@@ -83,6 +83,11 @@ namespace UnityEditor.PackageManager.UI
             get { return !string.IsNullOrEmpty(Version.Prerelease) && !IsVerified; }
         }
 
+        public bool IsPreview
+        {
+            get { return IsPreRelease && HasTag(PackageTag.preview); }
+        }
+
         // A version is user visible if it has a supported tag (or no tag at all)
         public bool IsUserVisible
         {

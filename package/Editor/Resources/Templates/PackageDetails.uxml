@@ -36,10 +36,22 @@
 
                 <engine:VisualElement name="detailCustomContainer" class="display-none"/>
 
-                <engine:VisualElement name="detailActions">
-                    <engine:Button name="viewDocumentation" class="detailAction link display-none" text="View Documentation"/>
-                    <engine:Label name="detailActionsSeparator" text="-" class="detailActionSeparator display-none"/>
-                    <engine:Button name="viewChangelog" class="detailAction link display-none" text="View Changelog"/>
+                <engine:VisualElement name="documentationContainer" class="display-none">
+                    <engine:VisualElement name="thirdPartyNoticeContainer" class="detailActions">
+                        <engine:Label name="thirdPartyNoticeLabel" class="" text="To view the third party softwares used by this package, click view licenses below."/>
+                    </engine:VisualElement>
+
+                    <engine:VisualElement name="detailActions">
+                        <engine:Button name="viewDocumentation" class="detailAction link" text="View documentation"/>
+                        <engine:VisualElement name="changeLogContainer">
+                            <engine:Label name="changelogSeparator" class="detailActionSeparator" text="-"/>
+                            <engine:Button name="viewChangelog" class="detailAction link" text="View changelog"/>
+                        </engine:VisualElement>
+                        <engine:VisualElement name="viewLicensesContainer">
+                            <engine:Label name="thirdPartySeparator" class="detailActionSeparator" text="-"/>
+                            <engine:Button name="viewLicenses" class="link" text="View licenses"/>
+                        </engine:VisualElement>
+                    </engine:VisualElement>
                 </engine:VisualElement>
 
                 <engine:Label name="detailName"/>

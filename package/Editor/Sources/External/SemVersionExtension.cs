@@ -10,10 +10,6 @@
         public static string ShortVersion(this SemVersion version)
         {
             var versionStr = "" + version.Major + "." + version.Minor;
-            if (!string.IsNullOrEmpty(version.Prerelease))
-                versionStr += "-" + version.Prerelease;
-            if (!string.IsNullOrEmpty(version.Build))
-                versionStr += "+" + version.Build;
             return versionStr;
         }                
     }

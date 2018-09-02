@@ -619,7 +619,17 @@ $spinner-normal-half-size: 8;
 				@include margin(auto, auto, 5, auto);
 			}
 
-			#detailActions {
+			#thirdPartyNoticeContainer {
+				margin-left: 4;
+				padding-left: 2;
+			}
+
+			#changeLogContainer, #viewLicensesContainer {
+				flex: 0;
+				flex-direction: row;
+			}
+
+			#detailActions, .detailActions {
 				flex: 0;
 				flex-direction: row;
 				margin-left: 2;
@@ -637,6 +647,15 @@ $spinner-normal-half-size: 8;
 					@include margin(auto, 0, auto, 0);
 					@include padding(auto, 0, auto, 0);
 					border-left: 0;
+					border-right: 0;
+				}
+
+				#thirdPartyNoticeLabel {
+					@include margin(4, 0, 4, 0);
+					@include padding-box(0);
+				}
+
+				#viewThirdParty {
 					border-right: 0;
 				}
 			}

@@ -42,16 +42,9 @@ namespace UnityEditor.PackageManager.UI
             Add(root);
 
             root.AddManipulator(new Clickable(Select));
-            if (package != null)
-                SetItem(package);
+            SetItem(package);
         }
 
-        // Package version to display
-        internal PackageInfo Display(Package package)
-        {
-            return package.Current == null ? package.Latest : package.Current;
-        }
-        
         private void Select()
         {
             OnSelected(this);
@@ -69,7 +62,7 @@ namespace UnityEditor.PackageManager.UI
 
         private void SetItem(Package package)
         {
-            var displayPackage = Display(package);
+            var displayPackage = package != null ? package.VersionToDisplay : null;
             if (displayPackage == null)
                 return;
             
@@ -93,16 +86,15 @@ namespace UnityEditor.PackageManager.UI
 
         private void OnPackageChanged()
         {
-            var displayPackage = Display(package);
+            var displayPackage = package != null ? package.VersionToDisplay : null;
             if (displayPackage == null)
                 return;
 
             NameLabel.text = displayPackage.DisplayName;
             VersionLabel.text = displayPackage.Version.ToString();
 
-            var packageInfo = package.Current ?? package.Latest;
-            var stateClass = GetIconStateId(packageInfo);
-            if (packageInfo.State == PackageState.Outdated && package.LatestUpdate == package.Current)
+            var stateClass = GetIconStateId(displayPackage);
+            if (displayPackage.State == PackageState.Outdated && package.LatestUpdate == package.Current)
                 stateClass = GetIconStateId(PackageState.UpToDate);
 
             StateLabel.RemoveFromClassList(currentStateClass);

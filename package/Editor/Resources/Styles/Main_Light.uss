@@ -40,7 +40,7 @@
   margin-right: 0;
 }
 
-.row, #detailListView .combo, #detailListView #detailView .detail #detailActions, #detailListView #detailView .detail .versionContainer, #detailListView #detailView .detail .tagLine {
+.row, #detailListView .combo, #detailListView #detailView .detail #detailActions, #detailListView #detailView .detail .detailActions, #detailListView #detailView .detail .versionContainer, #detailListView #detailView .detail .tagLine {
   flex: 1;
   flex-direction: row;
 }
@@ -550,12 +550,20 @@
   word-wrap: true;
   margin-bottom: 5;
 }
-#detailListView #detailView .detail #detailActions {
+#detailListView #detailView .detail #thirdPartyNoticeContainer {
+  margin-left: 4;
+  padding-left: 2;
+}
+#detailListView #detailView .detail #changeLogContainer, #detailListView #detailView .detail #viewLicensesContainer {
+  flex: 0;
+  flex-direction: row;
+}
+#detailListView #detailView .detail #detailActions, #detailListView #detailView .detail .detailActions {
   flex: 0;
   flex-direction: row;
   margin-left: 2;
 }
-#detailListView #detailView .detail #detailActions .detailAction {
+#detailListView #detailView .detail #detailActions .detailAction, #detailListView #detailView .detail .detailActions .detailAction {
   margin-left: 0;
   margin-right: 0;
   padding-left: 2;
@@ -563,12 +571,25 @@
   border-left: 2;
   border-right: 2;
 }
-#detailListView #detailView .detail #detailActions .detailActionSeparator {
+#detailListView #detailView .detail #detailActions .detailActionSeparator, #detailListView #detailView .detail .detailActions .detailActionSeparator {
   margin-left: 0;
   margin-right: 0;
   padding-left: 0;
   padding-right: 0;
   border-left: 0;
+  border-right: 0;
+}
+#detailListView #detailView .detail #detailActions #thirdPartyNoticeLabel, #detailListView #detailView .detail .detailActions #thirdPartyNoticeLabel {
+  margin-top: 4;
+  margin-left: 0;
+  margin-bottom: 4;
+  margin-right: 0;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+}
+#detailListView #detailView .detail #detailActions #viewThirdParty, #detailListView #detailView .detail .detailActions #viewThirdParty {
   border-right: 0;
 }
 #detailListView #detailView .detail .versionContainer {
