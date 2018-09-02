@@ -11,7 +11,7 @@ Shader "Hidden/PostProcessing/Uber"
         #pragma multi_compile __ VIGNETTE
         #pragma multi_compile __ GRAIN
         #pragma multi_compile __ FINALPASS
-        
+
         #include "../StdLib.hlsl"
         #include "../Colors.hlsl"
         #include "../Sampling.hlsl"
@@ -148,6 +148,7 @@ Shader "Hidden/PostProcessing/Uber"
 
             #if VIGNETTE
             {
+                UNITY_BRANCH
                 if (_Vignette_Mode < 0.5)
                 {
                     half2 d = abs(uv - _Vignette_Center) * _Vignette_Settings.x;
@@ -213,6 +214,7 @@ Shader "Hidden/PostProcessing/Uber"
             }
             #else
             {
+                UNITY_BRANCH
                 if (_LumaInAlpha > 0.5)
                 {
                     // Put saturated luma in alpha for FXAA - higher quality than "green as luma" and
@@ -243,20 +245,11 @@ Shader "Hidden/PostProcessing/Uber"
         {
             HLSLPROGRAM
 
-                #pragma vertex VertDefault
+                #pragma vertex VertUVTransform
                 #pragma fragment FragUber
 
             ENDHLSL
         }
 
-        Pass
-        {
-            HLSLPROGRAM
-
-                #pragma vertex VertDefaultNoFlip
-                #pragma fragment FragUber
-
-            ENDHLSL
-        }
     }
 }

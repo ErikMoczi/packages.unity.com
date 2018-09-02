@@ -176,7 +176,9 @@ namespace UnityEngine.Rendering.PostProcessing
             var gradingMode = settings.gradingMode.value;
             var supportComputeTex3D = SystemInfo.supports3DRenderTextures
                 && SystemInfo.supportsComputeShaders
-                && SystemInfo.graphicsDeviceType != GraphicsDeviceType.OpenGLCore;
+                && context.resources.computeShaders.lut3DBaker != null
+                && SystemInfo.graphicsDeviceType != GraphicsDeviceType.OpenGLCore
+                && SystemInfo.graphicsDeviceType != GraphicsDeviceType.OpenGLES3;
 
             if (gradingMode == GradingMode.External)
                 RenderExternalPipeline3D(context);
@@ -543,14 +545,14 @@ namespace UnityEngine.Rendering.PostProcessing
             // Use ARGBHalf if possible, fallback on ARGB2101010 and ARGB32 otherwise
             var format = RenderTextureFormat.ARGBHalf;
 
-            if (!SystemInfo.SupportsRenderTextureFormat(format))
+            if (!format.IsSupported())
             {
                 format = RenderTextureFormat.ARGB2101010;
 
                 // Note that using a log lut in ARGB32 is a *very* bad idea but we need it for
                 // compatibility reasons (else if a platform doesn't support one of the previous
                 // format it'll output a black screen, or worse will segfault on the user).
-                if (!SystemInfo.SupportsRenderTextureFormat(format))
+                if (!format.IsSupported())
                     format = RenderTextureFormat.ARGB32;
             }
 
