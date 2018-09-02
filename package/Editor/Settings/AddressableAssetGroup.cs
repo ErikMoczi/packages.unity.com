@@ -162,16 +162,21 @@ namespace UnityEditor.AddressableAssets
         {
             get
             {
-                if (m_processor == null)
-                {
-                    m_processor = CreateProcessor(false);
-                    if (m_processor == null)
-                        m_processor = CreateProcessor(true);
-                    if (m_processor != null)
-                        m_processor.CreateDefaultData(this);
-                }
+                EnsureValidProcessor();
                 return m_processor;
             }
+        }
+        private void EnsureValidProcessor()
+        {
+            if (m_processor == null)
+            {
+                m_processor = CreateProcessor(false);
+                if (m_processor == null)
+                    m_processor = CreateProcessor(true);
+                if (m_processor != null)
+                    m_processor.CreateDefaultData(this);
+            }
+
         }
 
         /// <summary>
@@ -322,6 +327,7 @@ namespace UnityEditor.AddressableAssets
             m_name = groupName;
             m_readOnly = readOnly;
             SetProcessorType(processorType);
+            EnsureValidProcessor();
             m_guid = guid;
         }
 

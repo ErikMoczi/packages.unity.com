@@ -826,7 +826,7 @@ namespace UnityEditor.AddressableAssets
             return retVal;
         }
 
-        protected override bool CanRename(TreeViewItem item)
+        protected bool CheckForRename(TreeViewItem item, bool isActualRename)
         {
             bool result = false;
             var assetItem = item as AssetEntryTreeViewItem;
@@ -836,10 +836,14 @@ namespace UnityEditor.AddressableAssets
                     result = !assetItem.group.ReadOnly;
                 else if (assetItem.entry != null)
                     result = !assetItem.entry.ReadOnly;
-
-                assetItem.isRenaming = result;
+                if(isActualRename)
+                    assetItem.isRenaming = result;
             }
             return result;
+        }
+        protected override bool CanRename(TreeViewItem item)
+        {
+            return CheckForRename(item, true);
         }
 
         private AssetEntryTreeViewItem FindItemInVisibleRows(int id)
@@ -1077,7 +1081,7 @@ namespace UnityEditor.AddressableAssets
 
             if (selectedNodes.Count == 1)
             {
-                if (CanRename(selectedNodes.First()))
+                if (CheckForRename(selectedNodes.First(), false))
                     menu.AddItem(new GUIContent("Rename"), false, RenameItem, selectedNodes);
             }
             menu.ShowAsContext();
@@ -1319,6 +1323,8 @@ namespace UnityEditor.AddressableAssets
                             foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
                             {
 #if NET_4_6
+                                if (a.IsDynamic)
+                                    continue;
                                 foreach (var t in a.ExportedTypes)
 #else
                                 foreach (var t in a.GetExportedTypes())

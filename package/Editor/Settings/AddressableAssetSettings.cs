@@ -469,7 +469,24 @@ namespace UnityEditor.AddressableAssets
                         return null;
                     }
                 }
-                return groups.Find(s => s.Guid == m_defaultGroup);
+                var group = groups.Find(s => s.Guid == m_defaultGroup);
+                if(group == null)
+                {
+                    foreach(var g in groups)
+                    {
+                        if (!g.ReadOnly)
+                        {
+                            group = g;
+                            break;
+                        }
+                    }
+                    if(group == null)
+                    {
+                        Debug.LogWarning("Addressable assets must have at least one group that is not read-only to be default, creating new group");
+                        group = CreateGroup("New Group", typeof(BundledAssetGroupProcessor), true, false);
+                    }
+                }
+                return group;
             }
             set
             {

@@ -281,14 +281,29 @@ namespace UnityEditor.AddressableAssets.Diagnostics
 
             using (new EditorGUI.DisabledScope(m_inspectFrame <= 0))
                 if (GUILayout.Button(m_prevFrameIcon, EditorStyles.toolbarButton))
+                {
                     m_inspectFrame--;
+                    m_eventList.SetEvents(activeSession.GetFrameEvents(m_inspectFrame));
+                    m_lastEventListUpdate = Time.unscaledTime;
+                    m_eventListFrame = m_inspectFrame;
+                }
 
             using (new EditorGUI.DisabledScope(m_inspectFrame >= m_latestFrame))
                 if (GUILayout.Button(m_nextFrameIcon, EditorStyles.toolbarButton))
+                {
                     m_inspectFrame++;
+                    m_eventList.SetEvents(activeSession.GetFrameEvents(m_inspectFrame));
+                    m_lastEventListUpdate = Time.unscaledTime;
+                    m_eventListFrame = m_inspectFrame;
+                }
 
             if (GUILayout.Button("Current", EditorStyles.toolbarButton, GUILayout.ExpandWidth(false)))
+            {
                 m_inspectFrame = m_latestFrame;
+                m_eventList.SetEvents(activeSession.GetFrameEvents(m_inspectFrame));
+                m_lastEventListUpdate = Time.unscaledTime;
+                m_eventListFrame = m_inspectFrame;
+            }
             GUILayout.EndHorizontal();
         }
 

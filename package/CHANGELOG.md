@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.3.3-preview] - 2018-XX-XX
+ - fixed exception thrown when creating a group and using .NET 4.x
+ - fixed bugs surrounding a project without addressables data.
+  - AssetLabelReference inspector rendering
+  - AssetReference drag and drop
+ - fixed profiler details view not updating when a mouse drag is completed
+ - fixes surrounding the stability of interacting with the "default" group.
+ 
 ## [0.3.2-preview] - 2018-08-23
  - Added docs for the Content Update flow.
  

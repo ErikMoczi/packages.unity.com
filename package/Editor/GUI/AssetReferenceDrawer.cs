@@ -26,7 +26,7 @@ namespace UnityEditor.AddressableAssets
             {
                 if (assetRefObject == null)
                     return false;
-                if(obj == null)
+                if (obj == null)
                 {
                     assetRefObject.editorAsset = null;
                     return true;
@@ -56,7 +56,7 @@ namespace UnityEditor.AddressableAssets
                 Debug.LogError("Error rendering drawer for AssetReference property.");
                 return;
             }
-            if(assetRefObject == null)
+            if (assetRefObject == null)
                 assetRefObject = property.GetActualObjectForSerializedProperty<AssetReference>(fieldInfo);
             label.text = ObjectNames.NicifyVariableName(property.propertyPath);
             if (assetRefObject == null)
@@ -142,29 +142,34 @@ namespace UnityEditor.AddressableAssets
 
                 if (!rejected && labelFilter != null)
                 {
-                    var aaEntries = DragAndDrop.GetGenericData("AssetEntryTreeViewItem") as List<AssetEntryTreeViewItem>;
-                    if (aaEntries != null)
-                    {
-                        if (aaEntries.Count != 1)
-                            rejected = true;
-                        if (rejected && !labelFilter.Validate(aaEntries[0].entry.labels))
-                            rejected = true;
-                    }
+                    if (aaSettings == null)
+                        rejected = true;
                     else
                     {
-                        if (DragAndDrop.paths.Length == 1)
+                        var aaEntries = DragAndDrop.GetGenericData("AssetEntryTreeViewItem") as List<AssetEntryTreeViewItem>;
+                        if (aaEntries != null)
                         {
-                            var entry = aaSettings.FindAssetEntry(AssetDatabase.AssetPathToGUID(DragAndDrop.paths[0]));
-                            //for now, do not allow creation of new AssetEntries when there is a label filter on the property.
-                            //This could be changed in the future to be configurable via the attribute if desired (allowEntryCreate = true)
-                            if (entry == null)
+                            if (aaEntries.Count != 1)
                                 rejected = true;
-                            if (!rejected && !labelFilter.Validate(entry.labels))
+                            if (rejected && !labelFilter.Validate(aaEntries[0].entry.labels))
                                 rejected = true;
                         }
                         else
                         {
-                            rejected = true;
+                            if (DragAndDrop.paths.Length == 1)
+                            {
+                                var entry = aaSettings.FindAssetEntry(AssetDatabase.AssetPathToGUID(DragAndDrop.paths[0]));
+                                //for now, do not allow creation of new AssetEntries when there is a label filter on the property.
+                                //This could be changed in the future to be configurable via the attribute if desired (allowEntryCreate = true)
+                                if (entry == null)
+                                    rejected = true;
+                                if (!rejected && !labelFilter.Validate(entry.labels))
+                                    rejected = true;
+                            }
+                            else
+                            {
+                                rejected = true;
+                            }
                         }
                     }
                 }
@@ -191,6 +196,8 @@ namespace UnityEditor.AddressableAssets
 
                         if (SetObject(property, obj, out guid))
                         {
+                            if (aaSettings == null)
+                                aaSettings = AddressableAssetSettings.GetDefault(true, true);
                             var entry = aaSettings.FindAssetEntry(guid);
                             if (entry == null && !string.IsNullOrEmpty(guid))
                             {
@@ -308,7 +315,7 @@ namespace UnityEditor.AddressableAssets
             tree.searchString = currentName;
             tree.OnGUI(remainginRect);
 
-            if(shouldClose)
+            if (shouldClose)
             {
                 EditorGUIUtility.hotControl = 0;
                 editorWindow.Close();

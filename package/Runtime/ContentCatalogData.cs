@@ -93,17 +93,17 @@ namespace UnityEngine.AddressableAssets
         }
 
         [SerializeField]
-        string[] m_providerIds;
+        string[] m_providerIds = null;
         [SerializeField]
-        string[] m_internalIds;
+        string[] m_internalIds = null;
         [SerializeField]
-        string m_keyDataString;
+        string m_keyDataString = null;
         [SerializeField]
-        string m_bucketDataString;
+        string m_bucketDataString = null;
         [SerializeField]
-        string m_entryDataString;
+        string m_entryDataString = null;
         [SerializeField]
-        string m_extraDataString;
+        string m_extraDataString = null;
 
         struct Bucket
         {

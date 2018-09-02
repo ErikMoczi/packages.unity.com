@@ -29,15 +29,24 @@ namespace UnityEditor.AddressableAssets
     {
         public static void ConvertDeprecatedGroupData(this AddressableAssetSettings settings, AddressableAssetGroupDeprecated old, bool staticContent)
         {
-            string validName = settings.FindUniqueGroupName(old.m_name);
-            var group = ScriptableObject.CreateInstance<AddressableAssetGroup>();
-            group.Initialize(settings, validName, old);
-            group.StaticContent = staticContent;
-            if (!Directory.Exists(settings.GroupFolder))
-                Directory.CreateDirectory(settings.GroupFolder);
-            var groupAssetPath = settings.GroupFolder + "/" + validName + ".asset";
-            AssetDatabase.CreateAsset(group, groupAssetPath);
-            settings.groups.Add(AssetDatabase.LoadAssetAtPath<AddressableAssetGroup>(groupAssetPath));
+            try
+            {
+                string validName = settings.FindUniqueGroupName(old.m_name);
+                var group = ScriptableObject.CreateInstance<AddressableAssetGroup>();
+                group.Initialize(settings, validName, old);
+                group.StaticContent = staticContent;
+                if (!Directory.Exists(settings.GroupFolder))
+                    Directory.CreateDirectory(settings.GroupFolder);
+                var groupAssetPath = settings.GroupFolder + "/" + validName + ".asset";
+                if (File.Exists(groupAssetPath))
+                    AssetDatabase.DeleteAsset(groupAssetPath);
+                AssetDatabase.CreateAsset(group, groupAssetPath);
+                settings.groups.Add(group);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+            }
         }
     }
 
