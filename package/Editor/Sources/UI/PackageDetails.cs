@@ -27,11 +27,6 @@ namespace UnityEditor.PackageManager.UI
         internal new class UxmlFactory : UxmlFactory<PackageDetails> { }
 #endif
 
-        internal static PackageTag[] SupportedTags()
-        {
-            return new [] { PackageTag.preview };
-        }
-
         public event Action<PackageManager.PackageInfo> OnPackageUpdate = delegate { };
 
         private readonly VisualElement root;
@@ -190,9 +185,8 @@ namespace UnityEditor.PackageManager.UI
                     UIUtils.SetElementDisplay(GetTag(PackageTag.verified), DisplayPackage.IsVerified);
                 }
 
-                foreach (var tag in SupportedTags())
-                    UIUtils.SetElementDisplay(GetTag(tag), DisplayPackage.HasTag(tag));
-                                
+                UIUtils.SetElementDisplay(GetTag(PackageTag.preview), DisplayPackage.IsPreview);
+
                 UIUtils.SetElementDisplay(DocumentationContainer, DisplayPackage.Origin != PackageSource.BuiltIn);
                 UIUtils.SetElementDisplay(ChangelogContainer, HasChangelog(DisplayPackage));
 

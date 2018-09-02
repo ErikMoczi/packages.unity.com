@@ -80,12 +80,12 @@ namespace UnityEditor.PackageManager.UI
         //        Current logic is any tag is considered pre-release, except recommended
         public bool IsPreRelease
         {
-            get { return !string.IsNullOrEmpty(Version.Prerelease) && !IsVerified; }
+            get { return !string.IsNullOrEmpty(Version.Prerelease) || Version.Major == 0; }
         }
 
         public bool IsPreview
         {
-            get { return IsPreRelease && HasTag(PackageTag.preview); }
+            get { return HasTag(PackageTag.preview) || Version.Major == 0; }
         }
 
         // A version is user visible if it has a supported tag (or no tag at all)
