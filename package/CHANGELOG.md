@@ -5,11 +5,7 @@ See the following link for the Release Notes for version 1.0.56.xx.0b2 of TextMe
 
 ## [1.2.0] - 2018-01-23
 ### Changes
-- Package version # increased to 1.2.0 which is the first release for Unity 2018.2.
-
-## [1.1.0] - 2018-01-23
-### Changes
-- Package version # increased to 1.1.0 which is the first release for Unity 2018.1. 
+- Package version # increased to 1.2.0 which is the first release for Unity 2018.2. 
 
 ## [1.0.27] - 2018-01-16
 ### Changes
