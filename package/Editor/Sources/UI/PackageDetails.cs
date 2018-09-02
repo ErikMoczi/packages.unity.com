@@ -86,13 +86,11 @@ namespace UnityEditor.PackageManager.UI
                     this.package.AddSignal.Operation.OnOperationError -= OnAddOperationError;
                     this.package.AddSignal.Operation.OnOperationSuccess -= OnAddOperationSuccess;
                 }
-                this.package.AddSignal.ResetEvents();
 
                 if (this.package.RemoveSignal.Operation != null)
                 {
                     this.package.RemoveSignal.Operation.OnOperationError -= OnRemoveOperationError;
                 }
-                this.package.RemoveSignal.ResetEvents();
             }
             
             this.filter = filter;
@@ -331,6 +329,9 @@ namespace UnityEditor.PackageManager.UI
                 visibleFlag = true;
             }
 
+            if (package.RemoveSignal.Operation != null)
+                enableButton = false;
+
             UpdateButton.SetEnabled(enableButton);
             UpdateButton.text = actionLabel;   
             SetUpdateVisibility(visibleFlag);
@@ -356,6 +357,11 @@ namespace UnityEditor.PackageManager.UI
                         GetButtonText(PackageAction.Remove, true, displayPackage.Version);;
                     enableButton = true;
                 }
+            }
+
+            if (package.RemoveSignal.Operation != null)
+            {
+                enableButton = false;
             }
             
             RemoveButton.SetEnabled(enableButton);
@@ -394,6 +400,7 @@ namespace UnityEditor.PackageManager.UI
             DetailError.ClearError();
             package.Update();
             RefreshAddButton();
+            RefreshRemoveButton();
         }
 
         private void CloseAndUpdate()
@@ -418,6 +425,7 @@ namespace UnityEditor.PackageManager.UI
             DetailError.ClearError();
             package.Remove();
             RefreshRemoveButton();
+            RefreshAddButton();
         }
 
         private void ViewDocClick()

@@ -50,7 +50,7 @@ namespace UnityEditor.PackageManager.UI
             
             Filter = PackageFilter.Local;
 
-            FetchAllCache();
+            FetchAllCaches();
         }
 
         // Return Packages from internal cache.
@@ -70,20 +70,24 @@ namespace UnityEditor.PackageManager.UI
             return true;
         }
 
+        private void Reset()
+        {
+            LastListOfflinePackages = null;
+            LastListPackages = null;
+            LastSearchPackages = null;
+
+            listOperation = null;
+            listOperationOffline = null;
+            searchOperation = null;
+
+            ClearPackagesInternal();
+            FetchAllCaches();            
+        }
+        
         public void UpdatePackageCollection(bool reset = false)
         {
             if (reset)
-            {
-                LastListOfflinePackages = null;
-                LastListPackages = null;
-                LastSearchPackages = null;
-
-                listOperation = null;
-                listOperationOffline = null;
-                searchOperation = null;
-
-                FetchAllCache();
-            }
+                Reset();
 
             switch (Filter)
             {
@@ -109,8 +113,7 @@ namespace UnityEditor.PackageManager.UI
         {
             if (listOperationOffline == null && LastListOfflinePackages == null)
             {
-                listOperationOffline = OperationFactory.Instance.CreateListOperation();
-                listOperationOffline.OfflineMode = true;
+                listOperationOffline = OperationFactory.Instance.CreateListOperation(true);
                 listOperationOffline.GetPackageListAsync(infos => { LastListOfflinePackages = infos; }, error => { ClearPackages(); });
             }
         }
@@ -135,7 +138,7 @@ namespace UnityEditor.PackageManager.UI
             }
         }
 
-        public void FetchAllCache()
+        private void FetchAllCaches()
         {
             FetchListOfflineCache();
             FetchListCache();
@@ -152,8 +155,8 @@ namespace UnityEditor.PackageManager.UI
 
             if (LastListOfflinePackages == null)
             {
-                listOperationOffline.OnOperationFinalized -= OnListOperationOfflineOnOnOperationFinalized;    // Make sure we cancel previous listeners 
-                listOperationOffline.OnOperationFinalized += OnListOperationOfflineOnOnOperationFinalized;
+                listOperationOffline.OnOperationFinalized -= OnListOperationOfflineFinalized;    // Make sure we cancel previous listeners 
+                listOperationOffline.OnOperationFinalized += OnListOperationOfflineFinalized;
             }
             else
             {
@@ -161,7 +164,7 @@ namespace UnityEditor.PackageManager.UI
             }
         }
 
-        private void OnListOperationOfflineOnOnOperationFinalized()
+        private void OnListOperationOfflineFinalized()
         {
             SetListPackageInfos(LastListOfflinePackages);
         }
@@ -173,8 +176,8 @@ namespace UnityEditor.PackageManager.UI
 
             if (LastListPackages == null)
             {
-                listOperation.OnOperationFinalized -= OnListOperationOnOnOperationFinalized;  // Make sure we cancel previous listeners
-                listOperation.OnOperationFinalized += OnListOperationOnOnOperationFinalized;
+                listOperation.OnOperationFinalized -= OnListOperationFinalized;  // Make sure we cancel previous listeners
+                listOperation.OnOperationFinalized += OnListOperationFinalized;
             }
             else
             {
@@ -182,7 +185,7 @@ namespace UnityEditor.PackageManager.UI
             }
         }
 
-        private void OnListOperationOnOnOperationFinalized()
+        private void OnListOperationFinalized()
         {
             listOperation = null;
             SetListPackageInfos(LastListPackages);
@@ -210,8 +213,8 @@ namespace UnityEditor.PackageManager.UI
 
             if (LastSearchPackages == null)
             {
-                searchOperation.OnOperationFinalized -= OnSearchOperationOnOnOperationFinalized; // Make sure we cancel previous listeners
-                searchOperation.OnOperationFinalized += OnSearchOperationOnOnOperationFinalized;
+                searchOperation.OnOperationFinalized -= OnSearchOperationFinalized; // Make sure we cancel previous listeners
+                searchOperation.OnOperationFinalized += OnSearchOperationFinalized;
             }
             else
             {
@@ -219,7 +222,7 @@ namespace UnityEditor.PackageManager.UI
             }            
         }
 
-        private void OnSearchOperationOnOnOperationFinalized()
+        private void OnSearchOperationFinalized()
         {
             SetSearchPackageInfos(LastSearchPackages);
         }
@@ -235,7 +238,7 @@ namespace UnityEditor.PackageManager.UI
             // Don't update the current list if the filter changed since the operation started 
             if (Filter == PackageFilter.All)
             {
-                ClearPackagesInternal();
+                ClearPackageInfosInternal();
                 AddPackageInfos(LastSearchPackages);
             }
         }
@@ -246,15 +249,20 @@ namespace UnityEditor.PackageManager.UI
             if (Filter == PackageFilter.Local)
             {
                 CancelListOffline();
-                ClearPackagesInternal();
+                ClearPackageInfosInternal();
                 AddPackageInfos(packageInfos);
             }
+        }
+
+        private IEnumerable<Package> OrderedPackages()
+        {
+            return Packages.Values.OrderBy(pkg => pkg.Versions.LastOrDefault() == null ? pkg.Name : pkg.Versions.Last().DisplayName).AsEnumerable();
         }
 
         public void AddPackageInfo(PackageInfo packageInfo)
         {
             AddPackageInfoInternal(packageInfo);
-            OnPackagesChanged(Packages.Values.AsEnumerable());
+            OnPackagesChanged(OrderedPackages());
         }
 
         public void AddPackageInfos(IEnumerable<PackageInfo> packageInfos)
@@ -267,7 +275,7 @@ namespace UnityEditor.PackageManager.UI
                 AddPackageInfoInternal(packageInfo);
             }
             
-            OnPackagesChanged(Packages.Values.AsEnumerable());
+            OnPackagesChanged(OrderedPackages());
         }
 
         private void AddPackageInfoInternal(PackageInfo packageInfo)
@@ -292,12 +300,17 @@ namespace UnityEditor.PackageManager.UI
             searchOperation = null;
             
             ClearPackagesInternal();
-            OnPackagesChanged(Packages.Values.AsEnumerable());
+            OnPackagesChanged(OrderedPackages());
+        }
+
+        private void ClearPackageInfosInternal()
+        {
+            packageInfos.Clear();
         }
 
         private void ClearPackagesInternal()
         {
-            packageInfos.Clear();
+            ClearPackageInfosInternal();
             Packages.Clear();
         }
 

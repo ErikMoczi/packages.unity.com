@@ -64,13 +64,27 @@ namespace UnityEditor.PackageManager.UI
 
         private void SetItem(Package package)
         {
-            if (Display(package) == null)
+            var displayPackage = Display(package);
+            if (displayPackage == null)
                 return;
-            
+                            
             this.package = package;
-            this.package.AddSignal.WhenOperation(OnPackageUpdate);
-            
             OnPackageChanged();
+            
+            this.package.AddSignal.WhenOperation(OnPackageAdd);
+            this.package.RemoveSignal.WhenOperation(OnPackageRemove);
+        }
+
+        private void OnPackageRemove(IRemoveOperation operation)
+        {
+            operation.OnOperationError += error => Spinner.Stop();
+            OnPackageUpdate();
+        }
+
+        private void OnPackageAdd(IAddOperation operation)
+        {
+            operation.OnOperationError += error => Spinner.Stop();
+            OnPackageUpdate();
         }
 
         private void OnPackageChanged()
@@ -99,7 +113,7 @@ namespace UnityEditor.PackageManager.UI
                 Spinner.Stop();
         }
 
-        private void OnPackageUpdate(IAddOperation operation)
+        private void OnPackageUpdate()
         {
             Spinner.Start();
         }

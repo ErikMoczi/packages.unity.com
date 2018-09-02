@@ -29,7 +29,11 @@ namespace UnityEditor.PackageManager.UI
 
         public void SetError(Error error)
         {
-            AlertMessage.text = error.message ?? string.Format("An error occurred ({0})", error.errorCode.ToString());
+            var message = "An error occured.";
+            if (error != null)
+                message = error.message ?? string.Format("An error occurred ({0})", error.errorCode.ToString());
+
+            AlertMessage.text = message;
             RemoveFromClassList("display-none");
         }
 

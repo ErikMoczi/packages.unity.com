@@ -11,6 +11,11 @@ namespace UnityEditor.PackageManager.UI
         [SerializeField]
         private Action<IEnumerable<PackageInfo>> _doneCallbackAction;
 
+        public UpmListOperation(bool offlineMode) : base() 
+        {
+            OfflineMode = offlineMode;
+        }
+
         public bool OfflineMode { get; set; }
 
         public void GetPackageListAsync(Action<IEnumerable<PackageInfo>> doneCallbackAction, Action<Error> errorCallbackAction = null)

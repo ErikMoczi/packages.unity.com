@@ -235,6 +235,11 @@ namespace UnityEditor.PackageManager.UI
         
         private void SetPackages(IEnumerable<Package> packages)
         {
+            if (PackageCollection.Instance.Filter == PackageFilter.Local)
+            {
+                packages = packages.Where(pkg => pkg.Current != null);
+            }
+
             var previousSelection = selectedItem != null ? selectedItem.package : null;
 
             OnLoaded();
@@ -261,7 +266,7 @@ namespace UnityEditor.PackageManager.UI
             root.Q<VisualElement>(loadingId).visible = false;
             LoadingSpinner.Stop();
 
-            foreach (var package in packages)
+            foreach (var package in packages.OrderBy(pkg => pkg.Versions.FirstOrDefault() == null ? pkg.Name : pkg.Versions.FirstOrDefault().DisplayName))
             {
                 var item = AddPackage(package);
 
