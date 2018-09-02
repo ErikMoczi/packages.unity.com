@@ -1,4 +1,4 @@
 # Unity scriptablebuildpipeline
 
-scriptablebuildpipeline info placeholder
+The Scriptable Build Pipeline moves the asset bundle build pipeline to C#.  Use the pre-defined build flows, or create your own using the divided up APIs.  This system improves build time, fixes incremental build, and provides greater flexibility.
 
