@@ -1,0 +1,14 @@
+{
+    "name": "com.unity.textmeshpro.EditorTests",
+    "references": [
+        "com.unity.textmeshpro.Runtime",
+        "com.unity.textmeshpro.Editor"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

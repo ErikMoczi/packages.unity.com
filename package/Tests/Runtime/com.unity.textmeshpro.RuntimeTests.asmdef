@@ -1,0 +1,11 @@
+{
+    "name": "com.unity.textmeshpro.RuntimeTests",
+    "references": [
+        "com.unity.textmeshpro.Runtime"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": []
+}
