@@ -35,8 +35,8 @@ namespace UnityEditor.ProBuilder.Actions
 
 		public override ActionResult DoAction()
 		{
-			ExportWithFileDialog( MeshSelection.TopInternal() );
-			AssetDatabase.Refresh();
+			var res = ExportWithFileDialog( MeshSelection.TopInternal() );
+			Export.PingExportedModel(res);
 			return new ActionResult(ActionResult.Status.Success, "Make Asset & Prefab");
 		}
 
@@ -121,7 +121,11 @@ namespace UnityEditor.ProBuilder.Actions
 			go.GetComponent<MeshFilter>().sharedMesh = meshAsset;
 			string relativePrefabPath = string.Format("{0}/{1}.prefab", relativeDirectory, name);
 			string prefabPath = AssetDatabase.GenerateUniqueAssetPath(relativePrefabPath);
+#if UNITY_2018_3_OR_NEWER
+			PrefabUtility.CreatePrefab(prefabPath, go);
+#else
 			PrefabUtility.CreatePrefab(prefabPath, go, ReplacePrefabOptions.Default);
+#endif
 			Object.DestroyImmediate(go);
 
 			return meshPath;

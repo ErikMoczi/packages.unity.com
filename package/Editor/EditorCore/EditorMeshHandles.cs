@@ -267,22 +267,19 @@ namespace UnityEditor.ProBuilder
 			}
 			else if (selection.edge != Edge.Empty)
 			{
+				m_EdgeMaterial.SetColor("_Color", preselectionColor);
+
 				if (BeginDrawingLines(Handles.zTest))
 				{
-					m_EdgeMaterial.SetColor("_Color", Color.white);
-					GL.Color(preselectionColor);
-
 					GL.MultMatrix(mesh.transform.localToWorldMatrix);
 					GL.Vertex(positions[selection.edge.a]);
 					GL.Vertex(positions[selection.edge.b]);
-
 					EndDrawingLines();
 				}
 			}
 			else if (selection.vertex > -1)
 			{
-				// todo
-				var size = .25f / (PreferencesInternal.GetFloat(PreferenceKeys.pbVertexHandleSize) * EditorGUIUtility.pixelsPerPoint);
+				var size = (PreferencesInternal.GetFloat(PreferenceKeys.pbVertexHandleSize) * EditorGUIUtility.pixelsPerPoint) * .0125f;
 
 				using (new Handles.DrawingScope(preselectionColor, mesh.transform.localToWorldMatrix))
 				{
@@ -302,7 +299,7 @@ namespace UnityEditor.ProBuilder
 				case SelectMode.Edge:
 				{
 					// render wireframe with edge material in edge mode so that the size change is reflected
-					RenderWithColor(m_WireHandles, m_EdgeMaterial, s_WireframeColor);
+					RenderWithColor(m_WireHandles, m_EdgeMaterial, s_EdgeUnselectedColor);
 					RenderWithColor(m_EdgeHandles, m_EdgeMaterial, s_EdgeSelectedColor);
 					break;
 				}

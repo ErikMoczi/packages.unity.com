@@ -1036,7 +1036,7 @@ namespace UnityEditor.ProBuilder
 				copy.MakeUnique();
 
 				// if is prefab, break connection and destroy children
-				if( EditorUtility.IsPrefabInstance(copy.gameObject) || EditorUtility.IsPrefabRoot(copy.gameObject) )
+				if( EditorUtility.IsPrefabInstance(copy.gameObject) || EditorUtility.IsPrefabAsset(copy.gameObject) )
 					PrefabUtility.DisconnectPrefabInstance(copy.gameObject);
 
 				if(copy.transform.childCount > 0)
@@ -1190,13 +1190,11 @@ namespace UnityEditor.ProBuilder
 				if(pb.selectedIndexesInternal.Length > 1)
 				{
 					int newIndex = pb.MergeVertexes(pb.selectedIndexesInternal, collapseToFirst);
+
 					success = newIndex > -1;
 
 					if(success)
-					{
-						pb.RemoveDegenerateTriangles();
 						pb.SetSelectedVertexes(new int[] { newIndex });
-					}
 
 					pb.ToMesh();
 					pb.Refresh();
