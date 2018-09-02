@@ -11,6 +11,12 @@ namespace UnityEditor.PackageManager.UI.Tests
         private Action<IAddOperation> OnAddOperation;
         private Action<IRemoveOperation> OnRemoveOperation;
 
+        // Package version to display
+        public PackageInfo Display(Package package)
+        {
+            return PackageCollection.Instance.Filter == PackageFilter.All || package.Current == null ? package.Latest : package.Current;
+        }
+        
         [TearDown]
         public void TearDown()
         {
@@ -270,7 +276,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             var packages = PackageSets.Instance.Many(kPackageTestName, 2, true);
             var package = new Package(kPackageTestName, packages);
             
-            Assert.AreEqual(package.Current, package.Display);
+            Assert.AreEqual(package.Current, Display(package));
         }
         
         [Test]
@@ -280,7 +286,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             packages[0].IsCurrent = false;
             var package = new Package(kPackageTestName, packages);
             
-            Assert.AreEqual(package.Latest, package.Display);
+            Assert.AreEqual(package.Latest, Display(package));
         }
         
         [Test]
@@ -291,7 +297,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             var package = new Package(kPackageTestName, packages);
             var answer = packages.Max(x => x.Version);
 
-            Assert.AreEqual(package.Display.Version, answer);
+            Assert.AreEqual(Display(package).Version, answer);
         }
         
         [Test]

@@ -56,21 +56,5 @@ namespace UnityEditor.PackageManager.UI.Tests
             
             Assert.AreEqual("1.0.0", info.VersionWithoutTag);
         }
-
-        [Test]
-        public void PackageFromUpm_GivesCorrectRecommendedTag()
-        {
-            Assert.IsTrue(UpmBaseOperation.GetIsRecommended("0.0.1", "0.0.1", true));
-            Assert.IsTrue(UpmBaseOperation.GetIsRecommended("0.0.2", "0.0.2", false));
-            Assert.IsTrue(UpmBaseOperation.GetIsRecommended("0.0.2", "0.0.1", true));    // Higher patch version are recommended
-            Assert.IsFalse(UpmBaseOperation.GetIsRecommended("1.0.2", "0.0.1", true));    // But not higher major/minor
-            Assert.IsFalse(UpmBaseOperation.GetIsRecommended("0.1.2", "0.0.1", true));    //
-            Assert.IsFalse(UpmBaseOperation.GetIsRecommended("0.1.0", "0.0.1", true));    //
-            Assert.IsFalse(UpmBaseOperation.GetIsRecommended("1.0.0", "0.0.1", true));    //
-            
-            Assert.IsFalse(UpmBaseOperation.GetIsRecommended("0.0.2-alpha", "0.0.1", true));
-            Assert.IsFalse(UpmBaseOperation.GetIsRecommended("0.0.2-beta", "0.0.1", true));
-            Assert.IsFalse(UpmBaseOperation.GetIsRecommended("0.0.2-experimental", "0.0.1", true));
-        }
     }
 }

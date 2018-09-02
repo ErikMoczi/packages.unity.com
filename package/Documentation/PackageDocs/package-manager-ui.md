@@ -127,5 +127,6 @@ The following table provides an alphabetical list of the important files and fol
 
 |Date|Reason|
 |---|---|
+|Jan 17, 2018|Document updated. Matches package version 1.5.0.|
 |Jan 12, 2018|Document updated. Matches package version 1.4.0.|
 |Nov 7, 2017|Document created. Matches package version 1.0.0.|

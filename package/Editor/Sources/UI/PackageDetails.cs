@@ -32,12 +32,13 @@ namespace UnityEditor.PackageManager.UI
             Add,
             Remove,
             Update,
+            Downgrade,
             Enable,
             Disable
         }
         
-        private static readonly string[] PackageActionVerbs = { "Install", "Remove", "Update to", "Enable", "Disable" };
-        private static readonly string[] PackageActionInProgressVerbs = { "Installing", "Removing", "Updating to", "Enabling", "Disabling" };
+        private static readonly string[] PackageActionVerbs = { "Install", "Remove", "Update to", "Go back to",  "Enable", "Disable" };
+        private static readonly string[] PackageActionInProgressVerbs = { "Installing", "Removing", "Updating to", "Going back to", "Enabling", "Disabling" };
 
         public PackageDetails()
         {
@@ -55,6 +56,12 @@ namespace UnityEditor.PackageManager.UI
                 ViewDocButton.clickable.clicked += ViewDocClick;
             
             PackageCollection.Instance.OnFilterChanged += OnFilterChanged;
+        }
+
+        // Package version to display
+        public PackageInfo Display(Package package)
+        {
+            return PackageCollection.Instance.Filter == PackageFilter.All || package.Current == null ? package.Latest : package.Current;
         }
 
         private void OnFilterChanged(PackageFilter obj)
@@ -85,7 +92,7 @@ namespace UnityEditor.PackageManager.UI
             var detailVisible = true;
             Error error = null;
 
-            if (package == null || package.Display == null)
+            if (package == null || Display(package) == null)
             {
                 detailVisible = false;
             }
@@ -94,7 +101,7 @@ namespace UnityEditor.PackageManager.UI
                 UpdateButton.visible = true;
                 RemoveButton.visible = true;
 
-                var displayPackage = package.Display;
+                var displayPackage = Display(package);
                 
                 if (string.IsNullOrEmpty(displayPackage.Description))
                 {
@@ -147,7 +154,7 @@ namespace UnityEditor.PackageManager.UI
                     else if (displayPackage.IsCurrent)
                     {
                         DetailPackageStatus.text =
-                            "This package is installed for you project";
+                            "This package is installed for your project";
                     }
                 }
 
@@ -229,30 +236,50 @@ namespace UnityEditor.PackageManager.UI
 
         private void RefreshAddButton()
         {
-            var displayPackage = package.Display;
+            var displayPackage = Display(package);
             var visibleFlag = false;
             var actionLabel = "";
-            SemVersion version;
             var enableButton = true;
 
-            if (package.AddSignal.Operation != null)
+            if (package.AddSignal.Operation != null && displayPackage.OriginType == OriginType.Builtin)
             {
-                version = package.AddSignal.Operation.PackageInfo.Version;
-                actionLabel = displayPackage.OriginType == OriginType.Builtin ? 
-                    GetButtonText(PackageAction.Enable, true) : 
-                    GetButtonText(displayPackage.IsCurrent ? PackageAction.Update : PackageAction.Add, true, version);
+                actionLabel = GetButtonText(PackageAction.Enable, true);
+                enableButton = false;
+                visibleFlag = true;
+            } 
+            else if (package.AddSignal.Operation != null && displayPackage.OriginType != OriginType.Builtin)
+            {
+                var version = package.AddSignal.Operation.PackageInfo.Version;
+                if (!displayPackage.IsCurrent)
+                {
+                    actionLabel = GetButtonText(PackageAction.Add, true, version);
+                }
+                else
+                {
+                    var currentVersion = package.Current.Version;
+                    var action = version.CompareByPrecedence(currentVersion) > 0
+                        ? PackageAction.Update
+                        : PackageAction.Downgrade;
+
+                    actionLabel = GetButtonText(action, true, version);
+                }
+                
                 enableButton = false;
                 visibleFlag = true;
             }
-            else if (displayPackage.IsCurrent && package.Latest != null && package.Latest.Version != package.Current.Version)
+            else if (package.Current != null && package.Latest != null && package.Latest.Version != package.Current.Version)
             {
-                version = package.Latest.Version;
-                actionLabel = GetButtonText(PackageAction.Update, false, version);
+                var version = package.Latest.Version;
+                var currentVersion = package.Current.Version;
+                var action = version.CompareByPrecedence(currentVersion) > 0
+                    ? PackageAction.Update
+                    : PackageAction.Downgrade;
+                actionLabel = GetButtonText(action, false, version);
                 visibleFlag = true;
             }
             else if (package.Current == null && package.Versions.Any())
             {
-                version = package.Latest.Version;
+                var version = package.Latest.Version;
                 actionLabel = displayPackage.OriginType == OriginType.Builtin ?
                     GetButtonText(PackageAction.Enable) :
                     GetButtonText(PackageAction.Add, false, version);
@@ -266,7 +293,7 @@ namespace UnityEditor.PackageManager.UI
 
         private void RefreshRemoveButton()
         {
-            var displayPackage = package.Display;
+            var displayPackage = Display(package);
             var visibleFlag = false;
             var actionLabel = displayPackage.OriginType == OriginType.Builtin ?
                 GetButtonText(PackageAction.Disable) :
@@ -275,15 +302,14 @@ namespace UnityEditor.PackageManager.UI
 
             if (filter != PackageFilter.All)
             {
+                visibleFlag = package.CanBeRemoved;
                 enableButton = package.CanBeRemoved;
-                
-                visibleFlag = true;
                 if (package.RemoveSignal.Operation != null)
                 {
                     actionLabel = displayPackage.OriginType == OriginType.Builtin ?
                         GetButtonText(PackageAction.Disable, true) :
                         GetButtonText(PackageAction.Remove, true, displayPackage.Version);;
-                    enableButton = false;
+                    enableButton = true;
                 }
             }
             

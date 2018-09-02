@@ -32,6 +32,12 @@ namespace UnityEditor.PackageManager.UI
                 SetItem(package);
         }
 
+        // Package version to display
+        public PackageInfo Display(Package package)
+        {
+            return PackageCollection.Instance.Filter == PackageFilter.All || package.Current == null ? package.Latest : package.Current;
+        }
+        
         private void Select()
         {
             OnSelected(package, this);
@@ -49,7 +55,7 @@ namespace UnityEditor.PackageManager.UI
 
         private void SetItem(Package package)
         {
-            if (package.Display == null)
+            if (Display(package) == null)
                 return;
             
             this.package = package;
@@ -60,13 +66,14 @@ namespace UnityEditor.PackageManager.UI
 
         private void OnPackageChanged()
         {
-            if (package.Display == null)
+            var displayPackage = Display(package);
+            if (displayPackage == null)
                 return;
 
-            NameLabel.text = package.Display.DisplayName;
-            VersionLabel.text = package.Display.Version.ToString();
+            NameLabel.text = displayPackage.DisplayName;
+            VersionLabel.text = displayPackage.Version.ToString();
             
-            var stateClass = GetIconStateId(package.Display);
+            var stateClass = GetIconStateId(package.Current ?? package.Latest);
             
             StateLabel.RemoveFromClassList(currentStateClass);
             StateLabel.AddToClassList(stateClass);

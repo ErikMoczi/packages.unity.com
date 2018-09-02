@@ -52,21 +52,37 @@ namespace UnityEditor.PackageManager.UI
         {
             get {return this.GetRootVisualContainer().Q<PackageSearchFilterTabs>("tabsGroup");}
         }
+#endif
 
-        [MenuItem("Project/Packages/Manage")]
+        private static T FindFirstEditorWindow<T>() where T : EditorWindow
+        {
+            var windows = Resources.FindObjectsOfTypeAll<T>();
+            if(windows != null && windows.Length > 0)
+            {
+                return windows[0];
+            }
+            
+            return null;
+        }
+
+        [MenuItem("Window/Package Manager", priority = 1500)]
         internal static void ShowPackageManagerWindow()
         {
-            var window = GetWindow<PackageManagerWindow>(true, "Packages", true);
+#if UNITY_2018_1_OR_NEWER
+            var window = FindFirstEditorWindow<PackageManagerWindow>();
+            if (window != null)
+            {
+                window.Focus();
+                return;
+            }
+            
+            window = GetWindow<PackageManagerWindow>(true, "Packages", true);
             window.minSize = new Vector2(850, 450);
             window.maxSize = window.minSize;
             window.Show();
-        }
 #else
-        [MenuItem("Project/Packages/Manage")]
-        internal static void ShowPackageManagerWindow()
-        {
             EditorUtility.DisplayDialog("Unsupported Unity Version", string.Format("The Package Manager requires Unity Version {0} or higher to operate.", targetVersionNumber), "Ok");
-        }
 #endif
+        }
     }
 }

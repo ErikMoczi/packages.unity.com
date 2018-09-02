@@ -7,7 +7,12 @@ The "In Project" and "Install" filters allow you to show different lists of pack
 ▪ In Project: Lists the packages that are currently available in your project.
 ▪ Install: Lists all discoverable packages and all previously downloaded packages. If a package is already installed in your project, it will show with a differently colored background.
 
-What's new in 1.4.0:
+What's new:
+▪ Move "Project->Packages->Manage" menu item to "Window->Package Manager"
+▪ Show the latest version and description in tab "Install" instead of the current version
+▪ Display "Recommended" tag properly
+▪ Display "Go back to" when latest version is less than current one
+▪ Do not display "Update to" when current version is greater than lastest one. (case for embedded or local packages)
 ▪ Replace packages action button label: "Install" instead of "Add" for packages and "Enable/Disable" instead of "Add/Remove" for built-in packages
 ▪ "alpha", "beta", "experimental" and "recommended" tags support
 ▪ Add loading progress while opening window

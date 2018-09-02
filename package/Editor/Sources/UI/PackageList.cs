@@ -95,7 +95,7 @@ namespace UnityEditor.PackageManager.UI
 
         private void AddPackage(Package package)
         {
-            var groupName = package.Display.Group;
+            var groupName = package.Latest.Group;
             var group = GetOrCreateGroup(groupName);
             var packageItem = group.AddPackage(package);
 

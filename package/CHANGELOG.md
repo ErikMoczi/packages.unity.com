@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2018-01-17
+### Fixes
+- Move "Project->Packages->Manage" menu item to "Window->Package Manager"
+- Show the latest version and description in tab "Install" instead of the current version
+- Display "Recommended" tag properly
+- Display "Go back to" when latest version is less than current one
+- Do not display "Update to" when current version is greater than lastest one. (case for embedded or local packages)
+
 ## [1.4.0] - 2018-01-12
 ### Fixes
 - Surround specific Unity version 2018.2 code due to API break in UIElements

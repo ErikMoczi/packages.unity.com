@@ -47,6 +47,21 @@ namespace UnityEditor.PackageManager.UI.Tests
                 }
             }
         }
-        
+
+        [Test]
+        public void Show_CorrectPackage()
+        {
+            var packageInfos = PackageSets.Instance.Outdated();
+            SetPackages(packageInfos);
+
+            var package = PackageCollection.Instance.GetPackageByName(packageInfos.First().Name);
+                
+            var details = Container.Q<PackageDetails>("detailsGroup");
+            PackageCollection.Instance.SetFilter(PackageFilter.Local);
+            Assert.IsTrue(details.Display(package) == packageInfos[0]);
+
+            PackageCollection.Instance.SetFilter(PackageFilter.All);
+            Assert.IsTrue(details.Display(package) == packageInfos[1]);
+        }
     }
 }

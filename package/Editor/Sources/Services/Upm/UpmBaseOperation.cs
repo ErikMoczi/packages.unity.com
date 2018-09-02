@@ -19,33 +19,6 @@ namespace UnityEditor.PackageManager.UI
             return group;
         }
 
-        public static bool GetIsRecommended(string version, string upmRecommended, bool isVersionCurrent)
-        {
-            SemVersion semVersion = version;
-            var isPreRelease = !string.IsNullOrEmpty(semVersion.Prerelease);
-                
-            bool isRecommended = version == upmRecommended;
-                
-            // Your are the recommended if you also satisfy all these conditions:
-            //     - If your are not alpha/beta
-            //     - Your current major/minor version is the same as the recommended major/minor version from upm request
-            //     - Your patch version is >= then the recommended from upm request
-            if (!isRecommended && isVersionCurrent)
-            {
-                // In some cases, such as built-in packages, the recommended version will be empty,
-                // so in these cases keep isRecommended to false.
-                SemVersion semRecommended;
-                if (SemVersion.TryParse(upmRecommended, out semRecommended))
-                    if (!isPreRelease)
-                        if (semVersion.Major == semRecommended.Major &&
-                            semVersion.Minor == semRecommended.Minor &&
-                            semVersion.Patch >= semRecommended.Patch)
-                            isRecommended = true;
-            }
-
-            return isRecommended;
-        }
-
         protected static IEnumerable<PackageInfo> FromUpmPackageInfo(PackageManager.PackageInfo info, bool isCurrent=true)
         {
             var packages = new List<PackageInfo>();
@@ -57,19 +30,40 @@ namespace UnityEditor.PackageManager.UI
                 displayName = new CultureInfo("en-US").TextInfo.ToTitleCase(displayName);
             }
 
+            var lastCompatible = info.versions.latestCompatible;
             var versions = new List<string>();
             versions.AddRange(info.versions.compatible);
-            if (versions.All(version => version != info.version))
+            if (versions.FindIndex(version => version == info.version) == -1)
             {
                 versions.Add(info.version);
+
+                versions.Sort((left, right) =>
+                {
+                    SemVersion leftVersion = left;
+                    SemVersion righVersion = right;
+                    return leftVersion.CompareByPrecedence(righVersion);
+                });
+
+                SemVersion packageVersion = info.version;
+                if (!string.IsNullOrEmpty(lastCompatible))
+                {
+                    SemVersion lastCompatibleVersion =
+                        string.IsNullOrEmpty(lastCompatible) ? (SemVersion) null : lastCompatible;
+                    if (packageVersion != null && string.IsNullOrEmpty(packageVersion.Prerelease) &&
+                        packageVersion.CompareByPrecedence(lastCompatibleVersion) > 0)
+                        lastCompatible = info.version;
+                }
+                else
+                {
+                    if (packageVersion != null && string.IsNullOrEmpty(packageVersion.Prerelease))
+                        lastCompatible = info.version;
+                }
             }
-                        
+
             foreach(var version in versions)
             {
-                bool isVersionCurrent = version == info.version && isCurrent;
-                bool isRecommended = GetIsRecommended(version, info.versions.recommended, isVersionCurrent);
-
-                var state = (info.originType == OriginType.Builtin || info.version == info.versions.latestCompatible) ? PackageState.UpToDate : PackageState.Outdated;
+                var isVersionCurrent = version == info.version && isCurrent;
+                var state = (info.originType == OriginType.Builtin || info.version == lastCompatible) ? PackageState.UpToDate : PackageState.Outdated;
                 
                 // Happens mostly when using a package that hasn't been in production yet.
                 if (info.versions.all.Length <= 0)
@@ -87,8 +81,8 @@ namespace UnityEditor.PackageManager.UI
                     Description = info.description,
                     Category = info.category,
                     IsCurrent = isVersionCurrent,
-                    IsLatest = version == info.versions.latestCompatible,
-                    IsRecommended = isRecommended,
+                    IsLatest = version == lastCompatible,
+                    IsRecommended = version == info.versions.recommended,
                     Errors = info.errors.ToList(),
                     Group = GroupName(info.originType),
                     State = state,
