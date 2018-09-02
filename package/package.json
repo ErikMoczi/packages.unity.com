@@ -1,12 +1,11 @@
 {
   "name": "com.unity.standardevents",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "unity": "2017.3",
   "description": "Unity Analytics Standard Events",
   "keywords": [
     "analytics",
     "unity"
   ],
-  "readme": "Unity Analytics Standard Events",
-  "category": "AssetStore/Unity"
+  "readme": "Unity Analytics Standard Events"
 }
