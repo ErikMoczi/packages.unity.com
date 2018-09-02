@@ -192,6 +192,14 @@ $spinner-normal-half-size: 8;
 	flex: 1;
 	flex-direction: row;
 
+	.link {
+		text-color: $link-text-color;
+		background: rgba(0, 0, 0, 0);
+		background-image: none;
+		@include margin-box(0);
+		@include padding-box(0);
+	}
+
 	.emptyArea {
 		flex: 1;
 		position-type: absolute;
@@ -514,6 +522,25 @@ $spinner-normal-half-size: 8;
 				align-items: center;
 				height: 40;
 
+				margin-bottom: 8;
+
+				#updateContainer {
+					position-type: relative;
+					display: block;
+					align-items: center;
+
+					@include padding-box(0);
+
+					#viewChangelog {
+						position-type: absolute;
+						@include margin-box(0);
+						@include padding-box(0);
+						position-bottom: -14;
+						position-right: 0;
+						z-index: 1000;
+					}
+				}
+
 				#update {
 					@include button(3,3,4,3);
 				}
@@ -570,11 +597,8 @@ $spinner-normal-half-size: 8;
 			#detailActions {
 				flex: 0;
 				flex-direction: row;
-				border-top: 20px;
 
-				#viewDocumentation {
-					@include button(3,3,4,3);
-				}
+				@extend .row;
 			}
 			.versionContainer {
 				@extend .row;

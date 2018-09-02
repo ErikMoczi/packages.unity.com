@@ -4,7 +4,10 @@
             <ui:VisualElement name="detail" class="detail">
                 <ui:VisualElement class="header">
                     <ui:Label name="detailTitle"/>
-                    <ui:Button name="update" text="Update" class="button"/>
+                    <ui:VisualElement name="updateContainer">
+                        <ui:Button name="update" text="Update" class="button"/>
+                        <ui:Button name="viewChangelog" class="link" text="View Changes"/>
+                    </ui:VisualElement>
                     <ui:Button name="remove" text="Remove" class="button"/>
                 </ui:VisualElement>
                 <ui:VisualElement class="versionContainer">
@@ -26,15 +29,15 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
 
+                <ui:VisualElement name="detailActions">
+                    <ui:Button name="viewDocumentation" text="View Documentation" class="link display-none"/>
+                </ui:VisualElement>
+
                 <ui:Label name="detailName"/>
                 <ui:Label name="detailPackageStatus"/>
                 <ui:Label name="detailModuleReference"/>
                 <ui:Label name="detailDesc"/>
-                <!--
-                <ui:VisualElement name="detailActions">
-                    <ui:Button name="viewDocumentation" text="View documentation..."/>
-                </ui:VisualElement>
-                -->
+
             </ui:VisualElement>
             <ui:VisualElement name="emptyArea" class="detail emptyArea">
                 <ui:Label class="title" text="There is no package selected."/>

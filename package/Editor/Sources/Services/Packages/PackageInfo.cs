@@ -54,6 +54,10 @@ namespace UnityEditor.PackageManager.UI
             }
         }
 
+        // This will always be <name>@<version>, even for an embedded package.
+        public string VersionId {get { return string.Format("{0}@{1}", Name.ToLower(), Version); }}
+        public string ShortVersionId {get { return string.Format("{0}@{1}", Name.ToLower(), Version.ShortVersion()); }}
+
         public string ModuleName { get { return IsModule(Name) ? DisplayName : ""; } }
 
         public bool Equals(PackageInfo other)

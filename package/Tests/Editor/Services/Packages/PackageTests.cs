@@ -262,15 +262,6 @@ namespace UnityEditor.PackageManager.UI.Tests
         }
         
         [Test]
-        public void DocumentationLink_ReturnsNotEmptyString()
-        {
-            var packages = PackageSets.Instance.Many(kPackageTestName, 1, true);
-            var package = new Package(kPackageTestName, packages);
-            
-            Assert.IsNotEmpty(package.DocumentationLink);
-        }
-        
-        [Test]
         public void Display_WhenCurrentIsNotNull_ReturnsCurrent()
         {
             var packages = PackageSets.Instance.Many(kPackageTestName, 2, true);

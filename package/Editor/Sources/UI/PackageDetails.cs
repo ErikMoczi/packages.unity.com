@@ -46,16 +46,24 @@ namespace UnityEditor.PackageManager.UI
             Add(root);
             root.StretchToParentSize();
 
-            UpdateButton.visible = false;
+            SetUpdateVisibility(false);
             RemoveButton.visible = false;
             root.Q<VisualElement>(emptyId).visible = false;
 
             UpdateButton.clickable.clicked += UpdateClick;
             RemoveButton.clickable.clicked += RemoveClick;
-            if (ViewDocButton != null) 
-                ViewDocButton.clickable.clicked += ViewDocClick;
-            
+            ViewDocButton.clickable.clicked += ViewDocClick;
+            ViewChangelogButton.clickable.clicked += ViewChangelogClick;
+            ViewChangelogButton.parent.clippingOptions = ClippingOptions.NoClipping;
+            ViewChangelogButton.parent.parent.clippingOptions = ClippingOptions.NoClipping;
+
             PackageCollection.Instance.OnFilterChanged += OnFilterChanged;
+        }
+
+        private void SetUpdateVisibility(bool value)
+        {
+            if (UpdateContainer != null)
+                UIUtils.SetElementDisplay(UpdateContainer, value);
         }
 
         // Package version to display
@@ -95,10 +103,12 @@ namespace UnityEditor.PackageManager.UI
             if (package == null || Display(package) == null)
             {
                 detailVisible = false;
+                UIUtils.SetElementDisplay(ViewChangelogButton, false);
+                UIUtils.SetElementDisplay(ViewDocButton, false);
             }
             else
             {
-                UpdateButton.visible = true;
+                SetUpdateVisibility(true);
                 RemoveButton.visible = true;
 
                 var displayPackage = Display(package);
@@ -121,6 +131,17 @@ namespace UnityEditor.PackageManager.UI
                 foreach (var tag in SupportedTags())
                     UIUtils.SetElementDisplay(GetTag(tag), displayPackage.HasTag(tag));
                                 
+                if (Display(package).Origin == PackageOrigin.Builtin)
+                {
+                    UIUtils.SetElementDisplay(ViewChangelogButton, false);
+                    UIUtils.SetElementDisplay(ViewDocButton, false);
+                }
+                else
+                {
+                    UIUtils.SetElementDisplay(ViewChangelogButton, true);
+                    UIUtils.SetElementDisplay(ViewDocButton, true);
+                }
+
                 root.Q<Label>("detailName").text = displayPackage.Name;
                 root.Q<ScrollView>("detailView").scrollOffset = new Vector2(0, 0);
 
@@ -292,7 +313,7 @@ namespace UnityEditor.PackageManager.UI
 
             UpdateButton.SetEnabled(enableButton);
             UpdateButton.text = actionLabel;   
-            UIUtils.SetElementDisplay(UpdateButton, visibleFlag);
+            SetUpdateVisibility(visibleFlag);
         }
 
         private void RefreshRemoveButton()
@@ -381,18 +402,30 @@ namespace UnityEditor.PackageManager.UI
 
         private void ViewDocClick()
         {
-            Application.OpenURL(package.DocumentationLink);
+            var packageInfo = Display(package);
+            var url = string.Format("http://docs.unity3d.com/Packages/{0}/index.html", packageInfo.ShortVersionId);
+            Application.OpenURL(url);
+        } 
+
+        private void ViewChangelogClick()
+        {
+            var packageInfo = Display(package);
+            var url = string.Format("http://docs.unity3d.com/Packages/{0}/changelog/CHANGELOG.html", packageInfo.ShortVersionId);
+            Application.OpenURL(url);
         }
 
         private Label DetailDesc { get { return root.Q<Label>("detailDesc"); } }
         private Button UpdateButton { get { return root.Q<Button>("update"); } }
         private Button RemoveButton { get { return root.Q<Button>("remove"); } }
         private Button ViewDocButton { get { return root.Q<Button>("viewDocumentation"); } }
+        private Button ViewChangelogButton { get { return root.Q<Button>("viewChangelog"); } }
+        private VisualElement UpdateContainer { get { return root.Q<VisualElement>("updateContainer"); } }
         private Alert DetailError { get { return root.Q<Alert>("detailError"); } }
         private ScrollView DetailView { get { return root.Q<ScrollView>("detailView"); } }
         private Label DetailPackageStatus { get { return root.Q<Label>("detailPackageStatus"); } }
         private Label DetailModuleReference { get { return root.Q<Label>("detailModuleReference"); } }
         private Label DetailVersion { get { return root.Q<Label>("detailVersion");  }}
+        private VisualElement VersionContainer { get { return root.Q<Label>("versionContainer");  }}
         
         internal VisualElement GetTag(PackageTag tag) {return root.Q<VisualElement>("tag-" + tag.ToString()); } 
     }

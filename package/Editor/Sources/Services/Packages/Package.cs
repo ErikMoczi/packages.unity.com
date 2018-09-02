@@ -30,14 +30,6 @@ namespace UnityEditor.PackageManager.UI
         public IEnumerable<PackageInfo> Versions { get { return source.OrderBy(package => package.Version); } }
         public string Name { get { return packageName; } }
 
-        public string DocumentationLink
-        {
-            get {
-                // returns hardcoded value for the moment
-                return "https://docs.unity3d.com/2017.3/Documentation/Manual/ExpertGuides.html";
-            }
-        }
-
         public bool IsPackageManagerUI
         {
             get { return Name == packageManagerUIName; }

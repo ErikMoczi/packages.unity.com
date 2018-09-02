@@ -1,6 +1,6 @@
 ﻿namespace UnityEditor.PackageManager.UI
 {
-    public enum PackageTag
+    internal enum PackageTag
     {
         alpha,
         beta,

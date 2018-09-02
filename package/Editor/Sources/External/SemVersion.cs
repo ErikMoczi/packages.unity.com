@@ -29,6 +29,7 @@ using System.Runtime.Serialization;
 using System.Security.Permissions;
 #endif
 using System.Text.RegularExpressions;
+using UnityEngine;
 
 namespace Semver
 {
@@ -133,7 +134,10 @@ namespace Semver
         {
             var match = parseEx.Match(version);
             if (!match.Success)
-                throw new ArgumentException("Invalid version.", "version");
+            {
+                Debug.LogWarning("Invalid version: " + version);
+                return new SemVersion(0);
+            }
 
 #if NETSTANDARD
             var major = int.Parse(match.Groups["major"].Value);
