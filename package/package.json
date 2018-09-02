@@ -1,9 +1,9 @@
 {
 	"name": "com.unity.scriptablebuildpipeline",
 	"displayName": "Scriptable Build Pipeline",
-	"version": "0.0.1-alpha",
+	"version": "0.0.2-alpha",
 	"unity": "2018.2",
-	"description": "TODO...",
+	"description": "TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... ",
 	"keywords": ["build", "bundle", "bundles", "assetbundles"],
 	"category": "",
 	"dependencies": {
