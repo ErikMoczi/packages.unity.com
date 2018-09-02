@@ -306,6 +306,7 @@ namespace UnityEditor.PackageManager.UI
             if (package.LatestPatch != null && package.IsAfterCurrentVersion(package.LatestPatch)) keyVersions.Add(package.LatestPatch);
             if (package.Current == null && package.LatestRelease == null && package.Latest != null) keyVersions.Add(package.Latest);
             if (Package.ShouldProposeLatestVersions && package.Latest != package.LatestRelease && package.Latest != null) keyVersions.Add(package.Latest);
+            keyVersions.Add(package.LatestUpdate);        // Make sure LatestUpdate is always in the list.
 
             foreach (var version in keyVersions.OrderBy(package => package.Version).Reverse())
             {
@@ -582,7 +583,7 @@ namespace UnityEditor.PackageManager.UI
         {
             if (package.IsPackageManagerUI)
             {
-                if (!EditorUtility.DisplayDialog("", "Updating this package will temporarily close the Package Manager window. You will have to re-open it after the update is done. Do you want to continue?", "Yes", "No"))
+                if (!EditorUtility.DisplayDialog("", "Updating this package will close the Package Manager window. You will have to re-open it after the update is done. Do you want to continue?", "Yes", "No"))
                     return;
 
                 if (package.AddSignal.Operation != null)
