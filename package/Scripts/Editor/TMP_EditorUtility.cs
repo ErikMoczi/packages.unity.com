@@ -232,54 +232,6 @@ namespace TMPro.EditorUtilities
             return null;
         }
 
-        /// <summary>
-        /// Function to find the asset folder location in case it was moved by the user.
-        /// </summary>
-        /// <returns></returns>
-        public static string GetAssetLocation()
-        {
-            if (isTMProFolderLocated == false)
-            {
-                isTMProFolderLocated = true;
-
-                // Check for potential UPM package
-                string packagePath = Path.GetFullPath("Packages/com.unity.textmeshpro");
-                if (Directory.Exists(packagePath))
-                {
-                    return "Packages/com.unity.textmeshpro";
-                }
-
-                string projectPath = Path.GetFullPath("Assets/..");
-                if (Directory.Exists(projectPath))
-                {
-
-                }
-
-                // Find all potential directories where TextMesh Pro and its resources could be located.
-                string[] matchingPaths = Directory.GetDirectories(projectPath, "*TextMeshPro", SearchOption.AllDirectories);
-                folderPath = ValidateLocation(matchingPaths, projectPath);
-                if (folderPath != null) return folderPath;
-
-                // Check alternative Asset folder name.
-                matchingPaths = Directory.GetDirectories(projectPath, "TextMesh Pro", SearchOption.AllDirectories);
-                folderPath = ValidateLocation(matchingPaths, projectPath);
-                if (folderPath != null) return folderPath;
-
-                //string packagePath = Path.GetFullPath("Packages/com.unity.textmeshpro");
-                //matchingPaths = Directory.GetDirectories(projectPath, "TextMeshPro", SearchOption.AllDirectories);
-                //folderPath = ValidateLocation(matchingPaths, packagePath);
-                //if (folderPath != null) return folderPath;
-            }
-
-            if (folderPath != null) return folderPath;
-            else
-            {
-                isTMProFolderLocated = false;
-                Debug.LogWarning("Could not located the \"TextMesh Pro/GUISkins\" Folder to load the Editor Skins.");
-                return null;
-            }
-        }
-
 
         /// <summary>
         /// Method to validate the location of the asset folder by making sure the GUISkins folder exists.

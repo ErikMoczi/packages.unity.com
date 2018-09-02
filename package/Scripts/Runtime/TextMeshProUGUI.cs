@@ -135,13 +135,14 @@ namespace TMPro
 
         public override void SetVerticesDirty()
         {
-            //Debug.Log("SetVerticesDirty() on Object ID: " + this.GetInstanceID());
-
             if (m_verticesAlreadyDirty || this == null || !this.IsActive() || CanvasUpdateRegistry.IsRebuildingGraphics())
                 return;
 
             m_verticesAlreadyDirty = true;
             CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild((ICanvasElement)this);
+
+            if (m_OnDirtyVertsCallback != null)
+                m_OnDirtyVertsCallback();
         }
 
 
@@ -161,6 +162,9 @@ namespace TMPro
             LayoutRebuilder.MarkLayoutForRebuild(this.rectTransform);
 
             m_isLayoutDirty = true;
+
+            if (m_OnDirtyLayoutCallback != null)
+                m_OnDirtyLayoutCallback();
         }
 
 
@@ -179,8 +183,6 @@ namespace TMPro
 
             if (m_OnDirtyMaterialCallback != null)
                 m_OnDirtyMaterialCallback();
-
-            //UpdateMaterial();
         }
 
 
