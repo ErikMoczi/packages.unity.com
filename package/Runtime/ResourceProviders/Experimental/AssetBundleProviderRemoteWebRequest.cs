@@ -37,7 +37,7 @@ namespace ResourceManagement.ResourceProviders.Experimental
                 HttpWebRequest req = ar.AsyncState as HttpWebRequest;
                 var response = req.EndGetResponse(ar);
                 var stream = (response as HttpWebResponse).GetResponseStream();
-                stream.BeginRead(buffer, 0, buffer.Length, OnRead, stream);
+                //stream.BeginRead(buffer, 0, buffer.Length, OnRead, stream);
             }
 
             void OnRead(IAsyncResult ar)
@@ -47,7 +47,7 @@ namespace ResourceManagement.ResourceProviders.Experimental
                 if (read > 0)
                 {
                     data.Write(buffer, 0, read);
-                    responseStream.BeginRead(buffer, 0, buffer.Length, OnRead, responseStream);
+                    //responseStream.BeginRead(buffer, 0, buffer.Length, OnRead, responseStream);
                 }
                 else
                 {
