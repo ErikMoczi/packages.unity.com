@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.WriteTypes;
 
@@ -9,40 +9,34 @@ namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class GenerateSpritePathMaps : IBuildTask
     {
-        const int k_Version = 1;
-        public int Version { get { return k_Version; } }
+        public int Version { get { return 1; } }
 
-        static readonly Type[] k_RequiredTypes = { typeof(IBundleWriteData) };
-        public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
+#pragma warning disable 649
+        [InjectContext]
+        IBundleWriteData m_WriteData;
 
-        public ReturnCode Run(IBuildContext context)
-        {
-            if (context == null)
-                throw new ArgumentNullException("context");
-            
-            IBuildSpriteData spriteData;
-            context.TryGetContextObject(out spriteData);
-            return Run(context.GetContextObject<IBundleWriteData>(), spriteData);
-        }
+        [InjectContext(ContextUsage.In, true)]
+        IBuildSpriteData m_SpriteData;
+#pragma warning restore 649
 
         static int GetWrapOffsetIndex(int index, int offset, int max)
         {
             return (index + offset) % max;
         }
 
-        static ReturnCode Run(IBundleWriteData writeData, IBuildSpriteData spriteData)
+        public ReturnCode Run()
         {
-            if (spriteData == null || spriteData.ImporterData.Count == 0)
+            if (m_SpriteData == null || m_SpriteData.ImporterData.Count == 0)
                 return ReturnCode.SuccessNotRun;
 
-            Dictionary<string, IWriteOperation> fileToOperation = writeData.WriteOperations.ToDictionary(x => x.Command.internalName, x => x);
-            foreach (GUID asset in spriteData.ImporterData.Keys)
+            Dictionary<string, IWriteOperation> fileToOperation = m_WriteData.WriteOperations.ToDictionary(x => x.Command.internalName, x => x);
+            foreach (GUID asset in m_SpriteData.ImporterData.Keys)
             {
-                var mainFile = writeData.AssetToFiles[asset][0];
+                string mainFile = m_WriteData.AssetToFiles[asset][0];
                 var abOp = fileToOperation[mainFile] as AssetBundleWriteOperation;
 
-                var assetInfoIndex = abOp.Info.bundleAssets.FindIndex(x => x.asset == asset);
-                var assetInfo = abOp.Info.bundleAssets[assetInfoIndex];
+                int assetInfoIndex = abOp.Info.bundleAssets.FindIndex(x => x.asset == asset);
+                AssetLoadInfo assetInfo = abOp.Info.bundleAssets[assetInfoIndex];
                 for (int i = 1; i < assetInfo.includedObjects.Count; i++)
                 {
                     var secondaryAssetInfo = new AssetLoadInfo();
@@ -53,7 +47,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                     secondaryAssetInfo.includedObjects = new List<ObjectIdentifier>();
                     for (int j = 0; j < assetInfo.includedObjects.Count; j++)
                     {
-                        var index = GetWrapOffsetIndex(j, i, assetInfo.includedObjects.Count);
+                        int index = GetWrapOffsetIndex(j, i, assetInfo.includedObjects.Count);
                         secondaryAssetInfo.includedObjects.Add(assetInfo.includedObjects[index]);
                     }
                     abOp.Info.bundleAssets.Insert(assetInfoIndex + i, secondaryAssetInfo);

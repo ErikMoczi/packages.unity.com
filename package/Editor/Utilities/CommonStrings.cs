@@ -1,7 +1,8 @@
 ﻿namespace UnityEditor.Build.Utilities
 {
-    static class CommonStrings
+    public static class CommonStrings
     {
+        public const string UnityEditorResourcePath = "library/unity editor resources";
         public const string UnityDefaultResourcePath = "library/unity default resources";
         public const string UnityBuiltInExtraPath = "resources/unity_builtin_extra";
         public const string AssetBundleNameFormat = "archive:/{0}/{0}";

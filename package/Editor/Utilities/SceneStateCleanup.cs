@@ -8,7 +8,7 @@ namespace UnityEditor.Build.Utilities
     {
         SceneSetup[] m_Scenes;
 
-        bool m_Disposed = false;
+        bool m_Disposed;
 
         public SceneStateCleanup()
         {
@@ -31,17 +31,7 @@ namespace UnityEditor.Build.Utilities
             if (disposing)
             {
                 if (!m_Scenes.IsNullOrEmpty())
-                {
-                    SceneSetup[] current = EditorSceneManager.GetSceneManagerSetup();
-                    bool scenesChanged = false;
-                    if (current.Length == m_Scenes.Length)
-                    {
-                        for (int i = 0; i < current.Length; i++)
-                            scenesChanged |= current[i].isActive != m_Scenes[i].isActive || current[i].isLoaded != m_Scenes[i].isLoaded || current[i].path != m_Scenes[i].path;
-                    }
-                    if (scenesChanged)
-                        EditorSceneManager.RestoreSceneManagerSetup(m_Scenes);
-                }
+                    EditorSceneManager.RestoreSceneManagerSetup(m_Scenes);
                 else
                     EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
             }

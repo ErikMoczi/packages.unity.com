@@ -53,6 +53,19 @@ namespace UnityEditor.Build.Pipeline
         }
 
         /// <inheritdoc />
+        public void SetContextObject(Type type, IContextObject contextObject)
+        {
+            if (contextObject == null)
+                throw new ArgumentNullException("contextObject");
+
+            if (!type.IsInterface)
+                throw new InvalidOperationException(string.Format("Passed in type '{0}' is not an interface.", type));
+            if (!type.IsInstanceOfType(contextObject))
+                throw new InvalidOperationException(string.Format("'{0}' is not of passed in type '{1}'.", contextObject.GetType(), type));
+            m_ContextObjects[type] = contextObject;
+        }
+
+        /// <inheritdoc />
         public void SetContextObject(IContextObject contextObject)
         {
             if (contextObject == null)
@@ -109,6 +122,20 @@ namespace UnityEditor.Build.Pipeline
             }
 
             contextObject = default(T);
+            return false;
+        }
+
+        /// <inheritdoc />
+        public bool TryGetContextObject(Type type, out IContextObject contextObject)
+        {
+            IContextObject cachedContextObject;
+            if (m_ContextObjects.TryGetValue(type, out cachedContextObject) && type.IsInstanceOfType(cachedContextObject))
+            {
+                contextObject = cachedContextObject;
+                return true;
+            }
+
+            contextObject = null;
             return false;
         }
     }

@@ -1,49 +1,47 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Utilities;
+using UnityEngine;
+
 #if UNITY_2018_3_OR_NEWER
 using BuildCompression = UnityEngine.BuildCompression;
 #else
 using BuildCompression = UnityEditor.Build.Content.BuildCompression;
 #endif
 
-
 namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class ArchiveAndCompressBundles : IBuildTask
     {
-        const int k_Version = 1;
-        public int Version { get { return k_Version; } }
+        public int Version { get { return 1; } }
+        
+#pragma warning disable 649
+        [InjectContext(ContextUsage.In)]
+        IBuildParameters m_Parameters;
 
-        static readonly Type[] k_RequiredTypes = { typeof(IBuildParameters), typeof(IBundleWriteData), typeof(IBundleBuildResults) };
-        public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
+        [InjectContext(ContextUsage.In)]
+        IBundleWriteData m_WriteData;
 
-        public ReturnCode Run(IBuildContext context)
-        {
-            if (context == null)
-                throw new ArgumentNullException("context");
-            
-            IBuildParameters parameters = context.GetContextObject<IBuildParameters>();
+        [InjectContext]
+        IBundleBuildResults m_Results;
 
-            IProgressTracker tracker;
-            context.TryGetContextObject(out tracker);
-            IBuildCache cache = null;
-            if (parameters.UseCache)
-                context.TryGetContextObject(out cache);
+        [InjectContext(ContextUsage.In, true)]
+        IProgressTracker m_Tracker;
 
-            return Run(parameters, context.GetContextObject<IBundleWriteData>(), context.GetContextObject<IBundleBuildResults>(), tracker, cache);
-        }
+        [InjectContext(ContextUsage.In, true)]
+        IBuildCache m_Cache;
+#pragma warning restore 649
 
-        static CacheEntry GetCacheEntry(string bundleName, IEnumerable<ResourceFile> resources, BuildCompression compression)
+        CacheEntry GetCacheEntry(string bundleName, IEnumerable<ResourceFile> resources, BuildCompression compression)
         {
             var entry = new CacheEntry();
             entry.Type = CacheEntry.EntryType.Data;
             entry.Guid = HashingMethods.Calculate("ArchiveAndCompressBundles", bundleName).ToGUID();
-            entry.Hash = HashingMethods.Calculate(k_Version, resources, compression).ToHash128();
+            entry.Hash = HashingMethods.Calculate(Version, resources, compression).ToHash128();
             return entry;
         }
 
@@ -62,28 +60,58 @@ namespace UnityEditor.Build.Pipeline.Tasks
             return info;
         }
 
-        static ReturnCode Run(IBuildParameters parameters, IBundleWriteData writeData, IBundleBuildResults results, IProgressTracker tracker, IBuildCache cache)
+        static Hash128 CalculateHashVersion(Dictionary<string, ulong> fileOffsets, ResourceFile[] resourceFiles)
         {
+            List<RawHash> hashes = new List<RawHash>();
+            foreach (ResourceFile file in resourceFiles)
+            {
+                if (file.serializedFile)
+                {
+                    // For serialized files, we ignore the header for the hash value. 
+                    // This leaves us with a hash value of just the written object data.
+                    using (var stream = new FileStream(file.fileName, FileMode.Open))
+                    {
+                        stream.Position = (long)fileOffsets[file.fileName];
+                        hashes.Add(HashingMethods.CalculateStream(stream));
+                    }
+                }
+                else
+                    hashes.Add(HashingMethods.CalculateFile(file.fileName));
+            }
+            return HashingMethods.Calculate(hashes).ToHash128();
+        }
+
+        public ReturnCode Run()
+        {
+            Dictionary<string, ulong> fileOffsets = new Dictionary<string, ulong>();
             List<KeyValuePair<string, List<ResourceFile>>> bundleResources;
             { 
                 Dictionary<string, List<ResourceFile>> bundleToResources = new Dictionary<string, List<ResourceFile>>();
-                foreach (var result in results.WriteResults)
+                foreach (var pair in m_Results.WriteResults)
                 {
-                    string bundle = writeData.FileToBundle[result.Key];
+                    string bundle = m_WriteData.FileToBundle[pair.Key];
                     List<ResourceFile> resourceFiles;
                     bundleToResources.GetOrAdd(bundle, out resourceFiles);
-                    resourceFiles.AddRange(result.Value.resourceFiles);
+                    resourceFiles.AddRange(pair.Value.resourceFiles);
+
+                    foreach (ResourceFile serializedFile in pair.Value.resourceFiles)
+                    {
+                        if (!serializedFile.serializedFile)
+                            continue;
+
+                        ObjectSerializedInfo firstObject = pair.Value.serializedObjects.First(x => x.header.fileName == serializedFile.fileAlias);
+                        fileOffsets[serializedFile.fileName] = firstObject.header.offset;
+                    }
                 }
                 bundleResources = bundleToResources.ToList();
             }
 
-            IList<CacheEntry> entries = null;
+            IList<CacheEntry> entries = bundleResources.Select(x => GetCacheEntry(x.Key, x.Value, m_Parameters.GetCompressionForIdentifier(x.Key))).ToList();
             IList<CachedInfo> cachedInfo = null;
-            List<CachedInfo> uncachedInfo = null;
-            if (cache != null)
+            IList<CachedInfo> uncachedInfo = null;
+            if (m_Parameters.UseCache && m_Cache != null)
             {
-                entries = bundleResources.Select(x => GetCacheEntry(x.Key, x.Value, parameters.GetCompressionForIdentifier(x.Key))).ToList();
-                cache.LoadCachedData(entries, out cachedInfo);
+                m_Cache.LoadCachedData(entries, out cachedInfo);
 
                 uncachedInfo = new List<CachedInfo>();
             }
@@ -92,46 +120,47 @@ namespace UnityEditor.Build.Pipeline.Tasks
             {
                 string bundleName = bundleResources[i].Key;
                 ResourceFile[] resourceFiles = bundleResources[i].Value.ToArray();
-                BuildCompression compression = parameters.GetCompressionForIdentifier(bundleName);
+                BuildCompression compression = m_Parameters.GetCompressionForIdentifier(bundleName);
 
                 string writePath;
                 BundleDetails details;
                 if (cachedInfo != null && cachedInfo[i] != null)
                 {
-                    if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", bundleName)))
+                    if (!m_Tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", bundleName)))
                         return ReturnCode.Canceled;
 
                     details = (BundleDetails)cachedInfo[i].Data[0];
-                    writePath = string.Format("{0}/{1}", cache.GetCachedArtifactsDirectory(entries[i]), bundleName);
+                    writePath = string.Format("{0}/{1}", m_Cache.GetCachedArtifactsDirectory(entries[i]), bundleName);
                 }
                 else
                 {
-                    if (!tracker.UpdateInfoUnchecked(bundleName))
+                    if (!m_Tracker.UpdateInfoUnchecked(bundleName))
                         return ReturnCode.Canceled;
 
                     details = new BundleDetails();
-                    writePath = cache != null && parameters.UseCache ? string.Format("{0}/{1}", cache.GetCachedArtifactsDirectory(entries[i]), bundleName)
-                        : string.Format("{0}/{1}", parameters.TempOutputFolder, bundleName);
+                    writePath = string.Format("{0}/{1}", m_Parameters.TempOutputFolder, bundleName);
+                    if (m_Parameters.UseCache && m_Cache != null)
+                        writePath = string.Format("{0}/{1}", m_Cache.GetCachedArtifactsDirectory(entries[i]), bundleName);
                     Directory.CreateDirectory(Path.GetDirectoryName(writePath));
 
-                    details.FileName = string.Format("{0}/{1}", parameters.OutputFolder, bundleName);
+                    details.FileName = string.Format("{0}/{1}", m_Parameters.OutputFolder, bundleName);
                     details.Crc = ContentBuildInterface.ArchiveAndCompress(resourceFiles, writePath, compression);
-                    details.Hash = HashingMethods.CalculateFile(writePath).ToHash128();
+                    details.Hash = CalculateHashVersion(fileOffsets, resourceFiles);
 
-                    if (cache != null)
-                        uncachedInfo.Add(GetCachedInfo(cache, entries[i], resourceFiles, details));
+                    if (uncachedInfo != null)
+                        uncachedInfo.Add(GetCachedInfo(m_Cache, entries[i], resourceFiles, details));
                 }
                 
-                SetOutputInformation(writePath, details.FileName, bundleName, details, results);
+                SetOutputInformation(writePath, details.FileName, bundleName, details);
             }
             
-            if (cache != null)
-                cache.SaveCachedData(uncachedInfo);
+            if (m_Parameters.UseCache && m_Cache != null)
+                m_Cache.SaveCachedData(uncachedInfo);
 
             return ReturnCode.Success;
         }
 
-        static void SetOutputInformation(string writePath, string finalPath, string bundleName, BundleDetails details, IBundleBuildResults results)
+        void SetOutputInformation(string writePath, string finalPath, string bundleName, BundleDetails details)
         {
             if (finalPath != writePath)
             {
@@ -139,7 +168,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 Directory.CreateDirectory(directory);
                 File.Copy(writePath, finalPath, true);
             }
-            results.BundleInfos.Add(bundleName, details);
+            m_Results.BundleInfos.Add(bundleName, details);
         }
     }
 }

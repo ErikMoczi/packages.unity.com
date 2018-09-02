@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Utilities;
 using UnityEditor.Build.Pipeline.WriteTypes;
@@ -12,36 +12,37 @@ namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class GenerateBundleCommands : IBuildTask
     {
-        const int k_Version = 1;
-        public int Version { get { return k_Version; } }
+        public int Version { get { return 1; } }
+        
+#pragma warning disable 649
+        [InjectContext(ContextUsage.In)]
+        IBundleBuildContent m_BuildContent;
 
-        static readonly Type[] k_RequiredTypes = { typeof(IBundleBuildContent), typeof(IDependencyData), typeof(IBundleWriteData), typeof(IDeterministicIdentifiers) };
-        public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
+        [InjectContext(ContextUsage.In)]
+        IDependencyData m_DependencyData;
 
-        public ReturnCode Run(IBuildContext context)
+        [InjectContext]
+        IBundleWriteData m_WriteData;
+
+        [InjectContext(ContextUsage.In)]
+        IDeterministicIdentifiers m_PackingMethod;
+#pragma warning restore 649
+
+        public ReturnCode Run()
         {
-            if (context == null)
-                throw new ArgumentNullException("context");
-
-            return Run(context.GetContextObject<IBundleBuildContent>(), context.GetContextObject<IDependencyData>(), context.GetContextObject<IBundleWriteData>(),
-                context.GetContextObject<IDeterministicIdentifiers>());
-        }
-
-        static ReturnCode Run(IBundleBuildContent buildContent, IDependencyData dependencyData, IBundleWriteData writeData, IDeterministicIdentifiers packingMethod)
-        {
-            foreach (var bundlePair in buildContent.BundleLayout)
+            foreach (var bundlePair in m_BuildContent.BundleLayout)
             {
                 if (ValidationMethods.ValidAssetBundle(bundlePair.Value))
                 {
                     // Use generated internalName here as we could have an empty asset bundle used for raw object storage (See CreateStandardShadersBundle)
-                    var internalName = string.Format(CommonStrings.AssetBundleNameFormat, packingMethod.GenerateInternalFileName(bundlePair.Key));
-                    CreateAssetBundleCommand(bundlePair.Key, internalName, bundlePair.Value, buildContent, dependencyData, writeData, packingMethod);
+                    var internalName = string.Format(CommonStrings.AssetBundleNameFormat, m_PackingMethod.GenerateInternalFileName(bundlePair.Key));
+                    CreateAssetBundleCommand(bundlePair.Key, internalName, bundlePair.Value);
                 }
                 else if (ValidationMethods.ValidSceneBundle(bundlePair.Value))
                 {
-                    CreateSceneBundleCommand(bundlePair.Key, writeData.AssetToFiles[bundlePair.Value[0]][0], bundlePair.Value[0], bundlePair.Value, buildContent, dependencyData, writeData);
+                    CreateSceneBundleCommand(bundlePair.Key, m_WriteData.AssetToFiles[bundlePair.Value[0]][0], bundlePair.Value[0], bundlePair.Value);
                     for (int i = 1; i < bundlePair.Value.Count; ++i)
-                        CreateSceneDataCommand(writeData.AssetToFiles[bundlePair.Value[i]][0], bundlePair.Value[i], dependencyData, writeData);
+                        CreateSceneDataCommand(m_WriteData.AssetToFiles[bundlePair.Value[i]][0], bundlePair.Value[i]);
                 }
             }
             return ReturnCode.Success;
@@ -61,45 +62,45 @@ namespace UnityEditor.Build.Pipeline.Tasks
             return command;
         }
 
-        static void CreateAssetBundleCommand(string bundleName, string internalName, List<GUID> assets, IBundleBuildContent buildContent, IDependencyData dependencyData, IBundleWriteData writeData, IDeterministicIdentifiers packingMethod)
+        void CreateAssetBundleCommand(string bundleName, string internalName, List<GUID> assets)
         {
             var abOp = new AssetBundleWriteOperation();
             
-            var fileObjects = writeData.FileToObjects[internalName];
-            abOp.Command = CreateWriteCommand(internalName, fileObjects, packingMethod);
+            var fileObjects = m_WriteData.FileToObjects[internalName];
+            abOp.Command = CreateWriteCommand(internalName, fileObjects, m_PackingMethod);
 
             abOp.UsageSet = new BuildUsageTagSet();
-            writeData.FileToUsageSet.Add(internalName, abOp.UsageSet);
+            m_WriteData.FileToUsageSet.Add(internalName, abOp.UsageSet);
 
             abOp.ReferenceMap = new BuildReferenceMap();
             abOp.ReferenceMap.AddMappings(internalName, abOp.Command.serializeObjects.ToArray());
-            writeData.FileToReferenceMap.Add(internalName, abOp.ReferenceMap);
+            m_WriteData.FileToReferenceMap.Add(internalName, abOp.ReferenceMap);
 
             {
                 abOp.Info = new AssetBundleInfo();
                 abOp.Info.bundleName = bundleName;
-                abOp.Info.bundleAssets = assets.Select(x => dependencyData.AssetInfo[x]).ToList();
+                abOp.Info.bundleAssets = assets.Select(x => m_DependencyData.AssetInfo[x]).ToList();
                 foreach (var loadInfo in abOp.Info.bundleAssets)
-                    loadInfo.address = buildContent.Addresses[loadInfo.asset];
+                    loadInfo.address = m_BuildContent.Addresses[loadInfo.asset];
             }
 
-            writeData.WriteOperations.Add(abOp);
+            m_WriteData.WriteOperations.Add(abOp);
         }
 
-        static void CreateSceneBundleCommand(string bundleName, string internalName, GUID asset, List<GUID> assets, IBundleBuildContent buildContent, IDependencyData dependencyData, IBundleWriteData writeData)
+        void CreateSceneBundleCommand(string bundleName, string internalName, GUID asset, List<GUID> assets)
         {
             var sbOp = new SceneBundleWriteOperation();
 
-            var fileObjects = writeData.FileToObjects[internalName];
+            var fileObjects = m_WriteData.FileToObjects[internalName];
             sbOp.Command = CreateWriteCommand(internalName, fileObjects, new LinearPackedIdentifiers(3)); // Start at 3: PreloadData = 1, AssetBundle = 2
 
             sbOp.UsageSet = new BuildUsageTagSet();
-            writeData.FileToUsageSet.Add(internalName, sbOp.UsageSet);
+            m_WriteData.FileToUsageSet.Add(internalName, sbOp.UsageSet);
 
             sbOp.ReferenceMap = new BuildReferenceMap();
-            writeData.FileToReferenceMap.Add(internalName, sbOp.ReferenceMap);
+            m_WriteData.FileToReferenceMap.Add(internalName, sbOp.ReferenceMap);
 
-            var sceneInfo = dependencyData.SceneInfo[asset];
+            var sceneInfo = m_DependencyData.SceneInfo[asset];
             sbOp.Scene = sceneInfo.scene;
             sbOp.ProcessedScene = sceneInfo.processedScene;
 
@@ -113,28 +114,28 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 sbOp.Info.bundleScenes = assets.Select(x => new SceneLoadInfo
                 {
                     asset = x,
-                    internalName = Path.GetFileNameWithoutExtension(writeData.AssetToFiles[x][0]),
-                    address = buildContent.Addresses[x]
+                    internalName = Path.GetFileNameWithoutExtension(m_WriteData.AssetToFiles[x][0]),
+                    address = m_BuildContent.Addresses[x]
                 }).ToList();
             }
 
-            writeData.WriteOperations.Add(sbOp);
+            m_WriteData.WriteOperations.Add(sbOp);
         }
 
-        static void CreateSceneDataCommand(string internalName, GUID asset, IDependencyData dependencyData, IBundleWriteData writeData)
+        void CreateSceneDataCommand(string internalName, GUID asset)
         {
             var sdOp = new SceneDataWriteOperation();
 
-            var fileObjects = writeData.FileToObjects[internalName];
+            var fileObjects = m_WriteData.FileToObjects[internalName];
             sdOp.Command = CreateWriteCommand(internalName, fileObjects, new LinearPackedIdentifiers(2)); // Start at 2: PreloadData = 1
 
             sdOp.UsageSet = new BuildUsageTagSet();
-            writeData.FileToUsageSet.Add(internalName, sdOp.UsageSet);
+            m_WriteData.FileToUsageSet.Add(internalName, sdOp.UsageSet);
 
             sdOp.ReferenceMap = new BuildReferenceMap();
-            writeData.FileToReferenceMap.Add(internalName, sdOp.ReferenceMap);
+            m_WriteData.FileToReferenceMap.Add(internalName, sdOp.ReferenceMap);
 
-            var sceneInfo = dependencyData.SceneInfo[asset];
+            var sceneInfo = m_DependencyData.SceneInfo[asset];
             sdOp.Scene = sceneInfo.scene;
             sdOp.ProcessedScene = sceneInfo.processedScene;
 
@@ -143,7 +144,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 sdOp.PreloadInfo.preloadObjects = sceneInfo.referencedObjects.Where(x => !fileObjects.Contains(x)).ToList();
             }
 
-            writeData.WriteOperations.Add(sdOp);
+            m_WriteData.WriteOperations.Add(sdOp);
         }
     }
 }

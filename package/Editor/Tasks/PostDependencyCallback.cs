@@ -1,28 +1,26 @@
-﻿using System;
+﻿using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class PostDependencyCallback : IBuildTask
     {
-        const int k_Version = 1;
-        public int Version { get { return k_Version; } }
+        public int Version { get { return 1; } }
 
-        static readonly Type[] k_RequiredTypes = { typeof(IBuildParameters), typeof(IDependencyData), typeof(IDependencyCallback) };
-        public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
+#pragma warning disable 649
+        [InjectContext]
+        IBuildParameters m_Parameters;
 
-        public ReturnCode Run(IBuildContext context)
+        [InjectContext]
+        IDependencyData m_DependencyData;
+
+        [InjectContext(ContextUsage.In)]
+        IDependencyCallback m_Callback;
+#pragma warning restore 649
+
+        public ReturnCode Run()
         {
-            if (context == null)
-                throw new ArgumentNullException("context");
-
-            return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IDependencyData>(),
-                context.GetContextObject<IDependencyCallback>());
-        }
-
-        static ReturnCode Run(IBuildParameters parameters, IDependencyData dependencyData, IDependencyCallback callback)
-        {
-            return callback.PostDependency(parameters, dependencyData);
+            return m_Callback.PostDependency(m_Parameters, m_DependencyData);
         }
     }
 }

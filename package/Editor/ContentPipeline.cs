@@ -25,32 +25,32 @@ namespace UnityEditor.Build.Pipeline
         /// <summary>
         /// Default implementation of generating Asset Bundles using the Scriptable Build Pipeline.
         /// </summary>
-        /// <param name="buildParameters">Set of parameters used for building asset bundles.</param>
-        /// <param name="buildContent">Set of content and explicit asset bundle layout to build.</param>
+        /// <param name="parameters">Set of parameters used for building asset bundles.</param>
+        /// <param name="content">Set of content and explicit asset bundle layout to build.</param>
         /// <param name="result">Results from building the content and explicit asset bundle layout.</param>
         /// <returns>Return code with status information about success or failure causes.</returns>
-        public static ReturnCode BuildAssetBundles(IBuildParameters buildParameters, IBundleBuildContent buildContent, out IBundleBuildResults result)
+        public static ReturnCode BuildAssetBundles(IBundleBuildParameters parameters, IBundleBuildContent content, out IBundleBuildResults result)
         {
-            var taskList = DefaultBuildTasks.Create(DefaultBuildTasks.Preset.AssetBundleCompatible, buildParameters.ScriptInfo == null);
-            return BuildAssetBundles(buildParameters, buildContent, out result, taskList);
+            var taskList = DefaultBuildTasks.Create(DefaultBuildTasks.Preset.AssetBundleCompatible, parameters.ScriptInfo == null);
+            return BuildAssetBundles(parameters, content, out result, taskList);
         }
 
         /// <summary>
         /// Default implementation of generating Asset Bundles using the Scriptable Build Pipeline.
         /// </summary>
-        /// <param name="buildParameters">Set of parameters used for building asset bundles.</param>
-        /// <param name="buildContent">Set of content and explicit asset bundle layout to build.</param>
+        /// <param name="parameters">Set of parameters used for building asset bundles.</param>
+        /// <param name="content">Set of content and explicit asset bundle layout to build.</param>
         /// <param name="result">Results from building the content and explicit asset bundle layout.</param>
         /// <param name="taskList">Custom task list for building asset bundles.</param>
         /// <param name="contextObjects">Additional context objects to make available to the build.</param>
         /// <returns>Return code with status information about success or failure causes.</returns>
-        public static ReturnCode BuildAssetBundles(IBuildParameters buildParameters, IBundleBuildContent buildContent, out IBundleBuildResults result, IList<IBuildTask> taskList, params IContextObject[] contextObjects)
+        public static ReturnCode BuildAssetBundles(IBundleBuildParameters parameters, IBundleBuildContent content, out IBundleBuildResults result, IList<IBuildTask> taskList, params IContextObject[] contextObjects)
         {
             // Avoid throwing exceptions in here as we don't want them bubbling up to calling user code
-            if (buildParameters == null)
+            if (parameters == null)
             {
                 result = null;
-                BuildLogger.LogException(new ArgumentNullException("buildParameters"));
+                BuildLogger.LogException(new ArgumentNullException("parameters"));
                 return ReturnCode.Exception;
             }
 
@@ -62,22 +62,29 @@ namespace UnityEditor.Build.Pipeline
                 return ReturnCode.Exception;
             }
 
+            // Don't run if there are unsaved changes
+            if (ValidationMethods.HasDirtyScenes())
+            {
+                result = null;
+                return ReturnCode.UnsavedChanges;
+            }
+
             ReturnCode exitCode;
             result = new BundleBuildResults();
             
             using (new SceneStateCleanup())
             using (new BuildInterfacesWrapper())
             using (var progressTracker = new ProgressTracker())
-            using (var buildCache = new BuildCache(buildParameters.CacheServerHost, buildParameters.CacheServerPort))
+            using (var buildCache = new BuildCache(parameters.CacheServerHost, parameters.CacheServerPort))
             {
-                Directory.CreateDirectory(buildParameters.TempOutputFolder);
+                Directory.CreateDirectory(parameters.TempOutputFolder);
 
                 BuildContext buildContext;
                 try
                 {
                     buildContext = new BuildContext(contextObjects);
-                    buildContext.SetContextObject(buildParameters);
-                    buildContext.SetContextObject(buildContent);
+                    buildContext.SetContextObject(parameters);
+                    buildContext.SetContextObject(content);
                     buildContext.SetContextObject(result);
                     buildContext.SetContextObject(progressTracker);
                     buildContext.SetContextObject(buildCache);
@@ -98,8 +105,8 @@ namespace UnityEditor.Build.Pipeline
                 if (exitCode >= ReturnCode.Success)
                     exitCode = BuildTasksRunner.Run(taskList, buildContext);
 
-                if (Directory.Exists(buildParameters.TempOutputFolder))
-                    Directory.Delete(buildParameters.TempOutputFolder, true);
+                if (Directory.Exists(parameters.TempOutputFolder))
+                    Directory.Delete(parameters.TempOutputFolder, true);
             }
             return exitCode;
         }

@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Utilities;
 
@@ -10,36 +10,33 @@ namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class CalculateSceneDependencyData : IBuildTask
     {
-        const int k_Version = 1;
-        public int Version { get { return k_Version; } }
+        public int Version { get { return 1; } }
+        
+#pragma warning disable 649
+        [InjectContext(ContextUsage.In)]
+        IBuildParameters m_Parameters;
+        
+        [InjectContext(ContextUsage.In)]
+        IBuildContent m_Content;
+        
+        [InjectContext]
+        IDependencyData m_DependencyData;
 
-        static readonly Type[] k_RequiredTypes = { typeof(IBuildParameters), typeof(IBuildContent), typeof(IDependencyData) };
-        public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
+        [InjectContext(ContextUsage.In, true)]
+        IProgressTracker m_Tracker;
 
-        public ReturnCode Run(IBuildContext context)
-        {
-            if (context == null)
-                throw new ArgumentNullException("context");
+        [InjectContext(ContextUsage.In, true)]
+        IBuildCache m_Cache;
+#pragma warning restore 649
 
-            IBuildParameters parameters = context.GetContextObject<IBuildParameters>();
-
-            IProgressTracker tracker;
-            context.TryGetContextObject(out tracker);
-            IBuildCache cache = null;
-            if (parameters.UseCache)
-                context.TryGetContextObject(out cache);
-
-            return Run(parameters, context.GetContextObject<IBuildContent>(), context.GetContextObject<IDependencyData>(), tracker, cache);
-        }
-
-        static CachedInfo GetCachedInfo(IBuildCache cache, GUID scene, IEnumerable<ObjectIdentifier> references, SceneDependencyInfo sceneInfo, BuildUsageTagSet usageTags)
+        CachedInfo GetCachedInfo(GUID scene, IEnumerable<ObjectIdentifier> references, SceneDependencyInfo sceneInfo, BuildUsageTagSet usageTags)
         {
             var info = new CachedInfo();
-            info.Asset = cache.GetCacheEntry(scene);
+            info.Asset = m_Cache.GetCacheEntry(scene);
 
             var dependencies = new HashSet<CacheEntry>();
             foreach (var reference in references)
-                dependencies.Add(cache.GetCacheEntry(reference));
+                dependencies.Add(m_Cache.GetCacheEntry(reference));
             info.Dependencies = dependencies.ToArray();
 
             info.Data = new object[] { sceneInfo, usageTags };
@@ -47,25 +44,25 @@ namespace UnityEditor.Build.Pipeline.Tasks
             return info;
         }
 
-        static ReturnCode Run(IBuildParameters parameters, IBuildContent content, IDependencyData dependencyData, IProgressTracker tracker, IBuildCache cache)
+        public ReturnCode Run()
         {
-            if (content.Scenes.IsNullOrEmpty())
+            if (m_Content.Scenes.IsNullOrEmpty())
                 return ReturnCode.SuccessNotRun;
 
-
             IList<CachedInfo> cachedInfo = null;
-            List<CachedInfo> uncachedInfo = null;
-            if (cache != null)
+            IList<CachedInfo> uncachedInfo = null;
+            if (m_Parameters.UseCache && m_Cache != null)
             {
-                IList<CacheEntry> entries = content.Scenes.Select(cache.GetCacheEntry).ToList();
-                cache.LoadCachedData(entries, out cachedInfo);
+                IList<CacheEntry> entries = m_Content.Scenes.Select(m_Cache.GetCacheEntry).ToList();
+                m_Cache.LoadCachedData(entries, out cachedInfo);
 
                 uncachedInfo = new List<CachedInfo>();
             }
 
-            for (int i = 0; i < content.Scenes.Count; i++)
+            BuildSettings settings = m_Parameters.GetContentBuildSettings();
+            for (int i = 0; i < m_Content.Scenes.Count; i++)
             {
-                GUID scene = content.Scenes[i];
+                GUID scene = m_Content.Scenes[i];
                 string scenePath = AssetDatabase.GUIDToAssetPath(scene.ToString());
 
                 SceneDependencyInfo sceneInfo;
@@ -73,7 +70,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
 
                 if (cachedInfo != null && cachedInfo[i] != null)
                 {
-                    if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", scenePath)))
+                    if (!m_Tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", scenePath)))
                         return ReturnCode.Canceled;
 
                     sceneInfo = (SceneDependencyInfo)cachedInfo[i].Data[0];
@@ -81,34 +78,35 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 }
                 else
                 {
-                    if (!tracker.UpdateInfoUnchecked(scenePath))
+                    if (!m_Tracker.UpdateInfoUnchecked(scenePath))
                         return ReturnCode.Canceled;
 
                     usageTags = new BuildUsageTagSet();
-                    var outputFolder = cache != null ? cache.GetCachedArtifactsDirectory(cache.GetCacheEntry(scene))
-                        : parameters.TempOutputFolder;
+                    string outputFolder = m_Parameters.TempOutputFolder;
+                    if (m_Parameters.UseCache && m_Cache != null)
+                        outputFolder = m_Cache.GetCachedArtifactsDirectory(m_Cache.GetCacheEntry(scene));
                     Directory.CreateDirectory(outputFolder);
 
-                    sceneInfo = ContentBuildInterface.PrepareScene(scenePath, parameters.GetContentBuildSettings(), usageTags, outputFolder);
+                    sceneInfo = ContentBuildInterface.PrepareScene(scenePath, settings, usageTags, m_DependencyData.DependencyUsageCache, outputFolder);
 
-                    if (cache != null)
-                        uncachedInfo.Add(GetCachedInfo(cache, scene, sceneInfo.referencedObjects, sceneInfo, usageTags));
+                    if (uncachedInfo != null)
+                        uncachedInfo.Add(GetCachedInfo(scene, sceneInfo.referencedObjects, sceneInfo, usageTags));
                 }
 
-                SetOutputInformation(scene, sceneInfo, usageTags, dependencyData);
+                SetOutputInformation(scene, sceneInfo, usageTags);
             }
 
-            if (cache != null)
-                cache.SaveCachedData(uncachedInfo);
+            if (m_Parameters.UseCache && m_Cache != null)
+                m_Cache.SaveCachedData(uncachedInfo);
 
             return ReturnCode.Success;
         }
 
-        static void SetOutputInformation(GUID asset, SceneDependencyInfo sceneInfo, BuildUsageTagSet usageTags, IDependencyData dependencyData)
+        void SetOutputInformation(GUID asset, SceneDependencyInfo sceneInfo, BuildUsageTagSet usageTags)
         {
             // Add generated scene information to BuildDependencyData
-            dependencyData.SceneInfo.Add(asset, sceneInfo);
-            dependencyData.SceneUsage.Add(asset, usageTags);
+            m_DependencyData.SceneInfo.Add(asset, sceneInfo);
+            m_DependencyData.SceneUsage.Add(asset, usageTags);
         }
     }
 }

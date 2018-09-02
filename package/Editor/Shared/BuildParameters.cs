@@ -4,6 +4,12 @@ using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Player;
 using UnityEngine;
 
+#if UNITY_2018_3_OR_NEWER
+using BuildCompression = UnityEngine.BuildCompression;
+#else
+using BuildCompression = UnityEditor.Build.Content.BuildCompression;
+#endif
+
 namespace UnityEditor.Build.Pipeline
 {
     /// <summary>
@@ -110,5 +116,16 @@ namespace UnityEditor.Build.Pipeline
         {
             return BundleCompression;
         }
+    }
+
+    [Serializable]
+    public class BundleBuildParameters : BuildParameters, IBundleBuildParameters
+    {
+        /// <inheritdoc />
+        public BundleBuildParameters(BuildTarget target, BuildTargetGroup @group, string outputFolder)
+            : base(target, @group, outputFolder) { }
+        
+        /// <inheritdoc />
+        public bool AppendHash { get; set; }
     }
 }

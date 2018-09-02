@@ -2,6 +2,12 @@
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEngine;
 
+#if UNITY_2018_3_OR_NEWER
+using BuildCompression = UnityEngine.BuildCompression;
+#else
+using BuildCompression = UnityEditor.Build.Content.BuildCompression;
+#endif
+
 namespace UnityEditor.Build.Pipeline
 {
     /// <summary>
@@ -48,32 +54,32 @@ namespace UnityEditor.Build.Pipeline
             return BuildAssetBundles_Internal(outputPath, new BundleBuildContent(builds), assetBundleOptions, targetPlatform);
         }
 
-        internal static AssetBundleManifest BuildAssetBundles_Internal(string outputPath, IBundleBuildContent buildContent, BuildAssetBundleOptions assetBundleOptions, BuildTarget targetPlatform)
+        internal static AssetBundleManifest BuildAssetBundles_Internal(string outputPath, IBundleBuildContent content, BuildAssetBundleOptions options, BuildTarget targetPlatform)
         {
             var group = BuildPipeline.GetBuildTargetGroup(targetPlatform);
-            var buildParams = new BuildParameters(targetPlatform, group, outputPath);
+            var parameters = new BundleBuildParameters(targetPlatform, group, outputPath);
 
 #if UNITY_2018_3_OR_NEWER
-            if ((assetBundleOptions & BuildAssetBundleOptions.ChunkBasedCompression) != 0)
-                buildParams.BundleCompression = BuildCompression.LZ4;
-            else if ((assetBundleOptions & BuildAssetBundleOptions.UncompressedAssetBundle) != 0)
-                buildParams.BundleCompression = BuildCompression.Uncompressed;
+            if ((options & BuildAssetBundleOptions.ChunkBasedCompression) != 0)
+                parameters.BundleCompression = BuildCompression.LZ4;
+            else if ((options & BuildAssetBundleOptions.UncompressedAssetBundle) != 0)
+                parameters.BundleCompression = BuildCompression.Uncompressed;
             else
-                buildParams.BundleCompression = BuildCompression.LZMA;
+                parameters.BundleCompression = BuildCompression.LZMA;
 #else
-            if ((assetBundleOptions & BuildAssetBundleOptions.ChunkBasedCompression) != 0)
-                buildParams.BundleCompression = BuildCompression.DefaultLZ4;
-            else if ((assetBundleOptions & BuildAssetBundleOptions.UncompressedAssetBundle) != 0)
-                buildParams.BundleCompression = BuildCompression.DefaultUncompressed;
+            if ((options & BuildAssetBundleOptions.ChunkBasedCompression) != 0)
+                parameters.BundleCompression = BuildCompression.DefaultLZ4;
+            else if ((options & BuildAssetBundleOptions.UncompressedAssetBundle) != 0)
+                parameters.BundleCompression = BuildCompression.DefaultUncompressed;
             else
-                buildParams.BundleCompression = BuildCompression.DefaultLZMA;
+                parameters.BundleCompression = BuildCompression.DefaultLZMA;
 #endif
 
-            if ((assetBundleOptions & BuildAssetBundleOptions.DisableWriteTypeTree) != 0)
-                buildParams.ContentBuildFlags |= ContentBuildFlags.DisableWriteTypeTree;
+            if ((options & BuildAssetBundleOptions.DisableWriteTypeTree) != 0)
+                parameters.ContentBuildFlags |= ContentBuildFlags.DisableWriteTypeTree;
 
             IBundleBuildResults results;
-            ReturnCode exitCode = ContentPipeline.BuildAssetBundles(buildParams, buildContent, out results);
+            ReturnCode exitCode = ContentPipeline.BuildAssetBundles(parameters, content, out results);
             if (exitCode < ReturnCode.Success)
                 return null;
 

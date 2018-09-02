@@ -9,43 +9,107 @@ using UnityEngine.TestTools;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Tasks;
-
+using UnityEditor.Build.Pipeline.Utilities;
 
 namespace UnityEditor.Build.Pipeline.Tests
+
 {
     [TestFixture]
+
     class ScriptableBuildPipelineTests
     {
         const string k_FolderPath = "Test";
         const string k_TmpPath = "tmp";
+
         const string k_ScenePath = "Assets/testScene.unity";
-        string k_TestAssetsPath = "Assets/TestAssetsOnlyWillBeDeleted";
-        string k_CubePath = "";
+        const string k_TestAssetsPath = "Assets/TestAssetsOnlyWillBeDeleted";
+        const string k_CubePath = k_TestAssetsPath + "/Cube.prefab";
 
         [OneTimeSetUp]
         public void Setup()
         {
             EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo();
             Directory.CreateDirectory(k_TestAssetsPath);
-            k_CubePath = k_TestAssetsPath + "/Cube.prefab";
             PrefabUtility.CreatePrefab(k_CubePath, GameObject.CreatePrimitive(PrimitiveType.Cube));
         }
 
         [OneTimeTearDown]
         public void Cleanup()
         {
+
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
             AssetDatabase.DeleteAsset(k_ScenePath);
-            CleanupFolders();
+
+            if (Directory.Exists(k_FolderPath))
+                Directory.Delete(k_FolderPath, true);
+            if (Directory.Exists(k_TmpPath))
+                Directory.Delete(k_TmpPath, true);
+            if (Directory.Exists(k_TestAssetsPath))
+                Directory.Delete(k_TestAssetsPath, true);
+            if (File.Exists(k_TestAssetsPath + ".meta"))
+                File.Delete(k_TestAssetsPath + ".meta");
         }
 
-        public static ReturnCode RunTask<T>(params IContextObject[] args) where T : IBuildTask
+        static ReturnCode RunTask<T>(params IContextObject[] args) where T : IBuildTask
         {
             IBuildContext context = new BuildContext(args);
             IBuildTask instance = Activator.CreateInstance<T>();
-            return instance.Run(context);
+            ContextInjector.Inject(context, instance);
+            var result = instance.Run();
+            ContextInjector.Extract(context, instance);
+            return result;
+        }
+
+        static IBundleBuildParameters GetBuildParameters()
+        {
+            if (Directory.Exists(k_FolderPath))
+                Directory.Delete(k_FolderPath, true);
+            if (Directory.Exists(k_TmpPath))
+                Directory.Delete(k_TmpPath, true);
+
+            Directory.CreateDirectory(k_FolderPath);
+            Directory.CreateDirectory(k_TmpPath);
+
+            IBundleBuildParameters buildParams = new BundleBuildParameters(EditorUserBuildSettings.activeBuildTarget, BuildTargetGroup.Unknown, k_FolderPath);
+            buildParams.TempOutputFolder = k_TmpPath;
+            return buildParams;
+        }
+
+        static IBundleBuildContent GetBundleContent()
+        {
+            List<AssetBundleBuild> buildData = new List<AssetBundleBuild>();
+            AssetBundleBuild dataPoint1 = new AssetBundleBuild()
+            {
+                addressableNames = new[] { k_CubePath },
+                assetBundleName = "bundle",
+                assetBundleVariant = "",
+                assetNames = new[] { k_CubePath }
+            };
+            buildData.Add(dataPoint1);
+            IBundleBuildContent buildContent = new BundleBuildContent(buildData);
+            return buildContent;
+        }
+
+        static IDependencyData GetDependancyData()
+        {
+            GUID guid;
+            GUID.TryParse(AssetDatabase.AssetPathToGUID(k_CubePath), out guid);
+            ObjectIdentifier[] oId = ContentBuildInterface.GetPlayerObjectIdentifiersInAsset(guid, EditorUserBuildSettings.activeBuildTarget);
+            AssetLoadInfo loadInfo = new AssetLoadInfo()
+            {
+                asset = guid,
+                address = k_CubePath,
+                includedObjects = oId.ToList(),
+                referencedObjects = oId.ToList()
+            };
+
+            IDependencyData dep = new BuildDependencyData();
+            dep.AssetInfo.Add(guid, loadInfo);
+
+            return dep;
         }
 
         [UnityTest]
@@ -61,7 +125,7 @@ namespace UnityEditor.Build.Pipeline.Tests
             Assert.IsNotNull(objectWeAdded, "No object before entering playmode");
             Assert.AreEqual("testScene", EditorSceneManager.GetActiveScene().name);
 
-            IBuildParameters buildParameters = GetBuildParameters(k_FolderPath, k_TmpPath);
+            IBundleBuildParameters buildParameters = GetBuildParameters();
             IBundleBuildContent buildContent = GetBundleContent();
             IBundleBuildResults results;
 
@@ -74,25 +138,24 @@ namespace UnityEditor.Build.Pipeline.Tests
         }
 
         [UnityTest]
-        public IEnumerator DefaultBuildTasks_ProjectInCleanState()
+        public IEnumerator ValidationMethods_HasDirtyScenes()
         {
             Scene s = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
             yield return null;
 
-            ReturnCode exitCode = RunTask<ProjectInCleanState>();
-            Assert.AreEqual(ReturnCode.Success, exitCode);
+            bool dirty = ValidationMethods.HasDirtyScenes();
+            Assert.IsFalse(dirty);
 
             EditorSceneManager.MarkSceneDirty(s);
 
-            exitCode = RunTask<ProjectInCleanState>();
-            Assert.AreEqual(ReturnCode.UnsavedChanges, exitCode);
+            dirty = ValidationMethods.HasDirtyScenes();
+            Assert.IsTrue(dirty);
         }
-
 
         [Test]
         public void DefaultBuildTasks_WriteSerialziedFiles()
         {
-            IBuildParameters buildParams = GetBuildParameters(k_FolderPath, k_TmpPath);
+            IBuildParameters buildParams = GetBuildParameters();
             IDependencyData dependencyData = new BuildDependencyData();
             IWriteData writeData = new BuildWriteData();
             IBuildResults results = new BuildResults();
@@ -142,7 +205,7 @@ namespace UnityEditor.Build.Pipeline.Tests
         {
             bool packingCallbackCalled = false;
 
-            IBuildParameters buildParams = GetBuildParameters(k_FolderPath, k_TmpPath);
+            IBuildParameters buildParams = GetBuildParameters();
             IDependencyData dep = GetDependancyData();
             IBundleWriteData writeData = new BundleWriteData();
             BuildCallbacks callback = new BuildCallbacks();
@@ -162,7 +225,7 @@ namespace UnityEditor.Build.Pipeline.Tests
         {
             bool writingCallbackCalled = false;
 
-            IBuildParameters buildParams = GetBuildParameters(k_FolderPath, k_TmpPath);
+            IBuildParameters buildParams = GetBuildParameters();
             IDependencyData dep = GetDependancyData();
             IWriteData writeData = new BuildWriteData();
             IBuildResults results = new BuildResults();
@@ -183,7 +246,7 @@ namespace UnityEditor.Build.Pipeline.Tests
         {
             bool dependencyCallbackCalled = false;
 
-            IBuildParameters buildParameters = GetBuildParameters(k_FolderPath, k_TmpPath);
+            IBuildParameters buildParameters = GetBuildParameters();
             IDependencyData dep = GetDependancyData();
             BuildCallbacks callback = new BuildCallbacks();
             callback.PostDependencyCallback = (parameters, data) =>
@@ -202,7 +265,7 @@ namespace UnityEditor.Build.Pipeline.Tests
         {
             bool scriptsCallbackCalled = false;
 
-            IBuildParameters buildParameters = GetBuildParameters(k_FolderPath, k_TmpPath);
+            IBuildParameters buildParameters = GetBuildParameters();
             IBuildResults results = new BuildResults();
             BuildCallbacks callback = new BuildCallbacks();
             callback.PostScriptsCallbacks = (parameters, buildResults) =>
@@ -216,68 +279,25 @@ namespace UnityEditor.Build.Pipeline.Tests
             Assert.IsTrue(scriptsCallbackCalled);
         }
 
-        IBundleBuildContent GetBundleContent()
+        [Test]
+        public void DefaultBuildTasks_AppendBundleHash()
         {
-            List<AssetBundleBuild> buildData = new List<AssetBundleBuild>();
-            AssetBundleBuild dataPoint1 = new AssetBundleBuild()
+            IBundleBuildParameters buildParameters = GetBuildParameters();
+            buildParameters.AppendHash = true;
+            var fileName = k_FolderPath + "/TestBundle";
+            var fileHash = HashingMethods.Calculate(fileName).ToHash128();
+            File.WriteAllText(fileName, fileName);
+            IBundleBuildResults results = new BundleBuildResults();
+            results.BundleInfos["TestBundle"] = new BundleDetails
             {
-                addressableNames = new string[] { },
-                assetBundleName = "bundle",
-                assetBundleVariant = "",
-                assetNames = new string[] { k_CubePath }
-            };
-            buildData.Add(dataPoint1);
-            IBundleBuildContent buildContent = new BundleBuildContent(buildData);
-            return buildContent;
-        }
-
-        IDependencyData GetDependancyData()
-        {
-            GUID guid;
-            GUID.TryParse(AssetDatabase.AssetPathToGUID(k_CubePath), out guid);
-            ObjectIdentifier[] oId = ContentBuildInterface.GetPlayerObjectIdentifiersInAsset(guid, EditorUserBuildSettings.activeBuildTarget);
-            AssetLoadInfo loadInfo = new AssetLoadInfo()
-            {
-                asset = guid,
-                address = k_CubePath,
-                includedObjects = oId.ToList(),
-                referencedObjects = oId.ToList()
+                Crc = 0,
+                FileName = fileName,
+                Hash = fileHash
             };
 
-            IDependencyData dep = new BuildDependencyData();
-            dep.AssetInfo.Add(guid, loadInfo);
-
-            return dep;
-        }
-
-        IBuildParameters GetBuildParameters(string folderPath, string tmpPath)
-        {
-            if (Directory.Exists(folderPath))
-                Directory.Delete(folderPath, true);
-            if (Directory.Exists(tmpPath))
-                Directory.Delete(tmpPath, true);
-
-            if (!Directory.Exists(folderPath))
-                Directory.CreateDirectory(folderPath);
-
-            if (!Directory.Exists(tmpPath))
-                Directory.CreateDirectory(tmpPath);
-
-            IBuildParameters buildParams = new BuildParameters(EditorUserBuildSettings.activeBuildTarget, BuildTargetGroup.Unknown, folderPath);
-            buildParams.TempOutputFolder = tmpPath;
-            return buildParams;
-        }
-
-        void CleanupFolders()
-        {
-            if (Directory.Exists(k_FolderPath))
-                Directory.Delete(k_FolderPath, true);
-            if (Directory.Exists(k_TmpPath))
-                Directory.Delete(k_TmpPath, true);
-            if (Directory.Exists(k_TestAssetsPath))
-                Directory.Delete(k_TestAssetsPath, true);
-            if (File.Exists(k_TestAssetsPath + ".meta"))
-                File.Delete(k_TestAssetsPath + ".meta");
+            ReturnCode exitCode = RunTask<AppendBundleHash>(buildParameters, results);
+            Assert.AreEqual(ReturnCode.Success, exitCode);
+            FileAssert.Exists(fileName + "_" + fileHash);
         }
     }
 }

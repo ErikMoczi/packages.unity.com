@@ -15,10 +15,10 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// <summary>
         /// Processes all the callbacks after script building step.
         /// </summary>
-        /// <param name="buildParameters">Parameters passed into the build pipeline.</param>
-        /// <param name="buildResults">Results from the script building step.</param>
+        /// <param name="parameters">Parameters passed into the build pipeline.</param>
+        /// <param name="results">Results from the script building step.</param>
         /// <returns>Return code from processing the callbacks.</returns>
-        ReturnCode PostScripts(IBuildParameters buildParameters, IBuildResults buildResults);
+        ReturnCode PostScripts(IBuildParameters parameters, IBuildResults results);
     }
     
     /// <summary>
@@ -29,10 +29,10 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// <summary>
         /// Processes all the callbacks after dependency calculation step.
         /// </summary>
-        /// <param name="buildParameters">Parameters passed into the build pipeline.</param>
+        /// <param name="parameters">Parameters passed into the build pipeline.</param>
         /// <param name="dependencyData">Results from the dependency calculation step.</param>
         /// <returns>Return code from processing the callbacks.</returns>
-        ReturnCode PostDependency(IBuildParameters buildParameters, IDependencyData dependencyData);
+        ReturnCode PostDependency(IBuildParameters parameters, IDependencyData dependencyData);
     }
     
     /// <summary>
@@ -43,11 +43,11 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// <summary>
         /// Processes all the callbacks after packing step.
         /// </summary>
-        /// <param name="buildParameters">Parameters passed into the build pipeline.</param>
+        /// <param name="parameters">Parameters passed into the build pipeline.</param>
         /// <param name="dependencyData">Results from the dependency calculation step.</param>
         /// <param name="writeData">Results from the packing step.</param>
         /// <returns>Return code from processing the callbacks.</returns>
-        ReturnCode PostPacking(IBuildParameters buildParameters, IDependencyData dependencyData, IWriteData writeData);
+        ReturnCode PostPacking(IBuildParameters parameters, IDependencyData dependencyData, IWriteData writeData);
     }
     
     /// <summary>
@@ -58,12 +58,12 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// <summary>
         /// Processes all the callbacks after writing step.
         /// </summary>
-        /// <param name="buildParameters">Parameters passed into the build pipeline.</param>
+        /// <param name="parameters">Parameters passed into the build pipeline.</param>
         /// <param name="dependencyData">Results from the dependency calculation step.</param>
         /// <param name="writeData">Results from the packing step.</param>
-        /// <param name="buildResults">Results from the writing step.</param>
+        /// <param name="results">Results from the writing step.</param>
         /// <returns>Return code from processing the callbacks.</returns>
-        ReturnCode PostWriting(IBuildParameters buildParameters, IDependencyData dependencyData, IWriteData writeData, IBuildResults buildResults);
+        ReturnCode PostWriting(IBuildParameters parameters, IDependencyData dependencyData, IWriteData writeData, IBuildResults results);
     }
 
     /// <summary>
@@ -107,6 +107,13 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         void SetContextObject<T>(IContextObject contextObject) where T : IContextObject;
 
         /// <summary>
+        /// Adds the data of the specified type to the build context.
+        /// </summary>
+        /// <param name="type">Type of data to add.</param>
+        /// <param name="contextObject">Object holding the data to add.</param>
+        void SetContextObject(Type type, IContextObject contextObject);
+
+        /// <summary>
         /// Adds the data to the build context. Type will be inferred using Reflection.
         /// </summary>
         /// <param name="contextObject">Object holding the data to add.</param>
@@ -119,5 +126,13 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// <param name="contextObject">The object holding the data to be returned if found.</param>
         /// <returns><c>true</c> if the context was able to returned the specified data; otherwise, <c>false</c>.</returns>
         bool TryGetContextObject<T>(out T contextObject) where T : IContextObject;
+
+        /// <summary>
+        /// Tries to get the data of the specified type contained in the build context.
+        /// </summary>
+        /// <param name="type">Type of data to return.</param>
+        /// <param name="contextObject">The object holding the data to be returned if found.</param>
+        /// <returns><c>true</c> if the context was able to returned the specified data; otherwise, <c>false</c>.</returns>
+        bool TryGetContextObject(Type type, out IContextObject contextObject);
     }
 }

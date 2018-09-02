@@ -16,11 +16,23 @@ namespace UnityEditor.Build.Pipeline
         public Dictionary<GUID, AssetLoadInfo> AssetInfo { get; private set; }
         /// <inheritdoc />
         public Dictionary<GUID, BuildUsageTagSet> AssetUsage { get; private set; }
-        
+
         /// <inheritdoc />
         public Dictionary<GUID, SceneDependencyInfo> SceneInfo { get; private set; }
         /// <inheritdoc />
         public Dictionary<GUID, BuildUsageTagSet> SceneUsage { get; private set; }
+
+        [NonSerialized]
+        BuildUsageCache m_BuildUsageCache;
+        public BuildUsageCache DependencyUsageCache
+        {
+            get
+            {
+                if (m_BuildUsageCache == null)
+                    m_BuildUsageCache = new BuildUsageCache();
+                return m_BuildUsageCache;
+            }
+        }
 
         /// <summary>
         /// Default constructor, initializes properties to defaults
@@ -31,6 +43,7 @@ namespace UnityEditor.Build.Pipeline
             AssetUsage = new Dictionary<GUID, BuildUsageTagSet>();
             SceneInfo = new Dictionary<GUID, SceneDependencyInfo>();
             SceneUsage = new Dictionary<GUID, BuildUsageTagSet>();
+            m_BuildUsageCache = new BuildUsageCache();
         }
     }
 }

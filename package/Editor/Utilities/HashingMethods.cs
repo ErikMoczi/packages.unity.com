@@ -200,7 +200,6 @@ namespace UnityEditor.Build.Pipeline.Utilities
                 return RawHash.Zero();
 
             byte[] hash;
-            stream.Position = 0;
             using (var hashAlgorithm = GetHashAlgorithm(typeof(MD5)))
                 hash = hashAlgorithm.ComputeHash(stream);
             return new RawHash(hash);
@@ -212,7 +211,6 @@ namespace UnityEditor.Build.Pipeline.Utilities
                 return RawHash.Zero();
 
             byte[] hash;
-            stream.Position = 0;
             using (var hashAlgorithm = GetHashAlgorithm(typeof(T)))
                 hash = hashAlgorithm.ComputeHash(stream);
             return new RawHash(hash);
@@ -224,6 +222,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
             using (var stream = new MemoryStream())
             {
                 GetRawBytes(stream, obj);
+                stream.Position = 0;
                 rawHash = CalculateStream<MD5>(stream);
             }
             return rawHash;
@@ -238,6 +237,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
             using (var stream = new MemoryStream())
             {
                 GetRawBytes(stream, objects);
+                stream.Position = 0;
                 rawHash = CalculateStream<MD5>(stream);
             }
             return rawHash;
@@ -249,6 +249,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
             using (var stream = new MemoryStream())
             {
                 GetRawBytes(stream, obj);
+                stream.Position = 0;
                 rawHash = CalculateStream<T>(stream);
             }
             return rawHash;
@@ -263,6 +264,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
             using (var stream = new MemoryStream())
             {
                 GetRawBytes(stream, objects);
+                stream.Position = 0;
                 rawHash = CalculateStream<T>(stream);
             }
             return rawHash;

@@ -1,4 +1,4 @@
-﻿using System;
+﻿using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Sprites;
 
@@ -6,24 +6,17 @@ namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class RebuildSpriteAtlasCache : IBuildTask
     {
-        const int k_Version = 1;
-        public int Version { get { return k_Version; } }
+        public int Version { get { return 1; } }
+        
+#pragma warning disable 649
+        [InjectContext(ContextUsage.In)]
+        IBuildParameters m_Parameters;
+#pragma warning restore 649
 
-        static readonly Type[] k_RequiredTypes = { typeof(IBuildParameters) };
-        public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
-
-        public ReturnCode Run(IBuildContext context)
-        {
-            if (context == null)
-                throw new ArgumentNullException("context");
-
-            return Run(context.GetContextObject<IBuildParameters>());
-        }
-
-        static ReturnCode Run(IBuildParameters parameters)
+        public ReturnCode Run()
         {
             // TODO: Need a return value if this ever can fail
-            Packer.RebuildAtlasCacheIfNeeded(parameters.Target, true, Packer.Execution.Normal);
+            Packer.RebuildAtlasCacheIfNeeded(m_Parameters.Target, true, Packer.Execution.Normal);
             return ReturnCode.Success;
         }
     }

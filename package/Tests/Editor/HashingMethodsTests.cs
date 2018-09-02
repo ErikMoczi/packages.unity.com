@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using NUnit.Framework;
 using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline.Utilities;
@@ -97,6 +98,24 @@ namespace UnityEditor.Build.Pipeline.Tests
             };
             
             Assert.AreEqual("34392e04ec079d34cd861df956db2099", HashingMethods.Calculate<MD4>(sourceNames).ToString());
+        }
+        
+        [Test]
+        public void CalculateStreamCanUseOffsets()
+        {
+            byte[] bytes = { 0xe1, 0x43, 0x2f, 0x83, 0xdf, 0xeb, 0xa8, 0x86, 0xfb, 0xfe, 0xc9, 0x97, 0x20, 0xfb, 0x53, 0x45,
+                             0x24, 0x5d, 0x92, 0x8b, 0xa2, 0xc4, 0xe1, 0xe2, 0x48, 0x4a, 0xbb, 0x66, 0x43, 0x9a, 0xbc, 0x84 };
+
+            using (var stream = new MemoryStream(bytes))
+            {
+                stream.Position = 16;
+                RawHash hash1 = HashingMethods.CalculateStream(stream);
+
+                stream.Position = 0;
+                RawHash hash2 = HashingMethods.CalculateStream(stream);
+
+                Assert.AreNotEqual(hash1.ToString(), hash2.ToString());
+            }
         }
     }
 }

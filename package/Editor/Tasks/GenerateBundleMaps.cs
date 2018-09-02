@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Utilities;
 
@@ -9,46 +9,42 @@ namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class GenerateBundleMaps : IBuildTask
     {
-        const int k_Version = 1;
-        public int Version { get { return k_Version; } }
+        public int Version { get { return 1; } }
+        
+#pragma warning disable 649
+        [InjectContext(ContextUsage.In)]
+        IDependencyData m_DependencyData;
 
-        static readonly Type[] k_RequiredTypes = { typeof(IDependencyData), typeof(IBundleWriteData) };
-        public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
+        [InjectContext]
+        IBundleWriteData m_WriteData;
+#pragma warning restore 649
 
-        public ReturnCode Run(IBuildContext context)
+        public ReturnCode Run()
         {
-            if (context == null)
-                throw new ArgumentNullException("context");
-
-            return Run(context.GetContextObject<IDependencyData>(), context.GetContextObject<IBundleWriteData>());
-        }
-
-        static ReturnCode Run(IDependencyData dependencyData, IBundleWriteData writeData)
-        {
-            Dictionary<string, WriteCommand> fileToCommand = writeData.WriteOperations.ToDictionary(x => x.Command.internalName, x => x.Command);
+            Dictionary<string, WriteCommand> fileToCommand = m_WriteData.WriteOperations.ToDictionary(x => x.Command.internalName, x => x.Command);
             Dictionary<string, HashSet<string>> filesMapped = new Dictionary<string, HashSet<string>>();
-            foreach (var assetFilesPair in writeData.AssetToFiles)
+            foreach (var assetFilesPair in m_WriteData.AssetToFiles)
             {
                 // Generate BuildReferenceMap map
-                AddReferencesForFiles(assetFilesPair.Value, writeData, filesMapped, fileToCommand);
+                AddReferencesForFiles(assetFilesPair.Value, filesMapped, fileToCommand);
                 
                 // Generate BuildUsageTagSet map
-                AddUsageSetForFiles(assetFilesPair.Key, assetFilesPair.Value, dependencyData, writeData);
+                AddUsageSetForFiles(assetFilesPair.Key, assetFilesPair.Value);
             }
 
             return ReturnCode.Success;
         }
 
-        static void AddReferencesForFiles(IList<string> files, IBundleWriteData writeData, Dictionary<string, HashSet<string>> filesMapped, Dictionary<string, WriteCommand> fileToCommand)
+        void AddReferencesForFiles(IList<string> files, Dictionary<string, HashSet<string>> filesMapped, Dictionary<string, WriteCommand> fileToCommand)
         {
             HashSet<string> visited;
             filesMapped.GetOrAdd(files[0], out visited);
 
             BuildReferenceMap referenceMap;
-            if (!writeData.FileToReferenceMap.TryGetValue(files[0], out referenceMap))
+            if (!m_WriteData.FileToReferenceMap.TryGetValue(files[0], out referenceMap))
             {
                 referenceMap = new BuildReferenceMap();
-                writeData.FileToReferenceMap.Add(files[0], referenceMap);
+                m_WriteData.FileToReferenceMap.Add(files[0], referenceMap);
             }
             
             foreach (var file in files)
@@ -61,22 +57,22 @@ namespace UnityEditor.Build.Pipeline.Tasks
             }
         }
 
-        static void AddUsageSetForFiles(GUID asset, IList<string> files, IDependencyData dependencyData, IBundleWriteData writeData)
+        void AddUsageSetForFiles(GUID asset, IList<string> files)
         {
             BuildUsageTagSet assetUsage;
-            if (!dependencyData.AssetUsage.TryGetValue(asset, out assetUsage))
+            if (!m_DependencyData.AssetUsage.TryGetValue(asset, out assetUsage))
             {
-                if (!dependencyData.SceneUsage.TryGetValue(asset, out assetUsage))
+                if (!m_DependencyData.SceneUsage.TryGetValue(asset, out assetUsage))
                     return;
             }
 
             foreach (var file in files)
             {
                 BuildUsageTagSet fileUsage;
-                if (!writeData.FileToUsageSet.TryGetValue(file, out fileUsage))
+                if (!m_WriteData.FileToUsageSet.TryGetValue(file, out fileUsage))
                 {
                     fileUsage = new BuildUsageTagSet();
-                    writeData.FileToUsageSet.Add(file, fileUsage);
+                    m_WriteData.FileToUsageSet.Add(file, fileUsage);
                 }
                 fileUsage.UnionWith(assetUsage);
             }

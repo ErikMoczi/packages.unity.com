@@ -1,57 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class StripUnusedSpriteSources : IBuildTask
     {
-        const int k_Version = 2;
-        public int Version { get { return k_Version; } }
+        public int Version { get { return 2; } }
 
-        static readonly Type[] k_RequiredTypes = { typeof(IDependencyData) };
-        public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
+#pragma warning disable 649
+        [InjectContext]
+        IDependencyData m_DependencyData;
 
-        public ReturnCode Run(IBuildContext context)
+        [InjectContext(ContextUsage.In, true)]
+        IBuildSpriteData m_SpriteData;
+#pragma warning restore 649
+
+        public ReturnCode Run()
         {
-            if (context == null)
-                throw new ArgumentNullException("context");
-            
-            IBuildSpriteData spriteData;
-            context.TryGetContextObject(out spriteData);
-            return Run(context.GetContextObject<IDependencyData>(), spriteData);
-        }
-
-        static ReturnCode Run(IDependencyData dependencyData, IBuildSpriteData spriteData)
-        {
-            if (spriteData == null || spriteData.ImporterData.Count == 0)
+            if (m_SpriteData == null || m_SpriteData.ImporterData.Count == 0)
                 return ReturnCode.SuccessNotRun;
 
             var unusedSources = new HashSet<ObjectIdentifier>();
-            var textures = spriteData.ImporterData.Values.Where(x => x.PackedSprite).Select(x => x.SourceTexture);
+            var textures = m_SpriteData.ImporterData.Values.Where(x => x.PackedSprite).Select(x => x.SourceTexture);
             unusedSources.UnionWith(textures);
 
             // Count refs from assets
-            var assetRefs = dependencyData.AssetInfo.SelectMany(x => x.Value.referencedObjects);
+            var assetRefs = m_DependencyData.AssetInfo.SelectMany(x => x.Value.referencedObjects);
             foreach (ObjectIdentifier reference in assetRefs)
                 unusedSources.Remove(reference);
 
             // Count refs from scenes
-            var sceneRefs = dependencyData.SceneInfo.SelectMany(x => x.Value.referencedObjects);
+            var sceneRefs = m_DependencyData.SceneInfo.SelectMany(x => x.Value.referencedObjects);
             foreach (ObjectIdentifier reference in sceneRefs)
                 unusedSources.Remove(reference);
 
-            SetOutputInformation(unusedSources, dependencyData);
+            SetOutputInformation(unusedSources);
             return ReturnCode.Success;
         }
 
-        static void SetOutputInformation(HashSet<ObjectIdentifier> unusedSources, IDependencyData dependencyData)
+        public void SetOutputInformation(HashSet<ObjectIdentifier> unusedSources)
         {
             foreach (var source in unusedSources)
             {
-                var assetInfo = dependencyData.AssetInfo[source.guid];
+                var assetInfo = m_DependencyData.AssetInfo[source.guid];
                 assetInfo.includedObjects.RemoveAt(0);
             }
         }

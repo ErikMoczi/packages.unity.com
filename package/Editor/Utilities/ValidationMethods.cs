@@ -7,30 +7,33 @@ namespace UnityEditor.Build.Pipeline.Utilities
 {
     static class ValidationMethods
     {
-        public static bool ValidScene(GUID asset)
+        public enum Status
+        {
+            Invalid,
+            Asset,
+            Scene
+        }
+
+        public static Status ValidAsset(GUID asset)
         {
             var path = AssetDatabase.GUIDToAssetPath(asset.ToString());
-            if (string.IsNullOrEmpty(path) || !path.EndsWith(".unity") || !File.Exists(path))
-                return false;
-            return true;
+            if (string.IsNullOrEmpty(path) || !File.Exists(path))
+                return Status.Invalid;
+
+            if (path.EndsWith(".unity"))
+                return Status.Scene;
+
+            return Status.Asset;
         }
 
         public static bool ValidSceneBundle(List<GUID> assets)
         {
-            return assets.All(ValidScene);
-        }
-
-        public static bool ValidAsset(GUID asset)
-        {
-            var path = AssetDatabase.GUIDToAssetPath(asset.ToString());
-            if (string.IsNullOrEmpty(path) || path.EndsWith(".unity") || !File.Exists(path))
-                return false;
-            return true;
+            return assets.All(x => ValidAsset(x) == Status.Scene);
         }
 
         public static bool ValidAssetBundle(List<GUID> assets)
         {
-            return assets.All(ValidAsset);
+            return assets.All(x => ValidAsset(x) == Status.Asset);
         }
 
         public static bool HasDirtyScenes()

@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Utilities;
 using UnityEditor.Build.Utilities;
@@ -10,44 +10,45 @@ namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class GenerateBundlePacking : IBuildTask
     {
-        const int k_Version = 1;
-        public int Version { get { return k_Version; } }
+        public int Version { get { return 1; } }
+        
+#pragma warning disable 649
+        [InjectContext(ContextUsage.In)]
+        IBundleBuildContent m_BuildContent;
 
-        static readonly Type[] k_RequiredTypes = { typeof(IBundleBuildContent), typeof(IDependencyData), typeof(IBundleWriteData), typeof(IDeterministicIdentifiers) };
-        public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
+        [InjectContext(ContextUsage.In)]
+        IDependencyData m_DependencyData;
 
-        public ReturnCode Run(IBuildContext context)
-        {
-            if (context == null)
-                throw new ArgumentNullException("context");
+        [InjectContext]
+        IBundleWriteData m_WriteData;
 
-            return Run(context.GetContextObject<IBundleBuildContent>(), context.GetContextObject<IDependencyData>(), context.GetContextObject<IBundleWriteData>(),
-                context.GetContextObject<IDeterministicIdentifiers>());
-        }
+        [InjectContext(ContextUsage.In)]
+        IDeterministicIdentifiers m_PackingMethod;
+#pragma warning restore 649
 
-        static ReturnCode Run(IBundleBuildContent buildContent, IDependencyData dependencyData, IBundleWriteData writeData, IDeterministicIdentifiers packingMethod)
+        public ReturnCode Run()
         {
             Dictionary<GUID, List<GUID>> assetToReferences = new Dictionary<GUID, List<GUID>>();
 
             // Pack each asset bundle
-            foreach (var bundle in buildContent.BundleLayout)
+            foreach (var bundle in m_BuildContent.BundleLayout)
             {
                 if (ValidationMethods.ValidAssetBundle(bundle.Value))
-                    PackAssetBundle(bundle.Key, bundle.Value, dependencyData, writeData, packingMethod, assetToReferences);
+                    PackAssetBundle(bundle.Key, bundle.Value, assetToReferences);
                 else if (ValidationMethods.ValidSceneBundle(bundle.Value))
-                    PackSceneBundle(bundle.Key, bundle.Value, dependencyData, writeData, packingMethod, assetToReferences);
+                    PackSceneBundle(bundle.Key, bundle.Value, assetToReferences);
             }
 
             // Calculate Asset file load dependency list
-            foreach (var bundle in buildContent.BundleLayout)
+            foreach (var bundle in m_BuildContent.BundleLayout)
             {
                 foreach (var asset in bundle.Value)
                 {
-                    List<string> files = writeData.AssetToFiles[asset];
+                    List<string> files = m_WriteData.AssetToFiles[asset];
                     List<GUID> references = assetToReferences[asset];
                     foreach (var reference in references)
                     {
-                        List<string> referenceFiles = writeData.AssetToFiles[reference];
+                        List<string> referenceFiles = m_WriteData.AssetToFiles[reference];
                         if (!files.Contains(referenceFiles[0]))
                             files.Add(referenceFiles[0]);
                     }
@@ -57,52 +58,52 @@ namespace UnityEditor.Build.Pipeline.Tasks
             return ReturnCode.Success;
         }
 
-        static void PackAssetBundle(string bundleName, List<GUID> includedAssets, IDependencyData dependencyData, IBundleWriteData writeData, IDeterministicIdentifiers packingMethod, Dictionary<GUID, List<GUID>> assetToReferences)
+        void PackAssetBundle(string bundleName, List<GUID> includedAssets, Dictionary<GUID, List<GUID>> assetToReferences)
         {
-            var internalName = string.Format(CommonStrings.AssetBundleNameFormat, packingMethod.GenerateInternalFileName(bundleName));
+            var internalName = string.Format(CommonStrings.AssetBundleNameFormat, m_PackingMethod.GenerateInternalFileName(bundleName));
 
             var allObjects = new HashSet<ObjectIdentifier>();
             foreach (var asset in includedAssets)
             {
-                AssetLoadInfo assetInfo = dependencyData.AssetInfo[asset];
+                AssetLoadInfo assetInfo = m_DependencyData.AssetInfo[asset];
                 allObjects.UnionWith(assetInfo.includedObjects);
 
                 var references = new List<ObjectIdentifier>();
                 references.AddRange(assetInfo.referencedObjects);
-                assetToReferences[asset] = FilterReferencesForAsset(dependencyData, asset, references);
+                assetToReferences[asset] = FilterReferencesForAsset(asset, references);
 
                 allObjects.UnionWith(references);
-                writeData.AssetToFiles[asset] = new List<string> { internalName };
+                m_WriteData.AssetToFiles[asset] = new List<string> { internalName };
             }
 
-            writeData.FileToBundle.Add(internalName, bundleName);
-            writeData.FileToObjects.Add(internalName, allObjects.ToList());
+            m_WriteData.FileToBundle.Add(internalName, bundleName);
+            m_WriteData.FileToObjects.Add(internalName, allObjects.ToList());
         }
 
-        static void PackSceneBundle(string bundleName, List<GUID> includedScenes, IDependencyData dependencyData, IBundleWriteData writeData, IDeterministicIdentifiers packingMethod, Dictionary<GUID, List<GUID>> assetToReferences)
+        void PackSceneBundle(string bundleName, List<GUID> includedScenes, Dictionary<GUID, List<GUID>> assetToReferences)
         {
             var firstFileName = "";
             foreach (var scene in includedScenes)
             {
                 var scenePath = AssetDatabase.GUIDToAssetPath(scene.ToString());
-                var internalSceneName = packingMethod.GenerateInternalFileName(scenePath);
+                var internalSceneName = m_PackingMethod.GenerateInternalFileName(scenePath);
                 if (string.IsNullOrEmpty(firstFileName))
                     firstFileName = internalSceneName;
                 var internalName = string.Format(CommonStrings.SceneBundleNameFormat, firstFileName, internalSceneName);
 
-                SceneDependencyInfo sceneInfo = dependencyData.SceneInfo[scene];
+                SceneDependencyInfo sceneInfo = m_DependencyData.SceneInfo[scene];
 
                 var references = new List<ObjectIdentifier>();
                 references.AddRange(sceneInfo.referencedObjects);
-                assetToReferences[scene] = FilterReferencesForAsset(dependencyData, scene, references);
+                assetToReferences[scene] = FilterReferencesForAsset(scene, references);
 
-                writeData.FileToObjects.Add(internalName, references);
-                writeData.FileToBundle.Add(internalName, bundleName);
-                writeData.AssetToFiles[scene] = new List<string> { internalName };
+                m_WriteData.FileToObjects.Add(internalName, references);
+                m_WriteData.FileToBundle.Add(internalName, bundleName);
+                m_WriteData.AssetToFiles[scene] = new List<string> { internalName };
             }
         }
 
-        static List<GUID> FilterReferencesForAsset(IDependencyData dependencyData, GUID asset, List<ObjectIdentifier> references)
+        List<GUID> FilterReferencesForAsset(GUID asset, List<ObjectIdentifier> references)
         {
             var referencedAssets = new HashSet<AssetLoadInfo>();
 
@@ -117,7 +118,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 }
 
                 AssetLoadInfo referenceInfo;
-                if (dependencyData.AssetInfo.TryGetValue(reference.guid, out referenceInfo))
+                if (m_DependencyData.AssetInfo.TryGetValue(reference.guid, out referenceInfo))
                 {
                     references.RemoveAt(i);
                     referencedAssets.Add(referenceInfo);

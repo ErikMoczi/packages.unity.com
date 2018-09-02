@@ -27,5 +27,10 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// Map of Scene to usage data.
         /// </summary>
         Dictionary<GUID, BuildUsageTagSet> SceneUsage { get; }
+
+        /// <summary>
+        /// Reusable cache for calculating usage tags
+        /// </summary>
+        BuildUsageCache DependencyUsageCache { get; }
     }
 }

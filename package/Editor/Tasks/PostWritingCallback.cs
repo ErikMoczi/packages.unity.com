@@ -1,28 +1,32 @@
-﻿using System;
+﻿using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class PostWritingCallback : IBuildTask
     {
-        const int k_Version = 1;
-        public int Version { get { return k_Version; } }
+        public int Version { get { return 1; } }
 
-        static readonly Type[] k_RequiredTypes = { typeof(IBuildParameters), typeof(IDependencyData), typeof(IWriteData), typeof(IBuildResults), typeof(IWritingCallback) };
-        public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
+#pragma warning disable 649
+        [InjectContext]
+        IBuildParameters m_Parameters;
 
-        public ReturnCode Run(IBuildContext context)
+        [InjectContext]
+        IDependencyData m_DependencyData;
+
+        [InjectContext]
+        IWriteData m_WriteData;
+
+        [InjectContext]
+        IBuildResults m_Results;
+
+        [InjectContext(ContextUsage.In)]
+        IWritingCallback m_Callback;
+#pragma warning restore 649
+
+        public ReturnCode Run()
         {
-            if (context == null)
-                throw new ArgumentNullException("context");
-
-            return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IDependencyData>(),
-                context.GetContextObject<IWriteData>(), context.GetContextObject<IBuildResults>(), context.GetContextObject<IWritingCallback>());
-        }
-
-        static ReturnCode Run(IBuildParameters parameters, IDependencyData dependencyData, IWriteData writeData, IBuildResults results, IWritingCallback callback)
-        {
-            return callback.PostWriting(parameters, dependencyData, writeData, results);
+            return m_Callback.PostWriting(m_Parameters, m_DependencyData, m_WriteData, m_Results);
         }
     }
 }

@@ -31,10 +31,10 @@ namespace UnityEditor.Build.Pipeline
         public Func<IBuildParameters, IDependencyData, IWriteData, IBuildResults, ReturnCode> PostWritingCallback { get; set; }
         
         /// <inheritdoc />
-        public ReturnCode PostScripts(IBuildParameters buildParameters, IBuildResults buildResults)
+        public ReturnCode PostScripts(IBuildParameters parameters, IBuildResults results)
         {
             if (PostScriptsCallbacks != null)
-                return PostScriptsCallbacks(buildParameters, buildResults);
+                return PostScriptsCallbacks(parameters, results);
             return ReturnCode.Success;
         }
         
@@ -55,10 +55,10 @@ namespace UnityEditor.Build.Pipeline
         }
         
         /// <inheritdoc />
-        public ReturnCode PostWriting(IBuildParameters buildParameters, IDependencyData dependencyData, IWriteData writeData, IBuildResults buildResults)
+        public ReturnCode PostWriting(IBuildParameters parameters, IDependencyData dependencyData, IWriteData writeData, IBuildResults results)
         {
             if (PostWritingCallback != null)
-                return PostWritingCallback(buildParameters, dependencyData, writeData, buildResults);
+                return PostWritingCallback(parameters, dependencyData, writeData, results);
             return ReturnCode.Success;
         }
     }

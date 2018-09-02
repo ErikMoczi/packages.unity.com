@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Utilities;
 using UnityEditor.Build.Pipeline.WriteTypes;
@@ -11,38 +11,38 @@ namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class WriteSerializedFiles : IBuildTask
     {
-        const int k_Version = 2;
-        public int Version { get { return k_Version; } }
+        public int Version { get { return 2; } }
+        
+#pragma warning disable 649
+        [InjectContext(ContextUsage.In)]
+        IBuildParameters m_Parameters;
 
-        static readonly Type[] k_RequiredTypes = { typeof(IBuildParameters), typeof(IDependencyData), typeof(IWriteData), typeof(IBuildResults) };
-        public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
+        [InjectContext(ContextUsage.In)]
+        IDependencyData m_DependencyData;
 
-        public ReturnCode Run(IBuildContext context)
-        {
-            if (context == null)
-                throw new ArgumentNullException("context");
+        [InjectContext(ContextUsage.In)]
+        IWriteData m_WriteData;
 
-            IBuildParameters parameters = context.GetContextObject<IBuildParameters>();
+        [InjectContext]
+        IBuildResults m_Results;
 
-            IProgressTracker tracker;
-            context.TryGetContextObject(out tracker);
-            IBuildCache cache = null;
-            if (parameters.UseCache)
-                context.TryGetContextObject(out cache);
+        [InjectContext(ContextUsage.In, true)]
+        IProgressTracker m_Tracker;
 
-            return Run(parameters, context.GetContextObject<IDependencyData>(), context.GetContextObject<IWriteData>(), context.GetContextObject<IBuildResults>(), tracker, cache);
-        }
+        [InjectContext(ContextUsage.In, true)]
+        IBuildCache m_Cache;
+#pragma warning restore 649
 
-        static CacheEntry GetCacheEntry(IWriteOperation operation, BuildSettings settings, BuildUsageTagGlobal globalUsage)
+        CacheEntry GetCacheEntry(IWriteOperation operation, BuildSettings settings, BuildUsageTagGlobal globalUsage)
         {
             var entry = new CacheEntry();
             entry.Type = CacheEntry.EntryType.Data;
             entry.Guid = HashingMethods.Calculate("WriteSerializedFiles", operation.Command.internalName).ToGUID();
-            entry.Hash = HashingMethods.Calculate(k_Version, operation.GetHash128(), settings.GetHash128(), globalUsage).ToHash128();
+            entry.Hash = HashingMethods.Calculate(Version, operation.GetHash128(), settings.GetHash128(), globalUsage).ToHash128();
             return entry;
         }
 
-        static CachedInfo GetCachedInfo(IBuildCache cache, CacheEntry entry, IWriteOperation operation, WriteResult result)
+        CachedInfo GetCachedInfo(CacheEntry entry, IWriteOperation operation, WriteResult result)
         {
             var info = new CachedInfo();
             info.Asset = entry;
@@ -50,12 +50,12 @@ namespace UnityEditor.Build.Pipeline.Tasks
             var dependencies = new HashSet<CacheEntry>();
             var sceneBundleOp = operation as SceneBundleWriteOperation;
             if (sceneBundleOp != null)
-                dependencies.Add(cache.GetCacheEntry(sceneBundleOp.ProcessedScene));
+                dependencies.Add(m_Cache.GetCacheEntry(sceneBundleOp.ProcessedScene));
             var sceneDataOp = operation as SceneDataWriteOperation;
             if (sceneDataOp != null)
-                dependencies.Add(cache.GetCacheEntry(sceneDataOp.ProcessedScene));
+                dependencies.Add(m_Cache.GetCacheEntry(sceneDataOp.ProcessedScene));
             foreach (var serializeObject in operation.Command.serializeObjects)
-                dependencies.Add(cache.GetCacheEntry(serializeObject.serializationObject));
+                dependencies.Add(m_Cache.GetCacheEntry(serializeObject.serializationObject));
             info.Dependencies = dependencies.ToArray();
 
             info.Data = new object[] { result };
@@ -63,63 +63,62 @@ namespace UnityEditor.Build.Pipeline.Tasks
             return info;
         }
 
-        static ReturnCode Run(IBuildParameters parameters, IDependencyData dependencyData, IWriteData writeData, IBuildResults results, IProgressTracker tracker, IBuildCache cache)
+        public ReturnCode Run()
         {
             BuildUsageTagGlobal globalUsage = new BuildUsageTagGlobal();
-            foreach (var sceneInfo in dependencyData.SceneInfo)
+            foreach (var sceneInfo in m_DependencyData.SceneInfo)
                 globalUsage |= sceneInfo.Value.globalUsage;
 
-            IList<CacheEntry> entries = null;
+            IList<CacheEntry> entries = m_WriteData.WriteOperations.Select(x => GetCacheEntry(x, m_Parameters.GetContentBuildSettings(), globalUsage)).ToList();
             IList<CachedInfo> cachedInfo = null;
-            List<CachedInfo> uncachedInfo = null;
-            if (cache != null)
+            IList<CachedInfo> uncachedInfo = null;
+            if (m_Parameters.UseCache && m_Cache != null)
             {
-                entries = writeData.WriteOperations.Select(x => GetCacheEntry(x, parameters.GetContentBuildSettings(), globalUsage)).ToList();
-                cache.LoadCachedData(entries, out cachedInfo);
+                m_Cache.LoadCachedData(entries, out cachedInfo);
 
                 uncachedInfo = new List<CachedInfo>();
             }
 
-            for (int i = 0; i < writeData.WriteOperations.Count; i++)
+            for (int i = 0; i < m_WriteData.WriteOperations.Count; i++)
             {
-                IWriteOperation op = writeData.WriteOperations[i];
+                IWriteOperation op = m_WriteData.WriteOperations[i];
 
                 WriteResult result;
                 if (cachedInfo != null && cachedInfo[i] != null)
                 {
-                    if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", op.Command.internalName)))
+                    if (!m_Tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", op.Command.internalName)))
                         return ReturnCode.Canceled;
 
                     result = (WriteResult)cachedInfo[i].Data[0];
                 }
                 else
                 {
-                    if (!tracker.UpdateInfoUnchecked(op.Command.internalName))
+                    if (!m_Tracker.UpdateInfoUnchecked(op.Command.internalName))
                         return ReturnCode.Canceled;
 
-                    var outputFolder = parameters.UseCache && cache != null
-                        ? cache.GetCachedArtifactsDirectory(entries[i])
-                        : parameters.TempOutputFolder;
+                    var outputFolder = m_Parameters.TempOutputFolder;
+                    if (m_Parameters.UseCache && m_Cache != null)
+                        outputFolder = m_Cache.GetCachedArtifactsDirectory(entries[i]);
                     Directory.CreateDirectory(outputFolder);
 
-                    result = op.Write(outputFolder, parameters.GetContentBuildSettings(), globalUsage);
+                    result = op.Write(outputFolder, m_Parameters.GetContentBuildSettings(), globalUsage);
 
-                    if (cache != null)
-                        uncachedInfo.Add(GetCachedInfo(cache, entries[i], op, result));
+                    if (uncachedInfo != null)
+                        uncachedInfo.Add(GetCachedInfo(entries[i], op, result));
                 }
 
-                SetOutputInformation(op.Command.internalName, result, results);
+                SetOutputInformation(op.Command.internalName, result);
             }
 
-            if (cache != null)
-                cache.SaveCachedData(uncachedInfo);
+            if (m_Parameters.UseCache && m_Cache != null)
+                m_Cache.SaveCachedData(uncachedInfo);
 
             return ReturnCode.Success;
         }
 
-        static void SetOutputInformation(string fileName, WriteResult result, IBuildResults results)
+        void SetOutputInformation(string fileName, WriteResult result)
         {
-            results.WriteResults.Add(fileName, result);
+            m_Results.WriteResults.Add(fileName, result);
         }
     }
 }

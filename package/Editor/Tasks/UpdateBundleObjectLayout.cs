@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Utilities;
 using UnityEditor.Build.Utilities;
@@ -9,78 +9,81 @@ namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class UpdateBundleObjectLayout : IBuildTask
     {
-        const int k_Version = 1;
-        public int Version { get { return k_Version; } }
+        public int Version { get { return 1; } }
+        
+#pragma warning disable 649
+        [InjectContext(ContextUsage.In, true)]
+        IBundleExplictObjectLayout m_Layout;
+        
+        [InjectContext]
+        IBundleBuildContent m_Content;
+        
+        [InjectContext(ContextUsage.In)]
+        IDependencyData m_DependencyData;
+        
+        [InjectContext]
+        IBundleWriteData m_WriteData;
+        
+        [InjectContext(ContextUsage.In)]
+        IDeterministicIdentifiers m_PackingMethod;
+#pragma warning restore 649
 
-        static readonly Type[] k_RequiredTypes = { typeof(IBundleBuildContent), typeof(IDependencyData), typeof(IBundleWriteData), typeof(IDeterministicIdentifiers) };
-        public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
-
-        public ReturnCode Run(IBuildContext context)
+        public ReturnCode Run()
         {
-            if (context == null)
-                throw new ArgumentNullException("context");
-
-            IBundleExplictObjectLayout layout;
-            if (!context.TryGetContextObject(out layout))
-                return ReturnCode.SuccessNotRun;
-
-            return Run(layout, context.GetContextObject<IBundleBuildContent>(), context.GetContextObject<IDependencyData>(), 
-                context.GetContextObject<IBundleWriteData>(), context.GetContextObject<IDeterministicIdentifiers>());
-        }
-
-
-        static ReturnCode Run(IBundleExplictObjectLayout layout, IBundleBuildContent content, IDependencyData dependencyData, IBundleWriteData writeData, IDeterministicIdentifiers packingMethod)
-        {
-            if (layout.ExplicitObjectLocation.IsNullOrEmpty())
+            if (m_Layout == null || m_Layout.ExplicitObjectLocation.IsNullOrEmpty())
                 return ReturnCode.SuccessNotRun;
 
             // Go object by object
-            foreach (var pair in layout.ExplicitObjectLocation)
+            foreach (var pair in m_Layout.ExplicitObjectLocation)
             {
-                var objectID = pair.Key;
-                var bundleName = pair.Value;
-                var internalName = string.Format(CommonStrings.AssetBundleNameFormat, packingMethod.GenerateInternalFileName(bundleName));
+                ObjectIdentifier objectID = pair.Key;
+                string bundleName = pair.Value;
+                string internalName = string.Format(CommonStrings.AssetBundleNameFormat, m_PackingMethod.GenerateInternalFileName(bundleName));
 
                 // Add dependency on possible new file if asset depends on object
-                foreach (var dependencyPair in dependencyData.AssetInfo)
+                foreach (KeyValuePair<GUID, AssetLoadInfo> dependencyPair in m_DependencyData.AssetInfo)
                 {
                     var asset = dependencyPair.Key;
                     var assetInfo = dependencyPair.Value;
-                    AddFileDependencyIfFound(objectID, internalName, writeData.AssetToFiles[asset], assetInfo.includedObjects, assetInfo.referencedObjects);
+                    var assetFiles = m_WriteData.AssetToFiles[asset];
+                    AddFileDependencyIfFound(objectID, internalName, assetFiles, assetInfo.includedObjects);
+                    AddFileDependencyIfFound(objectID, internalName, assetFiles, assetInfo.referencedObjects);
                 }
 
                 // Add dependency on possible new file if scene depends on object
-                foreach (var dependencyPair in dependencyData.SceneInfo)
+                foreach (KeyValuePair<GUID, SceneDependencyInfo> dependencyPair in m_DependencyData.SceneInfo)
                 {
                     var asset = dependencyPair.Key;
                     var assetInfo = dependencyPair.Value;
-                    AddFileDependencyIfFound(objectID, internalName, writeData.AssetToFiles[asset], assetInfo.referencedObjects, null);
+                    AddFileDependencyIfFound(objectID, internalName, m_WriteData.AssetToFiles[asset], assetInfo.referencedObjects);
                 }
 
                 // Remove object from existing FileToObjects
-                foreach (var fileObjects in writeData.FileToObjects.Values)
+                foreach (List<ObjectIdentifier> fileObjects in m_WriteData.FileToObjects.Values)
                 {
                     if (fileObjects.Contains(objectID))
                         fileObjects.Remove(objectID);
                 }
 
-                if (!writeData.FileToBundle.ContainsKey(internalName))
+                // Update File to bundle and Bundle layout
+                if (!m_WriteData.FileToBundle.ContainsKey(internalName))
                 {
-                    writeData.FileToBundle.Add(internalName, bundleName);
-                    content.BundleLayout.Add(bundleName, new List<GUID>());
+                    m_WriteData.FileToBundle.Add(internalName, bundleName);
+                    m_Content.BundleLayout.Add(bundleName, new List<GUID>());
                 }
 
+                // Update File to object map
                 List<ObjectIdentifier> objectIDs;
-                writeData.FileToObjects.GetOrAdd(internalName, out objectIDs);
+                m_WriteData.FileToObjects.GetOrAdd(internalName, out objectIDs);
                 if (!objectIDs.Contains(objectID))
                     objectIDs.Add(objectID);
             }
             return ReturnCode.Success;
         }
 
-        static void AddFileDependencyIfFound(ObjectIdentifier objectID, string fileName, List<string> assetFiles, ICollection<ObjectIdentifier> collection1, ICollection<ObjectIdentifier> collection2 = null)
+        static void AddFileDependencyIfFound(ObjectIdentifier objectID, string fileName, ICollection<string> assetFiles, ICollection<ObjectIdentifier> collection)
         {
-            if (collection1.Contains(objectID) || collection2 != null && collection2.Contains(objectID))
+            if (collection.Contains(objectID))
             {
                 if (!assetFiles.Contains(fileName))
                     assetFiles.Add(fileName);

@@ -2,6 +2,12 @@
 using UnityEditor.Build.Player;
 using UnityEngine;
 
+#if UNITY_2018_3_OR_NEWER
+using BuildCompression = UnityEngine.BuildCompression;
+#else
+using BuildCompression = UnityEditor.Build.Content.BuildCompression;
+#endif
+
 namespace UnityEditor.Build.Pipeline.Interfaces
 {
     /// <summary>
@@ -78,5 +84,13 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// </summary>
         /// <returns>Returns the ScriptCompilationSettings struct to use for script compiling.</returns>
         ScriptCompilationSettings GetScriptCompilationSettings();
+    }
+
+    public interface IBundleBuildParameters : IBuildParameters
+    {
+        /// <summary>
+        /// Append the hash to the assetBundle file name.
+        /// </summary>
+        bool AppendHash { get; set; }
     }
 }

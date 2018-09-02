@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEngine;
 
@@ -13,12 +14,15 @@ namespace UnityEditor.Build.Pipeline.Tasks
     public class CreateBuiltInShadersBundle : IBuildTask
     {
         static readonly GUID k_BuiltInGuid = new GUID("0000000000000000f000000000000000");
+        public int Version { get { return 1; } }
+        
+#pragma warning disable 649
+        [InjectContext(ContextUsage.In)]
+        IDependencyData m_DependencyData;
 
-        const int k_Version = 1;
-        public int Version { get { return k_Version; } }
-
-        static readonly Type[] k_RequiredTypes = { typeof(IDependencyData) };
-        public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
+        [InjectContext(ContextUsage.InOut, true)]
+        IBundleExplictObjectLayout m_Layout;
+#pragma warning restore 649
 
         public string ShaderBundleName { get; set; }
 
@@ -27,41 +31,32 @@ namespace UnityEditor.Build.Pipeline.Tasks
             ShaderBundleName = bundleName;
         }
 
-        public ReturnCode Run(IBuildContext context)
-        {
-            if (context == null)
-                throw new ArgumentNullException("context");
-
-            IBundleExplictObjectLayout layout;
-            if (!context.TryGetContextObject(out layout))
-            {
-                layout = new BundleExplictObjectLayout();
-                context.SetContextObject(layout);
-            }
-
-            return Run(context.GetContextObject<IDependencyData>(), layout, ShaderBundleName);
-        }
-
-        static ReturnCode Run(IDependencyData dependencyData, IBundleExplictObjectLayout layout, string bundleName)
+        public ReturnCode Run()
         {
             HashSet<ObjectIdentifier> buildInObjects = new HashSet<ObjectIdentifier>();
-            foreach (var dependencyInfo in dependencyData.AssetInfo.Values)
+            foreach (AssetLoadInfo dependencyInfo in m_DependencyData.AssetInfo.Values)
                 buildInObjects.UnionWith(dependencyInfo.referencedObjects.Where(x => x.guid == k_BuiltInGuid));
 
-            foreach (var dependencyInfo in dependencyData.SceneInfo.Values)
+            foreach (SceneDependencyInfo dependencyInfo in m_DependencyData.SceneInfo.Values)
                 buildInObjects.UnionWith(dependencyInfo.referencedObjects.Where(x => x.guid == k_BuiltInGuid));
 
             ObjectIdentifier[] usedSet = buildInObjects.ToArray();
             Type[] usedTypes = ContentBuildInterface.GetTypeForObjects(usedSet);
+            
+            if (m_Layout == null)
+                m_Layout = new BundleExplictObjectLayout();
 
             Type shader = typeof(Shader);
-            for (var i = 0; i < usedTypes.Length; i++)
+            for (int i = 0; i < usedTypes.Length; i++)
             {
                 if (usedTypes[i] != shader)
                     continue;
 
-                layout.ExplicitObjectLocation.Add(usedSet[i], bundleName);
+                m_Layout.ExplicitObjectLocation.Add(usedSet[i], ShaderBundleName);
             }
+
+            if (m_Layout.ExplicitObjectLocation.Count == 0)
+                m_Layout = null;
 
             return ReturnCode.Success;
         }

@@ -46,12 +46,10 @@ namespace UnityEditor.Build.Pipeline
             var buildTasks = new List<IBuildTask>();
 
             // Setup
-            buildTasks.Add(new ProjectInCleanState());
             buildTasks.Add(new SwitchToBuildPlatform());
 
             // Player Scripts
             buildTasks.Add(new BuildPlayerScripts());
-            buildTasks.Add(new SetBundleSettingsTypeDB());
             buildTasks.Add(new PostScriptsCallback());
 
             // Dependency
@@ -71,8 +69,6 @@ namespace UnityEditor.Build.Pipeline
             var buildTasks = new List<IBuildTask>();
 
             // Setup
-            buildTasks.Add(new ProjectInCleanState());
-            buildTasks.Add(new ValidateBundleAssignments());
             buildTasks.Add(new SwitchToBuildPlatform());
             buildTasks.Add(new RebuildSpriteAtlasCache());
 
@@ -80,7 +76,6 @@ namespace UnityEditor.Build.Pipeline
             if (compileScripts)
             {
                 buildTasks.Add(new BuildPlayerScripts());
-                buildTasks.Add(new SetBundleSettingsTypeDB());
                 buildTasks.Add(new PostScriptsCallback());
             }
 
@@ -100,6 +95,7 @@ namespace UnityEditor.Build.Pipeline
             // Writing
             buildTasks.Add(new WriteSerializedFiles());
             buildTasks.Add(new ArchiveAndCompressBundles());
+            buildTasks.Add(new AppendBundleHash());
             buildTasks.Add(new PostWritingCallback());
 
             // Generate manifest files
@@ -113,8 +109,6 @@ namespace UnityEditor.Build.Pipeline
             var buildTasks = new List<IBuildTask>();
 
             // Setup
-            buildTasks.Add(new ProjectInCleanState());
-            buildTasks.Add(new ValidateBundleAssignments());
             buildTasks.Add(new SwitchToBuildPlatform());
             buildTasks.Add(new RebuildSpriteAtlasCache());
 
@@ -122,7 +116,6 @@ namespace UnityEditor.Build.Pipeline
             if (compileScripts)
             {
                 buildTasks.Add(new BuildPlayerScripts());
-                buildTasks.Add(new SetBundleSettingsTypeDB());
                 buildTasks.Add(new PostScriptsCallback());
             }
 
@@ -144,6 +137,7 @@ namespace UnityEditor.Build.Pipeline
             // Writing
             buildTasks.Add(new WriteSerializedFiles());
             buildTasks.Add(new ArchiveAndCompressBundles());
+            buildTasks.Add(new AppendBundleHash());
             buildTasks.Add(new PostWritingCallback());
 
             // Generate manifest files

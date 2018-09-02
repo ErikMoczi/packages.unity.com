@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Utilities;
 using UnityEditor.Build.Profiler;
@@ -45,9 +46,11 @@ namespace UnityEditor.Build.Pipeline
                     if (!tracker.UpdateTaskUnchecked(task.GetType().Name.HumanReadable()))
                         return ReturnCode.Canceled;
 
-                    var result = task.Run(context);
+                    ContextInjector.Inject(context, task);
+                    var result = task.Run();
                     if (result < ReturnCode.Success)
                         return result;
+                    ContextInjector.Extract(context, task);
                 }
                 catch (Exception e)
                 {
@@ -100,9 +103,10 @@ namespace UnityEditor.Build.Pipeline
                         profiler.Print();
                         return ReturnCode.Canceled;
                     }
-
+                    
+                    ContextInjector.Inject(context, task);
                     profiler.Start(count, task.GetType().Name);
-                    var result = task.Run(context);
+                    var result = task.Run();
                     profiler.Stop(count++);
 
                     if (result < ReturnCode.Success)
@@ -111,6 +115,7 @@ namespace UnityEditor.Build.Pipeline
                         profiler.Print();
                         return result;
                     }
+                    ContextInjector.Extract(context, task);
                 }
                 catch (Exception e)
                 {
@@ -135,36 +140,36 @@ namespace UnityEditor.Build.Pipeline
         /// <returns>Return code with status information about success or failure causes.</returns>
         public static ReturnCode Validate(IList<IBuildTask> pipeline, IBuildContext context)
         {
-            // Avoid throwing exceptions in here as we don't want them bubbling up to calling user code
-            if (pipeline == null)
-            {
-                BuildLogger.LogException(new ArgumentNullException("pipeline"));
-                return ReturnCode.Exception;
-            }
+            //// Avoid throwing exceptions in here as we don't want them bubbling up to calling user code
+            //if (pipeline == null)
+            //{
+            //    BuildLogger.LogException(new ArgumentNullException("pipeline"));
+            //    return ReturnCode.Exception;
+            //}
             
-            // Avoid throwing exceptions in here as we don't want them bubbling up to calling user code
-            if (context == null)
-            {
-                BuildLogger.LogException(new ArgumentNullException("context"));
-                return ReturnCode.Exception;
-            }
+            //// Avoid throwing exceptions in here as we don't want them bubbling up to calling user code
+            //if (context == null)
+            //{
+            //    BuildLogger.LogException(new ArgumentNullException("context"));
+            //    return ReturnCode.Exception;
+            //}
 
-            var requiredTypes = new HashSet<Type>();
-            foreach (IBuildTask task in pipeline)
-                requiredTypes.UnionWith(task.RequiredContextTypes);
+            //var requiredTypes = new HashSet<Type>();
+            //foreach (IBuildTask task in pipeline)
+            //    requiredTypes.UnionWith(task.RequiredContextTypes);
 
-            var missingTypes = new List<string>();
-            foreach (Type requiredType in requiredTypes)
-            {
-                if (!context.ContainsContextObject(requiredType))
-                    missingTypes.Add(requiredType.Name);
-            }
+            //var missingTypes = new List<string>();
+            //foreach (Type requiredType in requiredTypes)
+            //{
+            //    if (!context.ContainsContextObject(requiredType))
+            //        missingTypes.Add(requiredType.Name);
+            //}
 
-            if (missingTypes.Count > 0)
-            {
-                BuildLogger.LogError("Missing required object types to run build pipeline:\n{0}", string.Join(", ", missingTypes.ToArray()));
-                return ReturnCode.MissingRequiredObjects;
-            }
+            //if (missingTypes.Count > 0)
+            //{
+            //    BuildLogger.LogError("Missing required object types to run build pipeline:\n{0}", string.Join(", ", missingTypes.ToArray()));
+            //    return ReturnCode.MissingRequiredObjects;
+            //}
             return ReturnCode.Success;
         }
     }

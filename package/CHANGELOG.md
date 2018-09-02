@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.2.0-preview] - 2018-07-23
+- Removed ProjectInCleanState & ValidateBundleAssignments tasks and integrated them directly indo the data validation or running methods
+- Added build task to append hash to asset bundle files
+- Large rework of how IBuildTasks are implemented. Now using dependency injection to handle passing data.
+- Added reusable BuildUsageCache for usage tag calculation performance improvements
+- - Unity minimum version now 2018.2.0b9
+- Improved asset bundle hash version calculation to be unity version agnostic
+
 ## [0.1.0-preview] - 2018-06-06
 - Added support for Cache Server integration of the Build Cache
 - Refactored Build Cache internals for even more performance gains
