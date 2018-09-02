@@ -31,4 +31,5 @@ namespace UnityEngine.ResourceManagement
             m_dependencies = new List<IResourceLocation>(dependencies);
         }
     }
+
 }

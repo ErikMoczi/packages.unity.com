@@ -16,8 +16,17 @@ namespace UnityEngine.ResourceManagement
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
                 Result = null;
-                if(loadDependencyOperation != null && location != null)
-                    loadDependencyOperation.Completed += (obj) => UnityWebRequestTexture.GetTexture(location.InternalId).SendWebRequest().completed += OnComplete;
+                if (loadDependencyOperation != null && location != null)
+                {
+                    loadDependencyOperation.Completed += (obj) =>
+                    {
+                        var reqOp = UnityWebRequestTexture.GetTexture(location.InternalId).SendWebRequest();
+                        if (reqOp.isDone)
+                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
+                        else
+                            reqOp.completed += OnComplete;
+                    };
+                }
                 return base.Start(location);
             }
 

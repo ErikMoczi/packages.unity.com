@@ -14,7 +14,11 @@ namespace UnityEngine.ResourceManagement
                 Result = null;
                 loadDependencyOperation.Completed += (obj) =>
                     {
-                        AssetBundle.LoadFromFileAsync(Path.Combine("file://", ResourceManagerConfig.ExpandPathWithGlobalVariables(location.InternalId))).completed += OnComplete;
+                        var reqOp = AssetBundle.LoadFromFileAsync(Path.Combine("file://", ResourceManagerConfig.ExpandPathWithGlobalVariables(location.InternalId)));
+                        if (reqOp.isDone)
+                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
+                        else
+                            reqOp.completed += OnComplete;
                     };
 
                 return base.Start(location);

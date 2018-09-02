@@ -1,26 +1,32 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement
 {
     public class AssetDatabaseProvider : ResourceProviderBase
     {
+        float m_loadDelay = .1f;
+        public AssetDatabaseProvider(float delay = .25f)
+        {
+            m_loadDelay = delay;
+        }
+
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
-            public override InternalProviderOperation<TObject> Start(IResourceLocation location)
+            public InternalProviderOperation<TObject> Start(IResourceLocation location, float loadDelay)
             {
                 Result = null;
-                CompletionUpdater.UpdateUntilComplete(location.ToString(), () => {
-                    #if UNITY_EDITOR
-                        var res = UnityEditor.AssetDatabase.LoadAssetAtPath<Object>(location.InternalId) as TObject;
-                        SetResult(res);
-                    #endif
-
-                        OnComplete();
-                        return true;
-                    });
+                Context = location;
+                DelayedActionManager.AddAction((Action)CompleteLoad, loadDelay);
                 return base.Start(location);
+            }
+
+            void CompleteLoad()
+            {
+                SetResult(UnityEditor.AssetDatabase.LoadAssetAtPath<Object>((Context as IResourceLocation).InternalId) as TObject);
+                OnComplete();
             }
 
             public override TObject ConvertResult(AsyncOperation op) { return null; }
@@ -33,7 +39,7 @@ namespace UnityEngine.ResourceManagement
             if (loadDependencyOperation == null)
                 throw new System.ArgumentNullException("loadDependencyOperation");
             var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
-            return operation.Start(location);
+            return operation.Start(location, m_loadDelay);
         }
 
         public override bool Release(IResourceLocation location, object asset)

@@ -10,7 +10,14 @@ namespace UnityEngine.ResourceManagement
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
                 Result = null;
-                loadDependencyOperation.Completed += (obj) => Resources.LoadAsync<Object>(location.InternalId).completed += OnComplete;
+                loadDependencyOperation.Completed += (obj) =>
+                {
+                    var reqOp = Resources.LoadAsync<Object>(location.InternalId);
+                    if (reqOp.isDone)
+                        DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
+                    else
+                        reqOp.completed += OnComplete;
+                };
                 return base.Start(location);
             }
 
@@ -34,10 +41,8 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
-            if (asset == null)
-                throw new System.ArgumentNullException("asset");
-            var obj = asset as Object;
 
+            var obj = asset as Object;
             if (obj != null)
             {
                 Resources.UnloadAsset(obj);

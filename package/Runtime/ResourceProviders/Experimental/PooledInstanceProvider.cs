@@ -100,7 +100,7 @@ namespace UnityEngine.ResourceManagement
                 if (loadOperation != null)
                     loadOperation.Completed += m_onLoadOperationCompleteAction;
                 else
-                    DelayedActionManager.AddAction(m_onValidResultCompleteAction, Result);
+                    DelayedActionManager.AddAction(m_onValidResultCompleteAction, 0, Result);
 
                 return this;
             }
@@ -181,7 +181,15 @@ namespace UnityEngine.ResourceManagement
                 m_instances.Push(gameObject);
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.PoolCount, m_location, m_instances.Count);
             }
-
+            
+            void ReleaseInternal(IResourceProvider provider, IResourceLocation location)
+            {
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.Release, location, Time.frameCount);
+                provider.Release(location, null);
+                for (int i = 0; location.Dependencies != null && i < location.Dependencies.Count; i++)
+                    ReleaseInternal(ResourceManager.GetResourceProvider<object>(location.Dependencies[i]), location.Dependencies[i]);
+            }
+            
             internal bool Update(float releaseTime)
             {
                 if (m_instances.Count > 0)
@@ -190,7 +198,7 @@ namespace UnityEngine.ResourceManagement
                     {
                         m_lastReleaseTime = m_lastRefTime = Time.unscaledTime;
                         var inst = m_instances.Pop();
-                        m_loadProvider.Release(m_location, null);
+                        ReleaseInternal(m_loadProvider, m_location);
                         GameObject.Destroy(inst);
                         ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.PoolCount, m_location, m_instances.Count);
                         if (m_instances.Count == 0 && m_holdCount == 0)
@@ -203,7 +211,13 @@ namespace UnityEngine.ResourceManagement
             internal IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IAsyncOperation<IList<object>> loadDependencyOperation, InstantiationParameters instantiateParameters) where TObject : Object
             {
                 if (m_instances.Count > 0)
+                {
+                    //this accounts for the dependency load which is not needed since the asset is cached.
+                    for (int i = 0; m_location.Dependencies != null && i < m_location.Dependencies.Count; i++)
+                        ReleaseInternal(ResourceManager.GetResourceProvider<object>(m_location.Dependencies[i]), m_location.Dependencies[i]);
+
                     return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>().Start(null, m_location, Get<TObject>(), instantiateParameters);
+                }
 
                 var depOp = loadProvider.ProvideAsync<TObject>(m_location, loadDependencyOperation);
                 return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>().Start(depOp, m_location, null, instantiateParameters);

@@ -15,7 +15,14 @@ namespace UnityEngine.ResourceManagement
                 Validate();
                 Context = location;
                 m_loadMode = loadMode;
-                loadDependencyOperation.Completed += (op) => SceneManager.LoadSceneAsync((Context as IResourceLocation).InternalId, m_loadMode).completed += OnSceneLoaded;
+                loadDependencyOperation.Completed += (op) =>
+                {
+                    var reqOp = SceneManager.LoadSceneAsync((Context as IResourceLocation).InternalId, m_loadMode);
+                    if (reqOp.isDone)
+                        DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnSceneLoaded, 0, reqOp);
+                    else
+                        reqOp.completed += OnSceneLoaded;
+                };
                 return this;
             }
 
@@ -24,7 +31,8 @@ namespace UnityEngine.ResourceManagement
                 Validate();
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadSceneAsyncCompletion, Context, 1);
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, Context, 100);
-                Result = SceneManager.GetActiveScene();
+               
+                SetResult(SceneManager.GetActiveScene());
                 InvokeCompletionEvent();
             }
 

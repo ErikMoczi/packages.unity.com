@@ -10,26 +10,27 @@ namespace UnityEngine.ResourceManagement
         {
             protected object m_result;
             protected CacheList m_cacheList;
+            protected AsyncOperationStatus m_status;
+            protected Exception m_error;
             abstract internal bool CanProvide<TObject>(IResourceLocation location) where TObject : class;
 
             public abstract bool IsDone { get; }
             public abstract float PercentComplete { get; }
-            public object Result
-            {
-                get
-                {
-                    return m_result;
-                }
-            }
+            public object Result { get { return m_result; } }
             public abstract void ReleaseInternalOperation();
+
+            public void Reset() { }
+
+            public void ResetStatus()
+            {
+                //should never be called as this operation doe not end up in cache
+            }
         }
 
         internal class CacheEntry<TObject> : CacheEntry, IAsyncOperation<TObject>
             where TObject : class
         {
             IAsyncOperation<TObject> m_operation;
-            AsyncOperationStatus m_status;
-            Exception m_error;
 
             public AsyncOperationStatus Status
             {
@@ -91,16 +92,9 @@ namespace UnityEngine.ResourceManagement
                 }
             }
 
-            public void Reset()
-            {
-            }
 
             public bool IsValid { get { return m_operation != null && m_operation.IsValid; } set { } }
 
-            public void ResetStatus()
-            {
-                //should never be called as this operation doe not end up in cache
-            }
 
             public override void ReleaseInternalOperation()
             {
@@ -124,7 +118,7 @@ namespace UnityEngine.ResourceManagement
                 {
                     Validate();
                     if (IsDone)
-                        DelayedActionManager.AddAction(value, this);
+                        DelayedActionManager.AddAction(value, 0, this);
                     else
                         m_completedActionT += value;
                 }
@@ -141,7 +135,7 @@ namespace UnityEngine.ResourceManagement
                 {
                     Validate();
                     if (IsDone)
-                        DelayedActionManager.AddAction(value, this);
+                        DelayedActionManager.AddAction(value, 0, this);
                     else
                         m_completedAction += value;
                 }
@@ -244,6 +238,17 @@ namespace UnityEngine.ResourceManagement
                 return m_location.GetHashCode();
             }
 
+            public bool IsDone
+            {
+                get
+                {
+                    foreach (var ee in entries)
+                        if (!ee.IsDone)
+                            return false;
+                    return true;
+                }
+            }
+
             public float CompletePercent
             {
                 get
@@ -297,8 +302,8 @@ namespace UnityEngine.ResourceManagement
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, m_location, 0);
                 foreach (var e in entries)
                 {
-                    if (!provider.Release(m_location, e.Result))
-                        Debug.LogWarning("Failed to release location " + m_location);
+                    Debug.Assert(e.IsDone);
+                    provider.Release(m_location, e.Result);
                     e.ReleaseInternalOperation();
                 }
             }
@@ -347,7 +352,7 @@ namespace UnityEngine.ResourceManagement
             if (m_lru != null)
             {
                 float time = Time.unscaledTime;
-                while (m_lru.Last != null && m_lru.Last.Value.m_lastAccessTime > m_maxLRUAge)
+                while (m_lru.Last != null && m_lru.Last.Value.m_lastAccessTime > m_maxLRUAge && m_lru.Last.Value.IsDone)
                 {
                     m_lru.Last.Value.ReleaseAssets(m_internalProvider);
                     m_lru.RemoveLast();
@@ -365,32 +370,56 @@ namespace UnityEngine.ResourceManagement
             return m_internalProvider.CanProvide<TObject>(location);
         }
 
+        Action<CacheList> m_retryReleaseEntryAction;
         public bool Release(IResourceLocation location, object asset)
         {
             CacheList entryList = null;
             if (location == null || !m_cache.TryGetValue(location.GetHashCode(), out entryList))
                 return false;
 
+            return ReleaseCache(entryList);
+        }
+
+        bool ReleaseCache(CacheList entryList)
+        {
             if (entryList.Release())
             {
-                if (m_lru != null)
+                if (!entryList.IsDone)
                 {
-                    m_lru.AddFirst(entryList);
-                    while (m_lru.Count > m_maxLRUCount)
-                    {
-                        m_lru.Last.Value.ReleaseAssets(m_internalProvider);
-                        m_lru.RemoveLast();
-                    }
+                    if (m_retryReleaseEntryAction == null)
+                        m_retryReleaseEntryAction = RetryEntryRelease;
+                    entryList.Retain(); //hold on since this will be retried...
+                    DelayedActionManager.AddAction(m_retryReleaseEntryAction, .2f, entryList);
+                    return false;
                 }
                 else
                 {
-                    entryList.ReleaseAssets(m_internalProvider);
-                }
+                    if (m_lru != null)
+                    {
+                        m_lru.AddFirst(entryList);
+                        while (m_lru.Count > m_maxLRUCount && m_lru.Last.Value.IsDone)
+                        {
+                            m_lru.Last.Value.ReleaseAssets(m_internalProvider);
+                            m_lru.RemoveLast();
+                        }
+                    }
+                    else
+                    {
+                        entryList.ReleaseAssets(m_internalProvider);
+                    }
 
-                m_cache.Remove(entryList.GetHashCode());
+                    if (!m_cache.Remove(entryList.GetHashCode()))
+                        Debug.LogWarningFormat("Unable to find entryList {0} in cache.", entryList.m_location);
+                }
                 return true;
             }
             return false;
+        }
+
+
+        internal void RetryEntryRelease(CacheList e)
+        {
+            ReleaseCache(e);
         }
 
         public IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
@@ -402,9 +431,6 @@ namespace UnityEngine.ResourceManagement
                 throw new System.ArgumentNullException("loadDependencyOperation");
 
             CacheList entryList = null;
-            if (location == null)
-                return null;
-
             if (!m_cache.TryGetValue(location.GetHashCode(), out entryList))
             {
                 if (m_lru != null && m_lru.Count > 0)

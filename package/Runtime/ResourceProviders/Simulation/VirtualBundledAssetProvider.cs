@@ -33,12 +33,6 @@ namespace UnityEngine.ResourceManagement
                 return base.Start(location);
             }
 
-            void OnComplete(IAsyncOperation<TObject> operation)
-            {
-                SetResult(operation.Result);
-                OnComplete();
-            }
-
             public override TObject ConvertResult(AsyncOperation operation) { return null; }
         }
 

@@ -24,6 +24,7 @@ namespace UnityEngine.ResourceManagement
         /// </summary>
         /// <value>The dependencies.</value>
         IList<IResourceLocation> Dependencies { get; }
+
     }
 
     /// <summary>

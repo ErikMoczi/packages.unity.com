@@ -14,11 +14,12 @@ namespace UnityEngine.ResourceManagement
                 {
                     loadDependencyOperation.Completed += (obj) =>
                     {
-                        AssetBundle bundle;
-                        if (obj.Result != null && obj.Result.Count > 0 && (bundle = obj.Result[0] as AssetBundle) != null)
-                            bundle.LoadAssetAsync<TObject>(location.InternalId).completed += OnComplete;
+                        AssetBundle bundle = obj.Result[0] as AssetBundle;
+                        var reqOp = bundle.LoadAssetAsync<TObject>(location.InternalId);
+                        if (reqOp.isDone)
+                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
                         else
-                            OnComplete();
+                            reqOp.completed += OnComplete;
                     };
                 }
                 return base.Start(location);
@@ -44,9 +45,6 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
-            if (asset == null)
-                throw new System.ArgumentNullException("asset");
-            // Bundled assets are exclusively unloaded by unloading their parent asset bundle
             return true;
         }
     }

@@ -19,7 +19,13 @@ namespace UnityEngine.ResourceManagement
         }
 #endif
 
+        static Dictionary<string, string> s_cachedPaths = new Dictionary<string, string>();
         static Dictionary<string, string> s_cachedValues = new Dictionary<string, string>();
+
+        public static void AddCachedValue(string key, string val)
+        {
+            s_cachedValues.Add(key, val);
+        }
 
         public static string GetGlobalVar(string variableName)
         {
@@ -28,13 +34,13 @@ namespace UnityEngine.ResourceManagement
             if (string.IsNullOrEmpty(variableName))
                 return string.Empty;
 
-            int i = variableName.LastIndexOf('.');
-            if (i < 0)
-                return variableName;
-
             string cachedValue = null;
             if (s_cachedValues.TryGetValue(variableName, out cachedValue))
                 return cachedValue;
+
+            int i = variableName.LastIndexOf('.');
+            if (i < 0)
+                return variableName;
 
             var className = variableName.Substring(0, i);
             var propName = variableName.Substring(i + 1);
@@ -73,7 +79,6 @@ namespace UnityEngine.ResourceManagement
             return variableName;
         }
 
-        static Dictionary<string, string> s_cachedPaths = new Dictionary<string, string>();
         public static string ExpandPathWithGlobalVariables(string inputString)
         {
             Debug.Assert(s_cachedPaths != null, "ResourceManagerConfig.ExpandPathWithGlobalVariables - s_cachedPaths == null.");

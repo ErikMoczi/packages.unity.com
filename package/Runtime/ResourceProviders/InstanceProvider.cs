@@ -39,7 +39,7 @@ namespace UnityEngine.ResourceManagement
                 prefabResult = operation.Result;
                 if (prefabResult == null)
                 {
-                    Debug.Log("Unable to load asset to instantiate: " + Context);
+                    Debug.LogWarningFormat("Unable to load asset to instantiate from location {0}", Context);
                 }
                 else if (Result == null)
                 {
@@ -78,7 +78,7 @@ namespace UnityEngine.ResourceManagement
             if (loadProvider == null)
                 throw new ArgumentException("IResourceProvider loadProvider cannot be null.");
             Object.Destroy(instance);
-            return loadProvider.Release(location, null);
+            return true;
         }
     }
 }

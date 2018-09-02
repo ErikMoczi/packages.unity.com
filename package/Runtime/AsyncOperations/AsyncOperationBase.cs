@@ -71,7 +71,7 @@ namespace UnityEngine.ResourceManagement
             {
                 Validate();
                 if (IsDone)
-                    DelayedActionManager.AddAction(value, this);
+                    DelayedActionManager.AddAction(value, 0, this);
                 else
                     m_completedActionT += value;
             }
@@ -88,7 +88,7 @@ namespace UnityEngine.ResourceManagement
 			{
                 Validate();
                 if (IsDone)
-                    DelayedActionManager.AddAction(value, this);
+                    DelayedActionManager.AddAction(value, 0, this);
                 else
                     m_completedAction += value;
             }

@@ -19,6 +19,13 @@ namespace UnityEngine.ResourceManagement
             return this;
         }
 
+        protected virtual void OnComplete(IAsyncOperation<TObject> op)
+        {
+            Validate();
+            SetResult(op.Result);
+            OnComplete();
+        }
+
         protected virtual void OnComplete(AsyncOperation op)
         {
             Validate();
@@ -33,6 +40,9 @@ namespace UnityEngine.ResourceManagement
             InvokeCompletionEvent();
         }
 
-        public abstract TObject ConvertResult(AsyncOperation op);
+        public virtual TObject ConvertResult(AsyncOperation op)
+        {
+            return default(TObject);
+        }
     }
 }

@@ -11,7 +11,15 @@ namespace UnityEngine.ResourceManagement
             System.Action<IAsyncOperation<IList<object>>> action;
             public InternalOp()
             {
-                action = (op) => { UnityWebRequestAssetBundle.GetAssetBundle(ResourceManagerConfig.ExpandPathWithGlobalVariables((Context as IResourceLocation).InternalId)).SendWebRequest().completed += OnComplete; };
+                action = (op) => 
+                {
+                    var bundleURL = ResourceManagerConfig.ExpandPathWithGlobalVariables((Context as IResourceLocation).InternalId);
+                    var reqOp = UnityWebRequestAssetBundle.GetAssetBundle(bundleURL).SendWebRequest();
+                    if (reqOp.isDone)
+                        DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
+                    else
+                        reqOp.completed += OnComplete;
+                };
             }
 
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)

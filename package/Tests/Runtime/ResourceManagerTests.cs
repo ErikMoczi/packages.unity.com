@@ -15,6 +15,7 @@ public class ResourceManagerTests : MonoBehaviour, IPrebuildSetup
     private string resourcesFolder = "Assets/ResourceManager/Tests/Runtime/TestResources/Resources/";
     public void Setup()
     {
+        ResourceManager.SetReady();
         if (!Directory.Exists(resourcesFolder))
             Directory.CreateDirectory(resourcesFolder);
     }

@@ -15,6 +15,13 @@ namespace UnityEngine.ResourceManagement
             {
                 Location = location;
             }
+            public override string Message
+            {
+                get
+                {
+                    return base.Message + ", Location=" + Location;
+                }
+            }
         }
         public class UnknownResourceLocationException<TAddress> : Exception
         {
@@ -22,6 +29,13 @@ namespace UnityEngine.ResourceManagement
             public UnknownResourceLocationException(TAddress address)
             {
                 Address = address;
+            }
+            public override string Message
+            {
+                get
+                {
+                    return base.Message + ", Address=" + Address;
+                }
             }
         }
         public class ResourceProviderFailedException : Exception
@@ -36,12 +50,38 @@ namespace UnityEngine.ResourceManagement
                 Location = location;
                 DependencyOperation = dependencyOperation;
             }
+            public override string Message
+            {
+                get
+                {
+                    return base.Message + ", Provider=" + Provider + ", Location=" + Location;
+                }
+            }
         }
 
         static List<IResourceLocator> s_resourceLocators = new List<IResourceLocator>();
         static List<IResourceProvider> s_resourceProviders = new List<IResourceProvider>();
         static List<IAsyncOperation> s_initializationOperations = new List<IAsyncOperation>();
-        static Action s_initializationComplete;
+        static Action s_initializationCompletionCallback;
+        static bool s_initializationCompleted = false;
+        /// <summary>
+        /// This is used to tell the resourcemanager that all initialization events have completed. It will normally be called from loading catalogs, but tests will need to call it before running.
+        /// </summary>
+        static public void SetReady()
+        {
+            s_initializationCompleted = true;
+            try
+            {
+                if (s_initializationCompletionCallback != null)
+                    s_initializationCompletionCallback();
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            s_initializationCompletionCallback = null;
+        }
+
         //used to look up locations of instatiated objects in order to find the provider when they are released
         static Dictionary<object, IResourceLocation> s_instanceToLocationMap = new Dictionary<object, IResourceLocation>();
 
@@ -61,14 +101,14 @@ namespace UnityEngine.ResourceManagement
                 if (value == null)
                     throw new ArgumentNullException("value");
 
-                if (s_initializationOperations.Count == 0)
-                    DelayedActionManager.AddAction(value, null);
+                if (s_initializationCompleted)
+                    DelayedActionManager.AddAction(value, 0);
                 else
-                    s_initializationComplete += value;
+                    s_initializationCompletionCallback += value;
             }
             remove
             {
-                s_initializationComplete -= value;
+                s_initializationCompletionCallback -= value;
             }
         }
 
@@ -76,14 +116,14 @@ namespace UnityEngine.ResourceManagement
             where TObject : class
         {
             Debug.Assert(location != null, "ResourceManager.Release_Internal - location == null.");
+
+            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.Release, location, Time.frameCount);
+            GetResourceProvider<TObject>(location).Release(location, asset);
             if (location.Dependencies != null)
             {
                 for (int i = 0; i < location.Dependencies.Count; i++)
                     Release_Internal(location.Dependencies[i], default(object));
             }
-
-            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.Release, location, Time.frameCount);
-            GetResourceProvider<TObject>(location).Release(location, asset);
         }
 
         static Dictionary<Type, object> s_loadAsyncInternalCache = new Dictionary<Type, object>();
@@ -114,9 +154,9 @@ namespace UnityEngine.ResourceManagement
                 throw new UnknownResourceProviderException(location);
 
             var operation = provider.ProvideAsync<TObject>(location, groupOp);
-            operation.Validate();
             if (operation == null)
                 throw new ResourceProviderFailedException(provider, location, groupOp);
+            operation.Validate();
 
             //Debug.Assert(operation.Context is IResourceLocation, "IAsyncOperation.context is not an IResourceLocation for " + location.InternalId + ", op.context=" + operation.Context);
 
@@ -186,7 +226,7 @@ namespace UnityEngine.ResourceManagement
                         }
                         else
                         {
-                            Debug.Log("FAILED Added instance " + op2.Result.GetInstanceID() + " loc: " + op2.Context);
+                            Debug.LogErrorFormat("s_instanceToLocationMap.Add failed for {0}, context={1}", op2.Result.GetInstanceID(), op2.Context);
                         }
                     }
                 };
@@ -267,6 +307,7 @@ namespace UnityEngine.ResourceManagement
             if (operation == null)
                 throw new ArgumentNullException("operation");
 
+            s_initializationCompleted = false;
             s_initializationOperations.Add(operation);
             operation.Completed += (op2) => RemoveInitializationOperation(op2);
         }
@@ -276,8 +317,8 @@ namespace UnityEngine.ResourceManagement
             if (operation == null)
                 throw new ArgumentNullException("operation");
             s_initializationOperations.Remove(operation);
-            if (s_initializationOperations.Count == 0 && s_initializationComplete != null)
-                s_initializationComplete();
+            if (s_initializationOperations.Count == 0)
+                SetReady();
         }
 
         /// <summary>
@@ -331,16 +372,31 @@ namespace UnityEngine.ResourceManagement
         {
             Debug.Assert(s_assetToLocationMap != null, "ResourceManager.Release - s_assetToLocationMap == null.");
             if (asset == null)
-                throw new ArgumentNullException("asset");
+                throw new ArgumentNullException("asset",  "Cannot release null asset.  It is possible that the object has been destroyed.");
 
             IResourceLocation loc = null;
             if (!s_assetToLocationMap.TryGetValue(asset, out loc))
             {
-                Debug.LogWarning("Unable to find location for instantiated object " + asset);
+                if (s_instanceToLocationMap.ContainsKey(asset))
+                    Debug.LogWarningFormat("ResourceManager.Release() - parameter asset {0} is an instance. Instances must be released using ReleaseInstance().", asset);
+                else
+                    Debug.LogWarningFormat("ResourceManager.Release() - unable to find location for asset {0}.", asset);
                 return;
             }
 
             Release_Internal(loc, asset);
+        }
+
+        public static void ReleaseInstance<TObject>(TObject instance, float delay)
+            where TObject : Object
+        {
+            Debug.Assert(s_instanceToLocationMap != null, "ResourceManager.ReleaseInstance - s_instanceToLocationMap == null.");
+            if (instance == null)
+                throw new ArgumentNullException("instance", "Cannot release null instance.  It is possible that the object has been destroyed.");
+            if (delay <= 0)
+                ReleaseInstance(instance);
+            else
+                DelayedActionManager.AddAction(new Action<TObject>(ReleaseInstance), delay, instance);
         }
 
         /// <summary>
@@ -361,20 +417,18 @@ namespace UnityEngine.ResourceManagement
 
             if (!s_instanceToLocationMap.TryGetValue(instance, out loc))
             {
-                Debug.LogWarning("Unable to find location for instantiated object " + instance.GetInstanceID());
+                if(s_assetToLocationMap.ContainsKey(instance))
+                    Debug.LogWarningFormat("ResourceManager.ReleaseInstance() - parameter instance {0} is an asset. Assets must be released using Release().", instance.GetInstanceID());
+                else
+                    Debug.LogWarningFormat("ResourceManager.ReleaseInstance() - unable to find location for instance {0}.", instance.GetInstanceID());
                 return;
             }
 
-
             s_instanceToLocationMap.Remove(instance);
-            if (loc.Dependencies != null)
-            {
-                for (int i = 0; i < loc.Dependencies.Count; i++)
-                    Release_Internal(loc.Dependencies[i], default(object));
-            }
 
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.ReleaseInstance, loc, Time.frameCount);
-            InstanceProvider.ReleaseInstance(GetResourceProvider<TObject>(loc), loc, instance);
+            if (InstanceProvider.ReleaseInstance(GetResourceProvider<TObject>(loc), loc, instance))
+                Release_Internal(loc, default(object));
         }
 
         class LocationOperation<TKey, TObject> : AsyncOperationBase<TObject>
@@ -487,7 +541,7 @@ namespace UnityEngine.ResourceManagement
             if (asyncFunction == null)
                 throw new ArgumentNullException("asyncFunction");
             var loc = GetResourceLocation(key);
-            if (loc == null && s_initializationOperations.Count > 0)
+            if (loc == null && !s_initializationCompleted)
             {
                 var locationOp = AsyncOperationCache.Instance.Acquire<LocationOperation<TKey, TObject>, object>();
                 return locationOp.Start(key, s_initializationOperations, asyncFunction);
@@ -501,7 +555,7 @@ namespace UnityEngine.ResourceManagement
             if (asyncFunction == null)
                 throw new ArgumentNullException("asyncFunction");
             var loc = GetResourceLocation(key);
-            if (loc == null && s_initializationOperations.Count > 0)
+            if (loc == null && !s_initializationCompleted)
             {
                 var locationOp = AsyncOperationCache.Instance.Acquire<InstanceLocationOperation<TKey, TObject>, object>();
                 return locationOp.Start(key, s_initializationOperations, asyncFunction, instantiateParameters);
@@ -552,7 +606,7 @@ namespace UnityEngine.ResourceManagement
             if (asyncFunction == null)
                 throw new ArgumentNullException("asyncFunction");
 
-            if (s_initializationOperations.Count > 0)
+            if (!s_initializationCompleted)
             {
                 var locationOp = AsyncOperationCache.Instance.Acquire<LocationListOperation<TKey, TObject>, object>();
                 return locationOp.Start(keyList, s_initializationOperations, asyncFunction);
@@ -698,7 +752,7 @@ namespace UnityEngine.ResourceManagement
         {
             Debug.Assert(s_initializationOperations != null, "ResourceManager.InstantiateAllAsync - s_initializationOperations == null.");
 
-            if (s_initializationOperations.Count > 0)
+            if (!s_initializationCompleted)
             {
                 var locationOp = AsyncOperationCache.Instance.Acquire<InstanceLocationListOperation<TKey, TObject>, object>();
                 return locationOp.Start(keys, s_initializationOperations, GetInstantiateAllAsyncInternalFunc<TObject>(), callback, instantiateParameters);
