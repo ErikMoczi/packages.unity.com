@@ -6,7 +6,7 @@ using ResourceManagement.ResourceProviders;
 
 namespace ResourceManagement.ResourceProviders.Simulation
 {
-    public class VirtualAssetBundleProvider : ResourceProviderBase
+    internal class VirtualAssetBundleProvider : ResourceProviderBase
     {
         VirtualAssetBundleManager m_assetBundleManager;
         bool m_allowSynchronous;
@@ -22,7 +22,7 @@ namespace ResourceManagement.ResourceProviders.Simulation
             get { return m_allowSynchronous ? typeof(LocalAssetBundleProvider).FullName : typeof(RemoteAssetBundleProvider).FullName; }
         }
 
-        public class InternalOp<TObject> : InternalProviderOperation<TObject>
+        internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
             public VirtualAssetBundleManager assetBundleManager;

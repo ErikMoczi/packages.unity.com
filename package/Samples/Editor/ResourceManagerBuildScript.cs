@@ -5,8 +5,14 @@ using UnityEngine;
 using ResourceManagement.ResourceProviders;
 using ResourceManagement.ResourceProviders.Simulation;
 using System;
+
 namespace ResourceManagement.Samples
 {
+    /*
+     * This sample build script will gather all prefabs from a folder in the project and create addresses for them and create the runtime data needed
+     * to load and use the ResourceManager.  It is intended to be used as a starting point for those that want to implement a custom solution in a project.  
+     * A more comprehensive system is implemented in the Addressable package and is inteneded to fit most use cases.
+     */
     public class ResourceManagerBuildScript
     {
         //call from an [InitializeOnLoadMethod] to use
@@ -39,6 +45,9 @@ namespace ResourceManagement.Samples
             BuildPipeline.BuildPlayer(ops);
         }
 
+
+        //create ResourceManagerRuntimeData for the player to use
+        //in the player, call ResourceManagerRuntimeData.Initialize() to load and init RM with this data
         static void PrepareRuntimeData(ResourceManagerRuntimeData.ProviderMode mode, bool isDevBuild, BuildTargetGroup targetGroup, BuildTarget target)
         {
             ResourceManagerRuntimeData runtimeData = new ResourceManagerRuntimeData();
@@ -142,10 +151,10 @@ namespace ResourceManagement.Samples
         //this class is used to save and restore the EditorBuildSettings scene list when entering and existing play mode,
         //since the build script may modify it when running in Fast or Virtual mode
         [Serializable]
-        public class SceneManagerState
+        internal class SceneManagerState
         {
             [Serializable]
-            public class EBSSceneState
+            internal class EBSSceneState
             {
                 [SerializeField]
                 public string guid;

@@ -1,0 +1,11 @@
+﻿{
+    "name": "com.unity.resourcemanager.RuntimeTests",
+    "references": [
+        "com.unity.resourcemanager.Runtime"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": []
+}

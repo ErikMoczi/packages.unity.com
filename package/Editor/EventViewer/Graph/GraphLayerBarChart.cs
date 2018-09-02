@@ -14,7 +14,7 @@ namespace EditorDiagnostics
 
         Rect bounds;
         Vector2 gridSize;
-        
+
         public GraphLayerBarChartMesh(int stream, string name, string desc, Color color) : base(stream, name, desc, color) { }
         private void AddQuadToMesh(float left, float right, float bot, float top)
         {

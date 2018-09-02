@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
-using ResourceManagement.Diagnostics;
+using ResourceManagement.Util;
 using ResourceManagement.AsyncOperations;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -62,14 +62,14 @@ namespace ResourceManagement
             foreach (var dep in loc.dependencies)
                 Release_Internal(dep, default(object));
 
-            ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.Release, loc, Time.frameCount);
+            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.Release, loc, Time.frameCount);
             GetResourceProvider<TObject>(loc).Release(loc, obj);
         }
 
         static IAsyncOperation<TObject> LoadAsync_Internal<TObject>(IResourceLocation loc)
             where TObject : class
         {
-            ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.LoadAsyncRequest, loc, Time.frameCount);
+            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncRequest, loc, Time.frameCount);
             var groupOp = StartLoadGroupOperation(loc.dependencies, LoadAsync_Internal<object>, null);
             return GetResourceProvider<TObject>(loc).ProvideAsync<TObject>(loc, groupOp);
         }
@@ -77,8 +77,8 @@ namespace ResourceManagement
         static IAsyncOperation<TObject> InstantiateAsync_Internal<TObject>(IResourceLocation loc)
             where TObject : Object
         {
-            ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.InstantiateAsyncRequest, loc, Time.frameCount);
-            ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.LoadAsyncRequest, loc, Time.frameCount);
+            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncRequest, loc, Time.frameCount);
+            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncRequest, loc, Time.frameCount);
 
             var groupOp = StartLoadGroupOperation(loc.dependencies, LoadAsync_Internal<object>, null);
             return instanceProvider.ProvideInstanceAsync<TObject>(GetResourceProvider<TObject>(loc), loc, groupOp);
@@ -234,7 +234,7 @@ namespace ResourceManagement
                 foreach (var dep in loc.dependencies)
                     Release_Internal(dep, default(object));
 
-            ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.ReleaseInstance, loc, Time.frameCount);
+            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.ReleaseInstance, loc, Time.frameCount);
             instanceProvider.ReleaseInstance(GetResourceProvider<TObject>(loc), loc, inst);
         }
 
@@ -345,8 +345,8 @@ namespace ResourceManagement
         public static IAsyncOperation<Scene> LoadSceneAsync<TAddress>(TAddress address, LoadSceneMode loadMode = LoadSceneMode.Single)
         {
             return StartInternalAsyncOp(address, (IResourceLocation loc) => {
-                    ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.LoadSceneAsyncRequest, loc, 1);
-                    ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.CacheEntryLoadPercent, loc, 0);
+                    ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadSceneAsyncRequest, loc, 1);
+                    ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, loc, 0);
 
                     var groupOp = StartLoadGroupOperation(loc.dependencies, LoadAsync_Internal<object>, null);
                     return sceneProvider.ProvideSceneAsync(loc, groupOp, loadMode);

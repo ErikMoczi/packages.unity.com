@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace ResourceManagement.AsyncOperations
 {
-    public class EmptyGroupOperation<TObject> : LoadGroupOperation<TObject>
+    internal class EmptyGroupOperation<TObject> : LoadGroupOperation<TObject>
         where TObject : class
     {
         public EmptyGroupOperation()

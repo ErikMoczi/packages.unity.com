@@ -79,10 +79,10 @@ namespace EditorDiagnostics
             public class DataSet
             {
                 [Serializable]
-                public class DataStream
+                internal class DataStream
                 {
                     [Serializable]
-                    public struct Sample
+                    internal struct Sample
                     {
                         public int frame;
                         public int value;

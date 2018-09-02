@@ -1,9 +1,9 @@
 ﻿using UnityEngine;
 using EditorDiagnostics;
 
-public class ProfilerStressTest : MonoBehaviour
+internal class ProfilerStressTest : MonoBehaviour
 {
-    public static string graphName = "EventStress";
+    internal static string graphName = "EventStress";
     //[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void init()
     {

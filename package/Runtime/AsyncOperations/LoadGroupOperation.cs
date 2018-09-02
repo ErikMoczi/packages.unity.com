@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace ResourceManagement.AsyncOperations
 {
-    public class LoadGroupOperation<TObject> : AsyncOperationBase<IList<TObject>>
+    internal class LoadGroupOperation<TObject> : AsyncOperationBase<IList<TObject>>
         where TObject : class
     {
         protected int totalToLoad;

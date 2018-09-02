@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+
+//this is used by code surrounded by #if !UNITY_EDITOR, so dont remove even if it appears that it can be removed
 using UnityEngine.Networking.PlayerConnection;
 
 namespace EditorDiagnostics

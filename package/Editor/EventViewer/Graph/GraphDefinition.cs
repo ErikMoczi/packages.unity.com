@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace EditorDiagnostics
 {
-    public class GraphDefinition
+    internal class GraphDefinition
     {
         int m_maxValueStream;
         public IGraphLayer[] layers;

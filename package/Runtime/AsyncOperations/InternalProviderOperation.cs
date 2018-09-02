@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using ResourceManagement.Diagnostics;
+using ResourceManagement.Util;
 
 namespace ResourceManagement.AsyncOperations
 {
@@ -36,7 +36,7 @@ namespace ResourceManagement.AsyncOperations
 
         protected virtual void OnComplete()
         {
-            ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.LoadAsyncCompletion, m_location, Time.frameCount - startFrame);
+            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncCompletion, m_location, Time.frameCount - startFrame);
             InvokeCompletionEvent(this);
             AsyncOperationCache.Instance.Release<TObject>(this);
         }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using ResourceManagement;
 using ResourceManagement.AsyncOperations;
 
-public class ResourceLocationLoadOperation<TAddress> : AsyncOperationBase<IResourceLocation>
+internal class ResourceLocationLoadOperation<TAddress> : AsyncOperationBase<IResourceLocation>
 {
     IList<IResourceLocator> m_resourceLocators;
     List<IAsyncOperation<IResourceLocator>> m_locatorLoadOps;

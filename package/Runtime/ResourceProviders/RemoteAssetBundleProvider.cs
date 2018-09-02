@@ -9,7 +9,7 @@ namespace ResourceManagement.ResourceProviders
 {
     public class RemoteAssetBundleProvider : ResourceProviderBase
     {
-        public class InternalOp<TObject> : InternalProviderOperation<TObject>
+        internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
             public override InternalProviderOperation<TObject> Start(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation)

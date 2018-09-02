@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using ResourceManagement.Diagnostics;
 
 namespace ResourceManagement.ResourceProviders
 {

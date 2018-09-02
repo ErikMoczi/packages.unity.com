@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using ResourceManagement.AsyncOperations;
-using ResourceManagement.Diagnostics;
+using ResourceManagement.Util;
 
 namespace ResourceManagement.ResourceProviders
 {
     public class InstanceProvider : IInstanceProvider
     {
-        public class InternalOp<TObject> : AsyncOperationBase<TObject>
+        internal class InternalOp<TObject> : AsyncOperationBase<TObject>
             where TObject : class
         {
             IResourceLocation m_location;
@@ -29,7 +29,7 @@ namespace ResourceManagement.ResourceProviders
 
             void OnComplete(IAsyncOperation<TObject> op)
             {
-                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.InstantiateAsyncCompletion, m_location, Time.frameCount - m_startFrame);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, m_location, Time.frameCount - m_startFrame);
                 prefabResult = op.result;
                 if (prefabResult == null)
                 {

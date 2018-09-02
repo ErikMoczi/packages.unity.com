@@ -156,6 +156,31 @@ namespace EditorDiagnostics
                 return;
             InitializeGUI();
 
+            //this prevent arrow key events from reaching the treeview, so navigation via keys is disabled
+            if (Event.current.type == EventType.KeyDown)
+            {
+                if (Event.current.keyCode == KeyCode.RightArrow)
+                {
+                    m_inspectFrame++;
+                    if (m_inspectFrame > latestFrame)
+                        m_inspectFrame = latestFrame;
+                    m_eventList.SetEvents(activeSession.GetFrameEvents(m_inspectFrame));
+                    lastEventListUpdate = Time.unscaledTime;
+                    m_eventListFrame = m_inspectFrame;
+                    return;
+                }
+                if (Event.current.keyCode == KeyCode.LeftArrow)
+                {
+                    m_inspectFrame--;
+                    if (m_inspectFrame < 0)
+                        m_inspectFrame = 0;
+                    m_eventList.SetEvents(activeSession.GetFrameEvents(m_inspectFrame));
+                    lastEventListUpdate = Time.unscaledTime;
+                    m_eventListFrame = m_inspectFrame;
+                    return;
+                }
+            }
+
             DrawToolBar(session);
 
             var r = EditorGUILayout.GetControlRect();

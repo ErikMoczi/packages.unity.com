@@ -26,7 +26,7 @@ namespace EditorDiagnostics
         int m_inspectFrame = -1;
         public int visibleStartTime = 0;
         public int visibleDuration = 300;
-        public EventGraphListView(EventDataCollection.PlayerSession data, TreeViewState tvs, MultiColumnHeaderState mchs, Func<string, bool> filter) : base(tvs, new MultiColumnHeader(mchs))
+        internal EventGraphListView(EventDataCollection.PlayerSession data, TreeViewState tvs, MultiColumnHeaderState mchs, Func<string, bool> filter) : base(tvs, new MultiColumnHeader(mchs))
         {
             showBorder = true;
             m_data = data;

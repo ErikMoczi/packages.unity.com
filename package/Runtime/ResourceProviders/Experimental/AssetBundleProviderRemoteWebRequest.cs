@@ -5,13 +5,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using ResourceManagement.AsyncOperations;
-using ResourceManagement.Diagnostics;
+using ResourceManagement.Util;
 
 namespace ResourceManagement.ResourceProviders.Experimental
 {
     public class AssetBundleProviderRemoteWebRequest : ResourceProviderBase
     {
-        public class InternalOp<TObject> : AsyncOperationBase<TObject>
+        internal class InternalOp<TObject> : AsyncOperationBase<TObject>
             where TObject : class
         {
             IResourceLocation m_location;
@@ -70,7 +70,7 @@ namespace ResourceManagement.ResourceProviders.Experimental
 
             void InternalOp_completed(AsyncOperation obj)
             {
-                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.LoadAsyncCompletion, m_location, Time.frameCount - m_startFrame);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncCompletion, m_location, Time.frameCount - m_startFrame);
                 m_result = (obj as AssetBundleCreateRequest).assetBundle as TObject;
                 InvokeCompletionEvent(this);
                 AsyncOperationCache.Instance.Release<TObject>(this);

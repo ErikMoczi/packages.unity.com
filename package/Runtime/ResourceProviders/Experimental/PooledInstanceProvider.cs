@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using ResourceManagement.AsyncOperations;
-using ResourceManagement.Diagnostics;
+using ResourceManagement.Util;
 
 namespace ResourceManagement.ResourceProviders.Experimental
 {
@@ -23,7 +23,7 @@ namespace ResourceManagement.ResourceProviders.Experimental
                 m_Provider.Update();
             }
         }
-        public Dictionary<IResourceLocation, InstancePool> m_pools = new Dictionary<IResourceLocation, InstancePool>();
+        internal Dictionary<IResourceLocation, InstancePool> m_pools = new Dictionary<IResourceLocation, InstancePool>();
 
         float m_releaseTime;
         public PooledInstanceProvider(string name, float releaseTime)
@@ -87,7 +87,7 @@ namespace ResourceManagement.ResourceProviders.Experimental
             pool.m_holdCount--;
         }
 
-        public class InternalOp<TObject> : AsyncOperationBase<TObject> where TObject : class
+        internal class InternalOp<TObject> : AsyncOperationBase<TObject> where TObject : class
         {
             IResourceLocation m_location;
             TObject prefabResult;
@@ -106,7 +106,7 @@ namespace ResourceManagement.ResourceProviders.Experimental
 
             void OnComplete(IAsyncOperation<TObject> op)
             {
-                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.InstantiateAsyncCompletion, m_location, Time.frameCount - m_startFrame);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, m_location, Time.frameCount - m_startFrame);
                 prefabResult = op.result;
                 if (prefabResult == null)
                 {
@@ -124,7 +124,7 @@ namespace ResourceManagement.ResourceProviders.Experimental
             }
         }
 
-        public class InstancePool
+        internal class InstancePool
         {
             public IResourceLocation m_location;
             public float m_lastRefTime = 0;
@@ -142,7 +142,7 @@ namespace ResourceManagement.ResourceProviders.Experimental
             public T Get<T>() where T : class
             {
                 m_lastRefTime = Time.unscaledTime;
-                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.PoolCount, m_location, m_instances.Count - 1);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.PoolCount, m_location, m_instances.Count - 1);
                 var o = m_instances.Pop() as T;
                 (o as GameObject).SetActive(true);
                 return o;
@@ -152,7 +152,7 @@ namespace ResourceManagement.ResourceProviders.Experimental
             {
                 (o as GameObject).SetActive(false);
                 m_instances.Push(o);
-                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.PoolCount, m_location, m_instances.Count);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.PoolCount, m_location, m_instances.Count);
             }
 
             internal bool Update(float releaseTime)
@@ -165,7 +165,7 @@ namespace ResourceManagement.ResourceProviders.Experimental
                         var inst = m_instances.Pop();
                         m_loadProvider.Release(m_location, inst);
                         GameObject.Destroy(inst);
-                        ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.PoolCount, m_location, m_instances.Count);
+                        ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.PoolCount, m_location, m_instances.Count);
                         if (m_instances.Count == 0 && m_holdCount == 0)
                             return false;
                     }

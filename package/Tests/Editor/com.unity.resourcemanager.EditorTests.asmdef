@@ -1,0 +1,8 @@
+﻿{
+    "name": "com.unity.resourcemanager.EditorTests",
+    "references": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

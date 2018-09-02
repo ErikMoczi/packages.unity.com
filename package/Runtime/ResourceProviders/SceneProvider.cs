@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using ResourceManagement.AsyncOperations;
-using ResourceManagement.Diagnostics;
+using ResourceManagement.Util;
 using System;
 using System.Collections.Generic;
 
@@ -24,8 +24,8 @@ namespace ResourceManagement.ResourceProviders
 
             void OnSceneLoaded(AsyncOperation op)
             {
-                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.LoadSceneAsyncCompletion, m_location, 1);
-                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.CacheEntryLoadPercent, m_location, 100);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadSceneAsyncCompletion, m_location, 1);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, m_location, 100);
                 m_result = SceneManager.GetActiveScene();
                 InvokeCompletionEvent(this);
             }
@@ -58,7 +58,7 @@ namespace ResourceManagement.ResourceProviders
 
                 if (m_result.isLoaded)
                 {
-                    ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.ReleaseSceneAsyncRequest, m_location, 0);
+                    ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.ReleaseSceneAsyncRequest, m_location, 0);
                     SceneManager.UnloadSceneAsync(loc.id).completed += OnSceneUnloaded;
                 }
                 else
@@ -71,8 +71,8 @@ namespace ResourceManagement.ResourceProviders
 
             void OnSceneUnloaded(AsyncOperation op)
             {
-                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.ReleaseSceneAsyncCompletion, m_location, 0);
-                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.CacheEntryLoadPercent, m_location, 0);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.ReleaseSceneAsyncCompletion, m_location, 0);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, m_location, 0);
             }
 
             public override bool isDone

@@ -6,8 +6,13 @@ using ResourceManagement.ResourceProviders;
 
 namespace ResourceManagement.Samples
 {
+    /*
+     * This data is intended to be serialized and passed to the player.  A build script would create an instance of this data and call the Save() method.
+     * In the player initialization code, ResourceManagerRuntimeData.Initialize() will load and init the ResourceManager.
+     */
     public class ResourceManagerRuntimeData
     {
+        //This controls which providers are added to the ResourceManager
         public enum ProviderMode
         {
             FastMode,       //faster iteration mode, assets are loaded directly through the AssetDatabase
@@ -72,7 +77,7 @@ namespace ResourceManagement.Samples
         }
 
         //attach to RM profiler
-        public bool profileEvents = false;
+        public bool profileEvents = true;
 
         //the mode determines the providers added to ResourceManager
         public ProviderMode resourceProviderMode = ProviderMode.VirtualBundles;
@@ -114,7 +119,7 @@ namespace ResourceManagement.Samples
                     ResourceManager.resourceProviders.Insert(0, new AssetDatabaseProvider());
                     break;
                 case ProviderMode.VirtualBundles:
-                    ResourceManagement.ResourceProviders.Simulation.VirtualAssetBundleManager.AddProviders();
+                    ResourceProviders.Simulation.VirtualAssetBundleManager.AddProviders();
                     break;
                 case ProviderMode.AssetBundles:
                 {
@@ -128,6 +133,7 @@ namespace ResourceManagement.Samples
         }
 
 #if UNITY_EDITOR
+        //Serialize this class in JSON format to a location for the player to load
         public void Save()
         {
             var data = JsonUtility.ToJson(this);
@@ -135,7 +141,7 @@ namespace ResourceManagement.Samples
                 Directory.CreateDirectory(Path.GetDirectoryName(PlayerLocation));
             File.WriteAllText(PlayerLocation, data);
         }
-
 #endif
+
     }
 }

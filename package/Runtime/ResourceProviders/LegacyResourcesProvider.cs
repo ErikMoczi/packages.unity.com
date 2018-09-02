@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using ResourceManagement.AsyncOperations;
-using ResourceManagement.Diagnostics;
+using ResourceManagement.Util;
 
 namespace ResourceManagement.ResourceProviders
 {
     public class LegacyResourcesProvider : ResourceProviderBase
     {
-        public class InternalOp<TObject> : InternalProviderOperation<TObject>
+        internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
             public override InternalProviderOperation<TObject> Start(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation)

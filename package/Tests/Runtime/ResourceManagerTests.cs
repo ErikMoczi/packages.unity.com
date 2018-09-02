@@ -1,19 +1,27 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using NUnit.Framework;
 using ResourceManagement;
-using ResourceManagement.AsyncOperations;
-using ResourceManagement.ResourceLocations;
 using ResourceManagement.ResourceLocators;
 using ResourceManagement.ResourceProviders;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
-public class ResourceManagerTests : MonoBehaviour
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
+public class ResourceManagerTests : MonoBehaviour, IPrebuildSetup
 {
+    public void Setup()
+    {
+#if UNITY_EDITOR
+        EditorApplication.ExecuteMenuItem("Build/AssetBundles");
+#endif
+    }
+
     [UnityTest]
     public IEnumerator CanLoadAssetsFrom_ResourcesFolder_WtihCallback()
     {
@@ -21,7 +29,7 @@ public class ResourceManagerTests : MonoBehaviour
         ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
 
         GameObject cube = null;
-        var oper = ResourceManager.LoadAsync<GameObject, string>("test");
+        var oper = ResourceManager.LoadAsync<GameObject, string>("Cube");
         oper.completed +=
             (op) =>
             {
@@ -38,7 +46,7 @@ public class ResourceManagerTests : MonoBehaviour
         ResourceManager.resourceProviders.Add(new LegacyResourcesProvider());
         ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
 
-        IAsyncOperation op = ResourceManager.LoadAsync<GameObject, string>("test");
+        IAsyncOperation op = ResourceManager.LoadAsync<GameObject, string>("Cube");
 
         while (!op.isDone)
             yield return null;
@@ -55,10 +63,10 @@ public class ResourceManagerTests : MonoBehaviour
         ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
 
         List<GameObject> gameObjects = new List<GameObject>();
-        IAsyncOperation op = ResourceManager.LoadAllAsync<GameObject, string>(new List<string>() {"Cube", "Cube 1", "Cube 2"}, (operation) =>
-        {
-            gameObjects.Add(operation.result);
-        });
+        IAsyncOperation op = ResourceManager.LoadAllAsync<GameObject, string>(new List<string>() { "Cube", "Cube1", "Cube2" }, (operation) =>
+            {
+                gameObjects.Add(operation.result);
+            });
 
         yield return op;
 
@@ -102,14 +110,14 @@ public class ResourceManagerTests : MonoBehaviour
         ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
         ResourceManager.instanceProvider = new InstanceProvider();
 
-        IAsyncOperation op = ResourceManager.InstantiateAsync<GameObject, string>("Cube 1");
+        IAsyncOperation op = ResourceManager.InstantiateAsync<GameObject, string>("Cube1");
         yield return op;
 
         GameObject obj = op.result as GameObject;
         Assert.IsNotNull(obj);
-        Assert.IsNotNull(GameObject.Find("Cube 1(Clone)"));
+        Assert.IsNotNull(GameObject.Find("Cube1(Clone)"));
 
-        Destroy(GameObject.Find("Cube 1(Clone)"));
+        Destroy(GameObject.Find("Cube1(Clone)"));
     }
 
     [UnityTest]
@@ -121,21 +129,21 @@ public class ResourceManagerTests : MonoBehaviour
 
         List<GameObject> objects = new List<GameObject>();
         IAsyncOperation op =
-            ResourceManager.InstantiateAllAsync<GameObject, string>(new List<string>() {"Cube", "Cube 1", "Cube 2"},
+            ResourceManager.InstantiateAllAsync<GameObject, string>(new List<string>() { "Cube", "Cube1", "Cube2" },
                 (o) =>
-                {
-                    objects.Add(o.result);
-                });
+            {
+                objects.Add(o.result);
+            });
         yield return op;
 
         Assert.AreEqual(3, objects.Count);
         Assert.IsNotNull(GameObject.Find("Cube(Clone)"));
-        Assert.IsNotNull(GameObject.Find("Cube 1(Clone)"));
-        Assert.IsNotNull(GameObject.Find("Cube 2(Clone)"));
+        Assert.IsNotNull(GameObject.Find("Cube1(Clone)"));
+        Assert.IsNotNull(GameObject.Find("Cube2(Clone)"));
 
         Destroy(GameObject.Find("Cube(Clone)"));
-        Destroy(GameObject.Find("Cube 1(Clone)"));
-        Destroy(GameObject.Find("Cube 2(Clone)"));
+        Destroy(GameObject.Find("Cube1(Clone)"));
+        Destroy(GameObject.Find("Cube2(Clone)"));
     }
 
     [UnityTest]
@@ -145,16 +153,16 @@ public class ResourceManagerTests : MonoBehaviour
         ResourceManager.resourceProviders.Add(provider);
         ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
 
-        IResourceLocation dep1 = ResourceManager.GetResourceLocation("Cube 1");
-        IResourceLocation dep2 = ResourceManager.GetResourceLocation("Cube 2");
+        IResourceLocation dep1 = ResourceManager.GetResourceLocation("Cube1");
+        IResourceLocation dep2 = ResourceManager.GetResourceLocation("Cube2");
         IResourceLocation[] deps = new IResourceLocation[] { dep1, dep2 };
         IResourceLocation location = new ResourceLocationBase<string>("Cube", "Cube", provider.providerId, deps);
 
         List<GameObject> loadedDependencies = new List<GameObject>();
         IAsyncOperation asyncOperation = ResourceManager.PreloadDependenciesAsync(location, (op) =>
-        {
-            loadedDependencies.Add(op.result as GameObject);
-        });
+            {
+                loadedDependencies.Add(op.result as GameObject);
+            });
 
         while (!asyncOperation.isDone)
             yield return null;
@@ -169,16 +177,16 @@ public class ResourceManagerTests : MonoBehaviour
         ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
         ResourceManager.instanceProvider = new InstanceProvider();
 
-        IAsyncOperation op = ResourceManager.InstantiateAsync<GameObject, string>("Cube 1");
+        IAsyncOperation op = ResourceManager.InstantiateAsync<GameObject, string>("Cube1");
         while (!op.isDone)
             yield return null;
 
-        Assert.IsNotNull(GameObject.Find("Cube 1(Clone)"));
+        Assert.IsNotNull(GameObject.Find("Cube1(Clone)"));
 
-        ResourceManager.ReleaseInstance<GameObject, string>("Cube 1", op.result as GameObject);
+        ResourceManager.ReleaseInstance<GameObject, string>("Cube1", op.result as GameObject);
 
         yield return null;
-        Assert.IsNull(GameObject.Find("Cube 1(Clone)"));
+        Assert.IsNull(GameObject.Find("Cube1(Clone)"));
     }
 
     [UnityTest]
@@ -188,15 +196,15 @@ public class ResourceManagerTests : MonoBehaviour
         ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
 
         IResourceLocation loc1 = ResourceManager.GetResourceLocation("Cube");
-        IResourceLocation loc2 = ResourceManager.GetResourceLocation("Cube 1");
+        IResourceLocation loc2 = ResourceManager.GetResourceLocation("Cube1");
         List<IResourceLocation> locs = new List<IResourceLocation>() { loc1, loc2 };
 
         List<GameObject> loadedObjects = new List<GameObject>();
         IAsyncOperation loadOp = ResourceManager.LoadAllAsync<GameObject, IResourceLocation>(locs, (op) =>
-        {
-            GameObject go = op.result as GameObject;
-            loadedObjects.Add(go);
-        });
+            {
+                GameObject go = op.result as GameObject;
+                loadedObjects.Add(go);
+            });
 
         while (!loadOp.isDone)
             yield return null;

@@ -3,7 +3,10 @@ using UnityEditor;
 
 namespace ResourceManagement.Samples
 {
-    //simple helper GUI to configure ResourceManager build data
+    /*
+     * Sample implementation of a minimal build configuration for using the ResourceManager.
+     * A more comprehensive system is implemented in the Addressable package and is inteneded to fit most use cases.
+     */
     public class ResourceManagerSettings : EditorWindow
     {
 /*      //put similar code in your project to use this window

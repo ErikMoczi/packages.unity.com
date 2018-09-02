@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEditor;
 namespace EditorDiagnostics
 {
-    public class GraphLayerBackgroundGraph : GraphLayerBase
+    internal class GraphLayerBackgroundGraph : GraphLayerBase
     {
         Color m_bgColor;
         int m_visibilityStream;

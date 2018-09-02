@@ -2,10 +2,10 @@ using UnityEngine;
 using UnityEditor;
 namespace EditorDiagnostics
 {
-    public class GraphLayerLabel : GraphLayerBase
+    internal class GraphLayerLabel : GraphLayerBase
     {
         System.Func<int, string> labelFunc;
-        public GraphLayerLabel(int stream, string name, string desc, Color color, System.Func<int, string> func) : base(stream, name, desc, color) { labelFunc = func; }
+        internal GraphLayerLabel(int stream, string name, string desc, Color color, System.Func<int, string> func) : base(stream, name, desc, color) { labelFunc = func; }
         public override void Draw(EventDataCollection.PlayerSession.DataSet e, Rect r, int startFrame, int frameCount, int inspectFrame, bool expanded, Material mat, int maxValue)
         {
             var endTime = startFrame + frameCount;

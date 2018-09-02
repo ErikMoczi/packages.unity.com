@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using Object = UnityEngine.Object;
-using ResourceManagement.Diagnostics;
+using ResourceManagement.Util;
 
 namespace ResourceManagement.ResourceProviders
 {
     public class CachedProvider : IResourceProvider
     {
-        public abstract class CacheEntry
+        internal abstract class CacheEntry
         {
             protected object m_result;
             protected IResourceLocation m_location;
@@ -20,7 +20,7 @@ namespace ResourceManagement.ResourceProviders
             public object result { get { return m_result; } }
         }
 
-        public class CacheEntry<TObject> : CacheEntry, IAsyncOperation<TObject>
+        internal class CacheEntry<TObject> : CacheEntry, IAsyncOperation<TObject>
             where TObject : class
         {
             IAsyncOperation operation;
@@ -60,7 +60,7 @@ namespace ResourceManagement.ResourceProviders
                 m_cacheList = cl;
                 m_location = loc;
                 operation = op;
-                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.CacheEntryLoadPercent, m_location, 0);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, m_location, 0);
                 m_result = res;
                 if (m_result == null)
                     op.completed += OnComplete;
@@ -75,7 +75,7 @@ namespace ResourceManagement.ResourceProviders
                     m_onComplete = null;
                     tmpEvent(this);
                 }
-                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.CacheEntryLoadPercent, m_location, 100);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, m_location, 100);
             }
 
             internal override bool CanProvide<T1>(IResourceLocation loc)
@@ -84,7 +84,7 @@ namespace ResourceManagement.ResourceProviders
             }
         }
 
-        public class CacheList
+        internal class CacheList
         {
             public int m_refCount;
             public IResourceLocation m_location;
@@ -144,18 +144,18 @@ namespace ResourceManagement.ResourceProviders
             internal void Retain()
             {
                 m_refCount++;
-                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.CacheEntryRefCount, m_location, m_refCount);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryRefCount, m_location, m_refCount);
             }
 
             internal bool Release()
             {
                 m_refCount--;
-                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.CacheEntryRefCount, m_location, m_refCount);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryRefCount, m_location, m_refCount);
                 return m_refCount == 0;
             }
         }
 
-        public Dictionary<int, CacheList> m_cache = new Dictionary<int, CacheList>();
+        internal Dictionary<int, CacheList> m_cache = new Dictionary<int, CacheList>();
         public override string ToString() { return "CachedProvider[" + m_internalProvider + "]"; }
         protected IResourceProvider m_internalProvider;
 
@@ -201,7 +201,7 @@ namespace ResourceManagement.ResourceProviders
                 }
 
                 m_cache.Remove(loc.GetHashCode());
-                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.CacheEntryLoadPercent, loc, 0);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, loc, 0);
 
                 return true;
             }

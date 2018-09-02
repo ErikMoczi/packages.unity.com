@@ -4,7 +4,7 @@ using ResourceManagement;
 using ResourceManagement.AsyncOperations;
 using UnityEngine;
 
-public class ResourceLocationCollectionLoadOperation<TAddress> : AsyncOperationBase<IList<IResourceLocation>>
+internal class ResourceLocationCollectionLoadOperation<TAddress> : AsyncOperationBase<IList<IResourceLocation>>
 {
     IList<IResourceLocator> m_resourceLocators;
     IList<IAsyncOperation<IResourceLocator>> m_locatorLoadOps;

@@ -5,7 +5,7 @@ using System;
 
 namespace EditorDiagnostics
 {
-    public class EventListView : TreeView
+    internal class EventListView : TreeView
     {
         class EventTreeViewItem : TreeViewItem
         {

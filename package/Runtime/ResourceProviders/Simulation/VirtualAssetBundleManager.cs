@@ -6,8 +6,8 @@ namespace ResourceManagement.ResourceProviders.Simulation
 {
     public class VirtualAssetBundleManager : MonoBehaviour
     {
-        public List<VirtualAssetBundle> bundles = new List<VirtualAssetBundle>();
-        List<LoadAssetBundleOp> operations = new List<LoadAssetBundleOp>();
+        internal List<VirtualAssetBundle> bundles = new List<VirtualAssetBundle>();
+        Dictionary<string, LoadAssetBundleOp> operations = new Dictionary<string, LoadAssetBundleOp>();
         public int remoteLoadSpeed = 1024 * 100; //100 KB per second
         public int localLoadSpeed = 1024 * 1024 * 10; //10 MB per second
 
@@ -113,18 +113,19 @@ namespace ResourceManagement.ResourceProviders.Simulation
 
         public IAsyncOperation<VirtualAssetBundle> LoadAsync(string id)
         {
-            var op = new LoadAssetBundleOp(this, id, GetBundleLoadTime(id));
-            operations.Add(op);
+            LoadAssetBundleOp op = null;
+            if (!operations.TryGetValue(id, out op))
+                operations.Add(id, op = new LoadAssetBundleOp(this, id, GetBundleLoadTime(id)));
             return op;
         }
 
         public void Update()
         {
-            foreach (LoadAssetBundleOp o in operations)
+            foreach (var o in operations)
             {
-                if (!o.Update())
+                if (!o.Value.Update())
                 {
-                    operations.Remove(o);
+                    operations.Remove(o.Key);
                     break;
                 }
             }

@@ -4,7 +4,7 @@ using ResourceManagement.AsyncOperations;
 
 namespace ResourceManagement.ResourceProviders.Simulation
 {
-    public class VirtualBundledAssetProvider : ResourceProviderBase
+    internal class VirtualBundledAssetProvider : ResourceProviderBase
     {
         public int loadSpeed;
         public VirtualBundledAssetProvider(int speed) { loadSpeed = speed; }
@@ -13,7 +13,7 @@ namespace ResourceManagement.ResourceProviders.Simulation
             get { return typeof(BundledAssetProvider).FullName; }
         }
 
-        public class InternalOp<TObject> : InternalProviderOperation<TObject>
+        internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
             public InternalProviderOperation<TObject> Start(IResourceLocation loc, int speed, IAsyncOperation<IList<object>> loadDependencyOperation)

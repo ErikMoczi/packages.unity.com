@@ -2,10 +2,10 @@ using UnityEngine;
 using UnityEditor;
 namespace EditorDiagnostics
 {
-    public class GraphLayerEventMarker : GraphLayerBase
+    internal class GraphLayerEventMarker : GraphLayerBase
     {
         Color m_endColor;
-        public GraphLayerEventMarker(int stream, string name, string desc, Color startColor, Color endColor) : base(stream, name, desc, startColor) { m_endColor = endColor; }
+        internal GraphLayerEventMarker(int stream, string name, string desc, Color startColor, Color endColor) : base(stream, name, desc, startColor) { m_endColor = endColor; }
         public override void Draw(EventDataCollection.PlayerSession.DataSet e, Rect r, int startFrame, int frameCount, int inspectFrame, bool expanded, Material mat, int maxValue)
         {
             var endTime = startFrame + frameCount;
@@ -23,9 +23,9 @@ namespace EditorDiagnostics
         }
     }
 
-    public class GraphLayerVertValueLine : GraphLayerBase
+    internal class GraphLayerVertValueLine : GraphLayerBase
     {
-        public GraphLayerVertValueLine(int stream, string name, string desc, Color color) : base(stream, name, desc, color) {}
+        internal GraphLayerVertValueLine(int stream, string name, string desc, Color color) : base(stream, name, desc, color) {}
         public override void Draw(EventDataCollection.PlayerSession.DataSet e, Rect r, int startFrame, int frameCount, int inspectFrame, bool expanded, Material mat, int maxValue)
         {
             var endTime = startFrame + frameCount;
@@ -44,7 +44,7 @@ namespace EditorDiagnostics
         }
     }
 
-    //public class GraphLayerVertValueLineRects : GraphLayerBase, System.IDisposable
+    //internal class GraphLayerVertValueLineRects : GraphLayerBase, System.IDisposable
     //{
     //    UnityEngine.Collections.NativeArray<Graphics.DrawRectArgs> rects = new UnityEngine.Collections.NativeArray<Graphics.DrawRectArgs>(1000, UnityEngine.Collections.Allocator.Persistent);
     //    public GraphLayerVertValueLineRects(int stream, string name, string desc, Color color) : base(stream, name, desc, color) { }

@@ -12,7 +12,7 @@ namespace ResourceManagement.AsyncOperations
             get { return m_instance; }
         }
 
-        public struct CacheKey
+        internal struct CacheKey
         {
             readonly Type opType;
             readonly Type objType;
