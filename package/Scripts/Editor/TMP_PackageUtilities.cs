@@ -11,7 +11,7 @@ namespace TMPro
     public class TMP_ProjectConversionUtility : EditorWindow
     {
         // Create Sprite Asset Editor Window
-        [MenuItem("Window/TextMeshPro/Project Files GUID Remapping Tool", false, 1510)]
+        [MenuItem("Window/TextMeshPro/Project Files GUID Remapping Tool", false, 2051)]
         static void ShowConverterWindow()
         {
             var window = GetWindow<TMP_ProjectConversionUtility>();
@@ -296,9 +296,9 @@ namespace TMPro
                 for (int i = 0; i < m_ModifiedAssetList.Count; i++)
                 {
                     // Make sure all file streams that might have been opened by Unity are closed.
-                    AssetDatabase.ReleaseCachedFileHandles();
+                    //AssetDatabase.ReleaseCachedFileHandles();
 
-                    Debug.Log("Writing asset file [" + m_ModifiedAssetList[i].assetFilePath + "].");
+                    //Debug.Log("Writing asset file [" + m_ModifiedAssetList[i].assetFilePath + "].");
 
                     File.WriteAllText(projectPath + "/" + m_ModifiedAssetList[i].assetFilePath, m_ModifiedAssetList[i].assetDataFile);
                 }
@@ -378,7 +378,7 @@ namespace TMPro
         /// <summary>
         /// 
         /// </summary>
-        [MenuItem("Window/TextMeshPro/Import Examples and Extra Content", false, 1500)]
+        [MenuItem("Window/TextMeshPro/Import Examples and Extra Content", false, 2050)]
         public static void ImportExamplesContentMenu()
         {
             ImportExtraContent();
@@ -712,7 +712,7 @@ namespace TMPro
                 for (int i = 0; i < modifiedAssetList.Count; i++)
                 {
                     // Make sure all file streams that might have been opened by Unity are closed.
-                    AssetDatabase.ReleaseCachedFileHandles();
+                    //AssetDatabase.ReleaseCachedFileHandles();
 
                     Debug.Log("Writing asset file [" + modifiedAssetList[i].assetFilePath + "].");
 

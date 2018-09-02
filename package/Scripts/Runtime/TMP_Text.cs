@@ -1400,7 +1400,6 @@ namespace TMPro
         protected TMP_SpriteAsset m_currentSpriteAsset;
         protected int m_spriteCount = 0;
         protected int m_spriteIndex;
-        protected InlineGraphicManager m_inlineGraphics;
         protected int m_spriteAnimationID;
         //protected TMP_XmlTagStack<int> m_spriteAnimationStack = new TMP_XmlTagStack<int>(new int[16]);
 

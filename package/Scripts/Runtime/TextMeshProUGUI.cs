@@ -65,15 +65,6 @@ namespace TMPro
 
 
         /// <summary>
-        /// 
-        /// </summary>
-        public InlineGraphicManager inlineGraphicManager
-        {
-            get { return m_inlineGraphics; }
-        }
-
-
-        /// <summary>
         /// Anchor dampening prevents the anchor position from being adjusted unless the positional change exceeds about 40% of the width of the underline character. This essentially stabilizes the anchor position.
         /// </summary>
         //public bool anchorDampening
