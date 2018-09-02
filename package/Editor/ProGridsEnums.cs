@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace ProGrids.Editor
+namespace UnityEditor.ProGrids
 {
 	[System.Flags]
 	enum Axis {

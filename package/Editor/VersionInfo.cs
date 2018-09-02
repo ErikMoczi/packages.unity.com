@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
-namespace ProGrids.Editor
+namespace UnityEditor.ProGrids
 {
 	enum VersionType
 	{

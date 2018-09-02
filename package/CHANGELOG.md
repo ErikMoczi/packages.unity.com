@@ -1,4 +1,4 @@
-# ProGrids 3.0.0-preview.7
+# ProGrids 3.0.0-preview.8
 
 ## Features
 
@@ -22,10 +22,11 @@
 - Change color of "close" button to light blue.
 - Remove `pg_` suffix from class and file names.
 - Remove automatic About Window popup on update.
+- `Alpha 0` shortcut now resets grid size modifier and offset.
 
-## Changes from preview.6
+## Changes from ProGrids 3.0.0-preview.7
 
-- Reset grid size and offset shortcut are now the same, fixing a conflict.
+- Fix reset shortcut not affecting the size modifier in some cases.
 
 # ProGrids 2.5.0-f.0
 

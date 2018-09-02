@@ -1,4 +1,4 @@
-namespace ProGrids.Editor
+namespace UnityEditor.ProGrids
 {
 	static class PreferenceKeys
 	{

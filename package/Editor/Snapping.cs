@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace ProGrids.Editor
+namespace UnityEditor.ProGrids
 {
 	static class Snapping
 	{

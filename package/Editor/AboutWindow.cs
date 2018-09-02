@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 
-namespace ProGrids.Editor
+namespace UnityEditor.ProGrids
 {
 	class AboutWindow : EditorWindow
 	{

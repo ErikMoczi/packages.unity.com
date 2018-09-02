@@ -2,12 +2,12 @@
 using UnityEditor;
 using System.Collections;
 
-namespace ProGrids.Editor
+namespace UnityEditor.ProGrids
 {
 	class ScenePreferencesWindow : EditorWindow
 	{
 		internal ProGridsEditor editor;
-
+		const string k_SnapFieldControlName = "ProGridsSnapValueField";
 		GUIContent m_PredictiveGrid = new GUIContent("Predictive Grid", "If enabled, the grid will automatically render at the optimal axis based on movement.");
 		GUIContent m_SnapAsGroup = new GUIContent("Snap as Group", "If enabled, selected objects will keep their relative offsets when moving.  If disabled, every object in the selection is snapped to grid independently.");
 
@@ -26,17 +26,24 @@ namespace ProGrids.Editor
 
 			GUILayout.Label("Snap Settings", EditorStyles.boldLabel);
 
-			float snap = editor.SnapValueInGridUnits * editor.SnapModifier;
+			float snap = editor.SnapValueInGridUnits * editor.SnapMultiplier;
 
 			EditorGUI.BeginChangeCheck();
 
+			string previousControl = GUI.GetNameOfFocusedControl();
+			GUI.SetNextControlName(k_SnapFieldControlName);
+
 			snap = EditorGUILayout.FloatField("Snap Value", snap);
 
-			if(EditorGUI.EndChangeCheck())
-				editor.SnapValueInGridUnits = snap / editor.SnapModifier;
+			if (EditorGUI.EndChangeCheck() ||
+			    (GUI.GetNameOfFocusedControl().Equals(k_SnapFieldControlName)
+			     && !previousControl.Equals(k_SnapFieldControlName)))
+			{
+				editor.SnapModifier = Defaults.DefaultSnapMultiplier;
+				editor.SnapValueInGridUnits = snap;
+			}
 
 			editor.ScaleSnapEnabled = EditorGUILayout.Toggle("Snap On Scale", editor.ScaleSnapEnabled);
-
 
 			bool snapAsGroup = editor.SnapAsGroupEnabled;
 			snapAsGroup = EditorGUILayout.Toggle(m_SnapAsGroup, snapAsGroup);

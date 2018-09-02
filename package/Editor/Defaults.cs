@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace ProGrids.Editor
+namespace UnityEditor.ProGrids
 {
 	static class Defaults
 	{
@@ -8,7 +8,7 @@ namespace ProGrids.Editor
 		public static readonly Color GridColorY = new Color(.46f, .9f, .46f, .15f);
 		public static readonly Color GridColorZ = new Color(.46f, .46f, .9f, .15f);
 
-		public const SnapUnit @SnapUnit = ProGrids.Editor.SnapUnit.Meter;
+		public const SnapUnit @SnapUnit = ProGrids.SnapUnit.Meter;
 		public const int DefaultSnapMultiplier = 2048;
 		public const float SnapValue = 1f;
 		public const float AlphaBump = .25f;

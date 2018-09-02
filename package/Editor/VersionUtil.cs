@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace ProGrids.Editor
+namespace UnityEditor.ProGrids
 {
 	/// <summary>
 	/// Utility methods for finding and extracting version & changelog information.

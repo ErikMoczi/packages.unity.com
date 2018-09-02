@@ -6,7 +6,7 @@ using UnityEngine.TestTools;
 using NUnit.Framework;
 using System.Collections;
 
-namespace ProGrids.Editor.Tests
+namespace UnityEditor.ProGrids.Tests
 {
 	public class SnapOnAllAxes
 	{

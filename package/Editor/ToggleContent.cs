@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace ProGrids.Editor
+namespace UnityEditor.ProGrids
 {
 	[System.Serializable]
 	class ToggleContent

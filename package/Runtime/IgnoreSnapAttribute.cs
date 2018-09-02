@@ -1,13 +1,10 @@
 using System;
 
-namespace ProGrids.Runtime
+namespace UnityEngine.ProGrids
 {
 	/// <summary>
-	/// Tells ProGrids to skip snapping on this object.
+	/// Apply this attribute to a MonoBehaviour to disable grid snapping on the parent object.
 	/// </summary>
-	/// <remarks>
-	/// On Unity versions less than 5.2 this will not take effect until after a script reload.
-	/// </remarks>
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
 	public class ProGridsNoSnapAttribute : Attribute
 	{
@@ -17,8 +14,18 @@ namespace ProGrids.Runtime
 	/// Tells ProGrids to check for a function named `bool IsSnapEnabled()` on this object. In this way you can
 	/// programmatically enable or disable snapping.
 	/// </summary>
+	[Obsolete("Use IConditionalSnap interface")]
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
 	public class ProGridsConditionalSnapAttribute : Attribute
 	{
+	}
+
+	/// <summary>
+	/// Implement this interface in a MonoBehaviour to dynamically enable or disabled grid snapping on the parent
+	/// GameObject.
+	/// </summary>
+	public interface IConditionalSnap
+	{
+		bool snapEnabled { get; }
 	}
 }

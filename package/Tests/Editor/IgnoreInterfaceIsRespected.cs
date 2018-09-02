@@ -10,39 +10,28 @@ using UObject = UnityEngine.Object;
 
 namespace UnityEditor.ProGrids.Tests
 {
-	public class IgnoreAttributeIsRespected
+	public class IgnoreInterfaceIsRespected
 	{
 		[Test]
-		public void GameObjectWithIgnoreAttribIsNotSnapped()
+		public void GameObjectWithIgnoreInterfaceIsNotSnapped()
 		{
 			var go = new GameObject();
 			Assert.IsTrue(EditorUtility.SnapIsEnabled(go.transform));
+			var attrib = go.AddComponent<IgnoreSnapInterface>();
 			EditorUtility.ClearSnapEnabledCache();
-			go.AddComponent<IgnoreSnap>();
+			attrib.snapEnabled = false;
 			Assert.IsFalse(EditorUtility.SnapIsEnabled(go.transform));
 			UObject.DestroyImmediate(go);
 		}
 
 		[Test]
-		public void GameObjectWithConditionalIgnoreAttribIsNotSnapped()
+		public void GameObjectWithIgnoreInterfaceIsSnapped()
 		{
 			var go = new GameObject();
 			Assert.IsTrue(EditorUtility.SnapIsEnabled(go.transform));
-			var attrib = go.AddComponent<IgnoreSnapConditionalAttribute>();
+			var attrib = go.AddComponent<IgnoreSnapInterface>();
 			EditorUtility.ClearSnapEnabledCache();
-			attrib.m_SnapEnabled = false;
-			Assert.IsFalse(EditorUtility.SnapIsEnabled(go.transform));
-			UObject.DestroyImmediate(go);
-		}
-
-		[Test]
-		public void GameObjectWithConditionalIgnoreAttribIsSnapped()
-		{
-			var go = new GameObject();
-			Assert.IsTrue(EditorUtility.SnapIsEnabled(go.transform));
-			var attrib = go.AddComponent<IgnoreSnapConditionalAttribute>();
-			EditorUtility.ClearSnapEnabledCache();
-			attrib.m_SnapEnabled = true;
+			attrib.snapEnabled = true;
 			Assert.IsTrue(EditorUtility.SnapIsEnabled(go.transform));
 			UObject.DestroyImmediate(go);
 		}

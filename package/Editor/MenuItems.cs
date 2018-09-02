@@ -1,6 +1,6 @@
 ﻿using UnityEditor;
 
-namespace ProGrids.Editor
+namespace UnityEditor.ProGrids
 {
 	static class MenuItems
 	{

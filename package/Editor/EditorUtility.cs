@@ -6,9 +6,10 @@ using UnityEditor;
 using UnityEngine;
 using System.IO;
 using System.Linq;
+using UnityEngine.ProGrids;
 using Object = UnityEngine.Object;
 
-namespace ProGrids.Editor
+namespace UnityEditor.ProGrids
 {
 	static class EditorUtility
 	{
@@ -197,6 +198,21 @@ namespace ProGrids.Editor
 			public override bool IsEnabled() { return m_IsEnabledDelegate(); }
 		}
 
+		class ConditionalSnapInterfaceOverride : SnapEnabledOverride
+		{
+			IConditionalSnap m_Target;
+
+			public ConditionalSnapInterfaceOverride(IConditionalSnap target)
+			{
+				m_Target = target;
+			}
+
+			public override bool IsEnabled()
+			{
+				return m_Target == null || m_Target.snapEnabled;
+			}
+		}
+
 		public static void ClearSnapEnabledCache()
 		{
 			s_SnapOverrideCache.Clear();
@@ -217,26 +233,32 @@ namespace ProGrids.Editor
 					continue;
 
 				Type type = c.GetType();
-
 				bool hasNoSnapAttrib;
+				var snapInterface = c as IConditionalSnap;
 
-				if(s_NoSnapAttributeTypeCache.TryGetValue(type, out hasNoSnapAttrib))
+				if (snapInterface != null)
+				{
+					s_SnapOverrideCache.Add(t, new ConditionalSnapInterfaceOverride(snapInterface));
+					return snapInterface.snapEnabled;
+				}
+				else if(s_NoSnapAttributeTypeCache.TryGetValue(type, out hasNoSnapAttrib))
 				{
 					if(hasNoSnapAttrib)
 					{
-						s_SnapOverrideCache.Add(t, new SnapIsEnabledOverride(!hasNoSnapAttrib));
+						s_SnapOverrideCache.Add(t, new SnapIsEnabledOverride(false));
 						return false;
 					}
 				}
 				else
 				{
+					// this method is deprecated as of 3.0.0-preview.8
 					attribs = type.GetCustomAttributes(true);
 					hasNoSnapAttrib = attribs.Any(x => x != null && x.ToString().Contains("ProGridsNoSnap"));
 					s_NoSnapAttributeTypeCache.Add(type, hasNoSnapAttrib);
 
 					if(hasNoSnapAttrib)
 					{
-						s_SnapOverrideCache.Add(t, new SnapIsEnabledOverride(!hasNoSnapAttrib));
+						s_SnapOverrideCache.Add(t, new SnapIsEnabledOverride(false));
 						return false;
 					}
 				}

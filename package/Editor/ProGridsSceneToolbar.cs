@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-namespace ProGrids.Editor
+namespace UnityEditor.ProGrids
 {
 	partial class ProGridsEditor
 	{
@@ -60,7 +60,7 @@ namespace ProGrids.Editor
 
 				extendoOpen = IconUtility.LoadIcon("ProGrids2_MenuExtendo_Open.png");
 				extendoClosed = IconUtility.LoadIcon("ProGrids2_MenuExtendo_Close.png");
-				
+
 				extendoStyle.normal.background = extendoOpen;
 				extendoStyle.hover.background = extendoOpen;
 
@@ -167,7 +167,7 @@ namespace ProGrids.Editor
 
 			menuRect.y = menuStart;
 
-			Styles.snapIncrementContent.text = (SnapValueInGridUnits * SnapModifier).ToString("#.####");
+			Styles.snapIncrementContent.text = (SnapValueInGridUnits * SnapMultiplier).ToString("#.####");
 
 			if (GUI.Button(menuRect, Styles.snapIncrementContent, Styles.gridButtonStyleBlank))
 			{

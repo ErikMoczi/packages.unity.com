@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace ProGrids.Editor
+namespace UnityEditor.ProGrids
 {
 	[InitializeOnLoad]
 	class PlayModeStateListener

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Object = UnityEngine.Object;
 
-namespace ProGrids.Editor
+namespace UnityEditor.ProGrids
 {
 	static class GridRenderer
 	{

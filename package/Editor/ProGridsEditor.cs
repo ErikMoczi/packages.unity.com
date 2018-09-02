@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
 
-namespace ProGrids.Editor
+namespace UnityEditor.ProGrids
 {
 	[InitializeOnLoad]
 	static class ProGridsInitializer
@@ -144,9 +144,19 @@ namespace ProGrids.Editor
 			}
 		}
 
-		internal float SnapModifier
+		internal float SnapMultiplier
 		{
 			get { return m_SnapSettings.SnapMultiplierFrac(); }
+		}
+
+		internal int SnapModifier
+		{
+			get { return m_SnapSettings.SnapMultiplier; }
+			set
+			{
+				m_SnapSettings.SnapMultiplier = value;
+				EditorPrefs.SetString(PreferenceKeys.SnapSettings, JsonUtility.ToJson(m_SnapSettings));
+			}
 		}
 
 		/// <summary>
@@ -162,6 +172,7 @@ namespace ProGrids.Editor
 			set
 			{
 				m_SnapSettings.SnapValue = value;
+				EditorPrefs.SetString(PreferenceKeys.SnapSettings, JsonUtility.ToJson(m_SnapSettings));
 
 				if (EditorPrefs.GetBool(PreferenceKeys.SyncUnitySnap, true))
 				{
@@ -192,8 +203,6 @@ namespace ProGrids.Editor
 						}
 					}
 				}
-
-				EditorPrefs.SetString(PreferenceKeys.SnapSettings, JsonUtility.ToJson(m_SnapSettings));
 			}
 		}
 
@@ -755,7 +764,7 @@ namespace ProGrids.Editor
 				{
 					if (!FullGridEnabled && !GridIsOrthographic && m_GridIsLocked)
 						MenuNudgePerspectiveReset();
-						
+
 					ResetGridSize();
 				}
 				else if (currentEvent.keyCode == m_CyclePerspectiveShortcut)
