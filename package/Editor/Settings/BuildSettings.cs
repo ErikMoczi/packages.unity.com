@@ -1,7 +1,7 @@
 using System;
-using UnityEditor.Experimental.Build.AssetBundle;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using UnityEditor.Build.Content;
 using UnityEngine.AddressableAssets;
 
 namespace UnityEditor.AddressableAssets

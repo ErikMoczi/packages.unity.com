@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEditor.Build;
-using UnityEditor.Build.Interfaces;
+using UnityEditor.Build.Pipeline;
+using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEngine.ResourceManagement;
 using UnityEngine.AddressableAssets;
 

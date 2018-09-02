@@ -1,13 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor;
 using System.Linq;
-using UnityEditor.Build;
-using UnityEditor.Build.AssetBundle;
-using UnityEditor.Build.Interfaces;
 using UnityEditor.Build.Utilities;
-using UnityEditor.Build.Tasks;
-using System.IO;
+using UnityEditor.Build.Pipeline;
+using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Pipeline.Tasks;
+using UnityEditor.Build.Pipeline.Utilities;
 using UnityEngine.ResourceManagement;
 using UnityEngine.AddressableAssets;
 using UnityEditor.SceneManagement;
@@ -164,11 +162,11 @@ namespace UnityEditor.AddressableAssets
                     var dependencyData = new BuildDependencyData();
                    // using (var progressTracker = new TimeThrottledProgressTracker(100))
                     {
-                        var buildParams = new BuildParameters(buildTarget, buildTargetGroup, aaSettings.buildSettings.bundleBuildPath, ContentPipeline.kTempBuildPath);
+                        var buildParams = new BuildParameters(buildTarget, buildTargetGroup, aaSettings.buildSettings.bundleBuildPath);
                         buildParams.UseCache = aaSettings.buildSettings.useCache && !forceRebuild;
                         using (var buildCleanup = new BuildStateCleanup(buildParams.TempOutputFolder))
                         {
-                            var buildContext = new BuildContext(new BundleContent(allBundleInputDefs), new Unity5PackedIdentifiers(), buildParams, dependencyData, bundleWriteData, bundleBuildResults);//, progressTracker);
+                            var buildContext = new BuildContext(new BundleBuildContent(allBundleInputDefs), new Unity5PackedIdentifiers(), buildParams, dependencyData, bundleWriteData, bundleBuildResults);//, progressTracker);
                             buildContext.SetContextObject(new AddressableAssetsBuildContext() { m_settings = aaSettings, m_runtimeData = runtimeData, m_bundleToAssetGroup = bundleToAssetGroup, m_contentCatalog = contentCatalog });
 
                             var buildTasks = new List<IBuildTask>();
@@ -266,11 +264,11 @@ namespace UnityEditor.AddressableAssets
 
             using (var progressTracker = new TimeThrottledProgressTracker(100))
             {
-                var buildParams = new BuildParameters(EditorUserBuildSettings.activeBuildTarget, BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget), aaSettings.buildSettings.bundleBuildPath, ContentPipeline.kTempBuildPath);
+                var buildParams = new BuildParameters(EditorUserBuildSettings.activeBuildTarget, BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget), aaSettings.buildSettings.bundleBuildPath);
                 buildParams.UseCache = aaSettings.buildSettings.useCache;
                 using (var buildCleanup = new BuildStateCleanup(buildParams.TempOutputFolder))
                 {
-                    var buildContext = new BuildContext(new BundleContent(allBundleInputDefs), new Unity5PackedIdentifiers(), buildParams, depData = new BuildDependencyData(), bundleWriteData = new BundleWriteData(), new BundleBuildResults(), progressTracker);
+                    var buildContext = new BuildContext(new BundleBuildContent(allBundleInputDefs), new Unity5PackedIdentifiers(), buildParams, depData = new BuildDependencyData(), bundleWriteData = new BundleWriteData(), new BundleBuildResults(), progressTracker);
                     buildContext.SetContextObject(new AddressableAssetsBuildContext() { m_settings = aaSettings, m_runtimeData = runtimeData, m_contentCatalog = contentCatalog });
 
                     var buildTasks = new List<IBuildTask>();
