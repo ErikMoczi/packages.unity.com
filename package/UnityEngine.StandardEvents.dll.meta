@@ -13,7 +13,6 @@ PluginImporter:
     second:
       enabled: 0
       settings:
-        Exclude Editor: 1
         Exclude N3DS: 1
         Exclude PS4: 1
         Exclude PSP2: 1
@@ -23,7 +22,7 @@ PluginImporter:
   - first:
       Editor: Editor
     second:
-      enabled: 0
+      enabled: 1
       settings:
         DefaultValueInitialized: true
   - first:
