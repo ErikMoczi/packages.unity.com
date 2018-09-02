@@ -44,8 +44,10 @@ namespace UnityEditor.Build.Pipeline.Tasks
             if (parameters.UseCache && cache != null)
             {
                 CalcualteCacheEntry(dependencyData, ref cacheEntry);
-                if (cache.TryLoadFromCache(cacheEntry, ref unusedSources))
+                List<ObjectIdentifier> unusedSourcesList = null; // Old Mono Runtime doesn't implement HashSet serialization
+                if (cache.TryLoadFromCache(cacheEntry, ref unusedSourcesList))
                 {
+                    unusedSources.UnionWith(unusedSourcesList); // Old Mono Runtime doesn't implement HashSet serialization
                     SetOutputInformation(unusedSources, dependencyData);
                     return ReturnCode.SuccessCached;
                 }
@@ -66,7 +68,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
 
             SetOutputInformation(unusedSources, dependencyData);
 
-            if (parameters.UseCache && cache != null && !cache.TrySaveToCache(cacheEntry, unusedSources))
+            if (parameters.UseCache && cache != null && !cache.TrySaveToCache(cacheEntry, unusedSources.ToList())) // Old Mono Runtime doesn't implement HashSet serialization
                 BuildLogger.LogWarning("Unable to cache StripUnusedSpriteSources results.");
 
             return ReturnCode.Success;

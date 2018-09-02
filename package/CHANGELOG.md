@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.0.13-preview] - 2018-05-03
+- fixed hash serialization bug.
+
 ## [0.0.12-preview] - 2018-05-02
 - Added build task for generating extra data for sprite loading edge case
 
