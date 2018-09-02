@@ -31,5 +31,11 @@ namespace UnityEngine.ResourceManagement
         /// <value>The dependencies.</value>
         bool HasDependencies { get; }
 
+        /// <summary>
+        /// Gets any data object associated with this locations
+        /// </summary>
+        /// <value>The object.</value>
+        object Data { get; }
+
     }
 }

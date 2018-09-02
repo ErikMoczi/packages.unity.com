@@ -248,9 +248,9 @@ namespace UnityEngine.ResourceManagement
 
     public class EmptyOperation<TObject> : AsyncOperationBase<TObject>
     {
-        public virtual IAsyncOperation<TObject> Start(IResourceLocation loc, TObject val, System.Exception error = null)
+        public virtual IAsyncOperation<TObject> Start(object context, TObject val, System.Exception error = null)
         {
-            m_context = loc;
+            m_context = context;
             m_error = error;
             SetResult(val);
             DelayedActionManager.AddAction((Action)InvokeCompletionEvent, 0);
@@ -261,16 +261,37 @@ namespace UnityEngine.ResourceManagement
     public class ChainOperation<TObject, TObjectDependency> : AsyncOperationBase<TObject>
     {
         Func<TObjectDependency, IAsyncOperation<TObject>> m_func;
+        IAsyncOperation m_dependencyOperation;
+        IAsyncOperation m_dependentOperation;
         public virtual IAsyncOperation<TObject> Start(IAsyncOperation<TObjectDependency> dependency, Func<TObjectDependency, IAsyncOperation<TObject>> func)
         {
             m_func = func;
+            m_dependencyOperation = dependency;
+            m_dependentOperation = null;
             dependency.Completed += OnDependencyCompleted;
             return this;
         }
 
+        public override float PercentComplete
+        {
+            get
+            {
+                if (m_dependentOperation == null)
+                {
+                    if (m_dependencyOperation == null)
+                        return 0;
+                            
+                    return m_dependencyOperation.PercentComplete * .5f;
+                }
+                return m_dependentOperation.PercentComplete * .5f + .5f;
+            }
+        }
+
         private void OnDependencyCompleted(IAsyncOperation<TObjectDependency> op)
         {
+            m_dependencyOperation = null;
             var funcOp = m_func(op.Result);
+            m_dependentOperation = funcOp;
             m_context = funcOp.Context;
             op.Release();
             funcOp.Completed += OnFuncCompleted;
@@ -352,6 +373,19 @@ namespace UnityEngine.ResourceManagement
             }
         }
 
+        public override float PercentComplete
+        {
+            get
+            {
+                if (IsDone || m_operations.Count < 1)
+                    return 1f;
+                float total = 0;
+                for (int i = 0; i < m_operations.Count; i++)
+                    total += m_operations[i].PercentComplete;
+                return total / m_operations.Count;
+            }
+        }
+
         private void OnOperationCompleted(IAsyncOperation<TObject> op)
         {
             if (m_callback != null)
@@ -363,7 +397,10 @@ namespace UnityEngine.ResourceManagement
                 {
                     Result[i] = op.Result;
                     if (op.Status != AsyncOperationStatus.Succeeded)
+                    {
                         Status = op.Status;
+                        m_error = op.OperationException;
+                    }
                     break;
                 }
             }

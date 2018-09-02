@@ -7,19 +7,23 @@ namespace UnityEngine.ResourceManagement
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
            where TObject : class
         {
+            IAsyncOperation m_dependencyOperation;
+            AssetBundleRequest m_requestOperation;
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
                 m_result = null;
+                m_requestOperation = null;
+                m_dependencyOperation = loadDependencyOperation;
                 loadDependencyOperation.Completed += (op) =>
                 {
                     if (op.Status == AsyncOperationStatus.Succeeded)
                     {
                         AssetBundle bundle = op.Result[0] as AssetBundle;
-                        var reqOp = bundle.LoadAssetAsync<TObject>(location.InternalId);
-                        if (reqOp.isDone)
-                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
+                        m_requestOperation = bundle.LoadAssetAsync<TObject>(location.InternalId);
+                        if (m_requestOperation.isDone)
+                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, m_requestOperation);
                         else
-                            reqOp.completed += OnComplete;
+                            m_requestOperation.completed += OnComplete;
                     }
                     else
                     {
@@ -29,6 +33,20 @@ namespace UnityEngine.ResourceManagement
                     }
                 };
                 return base.Start(location);
+            }
+
+            public override float PercentComplete
+            {
+                get
+                {
+                    if (IsDone)
+                        return 1;
+
+                    float reqPer = m_requestOperation == null ? 0 : m_requestOperation.progress;
+                    if (m_dependencyOperation == null)
+                        return reqPer;
+                    return reqPer * .25f + m_dependencyOperation.PercentComplete * .75f;
+                }
             }
 
             public override TObject ConvertResult(AsyncOperation op)

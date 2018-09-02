@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2018-06-05
+ - implemented PercentComplete for all providers
+ - append hash to all bundle names
+ - pass crc & hash to bundle provider
+
+
 ## [2.0.17-preview] - 2018-05-21
  - minor code cleanup.
  

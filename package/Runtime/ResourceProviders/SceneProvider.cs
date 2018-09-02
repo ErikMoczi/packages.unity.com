@@ -12,6 +12,8 @@ namespace UnityEngine.ResourceManagement
             LoadSceneMode m_loadMode;
             Scene m_scene;
             System.Action<IAsyncOperation<IList<object>>> action;
+            IAsyncOperation m_dependencyOperation;
+            AsyncOperation m_requestOperation;
 
             public InternalOp()
             {
@@ -19,12 +21,12 @@ namespace UnityEngine.ResourceManagement
                 {
                     if (op == null || op.Status == AsyncOperationStatus.Succeeded)
                     {
-                        var reqOp = SceneManager.LoadSceneAsync((Context as IResourceLocation).InternalId, m_loadMode);
+                        m_requestOperation = SceneManager.LoadSceneAsync((Context as IResourceLocation).InternalId, m_loadMode);
                         m_scene = SceneManager.GetSceneAt(SceneManager.sceneCount - 1);
-                        if (reqOp == null || reqOp.isDone)
-                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnSceneLoaded, 0, reqOp);
+                        if (m_requestOperation == null || m_requestOperation.isDone)
+                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnSceneLoaded, 0, m_requestOperation);
                         else
-                            reqOp.completed += OnSceneLoaded;
+                            m_requestOperation.completed += OnSceneLoaded;
                     }
                     else
                     {
@@ -34,11 +36,25 @@ namespace UnityEngine.ResourceManagement
                     }
                 };
             }
+            public override float PercentComplete
+            {
+                get
+                {
+                    if (IsDone)
+                        return 1;
 
+                    float reqPer = m_requestOperation == null ? 0 : m_requestOperation.progress;
+                    if (m_dependencyOperation == null)
+                        return reqPer;
+                    return reqPer * .25f + m_dependencyOperation.PercentComplete * .75f;
+                }
+            }
 
             public IAsyncOperation<Scene> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, LoadSceneMode loadMode)
             {
                 Validate();
+                m_requestOperation = null;
+                m_dependencyOperation = loadDependencyOperation;
                 Context = location;
                 m_loadMode = loadMode;
                 if (loadDependencyOperation == null)

@@ -13,6 +13,7 @@ namespace UnityEngine.ResourceManagement
         public string ProviderId { get { return m_providerId; } }
         public IList<IResourceLocation> Dependencies { get { return m_dependencies; } }
         public bool HasDependencies { get { return m_dependencies != null && m_dependencies.Count > 0; } }
+        public object Data { get { return null; } }
 
         public override string ToString()
         {

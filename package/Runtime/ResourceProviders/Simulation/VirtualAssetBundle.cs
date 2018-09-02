@@ -44,7 +44,18 @@ namespace UnityEngine.ResourceManagement
         public string Name { get { return m_name; } }
         public List<AssetInfo> Assets { get { return m_serializedAssets; } }
 
-        public VirtualAssetBundle() { }
+        public VirtualAssetBundle()
+        {
+        }
+
+        public float PercentComplete
+        {
+            get
+            {
+                return (float)(m_headerBytesLoaded + m_dataBytesLoaded) / (m_headerSize + m_dataSize);
+            }
+        }
+
         public VirtualAssetBundle(string name, bool local)
         {
             m_latency = .1f;
@@ -54,7 +65,7 @@ namespace UnityEngine.ResourceManagement
             m_dataBytesLoaded = 0;
         }
 
-        public void SetSize(long headerSize, long dataSize)
+        public void SetSize(long dataSize, long headerSize)
         {
             m_headerSize = headerSize;
             m_dataSize = dataSize;
@@ -69,7 +80,6 @@ namespace UnityEngine.ResourceManagement
             m_assetMap = new Dictionary<string, AssetInfo>();
             foreach (var a in m_serializedAssets)
                 m_assetMap.Add(a.m_name, a);
-
         }
 
         class LoadAssetBundleOp : AsyncOperationBase<VirtualAssetBundle>
@@ -84,6 +94,15 @@ namespace UnityEngine.ResourceManagement
                 m_lastUpdateTime = Time.unscaledTime + bundle.m_latency;
             }
 
+            public override float PercentComplete
+            {
+                get
+                {
+                    if (IsDone)
+                        return 1f;
+                    return m_bundle.PercentComplete;
+                }
+            }
             public bool Update(long localBandwidth, long remoteBandwidth)
             {
                 Validate();

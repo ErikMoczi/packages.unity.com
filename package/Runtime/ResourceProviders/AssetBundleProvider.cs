@@ -1,37 +1,47 @@
-#if UNITY_EDITOR
 using System.Collections.Generic;
+using UnityEngine.Networking;
 
 namespace UnityEngine.ResourceManagement
 {
-    internal class VirtualAssetBundleProvider : ResourceProviderBase
+    public class AssetBundleProvider : ResourceProviderBase
     {
-        VirtualAssetBundleManager m_assetBundleManager;
-        string m_providerId;
-        public VirtualAssetBundleProvider(VirtualAssetBundleManager abm, string provId)
+        [System.Serializable]
+        public class CacheInfo
         {
-            m_assetBundleManager = abm;
-            m_providerId = provId;
+            public string m_hash;
+            public uint m_crc;
         }
 
-        public override string ProviderId{ get { return m_providerId; } }
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
-            public VirtualAssetBundleManager assetBundleManager;
             System.Action<IAsyncOperation<IList<object>>> action;
             IAsyncOperation m_dependencyOperation;
-            IAsyncOperation<VirtualAssetBundle> m_requestOperation;
+            AsyncOperation m_requestOperation;
             public InternalOp()
             {
                 action = (op) =>
                 {
                     if (op == null || op.Status == AsyncOperationStatus.Succeeded)
                     {
-                        (m_requestOperation = assetBundleManager.LoadAsync(Context as IResourceLocation)).Completed += (bundleOp) =>
+                        var path = (Context as IResourceLocation).InternalId;
+                        if (path.Contains("://"))
                         {
-                            SetResult(bundleOp.Result as TObject);
-                            OnComplete();
-                        };
+                            var cacheInfo = (Context as IResourceLocation).Data as CacheInfo;
+                            if(cacheInfo != null && !string.IsNullOrEmpty(cacheInfo.m_hash) && cacheInfo.m_crc != 0)
+                                m_requestOperation = UnityWebRequestAssetBundle.GetAssetBundle(path, Hash128.Parse(cacheInfo.m_hash), cacheInfo.m_crc).SendWebRequest();
+                            else
+                                m_requestOperation = UnityWebRequestAssetBundle.GetAssetBundle(path).SendWebRequest();
+                        }
+                        else
+                        {
+                            m_requestOperation = AssetBundle.LoadFromFileAsync(path);
+                        }
+
+                        if (m_requestOperation.isDone)
+                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, m_requestOperation);
+                        else
+                            m_requestOperation.completed += OnComplete;
                     }
                     else
                     {
@@ -39,7 +49,6 @@ namespace UnityEngine.ResourceManagement
                         SetResult(default(TObject));
                         OnComplete();
                     }
-
                 };
             }
 
@@ -50,9 +59,10 @@ namespace UnityEngine.ResourceManagement
                     if (IsDone)
                         return 1;
 
-                    float reqPer = m_requestOperation == null ? 0 : m_requestOperation.PercentComplete;
+                    float reqPer = m_requestOperation == null ? 0 : m_requestOperation.progress;
                     if (m_dependencyOperation == null)
                         return reqPer;
+
                     return reqPer * .25f + m_dependencyOperation.PercentComplete * .75f;
                 }
             }
@@ -67,10 +77,26 @@ namespace UnityEngine.ResourceManagement
                     action(null);
                 else
                     loadDependencyOperation.Completed += action;
+
                 return base.Start(location);
             }
 
-            public override TObject ConvertResult(AsyncOperation op) { return null; }
+            public override TObject ConvertResult(AsyncOperation op)
+            {
+                var localReq = op as AssetBundleCreateRequest;
+                if (localReq != null)
+                    return localReq.assetBundle as TObject;
+
+                var remoteReq = op as UnityWebRequestAsyncOperation;
+                if (remoteReq != null)
+                {
+                    var webReq = remoteReq.webRequest;
+                    if (string.IsNullOrEmpty(webReq.error))
+                        return (webReq.downloadHandler as DownloadHandlerAssetBundle).assetBundle as TObject;
+                    m_error = new System.Exception(string.Format("RemoteAssetBundleProvider unable to load from url {0}, result='{1}'.", webReq.url, webReq.error));
+                }
+                return default(TObject);
+            }
         }
 
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
@@ -78,7 +104,6 @@ namespace UnityEngine.ResourceManagement
             if (location == null)
                 throw new System.ArgumentNullException("location");
             var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
-            operation.assetBundleManager = m_assetBundleManager;
             return operation.Start(location, loadDependencyOperation);
         }
 
@@ -88,8 +113,14 @@ namespace UnityEngine.ResourceManagement
                 throw new System.ArgumentNullException("location");
             if (asset == null)
                 throw new System.ArgumentNullException("asset");
-            return m_assetBundleManager.Unload(location);
+            var bundle = asset as AssetBundle;
+            if (bundle != null)
+            {
+                bundle.Unload(true);
+                return true;
+            }
+
+            return false;
         }
     }
 }
-#endif

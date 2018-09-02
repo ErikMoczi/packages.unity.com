@@ -9,18 +9,23 @@ namespace UnityEngine.ResourceManagement
         {
             System.Action<IAsyncOperation<IList<object>>> action;
             System.Func<DownloadHandler, TObject> m_convertFunc;
+            IAsyncOperation m_dependencyOperation;
+            UnityWebRequestAsyncOperation m_requestOperation;
             public InternalOp()
             {
                 action = (op) => 
                 {
                     if (op == null || op.Status == AsyncOperationStatus.Succeeded)
                     {
-                        var url = (Context as IResourceLocation).InternalId;
-                        var reqOp = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET, new DownloadHandlerBuffer(), null).SendWebRequest();
-                        if (reqOp.isDone)
-                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
+                        var path = (Context as IResourceLocation).InternalId;
+                        //this is necessary because this provider can only load via UnityWebRequest
+                        if (!path.Contains("://"))
+                            path = "file://" + path;
+                        m_requestOperation = new UnityWebRequest(path, UnityWebRequest.kHttpVerbGET, new DownloadHandlerBuffer(), null).SendWebRequest();
+                        if (m_requestOperation.isDone)
+                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, m_requestOperation);
                         else
-                            reqOp.completed += OnComplete;
+                            m_requestOperation.completed += OnComplete;
                     }
                     else
                     {
@@ -31,11 +36,29 @@ namespace UnityEngine.ResourceManagement
                 };
             }
 
+            public override float PercentComplete
+            {
+                get
+                {
+                    if (IsDone)
+                        return 1;
+
+                    float reqPer = 0;
+                    if (m_requestOperation != null)
+                        reqPer = m_requestOperation.progress;
+
+                    if (m_dependencyOperation == null)
+                        return reqPer;
+
+                    return reqPer * .25f + m_dependencyOperation.PercentComplete * .75f;
+                }
+            }
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, System.Func<DownloadHandler, TObject> convertFunc)
             {
                 m_result = null;
                 m_convertFunc = convertFunc;
                 Context = location;
+                m_dependencyOperation = loadDependencyOperation;
                 if (loadDependencyOperation == null)
                     action(null);
                 else

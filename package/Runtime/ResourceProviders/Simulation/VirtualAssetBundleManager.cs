@@ -32,8 +32,7 @@ namespace UnityEngine.ResourceManagement
             m_remoteLoadSpeed = virtualBundleData.RemoteLoadSpeed;
             foreach (var b in virtualBundleData.AssetBundles)
                 m_allBundles.Add(bundleNameConverter(b.Name), b);
-            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(this, typeof(RemoteAssetBundleProvider).FullName), bundleCacheSize, buncleCacheAge));
-            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(this, typeof(LocalAssetBundleProvider).FullName), bundleCacheSize, buncleCacheAge));
+            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(this, typeof(AssetBundleProvider).FullName), bundleCacheSize, buncleCacheAge));
             ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualBundledAssetProvider(), assetCacheSize, assetCacheAge));
         }
 

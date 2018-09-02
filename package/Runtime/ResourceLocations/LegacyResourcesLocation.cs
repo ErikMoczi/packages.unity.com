@@ -11,5 +11,6 @@ namespace UnityEngine.ResourceManagement
         public string ProviderId { get { return typeof(LegacyResourcesProvider).FullName; } }
         public IList<IResourceLocation> Dependencies { get { return null; } }
         public bool HasDependencies { get { return false; } }
+        public object Data { get { return null; } }
     }
 }

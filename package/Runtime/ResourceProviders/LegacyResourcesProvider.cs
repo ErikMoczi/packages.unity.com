@@ -7,17 +7,26 @@ namespace UnityEngine.ResourceManagement
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
+            AsyncOperation m_requestOperation;
             public InternalProviderOperation<TObject> StartOp(IResourceLocation location)
             {
                 m_result = null;
-                var reqOp = Resources.LoadAsync<Object>(location.InternalId);
-                if (reqOp.isDone)
-                    DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
+                m_requestOperation = Resources.LoadAsync<Object>(location.InternalId);
+                if (m_requestOperation.isDone)
+                    DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, m_requestOperation);
                 else
-                    reqOp.completed += OnComplete;
+                    m_requestOperation.completed += OnComplete;
                 return base.Start(location);
             }
-
+            public override float PercentComplete
+            {
+                get
+                {
+                    if (IsDone)
+                        return 1;
+                    return m_requestOperation.progress;
+                }
+            }
             public override TObject ConvertResult(AsyncOperation op)
             {
                 return (op as ResourceRequest).asset as TObject;
