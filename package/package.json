@@ -1,0 +1,10 @@
+{
+	"name": "com.unity.resourcemanager",
+	"version": "0.0.1",
+	"unity": "2017.3",
+	"description": "Universal runtime asset loading API",
+	"keywords": [],
+	"category": "",
+	"dependencies": {
+	}
+}

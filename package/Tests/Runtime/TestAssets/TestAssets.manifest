@@ -1,0 +1,14 @@
+ManifestFileVersion: 0
+CRC: 3320765727
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: materialbundle
+      Dependencies: {}
+    Info_1:
+      Name: localbundle
+      Dependencies:
+        Dependency_0: materialbundle
+    Info_2:
+      Name: scene
+      Dependencies: {}
