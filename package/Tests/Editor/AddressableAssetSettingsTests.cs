@@ -18,6 +18,12 @@ namespace UnityEditor.AddressableAssets.Tests
         }
 
         [Test]
+        public void VerifyBuildTargetProfileVariable()
+        {
+            Assert.AreEqual(EditorUserBuildSettings.activeBuildTarget.ToString(), AddressableAssetProfileSettings.ProfileIDData.Evaluate(settings.profileSettings, settings.activeProfileId, "[BuildTarget]"));
+        }
+
+        [Test]
         public void AddRemovelabel()
         {
             const string labelName = "Newlabel";
@@ -48,7 +54,7 @@ namespace UnityEditor.AddressableAssets.Tests
         public void AddRemoveGroup()
         {
             const string groupName = "NewGroup";
-            var group = settings.CreateGroup(groupName, typeof(LocalAssetBundleAssetGroupProcessor).FullName);
+            var group = settings.CreateGroup(groupName, typeof(BundledAssetGroupProcessor), false, false);
             Assert.IsNotNull(group);
             settings.RemoveGroup(group);
             Assert.IsNull(settings.FindGroup(groupName));
@@ -57,7 +63,7 @@ namespace UnityEditor.AddressableAssets.Tests
         [Test]
         public void CreateNewEntry()
         {
-            var group = settings.CreateGroup("NewGroupForCreateOrMoveEntryTest", typeof(LocalAssetBundleAssetGroupProcessor).FullName);
+            var group = settings.CreateGroup("NewGroupForCreateOrMoveEntryTest", typeof(BundledAssetGroupProcessor), false, false);
             Assert.IsNotNull(group);
             var entry = settings.CreateOrMoveEntry(assetGUID, group);
             Assert.IsNotNull(entry);

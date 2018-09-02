@@ -24,6 +24,7 @@ namespace UnityEditor.AddressableAssets
             GroupAdded,
             GroupRemoved,
             GroupProcessorChanged,
+            GroupDataModified,
             EntryCreated,
             EntryAdded,
             EntryMoved,
@@ -36,15 +37,16 @@ namespace UnityEditor.AddressableAssets
             GroupRenamed,
             GroupProcessorModified,
             EntryModified,
-            BuildSettingsChanged
+            BuildSettingsChanged,
+            BatchModification // <-- posted object will be null.
         }
 
         /// <summary>
         /// TODO - doc
         /// </summary>
-        public Action<AddressableAssetSettings, ModificationEvent, object> OnModification;
+        public Action<AddressableAssetSettings, ModificationEvent, object> OnModification { get; set; }
         [SerializeField]
-        internal string pathForAsset;
+        private string m_defaultGroup;
         [SerializeField]
         Hash128 m_cachedHash;
         public Hash128 currentHash
@@ -55,7 +57,7 @@ namespace UnityEditor.AddressableAssets
                     return m_cachedHash;
                 var stream = new MemoryStream();
                 var formatter = new BinaryFormatter();
-                //formatter.Serialize(stream, m_buildSettings);
+//                formatter.Serialize(stream, m_buildSettings);
                 m_buildSettings.SerializeForHash(formatter, stream);
                 formatter.Serialize(stream, activeProfileId);
                 formatter.Serialize(stream, m_labelTable);
@@ -116,18 +118,18 @@ namespace UnityEditor.AddressableAssets
         public List<AddressableAssetGroup> groups { get { return m_groups; } }
 
         [SerializeField]
-        BuildSettings m_buildSettings = new BuildSettings();
+        AddressableAssetBuildSettings m_buildSettings = new AddressableAssetBuildSettings();
         /// <summary>
         /// TODO - doc
         /// </summary>
-        public BuildSettings buildSettings { get { return m_buildSettings; } }
+        public AddressableAssetBuildSettings buildSettings { get { return m_buildSettings; } }
 
         [SerializeField]
-        ProfileSettings m_profileSettings = new ProfileSettings();
+        AddressableAssetProfileSettings m_profileSettings = new AddressableAssetProfileSettings();
         /// <summary>
         /// TODO - doc
         /// </summary>
-        public ProfileSettings profileSettings { get { return m_profileSettings; } }
+        public AddressableAssetProfileSettings profileSettings { get { return m_profileSettings; } }
         
         [SerializeField]
         LabelTable m_labelTable = new LabelTable();
@@ -182,12 +184,10 @@ namespace UnityEditor.AddressableAssets
             }
         }
 
-        public List<AddressableAssetEntry> GetAllAssets()
+        public void GetAllAssets(List<AddressableAssetEntry> assets)
         {
-            var results = new List<AddressableAssetEntry>();
             foreach (var g in groups)
-                g.GatherAllAssets(results, true, true);
-            return results;
+                g.GatherAllAssets(assets, true, true);
         }
 
         public bool RemoveAssetEntry(string guid, bool postEvent = true)
@@ -223,7 +223,7 @@ namespace UnityEditor.AddressableAssets
         public static AddressableAssetSettings GetDefault(bool create, bool browse)
         {
             return GetDefault(create, browse, DefaultConfigFolder, DefaultConfigName);
-        }
+        } 
         internal static AddressableAssetSettings GetDefault(bool create, bool browse, string configFolder, string configName)
         {
             AddressableAssetSettings aa = null;
@@ -236,6 +236,7 @@ namespace UnityEditor.AddressableAssets
                 aa = AssetDatabase.LoadAssetAtPath<AddressableAssetSettings>(path);
                 if (aa == null && create)
                 {
+                    //uncomment this to restore the browse behavior
                     //if (browse)
                     //    path = EditorUtility.SaveFilePanelInProject("Addressable Assets Config Folder", configName, "asset", "Select file for Addressable Assets Settings", configFolder);
                     Debug.Log("Creating Addressables settings object: " + path);
@@ -243,14 +244,11 @@ namespace UnityEditor.AddressableAssets
                     AssetDatabase.CreateAsset(aa = CreateInstance<AddressableAssetSettings>(), path);
                     aa.profileSettings.Reset();
                     aa.name = configName;
-                    aa.pathForAsset = path;
-                    var playerData = aa.CreateGroup(PlayerDataGroupName, typeof(PlayerDataAssetGroupProcessor).FullName);
-                    playerData.readOnly = true;
+                    var playerData = aa.CreateGroup(PlayerDataGroupName, typeof(PlayerDataAssetGroupProcessor), false, true);
                     var resourceEntry = aa.CreateOrMoveEntry(AddressableAssetEntry.ResourcesName, playerData);
                     resourceEntry.isInResources = true;
                     aa.CreateOrMoveEntry(AddressableAssetEntry.EditorSceneListName, playerData);
-
-                    aa.CreateGroup(DefaultLocalGroupName, typeof(LocalAssetBundleAssetGroupProcessor).FullName, true);
+                    aa.CreateGroup(DefaultLocalGroupName, typeof(BundledAssetGroupProcessor), true, false);
 
                     AssetDatabase.SaveAssets();
                     EditorBuildSettings.AddConfigObject(configName, aa, true);
@@ -261,7 +259,7 @@ namespace UnityEditor.AddressableAssets
 
         public AddressableAssetGroup FindGroup(string name)
         {
-            return groups.Find(s => s.name == name);
+            return groups.Find(s => s.Name == name);
         }
 
         /// <summary>
@@ -271,7 +269,17 @@ namespace UnityEditor.AddressableAssets
         {
             get
             {
-                return groups.Find(s => s.isDefault);
+                if (string.IsNullOrEmpty(m_defaultGroup))
+                {
+                    //set to the first non readonly group if possible
+                    foreach (var g in groups)
+                    {
+                        m_defaultGroup = g.Guid;
+                        if (!g.IsProcessorType(typeof(PlayerDataAssetGroupProcessor)))
+                            break;
+                    }
+                }
+                return groups.Find(s => s.Guid == m_defaultGroup);
             }
         }
 
@@ -315,32 +323,47 @@ namespace UnityEditor.AddressableAssets
         /// </summary>
         public void MoveAssetsFromResources(Dictionary<string, string> guidToNewPath, AddressableAssetGroup targetParent)
         {
+            if (guidToNewPath == null)
+                return;
             var entries = new List<AddressableAssetEntry>();
             AssetDatabase.StartAssetEditing();
             foreach (var item in guidToNewPath)
             {
-                AddressableAssetEntry entry = FindAssetEntry(item.Key);
-                if (entry != null) //move entry to where it should go...
-                {   
-                    var dirInfo = new FileInfo(item.Value).Directory;
-                    if(!dirInfo.Exists)
-                    {
-                        dirInfo.Create();
-                        AssetDatabase.Refresh();
-                    }
-                    
 
-                    var errorStr = AssetDatabase.MoveAsset(entry.assetPath, item.Value);
-                    if (errorStr != string.Empty)
-                        Debug.LogError("Error moving asset: " + errorStr);
-                    else
-                    {
-                        AddressableAssetEntry e = FindAssetEntry(item.Key);
-                        if (e != null)
-                            e.isInResources = false;
-                        entries.Add(CreateOrMoveEntry(item.Key, targetParent, false, false));
-                    }
+                var dirInfo = new FileInfo(item.Value).Directory;
+                if(!dirInfo.Exists)
+                {
+                    dirInfo.Create();
+                    AssetDatabase.StopAssetEditing();
+                    AssetDatabase.Refresh();
+                    AssetDatabase.StartAssetEditing();
                 }
+
+                var oldPath = AssetDatabase.GUIDToAssetPath(item.Key);
+                var errorStr = AssetDatabase.MoveAsset(oldPath, item.Value);
+                if (!string.IsNullOrEmpty(errorStr))
+                {
+                    Debug.LogError("Error moving asset: " + errorStr);
+                }
+                else
+                {
+                    AddressableAssetEntry e = FindAssetEntry(item.Key);
+                    if (e != null)
+                        e.isInResources = false;
+
+                    var newEntry = CreateOrMoveEntry(item.Key, targetParent, false, false);
+                    var index = oldPath.ToLower().LastIndexOf("resources/");
+                    if(index >= 0)
+                    {
+                        var newAddress = Path.GetFileNameWithoutExtension(oldPath.Substring(index + 10));
+                        if(!string.IsNullOrEmpty(newAddress))
+                        {
+                            newEntry.address = newAddress;
+                        }
+                    }
+                    entries.Add(newEntry);
+                }
+                
             }
             AssetDatabase.StopAssetEditing();
             AssetDatabase.Refresh();
@@ -353,6 +376,9 @@ namespace UnityEditor.AddressableAssets
         // create a new entry, or if one exists in a different group, move it into the new group
         public AddressableAssetEntry CreateOrMoveEntry(string guid, AddressableAssetGroup targetParent, bool readOnly = false, bool postEvent = true)
         {
+            if (targetParent == null)
+                return null;
+
             AddressableAssetEntry entry = FindAssetEntry(guid);
             if (entry != null) //move entry to where it should go...
             {
@@ -428,37 +454,28 @@ namespace UnityEditor.AddressableAssets
             return null;
         }
 
-        public void ConvertGroup(AddressableAssetGroup group, string processorType)
+        public void ConvertGroup(AddressableAssetGroup group, Type processorType)
         {
-            var proc = CreateInstance(processorType) as AssetGroupProcessor;
-            proc.Initialize(this);
-            var name = proc.displayName + " Group";
-            string validName = FindUniqueGroupName(name);
-            var path = System.IO.Path.GetDirectoryName(pathForAsset) + "/" + processorType + "_" + validName + ".asset";
-            AssetDatabase.CreateAsset(proc, path);
-            var guid = AssetDatabase.AssetPathToGUID(path);
-            AssetDatabase.MoveAsset(path, System.IO.Path.GetDirectoryName(pathForAsset) + "/" + guid.ToString() + ".asset");
-            group.ReplaceProcessor(proc, guid);
+            if (group == null)
+                return;
+            group.SetProcessorType(processorType);
             PostModificationEvent(ModificationEvent.GroupProcessorChanged, group);
         }
 
         /// <summary>
         /// TODO - doc
         /// </summary>
-        public AddressableAssetGroup CreateGroup(string name, string processorType, bool setAsDefaultGroup = false)
+        public AddressableAssetGroup CreateGroup(string name, Type processorType, bool setAsDefaultGroup, bool readOnly, bool postEvent = true)
         {
-            var proc = CreateInstance(processorType) as AssetGroupProcessor;
-            proc.Initialize(this);
             if (string.IsNullOrEmpty(name))
-                name = proc.displayName + " Group";
+                name = processorType + " Group";
             string validName = FindUniqueGroupName(name);
-            var path = Path.GetDirectoryName(pathForAsset) + "/" + processorType + "_" + validName + ".asset";
-            AssetDatabase.CreateAsset(proc, path);
-            var guid = AssetDatabase.AssetPathToGUID(path);
-            AssetDatabase.MoveAsset(path, Path.GetDirectoryName(pathForAsset) + "/" + guid.ToString() + ".asset");
-            var g = new AddressableAssetGroup(validName, proc, setAsDefaultGroup, guid);
+            var g = new AddressableAssetGroup(this, validName, processorType, GUID.Generate().ToString(), readOnly);
             groups.Add(g);
-            PostModificationEvent(ModificationEvent.GroupAdded, g);
+            if (setAsDefaultGroup)
+                m_defaultGroup = g.Guid;
+            if(postEvent)
+                PostModificationEvent(ModificationEvent.GroupAdded, g);
             return g;
         }
 
@@ -484,13 +501,14 @@ namespace UnityEditor.AddressableAssets
 
             return validName;
         }
+
         public bool IsNotUniqueGroupName(string name)
         {
 
             bool foundExisting = false;
             foreach (var g in groups)
             {
-                if (g.name == name)
+                if (g.Name == name)
                 {
                     foundExisting = true;
                     break;
@@ -504,8 +522,6 @@ namespace UnityEditor.AddressableAssets
         /// </summary>
         public void RemoveGroup(AddressableAssetGroup g, bool postEvent = true)
         {
-            var path = System.IO.Path.GetDirectoryName(pathForAsset) + "/" + g.guid.ToString() + ".asset";
-            AssetDatabase.DeleteAsset(path);
             groups.Remove(g);
             if(postEvent)
                 PostModificationEvent(ModificationEvent.GroupRemoved, g);
