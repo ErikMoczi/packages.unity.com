@@ -9,10 +9,17 @@ PluginImporter:
   isOverridable: 0
   platformData:
   - first:
-      Any: 
+      '': Any
     second:
-      enabled: 1
-      settings: {}
+      enabled: 0
+      settings:
+        Exclude Editor: 1
+        Exclude N3DS: 1
+        Exclude PS4: 1
+        Exclude PSP2: 1
+        Exclude Switch: 1
+        Exclude WiiU: 1
+        Exclude XboxOne: 1  
   - first:
       Editor: Editor
     second:
