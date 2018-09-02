@@ -25,3 +25,4 @@
 4.0.0-preview.1
 4.0.0-preview.2
 4.0.0-preview.3
+4.0.0-preview.4
