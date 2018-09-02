@@ -1,7 +1,7 @@
 {
 	"name": "com.unity.resourcemanager",
 	"displayName": "Resource Manager",
-	"version": "2.0.3-alpha",
+	"version": "2.0.4-alpha",
 	"unity": "2018.2",
 	"description": "The ResourceManager is an extendable high level API that asynchronously loads and unloads assets.\n\nThe specific method and location of loading assets is abstracted. With the proper extension, assets can be loading from a variety of locations (Resources, Bundles, etc) all through a single API. \n\nThe overall goal is that regardless of what your setup is, or where you are loading from, you always load in the same way. For example, you can call: \nResourceManager.LoadAsync<Texture, string>(\"myTexture\");\n and have that be loaded regardless of where it came from. \n\nThis package can function as a standalone package, but will be extended in the future via high-level packages that add custom IResourceLocator and IResourceProvider interfaces. See the Samples directory for help on how to use it as a standalone package. Future high-level packages will come with locators and providers, and will handle the initialization themselves. The intent being that users need not know about the above interfaces.",
 	"keywords": ["asset", "resources", "bundle", "bundles", "assetbundles"],
