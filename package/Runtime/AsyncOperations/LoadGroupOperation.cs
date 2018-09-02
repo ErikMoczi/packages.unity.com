@@ -69,7 +69,7 @@ namespace UnityEngine.ResourceManagement
             m_loadedCount++;
             for (int i = 0; i < m_operations.Count; i++)
             {
-                if (m_operations[i] == op)
+                if (Result[i] == default(TObject) && m_operations[i] == op)
                 {
                     Result[i] = op.Result;
                     break;

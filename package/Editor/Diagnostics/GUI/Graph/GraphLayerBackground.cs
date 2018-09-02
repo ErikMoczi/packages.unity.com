@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEditor;
 namespace UnityEditor.ResourceManagement.Diagnostics
 {
     internal class GraphLayerBackgroundGraph : GraphLayerBase

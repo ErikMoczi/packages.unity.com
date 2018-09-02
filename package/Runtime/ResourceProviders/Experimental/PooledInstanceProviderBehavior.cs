@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace UnityEngine.ResourceManagement
+﻿namespace UnityEngine.ResourceManagement
 {
     class PooledInstanceProviderBehavior : MonoBehaviour
     {

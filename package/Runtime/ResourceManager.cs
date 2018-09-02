@@ -422,105 +422,99 @@ namespace UnityEngine.ResourceManagement
 
         class LocationOperation<TKey, TObject> : AsyncOperationBase<TObject>
         {
-            int dependencyCount;
             TKey m_key;
             Func<IResourceLocation, IAsyncOperation<TObject>> m_asyncFunc;
-            public IAsyncOperation<TObject> Start(TKey key, List<IAsyncOperation> dependencies, Func<IResourceLocation, IAsyncOperation<TObject>> asyncFunction)
+            public IAsyncOperation<TObject> Start(TKey key, Func<IResourceLocation, IAsyncOperation<TObject>> asyncFunction)
             {
                 Validate();
                 m_key = key;
                 m_asyncFunc = asyncFunction;
-                dependencyCount = dependencies.Count;
-                foreach (var d in dependencies)
-                    d.Completed += OnDependenciesComplete;
-                return this;
-            }
-
-            void OnDependenciesComplete(IAsyncOperation op)
-            {
-                Validate();
-                dependencyCount--;
-                if (dependencyCount == 0)
+                InitializationComplete += () =>
                 {
                     m_asyncFunc(GetResourceLocation(m_key)).Completed += (loadOp) =>
                     {
                         SetResult(loadOp.Result);
                         InvokeCompletionEvent();
                     };
-                }
+                };
+                return this;
+            }
+        }
+
+        class LocationListOperation<TKey, TObject> : AsyncOperationBase<IList<TObject>>
+        {
+            IList<TKey> m_keys;
+            Func<IList<IResourceLocation>, IAsyncOperation<IList<TObject>>> m_asyncFunc;
+            public IAsyncOperation<IList<TObject>> Start(IList<TKey> keys, Func<IList<IResourceLocation>, IAsyncOperation<IList<TObject>>> asyncFunction)
+            {
+                Validate();
+                m_keys = keys;
+                m_asyncFunc = asyncFunction;
+                InitializationComplete += () =>
+                {
+                    var locList = new List<IResourceLocation>(m_keys.Count);
+                    foreach (var key in m_keys)
+                        locList.Add(GetResourceLocation(key));
+                    m_asyncFunc(locList).Completed += (loadOp) =>
+                    {
+                        SetResult(loadOp.Result);
+                        InvokeCompletionEvent();
+                    };
+                };
+                return this;
             }
         }
 
         class InstanceLocationOperation<TKey, TObject> : AsyncOperationBase<TObject>
         {
-            int dependencyCount;
             TKey m_key;
             Func<IResourceLocation, InstantiationParameters, IAsyncOperation<TObject>> m_asyncFunc;
             InstantiationParameters m_instParams;
-
-            public IAsyncOperation<TObject> Start(TKey key, List<IAsyncOperation> dependencies, Func<IResourceLocation, InstantiationParameters, IAsyncOperation<TObject>> asyncFunction, InstantiationParameters instantiateParameters)
+            public IAsyncOperation<TObject> Start(TKey key, InstantiationParameters inst, Func<IResourceLocation, InstantiationParameters, IAsyncOperation<TObject>> asyncFunction)
             {
                 Validate();
+                m_instParams = inst;
                 m_key = key;
-                m_instParams = instantiateParameters;
                 m_asyncFunc = asyncFunction;
-                dependencyCount = dependencies.Count;
-                foreach (var d in dependencies)
-                    d.Completed += OnDependenciesComplete;
-                return this;
-            }
-
-            void OnDependenciesComplete(IAsyncOperation op)
-            {
-                Validate();
-                dependencyCount--;
-                if (dependencyCount == 0)
+                InitializationComplete += () =>
                 {
                     m_asyncFunc(GetResourceLocation(m_key), m_instParams).Completed += (loadOp) =>
                     {
                         SetResult(loadOp.Result);
                         InvokeCompletionEvent();
                     };
-                }
+                };
+                return this;
             }
         }
 
         class InstanceLocationListOperation<TKey, TObject> : AsyncOperationBase<IList<TObject>>
         {
-            int dependencyCount;
             IList<TKey> m_keys;
             InstantiationParameters m_instParams;
             Action<IAsyncOperation<TObject>> m_callback;
             Func<IList<IResourceLocation>, Action<IAsyncOperation<TObject>>, InstantiationParameters, IAsyncOperation<IList<TObject>>> m_asyncFunc;
-            public IAsyncOperation<IList<TObject>> Start(IList<TKey> keys, List<IAsyncOperation> dependencies, Func<IList<IResourceLocation>, Action<IAsyncOperation<TObject>>, InstantiationParameters, IAsyncOperation<IList<TObject>>> asyncFunction, Action<IAsyncOperation<TObject>> callback, InstantiationParameters instantiateParameters)
+            public IAsyncOperation<IList<TObject>> Start(IList<TKey> keys, InstantiationParameters instParams, 
+                Func<IList<IResourceLocation>, Action<IAsyncOperation<TObject>>, InstantiationParameters, IAsyncOperation<IList<TObject>>> asyncFunction,
+                Action<IAsyncOperation<TObject>> callback)
             {
                 Validate();
-                m_instParams = instantiateParameters;
-                m_callback = callback;
                 m_keys = keys;
+                m_instParams = instParams;
+                m_callback = callback;
                 m_asyncFunc = asyncFunction;
-                dependencyCount = dependencies.Count;
-                foreach (var d in dependencies)
-                    d.Completed += OnDependenciesComplete;
-                return this;
-            }
-
-            void OnDependenciesComplete(IAsyncOperation operation)
-            {
-                Validate();
-                dependencyCount--;
-                if (dependencyCount == 0)
+                InitializationComplete += () =>
                 {
                     var locList = new List<IResourceLocation>(m_keys.Count);
                     foreach (var key in m_keys)
                         locList.Add(GetResourceLocation(key));
-
                     m_asyncFunc(locList, m_callback, m_instParams).Completed += (loadOp) =>
                     {
                         SetResult(loadOp.Result);
                         InvokeCompletionEvent();
                     };
-                }
+                };
+                return this;
             }
         }
 
@@ -531,10 +525,7 @@ namespace UnityEngine.ResourceManagement
                 throw new ArgumentNullException("asyncFunction");
             var loc = GetResourceLocation(key);
             if (loc == null && !s_initializationCompleted)
-            {
-                var locationOp = AsyncOperationCache.Instance.Acquire<LocationOperation<TKey, TObject>, object>();
-                return locationOp.Start(key, s_initializationOperations, asyncFunction);
-            }
+                return AsyncOperationCache.Instance.Acquire<LocationOperation<TKey, TObject>, object>().Start(key, asyncFunction);
 
             return asyncFunction(loc);
         }
@@ -545,48 +536,11 @@ namespace UnityEngine.ResourceManagement
                 throw new ArgumentNullException("asyncFunction");
             var loc = GetResourceLocation(key);
             if (loc == null && !s_initializationCompleted)
-            {
-                var locationOp = AsyncOperationCache.Instance.Acquire<InstanceLocationOperation<TKey, TObject>, object>();
-                return locationOp.Start(key, s_initializationOperations, asyncFunction, instantiateParameters);
-            }
+                return AsyncOperationCache.Instance.Acquire<InstanceLocationOperation<TKey, TObject>, object>().Start(key, instantiateParameters, asyncFunction);
 
             return asyncFunction(loc, instantiateParameters);
         }
 
-        class LocationListOperation<TKey, TObject> : AsyncOperationBase<IList<TObject>>
-        {
-            int dependencyCount;
-            IList<TKey> m_keys;
-            Func<IList<IResourceLocation>, IAsyncOperation<IList<TObject>>> m_asyncFunc;
-            public IAsyncOperation<IList<TObject>> Start(IList<TKey> keys, List<IAsyncOperation> dependencies, Func<IList<IResourceLocation>, IAsyncOperation<IList<TObject>>> asyncFunction)
-            {
-                Validate();
-                m_keys = keys;
-                m_asyncFunc = asyncFunction;
-                dependencyCount = dependencies.Count;
-                foreach (var d in dependencies)
-                    d.Completed += OnDependenciesComplete;
-                return this;
-            }
-
-            void OnDependenciesComplete(IAsyncOperation op)
-            {
-                Validate();
-                dependencyCount--;
-                if (dependencyCount == 0)
-                {
-                    var locList = new List<IResourceLocation>(m_keys.Count);
-                    foreach (var key in m_keys)
-                        locList.Add(GetResourceLocation(key));
-
-                    m_asyncFunc(locList).Completed += (loadOp) =>
-                    {
-                        SetResult(loadOp.Result);
-                        InvokeCompletionEvent();
-                    };
-                }
-            }
-        }
 
         static IAsyncOperation<IList<TObject>> StartInternalAsyncOp<TObject, TKey>(IList<TKey> keyList, Func<IList<IResourceLocation>, IAsyncOperation<IList<TObject>>> asyncFunction)
         {
@@ -598,7 +552,7 @@ namespace UnityEngine.ResourceManagement
             if (!s_initializationCompleted)
             {
                 var locationOp = AsyncOperationCache.Instance.Acquire<LocationListOperation<TKey, TObject>, object>();
-                return locationOp.Start(keyList, s_initializationOperations, asyncFunction);
+                return locationOp.Start(keyList, asyncFunction);
             }
 
             var locList = new List<IResourceLocation>(keyList.Count);
@@ -674,14 +628,14 @@ namespace UnityEngine.ResourceManagement
             if (keys == null)
                 throw new ArgumentNullException("keys");
 
-            List<IResourceLocation> dependencyLocations = new List<IResourceLocation>();
+            var dependencyLocations = new HashSet<IResourceLocation>();
             foreach (TKey adr in keys)
             {
                 IResourceLocation loc = GetResourceLocation(adr);
-                dependencyLocations.AddRange(loc.Dependencies);
+                foreach(var d in loc.Dependencies)
+                    dependencyLocations.Add(d);
             }
-
-            return StartInternalAsyncOp(dependencyLocations, (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, GetLoadAsyncInternalFunc<object>(), callback); }).Acquire();
+            return StartInternalAsyncOp(new List<IResourceLocation>(dependencyLocations), (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, GetLoadAsyncInternalFunc<object>(), callback); }).Acquire();
         }
 
         /// <summary>
@@ -694,25 +648,16 @@ namespace UnityEngine.ResourceManagement
         internal static IAsyncOperation<TObject> InstantiateAsync<TObject, TKey>(TKey key, InstantiationParameters instantiateParameters)
             where TObject : Object
         {
-            if (InstanceProvider == null)
-                throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
-
             return StartInternalAsyncInstantiateOp(key, GetInstantiateAsyncInternalFunc<TObject>(), instantiateParameters).Acquire();
         }
 
         public static IAsyncOperation<TObject> InstantiateAsync<TObject, TKey>(TKey key, Transform parent = null, bool instantiateInWorldSpace = false) where TObject : Object
         {
-            if (InstanceProvider == null)
-                throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
-
             return StartInternalAsyncInstantiateOp(key, GetInstantiateAsyncInternalFunc<TObject>(), new InstantiationParameters(parent, instantiateInWorldSpace)).Acquire();
         }
 
         public static IAsyncOperation<TObject> InstantiateAsync<TObject, TKey>(TKey key, Vector3 position, Quaternion rotation, Transform parent = null) where TObject : Object
         {
-            if (InstanceProvider == null)
-                throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
-
             return StartInternalAsyncInstantiateOp(key, GetInstantiateAsyncInternalFunc<TObject>(), new InstantiationParameters(position, rotation, parent)).Acquire();
         }
 
@@ -730,9 +675,6 @@ namespace UnityEngine.ResourceManagement
             if(keys == null)
                 throw new ArgumentNullException("keys");
 
-            if (InstanceProvider == null)
-                throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
-
             return InstantiateAllAsync<TObject, TKey>(keys, callback, new InstantiationParameters(parent, instantiateInWorldSpace)).Acquire();
         }
 
@@ -744,7 +686,7 @@ namespace UnityEngine.ResourceManagement
             if (!s_initializationCompleted)
             {
                 var locationOp = AsyncOperationCache.Instance.Acquire<InstanceLocationListOperation<TKey, TObject>, object>();
-                return locationOp.Start(keys, s_initializationOperations, GetInstantiateAllAsyncInternalFunc<TObject>(), callback, instantiateParameters);
+                return locationOp.Start(keys, instantiateParameters, GetInstantiateAllAsyncInternalFunc<TObject>(), callback);
             }
 
             var locList = new List<IResourceLocation>(keys.Count);

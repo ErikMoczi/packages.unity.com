@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine.ResourceManagement.Diagnostics;
-using UnityEngine;
 
 namespace UnityEditor.ResourceManagement.Diagnostics
 {
