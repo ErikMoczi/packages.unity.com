@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEditor.IMGUI.Controls;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
+//using System.Runtime.Serialization.Formatters.Binary;
 using System.Linq;
 
 namespace AssetBundleBrowser
@@ -71,15 +71,15 @@ namespace AssetBundleBrowser
             dataPath = dataPath.Replace("\\", "/");
             dataPath += "/Library/AssetBundleBrowserInspect.dat";
 
-            if (File.Exists(dataPath))
-            {
-                BinaryFormatter bf = new BinaryFormatter();
-                FileStream file = File.Open(dataPath, FileMode.Open);
-                var data = bf.Deserialize(file) as InspectTabData;
-                if (data != null)
-                    m_Data = data;
-                file.Close();
-            }
+            //if (File.Exists(dataPath))
+            //{
+            //    BinaryFormatter bf = new BinaryFormatter();
+            //    FileStream file = File.Open(dataPath, FileMode.Open);
+            //    var data = bf.Deserialize(file) as InspectTabData;
+            //    if (data != null)
+            //        m_Data = data;
+            //    file.Close();
+            //}
 
 
             if (m_BundleList == null)
@@ -97,15 +97,15 @@ namespace AssetBundleBrowser
         {
             ClearData();
 
-            var dataPath = System.IO.Path.GetFullPath(".");
-            dataPath = dataPath.Replace("\\", "/");
-            dataPath += "/Library/AssetBundleBrowserInspect.dat";
+            //var dataPath = System.IO.Path.GetFullPath(".");
+            //dataPath = dataPath.Replace("\\", "/");
+            //dataPath += "/Library/AssetBundleBrowserInspect.dat";
 
-            BinaryFormatter bf = new BinaryFormatter();
-            FileStream file = File.Create(dataPath);
+            //BinaryFormatter bf = new BinaryFormatter();
+            //FileStream file = File.Create(dataPath);
 
-            bf.Serialize(file, m_Data);
-            file.Close();
+            //bf.Serialize(file, m_Data);
+            //file.Close();
         }
 
         internal void OnGUI(Rect pos)
@@ -259,14 +259,14 @@ namespace AssetBundleBrowser
 
             foreach(var folder in m_Data.BundleFolders)
             {
-                if(Directory.Exists(folder.Path))
+                if(Directory.Exists(folder.path))
                 {
-                    AddFilePathToList(folder.Path, folder.Path);
+                    AddFilePathToList(folder.path, folder.path);
                 }
                 else
                 {
                     Debug.Log("Expected folder not found: " + folder);
-                    pathsToRemove.Add(folder.Path);
+                    pathsToRemove.Add(folder.path);
                 }
             }
             foreach (var path in pathsToRemove)
@@ -364,7 +364,7 @@ namespace AssetBundleBrowser
                     }
                     else
                     {
-                        possibleFolderData.IgnoredFiles.Remove(newPath);
+                        possibleFolderData.ignoredFiles.Remove(newPath);
                     }
                 }
             }
@@ -382,20 +382,22 @@ namespace AssetBundleBrowser
 
             internal void RemoveFolder(string pathToRemove)
             {
-                m_BundleFolders.Remove(BundleFolders.FirstOrDefault(bfd => bfd.Path == pathToRemove));
+                m_BundleFolders.Remove(BundleFolders.FirstOrDefault(bfd => bfd.path == pathToRemove));
             }
 
             internal bool FolderIgnoresFile(string folderPath, string filePath)
             {
-                var bundleFolderData = BundleFolders.FirstOrDefault(bfd => bfd.Path == folderPath);
-                return bundleFolderData != null && bundleFolderData.IgnoredFiles.Contains(filePath);
+                if (BundleFolders == null)
+                    return false;
+                var bundleFolderData = BundleFolders.FirstOrDefault(bfd => bfd.path == folderPath);
+                return bundleFolderData != null && bundleFolderData.ignoredFiles.Contains(filePath);
             }
 
             internal BundleFolderData FolderDataContainingFilePath(string filePath)
             {
                 foreach (var bundleFolderData in BundleFolders)
                 {
-                    if (Path.GetFullPath(filePath).StartsWith(Path.GetFullPath(bundleFolderData.Path)))
+                    if (Path.GetFullPath(filePath).StartsWith(Path.GetFullPath(bundleFolderData.path)))
                     {
                         return bundleFolderData;
                     }
@@ -407,7 +409,7 @@ namespace AssetBundleBrowser
             {
                 foreach(var bundleFolderData in BundleFolders)
                 {
-                    if(Path.GetFullPath(bundleFolderData.Path) == Path.GetFullPath(folderPath))
+                    if(Path.GetFullPath(bundleFolderData.path) == Path.GetFullPath(folderPath))
                     {
                         return true;
                     }
@@ -418,14 +420,24 @@ namespace AssetBundleBrowser
             [System.Serializable]
             internal class BundleFolderData
             {
-                internal string Path;
+                [SerializeField]
+                internal string path;
 
-                internal IList<string> IgnoredFiles;
-
-                internal BundleFolderData(string path)
+                [SerializeField]
+                private List<string> m_ignoredFiles;
+                internal List<string> ignoredFiles
                 {
-                    Path = path;
-                    IgnoredFiles = new List<string>();
+                    get
+                    {
+                        if (m_ignoredFiles == null)
+                            m_ignoredFiles = new List<string>();
+                        return m_ignoredFiles;
+                    }
+                }
+
+                internal BundleFolderData(string p)
+                {
+                    path = p;
                 }
             }
         }
