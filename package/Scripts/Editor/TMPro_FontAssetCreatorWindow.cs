@@ -1288,15 +1288,15 @@ namespace TMPro.EditorUtilities
             for (int i = 0; i < kpCount; i++)
             {
                 // Proceed to add each kerning pairs.
-                KerningPair kp = new KerningPair(kerningPairs[i].ascII_Left, kerningPairs[i].ascII_Right, kerningPairs[i].xAdvanceOffset * pointSize);
+                KerningPair kp = new KerningPair((uint)kerningPairs[i].ascII_Left, (uint)kerningPairs[i].ascII_Right, kerningPairs[i].xAdvanceOffset * pointSize);
 
                 // Filter kerning pairs to avoid duplicates
-                int index = kerningInfo.kerningPairs.FindIndex(item => item.AscII_Left == kp.AscII_Left && item.AscII_Right == kp.AscII_Right);
+                int index = kerningInfo.kerningPairs.FindIndex(item => item.firstGlyph == kp.firstGlyph && item.secondGlyph == kp.secondGlyph);
 
                 if (index == -1)
                     kerningInfo.kerningPairs.Add(kp);
                 else
-                    if (!TMP_Settings.warningsDisabled) Debug.LogWarning("Kerning Key for [" + kp.AscII_Left + "] and [" + kp.AscII_Right + "] is a duplicate.");
+                    if (!TMP_Settings.warningsDisabled) Debug.LogWarning("Kerning Key for [" + kp.firstGlyph + "] and [" + kp.secondGlyph + "] is a duplicate.");
 
             }
 

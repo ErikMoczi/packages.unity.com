@@ -10,9 +10,9 @@ namespace TMPro.EditorUtilities
     [CustomEditor(typeof(TextMeshProUGUI)), CanEditMultipleObjects]
     public class TMP_UiEditorPanel : Editor
     {
-
         private struct m_foldout
-        { // Track Inspector foldout panel states, globally.
+        {
+            // Track Inspector foldout panel states, globally.
             public static bool textInput = true;
             public static bool fontSettings = true;
             public static bool extraSettings = false;

@@ -21,7 +21,6 @@ namespace TMPro.EditorUtilities
             TextMeshPro textMeshPro = go.AddComponent<TextMeshPro>();
             textMeshPro.text = "Sample text";
             textMeshPro.alignment = TextAlignmentOptions.TopLeft;
-            //textMeshPro.rectTransform.sizeDelta = new Vector2(20, 5);
 
             Undo.RegisterCreatedObjectUndo((Object)go, "Create " + go.name);
 
@@ -238,7 +237,6 @@ namespace TMPro.EditorUtilities
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             root.AddComponent<CanvasScaler>();
             root.AddComponent<GraphicRaycaster>();
-
             Undo.RegisterCreatedObjectUndo(root, "Create " + root.name);
 
             // if there is no event system add one...
