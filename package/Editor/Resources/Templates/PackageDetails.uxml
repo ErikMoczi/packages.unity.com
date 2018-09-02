@@ -12,6 +12,7 @@
                     <ui:Label name="inPreview" class="display-none"/>
                 </ui:VisualContainer>
                 <ui:Label name="detailName"/>
+                <ui:Label name="detailModuleReference"/>
                 <ui:Label name="detailDesc"/>
                 <!--
                 <ui:VisualContainer name="detailActions">

@@ -1,7 +1,7 @@
 ﻿
 namespace UnityEditor.PackageManager.ValidationSuite
 {
-    public enum TestCategory
+    internal enum TestCategory
     {
         DataValidation,
         ApiValidation,
@@ -9,7 +9,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
         TestValidation,
     }
 
-    public interface IValidationTest
+    internal interface IValidationTest
     {
         string TestName { get; }
 

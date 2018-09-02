@@ -8,7 +8,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
         private static string resultsFilePath = "ValidationSuiteResults.txt";
 
         [MenuItem("internal:Project/Packages/Validate")]
-        public static void ShowPackageManagerWindow()
+        internal static void ShowPackageManagerWindow()
         {
             // ***** Hack *****  Until we have a better way to test a particular package, find the first package.
             var path = FindFirstPackagePath();

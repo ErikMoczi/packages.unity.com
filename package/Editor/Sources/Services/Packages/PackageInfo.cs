@@ -8,6 +8,11 @@ namespace UnityEditor.PackageManager.UI
     [Serializable]
     internal class PackageInfo : IEquatable<PackageInfo>
     {
+        public static bool IsModule(string packageName)
+        {
+            return packageName.StartsWith("com.unity.modules.");
+        }
+
         private const string previewTag = "preview";
 
         [SerializeField]
@@ -32,10 +37,11 @@ namespace UnityEditor.PackageManager.UI
         public string Group;
         [SerializeField] 
         public OriginType OriginType;
-
         [SerializeField] 
         public List<Error> Errors;
-        
+
+        public string ModuleName { get { return IsModule(Name) ? DisplayName : ""; } }
+
         public bool Equals(PackageInfo other)
         {
             if (other == null) 

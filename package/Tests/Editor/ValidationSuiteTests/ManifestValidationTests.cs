@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace UnityEditor.PackageManager.ValidationSuite.Tests
 {
-    public class ManifestValidationTests
+    internal class ManifestValidationTests
     {
         private string testDirectory = "tempTest";
         private string packagesJsonPath;

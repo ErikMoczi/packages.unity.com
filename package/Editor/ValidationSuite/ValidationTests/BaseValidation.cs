@@ -2,7 +2,7 @@
 
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
-    public abstract class BaseValidation : IValidationTest, IValidationTestResult
+    internal abstract class BaseValidation : IValidationTest, IValidationTestResult
     {
         public string TestName { get; set; }
 

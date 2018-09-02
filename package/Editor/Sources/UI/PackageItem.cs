@@ -73,6 +73,9 @@ namespace UnityEditor.PackageManager.UI
 
             if(package.Current != null && PackageCollection.Instance.Filter == PackageFilter.All)
                 PackageContainer.AddToClassList("installed");
+
+            UIUtils.SetElementDisplay(VersionLabel, !PackageInfo.IsModule(package.Name));
+            
             currentStateClass = stateClass;
         }
 

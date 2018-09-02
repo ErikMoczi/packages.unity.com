@@ -2,16 +2,14 @@
 
 namespace UnityEditor.PackageManager.ValidationSuite
 {
-    public enum TestState
+    internal enum TestState
     {
         Succeeded,
-
         Failed,
-
         NotRun
     }
 
-    public interface IValidationTestResult
+    internal interface IValidationTestResult
     {
         // The test associated to this result
         IValidationTest ValidationTest { get; }

@@ -83,15 +83,26 @@ namespace UnityEditor.PackageManager.UI
                 }
 
                 root.Q<Label>("detailTitle").text = displayPackage.DisplayName;
-                root.Q<Label>("detailVersion").text = "Version " + displayPackage.VersionWithoutTag;
-                
-                if(displayPackage.IsInPreview)
-                    root.Q<Label>("inPreview").RemoveFromClassList("display-none");
-                else
-                    root.Q<Label>("inPreview").AddToClassList("display-none");
+                DetailVersion.text = "Version " + displayPackage.VersionWithoutTag;
+                                
+                UIUtils.SetElementDisplay(root.Q<Label>("inPreview"), displayPackage.IsInPreview);
+
                 root.Q<Label>("detailName").text = displayPackage.Name;
                 root.Q<ScrollView>("detailView").scrollOffset = new Vector2(0, 0);
+
+                var isModule = PackageInfo.IsModule(displayPackage.Name);
+                if (PackageInfo.IsModule(displayPackage.Name))
+                {
+                    DetailModuleReference.text =
+                        string.Format("This built in package controls the presence of the {0} module.",
+                            displayPackage.ModuleName);
+                }
                 
+                UIUtils.SetElementDisplay(DetailDesc, !isModule);
+                UIUtils.SetElementDisplay(DetailVersion, !isModule);
+                UIUtils.SetElementDisplay(DetailModuleReference, isModule);
+
+
                 if (displayPackage.Errors.Count > 0)
                     error = displayPackage.Errors.First();
 
@@ -248,5 +259,7 @@ namespace UnityEditor.PackageManager.UI
         private Button ViewDocButton { get { return root.Q<Button>("viewDocumentation"); } }
         private Alert DetailError { get { return root.Q<Alert>("detailError"); } }
         private ScrollView DetailView { get { return root.Q<ScrollView>("detailView"); } }
+        private Label DetailModuleReference { get { return root.Q<Label>("detailModuleReference"); } }
+        private Label DetailVersion { get { return root.Q<Label>("detailVersion");  }}
     }
 }

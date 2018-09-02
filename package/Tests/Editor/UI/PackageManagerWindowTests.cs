@@ -37,7 +37,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             };
             
             PackageCollection.Instance.OnPackagesChanged += onPackageChangedEvent;
-            SetPackages(PackageSets.Instance.Many(5));
+            SetPackages(PackageSets.Instance.Many(5, true));
         }
 
         [Test]
@@ -61,15 +61,15 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             SetPackages(PackageSets.Instance.Many(5));
             
-            var packageGroups = Container.Query<VisualContainer>("groupContainerOuter").Build().ToList();
+            var packageGroups = Container.Query<PackageGroup>("groupContainerOuter").Build().ToList();
             foreach (var packageGroup in packageGroups)
             {
-                var groupHeader = packageGroup.Q<Label>("headerTitle").text;
+                var groupHeader = packageGroup.Origin;
                 var children = packageGroup.Query(null, "package").Build().ToList().Count;
 
-                if (groupHeader == PackageGroupOrigins.Packages.ToString())
+                if (groupHeader == PackageGroupOrigins.Packages)
                     Assert.IsTrue(children > 0);           // Make sure it is not collapsed
-                else if (groupHeader == PackageGroupOrigins.Modules.ToString())
+                else if (groupHeader == PackageGroupOrigins.BuiltInPackages)
                     Assert.IsTrue(children == 0);        // Make sure it is collapsed
             }
         }

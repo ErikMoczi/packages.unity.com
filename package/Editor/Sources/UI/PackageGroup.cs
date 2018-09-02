@@ -17,19 +17,28 @@ namespace UnityEditor.PackageManager.UI
         private bool collapsed;
         private readonly VisualContainer listElement;
 
+        internal readonly PackageGroupOrigins Origin;
+
         public PackageGroup(string groupName)
         {            
             root = Resources.Load<VisualTreeAsset>("Templates/PackageGroup").CloneTree(null);
             Add(root);
             listElement = List;
-            HeaderTitle.text = groupName;
 
             Header.AddManipulator(new Clickable(ToggleCollapse));
-            
-            if (groupName == PackageGroupOrigins.Modules.ToString())
+
+            if (groupName == PackageGroupOrigins.BuiltInPackages.ToString())
+            {
+                Origin = PackageGroupOrigins.BuiltInPackages;
                 SetCollapsed(true);
+                HeaderTitle.text = "Built In Packages";
+            }
             else
+            {
+                HeaderTitle.text = "Packages";
+                Origin = PackageGroupOrigins.Packages;
                 Caret.SetState(false);
+            }
         }
 
         private void SetCollapsed(bool value)

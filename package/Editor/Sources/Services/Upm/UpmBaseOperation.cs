@@ -15,7 +15,7 @@ namespace UnityEditor.PackageManager.UI
             // MOCKED
             //if (origin == OriginType.Builtin)
             if (origin == OriginType.Path)
-                group = PackageGroupOrigins.Modules.ToString();
+                group = PackageGroupOrigins.BuiltInPackages.ToString();
 
             return group;
         }
@@ -51,13 +51,13 @@ namespace UnityEditor.PackageManager.UI
                     
                     // MOCK
                     // Group = GroupName(info.originType),
-                    Group = GroupName(info.name.StartsWith("com.unity.modules.") ? OriginType.Path : OriginType.Registry),
+                    Group = GroupName(PackageInfo.IsModule(info.name) ? OriginType.Path : OriginType.Registry),
 
                     State = state,
                     
                     // MOCK TO REMOVE
                     // OriginType = info.originType                    
-                    OriginType = info.name.StartsWith("com.unity.modules.") ? OriginType.Path : OriginType.Registry
+                    OriginType = PackageInfo.IsModule(info.name) ? OriginType.Path : OriginType.Registry
                 }
             );
 

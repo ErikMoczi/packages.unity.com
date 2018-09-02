@@ -120,7 +120,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             if (packages.Count > 1)
             {
                 packages[0].Group = PackageGroupOrigins.Packages.ToString();
-                packages[1].Group = PackageGroupOrigins.Modules.ToString();
+                packages[1].Group = PackageGroupOrigins.BuiltInPackages.ToString();
             }
 
             if (onlyPackageGroup)

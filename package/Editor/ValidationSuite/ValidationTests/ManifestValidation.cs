@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
-    public class ManifestValidation : BaseValidation
+    internal class ManifestValidation : BaseValidation
     {
         private const string ManifestFileName = "package.json";
         private const string PackageNamePrefix = "com.unity.";
@@ -114,7 +114,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
         }
 
-        public class ManifestData
+        internal class ManifestData
         {
             public string name;
             public string description;

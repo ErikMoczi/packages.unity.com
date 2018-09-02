@@ -1,16 +1,8 @@
 {
 	"name": "com.unity.package-manager-ui",
-	"version": "1.0.0",
+	"version": "1.2.0",
 	"unity": "2018.1",
 	"description": "Unity Package Manager user interface, where a project's packages can be managed, and new packages can be discovered.",
-	"keywords": [
-		"package",
-		"unity"
-	],
-	"category": "AssetStore/Unity",
-	"publishConfig": {
-		"registry": "https://staging-packages.unity.com"
-	},
 	"dependencies": {
 	}
 }

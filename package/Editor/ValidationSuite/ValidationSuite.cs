@@ -8,12 +8,12 @@ using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
 namespace UnityEditor.PackageManager.ValidationSuite
 {
     // Delegate called after every test to provide immediate feedback on single test results.
-    public delegate void SingleTestCompletedDelegate(IValidationTestResult testResult);
+    internal delegate void SingleTestCompletedDelegate(IValidationTestResult testResult);
 
     // Delegate called after the test run completed, whether it succeeded, failed or got canceled.
-    public delegate void AllTestsCompletedDelegate(TestState testRunState);
+    internal delegate void AllTestsCompletedDelegate(TestState testRunState);
 
-    public class ValidationSuite
+    internal class ValidationSuite
     {
         // List of validation tests
         private IEnumerable<BaseValidation> validationTests;
