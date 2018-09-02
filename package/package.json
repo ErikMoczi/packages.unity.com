@@ -1,9 +1,14 @@
 {
-    "name": "com.unity.postprocessing",
-    "version": "2.0.8-preview",
-    "displayName": "Post-processing",
-    "unity": "2018.1",
-    "description": "Unity post-processing framework (v2)",
-    "dependencies": {
-    }
+    "dependencies": {}, 
+    "description": "Unity post-processing framework (v2)", 
+    "displayName": "Post-processing", 
+    "gitHead": "ab2cef86697dfc1bdc687795c73dbf9748548574", 
+    "name": "com.unity.postprocessing", 
+    "repoPackagePath": "com.unity.postprocessing", 
+    "repository": {
+        "type": "git", 
+        "url": "ssh://git@github.com/Unity-Technologies/ScriptableRenderLoop.git"
+    }, 
+    "unity": "2018.1", 
+    "version": "2.0.8-preview.1"
 }
