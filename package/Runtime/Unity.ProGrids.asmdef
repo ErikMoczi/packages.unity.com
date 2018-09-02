@@ -1,0 +1,9 @@
+{
+    "name": "Unity.ProGrids",
+    "references": [],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

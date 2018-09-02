@@ -1,0 +1,11 @@
+{
+    "name": "Unity.ProGrids.Tests",
+    "references": [
+        "Unity.ProGrids"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": []
+}
