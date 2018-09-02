@@ -18,17 +18,37 @@ namespace UnityEngine.ResourceManagement
             where TObject : class
         {
             public VirtualAssetBundleManager assetBundleManager;
+            System.Action<IAsyncOperation<IList<object>>> action;
+            public InternalOp()
+            {
+                action = (op) =>
+                {
+                    if (op == null || op.Status == AsyncOperationStatus.Succeeded)
+                    {
+                        assetBundleManager.LoadAsync(Context as IResourceLocation).Completed += (bundleOp) =>
+                        {
+                            SetResult(bundleOp.Result as TObject);
+                            OnComplete();
+                        };
+                    }
+                    else
+                    {
+                        m_error = op.OperationException;
+                        SetResult(default(TObject));
+                        OnComplete();
+                    }
+
+                };
+            }
 
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
-                Result = null;
-                loadDependencyOperation.Completed += (obj) => {
-                    assetBundleManager.LoadAsync(location).Completed += (IAsyncOperation<VirtualAssetBundle> operation) => {
-                        SetResult(operation.Result as TObject);
-                        OnComplete();
-                    };
-                };
-
+                Context = location;
+                m_result = null;
+                if (loadDependencyOperation == null)
+                    action(null);
+                else
+                    loadDependencyOperation.Completed += action;
                 return base.Start(location);
             }
 
@@ -39,8 +59,6 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
-            if (loadDependencyOperation == null)
-                throw new System.ArgumentNullException("loadDependencyOperation");
             var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
             operation.assetBundleManager = m_assetBundleManager;
             return operation.Start(location, loadDependencyOperation);

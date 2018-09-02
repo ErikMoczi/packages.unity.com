@@ -26,8 +26,6 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
-            if (loadDependencyOperation == null)
-                throw new System.ArgumentNullException("loadDependencyOperation");
             if (loadProvider == null)
                 throw new ArgumentNullException("loadProvider");
             InstancePool pool;
@@ -94,7 +92,7 @@ namespace UnityEngine.ResourceManagement
                 Validate();
                 prefabResult = null;
                 m_instParams = instantiateParameters;
-                Result = value;
+                SetResult(value);
                 Context = location;
                 m_startFrame = Time.frameCount;
                 if (loadOperation != null)
@@ -108,7 +106,7 @@ namespace UnityEngine.ResourceManagement
             void OnInstantComplete(TObject res)
             {
                 Validate();
-                Result = res;
+                SetResult(res);
                 var go = Result as GameObject;
                 if (go != null)
                 {
@@ -143,7 +141,7 @@ namespace UnityEngine.ResourceManagement
                 }
                 else if (Result == null)
                 {
-                    Result = m_instParams.Instantiate(prefabResult);
+                    SetResult(m_instParams.Instantiate(prefabResult));
                 }
 
                 InvokeCompletionEvent();

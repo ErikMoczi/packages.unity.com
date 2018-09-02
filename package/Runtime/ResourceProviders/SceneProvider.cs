@@ -11,21 +11,40 @@ namespace UnityEngine.ResourceManagement
         {
             LoadSceneMode m_loadMode;
             Scene m_scene;
+            System.Action<IAsyncOperation<IList<object>>> action;
+
+            public InternalOp()
+            {
+                action = (op) =>
+                {
+                    if (op == null || op.Status == AsyncOperationStatus.Succeeded)
+                    {
+                        var reqOp = SceneManager.LoadSceneAsync((Context as IResourceLocation).InternalId, m_loadMode);
+                        m_scene = SceneManager.GetSceneAt(SceneManager.sceneCount - 1);
+                        if (reqOp == null || reqOp.isDone)
+                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnSceneLoaded, 0, reqOp);
+                        else
+                            reqOp.completed += OnSceneLoaded;
+                    }
+                    else
+                    {
+                        m_error = op.OperationException;
+                        SetResult(default(Scene));
+                        OnSceneLoaded(null);
+                    }
+                };
+            }
+
+
             public IAsyncOperation<Scene> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, LoadSceneMode loadMode)
             {
                 Validate();
                 Context = location;
                 m_loadMode = loadMode;
-                loadDependencyOperation.Completed += (op) =>
-                {
-                    
-                    var reqOp = SceneManager.LoadSceneAsync((Context as IResourceLocation).InternalId, m_loadMode);
-                    m_scene = SceneManager.GetSceneAt(SceneManager.sceneCount - 1);
-                    if (reqOp == null || reqOp.isDone)
-                        DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnSceneLoaded, 0, reqOp);
-                    else
-                        reqOp.completed += OnSceneLoaded;
-                };
+                if (loadDependencyOperation == null)
+                    action(null);
+                else
+                    loadDependencyOperation.Completed += action;
                 return this;
             }
 
@@ -52,9 +71,6 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new ArgumentNullException("location");
-            if(loadDependencyOperation == null)
-                throw new ArgumentNullException("loadDependencyOperation");
-
             return AsyncOperationCache.Instance.Acquire<InternalOp>().Start(location, loadDependencyOperation, loadMode);
         }
 

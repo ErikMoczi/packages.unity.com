@@ -32,9 +32,6 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
-            if (asset == null)
-                throw new System.ArgumentNullException("asset");
-
             return true;
         }
     }

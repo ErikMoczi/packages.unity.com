@@ -438,8 +438,6 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
-            if (loadDependencyOperation == null)
-                throw new System.ArgumentNullException("loadDependencyOperation");
 
             CacheList entryList = null;
             if (!m_cache.TryGetValue(location.GetHashCode(), out entryList))

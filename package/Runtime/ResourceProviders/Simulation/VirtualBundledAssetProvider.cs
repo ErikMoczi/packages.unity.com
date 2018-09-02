@@ -16,7 +16,7 @@ namespace UnityEngine.ResourceManagement
             System.Action<IAsyncOperation<TObject>> onCompleteAction;
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
-                Result = null;
+                m_result = null;
                 if (onCompleteAction == null)
                     onCompleteAction = OnComplete;
                 loadDependencyOperation.Completed += (obj) => 
@@ -39,7 +39,7 @@ namespace UnityEngine.ResourceManagement
             if (location == null)
                 throw new System.ArgumentNullException("location");
             if (loadDependencyOperation == null)
-                throw new System.ArgumentNullException("loadDependencyOperation");
+                return new EmptyOperation<TObject>().Start(location, default(TObject), new System.ArgumentNullException("IAsyncOperation<IList<object>> loadDependencyOperation"));
             var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
             return operation.Start(location, loadDependencyOperation);
         }
@@ -48,8 +48,6 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
-            if (asset == null)
-                throw new System.ArgumentNullException("asset");
             return true;
 
         }

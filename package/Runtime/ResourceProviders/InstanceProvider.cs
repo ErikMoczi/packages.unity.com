@@ -23,7 +23,7 @@ namespace UnityEngine.ResourceManagement
             {
                 Validate();
                 prefabResult = null;
-                Result = null;
+                m_result = null;
                 Context = location;
                 m_instParams = instantiateParameters;
                 m_startFrame = Time.frameCount;
@@ -43,7 +43,7 @@ namespace UnityEngine.ResourceManagement
                 }
                 else if (Result == null)
                 {
-                    Result = m_instParams.Instantiate(prefabResult);
+                    SetResult(m_instParams.Instantiate(prefabResult));
                 }
                 InvokeCompletionEvent();
             }
@@ -62,8 +62,7 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
-            if (loadDependencyOperation == null)
-                throw new System.ArgumentNullException("loadDependencyOperation");
+
             if (loadProvider == null)
                 throw new ArgumentNullException("loadProvider");
 

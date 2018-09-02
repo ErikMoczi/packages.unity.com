@@ -150,16 +150,14 @@ namespace UnityEngine.ResourceManagement
             if (location == null)
                 throw new ArgumentException("IResourceLocation location cannot be null.");
             if (m_bundleLoadOperation == null)
-                throw new Exception("LoadAssetAsync called on unloaded bundle " + m_name);
+                return new EmptyOperation<TObject>().Start(location, default(TObject), new Exception("LoadAssetAsync called on unloaded bundle " + m_name));
+
             if (!m_bundleLoadOperation.IsDone)
-                throw new Exception("LoadAssetAsync called on loading bundle " + m_name);
+                return new EmptyOperation<TObject>().Start(location, default(TObject), new Exception("LoadAssetAsync called on loading bundle " + m_name));
 
             AssetInfo assetInfo;
             if (!m_assetMap.TryGetValue(location.InternalId, out assetInfo))
-            {
-                Debug.LogWarningFormat("Unable to load asset {0} from simulated bundle {1}.", location.InternalId, Name);
-                return null;
-            }
+                return new EmptyOperation<TObject>().Start(location, default(TObject), new Exception(string.Format("Unable to load asset {0} from simulated bundle {1}.", location.InternalId, Name)));
 
             LoadAssetOp<TObject> op = new LoadAssetOp<TObject>(location, assetInfo);
             m_assetLoadOperations.Add(op);

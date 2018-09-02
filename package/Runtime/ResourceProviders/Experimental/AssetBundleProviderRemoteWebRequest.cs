@@ -20,7 +20,7 @@ namespace UnityEngine.ResourceManagement
             public InternalOp<TObject> Start(IResourceLocation location)
             {
                 Validate();
-                Result = null;
+                m_result = null;
                 Context = location;
                 m_complete = false;
                 m_startFrame = Time.frameCount;
@@ -71,7 +71,7 @@ namespace UnityEngine.ResourceManagement
             {
                 Validate();
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncCompletion, Context, Time.frameCount - m_startFrame);
-                Result = (obj as AssetBundleCreateRequest).assetBundle as TObject;
+                SetResult((obj as AssetBundleCreateRequest).assetBundle as TObject);
                 InvokeCompletionEvent();
                 m_data.Close();
                 m_data.Dispose();

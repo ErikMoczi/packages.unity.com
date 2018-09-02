@@ -8,18 +8,36 @@ namespace UnityEngine.ResourceManagement
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
-            public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
+            System.Action<IAsyncOperation<IList<object>>> action;
+            public InternalOp()
             {
-                Context = location;
-                Result = null;
-                loadDependencyOperation.Completed += (obj) =>
+                action = (op) =>
+                {
+                    if (op == null || op.Status == AsyncOperationStatus.Succeeded)
                     {
-                        var reqOp = AssetBundle.LoadFromFileAsync(location.InternalId);
+                        var reqOp = AssetBundle.LoadFromFileAsync((Context as IResourceLocation).InternalId);
                         if (reqOp.isDone)
                             DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
                         else
                             reqOp.completed += OnComplete;
-                    };
+                    }
+                    else
+                    {
+                        m_error = op.OperationException;
+                        SetResult(default(TObject));
+                        OnComplete();
+                    }
+                };
+            }
+
+            public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
+            {
+                Context = location;
+                m_result = null;
+                if (loadDependencyOperation == null)
+                    action(null);
+                else
+                    loadDependencyOperation.Completed += action;
 
                 return base.Start(location);
             }
@@ -34,8 +52,6 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
-            if (loadDependencyOperation == null)
-                throw new System.ArgumentNullException("loadDependencyOperation");
             var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
             return operation.Start(location, loadDependencyOperation);
         }

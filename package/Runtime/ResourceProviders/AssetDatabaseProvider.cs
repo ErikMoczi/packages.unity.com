@@ -17,7 +17,7 @@ namespace UnityEngine.ResourceManagement
         {
             public InternalProviderOperation<TObject> Start(IResourceLocation location, float loadDelay)
             {
-                Result = null;
+                m_result = null;
                 Context = location;
                 DelayedActionManager.AddAction((Action)CompleteLoad, loadDelay);
                 return base.Start(location);
@@ -33,14 +33,22 @@ namespace UnityEngine.ResourceManagement
             public override TObject ConvertResult(AsyncOperation op) { return null; }
         }
 
+
+        public override bool CanProvide<TObject>(IResourceLocation location)
+        {
+            if (!base.CanProvide<TObject>(location))
+                return false;
+            var t = typeof(TObject);
+            return t == typeof(object) || typeof(UnityEngine.Object).IsAssignableFrom(t);
+        }
+
+
+
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
-            if (loadDependencyOperation == null)
-                throw new System.ArgumentNullException("loadDependencyOperation");
-            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
-            return operation.Start(location, m_loadDelay);
+            return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>().Start(location, m_loadDelay);
         }
 
         public override bool Release(IResourceLocation location, object asset)

@@ -163,18 +163,13 @@ namespace UnityEngine.ResourceManagement
                 Validate();
                 return m_result;
             }
-            set
-            {
-                Validate();
-                m_result = value;
-            }
         }
         public virtual bool IsDone
         {
             get
             {
                 Validate();
-                return !(EqualityComparer<TObject>.Default.Equals(Result, default(TObject)));
+                return Status == AsyncOperationStatus.Failed || Status == AsyncOperationStatus.Succeeded;
             }
         }
         public virtual float PercentComplete
@@ -253,9 +248,10 @@ namespace UnityEngine.ResourceManagement
 
     public class EmptyOperation<TObject> : AsyncOperationBase<TObject>
     {
-        public virtual IAsyncOperation<TObject> Start(IResourceLocation loc, TObject val)
+        public virtual IAsyncOperation<TObject> Start(IResourceLocation loc, TObject val, System.Exception error = null)
         {
             m_context = loc;
+            m_error = error;
             SetResult(val);
             DelayedActionManager.AddAction((Action)InvokeCompletionEvent, 0);
             return this;
@@ -296,7 +292,7 @@ namespace UnityEngine.ResourceManagement
         public GroupOperation()
         {
             m_internalOnComplete = OnOperationCompleted;
-            Result = new List<TObject>();
+            m_result = new List<TObject>();
         }
 
         public override void SetResult(IList<TObject> result)
@@ -366,12 +362,18 @@ namespace UnityEngine.ResourceManagement
                 if (m_operations[i] == op)
                 {
                     Result[i] = op.Result;
+                    if (op.Status != AsyncOperationStatus.Succeeded)
+                        Status = op.Status;
                     break;
                 }
             }
             op.Release();
             if (IsDone)
+            {
+                if (Status != AsyncOperationStatus.Failed)
+                    Status = AsyncOperationStatus.Succeeded;
                 InvokeCompletionEvent();
+            }
         }
     }
 

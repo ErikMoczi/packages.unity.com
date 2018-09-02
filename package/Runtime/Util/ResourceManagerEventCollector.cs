@@ -38,14 +38,14 @@ namespace UnityEngine.ResourceManagement.Diagnostics
             if (loc != null)
             {
                 id = loc.ToString();
-                if (loc.Dependencies != null && loc.Dependencies.Count > 0)
+                if (loc.HasDependencies)
                     parent = loc.Dependencies[0].ToString();
                 var sb = new System.Text.StringBuilder(256);
                 sb.Append(loc.ProviderId.Substring(loc.ProviderId.LastIndexOf('.') + 1));
                 sb.Append('!');
                 sb.Append(loc.InternalId);
                 sb.Append('!');
-                for (int i = 0; loc.Dependencies != null && i < loc.Dependencies.Count; i++)
+                for (int i = 0; loc.HasDependencies && i < loc.Dependencies.Count; i++)
                 {
                     sb.Append(loc.Dependencies[i].ToString());
                     sb.Append(',');

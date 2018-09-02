@@ -9,19 +9,25 @@ namespace UnityEngine.ResourceManagement
         {
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
-                Result = null;
-                if (loadDependencyOperation != null)
+                m_result = null;
+                loadDependencyOperation.Completed += (op) =>
                 {
-                    loadDependencyOperation.Completed += (obj) =>
+                    if (op.Status == AsyncOperationStatus.Succeeded)
                     {
-                        AssetBundle bundle = obj.Result[0] as AssetBundle;
+                        AssetBundle bundle = op.Result[0] as AssetBundle;
                         var reqOp = bundle.LoadAssetAsync<TObject>(location.InternalId);
                         if (reqOp.isDone)
                             DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
                         else
                             reqOp.completed += OnComplete;
-                    };
-                }
+                    }
+                    else
+                    {
+                        m_error = op.OperationException;
+                        SetResult(default(TObject));
+                        OnComplete();
+                    }
+                };
                 return base.Start(location);
             }
 
@@ -36,9 +42,9 @@ namespace UnityEngine.ResourceManagement
             if (location == null)
                 throw new System.ArgumentNullException("location");
             if (loadDependencyOperation == null)
-                throw new System.ArgumentNullException("loadDependencyOperation");
-            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
-            return operation.Start(location, loadDependencyOperation);
+                return new EmptyOperation<TObject>().Start(location, default(TObject), new System.ArgumentNullException("IAsyncOperation<IList<object>> loadDependencyOperation"));
+
+            return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>().Start(location, loadDependencyOperation);
         }
 
         public override bool Release(IResourceLocation location, object asset)

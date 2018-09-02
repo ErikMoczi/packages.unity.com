@@ -7,17 +7,14 @@ namespace UnityEngine.ResourceManagement
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
-            public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
+            public InternalProviderOperation<TObject> StartOp(IResourceLocation location)
             {
-                Result = null;
-                loadDependencyOperation.Completed += (obj) =>
-                {
-                    var reqOp = Resources.LoadAsync<Object>(location.InternalId);
-                    if (reqOp.isDone)
-                        DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
-                    else
-                        reqOp.completed += OnComplete;
-                };
+                m_result = null;
+                var reqOp = Resources.LoadAsync<Object>(location.InternalId);
+                if (reqOp.isDone)
+                    DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
+                else
+                    reqOp.completed += OnComplete;
                 return base.Start(location);
             }
 
@@ -31,10 +28,7 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
-            if (loadDependencyOperation == null)
-                throw new System.ArgumentNullException("loadDependencyOperation");
-            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
-            return operation.Start(location, loadDependencyOperation);
+            return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>().StartOp(location);
         }
 
         public override bool Release(IResourceLocation location, object asset)

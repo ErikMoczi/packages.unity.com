@@ -1,19 +1,19 @@
 # Unity Resource Manager
 
-The ResourceManager is an extendable high level API that asynchronously loads and unloads assets.
+The __ResourceManager__ is a high level API that asynchronously provides and releases resources. Resources can be anything from an asset bundle to a single boolean.
 
-### Requires Unity 2018.1+
+The purpose of the __ResourceManager__ API is to provide a consistent way to access resources while abstracting out specific loading implementations.  It also provides dependency resolution and memory management functionality to simplify game code that needs to deal with loading assets.  To accomplish this, __ResourceManager__ implements a single API call which allows you to load assets from a variety of locations (Resources, Bundles, etc). For example, you can call `ResourceManager.LoadAsync<Texture>(myResourceLocation);` and have the resource loaded regardless of where it came from.
 
-The specific method and location of loading assets is abstracted. With the proper extension, assets can be loading from a variety of locations (Resources, Bundles, etc) all through a single API. The overall goal is that regardless of what your setup is, or where you are loading from, you always load in the same way. For example, you can call _ResourceManager.LoadAsync<Texture, string>("myTexture");_ and have that be loaded regardless of where it came from.
-This package can function as a standalone package, but will be extended in the future via high-level packages that add custom IResourceLocator and IResourceProvider interfaces. See the Samples directory for help on how to use it as a standalone package.
+The __ResourceManager__ package can function as a standalone package and contains providers for all common asset types.  It can be extended to handle more complex and custom loading scenarios.  For example on how to use __ResourceManager__ as a standalone package, see the Samples directory.
 
-## Locators, Locations & Providers
+### Requirements
 
-The ResourceManager project defines three important interfaces: IResourceLocator, IResourceLocation, and IResourceProvider.  
-* An **IResourceLocation** contains the information needed to load an asset; creating a resource location does not actually load the asset.  
-* An **IResourceLocator** object is what is used to find IResourceLocation objects.  This lookup is done by providing the locator an  "address".  What this address is (string name, int index, other) is determined by the implementation of the locator.  
-* An **IResourceProvider** is what actually does the loading of an asset. When asked to load a location, the resource manager asks all of the providers it knows about if they _CanProvide_ that location. Once one can, the resource manager stops its search, and asks that provider to profide the asset.  In general this will mean a _load_ operation, but in theory it could also be asset creation.  For example a custom provider could create composite or generated textures rather than simply loading them.
+Unity 2018.1 or greater
 
-The system is designed to be extensible to allow for custom locators and providers of assets.  Future high-level packages will come with locators and providers, and will handle the initialization themselves.  The intent being that users need not know about the above interfaces.
+## Locations and Providers
 
+The __ResourceManager__ API defines following three interfaces:
 
+* `IResourceLocation`: The interface a class must implement to specify the location, loading method, and dependencies of an asset resource. The instantiated object contains the information needed to load an asset. Creating a resource location does not load the asset.
+
+* `IResourceProvider`: The interface a class must implement to act as a resource provider. A resource provider loads an asset described by an `IResourceLocation`. When called to load a location, the resource manager queries the registered providers by calling the `CanProvide` method on the provider and passing in the resource location of the asset. When a resource provider responds that it can retrieve an asset based on the type of location specified, the resource manager stops its search. It calls the `Provide` method on the resource provider to start an asynchronous operation that returns the requested resource. Typically this is accomplished by executing a `load` operation, but the provider could also create an asset to fulfill the request. For example, a custom provider could create composite or generated textures rather than simply loading them.

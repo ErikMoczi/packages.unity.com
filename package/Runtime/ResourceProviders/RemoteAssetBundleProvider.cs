@@ -13,20 +13,32 @@ namespace UnityEngine.ResourceManagement
             {
                 action = (op) => 
                 {
-                    var bundleURL = (Context as IResourceLocation).InternalId;
-                    var reqOp = UnityWebRequestAssetBundle.GetAssetBundle(bundleURL).SendWebRequest();
-                    if (reqOp.isDone)
-                        DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
+                    if (op == null || op.Status == AsyncOperationStatus.Succeeded)
+                    {
+                        var bundleURL = (Context as IResourceLocation).InternalId;
+                        var reqOp = UnityWebRequestAssetBundle.GetAssetBundle(bundleURL).SendWebRequest();
+                        if (reqOp.isDone)
+                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
+                        else
+                            reqOp.completed += OnComplete;
+                    }
                     else
-                        reqOp.completed += OnComplete;
+                    {
+                        m_error = op.OperationException;
+                        SetResult(default(TObject));
+                        OnComplete();
+                    }
                 };
             }
 
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
-                Result = null;
+                m_result = null;
                 Context = location;
-                loadDependencyOperation.Completed += action;
+                if (loadDependencyOperation == null)
+                    action(null);
+                else
+                    loadDependencyOperation.Completed += action;
                 return base.Start(location);
             }
 
@@ -44,9 +56,6 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
-            if (loadDependencyOperation == null)
-                throw new System.ArgumentNullException("loadDependencyOperation");
-
             var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
             return operation.Start(location, loadDependencyOperation);
         }

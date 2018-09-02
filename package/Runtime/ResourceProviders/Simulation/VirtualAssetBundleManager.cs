@@ -44,7 +44,11 @@ namespace UnityEngine.ResourceManagement
 
             VirtualAssetBundle bundle = null;
             if (!m_allBundles.TryGetValue(location.InternalId, out bundle))
-                throw new Exception("Unable to unload virtual bundle " + location);
+            {
+                Debug.LogWarningFormat("Unable to unload virtual bundle {0}.", location);
+                return false;
+            }
+
             m_activeBundles.Remove(location.InternalId);
             return bundle.Unload();
         }
@@ -55,7 +59,7 @@ namespace UnityEngine.ResourceManagement
                 throw new ArgumentException("IResourceLocation location cannot be null.");
             VirtualAssetBundle bundle;
             if (!m_allBundles.TryGetValue(location.InternalId, out bundle))
-                throw new Exception("Unable to load virtual bundle from " + location);
+                return new EmptyOperation<VirtualAssetBundle>().Start(location, default(VirtualAssetBundle), new Exception(string.Format("Unable to unload virtual bundle {0}.", location)));
 
             m_activeBundles.Add(location.InternalId, bundle);
             return bundle.StartLoad(location);

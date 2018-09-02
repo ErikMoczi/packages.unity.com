@@ -13,21 +13,33 @@ namespace UnityEngine.ResourceManagement
             {
                 action = (op) => 
                 {
-                    var url = (Context as IResourceLocation).InternalId;
-                    var reqOp = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET, new DownloadHandlerBuffer(), null).SendWebRequest();
-                    if (reqOp.isDone)
-                        DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
+                    if (op == null || op.Status == AsyncOperationStatus.Succeeded)
+                    {
+                        var url = (Context as IResourceLocation).InternalId;
+                        var reqOp = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET, new DownloadHandlerBuffer(), null).SendWebRequest();
+                        if (reqOp.isDone)
+                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
+                        else
+                            reqOp.completed += OnComplete;
+                    }
                     else
-                        reqOp.completed += OnComplete;
+                    {
+                        m_error = op.OperationException;
+                        SetResult(default(TObject));
+                        OnComplete();
+                    }
                 };
             }
 
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, System.Func<DownloadHandler, TObject> convertFunc)
             {
-                Result = null;
+                m_result = null;
                 m_convertFunc = convertFunc;
                 Context = location;
-                loadDependencyOperation.Completed += action;
+                if (loadDependencyOperation == null)
+                    action(null);
+                else
+                    loadDependencyOperation.Completed += action;
                 return base.Start(location);
             }
 
@@ -50,8 +62,6 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
-            if (loadDependencyOperation == null)
-                throw new System.ArgumentNullException("loadDependencyOperation");
             var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
             return operation.Start(location, loadDependencyOperation, Convert<TObject>);
         }

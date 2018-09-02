@@ -12,7 +12,7 @@ namespace UnityEngine.ResourceManagement
         {
             Validate();
             if (location == null)
-                throw new ArgumentNullException("location");
+                m_error = new ArgumentNullException("location");
             startFrame = Time.frameCount;
             Context = location;
             return this;
@@ -21,6 +21,9 @@ namespace UnityEngine.ResourceManagement
         protected virtual void OnComplete(IAsyncOperation<TObject> op)
         {
             Validate();
+            if(op.Status != AsyncOperationStatus.Succeeded)
+                m_error = op.OperationException;
+
             SetResult(op.Result);
             OnComplete();
         }
@@ -28,7 +31,16 @@ namespace UnityEngine.ResourceManagement
         protected virtual void OnComplete(AsyncOperation op)
         {
             Validate();
-            SetResult(ConvertResult(op));
+            TObject res = default(TObject);
+            try
+            {
+                res = ConvertResult(op);
+            }
+            catch (Exception ex)
+            {
+                m_error = ex;
+            }
+            SetResult(res);
             OnComplete();
         }
 

@@ -15,7 +15,7 @@ namespace UnityEngine.ResourceManagement
         {
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
-                Result = null;
+                m_result = null;
                 if (loadDependencyOperation != null && location != null)
                 {
                     loadDependencyOperation.Completed += (obj) =>
@@ -46,8 +46,6 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
-            if (asset == null)
-                throw new System.ArgumentNullException("asset");
             return true;
         }
     }
