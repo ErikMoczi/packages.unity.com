@@ -4,9 +4,18 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.0.19-preview] - 2018-05-01
+ - Complete UI rework.
+	- Moved all functionality to one tab
+	- Preview is a toggle to view in-line.
+	- Profiles are edied from second window (this part is somewhat placeholder pending a better setup)
+ - Dependency updates
+ - Minor cleanup to build scripts
+
 ## [0.0.18-preview] - 2018-04-13
  - minor bug fixes
  - exposed memory cache parameters to build settings, changed defaults to use LRU and timed releases to make preloading dependencies more effective
+ 
 ## [0.0.17-preview] - 2018-04-13
  - added tests
  - fixed bugs

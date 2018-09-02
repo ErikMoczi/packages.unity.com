@@ -5,7 +5,7 @@ using UnityEditor.Build.Pipeline.Interfaces;
 
 namespace UnityEditor.AddressableAssets
 {
-    public struct GenerateLocationListsTask : IBuildTask
+    public class GenerateLocationListsTask : IBuildTask
     {
         const int k_Version = 1;
         public int Version { get { return k_Version; } }
