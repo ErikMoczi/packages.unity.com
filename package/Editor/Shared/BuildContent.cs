@@ -84,7 +84,7 @@ namespace UnityEditor.Build.Pipeline
                 {
                     var asset = new GUID(AssetDatabase.AssetPathToGUID(bundleBuild.assetNames[i]));
                     guids.Add(asset);
-                    var address = i >= bundleBuild.addressableNames.Length || string.IsNullOrEmpty(bundleBuild.addressableNames[i]) ?
+                    var address = bundleBuild.addressableNames == null || i >= bundleBuild.addressableNames.Length || string.IsNullOrEmpty(bundleBuild.addressableNames[i]) ?
                         AssetDatabase.GUIDToAssetPath(asset.ToString()) : bundleBuild.addressableNames[i];
                     Addresses.Add(asset, address);
                     if (ValidationMethods.ValidAsset(asset))

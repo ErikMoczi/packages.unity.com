@@ -45,6 +45,8 @@ namespace UnityEditor.Build.Pipeline.Utilities
 
         public static Hash128 GetHash128(this BuildSettings settings)
         {
+            if (settings.typeDB == null)
+                return HashingMethods.CalculateMD5Hash(settings.target, settings.group, settings.buildFlags);
             return HashingMethods.CalculateMD5Hash(settings.target, settings.group, settings.buildFlags, settings.typeDB.GetHash128());
         }
     }
