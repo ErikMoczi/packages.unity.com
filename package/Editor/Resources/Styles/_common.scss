@@ -577,6 +577,7 @@ $spinner-normal-half-size: 8;
 			#detailPackageStatus {
 				flex: 1;
 				font-style: bold;
+				word-wrap: true;
 			}
 
 			#detailTag {
@@ -647,6 +648,7 @@ $spinner-normal-half-size: 8;
 		position-type: absolute;
 		@include position(5, 5, auto, 5);
 		min-height: 50;
+		word-wrap: true;
 
 		&.display-none {
 			@include position(0, 0, 0, 0);

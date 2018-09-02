@@ -225,6 +225,7 @@ namespace UnityEditor.PackageManager.UI
         private static void Reload()
         {
             // Force a re-init to initial condition
+            PackageCollection.Instance.SetFilter(PackageFilter.Local, false);
             PackageCollection.Instance.UpdatePackageCollection(true);
         }
 
