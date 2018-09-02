@@ -118,9 +118,11 @@ namespace UnityEngine.Rendering.PostProcessing
             m_TargetPool = new TargetPool();
 
             debugLayer.OnEnable();
+        }
 
-            // Scriptable render pipelines handle their own command buffers
-            if (RuntimeUtilities.scriptableRenderPipelineActive)
+        void CheckInitLegacy()
+        {
+            if (m_Camera != null && m_CurrentContext != null)
                 return;
 
             m_LegacyCmdBufferBeforeReflections = new CommandBuffer { name = "Deferred Ambient Occlusion" };
@@ -264,6 +266,8 @@ namespace UnityEngine.Rendering.PostProcessing
             // Unused in scriptable render pipelines
             if (RuntimeUtilities.scriptableRenderPipelineActive)
                 return;
+
+            CheckInitLegacy();
 
             // Resets the projection matrix from previous frame in case TAA was enabled.
             // We also need to force reset the non-jittered projection matrix here as it's not done
@@ -413,7 +417,7 @@ namespace UnityEngine.Rendering.PostProcessing
             // Same as before, first blit needs to use the builtin Blit command to properly handle
             // tiled GPUs
             int tempRt = m_TargetPool.Get();
-            context.GetScreenSpaceTemporaryRT(m_LegacyCmdBuffer, tempRt, 24, sourceFormat);
+            context.GetScreenSpaceTemporaryRT(m_LegacyCmdBuffer, tempRt, 24, sourceFormat, RenderTextureReadWrite.sRGB);
             m_LegacyCmdBuffer.Blit(cameraTarget, tempRt, RuntimeUtilities.copyStdMaterial, stopNaNPropagation ? 1 : 0);
             m_NaNKilled = stopNaNPropagation;
 
