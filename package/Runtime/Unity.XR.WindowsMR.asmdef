@@ -3,7 +3,6 @@
     "references": [],
     "optionalUnityReferences": [],
     "includePlatforms": [
-        "Editor",
         "WSA",
         "WindowsStandalone32",
         "WindowsStandalone64"
