@@ -1,8 +1,10 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.IO;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro.EditorUtilities;
+
 
 namespace TMPro
 {
@@ -48,6 +50,7 @@ namespace TMPro
             public string assetDataFile;
         }
 
+        private static bool m_IsAlreadyScanningProject;
         private static string k_ProjectScanReportDefaultText = "<color=#FFFF80><b>Project Scan Results</b></color>\n";
         private static string m_ProjectScanResults = string.Empty;
         private static Vector2 m_ProjectScanResultScrollPosition;
@@ -73,7 +76,7 @@ namespace TMPro
 
         void OnGUI()
         {
-            m_ProgressPercentage = (m_ProgressPercentage + 1) % 100;
+            //m_ProgressPercentage = (m_ProgressPercentage + 1) % 100;
 
             GUILayout.BeginVertical();
             {
@@ -86,20 +89,22 @@ namespace TMPro
                     GUILayout.Label("Press the <i>Scan Project Files</i> button to begin scanning your project for files & resources that were created with a previous version of TextMesh Pro", TMP_UIStyleManager.Label);
                     GUILayout.Space(5f);
 
+                    GUI.enabled = m_IsAlreadyScanningProject == false ? true : false;
                     if (GUILayout.Button("Scan Project Files"))
                     {
-                        m_ProjectScanResults = ScanProjectFiles();
+                        EditorCoroutine.StartCoroutine(ScanProjectFiles());
                     }
+                    GUI.enabled = true;
 
                     // Display progress bar
                     Rect rect = GUILayoutUtility.GetRect(0f, 20f, GUILayout.ExpandWidth(true));
-                    EditorGUI.ProgressBar(rect, m_ProgressPercentage / 100, "Scan Progress");
+                    EditorGUI.ProgressBar(rect, m_ProgressPercentage, "Scan Progress");
                     GUILayout.Space(5);
 
                     // Creation Feedback
-                    GUILayout.BeginVertical(TMP_UIStyleManager.TextAreaBoxWindow);
+                    GUILayout.BeginVertical(TMP_UIStyleManager.TextAreaBoxWindow, GUILayout.ExpandHeight(true));
                     {
-                        m_ProjectScanResultScrollPosition = EditorGUILayout.BeginScrollView(m_ProjectScanResultScrollPosition, GUILayout.Height(145));
+                        m_ProjectScanResultScrollPosition = EditorGUILayout.BeginScrollView(m_ProjectScanResultScrollPosition, GUILayout.ExpandHeight(true));
                         EditorGUILayout.LabelField(m_ProjectScanResults, TMP_UIStyleManager.Label);
                         EditorGUILayout.EndScrollView();
                     }
@@ -112,10 +117,10 @@ namespace TMPro
                 GUILayout.BeginVertical(TMP_UIStyleManager.SquareAreaBox85G);
                 { 
                     GUILayout.Label("<b>Save Modified Project Files</b>", TMP_UIStyleManager.Label);
-                    GUILayout.Label("Pressing the <i>Save Modified Project Files</i> button will update the project files listed in the <i>Project Scan Results</i> above. <color=#FFFF80>Please make sure that you have created a backup of your project first</color> as these file modifications are permanent and cannot be undone.", TMP_UIStyleManager.Label);
+                    GUILayout.Label("Pressing the <i>Save Modified Project Files</i> button will update the files in the <i>Project Scan Results</i> listed above. <color=#FFFF80>Please make sure that you have created a backup of your project first</color> as these file modifications are permanent and cannot be undone.", TMP_UIStyleManager.Label);
                     GUILayout.Space(5f);
 
-                    GUI.enabled = m_ModifiedAssetList.Count > 0 ? true : false;
+                    GUI.enabled = m_IsAlreadyScanningProject == false && m_ModifiedAssetList.Count > 0 ? true : false;
                     if (GUILayout.Button("Save Modified Project Files"))
                     {
                         UpdateProjectFiles();
@@ -126,6 +131,7 @@ namespace TMPro
 
             }
             GUILayout.EndVertical();
+            GUILayout.Space(5f);
         }
 
         void OnInspectorUpdate()
@@ -143,14 +149,16 @@ namespace TMPro
 
             Vector2 currentWindowSize = editorWindow.minSize;
 
-            editorWindow.minSize = new Vector2(Mathf.Max(640, currentWindowSize.x), Mathf.Max(418, currentWindowSize.y));
+            editorWindow.minSize = new Vector2(Mathf.Max(640, currentWindowSize.x), Mathf.Max(420, currentWindowSize.y));
         }
 
-        private static string ScanProjectFiles()
+
+        private IEnumerator ScanProjectFiles()
         {
             // Make sure Asset Serialization mode is set to ForceText with Visible Meta Files.
             SetProjectSerializationAndSourceControlModes();
 
+            m_IsAlreadyScanningProject = true;
             string projectPath = Path.GetFullPath("Assets/..");
             string packageFullPath = EditorUtilities.TMP_EditorUtility.packageFullPath;
 
@@ -165,6 +173,7 @@ namespace TMPro
             // Get list of GUIDs for assets that might contain references to previous GUIDs that require updating.
             string[] projectGUIDs = AssetDatabase.FindAssets("t:Object");
 
+            // Iterate through projectGUIDs to search project assets of the types likely to reference GUIDs and FileIDs used by previous versions of TextMesh Pro. 
             for (int i = 0; i < projectGUIDs.Length; i++)
             {
                 // Could add a progress bar for this process
@@ -218,13 +227,13 @@ namespace TMPro
                     scanResults += assetFilePath + "\n";
                 }
 
-                m_ProgressPercentage += 1;
-                
+                m_ProjectScanResults = scanResults;
+                m_ProgressPercentage = (float)i / (projectGUIDs.Length * 2);
+
+                yield return null;
             }
 
-            // Scan project meta files to update GUIDs of assets whose GUID has changed.
-            projectGUIDs = AssetDatabase.FindAssets("t:Object");
-
+            // Iterate through projectGUIDs (again) to search project meta files which reference GUIDs used by previous versions of TextMesh Pro. 
             for (int i = 0; i < projectGUIDs.Length; i++)
             {
                 string guid = projectGUIDs[i];
@@ -258,11 +267,16 @@ namespace TMPro
 
                     m_ModifiedAssetList.Add(modifiedAsset);
 
-                    scanResults += assetFilePath + "\n";
+                    scanResults += assetMetaFilePath + "\n";
                 }
+
+                m_ProjectScanResults = scanResults;
+                m_ProgressPercentage = 0.5f + ((float)i / (projectGUIDs.Length * 2));
+
+                yield return null;
             }
 
-            return scanResults;
+            m_IsAlreadyScanningProject = false;
         }
 
         private static void UpdateProjectFiles()
@@ -285,6 +299,9 @@ namespace TMPro
             }
 
             AssetDatabase.Refresh();
+
+            m_ProgressPercentage = 0;
+            m_ProjectScanResults = k_ProjectScanReportDefaultText;
 
             // Restore project Asset Serialization and Source Control modes.
             RestoreProjectSerializationAndSourceControlModes();
