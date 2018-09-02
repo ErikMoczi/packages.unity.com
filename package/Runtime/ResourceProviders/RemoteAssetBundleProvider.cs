@@ -14,7 +14,7 @@ namespace ResourceManagement.ResourceProviders
         {
             public override InternalProviderOperation<TObject> Start(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
-                loadDependencyOperation.completed += (obj) => UnityWebRequest.GetAssetBundle(Path.Combine("file://", Config.ExpandPathWithGlobalVars(loc.id))).SendWebRequest().completed += OnComplete;
+                loadDependencyOperation.completed += (obj) => UnityWebRequestAssetBundle.GetAssetBundle(Path.Combine("file://", Config.ExpandPathWithGlobalVars(loc.id))).SendWebRequest().completed += OnComplete;
                 return base.Start(loc, loadDependencyOperation);
             }
 
