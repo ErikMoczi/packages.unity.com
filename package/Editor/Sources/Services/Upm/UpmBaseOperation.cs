@@ -155,11 +155,19 @@ namespace UnityEditor.PackageManager.UI
 
         private void OnError(Error error)
         {
-            Error = error;
+            try
+            {
+                Error = error;
 
-            Debug.LogError("Cannot perform upm operation: " + Error.message + " [" + Error.errorCode + "]");
+                Debug.LogError("Cannot perform upm operation: " + Error.message + " [" + Error.errorCode + "]");
 
-            OnOperationError(Error);
+                OnOperationError(Error);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("Package Manager Window had an error while reporting an error in an operation: " + exception);                
+            }
+
             FinalizeOperation();
         }
 
