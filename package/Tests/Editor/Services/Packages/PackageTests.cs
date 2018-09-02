@@ -232,7 +232,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         }
 
         [Test]
-        public void CanBeRemoved_WhenPackageManagerUIPackage_ReturnsFalse()
+        public void IsPackageManagerUI_WhenPackageManagerUIPackage_ReturnsTrue()
         {
             var packages = new List<PackageInfo>
             {
@@ -240,16 +240,16 @@ namespace UnityEditor.PackageManager.UI.Tests
             };
             var package = new Package(Package.packageManagerUIName, packages);
             
-            Assert.IsFalse(package.CanBeRemoved);
+            Assert.IsTrue(package.IsPackageManagerUI);
         }
         
         [Test]
-        public void CanBeRemoved_WhenNotPackageManagerUIPackage_ReturnsTrue()
+        public void IsPackageManagerUI_WhenNotPackageManagerUIPackage_ReturnsFalse()
         {
             var packages = PackageSets.Instance.Many(kPackageTestName, 1, true);
             var package = new Package(kPackageTestName, packages);
             
-            Assert.IsTrue(package.CanBeRemoved);
+            Assert.IsFalse(package.IsPackageManagerUI);
         }
         
         [Test]

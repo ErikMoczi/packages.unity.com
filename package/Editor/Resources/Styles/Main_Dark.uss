@@ -298,7 +298,7 @@
   margin-left: 0;
   margin-bottom: 0;
   margin-right: 0;
-  text-color: #777777;
+  text-color: #646464;
 }
 #detailListView #packageListGroup #groupContainerOuter #groupContainer {
   margin-top: 0;
@@ -342,7 +342,7 @@
   text-color: #f4f4f4;
 }
 #detailListView .package.not-installed {
-  background-color: #292929;
+  background-color: #424242;
 }
 #detailListView .package .name {
   flex: 1;

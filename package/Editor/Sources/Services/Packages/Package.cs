@@ -38,9 +38,9 @@ namespace UnityEditor.PackageManager.UI
             }
         }
 
-        public bool CanBeRemoved
+        public bool IsPackageManagerUI
         {
-            get { return Name != packageManagerUIName; }
+            get { return Name == packageManagerUIName; }
         }
         
         public bool Equals(Package other)

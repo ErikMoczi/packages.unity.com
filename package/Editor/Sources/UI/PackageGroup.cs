@@ -35,18 +35,17 @@ namespace UnityEditor.PackageManager.UI
             listElement = List;
 
             Header.AddManipulator(new Clickable(ToggleCollapse));
-
-            if (groupName == PackageGroupOrigins.BuiltInPackages.ToString())
-            {
-                HeaderTitle.text = "Built In Packages";
-                Origin = PackageGroupOrigins.BuiltInPackages;
-                SetCollapsed(true);
-            }
-            else
+            if (string.IsNullOrEmpty(groupName) || groupName != PackageGroupOrigins.BuiltInPackages.ToString())
             {
                 HeaderTitle.text = "Packages";
                 Origin = PackageGroupOrigins.Packages;
                 SetCollapsed(false);
+            }
+            else
+            {
+                HeaderTitle.text = "Built In Packages";
+                Origin = PackageGroupOrigins.BuiltInPackages;
+                SetCollapsed(true);
             }
         }
 

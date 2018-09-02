@@ -27,6 +27,12 @@ namespace UnityEditor.PackageManager.UI
             PackageList.OnLoaded += OnPackagesLoaded;
         }
 
+        public void OnDisable()
+        {
+            PackageList.OnSelected -= OnPackageSelected;
+            PackageList.OnLoaded -= OnPackagesLoaded;
+        }
+
         private void OnPackageSelected(Package package)
         {
             PackageDetails.SetPackage(package, PackageSearchFilterTabs.CurrentFilter);
@@ -57,6 +63,9 @@ namespace UnityEditor.PackageManager.UI
         internal static void ShowPackageManagerWindow()
         {
 #if UNITY_2018_1_OR_NEWER
+            // Make sure we are not registered on callback anymore
+            AssemblyReloadEvents.beforeAssemblyReload -= ShowPackageManagerWindow;
+
             var window = GetWindow<PackageManagerWindow>(false, "Package Manager", true);
             window.minSize = new Vector2(700, 250);
             window.maxSize = new Vector2(1400, 1400);

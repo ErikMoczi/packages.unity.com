@@ -306,8 +306,8 @@ namespace UnityEditor.PackageManager.UI
 
             if (filter != PackageFilter.All)
             {
-                visibleFlag = package.CanBeRemoved;
-                enableButton = package.CanBeRemoved;
+                visibleFlag = !package.IsPackageManagerUI;
+                enableButton = !package.IsPackageManagerUI;
                 if (package.RemoveSignal.Operation != null)
                 {
                     actionLabel = displayPackage.Origin == PackageOrigin.Builtin ?
@@ -331,10 +331,46 @@ namespace UnityEditor.PackageManager.UI
 
         private void UpdateClick()
         {
+            if (package.IsPackageManagerUI)
+            {
+                if (!EditorUtility.DisplayDialog("", "Updating this package will temporary close Package Manager window, do you want to continue?", "Yes", "No")) 
+                    return;
+                
+                if (package.AddSignal.Operation != null)
+                {
+                    package.AddSignal.Operation.OnOperationSuccess -= OnAddOperationSuccess;
+                    package.AddSignal.Operation.OnOperationError -= OnAddOperationError;
+                    package.AddSignal.ResetEvents();
+                    package.AddSignal.Operation = null;
+                }
+
+                DetailError.ClearError();
+                EditorApplication.update += CloseAndUpdate;
+
+                return;
+            }
+           
             DetailError.ClearError();
             package.Update();
             RefreshAddButton();
         }
+
+        private void CloseAndUpdate()
+        {
+            EditorApplication.update -= CloseAndUpdate;
+
+            // Registered on callback
+            AssemblyReloadEvents.beforeAssemblyReload += PackageManagerWindow.ShowPackageManagerWindow;
+
+            package.Update();
+
+            var windows = Resources.FindObjectsOfTypeAll<PackageManagerWindow>();
+            if (windows.Length > 0)
+            {
+                windows[0].Close();
+            }
+        }
+        
 
         private void RemoveClick()
         {
