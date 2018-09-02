@@ -324,7 +324,7 @@ namespace UnityEditor.PackageManager.UI
 
             if (Packages.ContainsKey(packageInfo.Name))
             {
-                Packages[packageInfo.Name].source = from pkg in packageInfos where pkg.Name == packageInfo.Name select pkg;
+                Packages[packageInfo.Name].UpdateSource(from pkg in packageInfos where pkg.Name == packageInfo.Name select pkg);
                 return;
             }
 

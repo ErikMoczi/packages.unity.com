@@ -198,10 +198,7 @@ $spinner-normal-half-size: 8;
 		background-image: none;
 		@include margin-box(0);
 		@include padding-box(0);
-
-		&:hover {
-			cursor: link;
-		}
+		cursor: link;
 	}
 
 	.emptyArea {
@@ -511,7 +508,7 @@ $spinner-normal-half-size: 8;
 						font-size: 18;
 						font-style: bold;
 						word-wrap: true;
-						@include margin(0, 3, 0, 0);
+						@include margin(0, 0, 0, 4);
 					}
 				}
 
@@ -545,6 +542,10 @@ $spinner-normal-half-size: 8;
 							&:focus {
 								background-image: $popup-background;
 							}
+
+							&:hover {
+								text-color: $unity-text-color;
+							}
 						}
 					}
 
@@ -554,6 +555,10 @@ $spinner-normal-half-size: 8;
 						@include font-normal();
 						@include padding(2, 4, 3, 4);
 						position-right: -3;
+
+						&:hover {
+							text-color: $unity-text-color;
+						}
 					}
 				}
 
@@ -617,11 +622,6 @@ $spinner-normal-half-size: 8;
 				word-wrap: true;
 
 				@include margin(auto, auto, 5, auto);
-			}
-
-			#thirdPartyNoticeContainer {
-				margin-left: 4;
-				padding-left: 2;
 			}
 
 			#changeLogContainer, #viewLicensesContainer {
@@ -694,7 +694,7 @@ $spinner-normal-half-size: 8;
 	#detailError {
 		position-type: absolute;
 		@include position(5, 5, auto, 5);
-		min-height: 50;
+		min-height: 200;
 		word-wrap: true;
 
 		&.display-none {
@@ -742,11 +742,13 @@ $spinner-normal-half-size: 8;
 	#alertMessage {
 		flex: 1;
 		text-color: $unity-text-color-highlight;
+		word-wrap: true;
 		@include text-clip();
 	}
 
 	#close {
 		flex: 0;
+		max-height: 30;
 		@include position(auto, auto, auto, 5);
 		@include button(3,3,4,3);
 	}

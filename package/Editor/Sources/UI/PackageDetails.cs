@@ -194,7 +194,6 @@ namespace UnityEditor.PackageManager.UI
                     UIUtils.SetElementDisplay(GetTag(tag), DisplayPackage.HasTag(tag));
                                 
                 UIUtils.SetElementDisplay(DocumentationContainer, DisplayPackage.Origin != PackageSource.BuiltIn);
-                UIUtils.SetElementDisplay(ThirdPartyNoticeContainer, HasThirdPartyNotices(DisplayPackage));
                 UIUtils.SetElementDisplay(ChangelogContainer, HasChangelog(DisplayPackage));
 
                 root.Q<Label>("detailName").text = DisplayPackage.Name;
@@ -647,12 +646,6 @@ namespace UnityEditor.PackageManager.UI
             return !string.IsNullOrEmpty(GetPackageUrlRedirect(packageInfo.Name));
         }
 
-        public bool HasThirdPartyNotices(PackageInfo packageInfo)
-        {
-            // Packages with no docs have no third party notice
-            return !RedirectsToManual(packageInfo);
-        }
-
         public bool HasChangelog(PackageInfo packageInfo)
         {
             // Packages with no docs have no third party notice
@@ -685,7 +678,6 @@ namespace UnityEditor.PackageManager.UI
         private Button RemoveButton { get { return root.Q<Button>("remove"); } }
         private Button ViewDocButton { get { return root.Q<Button>("viewDocumentation"); } }
         private VisualElement DocumentationContainer { get { return root.Q<VisualElement>("documentationContainer"); } }
-        private VisualElement ThirdPartyNoticeContainer { get { return root.Q<VisualElement>("thirdPartyNoticeContainer"); } }
         private Button ViewChangelogButton { get { return root.Q<Button>("viewChangelog"); } }
         private VisualElement ChangelogContainer { get { return root.Q<VisualElement>("changeLogContainer"); } }
         private VisualElement ViewLicensesContainer { get { return root.Q<VisualElement>("viewLicensesContainer"); } }
