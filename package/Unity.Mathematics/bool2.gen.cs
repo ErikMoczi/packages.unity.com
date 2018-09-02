@@ -5,25 +5,40 @@ namespace Unity.Mathematics
 {
     public partial struct bool2 : System.IEquatable<bool2>
     {
+        // constructors
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool2(bool x, bool y)
+        { 
+            this.x = x;
+            this.y = y;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool2(bool2 xy)
+        { 
+            this.x = xy.x;
+            this.y = xy.y;
+        }
+
 
         // equal 
-        [MethodImpl(0x100)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2 operator == (bool2 lhs, bool2 rhs) { return new bool2 (lhs.x == rhs.x, lhs.y == rhs.y); }
-        [MethodImpl(0x100)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2 operator == (bool2 lhs, bool rhs) { return new bool2 (lhs.x == rhs, lhs.y == rhs); }
-        [MethodImpl(0x100)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2 operator == (bool lhs, bool2 rhs) { return new bool2 (lhs == rhs.x, lhs == rhs.y); }
 
         // not equal 
-        [MethodImpl(0x100)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2 operator != (bool2 lhs, bool2 rhs) { return new bool2 (lhs.x != rhs.x, lhs.y != rhs.y); }
-        [MethodImpl(0x100)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2 operator != (bool2 lhs, bool rhs) { return new bool2 (lhs.x != rhs, lhs.y != rhs); }
-        [MethodImpl(0x100)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2 operator != (bool lhs, bool2 rhs) { return new bool2 (lhs != rhs.x, lhs != rhs.y); }
 
         // Equals 
-        [MethodImpl(0x100)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(bool2 rhs)  { return x == rhs.x && y == rhs.y; }
 
         // [int index] 
@@ -48,32 +63,32 @@ namespace Unity.Mathematics
         }
 
         // operator &
-        [MethodImpl(0x100)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2 operator & (bool2 lhs, bool2 rhs) { return new bool2 (lhs.x & rhs.x, lhs.y & rhs.y); }
-        [MethodImpl(0x100)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2 operator & (bool2 lhs, bool rhs) { return new bool2 (lhs.x & rhs, lhs.y & rhs); }
-        [MethodImpl(0x100)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2 operator & (bool lhs, bool2 rhs) { return new bool2 (lhs & rhs.x, lhs & rhs.y); }
 
         // operator |
-        [MethodImpl(0x100)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2 operator | (bool2 lhs, bool2 rhs) { return new bool2 (lhs.x | rhs.x, lhs.y | rhs.y); }
-        [MethodImpl(0x100)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2 operator | (bool2 lhs, bool rhs) { return new bool2 (lhs.x | rhs, lhs.y | rhs); }
-        [MethodImpl(0x100)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2 operator | (bool lhs, bool2 rhs) { return new bool2 (lhs | rhs.x, lhs | rhs.y); }
 
         // operator ^
-        [MethodImpl(0x100)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2 operator ^ (bool2 lhs, bool2 rhs) { return new bool2 (lhs.x ^ rhs.x, lhs.y ^ rhs.y); }
-        [MethodImpl(0x100)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2 operator ^ (bool2 lhs, bool rhs) { return new bool2 (lhs.x ^ rhs, lhs.y ^ rhs); }
-        [MethodImpl(0x100)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2 operator ^ (bool lhs, bool2 rhs) { return new bool2 (lhs ^ rhs.x, lhs ^ rhs.y); }
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 xxxx
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool4(x, x, x, x); }
         }
 
@@ -81,7 +96,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 xxxy
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool4(x, x, x, y); }
         }
 
@@ -89,7 +104,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 xxyx
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool4(x, x, y, x); }
         }
 
@@ -97,7 +112,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 xxyy
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool4(x, x, y, y); }
         }
 
@@ -105,7 +120,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 xyxx
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool4(x, y, x, x); }
         }
 
@@ -113,7 +128,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 xyxy
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool4(x, y, x, y); }
         }
 
@@ -121,7 +136,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 xyyx
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool4(x, y, y, x); }
         }
 
@@ -129,7 +144,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 xyyy
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool4(x, y, y, y); }
         }
 
@@ -137,7 +152,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 yxxx
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool4(y, x, x, x); }
         }
 
@@ -145,7 +160,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 yxxy
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool4(y, x, x, y); }
         }
 
@@ -153,7 +168,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 yxyx
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool4(y, x, y, x); }
         }
 
@@ -161,7 +176,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 yxyy
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool4(y, x, y, y); }
         }
 
@@ -169,7 +184,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 yyxx
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool4(y, y, x, x); }
         }
 
@@ -177,7 +192,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 yyxy
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool4(y, y, x, y); }
         }
 
@@ -185,7 +200,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 yyyx
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool4(y, y, y, x); }
         }
 
@@ -193,7 +208,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 yyyy
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool4(y, y, y, y); }
         }
 
@@ -201,7 +216,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool3 xxx
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool3(x, x, x); }
         }
 
@@ -209,7 +224,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool3 xxy
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool3(x, x, y); }
         }
 
@@ -217,7 +232,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool3 xyx
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool3(x, y, x); }
         }
 
@@ -225,7 +240,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool3 xyy
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool3(x, y, y); }
         }
 
@@ -233,7 +248,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool3 yxx
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool3(y, x, x); }
         }
 
@@ -241,7 +256,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool3 yxy
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool3(y, x, y); }
         }
 
@@ -249,7 +264,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool3 yyx
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool3(y, y, x); }
         }
 
@@ -257,7 +272,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool3 yyy
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool3(y, y, y); }
         }
 
@@ -265,7 +280,7 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool2 xx
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool2(x, x); }
         }
 
@@ -273,9 +288,9 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool2 xy
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool2(x, y); }
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { x = value.x; y = value.y; }
         }
 
@@ -283,9 +298,9 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool2 yx
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool2(y, x); }
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { y = value.x; x = value.y; }
         }
 
@@ -293,10 +308,20 @@ namespace Unity.Mathematics
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool2 yy
         {
-            [MethodImpl(0x100)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return new bool2(y, y); }
         }
 
+
+    }
+
+    public static partial class math
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool2 bool2(bool x, bool y) { return bool2(x, y); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool2 bool2(bool2 xy) { return bool2(xy); }
 
     }
 }

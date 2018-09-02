@@ -14,3 +14,4 @@
 0.0.12-preview.3
 0.0.12-preview.4
 0.0.12-preview.5
+0.0.12-preview.6

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
 
@@ -26,38 +26,14 @@ namespace Unity.Mathematics
         public float x;
         public float y;
         public float z;
-
-        [MethodImpl((MethodImplOptions)0x100)] // agressive inline
-        public float3(float x, float y, float z)
-        {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-        }
-
-        [MethodImpl((MethodImplOptions)0x100)] // agressive inline
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3(float val) { x = y = z = val; }
 
-        [MethodImpl((MethodImplOptions)0x100)] // agressive inline
-        public float3(float2 xy, float z)
-        {
-            this.x = xy.x;
-            this.y = xy.y;
-            this.z = z;
-        }
-        
-        [MethodImpl((MethodImplOptions)0x100)] // agressive inline
-        public float3(float x, float2 yz)
-        {
-            this.x = x;
-            this.y = yz.x;
-            this.z = yz.y;
-        }
-
-        [MethodImpl((MethodImplOptions)0x100)] // agressive inline
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3(int val) { x = y = z = val; }
 
-        [MethodImpl((MethodImplOptions)0x100)] // agressive inline
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3(int3 val)
         {
             x = val.x;
@@ -65,10 +41,10 @@ namespace Unity.Mathematics
             z = val.z;
         }
 
-        [MethodImpl((MethodImplOptions)0x100)] // agressive inline
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator float3(float d) { return new float3(d); }
 
-        [MethodImpl((MethodImplOptions)0x100)] // agressive inline
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator float3(int3 d) { return new float3(d.x, d.y, d.z); }
 
         public override string ToString()
