@@ -11,7 +11,7 @@ namespace ResourceManagement.AsyncOperations
             m_result = new TObject[0];
         }
 
-        protected override void SetResult(IList<TObject> result)
+        public override void SetResult(IList<TObject> result)
         {
             // Do nothing
         }

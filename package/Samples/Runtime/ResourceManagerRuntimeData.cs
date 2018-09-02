@@ -24,14 +24,14 @@ namespace ResourceManagement.Samples
         [Serializable]
         public class ResourceLocationData
         {
-            public string address;
+            public string key;
             public string guid;
             public string id;
             public string provider;
             public string[] dependencies;
             public ResourceLocationData(string a, string g, string i, string p, string[] deps)
             {
-                address = a;
+                key = a;
                 guid = g;
                 id = i;
                 provider = p;
@@ -52,9 +52,9 @@ namespace ResourceManagement.Samples
                 for (int i = 0; i < locationData.Count; i++)
                 {
                     var locData = locationData[i];
-                    var loc = new ResourceLocationBase<string>(locData.address, locData.id, locData.provider);
-                    m_addressMap.Add(locData.address, loc);
-                    dataMap.Add(locData.address, locData);
+                    var loc = new ResourceLocationBase<string>(locData.key, locData.id, locData.provider);
+                    m_addressMap.Add(locData.key, loc);
+                    dataMap.Add(locData.key, locData);
                 }
 
                 //fix up dependencies between them
@@ -68,10 +68,10 @@ namespace ResourceManagement.Samples
             }
 
             //IResourceLocator interface
-            public IResourceLocation Locate(string address)
+            public IResourceLocation Locate(string key)
             {
                 IResourceLocation<string> loc = null;
-                m_addressMap.TryGetValue(address, out loc);
+                m_addressMap.TryGetValue(key, out loc);
                 return loc;
             }
         }

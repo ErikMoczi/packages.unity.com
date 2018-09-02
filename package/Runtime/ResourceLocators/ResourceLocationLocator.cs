@@ -6,9 +6,9 @@ namespace ResourceManagement.ResourceLocators
 {
     public class ResourceLocationLocator : IResourceLocator<IResourceLocation>
     {
-        public IResourceLocation Locate(IResourceLocation address)
+        public IResourceLocation Locate(IResourceLocation key)
         {
-            return address;
+            return key;
         }
     }
 }

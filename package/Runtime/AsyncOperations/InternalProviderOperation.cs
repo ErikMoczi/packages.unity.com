@@ -13,14 +13,13 @@ namespace ResourceManagement.AsyncOperations
         public virtual InternalProviderOperation<TObject> Start(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             startFrame = Time.frameCount;
-            m_result = null;
             m_context = loc;
             return this;
         }
 
         protected virtual void OnComplete(AsyncOperation op)
         {
-            m_result = ConvertResult(op);
+            SetResult(ConvertResult(op));
             OnComplete();
         }
 

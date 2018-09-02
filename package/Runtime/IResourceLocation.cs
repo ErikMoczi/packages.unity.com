@@ -27,14 +27,14 @@ namespace ResourceManagement
     }
 
     /// <summary>
-    /// Resource location with an additional typed address.
+    /// Resource location with an additional typed key.
     /// </summary>
-    public interface IResourceLocation<TAddress> : IResourceLocation
+    public interface IResourceLocation<TKey> : IResourceLocation
     {
         /// <summary>
-        /// Gets the address for the location.
+        /// Gets the key for the location.
         /// </summary>
-        /// <value>The address.</value>
-        TAddress address { get; }
+        /// <value>The key.</value>
+        TKey key { get; }
     }
 }

@@ -78,7 +78,7 @@ namespace ResourceManagement.Util
 
         protected override void OnGetColumns(List<string> columnNames, List<float> columnSizes)
         {
-            columnNames.AddRange(new string[] { "Event", "Address", "Provider", "Path", "Dependencies" });
+            columnNames.AddRange(new string[] { "Event", "Key", "Provider", "Path", "Dependencies" });
             columnSizes.AddRange(new float[] { 150, 150, 200, 300, 400});
         }
 

@@ -8,17 +8,19 @@ namespace ResourceManagement.ResourceProviders
     public class BundledAssetProvider : ResourceProviderBase
     {
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
-            where TObject : class
+           where TObject : class
         {
             public override InternalProviderOperation<TObject> Start(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
-                loadDependencyOperation.completed += (obj) => {
-                        AssetBundle bundle;
-                        if (obj.result != null && obj.result.Count > 0 && (bundle = obj.result[0] as AssetBundle) != null)
-                            bundle.LoadAssetAsync<TObject>(loc.id).completed += OnComplete;
-                        else
-                            OnComplete();
-                    };
+                m_result = null;
+                loadDependencyOperation.completed += (obj) =>
+                {
+                    AssetBundle bundle;
+                    if (obj.result != null && obj.result.Count > 0 && (bundle = obj.result[0] as AssetBundle) != null)
+                        bundle.LoadAssetAsync<TObject>(loc.id).completed += OnComplete;
+                    else
+                        OnComplete();
+                };
 
                 return base.Start(loc, loadDependencyOperation);
             }

@@ -1,0 +1,9 @@
+{
+    "name": "Unity.ResourceManager.Editor",
+    "references": [
+      "Unity.ResourceManager"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}

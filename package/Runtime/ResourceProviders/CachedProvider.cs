@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Object = UnityEngine.Object;
 using ResourceManagement.Util;
+using UnityEngine;
 
 namespace ResourceManagement.ResourceProviders
 {
@@ -22,31 +23,79 @@ namespace ResourceManagement.ResourceProviders
             where TObject : class
         {
             IAsyncOperation m_operation;
+            AsyncOperationStatus m_status;
+            Exception m_error;
+            public AsyncOperationStatus status { get { return m_status > AsyncOperationStatus.None ? m_status : m_operation.status; } }
+            public Exception error { get { return m_error != null ? m_error : m_operation.error; } }
             new public TObject result { get { return m_result as TObject; } }
             public override bool isDone { get { return !(EqualityComparer<TObject>.Default.Equals(result, default(TObject))); } }
-            object IAsyncOperation.result { get { return m_result; } }
             public object Current { get { return m_result; } }
             public bool MoveNext() { return m_result == null; }
-            public object context { get { return m_operation == null ? null : m_operation.context; } }
+            public object context { get { return m_operation.context; } }
             public void Reset() {}
-            public override float percentComplete { get { return isDone ? 1f : (m_operation == null ? 0 : m_operation.percentComplete); } }
-            protected event Action<IAsyncOperation<TObject>> m_onComplete;
+            public virtual void ResetStatus()
+            {
+                m_operation.ResetStatus();
+                m_status = AsyncOperationStatus.None;
+                m_error = null;
+            }
+
+            public override float percentComplete { get { return isDone ? 1f : m_operation.percentComplete; } }
+            protected event Action<IAsyncOperation<TObject>> m_completedActionT;
+            protected event Action<IAsyncOperation> m_completedAction;
             public event Action<IAsyncOperation<TObject>> completed
             {
                 add
                 {
                     if (isDone)
-                        value(this);
+                    {
+                        try
+                        {
+                            value(this);
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogException(e);
+                            m_error = e;
+                            m_status = AsyncOperationStatus.Failed;
+                        }
+                    }
                     else
-                        m_onComplete += value;
+                        m_completedActionT += value;
                 }
 
                 remove
                 {
-                    m_onComplete -= value;
+                    m_completedActionT -= value;
                 }
             }
 
+            event Action<IAsyncOperation> IAsyncOperation.completed
+            {
+                add
+                {
+                    if (isDone)
+                    {
+                        try
+                        {
+                            value(this);
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogException(e);
+                            m_error = e;
+                            m_status = AsyncOperationStatus.Failed;
+                        }
+                    }
+                    else
+                        m_completedAction += value;
+                }
+
+                remove
+                {
+                    m_completedAction -= value;
+                }
+            }
             public CacheEntry(CacheList cl, IAsyncOperation<TObject> op)
             {
                 m_cacheList = cl;
@@ -58,11 +107,35 @@ namespace ResourceManagement.ResourceProviders
             void OnComplete(IAsyncOperation<TObject> op)
             {
                 m_result = op.result;
-                if (m_onComplete != null)
+                if (m_completedActionT != null)
                 {
-                    var tmpEvent = m_onComplete;
-                    m_onComplete = null;
-                    tmpEvent(this);
+                    var tmpEvent = m_completedActionT;
+                    m_completedActionT = null;
+                    try
+                    {
+                        tmpEvent(this);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogException(e);
+                        m_error = e;
+                        m_status = AsyncOperationStatus.Failed;
+                    }
+                }
+                if (m_completedAction != null)
+                {
+                    var tmpEvent = m_completedAction;
+                    m_completedAction = null;
+                    try
+                    {
+                        tmpEvent(this);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogException(e);
+                        m_error = e;
+                        m_status = AsyncOperationStatus.Failed;
+                    }
                 }
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, context, 100);
             }
@@ -129,7 +202,7 @@ namespace ResourceManagement.ResourceProviders
 
             internal void Retain()
             {
-                m_lastAccessTime = UnityEngine.Time.unscaledTime;
+                m_lastAccessTime = Time.unscaledTime;
                 m_refCount++;
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryRefCount, m_location, m_refCount);
             }
@@ -147,12 +220,12 @@ namespace ResourceManagement.ResourceProviders
                 foreach (var e in entries)
                 {
                     if (!provider.Release(m_location, e.result))
-                        UnityEngine.Debug.LogWarning("Failed to release location " + m_location);
+                        Debug.LogWarning("Failed to release location " + m_location);
                 }
             }
         }
 
-        class CachedProviderUpdater : UnityEngine.MonoBehaviour
+        class CachedProviderUpdater : MonoBehaviour
         {
             CachedProvider m_Provider;
             public void Init(CachedProvider p)
@@ -183,9 +256,9 @@ namespace ResourceManagement.ResourceProviders
                 m_maxLRUAge = lruMaxAge;
                 if (lruMaxAge > 0)
                 {
-                    var go = new UnityEngine.GameObject("CachedProviderUpdater", typeof(CachedProviderUpdater));
+                    var go = new GameObject("CachedProviderUpdater", typeof(CachedProviderUpdater));
                     go.GetComponent<CachedProviderUpdater>().Init(this);
-                    go.hideFlags = UnityEngine.HideFlags.HideAndDontSave;
+                    go.hideFlags = HideFlags.HideAndDontSave;
                 }
             }
         }
@@ -194,7 +267,7 @@ namespace ResourceManagement.ResourceProviders
         {          
             if (m_lru != null)
             {
-                float time = UnityEngine.Time.unscaledTime;
+                float time = Time.unscaledTime;
                 while (m_lru.Last != null && m_lru.Last.Value.m_lastAccessTime > m_maxLRUAge)
                 {
                     m_lru.Last.Value.ReleaseAssets(m_internalProvider);

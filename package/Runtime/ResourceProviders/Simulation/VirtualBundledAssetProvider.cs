@@ -19,15 +19,17 @@ namespace ResourceManagement.ResourceProviders.Simulation
             System.Action<IAsyncOperation<TObject>> onCompleteAction;
             public InternalProviderOperation<TObject> Start(IResourceLocation loc, int speed, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
+                m_result = null;
                 if (onCompleteAction == null)
                     onCompleteAction = OnComplete;
-                loadDependencyOperation.completed += (obj) => {
-                        VirtualAssetBundle bundle;
-                        if (obj.result != null && obj.result.Count > 0 && (bundle = obj.result[0] as VirtualAssetBundle) != null)
-                            bundle.LoadAssetAsync<TObject>(loc, speed).completed += onCompleteAction;
-                        else
-                            OnComplete();
-                    };
+                loadDependencyOperation.completed += (obj) => 
+                {
+                    VirtualAssetBundle bundle;
+                    if (obj.result != null && obj.result.Count > 0 && (bundle = obj.result[0] as VirtualAssetBundle) != null)
+                        bundle.LoadAssetAsync<TObject>(loc, speed).completed += onCompleteAction;
+                    else
+                        OnComplete();
+                };
 
                 return base.Start(loc, loadDependencyOperation);
             }
@@ -50,6 +52,7 @@ namespace ResourceManagement.ResourceProviders.Simulation
         public override bool Release(IResourceLocation loc, object asset)
         {
             return true;
+
         }
     }
 }

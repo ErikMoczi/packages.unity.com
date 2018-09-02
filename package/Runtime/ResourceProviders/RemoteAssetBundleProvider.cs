@@ -20,6 +20,7 @@ namespace ResourceManagement.ResourceProviders
 
             public override InternalProviderOperation<TObject> Start(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
+                m_result = null;
                 m_context = loc;
                 loadDependencyOperation.completed += action;
                 return base.Start(loc, loadDependencyOperation);

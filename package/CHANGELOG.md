@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [1.6.0] - 2018-01-24
 - updating description in docs.
+- Refactored async init.
+- Improved robustness within providors
+- code cleanup
+- internal op simplification.
+- changed params named "address" be a more generic "key" to avoid naming confusion with addressables system.
 
 ## [1.5.0] - 2018-01-10
 - added UWP support

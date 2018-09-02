@@ -142,7 +142,7 @@ namespace ResourceManagement.Samples
 
             foreach (var bd in bundledAssets)
             {
-                var bundleLocData = runtimeData.locationData.Find(a => a.address == bd.Key);
+                var bundleLocData = runtimeData.locationData.Find(a => a.key == bd.Key);
                 var size = bd.Value.Count * 1024 * 1024; //for now estimate 1MB per entry
                 virtualBundleData.simulatedAssetBundles.Add(new VirtualAssetBundle(bundleLocData.id, bundleLocData.provider == typeof(LocalAssetBundleProvider).FullName, size, bd.Value));
             }

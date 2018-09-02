@@ -1,3 +1,9 @@
-The Asset Bundle Browser tool enables the user to view and edit the configuration of asset bundles for their Unity project. It will block editing that would create invalid bundles, and inform you of any issues with existing bundles. It also provides basic build functionality.
+The ResourceManager is an extendable high level API that asynchronously loads and unloads assets.
 
-Use this tool as an alternative to selecting assets and setting their asset bundle manually in the inspector. It can be dropped into any Unity project with a version of 5.6 or greater. It will create a new menu item in Window > AssetBundle Browser. The bundle configuration, build functionality, and build-bundle inspection are split into three tabs within the new window.
+The specific method and location of loading assets is abstracted. With the proper extension, assets can be loading from a variety of locations (Resources, Bundles, etc) all through a single API. 
+
+The overall goal is that regardless of what your setup is, or where you are loading from, you always load in the same way. For example, you can call: 
+ResourceManager.LoadAsync<Texture, string>("myTexture");
+ and have that be loaded regardless of where it came from. 
+
+This package can function as a standalone package, but will be extended in the future via high-level packages that add custom IResourceLocator and IResourceProvider interfaces. See the Samples directory for help on how to use it as a standalone package. Future high-level packages will come with locators and providers, and will handle the initialization themselves. The intent being that users need not know about the above interfaces.

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace ResourceManagement.AsyncOperations
 {
-    internal class LoadGroupOperation<TObject> : AsyncOperationBase<IList<TObject>>
+    public class LoadGroupOperation<TObject> : AsyncOperationBase<IList<TObject>>
         where TObject : class
     {
         protected int totalToLoad;
@@ -12,8 +12,7 @@ namespace ResourceManagement.AsyncOperations
         Action<IAsyncOperation<TObject>> m_internalOnComplete;
         Action<IAsyncOperation<TObject>> m_action;
         List<IAsyncOperation<TObject>> m_ops;
-
-        protected override void SetResult(IList<TObject> result)
+        public override void SetResult(IList<TObject> result)
         {
             foreach (var op in m_ops)
                 m_result.Add(op.result);
@@ -28,6 +27,7 @@ namespace ResourceManagement.AsyncOperations
         {
             UnityEngine.Debug.Assert(locations != null, "Null location list passed into LoadGroupOperation");
             totalToLoad = locations.Count;
+            m_context = locations;
             loadCount = 0;
             allStarted = false;
             m_action = onComplete;
@@ -51,7 +51,10 @@ namespace ResourceManagement.AsyncOperations
             allStarted = true;
 
             if (isDone)
+            {
+                SetResult(result);
                 InvokeCompletionEvent();
+            }
 
             return this;
         }
@@ -66,7 +69,10 @@ namespace ResourceManagement.AsyncOperations
             loadCount++;
 
             if (isDone)
+            {
+                SetResult(result);
                 InvokeCompletionEvent();
+            }
         }
     }
 }

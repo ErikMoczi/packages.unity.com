@@ -7,14 +7,14 @@ namespace ResourceManagement
     {
     }
 
-    public interface IResourceLocator<TAddress> : IResourceLocator
+    public interface IResourceLocator<TKey> : IResourceLocator
     {
         /// <summary>
-        /// Resolve an <paramref name="address"/> to an <see cref="IResourceLocation"/>
+        /// Resolve an <paramref name="key"/> to an <see cref="IResourceLocation"/>
         /// </summary>
         /// <returns>The resource location.</returns>
-        /// <param name="address">Address to resolve.</param>
-        /// <typeparam name="TAddress">The address type</typeparam>
-        IResourceLocation Locate(TAddress address);
+        /// <param name="key">key to resolve.</param>
+        /// <typeparam name="TKey">The key type</typeparam>
+        IResourceLocation Locate(TKey key);
     }
 }

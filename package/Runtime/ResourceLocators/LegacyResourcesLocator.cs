@@ -6,9 +6,9 @@ namespace ResourceManagement.ResourceLocators
 {
     public class LegacyResourcesLocator : IResourceLocator<string>
     {
-        public IResourceLocation Locate(string address)
+        public IResourceLocation Locate(string key)
         {
-            return new LegacyResourcesLocation(address);
+            return new LegacyResourcesLocation(key);
         }
     }
 }

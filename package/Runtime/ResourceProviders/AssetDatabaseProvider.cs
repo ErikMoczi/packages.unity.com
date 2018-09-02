@@ -14,6 +14,7 @@ namespace ResourceManagement.ResourceProviders
         {
             public override InternalProviderOperation<TObject> Start(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
+                m_result = null;
                 CompletionUpdater.UpdateUntilComplete(loc.ToString(), () => {
                     #if UNITY_EDITOR
                         var res = UnityEditor.AssetDatabase.LoadAssetAtPath<Object>(loc.id) as TObject;

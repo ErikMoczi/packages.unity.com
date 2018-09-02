@@ -39,14 +39,14 @@ namespace ResourceManagement.ResourceProviders.Experimental
             return loadProvider.CanProvide<TObject>(loc) && Config.IsInstance<TObject, GameObject>();
         }
 
-        public IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation) where TObject : Object
+        public IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, InstantiationParams instParams) where TObject : Object
         {
             InstancePool pool;
             if (!m_pools.TryGetValue(location, out pool))
                 m_pools.Add(location, pool = new InstancePool(loadProvider, location));
 
             pool.m_holdCount++;
-            return pool.ProvideInstanceAsync<TObject>(loadProvider, loadDependencyOperation);
+            return pool.ProvideInstanceAsync<TObject>(loadProvider, loadDependencyOperation, instParams);
         }
 
         public bool ReleaseInstance(IResourceProvider loadProvider, IResourceLocation location, Object instance)
@@ -87,20 +87,21 @@ namespace ResourceManagement.ResourceProviders.Experimental
             pool.m_holdCount--;
         }
 
-        internal class InternalOp<TObject> : AsyncOperationBase<TObject> where TObject : class
+        internal class InternalOp<TObject> : AsyncOperationBase<TObject> where TObject : Object
         {
             TObject prefabResult;
             int m_startFrame;
             Action<IAsyncOperation<TObject>> m_onCompleteAction;
-
+            InstantiationParams m_instParams;
             public InternalOp() 
             {
                 m_onCompleteAction = OnComplete;
             }
 
-            public InternalOp<TObject> Start(IAsyncOperation<TObject> loadOp, IResourceLocation loc, TObject val)
+            public InternalOp<TObject> Start(IAsyncOperation<TObject> loadOp, IResourceLocation loc, TObject val, InstantiationParams instParams)
             {
                 prefabResult = null;
+                m_instParams = instParams;
                 m_result = val;
                 m_context = loc;
                 m_startFrame = Time.frameCount;
@@ -114,6 +115,24 @@ namespace ResourceManagement.ResourceProviders.Experimental
             void OnComplete(TObject res)
             {
                 m_result = res;
+                var go = m_result as GameObject;
+                if (go != null)
+                {
+                    if(m_instParams.m_parent != null)
+                        go.transform.SetParent(m_instParams.m_parent);
+                    if (m_instParams.m_setPositionRotation)
+                    {
+                        if (m_instParams.m_instantiateInWorldPosition)
+                        {
+                            go.transform.position = m_instParams.m_position;
+                            go.transform.rotation = m_instParams.m_rotation;
+                        }
+                        else
+                        {
+                            go.transform.SetPositionAndRotation(m_instParams.m_position, m_instParams.m_rotation);
+                        }
+                    }
+                }
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, m_context, Time.frameCount - m_startFrame);
                 InvokeCompletionEvent();
                 AsyncOperationCache.Instance.Release<TObject>(this);
@@ -125,9 +144,13 @@ namespace ResourceManagement.ResourceProviders.Experimental
                 prefabResult = op.result;
 
                 if (prefabResult == null)
+                {
                     Debug.LogWarning("NULL prefab on instantiate: " + m_context);
+                }
                 else if (m_result == null)
-                    m_result = Object.Instantiate(prefabResult as GameObject) as TObject;
+                {
+                    m_result = m_instParams.Instantiate(prefabResult);
+                }
 
                 InvokeCompletionEvent();
                 AsyncOperationCache.Instance.Release<TObject>(this);
@@ -184,13 +207,13 @@ namespace ResourceManagement.ResourceProviders.Experimental
                 return true;
             }
 
-            internal IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IAsyncOperation<IList<object>> loadDependencyOperation) where TObject : Object
+            internal IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IAsyncOperation<IList<object>> loadDependencyOperation, InstantiationParams instParams) where TObject : Object
             {
                 if (m_instances.Count > 0)
-                    return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>().Start(null, m_location, Get<TObject>());
+                    return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>().Start(null, m_location, Get<TObject>(), instParams);
 
                 var depOp = loadProvider.ProvideAsync<TObject>(m_location, loadDependencyOperation);
-                return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>().Start(depOp, m_location, null);
+                return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>().Start(depOp, m_location, null, instParams);
             }
         }
     }

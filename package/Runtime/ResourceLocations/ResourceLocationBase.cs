@@ -4,23 +4,23 @@ namespace ResourceManagement
 {
     public class ResourceLocationBase<T> : IResourceLocation<T>
     {
-        T m_address;
+        T m_key;
         string m_id;
         string m_providerId;
         List<IResourceLocation> m_dependencies;
-        public T address { get { return m_address; } }
+        public T key { get { return m_key; } }
         public string id { get { return m_id; } }
         public string providerId { get { return m_providerId; } }
         public IList<IResourceLocation> dependencies { get { return m_dependencies; } set { m_dependencies = new List<IResourceLocation>(); m_dependencies.AddRange(value); } }
 
         public override string ToString()
         {
-            return m_address.ToString();
+            return m_key.ToString();
         }
 
-        public ResourceLocationBase(T address, string id, string providerId, params IResourceLocation[] deps)
+        public ResourceLocationBase(T key, string id, string providerId, params IResourceLocation[] deps)
         {
-            m_address = address;
+            m_key = key;
             m_id = id;
             m_providerId = providerId;
             dependencies = new List<IResourceLocation>(deps);

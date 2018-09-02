@@ -56,21 +56,21 @@ namespace ResourceManagement.AsyncOperations
         readonly Dictionary<CacheKey, Stack<IAsyncOperation>> cache = new Dictionary<CacheKey, Stack<IAsyncOperation>>(new CacheKeyComparer());
 
         public void Release<TObject>(IAsyncOperation op)
-            where TObject : class
         {
             var key = new CacheKey(op.GetType(), typeof(TObject));
             Stack<IAsyncOperation> c;
             if (!cache.TryGetValue(key, out c))
                 cache.Add(key, c = new Stack<IAsyncOperation>());
+            op.ResetStatus();
             c.Push(op);
         }
 
         public TAsyncOperation Acquire<TAsyncOperation, TObject>()
-            where TAsyncOperation : class, IAsyncOperation, new()
+            where TAsyncOperation : IAsyncOperation, new()
         {
             Stack<IAsyncOperation> c;
             if (cache.TryGetValue(new CacheKey(typeof(TAsyncOperation), typeof(TObject)), out c) && c.Count > 0)
-                return c.Pop() as TAsyncOperation;
+                return (TAsyncOperation)c.Pop();
 
             return new TAsyncOperation();
         }

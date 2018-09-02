@@ -1,8 +1,7 @@
-using System;
+using ResourceManagement.AsyncOperations;
+using ResourceManagement;
 using System.Collections.Generic;
 using UnityEngine;
-using ResourceManagement.AsyncOperations;
-using ResourceManagement.ResourceProviders;
 
 namespace ResourceManagement.ResourceProviders.Simulation
 {
@@ -17,7 +16,6 @@ namespace ResourceManagement.ResourceProviders.Simulation
         }
 
         public override string providerId{ get { return m_providerId; } }
-
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
@@ -25,12 +23,13 @@ namespace ResourceManagement.ResourceProviders.Simulation
 
             public override InternalProviderOperation<TObject> Start(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
+                m_result = null;
                 loadDependencyOperation.completed += (obj) => {
-                        assetBundleManager.LoadAsync(loc).completed += (IAsyncOperation<VirtualAssetBundle> op) => {
-                            SetResult(op.result as TObject);
-                            OnComplete();
-                        };
+                    assetBundleManager.LoadAsync(loc).completed += (IAsyncOperation<VirtualAssetBundle> op) => {
+                        SetResult(op.result as TObject);
+                        OnComplete();
                     };
+                };
 
                 return base.Start(loc, loadDependencyOperation);
             }

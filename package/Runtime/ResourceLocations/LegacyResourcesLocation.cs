@@ -5,10 +5,10 @@ namespace ResourceManagement.ResourceLocations
 {
     public struct LegacyResourcesLocation : IResourceLocation<string>
     {
-        string m_address;
-        public string address { get { return m_address; } }
-        public LegacyResourcesLocation(string a) { m_address = a; }
-        public string id { get { return m_address; } }
+        string m_key;
+        public string key { get { return m_key; } }
+        public LegacyResourcesLocation(string a) { m_key = a; }
+        public string id { get { return m_key; } }
         public string providerId { get { return typeof(LegacyResourcesProvider).FullName; } }
         public IList<IResourceLocation> dependencies { get { return null; } }
     }
