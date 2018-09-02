@@ -8,3 +8,4 @@
 3.0.0-preview.8
 3.0.0
 3.0.1-preview
+3.0.2-preview

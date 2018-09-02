@@ -234,7 +234,7 @@ namespace UnityEditor.ProGrids
 			GUILayout.Label("\n" + m_ChangeLogRichText, changelogTextStyle);
 			EditorGUILayout.EndScrollView();
 
-			GUILayout.Label(Version.Current.ToString("R"));
+			GUILayout.Label(Version.current.ToString("R"));
 		}
 
 		string ConvertReleaseNotesToRichText(string contents)

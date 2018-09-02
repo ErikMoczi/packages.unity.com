@@ -722,7 +722,7 @@ namespace UnityEditor.ProGrids
 
 		void HandleKeys(Event currentEvent)
 		{
-			if (!currentEvent.isKey)
+			if (!currentEvent.isKey || EditorUtility.SceneViewInUse())
 				return;
 
 			KeyCode keyCode = currentEvent.keyCode;

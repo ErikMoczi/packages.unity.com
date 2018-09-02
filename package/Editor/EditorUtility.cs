@@ -20,6 +20,16 @@ namespace UnityEditor.ProGrids
 		static Dictionary<Type, bool> s_NoSnapAttributeTypeCache = new Dictionary<Type, bool>();
 		static Dictionary<Type, MethodInfo> s_ConditionalSnapAttributeCache = new Dictionary<Type, MethodInfo>();
 
+		internal static bool SceneViewInUse()
+		{
+			var e = Event.current;
+
+			return 	e.alt
+				|| Tools.current == Tool.View
+				|| GUIUtility.hotControl > 0
+				|| (e.isMouse && e.button > 0);
+		}
+
 		static SceneView.OnSceneFunc onPreSceneGuiDelegate
 		{
 			get

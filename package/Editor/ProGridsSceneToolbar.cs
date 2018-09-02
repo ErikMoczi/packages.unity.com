@@ -150,8 +150,10 @@ namespace UnityEditor.ProGrids
 				mouseOverMenu = backgroundRect.Contains(currentEvent.mousePosition);
 			}
 
+#if !UNITY_2018_2_OR_NEWER
 			bool srgb = GL.sRGBWrite;
 			GL.sRGBWrite = false;
+#endif
 
 			GUI.backgroundColor = menuBackgroundColor;
 			backgroundRect.x = menuRect.x - 4;
@@ -280,8 +282,9 @@ namespace UnityEditor.ProGrids
 			}
 
 			GUI.backgroundColor = Color.white;
-
+#if !UNITY_2018_2_OR_NEWER
 			GL.sRGBWrite = srgb;
+#endif
 		}
 
 		void ToggleMenuVisibility()
