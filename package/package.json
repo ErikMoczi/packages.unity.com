@@ -1,7 +1,7 @@
 {
 	"name": "com.unity.xr.oculus.android",
 	"displayName":"Oculus (Android)",
-	"version": "1.24.2",
+	"version": "1.27.1",
 	"unity": "2018.3",
 	"description": "This package contains the necessary components required to use the Oculus Virtual Reality SDK on Android. By using this package, you will be able to deploy and run your applications on Oculus supported devices.",
 	"keywords": ["oculus", "xr", "vr", "virtual", "gear", "gearvr", "sdk", "android"],
