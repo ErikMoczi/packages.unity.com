@@ -1,0 +1,9 @@
+{
+    "name": "com.unity.resourcemanager.SamplesRuntime",
+    "references": [
+      "com.unity.resourcemanager.Runtime"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": []
+}

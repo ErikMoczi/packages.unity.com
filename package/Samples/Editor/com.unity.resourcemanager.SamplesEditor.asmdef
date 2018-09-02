@@ -1,0 +1,10 @@
+{
+    "name": "com.unity.resourcemanager.SamplesEditor",
+    "references": [
+      "com.unity.resourcemanager.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
