@@ -8,7 +8,7 @@ namespace UnityEngine.Rendering.PostProcessing
         internal static readonly int MainTex                         = Shader.PropertyToID("_MainTex");
 
         internal static readonly int Jitter                          = Shader.PropertyToID("_Jitter");
-        internal static readonly int SharpenParameters               = Shader.PropertyToID("_SharpenParameters");
+        internal static readonly int Sharpness                       = Shader.PropertyToID("_Sharpness");
         internal static readonly int FinalBlendParameters            = Shader.PropertyToID("_FinalBlendParameters");
         internal static readonly int HistoryTex                      = Shader.PropertyToID("_HistoryTex");
         
@@ -21,6 +21,17 @@ namespace UnityEngine.Rendering.PostProcessing
         internal static readonly int OcclusionTexture2               = Shader.PropertyToID("_OcclusionTexture2");
         internal static readonly int SAOcclusionTexture              = Shader.PropertyToID("_SAOcclusionTexture");
         internal static readonly int MSVOcclusionTexture             = Shader.PropertyToID("_MSVOcclusionTexture");
+        
+        internal static readonly int SSRResolveTemp                  = Shader.PropertyToID("_SSRResolveTemp");
+        internal static readonly int Noise                           = Shader.PropertyToID("_Noise");
+        internal static readonly int Test                            = Shader.PropertyToID("_Test");
+        internal static readonly int Resolve                         = Shader.PropertyToID("_Resolve");
+        internal static readonly int History                         = Shader.PropertyToID("_History");
+        internal static readonly int ViewMatrix                      = Shader.PropertyToID("_ViewMatrix");
+        internal static readonly int InverseViewMatrix               = Shader.PropertyToID("_InverseViewMatrix");
+        internal static readonly int InverseProjectionMatrix         = Shader.PropertyToID("_InverseProjectionMatrix");
+        internal static readonly int ScreenSpaceProjectionMatrix     = Shader.PropertyToID("_ScreenSpaceProjectionMatrix");
+        internal static readonly int Params2                         = Shader.PropertyToID("_Params2");
         
         internal static readonly int FogColor                        = Shader.PropertyToID("_FogColor");
         internal static readonly int FogParams                       = Shader.PropertyToID("_FogParams");
@@ -58,10 +69,10 @@ namespace UnityEngine.Rendering.PostProcessing
         internal static readonly int BloomTex                        = Shader.PropertyToID("_BloomTex");
         internal static readonly int SampleScale                     = Shader.PropertyToID("_SampleScale");
         internal static readonly int Threshold                       = Shader.PropertyToID("_Threshold");
+        internal static readonly int ColorIntensity                  = Shader.PropertyToID("_ColorIntensity");
         internal static readonly int Bloom_DirtTex                   = Shader.PropertyToID("_Bloom_DirtTex");
         internal static readonly int Bloom_Settings                  = Shader.PropertyToID("_Bloom_Settings");
         internal static readonly int Bloom_Color                     = Shader.PropertyToID("_Bloom_Color");
-        internal static readonly int Bloom_Threshold                 = Shader.PropertyToID("_Bloom_Threshold");
         internal static readonly int Bloom_DirtTileOffset            = Shader.PropertyToID("_Bloom_DirtTileOffset");
 
         internal static readonly int ChromaticAberration_Amount      = Shader.PropertyToID("_ChromaticAberration_Amount");
@@ -83,6 +94,13 @@ namespace UnityEngine.Rendering.PostProcessing
         internal static readonly int InvGamma                        = Shader.PropertyToID("_InvGamma");
         internal static readonly int Gain                            = Shader.PropertyToID("_Gain");
         internal static readonly int Curves                          = Shader.PropertyToID("_Curves");
+        internal static readonly int CustomToneCurve                 = Shader.PropertyToID("_CustomToneCurve");
+        internal static readonly int ToeSegmentA                     = Shader.PropertyToID("_ToeSegmentA");
+        internal static readonly int ToeSegmentB                     = Shader.PropertyToID("_ToeSegmentB");
+        internal static readonly int MidSegmentA                     = Shader.PropertyToID("_MidSegmentA");
+        internal static readonly int MidSegmentB                     = Shader.PropertyToID("_MidSegmentB");
+        internal static readonly int ShoSegmentA                     = Shader.PropertyToID("_ShoSegmentA");
+        internal static readonly int ShoSegmentB                     = Shader.PropertyToID("_ShoSegmentB");
 
         internal static readonly int Vignette_Color                  = Shader.PropertyToID("_Vignette_Color");
         internal static readonly int Vignette_Center                 = Shader.PropertyToID("_Vignette_Center");

@@ -28,9 +28,11 @@ namespace UnityEngine.Rendering.PostProcessing
             public Shader gammaHistogram;
             public Shader waveform;
             public Shader vectorscope;
+            public Shader debugOverlays;
             public Shader deferredFog;
             public Shader scalableAO;
             public Shader multiScaleAO;
+            public Shader screenSpaceReflections;
         }
 
         [Serializable]
@@ -46,6 +48,7 @@ namespace UnityEngine.Rendering.PostProcessing
             public ComputeShader multiScaleAODownsample2;
             public ComputeShader multiScaleAORender;
             public ComputeShader multiScaleAOUpsample;
+            public ComputeShader gaussianDownsample;
         }
 
         [Serializable]
@@ -55,7 +58,8 @@ namespace UnityEngine.Rendering.PostProcessing
             public Texture2D search;
         }
         
-        public Texture2D[] blueNoise;
+        public Texture2D[] blueNoise64;
+        public Texture2D[] blueNoise256;
         public SMAALuts smaaLuts;
         public Shaders shaders;
         public ComputeShaders computeShaders;

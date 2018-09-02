@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace UnityEngine.Rendering.PostProcessing
 {
@@ -6,31 +6,9 @@ namespace UnityEngine.Rendering.PostProcessing
     [Serializable]
     public sealed class ScalableAO : IAmbientOcclusionMethod
     {
-        // Unity sorts enums by value in the editor (and doesn't handle same-values enums very well
-        // so we won't use enum values as sample counts this time
-        public enum Quality
-        {
-            Lowest,
-            Low,
-            Medium,
-            High,
-            Ultra
-        }
-
-        [Range(0f, 4f), Tooltip("Degree of darkness produced by the effect.")]
-        public float intensity = 0.5f;
-
-        [Tooltip("Radius of sample points, which affects extent of darkened areas.")]
-        public float radius = 0.25f;
-
-        [Tooltip("Number of sample points, which affects quality and performance. Lowest, Low & Medium passes are downsampled. High and Ultra are not and should only be used on high-end hardware.")]
-        public Quality quality = Quality.Medium;
-
-        [ColorUsage(false), Tooltip("Custom color to use for the ambient occlusion.")]
-        public Color color = Color.black;
-
         RenderTexture m_Result;
         PropertySheet m_PropertySheet;
+        AmbientOcclusion m_Settings;
 
         readonly RenderTargetIdentifier[] m_MRT =
         {
@@ -48,18 +26,18 @@ namespace UnityEngine.Rendering.PostProcessing
             HorizontalBlurDeferred,
             VerticalBlur,
             CompositionForward,
-            CompositionDeferred
+            CompositionDeferred,
+            DebugOverlay
+        }
+
+        public ScalableAO(AmbientOcclusion settings)
+        {
+            m_Settings = settings;
         }
 
         public DepthTextureMode GetCameraFlags()
         {
             return DepthTextureMode.Depth | DepthTextureMode.DepthNormals;
-        }
-
-        public bool IsSupported(PostProcessRenderContext context)
-        {
-            return intensity > 0f
-                && !RuntimeUtilities.scriptableRenderPipelineActive;
         }
 
         void DoLazyInitialization(PostProcessRenderContext context)
@@ -94,20 +72,20 @@ namespace UnityEngine.Rendering.PostProcessing
         void Render(PostProcessRenderContext context, CommandBuffer cmd, int occlusionSource)
         {
             DoLazyInitialization(context);
-            radius = Mathf.Max(radius, 1e-4f);
+            m_Settings.radius.value = Mathf.Max(m_Settings.radius.value, 1e-4f);
 
             // Material setup
             // Always use a quater-res AO buffer unless High/Ultra quality is set.
-            bool downsampling = (int)quality < (int)Quality.High;
-            float px = intensity;
-            float py = radius;
+            bool downsampling = (int)m_Settings.quality.value < (int)AmbientOcclusionQuality.High;
+            float px = m_Settings.intensity.value;
+            float py = m_Settings.radius.value;
             float pz = downsampling ? 0.5f : 1f;
-            float pw = m_SampleCount[(int)quality];
+            float pw = m_SampleCount[(int)m_Settings.quality.value];
 
             var sheet = m_PropertySheet;
             sheet.ClearKeywords();
             sheet.properties.SetVector(ShaderIDs.AOParams, new Vector4(px, py, pz, pw));
-            sheet.properties.SetVector(ShaderIDs.AOColor, Color.white - color);
+            sheet.properties.SetVector(ShaderIDs.AOColor, Color.white - m_Settings.color.value);
 
             // In forward fog is applied at the object level in the grometry pass so we need to
             // apply it to AO as well or it'll drawn on top of the fog effect.
@@ -147,6 +125,9 @@ namespace UnityEngine.Rendering.PostProcessing
             // Separable blur (vertical pass)
             cmd.BlitFullscreenTriangle(rtBlur, m_Result, sheet, (int)Pass.VerticalBlur);
             cmd.ReleaseTemporaryRT(rtBlur);
+
+            if (context.IsDebugOverlayEnabled(DebugOverlay.AmbientOcclusion))
+                context.PushDebugOverlay(cmd, m_Result, sheet, (int)Pass.DebugOverlay);
         }
 
         public void RenderAfterOpaque(PostProcessRenderContext context)

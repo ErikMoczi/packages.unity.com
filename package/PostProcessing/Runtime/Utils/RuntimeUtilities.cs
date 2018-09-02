@@ -206,10 +206,16 @@ namespace UnityEngine.Rendering.PostProcessing
         public static void CopyTexture(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier destination)
         {
             if (SystemInfo.copyTextureSupport > CopyTextureSupport.None)
+            {
                 cmd.CopyTexture(source, destination);
-            else
-                cmd.BlitFullscreenTriangle(source, destination);
+                return;
+            }
+
+            cmd.BlitFullscreenTriangle(source, destination);
         }
+
+        // TODO: Generalize the GetTemporaryRT and Blit commands in order to support
+        // RT Arrays for Stereo Instancing/MultiView
 
         #endregion
 
@@ -227,7 +233,10 @@ namespace UnityEngine.Rendering.PostProcessing
             {
 #if UNITY_EDITOR
                 return UnityEditor.PlayerSettings.virtualRealitySupported
-                    && UnityEditor.PlayerSettings.stereoRenderingPath == UnityEditor.StereoRenderingPath.SinglePass;
+                    && UnityEditor.PlayerSettings.stereoRenderingPath == UnityEditor.StereoRenderingPath.SinglePass
+                    && Application.isPlaying;
+#elif UNITY_2017_2_OR_NEWER
+                return UnityEngine.XR.XRSettings.eyeTextureDesc.vrUsage == VRTextureUsage.TwoEyes;
 #else
                 return false;
 #endif
@@ -240,12 +249,19 @@ namespace UnityEngine.Rendering.PostProcessing
             {
 #if UNITY_EDITOR
                 return UnityEditor.PlayerSettings.virtualRealitySupported;
+#elif UNITY_XBOXONE
+                return false;
 #elif UNITY_2017_2_OR_NEWER
                 return UnityEngine.XR.XRSettings.enabled;
 #elif UNITY_5_6_OR_NEWER
                 return UnityEngine.VR.VRSettings.enabled;
 #endif
             }
+        }
+
+        public static bool isAndroidOpenGL
+        {
+            get { return Application.platform == RuntimePlatform.Android && SystemInfo.graphicsDeviceType != GraphicsDeviceType.Vulkan; }
         }
 
         public static void Destroy(UnityObject obj)
@@ -274,7 +290,7 @@ namespace UnityEngine.Rendering.PostProcessing
             // TODO: Is there more proper way to determine this? What about SRPs?
             var gtype = SystemInfo.graphicsDeviceType;
             return camera.actualRenderingPath == RenderingPath.DeferredShading &&
-                (gtype == GraphicsDeviceType.Direct3D11 || gtype == GraphicsDeviceType.Direct3D12);
+                (gtype == GraphicsDeviceType.Direct3D11 || gtype == GraphicsDeviceType.Direct3D12 || gtype == GraphicsDeviceType.XboxOne);
         }
 
         public static void DestroyProfile(PostProcessProfile profile, bool destroyEffects)
@@ -400,6 +416,69 @@ namespace UnityEngine.Rendering.PostProcessing
             return Matrix4x4.Ortho(left, right, bottom, top, camera.nearClipPlane, camera.farClipPlane);
         }
 
+        public static Matrix4x4 GenerateJitteredProjectionMatrixFromOriginal(PostProcessRenderContext context, Matrix4x4 origProj, Vector2 jitter)
+        {
+#if UNITY_2017_2_OR_NEWER
+            var planes = origProj.decomposeProjection;
+
+            float vertFov = Math.Abs(planes.top) + Math.Abs(planes.bottom);
+            float horizFov = Math.Abs(planes.left) + Math.Abs(planes.right);
+
+            var planeJitter = new Vector2(jitter.x * horizFov / context.xrSingleEyeWidth,
+                                          jitter.y * vertFov / context.height);
+
+            planes.left += planeJitter.x;
+            planes.right += planeJitter.x;
+            planes.top += planeJitter.y;
+            planes.bottom += planeJitter.y;
+
+            var jitteredMatrix = Matrix4x4.Frustum(planes);
+
+            return jitteredMatrix;
+#else
+            var rTan = (1.0f + origProj[0, 2]) / origProj[0, 0];
+            var lTan = (-1.0f + origProj[0, 2]) / origProj[0, 0];
+
+            var tTan = (1.0f + origProj[1, 2]) / origProj[1, 1];
+            var bTan = (-1.0f + origProj[1, 2]) / origProj[1, 1];
+
+            float tanVertFov = Math.Abs(tTan) + Math.Abs(bTan);
+            float tanHorizFov = Math.Abs(lTan) + Math.Abs(rTan);
+
+            jitter.x *= tanHorizFov / context.xrSingleEyeWidth;
+            jitter.y *= tanVertFov / context.height;
+
+            float left = jitter.x + lTan;
+            float right = jitter.x + rTan;
+            float top = jitter.y + tTan;
+            float bottom = jitter.y + bTan;
+
+            var jitteredMatrix = new Matrix4x4();
+
+            jitteredMatrix[0, 0] = 2f / (right - left);
+            jitteredMatrix[0, 1] = 0f;
+            jitteredMatrix[0, 2] = (right + left) / (right - left);
+            jitteredMatrix[0, 3] = 0f;
+
+            jitteredMatrix[1, 0] = 0f;
+            jitteredMatrix[1, 1] = 2f / (top - bottom);
+            jitteredMatrix[1, 2] = (top + bottom) / (top - bottom);
+            jitteredMatrix[1, 3] = 0f;
+
+            jitteredMatrix[2, 0] = 0f;
+            jitteredMatrix[2, 1] = 0f;
+            jitteredMatrix[2, 2] = origProj[2, 2];
+            jitteredMatrix[2, 3] = origProj[2, 3];
+
+            jitteredMatrix[3, 0] = 0f;
+            jitteredMatrix[3, 1] = 0f;
+            jitteredMatrix[3, 2] = -1f;
+            jitteredMatrix[3, 3] = 0f;
+
+            return jitteredMatrix;
+#endif
+        }
+
         #endregion
 
         #region Reflection
@@ -474,6 +553,6 @@ namespace UnityEngine.Rendering.PostProcessing
             return GetParentObject(string.Join(".", fields, 1, fields.Length - 1), obj);
         }
 
-        #endregion
+#endregion
     }
 }
