@@ -1,6 +1,6 @@
 {
   "name": "com.unity.package-manager-ui",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Unity Package Manager user interface.",
   "dependencies": {
   }

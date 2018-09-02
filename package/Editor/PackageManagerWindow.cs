@@ -82,7 +82,7 @@ namespace UnityEditor.PackageManager
 
         private StringBuilder sb = new StringBuilder();
 
-        [MenuItem("Window/Package Manager", false, 1012)]
+        [MenuItem("Window/Package Manager")]
         public static void  ShowWindow()
         {
             EditorWindow.GetWindow(typeof(PackageManagerWindow));
@@ -279,7 +279,7 @@ namespace UnityEditor.PackageManager
                     Debug.Log("OperationID " + operationId + " -> In Progress!");
                 else if (lCode == StatusCode.Done)
                 {
-                    sb.Clear();
+                    sb.Length = 0;
                     switch (type)
                     {
                         case 0:
@@ -351,7 +351,7 @@ namespace UnityEditor.PackageManager
                 }
                 else if (lCode == StatusCode.Error)
                 {
-                    sb.Clear();
+                    sb.Length = 0;
                     Error error = Client.GetOperationError(operationId);
                     sb.Append("Error: " + error.message);
                     resultText = sb.ToString();
