@@ -69,7 +69,7 @@ namespace TMPro
     /// </summary>
     //[Serializable]
     public struct TMP_CharacterInfo
-    {   
+    {
         public char character; // Should be changed to an int to handle UTF 32
         /// <summary>
         /// Index of the character in the raw string.
