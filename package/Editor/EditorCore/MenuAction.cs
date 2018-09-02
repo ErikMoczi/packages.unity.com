@@ -209,7 +209,7 @@ namespace UnityEditor.ProBuilder
 	    /// <summary>
 	    /// A check for whether or not the action is valid given the current selection.
 	    /// </summary>
-	    /// <seealso cref="IsHidden"/>
+	    /// <seealso cref="hidden"/>
 	    /// <value>True if this action is valid with current selection and mode.</value>
 	    public abstract bool enabled { get; }
 
@@ -217,7 +217,7 @@ namespace UnityEditor.ProBuilder
 	    /// Is this action visible in the ProBuilder toolbar?
 	    /// </summary>
 	    /// <remarks>This returns false by default.</remarks>
-	    /// <seealso cref="IsEnabled"/>
+	    /// <seealso cref="enabled"/>
 	    /// <value>True if this action should be shown in the toolbar with the current mode and settings, false otherwise.</value>
 	    public virtual bool hidden
 	    {
@@ -239,7 +239,7 @@ namespace UnityEditor.ProBuilder
 		/// <returns>A new ActionResult with a summary of the state of the action's success.</returns>
 	    public abstract ActionResult DoAction();
 
-        protected virtual void DoAlternativeAction()
+        protected virtual void DoAlternateAction()
         {
             MenuOption.Show(OnSettingsGUI, OnSettingsEnable, OnSettingsDisable);
         }
@@ -284,7 +284,7 @@ namespace UnityEditor.ProBuilder
 				{
 					if(showOptions && (optionsMenuState & MenuActionState.VisibleAndEnabled) == MenuActionState.VisibleAndEnabled)
 					{
-						DoAlternativeAction();
+						DoAlternateAction();
 					}
 					else
 					{
@@ -330,7 +330,7 @@ namespace UnityEditor.ProBuilder
 						GUI.enabled = GUI.enabled && (altState & MenuActionState.Enabled) == MenuActionState.Enabled;
 
 						if(DoAltButton(GUILayout.MaxWidth(21), GUILayout.MaxHeight(16)))
-							DoAlternativeAction();
+							DoAlternateAction();
 					}
 				GUILayout.EndHorizontal();
 
