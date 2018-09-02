@@ -53,7 +53,7 @@ namespace UnityEngine.AddressableAssets
         /// <summary>
         /// TODO - doc
         /// </summary>
-        public string contentVersion = "0";
+        public string contentVersion = "undefined";
 
         /// <summary>
         /// TODO - doc
