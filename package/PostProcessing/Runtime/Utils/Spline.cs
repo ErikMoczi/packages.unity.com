@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.Assertions;
 
 namespace UnityEngine.Rendering.PostProcessing
 {
@@ -31,6 +32,7 @@ namespace UnityEngine.Rendering.PostProcessing
 
         public Spline(AnimationCurve curve, float zeroValue, bool loop, Vector2 bounds)
         {
+            Assert.IsNotNull(curve);
             this.curve = curve;
             m_ZeroValue = zeroValue;
             m_Loop = loop;

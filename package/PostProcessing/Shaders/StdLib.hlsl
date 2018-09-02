@@ -9,19 +9,19 @@
 // -----------------------------------------------------------------------------
 // API macros
 
-#if SHADER_API_PSSL
+#if defined(SHADER_API_PSSL)
     #include "API/PSSL.hlsl"
-#elif SHADER_API_XBOXONE
+#elif defined(SHADER_API_XBOXONE)
     #include "API/XboxOne.hlsl"
-#elif SHADER_API_D3D11
+#elif defined(SHADER_API_D3D11)
     #include "API/D3D11.hlsl"
-#elif SHADER_API_D3D12
+#elif defined(SHADER_API_D3D12)
     #include "API/D3D12.hlsl"
-#elif SHADER_API_D3D9 || SHADER_API_D3D11_9X
+#elif defined(SHADER_API_D3D9) || defined(SHADER_API_D3D11_9X)
     #include "API/D3D9.hlsl"
-#elif SHADER_API_VULKAN || SHADER_API_SWITCH
+#elif defined(SHADER_API_VULKAN) || defined(SHADER_API_SWITCH)
     #include "API/Vulkan.hlsl"
-#elif SHADER_API_METAL
+#elif defined(SHADER_API_METAL)
     #include "API/Metal.hlsl"
 #else
     #include "API/OpenGL.hlsl"
@@ -53,6 +53,10 @@ float rcp(float value)
 {
     return 1.0 / value;
 }
+#endif
+
+#if defined(SHADER_API_GLES)
+#define mad(a, b, c) (a * b + c)
 #endif
 
 #ifndef INTRINSIC_MINMAX3
@@ -143,40 +147,25 @@ float4 PositivePow(float4 base, float4 power)
 }
 
 // NaN checker
+// /Gic isn't enabled on fxc so we can't rely on isnan() anymore
 bool IsNan(float x)
 {
-#if !SHADER_API_GLES
-    return isnan(x) || isinf(x);
-#else
     return (x <= 0.0 || 0.0 <= x) ? false : true;
-#endif
 }
 
 bool AnyIsNan(float2 x)
 {
-#if !SHADER_API_GLES
-    return any(isnan(x)) || any(isinf(x));
-#else
     return IsNan(x.x) || IsNan(x.y);
-#endif
 }
 
 bool AnyIsNan(float3 x)
 {
-#if !SHADER_API_GLES
-    return any(isnan(x)) || any(isinf(x));
-#else
     return IsNan(x.x) || IsNan(x.y) || IsNan(x.z);
-#endif
 }
 
 bool AnyIsNan(float4 x)
 {
-#if !SHADER_API_GLES
-    return any(isnan(x)) || any(isinf(x));
-#else
     return IsNan(x.x) || IsNan(x.y) || IsNan(x.z) || IsNan(x.w);
-#endif
 }
 
 // -----------------------------------------------------------------------------

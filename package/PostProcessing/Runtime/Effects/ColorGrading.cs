@@ -174,7 +174,9 @@ namespace UnityEngine.Rendering.PostProcessing
         public override void Render(PostProcessRenderContext context)
         {
             var gradingMode = settings.gradingMode.value;
-            var supportComputeTex3D = SystemInfo.supports3DRenderTextures && SystemInfo.supportsComputeShaders;
+            var supportComputeTex3D = SystemInfo.supports3DRenderTextures
+                && SystemInfo.supportsComputeShaders
+                && SystemInfo.graphicsDeviceType != GraphicsDeviceType.OpenGLCore;
 
             if (gradingMode == GradingMode.External)
                 RenderExternalPipeline3D(context);
@@ -448,13 +450,13 @@ namespace UnityEngine.Rendering.PostProcessing
                 m_InternalLogLut = new RenderTexture(k_Lut3DSize, k_Lut3DSize, 0, format, RenderTextureReadWrite.Linear)
                 {
                     name = "Color Grading Log Lut",
+                    dimension = TextureDimension.Tex3D,
                     hideFlags = HideFlags.DontSave,
                     filterMode = FilterMode.Bilinear,
                     wrapMode = TextureWrapMode.Clamp,
                     anisoLevel = 0,
                     enableRandomWrite = true,
                     volumeDepth = k_Lut3DSize,
-                    dimension = TextureDimension.Tex3D,
                     autoGenerateMips = false,
                     useMipMap = false
                 };

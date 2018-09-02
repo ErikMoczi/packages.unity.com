@@ -22,7 +22,7 @@ namespace UnityEditor.Rendering.PostProcessing
         {
             if (property.propertyType != SerializedPropertyType.Vector4)
                 return false;
-            
+
             var value = property.vector4Value;
 
             using (new EditorGUILayout.VerticalScope())
@@ -67,13 +67,19 @@ namespace UnityEditor.Rendering.PostProcessing
             {
                 // Retina support
                 float scale = EditorGUIUtility.pixelsPerPoint;
-    
+
                 if (s_Material == null)
                     s_Material = new Material(Shader.Find("Hidden/PostProcessing/Editor/Trackball")) { hideFlags = HideFlags.HideAndDontSave };
 
                 // Wheel texture
+            #if UNITY_2018_1_OR_NEWER
+                const RenderTextureReadWrite kReadWrite = RenderTextureReadWrite.sRGB;
+            #else
+                const RenderTextureReadWrite kReadWrite = RenderTextureReadWrite.Linear;
+            #endif
+
                 var oldRT = RenderTexture.active;
-                var rt = RenderTexture.GetTemporary((int)(size * scale), (int)(size * scale), 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+                var rt = RenderTexture.GetTemporary((int)(size * scale), (int)(size * scale), 0, RenderTextureFormat.ARGB32, kReadWrite);
                 s_Material.SetFloat("_Offset", offset);
                 s_Material.SetFloat("_DisabledState", overrideState ? 1f : 0.5f);
                 s_Material.SetVector("_Resolution", new Vector2(size * scale, size * scale / 2f));
@@ -106,7 +112,7 @@ namespace UnityEditor.Rendering.PostProcessing
 
             if (attr.mode == TrackballAttribute.Mode.None)
                 return;
-            
+
             // Values
             var displayValue = Vector3.zero;
 
