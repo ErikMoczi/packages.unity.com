@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Semver;
 using UnityEngine;
@@ -15,17 +16,38 @@ namespace UnityEditor.PackageManager.UI
 
     internal class PackageDetails : VisualElement
     {
+        internal static PackageTag[] SupportedTags()
+        {
+            return new PackageTag[] {PackageTag.alpha, PackageTag.beta, PackageTag.experimental};
+        }
+
         private readonly VisualElement root;
         private Package package;
         private PackageFilter filter;
         private const string emptyId = "emptyArea";
         private const string emptyDescriptionClass = "empty";
 
+        private enum PackageAction
+        {
+            Add,
+            Remove,
+            Update,
+            Enable,
+            Disable
+        }
+        
+        private static readonly string[] PackageActionVerbs = { "Install", "Remove", "Update to", "Enable", "Disable" };
+        private static readonly string[] PackageActionInProgressVerbs = { "Installing", "Removing", "Updating to", "Enabling", "Disabling" };
+
         public PackageDetails()
         {
             root = Resources.Load<VisualTreeAsset>("Templates/PackageDetails").CloneTree(null);
             Add(root);
             root.StretchToParentSize();
+
+            UpdateButton.visible = false;
+            RemoveButton.visible = false;
+            root.Q<VisualContainer>(emptyId).visible = false;
 
             UpdateButton.clickable.clicked += UpdateClick;
             RemoveButton.clickable.clicked += RemoveClick;
@@ -69,6 +91,9 @@ namespace UnityEditor.PackageManager.UI
             }
             else
             {
+                UpdateButton.visible = true;
+                RemoveButton.visible = true;
+
                 var displayPackage = package.Display;
                 
                 if (string.IsNullOrEmpty(displayPackage.Description))
@@ -84,9 +109,11 @@ namespace UnityEditor.PackageManager.UI
 
                 root.Q<Label>("detailTitle").text = displayPackage.DisplayName;
                 DetailVersion.text = "Version " + displayPackage.VersionWithoutTag;
-                                
-                UIUtils.SetElementDisplay(root.Q<Label>("inPreview"), displayPackage.IsInPreview);
 
+                UIUtils.SetElementDisplay(GetTag(PackageTag.recommended), displayPackage.IsRecommended);
+                foreach (var tag in SupportedTags())
+                    UIUtils.SetElementDisplay(GetTag(tag), displayPackage.HasTag(tag));
+                                
                 root.Q<Label>("detailName").text = displayPackage.Name;
                 root.Q<ScrollView>("detailView").scrollOffset = new Vector2(0, 0);
 
@@ -98,9 +125,36 @@ namespace UnityEditor.PackageManager.UI
                             displayPackage.ModuleName);
                 }
                 
+                // Show Status string on package if need be
+                DetailPackageStatus.text = string.Empty;
+                if (!isModule)
+                {
+                    if (displayPackage.State == PackageState.Outdated)
+                    {
+                        DetailPackageStatus.text =
+                            "This package is installed for your project and has an available update";
+                    }
+                    else if (displayPackage.State == PackageState.InProgress)
+                    {
+                        DetailPackageStatus.text =
+                            "This package is being updated or installed";
+                    }
+                    else if (displayPackage.State == PackageState.Error)
+                    {
+                        DetailPackageStatus.text =
+                            "This package is in error, please check console logs for more details.";
+                    }
+                    else if (displayPackage.IsCurrent)
+                    {
+                        DetailPackageStatus.text =
+                            "This package is installed for you project";
+                    }
+                }
+
                 UIUtils.SetElementDisplay(DetailDesc, !isModule);
                 UIUtils.SetElementDisplay(DetailVersion, !isModule);
                 UIUtils.SetElementDisplay(DetailModuleReference, isModule);
+                UIUtils.SetElementDisplay(DetailPackageStatus, !string.IsNullOrEmpty(DetailPackageStatus.text));
 
 
                 if (displayPackage.Errors.Count > 0)
@@ -184,21 +238,25 @@ namespace UnityEditor.PackageManager.UI
             if (package.AddSignal.Operation != null)
             {
                 version = package.AddSignal.Operation.PackageInfo.Version;
-                actionLabel = GetUpdateButtonText(displayPackage.IsCurrent ? "Updating to" : "Adding", version);
+                actionLabel = displayPackage.OriginType == OriginType.Builtin ? 
+                    GetButtonText(PackageAction.Enable, true) : 
+                    GetButtonText(displayPackage.IsCurrent ? PackageAction.Update : PackageAction.Add, true, version);
                 enableButton = false;
                 visibleFlag = true;
             }
             else if (displayPackage.IsCurrent && package.Latest != null && package.Latest.Version != package.Current.Version)
             {
                 version = package.Latest.Version;
-                actionLabel = GetUpdateButtonText("Update to", version);
+                actionLabel = GetButtonText(PackageAction.Update, false, version);
                 visibleFlag = true;
             }
             else if (package.Current == null && package.Versions.Any())
             {
-                visibleFlag = true;
                 version = package.Latest.Version;
-                actionLabel = GetUpdateButtonText("Add", version);
+                actionLabel = displayPackage.OriginType == OriginType.Builtin ?
+                    GetButtonText(PackageAction.Enable) :
+                    GetButtonText(PackageAction.Add, false, version);
+                visibleFlag = true;
             }
 
             UpdateButton.SetEnabled(enableButton);
@@ -208,8 +266,11 @@ namespace UnityEditor.PackageManager.UI
 
         private void RefreshRemoveButton()
         {
+            var displayPackage = package.Display;
             var visibleFlag = false;
-            var actionLabel = "Remove";
+            var actionLabel = displayPackage.OriginType == OriginType.Builtin ?
+                GetButtonText(PackageAction.Disable) :
+                GetButtonText(PackageAction.Remove, false, displayPackage.Version);
             var enableButton = false;
 
             if (filter != PackageFilter.All)
@@ -219,7 +280,9 @@ namespace UnityEditor.PackageManager.UI
                 visibleFlag = true;
                 if (package.RemoveSignal.Operation != null)
                 {
-                    actionLabel = "Removing";
+                    actionLabel = displayPackage.OriginType == OriginType.Builtin ?
+                        GetButtonText(PackageAction.Disable, true) :
+                        GetButtonText(PackageAction.Remove, true, displayPackage.Version);;
                     enableButton = false;
                 }
             }
@@ -229,9 +292,11 @@ namespace UnityEditor.PackageManager.UI
             UIUtils.SetElementDisplay(RemoveButton, visibleFlag);
         }
 
-        private static string GetUpdateButtonText(string action, SemVersion version)
+        private static string GetButtonText(PackageAction action, bool inProgress = false, SemVersion version = null)
         {
-            return string.Format("{0} {1}", action, version);
+            return version == null ? 
+                string.Format("{0}", inProgress ? PackageActionInProgressVerbs[(int) action] : PackageActionVerbs[(int) action]) : 
+                string.Format("{0} {1}", inProgress ? PackageActionInProgressVerbs[(int) action] : PackageActionVerbs[(int) action], version);
         }
 
         private void UpdateClick()
@@ -259,7 +324,10 @@ namespace UnityEditor.PackageManager.UI
         private Button ViewDocButton { get { return root.Q<Button>("viewDocumentation"); } }
         private Alert DetailError { get { return root.Q<Alert>("detailError"); } }
         private ScrollView DetailView { get { return root.Q<ScrollView>("detailView"); } }
+        private Label DetailPackageStatus { get { return root.Q<Label>("detailPackageStatus"); } }
         private Label DetailModuleReference { get { return root.Q<Label>("detailModuleReference"); } }
         private Label DetailVersion { get { return root.Q<Label>("detailVersion");  }}
+        
+        internal VisualContainer GetTag(PackageTag tag) {return root.Q<VisualContainer>("tag-" + tag.ToString()); } 
     }
 }

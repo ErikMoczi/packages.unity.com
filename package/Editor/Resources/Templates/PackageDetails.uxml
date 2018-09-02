@@ -9,9 +9,25 @@
                 </ui:VisualContainer>
                 <ui:VisualContainer class="versionContainer">
                     <ui:Label name="detailVersion"/>
-                    <ui:Label name="inPreview" class="display-none"/>
+                     <ui:VisualContainer name="tag-alpha" class="tagLine display-none">
+                        <ui:Label name="tag" class="tag" text="alpha"/>
+                    </ui:VisualContainer>
+
+                    <ui:VisualContainer name="tag-beta" class="tagLine display-none">
+                        <ui:Label name="tag" class="tag" text="beta"/>
+                    </ui:VisualContainer>
+
+                    <ui:VisualContainer name="tag-experimental" class="tagLine display-none">
+                        <ui:Label name="tag" class="tag" text="experimental"/>
+                    </ui:VisualContainer>
+
+                    <ui:VisualContainer name="tag-recommended" class="tagLine display-none">
+                        <ui:Label name="tag" class="tag" text="recommended"/>
+                    </ui:VisualContainer>
                 </ui:VisualContainer>
+
                 <ui:Label name="detailName"/>
+                <ui:Label name="detailPackageStatus"/>
                 <ui:Label name="detailModuleReference"/>
                 <ui:Label name="detailDesc"/>
                 <!--

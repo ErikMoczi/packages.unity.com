@@ -4,14 +4,21 @@ namespace UnityEditor.PackageManager.UI
 {
     internal static class UIUtils
     {
+        public static string DisplayNone = "display-none";
+        
         internal static void SetElementDisplay(VisualElement element, bool value)
         {
             if (value)
-                element.RemoveFromClassList("display-none");
+                element.RemoveFromClassList(DisplayNone);
             else
-                element.AddToClassList("display-none");
+                element.AddToClassList(DisplayNone);
 
             element.visible = value;
+        }
+
+        internal static bool IsElementVisible(VisualElement element)
+        {
+            return element.visible && !element.ClassListContains(DisplayNone);
         }
     }
 }

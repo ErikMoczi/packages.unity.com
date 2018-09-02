@@ -15,5 +15,9 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             Factory = factory;
         }
+
+        public void Cancel()
+        {
+        }
     }
 }

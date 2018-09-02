@@ -40,14 +40,30 @@
   margin-right: 0;
 }
 
-.row, #detailListView #packageListGroup #tabs, #detailListView #detailView .detail .versionContainer {
+.row, #detailListView #packageListGroup #tabs, #detailListView #detailView .detail .versionContainer, #detailListView #detailView .detail .tagLine {
   flex: 1;
   flex-direction: row;
 }
 
-.column, #detailListView #packageListGroup #listContainerOuter, #detailListView #packageListGroup #packageList, #detailListView #packageListGroup #listContainer, #detailListView #packageListGroup #listGroups, #detailListView #packageListGroup #scrollView {
+.column, #detailListView .emptyArea, #detailListView #packageListGroup #listContainerOuter, #detailListView #packageListGroup #packageList, #detailListView #packageListGroup #listContainer, #detailListView #packageListGroup #listGroups, #detailListView #packageListGroup #scrollView {
   flex: 1;
   flex-direction: column;
+}
+
+.tag {
+  border-top-width: 1;
+  border-left-width: 1;
+  border-bottom-width: 1;
+  border-right-width: 1;
+  padding-top: 1;
+  padding-left: 3;
+  padding-bottom: 1;
+  padding-right: 3;
+  font-size: 9;
+  border-radius: 5;
+  text-alignment: middle-center;
+  border-color: #000000;
+  text-color: #000000;
 }
 
 #detailListView {
@@ -65,6 +81,15 @@
   text-alignment: middle-center;
   font-size: 18;
   font-style: bold;
+}
+#detailListView .emptyArea .loading {
+  position-type: relative;
+  position-top: 0;
+  position-left: 0;
+  position-right: 0;
+  flex: 0.1;
+  flex-direction: column;
+  align-items: center;
 }
 #detailListView #headerTitle {
   flex: 1;
@@ -118,6 +143,7 @@
 }
 #detailListView #packageListGroup #tabsGroup {
   min-height: 42;
+  margin-bottom: 10;
 }
 #detailListView #packageListGroup #listContainerOuter #spinnerContainer {
   position-type: absolute;
@@ -366,6 +392,12 @@
   max-height: 20;
   font-style: italic;
 }
+#detailListView #detailView .detail #detailPackageStatus {
+  flex: 1;
+  max-height: 30;
+  font-style: bold;
+  word-wrap: true;
+}
 #detailListView #detailView .detail #detailTag {
   width: 60;
   font-size: 12;
@@ -426,13 +458,15 @@
   margin-bottom: 0;
   margin-right: 0;
 }
+#detailListView #detailView .detail .versionContainer {
+  align-items: center;
+}
 #detailListView #detailView .detail .versionContainer #detailVersion {
   flex: 0;
 }
-#detailListView #detailView .detail .versionContainer #inPreview {
-  background-image: resource("Images/preview");
-  width: 44;
-  height: 18;
+#detailListView #detailView .detail .tag {
+  border-color: #ffa44e;
+  text-color: #ffa44e;
 }
 #detailListView #detailError {
   position-type: absolute;

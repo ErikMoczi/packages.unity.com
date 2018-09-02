@@ -6,84 +6,40 @@ namespace UnityEditor.PackageManager.UI.Tests
     internal class PackageInfoTests : PackageBaseTests
     {
         [Test]
-        public void IsInPreview_WhenPreviewPackageVersionTagIsPreviewLowerCase_ReturnsTrue()
+        public void HasTag_WhenPreReleasePackageVersionTagWithPreReleaseName_ReturnsTrue()
         {
+            var tag = PackageTag.alpha.ToString();
+            
             var info = new PackageInfo()
             {
                 PackageId = kPackageTestName,
-                Version = new SemVersion(1, 0, 0, "preview")
+                Version = new SemVersion(1, 0, 0, tag)
             };
             
-            Assert.IsTrue(info.IsInPreview);
+            Assert.IsTrue(info.HasTag(tag));
         }
         
         [Test]
-        public void IsInPreview_WhenPreviewPackageVersionTagIsPreviewUpperCase_ReturnsTrue()
+        public void HasTag_WhenPackageVersionTagIsAnyCase_ReturnsTrue()
         {
+            var tag = "bEtA";
+            
             var info = new PackageInfo()
             {
                 PackageId = kPackageTestName,
-                Version = new SemVersion(1, 0, 0, "PREVIEW")
+                Version = new SemVersion(1, 0, 0, tag)
             };
             
-            Assert.IsTrue(info.IsInPreview);
-        }
-
-        [Test]
-        public void IsInPreview_WhenPreviewPackageVersionTagIsNotPreview_ReturnsFalse()
-        {
-            var info = new PackageInfo()
-            {
-                PackageId = kPackageTestName,
-                Version = new SemVersion(1, 0, 0, "release")
-            };
-            
-            Assert.IsFalse(info.IsInPreview);
-        }
-
-        [Test]
-        public void IsInPreview_WhenPackageVersionMajorIsZero_ReturnsTrue()
-        {
-            var info = new PackageInfo()
-            {
-                PackageId = kPackageTestName,
-                Version = new SemVersion(0)
-            };
-            
-            Assert.IsTrue(info.IsInPreview);
+            Assert.IsTrue(info.HasTag(tag));
         }
         
         [Test]
-        public void IsInPreview_WhenPackageVersionMajorIsGreaterThanZero_ReturnsFalse()
+        public void VersionWithoutTag_WhenVersionContainsTag_ReturnsVersionOnly()
         {
             var info = new PackageInfo()
             {
                 PackageId = kPackageTestName,
-                Version = new SemVersion(1)
-            };
-            
-            Assert.IsFalse(info.IsInPreview);
-        }
-        
-        [Test]
-        public void VersionWithoutTag_WhenVersionContainsPreviewTag_ReturnsVersionOnly()
-        {
-            var info = new PackageInfo()
-            {
-                PackageId = kPackageTestName,
-                Version = new SemVersion(1, 0, 0, "preview")
-            };
-            
-            Assert.AreEqual("1.0.0", info.VersionWithoutTag);
-        }
-        
-        [Test]
-        public void VersionWithoutTag_WhenVersionContainsOtherTag_ReturnsVersionOnly()
-        {
-            var info = new PackageInfo()
-            {
-                PackageId = kPackageTestName,
-                Version = new SemVersion(1, 0, 0, "release")
+                Version = new SemVersion(1, 0, 0, PackageTag.alpha.ToString())
             };
             
             Assert.AreEqual("1.0.0", info.VersionWithoutTag);
@@ -99,6 +55,22 @@ namespace UnityEditor.PackageManager.UI.Tests
             };
             
             Assert.AreEqual("1.0.0", info.VersionWithoutTag);
+        }
+
+        [Test]
+        public void PackageFromUpm_GivesCorrectRecommendedTag()
+        {
+            Assert.IsTrue(UpmBaseOperation.GetIsRecommended("0.0.1", "0.0.1", true));
+            Assert.IsTrue(UpmBaseOperation.GetIsRecommended("0.0.2", "0.0.2", false));
+            Assert.IsTrue(UpmBaseOperation.GetIsRecommended("0.0.2", "0.0.1", true));    // Higher patch version are recommended
+            Assert.IsFalse(UpmBaseOperation.GetIsRecommended("1.0.2", "0.0.1", true));    // But not higher major/minor
+            Assert.IsFalse(UpmBaseOperation.GetIsRecommended("0.1.2", "0.0.1", true));    //
+            Assert.IsFalse(UpmBaseOperation.GetIsRecommended("0.1.0", "0.0.1", true));    //
+            Assert.IsFalse(UpmBaseOperation.GetIsRecommended("1.0.0", "0.0.1", true));    //
+            
+            Assert.IsFalse(UpmBaseOperation.GetIsRecommended("0.0.2-alpha", "0.0.1", true));
+            Assert.IsFalse(UpmBaseOperation.GetIsRecommended("0.0.2-beta", "0.0.1", true));
+            Assert.IsFalse(UpmBaseOperation.GetIsRecommended("0.0.2-experimental", "0.0.1", true));
         }
     }
 }

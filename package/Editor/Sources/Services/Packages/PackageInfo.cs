@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Semver;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -12,8 +13,6 @@ namespace UnityEditor.PackageManager.UI
         {
             return packageName.StartsWith("com.unity.modules.");
         }
-
-        private const string previewTag = "preview";
 
         [SerializeField]
         public string Name;
@@ -39,6 +38,8 @@ namespace UnityEditor.PackageManager.UI
         public OriginType OriginType;
         [SerializeField] 
         public List<Error> Errors;
+        [SerializeField] 
+        public bool IsRecommended;
         
         public string PackageId {
             get
@@ -70,7 +71,15 @@ namespace UnityEditor.PackageManager.UI
             return PackageId.GetHashCode();
         }
 
-        public bool IsInPreview { get { return Version.Major == 0 || Version.Prerelease.ToLower() == previewTag; } }
+        public bool HasTag(string tag)
+        {
+            return String.Equals(Version.Prerelease, tag, StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        public bool HasTag(PackageTag tag)
+        {
+            return HasTag(tag.ToString());
+        }
 
         public string VersionWithoutTag { get { return Version.VersionOnly(); } }
     }

@@ -11,6 +11,13 @@
             <ui:VisualContainer name="emptyArea" class="list emptyArea">
                 <ui:Label class="title" text="There are no packages."/>
             </ui:VisualContainer>
+            <ui:VisualContainer name="loadingArea" class="detail emptyArea">
+                <ui:Label class="title" text="Retrieving package list."/>
+                <ui:Label class="loading">
+                    <upm:LoadingSpinner name="loadingSpinner" class="spinner"/>
+                </ui:Label>
+                <ui:Label class="title" text="Please wait."/>
+            </ui:VisualContainer>
 
         </ui:VisualContainer>
     </ui:VisualContainer>

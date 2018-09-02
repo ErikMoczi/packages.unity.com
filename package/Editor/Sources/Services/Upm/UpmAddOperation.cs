@@ -7,7 +7,6 @@ namespace UnityEditor.PackageManager.UI
 {
     internal class UpmAddOperation : UpmBaseOperation, IAddOperation
     {
-        [SerializeField]
         public PackageInfo PackageInfo { get; protected set; }
 
         public event Action<PackageInfo> OnOperationSuccess = delegate { };

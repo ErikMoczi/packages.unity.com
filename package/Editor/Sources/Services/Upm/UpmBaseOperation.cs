@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
+using Semver;
 using UnityEngine;
 using UnityEditor.PackageManager.Requests;
 
@@ -16,6 +17,33 @@ namespace UnityEditor.PackageManager.UI
                 group = PackageGroupOrigins.BuiltInPackages.ToString();
 
             return group;
+        }
+
+        public static bool GetIsRecommended(string version, string upmRecommended, bool isVersionCurrent)
+        {
+            SemVersion semVersion = version;
+            var isPreRelease = !string.IsNullOrEmpty(semVersion.Prerelease);
+                
+            bool isRecommended = version == upmRecommended;
+                
+            // Your are the recommended if you also satisfy all these conditions:
+            //     - If your are not alpha/beta
+            //     - Your current major/minor version is the same as the recommended major/minor version from upm request
+            //     - Your patch version is >= then the recommended from upm request
+            if (!isRecommended && isVersionCurrent)
+            {
+                // In some cases, such as built-in packages, the recommended version will be empty,
+                // so in these cases keep isRecommended to false.
+                SemVersion semRecommended;
+                if (SemVersion.TryParse(upmRecommended, out semRecommended))
+                    if (!isPreRelease)
+                        if (semVersion.Major == semRecommended.Major &&
+                            semVersion.Minor == semRecommended.Minor &&
+                            semVersion.Patch >= semRecommended.Patch)
+                            isRecommended = true;
+            }
+
+            return isRecommended;
         }
 
         protected static IEnumerable<PackageInfo> FromUpmPackageInfo(PackageManager.PackageInfo info, bool isCurrent=true)
@@ -35,10 +63,18 @@ namespace UnityEditor.PackageManager.UI
             {
                 versions.Add(info.version);
             }
-            
+                        
             foreach(var version in versions)
             {
-                var state = info.version == info.versions.latestCompatible ? PackageState.UpToDate : PackageState.Outdated;
+                bool isVersionCurrent = version == info.version && isCurrent;
+                bool isRecommended = GetIsRecommended(version, info.versions.recommended, isVersionCurrent);
+
+                var state = (info.originType == OriginType.Builtin || info.version == info.versions.latestCompatible) ? PackageState.UpToDate : PackageState.Outdated;
+                
+                // Happens mostly when using a package that hasn't been in production yet.
+                if (info.versions.all.Length <= 0)
+                    state = PackageState.UpToDate;
+                
                 if (info.errors.Length > 0)
                     state = PackageState.Error;
 
@@ -50,8 +86,9 @@ namespace UnityEditor.PackageManager.UI
                     Version = version,
                     Description = info.description,
                     Category = info.category,
-                    IsCurrent = version == info.version && isCurrent,
+                    IsCurrent = isVersionCurrent,
                     IsLatest = version == info.versions.latestCompatible,
+                    IsRecommended = isRecommended,
                     Errors = info.errors.ToList(),
                     Group = GroupName(info.originType),
                     State = state,
@@ -139,7 +176,14 @@ namespace UnityEditor.PackageManager.UI
         private void FinalizeOperation()
         {
             EditorApplication.update -= Progress;
-            OnOperationFinalized();            
+            OnOperationFinalized();
+        }
+
+        public void Cancel()
+        {
+            EditorApplication.update -= Progress;
+            OnOperationError = delegate { };
+            OnOperationFinalized = delegate { };
         }
 
         private bool TryForcedError()

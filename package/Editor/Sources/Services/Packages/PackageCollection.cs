@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -18,6 +18,8 @@ namespace UnityEditor.PackageManager.UI
         private List<PackageInfo> packageInfos;
         [SerializeField] 
         private Dictionary<string, Package> Packages;
+
+        private IBaseOperation currentOperation;
 
         private PackageFilter filter;
         public PackageFilter Filter
@@ -85,18 +87,33 @@ namespace UnityEditor.PackageManager.UI
 
         private void ListPackages()
         {
+            if (currentOperation != null)
+            {
+                currentOperation.Cancel();
+                currentOperation = null;
+            }
+
             var operation = OperationFactory.Instance.CreateListOperation();
-            operation.GetPackageListAsync(SetPackageInfos);            
+            currentOperation = operation;
+            operation.GetPackageListAsync(SetPackageInfos, error => { ClearPackages(); } );
         }
 
         private void SearchPackages()
         {
+            if (currentOperation != null)
+            {
+                currentOperation.Cancel();
+                currentOperation = null;
+            }
+
             var operation = OperationFactory.Instance.CreateSearchOperation();
-            operation.GetAllPackageAsync(AddSearchPackageInfos); 
+            currentOperation = operation;
+            operation.GetAllPackageAsync(AddSearchPackageInfos, error => { ClearPackages(); } );
         }
 
         private void AddSearchPackageInfos(IEnumerable<PackageInfo> searchPackageInfos)
         {
+            currentOperation = null;
             var copyPackageInfo = new List<PackageInfo>(packageInfos);
             copyPackageInfo.AddRange(searchPackageInfos.Where(pi => !Packages.ContainsKey(pi.Name) || Packages[pi.Name].Current == null || Packages[pi.Name].Current.Version != pi.Version));
             SetPackageInfos(copyPackageInfo);
@@ -104,6 +121,7 @@ namespace UnityEditor.PackageManager.UI
 
         public void SetPackageInfos(IEnumerable<PackageInfo> packageInfos)
         {
+            currentOperation = null;
             ClearPackagesInternal();
             AddPackageInfos(packageInfos);
         }
@@ -143,6 +161,7 @@ namespace UnityEditor.PackageManager.UI
 
         public void ClearPackages()
         {
+            currentOperation = null;
             ClearPackagesInternal();
             OnPackagesChanged(Packages.Values.AsEnumerable());
         }

@@ -8,7 +8,6 @@ namespace UnityEditor.PackageManager.UI
     {
         public event Action<T> OnOperation = delegate { };
 
-        [SerializeField]
         public T Operation { get; set; }
 
         public void SetOperation(T operation)
