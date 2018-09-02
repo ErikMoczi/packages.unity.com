@@ -1,1 +1,1 @@
-11-6-17 Initial release of the Analytics Standard Events package.
+1.0.3 - Initial release of the Analytics Standard Events package.
