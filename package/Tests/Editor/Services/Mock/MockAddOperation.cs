@@ -23,6 +23,7 @@ namespace UnityEditor.PackageManager.UI.Tests
                 if (errorCallbackAction != null)
                     errorCallbackAction(ForceError);
 
+                IsCompleted = true;
                 OnOperationError(ForceError);
             }
             else
@@ -30,6 +31,7 @@ namespace UnityEditor.PackageManager.UI.Tests
                 if (doneCallbackAction != null)
                     doneCallbackAction(PackageInfo);
 
+                IsCompleted = true;
                 OnOperationSuccess(PackageInfo);
             }
 

@@ -65,7 +65,8 @@ namespace UnityEditor.PackageManager.UI
             foreach(var version in versions)
             {
                 var isVersionCurrent = version == info.version && isCurrent;
-                var state = (info.source == PackageSource.BuiltIn || info.version == lastCompatible) ? PackageState.UpToDate : PackageState.Outdated;
+                var isBuiltIn = info.source == PackageSource.BuiltIn;
+                var state = (isBuiltIn || info.version == lastCompatible) ? PackageState.UpToDate : PackageState.Outdated;
                 
                 // Happens mostly when using a package that hasn't been in production yet.
                 if (info.versions.all.Length <= 0)
@@ -88,7 +89,7 @@ namespace UnityEditor.PackageManager.UI
                     Errors = info.errors.ToList(),
                     Group = GroupName(info.source),
                     State = state,
-                    Origin = info.source,
+                    Origin = isBuiltIn || isVersionCurrent ? info.source : PackageSource.Registry,
                     Author = null,
                     Info = info
                 };
@@ -107,7 +108,7 @@ namespace UnityEditor.PackageManager.UI
         public Error ForceError { get; set; }                // Allow external component to force an error on the requests (eg: testing)
         public Error Error { get; protected set; }        // Keep last error
         
-        public bool IsCompleted { get; protected set; }
+        public bool IsCompleted { get; private set; }
 
         protected abstract Request CreateRequest();
         
@@ -121,6 +122,7 @@ namespace UnityEditor.PackageManager.UI
         {
             Error = null;
             OnOperationStart(this);
+
             Delay.Start();
 
             if (TryForcedError())

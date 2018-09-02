@@ -29,7 +29,6 @@ using System.Runtime.Serialization;
 using System.Security.Permissions;
 #endif
 using System.Text.RegularExpressions;
-using UnityEngine;
 
 namespace Semver
 {

@@ -8,6 +8,9 @@ namespace UnityEditor.PackageManager.UI
 
         public static void SetElementDisplay(VisualElement element, bool value)
         {
+            if (element == null)
+                return;
+            
             if (value)
                 element.RemoveFromClassList(DisplayNone);
             else

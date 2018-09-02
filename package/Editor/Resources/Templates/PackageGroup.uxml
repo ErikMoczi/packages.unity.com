@@ -5,7 +5,6 @@
         xsi:schemaLocation="UnityEngine.Experimental.UIElements UIElementsSchema/UnityEngine.Experimental.UIElements.xsd">
     <engine:VisualElement name="groupContainerOuter">
         <engine:VisualElement name="headerContainer">
-            <engine:Label name="headerCaret"/>
             <engine:Label name="headerTitle" text="Default" />
         </engine:VisualElement>
 

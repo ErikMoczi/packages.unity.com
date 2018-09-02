@@ -11,8 +11,8 @@
             <upm:LoadingSpinner name="packageSpinner" class="spinner"/>
         </engine:VisualElement>
     </engine:VisualElement>
+    <engine:Label name="packageState" class="status" />
     <engine:Label name="packageName" class="name" />
     <engine:Label name="packageVersion" class="version"/>
-    <engine:Label name="packageState" class="status" />
   </engine:VisualElement>
 </engine:UXML>

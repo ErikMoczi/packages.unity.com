@@ -67,7 +67,11 @@ namespace UnityEditor.PackageManager.UI
                 else
                     text = m_Value.ToString();
  
+#if UNITY_2018_3_OR_NEWER
+                MarkDirtyRepaint();
+#else
                 Dirty(ChangeType.Repaint);
+#endif
             }
         }
 

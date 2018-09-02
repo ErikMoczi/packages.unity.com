@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Experimental.UIElements;
 using NUnit.Framework;
-using UnityEngine;
 
 namespace UnityEditor.PackageManager.UI.Tests
 {
@@ -16,8 +15,8 @@ namespace UnityEditor.PackageManager.UI.Tests
         public void Setup()
         {
             PackageCollection.Instance.SetFilter(PackageFilter.Local);
-            PackageCollection.Instance.UpdatePackageCollection(true);
-            SetPackages(null);
+            SetListPackages(Enumerable.Empty<PackageInfo>());
+            SetSearchPackages(Enumerable.Empty<PackageInfo>());
             Factory.ResetOperations();
         }
 
@@ -39,50 +38,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             };
             
             PackageCollection.Instance.OnPackagesChanged += onPackageChangedEvent;
-            SetPackages(PackageSets.Instance.Many(5, true));
-        }
-
-        [Test]
-        public void When_Default_PackageGroupsCollapsedState()
-        {
-            SetPackages(PackageSets.Instance.Many(5));
-            
-            var packageGroups = Container.Query<PackageGroup>("groupContainerOuter").Build().ToList();
-            foreach (var packageGroup in packageGroups)
-            {
-                var groupHeader = packageGroup.Origin;
-                var children = packageGroup.Query(null, "package").Build().ToList().Count;
-
-                if (groupHeader == PackageGroupOrigins.Packages)
-                    Assert.IsTrue(packageGroup.Collapsed);           // Make sure it is not collapsed
-                else if (groupHeader == PackageGroupOrigins.BuiltInPackages)
-                    Assert.IsFalse(packageGroup.Collapsed);        // Make sure it is collapsed
-            }
-        }
-        
-
-        [Test]
-        public void When_Default_PackageGroupsCollapsedState_Has_NoChildren()
-        {
-            SetPackages(PackageSets.Instance.Many(5));
-            
-            var packageGroups = Container.Query<PackageGroup>("groupContainerOuter").Build().ToList();
-            foreach (var packageGroup in packageGroups)
-            {
-                var groupHeader = packageGroup.Origin;
-                var children = packageGroup.Query(null, "package").Build().ToList().Count;
-
-                if (groupHeader == PackageGroupOrigins.Packages)
-                {
-                    Assert.IsTrue(packageGroup.Collapsed);           // Make sure it is not collapsed
-                    Assert.IsTrue(children > 0);           // Make sure it is not collapsed
-                }
-                else if (groupHeader == PackageGroupOrigins.BuiltInPackages)
-                {
-                    Assert.IsFalse(packageGroup.Collapsed);        // Make sure it is collapsed
-                    Assert.IsTrue(children == 0);        // Make sure it is collapsed
-                }
-            }
+            SetListPackages(PackageSets.Instance.Many(5, true));
         }
 
         [Test]
@@ -92,10 +48,9 @@ namespace UnityEditor.PackageManager.UI.Tests
             var current = packages.ToList().First();
             var latest = packages.ToList().Last();
 
-            SetPackages(packages);
+            SetListPackages(packages);
             Factory.AddOperation = new MockAddOperation(Factory, latest);
 
-            PackageCollection.Instance.SetListPackageInfos(packages);
             var package = PackageCollection.Instance.GetPackageByName(current.Name);
 
             onPackageChangedEvent = newpackages =>
@@ -132,13 +87,12 @@ namespace UnityEditor.PackageManager.UI.Tests
             var current = packages.ToList().First();
             var latest = packages.ToList().Last();
 
-            SetPackages(packages);
+            SetListPackages(packages);
 
             var error = MakeError(ErrorCode.Unknown, "Fake error");
             Factory.AddOperation = new MockAddOperation(Factory, latest);
             Factory.AddOperation.ForceError = error;
 
-            PackageCollection.Instance.SetListPackageInfos(packages);
             var package = PackageCollection.Instance.GetPackageByName(current.Name);
 
             package.AddSignal.OnOperation += operation =>
@@ -153,10 +107,10 @@ namespace UnityEditor.PackageManager.UI.Tests
                     var label = packageItem.Q<Label>("packageName");
                     var version = packageItem.Q<Label>("packageVersion");
                     var state = packageItem.Q<Label>("packageState");
-                    var hasOutdatedClass = state.ClassListContains(PackageItem.GetIconStateId(PackageState.Outdated));
+                    var hasErrorClass = state.ClassListContains(PackageItem.GetIconStateId(PackageState.Error));
                     Assert.IsTrue(current.Name == string.Format("com.unity.{0}", label.text));
                     Assert.IsTrue(current.Version == version.text);
-                    Assert.IsTrue(hasOutdatedClass);
+                    Assert.IsTrue(hasErrorClass);
                 };
             };
 
@@ -169,18 +123,20 @@ namespace UnityEditor.PackageManager.UI.Tests
             var packages = PackageSets.Instance.Many(5);
             var current = packages.ToList().First();
 
-            SetPackages(packages);
-            PackageCollection.Instance.SetListPackageInfos(packages);
+            SetListPackages(packages);
             var package = PackageCollection.Instance.GetPackageByName(current.Name);
             Assert.IsNotNull(package);
 
-            PackageCollection.Instance.OnPackagesChanged += allPackages =>
+            onPackageChangedEvent = allPackages =>
             {
                 package = PackageCollection.Instance.GetPackageByName(current.Name);
                 Assert.IsNull(package);
             };
 
+            PackageCollection.Instance.OnPackagesChanged += onPackageChangedEvent;
+
             package.Remove();
+            PackageCollection.Instance.FetchListOfflineCache(true);
         }
 
         [Test]
@@ -191,8 +147,7 @@ namespace UnityEditor.PackageManager.UI.Tests
 
             var error = MakeError(ErrorCode.Unknown, "Fake error");
             Factory.RemoveOperation = new MockRemoveOperation(Factory) {ForceError = error};
-            SetPackages(packages);
-            PackageCollection.Instance.SetListPackageInfos(packages);
+            SetListPackages(packages);
             var package = PackageCollection.Instance.GetPackageByName(current.Name);
             Assert.IsNotNull(package);
 
@@ -214,9 +169,9 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             var packagesLocal = PackageSets.Instance.Many(2);
             var packagesAll = PackageSets.Instance.Many(5);
-            
-            Factory.SearchOperation = new MockSearchOperation(Factory, packagesAll);
-            SetPackages(packagesLocal);
+
+            SetListPackages(packagesLocal);
+            SetSearchPackages(packagesAll);
 
             onPackageChangedEvent = packages =>
             {
@@ -234,23 +189,19 @@ namespace UnityEditor.PackageManager.UI.Tests
         [Test]
         public void ListPackages_UsesCache()
         {
-            var packages = PackageSets.Instance.Many(2);
             PackageCollection.Instance.SetFilter(PackageFilter.Local);                            // Set filter to use list
-            Factory.SearchOperation = new MockSearchOperation(Factory, packages);
-            SetPackages(packages);
+            SetListPackages(PackageSets.Instance.Many(2));
             
-            Assert.IsTrue(PackageCollection.Instance.HasFetchedPackageList());            // Make sure packages are cached
+            Assert.IsTrue(PackageCollection.Instance.LatestListPackages.Any());            // Make sure packages are cached
         }
 
         [Test]
         public void SearchPackages_UsesCache()
         {
-            var packages = PackageSets.Instance.Many(2);
             PackageCollection.Instance.SetFilter(PackageFilter.All);                                // Set filter to use search
-            Factory.SearchOperation = new MockSearchOperation(Factory, packages);
-            SetPackages(packages);
+            SetSearchPackages(PackageSets.Instance.Many(2));
             
-            Assert.IsTrue(PackageCollection.Instance.HasFetchedSearchPackages());     // Make sure packages are cached
+            Assert.IsTrue(PackageCollection.Instance.LatestSearchPackages.Any());     // Make sure packages are cached
         }
     }
 }

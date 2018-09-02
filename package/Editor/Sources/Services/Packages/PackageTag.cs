@@ -3,6 +3,8 @@
     internal enum PackageTag
     {
         preview,
-        verified
+        verified,
+        inDevelopment,
+        local
     }
 }

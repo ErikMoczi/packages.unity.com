@@ -74,13 +74,13 @@ namespace UnityEditor.PackageManager.UI
 
         private void OnPackageRemove(IRemoveOperation operation)
         {
-            operation.OnOperationError += error => Spinner.Stop();
+            operation.OnOperationError += error => StopSpinner();
             OnPackageUpdate();
         }
 
         private void OnPackageAdd(IAddOperation operation)
         {
-            operation.OnOperationError += error => Spinner.Stop();
+            operation.OnOperationError += error => StopSpinner();
             OnPackageUpdate();
         }
 
@@ -96,25 +96,36 @@ namespace UnityEditor.PackageManager.UI
             var stateClass = GetIconStateId(displayPackage);
             if (displayPackage.State == PackageState.Outdated && package.LatestUpdate == package.Current)
                 stateClass = GetIconStateId(PackageState.UpToDate);
+            if (PackageCollection.Instance.GetPackageError(package) != null)
+                stateClass = GetIconStateId(PackageState.Error);
+            if (stateClass ==  GetIconStateId(PackageState.UpToDate) && package.Current != null)
+                stateClass = "installed";
 
             StateLabel.RemoveFromClassList(currentStateClass);
             StateLabel.AddToClassList(stateClass);
 
-            if(package.Current == null && PackageCollection.Instance.Filter == PackageFilter.All)
-                PackageContainer.AddToClassList("not-installed");
-            else
-                PackageContainer.RemoveFromClassList("not-installed");
-
-            UIUtils.SetElementDisplay(VersionLabel, !PackageInfo.IsModule(package.Name));
+            UIUtils.SetElementDisplay(VersionLabel, !displayPackage.IsBuiltIn);
 
             currentStateClass = stateClass;
             if (displayPackage.State != PackageState.InProgress && Spinner.Started)
-                Spinner.Stop();
+                StopSpinner();
         }
 
         private void OnPackageUpdate()
         {
+            StartSpinner();
+        }
+
+        private void StartSpinner()
+        {
             Spinner.Start();
+            StateLabel.AddToClassList("no-icon");
+        }
+        
+        private void StopSpinner()
+        {
+            Spinner.Stop();
+            StateLabel.RemoveFromClassList("no-icon");
         }
 
         private Label NameLabel { get { return root.Q<Label>("packageName"); } }

@@ -18,13 +18,8 @@ namespace UnityEditor.PackageManager.UI
         public void WhenOperation(Action<T> callback)
         {
             if (Operation != null)
-            {
                 callback(Operation);
-            }
-            else
-            {
-                OnOperation += callback;
-            }
+            OnOperation += callback;
         }
 
         internal void ResetEvents()

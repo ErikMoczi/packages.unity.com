@@ -4,10 +4,19 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2018-05-14
+## [2.0.0] - 2018-05-31
 - Fixed dropdown to work with 2018.3 editor
 - Updated style to reflect changes in VisualElements
-- Fixed issue on built-in package enable/disable button not shown
+- Added packages serilization to avoid unnecessary refreshes
+- Enable "View Documentation" Button on built-in packages, and make it point to the url contained in the description string
+- Added persistent error icon when there are package add or remove errors
+- Filter by name, category, version and release tag
+- Show All Package by default
+- MenuDropdown for All packages/In project/Built-in
+- UI redesign
+- Remove sentence "This package is installed for..." and all other sentence regarding status of the package
+- Hide buttons for embedded, git and local packages
+- Display "No results for ""
 
 ## [1.9.9] - 2018-05-09
 - Only show user visible versions in the UI

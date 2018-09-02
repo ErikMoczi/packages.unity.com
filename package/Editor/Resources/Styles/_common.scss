@@ -108,10 +108,12 @@
 		border-left: 0;
 		border-bottom: 0;
 		border-right: 0;
+		min-width: 0;
 		@include border-box(0);
 		@include padding-box(0);
 		@include margin-box(0);
 		@include slice-box(0);
+		visibility: hidden;
 	}
 
 	&:hover {
@@ -185,8 +187,117 @@
 
 $spinner-large-size: 32;
 $spinner-large-half-size: 16;
-$spinner-normal-size: 16;
-$spinner-normal-half-size: 8;
+$spinner-normal-size: 14;
+$spinner-normal-half-size: 7;
+$toolbar-height: 18;
+
+#toolbarContainer {
+	flex: 0 0 auto;
+	flex-direction: row;
+	align-items: flex-start;
+	height: $toolbar-height;
+
+	#toolbarView {
+		flex: 1 0 0;
+		flex-direction: row;
+		align-items: flex-start;
+		background-image: $toolbar-background;
+		margin-top: -1;
+		@include slice(1, 1, 1, 1);
+
+		.toolbarButton {
+			flex: 1 0 0;
+			font-size: 9;
+			text-alignment: middle-center;
+			background-image: $toolbar-button-background;
+			@include button-box(0);
+			@include margin(0, -1, 0, 0);
+			@include padding(0, 5, 0, 5);
+			height: 19;
+
+			&.space {
+				margin-left: 7;
+			}
+
+			&.active {
+				background-image: $toolbar-button-active-background;
+			}
+
+			&.pulldown {
+
+				&:active {
+					background-image: $toolbar-button-background;
+				}
+			}
+		}
+
+		#toolbarLeft {
+			flex: 0 0 auto;
+			flex-direction: row;
+			align-items: flex-start;
+		}
+
+		#toolbarRight {
+			flex: 1 0 0;
+			flex-direction: row;
+			justify-content: flex-end;
+
+			#toolbarSearch {
+				flex: 1 0 0;
+				height: $toolbar-height;
+				max-width: 500;
+				flex-direction: row;
+				@include margin(0, 5, 0, 0);
+			}
+		}
+	}
+}
+
+#searchContainer {
+	flex: 1 0 0;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+	height: 14;
+	@include margin(0, 0, 0, 10);
+
+	#searchTextField {
+		flex: 1 0 0;
+		font-size: 9;
+		background-image: $toolbar-search-textfield-background;
+		@include margin(2, 5, 1, 5);
+		@include padding(2, 17, 1, 17);
+		@include slice(1, 0, 1, 14);
+		height: 14;
+
+		&:focus {
+			background-image: $toolbar-search-textfield-focus-background;
+		}
+
+		&.placeholder {
+			text-color: $unity-background-dark-contrast;
+		}
+	}
+
+	#searchCancelButton {
+		width: 14;
+		height: 15;
+		background-image: $toolbar-search-cancel-off-background;
+		@include button-box(0);
+		@include slice(1, 14, 1, 0);
+		@include margin(3, 0, 2, -10);
+		@include padding-box(0);
+		@include border-box(0);
+
+		&.on {
+			background-image: $toolbar-search-cancel-background;
+		}
+
+		&:active {
+			background-image: $toolbar-search-cancel-active-background;
+		}
+	}
+}
 
 #detailListView {
 	flex: 1 0 0;
@@ -206,14 +317,11 @@ $spinner-normal-half-size: 8;
 
 	.emptyArea {
 		flex: 1 0 0;
-		position-type: absolute;
-		@include position(0, 0, auto, 0);
 		@extend .column;
 
 		.title {
 			text-alignment: middle-center;
-			font-size: 18;
-			font-style: bold;
+			font-size: 14;
 		}
 
 		.loading {
@@ -249,7 +357,8 @@ $spinner-normal-half-size: 8;
 
 	#spinnerContainer {
 		position-type: absolute;
-		@include position(0, 0, auto, 0);
+		@include position(3, 0, auto, 2);
+		width: 14;
 
 		flex: 0.1 0 0;
 		flex-direction: column;
@@ -284,7 +393,7 @@ $spinner-normal-half-size: 8;
 		}
 
 		.button {
-			flex: 1; // Make buttons take all the parent's free space
+			flex: 1 0 0; // Make buttons take all the parent's free space
 
 			@include font-normal();
 			@include border-box(0);
@@ -297,7 +406,7 @@ $spinner-normal-half-size: 8;
 			border-top: 0;
 			border-right: 0;
 			border-bottom: 0;
-			background-image: resource($background-mid-button);
+			background-image: $background-mid-button;
 
 			border-top-right-radius: 0;
 			border-bottom-right-radius: 0;
@@ -305,25 +414,25 @@ $spinner-normal-half-size: 8;
 			border-bottom-left-radius: 0;
 
 			&.selected {
-				background-image: resource($background-mid-button-selected);
+				background-image: $background-mid-button-selected;
 				text-color: $unity-text-color-highlight;
 			}
 
 			&.first {
 				@include slice(4, $background-button-slice-right, 4, 6);
-				background-image: resource($background-left-button);
+				background-image: $background-left-button;
 
 				&.selected {
-					background-image: resource($background-left-button-selected);
+					background-image: $background-left-button-selected;
 				}
 			}
 
 			&.last {
 				@include slice(4, 6, 4, $background-button-slice-left);
-				background-image: resource($background-right-button);
+				background-image: $background-right-button;
 
 				&.selected {
-					background-image: resource($background-right-button-selected);
+					background-image: $background-right-button-selected;
 				}
 			}
 
@@ -339,43 +448,30 @@ $spinner-normal-half-size: 8;
 	// Package List
 	//--------------------------------------------------------------------------------------------------
 	#packageListGroup {
-		$min-filter-tabs-height: 38;
-
 		width: 270;
-
-		#tabsGroup {
-			min-height: $min-filter-tabs-height;
-			margin-bottom: 0;
-		}
 
 		#listContainerOuter {
 			@extend .column;
 		}
 
 		#groupContainerOuter {
-			@include margin(0, 0, 5, 0);
 
 			#headerContainer {
 				flex: 1 0 0;
 				flex-direction: row;
 				align-items: center;
-
-				@include margin(0, 10, 0, 10);
+				border-color: rgba(0,0,0, 0.5);
 
 				#headerTitle {
-					@include text-clip();
-					@include margin(0, 0, 0, 0);
-				}
-
-				#headerCaret {
-					@include text-clip();
-					@include margin(0, 0, 0, 0);
-					text-color: $caret-text-color;
+					height: 0;
+					@include margin-box(0);
+					@include padding-box(0);
+					@include border-box(0);
 				}
 			}
 
 			#groupContainer {
-				@include margin(0, 0, 0, 15);
+				@include margin(0, 0, 0, 0);
 			}
 		}
 
@@ -403,6 +499,12 @@ $spinner-normal-half-size: 8;
 				}
 			}
 		}
+
+		#noResult {
+			#noResultText {
+				word-wrap: true;
+			}
+		}
 	}
 
 	//--------------------------------------------------------------------------------------------------
@@ -422,42 +524,47 @@ $spinner-normal-half-size: 8;
 			#packageName, #packageVersion {
 				text-color: $unity-text-color-highlight;
 			}
-
-			&.not-installed {
-				@include selected-element();
-			}
-		}
-
-		&.not-installed {
-			background-color: $not-installed-package-background-color;
-		}
-
-		.name {
-			flex: 1 0 0;
-			@include font-normal();
-			margin-right: 5;
-			@include text-clip();
-		}
-
-		.version {
-			@include font-small;
 		}
 
 		.status {
 			flex: 0 0 14;
 			max-height: 14;
+			@include margin(auto, 0, auto, 2);
+
+			&.installed {
+				background-image: $installed-package-background;
+				&.no-icon {
+	 				background-image: none;
+				}
+			}
 
 			&.outdated {
- 				background-image: resource($background-status-outdated);
+ 				background-image: $background-status-outdated;
+				&.no-icon {
+	 				background-image: none;
+				}
 			}
 
 			&.inprogress {
- 				background-image: resource($background-status-inprogress);
+ 				background-image: none;
 			}
 
 			&.error {
- 				background-image: resource($background-status-error);
+ 				background-image: $background-status-error;
 			}
+		}
+
+		.name {
+			flex: 1 0 0;
+			@include font-normal();
+			@include margin(auto, 5, auto, 0);
+			@include text-clip();
+		}
+
+		.version {
+			flex: 0 0 auto;
+			@include margin(auto, 5, auto, 0);
+			@include font-small;
 		}
 	}
 
@@ -621,11 +728,27 @@ $spinner-normal-half-size: 8;
 				flex: 1 0 0;
 				@include font-normal();
 				word-wrap: true;
+			}
+
+			#detailCategory {
+				flex: 1 0 0;
+				@include font-normal();
+				word-wrap: true;
 
 				@include margin(auto, auto, 5, auto);
 			}
 
-			#detailActions {
+			#thirdPartyNoticeContainer {
+				margin-left: 4;
+				padding-left: 2;
+			}
+
+			#changeLogContainer, #viewLicensesContainer {
+				flex: 0 0 auto;
+				flex-direction: row;
+			}
+
+			#detailActions, .detailActions {
 				flex: 0 0 auto;
 				flex-direction: row;
 				margin-left: 2;
@@ -643,6 +766,16 @@ $spinner-normal-half-size: 8;
 					@include margin(auto, 0, auto, 0);
 					@include padding(auto, 0, auto, 0);
 					border-left: 0;
+					border-right: 0;
+				}
+
+				#thirdPartyNoticeLabel {
+					@include margin(4, 0, 4, 0);
+					@include padding-box(0);
+					word-wrap: true;
+				}
+
+				#viewThirdParty {
 					border-right: 0;
 				}
 			}
@@ -671,7 +804,8 @@ $spinner-normal-half-size: 8;
 			}
 
 			.tagLine {
-				@extend .row;
+				flex: 0 0 auto;
+				flex-direction: row;
 			}
 
 			.tagContainer {
@@ -697,24 +831,82 @@ $spinner-normal-half-size: 8;
 		}
 	}
 
-	#packagesLoading {
+	#packageStatusBar {
+		position-type: relative;
+
 		flex: 0 0 auto;
-		@include margin(2, 0, 2, 0);
+		@include margin(2, 0, 0, 0);
 
 		border-color: rgba(0, 0, 0, 0.5);
 		@include border(1, 0, 0, 0);
 	}
 
-	#loadingContainer {
+	#statusBarContainer {
 		flex-direction: row;
 		align-items: center;
-		justify-content: flex-start;
+		justify-content: space-between;
 
-		margin-left: 2;
+		#loadingContainer{
+			
+			flex-direction: row;
+			align-items: center;
+			justify-content: flex-start;
 
-		#loadingText {
-			margin-left: 0;
-			padding-left: 2;
+			margin-left: 2;
+
+			#loadingIcon {
+				background-image: $background-status-error;
+				width: 16;
+				height: 16;
+				margin-left: -12;
+				margin-right: 0;
+			}
+	
+			#loadingText {
+				margin-left: $spinner-normal-size;
+				padding-left: 2;
+	
+				&.icon {
+					margin-left: 0;
+				}
+			}
+		}
+
+		#moreAddOptionsButton {
+			font-size: 16;
+			background-image: none;
+			@include margin(0, 0, -2, 0);
+			@include padding(2, 2, 2, 2);
+			border-color: rgba(0, 0, 0, 0.5);
+			@include border(0, 1, 0, 0);
+		}
+	}
+
+	#packageAddFromUrlField {
+		position-type: absolute;
+		@include position(-35, 0, 0, 0);
+	}
+
+	#addFromUrlFieldContainer {
+		border-color: rgba(0, 0, 0, 0.5);
+		@include border(1, 0, 1, 0);
+
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+
+		height: 35;
+		background-color: $unity-background;
+
+		#urlTextField {
+			flex: 1 0 0;
+			height: 20;
+			text-alignment: middle-left;
+		}
+
+		#addFromUrlButton {
+			flex: 0 0 auto;
+			height: 20;
 		}
 	}
 }
@@ -748,7 +940,7 @@ $spinner-normal-half-size: 8;
 	min-height: $spinner-normal-size;
 	max-width: $spinner-normal-size;
 	max-height: $spinner-normal-size;
-	background-image: resource($background-spinner-normal);
+	background-image: $background-spinner-normal;
 }
 
 .largeSpinner {
@@ -759,5 +951,5 @@ $spinner-normal-half-size: 8;
 	min-height: $spinner-large-size;
 	max-width: $spinner-large-size;
 	max-height: $spinner-large-size;
-	background-image: resource($background-spinner-large);
+	background-image: $background-spinner-large;
 }

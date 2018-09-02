@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using NUnit.Framework;
-using Semver;
 
 namespace UnityEditor.PackageManager.UI.Tests
 {
@@ -28,12 +26,6 @@ namespace UnityEditor.PackageManager.UI.Tests
         public void Constructor_Instance_FilterIsLocal()
         {
             Assert.AreEqual(PackageFilter.Local, PackageCollection.Instance.Filter);
-        }
-
-        [Test]
-        public void Constructor_Instance_PackageInfosIsEmpty()
-        {
-            Assert.IsEmpty(PackageCollection.Instance.PackageInfos);
         }
 
         [Test]
@@ -114,7 +106,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         }
 
         [Test]
-        public void SetPackageInfos_PackagesChangeEventIsPropagated()
+        public void FetchListCache_PackagesChangeEventIsPropagated()
         {
             var wasCalled = false;
             OnPackagesChangeEvent = packages =>
@@ -123,56 +115,42 @@ namespace UnityEditor.PackageManager.UI.Tests
             };
 
             PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
-            PackageCollection.Instance.SetListPackageInfos(Enumerable.Empty<PackageInfo>());
+            Factory.Packages = PackageSets.Instance.Many(5);
+            PackageCollection.Instance.FetchListCache(true);
+
+            Assert.IsTrue(wasCalled);
+        }
+
+
+        [Test]
+        public void FetchListOfflineCache_PackagesChangeEventIsPropagated()
+        {
+            var wasCalled = false;
+            OnPackagesChangeEvent = packages =>
+            {
+                wasCalled = true;
+            };
+            PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
+
+            Factory.Packages = PackageSets.Instance.Many(5);
+            PackageCollection.Instance.FetchListOfflineCache(true);
+
             Assert.IsTrue(wasCalled);
         }
 
         [Test]
-        public void AddPackageInfos_PackagesChangeEventIsPropagated()
+        public void FetchSearchCache_PackagesChangeEventIsPropagated()
         {
             var wasCalled = false;
             OnPackagesChangeEvent = packages =>
             {
                 wasCalled = true;
             };
-
             PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
-            PackageCollection.Instance.SetListPackageInfos(Enumerable.Empty<PackageInfo>());
-            Assert.IsTrue(wasCalled);
-        }
 
-        [Test]
-        public void AddPackageInfo_PackagesChangeEventIsPropagated()
-        {
-            var wasCalled = false;
-            OnPackagesChangeEvent = packages =>
-            {
-                wasCalled = true;
-            };
+            Factory.SearchOperation = new MockSearchOperation(Factory, PackageSets.Instance.Many(5));
+            PackageCollection.Instance.FetchSearchCache(true);
 
-            PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
-            var info = new PackageInfo() {
-              Name = kPackageTestName,
-              Version = new SemVersion(1,0,0),
-              IsCurrent = true,
-              Group = "Test",
-              Errors = new List<Error>()
-            };
-            PackageCollection.Instance.AddPackageInfo(info);
-            Assert.IsTrue(wasCalled);
-        }
-
-        [Test]
-        public void ClearPackages_PackagesChangeEventIsPropagated()
-        {
-            var wasCalled = false;
-            OnPackagesChangeEvent = packages =>
-            {
-                wasCalled = true;
-            };
-
-            PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
-            PackageCollection.Instance.ClearPackages();
             Assert.IsTrue(wasCalled);
         }
     }

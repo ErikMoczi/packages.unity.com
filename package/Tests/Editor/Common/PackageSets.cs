@@ -9,7 +9,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         private static readonly PackageSets _instance = new PackageSets();
         public static PackageSets Instance { get { return _instance; } }
 
-        private static readonly System.Random Random = new System.Random();
+        private static readonly System.Random Random = new System.Random(1);
         private static string RandomString(int length)
         {
             const string chars = "abcdefghijklmnopqrstuvwxyz";
@@ -94,6 +94,7 @@ namespace UnityEditor.PackageManager.UI.Tests
                 IsCurrent = isCurrent,
                 IsLatest = false,
                 Origin = type,
+                Category = null,
                 Errors = new List<Error>()
             };
 
@@ -145,7 +146,7 @@ namespace UnityEditor.PackageManager.UI.Tests
                 }
             }
 
-            return packages;
+            return packages.OrderBy(p => p.DisplayName).ToList();
         }
 
         public List<PackageInfo> TestData()

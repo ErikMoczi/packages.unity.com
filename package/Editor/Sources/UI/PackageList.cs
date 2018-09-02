@@ -24,10 +24,10 @@ namespace UnityEditor.PackageManager.UI
 
         public event Action<Package> OnSelected = delegate { };
         public event Action OnLoaded = delegate { };
+        public event Action OnFocusChange = delegate { };
 
         private readonly VisualElement root;
-        private const string emptyId = "emptyArea";
-        private PackageItem selectedItem;
+        internal PackageItem selectedItem;
         private List<PackageGroup> Groups;
 
         public PackageList()
@@ -38,7 +38,8 @@ namespace UnityEditor.PackageManager.UI
             Add(root);
             root.StretchToParentSize();
 
-            root.Q<VisualElement>(emptyId).visible = false;
+            UIUtils.SetElementDisplay(Empty, false);
+            UIUtils.SetElementDisplay(NoResult, false);
 
             PackageCollection.Instance.OnPackagesChanged += SetPackages;
 
@@ -46,6 +47,68 @@ namespace UnityEditor.PackageManager.UI
             RegisterCallback<DetachFromPanelEvent>(OnLeavePanel);
 
             Reload();
+        }
+
+        public void GrabFocus()
+        {
+            if (selectedItem == null)
+                return;
+            
+            selectedItem.Focus();
+        }
+
+        public void ShowResults(PackageItem item)
+        {
+            NoResultText.text = string.Empty;
+            UIUtils.SetElementDisplay(NoResult, false);
+
+            Select(item);
+
+            EditorApplication.delayCall += ScrollIfNeeded;
+
+            UpdateGroups();
+        }
+
+        public void ShowNoResults()
+        {
+            NoResultText.text = string.Format("No results for \"{0}\"", PackageSearchFilter.Instance.SearchText);
+            UIUtils.SetElementDisplay(NoResult, true);
+            foreach (var group in Groups)
+            {
+                UIUtils.SetElementDisplay(group, false);
+            }
+            Select(null);
+            OnSelected(null);
+        }
+
+        private void UpdateGroups()
+        {
+            foreach (var group in Groups)
+            {
+                PackageItem firstPackage = null;
+                PackageItem lastPackage = null;
+
+                var listGroup = group.Query<PackageItem>().ToList();
+                foreach (var item in listGroup)
+                {
+                    if (!item.visible)
+                        continue;
+
+                    if (firstPackage == null) firstPackage = item;
+                    lastPackage = item;
+                }
+
+                if (firstPackage == null && lastPackage == null)
+                {
+                    UIUtils.SetElementDisplay(group, false);
+                }
+                else 
+                {
+                    UIUtils.SetElementDisplay(group, true);
+                    group.firstPackage = firstPackage;
+                    group.lastPackage = lastPackage;
+                }
+            }
         }
 
         private void OnEnterPanel(AttachToPanelEvent e)
@@ -60,6 +123,8 @@ namespace UnityEditor.PackageManager.UI
 
         private void ScrollIfNeeded()
         {
+            EditorApplication.delayCall -= ScrollIfNeeded;
+            
             if (selectedItem == null)
                 return;
 
@@ -72,6 +137,8 @@ namespace UnityEditor.PackageManager.UI
             if (itemMinY < minY)
             {
                 scroll.y -= minY - itemMinY;
+                if (scroll.y <= minY)
+                    scroll.y = 0;
                 List.scrollOffset = scroll;
             }
             else if (itemMaxY > maxY)
@@ -86,6 +153,13 @@ namespace UnityEditor.PackageManager.UI
             if (selectedItem == null)
                 return;
 
+            if (evt.keyCode == KeyCode.Tab)
+            {
+                OnFocusChange();
+                evt.StopPropagation();
+                return;
+            }
+            
             if (evt.keyCode == KeyCode.UpArrow)
             {
                 if (selectedItem.previousItem != null)
@@ -93,9 +167,8 @@ namespace UnityEditor.PackageManager.UI
                     Select(selectedItem.previousItem);
                     ScrollIfNeeded();
                 }
-                else if (selectedItem.packageGroup != null && selectedItem.packageGroup.previousGroup != null)
+                else if (selectedItem.packageGroup.previousGroup != null && selectedItem.packageGroup.previousGroup.visible)
                 {
-                    selectedItem.packageGroup.previousGroup.SetCollapsed(false);
                     Select(selectedItem.packageGroup.previousGroup.lastPackage);
                     ScrollIfNeeded();
                 }
@@ -110,42 +183,14 @@ namespace UnityEditor.PackageManager.UI
                     Select(selectedItem.nextItem);
                     ScrollIfNeeded();
                 }
-                else if (selectedItem.packageGroup != null && selectedItem.packageGroup.nextGroup != null)
+                else if (selectedItem.packageGroup.nextGroup != null && selectedItem.packageGroup.nextGroup.visible)
                 {
-                    selectedItem.packageGroup.nextGroup.SetCollapsed(false);
                     Select(selectedItem.packageGroup.nextGroup.firstPackage);
                     ScrollIfNeeded();
                 }
                 evt.StopPropagation();
                 return;
             }
-
-#if UNITY_2018_3_OR_NEWER
-            if (evt.keyCode == KeyCode.LeftArrow)
-            {
-                if (selectedItem.packageGroup != null)
-                {
-                    if (!selectedItem.packageGroup.Collapsed)
-                    {
-                        selectedItem.packageGroup.SetCollapsed(true);
-                        if (selectedItem.packageGroup.nextGroup != null)
-                        {
-                            selectedItem.packageGroup.nextGroup.SetCollapsed(false);
-                            Select(selectedItem.packageGroup.nextGroup.firstPackage);
-                            ScrollIfNeeded();
-                        }
-                        else if (selectedItem.packageGroup.previousGroup != null)
-                        {
-                            selectedItem.packageGroup.previousGroup.SetCollapsed(false);
-                            Select(selectedItem.packageGroup.previousGroup.lastPackage);
-                            ScrollIfNeeded();
-                        }
-                    }
-                }
-                evt.StopPropagation();
-                return;
-            }
-#endif
 
             if (evt.keyCode == KeyCode.PageUp)
             {
@@ -156,11 +201,8 @@ namespace UnityEditor.PackageManager.UI
                         Select(selectedItem.packageGroup.firstPackage);
                         ScrollIfNeeded();
                     }
-                    else if (selectedItem == selectedItem.packageGroup.firstPackage && selectedItem.packageGroup.previousGroup != null)
+                    else if (selectedItem == selectedItem.packageGroup.firstPackage && selectedItem.packageGroup.previousGroup != null && selectedItem.packageGroup.previousGroup.visible)
                     {
-                        if (selectedItem.packageGroup.previousGroup.Collapsed)
-                            selectedItem.packageGroup.previousGroup.SetCollapsed(false);
-
                         Select(selectedItem.packageGroup.previousGroup.lastPackage);
                         ScrollIfNeeded();
                     }
@@ -183,11 +225,8 @@ namespace UnityEditor.PackageManager.UI
                         Select(selectedItem.packageGroup.lastPackage);
                         ScrollIfNeeded();
                     }
-                    else if (selectedItem == selectedItem.packageGroup.lastPackage && selectedItem.packageGroup.nextGroup != null)
+                    else if (selectedItem == selectedItem.packageGroup.lastPackage && selectedItem.packageGroup.nextGroup != null && selectedItem.packageGroup.nextGroup.visible)
                     {
-                        if (selectedItem.packageGroup.nextGroup.Collapsed)
-                            selectedItem.packageGroup.nextGroup.SetCollapsed(false);
-
                         Select(selectedItem.packageGroup.nextGroup.firstPackage);
                         ScrollIfNeeded();
                     }
@@ -201,30 +240,37 @@ namespace UnityEditor.PackageManager.UI
             }
         }
 
-        private static void Reload()
+        private void Reload()
         {
             // Force a re-init to initial condition
-            PackageCollection.Instance.SetFilter(PackageFilter.Local, false);
-            PackageCollection.Instance.UpdatePackageCollection(true);
+            PackageCollection.Instance.UpdatePackageCollection();
+            SelectLastSelection();
         }
 
         private void ClearAll()
         {
             List.Clear();
             Groups.Clear();
-            ClearSelection();
 
-            root.Q<VisualElement>(emptyId).visible = false;
+            UIUtils.SetElementDisplay(Empty, false);
+            UIUtils.SetElementDisplay(NoResult, false);
         }
 
         private void SetPackages(IEnumerable<Package> packages)
         {
-            if (PackageCollection.Instance.Filter == PackageFilter.Local)
+            if (PackageCollection.Instance.Filter == PackageFilter.Modules)
             {
+                packages = packages.Where(pkg => pkg.IsBuiltIn);
+            }
+            else if (PackageCollection.Instance.Filter== PackageFilter.All)
+            {
+                packages = packages.Where(pkg => !pkg.IsBuiltIn);
+            }
+            else
+            {
+                packages = packages.Where(pkg => !pkg.IsBuiltIn);
                 packages = packages.Where(pkg => pkg.Current != null);
             }
-
-            var previousSelection = selectedItem != null ? selectedItem.package : null;
 
             OnLoaded();
             ClearAll();
@@ -232,40 +278,76 @@ namespace UnityEditor.PackageManager.UI
             var packagesGroup = new PackageGroup(PackageGroupOrigins.Packages.ToString());
             Groups.Add(packagesGroup);
             List.Add(packagesGroup);
+            packagesGroup.previousGroup = null;
 
             var builtInGroup = new PackageGroup(PackageGroupOrigins.BuiltInPackages.ToString());
             Groups.Add(builtInGroup);
             List.Add(builtInGroup);
 
-            packagesGroup.previousGroup = null;
-#if UNITY_2018_3_OR_NEWER
-            packagesGroup.nextGroup = builtInGroup;
-            builtInGroup.previousGroup = packagesGroup;
-            builtInGroup.nextGroup = null;
-#else
-            packagesGroup.nextGroup = null;
-            UIUtils.SetElementDisplay(builtInGroup, false);
-#endif
+            if ((PackageCollection.Instance.Filter & PackageFilter.Modules) == PackageFilter.Modules)
+            {
+                packagesGroup.nextGroup = builtInGroup;
+                builtInGroup.previousGroup = packagesGroup;
+                builtInGroup.nextGroup = null;
+            }
+            else
+            {
+                packagesGroup.nextGroup = null;
+                UIUtils.SetElementDisplay(builtInGroup, false);
+            }
+
+            var lastSelection = PackageCollection.Instance.SelectedPackage;
+            Select(null);
+
+            PackageItem defaultSelection = null;
 
             foreach (var package in packages.OrderBy(pkg => pkg.Versions.FirstOrDefault() == null ? pkg.Name : pkg.Versions.FirstOrDefault().DisplayName))
             {
                 var item = AddPackage(package);
 
-                if (previousSelection != null && package.Name == previousSelection.Name)
+                if (null == selectedItem && defaultSelection == null)
+                    defaultSelection = item;
+
+                if (null == selectedItem && !string.IsNullOrEmpty(lastSelection) && package.Name.Equals(lastSelection))
                     Select(item);
             }
 
-            root.Q<VisualElement>(emptyId).visible = !packages.Any();
+            if (selectedItem == null)
+                Select(defaultSelection);
+
+            PackageFiltering.FilterPackageList(this);
+        }
+
+        public void SelectLastSelection()
+        {
+            var lastSelection = PackageCollection.Instance.SelectedPackage;
+            if (lastSelection == null)
+                return;
+            
+            var list = List.Query<PackageItem>().ToList();
+            PackageItem defaultSelection = null;
+
+            foreach (var item in list)
+            {
+                if (defaultSelection == null)
+                    defaultSelection = item;
+
+                if (!string.IsNullOrEmpty(lastSelection) && item.package.Name.Equals(lastSelection))
+                {
+                    defaultSelection = item;
+                    break;
+                }
+            }
+
+            selectedItem = null;
+            Select(defaultSelection);
         }
 
         private PackageItem AddPackage(Package package)
         {
-            string groupName = package.Latest.Group;
+            var groupName = package.Latest != null ? package.Latest.Group : package.Current.Group;
             var group = GetOrCreateGroup(groupName);
             var packageItem = group.AddPackage(package);
-
-            if (selectedItem == null && !group.Collapsed)
-                Select(packageItem);
 
             packageItem.OnSelected += Select;
 
@@ -295,27 +377,32 @@ namespace UnityEditor.PackageManager.UI
             return group;
         }
 
-        private void ClearSelection()
-        {
-            Select(null);
-        }
-
         private void Select(PackageItem packageItem)
         {
             if (packageItem == selectedItem)
                 return;
 
+            var selectedPackageName = packageItem != null ? packageItem.package.Name : null;
+            PackageCollection.Instance.SelectedPackage = selectedPackageName;
+
             if (selectedItem != null)
-                selectedItem.SetSelected(false);        // Clear Previous selection
+                selectedItem.SetSelected(false); // Clear Previous selection
 
             selectedItem = packageItem;
             if (selectedItem == null)
+            {
+                OnSelected(null);
                 return;
+            }
 
             selectedItem.SetSelected(true);
+            ScrollIfNeeded();
             OnSelected(selectedItem.package);
         }
 
         private ScrollView List { get { return root.Q<ScrollView>("scrollView"); } }
+        private VisualElement Empty { get { return root.Q<VisualElement>("emptyArea"); } }
+        private VisualElement NoResult { get { return root.Q<VisualElement>("noResult"); } }
+        private Label NoResultText { get { return root.Q<Label>("noResultText"); } }
     }
 }

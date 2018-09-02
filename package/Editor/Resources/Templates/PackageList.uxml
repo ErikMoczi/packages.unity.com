@@ -11,6 +11,9 @@
             <engine:VisualElement name="emptyArea" class="list emptyArea">
                 <engine:Label class="title" text="There are no packages."/>
             </engine:VisualElement>
+            <engine:VisualElement name="noResult" class="list emptyArea">
+                <engine:Label name="noResultText" class="title"/>
+            </engine:VisualElement>
         </engine:VisualElement>
     </engine:VisualElement>
 </engine:UXML>

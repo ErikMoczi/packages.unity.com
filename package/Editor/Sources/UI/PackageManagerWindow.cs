@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
 using UnityEditor.Experimental.UIElements;
@@ -14,10 +15,16 @@ namespace UnityEditor.PackageManager.UI
 
         private const double targetVersionNumber = 2018.1;
 
+        public PackageCollection Collection;
+        public PackageSearchFilter SearchFilter;
+
 #if UNITY_2018_1_OR_NEWER
 
         public void OnEnable()
         {
+            PackageCollection.InitInstance(ref Collection);
+            PackageSearchFilter.InitInstance(ref SearchFilter);
+
             this.GetRootVisualContainer().AddStyleSheetPath(EditorGUIUtility.isProSkin ? DarkStylePath : LightStylePath);
 
             var windowResource = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath);
@@ -27,13 +34,35 @@ namespace UnityEditor.PackageManager.UI
                 this.GetRootVisualContainer().Add(template);
                 template.StretchToParentSize();
 
-                // Disable filter while fetching first results
-                if (!PackageCollection.Instance.HasFetchedPackageList())
-                    PackageSearchFilterTabs.SetEnabled(false);
-
                 PackageList.OnSelected += OnPackageSelected;
                 PackageList.OnLoaded += OnPackagesLoaded;
+                PackageList.OnFocusChange += OnListFocusChange;
+                
+                PackageManagerToolbar.SearchToolbar.OnSearchChange += OnSearchChange;
+                PackageManagerToolbar.SearchToolbar.OnFocusChange += OnToolbarFocusChange;
+
+                // Disable filter while fetching first results
+                if (!PackageCollection.Instance.LatestListPackages.Any())
+                    PackageManagerToolbar.SetEnabled(false);
+                else
+                    PackageList.SelectLastSelection();
             }
+        }
+
+        private void OnListFocusChange()
+        {
+            PackageManagerToolbar.GrabFocus();
+        }
+
+        private void OnToolbarFocusChange()
+        {
+            PackageList.GrabFocus();
+        }
+
+        private void OnSearchChange(string searchText)
+        {
+            PackageSearchFilter.Instance.SearchText = searchText;
+            PackageFiltering.FilterPackageList(PackageList);
         }
 
         public void OnDisable()
@@ -44,6 +73,18 @@ namespace UnityEditor.PackageManager.UI
                 PackageList.OnSelected -= OnPackageSelected;
                 PackageList.OnLoaded -= OnPackagesLoaded;
             }
+
+            if (PackageManagerToolbar != null)
+            {
+                PackageManagerToolbar.SearchToolbar.OnSearchChange -= OnSearchChange;
+                PackageManagerToolbar.SearchToolbar.OnFocusChange -= OnToolbarFocusChange;
+            }
+        }
+        
+        public void OnDestroy()
+        {
+            PackageSearchFilter.Instance.ResetSearch();
+            PackageCollection.Instance.SetFilter(PackageFilter.All, false);
         }
 
         private void OnPackageSelected(Package package)
@@ -53,7 +94,7 @@ namespace UnityEditor.PackageManager.UI
 
         private void OnPackagesLoaded()
         {
-            PackageSearchFilterTabs.SetEnabled(true);
+            PackageManagerToolbar.SetEnabled(true);
         }
 
         private PackageList PackageList
@@ -66,11 +107,11 @@ namespace UnityEditor.PackageManager.UI
             get {return this.GetRootVisualContainer().Q<PackageDetails>("detailsGroup");}
         }
 
-        private PackageSearchFilterTabs PackageSearchFilterTabs
+        private PackageManagerToolbar PackageManagerToolbar
         {
-            get {return this.GetRootVisualContainer().Q<PackageSearchFilterTabs>("tabsGroup");}
+            get {return this.GetRootVisualContainer().Q<PackageManagerToolbar>("toolbarContainer");}
         }
-        
+
         internal Alert ErrorBanner { get { return this.GetRootVisualContainer().Q<Alert>("errorBanner"); } }
         
 #endif

@@ -16,7 +16,7 @@ namespace UnityEditor.PackageManager.UI.Tests
                 Version = new SemVersion(1, 0, 0, tag)
             };
             
-            Assert.IsTrue(info.HasTag(tag));
+            Assert.IsTrue(info.HasVersionTag(tag));
         }
         
         [Test]
@@ -30,7 +30,7 @@ namespace UnityEditor.PackageManager.UI.Tests
                 Version = new SemVersion(1, 0, 0, tag)
             };
             
-            Assert.IsTrue(info.HasTag(tag));
+            Assert.IsTrue(info.HasVersionTag(tag));
         }
         
         [Test]

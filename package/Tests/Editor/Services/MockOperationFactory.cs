@@ -10,6 +10,11 @@ namespace UnityEditor.PackageManager.UI.Tests
         public MockSearchOperation SearchOperation { private get; set; }
         public MockRemoveOperation RemoveOperation { private get; set; }
 
+        public MockOperationFactory()
+        {
+            Packages = Enumerable.Empty<PackageInfo>();
+        }
+
         public void ResetOperations()
         {
             if (AddOperation != null) 

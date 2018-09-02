@@ -8,7 +8,7 @@ namespace UnityEditor.PackageManager.UI
         event Action OnOperationFinalized;
 
         bool IsCompleted { get; }
-        
+                
         void Cancel();
     }
 }

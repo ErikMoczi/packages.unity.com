@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System;
 using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
@@ -8,7 +8,7 @@ namespace UnityEditor.PackageManager.UI
     {
         protected override Alert DoCreate(IUxmlAttributes bag, CreationContext cc)
         {
-            return new Alert(bag.GetPropertyString("text"));
+            return new Alert();
         }
     }
 #endif
@@ -16,25 +16,7 @@ namespace UnityEditor.PackageManager.UI
     internal class Alert : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
-        internal new class UxmlFactory : UxmlFactory<Alert, UxmlTraits> { }
-
-        internal new class UxmlTraits : VisualElement.UxmlTraits
-        {
-            private UxmlStringAttributeDescription m_Text;
-
-            public UxmlTraits()
-            {
-                m_Text = new UxmlStringAttributeDescription { name="text" };
-            }
-
-            public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
-            {
-                base.Init(ve, bag, cc);
-
-                Alert alert = (Alert) ve;
-                alert.AlertMessage.text = m_Text.GetValueFromBag(bag);
-            }
-        }
+        internal new class UxmlFactory : UxmlFactory<Alert> { }
 #endif
 
         private const string TemplatePath = PackageManagerWindow.ResourcesPath + "Templates/Alert.uxml";
@@ -42,18 +24,22 @@ namespace UnityEditor.PackageManager.UI
         private const float originalPositionRight = 5.0f;
         private const float positionRightWithScroll = 12.0f;
 
-        public Alert() : this(string.Empty)
-        {
-        }
+        public Action OnCloseError;
 
-        public Alert(string text)
+        public Alert()
         {
             root = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath).CloneTree(null);
             Add(root);
             root.StretchToParentSize();
 
-            AlertMessage.text = text;
-            CloseButton.clickable.clicked += ClearError;
+            CloseButton.clickable.clicked += () =>
+            {
+                if (null != OnCloseError)
+                    OnCloseError();
+                ClearError();
+            };
+
+            visible = false;
         }
 
         public void SetError(Error error)
@@ -71,6 +57,7 @@ namespace UnityEditor.PackageManager.UI
             AddToClassList("display-none");
             AdjustSize(false);
             AlertMessage.text = "";
+            OnCloseError = null;
         }
 
         public void AdjustSize(bool verticalScrollerVisible)

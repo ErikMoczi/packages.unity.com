@@ -1,5 +1,3 @@
-using System;
-
 namespace UnityEditor.PackageManager.UI
 {
     internal class VersionItem
@@ -31,6 +29,8 @@ namespace UnityEditor.PackageManager.UI
 
                 var label = MenuName + Label;
                 
+                if (Version.IsLocal)
+                    label += " - local";
                 if (Version.IsCurrent)
                     label += " - current";
                 if (Version.IsVerified)

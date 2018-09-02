@@ -40,7 +40,7 @@
   margin-right: 0;
 }
 
-.row, #detailListView .combo, #detailListView #detailView .detail #detailActions, #detailListView #detailView .detail .versionContainer, #detailListView #detailView .detail .tagLine {
+.row, #detailListView .combo, #detailListView #detailView .detail #detailActions, #detailListView #detailView .detail .detailActions, #detailListView #detailView .detail .versionContainer {
   flex: 1 0 0;
   flex-direction: row;
 }
@@ -66,6 +66,219 @@
   text-color: #000000;
 }
 
+#toolbarContainer {
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: flex-start;
+  height: 18;
+}
+#toolbarContainer #toolbarView {
+  flex: 1 0 0;
+  flex-direction: row;
+  align-items: flex-start;
+  background-image: resource("Builtin Skins/LightSkin/Images/Toolbar.png");
+  margin-top: -1;
+  slice-top: 1;
+  slice-left: 1;
+  slice-bottom: 1;
+  slice-right: 1;
+}
+#toolbarContainer #toolbarView .toolbarButton {
+  flex: 1 0 0;
+  font-size: 9;
+  text-alignment: middle-center;
+  background-image: resource("Builtin Skins/LightSkin/Images/toolbar button.png");
+  flex: 0 0 auto;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+  slice-top: 4;
+  slice-left: 6;
+  slice-bottom: 4;
+  slice-right: 6;
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: -1;
+  padding-top: 0;
+  padding-left: 5;
+  padding-bottom: 0;
+  padding-right: 5;
+  height: 19;
+}
+#toolbarContainer #toolbarView .toolbarButton.display-none {
+  position: absolute;
+  border-radius: 0;
+  width: 0;
+  height: 0;
+  min-height: 0;
+  max-height: 0;
+  min-width: 0;
+  max-width: 0;
+  border-top: 0;
+  border-left: 0;
+  border-bottom: 0;
+  border-right: 0;
+  min-width: 0;
+  border-top-width: 0;
+  border-left-width: 0;
+  border-bottom-width: 0;
+  border-right-width: 0;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+  slice-top: 0;
+  slice-left: 0;
+  slice-bottom: 0;
+  slice-right: 0;
+  visibility: hidden;
+}
+#toolbarContainer #toolbarView .toolbarButton:hover {
+  text-color: #000000;
+}
+#toolbarContainer #toolbarView .toolbarButton.space {
+  margin-left: 7;
+}
+#toolbarContainer #toolbarView .toolbarButton.active {
+  background-image: resource("Builtin Skins/LightSkin/Images/toolbar button act.png");
+}
+#toolbarContainer #toolbarView .toolbarButton.pulldown:active {
+  background-image: resource("Builtin Skins/LightSkin/Images/toolbar button.png");
+}
+#toolbarContainer #toolbarView #toolbarLeft {
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: flex-start;
+}
+#toolbarContainer #toolbarView #toolbarRight {
+  flex: 1 0 0;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+#toolbarContainer #toolbarView #toolbarRight #toolbarSearch {
+  flex: 1 0 0;
+  height: 18;
+  max-width: 500;
+  flex-direction: row;
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: 5;
+}
+
+#searchContainer {
+  flex: 1 0 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  height: 14;
+  margin-top: 0;
+  margin-left: 10;
+  margin-bottom: 0;
+  margin-right: 0;
+}
+#searchContainer #searchTextField {
+  flex: 1 0 0;
+  font-size: 9;
+  background-image: resource("Builtin Skins/LightSkin/Images/toolbarsearch.png");
+  margin-top: 2;
+  margin-left: 5;
+  margin-bottom: 1;
+  margin-right: 5;
+  padding-top: 2;
+  padding-left: 17;
+  padding-bottom: 1;
+  padding-right: 17;
+  slice-top: 1;
+  slice-left: 14;
+  slice-bottom: 1;
+  slice-right: 0;
+  height: 14;
+}
+#searchContainer #searchTextField:focus {
+  background-image: resource("Builtin Skins/LightSkin/Images/toolbarsearch focused.png");
+}
+#searchContainer #searchTextField.placeholder {
+  text-color: #6C6C6C;
+}
+#searchContainer #searchCancelButton {
+  width: 14;
+  height: 15;
+  background-image: resource("Builtin Skins/LightSkin/Images/toolbarsearchCancelButtonOff.png");
+  flex: 0 0 auto;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+  slice-top: 4;
+  slice-left: 6;
+  slice-bottom: 4;
+  slice-right: 6;
+  slice-top: 1;
+  slice-left: 0;
+  slice-bottom: 1;
+  slice-right: 14;
+  margin-top: 3;
+  margin-left: -10;
+  margin-bottom: 2;
+  margin-right: 0;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+  border-top-width: 0;
+  border-left-width: 0;
+  border-bottom-width: 0;
+  border-right-width: 0;
+}
+#searchContainer #searchCancelButton.display-none {
+  position: absolute;
+  border-radius: 0;
+  width: 0;
+  height: 0;
+  min-height: 0;
+  max-height: 0;
+  min-width: 0;
+  max-width: 0;
+  border-top: 0;
+  border-left: 0;
+  border-bottom: 0;
+  border-right: 0;
+  min-width: 0;
+  border-top-width: 0;
+  border-left-width: 0;
+  border-bottom-width: 0;
+  border-right-width: 0;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+  slice-top: 0;
+  slice-left: 0;
+  slice-bottom: 0;
+  slice-right: 0;
+  visibility: hidden;
+}
+#searchContainer #searchCancelButton:hover {
+  text-color: #000000;
+}
+#searchContainer #searchCancelButton.on {
+  background-image: resource("Builtin Skins/LightSkin/Images/toolbarsearchCancelButton.png");
+}
+#searchContainer #searchCancelButton:active {
+  background-image: resource("Builtin Skins/LightSkin/Images/toolbarsearchCancelButtonActive.png");
+}
+
 #detailListView {
   flex: 1 0 0;
   flex-direction: row;
@@ -88,20 +301,15 @@
 }
 #detailListView .emptyArea {
   flex: 1 0 0;
-  position-type: absolute;
-  position-top: 0;
-  position-left: 0;
-  position-right: 0;
 }
 #detailListView .emptyArea .title {
   text-alignment: middle-center;
-  font-size: 18;
-  font-style: bold;
+  font-size: 14;
 }
 #detailListView .emptyArea .loading {
   position-type: relative;
-  position-top: 8;
-  position-left: 8;
+  position-top: 7;
+  position-left: 7;
   border-top-width: 0;
   border-left-width: 0;
   border-bottom-width: 0;
@@ -118,10 +326,10 @@
   slice-left: 0;
   slice-bottom: 0;
   slice-right: 0;
-  width: 16;
-  height: 16;
-  max-width: 16;
-  max-height: 16;
+  width: 14;
+  height: 14;
+  max-width: 14;
+  max-height: 14;
 }
 #detailListView #headerTitle {
   flex: 1 0 0;
@@ -138,17 +346,18 @@
 }
 #detailListView #spinnerContainer {
   position-type: absolute;
-  position-top: 0;
-  position-left: 0;
+  position-top: 3;
+  position-left: 2;
   position-right: 0;
+  width: 14;
   flex: 0.1 0 0;
   flex-direction: column;
   align-items: center;
 }
 #detailListView .loading {
   position-type: relative;
-  position-top: 8;
-  position-left: 8;
+  position-top: 7;
+  position-left: 7;
   border-top-width: 0;
   border-left-width: 0;
   border-bottom-width: 0;
@@ -165,10 +374,10 @@
   slice-left: 0;
   slice-bottom: 0;
   slice-right: 0;
-  width: 16;
-  height: 16;
-  max-width: 16;
-  max-height: 16;
+  width: 14;
+  height: 14;
+  max-width: 14;
+  max-height: 14;
 }
 #detailListView .combo {
   margin-top: 3;
@@ -193,7 +402,7 @@
   border-bottom-left-radius: 0;
 }
 #detailListView .combo .button {
-  flex: 1;
+  flex: 1 0 0;
   font-size: 12;
   border-top-width: 0;
   border-left-width: 0;
@@ -216,14 +425,14 @@
   border-top: 0;
   border-right: 0;
   border-bottom: 0;
-  background-image: resource("Images/Light/btnMid");
+  background-image: resource("Builtin Skins/LightSkin/Images/btn mid.png");
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
 #detailListView .combo .button.selected {
-  background-image: resource("Images/Light/btnMidOn");
+  background-image: resource("Builtin Skins/LightSkin/Images/btn mid on.png");
   text-color: #f4f4f4;
 }
 #detailListView .combo .button.first {
@@ -231,20 +440,20 @@
   slice-left: 6;
   slice-bottom: 4;
   slice-right: 6;
-  background-image: resource("Images/Light/btnLeft");
+  background-image: resource("Builtin Skins/LightSkin/Images/btn left.png");
 }
 #detailListView .combo .button.first.selected {
-  background-image: resource("Images/Light/btnLeftOn");
+  background-image: resource("Builtin Skins/LightSkin/Images/btn left on.png");
 }
 #detailListView .combo .button.last {
   slice-top: 4;
   slice-left: 6;
   slice-bottom: 4;
   slice-right: 6;
-  background-image: resource("Images/Light/btnRight");
+  background-image: resource("Builtin Skins/LightSkin/Images/btn right.png");
 }
 #detailListView .combo .button.last.selected {
-  background-image: resource("Images/Light/btnRightOn");
+  background-image: resource("Builtin Skins/LightSkin/Images/btn right on.png");
 }
 #detailListView .combo .button.small {
   flex: 0.5 0 0;
@@ -256,43 +465,30 @@
 #detailListView #packageListGroup {
   width: 270;
 }
-#detailListView #packageListGroup #tabsGroup {
-  min-height: 38;
-  margin-bottom: 0;
-}
-#detailListView #packageListGroup #groupContainerOuter {
-  margin-top: 0;
-  margin-left: 0;
-  margin-bottom: 5;
-  margin-right: 0;
-}
 #detailListView #packageListGroup #groupContainerOuter #headerContainer {
   flex: 1 0 0;
   flex-direction: row;
   align-items: center;
-  margin-top: 0;
-  margin-left: 10;
-  margin-bottom: 0;
-  margin-right: 10;
+  border-color: rgba(0, 0, 0, 0.5);
 }
 #detailListView #packageListGroup #groupContainerOuter #headerContainer #headerTitle {
-  overflow: hidden;
+  height: 0;
   margin-top: 0;
   margin-left: 0;
   margin-bottom: 0;
   margin-right: 0;
-}
-#detailListView #packageListGroup #groupContainerOuter #headerContainer #headerCaret {
-  overflow: hidden;
-  margin-top: 0;
-  margin-left: 0;
-  margin-bottom: 0;
-  margin-right: 0;
-  text-color: #646464;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+  border-top-width: 0;
+  border-left-width: 0;
+  border-bottom-width: 0;
+  border-right-width: 0;
 }
 #detailListView #packageListGroup #groupContainerOuter #groupContainer {
   margin-top: 0;
-  margin-left: 15;
+  margin-left: 0;
   margin-bottom: 0;
   margin-right: 0;
 }
@@ -308,6 +504,9 @@
 #detailListView #packageListGroup #scrollView #ContentViewport #ContentView {
   position-right: 0;
   position-left: 0;
+}
+#detailListView #packageListGroup #noResult #noResultText {
+  word-wrap: true;
 }
 #detailListView .package {
   flex: 1 0 0;
@@ -327,34 +526,42 @@
 #detailListView .package.selected #packageName, #detailListView .package.selected #packageVersion {
   text-color: #f4f4f4;
 }
-#detailListView .package.selected.not-installed {
-  background-color: #3e7de7;
-  text-color: #f4f4f4;
-}
-#detailListView .package.not-installed {
-  background-color: #d1d1d1;
-}
-#detailListView .package .name {
-  flex: 1 0 0;
-  font-size: 12;
-  margin-right: 5;
-  overflow: hidden;
-}
-#detailListView .package .version {
-  font-size: 9;
-}
 #detailListView .package .status {
   flex: 0 0 14;
   max-height: 14;
+  margin-left: 2;
+  margin-right: 0;
+}
+#detailListView .package .status.installed {
+  background-image: resource("Builtin Skins/LightSkin/Images/MenuItemOn.png");
+}
+#detailListView .package .status.installed.no-icon {
+  background-image: none;
 }
 #detailListView .package .status.outdated {
   background-image: resource("Images/Light/download");
 }
+#detailListView .package .status.outdated.no-icon {
+  background-image: none;
+}
 #detailListView .package .status.inprogress {
-  background-image: resource("Images/inprogress");
+  background-image: none;
 }
 #detailListView .package .status.error {
-  background-image: resource("Images/error");
+  background-image: resource("Images/Dark/error");
+}
+#detailListView .package .name {
+  flex: 1 0 0;
+  font-size: 12;
+  margin-left: 0;
+  margin-right: 5;
+  overflow: hidden;
+}
+#detailListView .package .version {
+  flex: 0 0 auto;
+  margin-left: 0;
+  margin-right: 5;
+  font-size: 9;
 }
 #detailListView #detailsGroup {
   flex: 1 0 0;
@@ -495,6 +702,7 @@
   border-left: 0;
   border-bottom: 0;
   border-right: 0;
+  min-width: 0;
   border-top-width: 0;
   border-left-width: 0;
   border-bottom-width: 0;
@@ -511,6 +719,7 @@
   slice-left: 0;
   slice-bottom: 0;
   slice-right: 0;
+  visibility: hidden;
 }
 #detailListView #detailView .detail .header .button:hover {
   text-color: #000000;
@@ -552,14 +761,27 @@
   flex: 1 0 0;
   font-size: 12;
   word-wrap: true;
+}
+#detailListView #detailView .detail #detailCategory {
+  flex: 1 0 0;
+  font-size: 12;
+  word-wrap: true;
   margin-bottom: 5;
 }
-#detailListView #detailView .detail #detailActions {
+#detailListView #detailView .detail #thirdPartyNoticeContainer {
+  margin-left: 4;
+  padding-left: 2;
+}
+#detailListView #detailView .detail #changeLogContainer, #detailListView #detailView .detail #viewLicensesContainer {
+  flex: 0 0 auto;
+  flex-direction: row;
+}
+#detailListView #detailView .detail #detailActions, #detailListView #detailView .detail .detailActions {
   flex: 0 0 auto;
   flex-direction: row;
   margin-left: 2;
 }
-#detailListView #detailView .detail #detailActions .detailAction {
+#detailListView #detailView .detail #detailActions .detailAction, #detailListView #detailView .detail .detailActions .detailAction {
   margin-left: 0;
   margin-right: 0;
   padding-left: 2;
@@ -567,12 +789,26 @@
   border-left: 2;
   border-right: 2;
 }
-#detailListView #detailView .detail #detailActions .detailActionSeparator {
+#detailListView #detailView .detail #detailActions .detailActionSeparator, #detailListView #detailView .detail .detailActions .detailActionSeparator {
   margin-left: 0;
   margin-right: 0;
   padding-left: 0;
   padding-right: 0;
   border-left: 0;
+  border-right: 0;
+}
+#detailListView #detailView .detail #detailActions #thirdPartyNoticeLabel, #detailListView #detailView .detail .detailActions #thirdPartyNoticeLabel {
+  margin-top: 4;
+  margin-left: 0;
+  margin-bottom: 4;
+  margin-right: 0;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+  word-wrap: true;
+}
+#detailListView #detailView .detail #detailActions #viewThirdParty, #detailListView #detailView .detail .detailActions #viewThirdParty {
   border-right: 0;
 }
 #detailListView #detailView .detail .versionContainer {
@@ -589,6 +825,10 @@
 #detailListView #detailView .detail .tag.verified {
   border-color: #000;
   text-color: #000;
+}
+#detailListView #detailView .detail .tagLine {
+  flex: 0 0 auto;
+  flex-direction: row;
 }
 #detailListView #detailError {
   position-type: absolute;
@@ -620,11 +860,12 @@
   margin-bottom: 0;
   margin-right: 0;
 }
-#detailListView #packagesLoading {
+#detailListView #packageStatusBar {
+  position-type: relative;
   flex: 0 0 auto;
   margin-top: 2;
   margin-left: 0;
-  margin-bottom: 2;
+  margin-bottom: 0;
   margin-right: 0;
   border-color: rgba(0, 0, 0, 0.5);
   border-top-width: 1;
@@ -632,15 +873,75 @@
   border-bottom-width: 0;
   border-right-width: 0;
 }
-#detailListView #loadingContainer {
+#detailListView #statusBarContainer {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+#detailListView #statusBarContainer #loadingContainer {
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
   margin-left: 2;
 }
-#detailListView #loadingContainer #loadingText {
-  margin-left: 0;
+#detailListView #statusBarContainer #loadingContainer #loadingIcon {
+  background-image: resource("Images/Dark/error");
+  width: 16;
+  height: 16;
+  margin-left: -12;
+  margin-right: 0;
+}
+#detailListView #statusBarContainer #loadingContainer #loadingText {
+  margin-left: 14;
   padding-left: 2;
+}
+#detailListView #statusBarContainer #loadingContainer #loadingText.icon {
+  margin-left: 0;
+}
+#detailListView #statusBarContainer #moreAddOptionsButton {
+  font-size: 16;
+  background-image: none;
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: -2;
+  margin-right: 0;
+  padding-top: 2;
+  padding-left: 2;
+  padding-bottom: 2;
+  padding-right: 2;
+  border-color: rgba(0, 0, 0, 0.5);
+  border-top-width: 0;
+  border-left-width: 1;
+  border-bottom-width: 0;
+  border-right-width: 0;
+}
+#detailListView #packageAddFromUrlField {
+  position-type: absolute;
+  position-top: -35;
+  position-left: 0;
+  position-bottom: 0;
+  position-right: 0;
+}
+#detailListView #addFromUrlFieldContainer {
+  border-color: rgba(0, 0, 0, 0.5);
+  border-top-width: 1;
+  border-left-width: 0;
+  border-bottom-width: 1;
+  border-right-width: 0;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  height: 35;
+  background-color: #c2c2c2;
+}
+#detailListView #addFromUrlFieldContainer #urlTextField {
+  flex: 1 0 0;
+  height: 20;
+  text-alignment: middle-left;
+}
+#detailListView #addFromUrlFieldContainer #addFromUrlButton {
+  flex: 0 0 auto;
+  height: 20;
 }
 
 .alert {
@@ -687,6 +988,7 @@
   border-left: 0;
   border-bottom: 0;
   border-right: 0;
+  min-width: 0;
   border-top-width: 0;
   border-left-width: 0;
   border-bottom-width: 0;
@@ -703,6 +1005,7 @@
   slice-left: 0;
   slice-bottom: 0;
   slice-right: 0;
+  visibility: hidden;
 }
 .alert #close:hover {
   text-color: #000000;
@@ -710,13 +1013,13 @@
 
 .spinner {
   flex: 0 0 auto;
-  position-top: -8;
-  position-left: -8;
-  min-width: 16;
-  min-height: 16;
-  max-width: 16;
-  max-height: 16;
-  background-image: resource("Images/Spinner/Light/loading");
+  position-top: -7;
+  position-left: -7;
+  min-width: 14;
+  min-height: 14;
+  max-width: 14;
+  max-height: 14;
+  background-image: resource("Images/Light/loading");
 }
 
 .largeSpinner {
@@ -727,5 +1030,5 @@
   min-height: 32;
   max-width: 32;
   max-height: 32;
-  background-image: resource("Images/Spinner/Light/loading");
+  background-image: resource("Images/Light/loading");
 }

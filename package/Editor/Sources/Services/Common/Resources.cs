@@ -2,10 +2,11 @@
 
 namespace UnityEditor.PackageManager.UI
 {
-    public class Resources
+    public static class Resources
     {
-        public static string TemplateRoot { get { return PackageManagerWindow.ResourcesPath + "Templates"; } }
-        public static string TemplatePath(string filename)
+        private static string TemplateRoot { get { return PackageManagerWindow.ResourcesPath + "Templates"; } }
+
+        private static string TemplatePath(string filename)
         {
             return string.Format("{0}/{1}", TemplateRoot, filename);
         }

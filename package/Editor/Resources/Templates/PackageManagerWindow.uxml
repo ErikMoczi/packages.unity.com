@@ -6,11 +6,11 @@
         xsi:schemaLocation="UnityEngine.Experimental.UIElements UIElementsSchema/UnityEngine.Experimental.UIElements.xsd
                             UnityEditor.PackageManager.UI UIElementsSchema/UnityEditor.PackageManager.UI.xsd">
     <engine:VisualElement name="container">
+        <upm:PackageManagerToolbar name="toolbarContainer"/>
         <engine:VisualElement name="detailListView">
             <engine:VisualElement name="packageListGroup">
-                <upm:PackageSearchFilterTabs name="tabsGroup" />
                 <upm:PackageList name="packageList" />
-                <upm:PackagesLoading name="packagesLoading" />
+                <upm:PackageStatusBar name="packageStatusBar" />
             </engine:VisualElement>
             <upm:PackageDetails name="detailsGroup" />
         </engine:VisualElement>

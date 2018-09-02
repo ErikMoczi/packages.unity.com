@@ -5,34 +5,35 @@ using Semver;
 
 namespace UnityEditor.PackageManager.UI
 {
+    [Serializable]
     internal class PackageInfo : IEquatable<PackageInfo>
     {
-        public static bool IsModule(string packageName)
-        {
-            return packageName.StartsWith("com.unity.modules.");
-        }
+        // Module package.json files contain a documentation url embedded in the description.
+        // We parse that to have the "View Documentation" button direct to it, instead of showing
+        // the link in the description text.
+        private const string builtinPackageDocsUrlKey = "Scripting API: ";
 
-        public string Name { get; set; }
-        public string DisplayName { get; set; }
+        public string Name;
+        public string DisplayName;
         private string _PackageId;
-        public SemVersion Version { get; set; }
-        public string Description { get; set; }
-        public string Category { get; set; }
-        public PackageState State { get; set; }
-        public bool IsCurrent { get; set; }
-        public bool IsLatest { get; set; }
-        public string Group { get; set; }
-        public PackageSource Origin { get; set; }
-        public List<Error> Errors { get; set; }
-        public bool IsVerified { get; set; }
-        public string Author { get; set; }
-        
+        public SemVersion Version;
+        public string Description;
+        public string Category;
+        public PackageState State;
+        public bool IsCurrent;
+        public bool IsLatest;
+        public string Group;
+        public PackageSource Origin;
+        public List<Error> Errors;
+        public bool IsVerified;
+        public string Author;
+
         public PackageManager.PackageInfo Info { get; set; }
         
         public string PackageId {
             get
             {
-                if (_PackageId != null) 
+                if (!string.IsNullOrEmpty(_PackageId )) 
                     return _PackageId;
                 return string.Format("{0}@{1}", Name.ToLower(), Version);
             }
@@ -46,8 +47,80 @@ namespace UnityEditor.PackageManager.UI
         public string VersionId { get { return string.Format("{0}@{1}", Name.ToLower(), Version); } }
         public string ShortVersionId { get { return string.Format("{0}@{1}", Name.ToLower(), Version.ShortVersion()); } }
 
-        public string ModuleName { get { return IsModule(Name) ? DisplayName : ""; } }
+        public string BuiltInDescription { get {
+            if (IsBuiltIn)
+                return string.Format("This built in package controls the presence of the {0} module.", DisplayName);
+            else
+                return Description.Split(new[] {builtinPackageDocsUrlKey}, StringSplitOptions.None)[0];
+        } }
 
+        // Method content must be matched in package-manager-doctools extension
+        public static string GetPackageUrlRedirect(string packageName)
+        {
+            var redirectUrl = "";
+            if (packageName == "com.unity.ads")
+                redirectUrl = "https://docs.unity3d.com/Manual/UnityAds.html";
+            else if  (packageName == "com.unity.analytics")
+                redirectUrl = "https://docs.unity3d.com/Manual/UnityAnalytics.html";
+            else if  (packageName == "com.unity.purchasing")
+                redirectUrl = "https://docs.unity3d.com/Manual/UnityIAP.html";
+            else if  (packageName == "com.unity.standardevents")
+                redirectUrl = "https://docs.unity3d.com/Manual/UnityAnalyticsCustomEvents.html";
+            else if  (packageName == "com.unity.xiaomi")
+                redirectUrl = "https://unity3d.com/cn/partners/xiaomi/guide";
+            else if (packageName == "com.unity.shadergraph")
+                redirectUrl = "https://github.com/Unity-Technologies/ShaderGraph/wiki";
+            else if (packageName == "com.unity.collab-proxy")
+                redirectUrl = "https://docs.unity3d.com/Manual/UnityCollaborate.html";
+
+            return redirectUrl;
+        }
+
+        public bool RedirectsToManual(PackageInfo packageInfo)
+        {
+            return !string.IsNullOrEmpty(GetPackageUrlRedirect(packageInfo.Name));
+        }
+
+        public bool HasThirdPartyNotices(PackageInfo packageInfo)
+        {
+            // Packages with no docs have no third party notice
+            return !RedirectsToManual(packageInfo);
+        }
+
+        public bool HasChangelog(PackageInfo packageInfo)
+        {
+            // Packages with no docs have no third party notice
+            return !RedirectsToManual(packageInfo);
+        }
+
+        public string GetDocumentationUrl()
+        {
+            if (IsBuiltIn)
+            {
+                if (!string.IsNullOrEmpty(Description))
+                {
+                    var split = Description.Split(new[] {builtinPackageDocsUrlKey}, StringSplitOptions.None);
+                    if (split.Length > 1)
+                        return split[1];
+                }
+            }
+            return string.Format("http://docs.unity3d.com/Packages/{0}/index.html", ShortVersionId);
+        }
+
+        public string GetChangelogUrl()
+        {
+            return string.Format("http://docs.unity3d.com/Packages/{0}/changelog/CHANGELOG.html", ShortVersionId);
+        }
+
+        public string GetLicensesUrl()
+        {
+            var url = string.Format("http://docs.unity3d.com/Packages/{0}/license/index.html", ShortVersionId);
+            if (RedirectsToManual(this))
+                url = "https://unity3d.com/legal/licenses/Unity_Companion_License";
+
+            return url;
+        }
+        
         public bool Equals(PackageInfo other)
         {
             if (other == null) 
@@ -63,7 +136,7 @@ namespace UnityEditor.PackageManager.UI
             return PackageId.GetHashCode();
         }
 
-        public bool HasTag(string tag)
+        public bool HasVersionTag(string tag)
         {
             if (string.IsNullOrEmpty(Version.Prerelease))
                 return false;
@@ -71,9 +144,9 @@ namespace UnityEditor.PackageManager.UI
             return String.Equals(Version.Prerelease.Split('.').First(), tag, StringComparison.CurrentCultureIgnoreCase);
         }
 
-        public bool HasTag(PackageTag tag)
+        public bool HasVersionTag(PackageTag tag)
         {
-            return HasTag(tag.ToString());
+            return HasVersionTag(tag.ToString());
         }
 
         // Is it a pre-release (alpha/beta/experimental/preview)?
@@ -83,21 +156,31 @@ namespace UnityEditor.PackageManager.UI
             get { return !string.IsNullOrEmpty(Version.Prerelease) && !IsVerified; }
         }
 
+        public bool IsPreview
+        {
+            get { return IsPreRelease && HasVersionTag(PackageTag.preview); }
+        }
+
         // A version is user visible if it has a supported tag (or no tag at all)
         public bool IsUserVisible
         {
-            get { return string.IsNullOrEmpty(Version.Prerelease) || HasTag(PackageTag.preview) || IsVerified; }
+            get { return string.IsNullOrEmpty(Version.Prerelease) || HasVersionTag(PackageTag.preview) || IsVerified; }
         }
+
+        public bool IsInDevelopment { get { return Origin == PackageSource.Embedded; } }
+        public bool IsLocal { get { return Origin == PackageSource.Local; } }
+        public bool IsBuiltIn { get { return Origin == PackageSource.BuiltIn; } }
         
         public string VersionWithoutTag { get { return Version.VersionOnly(); } }
         
         public bool IsVersionLocked
         {
-            get
-            {
-                return Origin == PackageSource.Embedded || Origin == PackageSource.Git ||
-                    Origin == PackageSource.BuiltIn || Origin == PackageSource.Local;
-            }
+            get { return Origin == PackageSource.Embedded || Origin == PackageSource.Git || Origin == PackageSource.BuiltIn; }
+        }
+
+        public bool CanBeRemoved
+        {
+            get { return Origin == PackageSource.Registry || Origin == PackageSource.BuiltIn || Origin == PackageSource.Local; }
         }
     }
 }

@@ -34,10 +34,16 @@ namespace UnityEditor.PackageManager.UI.Tests
             }
         }
 
-        protected void SetPackages(IEnumerable<PackageInfo> packages)
+        protected void SetSearchPackages(IEnumerable<PackageInfo> packages)
+        {
+            Factory.SearchOperation = new MockSearchOperation(Factory, packages);
+            PackageCollection.Instance.FetchSearchCache(true);
+        }
+
+        protected void SetListPackages(IEnumerable<PackageInfo> packages)
         {
             Factory.Packages = packages;
-            PackageCollection.Instance.UpdatePackageCollection(true);
+            PackageCollection.Instance.FetchListCache(true);
         }
 
         protected static Error MakeError(ErrorCode code, string message)

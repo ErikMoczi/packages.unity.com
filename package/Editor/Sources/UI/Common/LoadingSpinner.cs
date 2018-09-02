@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
@@ -17,15 +16,7 @@ namespace UnityEditor.PackageManager.UI
     internal class LoadingSpinner : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
-        internal new class UxmlFactory : UxmlFactory<LoadingSpinner, UxmlTraits> { }
-
-        internal new class UxmlTraits : VisualElement.UxmlTraits
-        {
-            public override IEnumerable<UxmlChildElementDescription> uxmlChildElementsDescription
-            {
-                get { yield break; }
-            }
-        }
+        internal new class UxmlFactory : UxmlFactory<LoadingSpinner> { }
 #endif
 
         public bool InvertColor { get; set; }
@@ -37,7 +28,6 @@ namespace UnityEditor.PackageManager.UI
         {
             InvertColor = false;
             Started = false;
-            clippingOptions = ClippingOptions.NoClipping;
             UIUtils.SetElementDisplay(this, false);
         }
 
@@ -59,8 +49,6 @@ namespace UnityEditor.PackageManager.UI
 
             // Weird hack to make sure loading spinner doesn't generate an error every frame.
             // Cannot put in constructor as it give really strange result.
-            if (parent != null)
-                parent.clippingOptions = ClippingOptions.NoClipping;
             if (parent != null && parent.parent != null)
                 parent.parent.clippingOptions = ClippingOptions.ClipAndCacheContents;
 

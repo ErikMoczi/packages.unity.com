@@ -12,7 +12,7 @@ namespace UnityEditor.PackageManager.UI
 
         public void GetAllPackageAsync(Action<IEnumerable<PackageInfo>> doneCallbackAction = null, Action<Error> errorCallbackAction = null)
         {
-            this._doneCallbackAction = doneCallbackAction;
+            _doneCallbackAction = doneCallbackAction;
             OnOperationError += errorCallbackAction;
             
             Start();
