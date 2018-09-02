@@ -37,33 +37,35 @@ namespace UnityEditor.Build.Tasks
 
         public static ReturnCodes Run(IBuildParameters parameters, IBuildContent content, IDependencyData dependencyData, IProgressTracker tracker = null)
         {
-            foreach (GUID asset in content.Scenes)
+            using (new SceneStateCleanup())
             {
-                string scenePath = AssetDatabase.GUIDToAssetPath(asset.ToString());
-
-                var usageTags = new BuildUsageTagSet();
-                var sceneInfo = new SceneDependencyInfo();
-
-                Hash128 hash = CalculateInputHash(parameters.UseCache, asset, parameters.GetContentBuildSettings());
-                if (TryLoadFromCache(parameters.UseCache, hash, ref sceneInfo, ref usageTags))
+                foreach (GUID asset in content.Scenes)
                 {
-                    if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", scenePath)))
+                    string scenePath = AssetDatabase.GUIDToAssetPath(asset.ToString());
+
+                    var usageTags = new BuildUsageTagSet();
+                    var sceneInfo = new SceneDependencyInfo();
+
+                    Hash128 hash = CalculateInputHash(parameters.UseCache, asset, parameters.GetContentBuildSettings());
+                    if (TryLoadFromCache(parameters.UseCache, hash, ref sceneInfo, ref usageTags))
+                    {
+                        if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", scenePath)))
+                            return ReturnCodes.Canceled;
+
+                        SetOutputInformation(asset, sceneInfo, usageTags, dependencyData);
+                        continue;
+                    }
+
+                    if (!tracker.UpdateInfoUnchecked(scenePath))
                         return ReturnCodes.Canceled;
 
+                    sceneInfo = BundleBuildInterface.PrepareScene(scenePath, parameters.GetContentBuildSettings(), usageTags, parameters.GetTempOrCacheBuildPath(hash));
                     SetOutputInformation(asset, sceneInfo, usageTags, dependencyData);
-                    continue;
+
+                    if (!TrySaveToCache(parameters.UseCache, hash, sceneInfo, usageTags))
+                        BuildLogger.LogWarning("Unable to cache SceneDependency results for asset '{0}'.", AssetDatabase.GUIDToAssetPath(asset.ToString()));
                 }
-
-                if (!tracker.UpdateInfoUnchecked(scenePath))
-                    return ReturnCodes.Canceled;
-
-                sceneInfo = BundleBuildInterface.PrepareScene(scenePath, parameters.GetContentBuildSettings(), usageTags, parameters.GetTempOrCacheBuildPath(hash));
-                SetOutputInformation(asset, sceneInfo, usageTags, dependencyData);
-
-                if (!TrySaveToCache(parameters.UseCache, hash, sceneInfo, usageTags))
-                    BuildLogger.LogWarning("Unable to cache SceneDependency results for asset '{0}'.", AssetDatabase.GUIDToAssetPath(asset.ToString()));
             }
-
             return ReturnCodes.Success;
         }
 

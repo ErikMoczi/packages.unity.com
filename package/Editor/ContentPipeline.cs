@@ -20,7 +20,7 @@ namespace UnityEditor.Build.AssetBundle
 
             using (var progressTracker = new ProgressTracker())
             {
-                using (var buildCleanup = new BuildStateCleanup(true, buildParameters.TempOutputFolder))
+                using (var buildCleanup = new BuildStateCleanup(buildParameters.TempOutputFolder))
                 {
                     var buildContext = new BuildContext(buildParameters, buildContent, result, progressTracker);
                     buildContext.SetContextObject(new PrefabPackedIdentifiers());
@@ -56,7 +56,7 @@ namespace UnityEditor.Build.AssetBundle
 
             using (var progressTracker = new ProgressTracker())
             {
-                using (var buildCleanup = new BuildStateCleanup(true, buildParameters.TempOutputFolder))
+                using (var buildCleanup = new BuildStateCleanup(buildParameters.TempOutputFolder))
                 {
                     var buildContext = new BuildContext(buildParameters, bundleContent, result, progressTracker);
                     buildContext.SetContextObject(new Unity5PackedIdentifiers());
