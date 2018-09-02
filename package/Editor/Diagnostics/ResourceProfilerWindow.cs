@@ -9,7 +9,7 @@ namespace UnityEditor.ResourceManagement.Diagnostics
      */ 
     internal class ResourceProfilerWindow : EventViewerWindow
     {
-        [MenuItem("Window/Resource Profiler", priority = 2051)]
+        [MenuItem("Window/Asset Management/Resource Profiler", priority = 2051)]
         static void ShowWindow()
         {
             var window = GetWindow<ResourceProfilerWindow>();
