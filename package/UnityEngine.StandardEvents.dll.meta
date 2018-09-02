@@ -9,9 +9,9 @@ PluginImporter:
   isOverridable: 0
   platformData:
   - first:
-      Any:
+      '': Any
     second:
-      enabled: 1
+      enabled: 0
       settings:
         Exclude N3DS: 1
         Exclude PS4: 1
@@ -20,17 +20,18 @@ PluginImporter:
         Exclude WiiU: 1
         Exclude XboxOne: 1  
   - first:
+      Any: 
+    second:
+      enabled: 1
+      settings: {}
+  - first:
       Editor: Editor
     second:
       enabled: 1
       settings:
-        DefaultValueInitialized: true
-  - first:
-      Windows Store Apps: WindowsStoreApps
-    second:
-      enabled: 0
-      settings:
         CPU: AnyCPU
+        DefaultValueInitialized: true
+        OS: AnyOS
   userData: 
   assetBundleName: 
   assetBundleVariant: 
