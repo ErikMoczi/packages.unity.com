@@ -116,7 +116,15 @@ namespace UnityEditor.AddressableAssets
                // Debug.Log("Loaded cached runtime data in " + timer.Elapsed.TotalSeconds + " secs.");
                 return true;
             }
+            bool validated = true;
+            foreach (var assetGroup in aaSettings.groups)
+            {
+                if (!assetGroup.processor.Validate(aaSettings, assetGroup))
+                    validated = false;
+            }
 
+            if (!validated)
+                return false;
 
             runtimeData = new ResourceManagerRuntimeData(isPlayerBuild ? ResourceManagerRuntimeData.EditorPlayMode.PackedMode : aaSettings.buildSettings.editorPlayMode);
             contentCatalog = new ResourceLocationList();
@@ -213,7 +221,9 @@ namespace UnityEditor.AddressableAssets
             runtimeData.settingsHash = settingsHash;
             var catalogLocations = new List<ResourceLocationData>();
             foreach (var assetGroup in aaSettings.groups)
+            {
                 assetGroup.processor.CreateCatalog(aaSettings, assetGroup, contentCatalog, catalogLocations);
+            }
             runtimeData.catalogLocations.locations.AddRange(catalogLocations.OrderBy(s => s.m_address));
 
             contentCatalog.Validate();

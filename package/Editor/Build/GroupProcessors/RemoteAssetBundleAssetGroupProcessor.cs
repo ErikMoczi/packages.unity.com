@@ -46,6 +46,24 @@ namespace UnityEditor.AddressableAssets
                 return m_loadPrefix;
             }
         }
+
+        internal override bool Validate(AddressableAssetSettings aaSettings, AddressableAssetSettings.AssetGroup assetGroup)
+        {
+            bool valid = true;
+            if (string.IsNullOrEmpty(loadPrefix.value))
+            {
+                Debug.LogWarningFormat("Asset Group '{0}' has invalid loadPrefix", assetGroup.name);
+                valid = false;
+            }
+            var bp = GetBuildPath(aaSettings);
+            if (string.IsNullOrEmpty(bp))
+            {
+                Debug.LogWarningFormat("Asset Group '{0}' has invalid buildPath", assetGroup.name);
+                valid = false;
+            }
+            return valid;
+        }
+
         public BundleMode bundleMode = BundleMode.PackTogether;
 
         internal override string displayName { get { return "Remote Packed Content"; } }
@@ -89,9 +107,11 @@ namespace UnityEditor.AddressableAssets
             return 0;
         }
 
+
         internal override void CreateCatalog(AddressableAssetSettings aaSettings, AddressableAssetSettings.AssetGroup group, ResourceLocationList contentCatalog, List<ResourceLocationData> locations)
         {
-            var buildPath = GetBuildPath(aaSettings) + aaSettings.profileSettings.Evaluate(aaSettings.activeProfile, "/catalog_[ContentVersion].json");
+            var bp = GetBuildPath(aaSettings);
+            var buildPath = Path.Combine(bp, aaSettings.profileSettings.Evaluate(aaSettings.activeProfile, "catalog_[ContentVersion].json"));
             var remoteHashLoadPath = m_loadPrefix.Evaluate(aaSettings.profileSettings, aaSettings.activeProfile) + "/catalog_{ContentVersion}.hash";
             var localCacheLoadPath = "{UnityEngine.Application.persistentDataPath}/catalog_{ContentVersion}.hash";
 
