@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -62,7 +62,7 @@ namespace ResourceManagement.Samples
                 }
             }
 
-            //IResourceLocator interface 
+            //IResourceLocator interface
             public IResourceLocation Locate(string address)
             {
                 IResourceLocation<string> loc = null;
@@ -117,12 +117,12 @@ namespace ResourceManagement.Samples
                     ResourceManagement.ResourceProviders.Simulation.VirtualAssetBundleManager.AddProviders();
                     break;
                 case ProviderMode.AssetBundles:
-                    {
-                        ResourceManager.resourceProviders.Insert(0, new CachedProvider(new BundledAssetProvider()));
-                        ResourceManager.resourceProviders.Insert(0, new CachedProvider(new LocalAssetBundleProvider()));
-                        ResourceManager.resourceProviders.Insert(0, new CachedProvider(new RemoteAssetBundleProvider()));
-                    }
-                    break;
+                {
+                    ResourceManager.resourceProviders.Insert(0, new CachedProvider(new BundledAssetProvider()));
+                    ResourceManager.resourceProviders.Insert(0, new CachedProvider(new LocalAssetBundleProvider()));
+                    ResourceManager.resourceProviders.Insert(0, new CachedProvider(new RemoteAssetBundleProvider()));
+                }
+                break;
             }
             EditorDiagnostics.EventCollector.profileEvents = profileEvents;
         }
@@ -135,7 +135,7 @@ namespace ResourceManagement.Samples
                 Directory.CreateDirectory(Path.GetDirectoryName(PlayerLocation));
             File.WriteAllText(PlayerLocation, data);
         }
-#endif
 
+#endif
     }
 }

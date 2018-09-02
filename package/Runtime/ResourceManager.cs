@@ -169,9 +169,8 @@ namespace ResourceManagement
         /// <typeparam name="TAddress">The address type</typeparam>
         public static IResourceLocation GetResourceLocation<TAddress>(TAddress address)
         {
-            var loc = address as IResourceLocation;
-            if (loc != null)
-                return loc;
+            if (address is IResourceLocation)
+                return address as IResourceLocation;
             for (int i = 0; i < resourceLocators.Count; i++)
             {
                 var locator = resourceLocators[i] as IResourceLocator<TAddress>;
@@ -299,14 +298,14 @@ namespace ResourceManagement
         /// <typeparam name="TAddress">Address type.</typeparam>
         public static IAsyncOperation<IList<object>> PreloadDependenciesAllAsync<TAddress>(ICollection<TAddress> addresses, Action<IAsyncOperation<object>> callback)
         {
-            List<IResourceLocation> dependancyLocations = new List<IResourceLocation>();
+            List<IResourceLocation> dependencyLocations = new List<IResourceLocation>();
             foreach (TAddress adr in addresses)
             {
                 IResourceLocation loc = GetResourceLocation(adr);
-                dependancyLocations.AddRange(loc.dependencies);
+                dependencyLocations.AddRange(loc.dependencies);
             }
-                
-            return StartInternalAsyncOp(dependancyLocations, (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, LoadAsync_Internal<object>, callback); });
+
+            return StartInternalAsyncOp(dependencyLocations, (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, LoadAsync_Internal<object>, callback); });
         }
 
         /// <summary>

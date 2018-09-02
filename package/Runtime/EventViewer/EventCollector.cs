@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking.PlayerConnection;
 
 namespace EditorDiagnostics
 {
+    [Serializable]
     public struct DiagnosticEvent
     {
         public string m_graph;  //id of graph definition to use
@@ -13,7 +14,7 @@ namespace EditorDiagnostics
         public int m_stream;    //data stream
         public int m_frame;     //frame of the event
         public int m_value;      //data value of event
-        public object m_data;   //this must be serializable 
+        public object m_data;   //this must be serializable
 
         public DiagnosticEvent(string graph, string parent, string id, int stream, int frame, int val, object data)
         {
@@ -47,10 +48,9 @@ namespace EditorDiagnostics
                 evt = (DiagnosticEvent)formatter.Deserialize(ms);
                 ms.Close();
             }
-            catch (Exception) { }
+            catch (Exception) {}
             return evt;
         }
-
     }
 
     public class EventCollector : MonoBehaviour
@@ -60,7 +60,13 @@ namespace EditorDiagnostics
         static Action<DiagnosticEvent> eventHandlers;
         static public bool profileEvents = false;
         static bool initialized = false;
-       
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        public static void SendFirstFrameEvent()
+        {
+            PostEvent(new DiagnosticEvent("EventCount", "", "Events", 0, 0, 0, null));
+        }
+
         public static void Initialize()
         {
             if (profileEvents)
@@ -110,7 +116,7 @@ namespace EditorDiagnostics
             else
                 unhandledEvents.Add(e);
 
-            if(e.m_id != "EventCount")
+            if (e.m_id != "EventCount")
                 CountFrameEvent(e.m_frame);
         }
 
@@ -123,7 +129,7 @@ namespace EditorDiagnostics
             DontDestroyOnLoad(gameObject);
             InvokeRepeating("SendEventCounts", 0, .25f);
         }
-        
+
         void SendEventCounts()
         {
             int latestFrame = Time.frameCount;
@@ -138,6 +144,5 @@ namespace EditorDiagnostics
             m_startFrame = latestFrame;
             m_frameEventCounts.Clear();
         }
-        
     }
 }

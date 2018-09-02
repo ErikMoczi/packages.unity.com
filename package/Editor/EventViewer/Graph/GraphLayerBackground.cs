@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEditor;
 namespace EditorDiagnostics
 {
@@ -7,7 +7,7 @@ namespace EditorDiagnostics
         Color m_bgColor;
         int m_visibilityStream;
         public GraphLayerBackgroundGraph(int stream, int visStream, string name, string desc, Color bgColor, Color fgColor) : base(stream, name, desc, fgColor) { m_bgColor = bgColor; m_visibilityStream = visStream; }
-        public override void Draw(EventDataCollection.PlayerSession.DataSet e, Rect r, int startFrame, int frameCount, int inspectFrame, bool expanded)
+        public override void Draw(EventDataCollection.PlayerSession.DataSet e, Rect r, int startFrame, int frameCount, int inspectFrame, bool expanded, Material mat, int maxValue)
         {
             var endTime = startFrame + frameCount;
             int nextFrame = endTime;

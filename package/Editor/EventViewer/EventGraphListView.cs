@@ -10,23 +10,27 @@ namespace EditorDiagnostics
     {
         class DataStreamEntry : TreeViewItem
         {
+            public GUIContent m_content;
             public EventDataCollection.PlayerSession.DataSet m_entry;
             public DataStreamEntry(EventDataCollection.PlayerSession.DataSet e, int depth) : base(e.name.GetHashCode(), depth)
             {
                 m_entry = e;
                 displayName = e.name;
+                m_content = new GUIContent(displayName);
             }
         }
         Dictionary<int, bool> maximizedState = new Dictionary<int, bool>();
+        Func<string, bool> filterFunc;
         EventDataCollection.PlayerSession m_data;
         float textHeight;
         int m_inspectFrame = -1;
         public int visibleStartTime = 0;
         public int visibleDuration = 300;
-        public EventGraphListView(EventDataCollection.PlayerSession data, TreeViewState tvs, MultiColumnHeaderState mchs) : base(tvs, new MultiColumnHeader(mchs))
+        public EventGraphListView(EventDataCollection.PlayerSession data, TreeViewState tvs, MultiColumnHeaderState mchs, Func<string, bool> filter) : base(tvs, new MultiColumnHeader(mchs))
         {
             showBorder = true;
             m_data = data;
+            filterFunc = filter;
             textHeight = EditorStyles.label.CalcHeight(GUIContent.none, 1000);
             columnIndexForTreeFoldouts = 1;
         }
@@ -44,9 +48,12 @@ namespace EditorDiagnostics
 
             foreach (var e in root.m_entry.m_children)
             {
-                var item = new DataStreamEntry(e.Value, root.depth + 1);
-                root.AddChild(item);
-                AddItems(item);
+                if (filterFunc(e.Value.graph))
+                {
+                    var item = new DataStreamEntry(e.Value, root.depth + 1);
+                    root.AddChild(item);
+                    AddItems(item);
+                }
             }
             return root;
         }
@@ -96,6 +103,9 @@ namespace EditorDiagnostics
                 CellGUI(args.GetCellRect(i), args.item as DataStreamEntry, args.GetColumn(i), ref args);
         }
 
+        GUIContent plus = new GUIContent("+", "Expand");
+        GUIContent minus = new GUIContent("-", "Collapse");
+
         private void CellGUI(Rect cellRect, DataStreamEntry item, int column, ref RowGUIArgs args)
         {
             switch (column)
@@ -103,7 +113,7 @@ namespace EditorDiagnostics
                 case 0:
                 {
                     var maximized = IsItemMaximized(item.id);
-                    if (GUI.Button(cellRect, maximized ? "-" : "+", EditorStyles.toolbarButton))
+                    if (GUI.Button(cellRect, maximized ? minus : plus, EditorStyles.toolbarButton))
                     {
                         if (!IsSelected(item.id))
                         {
@@ -121,7 +131,7 @@ namespace EditorDiagnostics
                 case 1:
                 {
                     cellRect.xMin += (GetContentIndent(item) + extraSpaceBeforeIconAndLabel);
-                    EditorGUI.LabelField(cellRect, item.m_entry.name);
+                    EditorGUI.LabelField(cellRect, item.m_content);
                 }
                 break;
                 case 2:
@@ -136,21 +146,35 @@ namespace EditorDiagnostics
             base.DoubleClickedItem(id);
         }
 
-        public void DefineGraph(string name, params IGraphLayer[] layers)
+        public void DefineGraph(string name, int maxValueStream, params IGraphLayer[] layers)
         {
-            graphDefs.Add(name, new GraphDefinition(layers));
+            graphDefs.Add(name, new GraphDefinition(maxValueStream, layers));
         }
 
- 
+        Material material;
         Dictionary<string, GraphDefinition> graphDefs = new Dictionary<string, GraphDefinition>();
         void DrawGraph(EventDataCollection.PlayerSession.DataSet e, Rect r, int startTime, int dur, bool drawLabels, float textHeight, bool expanded)
         {
+            if (Event.current.type != EventType.Repaint)
+                return;
+
             r = new Rect(r.x + 1, r.y + 1, r.width - 2, r.height - 2);
             GraphDefinition gd = null;
             if (!graphDefs.TryGetValue(e.graph, out gd))
                 return;
+
+            if (material == null)
+            {
+				// best material options are "Unlit/Color" or "UI/Default". 
+				//  Unlit/Color is more efficient, but does not support alpha
+				//  UI/Default does support alpha
+                material = new Material(Shader.Find("Unlit/Color"));
+            }
+
+            int maxValue = gd.GetMaxValue(e);
+
             foreach (var l in gd.layers)
-                l.Draw(e, r, startTime, dur, m_inspectFrame, expanded);
+                l.Draw(e, r, startTime, dur, m_inspectFrame, expanded, material, maxValue);
         }
 
         public static MultiColumnHeaderState CreateDefaultMultiColumnHeaderState()

@@ -1,10 +1,9 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace EditorDiagnostics
 {
     public static class GraphUtility
     {
-
         public static float ValueToPixel(float val, float min, float max, float pixels)
         {
             return Mathf.Clamp01((val - min) / (max - min)) * pixels;
@@ -19,6 +18,5 @@ namespace EditorDiagnostics
         {
             return Mathf.Clamp01((pixel - xMin) / (xMax - xMin)) * valueRange;
         }
-
     }
 }

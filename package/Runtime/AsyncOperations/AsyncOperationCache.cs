@@ -34,7 +34,7 @@ namespace ResourceManagement.AsyncOperations
                 if (!(obj is CacheKey))
                     return false;
 
-                var test = (CacheKey) obj;
+                var test = (CacheKey)obj;
 
                 return (test.opType == opType && test.objType == objType);
             }

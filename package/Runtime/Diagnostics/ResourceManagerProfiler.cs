@@ -4,6 +4,7 @@ namespace ResourceManagement.Diagnostics
 {
     public static class ResourceManagerProfiler
     {
+        public static string EventCategory = "ResourceManagerEvent";
         public static void PostEvent(ResourceManagerEvent.Type type, IResourceLocation loc, int val)
         {
             var parent = "";
@@ -22,7 +23,7 @@ namespace ResourceManagement.Diagnostics
                 data = dataList;
             }
             EditorDiagnostics.EventCollector.PostEvent(
-                new EditorDiagnostics.DiagnosticEvent("ResourceManagerEvent", parent, id, (int)type, UnityEngine.Time.frameCount, val, data));
+                new EditorDiagnostics.DiagnosticEvent(EventCategory, parent, id, (int)type, UnityEngine.Time.frameCount, val, data));
         }
     }
 }

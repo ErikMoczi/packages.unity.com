@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 namespace EditorDiagnostics
 {
     public class GraphLayerBase : IGraphLayer
@@ -22,7 +22,7 @@ namespace EditorDiagnostics
 
         public string description { get { return m_description; } }
 
-        public virtual void Draw(EventDataCollection.PlayerSession.DataSet e, Rect r, int startFrame, int frameCount, int inspectFrame, bool expanded)
+        public virtual void Draw(EventDataCollection.PlayerSession.DataSet e, Rect r, int startFrame, int frameCount, int inspectFrame, bool expanded, Material mat, int maxValue)
         {
         }
     }

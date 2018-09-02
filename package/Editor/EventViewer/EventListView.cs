@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 using UnityEditor.IMGUI.Controls;
+using System;
 
 namespace EditorDiagnostics
 {
@@ -16,11 +16,15 @@ namespace EditorDiagnostics
             }
         }
         List<DiagnosticEvent> events;
-        public System.Action<Rect, DiagnosticEvent, int> onColumnGUI;
+        Action<Rect, DiagnosticEvent, int> onColumnGUI;
+        Func<DiagnosticEvent, bool> onFilterEvent;
+
         public DiagnosticEvent selectedEvent;
 
-        public EventListView(TreeViewState tvs, MultiColumnHeaderState mchs) : base(tvs, new MultiColumnHeader(mchs))
+        public EventListView(TreeViewState tvs, MultiColumnHeaderState mchs, Action<Rect, DiagnosticEvent, int> onColumn, Func<DiagnosticEvent, bool> filter) : base(tvs, new MultiColumnHeader(mchs))
         {
+            onColumnGUI = onColumn;
+            onFilterEvent = filter;
             showBorder = true;
             showAlternatingRowBackgrounds = true;
         }
@@ -51,7 +55,10 @@ namespace EditorDiagnostics
             if (events != null)
             {
                 foreach (var e in events)
-                    root.AddChild(new EventTreeViewItem(e));
+                {
+                    if (onFilterEvent(e))
+                        root.AddChild(new EventTreeViewItem(e));
+                }
             }
             return root;
         }
@@ -84,7 +91,7 @@ namespace EditorDiagnostics
             var columns = new List<MultiColumnHeaderState.Column>();
             if (dataColumns.Count != sizes.Count)
                 throw new System.Exception("Column name and size lists are not the same size");
-            for(int i = 0; i < dataColumns.Count; i++)
+            for (int i = 0; i < dataColumns.Count; i++)
                 AddColumn(columns, dataColumns[i], dataColumns[i], sizes[i]);
             return new MultiColumnHeaderState(columns.ToArray());
         }
@@ -101,6 +108,5 @@ namespace EditorDiagnostics
             col.autoResize = false;
             columns.Add(col);
         }
-
     }
 }

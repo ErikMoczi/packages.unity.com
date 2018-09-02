@@ -1,33 +1,84 @@
 ﻿
 using UnityEngine;
 using UnityEditor;
+using System.Collections.Generic;
+
 namespace EditorDiagnostics
 {
-    public class GraphLayerBarChart : GraphLayerBase
+    public class GraphLayerBarChartMesh : GraphLayerBase
     {
-        public GraphLayerBarChart(int stream, string name, string desc, Color color) : base(stream, name, desc, color) { }
-        public override void Draw(EventDataCollection.PlayerSession.DataSet e, Rect r, int startFrame, int frameCount, int inspectFrame, bool expanded)
+        Mesh mesh;
+        List<Vector3> verts = new List<Vector3>();
+        List<int> indices = new List<int>();
+        List<Color32> colors = new List<Color32>();
+
+        Rect bounds;
+        Vector2 gridSize;
+        
+        public GraphLayerBarChartMesh(int stream, string name, string desc, Color color) : base(stream, name, desc, color) { }
+        private void AddQuadToMesh(float left, float right, float bot, float top)
         {
-            var endTime = startFrame + frameCount;
-            int nextFrame = endTime;
+            float xLeft = bounds.xMin + left * gridSize.x;
+            float xRight = bounds.xMin + right * gridSize.x;
+            float yBot = bounds.yMax - bot * gridSize.y;
+            float yTop = bounds.yMax - top * gridSize.y;
+
+            int start = verts.Count;
+            verts.Add(new Vector3(xLeft, yBot, 0));
+            verts.Add(new Vector3(xLeft, yTop, 0));
+            verts.Add(new Vector3(xRight, yTop, 0));
+            verts.Add(new Vector3(xRight, yBot, 0));
+
+            indices.Add(start);
+            indices.Add(start + 1);
+            indices.Add(start + 2);
+
+            indices.Add(start);
+            indices.Add(start + 2);
+            indices.Add(start + 3);
+        }
+
+        public override void Draw(EventDataCollection.PlayerSession.DataSet e, Rect r, int startFrame, int frameCount, int inspectFrame, bool expanded, Material mat, int maxValue)
+        {
             var stream = e.GetStream(m_stream);
-            if (stream != null)
+            if (stream != null && stream.samples.Count > 0)
             {
-                int refCountMaxDisplayVal = Mathf.Max(10, (stream.maxValue / 10 + 1) * 10);
-                for (int i = stream.samples.Count - 1; i >= 0 && nextFrame > startFrame; --i)
+                mat.color = m_color;
+
+                if (mesh == null)
+                    mesh = new Mesh();
+                verts.Clear();
+                indices.Clear();
+                colors.Clear();
+                var endTime = startFrame + frameCount;
+
+                bounds = new Rect(r);
+                gridSize.x = bounds.width / (float)frameCount;
+                gridSize.y = bounds.height / maxValue;
+
+                int previousFrameNumber = endTime;
+                int currentFrame = endTime;
+                
+                for (int i = stream.samples.Count - 1; i >= 0 && currentFrame > startFrame; --i)
                 {
+                    currentFrame = stream.samples[i].frame;
+                    var frame = Mathf.Max(currentFrame, startFrame);
                     if (stream.samples[i].value > 0)
                     {
-                        var frame = Mathf.Max(stream.samples[i].frame, startFrame);
-                        var x = r.xMin + GraphUtility.ValueToPixel(frame, startFrame, endTime, r.width);
-                        var w = (r.xMin + GraphUtility.ValueToPixel(nextFrame, startFrame, endTime, r.width)) - x;
-                        float pixelVal = GraphUtility.ValueToPixel(stream.samples[i].value, 0, refCountMaxDisplayVal, r.height);
-                        EditorGUI.DrawRect(new Rect(x, r.yMax - pixelVal, w, pixelVal), m_color);
+                        AddQuadToMesh(frame - startFrame, previousFrameNumber - startFrame, 0, stream.samples[i].value);
                     }
-                    nextFrame = stream.samples[i].frame;
+                    previousFrameNumber = frame;
+                }
+               
+                if (verts.Count > 0)
+                {
+                    mesh.Clear(true);
+                    mesh.SetVertices(verts);
+                    mesh.triangles = indices.ToArray();
+                    mat.SetPass(0);
+                    Graphics.DrawMeshNow(mesh, Vector3.zero, Quaternion.identity);
                 }
             }
         }
     }
-
 }

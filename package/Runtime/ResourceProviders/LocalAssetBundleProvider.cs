@@ -1,10 +1,9 @@
 using System;
 using UnityEngine;
 using System.Collections.Generic;
-using Object = UnityEngine.Object;
 using ResourceManagement.AsyncOperations;
-using ResourceManagement.Diagnostics;
 using ResourceManagement.Util;
+using System.IO;
 
 namespace ResourceManagement.ResourceProviders
 {
@@ -17,7 +16,7 @@ namespace ResourceManagement.ResourceProviders
             {
                 loadDependencyOperation.completed += (obj) =>
                     {
-                        AssetBundle.LoadFromFileAsync(Config.ExpandPathWithGlobalVars(loc.id)).completed += OnComplete;
+                        AssetBundle.LoadFromFileAsync(Path.Combine("file://", Config.ExpandPathWithGlobalVars(loc.id))).completed += OnComplete;
                     };
 
                 return base.Start(loc, loadDependencyOperation);

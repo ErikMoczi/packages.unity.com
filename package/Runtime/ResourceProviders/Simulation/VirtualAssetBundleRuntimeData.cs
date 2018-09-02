@@ -54,7 +54,12 @@ namespace ResourceManagement.ResourceProviders.Simulation
         public static void Cleanup()
         {
             if (File.Exists(PlayerLocation))
+            {
                 File.Delete(PlayerLocation);
+                var metaFile = PlayerLocation + ".meta";
+                if (File.Exists(metaFile))
+                    System.IO.File.Delete(metaFile);
+            }
         }
 
         public void Save()

@@ -9,14 +9,17 @@ namespace ResourceManagement.ResourceProviders
 {
     public class SceneProvider : ISceneProvider
     {
-        public class InternalOp : AsyncOperationBase<Scene>
+        class InternalOp : AsyncOperationBase<Scene>
         {
             IResourceLocation m_location;
 
-            public InternalOp(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation, LoadSceneMode loadMode) : base(loc.id)
+            public InternalOp() : base(""){}
+
+            public IAsyncOperation<Scene> Start(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation, LoadSceneMode loadMode)
             {
                 m_location = loc;
                 loadDependencyOperation.completed += (obj) => SceneManager.LoadSceneAsync(m_location.id, loadMode).completed += OnSceneLoaded;
+                return this;
             }
 
             void OnSceneLoaded(AsyncOperation op)
@@ -38,33 +41,38 @@ namespace ResourceManagement.ResourceProviders
 
         public IAsyncOperation<Scene> ProvideSceneAsync(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation, LoadSceneMode loadMode)
         {
-            return new InternalOp(loc, loadDependencyOperation, loadMode);
+            var r = AsyncOperationCache.Instance.Acquire<InternalOp, Scene>();
+            return r.Start(loc, loadDependencyOperation, loadMode);
         }
 
-        public class InternalReleaseOp : AsyncOperationBase<Scene>
+        class InternalReleaseOp : AsyncOperationBase<Scene>
         {
-            IResourceLocation location;
+            IResourceLocation m_location;
 
-            public InternalReleaseOp(IResourceLocation loc) : base(loc.id)
+            public InternalReleaseOp() : base("") {}
+
+            public IAsyncOperation<Scene> Start(IResourceLocation loc)
             {
-                location = loc;
+                m_location = loc;
                 m_result = SceneManager.GetSceneByPath(loc.id);
 
                 if (m_result.isLoaded)
                 {
-                    ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.ReleaseSceneAsyncRequest, location, 0);
+                    ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.ReleaseSceneAsyncRequest, m_location, 0);
                     SceneManager.UnloadSceneAsync(loc.id).completed += OnSceneUnloaded;
                 }
                 else
                 {
                     Debug.LogWarning("Tried to unload a scene that was not loaded:" + loc.id);
                 }
+
+                return this;
             }
 
             void OnSceneUnloaded(AsyncOperation op)
             {
-                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.ReleaseSceneAsyncCompletion, location, 0);
-                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.CacheEntryLoadPercent, location, 0);
+                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.ReleaseSceneAsyncCompletion, m_location, 0);
+                ResourceManagerProfiler.PostEvent(ResourceManagerEvent.Type.CacheEntryLoadPercent, m_location, 0);
             }
 
             public override bool isDone
@@ -84,11 +92,8 @@ namespace ResourceManagement.ResourceProviders
 
         public IAsyncOperation<Scene> ReleaseSceneAsync(IResourceLocation loc)
         {
-            return new InternalReleaseOp(loc);
-        }
-
-        public void ReleaseAll()
-        {
+            var r = AsyncOperationCache.Instance.Acquire<InternalReleaseOp, Scene>();
+            return r.Start(loc);
         }
     }
 }

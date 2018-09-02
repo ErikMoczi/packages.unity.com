@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace EditorDiagnostics
 {
@@ -7,6 +7,6 @@ namespace EditorDiagnostics
         string name { get; }
         string description { get; }
         Color color { get; }
-        void Draw(EventDataCollection.PlayerSession.DataSet e, Rect r, int startFrame, int frameCount, int inspectFrame, bool expanded);
+        void Draw(EventDataCollection.PlayerSession.DataSet e, Rect r, int startFrame, int frameCount, int inspectFrame, bool expanded, Material mat, int maxValue);
     }
 }

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEditor;
 using System;
 using UnityEditor.IMGUI.Controls;
@@ -38,9 +38,11 @@ namespace EditorDiagnostics
 
         private void OnEnable()
         {
+            lastEventListUpdate = 0;
             eventData = new EventDataCollection();
             eventData.AddSession("Editor", m_playerSessionIndex = 0);
             eventData.onEvent += OnEventProcessed;
+            eventData.onRecordEvent += OnRecordEvent;
             EditorConnection.instance.Initialize();
             EditorConnection.instance.Register(EventCollector.eventGUID, OnPlayerConnectionMessage);
             EditorConnection.instance.RegisterConnection(OnPlayerConnection);
@@ -90,25 +92,25 @@ namespace EditorDiagnostics
             if (!m_record)
                 return;
             var evt = DiagnosticEvent.Deserialize(args.data);
-
-            if(CanHandleEvent(evt))
-                eventData.ProcessEvent(evt, args.playerId);
+            eventData.ProcessEvent(evt, args.playerId);
         }
 
-        protected virtual bool CanHandleEvent(DiagnosticEvent e)
+        protected virtual bool CanHandleEvent(string graph)
         {
-            if(e.m_graph == "EventCount")
+            if (graph == "EventCount")
                 return true;
-            return OnCanHandleEvent(e);
+            return OnCanHandleEvent(graph);
         }
 
-        protected virtual bool OnCanHandleEvent(DiagnosticEvent e) { return true; }
+        protected virtual bool OnCanHandleEvent(string graph) { return true; }
 
         private void OnEditorPlayModeChanged(PlayModeStateChange state)
         {
             if (state == PlayModeStateChange.EnteredPlayMode)
             {
-                m_inspectFrame = activeSession.latestFrame;
+                lastEventListUpdate = 0;
+                m_inspectFrame = -1;
+                latestFrame = -1;
                 m_playerSessionIndex = 0;
                 RegisterEventHandler(true);
             }
@@ -118,9 +120,19 @@ namespace EditorDiagnostics
             }
         }
 
-        void OnEventProcessed(EventDataCollection.PlayerSession session, DiagnosticEvent evt, bool entryCreated, int prevLastFrame)
+        protected virtual bool OnRecordEvent(DiagnosticEvent evt)
         {
-            bool moveInspectFrame = m_inspectFrame == prevLastFrame;
+            return false;
+        }
+
+        int latestFrame = 0;
+        void OnEventProcessed(EventDataCollection.PlayerSession session, DiagnosticEvent evt, bool entryCreated)
+        {
+            if (!CanHandleEvent(evt.m_graph))
+                return;
+
+            bool moveInspectFrame = latestFrame < 0 || m_inspectFrame == latestFrame;
+            latestFrame = evt.m_frame;
             if (entryCreated)
             {
                 if (m_graphList != null)
@@ -128,7 +140,7 @@ namespace EditorDiagnostics
             }
 
             if (moveInspectFrame)
-                m_inspectFrame = session.latestFrame;
+                m_inspectFrame = latestFrame;
 
             if (evt.m_id == "Events")
             {
@@ -148,36 +160,45 @@ namespace EditorDiagnostics
 
             var r = EditorGUILayout.GetControlRect();
             Rect contentRect = new Rect(r.x, r.y, r.width, position.height - (r.y + r.x));
-            Rect top, bot;
-            bool resizingVer = verticalSplitter.OnGUI(contentRect, out top, out bot);
-
-            var graphRect = m_graphList.GetGraphRect();
-
-            ProcessInspectFrame(graphRect);
-
-            m_graphList.OnGUI(top, m_inspectFrame);
-
-            DrawInspectFrame(graphRect);
-
-            bool resizingHor = false;
-            if (showEventDetailPanel)
+            if (showEventPanel)
             {
-                Rect left, right;
-                resizingHor = horizontalSplitter.OnGUI(bot, out left, out right);
-                m_eventList.OnGUI(left);
-                OnEventDetailGUI(right, m_eventList.selectedEvent);
+                Rect top, bot;
+                bool resizingVer = verticalSplitter.OnGUI(contentRect, out top, out bot);
+
+                var graphRect = m_graphList.GetGraphRect();
+
+                ProcessInspectFrame(graphRect);
+
+                m_graphList.OnGUI(top, m_inspectFrame);
+
+                DrawInspectFrame(graphRect);
+
+                bool resizingHor = false;
+                if (showEventDetailPanel)
+                {
+                    Rect left, right;
+                    resizingHor = horizontalSplitter.OnGUI(bot, out left, out right);
+                    m_eventList.OnGUI(left);
+                    OnEventDetailGUI(right, m_eventList.selectedEvent);
+                }
+                else
+                {
+                    m_eventList.OnGUI(bot);
+                }
+                if (resizingVer || resizingHor)
+                    Repaint();
             }
             else
             {
-                m_eventList.OnGUI(bot);
-
+                var graphRect = m_graphList.GetGraphRect();
+                ProcessInspectFrame(graphRect);
+                m_graphList.OnGUI(contentRect, m_inspectFrame);
+                DrawInspectFrame(graphRect);
             }
-
-            if (resizingVer || resizingHor)
-                Repaint();
         }
 
         protected virtual bool showEventDetailPanel { get { return false; } }
+        protected virtual bool showEventPanel { get { return false; } }
 
         protected virtual void OnEventDetailGUI(Rect right, DiagnosticEvent selectedEvent)
         {
@@ -195,16 +216,22 @@ namespace EditorDiagnostics
                 if (EditorApplication.isPlaying)
                     EditorApplication.isPaused = true;
                 draggingInspectLine = true;
+                m_eventList.SetEvents(null);
             }
             if (draggingInspectLine && (Event.current.type == EventType.MouseDrag || Event.current.type == EventType.Repaint))
                 m_inspectFrame = m_graphList.visibleStartTime + (int)GraphUtility.PixelToValue(Event.current.mousePosition.x, graphRect.xMin, graphRect.xMax, m_graphList.visibleDuration);
             if (Event.current.type == EventType.MouseUp)
+            {
                 draggingInspectLine = false;
+                m_eventList.SetEvents(activeSession.GetFrameEvents(m_inspectFrame));
+                lastEventListUpdate = Time.unscaledTime;
+                m_eventListFrame = m_inspectFrame;
+            }
         }
 
         private void DrawInspectFrame(Rect graphPanelRect)
         {
-            if (m_inspectFrame != activeSession.latestFrame)
+            if (m_inspectFrame != latestFrame)
             {
                 var ix = graphPanelRect.xMin + GraphUtility.ValueToPixel(m_inspectFrame, m_graphList.visibleStartTime, m_graphList.visibleStartTime + m_graphList.visibleDuration, graphPanelRect.width);
                 EditorGUI.DrawRect(new Rect(ix - 1, graphPanelRect.yMin, 3, graphPanelRect.height), Color.white * .8f);
@@ -225,18 +252,18 @@ namespace EditorDiagnostics
                 session.Save();
 
             GUILayout.FlexibleSpace();
-            GUILayout.Label(m_inspectFrame == session.latestFrame ? "Frame:     " : "Frame: " + m_inspectFrame + "/" + session.latestFrame, EditorStyles.miniLabel);
+            GUILayout.Label(m_inspectFrame == latestFrame ? "Frame:     " : "Frame: " + m_inspectFrame + "/" + latestFrame, EditorStyles.miniLabel);
 
             using (new EditorGUI.DisabledScope(m_inspectFrame <= 0))
                 if (GUILayout.Button(prevFrameIcon, EditorStyles.toolbarButton))
                     m_inspectFrame--;
 
-            using (new EditorGUI.DisabledScope(m_inspectFrame >= session.latestFrame))
+            using (new EditorGUI.DisabledScope(m_inspectFrame >= latestFrame))
                 if (GUILayout.Button(nextFrameIcon, EditorStyles.toolbarButton))
                     m_inspectFrame++;
 
             if (GUILayout.Button("Current", EditorStyles.toolbarButton, GUILayout.ExpandWidth(false)))
-                m_inspectFrame = session.latestFrame;
+                m_inspectFrame = latestFrame;
             GUILayout.EndHorizontal();
         }
 
@@ -277,7 +304,7 @@ namespace EditorDiagnostics
                     MultiColumnHeaderState.OverwriteSerializedFields(m_graphListMCHS, headerState);
 
                 m_graphListMCHS = headerState;
-                m_graphList = new EventGraphListView(activeSession, m_graphListTreeViewState, m_graphListMCHS);
+                m_graphList = new EventGraphListView(activeSession, m_graphListTreeViewState, m_graphListMCHS, CanHandleEvent);
                 InitializeGraphView(m_graphList);
                 m_graphList.Reload();
             }
@@ -295,27 +322,28 @@ namespace EditorDiagnostics
                     MultiColumnHeaderState.OverwriteSerializedFields(m_eventListMCHS, headerState);
 
                 m_eventListMCHS = headerState;
-                m_eventList = new EventListView(m_eventListTreeViewState, m_eventListMCHS);
-                m_eventList.onColumnGUI += ColumnCellGUI;
+                m_eventList = new EventListView(m_eventListTreeViewState, m_eventListMCHS, ColumnCellGUI, OnRecordEvent);
                 m_eventList.Reload();
             }
-            if (m_eventListFrame != m_inspectFrame)
+
+            if (m_eventListFrame != m_inspectFrame && m_inspectFrame != latestFrame && !draggingInspectLine && Time.unscaledTime - lastEventListUpdate > .25f)
             {
                 m_eventList.SetEvents(activeSession.GetFrameEvents(m_inspectFrame));
+                lastEventListUpdate = Time.unscaledTime;
                 m_eventListFrame = m_inspectFrame;
             }
         }
 
+        float lastEventListUpdate = 0;
+
         void InitializeGraphView(EventGraphListView gv)
         {
-            gv.DefineGraph("EventCount",
-                new GraphLayerBarChart(0, "Events", "Event count per frame", Color.green));
-
+            gv.DefineGraph("EventCount", 0, new GraphLayerVertValueLine(0, "Events", "Event count per frame", Color.green));
+            //gv.DefineGraph("EventCount", 0, new GraphLayerVertValueLineRects(0, "Events", "Event count per frame", Color.green));
             OnInitializeGraphView(gv);
         }
 
-        virtual protected void OnInitializeGraphView(EventGraphListView gv) { }
-
+        virtual protected void OnInitializeGraphView(EventGraphListView gv) {}
     }
     [Serializable]
     class VerticalSplitter
@@ -404,5 +432,4 @@ namespace EditorDiagnostics
             return resizing;
         }
     }
-
 }

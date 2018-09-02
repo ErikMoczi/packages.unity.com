@@ -6,14 +6,14 @@ using ResourceManagement.AsyncOperations;
 public class ResourceLocationLoadOperation<TAddress> : AsyncOperationBase<IResourceLocation>
 {
     IList<IResourceLocator> m_resourceLocators;
-    IList<IAsyncOperation<IResourceLocator>> m_locatorLoadOps;
+    List<IAsyncOperation<IResourceLocator>> m_locatorLoadOps;
     Func<TAddress, IResourceLocation> m_getLocationFunc;
     TAddress m_address;
     int m_depLoadCount;
 
     public ResourceLocationLoadOperation() : base("") {}
 
-    public ResourceLocationLoadOperation<TAddress> Start(TAddress address, IList<IAsyncOperation<IResourceLocator>> locatorLoadOperations, IList<IResourceLocator> locators, Func<TAddress, IResourceLocation> getLocationFunc)
+    public ResourceLocationLoadOperation<TAddress> Start(TAddress address, List<IAsyncOperation<IResourceLocator>> locatorLoadOperations, IList<IResourceLocator> locators, Func<TAddress, IResourceLocation> getLocationFunc)
     {
         m_address = address;
         m_resourceLocators = locators;
@@ -23,7 +23,7 @@ public class ResourceLocationLoadOperation<TAddress> : AsyncOperationBase<IResou
 
         if (m_depLoadCount > 0)
         {
-            foreach (var op in locatorLoadOperations)
+            foreach (var op in locatorLoadOperations.ToArray())
                 op.completed += OnLocatorLoadComplete;
         }
         else

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,7 +20,7 @@ namespace EditorDiagnostics
             public int frameCount = 300;
 
             Dictionary<int, List<DiagnosticEvent>> m_frameEvents = new Dictionary<int, List<DiagnosticEvent>>();
-            public PlayerSession() { }
+            public PlayerSession() {}
             public PlayerSession(string n, int i)
             {
                 m_name = n;
@@ -58,12 +58,12 @@ namespace EditorDiagnostics
                 return null;
             }
 
-            internal void AddSample(DiagnosticEvent evt, ref bool entryCreated)
+            internal void AddSample(DiagnosticEvent evt, bool recordEvent, ref bool entryCreated)
             {
                 latestFrame = evt.m_frame;
                 startFrame = latestFrame - frameCount;
 
-                if (evt.m_id != "Events")
+                if (recordEvent)
                 {
                     List<DiagnosticEvent> frameEvents = null;
                     if (!m_frameEvents.TryGetValue(evt.m_frame, out frameEvents))
@@ -117,7 +117,7 @@ namespace EditorDiagnostics
                 public string graph;
                 public Dictionary<string, DataSet> m_children = null;
                 public bool hasChildren { get { return m_children != null && m_children.Count > 0; } }
-                public DataSet() { }
+                public DataSet() {}
                 public DataSet(string n, string g)
                 {
                     name = n;
@@ -160,12 +160,14 @@ namespace EditorDiagnostics
                         return 0;
                     return stream.GetValue(frame);
                 }
+
                 internal DataStream GetStream(int s)
                 {
                     if (s >= m_streams.Count)
                         return null;
                     return m_streams[s];
                 }
+
                 internal int GetStreamMaxValue(int s)
                 {
                     var stream = GetStream(s);
@@ -184,7 +186,15 @@ namespace EditorDiagnostics
         }
 
         List<PlayerSession> m_playerSessions = new List<PlayerSession>();
-        public Action<PlayerSession, DiagnosticEvent, bool, int> onEvent;
+        public Action<PlayerSession, DiagnosticEvent, bool> onEvent;
+        public Func<DiagnosticEvent, bool> onRecordEvent;
+
+        bool RecordEvent(DiagnosticEvent e)
+        {
+            if (onRecordEvent != null)
+                return onRecordEvent(e);
+            return false;
+        }
 
         public EventDataCollection()
         {
@@ -194,9 +204,8 @@ namespace EditorDiagnostics
         {
             var session = GetPlayerSession(sessionId, true);
             bool entryCreated = false;
-            int prevLatestFrame = session.latestFrame;
-            session.AddSample(evt, ref entryCreated);
-            onEvent(session, evt, entryCreated, prevLatestFrame);
+            session.AddSample(evt, RecordEvent(evt), ref entryCreated);
+            onEvent(session, evt, entryCreated);
         }
 
         public PlayerSession GetSessionByIndex(int index)
@@ -233,6 +242,5 @@ namespace EditorDiagnostics
         {
             m_playerSessions.Add(new PlayerSession(name, id));
         }
-
     }
 }

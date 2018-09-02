@@ -1,9 +1,9 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine.Networking;
 using UnityEngine;
 using ResourceManagement.AsyncOperations;
-using ResourceManagement.Diagnostics;
+using ResourceManagement.Util;
+using System.IO;
 
 namespace ResourceManagement.ResourceProviders
 {
@@ -14,7 +14,7 @@ namespace ResourceManagement.ResourceProviders
         {
             public override InternalProviderOperation<TObject> Start(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
-                loadDependencyOperation.completed += (obj) => UnityWebRequest.GetAssetBundle(loc.id).SendWebRequest().completed += OnComplete;
+                loadDependencyOperation.completed += (obj) => UnityWebRequest.GetAssetBundle(Path.Combine("file://", Config.ExpandPathWithGlobalVars(loc.id))).SendWebRequest().completed += OnComplete;
                 return base.Start(loc, loadDependencyOperation);
             }
 

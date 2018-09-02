@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEditor;
 
 namespace ResourceManagement.Samples
@@ -6,6 +6,7 @@ namespace ResourceManagement.Samples
     //simple helper GUI to configure ResourceManager build data
     public class ResourceManagerSettings : EditorWindow
     {
+/*      //put similar code in your project to use this window
         [MenuItem("Window/ResourceManager Build Settings", priority = 2060)]
         static void ShowWindow()
         {
@@ -13,7 +14,7 @@ namespace ResourceManagement.Samples
             window.titleContent = new GUIContent("RM Settings");
             window.Show();
         }
-
+*/
         private void OnGUI()
         {
             var tpath = EditorPrefs.GetString("RMTargetFolder", "Assets/Prefabs");
@@ -47,6 +48,5 @@ namespace ResourceManagement.Samples
             if (lpath != lnewPath)
                 EditorPrefs.SetString("RMBundleLoadPrefix", lnewPath);
         }
-
     }
 }

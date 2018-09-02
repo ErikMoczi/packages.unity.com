@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEditor;
 using System.IO;
 using UnityEngine;
@@ -56,9 +56,9 @@ namespace ResourceManagement.Samples
                     //for this mode just create locations for the AssetDatabase
                     var path = p.Replace('\\', '/');
                     runtimeData.locationData.Add(new ResourceManagerRuntimeData.ResourceLocationData(
-                        Path.GetFileNameWithoutExtension(path),
-                        AssetDatabase.AssetPathToGUID(path),
-                        path, typeof(AssetDatabaseProvider).FullName, null));
+                            Path.GetFileNameWithoutExtension(path),
+                            AssetDatabase.AssetPathToGUID(path),
+                            path, typeof(AssetDatabaseProvider).FullName, null));
                 }
             }
             else
@@ -74,11 +74,11 @@ namespace ResourceManagement.Samples
                     string bundleName = (name + ".bundle").ToLower();
                     assetBundleBuilds.Add(new AssetBundleBuild() { assetBundleName = bundleName, assetNames = new string[] { path } });
                     runtimeData.locationData.Add(new ResourceManagerRuntimeData.ResourceLocationData(
-                        name, AssetDatabase.AssetPathToGUID(path), path, typeof(BundledAssetProvider).FullName, new string[] { bundleName }));
+                            name, AssetDatabase.AssetPathToGUID(path), path, typeof(BundledAssetProvider).FullName, new string[] { bundleName }));
                     if (runtimeData.resourceProviderMode == ResourceManagerRuntimeData.ProviderMode.VirtualBundles)
                     {   //if simulating bundles, go ahead and create locations for bundles since they won't actually be created
                         runtimeData.locationData.Add(new ResourceManagerRuntimeData.ResourceLocationData(
-                            bundleName, "", bundleLoadPrefix + bundleName, typeof(LocalAssetBundleProvider).FullName, new string[] { }));
+                                bundleName, "", bundleLoadPrefix + bundleName, typeof(LocalAssetBundleProvider).FullName, new string[] {}));
                     }
                 }
                 if (runtimeData.resourceProviderMode == ResourceManagerRuntimeData.ProviderMode.AssetBundles)
@@ -86,7 +86,7 @@ namespace ResourceManagement.Samples
                     var manifest = BuildPipeline.BuildAssetBundles(bundleBuildPath, assetBundleBuilds.ToArray(), BuildAssetBundleOptions.UncompressedAssetBundle, target);
                     foreach (var bundleName in manifest.GetAllAssetBundles())
                         runtimeData.locationData.Add(new ResourceManagerRuntimeData.ResourceLocationData(
-                            bundleName, "", bundleLoadPrefix + bundleName, typeof(LocalAssetBundleProvider).FullName, manifest.GetAllDependencies(bundleName)));
+                                bundleName, "", bundleLoadPrefix + bundleName, typeof(LocalAssetBundleProvider).FullName, manifest.GetAllDependencies(bundleName)));
                 }
             }
 
@@ -106,7 +106,6 @@ namespace ResourceManagement.Samples
                 CreateVirtualBundleData(runtimeData);
 
             runtimeData.Save();
-
         }
 
         private static void CreateVirtualBundleData(ResourceManagerRuntimeData runtimeData)
@@ -140,8 +139,7 @@ namespace ResourceManagement.Samples
             virtualBundleData.Save();
         }
 
-
-        //this class is used to save and restore the EditorBuildSettings scene list when entering and existing play mode, 
+        //this class is used to save and restore the EditorBuildSettings scene list when entering and existing play mode,
         //since the build script may modify it when running in Fast or Virtual mode
         [Serializable]
         public class SceneManagerState
@@ -153,7 +151,7 @@ namespace ResourceManagement.Samples
                 public string guid;
                 [SerializeField]
                 public bool enabled;
-                public EBSSceneState() { }
+                public EBSSceneState() {}
                 public EBSSceneState(EditorBuildSettingsScene s) { guid = s.guid.ToString(); enabled = s.enabled; }
                 public EditorBuildSettingsScene GetBuildSettingsScene() { return new EditorBuildSettingsScene(new GUID(guid), enabled); }
             }
@@ -195,7 +193,6 @@ namespace ResourceManagement.Samples
                 {
                 }
             }
-
         }
     }
 }
