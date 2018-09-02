@@ -1,3 +1,19 @@
+# ProBuilder 3.0.0-b.6
+
+## Changes from 3.0.0-b5
+
+- Fix upgrade from asset store sometimes not popping up, or continuously popping up dialog.
+
+# ProBuilder 3.0.0-b.5
+
+## Changes from 3.0.0-b4
+
+- Update asset id remap file.
+- Fix line endings in menu generator and menu items file.
+- Verify that assets are text serialized prior to guid r.emap.
+- Replace TGA textures with PNG versions.
+- Remove pdf manual.
+
 # ProBuilder 3.0.0-b.4
 
 ## Changes from 3.0.0-b3
