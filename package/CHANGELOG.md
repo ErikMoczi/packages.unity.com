@@ -3,6 +3,13 @@ This is the release of the TextMesh Pro UPM package. This release is the equival
 
 See the following link for the Release Notes for version 1.0.56.xx.0b2 of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [1.0.27] - 2018-01-16
+### Fix
+- Fixed an issue where setting the TMP_InputField.text property to null would result in an error.
+- Fixed issue with Raycast Target state not getting serialized properly when saving / reloading a scene.
+- Changed reference to PrefabUtility.GetPrefabParent() to PrefabUtility.GetCorrespondingObjectFromSource() to reflect public API change in 2018.2
+- Option to import package essential resources will only be presented to users when accessing a TMP component or the TMP Settings file via the project menu.
+
 ## [1.0.26] - 2018-01-10
 ### Added
 - Removed Tizen player references in the TMP_InputField as the Tizen player is no longer supported as of Unity 2018.1.
