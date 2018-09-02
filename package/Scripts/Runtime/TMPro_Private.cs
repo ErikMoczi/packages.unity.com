@@ -365,6 +365,7 @@ namespace TMPro
                 m_isInputParsingRequired = true;
 
                 m_padding = GetPaddingForMaterial();
+                ComputeMarginSize();
                 SetVerticesDirty();
             }
         }
@@ -1415,7 +1416,7 @@ namespace TMPro
         /// <summary>
         /// Update the margin width and height
         /// </summary>
-        protected override void ComputeMarginSize()
+        public override void ComputeMarginSize()
         {
             if (this.rectTransform != null)
             {
@@ -2399,9 +2400,6 @@ namespace TMPro
                         m_lastVisibleCharacterOfLine = m_characterCount;
                         m_textInfo.lineInfo[m_lineNumber].spaceCount += 1;
                         m_textInfo.spaceCount += 1;
-
-                        if (charCode == 0xA0)
-                            m_textInfo.lineInfo[m_lineNumber].controlCharacterCount += 1;
                     }
                     else
                     {
@@ -2441,6 +2439,8 @@ namespace TMPro
                     {
                         m_textInfo.lineInfo[m_lineNumber].spaceCount += 1;
                         m_textInfo.spaceCount += 1;
+
+                        if (charCode == 0xA0) m_textInfo.lineInfo[m_lineNumber].controlCharacterCount = +1;
                     }
                 }
                 #endregion Handle Visible Characters

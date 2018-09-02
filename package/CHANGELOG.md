@@ -1,10 +1,9 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
-## [1.2.4] - 2018-06-10
+## [1.3.0] - 2018-05-30
 ### Changes
-- Fixed a minor issue when using Justified and Flush alignment in conjunction with \u00A0.
-- The Font Asset creationSettings field is no longer an Editor only serialized field.
+- Revamped UI to conform to Unity Human Interface Guidelines.
 
 ## [1.2.3] - 2018-05-29
 ### Changes
@@ -21,7 +20,7 @@ These are the release notes for the TextMesh Pro UPM package which was first int
 - Renamed a symbol used for internal debugging to avoid potential conflicts with other user project defines.
 - TMP Sprite Importer "Create Sprite Asset" and "Save Sprite Asset" options are disabled unless a Sprite Data Source, Import Format and Sprite Texture Atlas are provided.
 - Improved the performance of the Project Files GUID Remapping tool.
-- Users will now be prompted to import the TMP Essential Resources when using the Font Asset Creator if such resources have not already been imported. 
+- Users will now be prompted to import the TMP Essential Resources when using the Font Asset Creator if such resources have not already been imported.
 
 ## [1.2.2] - 2018-03-28
 ### Changes
