@@ -18,7 +18,7 @@ namespace UnityEditor.PackageManager.UI
     {
         internal static PackageTag[] SupportedTags()
         {
-            return new PackageTag[] {PackageTag.alpha, PackageTag.beta, PackageTag.experimental};
+            return new PackageTag[] { PackageTag.preview };
         }
 
         private readonly VisualElement root;
@@ -127,11 +127,15 @@ namespace UnityEditor.PackageManager.UI
                 root.Q<Label>("detailTitle").text = displayPackage.DisplayName;
                 DetailVersion.text = "Version " + displayPackage.VersionWithoutTag;
 
-                if (displayPackage.HasTag(PackageTag.alpha) || displayPackage.HasTag(PackageTag.beta) ||
-                    displayPackage.HasTag(PackageTag.experimental))
-                    UIUtils.SetElementDisplay(GetTag(PackageTag.recommended), false);
+                if (displayPackage.HasTag(PackageTag.preview))
+                    UIUtils.SetElementDisplay(GetTag(PackageTag.verified), false);
                 else
-                    UIUtils.SetElementDisplay(GetTag(PackageTag.recommended), displayPackage.IsRecommended);
+                {
+                    var unityVersionParts = Application.unityVersion.Split('.');
+                    var unityVersion = string.Format("{0}.{1}", unityVersionParts[0], unityVersionParts[1]);
+                    VerifyLabel.text = unityVersion + " Verified";
+                    UIUtils.SetElementDisplay(GetTag(PackageTag.verified), displayPackage.IsVerified);
+                }
 
                 foreach (var tag in SupportedTags())
                     UIUtils.SetElementDisplay(GetTag(tag), displayPackage.HasTag(tag));
@@ -437,9 +441,9 @@ namespace UnityEditor.PackageManager.UI
         private ScrollView DetailView { get { return root.Q<ScrollView>("detailView"); } }
         private Label DetailPackageStatus { get { return root.Q<Label>("detailPackageStatus"); } }
         private Label DetailModuleReference { get { return root.Q<Label>("detailModuleReference"); } }
-        private Label DetailVersion { get { return root.Q<Label>("detailVersion");  }}
-        private Label DetailAuthor { get { return root.Q<Label>("detailAuthor");  }}
-        private VisualElement VersionContainer { get { return root.Q<Label>("versionContainer");  }}
+        private Label DetailVersion { get { return root.Q<Label>("detailVersion"); } }
+        private Label DetailAuthor { get { return root.Q<Label>("detailAuthor"); } }
+        internal Label VerifyLabel { get { return root.Q<Label>("tagVerify"); } }
         internal VisualElement GetTag(PackageTag tag) {return root.Q<VisualElement>("tag-" + tag.ToString()); } 
     }
 }

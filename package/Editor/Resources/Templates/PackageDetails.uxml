@@ -12,20 +12,12 @@
                 </ui:VisualElement>
                 <ui:VisualElement class="versionContainer">
                     <ui:Label name="detailVersion"/>
-                     <ui:VisualElement name="tag-alpha" class="tagLine display-none">
-                        <ui:Label name="tag" class="tag" text="alpha"/>
+                    <ui:VisualElement name="tag-preview" class="tagLine display-none">
+                        <ui:Label name="tag" class="tag" text="Preview"/>
                     </ui:VisualElement>
 
-                    <ui:VisualElement name="tag-beta" class="tagLine display-none">
-                        <ui:Label name="tag" class="tag" text="beta"/>
-                    </ui:VisualElement>
-
-                    <ui:VisualElement name="tag-experimental" class="tagLine display-none">
-                        <ui:Label name="tag" class="tag" text="experimental"/>
-                    </ui:VisualElement>
-
-                    <ui:VisualElement name="tag-recommended" class="tagLine display-none">
-                        <ui:Label name="tag" class="tag recommended" text="recommended"/>
+                    <ui:VisualElement name="tag-verified" class="tagLine display-none">
+                        <ui:Label name="tagVerify" class="tag verified" text="Verified"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
 

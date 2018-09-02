@@ -587,7 +587,7 @@
   border-color: #d25a00;
   text-color: #d25a00;
 }
-#detailListView #detailView .detail .tag.recommended {
+#detailListView #detailView .detail .tag.verified {
   border-color: #000;
   text-color: #000;
 }

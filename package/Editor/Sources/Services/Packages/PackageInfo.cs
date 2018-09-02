@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Semver;
 using UnityEngine;
 using UnityEngine.UI;
@@ -39,7 +40,7 @@ namespace UnityEditor.PackageManager.UI
         [SerializeField] 
         public List<Error> Errors;
         [SerializeField] 
-        public bool IsRecommended;
+        public bool IsVerified;
         [SerializeField] 
         public string Author;
         
@@ -79,7 +80,10 @@ namespace UnityEditor.PackageManager.UI
 
         public bool HasTag(string tag)
         {
-            return String.Equals(Version.Prerelease, tag, StringComparison.CurrentCultureIgnoreCase);
+            if (string.IsNullOrEmpty(Version.Prerelease))
+                return false;
+
+            return String.Equals(Version.Prerelease.Split('.').First(), tag, StringComparison.CurrentCultureIgnoreCase);
         }
 
         public bool HasTag(PackageTag tag)

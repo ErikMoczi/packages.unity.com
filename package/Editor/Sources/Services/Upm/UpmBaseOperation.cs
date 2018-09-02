@@ -83,7 +83,7 @@ namespace UnityEditor.PackageManager.UI
                     Category = info.category,
                     IsCurrent = isVersionCurrent,
                     IsLatest = version == lastCompatible,
-                    IsRecommended = version == info.versions.recommended,
+                    IsVerified = version == info.versions.recommended,
                     Errors = info.errors.ToList(),
                     Group = GroupName(origin),
                     State = state,
