@@ -4,7 +4,7 @@
 
 <img src="Images/window.png">
 
-Use the package manager to manage which packages are available in your project.
+Use the package manager UI to manage which packages are available in your project.
 
 #### What is a package?
 
@@ -58,6 +58,8 @@ These are the built-in packages that are bundled with the editor and that affect
 
 The "recommended" tag next to the version in the package details indicates that this package
 is officially tested and approved by Unity.
+
+<img src="Images/tags.png">
 
 Others tags like "alpha", "beta" and "experimental" are used as a mechanism to give the ability to users to test a package's features before it has been fully documented and validated by either the development team or Unity's Quality Assurance team.
 
@@ -127,6 +129,7 @@ The following table provides an alphabetical list of the important files and fol
 
 |Date|Reason|
 |---|---|
+|Jan 29, 2018|Document updated. Matches package version 1.6.0.|
 |Jan 18, 2018|Document updated. Matches package version 1.5.1.|
 |Jan 17, 2018|Document updated. Matches package version 1.5.0.|
 |Jan 12, 2018|Document updated. Matches package version 1.4.0.|

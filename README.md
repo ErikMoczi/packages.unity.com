@@ -8,6 +8,9 @@ The "In Project" and "Install" filters allow you to show different lists of pack
 ▪ Install: Lists all discoverable packages and all previously downloaded packages. If a package is already installed in your project, it will show with a differently colored background.
 
 What's new:
+▪ Make window dockable.
+▪ UI style rework.
+▪ Keyboard navigation.
 ▪ Replace VisualContainer by VisualElement in code and templates.
 ▪ Move "Project->Packages->Manage" menu item to "Window->Package Manager"
 ▪ Show the latest version and description in tab "Install" instead of the current version

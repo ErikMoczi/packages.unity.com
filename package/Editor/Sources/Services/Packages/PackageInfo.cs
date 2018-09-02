@@ -35,7 +35,7 @@ namespace UnityEditor.PackageManager.UI
         [SerializeField]
         public string Group;
         [SerializeField] 
-        public OriginType OriginType;
+        public PackageOrigin Origin;
         [SerializeField] 
         public List<Error> Errors;
         [SerializeField] 

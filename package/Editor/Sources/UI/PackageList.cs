@@ -21,14 +21,14 @@ namespace UnityEditor.PackageManager.UI
 
         private readonly VisualElement root;
         private const string emptyId = "emptyArea";
-        private const string loadingId = "loadingArea";
-        private Package selected;
+        private const string loadingId = "loadingAreaContainer";
+        private const string loadingSpinnerId = "loadingSpinnerContainer";
         private PackageItem selectedItem;
-        private SortedDictionary<string, PackageGroup> Groups;
+        private List<PackageGroup> Groups;
 
         public PackageList()
         {
-            Groups = new SortedDictionary<string, PackageGroup>();
+            Groups = new List<PackageGroup>();
             
             root = Resources.Load<VisualTreeAsset>("Templates/PackageList").CloneTree(null);
             Add(root);
@@ -36,30 +36,179 @@ namespace UnityEditor.PackageManager.UI
 
             root.Q<VisualElement>(emptyId).visible = false;
             root.Q<VisualElement>(loadingId).visible = true;
+            root.Q<VisualElement>(loadingId).StretchToParentSize();
+            root.Q<VisualElement>(loadingSpinnerId).clippingOptions = ClippingOptions.NoClipping;
             LoadingSpinner.Start();
 
             PackageCollection.Instance.OnPackagesChanged += SetPackages;
             PackageCollection.Instance.OnFilterChanged += OnFilterChanged;
             
-            Reload();
+            RegisterCallback<AttachToPanelEvent>(OnEnterPanel);
+            RegisterCallback<DetachFromPanelEvent>(OnLeavePanel);
             
-            // Hack -- due to an issue with scrollView not laying out its content properly when using templates
-            // (everything inside has size 0). This forces a re-size after layout.
-#if UNITY_2018_2_OR_NEWER
-            List.RegisterCallback<GeometryChangedEvent>(geometryChangedEvent =>
-#else
-            List.RegisterCallback<PostLayoutEvent>(postLayoutEvent =>
-#endif
-            {
-                List.contentContainer.style.minWidth = List.contentViewport.layout.width;
-                List.contentContainer.style.minHeight = List.contentViewport.layout.height;
-            });
+            Reload();
         }
+
+        private void OnEnterPanel(AttachToPanelEvent e)
+        {
+            panel.visualTree.RegisterCallback<KeyDownEvent>(OnKeyDownShortcut);
+        }
+
+        private void OnLeavePanel(DetachFromPanelEvent e)
+        {
+            panel.visualTree.UnregisterCallback<KeyDownEvent>(OnKeyDownShortcut);
+        }
+
+        private void ScrollIfNeeded()
+        {
+            if (selectedItem == null)
+                return;
+            
+            var minY = List.worldBound.yMin;
+            var maxY = List.worldBound.yMax;
+            var itemMinY = selectedItem.worldBound.yMin;
+            var itemMaxY = selectedItem.worldBound.yMax;
+            var scroll = List.scrollOffset;
+
+            if (itemMinY < minY)
+            {
+                scroll.y -= minY - itemMinY;
+                List.scrollOffset = scroll;
+            }
+            else if (itemMaxY > maxY)
+            {
+                scroll.y += itemMaxY - maxY;
+                List.scrollOffset = scroll;
+            }
+        }
+
+        private void OnKeyDownShortcut(KeyDownEvent evt)
+        {
+            if (selectedItem == null)
+                return;
+            
+            if (evt.keyCode == KeyCode.UpArrow)
+            {
+                if (selectedItem.previousItem != null)
+                {
+                    Select(selectedItem.previousItem);
+                    ScrollIfNeeded();
+                }
+                else if (selectedItem.packageGroup != null && selectedItem.packageGroup.previousGroup != null)
+                {
+                    selectedItem.packageGroup.previousGroup.SetCollapsed(false);
+                    Select(selectedItem.packageGroup.previousGroup.lastPackage);
+                    ScrollIfNeeded();
+                }
+                evt.StopPropagation();
+                return;
+            } 
+            
+            if (evt.keyCode == KeyCode.DownArrow)
+            {
+                if (selectedItem.nextItem != null)
+                {
+                    Select(selectedItem.nextItem);
+                    ScrollIfNeeded();
+                }
+                else if (selectedItem.packageGroup != null && selectedItem.packageGroup.nextGroup != null)
+                {
+                    selectedItem.packageGroup.nextGroup.SetCollapsed(false);
+                    Select(selectedItem.packageGroup.nextGroup.firstPackage);
+                    ScrollIfNeeded();
+                }
+                evt.StopPropagation();
+                return;
+            }
+            
+            if (evt.keyCode == KeyCode.LeftArrow)
+            {
+                if (selectedItem.packageGroup != null)
+                {
+                    if (!selectedItem.packageGroup.Collapsed)
+                    {
+                        selectedItem.packageGroup.SetCollapsed(true);
+                        if (selectedItem.packageGroup.nextGroup != null)
+                        {
+                            selectedItem.packageGroup.nextGroup.SetCollapsed(false);
+                            Select(selectedItem.packageGroup.nextGroup.firstPackage);
+                            ScrollIfNeeded();
+                        } 
+                        else if (selectedItem.packageGroup.previousGroup != null)
+                        {
+                            selectedItem.packageGroup.previousGroup.SetCollapsed(false);
+                            Select(selectedItem.packageGroup.previousGroup.lastPackage);
+                            ScrollIfNeeded();
+                        }
+                    }
+                }
+                evt.StopPropagation();
+                return;
+            }
+
+            if (evt.keyCode == KeyCode.PageUp)
+            {
+                if (selectedItem.packageGroup != null)
+                {
+                    if (selectedItem == selectedItem.packageGroup.lastPackage && selectedItem != selectedItem.packageGroup.firstPackage)
+                    {
+                        Select(selectedItem.packageGroup.firstPackage);
+                        ScrollIfNeeded();
+                    }
+                    else if (selectedItem == selectedItem.packageGroup.firstPackage && selectedItem.packageGroup.previousGroup != null)
+                    {
+                        if (selectedItem.packageGroup.previousGroup.Collapsed)
+                            selectedItem.packageGroup.previousGroup.SetCollapsed(false);
+
+                        Select(selectedItem.packageGroup.previousGroup.lastPackage);
+                        ScrollIfNeeded();
+                    }
+                    else if (selectedItem != selectedItem.packageGroup.lastPackage && selectedItem != selectedItem.packageGroup.firstPackage)
+                    {
+                        Select(selectedItem.packageGroup.firstPackage);
+                        ScrollIfNeeded();
+                    }
+                }
+                evt.StopPropagation();
+                return;
+            }
+            
+            if (evt.keyCode == KeyCode.PageDown)
+            {
+                if (selectedItem.packageGroup != null)
+                {
+                    if (selectedItem == selectedItem.packageGroup.firstPackage && selectedItem != selectedItem.packageGroup.lastPackage)
+                    {
+                        Select(selectedItem.packageGroup.lastPackage);
+                        ScrollIfNeeded();
+                    }
+                    else if (selectedItem == selectedItem.packageGroup.lastPackage && selectedItem.packageGroup.nextGroup != null)
+                    {
+                        if (selectedItem.packageGroup.nextGroup.Collapsed)
+                            selectedItem.packageGroup.nextGroup.SetCollapsed(false);
+                        
+                        Select(selectedItem.packageGroup.nextGroup.firstPackage);
+                        ScrollIfNeeded();
+                    }
+                    else if (selectedItem != selectedItem.packageGroup.firstPackage && selectedItem != selectedItem.packageGroup.lastPackage)
+                    {
+                        Select(selectedItem.packageGroup.lastPackage);
+                        ScrollIfNeeded();
+                    }
+                }
+                evt.StopPropagation();
+            }
+        }
+
 
         private void OnFilterChanged(PackageFilter filter)
         {
             ClearAll();
-            Spinner.Start();
+            if (!LoadingSpinner.Started)
+            {
+                root.Q<VisualElement>(loadingId).visible = true;
+                LoadingSpinner.Start();
+            }
         }
 
         private static void Reload()
@@ -73,14 +222,32 @@ namespace UnityEditor.PackageManager.UI
             List.Clear();
             Groups.Clear();
             ClearSelection();
-            Spinner.Stop();
+
             root.Q<VisualElement>(emptyId).visible = false;
+            if (LoadingSpinner.Started)
+            {
+                root.Q<VisualElement>(loadingId).visible = false;
+                LoadingSpinner.Stop();
+            }
         }
         
         private void SetPackages(IEnumerable<Package> packages)
         {
             OnLoaded();
             ClearAll();
+
+            var packagesGroup = new PackageGroup(PackageGroupOrigins.Packages.ToString());
+            Groups.Add(packagesGroup);
+            List.Add(packagesGroup);
+
+            var builtInGroup = new PackageGroup(PackageGroupOrigins.BuiltInPackages.ToString());
+            Groups.Add(builtInGroup);
+            List.Add(builtInGroup);
+
+            packagesGroup.previousGroup = null;
+            packagesGroup.nextGroup = builtInGroup;
+            builtInGroup.previousGroup = packagesGroup;
+            builtInGroup.nextGroup = null;
 
             root.Q<VisualElement>(loadingId).visible = false;
             LoadingSpinner.Stop();
@@ -99,57 +266,57 @@ namespace UnityEditor.PackageManager.UI
             var group = GetOrCreateGroup(groupName);
             var packageItem = group.AddPackage(package);
 
-            if (selected == null && !group.Collapsed)
-                Select(package, packageItem);
+            if (selectedItem == null && !group.Collapsed)
+                Select(packageItem);
 
             packageItem.OnSelected += Select;
         }
 
         private PackageGroup GetOrCreateGroup(string groupName)
         {
-            if (groupName == null)
-                groupName = "";
-
-            if (!Groups.ContainsKey(groupName))
+            foreach (var g in Groups)
             {
-                var group = new PackageGroup(groupName);
-                Groups[groupName] = group;
-
-                // Need to re-build the package group list in order to keep ordering.
-                // An alternative way if efficiency becomes problematic would be to
-                // add the group at its proper place in the hierarchy.
-                List.Clear();
-                foreach (var grp in Groups)
-                    List.Add(grp.Value);
+                if (g.name == groupName)
+                    return g;
             }
 
-            return Groups[groupName];
+            var group = new PackageGroup(groupName);
+            var latestGroup = Groups.LastOrDefault();
+            Groups.Add(group);
+            List.Add(group);
+
+            group.previousGroup = null;
+            if (latestGroup != null)
+            {
+                latestGroup.nextGroup = group;
+                group.previousGroup = latestGroup;
+                group.nextGroup = null;
+            }
+            return group;
         }
 
         private void ClearSelection()
         {
-            Select(null, null);            
+            Select(null);            
         }
         
-        private void Select(Package package, PackageItem selectedItem)
+        private void Select(PackageItem packageItem)
         {
-            if (package == selected)
+            if (packageItem == selectedItem)
                 return;
 
-            if (this.selectedItem != null)
-                this.selectedItem.SetSelected(false);        // Clear Previous selection
+            if (selectedItem != null)
+                selectedItem.SetSelected(false);        // Clear Previous selection
             
-            selected = package;
-            this.selectedItem = selectedItem;
+            selectedItem = packageItem;
+            if (selectedItem == null) 
+                return;
             
-            if (this.selectedItem != null)
-                this.selectedItem.SetSelected(true);
-            
-            OnSelected(package);
+            selectedItem.SetSelected(true);
+            OnSelected(selectedItem.package);
         }
 
         private ScrollView List { get { return root.Q<ScrollView>("scrollView"); } }
-        private LoadingSpinner Spinner { get { return root.Q<LoadingSpinner>("packageListSpinner"); } }
-        private LoadingSpinner LoadingSpinner { get { return root.Query<LoadingSpinner>("loadingSpinner").First(); } }
+        private LoadingSpinner LoadingSpinner { get { return root.Q<LoadingSpinner>("loadingSpinner"); } }
     }
 }

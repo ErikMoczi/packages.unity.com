@@ -10,10 +10,10 @@ namespace UnityEditor.PackageManager.UI
 {    
     internal abstract class UpmBaseOperation : IBaseOperation
     {
-        public static string GroupName(OriginType origin)
+        public static string GroupName(PackageOrigin origin)
         {
             var group = PackageGroupOrigins.Packages.ToString();
-            if (origin == OriginType.Builtin)
+            if (origin == PackageOrigin.Builtin)
                 group = PackageGroupOrigins.BuiltInPackages.ToString();
 
             return group;
@@ -21,6 +21,7 @@ namespace UnityEditor.PackageManager.UI
 
         protected static IEnumerable<PackageInfo> FromUpmPackageInfo(PackageManager.PackageInfo info, bool isCurrent=true)
         {
+            var origin = PackageInfo.IsModule(info.name) ? PackageOrigin.Builtin : PackageOrigin.Registry;
             var packages = new List<PackageInfo>();
             var displayName = info.displayName;
             if (string.IsNullOrEmpty(displayName))
@@ -63,7 +64,7 @@ namespace UnityEditor.PackageManager.UI
             foreach(var version in versions)
             {
                 var isVersionCurrent = version == info.version && isCurrent;
-                var state = (info.originType == OriginType.Builtin || info.version == lastCompatible) ? PackageState.UpToDate : PackageState.Outdated;
+                var state = (origin == PackageOrigin.Builtin || info.version == lastCompatible) ? PackageState.UpToDate : PackageState.Outdated;
                 
                 // Happens mostly when using a package that hasn't been in production yet.
                 if (info.versions.all.Length <= 0)
@@ -84,9 +85,9 @@ namespace UnityEditor.PackageManager.UI
                     IsLatest = version == lastCompatible,
                     IsRecommended = version == info.versions.recommended,
                     Errors = info.errors.ToList(),
-                    Group = GroupName(info.originType),
+                    Group = GroupName(origin),
                     State = state,
-                    OriginType = info.originType
+                    Origin = origin
                 };
                 
                 packages.Add(packageInfo);

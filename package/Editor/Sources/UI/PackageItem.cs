@@ -16,17 +16,26 @@ namespace UnityEditor.PackageManager.UI
     {
         public static string SelectedClassName = "selected";
         
-        public event Action<Package, PackageItem> OnSelected = delegate { };
+        public event Action<PackageItem> OnSelected = delegate { };
         
+        private const string loadingSpinnerId = "loadingSpinnerContainer";
+
         private readonly VisualElement root;
-        private Package package;
         private string currentStateClass;
+        public Package package { get; private set; }
+        
+        public PackageItem previousItem;
+        public PackageItem nextItem;
+
+        public PackageGroup packageGroup;
 
         public PackageItem(Package package = null)
         {
             root = Resources.Load<VisualTreeAsset>("Templates/PackageItem").CloneTree(null);
             Add(root);
             
+            root.Q<VisualElement>(loadingSpinnerId).clippingOptions = ClippingOptions.NoClipping;
+
             root.AddManipulator(new Clickable(Select));
             if (package != null)
                 SetItem(package);
@@ -40,7 +49,7 @@ namespace UnityEditor.PackageManager.UI
         
         private void Select()
         {
-            OnSelected(package, this);
+            OnSelected(this);
         }
 
         public void SetSelected(bool value)
@@ -78,18 +87,21 @@ namespace UnityEditor.PackageManager.UI
             StateLabel.RemoveFromClassList(currentStateClass);
             StateLabel.AddToClassList(stateClass);
 
-            if(package.Current != null && PackageCollection.Instance.Filter == PackageFilter.All)
-                PackageContainer.AddToClassList("installed");
+            if(package.Current == null && PackageCollection.Instance.Filter == PackageFilter.All)
+                PackageContainer.AddToClassList("not-installed");
+            else
+                PackageContainer.RemoveFromClassList("not-installed");
 
             UIUtils.SetElementDisplay(VersionLabel, !PackageInfo.IsModule(package.Name));
             
             currentStateClass = stateClass;
+            if (displayPackage.State != PackageState.InProgress && Spinner.Started)
+                Spinner.Stop();
         }
 
         private void OnPackageUpdate(IAddOperation operation)
         {
             Spinner.Start();
-            operation.OnOperationFinalized += () => Spinner.Stop();        // Make sure the spinner stops on error or completion
         }
 
         private Label NameLabel { get { return root.Q<Label>("packageName"); } }

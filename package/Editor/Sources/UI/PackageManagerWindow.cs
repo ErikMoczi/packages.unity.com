@@ -20,9 +20,8 @@ namespace UnityEditor.PackageManager.UI
             var template = Resources.Load<VisualTreeAsset>("Templates/PackageManagerWindow").CloneTree(null);
             this.GetRootVisualContainer().Add(template);
             template.StretchToParentSize();
-            this.GetRootVisualContainer().StretchToParentSize();
 
-            PackageSearchFilterTabs.visible = false;
+            PackageSearchFilterTabs.SetEnabled(false);
 
             PackageList.OnSelected += OnPackageSelected;
             PackageList.OnLoaded += OnPackagesLoaded;
@@ -35,7 +34,7 @@ namespace UnityEditor.PackageManager.UI
 
         private void OnPackagesLoaded()
         {
-            PackageSearchFilterTabs.visible = true;
+            PackageSearchFilterTabs.SetEnabled(true);
         }
 
         private PackageList PackageList
@@ -54,31 +53,13 @@ namespace UnityEditor.PackageManager.UI
         }
 #endif
 
-        private static T FindFirstEditorWindow<T>() where T : EditorWindow
-        {
-            var windows = Resources.FindObjectsOfTypeAll<T>();
-            if(windows != null && windows.Length > 0)
-            {
-                return windows[0];
-            }
-            
-            return null;
-        }
-
         [MenuItem("Window/Package Manager", priority = 1500)]
         internal static void ShowPackageManagerWindow()
         {
 #if UNITY_2018_1_OR_NEWER
-            var window = FindFirstEditorWindow<PackageManagerWindow>();
-            if (window != null)
-            {
-                window.Focus();
-                return;
-            }
-            
-            window = GetWindow<PackageManagerWindow>(true, "Packages", true);
-            window.minSize = new Vector2(850, 450);
-            window.maxSize = window.minSize;
+            var window = GetWindow<PackageManagerWindow>(false, "Package Manager", true);
+            window.minSize = new Vector2(700, 250);
+            window.maxSize = new Vector2(1400, 1400);
             window.Show();
 #else
             EditorUtility.DisplayDialog("Unsupported Unity Version", string.Format("The Package Manager requires Unity Version {0} or higher to operate.", targetVersionNumber), "Ok");

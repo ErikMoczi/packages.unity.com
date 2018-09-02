@@ -22,7 +22,7 @@
                     </ui:VisualElement>
 
                     <ui:VisualElement name="tag-recommended" class="tagLine display-none">
-                        <ui:Label name="tag" class="tag" text="recommended"/>
+                        <ui:Label name="tag" class="tag recommended" text="recommended"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
 

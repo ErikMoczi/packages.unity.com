@@ -24,12 +24,33 @@ $unity-background-dark-contrast: #707070;			//
 $unity-text-color-highlight: #f4f4f4;
 
 $unity-installed-color-highlight: rgba(255,255,254,0.4);
-$installed-package-background-color: #3c3c3c;
-
-$icon-caret: resource("Icons/Dark/Caret");
-$icon-caret-hover: resource("Icons/Dark/Caret_Hover");
+$not-installed-package-background-color: #292929;
 
 $package-tag-color: #ffa44e;
+$package-tag-recommended-color: #e4e4e4;
+
+$caret-text-color: #777777;
+
+//--------------------------------------------------------------------------------------------------
+// Custom backgrounds
+//--------------------------------------------------------------------------------------------------
+$background-left-button: "Images/Dark/btnLeft";
+$background-left-button-selected: "Images/Dark/btnLeftOn";
+$background-mid-button: "Images/Dark/btnMid";
+$background-mid-button-selected: "Images/Dark/btnMidOn";
+$background-right-button: "Images/Dark/btnRight";
+$background-right-button-selected: "Images/Dark/btnRightOn";
+
+$background-button-slice-right: 0;
+$background-button-slice-left: 0;
+$background-button-slice-middle: 1;
+
+$background-status-outdated: "Images/Dark/download";
+$background-status-inprogress: "Images/inprogress";
+$background-status-error: "Images/error";
+
+$background-spinner-normal: "Images/Spinner/Dark/loading";
+$background-spinner-large: "Images/Spinner/Dark/loading";
 
 //--------------------------------------------------------------------------------------------------
 // Common stylesheet

@@ -23,7 +23,7 @@ namespace UnityEditor.PackageManager.UI
             root = Resources.Load<VisualTreeAsset>("Templates/PackageSearchFilterTabs").CloneTree(null);
             Add(root);
             root.StretchToParentSize();
-                        
+
             LocalButton.AddManipulator(new Clickable(() => SetFilter(PackageFilter.Local)));
             AllButton.AddManipulator(new Clickable(() => SetFilter(PackageFilter.All)));
 
@@ -33,7 +33,11 @@ namespace UnityEditor.PackageManager.UI
 
         private void SetFilter(PackageFilter filter)
         {
-            PackageCollection.Instance.SetFilter(filter);
+            root.SetEnabled(false);
+            if (!PackageCollection.Instance.SetFilter(filter))
+            {
+                root.SetEnabled(true);
+            }
         }
         
         private void OnFilterChanged(PackageFilter filter = PackageFilter.None)
@@ -52,8 +56,9 @@ namespace UnityEditor.PackageManager.UI
             {
                 LocalButton.AddToClassList(SelectedClassName);
                 AllButton.RemoveFromClassList(SelectedClassName);
-            } 
-            else {Debug.LogError("Unknown package filter.");}
+            }
+            
+            root.SetEnabled(true);
         }
 
         private Label LocalButton { get { return root.Q<Label>("local"); } }

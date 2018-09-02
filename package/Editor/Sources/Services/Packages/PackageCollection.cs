@@ -51,14 +51,15 @@ namespace UnityEditor.PackageManager.UI
             get { return packageInfos; }
         }
 
-        public void SetFilter(PackageFilter filter, bool refresh = true)
+        public bool SetFilter(PackageFilter filter, bool refresh = true)
         {
             if (filter == Filter) 
-                return;
+                return false;
             
             Filter = filter;
             if (refresh)
                 RefreshPackages();
+            return true;
         }
 
         // Force a re-init

@@ -1,4 +1,4 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("com.unity.package-manager-captain.Editor")]
-[assembly: InternalsVisibleTo("com.unity.package-manager-ui.EditorTests")]
+[assembly: InternalsVisibleTo("Unity.PackageManagerCaptain.Editor")]
+[assembly: InternalsVisibleTo("Unity.PackageManagerUI.EditorTests")]

@@ -1,24 +1,19 @@
 <UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:upm="UnityEditor.PackageManager.UI">
     <ui:VisualElement name="listContainerOuter">
-        <ui:Label name="spinnerContainer">
-            <upm:LoadingSpinner name="packageListSpinner" class="spinner"/>
-        </ui:Label>
+        <ui:VisualElement name="loadingAreaContainer">
+            <ui:VisualElement name="loadingArea">
+                <ui:Label name="loadingTitle" class="title" text="Loading packages"/>
+                <ui:Label name="loadingSpinnerContainer" class="loading">
+                    <upm:LoadingSpinner name="loadingSpinner" class="largeSpinner"/>
+                </ui:Label>
+            </ui:VisualElement>
+        </ui:VisualElement>
 
         <ui:VisualElement name="listContainer">
-
             <ui:ScrollView name="scrollView"/>
-
             <ui:VisualElement name="emptyArea" class="list emptyArea">
                 <ui:Label class="title" text="There are no packages."/>
             </ui:VisualElement>
-            <ui:VisualElement name="loadingArea" class="detail emptyArea">
-                <ui:Label class="title" text="Retrieving package list."/>
-                <ui:Label class="loading">
-                    <upm:LoadingSpinner name="loadingSpinner" class="spinner"/>
-                </ui:Label>
-                <ui:Label class="title" text="Please wait."/>
-            </ui:VisualElement>
-
         </ui:VisualElement>
     </ui:VisualElement>
 </UXML>

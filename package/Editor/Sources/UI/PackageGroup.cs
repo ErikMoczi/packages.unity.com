@@ -1,4 +1,6 @@
-﻿using UnityEngine.Experimental.UIElements;
+﻿using System;
+using System.Linq;
+using UnityEngine.Experimental.UIElements;
 using UnityEngine;
 
 namespace UnityEditor.PackageManager.UI
@@ -19,8 +21,15 @@ namespace UnityEditor.PackageManager.UI
 
         internal readonly PackageGroupOrigins Origin;
 
+        public PackageGroup previousGroup;
+        public PackageGroup nextGroup;
+
+        public PackageItem firstPackage;
+        public PackageItem lastPackage;
+
         public PackageGroup(string groupName)
-        {            
+        {
+            name = groupName;
             root = Resources.Load<VisualTreeAsset>("Templates/PackageGroup").CloneTree(null);
             Add(root);
             listElement = List;
@@ -29,24 +38,24 @@ namespace UnityEditor.PackageManager.UI
 
             if (groupName == PackageGroupOrigins.BuiltInPackages.ToString())
             {
+                HeaderTitle.text = "Built In Packages";
                 Origin = PackageGroupOrigins.BuiltInPackages;
                 SetCollapsed(true);
-                HeaderTitle.text = "Built In Packages";
             }
             else
             {
                 HeaderTitle.text = "Packages";
                 Origin = PackageGroupOrigins.Packages;
-                Caret.SetState(false);
+                SetCollapsed(false);
             }
         }
 
-        private void SetCollapsed(bool value)
+        public void SetCollapsed(bool value)
         {
+            Caret.text = value ? "\u25B6" : "\u25BC";
+
             if (value == collapsed)
                 return;
-            
-            Caret.SetState(value);
 
             if (value)
                 List.RemoveFromHierarchy();
@@ -63,8 +72,20 @@ namespace UnityEditor.PackageManager.UI
         
         internal PackageItem AddPackage(Package package)
         {
-            var packageItem = new PackageItem(package);
+            var packageItem = new PackageItem(package) {packageGroup = this};
+            var lastItem = listElement.Children().LastOrDefault() as PackageItem;
+            if (lastItem != null)
+            {
+                lastItem.nextItem = packageItem;
+                packageItem.previousItem = lastItem;
+                packageItem.nextItem = null;
+            }
+            
             listElement.Add(packageItem);
+            
+            if (firstPackage == null) firstPackage = packageItem;
+            lastPackage = packageItem;
+            
             return packageItem;
         }
         
@@ -72,7 +93,7 @@ namespace UnityEditor.PackageManager.UI
         private VisualElement ListContainer { get { return root.Q<VisualElement>("groupContainerOuter"); } }
         private VisualElement Header { get { return root.Q<VisualElement>("headerContainer"); } }        
         private Label HeaderTitle { get { return root.Q<Label>("headerTitle"); } }
-        private Caret Caret { get { return root.Q<Caret>("headerExpandState"); } }
+        private Label Caret { get { return root.Q<Label>("headerCaret"); } }
         internal bool Collapsed { get { return collapsed; } set { SetCollapsed(value); } }
     }
 }

@@ -236,7 +236,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             var packages = new List<PackageInfo>
             {
-                PackageSets.Instance.Single(OriginType.Unknown, Package.packageManagerUIName, "1.0.0")
+                PackageSets.Instance.Single(PackageOrigin.Unknown, Package.packageManagerUIName, "1.0.0")
             };
             var package = new Package(Package.packageManagerUIName, packages);
             
