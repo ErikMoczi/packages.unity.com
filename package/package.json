@@ -1,0 +1,10 @@
+{
+	"name": "com.unity.xr.openvr.standalone",
+	"displayName":"OpenVR",
+	"version": "1.0.0",
+	"unity": "2018.2",
+	"description": "This package contains the necessary components required to use the OpenVR Virtual Reality SDK on Standalone. By using this package, you will be able to deploy and run your applications on SteamVR supported devices.",
+	"keywords": ["openvr", "xr", "vr", "virtual", "open", "sdk", "steam", "steamvr", "valve"],
+	"dependencies": {
+	}
+}
