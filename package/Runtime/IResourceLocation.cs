@@ -25,17 +25,11 @@ namespace UnityEngine.ResourceManagement
         /// <value>The dependencies.</value>
         IList<IResourceLocation> Dependencies { get; }
 
-    }
-
-    /// <summary>
-    /// Resource location with an additional typed key.
-    /// </summary>
-    public interface IResourceLocation<TKey> : IResourceLocation
-    {
         /// <summary>
-        /// Gets the key for the location.
+        /// Gets the dependencies to other IResourceLocations
         /// </summary>
-        /// <value>The key.</value>
-        TKey Key { get; }
+        /// <value>The dependencies.</value>
+        bool HasDependencies { get; }
+
     }
 }

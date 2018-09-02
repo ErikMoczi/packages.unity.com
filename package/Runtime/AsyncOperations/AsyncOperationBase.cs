@@ -37,10 +37,10 @@ namespace UnityEngine.ResourceManagement
             Validate();
             m_releaseToCacheOnCompletion = true;
             if (!m_insideCompletionEvent && IsDone)
-                AsyncOperationCache.Instance.Release<TObject>(this);
+                AsyncOperationCache.Instance.Release(this);
         }
 
-        public IAsyncOperation<TObject> Acquire()
+        public IAsyncOperation<TObject> Retain()
         {
             Validate();
             m_releaseToCacheOnCompletion = false;
@@ -239,7 +239,7 @@ namespace UnityEngine.ResourceManagement
             }
             m_insideCompletionEvent = false;
             if (m_releaseToCacheOnCompletion)
-                AsyncOperationCache.Instance.Release<TObject>(this);
+                AsyncOperationCache.Instance.Release(this);
         }
 
         public virtual void SetResult(TObject result)
@@ -250,4 +250,129 @@ namespace UnityEngine.ResourceManagement
         }
 
     }
+
+    public class EmptyOperation<TObject> : AsyncOperationBase<TObject>
+    {
+        public virtual IAsyncOperation<TObject> Start(IResourceLocation loc, TObject val)
+        {
+            m_context = loc;
+            SetResult(val);
+            DelayedActionManager.AddAction((Action)InvokeCompletionEvent, 0);
+            return this;
+        }
+    }
+
+    public class ChainOperation<TObject, TObjectDependency> : AsyncOperationBase<TObject>
+    {
+        Func<TObjectDependency, IAsyncOperation<TObject>> m_func;
+        public virtual IAsyncOperation<TObject> Start(IAsyncOperation<TObjectDependency> dependency, Func<TObjectDependency, IAsyncOperation<TObject>> func)
+        {
+            m_func = func;
+            dependency.Completed += OnDependencyCompleted;
+            return this;
+        }
+
+        private void OnDependencyCompleted(IAsyncOperation<TObjectDependency> op)
+        {
+            var funcOp = m_func(op.Result);
+            m_context = funcOp.Context;
+            op.Release();
+            funcOp.Completed += OnFuncCompleted;
+        }
+
+        private void OnFuncCompleted(IAsyncOperation<TObject> op)
+        {
+            SetResult(op.Result);
+            InvokeCompletionEvent();
+        }
+    }
+
+    public class GroupOperation<TObject> : AsyncOperationBase<IList<TObject>> where TObject : class
+    {
+        Action<IAsyncOperation<TObject>> m_callback;
+        Action<IAsyncOperation<TObject>> m_internalOnComplete;
+        List<IAsyncOperation<TObject>> m_operations;
+        int m_loadedCount;
+        public GroupOperation()
+        {
+            m_internalOnComplete = OnOperationCompleted;
+            Result = new List<TObject>();
+        }
+
+        public override void SetResult(IList<TObject> result)
+        {
+            Validate();
+        }
+
+        public override void ResetStatus()
+        {
+            m_releaseToCacheOnCompletion = true;
+            m_status = AsyncOperationStatus.None;
+            m_error = null;
+            m_context = null;
+
+            Result.Clear();
+            m_operations = null;
+        }
+
+        public virtual IAsyncOperation<IList<TObject>> Start(IList<IResourceLocation> locations, Action<IAsyncOperation<TObject>> callback, Func<IResourceLocation, IAsyncOperation<TObject>> func)
+        {
+            m_context = locations;
+            m_callback = callback;
+            m_loadedCount = 0;
+            m_operations = new List<IAsyncOperation<TObject>>(locations.Count);
+            foreach (var o in locations)
+            {
+                Result.Add(default(TObject));
+                var op = func(o);
+                m_operations.Add(op);
+                op.Completed += m_internalOnComplete;
+            }
+            return this;
+        }
+
+        public virtual IAsyncOperation<IList<TObject>> Start<TParam>(IList<IResourceLocation> locations, Action<IAsyncOperation<TObject>> callback, Func<IResourceLocation, TParam, IAsyncOperation<TObject>> func, TParam funcParams)
+        {
+            m_context = locations;
+            m_callback = callback;
+            m_loadedCount = 0;
+            m_operations = new List<IAsyncOperation<TObject>>(locations.Count);
+            foreach (var o in locations)
+            {
+                Result.Add(default(TObject));
+                var op = func(o, funcParams);
+                m_operations.Add(op);
+                op.Completed += m_internalOnComplete;
+            }
+            return this;
+        }
+
+        public override bool IsDone
+        {
+            get
+            {
+                Validate();
+                return Result.Count == m_loadedCount;
+            }
+        }
+
+        private void OnOperationCompleted(IAsyncOperation<TObject> op)
+        {
+            if (m_callback != null)
+                m_callback(op);
+            m_loadedCount++;
+            for (int i = 0; i < m_operations.Count; i++)
+            {
+                if (m_operations[i] == op)
+                {
+                    Result[i] = op.Result;
+                    break;
+                }
+            }
+            op.Release();
+            if (IsDone)
+                InvokeCompletionEvent();
+        }
+    }
+
 }

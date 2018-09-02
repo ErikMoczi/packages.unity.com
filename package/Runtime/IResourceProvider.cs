@@ -20,7 +20,7 @@ namespace UnityEngine.ResourceManagement
         /// <param name="location">Location to load.</param>
         /// <param name="loadDependencyOperation">Aynchronous dependency load operation.</param>
         /// <typeparam name="TObject">Object type to be loaded and returned.</typeparam>
-        IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
+        IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         where TObject : class;
 
         /// <summary>

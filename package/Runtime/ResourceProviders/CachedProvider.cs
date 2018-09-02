@@ -155,7 +155,7 @@ namespace UnityEngine.ResourceManagement
             public CacheEntry(CacheList cacheList, IAsyncOperation<TObject> operation)
             {
                 m_cacheList = cacheList;
-                m_operation = operation.Acquire();
+                m_operation = operation.Retain();
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, Context, 0);
                 operation.Completed += OnComplete;
             }
@@ -215,7 +215,7 @@ namespace UnityEngine.ResourceManagement
                 return true;
             }
 
-            public IAsyncOperation<TObject> Acquire()
+            public IAsyncOperation<TObject> Retain()
             {
                 return this;
             }
@@ -433,7 +433,7 @@ namespace UnityEngine.ResourceManagement
             ReleaseCache(e);
         }
 
-        public IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
+        public IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             where TObject : class
         {
             if (location == null)
@@ -470,7 +470,7 @@ namespace UnityEngine.ResourceManagement
             var entry = entryList.FindEntry<TObject>(location);
             if (entry != null)
                 return entry;
-            return entryList.CreateEntry(m_internalProvider.ProvideAsync<TObject>(location, loadDependencyOperation));
+            return entryList.CreateEntry(m_internalProvider.Provide<TObject>(location, loadDependencyOperation));
         }
 
     }

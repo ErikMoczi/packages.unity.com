@@ -25,7 +25,7 @@ namespace UnityEngine.ResourceManagement
             return string.Format("[{0}]", ProviderId);
         }
 
-        public abstract IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
+        public abstract IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         where TObject : class;
 
         public virtual bool Release(IResourceLocation location, object asset)

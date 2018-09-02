@@ -11,16 +11,16 @@ namespace UnityEngine.ResourceManagement
         [SerializeField]
         List<VirtualAssetBundle> m_simulatedAssetBundles = new List<VirtualAssetBundle>();
         [SerializeField]
-        uint m_remoteLoadSpeed = 1024 * 100;
+        long m_remoteLoadSpeed = 1024 * 100;
         [SerializeField]
-        uint m_localLoadSpeed = 1024 * 1024 * 10;
+        long m_localLoadSpeed = 1024 * 1024 * 10;
         public static string PlayerLocation { get { return Path.Combine(Application.streamingAssetsPath, "VirtualAssetBundleData.json").Replace('\\', '/'); } }
-        public IList<VirtualAssetBundle> AssetBundles { get { return m_simulatedAssetBundles; } }
-        public uint RemoteLoadSpeed { get { return m_remoteLoadSpeed; } }
-        public uint LocalLoadSpeed { get { return m_localLoadSpeed; } }
+        public List<VirtualAssetBundle> AssetBundles { get { return m_simulatedAssetBundles; } }
+        public long RemoteLoadSpeed { get { return m_remoteLoadSpeed; } }
+        public long LocalLoadSpeed { get { return m_localLoadSpeed; } }
 
         public VirtualAssetBundleRuntimeData() {}
-        public VirtualAssetBundleRuntimeData(uint localSpeed, uint remoteSpeed)
+        public VirtualAssetBundleRuntimeData(long localSpeed, long remoteSpeed)
         {
             m_localLoadSpeed = localSpeed;
             m_remoteLoadSpeed = remoteSpeed;

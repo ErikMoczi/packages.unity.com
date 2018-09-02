@@ -67,9 +67,9 @@ namespace UnityEngine.ResourceManagement
             if (loadProvider == null)
                 throw new ArgumentNullException("loadProvider");
 
-            var depOp = loadProvider.ProvideAsync<TObject>(location, loadDependencyOperation);
+            var depOp = loadProvider.Provide<TObject>(location, loadDependencyOperation);
 
-            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
+            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
             return operation.Start(depOp, location, instantiateParameters);
         }
 

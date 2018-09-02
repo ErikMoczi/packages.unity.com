@@ -90,7 +90,7 @@ namespace UnityEngine.ResourceManagement
         /// Internally marks operations to not automatically release back to the cache.
         /// </summary>
         /// <returns>Passes back this</returns>
-        IAsyncOperation<T> Acquire();
+        IAsyncOperation<T> Retain();
         /// <summary>
         /// Occurs when completed.
         /// </summary>

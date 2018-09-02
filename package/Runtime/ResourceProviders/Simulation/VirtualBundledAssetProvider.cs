@@ -5,8 +5,6 @@ namespace UnityEngine.ResourceManagement
 {
     internal class VirtualBundledAssetProvider : ResourceProviderBase
     {
-        public uint loadSpeed;
-        public VirtualBundledAssetProvider(uint speed) { loadSpeed = speed; }
         public override string ProviderId
         {
             get { return typeof(BundledAssetProvider).FullName; }
@@ -16,7 +14,7 @@ namespace UnityEngine.ResourceManagement
             where TObject : class
         {
             System.Action<IAsyncOperation<TObject>> onCompleteAction;
-            public InternalProviderOperation<TObject> Start(IResourceLocation location, uint speed, IAsyncOperation<IList<object>> loadDependencyOperation)
+            public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
                 Result = null;
                 if (onCompleteAction == null)
@@ -25,7 +23,7 @@ namespace UnityEngine.ResourceManagement
                 {
                     VirtualAssetBundle bundle;
                     if (obj.Result != null && obj.Result.Count > 0 && (bundle = obj.Result[0] as VirtualAssetBundle) != null)
-                        bundle.LoadAssetAsync<TObject>(location, speed).Completed += onCompleteAction;
+                        bundle.LoadAssetAsync<TObject>(location).Completed += onCompleteAction;
                     else
                         OnComplete();
                 };
@@ -36,14 +34,14 @@ namespace UnityEngine.ResourceManagement
             public override TObject ConvertResult(AsyncOperation operation) { return null; }
         }
 
-        public override IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
+        public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
             if (loadDependencyOperation == null)
                 throw new System.ArgumentNullException("loadDependencyOperation");
-            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
-            return operation.Start(location, loadSpeed, loadDependencyOperation);
+            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
+            return operation.Start(location, loadDependencyOperation);
         }
 
         public override bool Release(IResourceLocation location, object asset)

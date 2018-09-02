@@ -35,13 +35,13 @@ namespace UnityEngine.ResourceManagement
             public override TObject ConvertResult(AsyncOperation op) { return null; }
         }
 
-        public override IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
+        public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
             if (loadDependencyOperation == null)
                 throw new System.ArgumentNullException("loadDependencyOperation");
-            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
+            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
             operation.assetBundleManager = m_assetBundleManager;
             return operation.Start(location, loadDependencyOperation);
         }

@@ -3,29 +3,29 @@ using System;
 
 namespace UnityEngine.ResourceManagement
 {
-    public class ResourceLocationBase<TKey> : IResourceLocation<TKey>
+    public class ResourceLocationBase : IResourceLocation
     {
-        TKey m_key;
+        string m_name;
         string m_id;
         string m_providerId;
         List<IResourceLocation> m_dependencies;
-        public TKey Key { get { return m_key; } }
         public string InternalId { get { return m_id; } }
         public string ProviderId { get { return m_providerId; } }
         public IList<IResourceLocation> Dependencies { get { return m_dependencies; } }
+        public bool HasDependencies { get { return m_dependencies != null && m_dependencies.Count > 0; } }
 
         public override string ToString()
         {
-            return m_key.ToString();
+            return m_name;
         }
 
-        public ResourceLocationBase(TKey key, string id, string providerId, params IResourceLocation[] dependencies)
+        public ResourceLocationBase(string name, string id, string providerId, params IResourceLocation[] dependencies)
         {
             if (string.IsNullOrEmpty(id))
                 throw new ArgumentNullException(id);
             if (string.IsNullOrEmpty(providerId))
                 throw new ArgumentNullException(providerId);
-            m_key = key;
+            m_name = name;
             m_id = id;
             m_providerId = providerId;
             m_dependencies = new List<IResourceLocation>(dependencies);

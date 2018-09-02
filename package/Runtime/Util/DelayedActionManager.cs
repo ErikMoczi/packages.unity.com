@@ -55,7 +55,7 @@ namespace UnityEngine.ResourceManagement
         Stack<LinkedListNode<DelegateInfo>> m_nodeCache = new Stack<LinkedListNode<DelegateInfo>>(10);
         int m_collectionIndex = 0;
         static DelayedActionManager m_instance;
-
+        bool m_destroyOnCompletion = false;
         LinkedListNode<DelegateInfo> GetNode(ref DelegateInfo del)
         {
             if (m_nodeCache.Count > 0)
@@ -65,6 +65,18 @@ namespace UnityEngine.ResourceManagement
                 return node;
             }
             return new LinkedListNode<DelegateInfo>(del);
+        }
+
+        public static void Clear()
+        {
+            if (m_instance != null)
+                m_instance.DestroyWhenComplete();
+            m_instance = null;
+        }
+
+        private void DestroyWhenComplete()
+        {
+            m_destroyOnCompletion = true;
         }
 
         public static void AddAction(Delegate action, float delay = 0, params object[] parameters)
@@ -108,6 +120,21 @@ namespace UnityEngine.ResourceManagement
             DontDestroyOnLoad(gameObject);
         }
 
+        public static bool IsActive
+        {
+            get
+            {
+                if (m_instance == null)
+                    return false;
+                if (m_instance.m_delayedActions.Count > 0)
+                    return true;
+                for (int i = 0; i < m_instance.m_actions.Length; i++)
+                    if (m_instance.m_actions[i].Count > 0)
+                        return true;
+                return false;
+            }
+        }
+
         void LateUpdate()
         {
             int iterationCount = 0;
@@ -133,6 +160,9 @@ namespace UnityEngine.ResourceManagement
                 iterationCount++;
                 Debug.Assert(iterationCount < 100);
             } while (m_actions[m_collectionIndex].Count > 0);
+
+            if (m_destroyOnCompletion && !IsActive)
+                Destroy(gameObject);
         }
     }
 

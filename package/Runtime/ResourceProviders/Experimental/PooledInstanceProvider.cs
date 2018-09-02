@@ -216,11 +216,11 @@ namespace UnityEngine.ResourceManagement
                     for (int i = 0; m_location.Dependencies != null && i < m_location.Dependencies.Count; i++)
                         ReleaseInternal(ResourceManager.GetResourceProvider<object>(m_location.Dependencies[i]), m_location.Dependencies[i]);
 
-                    return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>().Start(null, m_location, Get<TObject>(), instantiateParameters);
+                    return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>().Start(null, m_location, Get<TObject>(), instantiateParameters);
                 }
 
-                var depOp = loadProvider.ProvideAsync<TObject>(m_location, loadDependencyOperation);
-                return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>().Start(depOp, m_location, null, instantiateParameters);
+                var depOp = loadProvider.Provide<TObject>(m_location, loadDependencyOperation);
+                return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>().Start(depOp, m_location, null, instantiateParameters);
             }
         }
     }

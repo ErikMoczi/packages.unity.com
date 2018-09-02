@@ -90,9 +90,9 @@ namespace UnityEngine.ResourceManagement
             }
         }
 
-        public override IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
+        public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
-            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
+            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
             return operation.Start(location);
         }
 

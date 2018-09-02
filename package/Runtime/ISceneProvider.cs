@@ -19,6 +19,6 @@ namespace UnityEngine.ResourceManagement
         /// </summary>
         /// <returns>An async operation for the scene, completed when the scene is unloaded.</returns>
         /// <param name="location">Location to unload.</param>
-        IAsyncOperation<Scene> ReleaseSceneAsync(IResourceLocation location);
+        IAsyncOperation<Scene> ReleaseSceneAsync(IResourceLocation location, Scene scene);
     }
 }

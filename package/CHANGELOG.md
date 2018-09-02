@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.0.14-preview] - 2018-04-13
+ - added tests
+ - fixed bugs
+ - major API rewrite
+	- simplified RM APIs to only deal with IResourceLocations
+	- IResourceLocator interface moved to Addressables
+	- all API that deals with addresses or keys have been moved to Addressables
+	- LoadDependencies APIs moved to Addressables
+	- LoadX APIs renamed to ProvideX and ReleaseX
+
 ## [2.0.13-preview] - 2018-04-04
 - moved variable expansion of location data to startup 
 - fixed sprite loading in virtual mode

@@ -27,9 +27,9 @@ namespace UnityEngine.ResourceManagement.Diagnostics
         }
 
         public static string EventCategory = "ResourceManagerEvent";
-        public static void PostEvent(ResourceManagerEventCollector.EventType type, object context, int eventValue)
+        public static void PostEvent(EventType type, object context, int eventValue)
         {
-            if (!ResourceManager.s_postEvents)
+            if (!DiagnosticEventCollector.ProfileEvents)
                 return;
             var parent = "";
             var id = context.ToString();
