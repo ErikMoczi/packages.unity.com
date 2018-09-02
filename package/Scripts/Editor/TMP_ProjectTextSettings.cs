@@ -2,16 +2,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using TMPro;
 
-namespace UnityEditor.TextCore
+
+namespace TMPro
 {
 
     public static class TMP_ProjectTextSettings
     {
 
         // Open Project Text Settings
-        [MenuItem("Edit/Project Settings/Text", false, 300)]
+        [MenuItem("Window/TextMeshPro/TMP Settings", false, 2000)]
         public static void SelectProjectTextSettings()
         {
             TMP_Settings textSettings = TMP_Settings.instance;

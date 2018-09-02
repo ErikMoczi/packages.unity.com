@@ -119,7 +119,7 @@ namespace TMPro
                 string guid = packageGUIDs[i];
                 string assetFilePath = AssetDatabase.GUIDToAssetPath(guid);
                 string assetMetaFilePath = AssetDatabase.GetTextMetaFilePathFromAssetPath(assetFilePath);
-                System.Type assetType = AssetDatabase.GetMainAssetTypeAtPath(assetFilePath);
+                //System.Type assetType = AssetDatabase.GetMainAssetTypeAtPath(assetFilePath);
 
                 AssetRecord assetRecord;
                 assetRecord.oldGuid = guid;
@@ -215,7 +215,7 @@ namespace TMPro
 
                 string guid = packageGUIDs[i];
                 string assetFilePath = AssetDatabase.GUIDToAssetPath(guid);
-                string assetMetaFilePath = AssetDatabase.GetTextMetaFilePathFromAssetPath(assetFilePath);
+                //string assetMetaFilePath = AssetDatabase.GetTextMetaFilePathFromAssetPath(assetFilePath);
 
                 //ObjectIdentifier[] localIdentifider = BundleBuildInterface.GetPlayerObjectIdentifiersInAsset(new GUID(guid), BuildTarget.NoTarget);
                 //System.Type[] types = BundleBuildInterface.GetTypeForObjects(localIdentifider);
@@ -240,7 +240,7 @@ namespace TMPro
                 data.assetRecords.Add(record);
 
                 // Read the meta file for the given asset.
-                string assetMetaFile = File.ReadAllText(projectPath + "/" + assetMetaFilePath);
+                //string assetMetaFile = File.ReadAllText(projectPath + "/" + assetMetaFilePath);
 
                 //assetMetaFile = assetMetaFile.Replace("guid: " + guid, "guid: " + newGUID);
 
