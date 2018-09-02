@@ -279,10 +279,16 @@ namespace TMPro
             m_IsAlreadyScanningProject = false;
         }
 
+
+        /// <summary>
+        /// 
+        /// </summary>
         private static void UpdateProjectFiles()
         {
             // Make sure Asset Serialization mode is set to ForceText with Visible Meta Files.
             SetProjectSerializationAndSourceControlModes();
+
+            string projectPath = Path.GetFullPath("Assets/..");
 
             // Display dialogue to show user a list of project files that will be modified upon their consent.
             if (EditorUtility.DisplayDialog("Save Modified Asset(s)?", "Are you sure you want to save all modified assets?", "YES", "NO"))
@@ -290,11 +296,11 @@ namespace TMPro
                 for (int i = 0; i < m_ModifiedAssetList.Count; i++)
                 {
                     // Make sure all file streams that might have been opened by Unity are closed.
-                    AssetDatabase.UnloadAllFileStreams();
+                    AssetDatabase.ReleaseCachedFileHandles();
 
                     Debug.Log("Writing asset file [" + m_ModifiedAssetList[i].assetFilePath + "].");
 
-                    //File.WriteAllText(projectPath + "/" + modifiedAssetList[i].assetFilePath, modifiedAssetList[i].assetDataFile);
+                    File.WriteAllText(projectPath + "/" + m_ModifiedAssetList[i].assetFilePath, m_ModifiedAssetList[i].assetDataFile);
                 }
             }
 
@@ -305,8 +311,8 @@ namespace TMPro
 
             // Restore project Asset Serialization and Source Control modes.
             RestoreProjectSerializationAndSourceControlModes();
-
         }
+
 
         /// <summary>
         /// Change project asset serialization mode to ForceText (if necessary)
@@ -706,7 +712,7 @@ namespace TMPro
                 for (int i = 0; i < modifiedAssetList.Count; i++)
                 {
                     // Make sure all file streams that might have been opened by Unity are closed.
-                    AssetDatabase.UnloadAllFileStreams();
+                    AssetDatabase.ReleaseCachedFileHandles();
 
                     Debug.Log("Writing asset file [" + modifiedAssetList[i].assetFilePath + "].");
 

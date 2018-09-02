@@ -1,6 +1,6 @@
 {
 	"name": "com.unity.textmeshpro",
-	"version": "1.0.19",
+	"version": "1.0.20",
 	"unity": "2018.1",
 	"description": "UPM version of TextMesh Pro",
 	"keywords": ["TextMeshPro", "TextMesh Pro", "Text", "SDF"],
