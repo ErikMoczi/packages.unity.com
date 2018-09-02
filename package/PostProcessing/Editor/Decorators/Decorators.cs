@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.Rendering.PostProcessing;
 
 namespace UnityEditor.Rendering.PostProcessing
 {
@@ -26,13 +25,13 @@ namespace UnityEditor.Rendering.PostProcessing
             return false;
         }
     }
-    
+
     [Decorator(typeof(UnityEngine.Rendering.PostProcessing.MinAttribute))]
     public sealed class MinDecorator : AttributeDecorator
     {
         public override bool OnGUI(SerializedProperty property, SerializedProperty overrideState, GUIContent title, Attribute attribute)
         {
-            var attr = (MinAttribute)attribute;
+            var attr = (UnityEngine.Rendering.PostProcessing.MinAttribute)attribute;
 
             if (property.propertyType == SerializedPropertyType.Float)
             {
@@ -51,13 +50,13 @@ namespace UnityEditor.Rendering.PostProcessing
             return false;
         }
     }
-    
+
     [Decorator(typeof(UnityEngine.Rendering.PostProcessing.MaxAttribute))]
     public sealed class MaxDecorator : AttributeDecorator
     {
         public override bool OnGUI(SerializedProperty property, SerializedProperty overrideState, GUIContent title, Attribute attribute)
         {
-            var attr = (MaxAttribute)attribute;
+            var attr = (UnityEngine.Rendering.PostProcessing.MaxAttribute)attribute;
 
             if (property.propertyType == SerializedPropertyType.Float)
             {
@@ -76,13 +75,13 @@ namespace UnityEditor.Rendering.PostProcessing
             return false;
         }
     }
-    
+
     [Decorator(typeof(UnityEngine.Rendering.PostProcessing.MinMaxAttribute))]
     public sealed class MinMaxDecorator : AttributeDecorator
     {
         public override bool OnGUI(SerializedProperty property, SerializedProperty overrideState, GUIContent title, Attribute attribute)
         {
-            var attr = (MinMaxAttribute)attribute;
+            var attr = (UnityEngine.Rendering.PostProcessing.MinMaxAttribute)attribute;
 
             if (property.propertyType == SerializedPropertyType.Float)
             {
@@ -120,6 +119,9 @@ namespace UnityEditor.Rendering.PostProcessing
             if (property.propertyType != SerializedPropertyType.Color)
                 return false;
 
+#if UNITY_2018_1_OR_NEWER
+            property.colorValue = EditorGUILayout.ColorField(title, property.colorValue, true, attr.showAlpha, attr.hdr);
+#else
             ColorPickerHDRConfig hdrConfig = null;
 
             if (attr.hdr)
@@ -133,6 +135,8 @@ namespace UnityEditor.Rendering.PostProcessing
             }
 
             property.colorValue = EditorGUILayout.ColorField(title, property.colorValue, true, attr.showAlpha, attr.hdr, hdrConfig);
+#endif
+
             return true;
         }
     }
