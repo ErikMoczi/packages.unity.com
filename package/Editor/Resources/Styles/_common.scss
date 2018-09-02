@@ -386,8 +386,8 @@ $toolbar-height: 18;
 		.popup {
 			@include padding(0, 0, 0, 8);
 			@include margin-box(0);
-			border-top-left-radius: 0;
-			border-bottom-left-radius: 0;
+			border-top-width-left-radius: 0;
+			border-bottom-width-left-radius: 0;
 		}
 
 		.button {
@@ -406,10 +406,10 @@ $toolbar-height: 18;
 			border-bottom-width: 0;
 			background-image: $background-mid-button;
 
-			border-top-right-radius: 0;
-			border-bottom-right-radius: 0;
-			border-top-left-radius: 0;
-			border-bottom-left-radius: 0;
+			border-top-width-right-radius: 0;
+			border-bottom-width-right-radius: 0;
+			border-top-width-left-radius: 0;
+			border-bottom-width-left-radius: 0;
 
 			&.selected {
 				background-image: $background-mid-button-selected;
@@ -657,7 +657,7 @@ $toolbar-height: 18;
 
 							&:hover {
 								.textElement {
-									text-color: $unity-text-color;
+									color: $unity-text-color;
 								}
 							}
 
@@ -674,7 +674,7 @@ $toolbar-height: 18;
 						@include padding(2, 4, 3, 4);
 						right: -3;
 						&:hover {
-							text-color: $unity-text-color;
+							color: $unity-text-color;
 						}
 					}
 				}
@@ -866,9 +866,8 @@ $toolbar-height: 18;
 			}
 	
 			#loadingText {
-				margin-left: $spinner-normal-size;
 				padding-left: 2;
-				font-style: italic;
+				-unity-font-style: italic;
 	
 				&.icon {
 					margin-left: 0;
@@ -880,7 +879,7 @@ $toolbar-height: 18;
 			font-size: 16;
 			background-image: none;
 			@include margin(0, 0, -2, 0);
-			@include padding(2, 2, 2, 2);
+			@include padding(3, 6, 6, 6);
 			border-color: rgba(0, 0, 0, 0.5);
 			@include border(0, 1, 0, 0);
 		}

@@ -4,10 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2018-07-05
+## [2.0.0] - 2018-08-10
 - Always mark a package as up to date when it's not installed
 - Add "Advanced" menu
-- Hide preview packages by default in stable Unity releases
+- Hide preview packages by default
 - Labelled packages with major version '0' as preview
 - Fixed cropped error message
 - Disabled downgrading Package Manager UI to incompatible versions
@@ -87,7 +87,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Showed the latest version and description in tab "Install" instead of the current version
 - Added "Recommended" tag properly
 - Added "Go back to" when latest version is less than current one
-- Removed "Update to" when current version is greater than lastest one. (case for embedded or local packages)
+- Removed "Update to" when current version is greater than latest one. (case for embedded or local packages)
 - Replaced packages action button label:
 	- "Install" instead of "Add" for packages
 	- "Enable/Disable" instead of "Add/Remove" for built-in packages

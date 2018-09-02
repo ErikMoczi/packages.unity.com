@@ -30,6 +30,10 @@ namespace UnityEditor.PackageManager.UI
                 displayName = new CultureInfo("en-US").TextInfo.ToTitleCase(displayName);
             }
 
+            string author = info.author.name;
+            if (string.IsNullOrEmpty(info.author.name) && info.name.StartsWith("com.unity."))
+                author = "Unity Technologies Inc.";
+
             var lastCompatible = info.versions.latestCompatible;
             var versions = new List<string>();
             versions.AddRange(info.versions.compatible);
@@ -91,7 +95,7 @@ namespace UnityEditor.PackageManager.UI
                     Group = GroupName(info.source),
                     State = state,
                     Origin = isBuiltIn || isVersionCurrent ? info.source : PackageSource.Registry,
-                    Author = null,
+                    Author = author,
                     Info = info
                 };
                 

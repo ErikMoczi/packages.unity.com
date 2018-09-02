@@ -119,7 +119,7 @@ namespace UnityEditor.PackageManager.UI
             var showPreviewPackages = PackageManagerPrefs.ShowPreviewPackages;
             if (!showPreviewPackages && PackageManagerPrefs.ShowPreviewPackagesWarning)
             {
-                const string message = "Preview packages are not verified with Unity, may be unstable, and should not be used in production. Are you sure you want to show preview packages?";
+                const string message = "Preview packages are not verified with Unity, may be unstable, and are unsupported in production. Are you sure you want to show preview packages?";
                 if (!EditorUtility.DisplayDialog("", message, "Yes", "No"))
                     return;
                 PackageManagerPrefs.ShowPreviewPackagesWarning = false;

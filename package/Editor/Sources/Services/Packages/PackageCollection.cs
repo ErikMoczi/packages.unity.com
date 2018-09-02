@@ -35,6 +35,10 @@ namespace UnityEditor.PackageManager.UI
         private bool listOperationOngoing;
         private bool listOperationOfflineOngoing;
 
+        private IListOperation listOperationOffline;
+        private IListOperation listOperation;
+        private ISearchOperation searchOperation;
+
         public readonly OperationSignal<ISearchOperation> SearchSignal = new OperationSignal<ISearchOperation>();
         public readonly OperationSignal<IListOperation> ListSignal = new OperationSignal<IListOperation>();
 
@@ -147,8 +151,10 @@ namespace UnityEditor.PackageManager.UI
         internal void FetchListOfflineCache(bool forceRefetch = false)
         {
             if (!forceRefetch && (listOperationOfflineOngoing || listPackagesOffline.Any())) return;
+            if (listOperationOffline != null)
+                listOperationOffline.Cancel();
             listOperationOfflineOngoing = true;
-            var listOperationOffline = OperationFactory.Instance.CreateListOperation(true);
+            listOperationOffline = OperationFactory.Instance.CreateListOperation(true);
             listOperationOffline.OnOperationFinalized += () =>
             {
                 listOperationOfflineOngoing = false;
@@ -166,8 +172,10 @@ namespace UnityEditor.PackageManager.UI
         internal void FetchListCache(bool forceRefetch = false)
         {
             if (!forceRefetch && (listOperationOngoing || listPackages.Any())) return;
+            if (listOperation != null)
+                listOperation.Cancel();
             listOperationOngoing = true;
-            var listOperation = OperationFactory.Instance.CreateListOperation();
+            listOperation = OperationFactory.Instance.CreateListOperation();
             listOperation.OnOperationFinalized += () =>
             {
                 listOperationOngoing = false;
@@ -181,8 +189,10 @@ namespace UnityEditor.PackageManager.UI
         internal void FetchSearchCache(bool forceRefetch = false)
         {
             if (!forceRefetch && (searchOperationOngoing || searchPackages.Any())) return;
+            if (searchOperation != null)
+                searchOperation.Cancel();
             searchOperationOngoing = true;
-            var searchOperation = OperationFactory.Instance.CreateSearchOperation();
+            searchOperation = OperationFactory.Instance.CreateSearchOperation();
             searchOperation.OnOperationFinalized += () =>
             {
                 searchOperationOngoing = false;

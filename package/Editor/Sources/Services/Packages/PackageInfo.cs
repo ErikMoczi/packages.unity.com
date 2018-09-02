@@ -65,7 +65,7 @@ namespace UnityEditor.PackageManager.UI
             else if  (packageName == "com.unity.purchasing")
                 redirectUrl = "https://docs.unity3d.com/Manual/UnityIAP.html";
             else if  (packageName == "com.unity.standardevents")
-                redirectUrl = "https://docs.unity3d.com/Manual/UnityAnalyticsCustomEvents.html";
+                redirectUrl = "https://docs.unity3d.com/Manual/UnityAnalyticsStandardEvents.html";
             else if  (packageName == "com.unity.xiaomi")
                 redirectUrl = "https://unity3d.com/cn/partners/xiaomi/guide";
             else if (packageName == "com.unity.shadergraph")

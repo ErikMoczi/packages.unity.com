@@ -163,6 +163,7 @@ namespace UnityEditor.PackageManager.UI
             {
                 AddSignal.Operation = null;
                 operation.OnOperationFinalized -= OnAddOperationFinalizedEvent;
+                PackageCollection.Instance.FetchListOfflineCache(true);
             };
 
             operation.OnOperationFinalized += OnAddOperationFinalizedEvent;
@@ -209,6 +210,7 @@ namespace UnityEditor.PackageManager.UI
             {
                 RemoveSignal.Operation = null;
                 operation.OnOperationFinalized -= OnRemoveOperationFinalizedEvent;
+                PackageCollection.Instance.FetchListOfflineCache(true);
             };
 
             operation.OnOperationFinalized += OnRemoveOperationFinalizedEvent;

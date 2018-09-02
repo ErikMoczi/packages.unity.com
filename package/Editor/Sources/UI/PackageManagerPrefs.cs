@@ -10,13 +10,13 @@ namespace UnityEditor.PackageManager.UI
 
         public static bool ShowPreviewPackages
         {
-            get { return EditorPrefs.GetBool(showPreviewPackagesPrefs, InternalEditorUtility.IsUnityBeta()); }
+            get { return EditorPrefs.GetBool(showPreviewPackagesPrefs, false); }
             set { EditorPrefs.SetBool(showPreviewPackagesPrefs, value); }
         }
 
         public static bool ShowPreviewPackagesWarning
         {
-            get { return EditorPrefs.GetBool(showPreviewPackagesWarningPrefs, !InternalEditorUtility.IsUnityBeta()); }
+            get { return EditorPrefs.GetBool(showPreviewPackagesWarningPrefs, true); }
             set { EditorPrefs.SetBool(showPreviewPackagesWarningPrefs, value); }
         }
     }

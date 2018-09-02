@@ -263,8 +263,8 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             const string name = "TestOutdated";
 
-            var packageA = Single(PackageSource.Registry, name, "0.0.1");
-            var packageB = Single(PackageSource.Registry, name, "0.0.2");
+            var packageA = Single(PackageSource.Registry, name, "1.0.1");
+            var packageB = Single(PackageSource.Registry, name, "1.0.2");
             packageA.State = PackageState.Outdated;
             packageB.IsCurrent = true;
             packageB.IsLatest = false;

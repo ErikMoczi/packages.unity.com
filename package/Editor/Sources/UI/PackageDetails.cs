@@ -174,9 +174,10 @@ namespace UnityEditor.PackageManager.UI
                 var isBuiltIn = DisplayPackage.IsBuiltIn;
                 if (isBuiltIn)
                     DetailModuleReference.text = DisplayPackage.BuiltInDescription;
-                
-                var author = string.IsNullOrEmpty(DisplayPackage.Author) ? "Unity Technologies Inc." : DisplayPackage.Author;
-                DetailAuthor.text = string.Format("Author: {0}", author);
+
+                DetailAuthor.text = "";
+                if (!string.IsNullOrEmpty(DisplayPackage.Author))
+                    DetailAuthor.text = string.Format("Author: {0}", DisplayPackage.Author);
 
                 UIUtils.SetElementDisplay(DetailDesc, !isBuiltIn);
                 UIUtils.SetElementDisplay(DetailVersion, !isBuiltIn);
@@ -467,6 +468,9 @@ namespace UnityEditor.PackageManager.UI
             {
                 enableButton = false;
                 enableVersionButton = false;
+
+                EditorApplication.update -= CheckCompilationStatus;
+                EditorApplication.update += CheckCompilationStatus;
             }
             
             var button = isBuiltIn ? UpdateBuiltIn : UpdateButton;
@@ -496,11 +500,27 @@ namespace UnityEditor.PackageManager.UI
 
                 var enableButton = visibleFlag && !EditorApplication.isCompiling && !inprogress && !Package.AddRemoveOperationInProgress;
 
+                if (EditorApplication.isCompiling)
+                {
+                    EditorApplication.update -= CheckCompilationStatus;
+                    EditorApplication.update += CheckCompilationStatus;
+                }
+
                 RemoveButton.SetEnabled(enableButton);
                 RemoveButton.text = GetButtonText(action, inprogress);                   
             }
 
             UIUtils.SetElementDisplay(RemoveButton, visibleFlag);
+        }
+
+        private void CheckCompilationStatus()
+        {
+            if (EditorApplication.isCompiling)
+                return;
+
+            RefreshAddButton();
+            RefreshRemoveButton();
+            EditorApplication.update -= CheckCompilationStatus;
         }
 
         private static string GetButtonText(PackageAction action, bool inProgress = false, SemVersion version = null)

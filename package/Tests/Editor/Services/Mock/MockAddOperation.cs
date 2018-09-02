@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace UnityEditor.PackageManager.UI.Tests
 {
@@ -28,6 +29,15 @@ namespace UnityEditor.PackageManager.UI.Tests
             }
             else
             {
+                // on add package success, add the package to the list and set it to current
+                var list = Factory.Packages.ToList();
+                list.RemoveAll(p => p.PackageId.ToLower() == packageInfo.PackageId.ToLower());
+                list.Add(packageInfo);
+                Factory.Packages = list;
+
+                Factory.Packages.ByName(packageInfo.Name).SetCurrent(false);
+                packageInfo.IsCurrent = true;
+
                 if (doneCallbackAction != null)
                     doneCallbackAction(PackageInfo);
 
