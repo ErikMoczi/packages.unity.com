@@ -7,6 +7,37 @@ namespace UnityEngine.ResourceManagement
 {
     public static class ResourceManager
     {
+
+        public class UnknownResourceProviderException : Exception
+        {
+            public IResourceLocation Location { get; private set; }
+            public UnknownResourceProviderException(IResourceLocation location)
+            {
+                Location = location;
+            }
+        }
+        public class UnknownResourceLocationException<TAddress> : Exception
+        {
+            public TAddress Address { get; private set; }
+            public UnknownResourceLocationException(TAddress address)
+            {
+                Address = address;
+            }
+        }
+        public class ResourceProviderFailedException : Exception
+        {
+            public IResourceLocation Location { get; private set; }
+            public IResourceProvider Provider { get; private set; }
+            public IAsyncOperation<IList<object>> DependencyOperation { get; private set; }
+
+            public ResourceProviderFailedException(IResourceProvider provider, IResourceLocation location, IAsyncOperation<IList<object>> dependencyOperation)
+            {
+                Provider = provider;
+                Location = location;
+                DependencyOperation = dependencyOperation;
+            }
+        }
+
         static List<IResourceLocator> s_resourceLocators = new List<IResourceLocator>();
         static List<IResourceProvider> s_resourceProviders = new List<IResourceProvider>();
         static List<IAsyncOperation> s_initializationOperations = new List<IAsyncOperation>();
@@ -23,22 +54,15 @@ namespace UnityEngine.ResourceManagement
         /// Event that can be used to determine when the initialization operations have completed
         /// </summary>
         /// <value>The event.</value>
-        static public event Action initializationComplete
+        static public event Action InitializationComplete
         {
             add
             {
+                if (value == null)
+                    throw new ArgumentNullException("value");
+
                 if (s_initializationOperations.Count == 0)
-                {
-                    try
-                    {
-                        if(value != null)
-                            value();
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogException(e);
-                    }
-                }
+                    DelayedActionManager.AddAction(value, null);
                 else
                     s_initializationComplete += value;
             }
@@ -51,6 +75,7 @@ namespace UnityEngine.ResourceManagement
         static void Release_Internal<TObject>(IResourceLocation location, TObject asset)
             where TObject : class
         {
+            Debug.Assert(location != null, "ResourceManager.Release_Internal - location == null.");
             if (location.Dependencies != null)
             {
                 for (int i = 0; i < location.Dependencies.Count; i++)
@@ -64,23 +89,36 @@ namespace UnityEngine.ResourceManagement
         static Dictionary<Type, object> s_loadAsyncInternalCache = new Dictionary<Type, object>();
         static Func<IResourceLocation, IAsyncOperation<TObject>> GetLoadAsyncInternalFunc<TObject>() where TObject : class
         {
+            Debug.Assert(s_loadAsyncInternalCache != null, "ResourceManager.GetLoadAsyncInternalFunc - s_loadAsyncInternalCache == null.");
+
             object result;
             if (!s_loadAsyncInternalCache.TryGetValue(typeof(TObject), out result))
                 s_loadAsyncInternalCache.Add(typeof(TObject), result = (Func<IResourceLocation, IAsyncOperation<TObject>>)LoadAsync_Internal<TObject>);
             return result as Func<IResourceLocation, IAsyncOperation<TObject>>;
         }
 
-
         static Dictionary<Type, object> s_loadAsyncInternalMapCache = new Dictionary<Type, object>();
         static IAsyncOperation<TObject> LoadAsync_Internal<TObject>(IResourceLocation location)
             where TObject : class
         {
+            Debug.Assert(s_loadAsyncInternalMapCache != null, "ResourceManager.LoadAsync_Internal - s_loadAsyncInternalMapCache == null.");
+            if (location == null)
+                throw new ArgumentNullException("location");
+
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncRequest, location, Time.frameCount);
             var groupOp = StartLoadGroupOperation(location.Dependencies, GetLoadAsyncInternalFunc<object>(), null);
-            var op = GetResourceProvider<TObject>(location).ProvideAsync<TObject>(location, groupOp);
+            Debug.Assert(groupOp != null, "ResourceManager.LoadAsync_Internal - groupOp == null.");
 
-            if (!(op.Context is IResourceLocation))
-                Debug.LogError("IAsyncOperation.context is not an IResourceLocation for " + location.InternalId + ", op.context=" + op.Context);
+            var provider = GetResourceProvider<TObject>(location);
+            if (provider == null)
+                throw new UnknownResourceProviderException(location);
+
+            var operation = provider.ProvideAsync<TObject>(location, groupOp);
+            operation.Validate();
+            if (operation == null)
+                throw new ResourceProviderFailedException(provider, location, groupOp);
+
+            //Debug.Assert(operation.Context is IResourceLocation, "IAsyncOperation.context is not an IResourceLocation for " + location.InternalId + ", op.context=" + operation.Context);
 
             object result;
             if (!s_loadAsyncInternalMapCache.TryGetValue(typeof(TObject), out result))
@@ -93,13 +131,15 @@ namespace UnityEngine.ResourceManagement
                 s_loadAsyncInternalMapCache.Add(typeof(TObject), result = action);
             }
 
-            op.completed += result as Action<IAsyncOperation<TObject>>;
-            return op;
+            operation.Completed += result as Action<IAsyncOperation<TObject>>;
+            return operation;
         }
 
         static Dictionary<Type, object> s_instantiateAsyncInternalCache = new Dictionary<Type, object>();
         static Func<IResourceLocation, InstantiationParameters, IAsyncOperation<TObject>> GetInstantiateAsyncInternalFunc<TObject>() where TObject : Object
         {
+            Debug.Assert(s_instantiateAsyncInternalCache != null, "ResourceManager.GetInstantiateAsyncInternalFunc - s_instantiateAsyncInternalCache == null.");
+
             object result;
             if (!s_instantiateAsyncInternalCache.TryGetValue(typeof(TObject), out result))
                 s_instantiateAsyncInternalCache.Add(typeof(TObject), result = (Func<IResourceLocation, InstantiationParameters, IAsyncOperation<TObject>>)InstantiateAsync_Internal<TObject>);
@@ -110,45 +150,69 @@ namespace UnityEngine.ResourceManagement
         static IAsyncOperation<TObject> InstantiateAsync_Internal<TObject>(IResourceLocation location, InstantiationParameters instantiationParameters)
             where TObject : Object
         {
+            Debug.Assert(s_instantiateAsyncInternalMapCache != null, "ResourceManager.InstantiateAsync_Internal - s_instantiateAsyncInternalMapCache == null.");
+
+            if (location == null)
+                throw new ArgumentNullException("location");
+
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncRequest, location, Time.frameCount);
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncRequest, location, Time.frameCount);
 
             var groupOp = StartLoadGroupOperation(location.Dependencies, GetLoadAsyncInternalFunc<object>(), null);
-            var op = InstanceProvider.ProvideInstanceAsync<TObject>(GetResourceProvider<TObject>(location), location, groupOp, instantiationParameters);
-            if(!(op.Context is IResourceLocation))
-                Debug.LogError("IAsyncOperation.context is not an IResourceLocation for " + location.InternalId + ", op.context="+op.Context);
+            Debug.Assert(groupOp != null, "ResourceManager.InstantiateAsync_Internal - groupOp == null.");
+
+            var provider = GetResourceProvider<TObject>(location);
+            if (provider == null)
+                throw new UnknownResourceProviderException(location);
+
+            var operation = InstanceProvider.ProvideInstanceAsync<TObject>(provider, location, groupOp, instantiationParameters);
+            if (operation == null)
+                throw new ResourceProviderFailedException(provider, location, groupOp);
+
+            Debug.Assert(operation.Context is IResourceLocation, "IAsyncOperation.context is not an IResourceLocation for " + location.InternalId + ", op.context=" + operation.Context);
 
             object result;
             if (!s_instantiateAsyncInternalMapCache.TryGetValue(typeof(TObject), out result))
             {
                 Action<IAsyncOperation<TObject>> action = (op2) =>
                 {
-                    if (op2.Result != null && !s_instanceToLocationMap.ContainsKey(op2.Result))
-                        s_instanceToLocationMap.Add(op2.Result, op2.Context as IResourceLocation);
+                    if (op2.Result != null)
+                    {
+                        if (!s_instanceToLocationMap.ContainsKey(op2.Result))
+                        {
+                            s_instanceToLocationMap.Add(op2.Result, op2.Context as IResourceLocation);
+                        }
+                        else
+                        {
+                            Debug.Log("FAILED Added instance " + op2.Result.GetInstanceID() + " loc: " + op2.Context);
+                        }
+                    }
                 };
                 s_instantiateAsyncInternalMapCache.Add(typeof(TObject), result = action);
             }
 
-            op.completed += result as Action<IAsyncOperation<TObject>>;
-            return op;
+            operation.Completed += result as Action<IAsyncOperation<TObject>>;
+            return operation;
         }
 
-        static Dictionary<Type, object> s_releaseCache = new Dictionary<Type, object>();
+       // static Dictionary<Type, object> s_releaseCache = new Dictionary<Type, object>();
         static LoadGroupOperation<TObject> StartLoadGroupOperation<TObject>(IList<IResourceLocation> locations, Func<IResourceLocation, IAsyncOperation<TObject>> loadFunction, Action<IAsyncOperation<TObject>> onComplete)
             where TObject : class
         {
+       //     Debug.Assert(s_releaseCache != null, "ResourceManager.StartLoadGroupOperation - s_releaseCache == null.");
+
             LoadGroupOperation<TObject> groupOp;
 
             if (locations != null && locations.Count > 0)
                 groupOp = AsyncOperationCache.Instance.Acquire<LoadGroupOperation<TObject>, TObject>();
             else
                 groupOp = AsyncOperationCache.Instance.Acquire<EmptyGroupOperation<TObject>, TObject>();
-            
+            /*
             object releaseAction = null;
             if (!s_releaseCache.TryGetValue(typeof(TObject), out releaseAction))
                 s_releaseCache.Add(typeof(TObject), releaseAction = (Action<IAsyncOperation<IList<TObject>>>)AsyncOperationCache.Instance.Release<TObject>);
-
-            groupOp.Start(locations, loadFunction, onComplete).completed += releaseAction as Action<IAsyncOperation<IList<TObject>>>;
+                */
+            groupOp.Start(locations, loadFunction, onComplete);//.Completed += releaseAction as Action<IAsyncOperation<IList<TObject>>>;
             return groupOp;
         }
 
@@ -156,13 +220,27 @@ namespace UnityEngine.ResourceManagement
         /// Gets the list of configured <see cref="IResourceLocator"/> objects. Resource Locators are used to find <see cref="IResourceLocation"/> objects from user-defined typed keys.
         /// </summary>
         /// <value>The resource locators list.</value>
-        public static IList<IResourceLocator> ResourceLocators { get { return s_resourceLocators; } }
+        public static IList<IResourceLocator> ResourceLocators
+        {
+            get
+            {
+                Debug.Assert(s_resourceLocators != null);
+                return s_resourceLocators;
+            }
+        }
 
         /// <summary>
         /// Gets the list of configured <see cref="IResourceProvider"/> objects. Resource Providers handle load and release operations for <see cref="IResourceLocation"/> objects.
         /// </summary>
         /// <value>The resource providers list.</value>
-        public static IList<IResourceProvider> ResourceProviders { get { return s_resourceProviders; } }
+        public static IList<IResourceProvider> ResourceProviders
+        {
+            get
+            {
+                Debug.Assert(s_resourceProviders != null);
+                return s_resourceProviders;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the <see cref="IInstanceProvider"/>. The instance provider handles instatiating and releasing prefabs.
@@ -184,15 +262,16 @@ namespace UnityEngine.ResourceManagement
         public static void QueueInitializationOperation(IAsyncOperation operation)
         {
             if (operation == null)
-                return;
+                throw new ArgumentNullException("operation");
+
             s_initializationOperations.Add(operation);
-            operation.completed += (op2) => RemoveInitializationOperation(op2);
+            operation.Completed += (op2) => RemoveInitializationOperation(op2);
         }
 
         internal static void RemoveInitializationOperation(IAsyncOperation operation)
         {
             if (operation == null)
-                return;
+                throw new ArgumentNullException("operation");
             s_initializationOperations.Remove(operation);
             if (s_initializationOperations.Count == 0 && s_initializationComplete != null)
                 s_initializationComplete();
@@ -247,6 +326,10 @@ namespace UnityEngine.ResourceManagement
         public static void Release<TObject>(TObject asset)
             where TObject : class
         {
+            Debug.Assert(s_assetToLocationMap != null, "ResourceManager.Release - s_assetToLocationMap == null.");
+            if (asset == null)
+                throw new ArgumentNullException("asset");
+
             IResourceLocation loc = null;
             if (!s_assetToLocationMap.TryGetValue(asset, out loc))
             {
@@ -265,12 +348,20 @@ namespace UnityEngine.ResourceManagement
         public static void ReleaseInstance<TObject>(TObject instance)
             where TObject : Object
         {
+            Debug.Assert(s_instanceToLocationMap != null, "ResourceManager.ReleaseInstance - s_instanceToLocationMap == null.");
+
+            if (InstanceProvider == null)
+                throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
+            if (instance == null)
+                throw new ArgumentNullException("instance");
             IResourceLocation loc = null;
+
             if (!s_instanceToLocationMap.TryGetValue(instance, out loc))
             {
-                Debug.LogWarning("Unable to find location for instantiated object " + instance);
+                Debug.LogWarning("Unable to find location for instantiated object " + instance.GetInstanceID());
                 return;
             }
+
 
             s_instanceToLocationMap.Remove(instance);
             if (loc.Dependencies != null)
@@ -290,24 +381,26 @@ namespace UnityEngine.ResourceManagement
             Func<IResourceLocation, IAsyncOperation<TObject>> m_asyncFunc;
             public IAsyncOperation<TObject> Start(TKey key, List<IAsyncOperation> dependencies, Func<IResourceLocation, IAsyncOperation<TObject>> asyncFunction)
             {
+                Validate();
                 m_key = key;
                 m_asyncFunc = asyncFunction;
                 dependencyCount = dependencies.Count;
                 foreach (var d in dependencies)
-                    d.completed += OnDependenciesComplete;
+                    d.Completed += OnDependenciesComplete;
                 return this;
             }
 
             void OnDependenciesComplete(IAsyncOperation op)
             {
+                Validate();
                 dependencyCount--;
                 if (dependencyCount == 0)
                 {
-                    m_asyncFunc(GetResourceLocation(m_key)).completed += (loadOp) =>
+                    m_asyncFunc(GetResourceLocation(m_key)).Completed += (loadOp) =>
                     {
                         SetResult(loadOp.Result);
                         InvokeCompletionEvent();
-                        AsyncOperationCache.Instance.Release<TObject>(this);
+                        ReleaseToCache();
                     };
                 }
             }
@@ -322,25 +415,27 @@ namespace UnityEngine.ResourceManagement
 
             public IAsyncOperation<TObject> Start(TKey key, List<IAsyncOperation> dependencies, Func<IResourceLocation, InstantiationParameters, IAsyncOperation<TObject>> asyncFunction, InstantiationParameters instantiateParameters)
             {
+                Validate();
                 m_key = key;
                 m_instParams = instantiateParameters;
                 m_asyncFunc = asyncFunction;
                 dependencyCount = dependencies.Count;
                 foreach (var d in dependencies)
-                    d.completed += OnDependenciesComplete;
+                    d.Completed += OnDependenciesComplete;
                 return this;
             }
 
             void OnDependenciesComplete(IAsyncOperation op)
             {
+                Validate();
                 dependencyCount--;
                 if (dependencyCount == 0)
                 {
-                    m_asyncFunc(GetResourceLocation(m_key), m_instParams).completed += (loadOp) =>
+                    m_asyncFunc(GetResourceLocation(m_key), m_instParams).Completed += (loadOp) =>
                     {
                         SetResult(loadOp.Result);
                         InvokeCompletionEvent();
-                        AsyncOperationCache.Instance.Release<TObject>(this);
+                        ReleaseToCache();
                     };
                 }
             }
@@ -355,18 +450,20 @@ namespace UnityEngine.ResourceManagement
             Func<IList<IResourceLocation>, Action<IAsyncOperation<TObject>>, InstantiationParameters, IAsyncOperation<IList<TObject>>> m_asyncFunc;
             public IAsyncOperation<IList<TObject>> Start(IList<TKey> keys, List<IAsyncOperation> dependencies, Func<IList<IResourceLocation>, Action<IAsyncOperation<TObject>>, InstantiationParameters, IAsyncOperation<IList<TObject>>> asyncFunction, Action<IAsyncOperation<TObject>> callback, InstantiationParameters instantiateParameters)
             {
+                Validate();
                 m_instParams = instantiateParameters;
                 m_callback = callback;
                 m_keys = keys;
                 m_asyncFunc = asyncFunction;
                 dependencyCount = dependencies.Count;
                 foreach (var d in dependencies)
-                    d.completed += OnDependenciesComplete;
+                    d.Completed += OnDependenciesComplete;
                 return this;
             }
 
             void OnDependenciesComplete(IAsyncOperation operation)
             {
+                Validate();
                 dependencyCount--;
                 if (dependencyCount == 0)
                 {
@@ -374,11 +471,11 @@ namespace UnityEngine.ResourceManagement
                     foreach (var key in m_keys)
                         locList.Add(GetResourceLocation(key));
 
-                    m_asyncFunc(locList, m_callback, m_instParams).completed += (loadOp) =>
+                    m_asyncFunc(locList, m_callback, m_instParams).Completed += (loadOp) =>
                     {
                         SetResult(loadOp.Result);
                         InvokeCompletionEvent();
-                        AsyncOperationCache.Instance.Release<TObject>(this);
+                        ReleaseToCache();
                     };
                 }
             }
@@ -387,6 +484,8 @@ namespace UnityEngine.ResourceManagement
 
         static IAsyncOperation<TObject> StartInternalAsyncOp<TObject, TKey>(TKey key, Func<IResourceLocation, IAsyncOperation<TObject>> asyncFunction)
         {
+            if (asyncFunction == null)
+                throw new ArgumentNullException("asyncFunction");
             var loc = GetResourceLocation(key);
             if (loc == null && s_initializationOperations.Count > 0)
             {
@@ -399,6 +498,8 @@ namespace UnityEngine.ResourceManagement
 
         static IAsyncOperation<TObject> StartInternalAsyncInstantiateOp<TObject, TKey>(TKey key, Func<IResourceLocation, InstantiationParameters, IAsyncOperation<TObject>> asyncFunction, InstantiationParameters instantiateParameters)
         {
+            if (asyncFunction == null)
+                throw new ArgumentNullException("asyncFunction");
             var loc = GetResourceLocation(key);
             if (loc == null && s_initializationOperations.Count > 0)
             {
@@ -416,16 +517,18 @@ namespace UnityEngine.ResourceManagement
             Func<IList<IResourceLocation>, IAsyncOperation<IList<TObject>>> m_asyncFunc;
             public IAsyncOperation<IList<TObject>> Start(IList<TKey> keys, List<IAsyncOperation> dependencies, Func<IList<IResourceLocation>, IAsyncOperation<IList<TObject>>> asyncFunction)
             {
+                Validate();
                 m_keys = keys;
                 m_asyncFunc = asyncFunction;
                 dependencyCount = dependencies.Count;
                 foreach (var d in dependencies)
-                    d.completed += OnDependenciesComplete;
+                    d.Completed += OnDependenciesComplete;
                 return this;
             }
 
             void OnDependenciesComplete(IAsyncOperation op)
             {
+                Validate();
                 dependencyCount--;
                 if (dependencyCount == 0)
                 {
@@ -433,11 +536,11 @@ namespace UnityEngine.ResourceManagement
                     foreach (var key in m_keys)
                         locList.Add(GetResourceLocation(key));
 
-                    m_asyncFunc(locList).completed += (loadOp) =>
+                    m_asyncFunc(locList).Completed += (loadOp) =>
                     {
                         SetResult(loadOp.Result);
                         InvokeCompletionEvent();
-                        AsyncOperationCache.Instance.Release<TObject>(this);
+                        ReleaseToCache();
                     };
                 }
             }
@@ -445,6 +548,11 @@ namespace UnityEngine.ResourceManagement
 
         static IAsyncOperation<IList<TObject>> StartInternalAsyncOp<TObject, TKey>(IList<TKey> keyList, Func<IList<IResourceLocation>, IAsyncOperation<IList<TObject>>> asyncFunction)
         {
+            Debug.Assert(s_initializationOperations != null, "ResourceManager.StartInternalAsyncOp - s_initializationOperations == null.");
+
+            if (asyncFunction == null)
+                throw new ArgumentNullException("asyncFunction");
+
             if (s_initializationOperations.Count > 0)
             {
                 var locationOp = AsyncOperationCache.Instance.Acquire<LocationListOperation<TKey, TObject>, object>();
@@ -494,6 +602,9 @@ namespace UnityEngine.ResourceManagement
         public static IAsyncOperation<IList<TObject>> LoadAllAsync<TObject, TKey>(IList<TKey> keys, Action<IAsyncOperation<TObject>> callback)
             where TObject : class
         {
+            if (keys == null)
+                throw new ArgumentNullException("keys");
+
             return StartInternalAsyncOp(keys, (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, GetLoadAsyncInternalFunc<TObject>(), callback); });
         }
 
@@ -519,7 +630,8 @@ namespace UnityEngine.ResourceManagement
         public static IAsyncOperation<IList<object>> PreloadDependenciesAllAsync<TKey>(IList<TKey> keys, Action<IAsyncOperation<object>> callback)
         {
             if (keys == null)
-                return new EmptyGroupOperation<object>();
+                throw new ArgumentNullException("keys");
+
             List<IResourceLocation> dependencyLocations = new List<IResourceLocation>();
             foreach (TKey adr in keys)
             {
@@ -540,16 +652,25 @@ namespace UnityEngine.ResourceManagement
         internal static IAsyncOperation<TObject> InstantiateAsync<TObject, TKey>(TKey key, InstantiationParameters instantiateParameters)
             where TObject : Object
         {
+            if (InstanceProvider == null)
+                throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
+
             return StartInternalAsyncInstantiateOp(key, GetInstantiateAsyncInternalFunc<TObject>(), instantiateParameters);
         }
 
         public static IAsyncOperation<TObject> InstantiateAsync<TObject, TKey>(TKey key, Transform parent = null, bool instantiateInWorldSpace = false) where TObject : Object
         {
+            if (InstanceProvider == null)
+                throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
+
             return StartInternalAsyncInstantiateOp(key, GetInstantiateAsyncInternalFunc<TObject>(), new InstantiationParameters(parent, instantiateInWorldSpace));
         }
 
         public static IAsyncOperation<TObject> InstantiateAsync<TObject, TKey>(TKey key, Vector3 position, Quaternion rotation, Transform parent = null) where TObject : Object
         {
+            if (InstanceProvider == null)
+                throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
+
             return StartInternalAsyncInstantiateOp(key, GetInstantiateAsyncInternalFunc<TObject>(), new InstantiationParameters(position, rotation, parent));
         }
 
@@ -564,12 +685,20 @@ namespace UnityEngine.ResourceManagement
         public static IAsyncOperation<IList<TObject>> InstantiateAllAsync<TObject, TKey>(IList<TKey> keys, Action<IAsyncOperation<TObject>> callback, Transform parent = null, bool instantiateInWorldSpace = false)
             where TObject : Object
         {
+            if(keys == null)
+                throw new ArgumentNullException("keys");
+
+            if (InstanceProvider == null)
+                throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
+
             return InstantiateAllAsync<TObject, TKey>(keys, callback, new InstantiationParameters(parent, instantiateInWorldSpace));
         }
 
         internal static IAsyncOperation<IList<TObject>> InstantiateAllAsync<TObject, TKey>(IList<TKey> keys, Action<IAsyncOperation<TObject>> callback, InstantiationParameters instantiateParameters)
             where TObject : Object
         {
+            Debug.Assert(s_initializationOperations != null, "ResourceManager.InstantiateAllAsync - s_initializationOperations == null.");
+
             if (s_initializationOperations.Count > 0)
             {
                 var locationOp = AsyncOperationCache.Instance.Acquire<InstanceLocationListOperation<TKey, TObject>, object>();
@@ -586,6 +715,8 @@ namespace UnityEngine.ResourceManagement
         static Dictionary<Type, object> s_instantiateAllAsyncInternalCache = new Dictionary<Type, object>();
         static Func<IList<IResourceLocation>, Action<IAsyncOperation<TObject>>, InstantiationParameters, IAsyncOperation<IList<TObject>>> GetInstantiateAllAsyncInternalFunc<TObject>() where TObject : Object
         {
+            Debug.Assert(s_instantiateAllAsyncInternalCache != null, "ResourceManager.GetInstantiateAllAsyncInternalFunc - s_instantiateAllAsyncInternalCache == null.");
+
             object res;
             if (!s_instantiateAllAsyncInternalCache.TryGetValue(typeof(TObject), out res))
                 s_instantiateAllAsyncInternalCache.Add(typeof(TObject), res = (Func<IList<IResourceLocation>, Action<IAsyncOperation<TObject>> , InstantiationParameters, IAsyncOperation<IList<TObject>>>)InstantiateAllAsync_Internal<TObject>);
@@ -608,6 +739,9 @@ namespace UnityEngine.ResourceManagement
         /// <typeparam name="TKey">key type.</typeparam>
         public static IAsyncOperation<Scene> LoadSceneAsync<TKey>(TKey key, LoadSceneMode loadMode = LoadSceneMode.Single)
         {
+            if (SceneProvider == null)
+                throw new NullReferenceException("ResourceManager.SceneProvider is null.  Assign a valid ISceneProvider object before using.");
+
             return StartInternalAsyncOp(key, (IResourceLocation location) => {
                     ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadSceneAsyncRequest, location, 1);
                     ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, location, 0);
@@ -625,6 +759,9 @@ namespace UnityEngine.ResourceManagement
         /// <typeparam name="TKey">key type.</typeparam>
         public static IAsyncOperation<Scene> UnloadSceneAsync<TKey>(TKey key)
         {
+            if (SceneProvider == null)
+                throw new NullReferenceException("ResourceManager.SceneProvider is null.  Assign a valid ISceneProvider object before using.");
+
             return StartInternalAsyncOp(key, SceneProvider.ReleaseSceneAsync);
         }
     }

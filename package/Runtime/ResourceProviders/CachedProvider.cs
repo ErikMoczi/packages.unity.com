@@ -14,7 +14,14 @@ namespace UnityEngine.ResourceManagement
 
             public abstract bool IsDone { get; }
             public abstract float PercentComplete { get; }
-            public object Result { get { return m_result; } }
+            public object Result
+            {
+                get
+                {
+                    return m_result;
+                }
+            }
+            public abstract void ReleaseToCacheInternal();
         }
 
         internal class CacheEntry<TObject> : CacheEntry, IAsyncOperation<TObject>
@@ -23,42 +30,97 @@ namespace UnityEngine.ResourceManagement
             IAsyncOperation m_operation;
             AsyncOperationStatus m_status;
             Exception m_error;
-            public AsyncOperationStatus Status { get { return m_status > AsyncOperationStatus.None ? m_status : m_operation.Status; } }
-            public Exception OperationException { get { return m_error != null ? m_error : m_operation.OperationException; } }
-            new public TObject Result { get { return m_result as TObject; } }
-            public override bool IsDone { get { return !(EqualityComparer<TObject>.Default.Equals(Result, default(TObject))); } }
-            public object Current { get { return m_result; } }
-            public bool MoveNext() { return m_result == null; }
-            public object Context { get { return m_operation.Context; } }
-            public void Reset() {}
-            public virtual void ResetStatus()
+            public AsyncOperationStatus Status
             {
-                m_operation.ResetStatus();
-                m_status = AsyncOperationStatus.None;
-                m_error = null;
+                get
+                {
+                    Validate();
+                    return m_status > AsyncOperationStatus.None ? m_status : m_operation.Status;
+                }
+            }
+            public Exception OperationException
+            {
+                get
+                {
+                    Validate();
+                    return m_error != null ? m_error : m_operation.OperationException;
+                }
+            }
+            new public TObject Result
+            {
+                get
+                {
+                    Validate();
+                    return m_result as TObject;
+                }
+            }
+            public override bool IsDone
+            {
+                get
+                {
+                    Validate();
+                    return !(EqualityComparer<TObject>.Default.Equals(Result, default(TObject)));
+                }
+            }
+            public object Current
+            {
+                get
+                {
+                    Validate();
+                    return m_result;
+                }
+            }
+            public bool MoveNext()
+            {
+                Validate();
+                return m_result == null;
+            }
+            public object Context
+            {
+                get
+                {
+                    Validate();
+                    return m_operation.Context;
+                }
+            }
+            public void Reset()
+            {
+            }
+            public bool IsValid { get { return m_operation.IsValid; } set { } }
+
+            public void ResetStatus()
+            {
+                //should never be called as this operation doe not end up in cache
             }
 
-            public override float PercentComplete { get { return IsDone ? 1f : m_operation.PercentComplete; } }
+            public bool BlockReleaseToCache { get; set; }
+            public void ReleaseToCache(bool force = false)
+            {
+                //This object will never be released to cache
+            }
+
+            public override void ReleaseToCacheInternal()
+            {
+                m_operation.ReleaseToCache(true);
+            }
+
+            public override float PercentComplete
+            {
+                get
+                {
+                    Validate();
+                    return IsDone ? 1f : m_operation.PercentComplete;
+                }
+            }
             protected event Action<IAsyncOperation<TObject>> m_completedActionT;
             protected event Action<IAsyncOperation> m_completedAction;
-            public event Action<IAsyncOperation<TObject>> completed
+            public event Action<IAsyncOperation<TObject>> Completed
             {
                 add
                 {
+                    Validate();
                     if (IsDone)
-                    {
-                        try
-                        {
-                            if (value != null)
-                                value(this);
-                        }
-                        catch (Exception e)
-                        {
-                            Debug.LogException(e);
-                            m_error = e;
-                            m_status = AsyncOperationStatus.Failed;
-                        }
-                    }
+                        DelayedActionManager.AddAction(value, this);
                     else
                         m_completedActionT += value;
                 }
@@ -69,24 +131,13 @@ namespace UnityEngine.ResourceManagement
                 }
             }
 
-            event Action<IAsyncOperation> IAsyncOperation.completed
+            event Action<IAsyncOperation> IAsyncOperation.Completed
             {
                 add
                 {
+                    Validate();
                     if (IsDone)
-                    {
-                        try
-                        {
-                            if(value != null)
-                                value(this);
-                        }
-                        catch (Exception e)
-                        {
-                            Debug.LogException(e);
-                            m_error = e;
-                            m_status = AsyncOperationStatus.Failed;
-                        }
-                    }
+                        DelayedActionManager.AddAction(value, this);
                     else
                         m_completedAction += value;
                 }
@@ -98,14 +149,17 @@ namespace UnityEngine.ResourceManagement
             }
             public CacheEntry(CacheList cacheList, IAsyncOperation<TObject> operation)
             {
+                IsValid = true;
                 m_cacheList = cacheList;
                 m_operation = operation;
+                m_operation.BlockReleaseToCache = true;
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, Context, 0);
-                operation.completed += OnComplete;
+                operation.Completed += OnComplete;
             }
 
             void OnComplete(IAsyncOperation<TObject> operation)
             {
+                Validate();
                 m_result = operation.Result;
                 if (m_completedActionT != null)
                 {
@@ -142,7 +196,18 @@ namespace UnityEngine.ResourceManagement
 
             internal override bool CanProvide<T1>(IResourceLocation location)
             {
+                Validate();
                 return typeof(TObject) == typeof(T1);
+            }
+
+            public bool Validate()
+            {
+                if (!IsValid)
+                {
+                    Debug.LogError("IAsyncOperation Validation Failed!");
+                    return false;
+                }
+                return true;
             }
         }
 
@@ -221,6 +286,7 @@ namespace UnityEngine.ResourceManagement
                 {
                     if (!provider.Release(m_location, e.Result))
                         Debug.LogWarning("Failed to release location " + m_location);
+                    e.ReleaseToCacheInternal();
                 }
             }
         }
@@ -246,15 +312,15 @@ namespace UnityEngine.ResourceManagement
         int m_maxLRUCount;
         float m_maxLRUAge;
 
-        public CachedProvider(IResourceProvider prov, int lruCount = 0, float lruMaxAge = 0)
+        public CachedProvider(IResourceProvider provider, int maxCacheItemCount = 0, float maxCacheItemAge = 0)
         {
-            m_internalProvider = prov;
-            m_maxLRUCount = lruCount;
+            m_internalProvider = provider;
+            m_maxLRUCount = maxCacheItemCount;
             if (m_maxLRUCount > 0)
             {
                 m_lru = new LinkedList<CacheList>();
-                m_maxLRUAge = lruMaxAge;
-                if (lruMaxAge > 0)
+                m_maxLRUAge = maxCacheItemAge;
+                if (maxCacheItemAge > 0)
                 {
                     var go = new GameObject("CachedProviderUpdater", typeof(CachedProviderUpdater));
                     go.GetComponent<CachedProviderUpdater>().Init(this);
@@ -317,6 +383,11 @@ namespace UnityEngine.ResourceManagement
         public IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             where TObject : class
         {
+            if (location == null)
+                throw new System.ArgumentNullException("location");
+            if (loadDependencyOperation == null)
+                throw new System.ArgumentNullException("loadDependencyOperation");
+
             CacheList entryList = null;
             if (location == null)
                 return null;

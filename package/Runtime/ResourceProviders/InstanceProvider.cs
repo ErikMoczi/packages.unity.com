@@ -7,7 +7,7 @@ namespace UnityEngine.ResourceManagement
     public class InstanceProvider : IInstanceProvider
     {
         internal class InternalOp<TObject> : AsyncOperationBase<TObject>
-            where TObject : UnityEngine.Object
+            where TObject : Object
         {
             TObject prefabResult;
             int m_startFrame;
@@ -21,50 +21,64 @@ namespace UnityEngine.ResourceManagement
 
             public InternalOp<TObject> Start(IAsyncOperation<TObject> loadOperation, IResourceLocation location, InstantiationParameters instantiateParameters)
             {
+                Validate();
                 prefabResult = null;
                 Result = null;
-                m_context = location;
+                Context = location;
                 m_instParams = instantiateParameters;
                 m_startFrame = Time.frameCount;
-                loadOperation.completed += m_completeAction;
+                loadOperation.Completed += m_completeAction;
                 return this;
             }
 
             void OnComplete(IAsyncOperation<TObject> operation)
             {
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, m_context, Time.frameCount - m_startFrame);
+                Validate();
+                Debug.Assert(operation != null);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, Context, Time.frameCount - m_startFrame);
                 prefabResult = operation.Result;
                 if (prefabResult == null)
                 {
-                    Debug.Log("Unable to load asset to instantiate: " + m_context);
+                    Debug.Log("Unable to load asset to instantiate: " + Context);
                 }
                 else if (Result == null)
                 {
                     Result = m_instParams.Instantiate(prefabResult);
                 }
                 InvokeCompletionEvent();
-                AsyncOperationCache.Instance.Release<TObject>(this);
+                ReleaseToCache();
             }
         }
 
         public bool CanProvideInstance<TObject>(IResourceProvider loadProvider, IResourceLocation location)
             where TObject : Object
         {
+            if (loadProvider == null)
+                return false;
             return loadProvider.CanProvide<TObject>(location) && ResourceManagerConfig.IsInstance<TObject, GameObject>();
         }
 
         public IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, InstantiationParameters instantiateParameters)
             where TObject : Object
         {
+            if (location == null)
+                throw new System.ArgumentNullException("location");
+            if (loadDependencyOperation == null)
+                throw new System.ArgumentNullException("loadDependencyOperation");
+            if (loadProvider == null)
+                throw new ArgumentNullException("loadProvider");
+
             var depOp = loadProvider.ProvideAsync<TObject>(location, loadDependencyOperation);
 
-            var r = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
-            return r.Start(depOp, location, instantiateParameters);
+            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
+            return operation.Start(depOp, location, instantiateParameters);
         }
 
-        public bool ReleaseInstance(IResourceProvider loadProvider, IResourceLocation location, UnityEngine.Object asset)
+        public bool ReleaseInstance(IResourceProvider loadProvider, IResourceLocation location, Object instance)
         {
-            Object.Destroy(asset);
+            if (loadProvider == null)
+                throw new ArgumentException("IResourceProvider loadProvider cannot be null.");
+            Object.Destroy(instance);
             return loadProvider.Release(location, null);
         }
     }

@@ -12,7 +12,7 @@ namespace UnityEngine.ResourceManagement
                 Result = null;
                 if (loadDependencyOperation != null)
                 {
-                    loadDependencyOperation.completed += (obj) =>
+                    loadDependencyOperation.Completed += (obj) =>
                     {
                         AssetBundle bundle;
                         if (obj.Result != null && obj.Result.Count > 0 && (bundle = obj.Result[0] as AssetBundle) != null)
@@ -32,12 +32,20 @@ namespace UnityEngine.ResourceManagement
 
         public override IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
-            var r = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
-            return r.Start(location, loadDependencyOperation);
+            if (location == null)
+                throw new System.ArgumentNullException("location");
+            if (loadDependencyOperation == null)
+                throw new System.ArgumentNullException("loadDependencyOperation");
+            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
+            return operation.Start(location, loadDependencyOperation);
         }
 
         public override bool Release(IResourceLocation location, object asset)
         {
+            if (location == null)
+                throw new System.ArgumentNullException("location");
+            if (asset == null)
+                throw new System.ArgumentNullException("asset");
             // Bundled assets are exclusively unloaded by unloading their parent asset bundle
             return true;
         }

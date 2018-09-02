@@ -32,7 +32,7 @@ public class ResourceManagerTests : MonoBehaviour, IPrebuildSetup
 
         GameObject cube = null;
         var oper = ResourceManager.LoadAsync<GameObject, string>("Cube");
-        oper.completed +=
+        oper.Completed +=
             (op) =>
             {
                 cube = op.Result as GameObject;
@@ -55,11 +55,11 @@ public class ResourceManagerTests : MonoBehaviour, IPrebuildSetup
         Destroy(go);
 
         IAsyncOperation op = ResourceManager.LoadAsync<GameObject, string>("Cube");
-
-        while (!op.IsDone)
-            yield return null;
+        op.BlockReleaseToCache = false;
+        yield return op;
 
         GameObject cube = op.Result as GameObject;
+        op.ReleaseToCache(true);
         Assert.IsNotNull(cube);
 
         DestroyAsset(cubePath);
@@ -229,9 +229,9 @@ public class ResourceManagerTests : MonoBehaviour, IPrebuildSetup
             {
                 loadedDependencies.Add(op.Result as GameObject);
             });
-
-        while (!asyncOperation.IsDone)
-            yield return null;
+        asyncOperation.BlockReleaseToCache = true;
+        yield return asyncOperation;
+        asyncOperation.ReleaseToCache(true);
 
         Assert.AreEqual(2, loadedDependencies.Count);
         DestroyAsset(cubePath);
@@ -252,13 +252,13 @@ public class ResourceManagerTests : MonoBehaviour, IPrebuildSetup
         Destroy(go);
 
         IAsyncOperation op = ResourceManager.InstantiateAsync<GameObject, string>("Cube1");
-        while (!op.IsDone)
-            yield return null;
+        op.BlockReleaseToCache = true;
+        yield return op;
 
         Assert.IsNotNull(GameObject.Find("Cube1(Clone)"));
 
         ResourceManager.ReleaseInstance<GameObject>(op.Result as GameObject);
-
+        op.ReleaseToCache(true);
         yield return null;
         Assert.IsNull(GameObject.Find("Cube1(Clone)"));
         DestroyAsset(cube1Path);
@@ -288,9 +288,9 @@ public class ResourceManagerTests : MonoBehaviour, IPrebuildSetup
                 GameObject go = op.Result as GameObject;
                 loadedObjects.Add(go);
             });
-
-        while (!loadOp.IsDone)
-            yield return null;
+        loadOp.BlockReleaseToCache = true;
+        yield return loadOp;
+        loadOp.ReleaseToCache(true);
 
         Assert.AreEqual(2, loadedObjects.Count);
         DestroyAsset(cubePath);

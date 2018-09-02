@@ -19,8 +19,9 @@ namespace UnityEngine.ResourceManagement
 
             public InternalOp<TObject> Start(IResourceLocation location)
             {
+                Validate();
                 Result = null;
-                m_context = location;
+                Context = location;
                 m_complete = false;
                 m_startFrame = Time.frameCount;
                 m_data = new ChunkedMemoryStream();
@@ -32,6 +33,7 @@ namespace UnityEngine.ResourceManagement
 
             void AsyncCallback(IAsyncResult ar)
             {
+                Validate();
                 HttpWebRequest req = ar.AsyncState as HttpWebRequest;
                 var response = req.EndGetResponse(ar);
                 var stream = (response as HttpWebResponse).GetResponseStream();
@@ -40,6 +42,7 @@ namespace UnityEngine.ResourceManagement
 
             void OnRead(IAsyncResult ar)
             {
+                Validate();
                 var responseStream = ar.AsyncState as System.IO.Stream;
                 int read = responseStream.EndRead(ar);
                 if (read > 0)
@@ -57,6 +60,7 @@ namespace UnityEngine.ResourceManagement
 
             public bool CompleteInMainThread()
             {
+                Validate();
                 if (!m_complete)
                     return false;
                 AssetBundle.LoadFromStreamAsync(m_data).completed += InternalOp_completed;
@@ -65,17 +69,19 @@ namespace UnityEngine.ResourceManagement
 
             void InternalOp_completed(AsyncOperation obj)
             {
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncCompletion, m_context, Time.frameCount - m_startFrame);
+                Validate();
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncCompletion, Context, Time.frameCount - m_startFrame);
                 Result = (obj as AssetBundleCreateRequest).assetBundle as TObject;
                 InvokeCompletionEvent();
-                AsyncOperationCache.Instance.Release<TObject>(this);
                 m_data.Close();
                 m_data.Dispose();
                 m_data = null;
+                ReleaseToCache();
             }
 
             public void Dispose()
             {
+                Validate();
                 if (m_data != null)
                 {
                     m_data.Close();
@@ -87,12 +93,16 @@ namespace UnityEngine.ResourceManagement
 
         public override IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
-            var r = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
-            return r.Start(location);
+            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
+            return operation.Start(location);
         }
 
         public override bool Release(IResourceLocation location, object asset)
         {
+            if (location == null)
+                throw new System.ArgumentNullException("location");
+            if (asset == null)
+                throw new System.ArgumentNullException("asset");
             (asset as AssetBundle).Unload(true);
             return true;
         }

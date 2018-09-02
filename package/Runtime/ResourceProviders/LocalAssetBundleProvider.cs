@@ -10,9 +10,9 @@ namespace UnityEngine.ResourceManagement
         {
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
-                m_context = location;
+                Context = location;
                 Result = null;
-                loadDependencyOperation.completed += (obj) =>
+                loadDependencyOperation.Completed += (obj) =>
                     {
                         AssetBundle.LoadFromFileAsync(Path.Combine("file://", ResourceManagerConfig.ExpandPathWithGlobalVariables(location.InternalId))).completed += OnComplete;
                     };
@@ -28,12 +28,20 @@ namespace UnityEngine.ResourceManagement
 
         public override IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
-            var r = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
-            return r.Start(location, loadDependencyOperation);
+            if (location == null)
+                throw new System.ArgumentNullException("location");
+            if (loadDependencyOperation == null)
+                throw new System.ArgumentNullException("loadDependencyOperation");
+            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
+            return operation.Start(location, loadDependencyOperation);
         }
 
         public override bool Release(IResourceLocation location, object asset)
         {
+            if (location == null)
+                throw new System.ArgumentNullException("location");
+            if (asset == null)
+                throw new System.ArgumentNullException("asset");
             var bundle = asset as AssetBundle;
             if (bundle != null)
             {

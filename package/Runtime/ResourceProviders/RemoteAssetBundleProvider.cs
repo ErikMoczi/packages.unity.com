@@ -11,14 +11,14 @@ namespace UnityEngine.ResourceManagement
             System.Action<IAsyncOperation<IList<object>>> action;
             public InternalOp()
             {
-                action = (op) => { UnityWebRequestAssetBundle.GetAssetBundle(ResourceManagerConfig.ExpandPathWithGlobalVariables((m_context as IResourceLocation).InternalId)).SendWebRequest().completed += OnComplete; };
+                action = (op) => { UnityWebRequestAssetBundle.GetAssetBundle(ResourceManagerConfig.ExpandPathWithGlobalVariables((Context as IResourceLocation).InternalId)).SendWebRequest().completed += OnComplete; };
             }
 
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
                 Result = null;
-                m_context = location;
-                loadDependencyOperation.completed += action;
+                Context = location;
+                loadDependencyOperation.Completed += action;
                 return base.Start(location);
             }
 
@@ -30,12 +30,21 @@ namespace UnityEngine.ResourceManagement
 
         public override IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
-            var r = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
-            return r.Start(location, loadDependencyOperation);
+            if (location == null)
+                throw new System.ArgumentNullException("location");
+            if (loadDependencyOperation == null)
+                throw new System.ArgumentNullException("loadDependencyOperation");
+
+            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
+            return operation.Start(location, loadDependencyOperation);
         }
 
         public override bool Release(IResourceLocation location, object asset)
         {
+            if (location == null)
+                throw new System.ArgumentNullException("location");
+            if (asset == null)
+                throw new System.ArgumentNullException("asset");
             var bundle = asset as AssetBundle;
             if (bundle != null)
             {

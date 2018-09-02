@@ -8,7 +8,7 @@ namespace UnityEngine.ResourceManagement
     {
         public EmptyGroupOperation()
         {
-            m_result = new TObject[0];
+            Result = new TObject[0];
         }
 
         public override void SetResult(IList<TObject> result)

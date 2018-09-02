@@ -6,34 +6,48 @@ namespace UnityEngine.ResourceManagement
     /// <summary>
     /// base class for implemented AsyncOperations, implements the needed interfaces and consolidates redundant code
     /// </summary>
-    public abstract class AsyncOperationBase<T> : IAsyncOperation<T>
+    public abstract class AsyncOperationBase<TObject> : IAsyncOperation<TObject>
     {
-        protected T m_result;
-        protected AsyncOperationStatus m_status;
-        protected Exception m_error;
-        protected object m_context;
+        TObject m_result;
+        AsyncOperationStatus m_status;
+        Exception m_error;
+        object m_context;
         event Action<IAsyncOperation> m_completedAction;
-        event Action<IAsyncOperation<T>> m_completedActionT;
-        protected AsyncOperationBase() { }
+        event Action<IAsyncOperation<TObject>> m_completedActionT;
+        protected AsyncOperationBase()
+        {
+            IsValid = true;
+        }
 
-        public event Action<IAsyncOperation<T>> completed
+        public bool IsValid { get; set; }
+
+        public virtual void ResetStatus()
+        {
+            m_status = AsyncOperationStatus.None;
+            m_error = null;
+            m_result = default(TObject);
+            m_context = null;
+        }
+
+        public bool BlockReleaseToCache { get; set; }
+
+        public bool Validate()
+        {
+            if (!IsValid)
+            {
+                Debug.LogError("INVALID OPERATION STATE!");
+                return false;
+            }
+            return true;
+        }
+
+        public event Action<IAsyncOperation<TObject>> Completed
         {
             add
             {
+                Validate();
                 if (IsDone)
-                {
-                    try
-                    {
-                        if(value != null)
-                            value(this);
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogException(e);
-                        m_error = e;
-                        m_status = AsyncOperationStatus.Failed;
-                    }
-                }
+                    DelayedActionManager.AddAction(value, this);
                 else
                     m_completedActionT += value;
             }
@@ -44,47 +58,119 @@ namespace UnityEngine.ResourceManagement
             }
         }
 		
-		event Action<IAsyncOperation> IAsyncOperation.completed
+		event Action<IAsyncOperation> IAsyncOperation.Completed
 		{
 			add
 			{
+                Validate();
                 if (IsDone)
-                {
-                    try
-                    {
-                        if (value != null)
-                            value(this);
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogException(e);
-                        m_error = e;
-                        m_status = AsyncOperationStatus.Failed;
-                    }
-                }
+                    DelayedActionManager.AddAction(value, this);
                 else
                     m_completedAction += value;
-			}
+            }
 
-			remove
+            remove
 			{
 				m_completedAction -= value;
 			}
 		}
 
-        object IAsyncOperation.Result { get { return m_result; } }
-        public AsyncOperationStatus Status { get { return m_status; } }
-        public Exception OperationException { get { return m_error; } }
-        public bool MoveNext() { return !IsDone; }
-        public void Reset() { }
-        public object Current { get { return Result; } }
-        public virtual T Result { get { return m_result; } set { m_result = value; } }
-        public virtual bool IsDone { get { return !(EqualityComparer<T>.Default.Equals(Result, default(T))); } }
-        public virtual float PercentComplete { get { return IsDone ? 1f : 0f; } }
-        public object Context { get { return m_context; } }
+        object IAsyncOperation.Result
+        {
+            get
+            {
+                Validate();
+                return m_result;
+            }
+        }
+
+        public AsyncOperationStatus Status
+        {
+            get
+            {
+                Validate();
+                return m_status;
+            }
+            protected set
+            {
+                Validate();
+                m_status = value;
+            }
+        }
+
+        public Exception OperationException
+        {
+            get
+            {
+                Validate();
+                return m_error;
+            }
+        }
+
+        public bool MoveNext()
+        {
+            Validate();
+            return !IsDone;
+        }
+
+        public void Reset()
+        {
+        }
+
+        public object Current
+        {
+            get
+            {
+                Validate();
+                return Result;
+            }
+        }
+        public TObject Result
+        {
+            get
+            {
+                Validate();
+                return m_result;
+            }
+            set
+            {
+                Validate();
+                m_result = value;
+            }
+        }
+        public virtual bool IsDone
+        {
+            get
+            {
+                Validate();
+                return !(EqualityComparer<TObject>.Default.Equals(Result, default(TObject)));
+            }
+        }
+        public virtual float PercentComplete
+        {
+            get
+            {
+                Validate();
+                return IsDone ? 1f : 0f;
+            }
+        }
+        public object Context
+        {
+            get
+            {
+                Validate();
+                return m_context;
+            }
+            protected set
+            {
+                Validate();
+                m_context = value;
+            }
+        }
 
         public void InvokeCompletionEvent()
         {
+            Validate();
             if (m_completedActionT != null)
             {
                 var tmpEvent = m_completedActionT;
@@ -118,17 +204,17 @@ namespace UnityEngine.ResourceManagement
             }
         }
 
-        public virtual void SetResult(T result)
+        public virtual void SetResult(TObject result)
         {
+            Validate();
             m_result = result;
             m_status = (m_result == null) ? AsyncOperationStatus.Failed : AsyncOperationStatus.Succeeded;
         }
 
-        public virtual void ResetStatus()
+        public virtual void ReleaseToCache(bool force = false)
         {
-            m_status = AsyncOperationStatus.None;
-            m_error = null;
+            if(force || !BlockReleaseToCache)
+                AsyncOperationCache.Instance.Release<TObject>(this);
         }
-
     }
 }

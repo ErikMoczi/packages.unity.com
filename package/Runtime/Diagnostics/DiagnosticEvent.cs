@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement.Diagnostics
 {
@@ -44,9 +45,9 @@ namespace UnityEngine.ResourceManagement.Diagnostics
             return System.Text.Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
         }
 
-        public static DiagnosticEvent Deserialize(byte[] d)
+        public static DiagnosticEvent Deserialize(byte[] data)
         {
-            return JsonUtility.FromJson<DiagnosticEvent>(System.Text.Encoding.ASCII.GetString(d));
+            return JsonUtility.FromJson<DiagnosticEvent>(System.Text.Encoding.ASCII.GetString(data));
         }
     }
 }

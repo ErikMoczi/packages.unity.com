@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine.ResourceManagement.Diagnostics;
+using System;
 
 namespace UnityEngine.ResourceManagement
 {
@@ -10,22 +11,27 @@ namespace UnityEngine.ResourceManagement
 
         public virtual InternalProviderOperation<TObject> Start(IResourceLocation location)
         {
+            Validate();
+            if (location == null)
+                throw new ArgumentNullException("location");
             startFrame = Time.frameCount;
-            m_context = location;
+            Context = location;
             return this;
         }
 
         protected virtual void OnComplete(AsyncOperation op)
         {
+            Validate();
             SetResult(ConvertResult(op));
             OnComplete();
         }
 
         protected virtual void OnComplete()
         {
-            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncCompletion, m_context, Time.frameCount - startFrame);
+            Validate();
+            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncCompletion, Context, Time.frameCount - startFrame);
             InvokeCompletionEvent();
-            AsyncOperationCache.Instance.Release<TObject>(this);
+            ReleaseToCache();
         }
 
         public abstract TObject ConvertResult(AsyncOperation op);

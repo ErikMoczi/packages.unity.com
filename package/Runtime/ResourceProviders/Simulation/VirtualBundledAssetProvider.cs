@@ -21,11 +21,11 @@ namespace UnityEngine.ResourceManagement
                 Result = null;
                 if (onCompleteAction == null)
                     onCompleteAction = OnComplete;
-                loadDependencyOperation.completed += (obj) => 
+                loadDependencyOperation.Completed += (obj) => 
                 {
                     VirtualAssetBundle bundle;
                     if (obj.Result != null && obj.Result.Count > 0 && (bundle = obj.Result[0] as VirtualAssetBundle) != null)
-                        bundle.LoadAssetAsync<TObject>(location, speed).completed += onCompleteAction;
+                        bundle.LoadAssetAsync<TObject>(location, speed).Completed += onCompleteAction;
                     else
                         OnComplete();
                 };
@@ -44,12 +44,20 @@ namespace UnityEngine.ResourceManagement
 
         public override IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
-            var r = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
-            return r.Start(location, loadSpeed, loadDependencyOperation);
+            if (location == null)
+                throw new System.ArgumentNullException("location");
+            if (loadDependencyOperation == null)
+                throw new System.ArgumentNullException("loadDependencyOperation");
+            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
+            return operation.Start(location, loadSpeed, loadDependencyOperation);
         }
 
         public override bool Release(IResourceLocation location, object asset)
         {
+            if (location == null)
+                throw new System.ArgumentNullException("location");
+            if (asset == null)
+                throw new System.ArgumentNullException("asset");
             return true;
 
         }

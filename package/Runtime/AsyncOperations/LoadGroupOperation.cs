@@ -7,72 +7,63 @@ namespace UnityEngine.ResourceManagement
         where TObject : class
     {
         protected int totalToLoad;
-        int loadCount;
-        bool allStarted;
         Action<IAsyncOperation<TObject>> m_internalOnComplete;
         Action<IAsyncOperation<TObject>> m_action;
-        List<IAsyncOperation<TObject>> m_ops;
-        public override void SetResult(IList<TObject> ignored)
-        {
-            foreach (var op in m_ops)
-                Result.Add(op.Result);
-        }
 
         public LoadGroupOperation() 
         {
             m_internalOnComplete = LoadGroupOperation_completed;
         }
 
+        public override void ResetStatus()
+        {
+            base.ResetStatus();
+            Result = new List<TObject>();
+        }
+
+        public override void SetResult(IList<TObject> result)
+        {
+            Validate();
+            if (result != null)
+            {
+                foreach (var r in result)
+                    Result.Add(r);
+            }
+            Status = (result.Count != totalToLoad) ? AsyncOperationStatus.Failed : AsyncOperationStatus.Succeeded;
+        }
+
+
         public virtual LoadGroupOperation<TObject> Start(IList<IResourceLocation> locations, Func<IResourceLocation, IAsyncOperation<TObject>> loadFunc, Action<IAsyncOperation<TObject>> onComplete)
         {
-            UnityEngine.Debug.Assert(locations != null, "Null location list passed into LoadGroupOperation");
+            Validate();
+            Debug.Assert(locations != null, "Null location list passed into LoadGroupOperation");
+            Debug.Assert(loadFunc != null, "Null loadFunc passed into LoadGroupOperation");
             totalToLoad = locations.Count;
-            m_context = locations;
-            loadCount = 0;
-            allStarted = false;
+            Context = locations;
             m_action = onComplete;
-            if(Result == null)
-                Result = new List<TObject>(locations.Count);
-            else
-                Result.Clear();
-
-            if(m_ops == null)
-                m_ops = new List<IAsyncOperation<TObject>>(locations.Count);
-            else
-                m_ops.Clear();
-
-            for(int i = 0; i < locations.Count; i++)
-            {
-                var op = loadFunc(locations[i]);
-                m_ops.Add(op);
-                op.completed += m_internalOnComplete;
-            }
-
-            allStarted = true;
-
-            if (IsDone)
-            {
-                SetResult(Result);
-                InvokeCompletionEvent();
-            }
-
+            for (int i = 0; i < locations.Count; i++)
+                loadFunc(locations[i]).Completed += m_internalOnComplete;
             return this;
         }
 
-        public override bool IsDone { get { return allStarted && loadCount == totalToLoad; } }
-
+        public override bool IsDone
+        {
+            get
+            {
+                Validate();
+                return Result.Count == totalToLoad;
+            }
+        }
         void LoadGroupOperation_completed(IAsyncOperation<TObject> obj)
         {
+            Validate();
             if (m_action != null)
                 m_action(obj);
 
-            loadCount++;
+            Result.Add(obj.Result);
 
             if (IsDone)
-            {
-                SetResult(Result);
                 InvokeCompletionEvent();
-            }
         }
     }
 }

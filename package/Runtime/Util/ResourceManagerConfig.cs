@@ -21,18 +21,23 @@ namespace UnityEngine.ResourceManagement
 
         static Dictionary<string, string> s_cachedValues = new Dictionary<string, string>();
 
-        public static string GetGlobalVar(string var)
+        public static string GetGlobalVar(string variableName)
         {
-            int i = var.LastIndexOf('.');
+            Debug.Assert(s_cachedValues != null, "ResourceManagerConfig.GetGlobalVar - s_cachedValues == null.");
+
+            if (string.IsNullOrEmpty(variableName))
+                return string.Empty;
+
+            int i = variableName.LastIndexOf('.');
             if (i < 0)
-                return var;
+                return variableName;
 
             string cachedValue = null;
-            if (s_cachedValues.TryGetValue(var, out cachedValue))
+            if (s_cachedValues.TryGetValue(variableName, out cachedValue))
                 return cachedValue;
 
-            var className = var.Substring(0, i);
-            var propName = var.Substring(i + 1);
+            var className = variableName.Substring(0, i);
+            var propName = variableName.Substring(i + 1);
             foreach (var a in GetAssemblies())
             {
                 Type t = a.GetType(className, false, false);
@@ -46,7 +51,7 @@ namespace UnityEngine.ResourceManagement
                         var v = pi.GetValue(null, null);
                         if (v != null)
                         {
-                            s_cachedValues.Add(var, v.ToString());
+                            s_cachedValues.Add(variableName, v.ToString());
                             return v.ToString();
                         }
                     }
@@ -56,7 +61,7 @@ namespace UnityEngine.ResourceManagement
                         var v = fi.GetValue(null);
                         if (v != null)
                         {
-                            s_cachedValues.Add(var, v.ToString());
+                            s_cachedValues.Add(variableName, v.ToString());
                             return v.ToString();
                         }
                     }
@@ -65,12 +70,17 @@ namespace UnityEngine.ResourceManagement
                 {
                 }
             }
-            return var;
+            return variableName;
         }
 
         static Dictionary<string, string> s_cachedPaths = new Dictionary<string, string>();
         public static string ExpandPathWithGlobalVariables(string inputString)
         {
+            Debug.Assert(s_cachedPaths != null, "ResourceManagerConfig.ExpandPathWithGlobalVariables - s_cachedPaths == null.");
+
+            if (string.IsNullOrEmpty(inputString))
+                return string.Empty;
+
             string val = null;
             if (!s_cachedPaths.TryGetValue(inputString, out val))
                 s_cachedPaths.Add(inputString, val = ExpandWithVariables(inputString, '{', '}', GetGlobalVar));
@@ -79,6 +89,9 @@ namespace UnityEngine.ResourceManagement
 
         public static string ExpandWithVariables(string inputString, char startDelimiter, char endDelimiter, Func<string, string> varFunc)
         {
+            if (string.IsNullOrEmpty(inputString))
+                return string.Empty;
+
             while (true)
             {
                 int i = inputString.IndexOf(startDelimiter);
@@ -94,10 +107,10 @@ namespace UnityEngine.ResourceManagement
         }
 
 
-        public static bool IsInstance<TA, TB>()
+        public static bool IsInstance<T1, T2>()
         {
-            var tA = typeof(TA);
-            var tB = typeof(TB);
+            var tA = typeof(T1);
+            var tB = typeof(T2);
 #if !UNITY_EDITOR && UNITY_WSA_10_0 && ENABLE_DOTNET
             return tB.GetTypeInfo().IsAssignableFrom(tA.GetTypeInfo());
 #else

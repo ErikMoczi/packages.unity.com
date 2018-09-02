@@ -3,7 +3,7 @@ using UnityEngine.Networking;
 
 namespace UnityEngine.ResourceManagement
 {
-    public class JSONAssetProvider : ResourceProviderBase
+    public class JsonAssetProvider : ResourceProviderBase
     {
         internal class InternalOp<TObject> : InternalProviderOperation<TObject> where TObject : class
         {
@@ -12,15 +12,15 @@ namespace UnityEngine.ResourceManagement
             {
                 action = (op) => 
                 {
-                    var m_webRequest = new UnityWebRequest(ResourceManagerConfig.ExpandPathWithGlobalVariables((m_context as IResourceLocation).InternalId), UnityWebRequest.kHttpVerbGET, new DownloadHandlerBuffer(), null);
+                    var m_webRequest = new UnityWebRequest(ResourceManagerConfig.ExpandPathWithGlobalVariables((Context as IResourceLocation).InternalId), UnityWebRequest.kHttpVerbGET, new DownloadHandlerBuffer(), null);
                     m_webRequest.SendWebRequest().completed += OnComplete;
                 };
             }
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
                 Result = null;
-                m_context = location;
-                loadDependencyOperation.completed += action;
+                Context = location;
+                loadDependencyOperation.Completed += action;
                 return base.Start(location);
             }
 
@@ -32,8 +32,12 @@ namespace UnityEngine.ResourceManagement
 
         public override IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
-            var r = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
-            return r.Start(location, loadDependencyOperation);
+            if (location == null)
+                throw new System.ArgumentNullException("location");
+            if (loadDependencyOperation == null)
+                throw new System.ArgumentNullException("loadDependencyOperation");
+            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
+            return operation.Start(location, loadDependencyOperation);
         }
     }
 }

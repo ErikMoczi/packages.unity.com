@@ -24,6 +24,12 @@ namespace UnityEngine.ResourceManagement
 
         public IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, InstantiationParameters instantiateParameters) where TObject : Object
         {
+            if (location == null)
+                throw new System.ArgumentNullException("location");
+            if (loadDependencyOperation == null)
+                throw new System.ArgumentNullException("loadDependencyOperation");
+            if (loadProvider == null)
+                throw new ArgumentNullException("loadProvider");
             InstancePool pool;
             if (!m_pools.TryGetValue(location, out pool))
                 m_pools.Add(location, pool = new InstancePool(loadProvider, location));
@@ -83,13 +89,14 @@ namespace UnityEngine.ResourceManagement
 
             public InternalOp<TObject> Start(IAsyncOperation<TObject> loadOperation, IResourceLocation location, TObject value, InstantiationParameters instantiateParameters)
             {
+                Validate();
                 prefabResult = null;
                 m_instParams = instantiateParameters;
                 Result = value;
-                m_context = location;
+                Context = location;
                 m_startFrame = Time.frameCount;
                 if (loadOperation != null)
-                    loadOperation.completed += m_onCompleteAction;
+                    loadOperation.Completed += m_onCompleteAction;
                 else
                     OnComplete(Result);
                 return this;
@@ -97,6 +104,7 @@ namespace UnityEngine.ResourceManagement
 
             void OnComplete(TObject res)
             {
+                Validate();
                 Result = res;
                 var go = Result as GameObject;
                 if (go != null)
@@ -116,19 +124,20 @@ namespace UnityEngine.ResourceManagement
                         }
                     }
                 }
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, m_context, Time.frameCount - m_startFrame);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, Context, Time.frameCount - m_startFrame);
                 InvokeCompletionEvent();
-                AsyncOperationCache.Instance.Release<TObject>(this);
+                ReleaseToCache();
             }
 
             void OnComplete(IAsyncOperation<TObject> operation)
             {
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, m_context, Time.frameCount - m_startFrame);
+                Validate();
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, Context, Time.frameCount - m_startFrame);
                 prefabResult = operation.Result;
 
                 if (prefabResult == null)
                 {
-                    Debug.LogWarning("NULL prefab on instantiate: " + m_context);
+                    Debug.LogWarning("NULL prefab on instantiate: " + Context);
                 }
                 else if (Result == null)
                 {
@@ -136,7 +145,7 @@ namespace UnityEngine.ResourceManagement
                 }
 
                 InvokeCompletionEvent();
-                AsyncOperationCache.Instance.Release<TObject>(this);
+                ReleaseToCache();
             }
         }
 

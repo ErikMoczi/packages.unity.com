@@ -37,8 +37,9 @@ namespace UnityEngine.ResourceManagement.Diagnostics
 
         public static void RegisterEventHandler(Action<DiagnosticEvent> handler)
         {
+            Debug.Assert(s_unhandledEvents != null, "DiagnosticEventCollector.RegisterEventHandler - s_unhandledEvents == null.");
             if (handler == null)
-                return;
+                throw new ArgumentNullException("handler");
             s_eventHandlers += handler;
             foreach (var e in s_unhandledEvents)
                 handler(e);
@@ -47,11 +48,14 @@ namespace UnityEngine.ResourceManagement.Diagnostics
 
         public static void UnregisterEventHandler(Action<DiagnosticEvent> handler)
         {
+            if (handler == null)
+                throw new ArgumentNullException("handler");
             s_eventHandlers -= handler;
         }
 
         static void CountFrameEvent(int frame)
         {
+            Debug.Assert(s_frameEventCounts != null, "DiagnosticEventCollector.CountFrameEvent - s_frameEventCounts == null.");
             if (frame < s_startFrame)
                 return;
             var index = frame - s_startFrame;
@@ -67,6 +71,8 @@ namespace UnityEngine.ResourceManagement.Diagnostics
 
             if (!ProfileEvents)
                 return;
+
+            Debug.Assert(s_unhandledEvents != null, "DiagnosticEventCollector.PostEvent - s_unhandledEvents == null.");
 
             if (s_eventHandlers != null)
                 s_eventHandlers(diagnosticEvent);
@@ -89,6 +95,8 @@ namespace UnityEngine.ResourceManagement.Diagnostics
 
         void SendEventCounts()
         {
+            Debug.Assert(s_frameEventCounts != null, "DiagnosticEventCollector.SendEventCounts - s_frameEventCounts == null.");
+
             int latestFrame = Time.frameCount;
 
             if (s_startFrame >= 0)

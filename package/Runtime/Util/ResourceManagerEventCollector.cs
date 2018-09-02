@@ -28,7 +28,7 @@ namespace UnityEngine.ResourceManagement.Diagnostics
             if (!ResourceManager.s_postEvents)
                 return;
             var parent = "";
-            var id = "";
+            var id = context.ToString();
             byte[] data = null;
             var loc = context as IResourceLocation;
             if (loc != null)

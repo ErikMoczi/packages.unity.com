@@ -56,6 +56,8 @@ namespace UnityEngine.ResourceManagement
 
         public IAsyncOperation<TObject> LoadAssetAsync<TObject>(IResourceLocation location, int speed) where TObject : class
         {
+            if (location == null)
+                throw new ArgumentException("IResourceLocation location cannot be null.");
 
             if (m_loaded && m_assets.Contains(location.InternalId))
             {
@@ -74,7 +76,7 @@ namespace UnityEngine.ResourceManagement
             float startTime;
             public LoadAssetOp(IResourceLocation location, float delay)
             {
-                m_context = location;
+                Context = location;
                 loadTime = (startTime = Time.unscaledTime) + delay;
             }
 
@@ -84,12 +86,13 @@ namespace UnityEngine.ResourceManagement
             {
                 get
                 {
+                    Validate();
                     if (base.IsDone)
                         return true;
                     if (Time.unscaledTime > loadTime)
                     {
-                        var assetPath = (m_context as IResourceLocation).InternalId;
-                        Result = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath) as TObject;
+                        var assetPath = (Context as IResourceLocation).InternalId;
+                        Result = UnityEditor.AssetDatabase.LoadAssetAtPath<Object>(assetPath) as TObject;
                         InvokeCompletionEvent();
                         return true;
                     }

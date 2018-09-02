@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement
@@ -41,13 +42,14 @@ namespace UnityEngine.ResourceManagement
             public LoadAssetBundleOp(VirtualAssetBundleManager manager, IResourceLocation location, float delay)
             {
                 this.manager = manager;
-                m_context = location;
+                Context = location;
                 bundleName = ResourceManagerConfig.ExpandPathWithGlobalVariables(location.InternalId);
                 loadTime = Time.unscaledTime + delay;
             }
 
             public bool Update()
             {
+                Validate();
                 if (Time.unscaledTime > loadTime)
                 {
                     Result = manager.Load(bundleName);
@@ -74,6 +76,7 @@ namespace UnityEngine.ResourceManagement
 
         private void Initialize(VirtualAssetBundleRuntimeData virtualBundleData)
         {
+            Debug.Assert(virtualBundleData != null);
             m_localLoadSpeed = virtualBundleData.LocalLoadSpeed;
             m_remoteLoadSpeed = virtualBundleData.RemoteLoadSpeed;
             foreach (var b in virtualBundleData.AssetBundles)
@@ -87,11 +90,16 @@ namespace UnityEngine.ResourceManagement
 
         public bool Unload(IResourceLocation location)
         {
+            if (location == null)
+                throw new ArgumentException("IResourceLocation location cannot be null.");
             return Unload(ResourceManagerConfig.ExpandPathWithGlobalVariables(location.InternalId));
         }
 
         public IAsyncOperation<VirtualAssetBundle> LoadAsync(IResourceLocation location)
         {
+            if (location == null)
+                throw new ArgumentException("IResourceLocation location cannot be null.");
+
             LoadAssetBundleOp op = null;
             var bundleName = ResourceManagerConfig.ExpandPathWithGlobalVariables(location.InternalId);
             if (!m_loadBundleOperations.TryGetValue(bundleName, out op))
@@ -101,6 +109,8 @@ namespace UnityEngine.ResourceManagement
 
         public void AddToUpdateList(VirtualAssetBundle bundle)
         {
+            if (bundle == null)
+                throw new ArgumentException("VirtualAssetBundle bundle cannot be null.");
             if (!m_updatingBundles.ContainsKey(bundle.Name))
                 m_updatingBundles.Add(bundle.Name, bundle);
         }

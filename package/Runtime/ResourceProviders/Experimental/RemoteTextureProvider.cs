@@ -17,7 +17,7 @@ namespace UnityEngine.ResourceManagement
             {
                 Result = null;
                 if(loadDependencyOperation != null && location != null)
-                    loadDependencyOperation.completed += (obj) => UnityWebRequestTexture.GetTexture(location.InternalId).SendWebRequest().completed += OnComplete;
+                    loadDependencyOperation.Completed += (obj) => UnityWebRequestTexture.GetTexture(location.InternalId).SendWebRequest().completed += OnComplete;
                 return base.Start(location);
             }
 
@@ -29,12 +29,16 @@ namespace UnityEngine.ResourceManagement
 
         public override IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
-            var r = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
-            return r.Start(location, loadDependencyOperation);
+            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
+            return operation.Start(location, loadDependencyOperation);
         }
 
         public override bool Release(IResourceLocation location, object asset)
         {
+            if (location == null)
+                throw new System.ArgumentNullException("location");
+            if (asset == null)
+                throw new System.ArgumentNullException("asset");
             return true;
         }
     }

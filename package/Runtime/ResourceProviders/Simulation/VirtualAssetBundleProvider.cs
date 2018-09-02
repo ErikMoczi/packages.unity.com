@@ -22,8 +22,8 @@ namespace UnityEngine.ResourceManagement
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
                 Result = null;
-                loadDependencyOperation.completed += (obj) => {
-                    assetBundleManager.LoadAsync(location).completed += (IAsyncOperation<VirtualAssetBundle> operation) => {
+                loadDependencyOperation.Completed += (obj) => {
+                    assetBundleManager.LoadAsync(location).Completed += (IAsyncOperation<VirtualAssetBundle> operation) => {
                         SetResult(operation.Result as TObject);
                         OnComplete();
                     };
@@ -37,13 +37,21 @@ namespace UnityEngine.ResourceManagement
 
         public override IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
-            var r = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
-            r.assetBundleManager = m_assetBundleManager;
-            return r.Start(location, loadDependencyOperation);
+            if (location == null)
+                throw new System.ArgumentNullException("location");
+            if (loadDependencyOperation == null)
+                throw new System.ArgumentNullException("loadDependencyOperation");
+            var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
+            operation.assetBundleManager = m_assetBundleManager;
+            return operation.Start(location, loadDependencyOperation);
         }
 
         public override bool Release(IResourceLocation location, object asset)
         {
+            if (location == null)
+                throw new System.ArgumentNullException("location");
+            if (asset == null)
+                throw new System.ArgumentNullException("asset");
             return m_assetBundleManager.Unload(location);
         }
     }

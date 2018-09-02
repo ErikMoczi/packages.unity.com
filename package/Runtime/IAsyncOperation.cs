@@ -23,7 +23,11 @@ namespace UnityEngine.ResourceManagement
         /// </summary>
         /// <value><c>true</c> if is done; otherwise, <c>false</c>.</value>
         AsyncOperationStatus Status { get; }
-
+        bool Validate();
+        bool IsValid { get; set; }
+        ////bool DelayReturnToCache { get; set; }
+        bool BlockReleaseToCache { get; set; }
+        void ReleaseToCache(bool force = false);
         /// <summary>
         /// Gets a value indicating whether this <see cref="T:ResourceManagement.IAsyncOperation"/> is done.
         /// </summary>
@@ -50,7 +54,7 @@ namespace UnityEngine.ResourceManagement
         /// <summary>
         /// Occurs when completed.
         /// </summary>
-        event Action<IAsyncOperation> completed;
+        event Action<IAsyncOperation> Completed;
         /// <summary>
         /// Gets the exception that caused this operation to change its status to Failure.
         /// </summary>
@@ -78,6 +82,6 @@ namespace UnityEngine.ResourceManagement
         /// <summary>
         /// Occurs when completed.
         /// </summary>
-        new event Action<IAsyncOperation<T>> completed;
+        new event Action<IAsyncOperation<T>> Completed;
     }
 }
