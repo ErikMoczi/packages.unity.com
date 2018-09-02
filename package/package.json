@@ -1,11 +1,11 @@
 {
-  "name": "com.unity.mathematics",
-  "version": "0.0.1",
-  "unity": "2018.1",
-  "description": "Unity SIMD Math",
-  "keywords": [
-    "ads",
-    "unity"
-  ],
-  "category": "AssetStore/Unity"
+    "category": "Unity", 
+    "commit": "ebac091", 
+    "description": "Unity SIMD Math", 
+    "keywords": [
+        "unity"
+    ], 
+    "name": "com.unity.mathematics", 
+    "unity": "2018.1", 
+    "version": "0.0.2"
 }
