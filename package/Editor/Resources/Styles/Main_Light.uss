@@ -547,6 +547,7 @@
 #detailListView #detailView .detail #detailPackageStatus {
   flex: 1;
   font-style: bold;
+  word-wrap: true;
 }
 #detailListView #detailView .detail #detailTag {
   width: 60;

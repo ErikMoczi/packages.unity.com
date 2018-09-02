@@ -1,7 +1,7 @@
-# Package Manager
-A package is a container that holds any combination of Assets, Shaders, Textures, plug-ins, icons, and scripts that enhance various parts of your project. Unity packages are newer, more tightly integrated versions of Asset Store packages, able to deliver a wide range of enhancements to Unity.
+# Unity Package Manager
+A package is a container that holds any combination of Assets, Shaders, Textures, plug-ins, icons, and scripts that enhance various parts of your project. Unity packages are newer, more tightly integrated versions of Asset Store packages, able to deliver a wide range of enhancements to Unity. 
 
-Use the Package Manager window to view which packages are available for installation or already installed in your project. In addition, you can use this window to [install](#PackManInstall), [remove](#PackManRemove), or [update](#PackManUpdate) packages for each project.
+Use the Unity Package Manager window (in Unity’s top menu: __Window__ > __Package Manager__) to view which packages are available for installation or already installed in your project. In addition, you can use this window to [install](#PackManInstall), [remove](#PackManRemove), or [update](#PackManUpdate) packages for each project.
 
 ![Package Manger window](Images/PackageManagerUI-Main.png)
 
@@ -34,27 +34,27 @@ These details include the following information:
  - (I) The link to open the package change log
 
 ### Version tags
-Some packages display special tags next to the version number. These tags convey special information about that version of the package.
+Some packages display tags next to the version number. These tags convey information about that version of the package. 
 
 ![Tagged version information](Images/PackageManagerUI-Tags.png)
 
-Package Manager uses the following values:
+The Package Manager uses the following values:
 
 | **Tag** | **Meaning** |
 |--|--|
-| `Verified` | This package has been verified by Unity's Quality Assurance team to work with a specific version of the Editor. |
-| `Preview` | This package is at an early stage of the release cycle and may not have been documented and fully validated by either the development team or Unity's Quality Assurance team. |
+| `verified` | Unity's Quality Assurance team has officially verified that this package works with a specific version of the Editor. |
+| `preview` | This package is at an early stage of the release cycle and may not have been documented and fully validated by either the development team or Unity's Quality Assurance team. |
 
 A Package without a tag is considered production quality.
 
 ### Finding more information
-You can find out more about a package by viewing the documentation.
+You can find out more about a package by viewing its documentation. 
 
 To access it, click the View Documentation link in the Details pane:
 
 ![View Documentation link](Images/PackageManagerUI-ViewDocs.png)
 
-The package documentation page opens.
+The package documentation page opens in your default browser.
 
 <a name="PackManOpen"></a>
 ## Accessing the Package Manager window
@@ -64,8 +64,8 @@ You can perform a variety of tasks through the Package Manager window:
  - [Remove an installed package](#PackManRemove)
  - [Update an installed package](#PackManUpdate)
 
- To open the Package Manager window, select **Window > Package Manager** from the main menu.
-
+ To open the Package Manager window, navigate to Unity's main menu and go to **Window > Package Manager**. 
+ 
 ![Window > Package Manager](Images/PackageManagerUI-Access.png)
 
 <a name="PackManInstall"></a>
@@ -87,41 +87,41 @@ To remove an installed package:
  3. Select the package you want to remove from the **Packages** list. The package information appears in the Details pane.
  4. Click the **Remove X.X.X** button. When the progress bar finishes, the package disappears from the list.
 
-**Notes:**
- - You can only remove packages which are not required by another package.
- - When you remove a package, any editor or runtime functionality which it implemented is no longer available.
+**Notes:** 
+ - You can only remove packages which are not required by another package. 
+ - When you remove a package, any Editor or run-time functionality which it implemented is no longer available.
 
 <a name="PackManUpdate"></a>
 ### Updating an installed package
 ![Update button](Images/PackageManagerUI-UpdateButton.png)
 
 You can update a package while in either the **In Project** or **All** mode:
- 1. Open the Project Manager window. Any packages that have updates available appear with an arrow indicator.
- 2. Select the package you want to update from the **Packages** list. The package information appears in the Details pane.
- 3. Click the **Update to X.X.X** button. When the progress bar finishes, the new package version information appears in the Details pane and any new functionality is available.
+ 1. Open the Project Manager window. An arrow indicator appears next to any packages that have updates available.
+ 2. Select the package you want to update from the **Packages** list. The package information appears in the Details pane. 
+ 3. Click the **Update to X.X.X** button. When the progress bar finishes, the new package version information appears in the Details pane, and any new functionality is immediately available. 
 
 ## Advanced package topics
-This section provides more advanced information about the package manifest file but you don't need to know anything about these topics to install, remove, and update packages.
+This section provides more advanced information about the package manifest file. You don't need to know anything about these topics to install, remove, and update packages.
 
-A Unity package contains a [package manifest file](#PackManManifestsPackage) in addition to the contents (Assets, Shaders, Textures, plug-ins, icons and scripts). The package manifest tells Unity how to display its information page in the Package Manager window and how to install the package in the project.
+In addition to its contents (Assets, Shaders, Textures, plug-ins, icons and scripts), a Unity package contains a [package manifest file](#PackManManifestsPackage). The package manifest tells Unity how to display its information page in the Package Manager window, and how to install the package in the project.
 
 ![Folder structure of a package](Images/PackageManagerUI-PackageStructure.png)
 
-In addition, there are several files that help manage the package deployment, including the tests, the samples, the license, the changelog, and the documentation.
+In addition, it contains several files that help manage the package deployment, including the tests, the samples, the license, the changelog, and the documentation.
 
 <a name="PackManManifests"></a>
 ### Manifests
-There are two types of manifest files: [project](#PackManManifestsProject) manifests (`manifest.json`), and [package](#PackManManifestsPackage) manifests (`package.json`). Both files use JSON (JavaScript Object Notation) syntax to communicate with Package Manager by describing which packages are available for each project and what each package contains.
+There are two types of manifest files: [project](#PackManManifestsProject) manifests (`manifest.json`), and [package](#PackManManifestsPackage) manifests (`package.json`). Both files use JSON (JavaScript Object Notation) syntax to communicate with the Package Manager, by describing which packages are available for each project, and what each package contains. 
 
 <a name="PackManManifestsProject"></a>
 #### Project manifests
-Project manifests (`manifest.json`) tell Package Manager which packages and versions are available to the project.
+Project manifests (`manifest.json`) tell the Package Manager which packages and versions are available to the project.
 
-The following value is supported:
+Project manifests support the following value:
 
 | Key | JSON Type | Description |
 |--|--|--|
-| `dependencies` | Object |List of packages for Package Manager to load. These are usually packages officially registered with Unity. |
+| `dependencies` | Object |List of packages for the Package Manager to load. These are usually packages officially registered with Unity. |
 
 
 Example of a `manifest.json` file:
@@ -138,20 +138,20 @@ Unity stores each project manifest in the `[your_project_root_folder]/Packages/m
 
 <a name="PackManManifestsPackage"></a>
 #### Package manifests
-Package Manager uses package manifests (`package.json`) to determine which version of the package to load and what information to display in the Package Manager window.
+The Package Manager uses package manifests (`package.json`) to determine which version of the package to load, and what information to display in the Package Manager window.
 
-The following values are supported:
+Package manifests support the following values:
 
 | Key | JSON Type | Description |
 |--|--|--|
-| `name` | String |Officially registered package name, following this naming convention: `"com.unity.[your package name]"`. For example, `"com.unity.resourcemanager"` |
-| `displayName` | String |Package name as it appears in the Package Manager window. For example, `Resource Manager"` |
-| `version` | String |Package version `"MAJOR.MINOR.PATCH"`. Unity packages follow the [Semantic Versioning](https://semver.org) system. For example, `"1.3.0"`. |
+| `name` | String |The officially registered package name, following this naming convention: `"com.unity.[your package name]"`. For example, `"com.unity.resourcemanager"` |
+| `displayName` | String |The package name as it appears in the Package Manager window. For example, `"Resource Manager"` |
+| `version` | String |The package version `"MAJOR.MINOR.PATCH"`. Unity packages follow the [Semantic Versioning](https://semver.org) system. For example, `"1.3.0"`. |
 | `unity` | String |The Unity version that supports this package. For example, `"2018.1"` indicates compatibility starting with Unity version 2018.1. |
-| `description` | String |Brief description of the package. This is the text that appears on the Details pane of the Package Manager window. Some special formatting character codes are supported, such as line breaks (`\n`) and bullets (`\u25AA`). |
-| `keywords` | Array of Strings |Keywords used for searching in the Package Manager window specified as a JSON array of strings. For example, `["Physics", "RigidBody", "Component"]`. |
-| `category` | String |Category of the package. For example, `"Forces"`. |
-| `dependencies` | Object |List of packages this package depends on, expressed as a JSON dictionary where the key is the package name and the value is the version number. Unity downloads all dependencies and loads them in the project with the package. |
+| `description` | String |A brief description of the package. This is the text that appears on the Details pane of the Package Manager window. Some special formatting character codes are supported, such as line breaks (`\n`) and bullets (`\u25AA`). |
+| `keywords` | Array of Strings |Keywords used for searching in the Package Manager window, specified as a JSON array of strings. For example, `["Physics", "RigidBody", "Component"]`. |
+| `category` | String |The category this packages is in. For example, `"Forces"`. |
+| `dependencies` | Object |A list of packages that this package depends on, expressed as a JSON dictionary where the key is the package name and the value is the version number. Unity downloads all dependencies and loads them into the project alongside this package. |
 
 Example of a `package.json` file:
 
@@ -174,31 +174,33 @@ Unity stores each package manifest in the `[your_package_root_folder]/package.js
 
 <a name="PackManRegistry"></a>
 ### The Package Registry
-Unity maintains a central registry of official packages that are available for distribution. When Unity loads, Package Manager communicates with the registry, checks the project manifest file, and displays the status of each available package in the Package Manager window.
+Unity maintains a central registry of official packages that are available for distribution. When Unity loads, the Package Manager communicates with the registry, checks the project manifest file, and displays the status of each available package in the Package Manager window.
 
-When you remove a package from the project, Package Manager updates the project manifest to exclude that package from the list in **In Project** mode but it is still available in **All** mode because it is still on the registry.
+When you remove a package from the project, the Package Manager updates the project manifest to exclude that package from the list in **In Project** mode but it is still available in **All** mode because it is still on the registry.
 
-When you install or update a package, Package Manager downloads the package from the registry.
+When you install or update a package, the Package Manager downloads the package from the registry.
 
 
 # Technical details
 
 ## Requirements
 
-This version of Package Manager is compatible with the following versions of the Unity Editor:
+This version of Unity Package Manager is compatible with the following versions of the Unity Editor:
 
-* 2018.1
+* 2018.1 and later (recommended)
 
 ## Known limitations
 
-Package Manager includes the following known limitations:
+The Package Manager includes the following known limitations:
 
 * If you manually edit the `manifest.json` file, the Package Manager window doesn't refresh the list of packages. You need to either [re-open the window](#PackManOpen) or [toggle between In Project and All modes](#PackManLists) to force an update.
 
 ## Documentation revision history
 |Date|Reason|
 |---|---|
-|Feb 19, 2018|Documentation updated. Matches package version 1.8.2.|
+|Mar 13, 2018|Documentation updated (final edits). Matches package version 1.8.2.|
+|Mar 2, 2018|Documentation updated. Matches package version 1.8.2.|
+|Feb 19, 2018|Documentation updated. Matches package version 1.8.0.|
 |Feb 8, 2018|Documentation updated. Matches package version 1.7.0.|
 |Feb 6, 2018|Documentation cleaned up. Matches package version 1.6.1.|
 |Jan 31, 2018|Documentation updated (developmental review)|
