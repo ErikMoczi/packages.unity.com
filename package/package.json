@@ -1,7 +1,7 @@
 {
 	"name": "com.unity.package-manager-ui",
 	"displayName": "Package Manager UI",
-	"version": "1.8.4",
+	"version": "1.8.5",
 	"unity": "2018.1",
 	"description": "Unity Package Manager user interface, where a project's packages can be managed and new packages can be discovered.\n\nWhat is a package?\nA package contains additional features to enhance various part of your project. This can include any aspect of Unity, from the editor itself to the runtime. Packages can also provide you with assets such as textures and objects. Simply click on a package to see its detailed information in this pane.\n\nThe \"In Project\" and \"All\" filters allow you to show different lists of packages:\n▪ In Project: Lists the packages that are currently available in your project.\n▪ All: Lists all discoverable packages and all previously downloaded packages. If a package is already installed in your project, it will show with a differently colored background.",
 	"dependencies": {}

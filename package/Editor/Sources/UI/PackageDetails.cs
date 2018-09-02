@@ -340,6 +340,12 @@ namespace UnityEditor.PackageManager.UI
         private void RefreshRemoveButton()
         {
             var displayPackage = Display(package);
+            if (displayPackage == null)
+            {
+                UIUtils.SetElementDisplay(RemoveButton, false);
+                return;
+            }
+            
             var visibleFlag = false;
             var actionLabel = displayPackage.Origin == PackageOrigin.Builtin ?
                 GetButtonText(PackageAction.Disable) :

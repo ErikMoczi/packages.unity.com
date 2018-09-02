@@ -25,7 +25,7 @@ namespace UnityEditor.PackageManager.UI
         }
 
         public PackageInfo Current { get { return Versions.FirstOrDefault(package => package.IsCurrent); } }
-        public PackageInfo Latest { get { return Versions.FirstOrDefault(package => package.IsLatest) ?? Versions.Last(); } }
+        public PackageInfo Latest { get { return Versions.FirstOrDefault(package => package.IsLatest) ?? Versions.LastOrDefault(); } }
                 
         public IEnumerable<PackageInfo> Versions { get { return source.OrderBy(package => package.Version); } }
         public string Name { get { return packageName; } }
@@ -91,6 +91,9 @@ namespace UnityEditor.PackageManager.UI
 
         public void Remove()
         {
+            if (Current == null)
+                return;
+                    
             var operation = OperationFactory.Instance.CreateRemoveOperation();
             OnRemoveOperationSuccessEvent = () =>
             {
