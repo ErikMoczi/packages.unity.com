@@ -37,6 +37,8 @@ namespace UnityEditor.PackageManager.UI
                     label += " - verified";
                 else if (!string.IsNullOrEmpty(Version.Version.Prerelease))
                     label += string.Format(" - {0}", Version.Version.Prerelease);
+                else if (Version.IsPreview)
+                    label += " - preview";
 
                 return label;
             }

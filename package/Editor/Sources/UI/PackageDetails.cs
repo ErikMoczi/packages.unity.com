@@ -22,11 +22,6 @@ namespace UnityEditor.PackageManager.UI
         internal new class UxmlFactory : UxmlFactory<PackageDetails> { }
 #endif
 
-        internal static PackageTag[] VersionGeneratedTags()
-        {
-            return new [] { PackageTag.preview };
-        }
-
         private readonly VisualElement root;
         private Package package;
         private const string emptyDescriptionClass = "empty";
@@ -167,9 +162,7 @@ namespace UnityEditor.PackageManager.UI
 
                 UIUtils.SetElementDisplay(GetTag(PackageTag.inDevelopment), DisplayPackage.IsInDevelopment);
                 UIUtils.SetElementDisplay(GetTag(PackageTag.local), DisplayPackage.IsLocal);
-
-                foreach (var tag in VersionGeneratedTags())
-                    UIUtils.SetElementDisplay(GetTag(tag), DisplayPackage.HasVersionTag(tag));
+                UIUtils.SetElementDisplay(GetTag(PackageTag.preview), DisplayPackage.IsPreview);
 
                 UIUtils.SetElementDisplay(DocumentationContainer, DisplayPackage.Origin != PackageSource.BuiltIn);
                 UIUtils.SetElementDisplay(ChangelogContainer, DisplayPackage.HasChangelog(DisplayPackage));
@@ -245,7 +238,7 @@ namespace UnityEditor.PackageManager.UI
 
             //
             // Add all versions
-            foreach (var version in package.UserVisibleVersions.Reverse())
+            foreach (var version in package.Versions.Reverse())
             {
                 var item = new VersionItem {Version = version};
                 item.MenuName = "All Versions/";

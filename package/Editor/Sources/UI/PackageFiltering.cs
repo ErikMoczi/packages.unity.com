@@ -26,7 +26,7 @@ namespace UnityEditor.PackageManager.UI
                 if (info.VersionWithoutTag.StartsWith(text, StringComparison.CurrentCultureIgnoreCase))
                     return true;
 
-                if (info.HasVersionTag(PackageTag.preview))
+                if (info.IsPreview)
                 {
                     if (PackageTag.preview.ToString().IndexOf(text, StringComparison.CurrentCultureIgnoreCase) >= 0)
                         return true;

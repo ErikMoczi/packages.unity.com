@@ -196,7 +196,7 @@ namespace UnityEditor.PackageManager.UI
         private void UpdateListPackageInfosOffline(IEnumerable<PackageInfo> newInfos, int version)
         {
             listPackagesOfflineVersion = version;
-            listPackagesOffline = newInfos.ToList();
+            listPackagesOffline = newInfos.Where(p => p.IsUserVisible).ToList();
         }
 
         private void UpdateListPackageInfos(IEnumerable<PackageInfo> newInfos)
@@ -205,13 +205,13 @@ namespace UnityEditor.PackageManager.UI
             // We keep track of the list packages version so that we know which version of cache
             // we are getting with the offline fetch operation.
             listPackagesVersion++;
-            listPackages = newInfos.ToList();
+            listPackages = newInfos.Where(p => p.IsUserVisible).ToList();
             listPackagesOffline = listPackages;
         }
 
         private void UpdateSearchPackageInfos(IEnumerable<PackageInfo> newInfos)
         {
-            searchPackages = newInfos.ToList();
+            searchPackages = newInfos.Where(p => p.IsUserVisible).ToList();
         }
 
         private IEnumerable<Package> OrderedPackages()
@@ -251,6 +251,11 @@ namespace UnityEditor.PackageManager.UI
             var allPackageInfos = new List<PackageInfo>(LatestListPackages);
             var packageIdSet = new HashSet<string>(allPackageInfos.Select(p => p.PackageId));
             allPackageInfos.AddRange(searchPackages.Where(p => !packageIdSet.Contains(p.PackageId)));
+
+            if (!PackageManagerPrefs.ShowPreviewPackages)
+            {
+                allPackageInfos = allPackageInfos.Where(p => !p.IsPreRelease || p.IsCurrent).ToList();
+            }
 
             // Rebuild packages dictionary
             packages.Clear();

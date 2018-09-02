@@ -260,7 +260,7 @@ $toolbar-height: 18;
 	align-items: center;
 	justify-content: flex-start;
 	height: 14;
-	@include margin(0, 0, 0, 10);
+	@include margin(0, 0, 0, 0);
 
 	#searchTextField {
 		flex: 1 0 0;

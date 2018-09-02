@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Linq;
+using UnityEngine;
 using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
@@ -44,7 +45,7 @@ namespace UnityEditor.PackageManager.UI
         {
             base.SetEnabled(enable);
             FilterButton.SetEnabled(enable);
-            //AdvancedButton.SetEnabled(enable);
+            AdvancedButton.SetEnabled(enable);
             SearchToolbar.SetEnabled(enable);
         }
 
@@ -97,22 +98,34 @@ namespace UnityEditor.PackageManager.UI
             menu.DropDown(menuRect);
         }
 
-        /*
         private void OnAdvancedButtonMouseDown(MouseDownEvent evt)
         {
             if (evt.propagationPhase != PropagationPhase.AtTarget)
                 return;
 
             var menu = new GenericMenu();
-            menu.AddDisabledItem(new GUIContent("Add package from URL..."));
-            menu.AddDisabledItem(new GUIContent("Add package from disk..."));
-            menu.AddSeparator("");
-            menu.AddItem(new GUIContent("Reset to defaults"), false, ResetToDefaultsClick);
+
+            menu.AddItem(new GUIContent("Show preview packages"), PackageManagerPrefs.ShowPreviewPackages, TogglePreviewPackages);
+            //menu.AddItem(new GUIContent("Reset to defaults"), false, ResetToDefaultsClick);
 
             var menuPosition = new Vector2(AdvancedButton.layout.xMax + 30, AdvancedButton.layout.center.y);
             menuPosition = this.LocalToWorld(menuPosition);
             var menuRect = new Rect(menuPosition, Vector2.zero);
             menu.DropDown(menuRect);
+        }
+
+        private static void TogglePreviewPackages()
+        {
+            var showPreviewPackages = PackageManagerPrefs.ShowPreviewPackages;
+            if (!showPreviewPackages && PackageManagerPrefs.ShowPreviewPackagesWarning)
+            {
+                const string message = "Preview packages are not verified with Unity, may be unstable, and should not be used in production. Are you sure you want to show preview packages?";
+                if (!EditorUtility.DisplayDialog("", message, "Yes", "No"))
+                    return;
+                PackageManagerPrefs.ShowPreviewPackagesWarning = false;
+            }
+            PackageManagerPrefs.ShowPreviewPackages = !showPreviewPackages;
+            PackageCollection.Instance.UpdatePackageCollection(true);
         }
 
         private void ResetToDefaultsClick()
@@ -131,22 +144,21 @@ namespace UnityEditor.PackageManager.UI
                 windows[0].Close();
             }
         }
-        */
 
         private void OnEnterPanel(AttachToPanelEvent evt)
         {
             FilterButton.RegisterCallback<MouseDownEvent>(OnFilterButtonMouseDown);
-            //AdvancedButton.RegisterCallback<MouseDownEvent>(OnAdvancedButtonMouseDown);
+            AdvancedButton.RegisterCallback<MouseDownEvent>(OnAdvancedButtonMouseDown);
         }
 
         private void OnLeavePanel(DetachFromPanelEvent evt)
         {
             FilterButton.UnregisterCallback<MouseDownEvent>(OnFilterButtonMouseDown);
-            //AdvancedButton.UnregisterCallback<MouseDownEvent>(OnAdvancedButtonMouseDown);
+            AdvancedButton.UnregisterCallback<MouseDownEvent>(OnAdvancedButtonMouseDown);
         }
 
         private Label FilterButton { get { return root.Q<Label>("toolbarFilterButton"); } }
-        //private Label AdvancedButton { get { return root.Q<Label>("toolbarAdvancedButton"); } }
+        private Label AdvancedButton { get { return root.Q<Label>("toolbarAdvancedButton"); } }
         internal PackageSearchToolbar SearchToolbar { get { return root.Q<PackageSearchToolbar>("toolbarSearch"); } }
     }
 }

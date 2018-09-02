@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<engine:UXML 
-        xmlns:engine="UnityEngine.Experimental.UIElements" 
+<engine:UXML
+        xmlns:engine="UnityEngine.Experimental.UIElements"
         xmlns:upm="UnityEditor.PackageManager.UI"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="UnityEngine.Experimental.UIElements UIElementsSchema/UnityEngine.Experimental.UIElements.xsd
@@ -11,7 +11,7 @@
             <engine:Label class="toolbarButton"/>
         </engine:VisualElement>
         <engine:VisualElement name="toolbarRight">
-            <!-- <engine:Label name="toolbarAdvancedButton" class="toolbarButton pulldown" text="Advanced ▾"/> -->
+            <engine:Label name="toolbarAdvancedButton" class="toolbarButton pulldown" text="Advanced ▾"/>
             <upm:PackageSearchToolbar name="toolbarSearch"/>
         </engine:VisualElement>
     </engine:VisualElement>

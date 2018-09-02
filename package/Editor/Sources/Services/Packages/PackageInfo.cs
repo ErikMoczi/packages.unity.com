@@ -147,18 +147,18 @@ namespace UnityEditor.PackageManager.UI
         //        Current logic is any tag is considered pre-release, except recommended
         public bool IsPreRelease
         {
-            get { return !string.IsNullOrEmpty(Version.Prerelease) && !IsVerified; }
+            get { return !string.IsNullOrEmpty(Version.Prerelease) || Version.Major == 0; }
         }
 
         public bool IsPreview
         {
-            get { return IsPreRelease && HasVersionTag(PackageTag.preview); }
+            get { return HasVersionTag(PackageTag.preview) || Version.Major == 0; }
         }
 
         // A version is user visible if it has a supported tag (or no tag at all)
         public bool IsUserVisible
         {
-            get { return string.IsNullOrEmpty(Version.Prerelease) || HasVersionTag(PackageTag.preview) || IsVerified; }
+            get { return IsCurrent || string.IsNullOrEmpty(Version.Prerelease) || HasVersionTag(PackageTag.preview) || IsVerified; }
         }
 
         public bool IsInDevelopment { get { return Origin == PackageSource.Embedded; } }

@@ -87,7 +87,7 @@ namespace UnityEditor.PackageManager.UI
                     return latestPreview;
 
                 // Show current if it exists, otherwise latest user visible, and then otherwise show the absolute latest
-                return current ?? UserVisibleVersions.LastOrDefault() ?? Latest;
+                return current ?? Latest;
             }
         }
 
@@ -109,13 +109,10 @@ namespace UnityEditor.PackageManager.UI
         internal PackageInfo Latest { get { return Versions.FirstOrDefault(package => package.IsLatest) ?? Versions.LastOrDefault(); } }
 
         // Returns the current version if it exist, otherwise returns the latest user visible version.
-        internal PackageInfo VersionToDisplay { get { return Current ?? UserVisibleVersions.LastOrDefault(); } }
+        internal PackageInfo VersionToDisplay { get { return Current ?? LatestUpdate; } }
 
         // Every version available for this package
         internal IEnumerable<PackageInfo> Versions { get { return source.OrderBy(package => package.Version); } }
-
-        // Every user visible version available for this package
-        internal IEnumerable<PackageInfo> UserVisibleVersions { get { return Versions.Where(package => package.IsUserVisible); } }
 
         // Every version that's not a pre-release (eg: not beta/alpha/preview).
         internal IEnumerable<PackageInfo> ReleaseVersions
