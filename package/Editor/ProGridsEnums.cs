@@ -21,6 +21,12 @@ namespace ProGrids.Editor
 		Yard,
 		Parsec
 	}
+	
+	enum SnapMethod
+	{
+		SnapOnSelectedAxis,
+		SnapOnAllAxes
+	}
 
 	static class EnumExtension
 	{
@@ -30,7 +36,7 @@ namespace ProGrids.Editor
 		/// <param name="v"></param>
 		/// <param name="axis"></param>
 		/// <returns></returns>
-		public static Vector3 InverseAxisMask(Vector3 v, Axis axis)
+		internal static Vector3 InverseAxisMask(Vector3 v, Axis axis)
 		{
 			switch(axis)
 			{
@@ -51,7 +57,7 @@ namespace ProGrids.Editor
 			}
 		}
 
-		public static Vector3 AxisMask(Vector3 v, Axis axis)
+		internal static Vector3 AxisMask(Vector3 v, Axis axis)
 		{
 			switch(axis)
 			{
@@ -72,7 +78,7 @@ namespace ProGrids.Editor
 			}
 		}
 
-		public static float SnapUnitValue(SnapUnit su)
+		internal static float SnapUnitValue(SnapUnit su)
 		{
 			switch(su)
 			{
@@ -92,6 +98,66 @@ namespace ProGrids.Editor
 					return Defaults.Parsec;
 				default:
 					return Defaults.Meter;
+			}
+		}
+
+		internal static SnapUnit SnapUnitWithString(string str)
+		{
+			foreach (SnapUnit su in SnapUnit.GetValues(typeof(SnapUnit)))
+			{
+				if (su.ToString() == str)
+					return su;
+			}
+			return (SnapUnit)0;
+		}
+
+		internal static Axis AxisWithVector(Vector3 val)
+		{
+			Vector3 v = new Vector3(Mathf.Abs(val.x), Mathf.Abs(val.y), Mathf.Abs(val.z));
+
+			if (v.x > v.y && v.x > v.z)
+			{
+				if (val.x > 0)
+					return Axis.X;
+				else
+					return Axis.NegX;
+			}
+			else
+			if (v.y > v.x && v.y > v.z)
+			{
+				if (val.y > 0)
+					return Axis.Y;
+				else
+					return Axis.NegY;
+			}
+			else
+			{
+				if (val.z > 0)
+					return Axis.Z;
+				else
+					return Axis.NegZ;
+			}
+		}
+
+		internal static Vector3 VectorWithAxis(Axis axis)
+		{
+			switch (axis)
+			{
+				case Axis.X:
+					return Vector3.right;
+				case Axis.Y:
+					return Vector3.up;
+				case Axis.Z:
+					return Vector3.forward;
+				case Axis.NegX:
+					return -Vector3.right;
+				case Axis.NegY:
+					return -Vector3.up;
+				case Axis.NegZ:
+					return -Vector3.forward;
+
+				default:
+					return Vector3.forward;
 			}
 		}
 	}

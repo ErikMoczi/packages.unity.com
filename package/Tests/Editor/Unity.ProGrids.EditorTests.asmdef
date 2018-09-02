@@ -1,5 +1,5 @@
 {
-    "name": "Unity.ProGrids.EditorTests",
+    "name": "Unity.ProGrids.Editor.Tests",
     "references": [
         "Unity.ProGrids.Editor"
     ],
@@ -9,5 +9,6 @@
     "includePlatforms": [
         "Editor"
     ],
-    "excludePlatforms": []
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
 }

@@ -1,5 +1,3 @@
-#define PRO
-
 using System;
 using UnityEngine;
 using UnityEditor;
@@ -23,27 +21,23 @@ namespace ProGrids.Editor
 		}
 	}
 
-	class ProGridsEditor
+	partial class ProGridsEditor
 	{
 #region Properties
+		// used to reset progrids preferences when necessary
+		const int k_CurrentPreferencesVersion = 22;
 
 		static ProGridsEditor s_Instance;
+		SnapSettings m_SnapSettings;
 
-		// the actual snap value, taking into account unit size
-		float m_SnapValue = 1f;
-		// what the user sees
-		float m_UiSnapValue = 1f;
-		bool m_SnapEnabled = true;
-		SnapUnit m_SnapUnit = SnapUnit.Meter;
 		bool m_GridIsLocked = false;
 		bool m_DrawGrid = true;
 		bool m_DrawAngles = false;
 		bool m_DoGridRepaint = true;
-		bool m_ScaleSnapEnabled = false;
-		bool m_SnapAsGroup = true;
 		Axis m_RenderPlane = Axis.Y;
-		public float angleValue = 45f;
-		public bool predictiveGrid = true;
+		float m_AngleValue = 45f;
+		bool m_PredictiveGrid = true;
+		bool m_GuiResourcesInitialized;
 
 		KeyCode m_IncreaseGridSizeShortcut = KeyCode.Equals;
 		KeyCode m_DecreaseGridSizeShortcut = KeyCode.Minus;
@@ -52,114 +46,182 @@ namespace ProGrids.Editor
 		KeyCode m_NudgePerspectiveResetShortcut = KeyCode.Alpha0;
 		KeyCode m_CyclePerspectiveShortcut = KeyCode.Backslash;
 
-		Texture2D m_ExtendoClosed;
-		Texture2D m_ExtendoOpen;
-		internal Color gridColorX;
-		internal Color gridColorY;
-		internal Color gridColorZ;
-		internal Color gridColorXPrimary;
-		internal Color gridColorYPrimary;
-		internal Color gridColorZPrimary;
-
-		GUIStyle m_GridButtonStyle = new GUIStyle();
-		GUIStyle m_ExtendoStyle = new GUIStyle();
-		GUIStyle m_GridButtonStyleBlank = new GUIStyle();
-		GUIStyle m_BackgroundStyle = new GUIStyle();
-		bool m_GuiInitialized = false;
-
-		const int k_CurrentPreferencesVersion = 22;
-
-		// the maximum amount of lines to display on screen in either direction
-		const int k_MaxLines = 150;
-
-		/// <summary>
-		/// Every tenth line gets an alpha bump by this amount
-		/// </summary>
-		public static float alphaBump;
+		float m_AlphaBump = .25f;
 
 		Transform m_LastActiveTransform;
-		const string k_AxisConstraintKey = "s";
-		const string k_TempDisableKey = "d";
+		Vector3 m_LastPosition = Vector3.zero;
+		Vector3 m_LastScale = Vector3.one;
+
+		const KeyCode k_AxisConstraintKey = KeyCode.S;
+		const KeyCode k_TempDisableKey = KeyCode.D;
 		bool m_ToggleAxisConstraint = false;
 		bool m_ToggleTempSnap = false;
-		Vector3 m_LastPosition = Vector3.zero;
-		// Vector3 lastRotation = Vector3.zero;
-		Vector3 m_LastScale = Vector3.one;
-		Vector3 pivot = Vector3.zero;
-		Vector3 lastPivot = Vector3.zero;
-		Vector3 camDir = Vector3.zero, prevCamDir = Vector3.zero;
-		// Distance from camera to pivot at the last time the grid mesh was updated.
-		float lastDistance = 0f;
-		public float offset = 0f;
-		public bool ortho { get; private set; }
-		bool prevOrtho = false;
-		bool firstMove = true;
-		float planeGridDrawDistance = 0f;
+		Vector3 m_Pivot = Vector3.zero;
+		Vector3 m_CameraDirection = Vector3.zero;
+		Vector3 m_PreviousCameraDirection = Vector3.zero;
+		// Distance from camera to m_Pivot at the last time the grid mesh was updated.
+		float m_LastDistanceCameraToPivot = 0f;
+		public float GridRenderOffset { get; set; }
+		public bool GridIsOrthographic { get; private set; }
+		bool m_IsFirstMove = true;
+		float m_PlaneGridDrawDistance = 0f;
 		bool m_IsEnabled;
+		SnapMethod m_SnapMethod;
 
-		public static ProGridsEditor instance
+		internal static ProGridsEditor Instance
 		{
 			get { return s_Instance; }
 		}
 
-		public bool snapAsGroup
+		internal float AlphaBump
 		{
-			get { return EditorPrefs.GetBool(PreferenceKeys.SnapAsGroup, Defaults.SnapAsGroup); }
+			get { return m_AlphaBump; }
 
 			set
 			{
-				m_SnapAsGroup = value;
-				EditorPrefs.SetBool(PreferenceKeys.SnapAsGroup, m_SnapAsGroup);
+				EditorPrefs.SetFloat(PreferenceKeys.AlphaBump, value);
+				m_AlphaBump = value;
 			}
 		}
 
-		bool useAxisConstraints
+		internal float AngleValue
 		{
-			get { return (SnapMethod) EditorPrefs.GetInt(PreferenceKeys.SnapMethod, (int) Defaults.SnapMethod) == SnapMethod.SnapOnSelectedAxis; }
-			set { EditorPrefs.SetInt(PreferenceKeys.SnapMethod, (int) (value ? SnapMethod.SnapOnSelectedAxis : SnapMethod.SnapOnAllAxes)); }
-		}
-
-		public bool fullGrid { get; private set; }
-
-		public bool ScaleSnapEnabled
-		{
-			get { return EditorPrefs.GetBool(PreferenceKeys.SnapScale, true); }
+			get { return m_AngleValue; }
 
 			set
 			{
-				m_ScaleSnapEnabled = value;
-				EditorPrefs.SetBool(PreferenceKeys.SnapScale, m_ScaleSnapEnabled);
+				EditorPrefs.SetFloat(PreferenceKeys.AngleValue, value);
+				m_AngleValue = value;
 			}
 		}
 
-		public bool gridIsLocked
+		internal bool PredictiveGrid
+		{
+			get { return m_PredictiveGrid; }
+
+			set
+			{
+				EditorPrefs.SetBool(PreferenceKeys.PredictiveGrid, value);
+				m_PredictiveGrid = value;
+			}
+		}
+
+		internal bool FullGridEnabled { get; private set; }
+
+		internal bool SnapAsGroupEnabled
+		{
+			get { return m_SnapSettings.SnapAsGroup; }
+
+			set
+			{
+				m_SnapSettings.SnapAsGroup = value;
+				EditorPrefs.SetString(PreferenceKeys.SnapSettings, JsonUtility.ToJson(m_SnapSettings));
+			}
+		}
+
+		internal bool GetSnapEnabled()
+		{
+			return m_SnapSettings.SnapEnabled;
+		}
+
+		internal void SetSnapEnabled(bool isEnabled)
+		{
+			m_SnapSettings.SnapEnabled = isEnabled;
+			EditorPrefs.SetString(PreferenceKeys.SnapSettings, JsonUtility.ToJson(m_SnapSettings));
+			if(isEnabled)
+				ResetActiveTransformValues();
+		}
+
+		internal bool ScaleSnapEnabled
+		{
+			get { return m_SnapSettings.ScaleSnapEnabled; }
+
+			set
+			{
+				m_SnapSettings.ScaleSnapEnabled = value;
+				EditorPrefs.SetString(PreferenceKeys.SnapSettings, JsonUtility.ToJson(m_SnapSettings));
+			}
+		}
+
+		/// <summary>
+		/// The snap value as set by the user interface. This is not multiplied by the grid unit or bracket key modifiers.
+		/// </summary>
+		/// <remarks>
+		/// To get the actual value used to snap objects in the scene, use SnapValueInUnityUnits.
+		/// </remarks>
+		internal float SnapValueInGridUnits
+		{
+			get { return m_SnapSettings.SnapValue; }
+
+			set
+			{
+				m_SnapSettings.SnapValue = value;
+
+				if (EditorPrefs.GetBool(PreferenceKeys.SyncUnitySnap, true))
+				{
+					float unitySnapUnit = m_SnapSettings.SnapValueInUnityUnits();
+
+					EditorPrefs.SetFloat(PreferenceKeys.UnityMoveSnapX, unitySnapUnit);
+					EditorPrefs.SetFloat(PreferenceKeys.UnityMoveSnapY, unitySnapUnit);
+					EditorPrefs.SetFloat(PreferenceKeys.UnityMoveSnapZ, unitySnapUnit);
+
+					if (EditorPrefs.GetBool(PreferenceKeys.SnapScale, true))
+						EditorPrefs.SetFloat(PreferenceKeys.UnityScaleSnap, unitySnapUnit);
+
+					// If Unity snap sync is enabled, refresh the Snap Settings window if it's open.
+					Type snapSettings = typeof(EditorWindow).Assembly.GetType("UnityEditor.SnapSettings");
+
+					if (snapSettings != null)
+					{
+						FieldInfo snapInitialized = snapSettings.GetField("s_Initialized", BindingFlags.NonPublic | BindingFlags.Static);
+
+						if (snapInitialized != null)
+						{
+							snapInitialized.SetValue(null, (object) false);
+
+							EditorWindow win = Resources.FindObjectsOfTypeAll<EditorWindow>().FirstOrDefault(x => x.ToString().Contains("SnapSettings"));
+
+							if (win != null)
+								win.Repaint();
+						}
+					}
+				}
+
+				EditorPrefs.SetString(PreferenceKeys.SnapSettings, JsonUtility.ToJson(m_SnapSettings));
+			}
+		}
+
+		/// <summary>
+		/// The value that positions are rounded to when snapping in the editor. This is the result of:
+		/// `SnapValueInGridUnits * GridUnit * BracketKeyMultiplier`
+		/// </summary>
+		internal float SnapValueInUnityUnits
+		{
+			get { return m_SnapSettings.SnapValueInUnityUnits(); }
+		}
+
+		internal SnapMethod SnapMethod
+		{
+			get { return m_SnapMethod; }
+
+			set
+			{
+				EditorPrefs.SetInt(PreferenceKeys.SnapMethod, (int) value);
+				m_SnapMethod = value;
+			}
+		}
+
+		internal bool GridIsLocked
 		{
 			get { return m_GridIsLocked; }
+
+			set
+			{
+				EditorPrefs.SetBool(PreferenceKeys.LockGrid, value);
+				m_GridIsLocked = value;
+			}
 		}
 
-		public float GetSnapIncrement()
-		{
-			return m_UiSnapValue;
-		}
-
-		public void SetSnapIncrement(float inc)
-		{
-			SetSnapValue(m_SnapUnit, Mathf.Max(inc, .001f), Defaults.DefaultSnapMultiplier);
-		}
-
-		int isMenuHidden { get { return menuIsOrtho ? -192 : -173; } }
-
-		ToggleContent m_SnapToGridContent = new ToggleContent("Snap", "", "Snaps all selected objects to grid.");
-		ToggleContent m_GridEnabledContent = new ToggleContent("Hide", "Show", "Toggles drawing of guide lines on or off.  Note that object snapping is not affected by this setting.");
-		ToggleContent m_SnapEnabledContent = new ToggleContent("On", "Off", "Toggles snapping on or off.");
-		ToggleContent m_LockGridContent = new ToggleContent("Lock", "Unlck", "Lock the perspective grid center in place.");
-		ToggleContent m_AngleEnabledContent = new ToggleContent("> On", "> Off", "If on, ProGrids will draw angled line guides.  Angle is settable in degrees.");
-		ToggleContent m_RenderPlaneXContent = new ToggleContent("X", "X", "Renders a grid on the X plane.");
-		ToggleContent m_RenderPlaneYContent = new ToggleContent("Y", "Y", "Renders a grid on the Y plane.");
-		ToggleContent m_RenderPlaneZContent = new ToggleContent("Z", "Z", "Renders a grid on the Z plane.");
-		ToggleContent m_RenderPerspectiveGridContent = new ToggleContent("Full", "Plane", "Renders a 3d grid in perspective mode.");
-		GUIContent m_ExtendMenuContent = new GUIContent("", "Show or hide the scene view menu.");
-		GUIContent m_SnapIncrementContent = new GUIContent("", "Set the snap increment.");
 #endregion
 
 #region Menu Actions
@@ -168,16 +230,10 @@ namespace ProGrids.Editor
 		{
 			if (!IsEnabled())
 				return;
-
-			int multiplier = EditorPrefs.HasKey(PreferenceKeys.SnapMultiplier) ? EditorPrefs.GetInt(PreferenceKeys.SnapMultiplier) : Defaults.DefaultSnapMultiplier;
-
-			float val = EditorPrefs.HasKey(PreferenceKeys.SnapValue) ? EditorPrefs.GetFloat(PreferenceKeys.SnapValue) : 1f;
-
-			if (multiplier < int.MaxValue / 2)
-				multiplier *= 2;
-
-			s_Instance.SetSnapValue(ProGridsEditor.instance.m_SnapUnit, val, multiplier);
-
+			var settings = Instance.m_SnapSettings;
+			if (settings.SnapMultiplier < int.MaxValue / 2)
+				settings.SnapMultiplier *= 2;
+			EditorPrefs.SetString(PreferenceKeys.SnapSettings, JsonUtility.ToJson(settings));
 			SceneView.RepaintAll();
 		}
 
@@ -185,42 +241,35 @@ namespace ProGrids.Editor
 		{
 			if (!IsEnabled())
 				return;
-
-			int multiplier = EditorPrefs.HasKey(PreferenceKeys.SnapMultiplier) ? EditorPrefs.GetInt(PreferenceKeys.SnapMultiplier) : Defaults.DefaultSnapMultiplier;
-			float val = EditorPrefs.HasKey(PreferenceKeys.SnapValue) ? EditorPrefs.GetFloat(PreferenceKeys.SnapValue) : 1f;
-
-			if (multiplier > 1)
-				multiplier /= 2;
-
-			s_Instance.SetSnapValue(ProGridsEditor.instance.m_SnapUnit, val, multiplier);
+			var settings = Instance.m_SnapSettings;
+			if (settings.SnapMultiplier > 1)
+				settings.SnapMultiplier /= 2;
+			EditorPrefs.SetString(PreferenceKeys.SnapSettings, JsonUtility.ToJson(settings));
 			SceneView.RepaintAll();
-
 		}
 
 		internal static void MenuNudgePerspectiveBackward()
 		{
-			if (!IsEnabled() || !instance.m_GridIsLocked)
+			if (!IsEnabled() || !Instance.m_GridIsLocked)
 				return;
-
-			instance.offset -= instance.m_SnapValue;
+			Instance.GridRenderOffset -= Instance.m_SnapSettings.SnapValueInUnityUnits();
 			DoGridRepaint();
-
 		}
 
 		internal static void MenuNudgePerspectiveForward()
 		{
-			if (!IsEnabled() || !instance.m_GridIsLocked)
+			if (!IsEnabled() || !Instance.m_GridIsLocked)
 				return;
-			instance.offset += instance.m_SnapValue;
+			Instance.GridRenderOffset += Instance.m_SnapSettings.SnapValueInUnityUnits();
 			DoGridRepaint();
 		}
 
 		internal static void MenuNudgePerspectiveReset()
 		{
-			if (!IsEnabled() || !instance.m_GridIsLocked)
+			if (!IsEnabled() || !Instance.m_GridIsLocked)
 				return;
 
-			instance.offset = 0;
+			Instance.GridRenderOffset = 0;
 			DoGridRepaint();
 		}
 
@@ -265,7 +314,6 @@ namespace ProGrids.Editor
 
 			EditorPrefs.SetInt(PreferenceKeys.LastOrthoToggledRotation, nextOrtho);
 		}
-
 #endregion
 
 #region INITIALIZATION / SERIALIZATION
@@ -282,7 +330,7 @@ namespace ProGrids.Editor
 				s_Instance.Destroy();
 		}
 
-		public static void Init()
+		internal static void Init()
 		{
 			EditorPrefs.SetBool(PreferenceKeys.ProGridsIsEnabled, true);
 
@@ -290,10 +338,6 @@ namespace ProGrids.Editor
 				new ProGridsEditor().Initialize();
 			else
 				s_Instance.Initialize();
-		}
-
-		ProGridsEditor()
-		{
 		}
 
 		~ProGridsEditor()
@@ -305,15 +349,10 @@ namespace ProGrids.Editor
 		{
 			s_Instance = this;
 			RegisterDelegates();
-			LoadGUIResources();
 			LoadPreferences();
 			GridRenderer.Init();
-			SetMenuIsExtended(menuOpen);
 			lastTime = Time.realtimeSinceStartup;
-
-			// reset colors without changing anything
-			menuOpen = !menuOpen;
-			ToggleMenuVisibility();
+			SetMenuIsExtended(menuOpen);
 
 			if (m_DrawGrid)
 				EditorUtility.SetUnityGridEnabled(false);
@@ -321,14 +360,15 @@ namespace ProGrids.Editor
 			DoGridRepaint();
 		}
 
-		public static void Close()
+		internal static void Close()
 		{
 			EditorPrefs.SetBool(PreferenceKeys.ProGridsIsEnabled, false);
+
 			if(s_Instance != null)
 				s_Instance.Destroy();
 		}
 
-		public void Destroy()
+		void Destroy()
 		{
 			GridRenderer.Destroy();
 			UnregisterDelegates();
@@ -338,7 +378,7 @@ namespace ProGrids.Editor
 			SceneView.RepaintAll();
 		}
 
-		public static bool IsEnabled()
+		internal static bool IsEnabled()
 		{
 			return s_Instance != null && s_Instance.m_IsEnabled;
 		}
@@ -348,15 +388,10 @@ namespace ProGrids.Editor
 			UnregisterDelegates();
 
 			SceneView.onSceneGUIDelegate += OnSceneGUI;
-			EditorApplication.update += Update;
+			EditorApplication.update += UpdateToolbar;
 			Selection.selectionChanged += OnSelectionChange;
-			EditorUtility.RegisterOnPreSceneGUIDelegate(GridRenderer.DoGUI);
-
-#if UNITY_2018_1_OR_NEWER
-			EditorApplication.hierarchyChanged += HierarchyWindowChanged;
-#else
-			EditorApplication.hierarchyWindowChanged += HierarchyWindowChanged;
-#endif
+			EditorUtility.RegisterOnPreSceneGUIDelegate(GridRenderer.OnGUI);
+			Undo.undoRedoPerformed += ResetActiveTransformValues;
 
 			m_IsEnabled = true;
 		}
@@ -365,20 +400,15 @@ namespace ProGrids.Editor
 		{
 			m_IsEnabled = false;
 
-			SceneView.onSceneGUIDelegate -= GridRenderer.DoGUI;
+			SceneView.onSceneGUIDelegate -= GridRenderer.OnGUI;
 			SceneView.onSceneGUIDelegate -= OnSceneGUI;
-			EditorApplication.update -= Update;
+			EditorApplication.update -= UpdateToolbar;
 			Selection.selectionChanged -= OnSelectionChange;
-			EditorUtility.UnregisterOnPreSceneGUIDelegate(GridRenderer.DoGUI);
-
-#if UNITY_2018_1_OR_NEWER
-			EditorApplication.hierarchyChanged -= HierarchyWindowChanged;
-#else
-			EditorApplication.hierarchyWindowChanged -= HierarchyWindowChanged;
-#endif
+			EditorUtility.UnregisterOnPreSceneGUIDelegate(GridRenderer.OnGUI);
+			Undo.undoRedoPerformed -= ResetActiveTransformValues;
 		}
 
-		public void LoadPreferences()
+		internal void LoadPreferences()
 		{
 			if (EditorPrefs.GetInt(PreferenceKeys.StoredPreferenceVersion, k_CurrentPreferencesVersion) != k_CurrentPreferencesVersion)
 			{
@@ -386,18 +416,9 @@ namespace ProGrids.Editor
 				Preferences.ResetPrefs();
 			}
 
-			if (EditorPrefs.HasKey(PreferenceKeys.SnapEnabled))
-			{
-				m_SnapEnabled = EditorPrefs.GetBool(PreferenceKeys.SnapEnabled);
-			}
-
-			menuOpen = EditorPrefs.GetBool(PreferenceKeys.ProGridsIsExtended, true);
-
-			SetSnapValue(
-				(SnapUnit) EditorPrefs.GetInt(PreferenceKeys.GridUnit, (int) Defaults.SnapUnit),
-				EditorPrefs.GetFloat(PreferenceKeys.SnapValue, Defaults.SnapValue),
-				EditorPrefs.GetInt(PreferenceKeys.SnapMultiplier, Defaults.DefaultSnapMultiplier)
-				);
+			string snapSettingsJson = EditorPrefs.GetString(PreferenceKeys.SnapSettings);
+			m_SnapSettings = new SnapSettings();
+			JsonUtility.FromJsonOverwrite(snapSettingsJson, m_SnapSettings);
 
 			m_IncreaseGridSizeShortcut = EditorPrefs.HasKey(PreferenceKeys.IncreaseGridSize)
 				? (KeyCode)EditorPrefs.GetInt(PreferenceKeys.IncreaseGridSize)
@@ -420,6 +441,11 @@ namespace ProGrids.Editor
 
 			m_GridIsLocked = EditorPrefs.GetBool(PreferenceKeys.LockGrid);
 
+			extendoOpen = IconUtility.LoadIcon("ProGrids2_MenuExtendo_Open.png");
+			extendoClosed = IconUtility.LoadIcon("ProGrids2_MenuExtendo_Close.png");
+
+			menuOpen = EditorPrefs.GetBool(PreferenceKeys.ProGridsIsExtended, true);
+
 			if (m_GridIsLocked)
 			{
 				if (EditorPrefs.HasKey(PreferenceKeys.LockedGridPivot))
@@ -428,363 +454,43 @@ namespace ProGrids.Editor
 					string[] pivsplit = piv.Replace("(", "").Replace(")", "").Split(',');
 
 					float x, y, z;
-					if (!float.TryParse(pivsplit[0], out x)) goto NoParseForYou;
-					if (!float.TryParse(pivsplit[1], out y)) goto NoParseForYou;
-					if (!float.TryParse(pivsplit[2], out z)) goto NoParseForYou;
 
-					pivot.x = x;
-					pivot.y = y;
-					pivot.z = z;
-
-				NoParseForYou:
-					;   // appease the compiler
+					if (float.TryParse(pivsplit[0], out x) &&
+					    float.TryParse(pivsplit[1], out y) &&
+					    float.TryParse(pivsplit[2], out z))
+					{
+						m_Pivot.x = x;
+						m_Pivot.y = y;
+						m_Pivot.z = z;
+					}
 				}
-
 			}
 
-			fullGrid = EditorPrefs.GetBool(PreferenceKeys.PerspGrid);
+			FullGridEnabled = EditorPrefs.GetBool(PreferenceKeys.PerspGrid);
 
 			m_RenderPlane = EditorPrefs.HasKey(PreferenceKeys.GridAxis) ? (Axis)EditorPrefs.GetInt(PreferenceKeys.GridAxis) : Axis.Y;
-
-			alphaBump = EditorPrefs.GetFloat(PreferenceKeys.AlphaBump, Defaults.AlphaBump);
-			gridColorX = (EditorPrefs.HasKey(PreferenceKeys.GridColorX)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorX)) : Defaults.GridColorX;
-			gridColorXPrimary = new Color(gridColorX.r, gridColorX.g, gridColorX.b, gridColorX.a + alphaBump);
-			gridColorY = (EditorPrefs.HasKey(PreferenceKeys.GridColorY)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorY)) : Defaults.GridColorY;
-			gridColorYPrimary = new Color(gridColorY.r, gridColorY.g, gridColorY.b, gridColorY.a + alphaBump);
-			gridColorZ = (EditorPrefs.HasKey(PreferenceKeys.GridColorZ)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorZ)) : Defaults.GridColorZ;
-			gridColorZPrimary = new Color(gridColorZ.r, gridColorZ.g, gridColorZ.b, gridColorZ.a + alphaBump);
-
 			m_DrawGrid = EditorPrefs.GetBool(PreferenceKeys.ShowGrid, Defaults.ShowGrid);
-
-			predictiveGrid = EditorPrefs.GetBool(PreferenceKeys.PredictiveGrid, Defaults.PredictiveGrid);
-
-			m_SnapAsGroup = snapAsGroup;
-			m_ScaleSnapEnabled = ScaleSnapEnabled;
-		}
-
-		void LoadGUIResources()
-		{
-			if (m_GridEnabledContent.image_on == null)
-				m_GridEnabledContent.image_on = IconUtility.LoadIcon("ProGrids2_GUI_Vis_On.png");
-
-			if (m_GridEnabledContent.image_off == null)
-				m_GridEnabledContent.image_off = IconUtility.LoadIcon("ProGrids2_GUI_Vis_Off.png");
-
-			if (m_SnapEnabledContent.image_on == null)
-				m_SnapEnabledContent.image_on = IconUtility.LoadIcon("ProGrids2_GUI_Snap_On.png");
-
-			if (m_SnapEnabledContent.image_off == null)
-				m_SnapEnabledContent.image_off = IconUtility.LoadIcon("ProGrids2_GUI_Snap_Off.png");
-
-			if (m_SnapToGridContent.image_on == null)
-				m_SnapToGridContent.image_on = IconUtility.LoadIcon("ProGrids2_GUI_PushToGrid_Normal.png");
-
-			if (m_LockGridContent.image_on == null)
-				m_LockGridContent.image_on = IconUtility.LoadIcon("ProGrids2_GUI_PGrid_Lock_On.png");
-
-			if (m_LockGridContent.image_off == null)
-				m_LockGridContent.image_off = IconUtility.LoadIcon("ProGrids2_GUI_PGrid_Lock_Off.png");
-
-			if (m_AngleEnabledContent.image_on == null)
-				m_AngleEnabledContent.image_on = IconUtility.LoadIcon("ProGrids2_GUI_AngleVis_On.png");
-
-			if (m_AngleEnabledContent.image_off == null)
-				m_AngleEnabledContent.image_off = IconUtility.LoadIcon("ProGrids2_GUI_AngleVis_Off.png");
-
-			if (m_RenderPlaneXContent.image_on == null)
-				m_RenderPlaneXContent.image_on = IconUtility.LoadIcon("ProGrids2_GUI_PGrid_X_On.png");
-
-			if (m_RenderPlaneXContent.image_off == null)
-				m_RenderPlaneXContent.image_off = IconUtility.LoadIcon("ProGrids2_GUI_PGrid_X_Off.png");
-
-			if (m_RenderPlaneYContent.image_on == null)
-				m_RenderPlaneYContent.image_on = IconUtility.LoadIcon("ProGrids2_GUI_PGrid_Y_On.png");
-
-			if (m_RenderPlaneYContent.image_off == null)
-				m_RenderPlaneYContent.image_off = IconUtility.LoadIcon("ProGrids2_GUI_PGrid_Y_Off.png");
-
-			if (m_RenderPlaneZContent.image_on == null)
-				m_RenderPlaneZContent.image_on = IconUtility.LoadIcon("ProGrids2_GUI_PGrid_Z_On.png");
-
-			if (m_RenderPlaneZContent.image_off == null)
-				m_RenderPlaneZContent.image_off = IconUtility.LoadIcon("ProGrids2_GUI_PGrid_Z_Off.png");
-
-			if (m_RenderPerspectiveGridContent.image_on == null)
-				m_RenderPerspectiveGridContent.image_on = IconUtility.LoadIcon("ProGrids2_GUI_PGrid_3D_On.png");
-
-			if (m_RenderPerspectiveGridContent.image_off == null)
-				m_RenderPerspectiveGridContent.image_off = IconUtility.LoadIcon("ProGrids2_GUI_PGrid_3D_Off.png");
-
-			if (m_ExtendoOpen == null)
-				m_ExtendoOpen = IconUtility.LoadIcon("ProGrids2_MenuExtendo_Open.png");
-
-			if (m_ExtendoClosed == null)
-				m_ExtendoClosed = IconUtility.LoadIcon("ProGrids2_MenuExtendo_Close.png");
-		}
-
-#endregion
-
-#region INTERFACE
-
-		public static void DoGridRepaint()
-		{
-			if (instance != null)
-			{
-				instance.m_DoGridRepaint = true;
-				SceneView.RepaintAll();
-			}
-		}
-
-		const int MENU_EXTENDED = 8;
-		const int PAD = 3;
-		Rect r = new Rect(8, MENU_EXTENDED, 42, 16);
-		Rect backgroundRect = new Rect(00, 0, 0, 0);
-		Rect extendoButtonRect = new Rect(0, 0, 0, 0);
-		bool menuOpen = true;
-		float menuStart = MENU_EXTENDED;
-		const float MENU_SPEED = 500f;
-		float deltaTime = 0f;
-		float lastTime = 0f;
-		const float FADE_SPEED = 2.5f;
-		float backgroundFade = 1f;
-		bool mouseOverMenu = false;
-		Color menuBackgroundColor = new Color(0f, 0f, 0f, .5f);
-		Color extendoNormalColor = new Color(.9f, .9f, .9f, .7f);
-		Color extendoHoverColor = new Color(0f, 1f, .4f, 1f);
-		bool extendoButtonHovering = false;
-		bool menuIsOrtho = false;
-
-		void Update()
-		{
-			deltaTime = Time.realtimeSinceStartup - lastTime;
-			lastTime = Time.realtimeSinceStartup;
-
-			if ((menuOpen && menuStart < MENU_EXTENDED) || (!menuOpen && menuStart > isMenuHidden))
-			{
-				menuStart += deltaTime * MENU_SPEED * (menuOpen ? 1f : -1f);
-				menuStart = Mathf.Clamp(menuStart, isMenuHidden, MENU_EXTENDED);
-				DoGridRepaint();
-			}
-
-			float a = menuBackgroundColor.a;
-			backgroundFade = (mouseOverMenu || !menuOpen) ? FADE_SPEED : -FADE_SPEED;
-
-			menuBackgroundColor.a = Mathf.Clamp(menuBackgroundColor.a + backgroundFade * deltaTime, 0f, .5f);
-			extendoNormalColor.a = menuBackgroundColor.a;
-			extendoHoverColor.a = (menuBackgroundColor.a / .5f);
-
-			if (!Mathf.Approximately(menuBackgroundColor.a, a))
-				DoGridRepaint();
-		}
-
-		void DrawSceneGUI()
-		{
-			bool srgb = GL.sRGBWrite;
-			GL.sRGBWrite = false;
-
-			GUI.backgroundColor = menuBackgroundColor;
-			backgroundRect.x = r.x - 4;
-			backgroundRect.y = 0;
-			backgroundRect.width = r.width + 8;
-			backgroundRect.height = r.y + r.height + PAD;
-			GUI.Box(backgroundRect, "", m_BackgroundStyle);
-
-			// when hit testing mouse for showing the background, add some leeway
-			backgroundRect.width += 32f;
-			backgroundRect.height += 32f;
-			GUI.backgroundColor = Color.white;
-
-			if (!m_GuiInitialized)
-			{
-				m_ExtendoStyle.normal.background = menuOpen ? m_ExtendoClosed : m_ExtendoOpen;
-				m_ExtendoStyle.hover.background = menuOpen ? m_ExtendoClosed : m_ExtendoOpen;
-
-				m_GuiInitialized = true;
-				m_BackgroundStyle.normal.background = EditorGUIUtility.whiteTexture;
-
-				Texture2D icon_button_normal = IconUtility.LoadIcon("ProGrids2_Button_Normal.png");
-				Texture2D icon_button_hover = IconUtility.LoadIcon("ProGrids2_Button_Hover.png");
-
-				if (icon_button_normal == null)
-				{
-					m_GridButtonStyleBlank = new GUIStyle("button");
-				}
-				else
-				{
-					m_GridButtonStyleBlank.normal.background = icon_button_normal;
-					m_GridButtonStyleBlank.hover.background = icon_button_hover;
-					m_GridButtonStyleBlank.normal.textColor = icon_button_normal != null ? Color.white : Color.black;
-					m_GridButtonStyleBlank.hover.textColor = new Color(.7f, .7f, .7f, 1f);
-				}
-
-				m_GridButtonStyleBlank.padding = new RectOffset(1, 2, 1, 2);
-				m_GridButtonStyleBlank.alignment = TextAnchor.MiddleCenter;
-			}
-
-			r.y = menuStart;
-
-			m_SnapIncrementContent.text = m_UiSnapValue.ToString("#.####");
-
-			if (GUI.Button(r, m_SnapIncrementContent, m_GridButtonStyleBlank))
-			{
-#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-		// On Mac ShowAsDropdown and ShowAuxWindow both throw stack pop exceptions when initialized.
-		ScenePreferencesWindow options = EditorWindow.GetWindow<ScenePreferencesWindow>(true, "ProGrids Settings", true);
-		Rect screenRect = SceneView.lastActiveSceneView.position;
-		options.editor = this;
-		options.position = new Rect(screenRect.x + r.x + r.width + PAD,
-										screenRect.y + r.y + 24,
-										256,
-										174);
-#else
-				ScenePreferencesWindow options = ScriptableObject.CreateInstance<ScenePreferencesWindow>();
-				Rect screenRect = SceneView.lastActiveSceneView.position;
-				options.editor = this;
-				options.ShowAsDropDown(new Rect(screenRect.x + r.x + r.width + PAD,
-												screenRect.y + r.y + 24,
-												0,
-												0),
-												new Vector2(256, 174));
-#endif
-			}
-
-			r.y += r.height + PAD;
-
-			// Draw grid
-			if (ToggleContent.ToggleButton(r, m_GridEnabledContent, m_DrawGrid, m_GridButtonStyle, EditorStyles.miniButton))
-				SetGridEnabled(!m_DrawGrid);
-
-			r.y += r.height + PAD;
-
-			// Snap enabled
-			if (ToggleContent.ToggleButton(r, m_SnapEnabledContent, m_SnapEnabled, m_GridButtonStyle, EditorStyles.miniButton))
-				SetSnapEnabled(!m_SnapEnabled);
-
-			r.y += r.height + PAD;
-
-			// Push to grid
-			if (ToggleContent.ToggleButton(r, m_SnapToGridContent, true, m_GridButtonStyle, EditorStyles.miniButton))
-				SnapToGrid(Selection.transforms);
-
-			r.y += r.height + PAD;
-
-			// Lock grid
-			if (ToggleContent.ToggleButton(r, m_LockGridContent, m_GridIsLocked, m_GridButtonStyle, EditorStyles.miniButton))
-			{
-				m_GridIsLocked = !m_GridIsLocked;
-				EditorPrefs.SetBool(PreferenceKeys.LockGrid, m_GridIsLocked);
-				EditorPrefs.SetString(PreferenceKeys.LockedGridPivot, pivot.ToString());
-
-				// if we've modified the nudge value, reset the pivot here
-				if (!m_GridIsLocked)
-					offset = 0f;
-
-				DoGridRepaint();
-			}
-
-			if (menuIsOrtho)
-			{
-				r.y += r.height + PAD;
-
-				if (ToggleContent.ToggleButton(r, m_AngleEnabledContent, m_DrawAngles, m_GridButtonStyle, EditorStyles.miniButton))
-					SetDrawAngles(!m_DrawAngles);
-			}
-
-			/**
-			 * Perspective Toggles
-			 */
-			r.y += r.height + PAD + 4;
-
-			if (ToggleContent.ToggleButton(r, m_RenderPlaneXContent, (m_RenderPlane & Axis.X) == Axis.X && !fullGrid, m_GridButtonStyle, EditorStyles.miniButton))
-				SetRenderPlane(Axis.X);
-
-			r.y += r.height + PAD;
-
-			if (ToggleContent.ToggleButton(r, m_RenderPlaneYContent, (m_RenderPlane & Axis.Y) == Axis.Y && !fullGrid, m_GridButtonStyle, EditorStyles.miniButton))
-				SetRenderPlane(Axis.Y);
-
-			r.y += r.height + PAD;
-
-			if (ToggleContent.ToggleButton(r, m_RenderPlaneZContent, (m_RenderPlane & Axis.Z) == Axis.Z && !fullGrid, m_GridButtonStyle, EditorStyles.miniButton))
-				SetRenderPlane(Axis.Z);
-
-			r.y += r.height + PAD;
-
-			if (ToggleContent.ToggleButton(r, m_RenderPerspectiveGridContent, fullGrid, m_GridButtonStyle, EditorStyles.miniButton))
-			{
-				fullGrid = !fullGrid;
-				EditorPrefs.SetBool(PreferenceKeys.PerspGrid, fullGrid);
-				DoGridRepaint();
-			}
-
-			r.y += r.height + PAD;
-
-			extendoButtonRect.x = r.x;
-			extendoButtonRect.y = r.y;
-			extendoButtonRect.width = r.width;
-			extendoButtonRect.height = r.height;
-
-			GUI.backgroundColor = extendoButtonHovering ? extendoHoverColor : extendoNormalColor;
-			m_ExtendMenuContent.text = m_ExtendoOpen == null ? (menuOpen ? "Close" : "Open") : "";
-			if (GUI.Button(r, m_ExtendMenuContent, m_ExtendoOpen ? m_ExtendoStyle : m_GridButtonStyleBlank))
-			{
-				ToggleMenuVisibility();
-				extendoButtonHovering = false;
-			}
-			GUI.backgroundColor = Color.white;
-
-			GL.sRGBWrite = srgb;
-		}
-
-		void ToggleMenuVisibility()
-		{
-			menuOpen = !menuOpen;
-			EditorPrefs.SetBool(PreferenceKeys.ProGridsIsExtended, menuOpen);
-
-			m_ExtendoStyle.normal.background = menuOpen ? m_ExtendoClosed : m_ExtendoOpen;
-			m_ExtendoStyle.hover.background = menuOpen ? m_ExtendoClosed : m_ExtendoOpen;
-
-			foreach (System.Action<bool> listener in toolbarEventSubscribers)
-				listener(menuOpen);
-
-			DoGridRepaint();
-		}
-
-		// skip color fading and stuff
-		void SetMenuIsExtended(bool isExtended)
-		{
-			menuOpen = isExtended;
-			menuIsOrtho = ortho;
-			menuStart = menuOpen ? MENU_EXTENDED : isMenuHidden;
-
-			menuBackgroundColor.a = 0f;
-			extendoNormalColor.a = menuBackgroundColor.a;
-			extendoHoverColor.a = (menuBackgroundColor.a / .5f);
-
-			m_ExtendoStyle.normal.background = menuOpen ? m_ExtendoClosed : m_ExtendoOpen;
-			m_ExtendoStyle.hover.background = menuOpen ? m_ExtendoClosed : m_ExtendoOpen;
-
-			foreach (System.Action<bool> listener in toolbarEventSubscribers)
-				listener(menuOpen);
-
-			EditorPrefs.SetBool(PreferenceKeys.ProGridsIsExtended, menuOpen);
+			m_PredictiveGrid = EditorPrefs.GetBool(PreferenceKeys.PredictiveGrid, Defaults.PredictiveGrid);
 		}
 #endregion
 
 #region ONSCENEGUI
 
-#if PROFILE_TIMES
-		pb_Profiler profiler = new pb_Profiler();
-#endif
-
-		public void OnSceneGUI(SceneView scnview)
+		internal static void DoGridRepaint()
 		{
-			bool isCurrentView = scnview == SceneView.lastActiveSceneView;
+			if (Instance != null)
+			{
+				Instance.m_DoGridRepaint = true;
+				SceneView.RepaintAll();
+			}
+		}
 
-			if (isCurrentView)
+		void OnSceneGUI(SceneView scnview)
+		{
+			if (scnview == SceneView.lastActiveSceneView)
 			{
 				Handles.BeginGUI();
-				DrawSceneGUI();
+				DrawSceneToolbar();
 				Handles.EndGUI();
 			}
 
@@ -792,261 +498,175 @@ namespace ProGrids.Editor
 			if (EditorApplication.isPlayingOrWillChangePlaymode)
 				return;
 
-			Event e = Event.current;
+			var currentEvent = Event.current;
 
-			// repaint scene gui if mouse is near controls
-			if (isCurrentView && e.type == EventType.MouseMove)
+			HandleKeys(currentEvent);
+
+			if (m_DrawGrid && (currentEvent.type == EventType.Repaint || m_DoGridRepaint))
 			{
-				bool tmp = extendoButtonHovering;
-				extendoButtonHovering = extendoButtonRect.Contains(e.mousePosition);
-
-				if (extendoButtonHovering != tmp)
-					DoGridRepaint();
-
-				mouseOverMenu = backgroundRect.Contains(e.mousePosition);
-			}
-
-			if (e.Equals(Event.KeyboardEvent(k_AxisConstraintKey)))
-			{
-				m_ToggleAxisConstraint = true;
-			}
-
-			if (e.Equals(Event.KeyboardEvent(k_TempDisableKey)))
-			{
-				m_ToggleTempSnap = true;
-			}
-
-			if (e.isKey)
-			{
-				m_ToggleAxisConstraint = false;
-				m_ToggleTempSnap = false;
-				bool used = true;
-
-				if (e.keyCode == m_IncreaseGridSizeShortcut)
+				if (GridIsOrthographic)
 				{
-					if (e.type == EventType.KeyUp)
-						IncreaseGridSize();
-				}
-				else if (e.keyCode == m_DecreaseGridSizeShortcut)
-				{
-					if (e.type == EventType.KeyUp)
-						DecreaseGridSize();
-				}
-				else if (e.keyCode == m_NudgePerspectiveBackwardShortcut)
-				{
-					if (e.type == EventType.KeyUp && !fullGrid && !ortho && m_GridIsLocked)
-						MenuNudgePerspectiveBackward();
-				}
-				else if (e.keyCode == m_NudgePerspectiveForwardShortcut)
-				{
-					if (e.type == EventType.KeyUp && !fullGrid && !ortho && m_GridIsLocked)
-						MenuNudgePerspectiveForward();
-				}
-				else if (e.keyCode == m_NudgePerspectiveResetShortcut)
-				{
-					if (e.type == EventType.KeyUp && !fullGrid && !ortho && m_GridIsLocked)
-						MenuNudgePerspectiveReset();
-				}
-				else if (e.keyCode == m_CyclePerspectiveShortcut)
-				{
-					if (e.type == EventType.KeyUp)
-						CyclePerspective();
+					GridRenderer.DrawGridOrthographic(scnview.camera, SnapValueInUnityUnits, m_DrawAngles ? AngleValue : -1f);
 				}
 				else
 				{
-					used = false;
-				}
+					Vector3 previousPivot = m_Pivot;
+					CalculateGridPlacement(scnview);
+					float camDistance = Vector3.Distance(scnview.camera.transform.position, previousPivot);
 
-				if (used)
-					e.Use();
+					if (m_DoGridRepaint || m_Pivot != previousPivot ||
+					    Mathf.Abs(camDistance - m_LastDistanceCameraToPivot) > m_LastDistanceCameraToPivot / 2 ||
+					    m_CameraDirection != m_PreviousCameraDirection)
+					{
+						m_PreviousCameraDirection = m_CameraDirection;
+						m_DoGridRepaint = false;
+						m_LastDistanceCameraToPivot = camDistance;
+
+						if (FullGridEnabled)
+							GridRenderer.DrawGridPerspective(scnview.camera, m_Pivot, m_SnapSettings.SnapValueInUnityUnits());
+						else
+							m_PlaneGridDrawDistance = GridRenderer.DrawGridPlane(scnview.camera, m_RenderPlane, m_SnapSettings.SnapValueInUnityUnits(), m_Pivot, GridRenderOffset);
+					}
+				}
 			}
 
-			Camera cam = Camera.current;
+			DoTransformSnapping(currentEvent, scnview.camera);
+		}
 
-			if (cam == null)
-				return;
+		void CalculateGridPlacement(SceneView view)
+		{
+			var cam = view.camera;
 
-			ortho = cam.orthographic && IsRounded(scnview.rotation.eulerAngles.normalized);
+			bool wasOrtho = GridIsOrthographic;
 
-			camDir = EditorUtility.CeilFloor(pivot - cam.transform.position);
+			GridIsOrthographic = cam.orthographic && Snapping.IsRounded(view.rotation.eulerAngles.normalized);
 
-			if (ortho && !prevOrtho || ortho != menuIsOrtho)
-				OnSceneBecameOrtho(isCurrentView);
+			m_CameraDirection = Snapping.Sign(m_Pivot - cam.transform.position);
 
-			if (!ortho && prevOrtho)
-				OnSceneBecamePersp(isCurrentView);
+			if (GridIsOrthographic && !wasOrtho || GridIsOrthographic != menuIsOrtho)
+				OnSceneBecameOrtho(view == SceneView.lastActiveSceneView);
 
-			prevOrtho = ortho;
+			if (!GridIsOrthographic && wasOrtho)
+				OnSceneBecamePersp(view == SceneView.lastActiveSceneView);
 
-			float camDistance = Vector3.Distance(cam.transform.position, lastPivot);    // distance from camera to pivot
 
-			if (fullGrid)
+			if (FullGridEnabled)
 			{
-				pivot = m_GridIsLocked || Selection.activeTransform == null ? pivot : Selection.activeTransform.position;
+				m_Pivot = m_GridIsLocked || Selection.activeTransform == null ? m_Pivot : Selection.activeTransform.position;
 			}
 			else
 			{
-				Vector3 sceneViewPlanePivot = pivot;
+				Vector3 sceneViewPlanePivot = m_Pivot;
 
 				Ray ray = new Ray(cam.transform.position, cam.transform.forward);
-				Plane plane = new Plane(Vector3.up, pivot);
-				float dist;
+				Plane plane = new Plane(Vector3.up, m_Pivot);
 
-				// the only time a locked grid should ever move is if it's pivot is out
+				// the only time a locked grid should ever move is if it's m_Pivot is out
 				// of the camera's frustum.
-				if ((m_GridIsLocked && !cam.InFrustum(pivot)) || !m_GridIsLocked || scnview != SceneView.lastActiveSceneView)
+				if ((m_GridIsLocked && !cam.InFrustum(m_Pivot)) || !m_GridIsLocked || view != SceneView.lastActiveSceneView)
 				{
+					float dist;
+
 					if (plane.Raycast(ray, out dist))
-						sceneViewPlanePivot = ray.GetPoint(Mathf.Min(dist, planeGridDrawDistance / 2f));
+						sceneViewPlanePivot = ray.GetPoint(Mathf.Min(dist, m_PlaneGridDrawDistance / 2f));
 					else
-						sceneViewPlanePivot = ray.GetPoint(Mathf.Min(cam.farClipPlane / 2f, planeGridDrawDistance / 2f));
+						sceneViewPlanePivot = ray.GetPoint(Mathf.Min(cam.farClipPlane / 2f, m_PlaneGridDrawDistance / 2f));
 				}
 
 				if (m_GridIsLocked)
 				{
-					pivot = EnumExtension.InverseAxisMask(sceneViewPlanePivot, m_RenderPlane) + EnumExtension.AxisMask(pivot, m_RenderPlane);
+					m_Pivot = EnumExtension.InverseAxisMask(sceneViewPlanePivot, m_RenderPlane) + EnumExtension.AxisMask(m_Pivot, m_RenderPlane);
 				}
 				else
 				{
-					pivot = Selection.activeTransform == null ? pivot : Selection.activeTransform.position;
+					m_Pivot = Selection.activeTransform == null ? m_Pivot : Selection.activeTransform.position;
 
-					if (Selection.activeTransform == null || !cam.InFrustum(pivot))
+					if (Selection.activeTransform == null || !cam.InFrustum(m_Pivot))
 					{
-						pivot = EnumExtension.InverseAxisMask(sceneViewPlanePivot, m_RenderPlane) + EnumExtension.AxisMask(Selection.activeTransform == null ? pivot : Selection.activeTransform.position, m_RenderPlane);
+						m_Pivot = EnumExtension.InverseAxisMask(sceneViewPlanePivot, m_RenderPlane) + EnumExtension.AxisMask(Selection.activeTransform == null ? m_Pivot : Selection.activeTransform.position, m_RenderPlane);
 					}
 				}
 			}
+		}
 
-#if PG_DEBUG
-		pivotGo.transform.position = pivot;
-#endif
+		void DoTransformSnapping(Event currentEvent, Camera camera)
+		{
+			if (currentEvent.type == EventType.MouseUp)
+				m_IsFirstMove = true;
 
-			if (m_DrawGrid)
-			{
-				if (ortho)
-				{
-					// ortho don't care about pivots
-					DrawGridOrthographic(cam);
-				}
-				else
-				{
-#if PROFILE_TIMES
-				profiler.LogStart("DrawGridPerspective");
-#endif
+			Transform selected = m_LastActiveTransform;
 
-					if (m_DoGridRepaint || pivot != lastPivot || Mathf.Abs(camDistance - lastDistance) > lastDistance / 2 || camDir != prevCamDir)
-					{
-						prevCamDir = camDir;
-						m_DoGridRepaint = false;
-						lastPivot = pivot;
-						lastDistance = camDistance;
-
-						if (fullGrid)
-						{
-							//  if perspective and 3d, use pivot like normal
-							GridRenderer.DrawGridPerspective(cam, pivot, m_SnapValue, new Color[3] { gridColorX, gridColorY, gridColorZ }, alphaBump);
-						}
-						else
-						{
-							if ((m_RenderPlane & Axis.X) == Axis.X)
-								planeGridDrawDistance = GridRenderer.DrawPlane(cam, pivot + Vector3.right * offset, Vector3.up, Vector3.forward, m_SnapValue, gridColorX, alphaBump);
-
-							if ((m_RenderPlane & Axis.Y) == Axis.Y)
-								planeGridDrawDistance = GridRenderer.DrawPlane(cam, pivot + Vector3.up * offset, Vector3.right, Vector3.forward, m_SnapValue, gridColorY, alphaBump);
-
-							if ((m_RenderPlane & Axis.Z) == Axis.Z)
-								planeGridDrawDistance = GridRenderer.DrawPlane(cam, pivot + Vector3.forward * offset, Vector3.up, Vector3.right, m_SnapValue, gridColorZ, alphaBump);
-
-						}
-					}
-#if PROFILE_TIMES
-				profiler.LogFinish("DrawGridPerspective");
-#endif
-				}
-			}
-
-			// Always keep track of the selection
-			if (!Selection.transforms.Contains(m_LastActiveTransform))
-			{
-				if (Selection.activeTransform)
-				{
-					m_LastActiveTransform = Selection.activeTransform;
-					m_LastPosition = Selection.activeTransform.position;
-					m_LastScale = Selection.activeTransform.localScale;
-				}
-			}
-
-
-			if (e.type == EventType.MouseUp)
-				firstMove = true;
-
-			if (!m_SnapEnabled || GUIUtility.hotControl < 1)
+			if (!m_SnapSettings.SnapEnabled || GUIUtility.hotControl < 1 || selected == null)
 				return;
 
-			// Bugger.SetKey("Toggle Snap Off", toggleTempSnap);
-
-			/**
-			 *	Snapping (for all the junk in PG, this method is literally the only code that actually affects anything).
-			 */
 			if (Selection.activeTransform && EditorUtility.SnapIsEnabled(Selection.activeTransform))
 			{
-				if (!FuzzyEquals(m_LastActiveTransform.position, m_LastPosition))
+				if (Tools.current == Tool.Move && !Snapping.Approx(m_LastActiveTransform.position, m_LastPosition))
 				{
-					Transform selected = m_LastActiveTransform;
-
 					if (!m_ToggleTempSnap)
 					{
 						Vector3 old = selected.position;
 						Vector3 mask = old - m_LastPosition;
 
-						bool constraintsOn = m_ToggleAxisConstraint ? !useAxisConstraints : useAxisConstraints;
+						bool constraintsOn = SnapMethod == SnapMethod.SnapOnSelectedAxis;
+
+						if (m_ToggleAxisConstraint)
+							constraintsOn = !constraintsOn;
+
+						Vector3 snapped;
 
 						if (constraintsOn)
-							selected.position = EditorUtility.SnapValue(old, mask, m_SnapValue);
+							snapped = Snapping.Round(old, mask, m_SnapSettings.SnapValueInUnityUnits());
 						else
-							selected.position = EditorUtility.SnapValue(old, m_SnapValue);
+							snapped = Snapping.Round(old, m_SnapSettings.SnapValueInUnityUnits());
 
-						Vector3 offset = selected.position - old;
+						Vector3 snapOffset = snapped - old;
 
-						if (predictiveGrid && firstMove && !fullGrid)
+						if (m_PredictiveGrid && m_IsFirstMove && !FullGridEnabled)
 						{
-							firstMove = false;
-							Axis dragAxis = EditorUtility.CalcDragAxis(offset, scnview.camera);
+							Undo.RecordObjects(Selection.transforms, "Move Objects");
+
+							m_IsFirstMove = false;
+							Axis dragAxis = EditorUtility.CalcDragAxis(snapOffset, camera);
 
 							if (dragAxis != Axis.None && dragAxis != m_RenderPlane)
 								SetRenderPlane(dragAxis);
 						}
 
-						if (m_SnapAsGroup)
+						selected.position = snapped;
+
+						if (m_SnapSettings.SnapAsGroup)
 						{
-							OffsetTransforms(Selection.transforms, selected, offset);
+							EditorUtility.OffsetTransforms(Selection.transforms, selected, snapOffset);
 						}
 						else
 						{
 							foreach (Transform t in Selection.transforms)
-								t.position = constraintsOn ? EditorUtility.SnapValue(t.position, mask, m_SnapValue) : EditorUtility.SnapValue(t.position, m_SnapValue);
+								t.position = constraintsOn
+									? Snapping.Round(t.position, mask, m_SnapSettings.SnapValueInUnityUnits())
+									: Snapping.Round(t.position, m_SnapSettings.SnapValueInUnityUnits());
 						}
 					}
 
 					m_LastPosition = selected.position;
 				}
 
-				if (!FuzzyEquals(m_LastActiveTransform.localScale, m_LastScale) && m_ScaleSnapEnabled)
+				if (Tools.current == Tool.Scale && m_SnapSettings.ScaleSnapEnabled && !Snapping.Approx(m_LastActiveTransform.localScale, m_LastScale))
 				{
 					if (!m_ToggleTempSnap)
 					{
 						Vector3 old = m_LastActiveTransform.localScale;
 						Vector3 mask = old - m_LastScale;
 
-						if (predictiveGrid)
+						if (m_PredictiveGrid)
 						{
-							Axis dragAxis = EditorUtility.CalcDragAxis(Selection.activeTransform.TransformDirection(mask), scnview.camera);
+							Axis dragAxis = EditorUtility.CalcDragAxis(Selection.activeTransform.TransformDirection(mask), camera);
 							if (dragAxis != Axis.None && dragAxis != m_RenderPlane)
 								SetRenderPlane(dragAxis);
 						}
 
 						foreach (Transform t in Selection.transforms)
-							t.localScale = EditorUtility.SnapValue(t.localScale, mask, m_SnapValue);
+							t.localScale = Snapping.Round(t.localScale, mask, m_SnapSettings.SnapValueInUnityUnits());
 
 						m_LastScale = m_LastActiveTransform.localScale;
 					}
@@ -1054,369 +674,109 @@ namespace ProGrids.Editor
 			}
 		}
 
+		void HandleKeys(Event currentEvent)
+		{
+			if (!currentEvent.isKey)
+				return;
+
+			KeyCode keyCode = currentEvent.keyCode;
+			bool used = true;
+
+			if (currentEvent.type == EventType.KeyDown)
+			{
+				if (keyCode == k_TempDisableKey)
+					m_ToggleTempSnap = true;
+				else if (keyCode == k_AxisConstraintKey)
+					m_ToggleAxisConstraint = true;
+				else
+					used = false;
+			}
+			else if (currentEvent.type == EventType.KeyUp)
+			{
+				m_ToggleTempSnap = false;
+				m_ToggleAxisConstraint = false;
+
+				if (currentEvent.keyCode == m_IncreaseGridSizeShortcut)
+				{
+					IncreaseGridSize();
+				}
+				else if (currentEvent.keyCode == m_DecreaseGridSizeShortcut)
+				{
+					DecreaseGridSize();
+				}
+				else if (currentEvent.keyCode == m_NudgePerspectiveBackwardShortcut)
+				{
+					if (!FullGridEnabled && !GridIsOrthographic && m_GridIsLocked)
+						MenuNudgePerspectiveBackward();
+				}
+				else if (currentEvent.keyCode == m_NudgePerspectiveForwardShortcut)
+				{
+					if (!FullGridEnabled && !GridIsOrthographic && m_GridIsLocked)
+						MenuNudgePerspectiveForward();
+				}
+				else if (currentEvent.keyCode == m_NudgePerspectiveResetShortcut)
+				{
+					if (!FullGridEnabled && !GridIsOrthographic && m_GridIsLocked)
+						MenuNudgePerspectiveReset();
+				}
+				else if (currentEvent.keyCode == m_CyclePerspectiveShortcut)
+				{
+					CyclePerspective();
+				}
+				else
+				{
+					used = false;
+				}
+			}
+
+			if (used)
+				currentEvent.Use();
+		}
+
 		void OnSelectionChange()
 		{
-			// Means we don't have to wait for script reloads
-			// to respect IgnoreSnap attribute, and keeps the
-			// cache small.
 			EditorUtility.ClearSnapEnabledCache();
+			ResetActiveTransformValues();
+		}
+
+		void ResetActiveTransformValues()
+		{
+			m_LastActiveTransform = Selection.activeTransform;
+
+			if (m_LastActiveTransform != null)
+			{
+				m_LastPosition = m_LastActiveTransform.position;
+				m_LastScale = m_LastActiveTransform.localScale;
+			}
 		}
 
 		void OnSceneBecameOrtho(bool isCurrentView)
 		{
-			GridRenderer.Destroy();
-
-			if (isCurrentView && ortho != menuIsOrtho)
+			if (isCurrentView && GridIsOrthographic != menuIsOrtho)
 				SetMenuIsExtended(menuOpen);
 		}
 
 		void OnSceneBecamePersp(bool isCurrentView)
 		{
-			if (isCurrentView && ortho != menuIsOrtho)
+			if (isCurrentView && GridIsOrthographic != menuIsOrtho)
 				SetMenuIsExtended(menuOpen);
-		}
-#endregion
-
-#region GRAPHICS
-
-		GameObject go;
-
-		private void DrawGridOrthographic(Camera cam)
-		{
-			Axis camAxis = AxisWithVector(Camera.current.transform.TransformDirection(Vector3.forward).normalized);
-
-			if (m_DrawGrid)
-			{
-				switch (camAxis)
-				{
-					case Axis.X:
-					case Axis.NegX:
-						DrawGridOrthographic(cam, camAxis, gridColorXPrimary, gridColorX);
-						break;
-
-					case Axis.Y:
-					case Axis.NegY:
-						DrawGridOrthographic(cam, camAxis, gridColorYPrimary, gridColorY);
-						break;
-
-					case Axis.Z:
-					case Axis.NegZ:
-						DrawGridOrthographic(cam, camAxis, gridColorZPrimary, gridColorZ);
-						break;
-				}
-			}
-		}
-
-		int PRIMARY_COLOR_INCREMENT = 10;
-		Color previousColor;
-		private void DrawGridOrthographic(Camera cam, Axis camAxis, Color primaryColor, Color secondaryColor)
-		{
-			previousColor = Handles.color;
-			Handles.color = primaryColor;
-
-			Vector3 bottomLeft = EditorUtility.SnapToFloor(cam.ScreenToWorldPoint(Vector2.zero), m_SnapValue);
-			Vector3 bottomRight = EditorUtility.SnapToFloor(cam.ScreenToWorldPoint(new Vector2(cam.pixelWidth, 0f)), m_SnapValue);
-			Vector3 topLeft = EditorUtility.SnapToFloor(cam.ScreenToWorldPoint(new Vector2(0f, cam.pixelHeight)), m_SnapValue);
-			Vector3 topRight = EditorUtility.SnapToFloor(cam.ScreenToWorldPoint(new Vector2(cam.pixelWidth, cam.pixelHeight)), m_SnapValue);
-
-			Vector3 axis = VectorWithAxis(camAxis);
-
-			float width = Vector3.Distance(bottomLeft, bottomRight);
-			float height = Vector3.Distance(bottomRight, topRight);
-
-			// Shift lines to 10m forward of the camera
-			bottomLeft += axis * 10f;
-			topRight += axis * 10f;
-			bottomRight += axis * 10f;
-			topLeft += axis * 10f;
-
-			/**
-			 *	Draw Vertical Lines
-			 */
-			Vector3 cam_right = cam.transform.right;
-			Vector3 cam_up = cam.transform.up;
-
-			float _snapVal = m_SnapValue;
-
-			int segs = (int)Mathf.Ceil(width / _snapVal) + 2;
-
-			float n = 2f;
-			while (segs > k_MaxLines)
-			{
-				_snapVal = _snapVal * n;
-				segs = (int)Mathf.Ceil(width / _snapVal) + 2;
-				n++;
-			}
-
-			// Screen start and end
-			Vector3 bl = cam_right.Sum() > 0 ? EditorUtility.SnapToFloor(bottomLeft, cam_right, _snapVal * PRIMARY_COLOR_INCREMENT) : EditorUtility.SnapToCeil(bottomLeft, cam_right, _snapVal * PRIMARY_COLOR_INCREMENT);
-			Vector3 start = bl - cam_up * (height + _snapVal * 2);
-			Vector3 end = bl + cam_up * (height + _snapVal * 2);
-
-			segs += PRIMARY_COLOR_INCREMENT;
-
-			// The current line start and end
-			Vector3 line_start = Vector3.zero;
-			Vector3 line_end = Vector3.zero;
-
-			for (int i = -1; i < segs; i++)
-			{
-				line_start = start + (i * (cam_right * _snapVal));
-				line_end = end + (i * (cam_right * _snapVal));
-				Handles.color = i % PRIMARY_COLOR_INCREMENT == 0 ? primaryColor : secondaryColor;
-				Handles.DrawLine(line_start, line_end);
-			}
-
-			/**
-			 * Draw Horizontal Lines
-			 */
-			segs = (int)Mathf.Ceil(height / _snapVal) + 2;
-
-			n = 2;
-			while (segs > k_MaxLines)
-			{
-				_snapVal = _snapVal * n;
-				segs = (int)Mathf.Ceil(height / _snapVal) + 2;
-				n++;
-			}
-
-			Vector3 tl = cam_up.Sum() > 0 ? EditorUtility.SnapToCeil(topLeft, cam_up, _snapVal * PRIMARY_COLOR_INCREMENT) : EditorUtility.SnapToFloor(topLeft, cam_up, _snapVal * PRIMARY_COLOR_INCREMENT);
-			start = tl - cam_right * (width + _snapVal * 2);
-			end = tl + cam_right * (width + _snapVal * 2);
-
-			segs += (int)PRIMARY_COLOR_INCREMENT;
-
-			for (int i = -1; i < segs; i++)
-			{
-				line_start = start + (i * (-cam_up * _snapVal));
-				line_end = end + (i * (-cam_up * _snapVal));
-				Handles.color = i % PRIMARY_COLOR_INCREMENT == 0 ? primaryColor : secondaryColor;
-				Handles.DrawLine(line_start, line_end);
-			}
-
-			if (m_DrawAngles)
-			{
-				Vector3 cen = EditorUtility.SnapValue(((topRight + bottomLeft) / 2f), m_SnapValue);
-
-				float half = (width > height) ? width : height;
-
-				float opposite = Mathf.Tan(Mathf.Deg2Rad * angleValue) * half;
-
-				Vector3 up = cam.transform.up * opposite;
-				Vector3 right = cam.transform.right * half;
-
-				Vector3 bottomLeftAngle = cen - (up + right);
-				Vector3 topRightAngle = cen + (up + right);
-
-				Vector3 bottomRightAngle = cen + (right - up);
-				Vector3 topLeftAngle = cen + (up - right);
-
-				Handles.color = primaryColor;
-
-				// y = 1x+1
-				Handles.DrawLine(bottomLeftAngle, topRightAngle);
-
-				// y = -1x-1
-				Handles.DrawLine(topLeftAngle, bottomRightAngle);
-			}
-
-			Handles.color = previousColor;
-		}
-
-#endregion
-
-#region ENUM UTILITY
-
-		public SnapUnit SnapUnitWithString(string str)
-		{
-			foreach (SnapUnit su in SnapUnit.GetValues(typeof(SnapUnit)))
-			{
-				if (su.ToString() == str)
-					return su;
-			}
-			return (SnapUnit)0;
-		}
-
-		public Axis AxisWithVector(Vector3 val)
-		{
-			Vector3 v = new Vector3(Mathf.Abs(val.x), Mathf.Abs(val.y), Mathf.Abs(val.z));
-
-			if (v.x > v.y && v.x > v.z)
-			{
-				if (val.x > 0)
-					return Axis.X;
-				else
-					return Axis.NegX;
-			}
-			else
-			if (v.y > v.x && v.y > v.z)
-			{
-				if (val.y > 0)
-					return Axis.Y;
-				else
-					return Axis.NegY;
-			}
-			else
-			{
-				if (val.z > 0)
-					return Axis.Z;
-				else
-					return Axis.NegZ;
-			}
-		}
-
-		public Vector3 VectorWithAxis(Axis axis)
-		{
-			switch (axis)
-			{
-				case Axis.X:
-					return Vector3.right;
-				case Axis.Y:
-					return Vector3.up;
-				case Axis.Z:
-					return Vector3.forward;
-				case Axis.NegX:
-					return -Vector3.right;
-				case Axis.NegY:
-					return -Vector3.up;
-				case Axis.NegZ:
-					return -Vector3.forward;
-
-				default:
-					return Vector3.forward;
-			}
-		}
-
-		public bool IsRounded(Vector3 v)
-		{
-			return (Mathf.Approximately(v.x, 1f) || Mathf.Approximately(v.y, 1f) || Mathf.Approximately(v.z, 1f)) || v == Vector3.zero;
-		}
-
-		public Vector3 RoundAxis(Vector3 v)
-		{
-			return VectorWithAxis(AxisWithVector(v));
-		}
-		#endregion
-
-#region MOVING TRANSFORMS
-
-		static bool FuzzyEquals(Vector3 lhs, Vector3 rhs)
-		{
-			return Mathf.Abs(lhs.x - rhs.x) < .001f && Mathf.Abs(lhs.y - rhs.y) < .001f && Mathf.Abs(lhs.z - rhs.z) < .001f;
-		}
-
-		public void OffsetTransforms(Transform[] trsfrms, Transform ignore, Vector3 offset)
-		{
-			foreach (Transform t in trsfrms)
-			{
-				if (t != ignore)
-					t.position += offset;
-			}
-		}
-
-		void HierarchyWindowChanged()
-		{
-			if (Selection.activeTransform != null)
-				m_LastPosition = Selection.activeTransform.position;
 		}
 
 #endregion
 
 #region SETTINGS
 
-		public void SetSnapEnabled(bool enable)
+		void SetRenderPlane(Axis axis)
 		{
-			EditorPrefs.SetBool(PreferenceKeys.SnapEnabled, enable);
-
-			if (Selection.activeTransform)
-			{
-				m_LastActiveTransform = Selection.activeTransform;
-				m_LastPosition = Selection.activeTransform.position;
-			}
-
-			m_SnapEnabled = enable;
-			DoGridRepaint();
-		}
-
-		public void SetSnapValue(SnapUnit su, float val, int multiplier)
-		{
-			int clamp_multiplier = (int)(Mathf.Min(Mathf.Max(1, multiplier), int.MaxValue));
-
-			float value_multiplier = clamp_multiplier / (float) Defaults.DefaultSnapMultiplier;
-
-			/**
-			 * multiplier is a value modifies the snap val.  100 = no change,
-			 * 50 is half val, 200 is double val, etc.
-			 */
-			m_SnapValue = EnumExtension.SnapUnitValue(su) * val * value_multiplier;
-			DoGridRepaint();
-
-			EditorPrefs.SetInt(PreferenceKeys.GridUnit, (int)su);
-			EditorPrefs.SetFloat(PreferenceKeys.SnapValue, val);
-			EditorPrefs.SetInt(PreferenceKeys.SnapMultiplier, clamp_multiplier);
-
-
-			// update gui (only necessary when calling with editorpref values)
-			m_UiSnapValue = val * value_multiplier;
-			m_SnapUnit = su;
-
-			switch (su)
-			{
-				case SnapUnit.Inch:
-					PRIMARY_COLOR_INCREMENT = 12;   // blasted imperial units
-					break;
-
-				case SnapUnit.Foot:
-					PRIMARY_COLOR_INCREMENT = 3;
-					break;
-
-				default:
-					PRIMARY_COLOR_INCREMENT = 10;
-					break;
-			}
-
-			if (EditorPrefs.GetBool(PreferenceKeys.SyncUnitySnap, true))
-			{
-				EditorPrefs.SetFloat(PreferenceKeys.UnityMoveSnapX, m_SnapValue);
-				EditorPrefs.SetFloat(PreferenceKeys.UnityMoveSnapY, m_SnapValue);
-				EditorPrefs.SetFloat(PreferenceKeys.UnityMoveSnapZ, m_SnapValue);
-
-				if (EditorPrefs.GetBool(PreferenceKeys.SnapScale, true))
-					EditorPrefs.SetFloat(PreferenceKeys.UnityScaleSnap, m_SnapValue);
-
-				// If Unity snap sync is enabled, refresh the Snap Settings window if it's open.
-				System.Type snapSettings = typeof(EditorWindow).Assembly.GetType("UnityEditor.SnapSettings");
-
-				if (snapSettings != null)
-				{
-					FieldInfo snapInitialized = snapSettings.GetField("s_Initialized", BindingFlags.NonPublic | BindingFlags.Static);
-
-					if (snapInitialized != null)
-					{
-						snapInitialized.SetValue(null, (object)false);
-
-						EditorWindow win = Resources.FindObjectsOfTypeAll<EditorWindow>().FirstOrDefault(x => x.ToString().Contains("SnapSettings"));
-
-						if (win != null)
-							win.Repaint();
-					}
-				}
-			}
-
-			DoGridRepaint();
-		}
-
-		public void SetRenderPlane(Axis axis)
-		{
-			offset = 0f;
-			fullGrid = false;
+			GridRenderOffset = 0f;
+			FullGridEnabled = false;
 			m_RenderPlane = axis;
-			EditorPrefs.SetBool(PreferenceKeys.PerspGrid, fullGrid);
+			EditorPrefs.SetBool(PreferenceKeys.PerspGrid, FullGridEnabled);
 			EditorPrefs.SetInt(PreferenceKeys.GridAxis, (int)m_RenderPlane);
 			DoGridRepaint();
 		}
 
-		public void SetGridEnabled(bool enable)
+		void SetGridEnabled(bool enable)
 		{
 			m_DrawGrid = enable;
 
@@ -1430,7 +790,7 @@ namespace ProGrids.Editor
 			DoGridRepaint();
 		}
 
-		public void SetDrawAngles(bool enable)
+		void SetDrawAngles(bool enable)
 		{
 			m_DrawAngles = enable;
 			DoGridRepaint();
@@ -1438,103 +798,156 @@ namespace ProGrids.Editor
 
 		void SnapToGrid(Transform[] transforms)
 		{
-			if (transforms != null)
+			if (transforms != null && transforms.Length > 0)
 			{
 				Undo.RecordObjects(transforms, "Snap to Grid");
 
 				foreach (Transform t in transforms)
-					t.position = EditorUtility.SnapValue(t.position, m_SnapValue);
+					t.position = Snapping.Round(t.position, SnapValueInUnityUnits);
 			}
+
+			PushToGrid(SnapValueInUnityUnits);
 
 			DoGridRepaint();
 		}
-#endregion
 
-#region GLOBAL SETTING
+		bool GetUseAxisConstraints()
+		{
+			bool useAxisConstraints = Instance.SnapMethod == SnapMethod.SnapOnSelectedAxis;
+			return m_ToggleAxisConstraint ? !useAxisConstraints : useAxisConstraints;
+		}
 
-		internal bool GetUseAxisConstraints() { return m_ToggleAxisConstraint ? !useAxisConstraints : useAxisConstraints; }
-		internal float GetSnapValue() { return m_SnapValue; }
-		internal bool GetSnapEnabled() { return (m_ToggleTempSnap ? !m_SnapEnabled : m_SnapEnabled); }
+		/// <summary>
+		/// Get the value used for snapping objects in Unity units. This is equal to `GridUnit * SnapValue * Multiplier`
+		/// </summary>
+		/// <returns></returns>
+		internal float GetSnapValue() { return SnapValueInUnityUnits; }
 
 		/// <returns>the value of useAxisConstraints, accounting for the shortcut key toggle.</returns>
 		/// <remarks>Used by ProBuilder.</remarks>
 		public static bool UseAxisConstraints()
 		{
-			return instance != null ? instance.GetUseAxisConstraints() : false;
+			return Instance != null && Instance.GetUseAxisConstraints();
 		}
 
 		/// <summary>
-		///
+		/// Get the origin point of the grid. If no instance is active, zero is returned.
+		/// </summary>
+		/// <returns></returns>
+		public static Vector3 GetPivot()
+		{
+			return s_Instance == null ? Vector3.zero : s_Instance.m_Pivot;
+		}
+
+		/// <summary>
+		/// Get the ProGrids snap value in Unity units.
 		/// </summary>
 		/// <returns>The current snap value.</returns>
 		/// <remarks>Used by ProBuilder.</remarks>
 		public static float SnapValue()
 		{
-			return instance != null ? instance.GetSnapValue() : 0f;
+			return Instance != null ? Instance.GetSnapValue() : 0f;
 		}
 
 		/// <summary>
+		/// Check if snapping is enabled by ProGrids.
 		/// </summary>
 		/// <returns>True if snapping is enabled, false otherwise.</returns>
 		/// <remarks>Used by ProBuilder.</remarks>
 		public static bool SnapEnabled()
 		{
-			return instance == null ? false : instance.GetSnapEnabled();
+			if (Instance == null)
+				return false;
+			bool isEnabled = Instance.GetSnapEnabled();
+			if (Instance.m_ToggleTempSnap)
+				isEnabled = !isEnabled;
+			return isEnabled;
 		}
 
-		/// <remarks>Used by ProBuilder.</remarks>
-		public static void AddPushToGridListener(System.Action<float> listener)
+		/// <summary>
+		/// Register a callback to be raised when the ProGrids "Push to Grid" button is pressed.
+		/// </summary>
+		/// <param name="listener">
+		/// A delegate accepting a float value (corresponding to the snap increment).
+		/// </param>
+		public static void AddPushToGridListener(Action<float> listener)
 		{
 			pushToGridListeners.Add(listener);
 		}
 
-		/// <remarks>Used by ProBuilder.</remarks>
+		/// <summary>
+		/// Remove a delegate registered via AddPushToGridListener.
+		/// </summary>
+		/// <param name="listener"></param>
 		public static void RemovePushToGridListener(System.Action<float> listener)
 		{
 			pushToGridListeners.Remove(listener);
 		}
 
+		/// <summary>
+		/// Register a delegate to be called when the ProGrids toolbar is opened or closed.
+		/// </summary>
+		/// <param name="listener">True when toolbar is opening, false if closing.</param>
 		/// <remarks>Used by ProBuilder.</remarks>
 		public static void AddToolbarEventSubscriber(System.Action<bool> listener)
 		{
 			toolbarEventSubscribers.Add(listener);
 		}
 
+		/// <summary>
+		/// Remove a delegate subscribed via AddToolbarEventSubscriber.
+		/// </summary>
+		/// <param name="listener"></param>
 		/// <remarks>Used by ProBuilder.</remarks>
 		public static void RemoveToolbarEventSubscriber(System.Action<bool> listener)
 		{
 			toolbarEventSubscribers.Remove(listener);
 		}
 
+		/// <summary>
+		/// Is ProGrids open?
+		/// </summary>
+		/// <returns>True if ProGrids is open in the scene, false if not.</returns>
 		/// <remarks>Used by ProBuilder.</remarks>
 		public static bool SceneToolbarActive()
 		{
-			return instance != null;
+			return Instance != null;
+		}
+
+		/// <summary>
+		/// True if ProGrids is open and the toolbar is in an extended state.
+		/// </summary>
+		/// <returns></returns>
+		/// <remarks>Used by ProBuilder.</remarks>
+		public static bool SceneToolbarIsExtended()
+		{
+			return SceneToolbarActive() && Instance.menuOpen;
 		}
 
 		[SerializeField]
-		static List<System.Action<float>> pushToGridListeners = new List<System.Action<float>>();
-		[SerializeField]
-		static List<System.Action<bool>> toolbarEventSubscribers = new List<System.Action<bool>>();
+		static List<Action<float>> pushToGridListeners = new List<Action<float>>();
 
-		private void PushToGrid(float snapValue)
+		[SerializeField]
+		static List<Action<bool>> toolbarEventSubscribers = new List<Action<bool>>();
+
+		static void PushToGrid(float snapValue)
 		{
-			foreach (System.Action<float> listener in pushToGridListeners)
+			foreach (Action<float> listener in pushToGridListeners)
 				listener(snapValue);
 		}
 
 		/// <remarks>Used by ProBuilder.</remarks>
-		public static void OnHandleMove(Vector3 worldDirection)
+		static void OnHandleMove(Vector3 worldDirection)
 		{
-			if (instance != null)
-				instance.OnHandleMove_Internal(worldDirection);
+			if (Instance != null)
+				Instance.OnHandleMove_Internal(worldDirection);
 		}
 
 		void OnHandleMove_Internal(Vector3 worldDirection)
 		{
-			if (predictiveGrid && firstMove && !fullGrid)
+			if (m_PredictiveGrid && m_IsFirstMove && !FullGridEnabled)
 			{
-				firstMove = false;
+				m_IsFirstMove = false;
 				Axis dragAxis = EditorUtility.CalcDragAxis(worldDirection, SceneView.lastActiveSceneView.camera);
 
 				if (dragAxis != Axis.None && dragAxis != m_RenderPlane)

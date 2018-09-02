@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEditor;
-using System.Collections;
 
 namespace ProGrids.Editor
 {
@@ -115,8 +114,8 @@ namespace ProGrids.Editor
 			EditorPrefs.SetInt(PreferenceKeys.CyclePerspective, (int)s_CyclePerspective);
 			EditorPrefs.SetInt(PreferenceKeys.SnapMethod, (int) s_SnapMethod);
 
-			if (ProGridsEditor.instance != null)
-				ProGridsEditor.instance.LoadPreferences();
+			if (ProGridsEditor.Instance != null)
+				ProGridsEditor.Instance.LoadPreferences();
 		}
 
 		public static void ResetPrefs()

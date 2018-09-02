@@ -1,4 +1,4 @@
-# ProGrids 3.0.0-preview.2
+# ProGrids 3.0.0-preview.3
 
 ## Features
 
@@ -13,6 +13,14 @@
 ## Changes
 
 - Remove `pg_` suffix from class and file names.
+
+## Changes from preview.2
+
+- Change color of "close" button to light blue.
+- Remove duplicate preference fields from in-scene settings window.
+- Fix single key toggle shortcuts not working.
+- Fix snapping multiple objects not undoing to original state.
+- Fix multiple objects snapping to first selected transform instead of the active transform. 
 
 # ProGrids 2.5.0-f.0
 

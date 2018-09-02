@@ -13,64 +13,55 @@ namespace ProGrids.Editor
 
 		void OnGUI()
 		{
+			if (editor == null)
+			{
+				editor = ProGridsEditor.Instance;
+
+				if (editor == null)
+				{
+					Close();
+					return;
+				}
+			}
+
 			GUILayout.Label("Snap Settings", EditorStyles.boldLabel);
 
-			float snap = editor.GetSnapIncrement();
+			float snap = editor.SnapValueInGridUnits;
 
 			EditorGUI.BeginChangeCheck();
 
 			snap = EditorGUILayout.FloatField("Snap Value", snap);
 
 			if(EditorGUI.EndChangeCheck())
-				editor.SetSnapIncrement(snap);
-
-			EditorGUI.BeginChangeCheck();
-			int majorLineIncrement = EditorPrefs.GetInt(PreferenceKeys.MajorLineIncrement, 10);
-			majorLineIncrement = EditorGUILayout.IntField("Major Line Increment", majorLineIncrement);
-			majorLineIncrement = majorLineIncrement < 2 ? 2 : majorLineIncrement > 128 ? 128 : majorLineIncrement;
-			if(EditorGUI.EndChangeCheck())
-			{
-				EditorPrefs.SetInt(PreferenceKeys.MajorLineIncrement, majorLineIncrement);
-				GridRenderer.majorLineIncrement = majorLineIncrement;
-				ProGridsEditor.DoGridRepaint();
-			}
+				editor.SnapValueInGridUnits = snap;
 
 			editor.ScaleSnapEnabled = EditorGUILayout.Toggle("Snap On Scale", editor.ScaleSnapEnabled);
 
-			SnapUnit _gridUnits = (SnapUnit)(EditorPrefs.HasKey(PreferenceKeys.GridUnit) ? EditorPrefs.GetInt(PreferenceKeys.GridUnit) : 0);
 
-			bool snapAsGroup = editor.snapAsGroup;
+			bool snapAsGroup = editor.SnapAsGroupEnabled;
 			snapAsGroup = EditorGUILayout.Toggle(m_SnapAsGroup, snapAsGroup);
-			if(snapAsGroup != editor.snapAsGroup)
-				editor.snapAsGroup = snapAsGroup;
+			if(snapAsGroup != editor.SnapAsGroupEnabled)
+				editor.SnapAsGroupEnabled = snapAsGroup;
 
 			EditorGUI.BeginChangeCheck();
 
-			_gridUnits = (SnapUnit)EditorGUILayout.EnumPopup("Grid Units", _gridUnits);
-
 			EditorGUI.BeginChangeCheck();
-			editor.angleValue = EditorGUILayout.Slider("Angle", editor.angleValue, 0f, 180f);
+			editor.AngleValue = EditorGUILayout.Slider("Angle", editor.AngleValue, 0f, 180f);
 			if(EditorGUI.EndChangeCheck())
 				SceneView.RepaintAll();
 
-			if( EditorGUI.EndChangeCheck() )
-			{
-				EditorPrefs.SetInt(PreferenceKeys.GridUnit, (int) _gridUnits);
-				editor.LoadPreferences();
-			}
-
-			bool tmp = editor.predictiveGrid;
+			bool tmp = editor.PredictiveGrid;
 			tmp = EditorGUILayout.Toggle(m_PredictiveGrid, tmp);
-			if( tmp != editor.predictiveGrid )
+			if( tmp != editor.PredictiveGrid )
 			{
-				editor.predictiveGrid = tmp;
+				editor.PredictiveGrid = tmp;
 				EditorPrefs.SetBool(PreferenceKeys.PredictiveGrid, tmp);
 			}
 
 			GUILayout.FlexibleSpace();
 
 			if( GUILayout.Button("Done"))
-				this.Close();
+				Close();
 		}
 	}
 

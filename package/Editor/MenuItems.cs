@@ -40,7 +40,7 @@ namespace ProGrids.Editor
 		[MenuItem("Tools/ProGrids/Decrease Grid Size", true, 202)]
 		public static bool VerifyGridSizeAdjustment()
 		{
-			return ProGridsEditor.instance != null;
+			return ProGridsEditor.Instance != null;
 		}
 
 		[MenuItem("Tools/ProGrids/Decrease Grid Size", false, 202)]
@@ -60,7 +60,7 @@ namespace ProGrids.Editor
 		[MenuItem("Tools/ProGrids/Reset Perspective Nudge", true, 306)]
 		public static bool VerifyMenuNudgePerspective()
 		{
-			return ProGridsEditor.IsEnabled() && !ProGridsEditor.instance.fullGrid && !ProGridsEditor.instance.ortho && ProGridsEditor.instance.gridIsLocked;
+			return ProGridsEditor.IsEnabled() && !ProGridsEditor.Instance.FullGridEnabled && !ProGridsEditor.Instance.GridIsOrthographic && ProGridsEditor.Instance.GridIsLocked;
 		}
 
 		[MenuItem("Tools/ProGrids/Nudge Perspective Backward", false, 304)]

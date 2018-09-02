@@ -1,6 +1,4 @@
 using UnityEngine;
-using UnityEditor;
-using System.IO;
 
 namespace ProGrids.Editor
 {
@@ -17,7 +15,7 @@ namespace ProGrids.Editor
 			if (!img)
 				Debug.LogError("ProGrids failed to locate menu image: " + iconName +
 					".\nThis can happen if the GUI folder is moved or deleted.  " +
-					"Deleting and re-importing ProGrids will fix this error.\nSearching at path: " + EditorUtility.GetProGridsInstallDirectory() + iconPath);
+					"Deleting and re-importing ProGrids will fix this error.\nSearching at path: " + iconPath);
 
 			return img;
 		}

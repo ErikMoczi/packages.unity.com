@@ -29,6 +29,8 @@ namespace ProGrids.Editor
 		public const string NudgePerspectiveForward = "pg_Editor::NudgePerspectiveForward";
 		public const string NudgePerspectiveReset = "pg_Editor::NudgePerspectiveReset";
 		public const string CyclePerspective = "pg_Editor::CyclePerspective";
+		public const string AngleValue = "pg_Editor::AngleValue";
+		public const string SnapSettings = "ProGridsEditor::m_SnapSettings";
 
 		// do not delete these
 		public const string UnityMoveSnapX = "MoveSnapX";

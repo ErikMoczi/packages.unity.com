@@ -6,25 +6,6 @@ using System.Text.RegularExpressions;
 namespace ProGrids.Editor
 {
 	/// <summary>
-	/// Contains information that the AboutEntry.txt file holds.
-	/// </summary>
-	[System.Serializable]
-	class AboutEntry
-	{
-		public string name;
-		public string identifier;
-		public string version;
-		public string date;
-		public string changelogPath;
-
-		public const string KEY_NAME = "name: ";
-		public const string KEY_IDENTIFIER = "identifier: ";
-		public const string KEY_VERSION = "version: ";
-		public const string KEY_DATE = "date: ";
-		public const string KEY_CHANGELOG = "changelog: ";
-	}
-
-	/// <summary>
 	/// Utility methods for finding and extracting version & changelog information.
 	/// </summary>
 	static class VersionUtil
@@ -116,30 +97,6 @@ namespace ProGrids.Editor
 			}
 
 			return success;
-		}
-
-		static AboutEntry ParseAboutEntry(TextAsset aboutTextAsset)
-		{
-			if(aboutTextAsset == null)
-				return null;
-
-			AboutEntry about = new AboutEntry();
-
-			foreach(string str in aboutTextAsset.text.Replace("\r\n", "\n").Split('\n'))
-			{
-				if(str.StartsWith(AboutEntry.KEY_NAME))
-					about.name = str.Replace(AboutEntry.KEY_NAME, "").Trim();
-				else if(str.StartsWith(AboutEntry.KEY_IDENTIFIER))
-					about.identifier = str.Replace(AboutEntry.KEY_IDENTIFIER, "").Trim();
-				else if(str.StartsWith(AboutEntry.KEY_VERSION))
-					about.version = str.Replace(AboutEntry.KEY_VERSION, "").Trim();
-				else if(str.StartsWith(AboutEntry.KEY_DATE))
-					about.date = str.Replace(AboutEntry.KEY_DATE, "").Trim();
-				else if(str.StartsWith(AboutEntry.KEY_CHANGELOG))
-					about.changelogPath = str.Replace(AboutEntry.KEY_CHANGELOG, "").Trim();
-			}
-
-			return about;
 		}
 	}
 }

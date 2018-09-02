@@ -6,40 +6,40 @@ namespace ProGrids.Editor
 	[System.Serializable]
 	class ToggleContent
 	{
-		public readonly string m_TextOn, m_TextOff;
-		public Texture2D image_on, image_off;
+		public readonly string textOn, textOff;
+		public Texture2D imageOn, imageOff;
 		public string tooltip;
 
-		GUIContent gc = new GUIContent();
+		GUIContent m_GuiContent = new GUIContent();
 
-		public ToggleContent(string t_on, string t_off, string tooltip)
+		public ToggleContent(string onText, string offText, string tooltip)
 		{
-			m_TextOn = t_on;
-			m_TextOff = t_off;
-			image_on = null;
-			image_off = null;
+			textOn = onText;
+			textOff = offText;
+			imageOn = null;
+			imageOff = null;
 			this.tooltip = tooltip;
 
-			gc.tooltip = tooltip;
+			m_GuiContent.tooltip = tooltip;
 		}
 
-		public ToggleContent(string t_on, string t_off, Texture2D i_on, Texture2D i_off, string tooltip)
+		public ToggleContent(string onText, string offText, Texture2D onImage, Texture2D offImage, string tip)
 		{
-			this.m_TextOn = t_on;
-			this.m_TextOff = t_off;
-			this.image_on = i_on;
-			this.image_off = i_off;
-			this.tooltip = tooltip;
+			textOn = onText;
+			textOff = offText;
+			imageOn = onImage;
+			imageOff = offImage;
+			tooltip = tip;
 
-			gc.tooltip = tooltip;
+			m_GuiContent.tooltip = tooltip;
 		}
 
 		public static bool ToggleButton(Rect r, ToggleContent content, bool enabled, GUIStyle imageStyle, GUIStyle altStyle)
 		{
-			content.gc.image = enabled ? content.image_on : content.image_off;
-			content.gc.text = content.gc.image == null ? (enabled ? content.m_TextOn : content.m_TextOff) : "";
+			content.m_GuiContent.image = enabled ? content.imageOn : content.imageOff;
+			content.m_GuiContent.text = content.m_GuiContent.image == null ? (enabled ? content.textOn : content.textOff) : "";
 
-			return GUI.Button(r, content.gc, content.gc.image != null ? imageStyle : altStyle);
+			return GUI.Button(r, content.m_GuiContent, content.m_GuiContent.image != null ? imageStyle : altStyle);
 		}
 	}
 }

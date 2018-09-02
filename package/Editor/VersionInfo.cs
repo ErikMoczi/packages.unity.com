@@ -41,6 +41,8 @@ namespace ProGrids.Editor
 		[SerializeField]
 		string m_Date;
 
+		[SerializeField]
+		string m_RawString;
 
 		public int major { get { return m_Major; } }
 		public int minor { get { return m_Minor; } }
@@ -49,6 +51,7 @@ namespace ProGrids.Editor
 		public VersionType type { get { return m_Type; } }
 		public string metadata { get { return m_Metadata; } }
 		public string date { get { return m_Date; } }
+		public string rawString { get { return m_RawString; } }
 
 		public const string DefaultStringFormat = "M.m.p-t.b";
 
@@ -59,8 +62,7 @@ namespace ProGrids.Editor
 		public VersionInfo(string formatted, string date = null)
 		{
 			VersionInfo parsed;
-
-			m_Metadata = formatted;
+			m_RawString = formatted;
 			m_Date = date;
 
 			if (TryGetVersionInfo(formatted, out parsed))
@@ -87,6 +89,7 @@ namespace ProGrids.Editor
 			m_Type = type;
 			m_Metadata = metadata;
 			m_Date = string.IsNullOrEmpty(date) ? DateTime.Now.ToString("en-US: MM/dd/yyyy") : date;
+			m_RawString = ToString();
 		}
 
 		public bool IsValid()
@@ -185,6 +188,7 @@ namespace ProGrids.Editor
 		/// 'T' Type
 		/// 'd' Date
 		/// 'D' Metadata
+		/// 'R' The input string used to construct this VersionInfo.
 		/// Escape characters with '\'.
 		/// </summary>
 		/// <example>
@@ -224,6 +228,8 @@ namespace ProGrids.Editor
 					sb.Append(date);
 				else if (c == 'D')
 					sb.Append(metadata);
+				else if (c == 'R')
+					sb.Append(rawString);
 				else
 					sb.Append(c);
 			}
@@ -247,9 +253,10 @@ namespace ProGrids.Editor
 		public static bool TryGetVersionInfo(string input, out VersionInfo version)
 		{
 			version = new VersionInfo();
+			version.m_RawString = input;
 			bool ret = false;
 
-			const string k_MajorMinorPatchRegex = "^([0-9]+\\.[0-9]+\\.[0-9]+)";
+			const string k_MajorMinorPatchRegex = "([0-9]+\\.[0-9]+\\.[0-9]+)";
 			const string k_VersionReleaseRegex = "(?i)(?<=\\-)[a-z0-9\\-\\.]+";
 			const string k_VersionReleaseLooseRegex = "(?<=[0-9]+\\.[0-9]+\\.[0-9]+)[a-z0-9\\-\\.\\+]+";
 			const string k_MetadataRegex = "(?<=\\+).+";

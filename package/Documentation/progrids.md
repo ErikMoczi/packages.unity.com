@@ -27,7 +27,7 @@ Verify that ProGrids is correctly installed by opening `Tools > ProGrids > About
 
 ## Unity 2017.3 and earlier
 
-**Important** - The Asset Store version of ProGrids will only receive critical bug fixes going forward. New features are available in the 2018.1 Package Manager version of ProGrids.
+**Important** - The Asset Store version of ProGrids will only receive critical bug fixes going forward. New features are available in the 2018.1 and later Package Manager version of ProGrids.
 
 1. Open your Unity project and ensure you have no persistent errors (red-colored text) in the Console.
 1. From the top menu, choose `Window > Asset Store`.
@@ -40,7 +40,7 @@ Verify that ProGrids is correctly installed by opening `Tools > ProGrids > About
 
 # Using ProGrids
 
-[![getting started video link](images/VidLink_GettingStarted_Slim.jpg)](https://youtu.be/1G-0f5m1_lw])
+[![getting started video link](images/VidLink_GettingStarted_Slim.jpg)](https://youtu.be/1G-0f5m1_lw)
 
 ## Quick Start
 

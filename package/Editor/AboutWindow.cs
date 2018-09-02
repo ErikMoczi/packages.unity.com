@@ -57,7 +57,7 @@ namespace ProGrids.Editor
 								changelogStyle,
 								changelogTextStyle;
 
-		Vector2 scroll = Vector2.zero;
+		Vector2 m_Scroll = Vector2.zero;
 
 		/// <summary>
 		/// Return true if Init took place, false if not.
@@ -195,13 +195,6 @@ namespace ProGrids.Editor
 			{
 				// todo
 				VersionUtil.FormatChangelog(raw, out m_ChangeLogVersionInfo, out m_ChangeLogRichText);
-
-#if !(DEBUG || DEVELOPMENT || PB_DEBUG)
-				if(!pb_Version.Current.Equals(m_ChangeLogVersionInfo))
-					pb_Log.Info("Changelog version does not match internal version. {0} != {1}",
-						m_ChangeLogVersionInfo.ToString(k_AboutPrefFormat),
-						pb_Version.Current.ToString(k_AboutPrefFormat));
-#endif
 			}
 
 			if (m_ChangeLogVersionInfo == null)
@@ -256,12 +249,12 @@ namespace ProGrids.Editor
 			GUILayout.EndVertical();
 
 			// always bold the first line (cause it's the version info stuff)
-			scroll = EditorGUILayout.BeginScrollView(scroll, changelogStyle);
+			m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll, changelogStyle);
 			GUILayout.Label(string.Format("Version: {0}", m_ChangeLogVersionInfo.ToString("M.m.p")), versionInfoStyle);
 			GUILayout.Label("\n" + m_ChangeLogRichText, changelogTextStyle);
 			EditorGUILayout.EndScrollView();
 
-			GUILayout.Label(Version.Current.ToString());
+			GUILayout.Label(Version.Current.ToString("R"));
 		}
 
 		/// <summary>

@@ -13,18 +13,11 @@ namespace ProGrids.Editor
 	static class EditorUtility
 	{
 		const BindingFlags k_BindingFlagsAll = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
-		static string s_ProGridsDirectory = "Packages/com.unity.progrids";
-		const float k_Epsilon = .0001f;
+		const string k_ProGridsDirectory = "Packages/com.unity.progrids/";
+
 		static Dictionary<Transform, SnapEnabledOverride> s_SnapOverrideCache = new Dictionary<Transform, SnapEnabledOverride>();
 		static Dictionary<Type, bool> s_NoSnapAttributeTypeCache = new Dictionary<Type, bool>();
 		static Dictionary<Type, MethodInfo> s_ConditionalSnapAttributeCache = new Dictionary<Type, MethodInfo>();
-
-		// The order is important - always search for the package manager installed version first
-		static string[] k_PossibleInstallDirectories = new string[]
-		{
-			"Packages/com.unity.progrids/",
-			"UnityPackageManager/com.unity.progrids/",
-		};
 
 		static SceneView.OnSceneFunc onPreSceneGuiDelegate
 		{
@@ -65,97 +58,10 @@ namespace ProGrids.Editor
 		{
 			if(path.StartsWith("/"))
 				path = path.Substring(1, path.Length - 1);
-			return AssetDatabase.LoadAssetAtPath<T>(GetProGridsInstallDirectory() + path);
+			return AssetDatabase.LoadAssetAtPath<T>(k_ProGridsDirectory + path);
 		}
 
-		static bool ValidateProGridsRoot(string dir)
-		{
-			return File.Exists(dir + "Editor/ProGridsEditor.cs");
-		}
-
-		/// <summary>
-		/// Return a relative path to the ProBuilder directory. Can be in the packages cache or Assets folder.
-		/// If the project is in the packman cache it is immutable.
-		/// </summary>
-		/// <returns></returns>
-		internal static string GetProGridsInstallDirectory()
-		{
-			if (ValidateProGridsRoot(s_ProGridsDirectory))
-				return s_ProGridsDirectory;
-
-			foreach (var install in k_PossibleInstallDirectories)
-			{
-				s_ProGridsDirectory = install;
-
-				if (ValidateProGridsRoot(s_ProGridsDirectory))
-					return s_ProGridsDirectory;
-			}
-
-			// It's not in any of the usual haunts, start digging through Assets until we find it (likely an A$ install)
-			s_ProGridsDirectory = FindProGridsInProject();
-
-			if (Directory.Exists(s_ProGridsDirectory))
-				return s_ProGridsDirectory;
-
-			Debug.LogWarning("Could not find ProGrids directory... was the ProGrids folder renamed?\nIcons & preferences may not work in this state.");
-
-			return s_ProGridsDirectory;
-		}
-
-		/// <summary>
-		/// Scan the Assets directory for an install of ProGrids
-		/// </summary>
-		/// <returns></returns>
-		static string FindProGridsInProject()
-		{
-			if (Directory.Exists(s_ProGridsDirectory) && ValidateProGridsRoot(s_ProGridsDirectory))
-				return s_ProGridsDirectory;
-
-			// wildcard search because while on windows file paths are case insensitve, osx and unix are not.
-			foreach (var dir in Directory.GetDirectories("Assets", "*", SearchOption.AllDirectories) )
-			{
-				if (CultureInfo.InvariantCulture.CompareInfo.IndexOf(dir, "progrids", CompareOptions.IgnoreCase) > -1)
-				{
-					s_ProGridsDirectory = dir.Replace("\\", "/") + "/";
-
-					if (ValidateProGridsRoot(s_ProGridsDirectory))
-					{
-						if (!s_ProGridsDirectory.EndsWith("/"))
-							s_ProGridsDirectory += "/";
-						break;
-					}
-				}
-			}
-
-			return s_ProGridsDirectory;
-		}
-
-		internal static string FindFolder(string folder)
-		{
-#if !UNITY_WEBPLAYER
-			string single = folder.Replace("\\", "/").Substring(folder.LastIndexOf('/') + 1);
-
-			string[] matches = Directory.GetDirectories("Assets/", single, SearchOption.AllDirectories);
-
-			foreach(string str in matches)
-			{
-				string path = str.Replace("\\", "/");
-
-				if(path.Contains(folder))
-				{
-					if(!path.EndsWith("/"))
-						path += "/";
-
-					return path;
-				}
-			}
-#endif
-			Debug.LogError("Could not locate ProGrids/GUI/ProGridsToggles folder.  The ProGrids folder may be moved, but the contents of ProGrids must remain unmodified.");
-
-			return "";
-		}
-
-		public static Color ColorWithString(string value)
+		internal static Color ColorWithString(string value)
 		{
 			string valid = "01234567890.,";
 	        value = new string(value.Where(c => valid.Contains(c)).ToArray());
@@ -186,15 +92,6 @@ namespace ProGrids.Editor
 			if( Mathf.Abs(vec.y) > 0 ) axis |= Axis.Y;
 			if( Mathf.Abs(vec.z) > 0 ) axis |= Axis.Z;
 			return axis;
-		}
-
-		static Axis BestAxis(Vector3 vec)
-		{
-			float x = Mathf.Abs(vec.x);
-			float y = Mathf.Abs(vec.y);
-			float z = Mathf.Abs(vec.z);
-
-			return (x > y && x > z) ? Axis.X : ((y > x && y > z) ? Axis.Y : Axis.Z);
 		}
 
 		public static Axis CalcDragAxis(Vector3 movement, Camera cam)
@@ -243,47 +140,12 @@ namespace ProGrids.Editor
 				return val.z;
 		}
 
-		public static Vector3 SnapValue(Vector3 val, float snapValue)
-		{
-			float _x = val.x, _y = val.y, _z = val.z;
-			return new Vector3(
-				Snap(_x, snapValue),
-				Snap(_y, snapValue),
-				Snap(_z, snapValue)
-				);
-		}
-
-		/**
-		 *	Fetch a type with name and optional assembly name.  `type` should include namespace.
-		 */
-		static Type GetType(string type, string assembly = null)
-		{
-			Type t = Type.GetType(type);
-
-			if(t == null)
-			{
-				IEnumerable<Assembly> assemblies = AppDomain.CurrentDomain.GetAssemblies();
-
-				if(assembly != null)
-					assemblies = assemblies.Where(x => x.FullName.Contains(assembly));
-
-				foreach(Assembly ass in assemblies)
-				{
-					t = ass.GetType(type);
-
-					if(t != null)
-						return t;
-				}
-			}
-
-			return t;
-		}
-
 		public static void SetUnityGridEnabled(bool isEnabled)
 		{
 			try
 			{
-				Type annotationUtility = GetType("UnityEditor.AnnotationUtility");
+				Assembly editorAssembly = Assembly.GetAssembly(typeof(UnityEditor.Editor));
+				Type annotationUtility = editorAssembly.GetType("UnityEditor.AnnotationUtility");
 				PropertyInfo pi = annotationUtility.GetProperty("showGrid", BindingFlags.NonPublic | BindingFlags.Static);
 				pi.SetValue(null, isEnabled, BindingFlags.NonPublic | BindingFlags.Static, null, null, null);
 			}
@@ -295,7 +157,8 @@ namespace ProGrids.Editor
 		{
 			try
 			{
-				Type annotationUtility = GetType("UnityEditor.AnnotationUtility");
+				Assembly editorAssembly = Assembly.GetAssembly(typeof(UnityEditor.Editor));
+				Type annotationUtility = editorAssembly.GetType("UnityEditor.AnnotationUtility");
 				PropertyInfo pi = annotationUtility.GetProperty("showGrid", BindingFlags.NonPublic | BindingFlags.Static);
 				return (bool) pi.GetValue(null, null);
 			}
@@ -303,71 +166,6 @@ namespace ProGrids.Editor
 			{}
 
 			return false;
-		}
-
-		public static Vector3 SnapValue(Vector3 val, Vector3 mask, float snapValue)
-		{
-
-			float _x = val.x, _y = val.y, _z = val.z;
-			return new Vector3(
-				( Mathf.Abs(mask.x) < k_Epsilon ? _x : Snap(_x, snapValue) ),
-				( Mathf.Abs(mask.y) < k_Epsilon ? _y : Snap(_y, snapValue) ),
-				( Mathf.Abs(mask.z) < k_Epsilon ? _z : Snap(_z, snapValue) )
-				);
-		}
-
-		public static Vector3 SnapToCeil(Vector3 val, Vector3 mask, float snapValue)
-		{
-			float _x = val.x, _y = val.y, _z = val.z;
-			return new Vector3(
-				( Mathf.Abs(mask.x) < k_Epsilon ? _x : SnapToCeil(_x, snapValue) ),
-				( Mathf.Abs(mask.y) < k_Epsilon ? _y : SnapToCeil(_y, snapValue) ),
-				( Mathf.Abs(mask.z) < k_Epsilon ? _z : SnapToCeil(_z, snapValue) )
-				);
-		}
-
-		public static Vector3 SnapToFloor(Vector3 val, float snapValue)
-		{
-			float _x = val.x, _y = val.y, _z = val.z;
-			return new Vector3(
-				SnapToFloor(_x, snapValue),
-				SnapToFloor(_y, snapValue),
-				SnapToFloor(_z, snapValue)
-				);
-		}
-
-		public static Vector3 SnapToFloor(Vector3 val, Vector3 mask, float snapValue)
-		{
-			float _x = val.x, _y = val.y, _z = val.z;
-			return new Vector3(
-				( Mathf.Abs(mask.x) < k_Epsilon ? _x : SnapToFloor(_x, snapValue) ),
-				( Mathf.Abs(mask.y) < k_Epsilon ? _y : SnapToFloor(_y, snapValue) ),
-				( Mathf.Abs(mask.z) < k_Epsilon ? _z : SnapToFloor(_z, snapValue) )
-				);
-		}
-
-		public static float Snap(float val, float round)
-		{
-			return round * Mathf.Round(val / round);
-		}
-
-		public static float SnapToFloor(float val, float snapValue)
-		{
-			return snapValue * Mathf.Floor(val / snapValue);
-		}
-
-		public static float SnapToCeil(float val, float snapValue)
-		{
-			return snapValue * Mathf.Ceil(val / snapValue);
-		}
-
-		public static Vector3 CeilFloor(Vector3 v)
-		{
-			v.x = v.x < 0 ? -1 : 1;
-			v.y = v.y < 0 ? -1 : 1;
-			v.z = v.z < 0 ? -1 : 1;
-
-			return v;
 		}
 
 		abstract class SnapEnabledOverride
@@ -389,7 +187,7 @@ namespace ProGrids.Editor
 
 		class ConditionalSnapOverride : SnapEnabledOverride
 		{
-			public System.Func<bool> m_IsEnabledDelegate;
+			Func<bool> m_IsEnabledDelegate;
 
 			public ConditionalSnapOverride(System.Func<bool> d)
 			{
@@ -413,7 +211,7 @@ namespace ProGrids.Editor
 
 			object[] attribs = null;
 
-			foreach(Component c in t.GetComponents<MonoBehaviour>())
+			foreach(var c in t.GetComponents<MonoBehaviour>())
 			{
 				if(c == null)
 					continue;
@@ -479,17 +277,13 @@ namespace ProGrids.Editor
 			return true;
 		}
 
-		public static bool Contains(this Transform[] arr, Transform trs)
+		internal static void OffsetTransforms(Transform[] trsfrms, Transform ignore, Vector3 offset)
 		{
-			for(int i = 0; i < arr.Length; i++)
-				if(arr[i] == trs)
-					return true;
-			return false;
-		}
-
-		public static float Sum(this Vector3 v)
-		{
-			return v[0] + v[1] + v[2];
+			foreach (Transform t in trsfrms)
+			{
+				if (t != ignore)
+					t.position += offset;
+			}
 		}
 
 		public static bool InFrustum(this Camera cam, Vector3 point)

@@ -21,7 +21,13 @@ namespace ProGrids.Editor
 
 		static Mesh s_GridMesh;
 		static Material s_GridMaterial;
-		static int tan_iter, bit_iter, max = k_MaxLines, div = 1;
+		static int s_TangentIteration, s_BitangentIteration, s_MaxLines = k_MaxLines, s_GridResolution = 1;
+
+		const int k_PrimaryColorIncrement = 10;
+		static float s_AlphaBump;
+		internal static Color gridColorX;
+		internal static Color gridColorY;
+		internal static Color gridColorZ;
 
 		public static int majorLineIncrement = 10;
 
@@ -60,6 +66,13 @@ namespace ProGrids.Editor
 					s_GridMaterial.hideFlags = k_SceneObjectHideFlags;
 				}
 			}
+
+
+			s_AlphaBump = EditorPrefs.GetFloat(PreferenceKeys.AlphaBump, Defaults.AlphaBump);
+
+			gridColorX = (EditorPrefs.HasKey(PreferenceKeys.GridColorX)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorX)) : Defaults.GridColorX;
+			gridColorY = (EditorPrefs.HasKey(PreferenceKeys.GridColorY)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorY)) : Defaults.GridColorY;
+			gridColorZ = (EditorPrefs.HasKey(PreferenceKeys.GridColorZ)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorZ)) : Defaults.GridColorZ;
 		}
 
 		public static void Destroy()
@@ -71,7 +84,7 @@ namespace ProGrids.Editor
 				Object.DestroyImmediate(s_GridMaterial);
 		}
 
-		public static void DoGUI(SceneView view)
+		public static void OnGUI(SceneView view)
 		{
 			if (Event.current.type == EventType.Repaint &&
 			    s_GridMesh != null &&
@@ -80,6 +93,21 @@ namespace ProGrids.Editor
 				s_GridMaterial.SetPass(0);
 				Graphics.DrawMeshNow(s_GridMesh, Matrix4x4.identity);
 			}
+		}
+
+
+		internal static float DrawGridPlane(Camera cam, Axis axis, float snapValue, Vector3 position, float offset)
+		{
+			if ((axis & Axis.X) == Axis.X)
+				return GridRenderer.DrawPlane(cam, position + Vector3.right * offset, Vector3.up, Vector3.forward, snapValue, gridColorX);
+
+			if ((axis & Axis.Y) == Axis.Y)
+				return GridRenderer.DrawPlane(cam, position + Vector3.up * offset, Vector3.right, Vector3.forward, snapValue, gridColorY);
+
+			if ((axis & Axis.Z) == Axis.Z)
+				return GridRenderer.DrawPlane(cam, position + Vector3.forward * offset, Vector3.up, Vector3.right, snapValue, gridColorZ);
+
+			return 0f;
 		}
 
 		/// <summary>
@@ -93,7 +121,7 @@ namespace ProGrids.Editor
 		/// <param name="color"></param>
 		/// <param name="alphaBump"></param>
 		/// <returns></returns>
-		public static float DrawPlane(Camera cam, Vector3 pivot, Vector3 tangent, Vector3 bitangent, float snapValue, Color color, float alphaBump)
+		public static float DrawPlane(Camera cam, Vector3 pivot, Vector3 tangent, Vector3 bitangent, float snapValue, Color color)
 		{
 			if(!s_GridMesh || !s_GridMaterial)
 				Init();
@@ -101,7 +129,7 @@ namespace ProGrids.Editor
 			s_GridMaterial.SetFloat("_AlphaCutoff", .1f);
 			s_GridMaterial.SetFloat("_AlphaFade", .6f);
 
-			pivot = EditorUtility.SnapValue(pivot, snapValue);
+			pivot = Snapping.Round(pivot, snapValue);
 
 			Vector3 p = cam.WorldToViewportPoint(pivot);
 			bool inFrustum = (p.x >= 0f && p.x <= 1f) &&
@@ -112,41 +140,41 @@ namespace ProGrids.Editor
 
 			if(inFrustum)
 			{
-				tan_iter = (int)(Mathf.Ceil( (Mathf.Abs(distances[0]) + Mathf.Abs(distances[2]))/snapValue ));
-				bit_iter = (int)(Mathf.Ceil( (Mathf.Abs(distances[1]) + Mathf.Abs(distances[3]))/snapValue ));
+				s_TangentIteration = (int)(Mathf.Ceil( (Mathf.Abs(distances[0]) + Mathf.Abs(distances[2]))/snapValue ));
+				s_BitangentIteration = (int)(Mathf.Ceil( (Mathf.Abs(distances[1]) + Mathf.Abs(distances[3]))/snapValue ));
 
-				max = Mathf.Max( tan_iter, bit_iter );
+				s_MaxLines = Mathf.Max( s_TangentIteration, s_BitangentIteration );
 
-				// if the max is around 3x greater than min, we're probably skewing the camera at near-plane
+				// if the s_MaxLines is around 3x greater than min, we're probably skewing the camera at near-plane
 				// angle, so use the min instead.
-				if(max > Mathf.Min(tan_iter, bit_iter) * 2)
-					max = (int) Mathf.Min(tan_iter, bit_iter) * 2;
+				if(s_MaxLines > Mathf.Min(s_TangentIteration, s_BitangentIteration) * 2)
+					s_MaxLines = (int) Mathf.Min(s_TangentIteration, s_BitangentIteration) * 2;
 
-				div = 1;
+				s_GridResolution = 1;
 
 				float dot = Vector3.Dot( cam.transform.position-pivot, Vector3.Cross(tangent, bitangent) );
 
-				if(max > k_MaxLines)
+				if(s_MaxLines > k_MaxLines)
 				{
 					if(Vector3.Distance(cam.transform.position, pivot) > 50f * snapValue && Mathf.Abs(dot) > .8f)
 					{
-						while(max/div > k_MaxLines)
-							div += div;
+						while(s_MaxLines/s_GridResolution > k_MaxLines)
+							s_GridResolution += s_GridResolution;
 					}
 					else
 					{
-						max = k_MaxLines;
+						s_MaxLines = k_MaxLines;
 					}
 				}
 			}
 
 			// origin, tan, bitan, increment, iterations, divOffset, color, primary alpha bump
-			DrawFullGrid(cam, pivot, tangent, bitangent, snapValue*div, max/div, div, color, alphaBump);
+			DrawFullGrid(cam, pivot, tangent, bitangent, snapValue*s_GridResolution, s_MaxLines/s_GridResolution, s_GridResolution, color);
 
-			return ((snapValue*div)*(max/div));
+			return ((snapValue*s_GridResolution)*(s_MaxLines/s_GridResolution));
 		}
 
-		public static void DrawGridPerspective(Camera cam, Vector3 pivot, float snapValue, Color[] colors, float alphaBump)
+		public static void DrawGridPerspective(Camera cam, Vector3 pivot, float snapValue)
 		{
 			if(!s_GridMesh || !s_GridMaterial)
 				Init();
@@ -155,7 +183,7 @@ namespace ProGrids.Editor
 			s_GridMaterial.SetFloat("_AlphaFade", 0f);
 
 			Vector3 camDir = (pivot - cam.transform.position).normalized;
-			pivot = EditorUtility.SnapValue(pivot, snapValue);
+			pivot = Snapping.Round(pivot, snapValue);
 
 			// Used to flip the grid to match whatever direction the cam is currently
 			// coming at the pivot from
@@ -172,6 +200,7 @@ namespace ProGrids.Editor
 			bool x_intersect = false, y_intersect = false, z_intersect = false;
 
 			Plane[] planes = GeometryUtility.CalculateFrustumPlanes(cam);
+
 			foreach(Plane p in planes)
 			{
 				float dist;
@@ -230,21 +259,21 @@ namespace ProGrids.Editor
 			List<int> indices_m = new List<int>();
 
 			// X plane
-			DrawHalfGrid(cam, pivot, up, right, snapValue*div, x_iter/div, colors[0], alphaBump, out vertices_t, out normals_t, out colors_t, out indices_t, 0);
+			DrawHalfGrid(cam, pivot, up, right, snapValue*div, x_iter/div, gridColorX, out vertices_t, out normals_t, out colors_t, out indices_t, 0);
 			vertices_m.AddRange(vertices_t);
 			normals_m.AddRange(normals_t);
 			colors_m.AddRange(colors_t);
 			indices_m.AddRange(indices_t);
 
 			// Y plane
-			DrawHalfGrid(cam, pivot, right, forward, snapValue*div, y_iter/div, colors[1], alphaBump, out vertices_t, out normals_t, out colors_t, out indices_t, vertices_m.Count);
+			DrawHalfGrid(cam, pivot, right, forward, snapValue*div, y_iter/div, gridColorY, out vertices_t, out normals_t, out colors_t, out indices_t, vertices_m.Count);
 			vertices_m.AddRange(vertices_t);
 			normals_m.AddRange(normals_t);
 			colors_m.AddRange(colors_t);
 			indices_m.AddRange(indices_t);
 
 			// Z plane
-			DrawHalfGrid(cam, pivot, forward, up, snapValue*div, z_iter/div, colors[2], alphaBump, out vertices_t, out normals_t, out colors_t, out indices_t, vertices_m.Count);
+			DrawHalfGrid(cam, pivot, forward, up, snapValue*div, z_iter/div, gridColorZ, out vertices_t, out normals_t, out colors_t, out indices_t, vertices_m.Count);
 			vertices_m.AddRange(vertices_t);
 			normals_m.AddRange(normals_t);
 			colors_m.AddRange(colors_t);
@@ -260,14 +289,14 @@ namespace ProGrids.Editor
 
 		}
 
-		static void DrawHalfGrid(Camera cam, Vector3 pivot, Vector3 tan, Vector3 bitan, float increment, int iterations, Color secondary, float alphaBump,
+		static void DrawHalfGrid(Camera cam, Vector3 pivot, Vector3 tan, Vector3 bitan, float increment, int iterations, Color secondary,
 			out Vector3[] vertices,
 			out Vector3[] normals,
 			out Color[] colors,
 			out int[] indices, int offset)
 		{
 			Color primary = secondary;
-			primary.a += alphaBump;
+			primary.a += s_AlphaBump;
 
 			float len = increment * iterations;
 
@@ -371,17 +400,17 @@ namespace ProGrids.Editor
 		/// <param name="div"></param>
 		/// <param name="secondary"></param>
 		/// <param name="alphaBump"></param>
-		static void DrawFullGrid(Camera cam, Vector3 pivot, Vector3 tan, Vector3 bitan, float increment, int iterations, int div, Color secondary, float alphaBump)
+		static void DrawFullGrid(Camera cam, Vector3 pivot, Vector3 tan, Vector3 bitan, float increment, int iterations, int div, Color secondary)
 		{
 			Color primary = secondary;
-			primary.a += alphaBump;
+			primary.a += s_AlphaBump;
 
 			float len = iterations * increment;
 
 			iterations++;
 
 			Vector3 start = pivot - tan*(len/2f) - bitan*(len/2f);
-			start = EditorUtility.SnapValue(start, bitan+tan, increment);
+			start = Snapping.Round(start, bitan+tan, increment);
 
 			float inc = increment;
 			int highlightOffsetTan = (int)((EditorUtility.ValueFromMask(start, tan) % (inc*majorLineIncrement)) / inc);
@@ -483,5 +512,144 @@ namespace ProGrids.Editor
 			}
 			return intersects;
 		}
+
+		internal static void DrawGridOrthographic(Camera cam, float snapValue, float angle)
+		{
+			Axis camAxis = EnumExtension.AxisWithVector(Camera.current.transform.TransformDirection(Vector3.forward).normalized);
+
+			switch (camAxis)
+			{
+				case Axis.X:
+				case Axis.NegX:
+					DrawGridOrthographic(cam, camAxis, gridColorX, snapValue, angle);
+					break;
+
+				case Axis.Y:
+				case Axis.NegY:
+					DrawGridOrthographic(cam, camAxis, gridColorY, snapValue, angle);
+					break;
+
+				case Axis.Z:
+				case Axis.NegZ:
+					DrawGridOrthographic(cam, camAxis, gridColorZ, snapValue, angle);
+					break;
+			}
+		}
+
+		static void DrawGridOrthographic(Camera cam, Axis camAxis, Color color, float snapValue, float angle)
+		{
+			Color previousColor = Handles.color;
+			Color primaryColor = new Color(color.r, color.g, color.b, color.a + s_AlphaBump);
+
+			Vector3 bottomLeft = Snapping.Floor(cam.ScreenToWorldPoint(Vector2.zero), snapValue);
+			Vector3 bottomRight = Snapping.Floor(cam.ScreenToWorldPoint(new Vector2(cam.pixelWidth, 0f)), snapValue);
+			Vector3 topLeft = Snapping.Floor(cam.ScreenToWorldPoint(new Vector2(0f, cam.pixelHeight)), snapValue);
+			Vector3 topRight = Snapping.Floor(cam.ScreenToWorldPoint(new Vector2(cam.pixelWidth, cam.pixelHeight)), snapValue);
+
+			Vector3 axis = EnumExtension.VectorWithAxis(camAxis);
+
+			float width = Vector3.Distance(bottomLeft, bottomRight);
+			float height = Vector3.Distance(bottomRight, topRight);
+
+			// Shift lines to 10m forward of the camera
+			bottomLeft += axis * 10f;
+			topRight += axis * 10f;
+			bottomRight += axis * 10f;
+			topLeft += axis * 10f;
+
+			// Draw Vertical Lines
+			Vector3 camRight = cam.transform.right;
+			Vector3 camUp = cam.transform.up;
+
+			float snapValueAtResolution = snapValue;
+
+			int segs = (int)Mathf.Ceil(width / snapValueAtResolution) + 2;
+
+			float n = 2f;
+
+			while (segs > k_MaxLines)
+			{
+				snapValueAtResolution = snapValueAtResolution * n;
+				segs = (int)Mathf.Ceil(width / snapValueAtResolution) + 2;
+				n++;
+			}
+
+			// Screen start and end
+			Vector3 bl = (camRight.x + camRight.y + camRight.z) > 0
+				? Snapping.Floor(bottomLeft, camRight, snapValueAtResolution * k_PrimaryColorIncrement)
+				: Snapping.Ceil(bottomLeft, camRight, snapValueAtResolution * k_PrimaryColorIncrement);
+			Vector3 start = bl - camUp * (height + snapValueAtResolution * 2);
+			Vector3 end = bl + camUp * (height + snapValueAtResolution * 2);
+
+			segs += k_PrimaryColorIncrement;
+
+			// The current line start and end
+			Vector3 lineStart;
+			Vector3 lineEnd;
+
+			for (int i = -1; i < segs; i++)
+			{
+				lineStart = start + (i * (camRight * snapValueAtResolution));
+				lineEnd = end + (i * (camRight * snapValueAtResolution));
+				Handles.color = i % k_PrimaryColorIncrement == 0 ? primaryColor : color;
+				Handles.DrawLine(lineStart, lineEnd);
+			}
+
+			// Draw Horizontal Lines
+			segs = (int)Mathf.Ceil(height / snapValueAtResolution) + 2;
+
+			n = 2;
+			while (segs > k_MaxLines)
+			{
+				snapValueAtResolution = snapValueAtResolution * n;
+				segs = (int)Mathf.Ceil(height / snapValueAtResolution) + 2;
+				n++;
+			}
+
+			Vector3 tl = (camUp.x + camUp.y + camUp.z) > 0
+				? Snapping.Ceil(topLeft, camUp, snapValueAtResolution * k_PrimaryColorIncrement)
+				: Snapping.Floor(topLeft, camUp, snapValueAtResolution * k_PrimaryColorIncrement);
+			start = tl - camRight * (width + snapValueAtResolution * 2);
+			end = tl + camRight * (width + snapValueAtResolution * 2);
+
+			segs += (int)k_PrimaryColorIncrement;
+
+			for (int i = -1; i < segs; i++)
+			{
+				lineStart = start + (i * (-camUp * snapValueAtResolution));
+				lineEnd = end + (i * (-camUp * snapValueAtResolution));
+				Handles.color = i % k_PrimaryColorIncrement == 0 ? primaryColor : color;
+				Handles.DrawLine(lineStart, lineEnd);
+			}
+
+			if (angle > 0f)
+			{
+				Vector3 cen = Snapping.Round(((topRight + bottomLeft) / 2f), snapValue);
+
+				float half = (width > height) ? width : height;
+
+				float opposite = Mathf.Tan(Mathf.Deg2Rad * angle) * half;
+
+				Vector3 up = cam.transform.up * opposite;
+				Vector3 right = cam.transform.right * half;
+
+				Vector3 bottomLeftAngle = cen - (up + right);
+				Vector3 topRightAngle = cen + (up + right);
+
+				Vector3 bottomRightAngle = cen + (right - up);
+				Vector3 topLeftAngle = cen + (up - right);
+
+				Handles.color = primaryColor;
+
+				// y = 1x+1
+				Handles.DrawLine(bottomLeftAngle, topRightAngle);
+
+				// y = -1x-1
+				Handles.DrawLine(topLeftAngle, bottomRightAngle);
+			}
+
+			Handles.color = previousColor;
+		}
+
 	}
 }
