@@ -9,7 +9,6 @@ namespace ProGrids.Editor
 		static Color s_GridColorY;
 		static Color s_GridColorZ;
 		static float s_AlphaBump;
-		static bool s_ScaleSnapEnabled;
 		static SnapMethod s_SnapMethod;
 		static float s_BracketIncreaseValue;
 		static SnapUnit s_GridUnits;
@@ -35,7 +34,6 @@ namespace ProGrids.Editor
 			GUILayout.Label("Snap Behavior", EditorStyles.boldLabel);
 			s_AlphaBump = EditorGUILayout.Slider(new GUIContent("Tenth Line Alpha", "Every 10th line will have it's alpha value bumped by this amount."), s_AlphaBump, 0f, 1f);
 			s_GridUnits = (SnapUnit)EditorGUILayout.EnumPopup("Grid Units", s_GridUnits);
-			s_ScaleSnapEnabled = EditorGUILayout.Toggle("Snap On Scale", s_ScaleSnapEnabled);
 			s_SnapMethod = (SnapMethod) EditorGUILayout.EnumPopup("Snap Method", s_SnapMethod);
 			s_SyncUnitySnap = EditorGUILayout.Toggle("Sync w/ Unity Snap", s_SyncUnitySnap);
 
@@ -64,7 +62,6 @@ namespace ProGrids.Editor
 
 		public static bool LoadPreferences()
 		{
-			s_ScaleSnapEnabled = EditorPrefs.GetBool(PreferenceKeys.SnapScale, Defaults.SnapOnScale);
 			s_GridColorX = (EditorPrefs.HasKey(PreferenceKeys.GridColorX)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorX)) : Defaults.GridColorX;
 			s_GridColorY = (EditorPrefs.HasKey(PreferenceKeys.GridColorY)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorY)) : Defaults.GridColorY;
 			s_GridColorZ = (EditorPrefs.HasKey(PreferenceKeys.GridColorZ)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorZ)) : Defaults.GridColorZ;
@@ -98,7 +95,6 @@ namespace ProGrids.Editor
 
 		public static void SetPreferences()
 		{
-			EditorPrefs.SetBool(PreferenceKeys.SnapScale, s_ScaleSnapEnabled);
 			EditorPrefs.SetString(PreferenceKeys.GridColorX, s_GridColorX.ToString("f3"));
 			EditorPrefs.SetString(PreferenceKeys.GridColorY, s_GridColorY.ToString("f3"));
 			EditorPrefs.SetString(PreferenceKeys.GridColorZ, s_GridColorZ.ToString("f3"));
@@ -115,7 +111,11 @@ namespace ProGrids.Editor
 			EditorPrefs.SetInt(PreferenceKeys.SnapMethod, (int) s_SnapMethod);
 
 			if (ProGridsEditor.Instance != null)
+			{
+				GridRenderer.LoadPreferences();
 				ProGridsEditor.Instance.LoadPreferences();
+				ProGridsEditor.DoGridRepaint();
+			}
 		}
 
 		public static void ResetPrefs()

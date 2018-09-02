@@ -121,7 +121,7 @@ namespace ProGrids.Editor
 
 		internal bool GetSnapEnabled()
 		{
-			return m_SnapSettings.SnapEnabled;
+			return m_ToggleTempSnap ? !m_SnapSettings.SnapEnabled : m_SnapSettings.SnapEnabled;
 		}
 
 		internal void SetSnapEnabled(bool isEnabled)
@@ -353,6 +353,7 @@ namespace ProGrids.Editor
 			GridRenderer.Init();
 			lastTime = Time.realtimeSinceStartup;
 			SetMenuIsExtended(menuOpen);
+			OnSelectionChange();
 
 			if (m_DrawGrid)
 				EditorUtility.SetUnityGridEnabled(false);
@@ -390,7 +391,6 @@ namespace ProGrids.Editor
 			SceneView.onSceneGUIDelegate += OnSceneGUI;
 			EditorApplication.update += UpdateToolbar;
 			Selection.selectionChanged += OnSelectionChange;
-			EditorUtility.RegisterOnPreSceneGUIDelegate(GridRenderer.OnGUI);
 			Undo.undoRedoPerformed += ResetActiveTransformValues;
 
 			m_IsEnabled = true;
@@ -400,11 +400,9 @@ namespace ProGrids.Editor
 		{
 			m_IsEnabled = false;
 
-			SceneView.onSceneGUIDelegate -= GridRenderer.OnGUI;
 			SceneView.onSceneGUIDelegate -= OnSceneGUI;
 			EditorApplication.update -= UpdateToolbar;
 			Selection.selectionChanged -= OnSelectionChange;
-			EditorUtility.UnregisterOnPreSceneGUIDelegate(GridRenderer.OnGUI);
 			Undo.undoRedoPerformed -= ResetActiveTransformValues;
 		}
 
@@ -419,6 +417,8 @@ namespace ProGrids.Editor
 			string snapSettingsJson = EditorPrefs.GetString(PreferenceKeys.SnapSettings);
 			m_SnapSettings = new SnapSettings();
 			JsonUtility.FromJsonOverwrite(snapSettingsJson, m_SnapSettings);
+
+			m_SnapMethod = (SnapMethod) EditorPrefs.GetInt(PreferenceKeys.SnapMethod, (int) Defaults.SnapMethod);
 
 			m_IncreaseGridSizeShortcut = EditorPrefs.HasKey(PreferenceKeys.IncreaseGridSize)
 				? (KeyCode)EditorPrefs.GetInt(PreferenceKeys.IncreaseGridSize)
@@ -504,14 +504,15 @@ namespace ProGrids.Editor
 
 			if (m_DrawGrid && (currentEvent.type == EventType.Repaint || m_DoGridRepaint))
 			{
+				Vector3 previousPivot = m_Pivot;
+				CalculateGridPlacement(scnview);
+
 				if (GridIsOrthographic)
 				{
-					GridRenderer.DrawGridOrthographic(scnview.camera, SnapValueInUnityUnits, m_DrawAngles ? AngleValue : -1f);
+					GridRenderer.DrawOrthographic(scnview.camera, SnapValueInUnityUnits, m_DrawAngles ? AngleValue : -1f);
 				}
 				else
 				{
-					Vector3 previousPivot = m_Pivot;
-					CalculateGridPlacement(scnview);
 					float camDistance = Vector3.Distance(scnview.camera.transform.position, previousPivot);
 
 					if (m_DoGridRepaint || m_Pivot != previousPivot ||
@@ -523,10 +524,12 @@ namespace ProGrids.Editor
 						m_LastDistanceCameraToPivot = camDistance;
 
 						if (FullGridEnabled)
-							GridRenderer.DrawGridPerspective(scnview.camera, m_Pivot, m_SnapSettings.SnapValueInUnityUnits());
+							GridRenderer.SetPerspective3D(scnview.camera, m_Pivot, m_SnapSettings.SnapValueInUnityUnits());
 						else
-							m_PlaneGridDrawDistance = GridRenderer.DrawGridPlane(scnview.camera, m_RenderPlane, m_SnapSettings.SnapValueInUnityUnits(), m_Pivot, GridRenderOffset);
+							m_PlaneGridDrawDistance = GridRenderer.SetPerspective(scnview.camera, m_RenderPlane, m_SnapSettings.SnapValueInUnityUnits(), m_Pivot, GridRenderOffset);
 					}
+
+					GridRenderer.Repaint();
 				}
 			}
 
@@ -549,6 +552,8 @@ namespace ProGrids.Editor
 			if (!GridIsOrthographic && wasOrtho)
 				OnSceneBecamePersp(view == SceneView.lastActiveSceneView);
 
+			if (GridIsOrthographic)
+				return;
 
 			if (FullGridEnabled)
 			{
@@ -596,82 +601,87 @@ namespace ProGrids.Editor
 
 			Transform selected = m_LastActiveTransform;
 
-			if (!m_SnapSettings.SnapEnabled || GUIUtility.hotControl < 1 || selected == null)
+			if (selected == null)
 				return;
 
-			if (Selection.activeTransform && EditorUtility.SnapIsEnabled(Selection.activeTransform))
+			bool positionMoved = !Snapping.Approx(m_LastActiveTransform.position, m_LastPosition);
+			bool scaleMoved = !Snapping.Approx(m_LastActiveTransform.localScale, m_LastScale);
+
+			if (!GetSnapEnabled() || !EditorUtility.SnapIsEnabled(selected) || GUIUtility.hotControl < 1)
 			{
-				if (Tools.current == Tool.Move && !Snapping.Approx(m_LastActiveTransform.position, m_LastPosition))
+				m_LastPosition = m_LastActiveTransform.position;
+				m_LastScale = m_LastActiveTransform.localScale;
+				return;
+			}
+
+			if (Tools.current == Tool.Move && positionMoved)
+			{
+				Vector3 old = selected.position;
+				Vector3 mask = old - m_LastPosition;
+
+				bool constraintsOn = SnapMethod == SnapMethod.SnapOnSelectedAxis;
+
+				if (m_ToggleAxisConstraint)
+					constraintsOn = !constraintsOn;
+
+				Vector3 snapped;
+
+				if (constraintsOn)
+					snapped = Snapping.Round(old, mask, m_SnapSettings.SnapValueInUnityUnits());
+				else
+					snapped = Snapping.Round(old, m_SnapSettings.SnapValueInUnityUnits());
+
+				Vector3 snapOffset = snapped - old;
+
+				if (m_IsFirstMove)
 				{
-					if (!m_ToggleTempSnap)
+					Undo.RecordObjects(Selection.transforms, "Move Objects");
+
+					m_IsFirstMove = false;
+
+					if (m_PredictiveGrid && !FullGridEnabled)
 					{
-						Vector3 old = selected.position;
-						Vector3 mask = old - m_LastPosition;
+						Axis dragAxis = EditorUtility.CalcDragAxis(snapOffset, camera);
 
-						bool constraintsOn = SnapMethod == SnapMethod.SnapOnSelectedAxis;
-
-						if (m_ToggleAxisConstraint)
-							constraintsOn = !constraintsOn;
-
-						Vector3 snapped;
-
-						if (constraintsOn)
-							snapped = Snapping.Round(old, mask, m_SnapSettings.SnapValueInUnityUnits());
-						else
-							snapped = Snapping.Round(old, m_SnapSettings.SnapValueInUnityUnits());
-
-						Vector3 snapOffset = snapped - old;
-
-						if (m_PredictiveGrid && m_IsFirstMove && !FullGridEnabled)
-						{
-							Undo.RecordObjects(Selection.transforms, "Move Objects");
-
-							m_IsFirstMove = false;
-							Axis dragAxis = EditorUtility.CalcDragAxis(snapOffset, camera);
-
-							if (dragAxis != Axis.None && dragAxis != m_RenderPlane)
-								SetRenderPlane(dragAxis);
-						}
-
-						selected.position = snapped;
-
-						if (m_SnapSettings.SnapAsGroup)
-						{
-							EditorUtility.OffsetTransforms(Selection.transforms, selected, snapOffset);
-						}
-						else
-						{
-							foreach (Transform t in Selection.transforms)
-								t.position = constraintsOn
-									? Snapping.Round(t.position, mask, m_SnapSettings.SnapValueInUnityUnits())
-									: Snapping.Round(t.position, m_SnapSettings.SnapValueInUnityUnits());
-						}
+						if (dragAxis != Axis.None && dragAxis != m_RenderPlane)
+							SetRenderPlane(dragAxis);
 					}
-
-					m_LastPosition = selected.position;
 				}
 
-				if (Tools.current == Tool.Scale && m_SnapSettings.ScaleSnapEnabled && !Snapping.Approx(m_LastActiveTransform.localScale, m_LastScale))
+				selected.position = snapped;
+
+				if (m_SnapSettings.SnapAsGroup)
 				{
-					if (!m_ToggleTempSnap)
-					{
-						Vector3 old = m_LastActiveTransform.localScale;
-						Vector3 mask = old - m_LastScale;
-
-						if (m_PredictiveGrid)
-						{
-							Axis dragAxis = EditorUtility.CalcDragAxis(Selection.activeTransform.TransformDirection(mask), camera);
-							if (dragAxis != Axis.None && dragAxis != m_RenderPlane)
-								SetRenderPlane(dragAxis);
-						}
-
-						foreach (Transform t in Selection.transforms)
-							t.localScale = Snapping.Round(t.localScale, mask, m_SnapSettings.SnapValueInUnityUnits());
-
-						m_LastScale = m_LastActiveTransform.localScale;
-					}
+					EditorUtility.OffsetTransforms(Selection.transforms, selected, snapOffset);
+				}
+				else
+				{
+					foreach (Transform t in Selection.transforms)
+						t.position = constraintsOn
+							? Snapping.Round(t.position, mask, m_SnapSettings.SnapValueInUnityUnits())
+							: Snapping.Round(t.position, m_SnapSettings.SnapValueInUnityUnits());
 				}
 			}
+
+			if (Tools.current == Tool.Scale && ScaleSnapEnabled && scaleMoved)
+			{
+				Vector3 old = m_LastActiveTransform.localScale;
+				Vector3 mask = old - m_LastScale;
+
+				if (m_PredictiveGrid)
+				{
+					Axis dragAxis = EditorUtility.CalcDragAxis(Selection.activeTransform.TransformDirection(mask), camera);
+					if (dragAxis != Axis.None && dragAxis != m_RenderPlane)
+						SetRenderPlane(dragAxis);
+				}
+
+				// scale snapping does not respect the SnapMethod by design
+				foreach (Transform t in Selection.transforms)
+					t.localScale = Snapping.Round(t.localScale, mask, m_SnapSettings.SnapValueInUnityUnits());
+			}
+
+			m_LastPosition = m_LastActiveTransform.position;
+			m_LastScale = m_LastActiveTransform.localScale;
 		}
 
 		void HandleKeys(Event currentEvent)
@@ -856,12 +866,7 @@ namespace ProGrids.Editor
 		/// <remarks>Used by ProBuilder.</remarks>
 		public static bool SnapEnabled()
 		{
-			if (Instance == null)
-				return false;
-			bool isEnabled = Instance.GetSnapEnabled();
-			if (Instance.m_ToggleTempSnap)
-				isEnabled = !isEnabled;
-			return isEnabled;
+			return Instance != null && Instance.GetSnapEnabled();
 		}
 
 		/// <summary>

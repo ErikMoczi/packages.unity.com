@@ -2,6 +2,7 @@
 
 namespace ProGrids.Editor
 {
+	[System.Flags]
 	enum Axis {
 		None = 0x0,
 		X = 0x1,
@@ -21,7 +22,7 @@ namespace ProGrids.Editor
 		Yard,
 		Parsec
 	}
-	
+
 	enum SnapMethod
 	{
 		SnapOnSelectedAxis,

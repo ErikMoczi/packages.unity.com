@@ -67,12 +67,7 @@ namespace ProGrids.Editor
 				}
 			}
 
-
-			s_AlphaBump = EditorPrefs.GetFloat(PreferenceKeys.AlphaBump, Defaults.AlphaBump);
-
-			gridColorX = (EditorPrefs.HasKey(PreferenceKeys.GridColorX)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorX)) : Defaults.GridColorX;
-			gridColorY = (EditorPrefs.HasKey(PreferenceKeys.GridColorY)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorY)) : Defaults.GridColorY;
-			gridColorZ = (EditorPrefs.HasKey(PreferenceKeys.GridColorZ)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorZ)) : Defaults.GridColorZ;
+			LoadPreferences();
 		}
 
 		public static void Destroy()
@@ -84,28 +79,34 @@ namespace ProGrids.Editor
 				Object.DestroyImmediate(s_GridMaterial);
 		}
 
-		public static void OnGUI(SceneView view)
+		internal static void LoadPreferences()
 		{
-			if (Event.current.type == EventType.Repaint &&
-			    s_GridMesh != null &&
-			    s_GridMaterial != null)
+			s_AlphaBump = EditorPrefs.GetFloat(PreferenceKeys.AlphaBump, Defaults.AlphaBump);
+
+			gridColorX = (EditorPrefs.HasKey(PreferenceKeys.GridColorX)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorX)) : Defaults.GridColorX;
+			gridColorY = (EditorPrefs.HasKey(PreferenceKeys.GridColorY)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorY)) : Defaults.GridColorY;
+			gridColorZ = (EditorPrefs.HasKey(PreferenceKeys.GridColorZ)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorZ)) : Defaults.GridColorZ;
+		}
+
+		internal static void Repaint()
+		{
+			if (s_GridMesh != null && s_GridMaterial != null)
 			{
 				s_GridMaterial.SetPass(0);
 				Graphics.DrawMeshNow(s_GridMesh, Matrix4x4.identity);
 			}
 		}
 
-
-		internal static float DrawGridPlane(Camera cam, Axis axis, float snapValue, Vector3 position, float offset)
+		internal static float SetPerspective(Camera cam, Axis axis, float snapValue, Vector3 position, float offset)
 		{
 			if ((axis & Axis.X) == Axis.X)
-				return GridRenderer.DrawPlane(cam, position + Vector3.right * offset, Vector3.up, Vector3.forward, snapValue, gridColorX);
+				return GridRenderer.SetPerspective(cam, position + Vector3.right * offset, Vector3.up, Vector3.forward, snapValue, gridColorX);
 
 			if ((axis & Axis.Y) == Axis.Y)
-				return GridRenderer.DrawPlane(cam, position + Vector3.up * offset, Vector3.right, Vector3.forward, snapValue, gridColorY);
+				return GridRenderer.SetPerspective(cam, position + Vector3.up * offset, Vector3.right, Vector3.forward, snapValue, gridColorY);
 
 			if ((axis & Axis.Z) == Axis.Z)
-				return GridRenderer.DrawPlane(cam, position + Vector3.forward * offset, Vector3.up, Vector3.right, snapValue, gridColorZ);
+				return GridRenderer.SetPerspective(cam, position + Vector3.forward * offset, Vector3.up, Vector3.right, snapValue, gridColorZ);
 
 			return 0f;
 		}
@@ -119,9 +120,8 @@ namespace ProGrids.Editor
 		/// <param name="bitangent"></param>
 		/// <param name="snapValue"></param>
 		/// <param name="color"></param>
-		/// <param name="alphaBump"></param>
 		/// <returns></returns>
-		public static float DrawPlane(Camera cam, Vector3 pivot, Vector3 tangent, Vector3 bitangent, float snapValue, Color color)
+		internal static float SetPerspective(Camera cam, Vector3 pivot, Vector3 tangent, Vector3 bitangent, float snapValue, Color color)
 		{
 			if(!s_GridMesh || !s_GridMaterial)
 				Init();
@@ -169,12 +169,12 @@ namespace ProGrids.Editor
 			}
 
 			// origin, tan, bitan, increment, iterations, divOffset, color, primary alpha bump
-			DrawFullGrid(cam, pivot, tangent, bitangent, snapValue*s_GridResolution, s_MaxLines/s_GridResolution, s_GridResolution, color);
+			RebuildPlane(cam, pivot, tangent, bitangent, snapValue*s_GridResolution, s_MaxLines/s_GridResolution, s_GridResolution, color);
 
 			return ((snapValue*s_GridResolution)*(s_MaxLines/s_GridResolution));
 		}
 
-		public static void DrawGridPerspective(Camera cam, Vector3 pivot, float snapValue)
+		internal static void SetPerspective3D(Camera cam, Vector3 pivot, float snapValue)
 		{
 			if(!s_GridMesh || !s_GridMaterial)
 				Init();
@@ -259,21 +259,21 @@ namespace ProGrids.Editor
 			List<int> indices_m = new List<int>();
 
 			// X plane
-			DrawHalfGrid(cam, pivot, up, right, snapValue*div, x_iter/div, gridColorX, out vertices_t, out normals_t, out colors_t, out indices_t, 0);
+			RebuildPerspectivePlane(cam, pivot, up, right, snapValue*div, x_iter/div, gridColorX, out vertices_t, out normals_t, out colors_t, out indices_t, 0);
 			vertices_m.AddRange(vertices_t);
 			normals_m.AddRange(normals_t);
 			colors_m.AddRange(colors_t);
 			indices_m.AddRange(indices_t);
 
 			// Y plane
-			DrawHalfGrid(cam, pivot, right, forward, snapValue*div, y_iter/div, gridColorY, out vertices_t, out normals_t, out colors_t, out indices_t, vertices_m.Count);
+			RebuildPerspectivePlane(cam, pivot, right, forward, snapValue*div, y_iter/div, gridColorY, out vertices_t, out normals_t, out colors_t, out indices_t, vertices_m.Count);
 			vertices_m.AddRange(vertices_t);
 			normals_m.AddRange(normals_t);
 			colors_m.AddRange(colors_t);
 			indices_m.AddRange(indices_t);
 
 			// Z plane
-			DrawHalfGrid(cam, pivot, forward, up, snapValue*div, z_iter/div, gridColorZ, out vertices_t, out normals_t, out colors_t, out indices_t, vertices_m.Count);
+			RebuildPerspectivePlane(cam, pivot, forward, up, snapValue*div, z_iter/div, gridColorZ, out vertices_t, out normals_t, out colors_t, out indices_t, vertices_m.Count);
 			vertices_m.AddRange(vertices_t);
 			normals_m.AddRange(normals_t);
 			colors_m.AddRange(colors_t);
@@ -289,7 +289,29 @@ namespace ProGrids.Editor
 
 		}
 
-		static void DrawHalfGrid(Camera cam, Vector3 pivot, Vector3 tan, Vector3 bitan, float increment, int iterations, Color secondary,
+		internal static void DrawOrthographic(Camera cam, float snapValue, float angle)
+		{
+			Axis camAxis = EnumExtension.AxisWithVector(Camera.current.transform.TransformDirection(Vector3.forward).normalized);
+
+			switch (camAxis)
+			{
+				case Axis.X:
+				case Axis.NegX:
+					DrawOrthographic(cam, camAxis, gridColorX, snapValue, angle);
+					break;
+
+				case Axis.Y:
+				case Axis.NegY:
+					DrawOrthographic(cam, camAxis, gridColorY, snapValue, angle);
+					break;
+
+				case Axis.Z:
+				case Axis.NegZ:
+					DrawOrthographic(cam, camAxis, gridColorZ, snapValue, angle);
+					break;
+			}
+		}
+		static void RebuildPerspectivePlane(Camera cam, Vector3 pivot, Vector3 tan, Vector3 bitan, float increment, int iterations, Color secondary,
 			out Vector3[] vertices,
 			out Vector3[] normals,
 			out Color[] colors,
@@ -400,7 +422,7 @@ namespace ProGrids.Editor
 		/// <param name="div"></param>
 		/// <param name="secondary"></param>
 		/// <param name="alphaBump"></param>
-		static void DrawFullGrid(Camera cam, Vector3 pivot, Vector3 tan, Vector3 bitan, float increment, int iterations, int div, Color secondary)
+		static void RebuildPlane(Camera cam, Vector3 pivot, Vector3 tan, Vector3 bitan, float increment, int iterations, int div, Color secondary)
 		{
 			Color primary = secondary;
 			primary.a += s_AlphaBump;
@@ -513,30 +535,7 @@ namespace ProGrids.Editor
 			return intersects;
 		}
 
-		internal static void DrawGridOrthographic(Camera cam, float snapValue, float angle)
-		{
-			Axis camAxis = EnumExtension.AxisWithVector(Camera.current.transform.TransformDirection(Vector3.forward).normalized);
-
-			switch (camAxis)
-			{
-				case Axis.X:
-				case Axis.NegX:
-					DrawGridOrthographic(cam, camAxis, gridColorX, snapValue, angle);
-					break;
-
-				case Axis.Y:
-				case Axis.NegY:
-					DrawGridOrthographic(cam, camAxis, gridColorY, snapValue, angle);
-					break;
-
-				case Axis.Z:
-				case Axis.NegZ:
-					DrawGridOrthographic(cam, camAxis, gridColorZ, snapValue, angle);
-					break;
-			}
-		}
-
-		static void DrawGridOrthographic(Camera cam, Axis camAxis, Color color, float snapValue, float angle)
+		static void DrawOrthographic(Camera cam, Axis camAxis, Color color, float snapValue, float angle)
 		{
 			Color previousColor = Handles.color;
 			Color primaryColor = new Color(color.r, color.g, color.b, color.a + s_AlphaBump);

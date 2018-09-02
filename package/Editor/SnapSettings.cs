@@ -1,7 +1,9 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace ProGrids.Editor
 {
+	[Serializable]
 	class SnapSettings
 	{
 		// The snap value in SnapUnit coordinates.

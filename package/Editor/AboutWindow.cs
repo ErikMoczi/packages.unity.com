@@ -3,18 +3,6 @@ using UnityEditor;
 
 namespace ProGrids.Editor
 {
-	/// <summary>
-	/// Used to pop up the window on import.
-	/// </summary>
-	[InitializeOnLoad]
-	static class AboutWindowSetup
-	{
-		static AboutWindowSetup()
-		{
-			EditorApplication.delayCall += () => { AboutWindow.Init(false); };
-		}
-	}
-
 	class AboutWindow : EditorWindow
 	{
 		GUIContent m_LearnContent = new GUIContent("Learn ProGrids", "Documentation");
@@ -59,21 +47,9 @@ namespace ProGrids.Editor
 
 		Vector2 m_Scroll = Vector2.zero;
 
-		/// <summary>
-		/// Return true if Init took place, false if not.
-		/// </summary>
-		/// <param name="fromMenu"></param>
-		/// <returns></returns>
-		public static bool Init (bool fromMenu)
+		internal static void Init ()
 		{
-			if(fromMenu || EditorPrefs.GetString(k_AboutWindowVersionPref) != Version.Current.ToString(k_AboutPrefFormat))
-			{
-				EditorPrefs.SetString(k_AboutWindowVersionPref, Version.Current.ToString(k_AboutPrefFormat));
-				GetWindow(typeof(AboutWindow), true, "ProGrids", true).ShowUtility();
-				return true;
-			}
-
-			return false;
+			GetWindow(typeof(AboutWindow), true, "ProGrids", true).ShowUtility();
 		}
 
 		static Color HexToColor(uint x)

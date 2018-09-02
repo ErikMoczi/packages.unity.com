@@ -1,4 +1,4 @@
-# ProGrids 3.0.0-preview.3
+# ProGrids 3.0.0-preview.4
 
 ## Features
 
@@ -14,13 +14,20 @@
 
 - Remove `pg_` suffix from class and file names.
 
+## Changes from preview.3
+
+- Fix "SnapEnabled" preference not persisting domain reloads.
+- Repaint grid when changing preferences.
+- Remove duplicate snap on scale pref in Prefences pane.
+- Remove automatic About Window popup on update.
+
 ## Changes from preview.2
 
 - Change color of "close" button to light blue.
 - Remove duplicate preference fields from in-scene settings window.
 - Fix single key toggle shortcuts not working.
 - Fix snapping multiple objects not undoing to original state.
-- Fix multiple objects snapping to first selected transform instead of the active transform. 
+- Fix multiple objects snapping to first selected transform instead of the active transform.
 
 # ProGrids 2.5.0-f.0
 

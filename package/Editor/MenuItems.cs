@@ -7,7 +7,7 @@ namespace ProGrids.Editor
 		[MenuItem("Tools/ProGrids/About", false, 0)]
 		public static void MenuAboutProGrids()
 		{
-			AboutWindow.Init(true);
+			AboutWindow.Init();
 		}
 
 		[MenuItem("Tools/ProGrids/ProGrids Window", false, 15)]
