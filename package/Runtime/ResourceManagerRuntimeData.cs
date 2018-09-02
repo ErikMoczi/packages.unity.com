@@ -39,7 +39,6 @@ namespace UnityEngine.AddressableAssets
         /// <summary>
         /// List of catalog locations to download in order (try remote first, then local)
         /// </summary>
-        //public List<ResourceLocationData> catalogLocations = new List<ResourceLocationData>();
         public ResourceLocationList catalogLocations = new ResourceLocationList();
         /// <summary>
         /// TODO - doc
@@ -67,11 +66,9 @@ namespace UnityEngine.AddressableAssets
             ResourceManager.ResourceProviders.Add(new TextDataProvider());
             ResourceManager.ResourceProviders.Add(new ContentCatalogProvider());
             var runtimeDataLocation = new ResourceLocationBase<string>("RuntimeData", PlayerSettingsLoadLocation, typeof(JsonAssetProvider).FullName);
-            var initOperation = ResourceManager.LoadAsync<ResourceManagerRuntimeData, IResourceLocation>(runtimeDataLocation);
-            ResourceManager.QueueInitializationOperation(initOperation);
-            initOperation.Completed += (op) =>
+            ResourceManager.LoadAsync<ResourceManagerRuntimeData, IResourceLocation>(runtimeDataLocation).Completed += (op) =>
             {
-                if(op.Result != null)
+                if (op.Result != null)
                     op.Result.Init();
             };
         }
@@ -105,20 +102,25 @@ namespace UnityEngine.AddressableAssets
         {
             while (index < catalogLocations.locations.Count && !catalogLocations.locations[index].m_isLoadable)
                 index++;
-            var loadOp = ResourceManager.LoadAsync<ResourceLocationList, string>(catalogLocations.locations[index].m_address);
-            ResourceManager.QueueInitializationOperation(loadOp);
-            loadOp.Completed += (op) =>
+
+            ResourceManager.LoadAsync<ResourceLocationList, string>(catalogLocations.locations[index].m_address).Completed += (op) =>
             {
                 if (op.Result != null)
                 {
                     AddContentCatalogs(op.Result);
+                    ResourceManager.SetReady();
                 }
                 else
                 {
                     if (index + 1 >= catalogLocations.locations.Count)
+                    {
                         Debug.LogError("Failed to load content catalog.");
+                        ResourceManager.SetReady();
+                    }
                     else
+                    {
                         LoadContentCatalog(index + 1);
+                    }
                 }
             }; 
         }
@@ -143,7 +145,6 @@ namespace UnityEngine.AddressableAssets
                 }
                 break;
             }
-            //ResourceManager.resourceProviders.Add(new LegacyResourcesProvider());
         }
 
         private static void AddContentCatalogs(ResourceLocationList locList)
@@ -203,7 +204,6 @@ namespace UnityEngine.AddressableAssets
                 ResourceManager.ResourceLocators.Insert(0, ccInt);
             if (ccEnum.m_addressMap.Count > 0)
                 ResourceManager.ResourceLocators.Insert(0, ccEnum);
-//            ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
         }
 
         private static void AddToCatalog<T>(List<string> labels, ResourceLocationMap<T> locations, IResourceLocation location, long labelMask)
