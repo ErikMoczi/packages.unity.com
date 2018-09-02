@@ -36,7 +36,7 @@ namespace ResourceManagement.ResourceProviders.Experimental
 
         public bool CanProvideInstance<TObject>(IResourceProvider loadProvider, IResourceLocation loc) where TObject : Object
         {
-            return loadProvider.CanProvide<TObject>(loc) && typeof(TObject).IsAssignableFrom(typeof(GameObject));
+            return loadProvider.CanProvide<TObject>(loc) && Config.IsInstance<TObject, GameObject>();
         }
 
         public IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation) where TObject : Object

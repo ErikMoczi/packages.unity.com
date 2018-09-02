@@ -10,7 +10,7 @@ namespace ResourceManagement.ResourceProviders.Experimental
     {
         public override bool CanProvide<TObject>(IResourceLocation loc)
         {
-            return base.CanProvide<TObject>(loc) && typeof(Texture2D).IsAssignableFrom(typeof(TObject));
+            return base.CanProvide<TObject>(loc) && ResourceManagement.Util.Config.IsInstance<TObject, Texture2D>();
         }
 
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>

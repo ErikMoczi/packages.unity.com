@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 namespace ResourceManagement.Util
 {
     public static class Config
@@ -6,6 +7,9 @@ namespace ResourceManagement.Util
         static System.Collections.Generic.Dictionary<string, string> cachedValues = new System.Collections.Generic.Dictionary<string, string>();
         public static string GetGlobalVar(string var)
         {
+#if UNITY_METRO
+            return var;
+#else
             int i = var.LastIndexOf('.');
             if (i < 0)
                 return var;
@@ -14,41 +18,53 @@ namespace ResourceManagement.Util
             if (cachedValues.TryGetValue(var, out cachedValue))
                 return cachedValue;
 
-            //var className = var.Substring(0, i); 
-            //var propName = var.Substring(i + 1);
-            //foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
-            //{
-            //    Type t = a.GetType(className, false, false);
-            //    if (t == null)
-            //        continue;
-            //    try
-            //    {
-            //        var pi = t.GetProperty(propName, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy | System.Reflection.BindingFlags.Public);
-            //        if (pi != null)
-            //        {
-            //            var v = pi.GetValue(null, null);
-            //            if (v != null)
-            //            {
-            //                cachedValues.Add(var, v.ToString());
-            //                return v.ToString();
-            //            }
-            //        }
-            //        var fi = t.GetField(propName, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy | System.Reflection.BindingFlags.Public);
-            //        if (fi != null)
-            //        {
-            //            var v = fi.GetValue(null);
-            //            if (v != null)
-            //            {
-            //                cachedValues.Add(var, v.ToString());
-            //                return v.ToString();
-            //            }
-            //        }
-            //    }
-            //    catch (Exception)
-            //    {
-            //    }
-            //}
+            var className = var.Substring(0, i);
+            var propName = var.Substring(i + 1);
+            foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                Type t = a.GetType(className, false, false);
+                if (t == null)
+                    continue;
+                try
+                {
+                    var pi = t.GetProperty(propName, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy | System.Reflection.BindingFlags.Public);
+                    if (pi != null)
+                    {
+                        var v = pi.GetValue(null, null);
+                        if (v != null)
+                        {
+                            cachedValues.Add(var, v.ToString());
+                            return v.ToString();
+                        }
+                    }
+                    var fi = t.GetField(propName, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy | System.Reflection.BindingFlags.Public);
+                    if (fi != null)
+                    {
+                        var v = fi.GetValue(null);
+                        if (v != null)
+                        {
+                            cachedValues.Add(var, v.ToString());
+                            return v.ToString();
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                }
+            }
             return var;
+#endif
+        }
+
+        public static bool IsInstance<A, B>()
+        {
+            var tA = typeof(A);
+            var tB = typeof(B);
+#if !UNITY_EDITOR && UNITY_METRO
+            return tB.GetTypeInfo().IsAssignableFrom(tA.GetTypeInfo());
+#else
+            return tB.IsAssignableFrom(tA);
+#endif
         }
 
         static System.Collections.Generic.Dictionary<string, string> cachedPaths = new System.Collections.Generic.Dictionary<string, string>();

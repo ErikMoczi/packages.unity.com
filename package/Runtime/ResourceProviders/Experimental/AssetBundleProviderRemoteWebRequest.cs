@@ -6,7 +6,7 @@ using System.Linq;
 using System.IO;
 using ResourceManagement.AsyncOperations;
 using ResourceManagement.Util;
-
+#if !UNITY_METRO
 namespace ResourceManagement.ResourceProviders.Experimental
 {
     public class AssetBundleProviderRemoteWebRequest : ResourceProviderBase
@@ -34,10 +34,10 @@ namespace ResourceManagement.ResourceProviders.Experimental
 
             void AsyncCallback(IAsyncResult ar)
             {
-                //HttpWebRequest req = ar.AsyncState as HttpWebRequest;
-                //var response = req.EndGetResponse(ar);
-                //var stream = (response as HttpWebResponse).GetResponseStream();
-                //stream.BeginRead(buffer, 0, buffer.Length, OnRead, stream);
+                HttpWebRequest req = ar.AsyncState as HttpWebRequest;
+                var response = req.EndGetResponse(ar);
+                var stream = (response as HttpWebResponse).GetResponseStream();
+                stream.BeginRead(buffer, 0, buffer.Length, OnRead, stream);
             }
 
             void OnRead(IAsyncResult ar)
@@ -46,8 +46,8 @@ namespace ResourceManagement.ResourceProviders.Experimental
                 int read = responseStream.EndRead(ar);
                 if (read > 0)
                 {
-                    data.Write(buffer, 0, read); 
-                    //responseStream.BeginRead(buffer, 0, buffer.Length, OnRead, responseStream);
+                    data.Write(buffer, 0, read);
+                    responseStream.BeginRead(buffer, 0, buffer.Length, OnRead, responseStream);
                 }
                 else
                 {
@@ -218,3 +218,4 @@ namespace ResourceManagement.ResourceProviders.Experimental
         }
     }
 }
+#endif
