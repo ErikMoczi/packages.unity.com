@@ -51,7 +51,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
         {
             var command = new WriteCommand();
             command.internalName = internalName;
-            command.fileName = Path.GetFileName(internalName); // TODO: Maybe remove this from C++?
+            command.fileName = Path.GetFileName(internalName);
 
             command.serializeObjects = objects.Select(x => new SerializationInfo
             {
@@ -78,14 +78,6 @@ namespace UnityEditor.Build.Pipeline.Tasks
             {
                 abOp.Info = new AssetBundleInfo();
                 abOp.Info.bundleName = bundleName;
-
-                // TODO: Convert this to AssetBundleManifest data
-                //var dependencies = new HashSet<string>();
-                //var bundles = assets.SelectMany(x => writeData.AssetToFiles[x].Select(y => writeData.FileToBundle[y]));
-                //dependencies.UnionWith(bundles);
-                //dependencies.Remove(bundleName);
-                //abOp.Info.bundleDependencies = dependencies.OrderBy(x => x).ToList();
-
                 abOp.Info.bundleAssets = assets.Select(x => dependencyData.AssetInfo[x]).ToList();
                 foreach (var loadInfo in abOp.Info.bundleAssets)
                     loadInfo.address = buildContent.Addresses[loadInfo.asset];
@@ -118,14 +110,6 @@ namespace UnityEditor.Build.Pipeline.Tasks
             {
                 sbOp.Info = new SceneBundleInfo();
                 sbOp.Info.bundleName = bundleName;
-
-                // TODO: Convert this to AssetBundleManifest data
-                //var dependencies = new HashSet<string>();
-                //var bundles = assets.SelectMany(x => writeData.AssetToFiles[x].Select(y => writeData.FileToBundle[y]));
-                //dependencies.UnionWith(bundles);
-                //dependencies.Remove(bundleName);
-                //sbOp.Info.bundleDependencies = dependencies.OrderBy(x => x).ToList();
-
                 sbOp.Info.bundleScenes = assets.Select(x => new SceneLoadInfo
                 {
                     asset = x,

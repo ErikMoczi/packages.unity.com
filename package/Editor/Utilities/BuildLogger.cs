@@ -8,6 +8,12 @@ namespace UnityEditor.Build.Pipeline.Utilities
         [Conditional("BUILD_CACHE_DEBUG")]
         public static void LogCache(string msg, params object[] attrs)
         {
+            Log(msg, attrs);
+        }
+
+        [Conditional("BUILD_CACHE_DEBUG")]
+        public static void LogCacheWarning(string msg, params object[] attrs)
+        {
             LogWarning(msg, attrs);
         }
 

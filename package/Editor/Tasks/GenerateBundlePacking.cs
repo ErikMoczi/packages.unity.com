@@ -27,15 +27,15 @@ namespace UnityEditor.Build.Pipeline.Tasks
 
         static ReturnCode Run(IBundleBuildContent buildContent, IDependencyData dependencyData, IBundleWriteData writeData, IDeterministicIdentifiers packingMethod)
         {
-            Dictionary<GUID, List<GUID>> AssetToReferences = new Dictionary<GUID, List<GUID>>();
+            Dictionary<GUID, List<GUID>> assetToReferences = new Dictionary<GUID, List<GUID>>();
 
             // Pack each asset bundle
             foreach (var bundle in buildContent.BundleLayout)
             {
                 if (ValidationMethods.ValidAssetBundle(bundle.Value))
-                    PackAssetBundle(bundle.Key, bundle.Value, dependencyData, writeData, packingMethod, AssetToReferences);
+                    PackAssetBundle(bundle.Key, bundle.Value, dependencyData, writeData, packingMethod, assetToReferences);
                 else if (ValidationMethods.ValidSceneBundle(bundle.Value))
-                    PackSceneBundle(bundle.Key, bundle.Value, dependencyData, writeData, packingMethod, AssetToReferences);
+                    PackSceneBundle(bundle.Key, bundle.Value, dependencyData, writeData, packingMethod, assetToReferences);
             }
 
             // Calculate Asset file load dependency list
@@ -44,7 +44,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 foreach (var asset in bundle.Value)
                 {
                     List<string> files = writeData.AssetToFiles[asset];
-                    List<GUID> references = AssetToReferences[asset];
+                    List<GUID> references = assetToReferences[asset];
                     foreach (var reference in references)
                     {
                         List<string> referenceFiles = writeData.AssetToFiles[reference];

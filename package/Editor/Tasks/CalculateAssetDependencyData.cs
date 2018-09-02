@@ -20,19 +20,37 @@ namespace UnityEditor.Build.Pipeline.Tasks
             if (context == null)
                 throw new ArgumentNullException("context");
 
+            IBuildParameters parameters = context.GetContextObject<IBuildParameters>();
+
             IProgressTracker tracker;
             context.TryGetContextObject(out tracker);
-            IBuildCache cache;
-            context.TryGetContextObject(out cache);
+            IBuildCache cache = null;
+            if (parameters.UseCache)
+                context.TryGetContextObject(out cache);
 
             IBuildSpriteData spriteData;
-            var result = Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IBuildContent>(), context.GetContextObject<IDependencyData>(), out spriteData, tracker, cache);
+            var result = Run(parameters, context.GetContextObject<IBuildContent>(), context.GetContextObject<IDependencyData>(), out spriteData, tracker, cache);
             if (spriteData != null && spriteData.ImporterData.Count > 0)
                 context.SetContextObject(spriteData);
             return result;
         }
 
-        static ReturnCode Run(IBuildParameters parameters, IBuildContent content, IDependencyData dependencyData, out IBuildSpriteData spriteData, IProgressTracker tracker = null, IBuildCache cache = null)
+        static CachedInfo GetCachedInfo(IBuildCache cache, GUID asset, AssetLoadInfo assetInfo, BuildUsageTagSet usageTags, SpriteImporterData importerData)
+        {
+            var info = new CachedInfo();
+            info.Asset = cache.GetCacheEntry(asset);
+
+            var dependencies = new HashSet<CacheEntry>();
+            foreach (var reference in assetInfo.referencedObjects)
+                dependencies.Add(cache.GetCacheEntry(reference));
+            info.Dependencies = dependencies.ToArray();
+
+            info.Data = new object[] { assetInfo, usageTags, importerData };
+
+            return info;
+        }
+
+        static ReturnCode Run(IBuildParameters parameters, IBuildContent content, IDependencyData dependencyData, out IBuildSpriteData spriteData, IProgressTracker tracker, IBuildCache cache)
         {
             var globalUsage = new BuildUsageTagGlobal();
             foreach (SceneDependencyInfo sceneInfo in dependencyData.SceneInfo.Values)
@@ -40,63 +58,80 @@ namespace UnityEditor.Build.Pipeline.Tasks
 
             spriteData = new BuildSpriteData();
 
-            foreach (GUID asset in content.Assets)
+            IList<CachedInfo> cachedInfo = null;
+            List<CachedInfo> uncachedInfo = null;
+            if (cache != null)
             {
-                var assetInfo = new AssetLoadInfo();
-                var usageTags = new BuildUsageTagSet();
+                IList<CacheEntry> entries = content.Assets.Select(cache.GetCacheEntry).ToList();
+                cache.LoadCachedData(entries, out cachedInfo);
+
+                uncachedInfo = new List<CachedInfo>();
+            }
+
+            for (int i = 0; i < content.Assets.Count; i++)
+            {
+                GUID asset = content.Assets[i];
                 string assetPath = AssetDatabase.GUIDToAssetPath(asset.ToString());
 
-                var cacheEntry = new CacheEntry { Guid = asset };
-                if (parameters.UseCache && cache != null)
-                {
-                    cacheEntry = cache.GetCacheEntry(asset);
-                    var result = cache.IsCacheEntryValid(cacheEntry);
-                    if (result && cache.TryLoadFromCache(cacheEntry, ref assetInfo, ref usageTags))
-                    {
-                        if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", assetPath)))
-                            return ReturnCode.Canceled;
+                AssetLoadInfo assetInfo;
+                BuildUsageTagSet usageTags;
+                SpriteImporterData importerData;
 
-                        SetSpriteImporterData(asset, assetPath, assetInfo.includedObjects, spriteData);
-                        SetOutputInformation(asset, assetInfo, usageTags, dependencyData);
-                        continue;
+                if (cachedInfo != null && cachedInfo[i] != null)
+                {
+                    if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", assetPath)))
+                        return ReturnCode.Canceled;
+
+                    assetInfo = cachedInfo[i].Data[0] as AssetLoadInfo;
+                    usageTags = cachedInfo[i].Data[1] as BuildUsageTagSet;
+                    importerData = cachedInfo[i].Data[2] as SpriteImporterData;
+                }
+                else
+                {
+                    if (!tracker.UpdateInfoUnchecked(assetPath))
+                        return ReturnCode.Canceled;
+
+                    assetInfo = new AssetLoadInfo();
+                    usageTags = new BuildUsageTagSet();
+                    importerData = null;
+
+                    assetInfo.asset = asset;
+                    var includedObjects = ContentBuildInterface.GetPlayerObjectIdentifiersInAsset(asset, parameters.Target);
+                    assetInfo.includedObjects = new List<ObjectIdentifier>(includedObjects);
+                    var referencedObjects = ContentBuildInterface.GetPlayerDependenciesForObjects(includedObjects, parameters.Target, parameters.ScriptInfo);
+                    assetInfo.referencedObjects = new List<ObjectIdentifier>(referencedObjects);
+                    ContentBuildInterface.CalculateBuildUsageTags(referencedObjects, includedObjects, globalUsage, usageTags);
+
+                    var importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+                    if (importer != null && importer.textureType == TextureImporterType.Sprite)
+                    {
+                        importerData = new SpriteImporterData();
+                        importerData.PackedSprite = !string.IsNullOrEmpty(importer.spritePackingTag);
+                        importerData.SourceTexture = includedObjects.First();
                     }
+
+                    if (cache != null)
+                        uncachedInfo.Add(GetCachedInfo(cache, asset, assetInfo, usageTags, importerData));
                 }
 
-                if (!tracker.UpdateInfoUnchecked(assetPath))
-                    return ReturnCode.Canceled;
-
-                assetInfo.asset = asset;
-                assetInfo.includedObjects = new List<ObjectIdentifier>(ContentBuildInterface.GetPlayerObjectIdentifiersInAsset(asset, parameters.Target));
-                var includedObjects = assetInfo.includedObjects.ToArray();
-                assetInfo.referencedObjects = new List<ObjectIdentifier>(ContentBuildInterface.GetPlayerDependenciesForObjects(includedObjects, parameters.Target, parameters.ScriptInfo));
-                ContentBuildInterface.CalculateBuildUsageTags(assetInfo.referencedObjects.ToArray(), includedObjects, globalUsage, usageTags);
-
-                SetSpriteImporterData(asset, assetPath, includedObjects, spriteData);
-                SetOutputInformation(asset, assetInfo, usageTags, dependencyData);
-                if (parameters.UseCache && cache != null && !cache.TrySaveToCache(cacheEntry, assetInfo, usageTags))
-                    BuildLogger.LogWarning("Unable to cache AssetCachedDependency results for asset '{0}'.", AssetDatabase.GUIDToAssetPath(asset.ToString()));
+                SetOutputInformation(asset, assetInfo, usageTags, importerData, dependencyData, spriteData);
             }
+
+            if (cache != null)
+                cache.SaveCachedData(uncachedInfo);
 
             return ReturnCode.Success;
         }
 
-        static void SetSpriteImporterData(GUID asset, string assetPath, IEnumerable<ObjectIdentifier> includedObjects, IBuildSpriteData spriteData)
+        static void SetOutputInformation(GUID asset, AssetLoadInfo assetInfo, BuildUsageTagSet usageTags, SpriteImporterData importerData, IDependencyData dependencyData, IBuildSpriteData spriteData)
         {
-            var importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
-            if (importer != null && importer.textureType == TextureImporterType.Sprite)
-            {
-                var importerData = new SpriteImporterData();
-                importerData.PackedSprite = !string.IsNullOrEmpty(importer.spritePackingTag);
-                importerData.SourceTexture = includedObjects.First();
-                spriteData.ImporterData.Add(asset, importerData);
-            }
-        }
-
-        static void SetOutputInformation(GUID asset, AssetLoadInfo assetInfo, BuildUsageTagSet usageTags, IDependencyData dependencyData)
-        {
-            // Add generated asset information to BuildDependencyData
+            // Add generated asset information to IDependencyData
             dependencyData.AssetInfo.Add(asset, assetInfo);
             dependencyData.AssetUsage.Add(asset, usageTags);
+
+            // Add generated importer data to IBuildSpriteData
+            if (importerData != null)
+                spriteData.ImporterData.Add(asset, importerData);
         }
     }
 }

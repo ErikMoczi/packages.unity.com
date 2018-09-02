@@ -1,5 +1,4 @@
 using System;
-using System.Text;
 using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Utilities;
@@ -15,37 +14,18 @@ namespace UnityEditor.Build.Pipeline
         /// <inheritdoc />
         public string GenerateInternalFileName(string name)
         {
-            var md4 = MD4.Create();
-            byte[] bytes = Encoding.ASCII.GetBytes(name);
-            md4.TransformFinalBlock(bytes, 0, bytes.Length);
-            return "CAB-" + BitConverter.ToString(md4.Hash, 0).ToLower().Replace("-", "");
+            return "CAB-" + HashingMethods.Calculate<MD4>(name);
         }
         
         /// <inheritdoc />
         public long SerializationIndexFromObjectIdentifier(ObjectIdentifier objectID)
         {
-            byte[] bytes;
-            var md4 = MD4.Create();
+            RawHash hash;
             if (objectID.fileType == FileType.MetaAssetType || objectID.fileType == FileType.SerializedAssetType)
-            {
-                // TODO: Variant info
-                // NOTE: ToString() required as unity5 uses the GUID as a string to hash
-                bytes = Encoding.ASCII.GetBytes(objectID.guid.ToString());
-                md4.TransformBlock(bytes, 0, bytes.Length, bytes, 0);
-                bytes = BitConverter.GetBytes((int)objectID.fileType);
-                md4.TransformBlock(bytes, 0, bytes.Length, bytes, 0);
-            }
-            // Or path
+                hash = HashingMethods.Calculate<MD4>(objectID.guid.ToString(), objectID.fileType, objectID.localIdentifierInFile);
             else
-            {
-                bytes = Encoding.ASCII.GetBytes(objectID.filePath);
-                md4.TransformBlock(bytes, 0, bytes.Length, bytes, 0);
-            }
-
-            bytes = BitConverter.GetBytes(objectID.localIdentifierInFile);
-            md4.TransformFinalBlock(bytes, 0, bytes.Length);
-            long hash = BitConverter.ToInt64(md4.Hash, 0);
-            return hash;
+                hash = HashingMethods.Calculate<MD4>(objectID.filePath, objectID.localIdentifierInFile);
+            return BitConverter.ToInt64(hash.ToBytes(), 0);
         }
     }
 }

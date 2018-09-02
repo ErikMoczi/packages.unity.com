@@ -27,8 +27,8 @@ namespace UnityEditor.Build.Pipeline
         /// <inheritdoc />
         public string GenerateInternalFileName(string name)
         {
-            Hash128 hash = HashingMethods.CalculateMD5Hash(name);
-            return string.Format("CAB-{0}", hash.ToString());
+            var hash = HashingMethods.Calculate(name).ToString();
+            return string.Format("CAB-{0}", hash);
         }
         
         /// <inheritdoc />

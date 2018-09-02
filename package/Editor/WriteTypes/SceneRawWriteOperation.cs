@@ -31,8 +31,8 @@ namespace UnityEditor.Build.Pipeline.WriteTypes
         /// <inheritdoc />
         public Hash128 GetHash128()
         {
-            Hash128 processedSceneHash = HashingMethods.CalculateFileMD5Hash(ProcessedScene);
-            return HashingMethods.CalculateMD5Hash(Command, UsageSet.GetHash128(), ReferenceMap.GetHash128(), Scene, processedSceneHash);
+            var processedSceneHash = HashingMethods.CalculateFile(ProcessedScene).ToHash128();
+            return HashingMethods.Calculate(Command, UsageSet.GetHash128(), ReferenceMap.GetHash128(), Scene, processedSceneHash).ToHash128();
         }
     }
 }

@@ -26,15 +26,25 @@ namespace UnityEditor.Build.Utilities
             if (m_Disposed)
                 return;
 
+            m_Disposed = true;
+
             if (disposing)
             {
                 if (!m_Scenes.IsNullOrEmpty())
-                    EditorSceneManager.RestoreSceneManagerSetup(m_Scenes);
+                {
+                    SceneSetup[] current = EditorSceneManager.GetSceneManagerSetup();
+                    bool scenesChanged = false;
+                    if (current.Length == m_Scenes.Length)
+                    {
+                        for (int i = 0; i < current.Length; i++)
+                            scenesChanged |= current[i].isActive != m_Scenes[i].isActive || current[i].isLoaded != m_Scenes[i].isLoaded || current[i].path != m_Scenes[i].path;
+                    }
+                    if (scenesChanged)
+                        EditorSceneManager.RestoreSceneManagerSetup(m_Scenes);
+                }
                 else
                     EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
             }
-
-            m_Disposed = true;
         }
     }
 }

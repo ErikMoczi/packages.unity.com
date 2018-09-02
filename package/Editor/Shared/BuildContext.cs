@@ -37,7 +37,7 @@ namespace UnityEditor.Build.Pipeline
                     SetContextObject(buildParam);
             }
         }
-        
+
         /// <inheritdoc />
         public void SetContextObject<T>(IContextObject contextObject) where T : IContextObject
         {
@@ -51,7 +51,7 @@ namespace UnityEditor.Build.Pipeline
                 throw new InvalidOperationException(string.Format("'{0}' is not of passed in type '{1}'.", contextObject.GetType(), type));
             m_ContextObjects[typeof(T)] = contextObject;
         }
-        
+
         /// <inheritdoc />
         public void SetContextObject(IContextObject contextObject)
         {
@@ -67,13 +67,13 @@ namespace UnityEditor.Build.Pipeline
                 m_ContextObjects[iType] = contextObject;
             }
         }
-        
+
         /// <inheritdoc />
         public bool ContainsContextObject<T>() where T : IContextObject
         {
             return ContainsContextObject(typeof(T));
         }
-        
+
         /// <inheritdoc />
         public bool ContainsContextObject(Type type)
         {
@@ -82,13 +82,13 @@ namespace UnityEditor.Build.Pipeline
 
             return m_ContextObjects.ContainsKey(type);
         }
-        
+
         /// <inheritdoc />
         public T GetContextObject<T>() where T : IContextObject
         {
             return (T)m_ContextObjects[typeof(T)];
         }
-        
+
         /// <inheritdoc />
         public IContextObject GetContextObject(Type type)
         {
@@ -97,7 +97,7 @@ namespace UnityEditor.Build.Pipeline
 
             return m_ContextObjects[type];
         }
-        
+
         /// <inheritdoc />
         public bool TryGetContextObject<T>(out T contextObject) where T : IContextObject
         {

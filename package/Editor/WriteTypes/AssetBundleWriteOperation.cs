@@ -34,7 +34,7 @@ namespace UnityEditor.Build.Pipeline.WriteTypes
         /// <inheritdoc />
         public Hash128 GetHash128()
         {
-            return HashingMethods.CalculateMD5Hash(Command, UsageSet.GetHash128(), ReferenceMap.GetHash128(), Info);
+            return HashingMethods.Calculate(Command, UsageSet.GetHash128(), ReferenceMap.GetHash128(), Info).ToHash128();
         }
     }
 }

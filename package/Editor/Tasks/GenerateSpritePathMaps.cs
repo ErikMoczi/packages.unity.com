@@ -12,19 +12,17 @@ namespace UnityEditor.Build.Pipeline.Tasks
         const int k_Version = 1;
         public int Version { get { return k_Version; } }
 
-        static readonly Type[] k_RequiredTypes = { typeof(IDependencyData), typeof(IBundleWriteData) };
+        static readonly Type[] k_RequiredTypes = { typeof(IBundleWriteData) };
         public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
 
         public ReturnCode Run(IBuildContext context)
         {
             if (context == null)
                 throw new ArgumentNullException("context");
-
-            IBuildCache cache;
-            context.TryGetContextObject(out cache);
+            
             IBuildSpriteData spriteData;
             context.TryGetContextObject(out spriteData);
-            return Run(context.GetContextObject<IDependencyData>(), context.GetContextObject<IBundleWriteData>(), spriteData, cache);
+            return Run(context.GetContextObject<IBundleWriteData>(), spriteData);
         }
 
         static int GetWrapOffsetIndex(int index, int offset, int max)
@@ -32,7 +30,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
             return (index + offset) % max;
         }
 
-        static ReturnCode Run(IDependencyData dependencyData, IBundleWriteData writeData, IBuildSpriteData spriteData, IBuildCache cache = null)
+        static ReturnCode Run(IBundleWriteData writeData, IBuildSpriteData spriteData)
         {
             if (spriteData == null || spriteData.ImporterData.Count == 0)
                 return ReturnCode.SuccessNotRun;

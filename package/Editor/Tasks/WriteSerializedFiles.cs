@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Utilities;
-using UnityEngine;
+using UnityEditor.Build.Pipeline.WriteTypes;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
@@ -21,57 +22,97 @@ namespace UnityEditor.Build.Pipeline.Tasks
             if (context == null)
                 throw new ArgumentNullException("context");
 
+            IBuildParameters parameters = context.GetContextObject<IBuildParameters>();
+
             IProgressTracker tracker;
             context.TryGetContextObject(out tracker);
-            IBuildCache cache;
-            context.TryGetContextObject(out cache);
-            return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IDependencyData>(), context.GetContextObject<IWriteData>(), context.GetContextObject<IBuildResults>(), tracker, cache);
+            IBuildCache cache = null;
+            if (parameters.UseCache)
+                context.TryGetContextObject(out cache);
+
+            return Run(parameters, context.GetContextObject<IDependencyData>(), context.GetContextObject<IWriteData>(), context.GetContextObject<IBuildResults>(), tracker, cache);
         }
 
-        static void CalcualteCacheEntry(IBuildCache cache, IWriteOperation operation, BuildSettings settings, BuildUsageTagGlobal globalUsage, ref CacheEntry cacheEntry)
+        static CacheEntry GetCacheEntry(IWriteOperation operation, BuildSettings settings, BuildUsageTagGlobal globalUsage)
         {
-            HashSet<CacheEntry> dependencies;
-            bool validHashes = cache.GetCacheEntries(operation.Command.serializeObjects.Select(x => x.serializationObject.guid), out dependencies);
-
-            // Using dependencies.ToArray() here because Old Mono Runtime doesn't implement HashSet serialization
-            cacheEntry.Hash = !validHashes ? new Hash128() : HashingMethods.CalculateMD5Hash(k_Version, operation.GetHash128(), dependencies.ToArray(), settings.GetHash128(), globalUsage);
-            cacheEntry.Guid = HashingMethods.CalculateMD5Guid("WriteSerializedFiles", operation.Command.internalName);
+            var entry = new CacheEntry();
+            entry.Type = CacheEntry.EntryType.Data;
+            entry.Guid = HashingMethods.Calculate("WriteSerializedFiles", operation.Command.internalName).ToGUID();
+            entry.Hash = HashingMethods.Calculate(k_Version, operation.GetHash128(), settings.GetHash128(), globalUsage).ToHash128();
+            return entry;
         }
 
-        static ReturnCode Run(IBuildParameters parameters, IDependencyData dependencyData, IWriteData writeData, IBuildResults results, IProgressTracker tracker = null, IBuildCache cache = null)
+        static CachedInfo GetCachedInfo(IBuildCache cache, CacheEntry entry, IWriteOperation operation, WriteResult result)
         {
-            BuildUsageTagGlobal globalUSage = new BuildUsageTagGlobal();
+            var info = new CachedInfo();
+            info.Asset = entry;
+
+            var dependencies = new HashSet<CacheEntry>();
+            var sceneBundleOp = operation as SceneBundleWriteOperation;
+            if (sceneBundleOp != null)
+                dependencies.Add(cache.GetCacheEntry(sceneBundleOp.ProcessedScene));
+            var sceneDataOp = operation as SceneDataWriteOperation;
+            if (sceneDataOp != null)
+                dependencies.Add(cache.GetCacheEntry(sceneDataOp.ProcessedScene));
+            foreach (var serializeObject in operation.Command.serializeObjects)
+                dependencies.Add(cache.GetCacheEntry(serializeObject.serializationObject));
+            info.Dependencies = dependencies.ToArray();
+
+            info.Data = new object[] { result };
+
+            return info;
+        }
+
+        static ReturnCode Run(IBuildParameters parameters, IDependencyData dependencyData, IWriteData writeData, IBuildResults results, IProgressTracker tracker, IBuildCache cache)
+        {
+            BuildUsageTagGlobal globalUsage = new BuildUsageTagGlobal();
             foreach (var sceneInfo in dependencyData.SceneInfo)
-                globalUSage |= sceneInfo.Value.globalUsage;
+                globalUsage |= sceneInfo.Value.globalUsage;
 
-            foreach (var op in writeData.WriteOperations)
+            IList<CacheEntry> entries = null;
+            IList<CachedInfo> cachedInfo = null;
+            List<CachedInfo> uncachedInfo = null;
+            if (cache != null)
             {
-                WriteResult result = new WriteResult();
+                entries = writeData.WriteOperations.Select(x => GetCacheEntry(x, parameters.GetContentBuildSettings(), globalUsage)).ToList();
+                cache.LoadCachedData(entries, out cachedInfo);
 
-                var cacheEntry = new CacheEntry();
-                if (parameters.UseCache && cache != null)
+                uncachedInfo = new List<CachedInfo>();
+            }
+
+            for (int i = 0; i < writeData.WriteOperations.Count; i++)
+            {
+                IWriteOperation op = writeData.WriteOperations[i];
+
+                WriteResult result;
+                if (cachedInfo != null && cachedInfo[i] != null)
                 {
-                    CalcualteCacheEntry(cache, op, parameters.GetContentBuildSettings(), globalUSage, ref cacheEntry);
-                    if (cache.TryLoadFromCache(cacheEntry, ref result))
-                    {
-                        if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", op.Command.internalName)))
-                            return ReturnCode.Canceled;
+                    if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", op.Command.internalName)))
+                        return ReturnCode.Canceled;
 
-                        SetOutputInformation(op.Command.internalName, result, results);
-                        continue;
-                    }
+                    result = (WriteResult)cachedInfo[i].Data[0];
+                }
+                else
+                {
+                    if (!tracker.UpdateInfoUnchecked(op.Command.internalName))
+                        return ReturnCode.Canceled;
+
+                    var outputFolder = parameters.UseCache && cache != null
+                        ? cache.GetCachedArtifactsDirectory(entries[i])
+                        : parameters.TempOutputFolder;
+                    Directory.CreateDirectory(outputFolder);
+
+                    result = op.Write(outputFolder, parameters.GetContentBuildSettings(), globalUsage);
+
+                    if (cache != null)
+                        uncachedInfo.Add(GetCachedInfo(cache, entries[i], op, result));
                 }
 
-                if (!tracker.UpdateInfoUnchecked(op.Command.internalName))
-                    return ReturnCode.Canceled;
-
-                var outputFolder = parameters.UseCache && cache != null ? cache.GetArtifactCacheDirectory(cacheEntry) : parameters.TempOutputFolder;
-                result = op.Write(outputFolder, parameters.GetContentBuildSettings(), globalUSage);
                 SetOutputInformation(op.Command.internalName, result, results);
-
-                if (parameters.UseCache && cache != null && !cache.TrySaveToCache(cacheEntry, result))
-                    BuildLogger.LogWarning("Unable to cache WriteSerializedFiles result for file {0}.", op.Command.internalName);
             }
+
+            if (cache != null)
+                cache.SaveCachedData(uncachedInfo);
 
             return ReturnCode.Success;
         }

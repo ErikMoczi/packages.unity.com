@@ -15,15 +15,15 @@ namespace UnityEditor.Build.Pipeline
         /// <inheritdoc />
         public string GenerateInternalFileName(string name)
         {
-            Hash128 hash = HashingMethods.CalculateMD5Hash(name);
-            return string.Format("CAB-{0}", hash.ToString());
+            var hash = HashingMethods.Calculate(name).ToString();
+            return string.Format("CAB-{0}", hash);
         }
         
         /// <inheritdoc />
         public long SerializationIndexFromObjectIdentifier(ObjectIdentifier objectID)
         {
-            byte[] assetHash = HashingMethods.CalculateMD5(objectID.guid, objectID.filePath);
-            byte[] objectHash = HashingMethods.CalculateMD5(objectID);
+            byte[] assetHash = HashingMethods.Calculate(objectID.guid, objectID.filePath).ToBytes();
+            byte[] objectHash = HashingMethods.Calculate(objectID).ToBytes();
 
             var assetVal = BitConverter.ToUInt64(assetHash, 0);
             var objectVal = BitConverter.ToUInt64(objectHash, 0);

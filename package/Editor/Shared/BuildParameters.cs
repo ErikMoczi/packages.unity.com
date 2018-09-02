@@ -46,8 +46,13 @@ namespace UnityEditor.Build.Pipeline
                 m_TempOutputFolder = value;
             }
         }
+
         /// <inheritdoc />
         public bool UseCache { get; set; }
+        /// <inheritdoc />
+        public string CacheServerHost { get; set; }
+        /// <inheritdoc />
+        public int CacheServerPort { get; set; }
 
         /// <summary>
         /// Default constructor, requires the target, group and output parameters at minimum for a successful build.
@@ -74,6 +79,7 @@ namespace UnityEditor.Build.Pipeline
             OutputFolder = outputFolder;
             TempOutputFolder = ContentPipeline.kTempBuildPath;
             UseCache = true;
+            CacheServerPort = 8126;
         }
         
         /// <inheritdoc />

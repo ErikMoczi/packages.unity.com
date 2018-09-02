@@ -51,6 +51,16 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         bool UseCache { get; set; }
 
         /// <summary>
+        /// Enables & specifies the cache server to use.
+        /// </summary>
+        string CacheServerHost { get; set; }
+
+        /// <summary>
+        /// The port for the cache server to use
+        /// </summary>
+        int CacheServerPort { get; set; }
+
+        /// <summary>
         /// Constructs and returns the BuildSettings struct to use for content building.
         /// </summary>
         /// <returns>Returns the BuildSettings struct to use for content building.</returns>

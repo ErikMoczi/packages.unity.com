@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline.Interfaces;
-using UnityEditor.Build.Pipeline.Utilities;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
@@ -12,47 +11,25 @@ namespace UnityEditor.Build.Pipeline.Tasks
         const int k_Version = 2;
         public int Version { get { return k_Version; } }
 
-        static readonly Type[] k_RequiredTypes = { typeof(IBuildParameters), typeof(IDependencyData) };
+        static readonly Type[] k_RequiredTypes = { typeof(IDependencyData) };
         public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
 
         public ReturnCode Run(IBuildContext context)
         {
             if (context == null)
                 throw new ArgumentNullException("context");
-
-            IBuildCache cache;
-            context.TryGetContextObject(out cache);
+            
             IBuildSpriteData spriteData;
             context.TryGetContextObject(out spriteData);
-            return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IDependencyData>(), spriteData, cache);
+            return Run(context.GetContextObject<IDependencyData>(), spriteData);
         }
 
-        static void CalcualteCacheEntry(IDependencyData dependencyData, ref CacheEntry cacheEntry)
-        {
-            cacheEntry.Hash = HashingMethods.CalculateMD5Hash(k_Version, dependencyData.AssetInfo, dependencyData.SceneInfo);
-            cacheEntry.Guid = HashingMethods.CalculateMD5Guid("StripUnusedSpriteSources");
-        }
-
-        static ReturnCode Run(IBuildParameters parameters, IDependencyData dependencyData, IBuildSpriteData spriteData, IBuildCache cache = null)
+        static ReturnCode Run(IDependencyData dependencyData, IBuildSpriteData spriteData)
         {
             if (spriteData == null || spriteData.ImporterData.Count == 0)
                 return ReturnCode.SuccessNotRun;
 
             var unusedSources = new HashSet<ObjectIdentifier>();
-
-            var cacheEntry = new CacheEntry();
-            if (parameters.UseCache && cache != null)
-            {
-                CalcualteCacheEntry(dependencyData, ref cacheEntry);
-                List<ObjectIdentifier> unusedSourcesList = null; // Old Mono Runtime doesn't implement HashSet serialization
-                if (cache.TryLoadFromCache(cacheEntry, ref unusedSourcesList))
-                {
-                    unusedSources.UnionWith(unusedSourcesList); // Old Mono Runtime doesn't implement HashSet serialization
-                    SetOutputInformation(unusedSources, dependencyData);
-                    return ReturnCode.SuccessCached;
-                }
-            }
-
             var textures = spriteData.ImporterData.Values.Where(x => x.PackedSprite).Select(x => x.SourceTexture);
             unusedSources.UnionWith(textures);
 
@@ -67,10 +44,6 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 unusedSources.Remove(reference);
 
             SetOutputInformation(unusedSources, dependencyData);
-
-            if (parameters.UseCache && cache != null && !cache.TrySaveToCache(cacheEntry, unusedSources.ToList())) // Old Mono Runtime doesn't implement HashSet serialization
-                BuildLogger.LogWarning("Unable to cache StripUnusedSpriteSources results.");
-
             return ReturnCode.Success;
         }
 
