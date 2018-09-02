@@ -486,21 +486,7 @@ namespace UnityEditor.PackageManager.UI.Tests
 
             Assert.IsTrue(package.LatestUpdate.Version == "4.0.0-preview");
         }
-
-        [Test]
-        public void VersionUpdate_CurrentPreview_WithLatestPreviewNoVerified()
-        {
-            var package = new Package(name, new List<PackageInfo>
-            {
-                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false),
-                PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false),
-                PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0-preview", true),    // current
-                PackageSets.Instance.Single(PackageSource.Registry, name, "4.0.0-preview", false)
-            });
-
-            Assert.IsTrue(package.LatestUpdate.Version == "4.0.0-preview");
-        }
-
+        
         [Test]
         public void VersionUpdate_CurrentEmbedded()
         {

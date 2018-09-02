@@ -34,8 +34,14 @@ namespace UnityEditor.PackageManager.UI.Tests
                 details.SetPackage(package);
 
                 // Check for every UI-supported tags that visibility is correct
-                Assert.IsTrue(UIUtils.IsElementVisible(details.GetTag(PackageTag.preview)) == packageInfo.IsPreview);
-                Assert.IsTrue(UIUtils.IsElementVisible(details.GetTag(PackageTag.verified)) == packageInfo.IsVerified);
+                foreach (var itemTag in PackageDetails.SupportedTags())
+                {
+                    var uiItem = details.GetTag(itemTag);
+                    if (tag == itemTag.ToString()) 
+                        Assert.IsTrue(UIUtils.IsElementVisible(uiItem));
+                    else 
+                        Assert.IsFalse(UIUtils.IsElementVisible(uiItem));
+                }
             }
         }
 

@@ -43,7 +43,7 @@ namespace UnityEditor.PackageManager.UI
             Add(root);
             listElement = List;
 
-#if UNITY_2018_2_OR_NEWER
+#if UNITY_2018_3_OR_NEWER
             Header.AddManipulator(new Clickable(ToggleCollapse));
 #else
             List.style.marginLeft = 0;

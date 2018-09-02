@@ -20,7 +20,7 @@ namespace UnityEditor.PackageManager.UI
 
         internal const string packageManagerUIName = "com.unity.package-manager-ui";
         private readonly string packageName;
-        private IEnumerable<PackageInfo> source;
+        internal IEnumerable<PackageInfo> source;
 
         internal Package(string packageName, IEnumerable<PackageInfo> infos)
         {
@@ -31,20 +31,11 @@ namespace UnityEditor.PackageManager.UI
                 throw new ArgumentException("Cannot be empty", "infos");
             
             this.packageName = packageName;
-            UpdateSource(infos);
-        }
-
-        internal void UpdateSource(IEnumerable<PackageInfo> source)
-        {
-            this.source = source;
-#if UNITY_2018_2_OR_NEWER
-            if (IsPackageManagerUI)
-                this.source = source.Where(p => p != null && (p.Version.Major >= 2 || (p.Version.Major == 1 && p.Version.Minor >= 9)));
-#endif
+            source = infos;
         }
 
         public PackageInfo Current { get { return Versions.FirstOrDefault(package => package.IsCurrent); } }
-
+        
         // This is the latest verified or official release (eg: 1.3.2). Not necessarily the latest verified release (eg: 1.2.4) or that latest candidate (eg: 1.4.0-beta)
         public PackageInfo LatestUpdate
         {
@@ -54,31 +45,37 @@ namespace UnityEditor.PackageManager.UI
                 if (ShouldProposeLatestVersions)
                     return Latest;
 
-                // Override with current when it's version locked
-                var current = Current;
-                if (current != null && current.IsVersionLocked)
-                    return current;
+                // Override with current
+                if (Current != null && Current.IsVersionLocked)
+                    return Current;
 
-                // Get all the candidates versions (verified, release, preview) that are newer than current
-                var verified = Verified;
-                var latestRelease = LatestRelease;
-                var latestPreview = Versions.LastOrDefault(package => package.IsPreview);
-                var candidates = new List<PackageInfo>
+                // Get verified if higher then current version
+                if (Verified != null)
+                    if (Current != null)
+                        // Give verified if it's later the current version
+                        if (IsAfterCurrentVersion(Verified) || Verified == Current)
+                            return Verified;
+                        else
+                            // Give latest release if it's later then current version, 
+                            // otherwise give latest (including previews)
+                            if (IsAfterCurrentVersion(LatestRelease))
+                                return LatestRelease;
+                            else
+                                return Latest;
+                    else
+                        return Verified;
+
+                // Prioritize showing latest release over latest previews
+                if (LatestRelease != null)
                 {
-                    verified,
-                    latestRelease,
-                    latestPreview,
-                }.Where(package => package != null && (current == null || current == package || current.Version < package.Version)).ToList();
+                    if (!IsAfterCurrentVersion(LatestRelease))
+                        return Current;
 
-                if (candidates.Contains(verified))
-                    return verified;
-                if ((current == null || !current.IsVerified ) && candidates.Contains(latestRelease))
-                    return latestRelease;
-                if ((current == null || current.IsPreview) && candidates.Contains(latestPreview))
-                    return latestPreview;
+                    return LatestRelease;
+                }
 
-                // Show current if it exists, otherwise latest user visible, and then otherwise show the absolute latest
-                return current ?? UserVisibleVersions.LastOrDefault() ?? Latest;
+                // Show the absolute latest (including preview)
+                return Latest;
             }
         }
 
@@ -100,7 +97,7 @@ namespace UnityEditor.PackageManager.UI
         internal PackageInfo Latest { get { return Versions.FirstOrDefault(package => package.IsLatest) ?? Versions.LastOrDefault(); } }
 
         // Returns the current version if it exist, otherwise returns the latest user visible version.
-        internal PackageInfo VersionToDisplay { get { return Current ?? LatestUpdate; } }
+        internal PackageInfo VersionToDisplay { get { return Current ?? UserVisibleVersions.LastOrDefault(); } }
 
         // Every version available for this package
         internal IEnumerable<PackageInfo> Versions { get { return source.OrderBy(package => package.Version); } }

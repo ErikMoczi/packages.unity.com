@@ -5,12 +5,49 @@ using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
+#if UNITY_2018_3_OR_NEWER
+    internal class PopupField<T> : Experimental.UIElements.PopupField<T>
+    {
+        private Func<T, string> m_Callback;
+
+        public override T value
+        {
+            get { return base.value; }
+            set
+            {
+                base.value = value;
+                if (m_Callback != null)
+                    m_TextElement.text = m_Callback(m_Value);
+                else
+                    m_TextElement.text = m_Value.ToString();
+            }
+        }
+
+        /// <summary>
+        /// Callback that will return the string to be set in the field's label.
+        /// </summary>
+        /// <param name="callback"></param>
+        public void SetLabelCallback(Func<T, string> callback)
+        {
+            m_Callback = callback;
+        }
+
+        public PopupField(List<T> choices, T defaultValue) :
+            base(choices, defaultValue)
+        {
+        }
+
+        public PopupField(List<T> choices, int defaultIndex) :
+            base(choices, defaultIndex)
+        {
+        }
+    }
+#else
     internal class PopupField<T> : BaseTextElement, INotifyValueChanged<T>
     {
         private readonly List<T> m_PossibleValues;
         private Func<T, string> m_Callback;
         private EventCallback<ChangeEvent<T>> m_valueCallback;
-
         private T m_Value;
         public T value
         {
@@ -30,11 +67,7 @@ namespace UnityEditor.PackageManager.UI
                 else
                     text = m_Value.ToString();
  
-#if UNITY_2018_3_OR_NEWER
-                MarkDirtyRepaint();
-#else
                 Dirty(ChangeType.Repaint);
-#endif
             }
         }
 
@@ -145,4 +178,5 @@ namespace UnityEditor.PackageManager.UI
             SetValueAndNotify(menuItem);
         }
     }
+#endif
 }

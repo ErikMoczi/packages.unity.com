@@ -198,7 +198,10 @@ $spinner-normal-half-size: 8;
 		background-image: none;
 		@include margin-box(0);
 		@include padding-box(0);
-		cursor: link;
+
+		&:hover {
+			cursor: link;
+		}
 	}
 
 	.emptyArea {
@@ -508,7 +511,7 @@ $spinner-normal-half-size: 8;
 						font-size: 18;
 						font-style: bold;
 						word-wrap: true;
-						@include margin(0, 0, 0, 4);
+						@include margin(0, 3, 0, 0);
 					}
 				}
 
@@ -542,10 +545,6 @@ $spinner-normal-half-size: 8;
 							&:focus {
 								background-image: $popup-background;
 							}
-
-							&:hover {
-								text-color: $unity-text-color;
-							}
 						}
 					}
 
@@ -555,10 +554,6 @@ $spinner-normal-half-size: 8;
 						@include font-normal();
 						@include padding(2, 4, 3, 4);
 						position-right: -3;
-
-						&:hover {
-							text-color: $unity-text-color;
-						}
 					}
 				}
 
@@ -624,12 +619,7 @@ $spinner-normal-half-size: 8;
 				@include margin(auto, auto, 5, auto);
 			}
 
-			#changeLogContainer, #viewLicensesContainer {
-				flex: 0;
-				flex-direction: row;
-			}
-
-			#detailActions, .detailActions {
+			#detailActions {
 				flex: 0;
 				flex-direction: row;
 				margin-left: 2;
@@ -647,15 +637,6 @@ $spinner-normal-half-size: 8;
 					@include margin(auto, 0, auto, 0);
 					@include padding(auto, 0, auto, 0);
 					border-left: 0;
-					border-right: 0;
-				}
-
-				#thirdPartyNoticeLabel {
-					@include margin(4, 0, 4, 0);
-					@include padding-box(0);
-				}
-
-				#viewThirdParty {
 					border-right: 0;
 				}
 			}
@@ -694,7 +675,7 @@ $spinner-normal-half-size: 8;
 	#detailError {
 		position-type: absolute;
 		@include position(5, 5, auto, 5);
-		min-height: 200;
+		min-height: 50;
 		word-wrap: true;
 
 		&.display-none {
@@ -742,13 +723,11 @@ $spinner-normal-half-size: 8;
 	#alertMessage {
 		flex: 1;
 		text-color: $unity-text-color-highlight;
-		word-wrap: true;
 		@include text-clip();
 	}
 
 	#close {
 		flex: 0;
-		max-height: 30;
 		@include position(auto, auto, auto, 5);
 		@include button(3,3,4,3);
 	}

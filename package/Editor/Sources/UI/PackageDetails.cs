@@ -27,6 +27,11 @@ namespace UnityEditor.PackageManager.UI
         internal new class UxmlFactory : UxmlFactory<PackageDetails> { }
 #endif
 
+        internal static PackageTag[] SupportedTags()
+        {
+            return new [] { PackageTag.preview };
+        }
+
         public event Action<PackageManager.PackageInfo> OnPackageUpdate = delegate { };
 
         private readonly VisualElement root;
@@ -81,7 +86,6 @@ namespace UnityEditor.PackageManager.UI
             RemoveButton.clickable.clicked += RemoveClick;
             ViewDocButton.clickable.clicked += ViewDocClick;
             ViewChangelogButton.clickable.clicked += ViewChangelogClick;
-            ViewLicenses.clickable.clicked += ViewLicensesClick;
 
             UpdateButton.parent.clippingOptions = ClippingOptions.NoClipping;
             UpdateButton.parent.parent.clippingOptions = ClippingOptions.NoClipping;
@@ -149,7 +153,9 @@ namespace UnityEditor.PackageManager.UI
             if (package == null || DisplayPackage == null)
             {
                 detailVisible = false;
-                UIUtils.SetElementDisplay(DocumentationContainer, false);
+                UIUtils.SetElementDisplay(ViewDocButton, false);
+                UIUtils.SetElementDisplay(DetailActionsSeparator, false);
+                UIUtils.SetElementDisplay(ViewChangelogButton, false);
                 UIUtils.SetElementDisplay(CustomContainer, false);
                 UIUtils.SetElementDisplay(UpdateBuiltIn, false);
 
@@ -185,10 +191,21 @@ namespace UnityEditor.PackageManager.UI
                     UIUtils.SetElementDisplay(GetTag(PackageTag.verified), DisplayPackage.IsVerified);
                 }
 
-                UIUtils.SetElementDisplay(GetTag(PackageTag.preview), DisplayPackage.IsPreview);
-
-                UIUtils.SetElementDisplay(DocumentationContainer, DisplayPackage.Origin != PackageSource.BuiltIn);
-                UIUtils.SetElementDisplay(ChangelogContainer, HasChangelog(DisplayPackage));
+                foreach (var tag in SupportedTags())
+                    UIUtils.SetElementDisplay(GetTag(tag), DisplayPackage.HasTag(tag));
+                                
+                if (DisplayPackage.Origin == PackageSource.BuiltIn)
+                {
+                    UIUtils.SetElementDisplay(ViewDocButton, false);
+                    UIUtils.SetElementDisplay(DetailActionsSeparator, false);
+                    UIUtils.SetElementDisplay(ViewChangelogButton, false);
+                }
+                else
+                {
+                    UIUtils.SetElementDisplay(ViewDocButton, true);
+                    UIUtils.SetElementDisplay(ViewChangelogButton, true);
+                    UIUtils.SetElementDisplay(DetailActionsSeparator, true);
+                }
 
                 root.Q<Label>("detailName").text = DisplayPackage.Name;
                 root.Q<ScrollView>("detailView").scrollOffset = new Vector2(0, 0);
@@ -504,7 +521,7 @@ namespace UnityEditor.PackageManager.UI
             VersionPopup.SetEnabled(enableVersionButton);
             button.text = GetButtonText(action, inprogress, version);
 
-            UIUtils.SetElementDisplay(UpdateBuiltIn, isBuiltIn && action != PackageAction.Update);
+            UIUtils.SetElementDisplay(UpdateBuiltIn, isBuiltIn);
             UIUtils.SetElementDisplay(UpdateCombo, !isBuiltIn);
             UIUtils.SetElementDisplay(UpdateButton, !isBuiltIn);
         }
@@ -537,7 +554,7 @@ namespace UnityEditor.PackageManager.UI
                     enableButton = false;
                 }
 
-                if (package.Current.IsVersionLocked  && current.Origin != PackageSource.BuiltIn)
+                if (package.Current.IsVersionLocked)
                 {
                     enableButton = false;
                     visibleFlag = false;
@@ -561,13 +578,6 @@ namespace UnityEditor.PackageManager.UI
         {
             if (package.IsPackageManagerUI)
             {
-                // Let's not allow updating of the UI if there are build errrors, as for now, that will prevent the UI from reloading properly.
-                if (EditorUtility.scriptCompilationFailed)
-                {
-                    EditorUtility.DisplayDialog("", "The Package Manager UI cannot be updated while there are script compilation errors in your project.  Please fix the errors and try again.", "Ok");
-                    return;
-                }
-
                 if (!EditorUtility.DisplayDialog("", "Updating this package will close the Package Manager window. You will have to re-open it after the update is done. Do you want to continue?", "Yes", "No"))
                     return;
 
@@ -612,39 +622,6 @@ namespace UnityEditor.PackageManager.UI
             RefreshRemoveButton();
             RefreshAddButton();
         }
-        
-        // Method content must be matched in package-manager-doctools extension
-        public string GetPackageUrlRedirect(string packageName)
-        {
-            var redirectUrl = "";
-            if (packageName == "com.unity.ads")
-                redirectUrl = "https://docs.unity3d.com/Manual/UnityAds.html";
-            else if  (packageName == "com.unity.analytics")
-                redirectUrl = "https://docs.unity3d.com/Manual/UnityAnalytics.html";
-            else if  (packageName == "com.unity.purchasing")
-                redirectUrl = "https://docs.unity3d.com/Manual/UnityIAP.html";
-            else if  (packageName == "com.unity.standardevents")
-                redirectUrl = "https://docs.unity3d.com/Manual/UnityAnalyticsCustomEvents.html";
-            else if  (packageName == "com.unity.xiaomi")
-                redirectUrl = "https://unity3d.com/cn/partners/xiaomi/guide";
-            else if (packageName == "com.unity.shadergraph")
-                redirectUrl = "https://github.com/Unity-Technologies/ShaderGraph/wiki";
-            else if (packageName == "com.unity.collab-proxy")
-                redirectUrl = "https://docs.unity3d.com/Manual/UnityCollaborate.html";
-
-            return redirectUrl;
-        }
-
-        public bool RedirectsToManual(PackageInfo packageInfo)
-        {
-            return !string.IsNullOrEmpty(GetPackageUrlRedirect(packageInfo.Name));
-        }
-
-        public bool HasChangelog(PackageInfo packageInfo)
-        {
-            // Packages with no docs have no third party notice
-            return !RedirectsToManual(packageInfo);
-        }
 
         private void ViewDocClick()
         {
@@ -658,24 +635,12 @@ namespace UnityEditor.PackageManager.UI
             Application.OpenURL(url);
         }
 
-        private void ViewLicensesClick()
-        {
-            var url = string.Format("http://docs.unity3d.com/Packages/{0}/license/index.html", DisplayPackage.ShortVersionId);
-            if (RedirectsToManual(DisplayPackage))
-                url = "https://unity3d.com/legal/licenses/Unity_Companion_License";
-            
-            Application.OpenURL(url);            
-        }
-
         private Label DetailDesc { get { return root.Q<Label>("detailDesc"); } }
         internal Button UpdateButton { get { return root.Q<Button>("update"); } }
         private Button RemoveButton { get { return root.Q<Button>("remove"); } }
         private Button ViewDocButton { get { return root.Q<Button>("viewDocumentation"); } }
-        private VisualElement DocumentationContainer { get { return root.Q<VisualElement>("documentationContainer"); } }
+        private Label DetailActionsSeparator { get { return root.Q<Label>("detailActionsSeparator"); } }
         private Button ViewChangelogButton { get { return root.Q<Button>("viewChangelog"); } }
-        private VisualElement ChangelogContainer { get { return root.Q<VisualElement>("changeLogContainer"); } }
-        private VisualElement ViewLicensesContainer { get { return root.Q<VisualElement>("viewLicensesContainer"); } }
-        private Button ViewLicenses { get { return root.Q<Button>("viewLicenses"); } }
         private VisualElement UpdateContainer { get { return root.Q<VisualElement>("updateContainer"); } }
         private Alert DetailError { get { return root.Q<Alert>("detailError"); } }
         private ScrollView DetailView { get { return root.Q<ScrollView>("detailView"); } }
