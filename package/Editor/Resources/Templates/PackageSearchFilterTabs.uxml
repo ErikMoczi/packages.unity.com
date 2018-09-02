@@ -1,0 +1,6 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements">
+    <ui:VisualContainer name="tabs">
+        <ui:Label name="local" text="In Project" class="button first"/>
+        <ui:Label name="all" text="Install" class="button last"/>
+    </ui:VisualContainer>
+</UXML>

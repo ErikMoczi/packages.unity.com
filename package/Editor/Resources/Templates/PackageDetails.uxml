@@ -1,0 +1,28 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:upm="UnityEditor.PackageManager.UI">
+    <ui:VisualContainer name="detailsContainer">
+        <ui:ScrollView name="detailView">
+            <ui:VisualContainer name="detail" class="detail">
+                <ui:VisualContainer class="header">
+                    <ui:Label name="detailTitle"/>
+                    <ui:Button name="update" text="Update" class="button"/>
+                    <ui:Button name="remove" text="Remove" class="button"/>
+                </ui:VisualContainer>
+                <ui:VisualContainer class="versionContainer">
+                    <ui:Label name="detailVersion"/>
+                    <ui:Label name="inPreview" class="display-none"/>
+                </ui:VisualContainer>
+                <ui:Label name="detailName"/>
+                <ui:Label name="detailDesc"/>
+                <!--
+                <ui:VisualContainer name="detailActions">
+                    <ui:Button name="viewDocumentation" text="View documentation..."/>
+                </ui:VisualContainer>
+                -->
+            </ui:VisualContainer>
+            <ui:VisualContainer name="emptyArea" class="detail emptyArea">
+                <ui:Label class="title" text="There is no package selected."/>
+            </ui:VisualContainer>
+        </ui:ScrollView>
+        <upm:Alert name="detailError" class="display-none"/>
+    </ui:VisualContainer>
+</UXML>

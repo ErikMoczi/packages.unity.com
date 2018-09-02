@@ -1,0 +1,447 @@
+/***************************************************************************************************
+
+														*** Auto-Generated - Do not modify .uss File ***
+
+																		Only Modify Main.scss
+
+***************************************************************************************************/
+#container {
+  position-type: absolute;
+  position-top: 0;
+  position-left: 0;
+  position-bottom: 0;
+  position-right: 0;
+}
+
+.display-none {
+  position: absolute;
+  width: 0;
+  height: 0;
+  min-height: 0;
+  max-height: 0;
+  border-top-width: 0;
+  border-left-width: 0;
+  border-bottom-width: 0;
+  border-right-width: 0;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+}
+
+.row, #detailListView #packageListGroup #tabs, #detailListView #detailView .detail .versionContainer {
+  flex: 1;
+  flex-direction: row;
+}
+
+.column, #detailListView #packageListGroup #listContainerOuter, #detailListView #packageListGroup #packageList, #detailListView #packageListGroup #listContainer, #detailListView #packageListGroup #listGroups, #detailListView #packageListGroup #scrollView {
+  flex: 1;
+  flex-direction: column;
+}
+
+#detailListView {
+  flex: 1;
+  flex-direction: row;
+}
+#detailListView .emptyArea {
+  flex: 1;
+  position-type: absolute;
+  position-top: 0;
+  position-left: 0;
+  position-right: 0;
+}
+#detailListView .emptyArea .title {
+  text-alignment: middle-center;
+  font-size: 18;
+  font-style: bold;
+}
+#detailListView #headerTitle {
+  flex: 1;
+  font-size: 16;
+  font-style: bold;
+}
+#detailListView #packageListGroup {
+  width: 350;
+}
+#detailListView #packageListGroup #tabs {
+  margin-top: 5;
+  margin-left: 5;
+  margin-bottom: 5;
+  margin-right: 5;
+  padding-top: 0;
+  padding-left: 20;
+  padding-bottom: 0;
+  padding-right: 20;
+}
+#detailListView #packageListGroup #tabs .button {
+  flex: 1;
+  font-size: 14;
+  border-top-width: 1;
+  border-left-width: 1;
+  border-bottom-width: 1;
+  border-right-width: 1;
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+  border-color: rgba(0, 0, 0, 0.5);
+  text-alignment: middle-center;
+  background-color: #3c3c3c;
+  text-color: #b4b4b4;
+}
+#detailListView #packageListGroup #tabs .button:hover {
+  text-color: #f4f4f4;
+}
+#detailListView #packageListGroup #tabs .button.selected {
+  background-color: #707070;
+  text-color: #f4f4f4;
+}
+#detailListView #packageListGroup #tabs .button.first {
+  border-top-left-radius: 10;
+  border-bottom-left-radius: 10;
+}
+#detailListView #packageListGroup #tabs .button.last {
+  border-top-right-radius: 10;
+  border-bottom-right-radius: 10;
+  border-left-width: 0;
+}
+#detailListView #packageListGroup #tabsGroup {
+  min-height: 42;
+}
+#detailListView #packageListGroup #listContainerOuter #spinnerContainer {
+  position-type: absolute;
+  position-top: 0;
+  position-left: 0;
+  position-right: 0;
+  flex: 0.1;
+  flex-direction: column;
+  align-items: center;
+}
+#detailListView #packageListGroup #groupContainerOuter {
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 5;
+  margin-right: 0;
+}
+#detailListView #packageListGroup #groupContainerOuter #headerContainer {
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 0;
+  margin-left: 10;
+  margin-bottom: 5;
+  margin-right: 10;
+}
+#detailListView #packageListGroup #groupContainerOuter #headerContainer #headerTitle {
+  overflow: hidden;
+  text-clipping: clip;
+  margin-top: 0;
+  margin-left: 3;
+  margin-bottom: 0;
+  margin-right: 0;
+}
+#detailListView #packageListGroup #groupContainerOuter #headerContainer:hover #headerTitle {
+  text-color: #f4f4f4;
+}
+#detailListView #packageListGroup #groupContainerOuter #headerContainer:hover .caret {
+  background-image: resource("Icons/Dark/Caret_Hover");
+}
+#detailListView #packageListGroup #groupContainerOuter #groupContainer {
+  margin-top: 0;
+  margin-left: 15;
+  margin-bottom: 0;
+  margin-right: 0;
+}
+#detailListView #packageListGroup #scrollView #VerticalScroller {
+  position-bottom: 0;
+}
+#detailListView #packageListGroup #scrollView #HorizontalScroller {
+  height: 0;
+}
+#detailListView #packageListGroup #scrollView #ContentViewport {
+  position-bottom: 0;
+}
+#detailListView #packageListGroup #scrollView #ContentViewport #ContentView {
+  position-right: 0;
+  position-left: 0;
+}
+#detailListView .caret {
+  width: 9;
+  height: 16;
+  background-image: resource("Icons/Dark/Caret");
+  margin-top: 0;
+  margin-left: 8;
+  margin-bottom: 0;
+  margin-right: 0;
+}
+#detailListView .package {
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 0;
+  margin-left: 10;
+  margin-bottom: 0;
+  margin-right: 10;
+  border-color: rgba(0, 0, 0, 0.5);
+  border-bottom-width: 1;
+}
+#detailListView .package:hover {
+  background-color: #484848;
+}
+#detailListView .package:hover #packageName, #detailListView .package:hover #packageVersion {
+  text-color: #f4f4f4;
+}
+#detailListView .package:hover.installed {
+  background-color: rgba(255, 255, 254, 0.4);
+}
+#detailListView .package.selected {
+  background-color: #3e5f96;
+  text-color: #f4f4f4;
+}
+#detailListView .package.selected #packageName, #detailListView .package.selected #packageVersion {
+  text-color: #f4f4f4;
+}
+#detailListView .package.selected.installed {
+  background-color: #3e5f96;
+  text-color: #f4f4f4;
+}
+#detailListView .package.installed {
+  font-style: italic;
+  background-color: #3c3c3c;
+}
+#detailListView .package .name {
+  flex: 1;
+  font-size: 12;
+  margin-right: 5;
+  overflow: hidden;
+  text-clipping: clip;
+}
+#detailListView .package .version {
+  font-size: 9;
+}
+#detailListView .package .status {
+  flex: 0;
+  width: 24;
+  height: 24;
+}
+#detailListView .package .status.outdated {
+  background-image: resource("Images/download");
+}
+#detailListView .package .status.inprogress {
+  background-image: resource("Images/inprogress");
+}
+#detailListView .package .status.error {
+  background-image: resource("Images/error");
+}
+#detailListView #detailsGroup {
+  flex: 1;
+  border-left-width: 1px;
+  border-color: rgba(0, 0, 0, 0.5);
+}
+#detailListView #detailsGroup #detailsContainer {
+  flex: 1;
+  flex-direction: column;
+  position-type: relative;
+}
+#detailListView #detailView {
+  flex: 1;
+}
+#detailListView #detailView #VerticalScroller {
+  position-bottom: 0;
+}
+#detailListView #detailView #ContentViewport #ContentView {
+  position-type: absolute;
+  position-top: 0;
+  position-left: 0;
+  position-right: 0;
+}
+#detailListView #detailView .detail {
+  flex: 1;
+  flex-direction: column;
+  padding-top: 20;
+  padding-left: 20;
+  padding-bottom: 20;
+  padding-right: 20;
+}
+#detailListView #detailView .detail .header {
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+}
+#detailListView #detailView .detail .header #update {
+  flex: 0;
+  background-image: none;
+  border-color: rgba(0, 0, 0, 0.5);
+  border-radius: 5;
+  border-top-width: 1;
+  border-left-width: 1;
+  border-bottom-width: 1;
+  border-right-width: 1;
+  padding-top: 1;
+  padding-left: 1;
+  padding-bottom: 1;
+  padding-right: 1;
+}
+#detailListView #detailView .detail .header #update:hover {
+  text-color: #f4f4f4;
+}
+#detailListView #detailView .detail .header #remove {
+  flex: 0;
+  background-image: none;
+  border-color: rgba(0, 0, 0, 0.5);
+  border-radius: 5;
+  border-top-width: 1;
+  border-left-width: 1;
+  border-bottom-width: 1;
+  border-right-width: 1;
+  padding-top: 1;
+  padding-left: 1;
+  padding-bottom: 1;
+  padding-right: 1;
+}
+#detailListView #detailView .detail .header #remove:hover {
+  text-color: #f4f4f4;
+}
+#detailListView #detailView .detail #detailTitle {
+  flex: 1;
+  font-size: 18;
+  font-style: bold;
+  max-height: 40;
+}
+#detailListView #detailView .detail #detailVersion {
+  flex: 1;
+  font-size: 16;
+  max-height: 30;
+}
+#detailListView #detailView .detail #detailName {
+  flex: 1;
+  max-height: 20;
+  font-style: italic;
+}
+#detailListView #detailView .detail #detailTag {
+  width: 60;
+  font-size: 12;
+  border-radius: 5;
+  border-color: #b4b4b4;
+  border-top-width: 2;
+  border-left-width: 2;
+  border-bottom-width: 2;
+  border-right-width: 2;
+  text-alignment: middle-center;
+}
+#detailListView #detailView .detail #detailDesc {
+  flex: 1;
+  font-size: 12;
+  word-wrap: true;
+}
+#detailListView #detailView .detail #detailDesc.empty {
+  font-style: italic;
+}
+#detailListView #detailView .detail #detailActions {
+  flex: 0;
+  flex-direction: row;
+  border-top: 20px;
+}
+#detailListView #detailView .detail #detailActions #viewDocumentation {
+  flex: 0;
+  background-image: none;
+  border-color: rgba(0, 0, 0, 0.5);
+  border-radius: 5;
+  border-top-width: 1;
+  border-left-width: 1;
+  border-bottom-width: 1;
+  border-right-width: 1;
+  padding-top: 1;
+  padding-left: 1;
+  padding-bottom: 1;
+  padding-right: 1;
+}
+#detailListView #detailView .detail #detailActions #viewDocumentation:hover {
+  text-color: #f4f4f4;
+}
+#detailListView #detailView .detail .versionContainer #detailVersion {
+  flex: 0;
+}
+#detailListView #detailView .detail .versionContainer #inPreview {
+  background-image: resource("Images/preview");
+  width: 44;
+  height: 18;
+}
+#detailListView #detailError {
+  position-type: absolute;
+  position-top: 5;
+  position-left: 5;
+  position-right: 5;
+  height: 50px;
+}
+#detailListView #detailError.display-none {
+  position-top: 0;
+  position-left: 0;
+  position-bottom: 0;
+  position-right: 0;
+  width: 0;
+  height: 0;
+  min-height: 0;
+  max-height: 0;
+  border-top-width: 0;
+  border-left-width: 0;
+  border-bottom-width: 0;
+  border-right-width: 0;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+}
+
+.alert {
+  background-color: rgba(200, 0, 0, 0.8);
+  border-color: #FF0000;
+  flex-direction: row;
+  border-top-width: 1;
+  border-left-width: 1;
+  border-bottom-width: 1;
+  border-right-width: 1;
+  padding-top: 5;
+  padding-left: 10;
+  padding-bottom: 5;
+  padding-right: 10;
+}
+.alert #alertMessage {
+  flex: 1;
+  text-color: #f4f4f4;
+  overflow: hidden;
+  text-clipping: clip;
+}
+.alert #close {
+  flex: 0;
+  position-left: 5;
+  flex: 0;
+  background-image: none;
+  border-color: rgba(0, 0, 0, 0.5);
+  border-radius: 5;
+  border-top-width: 1;
+  border-left-width: 1;
+  border-bottom-width: 1;
+  border-right-width: 1;
+  padding-top: 1;
+  padding-left: 1;
+  padding-bottom: 1;
+  padding-right: 1;
+}
+.alert #close:hover {
+  text-color: #f4f4f4;
+}
+
+.spinner {
+  flex: 0;
+  width: 24;
+  height: 24;
+}

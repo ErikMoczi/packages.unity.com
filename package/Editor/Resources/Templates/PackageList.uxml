@@ -1,0 +1,17 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:upm="UnityEditor.PackageManager.UI">
+    <ui:VisualContainer name="listContainerOuter">
+        <ui:Label name="spinnerContainer">
+            <upm:LoadingSpinner name="packageListSpinner" class="spinner"/>
+        </ui:Label>
+
+        <ui:VisualContainer name="listContainer">
+
+            <ui:ScrollView name="scrollView"/>
+
+            <ui:VisualContainer name="emptyArea" class="list emptyArea">
+                <ui:Label class="title" text="There are no packages."/>
+            </ui:VisualContainer>
+
+        </ui:VisualContainer>
+    </ui:VisualContainer>
+</UXML>

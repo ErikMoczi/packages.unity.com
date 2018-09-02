@@ -1,0 +1,10 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:upm="UnityEditor.PackageManager.UI">
+  <ui:VisualContainer name="packageContainer" class="package">
+    <ui:Label name="spinnerContainer">
+        <upm:LoadingSpinner name="packageSpinner" class="spinner"/>
+    </ui:Label>
+    <ui:Label name="packageName" class="name" />
+    <ui:Label name="packageVersion" class="version"/>
+    <ui:Label name="packageState" class="status" />
+  </ui:VisualContainer>
+</UXML>

@@ -1,0 +1,11 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:upm="UnityEditor.PackageManager.UI">
+    <ui:VisualContainer name="container">
+        <ui:VisualContainer name="detailListView">
+            <ui:VisualContainer name="packageListGroup">
+                <upm:PackageSearchFilterTabs name="tabsGroup" />
+                <upm:PackageList name="packageList" />
+            </ui:VisualContainer>
+            <upm:PackageDetails name="detailsGroup" />
+        </ui:VisualContainer>
+    </ui:VisualContainer>
+</UXML>

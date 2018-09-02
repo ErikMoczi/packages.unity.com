@@ -1,0 +1,510 @@
+// If you are using IntelliJ Rider, you can simply turn on the SCSS compiler, otherwise here is how to convert scss to uss
+//		# Install Sass
+//				gem install sass
+//
+//		# Convert
+//				sass --sourcemap=none --style=expanded --scss --no-cache Main_Dark.scss Main_Dark.uss
+//				sass --sourcemap=none --style=expanded --scss --no-cache Main_Light.scss Main_Light.uss
+//
+//		# Watch
+//				sass --watch --sourcemap=none --style=expanded --scss --no-cache Main_Light.scss:Main_Light.uss Main_Dark.scss:Main_Dark.uss
+//
+//	Sass to Uss Notes
+//		- Sass converts rgb(0,0,0) to css 'black'. Uss doesn't support named colors. The workaround is to set the color in sass as #000000
+//
+// Uss Notes
+//		Runtime\UIElements\Managed\StyleSheets\StyleSheetCache.cs:50 to see which properties are available (until there is a doc)
+
+//--------------------------------------------------------------------------------------------------
+// Helper Mixins
+//--------------------------------------------------------------------------------------------------
+
+@mixin border($top, $right, $bottom, $left) {
+	@if $top != 'auto' {border-top-width: $top;}
+	@if $left != 'auto' {border-left-width: $right;}
+	@if $bottom != 'auto' {border-bottom-width: $bottom;}
+	@if $right != 'auto' {border-right-width: $left;}
+}
+
+@mixin border-box($width: 1) {
+	@include border($width, $width, $width, $width);
+}
+
+@mixin padding($top, $right, $bottom, $left) {
+	@if $top != 'auto' {padding-top: $top;}
+	@if $left != 'auto' {padding-left: $left;}
+	@if $bottom != 'auto' {padding-bottom: $bottom;}
+	@if $right != 'auto' {padding-right: $right;}
+}
+
+@mixin padding-box($size) {
+	@include padding($size, $size, $size, $size);
+}
+
+@mixin margin($top, $right, $bottom, $left) {
+	@if $top != 'auto' {margin-top: $top;}
+	@if $left != 'auto' {margin-left: $left;}
+	@if $bottom != 'auto' {margin-bottom: $bottom;}
+	@if $right != 'auto' {margin-right: $right;}
+}
+
+@mixin margin-box($size) {
+	@include margin($size, $size, $size, $size);
+}
+
+@mixin position($top, $right, $bottom, $left) {
+	@if $top != 'auto' {position-top: $top;}
+	@if $left != 'auto' {position-left: $left;}
+	@if $bottom != 'auto' {position-bottom: $bottom;}
+	@if $right != 'auto' {position-right: $right;}
+}
+
+@mixin text-clip() {
+	overflow: hidden;
+	text-clipping: clip; // Without this, text doesn't actually get clip by overflow:hidden (uss bug?)
+}
+
+@mixin selected-element() {
+	background-color: $unity-list-selected-background;
+	text-color: $unity-text-color-highlight;
+}
+
+@mixin active-tab() {
+	background-color: $unity-background-dark-contrast;
+	text-color: $unity-text-color-highlight;
+}
+
+@mixin inactive-tab() {
+	background-color: $unity-background-light-contrast;
+	text-color: $unity-text-color;
+}
+
+@mixin button($top, $right, $bottom, $left) {
+	flex: 0;
+
+	background-image: none;
+	border-color: rgba(0, 0, 0, 0.5);
+	border-radius: 5;
+	@include border-box(1);
+	@include padding($top, $right, $bottom, $left);
+
+	&:hover {
+		text-color: $unity-text-color-highlight;
+	}
+}
+
+@mixin button-box($size) {
+	@include button($size, $size, $size, $size);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Styles
+//--------------------------------------------------------------------------------------------------
+
+#container {
+	position-type: absolute;
+	@include position(0, 0, 0, 0);
+}
+
+.display-none {
+	position: absolute;
+	width: 0;
+	height: 0;
+	min-height: 0;
+	max-height: 0;
+	@include border-box(0);
+	@include padding-box(0);
+	@include margin-box(0);
+}
+
+.row {
+	flex: 1;
+	flex-direction: row;
+}
+
+.column {
+	flex: 1;
+	flex-direction: column;
+}
+
+#detailListView {
+	flex: 1;
+	flex-direction: row;
+
+	.emptyArea {
+		flex: 1;
+		position-type: absolute;
+		@include position(0, 0, auto, 0);
+
+		.title {
+			text-alignment: middle-center;
+			font-size: 18;
+			font-style: bold;
+		}
+	}
+
+	#headerTitle {
+		flex: 1;
+		font-size: 16;
+		font-style: bold;
+	}
+
+	//--------------------------------------------------------------------------------------------------
+	// Package List
+	//--------------------------------------------------------------------------------------------------
+	#packageListGroup {
+		$min-filter-tabs-height: 42;
+
+		width: 350;
+
+		#tabs {
+			@extend .row;
+			@include margin(5, 5, 5, 5);
+
+			@include padding(0, 20, 0, 20);
+
+			.button {
+				flex: 1;			// Make buttons take all the parent's free space
+
+				font-size: 14;
+				@include border-box();
+				@include margin-box(0);
+				border-color: rgba(0, 0, 0, 0.5);
+				text-alignment: middle-center;
+
+				@include inactive-tab();
+
+				&:hover {
+					text-color: $unity-text-color-highlight;
+				}
+
+				&.selected {
+					@include active-tab();
+				}
+
+				$filter-corner-radius: 10;
+				&.first {
+					border-top-left-radius: $filter-corner-radius;
+					border-bottom-left-radius: $filter-corner-radius;
+				}
+
+				&.last {
+					border-top-right-radius: $filter-corner-radius;
+					border-bottom-right-radius: $filter-corner-radius;
+					border-left-width: 0;
+				}
+			}
+		}
+
+		#tabsGroup {
+			min-height: $min-filter-tabs-height;
+		}
+
+		#listContainerOuter {
+			@extend .column;
+
+			#spinnerContainer {
+				position-type: absolute;
+				@include position(0, 0, auto, 0);
+
+				flex: 0.1;
+				flex-direction: column;
+				align-items: center;
+			}
+		}
+
+		#groupContainerOuter {
+			@include margin(0, 0, 5, 0);
+
+			#headerContainer {
+				flex: 1;
+				flex-direction: row;
+				align-items: center;
+
+				@include margin(0, 10, 5, 10);
+
+				#headerTitle {
+					@include text-clip();
+					@include margin(0, 0, 0, 3);
+				}
+
+				&:hover {
+					#headerTitle {
+						text-color: $unity-text-color-highlight;
+					}
+
+					.caret {
+						background-image: $icon-caret-hover;
+					}
+				}
+			}
+
+
+			#groupContainer {
+				@include margin(0, 0, 0, 15);
+			}
+		}
+
+		#packageList, #listContainer, #listGroups {
+			@extend .column;
+		}
+
+		#scrollView {
+			@extend .column;
+
+			#VerticalScroller {
+				position-bottom: 0;
+			}
+
+			#HorizontalScroller {
+				height: 0;
+			}
+
+			#ContentViewport {
+				position-bottom: 0;
+
+				#ContentView {
+					position-right: 0;
+					position-left: 0;
+				}
+			}
+		}
+	}
+
+	$caret-height: 16;
+
+	.caret {
+		width: 9;
+		height: $caret-height;
+		background-image: $icon-caret;
+		@include margin(0, 0, 0, $caret-height / 2);
+	}
+
+	//--------------------------------------------------------------------------------------------------
+	// Package Item
+	//--------------------------------------------------------------------------------------------------
+	.package {
+		flex: 1;
+		flex-direction: row;
+		align-items: center;
+		@include margin(0, 10, 0, 10);
+		border-color: rgba(0,0,0, 0.5);
+		border-bottom-width: 1;
+
+		&:hover {
+			background-color: $unity-list-hover-background;
+
+			#packageName, #packageVersion {
+				text-color: $unity-text-color-highlight;
+			}
+			
+			&.installed {
+				background-color: $unity-installed-color-highlight;
+			}
+		}
+
+		&.selected {
+			@include selected-element();
+
+			#packageName, #packageVersion {
+				text-color: $unity-text-color-highlight;
+			}
+
+			&.installed {
+				@include selected-element();
+			}
+		}
+		
+		&.installed {
+			
+			font-style: italic;
+			background-color: $installed-package-background-color;
+
+		}
+
+		.name {
+			flex: 1;
+			font-size: 12;
+			margin-right: 5;
+			@include text-clip();
+		}
+
+		.version {
+			font-size: 9;
+		}
+
+		.status {
+			flex: 0;
+			width: 24;
+			height: 24;
+
+			&.outdated {
+				background-image: resource("Images/download");
+			}
+
+			&.inprogress {
+				background-image: resource("Images/inprogress");
+			}
+
+			&.error {
+				background-image: resource("Images/error");
+			}
+		}
+	}
+
+	//--------------------------------------------------------------------------------------------------
+	// Package Details
+	//--------------------------------------------------------------------------------------------------
+	#detailsGroup {
+		flex: 1;
+		border-left-width: 1px;
+		border-color: rgba(0,0,0, 0.5);
+
+		#detailsContainer {
+			flex: 1;
+			flex-direction: column;
+			position-type: relative;
+		}
+	}
+	
+	#detailView {
+		flex: 1;
+
+		#VerticalScroller {
+			position-bottom: 0;
+		}
+
+		#ContentViewport {
+
+			#ContentView {
+				position-type: absolute;
+				@include position(0, 0, auto, 0);
+			}
+		}
+
+		.detail {
+			flex: 1;
+			flex-direction: column;
+			@include padding-box(20);
+
+			.header {
+				flex: 1;
+				flex-direction: row;
+				align-items: center;
+
+				#update {
+					@include button-box(1);
+				}
+
+				#remove {
+					@include button-box(1);
+				}
+			}
+
+			#detailTitle {
+				flex: 1;
+				font-size: 18;
+				font-style: bold;
+				max-height: 40;
+				//word-wrap: true;		// Does not work well. Overlaps underlying elements.
+			}
+
+			#detailVersion {
+				flex: 1;
+				font-size: 16;
+				max-height: 30;
+			}
+
+			#detailName {
+				flex: 1;
+				max-height: 20;
+				font-style: italic;
+			}
+
+			#detailTag {
+				width: 60;
+				font-size: 12;
+				border-radius: 5;
+				border-color: rgb(180, 180, 180);
+				@include border-box(2);
+				text-alignment: middle-center;
+			}
+
+			#detailDesc {
+				flex: 1;
+				font-size: 12;
+				word-wrap: true;
+
+				&.empty {
+					font-style: italic;
+				}
+			}
+
+			#detailActions {
+				flex: 0;
+				flex-direction: row;
+				border-top: 20px;
+
+				#viewDocumentation {
+					@include button-box(1);
+				}
+			}
+			.versionContainer {
+				@extend .row;
+				#detailVersion {
+					flex: 0;
+				}
+				#inPreview {
+
+					background-image: resource("Images/preview");
+					width: 44;
+					height: 18;
+				} 
+			}
+		}
+	}
+	
+	#detailError {
+		position-type: absolute;
+		@include position(5, 5, auto, 5);
+		height: 50px;
+		
+		&.display-none {
+			@include position(0, 0, 0, 0);
+			width: 0;
+			height: 0;
+			min-height: 0;
+			max-height: 0;
+			@include border-box(0);
+			@include padding-box(0);
+			@include margin-box(0);
+		}
+	}
+}
+
+.alert {
+	background-color: rgba(200,0,0,0.8);
+	border-color: #FF0000;
+	flex-direction: row;
+
+	@include border-box(1);
+	@include padding(5, 10, 5, 10);
+	
+	#alertMessage {
+		flex: 1;
+		text-color: $unity-text-color-highlight;
+		@include text-clip();
+	}
+	
+	#close {
+		flex: 0;
+		@include position(auto, auto, auto, 5);
+		@include button-box(1);
+	}
+}
+
+.spinner {
+	flex: 0;
+	width: 24;
+	height: 24;
+}
