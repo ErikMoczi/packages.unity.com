@@ -148,13 +148,13 @@ namespace UnityEditor.AddressableAssets
                     var bundleWriteData = new BundleWriteData();
                     var bundleBuildResults = new BundleBuildResults();
                     var dependencyData = new BuildDependencyData();
-                    using (var progressTracker = new TimeThrottledProgressTracker(100))
+                   // using (var progressTracker = new TimeThrottledProgressTracker(100))
                     {
                         var buildParams = new BuildParameters(buildTarget, buildTargetGroup, aaSettings.buildSettings.bundleBuildPath, ContentPipeline.kTempBuildPath);
                         buildParams.UseCache = aaSettings.buildSettings.useCache && !forceRebuild;
                         using (var buildCleanup = new BuildStateCleanup(true, buildParams.TempOutputFolder))
                         {
-                            var buildContext = new BuildContext(new BundleContent(allBundleInputDefs), new Unity5PackedIdentifiers(), buildParams, dependencyData, bundleWriteData, bundleBuildResults, progressTracker);
+                            var buildContext = new BuildContext(new BundleContent(allBundleInputDefs), new Unity5PackedIdentifiers(), buildParams, dependencyData, bundleWriteData, bundleBuildResults);//, progressTracker);
                             buildContext.SetContextObject(new AddressableAssetsBuildContext() { m_settings = aaSettings, m_runtimeData = runtimeData, m_bundleToAssetGroup = bundleToAssetGroup, m_contentCatalog = contentCatalog });
 
                             var buildTasks = new List<IBuildTask>();

@@ -415,7 +415,7 @@ namespace UnityEditor.AddressableAssets
             AssetDatabase.CreateAsset(proc, path);
             var guid = AssetDatabase.AssetPathToGUID(path);
             AssetDatabase.MoveAsset(path, System.IO.Path.GetDirectoryName(pathForAsset) + "/" + guid.ToString() + ".asset");
-            var g = new AssetGroup(validName, proc, setAsDefaultGroup, guid);
+            var g = new AssetGroup(validName, proc, setAsDefaultGroup, guid, groups.Count);
             groups.Add(g);
             PostModificationEvent(ModificationEvent.GroupAdded, g);
             return g;

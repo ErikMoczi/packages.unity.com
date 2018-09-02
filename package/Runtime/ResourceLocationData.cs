@@ -60,7 +60,7 @@ namespace UnityEngine.AddressableAssets
         /// <summary>
         /// TODO - doc
         /// </summary>
-        public ResourceLocationData(string address, string guid, string id, string provider, LocationType locationType, long labels, string objectType, string[] dependencies)
+        public ResourceLocationData(string address, string guid, string id, string provider, LocationType locationType = LocationType.String, long labels = 0, string objectType = "", string[] dependencies = null)
         {
             m_address = address;
             m_guid = guid;
@@ -68,7 +68,7 @@ namespace UnityEngine.AddressableAssets
             m_provider = provider;
             m_typeName = objectType;
             m_type = locationType;
-            m_dependencies = dependencies;
+            m_dependencies = dependencies == null ? new string[0] : dependencies;
             m_labelMask = labels;
         }
 

@@ -22,6 +22,10 @@ namespace UnityEditor.AddressableAssets
             /// </summary>
             [SerializeField]
             internal string name;
+
+            [SerializeField]
+            internal int priority = 0;
+
             /// <summary>
             /// TODO - doc
             /// </summary>
@@ -103,9 +107,10 @@ namespace UnityEditor.AddressableAssets
             /// TODO - doc
             /// </summary>
             internal AssetGroup() {}
-            internal AssetGroup(string n, AssetGroupProcessor p, bool setAsDefault, string g)
+            internal AssetGroup(string n, AssetGroupProcessor p, bool setAsDefault, string g, int pri)
             {
                 name = n;
+                priority = pri;
                 processor = p;
                 isDefault = setAsDefault;
                 guid = g;
