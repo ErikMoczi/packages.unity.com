@@ -6,6 +6,7 @@ using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Utilities;
 using UnityEditor.Build.Pipeline.WriteTypes;
+using UnityEditor.Build.Utilities;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
@@ -32,7 +33,9 @@ namespace UnityEditor.Build.Pipeline.Tasks
             {
                 if (ValidationMethods.ValidAssetBundle(bundlePair.Value))
                 {
-                    CreateAssetBundleCommand(bundlePair.Key, writeData.AssetToFiles[bundlePair.Value[0]][0], bundlePair.Value, buildContent, dependencyData, writeData, packingMethod);
+                    // Use generated internalName here as we could have an empty asset bundle used for raw object storage (See CreateStandardShadersBundle)
+                    var internalName = string.Format(CommonStrings.AssetBundleNameFormat, packingMethod.GenerateInternalFileName(bundlePair.Key));
+                    CreateAssetBundleCommand(bundlePair.Key, internalName, bundlePair.Value, buildContent, dependencyData, writeData, packingMethod);
                 }
                 else if (ValidationMethods.ValidSceneBundle(bundlePair.Value))
                 {
@@ -61,14 +64,16 @@ namespace UnityEditor.Build.Pipeline.Tasks
         static void CreateAssetBundleCommand(string bundleName, string internalName, List<GUID> assets, IBundleBuildContent buildContent, IDependencyData dependencyData, IBundleWriteData writeData, IDeterministicIdentifiers packingMethod)
         {
             var abOp = new AssetBundleWriteOperation();
+            
+            var fileObjects = writeData.FileToObjects[internalName];
+            abOp.Command = CreateWriteCommand(internalName, fileObjects, packingMethod);
+
             abOp.UsageSet = new BuildUsageTagSet();
             writeData.FileToUsageSet.Add(internalName, abOp.UsageSet);
 
             abOp.ReferenceMap = new BuildReferenceMap();
+            abOp.ReferenceMap.AddMappings(internalName, abOp.Command.serializeObjects.ToArray());
             writeData.FileToReferenceMap.Add(internalName, abOp.ReferenceMap);
-
-            var fileObjects = writeData.FileToObjects[internalName];
-            abOp.Command = CreateWriteCommand(internalName, fileObjects, packingMethod);
 
             {
                 abOp.Info = new AssetBundleInfo();
@@ -92,14 +97,15 @@ namespace UnityEditor.Build.Pipeline.Tasks
         static void CreateSceneBundleCommand(string bundleName, string internalName, GUID asset, List<GUID> assets, IBundleBuildContent buildContent, IDependencyData dependencyData, IBundleWriteData writeData)
         {
             var sbOp = new SceneBundleWriteOperation();
+
+            var fileObjects = writeData.FileToObjects[internalName];
+            sbOp.Command = CreateWriteCommand(internalName, fileObjects, new LinearPackedIdentifiers(3)); // Start at 3: PreloadData = 1, AssetBundle = 2
+
             sbOp.UsageSet = new BuildUsageTagSet();
             writeData.FileToUsageSet.Add(internalName, sbOp.UsageSet);
 
             sbOp.ReferenceMap = new BuildReferenceMap();
             writeData.FileToReferenceMap.Add(internalName, sbOp.ReferenceMap);
-
-            var fileObjects = writeData.FileToObjects[internalName];
-            sbOp.Command = CreateWriteCommand(internalName, fileObjects, new LinearPackedIdentifiers(3)); // Start at 3: PreloadData = 1, AssetBundle = 2
 
             var sceneInfo = dependencyData.SceneInfo[asset];
             sbOp.Scene = sceneInfo.scene;
@@ -134,14 +140,15 @@ namespace UnityEditor.Build.Pipeline.Tasks
         static void CreateSceneDataCommand(string internalName, GUID asset, IDependencyData dependencyData, IBundleWriteData writeData)
         {
             var sdOp = new SceneDataWriteOperation();
+
+            var fileObjects = writeData.FileToObjects[internalName];
+            sdOp.Command = CreateWriteCommand(internalName, fileObjects, new LinearPackedIdentifiers(2)); // Start at 2: PreloadData = 1
+
             sdOp.UsageSet = new BuildUsageTagSet();
             writeData.FileToUsageSet.Add(internalName, sdOp.UsageSet);
 
             sdOp.ReferenceMap = new BuildReferenceMap();
             writeData.FileToReferenceMap.Add(internalName, sdOp.ReferenceMap);
-
-            var fileObjects = writeData.FileToObjects[internalName];
-            sdOp.Command = CreateWriteCommand(internalName, fileObjects, new LinearPackedIdentifiers(2)); // Start at 2: PreloadData = 1
 
             var sceneInfo = dependencyData.SceneInfo[asset];
             sdOp.Scene = sceneInfo.scene;

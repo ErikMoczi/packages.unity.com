@@ -9,7 +9,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class StripUnusedSpriteSources : IBuildTask
     {
-        const int k_Version = 1;
+        const int k_Version = 2;
         public int Version { get { return k_Version; } }
 
         static readonly Type[] k_RequiredTypes = { typeof(IBuildParameters), typeof(IDependencyData) };
@@ -22,7 +22,9 @@ namespace UnityEditor.Build.Pipeline.Tasks
 
             IBuildCache cache;
             context.TryGetContextObject(out cache);
-            return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IDependencyData>(), cache);
+            IBuildSpriteData spriteData;
+            context.TryGetContextObject(out spriteData);
+            return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IDependencyData>(), spriteData, cache);
         }
 
         static void CalcualteCacheEntry(IDependencyData dependencyData, ref CacheEntry cacheEntry)
@@ -31,70 +33,50 @@ namespace UnityEditor.Build.Pipeline.Tasks
             cacheEntry.Guid = HashingMethods.CalculateMD5Guid("StripUnusedSpriteSources");
         }
 
-        static ReturnCode Run(IBuildParameters parameters, IDependencyData dependencyData, IBuildCache cache = null)
+        static ReturnCode Run(IBuildParameters parameters, IDependencyData dependencyData, IBuildSpriteData spriteData, IBuildCache cache = null)
         {
-            var spriteSourceRef = new Dictionary<ObjectIdentifier, int>();
+            if (spriteData == null || spriteData.ImporterData.Count == 0)
+                return ReturnCode.SuccessNotRun;
+
+            var unusedSources = new HashSet<ObjectIdentifier>();
 
             var cacheEntry = new CacheEntry();
             if (parameters.UseCache && cache != null)
             {
                 CalcualteCacheEntry(dependencyData, ref cacheEntry);
-                if (cache.TryLoadFromCache(cacheEntry, ref spriteSourceRef))
+                if (cache.TryLoadFromCache(cacheEntry, ref unusedSources))
                 {
-                    SetOutputInformation(spriteSourceRef, dependencyData);
+                    SetOutputInformation(unusedSources, dependencyData);
                     return ReturnCode.SuccessCached;
                 }
             }
 
-            // CreateBundle sprite source ref count map
-            foreach (KeyValuePair<GUID, AssetLoadInfo> assetInfo in dependencyData.AssetInfo)
-            {
-                string path = AssetDatabase.GUIDToAssetPath(assetInfo.Value.asset.ToString());
-                var importer = AssetImporter.GetAtPath(path) as TextureImporter;
-                if (importer != null && importer.textureType == TextureImporterType.Sprite && !string.IsNullOrEmpty(importer.spritePackingTag))
-                    spriteSourceRef[assetInfo.Value.includedObjects[0]] = 0;
-            }
+            var textures = spriteData.ImporterData.Values.Where(x => x.PackedSprite).Select(x => x.SourceTexture);
+            unusedSources.UnionWith(textures);
 
             // Count refs from assets
             var assetRefs = dependencyData.AssetInfo.SelectMany(x => x.Value.referencedObjects);
             foreach (ObjectIdentifier reference in assetRefs)
-            {
-                int refCount = 0;
-                if (!spriteSourceRef.TryGetValue(reference, out refCount))
-                    continue;
-
-                // Note: Because pass by value
-                spriteSourceRef[reference] = ++refCount;
-            }
+                unusedSources.Remove(reference);
 
             // Count refs from scenes
             var sceneRefs = dependencyData.SceneInfo.SelectMany(x => x.Value.referencedObjects);
             foreach (ObjectIdentifier reference in sceneRefs)
-            {
-                int refCount = 0;
-                if (!spriteSourceRef.TryGetValue(reference, out refCount))
-                    continue;
+                unusedSources.Remove(reference);
 
-                // Note: Because pass by value
-                spriteSourceRef[reference] = ++refCount;
-            }
+            SetOutputInformation(unusedSources, dependencyData);
 
-            SetOutputInformation(spriteSourceRef, dependencyData);
-
-            if (parameters.UseCache && cache != null && !cache.TrySaveToCache(cacheEntry, spriteSourceRef))
+            if (parameters.UseCache && cache != null && !cache.TrySaveToCache(cacheEntry, unusedSources))
                 BuildLogger.LogWarning("Unable to cache StripUnusedSpriteSources results.");
 
             return ReturnCode.Success;
         }
 
-        static void SetOutputInformation(Dictionary<ObjectIdentifier, int> spriteSourceRef, IDependencyData dependencyData)
+        static void SetOutputInformation(HashSet<ObjectIdentifier> unusedSources, IDependencyData dependencyData)
         {
-            foreach (KeyValuePair<ObjectIdentifier, int> source in spriteSourceRef)
+            foreach (var source in unusedSources)
             {
-                if (source.Value > 0)
-                    continue;
-
-                var assetInfo = dependencyData.AssetInfo[source.Key.guid];
+                var assetInfo = dependencyData.AssetInfo[source.guid];
                 assetInfo.includedObjects.RemoveAt(0);
             }
         }

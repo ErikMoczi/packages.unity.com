@@ -25,11 +25,12 @@ namespace UnityEditor.Build.Pipeline.Tasks
 
         static ReturnCode Run(IDependencyData dependencyData, IBundleWriteData writeData)
         {
+            Dictionary<string, WriteCommand> fileToCommand = writeData.WriteOperations.ToDictionary(x => x.Command.internalName, x => x.Command);
             Dictionary<string, HashSet<string>> filesMapped = new Dictionary<string, HashSet<string>>();
             foreach (var assetFilesPair in writeData.AssetToFiles)
             {
                 // Generate BuildReferenceMap map
-                AddReferencesForFiles(assetFilesPair.Value, writeData, filesMapped);
+                AddReferencesForFiles(assetFilesPair.Value, writeData, filesMapped, fileToCommand);
                 
                 // Generate BuildUsageTagSet map
                 AddUsageSetForFiles(assetFilesPair.Key, assetFilesPair.Value, dependencyData, writeData);
@@ -38,7 +39,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
             return ReturnCode.Success;
         }
 
-        static void AddReferencesForFiles(IList<string> files, IBundleWriteData writeData, Dictionary<string, HashSet<string>> filesMapped)
+        static void AddReferencesForFiles(IList<string> files, IBundleWriteData writeData, Dictionary<string, HashSet<string>> filesMapped, Dictionary<string, WriteCommand> fileToCommand)
         {
             HashSet<string> visited;
             filesMapped.GetOrAdd(files[0], out visited);
@@ -50,7 +51,6 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 writeData.FileToReferenceMap.Add(files[0], referenceMap);
             }
             
-            var fileToCommand = writeData.WriteOperations.ToDictionary(x => x.Command.internalName, x => x.Command);
             foreach (var file in files)
             {
                 if (!visited.Add(file))

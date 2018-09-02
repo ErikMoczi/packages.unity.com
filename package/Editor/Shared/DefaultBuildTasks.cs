@@ -16,7 +16,8 @@ namespace UnityEditor.Build.Pipeline
         public enum Preset
         {
             PlayerScriptsOnly,
-            AssetBundleCompatible
+            AssetBundleCompatible,
+            AssetBundleBuiltInShaderExtraction,
         }
 
         /// <summary>
@@ -33,6 +34,8 @@ namespace UnityEditor.Build.Pipeline
                     return PlayerScriptsOnly();
                 case Preset.AssetBundleCompatible:
                     return AssetBundleCompatible(compileScripts);
+                case Preset.AssetBundleBuiltInShaderExtraction:
+                    return AssetBundleBuiltInShaderExtraction(compileScripts);
                 default:
                     throw new NotImplementedException(string.Format("Preset for '{0}' not yet implemented.", preset));
             }
@@ -71,7 +74,7 @@ namespace UnityEditor.Build.Pipeline
             buildTasks.Add(new ProjectInCleanState());
             buildTasks.Add(new ValidateBundleAssignments());
             buildTasks.Add(new SwitchToBuildPlatform());
-            buildTasks.Add(new RebuildAtlasCache());
+            buildTasks.Add(new RebuildSpriteAtlasCache());
 
             // Player Scripts
             if (compileScripts)
@@ -90,6 +93,51 @@ namespace UnityEditor.Build.Pipeline
             // Packing
             buildTasks.Add(new GenerateBundlePacking());
             buildTasks.Add(new GenerateBundleCommands());
+            buildTasks.Add(new GenerateSpritePathMaps());
+            buildTasks.Add(new GenerateBundleMaps());
+            buildTasks.Add(new PostPackingCallback());
+
+            // Writing
+            buildTasks.Add(new WriteSerializedFiles());
+            buildTasks.Add(new ArchiveAndCompressBundles());
+            buildTasks.Add(new PostWritingCallback());
+
+            // Generate manifest files
+            // TODO: IMPL manifest generation
+
+            return buildTasks;
+        }
+
+        static IList<IBuildTask> AssetBundleBuiltInShaderExtraction(bool compileScripts)
+        {
+            var buildTasks = new List<IBuildTask>();
+
+            // Setup
+            buildTasks.Add(new ProjectInCleanState());
+            buildTasks.Add(new ValidateBundleAssignments());
+            buildTasks.Add(new SwitchToBuildPlatform());
+            buildTasks.Add(new RebuildSpriteAtlasCache());
+
+            // Player Scripts
+            if (compileScripts)
+            {
+                buildTasks.Add(new BuildPlayerScripts());
+                buildTasks.Add(new SetBundleSettingsTypeDB());
+                buildTasks.Add(new PostScriptsCallback());
+            }
+
+            // Dependency
+            buildTasks.Add(new CalculateSceneDependencyData());
+            buildTasks.Add(new CalculateAssetDependencyData());
+            buildTasks.Add(new StripUnusedSpriteSources());
+            buildTasks.Add(new CreateBuiltInShadersBundle("UnityBuiltInShaders"));
+            buildTasks.Add(new PostDependencyCallback());
+
+            // Packing
+            buildTasks.Add(new GenerateBundlePacking());
+            buildTasks.Add(new UpdateBundleObjectLayout());
+            buildTasks.Add(new GenerateBundleCommands());
+            buildTasks.Add(new GenerateSpritePathMaps());
             buildTasks.Add(new GenerateBundleMaps());
             buildTasks.Add(new PostPackingCallback());
 

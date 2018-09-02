@@ -8,6 +8,7 @@
         // Success Codes are Positive!
         Success = 0,
         SuccessCached = 1,
+        SuccessNotRun = 2,
         // Error Codes are Negative!
         Error = -1,
         Exception = -2,
