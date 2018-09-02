@@ -17,7 +17,7 @@ namespace UnityEditor.AddressableAssets
             EditorGUI.BeginProperty(position, label, property);
             if (settings == null)
                 settings = AddressableAssetSettings.GetDefault(false, false);
-            if(settings == null)
+            if (settings == null)
             {
 
             }
@@ -29,7 +29,7 @@ namespace UnityEditor.AddressableAssets
                 var labelList = settings.labelTable.labelNames.ToArray();
                 var smallPos = EditorGUI.PrefixLabel(position, label);
                 var newIndex = EditorGUI.Popup(smallPos, currIndex, labelList);
-                if(newIndex != currIndex)
+                if (newIndex != currIndex)
                 {
                     currentLabel.stringValue = labelList[newIndex];
                 }
