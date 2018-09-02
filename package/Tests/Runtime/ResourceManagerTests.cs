@@ -14,38 +14,39 @@ using UnityEngine.TestTools;
 
 public class ResourceManagerTests : MonoBehaviour
 {
-    //WHY TEST IS REMOVED:  cannot get callback timing to work right. Manually testing while waiting to solve callback issue
-    //[UnityTest]
-    //public IEnumerator CanLoadAssetsFrom_ResourcesFolder_WtihCallback()
-    //{
-    //    ResourceManager.resourceProviders.Add(new LegacyResourcesProvider());
-    //    ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
+    [UnityTest]
+    public IEnumerator CanLoadAssetsFrom_ResourcesFolder_WtihCallback()
+    {
+        ResourceManager.resourceProviders.Add(new LegacyResourcesProvider());
+        ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
 
-    //    GameObject cube = null;
-    //    var oper = ResourceManager.LoadAsync<GameObject, string>("test");
-    //    oper.completed +=
-    //        (op) =>
-    //        {
-    //            cube = op.result as GameObject;
-    //        };
+        GameObject cube = null;
+        var oper = ResourceManager.LoadAsync<GameObject, string>("test");
+        oper.completed +=
+            (op) =>
+            {
+                cube = op.result as GameObject;
+            };
 
-    //    Assert.IsNotNull(cube);
-    //}
+        yield return null;
+        Assert.IsNotNull(cube);
+    }
 
-    //WHY TEST IS REMOVED:  cannot get async timing to work right. Manually testing while waiting to solve async issue
-    //[UnityTest]
-    //public IEnumerator CanLoadFrom_ResourceFolder_WithAsyncOperation()
-    //{
-    //    ResourceManager.resourceProviders.Add(new LegacyResourcesProvider());
-    //    ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
+    [UnityTest]
+    public IEnumerator CanLoadFrom_ResourceFolder_WithAsyncOperation()
+    {
+        ResourceManager.resourceProviders.Add(new LegacyResourcesProvider());
+        ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
 
-    //    IAsyncOperation op = ResourceManager.LoadAsync<GameObject, string>("test");
-    //    yield return op;
+        IAsyncOperation op = ResourceManager.LoadAsync<GameObject, string>("test");
 
-    //    GameObject cube = op.result as GameObject;
+        while (!op.isDone)
+            yield return null;
 
-    //    Assert.IsNotNull(cube);
-    //}
+        GameObject cube = op.result as GameObject;
+
+        Assert.IsNotNull(cube);
+    }
 
     [UnityTest]
     public IEnumerator CanLoadAllAssets_FromResourcesFolder()
@@ -63,54 +64,6 @@ public class ResourceManagerTests : MonoBehaviour
 
         Assert.AreEqual(3, gameObjects.Count);
     }
-
-    //WHY TEST IS REMOVED: I think this one will only work if a build is actually crated that contains the scene. 
-    //[UnityTest]
-    //public IEnumerator LoadScene_ThatIsIncluded_InBuildSettings()
-    //{
-    //    string sceneName = "BuildSettingsScene";
-    //    bool testPass = false;
-
-    //    ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
-    //    ResourceManager.sceneProvider = new SceneProvider();
-
-    //    SceneManager.sceneLoaded += ((scene, loadSceneMode) =>
-    //    {
-    //        if (scene.name == sceneName)
-    //            testPass = true;
-    //    });
-
-    //    IAsyncOperation op = ResourceManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
-    //    yield return op;
-
-    //    Assert.IsTrue(testPass);
-
-    //    yield return SceneManager.UnloadSceneAsync(sceneName);
-    //}
-
-    //WHY TEST IS REMOVED: requires a path to the built bundle, but I believe the path will change as Packman functionality locks in.
-    //[UnityTest]
-    //public IEnumerator LoadScene_ThatIsIncluded_InAssetBundle()
-    //{
-    //    ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
-    //    ResourceManager.sceneProvider = new SceneProvider();
-    //    string sceneName = "AssetBundleScene";
-    //    bool testPass = false;
-
-    //    SceneManager.sceneLoaded += ((scene, loadSceneMode) =>
-    //    {
-    //        if (scene.name == sceneName)
-    //            testPass = true;
-    //    });
-
-    //    AssetBundle ab = AssetBundle.LoadFromFile("Assets/ResourceManager/PlayModeTests/TestAssets/scene");
-    //    IAsyncOperation op = ResourceManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
-    //    yield return op;
-
-    //    yield return SceneManager.UnloadSceneAsync(sceneName);
-    //    ab.Unload(true);
-    //    Assert.IsTrue(testPass);
-    //}
 
     [UnityTest]
     public IEnumerator GetResourceLocation()
@@ -155,6 +108,8 @@ public class ResourceManagerTests : MonoBehaviour
         GameObject obj = op.result as GameObject;
         Assert.IsNotNull(obj);
         Assert.IsNotNull(GameObject.Find("Cube 1(Clone)"));
+
+        Destroy(GameObject.Find("Cube 1(Clone)"));
     }
 
     [UnityTest]
@@ -177,82 +132,75 @@ public class ResourceManagerTests : MonoBehaviour
         Assert.IsNotNull(GameObject.Find("Cube(Clone)"));
         Assert.IsNotNull(GameObject.Find("Cube 1(Clone)"));
         Assert.IsNotNull(GameObject.Find("Cube 2(Clone)"));
+
+        Destroy(GameObject.Find("Cube(Clone)"));
+        Destroy(GameObject.Find("Cube 1(Clone)"));
+        Destroy(GameObject.Find("Cube 2(Clone)"));
     }
 
-    //WHY TEST IS REMOVED: I think this one will only work if a build is actually crated that contains the scene. 
-    //[UnityTest]
-    //public IEnumerator UnloadScene_ThatIsIncluded_InBuildSettings()
-    //{
-    //    string sceneName = "BuildSettingsScene";
-    //    bool testPass = false;
+    [UnityTest]
+    public IEnumerator LoadAllDependencies_FromResourceLocation()
+    {
+        IResourceProvider provider = new LegacyResourcesProvider();
+        ResourceManager.resourceProviders.Add(provider);
+        ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
 
-    //    ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
-    //    ResourceManager.sceneProvider = new SceneProvider();
+        IResourceLocation dep1 = ResourceManager.GetResourceLocation("Cube 1");
+        IResourceLocation dep2 = ResourceManager.GetResourceLocation("Cube 2");
+        IResourceLocation[] deps = new IResourceLocation[] { dep1, dep2 };
+        IResourceLocation location = new ResourceLocationBase<string>("Cube", "Cube", provider.providerId, deps);
 
-    //    SceneManager.sceneUnloaded += ((scene) =>
-    //    {
-    //        if (scene.name == sceneName)
-    //            testPass = true;
-    //    });
+        List<GameObject> loadedDependencies = new List<GameObject>();
+        IAsyncOperation asyncOperation = ResourceManager.PreloadDependenciesAsync(location, (op) =>
+        {
+            loadedDependencies.Add(op.result as GameObject);
+        });
 
-    //    IAsyncOperation loadOp = ResourceManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
-    //    yield return loadOp;
+        while (!asyncOperation.isDone)
+            yield return null;
 
-    //    Assert.IsFalse(testPass);
+        Assert.AreEqual(2, loadedDependencies.Count);
+    }
 
-    //    IAsyncOperation unloadOp = ResourceManager.UnloadSceneAsync(sceneName);
-    //    yield return unloadOp;
+    [UnityTest]
+    public IEnumerator ReleaseInstance()
+    {
+        ResourceManager.resourceProviders.Add(new LegacyResourcesProvider());
+        ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
+        ResourceManager.instanceProvider = new InstanceProvider();
 
-    //    Assert.IsTrue(testPass);
-    //}
+        IAsyncOperation op = ResourceManager.InstantiateAsync<GameObject, string>("Cube 1");
+        while (!op.isDone)
+            yield return null;
 
-    //WHY TEST IS REMOVED:  cannot get async timing to work right. Manually testing while waiting to solve async issue
-    //[UnityTest]
-    //public IEnumerator LoadAllDependencies_FromResourceLocation()
-    //{
-    //    IResourceProvider provider = new LegacyResourcesProvider();
-    //    ResourceManager.resourceProviders.Add(provider);
-    //    ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
+        Assert.IsNotNull(GameObject.Find("Cube 1(Clone)"));
 
-    //    IResourceLocation dep1 = ResourceManager.GetResourceLocation("Cube 1");
-    //    IResourceLocation dep2 = ResourceManager.GetResourceLocation("Cube 2");
-    //    IResourceLocation[] deps = new IResourceLocation[] {dep1, dep2};
-    //    IResourceLocation location = new ResourceLocationBase<string>("Cube", "1", provider.providerId, deps);
+        ResourceManager.ReleaseInstance<GameObject, string>("Cube 1", op.result as GameObject);
 
-    //    List<GameObject> loadedDependencies = new List<GameObject>();
-    //    yield return ResourceManager.PreloadDependenciesAsync(location, (op) =>
-    //    {
-    //        loadedDependencies.Add(op.result as GameObject);
-    //    });
+        yield return null;
+        Assert.IsNull(GameObject.Find("Cube 1(Clone)"));
+    }
 
-    //    Assert.AreEqual(2, loadedDependencies.Count);
-    //}
+    [UnityTest]
+    public IEnumerator LoadAllObjects_Async()
+    {
+        ResourceManager.resourceProviders.Add(new LegacyResourcesProvider());
+        ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
 
+        IResourceLocation loc1 = ResourceManager.GetResourceLocation("Cube");
+        IResourceLocation loc2 = ResourceManager.GetResourceLocation("Cube 1");
+        List<IResourceLocation> locs = new List<IResourceLocation>() { loc1, loc2 };
 
-    //WHY TEST IS REMOVED: have to solve LoadAllDependencies_FromResourceLocation first.
-    //[UnityTest]
-    //public IEnumerator LoadDependencies_FromListOfResourceLocations()
-    //{
-    //    throw new NotImplementedException("Have to figure out why the test LoadAllDependencies_FromResourceLocation isn't working before implementing this one.");
-    //}
+        List<GameObject> loadedObjects = new List<GameObject>();
+        IAsyncOperation loadOp = ResourceManager.LoadAllAsync<GameObject, IResourceLocation>(locs, (op) =>
+        {
+            GameObject go = op.result as GameObject;
+            loadedObjects.Add(go);
+        });
 
+        while (!loadOp.isDone)
+            yield return null;
 
-    //WHY TEST IS REMOVED:  cannot get async timing to work right. Manually testing while waiting to solve async issue
-    //[UnityTest]
-    //public IEnumerator ReleaseInstance()
-    //{
-    //    ResourceManager.resourceProviders.Add(new LegacyResourcesProvider());
-    //    ResourceManager.resourceLocators.Add(new LegacyResourcesLocator());
-    //    ResourceManager.instanceProvider = new InstanceProvider();
-
-    //    IAsyncOperation op = ResourceManager.InstantiateAsync<GameObject, string>("Cube 1");
-    //    yield return op;
-
-    //    Assert.IsNotNull(GameObject.Find("Cube 1(Clone)"));
-
-    //    ResourceManager.ReleaseInstance<GameObject, string>("Cube 1", op.result as GameObject);
-
-    //    yield return null;
-    //    Assert.IsNull(GameObject.Find("Cube 1(Clone)"));
-    //}
+        Assert.AreEqual(2, loadedObjects.Count);
+    }
 }

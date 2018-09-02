@@ -299,7 +299,14 @@ namespace ResourceManagement
         /// <typeparam name="TAddress">Address type.</typeparam>
         public static IAsyncOperation<IList<object>> PreloadDependenciesAllAsync<TAddress>(ICollection<TAddress> addresses, Action<IAsyncOperation<object>> callback)
         {
-            return StartInternalAsyncOp(addresses, (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, LoadAsync_Internal<object>, callback); });
+            List<IResourceLocation> dependancyLocations = new List<IResourceLocation>();
+            foreach (TAddress adr in addresses)
+            {
+                IResourceLocation loc = GetResourceLocation(adr);
+                dependancyLocations.AddRange(loc.dependencies);
+            }
+                
+            return StartInternalAsyncOp(dependancyLocations, (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, LoadAsync_Internal<object>, callback); });
         }
 
         /// <summary>
