@@ -1,16 +1,11 @@
 {
-    "category": "", 
-    "commit": "2084c85054fbea879b98f292b9b02bb735fbbb0d", 
-    "dependencies": {}, 
-    "description": "TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... TODO... ", 
-    "displayName": "Scriptable Build Pipeline", 
-    "keywords": [
-        "build", 
-        "bundle", 
-        "bundles", 
-        "assetbundles"
-    ], 
-    "name": "com.unity.scriptablebuildpipeline", 
-    "unity": "2018.2", 
-    "version": "0.0.4-preview"
+	"name": "com.unity.scriptablebuildpipeline",
+	"displayName": "Scriptable Build Pipeline",
+	"version": "0.0.5-preview",
+	"unity": "2018.2",
+	"description": "The Scriptable Build Pipeline moves the asset bundle build pipeline to C#.  Use the pre-defined build flows, or create your own using the divided up APIs.  This system improves build time, fixes incremental build, and provides greater flexibility.",
+	"keywords": ["build", "bundle", "bundles", "assetbundles"],
+	"category": "",
+	"dependencies": {
+	}
 }
