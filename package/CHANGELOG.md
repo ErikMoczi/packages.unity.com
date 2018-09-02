@@ -1,4 +1,4 @@
-# ProGrids 3.0.0-preview.8
+# ProGrids 3.0.0
 
 ## Features
 
