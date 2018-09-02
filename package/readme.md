@@ -1,3 +1,3 @@
-ResourceManager provides a high level API for managing assets in Unity.  All load methods are asynchronous. 
+The ResourceManager is an extendible high level API that asynchronously loads and unloads assets.
 
-It can be used on its own, but in the future will primarily serve as the foundation under the Addressables package (still to be released).
+It can be used on its own, but in the future will primarily serve as the foundation under higher level packages (still to be released).
