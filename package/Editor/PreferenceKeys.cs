@@ -21,10 +21,11 @@ namespace ProGrids.Editor
 		public const string GridColorX = "pg_Editor::gridColorX";
 		public const string GridColorY = "pg_Editor::gridColorY";
 		public const string GridColorZ = "pg_Editor::gridColorZ";
-		public const string AlphaBump = "pg_Editor:::AlphaBump";
+		public const string AlphaBump = "pg_Editor::AlphaBump";
 		public const string ShowGrid = "pg_Editor::ShowGrid";
 		public const string IncreaseGridSize = "pg_Editor::IncreaseGridSize";
 		public const string DecreaseGridSize = "pg_Editor::DecreaseGridSize";
+		public const string ResetGridSize = "pg_Editor::ResetGridSize";
 		public const string NudgePerspectiveBackward = "pg_Editor::NudgePerspectiveBackward";
 		public const string NudgePerspectiveForward = "pg_Editor::NudgePerspectiveForward";
 		public const string NudgePerspectiveReset = "pg_Editor::NudgePerspectiveReset";

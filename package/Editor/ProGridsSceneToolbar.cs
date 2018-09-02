@@ -161,7 +161,7 @@ namespace ProGrids.Editor
 
 			menuRect.y = menuStart;
 
-			Styles.snapIncrementContent.text = SnapValueInGridUnits.ToString("#.####");
+			Styles.snapIncrementContent.text = (SnapValueInGridUnits * SnapModifier).ToString("#.####");
 
 			if (GUI.Button(menuRect, Styles.snapIncrementContent, Styles.gridButtonStyleBlank))
 			{

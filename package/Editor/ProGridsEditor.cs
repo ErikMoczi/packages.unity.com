@@ -24,6 +24,7 @@ namespace ProGrids.Editor
 	partial class ProGridsEditor
 	{
 #region Properties
+
 		// used to reset progrids preferences when necessary
 		const int k_CurrentPreferencesVersion = 22;
 
@@ -41,6 +42,7 @@ namespace ProGrids.Editor
 
 		KeyCode m_IncreaseGridSizeShortcut = KeyCode.Equals;
 		KeyCode m_DecreaseGridSizeShortcut = KeyCode.Minus;
+		KeyCode m_ResetGridSizeShortcut = KeyCode.Alpha0;
 		KeyCode m_NudgePerspectiveBackwardShortcut = KeyCode.LeftBracket;
 		KeyCode m_NudgePerspectiveForwardShortcut = KeyCode.RightBracket;
 		KeyCode m_NudgePerspectiveResetShortcut = KeyCode.Alpha0;
@@ -143,8 +145,13 @@ namespace ProGrids.Editor
 			}
 		}
 
+		internal float SnapModifier
+		{
+			get { return m_SnapSettings.SnapMultiplierFrac(); }
+		}
+
 		/// <summary>
-		/// The snap value as set by the user interface. This is not multiplied by the grid unit or bracket key modifiers.
+		/// The snap value as set by the user interface. This is not multiplied by the grid unit or -+ key modifiers.
 		/// </summary>
 		/// <remarks>
 		/// To get the actual value used to snap objects in the scene, use SnapValueInUnityUnits.
@@ -234,7 +241,7 @@ namespace ProGrids.Editor
 			if (settings.SnapMultiplier < int.MaxValue / 2)
 				settings.SnapMultiplier *= 2;
 			EditorPrefs.SetString(PreferenceKeys.SnapSettings, JsonUtility.ToJson(settings));
-			SceneView.RepaintAll();
+			DoGridRepaint();
 		}
 
 		internal static void DecreaseGridSize()
@@ -245,7 +252,17 @@ namespace ProGrids.Editor
 			if (settings.SnapMultiplier > 1)
 				settings.SnapMultiplier /= 2;
 			EditorPrefs.SetString(PreferenceKeys.SnapSettings, JsonUtility.ToJson(settings));
-			SceneView.RepaintAll();
+			DoGridRepaint();
+		}
+
+		internal static void ResetGridSize()
+		{
+			if (!IsEnabled())
+				return;
+			var settings = Instance.m_SnapSettings;
+			settings.SnapMultiplier = Defaults.DefaultSnapMultiplier;
+			EditorPrefs.SetString(PreferenceKeys.SnapSettings, JsonUtility.ToJson(settings));
+			DoGridRepaint();
 		}
 
 		internal static void MenuNudgePerspectiveBackward()
@@ -349,8 +366,18 @@ namespace ProGrids.Editor
 		{
 			s_Instance = this;
 			RegisterDelegates();
+			
+			// this can fail on the first import to a new project when the toolbar was opened in a previous project.
+			// the editor scripts compile and run before unity has a chance to load the resources, resulting in no assets
+			// being loaded and the toolbar not rendering properly. don't throw an error because it only occurs in a very
+			// specific scenario, and recovers immediately (it will reload correctly after the assets finish importing)
+			if (!GridRenderer.Init())
+			{
+				Destroy();
+				return;
+			}
+
 			LoadPreferences();
-			GridRenderer.Init();
 			lastTime = Time.realtimeSinceStartup;
 			SetMenuIsExtended(menuOpen);
 			OnSelectionChange();
@@ -389,6 +416,7 @@ namespace ProGrids.Editor
 			UnregisterDelegates();
 
 			SceneView.onSceneGUIDelegate += OnSceneGUI;
+			EditorUtility.RegisterOnPreSceneGUIDelegate(OnPreSceneGUI);
 			EditorApplication.update += UpdateToolbar;
 			Selection.selectionChanged += OnSelectionChange;
 			Undo.undoRedoPerformed += ResetActiveTransformValues;
@@ -401,6 +429,7 @@ namespace ProGrids.Editor
 			m_IsEnabled = false;
 
 			SceneView.onSceneGUIDelegate -= OnSceneGUI;
+			EditorUtility.UnregisterOnPreSceneGUIDelegate(OnPreSceneGUI);
 			EditorApplication.update -= UpdateToolbar;
 			Selection.selectionChanged -= OnSelectionChange;
 			Undo.undoRedoPerformed -= ResetActiveTransformValues;
@@ -468,7 +497,7 @@ namespace ProGrids.Editor
 
 			FullGridEnabled = EditorPrefs.GetBool(PreferenceKeys.PerspGrid);
 
-			m_RenderPlane = EditorPrefs.HasKey(PreferenceKeys.GridAxis) ? (Axis)EditorPrefs.GetInt(PreferenceKeys.GridAxis) : Axis.Y;
+			m_RenderPlane = EditorPrefs.HasKey(PreferenceKeys.GridAxis) ? (Axis) EditorPrefs.GetInt(PreferenceKeys.GridAxis) : Axis.Y;
 			m_DrawGrid = EditorPrefs.GetBool(PreferenceKeys.ShowGrid, Defaults.ShowGrid);
 			m_PredictiveGrid = EditorPrefs.GetBool(PreferenceKeys.PredictiveGrid, Defaults.PredictiveGrid);
 		}
@@ -485,35 +514,39 @@ namespace ProGrids.Editor
 			}
 		}
 
-		void OnSceneGUI(SceneView scnview)
+		void OnSceneGUI(SceneView view)
 		{
-			if (scnview == SceneView.lastActiveSceneView)
+			var currentEvent = Event.current;
+
+			HandleKeys(currentEvent);
+
+			if (view == SceneView.lastActiveSceneView)
 			{
 				Handles.BeginGUI();
 				DrawSceneToolbar();
 				Handles.EndGUI();
 			}
 
-			// don't snap stuff in play mode
-			if (EditorApplication.isPlayingOrWillChangePlaymode)
-				return;
+			if (!EditorApplication.isPlayingOrWillChangePlaymode)
+				DoTransformSnapping(currentEvent, view.camera);
+		}
 
+		void OnPreSceneGUI(SceneView view)
+		{
 			var currentEvent = Event.current;
-
-			HandleKeys(currentEvent);
 
 			if (m_DrawGrid && (currentEvent.type == EventType.Repaint || m_DoGridRepaint))
 			{
 				Vector3 previousPivot = m_Pivot;
-				CalculateGridPlacement(scnview);
+				CalculateGridPlacement(view);
 
 				if (GridIsOrthographic)
 				{
-					GridRenderer.DrawOrthographic(scnview.camera, SnapValueInUnityUnits, m_DrawAngles ? AngleValue : -1f);
+					GridRenderer.DrawOrthographic(view.camera, SnapValueInUnityUnits, m_DrawAngles ? AngleValue : -1f);
 				}
 				else
 				{
-					float camDistance = Vector3.Distance(scnview.camera.transform.position, previousPivot);
+					float camDistance = Vector3.Distance(view.camera.transform.position, previousPivot);
 
 					if (m_DoGridRepaint || m_Pivot != previousPivot ||
 					    Mathf.Abs(camDistance - m_LastDistanceCameraToPivot) > m_LastDistanceCameraToPivot / 2 ||
@@ -524,16 +557,14 @@ namespace ProGrids.Editor
 						m_LastDistanceCameraToPivot = camDistance;
 
 						if (FullGridEnabled)
-							GridRenderer.SetPerspective3D(scnview.camera, m_Pivot, m_SnapSettings.SnapValueInUnityUnits());
+							GridRenderer.SetPerspective3D(view.camera, m_Pivot, m_SnapSettings.SnapValueInUnityUnits());
 						else
-							m_PlaneGridDrawDistance = GridRenderer.SetPerspective(scnview.camera, m_RenderPlane, m_SnapSettings.SnapValueInUnityUnits(), m_Pivot, GridRenderOffset);
+							m_PlaneGridDrawDistance = GridRenderer.SetPerspective(view.camera, m_RenderPlane, m_SnapSettings.SnapValueInUnityUnits(), m_Pivot, GridRenderOffset);
 					}
 
 					GridRenderer.Repaint();
 				}
 			}
-
-			DoTransformSnapping(currentEvent, scnview.camera);
 		}
 
 		void CalculateGridPlacement(SceneView view)
@@ -713,6 +744,10 @@ namespace ProGrids.Editor
 				else if (currentEvent.keyCode == m_DecreaseGridSizeShortcut)
 				{
 					DecreaseGridSize();
+				}
+				else if (currentEvent.keyCode == m_ResetGridSizeShortcut)
+				{
+					ResetGridSize();
 				}
 				else if (currentEvent.keyCode == m_NudgePerspectiveBackwardShortcut)
 				{

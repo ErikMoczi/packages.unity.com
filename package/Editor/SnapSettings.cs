@@ -72,14 +72,14 @@ namespace ProGrids.Editor
 			set { m_SnapMultiplier = value; }
 		}
 
-		public float SnapMultiplierInUnityUnits()
+		public float SnapMultiplierFrac()
 		{
 			return m_SnapMultiplier / (float) Defaults.DefaultSnapMultiplier;
 		}
 
 		public float SnapValueInUnityUnits()
 		{
-			return SnapValue * EnumExtension.SnapUnitValue(SnapUnit) * SnapMultiplierInUnityUnits();
+			return SnapValue * EnumExtension.SnapUnitValue(SnapUnit) * SnapMultiplierFrac();
 		}
 	}
 }

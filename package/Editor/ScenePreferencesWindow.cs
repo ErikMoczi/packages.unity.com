@@ -26,14 +26,14 @@ namespace ProGrids.Editor
 
 			GUILayout.Label("Snap Settings", EditorStyles.boldLabel);
 
-			float snap = editor.SnapValueInGridUnits;
+			float snap = editor.SnapValueInGridUnits * editor.SnapModifier;
 
 			EditorGUI.BeginChangeCheck();
 
 			snap = EditorGUILayout.FloatField("Snap Value", snap);
 
 			if(EditorGUI.EndChangeCheck())
-				editor.SnapValueInGridUnits = snap;
+				editor.SnapValueInGridUnits = snap / editor.SnapModifier;
 
 			editor.ScaleSnapEnabled = EditorGUILayout.Toggle("Snap On Scale", editor.ScaleSnapEnabled);
 

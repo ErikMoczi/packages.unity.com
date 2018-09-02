@@ -2,3 +2,4 @@
 3.0.0-preview.2
 3.0.0-preview.3
 3.0.0-preview.4
+3.0.0-preview.5

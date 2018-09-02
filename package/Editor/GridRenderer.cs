@@ -34,7 +34,10 @@ namespace ProGrids.Editor
 		/// <summary>
 		/// Destroy any existing render objects, then initialize new ones.
 		/// </summary>
-		public static void Init()
+		/// <returns>
+		/// True if instance resources were successfully initialized, false if not.
+		/// </returns>
+		public static bool Init()
 		{
 			majorLineIncrement = EditorPrefs.GetInt(PreferenceKeys.MajorLineIncrement, 10);
 
@@ -61,13 +64,20 @@ namespace ProGrids.Editor
 
 				if (s_GridMaterial == null)
 				{
-					s_GridMaterial = new Material(Shader.Find(k_GridShader));
-					s_GridMaterial.name = k_MaterialObjectName;
-					s_GridMaterial.hideFlags = k_SceneObjectHideFlags;
+					var shader = Shader.Find(k_GridShader);
+
+					if (shader != null)
+					{
+						s_GridMaterial = new Material(shader);
+						s_GridMaterial.name = k_MaterialObjectName;
+						s_GridMaterial.hideFlags = k_SceneObjectHideFlags;
+					}
 				}
 			}
 
 			LoadPreferences();
+			
+			return s_GridMesh != null || s_GridMaterial != null;
 		}
 
 		public static void Destroy()

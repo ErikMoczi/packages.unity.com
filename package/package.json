@@ -1,7 +1,7 @@
 {
 	"name": "com.unity.progrids",
 	"displayName":"ProGrids",
-	"version": "3.0.0-preview.4",
+	"version": "3.0.0-preview.5",
 	"unity": "2018.1",
 	"description": "Grid snapping in the Scene View.",
 	"keywords": ["grid", "snap", "manipulation", "array", "align"],

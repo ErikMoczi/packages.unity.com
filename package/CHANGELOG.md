@@ -1,4 +1,4 @@
-# ProGrids 3.0.0-preview.4
+# ProGrids 3.0.0-preview.5
 
 ## Features
 
@@ -13,6 +13,14 @@
 ## Changes
 
 - Remove `pg_` suffix from class and file names.
+
+## Changes from preview.4
+
+- Fix errors on importing from Package Manager to clean project.
+- Fix grid rendering on top of UI elements.
+- Fix grid multiplier shortcuts not refreshing the scene.
+- Fix grid multiplier not being accounted for in UI.
+- Add a shortcut to reset the snap multiplier (alpha numeric 0 by default).
 
 ## Changes from preview.3
 
