@@ -304,7 +304,7 @@ namespace UnityEditor.AddressableAssets
                     SetValueByName(defaultId, "LocalLoadPrefix", "file://{UnityEngine.Application.streamingAssetsPath}");
                     SetValueByName(defaultId, "RemoteBuildPath", "ServerData/[BuildTarget]");
                     SetValueByName(defaultId, "RemoteLoadPrefix", "http://localhost/[BuildTarget]");
-                    SetValueByName(defaultId, "version", "1");
+                    SetValueByName(defaultId, "ContentVersion", "1");
 
                     var devId = AddProfile("Dev", defaultId);
                     SetValueByName(devId, "RemoteBuildPath", "DevServerData/[BuildTarget]");
