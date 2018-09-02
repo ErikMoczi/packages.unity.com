@@ -1,7 +1,6 @@
-using UnityEngine;
 using System;
 
-namespace ResourceManagement.Util
+namespace UnityEngine.ResourceManagement
 {
     internal class CompletionUpdater : MonoBehaviour
     {

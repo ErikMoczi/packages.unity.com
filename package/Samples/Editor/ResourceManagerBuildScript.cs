@@ -8,7 +8,7 @@ using ResourceManagement.ResourceProviders;
 using ResourceManagement.ResourceProviders.Simulation;
 using System;
 
-namespace ResourceManagement.Samples
+namespace UnityEngine.ResourceManagement
 {
     /*
      * This sample build script will gather all prefabs from a folder in the project and create addresses for them and create the runtime data needed

@@ -1,31 +1,31 @@
-using System.Collections;
 using System.Collections.Generic;
 using System;
-using UnityEngine;
-using Object = UnityEngine.Object;
 
-namespace ResourceManagement.AsyncOperations
+namespace UnityEngine.ResourceManagement
 {
     /// <summary>
     /// base class for implemented AsyncOperations, implements the needed interfaces and consolidates redundant code
     /// </summary>
-    public class AsyncOperationBase<T> : IAsyncOperation<T>
+    public abstract class AsyncOperationBase<T> : IAsyncOperation<T>
     {
         protected T m_result;
+        protected AsyncOperationStatus m_status;
+        protected Exception m_error;
+        protected object m_context;
         event Action<IAsyncOperation> m_completedAction;
         event Action<IAsyncOperation<T>> m_completedActionT;
-        public object m_context;
-		object IAsyncOperation.result { get { return m_result; } }
-        public AsyncOperationBase() { }
+        protected AsyncOperationBase() { }
+
         public event Action<IAsyncOperation<T>> completed
         {
             add
             {
-                if (isDone)
+                if (IsDone)
                 {
                     try
                     {
-                        value(this);
+                        if(value != null)
+                            value(this);
                     }
                     catch (Exception e)
                     {
@@ -48,11 +48,12 @@ namespace ResourceManagement.AsyncOperations
 		{
 			add
 			{
-                if (isDone)
+                if (IsDone)
                 {
                     try
                     {
-                        value(this);
+                        if (value != null)
+                            value(this);
                     }
                     catch (Exception e)
                     {
@@ -71,17 +72,16 @@ namespace ResourceManagement.AsyncOperations
 			}
 		}
 
-		protected AsyncOperationStatus m_status;
-        protected Exception m_error;
-        public AsyncOperationStatus status { get { return m_status; } }
-        public Exception error { get { return m_error; } }
-        public bool MoveNext() { return !isDone; }
+        object IAsyncOperation.Result { get { return m_result; } }
+        public AsyncOperationStatus Status { get { return m_status; } }
+        public Exception OperationException { get { return m_error; } }
+        public bool MoveNext() { return !IsDone; }
         public void Reset() { }
-        public object Current { get { return result; } }
-        public virtual T result { get { return m_result; } }
-        public virtual bool isDone { get { return !(EqualityComparer<T>.Default.Equals(result, default(T))); } }
-        public virtual float percentComplete { get { return isDone ? 1f : 0f; } }
-        public object context { get { return m_context; } }
+        public object Current { get { return Result; } }
+        public virtual T Result { get { return m_result; } set { m_result = value; } }
+        public virtual bool IsDone { get { return !(EqualityComparer<T>.Default.Equals(Result, default(T))); } }
+        public virtual float PercentComplete { get { return IsDone ? 1f : 0f; } }
+        public object Context { get { return m_context; } }
 
         public void InvokeCompletionEvent()
         {

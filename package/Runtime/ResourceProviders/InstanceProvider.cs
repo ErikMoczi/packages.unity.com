@@ -1,11 +1,8 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
-using Object = UnityEngine.Object;
-using ResourceManagement.AsyncOperations;
-using ResourceManagement.Util;
+using UnityEngine.ResourceManagement.Diagnostics;
 
-namespace ResourceManagement.ResourceProviders
+namespace UnityEngine.ResourceManagement
 {
     public class InstanceProvider : IInstanceProvider
     {
@@ -15,60 +12,60 @@ namespace ResourceManagement.ResourceProviders
             TObject prefabResult;
             int m_startFrame;
             Action<IAsyncOperation<TObject>> m_completeAction;
-            InstantiationParams m_instParams;
+            InstantiationParameters m_instParams;
 
             public InternalOp() 
             {
                 m_completeAction = OnComplete;
             }
 
-            public InternalOp<TObject> Start(IAsyncOperation<TObject> loadOp, IResourceLocation loc, InstantiationParams instParams)
+            public InternalOp<TObject> Start(IAsyncOperation<TObject> loadOperation, IResourceLocation location, InstantiationParameters instantiateParameters)
             {
                 prefabResult = null;
-                m_result = null;
-                m_context = loc;
-                m_instParams = instParams;
+                Result = null;
+                m_context = location;
+                m_instParams = instantiateParameters;
                 m_startFrame = Time.frameCount;
-                loadOp.completed += m_completeAction;
+                loadOperation.completed += m_completeAction;
                 return this;
             }
 
-            void OnComplete(IAsyncOperation<TObject> op)
+            void OnComplete(IAsyncOperation<TObject> operation)
             {
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, m_context, Time.frameCount - m_startFrame);
-                prefabResult = op.result;
+                prefabResult = operation.Result;
                 if (prefabResult == null)
                 {
                     Debug.Log("Unable to load asset to instantiate: " + m_context);
                 }
-                else if (m_result == null)
+                else if (Result == null)
                 {
-                    m_result = m_instParams.Instantiate(prefabResult);
+                    Result = m_instParams.Instantiate(prefabResult);
                 }
                 InvokeCompletionEvent();
                 AsyncOperationCache.Instance.Release<TObject>(this);
             }
         }
 
-        public bool CanProvideInstance<TObject>(IResourceProvider loadProvider, IResourceLocation loc)
+        public bool CanProvideInstance<TObject>(IResourceProvider loadProvider, IResourceLocation location)
             where TObject : Object
         {
-            return loadProvider.CanProvide<TObject>(loc) && Config.IsInstance<TObject, GameObject>();
+            return loadProvider.CanProvide<TObject>(location) && ResourceManagerConfig.IsInstance<TObject, GameObject>();
         }
 
-        public IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation, InstantiationParams instParams)
+        public IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, InstantiationParameters instantiateParameters)
             where TObject : Object
         {
-            var depOp = loadProvider.ProvideAsync<TObject>(loc, loadDependencyOperation);
+            var depOp = loadProvider.ProvideAsync<TObject>(location, loadDependencyOperation);
 
             var r = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
-            return r.Start(depOp, loc, instParams);
+            return r.Start(depOp, location, instantiateParameters);
         }
 
-        public bool ReleaseInstance(IResourceProvider loadProvider, IResourceLocation loc, UnityEngine.Object asset)
+        public bool ReleaseInstance(IResourceProvider loadProvider, IResourceLocation location, UnityEngine.Object asset)
         {
             Object.Destroy(asset);
-            return loadProvider.Release(loc, null);
+            return loadProvider.Release(location, null);
         }
     }
 }

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace ResourceManagement.AsyncOperations
+namespace UnityEngine.ResourceManagement
 {
-    public class LoadGroupOperation<TObject> : AsyncOperationBase<IList<TObject>>
+    internal class LoadGroupOperation<TObject> : AsyncOperationBase<IList<TObject>>
         where TObject : class
     {
         protected int totalToLoad;
@@ -12,10 +12,10 @@ namespace ResourceManagement.AsyncOperations
         Action<IAsyncOperation<TObject>> m_internalOnComplete;
         Action<IAsyncOperation<TObject>> m_action;
         List<IAsyncOperation<TObject>> m_ops;
-        public override void SetResult(IList<TObject> result)
+        public override void SetResult(IList<TObject> ignored)
         {
             foreach (var op in m_ops)
-                m_result.Add(op.result);
+                Result.Add(op.Result);
         }
 
         public LoadGroupOperation() 
@@ -31,10 +31,10 @@ namespace ResourceManagement.AsyncOperations
             loadCount = 0;
             allStarted = false;
             m_action = onComplete;
-            if(m_result == null)
-                m_result = new List<TObject>(locations.Count);
+            if(Result == null)
+                Result = new List<TObject>(locations.Count);
             else
-                m_result.Clear();
+                Result.Clear();
 
             if(m_ops == null)
                 m_ops = new List<IAsyncOperation<TObject>>(locations.Count);
@@ -50,16 +50,16 @@ namespace ResourceManagement.AsyncOperations
 
             allStarted = true;
 
-            if (isDone)
+            if (IsDone)
             {
-                SetResult(result);
+                SetResult(Result);
                 InvokeCompletionEvent();
             }
 
             return this;
         }
 
-        public override bool isDone { get { return allStarted && loadCount == totalToLoad; } }
+        public override bool IsDone { get { return allStarted && loadCount == totalToLoad; } }
 
         void LoadGroupOperation_completed(IAsyncOperation<TObject> obj)
         {
@@ -68,9 +68,9 @@ namespace ResourceManagement.AsyncOperations
 
             loadCount++;
 
-            if (isDone)
+            if (IsDone)
             {
-                SetResult(result);
+                SetResult(Result);
                 InvokeCompletionEvent();
             }
         }

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ResourceManagement.AsyncOperations
+namespace UnityEngine.ResourceManagement
 {
     internal class EmptyGroupOperation<TObject> : LoadGroupOperation<TObject>
         where TObject : class
@@ -21,7 +21,7 @@ namespace ResourceManagement.AsyncOperations
             return this;
         }
 
-        public override bool isDone
+        public override bool IsDone
         {
             get
             {
@@ -29,7 +29,7 @@ namespace ResourceManagement.AsyncOperations
             }
         }
 
-        public override float percentComplete
+        public override float PercentComplete
         {
             get
             {

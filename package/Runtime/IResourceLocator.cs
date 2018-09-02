@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ResourceManagement
+namespace UnityEngine.ResourceManagement
 {
     public interface IResourceLocator
     {

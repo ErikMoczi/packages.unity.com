@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using ResourceManagement.ResourceProviders;
-namespace ResourceManagement.Samples
+namespace UnityEngine.ResourceManagement
 {
     /*
      * This data is intended to be serialized and passed to the player.  A build script would create an instance of this data and call the Save() method.

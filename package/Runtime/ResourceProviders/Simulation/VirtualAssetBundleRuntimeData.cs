@@ -1,23 +1,29 @@
-using UnityEngine;
+#if UNITY_EDITOR
 using System.Collections.Generic;
 using System;
 using System.IO;
 
-namespace ResourceManagement.ResourceProviders.Simulation
+namespace UnityEngine.ResourceManagement
 {
     [Serializable]
     public class VirtualAssetBundleRuntimeData
     {
-        public List<VirtualAssetBundle> simulatedAssetBundles = new List<VirtualAssetBundle>();
-        public string[] sceneGUIDS;
-        public int remoteLoadSpeed = 1024 * 100;
-        public int localLoadSpeed = 1024 * 1024 * 10;
-        const string PlayerLocation = "Assets/StreamingAssets/VirtualAssetBundleData.json";
+        [SerializeField]
+        List<VirtualAssetBundle> m_simulatedAssetBundles = new List<VirtualAssetBundle>();
+        [SerializeField]
+        int m_remoteLoadSpeed = 1024 * 100;
+        [SerializeField]
+        int m_localLoadSpeed = 1024 * 1024 * 10;
+        public static string PlayerLocation { get { return Path.Combine(Application.streamingAssetsPath, "VirtualAssetBundleData.json").Replace('\\', '/'); } }
+        public IList<VirtualAssetBundle> AssetBundles { get { return m_simulatedAssetBundles; } }
+        public int RemoteLoadSpeed { get { return m_remoteLoadSpeed; } }
+        public int LocalLoadSpeed { get { return m_localLoadSpeed; } }
+
         public VirtualAssetBundleRuntimeData() {}
         public VirtualAssetBundleRuntimeData(int localSpeed, int remoteSpeed)
         {
-            localLoadSpeed = localSpeed;
-            remoteLoadSpeed = remoteSpeed;
+            m_localLoadSpeed = localSpeed;
+            m_remoteLoadSpeed = remoteSpeed;
         }
 
         public static VirtualAssetBundleRuntimeData Load()
@@ -28,14 +34,12 @@ namespace ResourceManagement.ResourceProviders.Simulation
                     return null;
                 return JsonUtility.FromJson<VirtualAssetBundleRuntimeData>(File.ReadAllText(PlayerLocation));
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.Log("Unable to load VirtualAssetBundleData from " + PlayerLocation + ", Exception: " + e);
             }
             return null;
         }
 
-#if UNITY_EDITOR
         const string LibraryLocation = "Library/VirtualAssetBundleData.json";
         public static VirtualAssetBundleRuntimeData LoadFromLibrary()
         {
@@ -73,6 +77,42 @@ namespace ResourceManagement.ResourceProviders.Simulation
             File.WriteAllText(LibraryLocation, data);
         }
 
-#endif
+        public static void DeleteFromLibrary()
+        {
+            try
+            {
+                if (File.Exists(LibraryLocation))
+                    File.Delete(LibraryLocation);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+        }
+
+        public static bool CopyFromLibraryToPlayer()
+        {
+            try
+            {
+                if (!File.Exists(LibraryLocation))
+                    return false;
+
+                if (File.Exists(PlayerLocation))
+                    File.Delete(PlayerLocation);
+
+                var dirName = Path.GetDirectoryName(PlayerLocation);
+                if (!string.IsNullOrEmpty(dirName) && !Directory.Exists(dirName))
+                    Directory.CreateDirectory(dirName);
+                File.Copy(LibraryLocation, PlayerLocation);
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                return false;
+            }
+        }
+
     }
 }
+#endif

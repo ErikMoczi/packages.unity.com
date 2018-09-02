@@ -1,19 +1,17 @@
-using System;
 using System.Collections.Generic;
-using UnityEngine;
-using ResourceManagement.Util;
+using UnityEngine.ResourceManagement.Diagnostics;
 
-namespace ResourceManagement.AsyncOperations
+namespace UnityEngine.ResourceManagement
 {
-    public abstract class InternalProviderOperation<TObject> : AsyncOperationBase<TObject>
+    internal abstract class InternalProviderOperation<TObject> : AsyncOperationBase<TObject>
         where TObject : class
     {
         int startFrame;
 
-        public virtual InternalProviderOperation<TObject> Start(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation)
+        public virtual InternalProviderOperation<TObject> Start(IResourceLocation location)
         {
             startFrame = Time.frameCount;
-            m_context = loc;
+            m_context = location;
             return this;
         }
 

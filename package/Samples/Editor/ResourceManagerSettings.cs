@@ -3,7 +3,7 @@
 using UnityEngine;
 using UnityEditor;
 
-namespace ResourceManagement.Samples
+namespace UnityEngine.ResourceManagement
 {
     /*
      * Sample implementation of a minimal build configuration for using the ResourceManager.

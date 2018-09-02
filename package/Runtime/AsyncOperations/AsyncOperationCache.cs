@@ -1,23 +1,19 @@
 using System;
 using System.Collections.Generic;
 
-namespace ResourceManagement.AsyncOperations
+namespace UnityEngine.ResourceManagement
 {
     public class AsyncOperationCache
     {
-        public static readonly AsyncOperationCache m_instance = new AsyncOperationCache();
-
-        public static AsyncOperationCache Instance
-        {
-            get { return m_instance; }
-        }
+        public static readonly AsyncOperationCache Instance = new AsyncOperationCache();
+        readonly Dictionary<CacheKey, Stack<IAsyncOperation>> m_cache = new Dictionary<CacheKey, Stack<IAsyncOperation>>(new CacheKeyComparer());
 
         internal struct CacheKey
         {
-            public readonly Type opType;
-            public readonly Type objType;
+            public Type opType { get; private set; }
+            public Type objType { get; private set; }
 
-            public CacheKey(Type opType, Type objType)
+            internal CacheKey(Type opType, Type objType)
             {
                 this.opType = opType;
                 this.objType = objType;
@@ -53,14 +49,14 @@ namespace ResourceManagement.AsyncOperations
             }
         }
 
-        readonly Dictionary<CacheKey, Stack<IAsyncOperation>> cache = new Dictionary<CacheKey, Stack<IAsyncOperation>>(new CacheKeyComparer());
-
         public void Release<TObject>(IAsyncOperation op)
         {
+            if (op == null)
+                return;
             var key = new CacheKey(op.GetType(), typeof(TObject));
             Stack<IAsyncOperation> c;
-            if (!cache.TryGetValue(key, out c))
-                cache.Add(key, c = new Stack<IAsyncOperation>());
+            if (!m_cache.TryGetValue(key, out c))
+                m_cache.Add(key, c = new Stack<IAsyncOperation>());
             op.ResetStatus();
             c.Push(op);
         }
@@ -69,7 +65,7 @@ namespace ResourceManagement.AsyncOperations
             where TAsyncOperation : IAsyncOperation, new()
         {
             Stack<IAsyncOperation> c;
-            if (cache.TryGetValue(new CacheKey(typeof(TAsyncOperation), typeof(TObject)), out c) && c.Count > 0)
+            if (m_cache.TryGetValue(new CacheKey(typeof(TAsyncOperation), typeof(TObject)), out c) && c.Count > 0)
                 return (TAsyncOperation)c.Pop();
 
             return new TAsyncOperation();
@@ -77,7 +73,7 @@ namespace ResourceManagement.AsyncOperations
 
         public void Clear()
         {
-            cache.Clear();
+            m_cache.Clear();
         }
     }
 }

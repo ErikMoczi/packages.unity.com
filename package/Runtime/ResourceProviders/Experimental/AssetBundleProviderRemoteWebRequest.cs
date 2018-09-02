@@ -1,33 +1,31 @@
 using System;
-using UnityEngine;
 using System.Net;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using ResourceManagement.AsyncOperations;
-using ResourceManagement.Util;
+using UnityEngine.ResourceManagement.Diagnostics;
 #if !UNITY_METRO
-namespace ResourceManagement.ResourceProviders.Experimental
+namespace UnityEngine.ResourceManagement
 {
     public class AssetBundleProviderRemoteWebRequest : ResourceProviderBase
     {
-        internal class InternalOp<TObject> : AsyncOperationBase<TObject>
+        internal class InternalOp<TObject> : AsyncOperationBase<TObject>, IDisposable
             where TObject : class
         {
+            bool m_complete;
             int m_startFrame;
-            ChunkedMemoryStream data;
-            byte[] buffer = new byte[1024 * 1024];
-            bool complete;
+            ChunkedMemoryStream m_data;
+            byte[] m_buffer = new byte[1024 * 1024];
 
-            public InternalOp<TObject> Start(IResourceLocation loc)
+            public InternalOp<TObject> Start(IResourceLocation location)
             {
-                m_result = null;
-                m_context = loc;
-                complete = false;
+                Result = null;
+                m_context = location;
+                m_complete = false;
                 m_startFrame = Time.frameCount;
-                data = new ChunkedMemoryStream();
-                CompletionUpdater.UpdateUntilComplete("WebRequest" + loc.id, CompleteInMainThread);
-                var req = WebRequest.Create(loc.id);
+                m_data = new ChunkedMemoryStream();
+                CompletionUpdater.UpdateUntilComplete("WebRequest" + location.InternalId, CompleteInMainThread);
+                var req = WebRequest.Create(location.InternalId);
                 req.BeginGetResponse(AsyncCallback, req);
                 return this;
             }
@@ -37,7 +35,7 @@ namespace ResourceManagement.ResourceProviders.Experimental
                 HttpWebRequest req = ar.AsyncState as HttpWebRequest;
                 var response = req.EndGetResponse(ar);
                 var stream = (response as HttpWebResponse).GetResponseStream();
-                stream.BeginRead(buffer, 0, buffer.Length, OnRead, stream);
+                stream.BeginRead(m_buffer, 0, m_buffer.Length, OnRead, stream);
             }
 
             void OnRead(IAsyncResult ar)
@@ -46,44 +44,54 @@ namespace ResourceManagement.ResourceProviders.Experimental
                 int read = responseStream.EndRead(ar);
                 if (read > 0)
                 {
-                    data.Write(buffer, 0, read);
-                    responseStream.BeginRead(buffer, 0, buffer.Length, OnRead, responseStream);
+                    m_data.Write(m_buffer, 0, read);
+                    responseStream.BeginRead(m_buffer, 0, m_buffer.Length, OnRead, responseStream);
                 }
                 else
                 {
-                    data.Position = 0;
-                    complete = true;
+                    m_data.Position = 0;
+                    m_complete = true;
                     responseStream.Close();
                 }
             }
 
             public bool CompleteInMainThread()
             {
-                if (!complete)
+                if (!m_complete)
                     return false;
-                AssetBundle.LoadFromStreamAsync(data).completed += InternalOp_completed;
+                AssetBundle.LoadFromStreamAsync(m_data).completed += InternalOp_completed;
                 return true;
             }
 
             void InternalOp_completed(AsyncOperation obj)
             {
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncCompletion, m_context, Time.frameCount - m_startFrame);
-                m_result = (obj as AssetBundleCreateRequest).assetBundle as TObject;
+                Result = (obj as AssetBundleCreateRequest).assetBundle as TObject;
                 InvokeCompletionEvent();
                 AsyncOperationCache.Instance.Release<TObject>(this);
-                data.Close();
-                data.Dispose();
-                data = null;
+                m_data.Close();
+                m_data.Dispose();
+                m_data = null;
+            }
+
+            public void Dispose()
+            {
+                if (m_data != null)
+                {
+                    m_data.Close();
+                    m_data.Dispose();
+                    m_data = null;
+                }
             }
         }
 
-        public override IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation)
+        public override IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             var r = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
-            return r.Start(loc);
+            return r.Start(location);
         }
 
-        public override bool Release(IResourceLocation loc, object asset)
+        public override bool Release(IResourceLocation location, object asset)
         {
             (asset as AssetBundle).Unload(true);
             return true;

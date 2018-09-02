@@ -1,4 +1,5 @@
-namespace ResourceManagement.Util
+
+namespace UnityEngine.ResourceManagement.Diagnostics
 {
     public static class ResourceManagerEventCollector
     {
@@ -22,9 +23,9 @@ namespace ResourceManagement.Util
         }
 
         public static string EventCategory = "ResourceManagerEvent";
-        public static void PostEvent(ResourceManagerEventCollector.EventType type, object context, int val)
+        public static void PostEvent(ResourceManagerEventCollector.EventType type, object context, int eventValue)
         {
-            if (!ResourceManager.m_postEvents)
+            if (!ResourceManager.s_postEvents)
                 return;
             var parent = "";
             var id = "";
@@ -33,22 +34,21 @@ namespace ResourceManagement.Util
             if (loc != null)
             {
                 id = loc.ToString();
-                if (loc.dependencies != null && loc.dependencies.Count > 0)
-                    parent = loc.dependencies[0].ToString();
+                if (loc.Dependencies != null && loc.Dependencies.Count > 0)
+                    parent = loc.Dependencies[0].ToString();
                 var sb = new System.Text.StringBuilder(256);
-                sb.Append(loc.providerId.Substring(loc.providerId.LastIndexOf('.') + 1));
-                sb.Append(',');
-                sb.Append(loc.id);
-                sb.Append(',');
-                for (int i = 0; loc.dependencies != null && i < loc.dependencies.Count; i++)
+                sb.Append(loc.ProviderId.Substring(loc.ProviderId.LastIndexOf('.') + 1));
+                sb.Append('!');
+                sb.Append(loc.InternalId);
+                sb.Append('!');
+                for (int i = 0; loc.Dependencies != null && i < loc.Dependencies.Count; i++)
                 {
-                    sb.Append(loc.dependencies[i].ToString());
+                    sb.Append(loc.Dependencies[i].ToString());
                     sb.Append(',');
                 }
                 data = System.Text.Encoding.ASCII.GetBytes(sb.ToString());
             }
-            EditorDiagnostics.EventCollector.PostEvent(
-                new EditorDiagnostics.DiagnosticEvent(EventCategory, parent, id, (int)type, UnityEngine.Time.frameCount, val, data));
+            DiagnosticEventCollector.PostEvent(new DiagnosticEvent(EventCategory, parent, id, (int)type, Time.frameCount, eventValue, data));
         }
     }
 }

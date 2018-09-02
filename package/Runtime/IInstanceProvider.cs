@@ -1,16 +1,22 @@
 using System.Collections.Generic;
-using UnityEngine;
 
-namespace ResourceManagement
+namespace UnityEngine.ResourceManagement
 {
-    public struct InstantiationParams
+    public struct InstantiationParameters
     {
-        public Vector3 m_position;
-        public Quaternion m_rotation;
-        public Transform m_parent;                
-        public bool m_instantiateInWorldPosition;
-        public bool m_setPositionRotation;
-        public InstantiationParams(Transform parent, bool instantiateInWorldSpace)
+        private Vector3 m_position;
+        private Quaternion m_rotation;
+        private Transform m_parent;
+        private bool m_instantiateInWorldPosition;
+        private bool m_setPositionRotation;
+
+        public Vector3 Position { get { return m_position; } }
+        public Quaternion Rotation { get { return m_rotation; } }
+        public Transform Parent { get { return m_parent; } }
+        public bool InstantiateInWorldPosition { get { return m_instantiateInWorldPosition; } }
+        public bool SetPositionRotation { get { return m_setPositionRotation; } }
+
+        public InstantiationParameters(Transform parent, bool instantiateInWorldSpace)
         {
             m_position = Vector3.zero;
             m_rotation = Quaternion.identity;
@@ -18,10 +24,10 @@ namespace ResourceManagement
             m_instantiateInWorldPosition = instantiateInWorldSpace;
             m_setPositionRotation = false;
         }
-        public InstantiationParams(Vector3 pos, Quaternion rot, Transform parent)
+        public InstantiationParameters(Vector3 position, Quaternion rotation, Transform parent)
         {
-            m_position = pos;
-            m_rotation = rot;
+            m_position = position;
+            m_rotation = rotation;
             m_parent = parent;
             m_instantiateInWorldPosition = false;
             m_setPositionRotation = true;
@@ -68,7 +74,7 @@ namespace ResourceManagement
         /// <param name="location">Location to instantiate.</param>
         /// <param name="loadDependencyOperation">Async operation for dependency loading.</param>
         /// <typeparam name="TObject">Instantiated object type.</typeparam>
-        IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, InstantiationParams instParams)
+        IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, InstantiationParameters instantiateParameters)
         where TObject : UnityEngine.Object;
 
         /// <summary>

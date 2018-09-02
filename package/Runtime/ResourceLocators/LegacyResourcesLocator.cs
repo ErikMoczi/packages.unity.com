@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using ResourceManagement.ResourceLocations;
-
-namespace ResourceManagement.ResourceLocators
+namespace UnityEngine.ResourceManagement
 {
     public class LegacyResourcesLocator : IResourceLocator<string>
     {

@@ -1,46 +1,70 @@
+#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
-using UnityEngine;
-using ResourceManagement.AsyncOperations;
 
-namespace ResourceManagement.ResourceProviders.Simulation
+namespace UnityEngine.ResourceManagement
 {
     [Serializable]
     public class VirtualAssetBundle
     {
-        public string name;
-        public bool loaded;
-        public bool isLocal;
-        public int size;
-        public List<string> assets = new List<string>();
-        public List<int> sizes = new List<int>();
-        List<IAsyncOperation> operations = new List<IAsyncOperation>();
-        [NonSerialized]
-        public VirtualAssetBundleManager m_manager;
+        [SerializeField]
+        string m_name;
+        [SerializeField]
+        bool m_isLocal;
+        [SerializeField]
+        int m_size;
+        [SerializeField]
+        List<string> m_assets = new List<string>();
+        [SerializeField]
+        List<int> m_sizes = new List<int>();
+
+        bool m_loaded;
+        List<IAsyncOperation> m_operations = new List<IAsyncOperation>();
+        VirtualAssetBundleManager m_manager;
+
+        public string Name { get { return m_name; } }
+
         public VirtualAssetBundle() {}
-        public VirtualAssetBundle(string n, bool local, int size, IEnumerable<string> a)
+        public VirtualAssetBundle(string name, bool local, int size, IEnumerable<string> assets)
         {
-            name = n;
-            this.size = size;
-            isLocal = local;
-            assets.AddRange(a);
+            m_name = name;
+            m_size = size;
+            m_isLocal = local;
+            m_assets.AddRange(assets);
             //TODO: pass in real size from VirtualAssetBundleRuntimeData
-            foreach (var aa in assets)
-                sizes.Add(1024 * 1024); //each asset is 1MB for now...
+            foreach (var aa in m_assets)
+                m_sizes.Add(1024 * 1024); //each asset is 1MB for now...
         }
 
-        public IAsyncOperation<TObject> LoadAssetAsync<TObject>(IResourceLocation loc, int speed) where TObject : class
+        internal bool Unload()
         {
-#if UNITY_EDITOR
-            if (loaded && assets.Contains(loc.id))
+            if (!m_loaded)
+                Debug.LogWarning("Simulated assetbundle " + Name + " is already unloaded.");
+            m_loaded = false;
+            return true;
+        }
+
+        internal VirtualAssetBundle Load(VirtualAssetBundleManager manager)
+        {
+            if (m_loaded)
+                Debug.LogWarning("Simulated assetbundle " + Name + " is already loaded.");
+            m_manager = manager;
+            m_loaded = true;
+            return this;
+
+        }
+
+        public IAsyncOperation<TObject> LoadAssetAsync<TObject>(IResourceLocation location, int speed) where TObject : class
+        {
+
+            if (m_loaded && m_assets.Contains(location.InternalId))
             {
-                var op = new LoadAssetOp<TObject>(loc, sizes[assets.IndexOf(loc.id)] / (float)speed);
-                operations.Add(op);
+                var op = new LoadAssetOp<TObject>(location, m_sizes[m_assets.IndexOf(location.InternalId)] / (float)speed);
+                m_operations.Add(op);
                 m_manager.AddToUpdateList(this);
                 return op;
             }
-#endif
-            Debug.Log("Unable to load asset " + loc.id + " from simulated bundle " + name);
+            Debug.Log("Unable to load asset " + location.InternalId + " from simulated bundle " + Name);
             return null;
         }
 
@@ -48,25 +72,24 @@ namespace ResourceManagement.ResourceProviders.Simulation
         {
             float loadTime;
             float startTime;
-            public LoadAssetOp(IResourceLocation loc, float delay)
+            public LoadAssetOp(IResourceLocation location, float delay)
             {
-                m_context = loc;
+                m_context = location;
                 loadTime = (startTime = Time.unscaledTime) + delay;
             }
 
-            public override float percentComplete { get { return Mathf.Clamp01((Time.unscaledTime - startTime) / (loadTime - startTime)); } }
+            public override float PercentComplete { get { return Mathf.Clamp01((Time.unscaledTime - startTime) / (loadTime - startTime)); } }
 
-            public override bool isDone
+            public override bool IsDone
             {
                 get
                 {
-                    if (base.isDone)
+                    if (base.IsDone)
                         return true;
                     if (Time.unscaledTime > loadTime)
                     {
-#if UNITY_EDITOR        //this only works in the editor
-                        m_result = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Object>((m_context as IResourceLocation).id) as TObject;
-#endif
+                        var assetPath = (m_context as IResourceLocation).InternalId;
+                        Result = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath) as TObject;
                         InvokeCompletionEvent();
                         return true;
                     }
@@ -77,23 +100,25 @@ namespace ResourceManagement.ResourceProviders.Simulation
 
         public bool UpdateAsyncOperations()
         {
-            foreach (var o in operations)
+            foreach (var o in m_operations)
             {
-                if (o.isDone)
+                if (o.IsDone)
                 {
-                    operations.Remove(o);
+                    m_operations.Remove(o);
                     break;
                 }
             }
-            return operations.Count > 0;
+            return m_operations.Count > 0;
         }
 
         //TODO: this needs to take into account the load of the entire system, not just a single asset load
         internal float GetLoadTime(int localLoadSpeed, int remoteLoadSpeed)
         {
-            if (isLocal)
-                return size / (float)localLoadSpeed;
-            return size / (float)remoteLoadSpeed;
+            if (m_isLocal)
+                return m_size / (float)localLoadSpeed;
+            return m_size / (float)remoteLoadSpeed;
         }
+
     }
 }
+#endif

@@ -1,8 +1,7 @@
+#if UNITY_EDITOR
 using System.Collections.Generic;
-using UnityEngine;
-using ResourceManagement.AsyncOperations;
-using ResourceManagement.Util;
-namespace ResourceManagement.ResourceProviders.Simulation
+
+namespace UnityEngine.ResourceManagement
 {
     public class VirtualAssetBundleManager : MonoBehaviour
     {
@@ -10,17 +9,8 @@ namespace ResourceManagement.ResourceProviders.Simulation
         Dictionary<string, LoadAssetBundleOp> m_loadBundleOperations = new Dictionary<string, LoadAssetBundleOp>();
         Dictionary<string, VirtualAssetBundle> m_updatingBundles = new Dictionary<string, VirtualAssetBundle>();
 
-        public int m_remoteLoadSpeed = 1024 * 100; //100 KB per second
-        public int m_localLoadSpeed = 1024 * 1024 * 10; //10 MB per second
-
-        internal void SetBundles(List<VirtualAssetBundle> bundles)
-        {
-            foreach (var b in bundles)
-            {
-                b.name = Config.ExpandPathWithGlobalVars(b.name);
-                m_allBundles.Add(b.name, b);
-            }
-        }
+        int m_remoteLoadSpeed = 1024 * 100; //100 KB per second
+        int m_localLoadSpeed = 1024 * 1024 * 10; //10 MB per second
 
         private void Awake()
         {
@@ -29,25 +19,18 @@ namespace ResourceManagement.ResourceProviders.Simulation
 
         private bool Unload(string id)
         {
-            VirtualAssetBundle vab = null;
-            if(!m_allBundles.TryGetValue(id, out vab))
+            VirtualAssetBundle bundle = null;
+            if(!m_allBundles.TryGetValue(id, out bundle))
                 Debug.LogWarning("Simulated assetbundle " + id + " not found.");
-            if(!vab.loaded)
-                Debug.LogWarning("Simulated assetbundle " + id + " is already unloaded.");
-            vab.loaded = false;
-            return true;
+            return bundle.Unload();
         }
 
         private VirtualAssetBundle Load(string id)
         {
-            VirtualAssetBundle vab = null;
-            if (!m_allBundles.TryGetValue(id, out vab))
+            VirtualAssetBundle bundle = null;
+            if (!m_allBundles.TryGetValue(id, out bundle))
                 Debug.LogWarning("Simulated assetbundle " + id + " not found.");
-            if (vab.loaded)
-                Debug.LogWarning("Simulated assetbundle " + id + " is already loaded.");
-            vab.m_manager = this;
-            vab.loaded = true;
-            return vab;
+            return bundle.Load(this);
         }
 
         class LoadAssetBundleOp : AsyncOperationBase<VirtualAssetBundle>
@@ -55,11 +38,11 @@ namespace ResourceManagement.ResourceProviders.Simulation
             VirtualAssetBundleManager manager;
             string bundleName;
             float loadTime;
-            public LoadAssetBundleOp(VirtualAssetBundleManager mgr, IResourceLocation loc, float delay)
+            public LoadAssetBundleOp(VirtualAssetBundleManager manager, IResourceLocation location, float delay)
             {
-                manager = mgr;
-                m_context = loc;
-                bundleName = Config.ExpandPathWithGlobalVars(loc.id);
+                this.manager = manager;
+                m_context = location;
+                bundleName = ResourceManagerConfig.ExpandPathWithGlobalVariables(location.InternalId);
                 loadTime = Time.unscaledTime + delay;
             }
 
@@ -67,7 +50,7 @@ namespace ResourceManagement.ResourceProviders.Simulation
             {
                 if (Time.unscaledTime > loadTime)
                 {
-                    m_result = manager.Load(bundleName);
+                    Result = manager.Load(bundleName);
                     InvokeCompletionEvent();
                     return false;
                 }
@@ -77,18 +60,24 @@ namespace ResourceManagement.ResourceProviders.Simulation
 
         public static void AddProviders()
         {
-            var virtualBundleData = JsonUtility.FromJson<VirtualAssetBundleRuntimeData>(System.IO.File.ReadAllText(Application.streamingAssetsPath + "/VirtualAssetBundleData.json"));
+            var virtualBundleData = VirtualAssetBundleRuntimeData.Load();
             if (virtualBundleData != null)
             {
                 var go = new GameObject("AssetBundleSimulator", typeof(VirtualAssetBundleManager));
                 var simABManager = go.GetComponent<VirtualAssetBundleManager>();
-                simABManager.m_localLoadSpeed = virtualBundleData.localLoadSpeed;
-                simABManager.m_remoteLoadSpeed = virtualBundleData.remoteLoadSpeed;
-                simABManager.SetBundles(virtualBundleData.simulatedAssetBundles);
-                ResourceManager.resourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(simABManager, typeof(RemoteAssetBundleProvider).FullName)));
-                ResourceManager.resourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(simABManager, typeof(LocalAssetBundleProvider).FullName)));
-                ResourceManager.resourceProviders.Insert(0, new CachedProvider(new VirtualBundledAssetProvider(simABManager.m_localLoadSpeed)));
+                simABManager.Initialize(virtualBundleData);
+                ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(simABManager, typeof(RemoteAssetBundleProvider).FullName)));
+                ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(simABManager, typeof(LocalAssetBundleProvider).FullName)));
+                ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualBundledAssetProvider(simABManager.m_localLoadSpeed)));
             }
+        }
+
+        private void Initialize(VirtualAssetBundleRuntimeData virtualBundleData)
+        {
+            m_localLoadSpeed = virtualBundleData.LocalLoadSpeed;
+            m_remoteLoadSpeed = virtualBundleData.RemoteLoadSpeed;
+            foreach (var b in virtualBundleData.AssetBundles)
+                m_allBundles.Add(ResourceManagerConfig.ExpandPathWithGlobalVariables(b.Name), b);
         }
 
         float GetBundleLoadTime(string id)
@@ -96,24 +85,24 @@ namespace ResourceManagement.ResourceProviders.Simulation
             return m_allBundles[id].GetLoadTime(m_localLoadSpeed, m_remoteLoadSpeed);
         }
 
-        public bool Unload(IResourceLocation loc)
+        public bool Unload(IResourceLocation location)
         {
-            return Unload(Config.ExpandPathWithGlobalVars(loc.id));
+            return Unload(ResourceManagerConfig.ExpandPathWithGlobalVariables(location.InternalId));
         }
 
-        public IAsyncOperation<VirtualAssetBundle> LoadAsync(IResourceLocation loc)
+        public IAsyncOperation<VirtualAssetBundle> LoadAsync(IResourceLocation location)
         {
             LoadAssetBundleOp op = null;
-            var bundleName = Config.ExpandPathWithGlobalVars(loc.id);
+            var bundleName = ResourceManagerConfig.ExpandPathWithGlobalVariables(location.InternalId);
             if (!m_loadBundleOperations.TryGetValue(bundleName, out op))
-                m_loadBundleOperations.Add(bundleName, op = new LoadAssetBundleOp(this, loc, GetBundleLoadTime(bundleName)));
+                m_loadBundleOperations.Add(bundleName, op = new LoadAssetBundleOp(this, location, GetBundleLoadTime(bundleName)));
             return op;
         }
 
-        public void AddToUpdateList(VirtualAssetBundle b)
+        public void AddToUpdateList(VirtualAssetBundle bundle)
         {
-            if (!m_updatingBundles.ContainsKey(b.name))
-                m_updatingBundles.Add(b.name, b);
+            if (!m_updatingBundles.ContainsKey(bundle.Name))
+                m_updatingBundles.Add(bundle.Name, bundle);
         }
 
         public void Update()
@@ -137,3 +126,4 @@ namespace ResourceManagement.ResourceProviders.Simulation
         }
     }
 }
+#endif

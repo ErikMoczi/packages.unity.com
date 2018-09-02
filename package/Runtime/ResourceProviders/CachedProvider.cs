@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Object = UnityEngine.Object;
-using ResourceManagement.Util;
-using UnityEngine;
+using UnityEngine.ResourceManagement.Diagnostics;
 
-namespace ResourceManagement.ResourceProviders
+namespace UnityEngine.ResourceManagement
 {
     public class CachedProvider : IResourceProvider
     {
@@ -12,11 +10,11 @@ namespace ResourceManagement.ResourceProviders
         {
             protected object m_result;
             protected CacheList m_cacheList;
-            abstract internal bool CanProvide<TObject>(IResourceLocation loc) where TObject : class;
+            abstract internal bool CanProvide<TObject>(IResourceLocation location) where TObject : class;
 
-            public abstract bool isDone { get; }
-            public abstract float percentComplete { get; }
-            public object result { get { return m_result; } }
+            public abstract bool IsDone { get; }
+            public abstract float PercentComplete { get; }
+            public object Result { get { return m_result; } }
         }
 
         internal class CacheEntry<TObject> : CacheEntry, IAsyncOperation<TObject>
@@ -25,13 +23,13 @@ namespace ResourceManagement.ResourceProviders
             IAsyncOperation m_operation;
             AsyncOperationStatus m_status;
             Exception m_error;
-            public AsyncOperationStatus status { get { return m_status > AsyncOperationStatus.None ? m_status : m_operation.status; } }
-            public Exception error { get { return m_error != null ? m_error : m_operation.error; } }
-            new public TObject result { get { return m_result as TObject; } }
-            public override bool isDone { get { return !(EqualityComparer<TObject>.Default.Equals(result, default(TObject))); } }
+            public AsyncOperationStatus Status { get { return m_status > AsyncOperationStatus.None ? m_status : m_operation.Status; } }
+            public Exception OperationException { get { return m_error != null ? m_error : m_operation.OperationException; } }
+            new public TObject Result { get { return m_result as TObject; } }
+            public override bool IsDone { get { return !(EqualityComparer<TObject>.Default.Equals(Result, default(TObject))); } }
             public object Current { get { return m_result; } }
             public bool MoveNext() { return m_result == null; }
-            public object context { get { return m_operation.context; } }
+            public object Context { get { return m_operation.Context; } }
             public void Reset() {}
             public virtual void ResetStatus()
             {
@@ -40,18 +38,19 @@ namespace ResourceManagement.ResourceProviders
                 m_error = null;
             }
 
-            public override float percentComplete { get { return isDone ? 1f : m_operation.percentComplete; } }
+            public override float PercentComplete { get { return IsDone ? 1f : m_operation.PercentComplete; } }
             protected event Action<IAsyncOperation<TObject>> m_completedActionT;
             protected event Action<IAsyncOperation> m_completedAction;
             public event Action<IAsyncOperation<TObject>> completed
             {
                 add
                 {
-                    if (isDone)
+                    if (IsDone)
                     {
                         try
                         {
-                            value(this);
+                            if (value != null)
+                                value(this);
                         }
                         catch (Exception e)
                         {
@@ -74,11 +73,12 @@ namespace ResourceManagement.ResourceProviders
             {
                 add
                 {
-                    if (isDone)
+                    if (IsDone)
                     {
                         try
                         {
-                            value(this);
+                            if(value != null)
+                                value(this);
                         }
                         catch (Exception e)
                         {
@@ -96,17 +96,17 @@ namespace ResourceManagement.ResourceProviders
                     m_completedAction -= value;
                 }
             }
-            public CacheEntry(CacheList cl, IAsyncOperation<TObject> op)
+            public CacheEntry(CacheList cacheList, IAsyncOperation<TObject> operation)
             {
-                m_cacheList = cl;
-                m_operation = op;
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, context, 0);
-                op.completed += OnComplete;
+                m_cacheList = cacheList;
+                m_operation = operation;
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, Context, 0);
+                operation.completed += OnComplete;
             }
 
-            void OnComplete(IAsyncOperation<TObject> op)
+            void OnComplete(IAsyncOperation<TObject> operation)
             {
-                m_result = op.result;
+                m_result = operation.Result;
                 if (m_completedActionT != null)
                 {
                     var tmpEvent = m_completedActionT;
@@ -137,10 +137,10 @@ namespace ResourceManagement.ResourceProviders
                         m_status = AsyncOperationStatus.Failed;
                     }
                 }
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, context, 100);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, Context, 100);
             }
 
-            internal override bool CanProvide<T1>(IResourceLocation loc)
+            internal override bool CanProvide<T1>(IResourceLocation location)
             {
                 return typeof(TObject) == typeof(T1);
             }
@@ -152,7 +152,7 @@ namespace ResourceManagement.ResourceProviders
             public float m_lastAccessTime;
             public IResourceLocation m_location;
             public List<CacheEntry> entries = new List<CacheEntry>();
-            public CacheList(IResourceLocation loc) { m_location = loc; }
+            public CacheList(IResourceLocation location) { m_location = location; }
             public int RefCount
             {
                 get
@@ -174,27 +174,27 @@ namespace ResourceManagement.ResourceProviders
                         return 0;
                     float rc = 0;
                     foreach (var ee in entries)
-                        rc += ee.percentComplete;
+                        rc += ee.PercentComplete;
                     return rc / entries.Count;
                 }
             }
 
-            public CacheEntry<TObject> FindEntry<TObject>(IResourceLocation loc)
+            public CacheEntry<TObject> FindEntry<TObject>(IResourceLocation location)
                  where TObject : class
             {
                 for (int i = 0; i < entries.Count; i++)
                 {
                     var e = entries[i];
-                    if (e.CanProvide<TObject>(loc))
+                    if (e.CanProvide<TObject>(location))
                         return e as CacheEntry<TObject>;
                 }
                 return null;
             }
 
-            public CacheEntry<TObject> CreateEntry<TObject>(IAsyncOperation<TObject> op) 
+            public CacheEntry<TObject> CreateEntry<TObject>(IAsyncOperation<TObject> operation) 
                 where TObject : class
             {
-                var entry = new CacheEntry<TObject>(this, op);
+                var entry = new CacheEntry<TObject>(this, operation);
                 entries.Add(entry);
                 return entry;
             }
@@ -219,7 +219,7 @@ namespace ResourceManagement.ResourceProviders
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, m_location, 0);
                 foreach (var e in entries)
                 {
-                    if (!provider.Release(m_location, e.result))
+                    if (!provider.Release(m_location, e.Result))
                         Debug.LogWarning("Failed to release location " + m_location);
                 }
             }
@@ -228,9 +228,9 @@ namespace ResourceManagement.ResourceProviders
         class CachedProviderUpdater : MonoBehaviour
         {
             CachedProvider m_Provider;
-            public void Init(CachedProvider p)
+            public void Init(CachedProvider provider)
             {
-                m_Provider = p;
+                m_Provider = provider;
                 DontDestroyOnLoad(gameObject);
             }
 
@@ -240,8 +240,8 @@ namespace ResourceManagement.ResourceProviders
             }
         }
 
-        internal Dictionary<int, CacheList> m_cache = new Dictionary<int, CacheList>();
-        protected IResourceProvider m_internalProvider;
+        Dictionary<int, CacheList> m_cache = new Dictionary<int, CacheList>();
+        IResourceProvider m_internalProvider;
         LinkedList<CacheList> m_lru;
         int m_maxLRUCount;
         float m_maxLRUAge;
@@ -278,18 +278,18 @@ namespace ResourceManagement.ResourceProviders
 
  
         public override string ToString() { return "CachedProvider[" + m_internalProvider + "]"; }
-        public string providerId { get { return m_internalProvider.providerId; } }
+        public string ProviderId { get { return m_internalProvider.ProviderId; } }
 
-        public bool CanProvide<TObject>(IResourceLocation loc)
+        public bool CanProvide<TObject>(IResourceLocation location)
             where TObject : class
         {
-            return m_internalProvider.CanProvide<TObject>(loc);
+            return m_internalProvider.CanProvide<TObject>(location);
         }
 
-        public bool Release(IResourceLocation loc, object asset)
+        public bool Release(IResourceLocation location, object asset)
         {
             CacheList entryList = null;
-            if (!m_cache.TryGetValue(loc.GetHashCode(), out entryList))
+            if (location == null || !m_cache.TryGetValue(location.GetHashCode(), out entryList))
                 return false;
 
             if (entryList.Release())
@@ -314,20 +314,23 @@ namespace ResourceManagement.ResourceProviders
             return false;
         }
 
-        public IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation)
+        public IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             where TObject : class
         {
             CacheList entryList = null;
-            if (!m_cache.TryGetValue(loc.GetHashCode(), out entryList))
+            if (location == null)
+                return null;
+
+            if (!m_cache.TryGetValue(location.GetHashCode(), out entryList))
             {
                 if (m_lru != null && m_lru.Count > 0)
                 {
                     var node = m_lru.First;
                     while (node != null)
                     {
-                        if (node.Value.m_location.GetHashCode() == loc.GetHashCode())
+                        if (node.Value.m_location.GetHashCode() == location.GetHashCode())
                         {
-                            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, loc, 1);
+                            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, location, 1);
                             entryList = node.Value;
                             m_lru.Remove(node);
                             break;
@@ -336,16 +339,16 @@ namespace ResourceManagement.ResourceProviders
                     }
                 }
                 if (entryList == null)
-                    entryList = new CacheList(loc);
+                    entryList = new CacheList(location);
 
-                m_cache.Add(loc.GetHashCode(), entryList);
+                m_cache.Add(location.GetHashCode(), entryList);
             }
 
             entryList.Retain();
-            var entry = entryList.FindEntry<TObject>(loc);
+            var entry = entryList.FindEntry<TObject>(location);
             if (entry != null)
                 return entry;
-            return entryList.CreateEntry(m_internalProvider.ProvideAsync<TObject>(loc, loadDependencyOperation));
+            return entryList.CreateEntry(m_internalProvider.ProvideAsync<TObject>(location, loadDependencyOperation));
         }
 
     }

@@ -1,22 +1,17 @@
-using System;
 using System.Collections.Generic;
-using UnityEngine;
-using Object = UnityEngine.Object;
-using ResourceManagement.AsyncOperations;
-using ResourceManagement.Util;
 
-namespace ResourceManagement.ResourceProviders
+namespace UnityEngine.ResourceManagement
 {
     public class LegacyResourcesProvider : ResourceProviderBase
     {
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
-            public override InternalProviderOperation<TObject> Start(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation)
+            public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
-                m_result = null;
-                loadDependencyOperation.completed += (obj) => Resources.LoadAsync<Object>(loc.id).completed += OnComplete;
-                return base.Start(loc, loadDependencyOperation);
+                Result = null;
+                loadDependencyOperation.completed += (obj) => Resources.LoadAsync<Object>(location.InternalId).completed += OnComplete;
+                return base.Start(location);
             }
 
             public override TObject ConvertResult(AsyncOperation op)
@@ -25,13 +20,13 @@ namespace ResourceManagement.ResourceProviders
             }
         }
 
-        public override IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation)
+        public override IAsyncOperation<TObject> ProvideAsync<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             var r = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
-            return r.Start(loc, loadDependencyOperation);
+            return r.Start(location, loadDependencyOperation);
         }
 
-        public override bool Release(IResourceLocation loc, object asset)
+        public override bool Release(IResourceLocation location, object asset)
         {
             var obj = asset as Object;
 
