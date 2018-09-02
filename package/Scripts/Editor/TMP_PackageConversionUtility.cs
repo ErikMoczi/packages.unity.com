@@ -39,7 +39,7 @@ namespace TMPro
 
 
         // Create Sprite Asset Editor Window
-        [MenuItem("Window/TextMeshPro/Convert Project to UPM", false, 1510)]
+        [MenuItem("Window/TextMeshPro/Convert TMP Project Files to UPM", false, 1510)]
         public static void ConvertProjectGUIDsMenu()
         {
             ConvertProjectGUIDsToUPM();
