@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-preview] - 2018-08-20
+- Fixed an issue in  ArchiveAndCompressBundles where previous output location was being used failing to copy cached bundles to the new location
+- Fixed an issue in BuildCache were built in plugin dlls did not have a hash version causing cache misses
+- Fixed invalid access errors when reading access controlled files for hashing.
+- Fixed an issue where you could not force rebuild asset bundles using LegacyBuildPipeline
+- Implemented IEquatable<T> on public structs
+- Breaking API Change: LegacyBuildPipeline.BuildAssetBundles now returns LegacyAssetBundleManifest
+	- LegacyAssetBundleManifest's API is identical to AssetBundleManifest
+
 ## [0.2.0-preview] - 2018-07-23
 - Removed ProjectInCleanState & ValidateBundleAssignments tasks and integrated them directly indo the data validation or running methods
 - Added build task to append hash to asset bundle files

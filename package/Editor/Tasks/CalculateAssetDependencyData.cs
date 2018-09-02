@@ -10,14 +10,14 @@ namespace UnityEditor.Build.Pipeline.Tasks
     public class CalculateAssetDependencyData : IBuildTask
     {
         public int Version { get { return 1; } }
-        
+
 #pragma warning disable 649
         [InjectContext(ContextUsage.In)]
         IBuildParameters m_Parameters;
-        
+
         [InjectContext(ContextUsage.In)]
         IBuildContent m_Content;
-        
+
         [InjectContext]
         IDependencyData m_DependencyData;
 

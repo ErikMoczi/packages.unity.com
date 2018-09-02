@@ -14,7 +14,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
     }
 
     [Serializable]
-    public struct CacheEntry
+    public struct CacheEntry : IEquatable<CacheEntry>
     {
         public enum EntryType
         {
@@ -35,11 +35,9 @@ namespace UnityEditor.Build.Pipeline.Utilities
 
         public override bool Equals(object obj)
         {
-            if (!(obj is CacheEntry))
+            if (ReferenceEquals(null, obj))
                 return false;
-
-            var rhs = (CacheEntry)obj;
-            return rhs == this;
+            return obj is CacheEntry && Equals((CacheEntry)obj);
         }
 
         public static bool operator ==(CacheEntry x, CacheEntry y)
@@ -54,7 +52,14 @@ namespace UnityEditor.Build.Pipeline.Utilities
 
         public override int GetHashCode()
         {
-            return Hash.GetHashCode() ^ Guid.GetHashCode();
+            unchecked
+            {
+                var hashCode = Hash.GetHashCode();
+                hashCode = (hashCode * 397) ^ Guid.GetHashCode();
+                hashCode = (hashCode * 397) ^ (int)Type;
+                hashCode = (hashCode * 397) ^ (File != null ? File.GetHashCode() : 0);
+                return hashCode;
+            }
         }
 
         public override string ToString()
@@ -62,6 +67,11 @@ namespace UnityEditor.Build.Pipeline.Utilities
             if (Type == EntryType.File)
                 return string.Format("{{{0}, {1}}}", File, Hash);
             return string.Format("{{{0}, {1}}}", Guid, Hash);
+        }
+
+        public bool Equals(CacheEntry other)
+        {
+            return Hash.Equals(other.Hash) && Guid.Equals(other.Guid) && Type == other.Type && string.Equals(File, other.File);
         }
     }
 }

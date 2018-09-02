@@ -16,7 +16,7 @@ namespace UnityEditor.Build.Pipeline
         {
             return "CAB-" + HashingMethods.Calculate<MD4>(name);
         }
-        
+
         /// <inheritdoc />
         public long SerializationIndexFromObjectIdentifier(ObjectIdentifier objectID)
         {

@@ -21,13 +21,13 @@ namespace UnityEditor.Build.Pipeline.WriteTypes
 
         public string Scene { get; set; }
         public string ProcessedScene { get; set; }
-        
+
         /// <inheritdoc />
         public WriteResult Write(string outputFolder, BuildSettings settings, BuildUsageTagGlobal globalUsage)
         {
             return ContentBuildInterface.WriteSceneSerializedFile(outputFolder, Scene, ProcessedScene, Command, settings, globalUsage, UsageSet, ReferenceMap);
         }
-        
+
         /// <inheritdoc />
         public Hash128 GetHash128()
         {

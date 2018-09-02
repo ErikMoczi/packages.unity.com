@@ -10,7 +10,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
     public class GenerateBundleMaps : IBuildTask
     {
         public int Version { get { return 1; } }
-        
+
 #pragma warning disable 649
         [InjectContext(ContextUsage.In)]
         IDependencyData m_DependencyData;
@@ -27,7 +27,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
             {
                 // Generate BuildReferenceMap map
                 AddReferencesForFiles(assetFilesPair.Value, filesMapped, fileToCommand);
-                
+
                 // Generate BuildUsageTagSet map
                 AddUsageSetForFiles(assetFilesPair.Key, assetFilesPair.Value);
             }
@@ -46,12 +46,12 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 referenceMap = new BuildReferenceMap();
                 m_WriteData.FileToReferenceMap.Add(files[0], referenceMap);
             }
-            
+
             foreach (var file in files)
             {
                 if (!visited.Add(file))
                     continue;
-                
+
                 var command = fileToCommand[file];
                 referenceMap.AddMappings(file, command.serializeObjects.ToArray());
             }

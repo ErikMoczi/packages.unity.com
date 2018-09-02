@@ -8,9 +8,10 @@ using UnityEngine;
 
 namespace UnityEditor.Build.Pipeline.Utilities
 {
-    public struct RawHash
+    [Serializable]
+    public struct RawHash : IEquatable<RawHash>
     {
-        byte[] m_Hash;
+        readonly byte[] m_Hash;
 
         internal RawHash(byte[] hash)
         {
@@ -21,7 +22,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
         {
             return new RawHash(new byte[16]);
         }
-        
+
         public byte[] ToBytes()
         {
             return m_Hash;
@@ -51,11 +52,28 @@ namespace UnityEditor.Build.Pipeline.Utilities
 
             return BitConverter.ToString(m_Hash).Replace("-", "").ToLower();
         }
+
+        public bool Equals(RawHash other)
+        {
+            return Equals(m_Hash, other.m_Hash);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+                return false;
+            return obj is RawHash && Equals((RawHash)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return (m_Hash != null ? m_Hash.GetHashCode() : 0);
+        }
     }
 
     public static class HashingMethods
     {
-        // TODO: Make this even faster! 
+        // TODO: Make this even faster!
         // Maybe use unsafe code to access the raw bytes and pass them directly into the stream?
         // Maybe pass the bytes into the HashAlgorithm directly
         // TODO: Does this handle arrays?
@@ -126,7 +144,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
             }
             else if (currObj is string)
             {
-                var bytes =  Encoding.ASCII.GetBytes((string)currObj);
+                var bytes = Encoding.ASCII.GetBytes((string)currObj);
                 stream.Write(bytes, 0, bytes.Length);
             }
             else if (currObj.GetType().IsEnum)
@@ -169,7 +187,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
         {
             var objStack = new Stack<object>();
             objStack.Push(obj);
-            while(objStack.Count > 0)
+            while (objStack.Count > 0)
                 GetRawBytes(objStack, stream);
         }
 
@@ -178,7 +196,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
             var objStack = new Stack<object>();
             for (var index = objects.Length - 1; index >= 0; index--)
                 objStack.Push(objects[index]);
-            while(objStack.Count > 0)
+            while (objStack.Count > 0)
                 GetRawBytes(objStack, stream);
         }
 
@@ -232,7 +250,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
         {
             if (objects == null)
                 return RawHash.Zero();
-            
+
             RawHash rawHash;
             using (var stream = new MemoryStream())
             {
@@ -259,7 +277,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
         {
             if (objects == null)
                 return RawHash.Zero();
-            
+
             RawHash rawHash;
             using (var stream = new MemoryStream())
             {
@@ -273,7 +291,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
         public static RawHash CalculateFile(string filePath)
         {
             RawHash rawHash;
-            using (var stream = new FileStream(filePath, FileMode.Open))
+            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                 rawHash = CalculateStream<MD5>(stream);
             return rawHash;
         }
@@ -281,7 +299,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
         public static RawHash CalculateFile<T>(string filePath) where T : HashAlgorithm
         {
             RawHash rawHash;
-            using (var stream = new FileStream(filePath, FileMode.Open))
+            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                 rawHash = CalculateStream<T>(stream);
             return rawHash;
         }

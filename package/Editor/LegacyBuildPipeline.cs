@@ -21,7 +21,7 @@ namespace UnityEditor.Build.Pipeline
         /// <seealso cref="BuildPipeline.BuildAssetBundles(string, BuildAssetBundleOptions, BuildTarget)"/>
         /// </summary>
         /// <remarks>
-        /// Not all BuildAssetBundleOptions are supported in the Scriptable Build Pipeline initial release. 
+        /// Not all BuildAssetBundleOptions are supported in the Scriptable Build Pipeline initial release.
         /// Supported options are: ChunkBasedCompression, UncompressedAssetBundle, DisableWriteTypeTree, and DisableWriteTypeTree.
         /// In addition, existing BuildPipeline callbacks are not yet supported. Est: 2018.3 release for support.
         /// </remarks>
@@ -29,7 +29,7 @@ namespace UnityEditor.Build.Pipeline
         /// <param name="assetBundleOptions">AssetBundle building options.</param>
         /// <param name="targetPlatform">Chosen target build platform.</param>
         /// <returns>null - Generating and returning an AssetBundleManifest is not yet supported by the Scriptable Build Pipeline. Est: 2018.3 support.</returns>
-        public static AssetBundleManifest BuildAssetBundles(string outputPath, BuildAssetBundleOptions assetBundleOptions, BuildTarget targetPlatform)
+        public static LegacyAssetBundleManifest BuildAssetBundles(string outputPath, BuildAssetBundleOptions assetBundleOptions, BuildTarget targetPlatform)
         {
             var buildInput = ContentBuildInterface.GenerateAssetBundleBuilds();
             return BuildAssetBundles_Internal(outputPath, new BundleBuildContent(buildInput), assetBundleOptions, targetPlatform);
@@ -40,7 +40,7 @@ namespace UnityEditor.Build.Pipeline
         /// <seealso cref="BuildPipeline.BuildAssetBundles(string, AssetBundleBuild[], BuildAssetBundleOptions, BuildTarget)"/>
         /// </summary>
         /// <remarks>
-        /// Not all BuildAssetBundleOptions are supported in the Scriptable Build Pipeline initial release. 
+        /// Not all BuildAssetBundleOptions are supported in the Scriptable Build Pipeline initial release.
         /// Supported options are: ChunkBasedCompression, UncompressedAssetBundle, DisableWriteTypeTree, and DisableWriteTypeTree.
         /// In addition, existing BuildPipeline callbacks are not yet supported. Est: 2018.3 release for support.
         /// </remarks>
@@ -49,15 +49,17 @@ namespace UnityEditor.Build.Pipeline
         /// <param name="assetBundleOptions">AssetBundle building options.</param>
         /// <param name="targetPlatform">Chosen target build platform.</param>
         /// <returns>null - Generating and returning an AssetBundleManifest is not yet supported by the Scriptable Build Pipeline. Est: 2018.3 release for support.</returns>
-        public static AssetBundleManifest BuildAssetBundles(string outputPath, AssetBundleBuild[] builds, BuildAssetBundleOptions assetBundleOptions, BuildTarget targetPlatform)
+        public static LegacyAssetBundleManifest BuildAssetBundles(string outputPath, AssetBundleBuild[] builds, BuildAssetBundleOptions assetBundleOptions, BuildTarget targetPlatform)
         {
             return BuildAssetBundles_Internal(outputPath, new BundleBuildContent(builds), assetBundleOptions, targetPlatform);
         }
 
-        internal static AssetBundleManifest BuildAssetBundles_Internal(string outputPath, IBundleBuildContent content, BuildAssetBundleOptions options, BuildTarget targetPlatform)
+        internal static LegacyAssetBundleManifest BuildAssetBundles_Internal(string outputPath, IBundleBuildContent content, BuildAssetBundleOptions options, BuildTarget targetPlatform)
         {
             var group = BuildPipeline.GetBuildTargetGroup(targetPlatform);
             var parameters = new BundleBuildParameters(targetPlatform, group, outputPath);
+            if ((options & BuildAssetBundleOptions.ForceRebuildAssetBundle) != 0)
+                parameters.UseCache = false;
 
 #if UNITY_2018_3_OR_NEWER
             if ((options & BuildAssetBundleOptions.ChunkBasedCompression) != 0)
@@ -83,8 +85,7 @@ namespace UnityEditor.Build.Pipeline
             if (exitCode < ReturnCode.Success)
                 return null;
 
-            // TODO: Return Unity 5 AssetBundleManifest
-            return null;
+            return new LegacyAssetBundleManifest(results);
         }
     }
 }

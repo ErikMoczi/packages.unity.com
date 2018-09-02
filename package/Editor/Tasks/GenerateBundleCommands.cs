@@ -13,7 +13,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
     public class GenerateBundleCommands : IBuildTask
     {
         public int Version { get { return 1; } }
-        
+
 #pragma warning disable 649
         [InjectContext(ContextUsage.In)]
         IBundleBuildContent m_BuildContent;
@@ -65,7 +65,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
         void CreateAssetBundleCommand(string bundleName, string internalName, List<GUID> assets)
         {
             var abOp = new AssetBundleWriteOperation();
-            
+
             var fileObjects = m_WriteData.FileToObjects[internalName];
             abOp.Command = CreateWriteCommand(internalName, fileObjects, m_PackingMethod);
 

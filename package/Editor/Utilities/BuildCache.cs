@@ -62,7 +62,11 @@ namespace UnityEditor.Build.Pipeline.Utilities
             if (path.Equals(CommonStrings.UnityBuiltInExtraPath, StringComparison.OrdinalIgnoreCase) || path.Equals(CommonStrings.UnityDefaultResourcePath, StringComparison.OrdinalIgnoreCase))
                 entry.Hash = HashingMethods.Calculate(Application.unityVersion, path).ToHash128();
             else
+            {
                 entry.Hash = AssetDatabase.GetAssetDependencyHash(path);
+                if (!entry.Hash.isValid)
+                    entry.Hash = HashingMethods.CalculateFile(path).ToHash128();
+            }
 
             m_GuidToHash[entry.Guid] = entry;
             return entry;

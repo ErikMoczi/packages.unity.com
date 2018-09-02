@@ -26,7 +26,7 @@ namespace UnityEditor.Build.Pipeline
             WriteResults = new Dictionary<string, WriteResult>();
         }
     }
-    
+
     /// <summary>
     /// Basic implementation of IBundleBuildResults. Stores the results for script compilation and asset bundle building.
     /// <seealso cref="IBundleBuildResults"/>

@@ -15,14 +15,14 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// <param name="asset">GUID identifier for an asset from the Asset Database</param>
         /// <returns>CacheEntry representing current asset.</returns>
         CacheEntry GetCacheEntry(GUID asset);
-        
+
         /// <summary>
         /// Gets a CacheEntry for a file identified by its relative path.
         /// </summary>
         /// <param name="path">Relative path of a file on disk</param>
         /// <returns>CacheEntry representing a file on disk.</returns>
         CacheEntry GetCacheEntry(string path);
-        
+
         /// <summary>
         /// Gets a CacheEntry for an object identified by an Object Identifier.
         /// </summary>
@@ -43,7 +43,7 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// <param name="entry">Cache entry to get the path</param>
         /// <returns>Path on disk where to save cached info</returns>
         string GetCachedInfoFile(CacheEntry entry);
-        
+
         /// <summary>
         /// Returns the path where artifact data can be saved in the cache
         /// </summary>

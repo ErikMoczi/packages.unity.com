@@ -14,7 +14,7 @@ namespace UnityEditor.Build.Pipeline
     {
         /// <inheritdoc />
         public List<GUID> Assets { get; private set; }
-        
+
         /// <inheritdoc />
         public List<GUID> Scenes { get; private set; }
 
@@ -42,7 +42,7 @@ namespace UnityEditor.Build.Pipeline
             }
         }
     }
-    
+
     /// <summary>
     /// Basic implementation of IBundleBuildContent. Stores the list of Assets with explicit Asset Bundle layout to feed the Scriptable Build Pipeline.
     /// <seealso cref="IBundleBuildContent"/>
@@ -52,13 +52,13 @@ namespace UnityEditor.Build.Pipeline
     {
         /// <inheritdoc />
         public List<GUID> Assets { get; private set; }
-        
+
         /// <inheritdoc />
         public List<GUID> Scenes { get; private set; }
-        
+
         /// <inheritdoc />
         public Dictionary<GUID, string> Addresses { get; private set; }
-        
+
         /// <inheritdoc />
         public Dictionary<string, List<GUID>> BundleLayout { get; private set; }
 
@@ -100,7 +100,7 @@ namespace UnityEditor.Build.Pipeline
 
                     string address = bundleBuild.addressableNames != null && i < bundleBuild.addressableNames.Length && string.IsNullOrEmpty(bundleBuild.addressableNames[i]) ?
                         bundleBuild.addressableNames[i] : AssetDatabase.GUIDToAssetPath(asset.ToString());
-                    
+
                     // Add the guid to the bundle map
                     guids.Add(asset);
                     // Add the guid & address

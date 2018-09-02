@@ -23,10 +23,10 @@ namespace UnityEditor.Build.Pipeline
         public BuildTarget Target { get; set; }
         /// <inheritdoc />
         public BuildTargetGroup Group { get; set; }
-        
+
         /// <inheritdoc />
         public ContentBuildFlags ContentBuildFlags { get; set; }
-        
+
         /// <inheritdoc />
         public TypeDB ScriptInfo { get; set; }
         /// <inheritdoc />
@@ -36,7 +36,7 @@ namespace UnityEditor.Build.Pipeline
         /// Default compression option to use for all built content files
         /// </summary>
         public BuildCompression BundleCompression { get; set; }
-        
+
         /// <inheritdoc />
         public string OutputFolder { get; set; }
 
@@ -87,7 +87,7 @@ namespace UnityEditor.Build.Pipeline
             UseCache = true;
             CacheServerPort = 8126;
         }
-        
+
         /// <inheritdoc />
         public BuildSettings GetContentBuildSettings()
         {
@@ -99,7 +99,7 @@ namespace UnityEditor.Build.Pipeline
                 buildFlags = ContentBuildFlags
             };
         }
-        
+
         /// <inheritdoc />
         public ScriptCompilationSettings GetScriptCompilationSettings()
         {
@@ -110,7 +110,7 @@ namespace UnityEditor.Build.Pipeline
                 options = ScriptOptions
             };
         }
-        
+
         /// <inheritdoc />
         public BuildCompression GetCompressionForIdentifier(string identifier)
         {
@@ -124,7 +124,7 @@ namespace UnityEditor.Build.Pipeline
         /// <inheritdoc />
         public BundleBuildParameters(BuildTarget target, BuildTargetGroup @group, string outputFolder)
             : base(target, @group, outputFolder) { }
-        
+
         /// <inheritdoc />
         public bool AppendHash { get; set; }
     }

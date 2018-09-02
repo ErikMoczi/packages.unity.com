@@ -39,7 +39,7 @@ namespace UnityEditor.Build.Pipeline.Injector
                 InjectContextAttribute attr = attrs[0] as InjectContextAttribute;
                 if (attr == null || attr.Usage == ContextUsage.Out)
                     continue;
-                
+
                 object injectionObject;
                 if (field.FieldType == typeof(IBuildContext))
                     injectionObject = context;

@@ -18,7 +18,7 @@ namespace UnityEditor.Build.Pipeline
         public Dictionary<string, List<ObjectIdentifier>> FileToObjects { get; private set; }
         /// <inheritdoc />
         public List<IWriteOperation> WriteOperations { get; private set; }
-        
+
         /// <summary>
         /// Default constructor, initializes properties to defaults
         /// </summary>
@@ -48,7 +48,7 @@ namespace UnityEditor.Build.Pipeline
         public Dictionary<string, BuildReferenceMap> FileToReferenceMap { get; private set; }
         /// <inheritdoc />
         public List<IWriteOperation> WriteOperations { get; private set; }
-        
+
         /// <summary>
         /// Default constructor, initializes properties to defaults
         /// </summary>

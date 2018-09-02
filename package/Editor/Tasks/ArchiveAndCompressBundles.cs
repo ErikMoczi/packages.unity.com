@@ -18,7 +18,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
     public class ArchiveAndCompressBundles : IBuildTask
     {
         public int Version { get { return 1; } }
-        
+
 #pragma warning disable 649
         [InjectContext(ContextUsage.In)]
         IBuildParameters m_Parameters;
@@ -67,9 +67,9 @@ namespace UnityEditor.Build.Pipeline.Tasks
             {
                 if (file.serializedFile)
                 {
-                    // For serialized files, we ignore the header for the hash value. 
+                    // For serialized files, we ignore the header for the hash value.
                     // This leaves us with a hash value of just the written object data.
-                    using (var stream = new FileStream(file.fileName, FileMode.Open))
+                    using (var stream = new FileStream(file.fileName, FileMode.Open, FileAccess.Read))
                     {
                         stream.Position = (long)fileOffsets[file.fileName];
                         hashes.Add(HashingMethods.CalculateStream(stream));
@@ -85,7 +85,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
         {
             Dictionary<string, ulong> fileOffsets = new Dictionary<string, ulong>();
             List<KeyValuePair<string, List<ResourceFile>>> bundleResources;
-            { 
+            {
                 Dictionary<string, List<ResourceFile>> bundleToResources = new Dictionary<string, List<ResourceFile>>();
                 foreach (var pair in m_Results.WriteResults)
                 {
@@ -104,6 +104,19 @@ namespace UnityEditor.Build.Pipeline.Tasks
                     }
                 }
                 bundleResources = bundleToResources.ToList();
+            }
+
+            Dictionary<string, HashSet<string>> bundleDependencies = new Dictionary<string, HashSet<string>>();
+            foreach (var files in m_WriteData.AssetToFiles.Values)
+            {
+                if (files.IsNullOrEmpty())
+                    continue;
+
+                string bundle = m_WriteData.FileToBundle[files.First()];
+                HashSet<string> dependencies;
+                bundleDependencies.GetOrAdd(bundle, out dependencies);
+                dependencies.UnionWith(files.Select(x => m_WriteData.FileToBundle[x]));
+                dependencies.Remove(bundle);
             }
 
             IList<CacheEntry> entries = bundleResources.Select(x => GetCacheEntry(x.Key, x.Value, m_Parameters.GetCompressionForIdentifier(x.Key))).ToList();
@@ -130,6 +143,13 @@ namespace UnityEditor.Build.Pipeline.Tasks
                         return ReturnCode.Canceled;
 
                     details = (BundleDetails)cachedInfo[i].Data[0];
+                    details.FileName = string.Format("{0}/{1}", m_Parameters.OutputFolder, bundleName);
+
+                    HashSet<string> dependencies;
+                    if (bundleDependencies.TryGetValue(bundleName, out dependencies))
+                        details.Dependencies = dependencies.ToArray();
+                    else
+                        details.Dependencies = new string[0];
                     writePath = string.Format("{0}/{1}", m_Cache.GetCachedArtifactsDirectory(entries[i]), bundleName);
                 }
                 else
@@ -147,13 +167,19 @@ namespace UnityEditor.Build.Pipeline.Tasks
                     details.Crc = ContentBuildInterface.ArchiveAndCompress(resourceFiles, writePath, compression);
                     details.Hash = CalculateHashVersion(fileOffsets, resourceFiles);
 
+                    HashSet<string> dependencies;
+                    if (bundleDependencies.TryGetValue(bundleName, out dependencies))
+                        details.Dependencies = dependencies.ToArray();
+                    else
+                        details.Dependencies = new string[0];
+
                     if (uncachedInfo != null)
                         uncachedInfo.Add(GetCachedInfo(m_Cache, entries[i], resourceFiles, details));
                 }
-                
+
                 SetOutputInformation(writePath, details.FileName, bundleName, details);
             }
-            
+
             if (m_Parameters.UseCache && m_Cache != null)
                 m_Cache.SaveCachedData(uncachedInfo);
 

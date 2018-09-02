@@ -20,7 +20,7 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// <returns>Return code from processing the callbacks.</returns>
         ReturnCode PostScripts(IBuildParameters parameters, IBuildResults results);
     }
-    
+
     /// <summary>
     /// Base interface for handling running the callbacks after dependency calculation step.
     /// </summary>
@@ -34,7 +34,7 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// <returns>Return code from processing the callbacks.</returns>
         ReturnCode PostDependency(IBuildParameters parameters, IDependencyData dependencyData);
     }
-    
+
     /// <summary>
     /// Base interface for handling running the callbacks after packing step.
     /// </summary>
@@ -49,7 +49,7 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// <returns>Return code from processing the callbacks.</returns>
         ReturnCode PostPacking(IBuildParameters parameters, IDependencyData dependencyData, IWriteData writeData);
     }
-    
+
     /// <summary>
     /// Base interface for handling running the callbacks after writing step.
     /// </summary>

@@ -31,7 +31,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
     {
         uint[] m_Buffer;
         uint[] m_Block;
-        uint   m_Bytes;
+        uint m_Bytes;
 
         static readonly byte[] kPadding = {
             0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

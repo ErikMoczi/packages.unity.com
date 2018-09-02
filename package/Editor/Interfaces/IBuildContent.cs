@@ -17,7 +17,7 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// </summary>
         List<GUID> Scenes { get; }
     }
-    
+
     /// <summary>
     /// Base interface for feeding Assets with explicit Asset Bundle layout to the Scriptable Build Pipeline.
     /// </summary>

@@ -24,13 +24,13 @@ namespace UnityEditor.Build.Pipeline.WriteTypes
         /// <see cref="AssetBundleInfo"/>
         /// </summary>
         public AssetBundleInfo Info { get; set; }
-        
+
         /// <inheritdoc />
         public WriteResult Write(string outputFolder, BuildSettings settings, BuildUsageTagGlobal globalUsage)
         {
             return ContentBuildInterface.WriteSerializedFile(outputFolder, Command, settings, globalUsage, UsageSet, ReferenceMap, Info);
         }
-        
+
         /// <inheritdoc />
         public Hash128 GetHash128()
         {

@@ -11,7 +11,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
     public class GenerateBundlePacking : IBuildTask
     {
         public int Version { get { return 1; } }
-        
+
 #pragma warning disable 649
         [InjectContext(ContextUsage.In)]
         IBundleBuildContent m_BuildContent;

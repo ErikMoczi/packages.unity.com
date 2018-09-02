@@ -15,7 +15,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
     {
         static readonly GUID k_BuiltInGuid = new GUID("0000000000000000f000000000000000");
         public int Version { get { return 1; } }
-        
+
 #pragma warning disable 649
         [InjectContext(ContextUsage.In)]
         IDependencyData m_DependencyData;
@@ -42,7 +42,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
 
             ObjectIdentifier[] usedSet = buildInObjects.ToArray();
             Type[] usedTypes = ContentBuildInterface.GetTypeForObjects(usedSet);
-            
+
             if (m_Layout == null)
                 m_Layout = new BundleExplictObjectLayout();
 

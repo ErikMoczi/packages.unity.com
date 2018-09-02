@@ -22,14 +22,14 @@ namespace UnityEditor.Build.Pipeline
         {
             Index = index;
         }
-        
+
         /// <inheritdoc />
         public string GenerateInternalFileName(string name)
         {
             var hash = HashingMethods.Calculate(name).ToString();
             return string.Format("CAB-{0}", hash);
         }
-        
+
         /// <inheritdoc />
         public long SerializationIndexFromObjectIdentifier(ObjectIdentifier objectID)
         {

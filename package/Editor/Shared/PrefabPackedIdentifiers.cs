@@ -17,7 +17,7 @@ namespace UnityEditor.Build.Pipeline
             var hash = HashingMethods.Calculate(name).ToString();
             return string.Format("CAB-{0}", hash);
         }
-        
+
         /// <inheritdoc />
         public long SerializationIndexFromObjectIdentifier(ObjectIdentifier objectID)
         {

@@ -18,13 +18,13 @@ namespace UnityEditor.Build.Pipeline.WriteTypes
         public BuildUsageTagSet UsageSet { get; set; }
         /// <inheritdoc />
         public BuildReferenceMap ReferenceMap { get; set; }
-        
+
         /// <inheritdoc />
         public WriteResult Write(string outputFolder, BuildSettings settings, BuildUsageTagGlobal globalUsage)
         {
             return ContentBuildInterface.WriteSerializedFile(outputFolder, Command, settings, globalUsage, UsageSet, ReferenceMap);
         }
-        
+
         /// <inheritdoc />
         public Hash128 GetHash128()
         {

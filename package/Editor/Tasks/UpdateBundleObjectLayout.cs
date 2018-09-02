@@ -10,20 +10,20 @@ namespace UnityEditor.Build.Pipeline.Tasks
     public class UpdateBundleObjectLayout : IBuildTask
     {
         public int Version { get { return 1; } }
-        
+
 #pragma warning disable 649
         [InjectContext(ContextUsage.In, true)]
         IBundleExplictObjectLayout m_Layout;
-        
+
         [InjectContext]
         IBundleBuildContent m_Content;
-        
+
         [InjectContext(ContextUsage.In)]
         IDependencyData m_DependencyData;
-        
+
         [InjectContext]
         IBundleWriteData m_WriteData;
-        
+
         [InjectContext(ContextUsage.In)]
         IDeterministicIdentifiers m_PackingMethod;
 #pragma warning restore 649

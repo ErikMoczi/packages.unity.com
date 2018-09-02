@@ -35,19 +35,19 @@ namespace UnityEditor.Build.Pipeline.WriteTypes
         /// <seealso cref="PreloadInfo"/>
         /// </summary>
         public PreloadInfo PreloadInfo { get; set; }
-        
+
         /// <summary>
         /// Information needed for generating the Asset Bundle object to be included in the serialized file.
         /// <see cref="SceneBundleInfo"/>
         /// </summary>
         public SceneBundleInfo Info { get; set; }
-        
+
         /// <inheritdoc />
         public WriteResult Write(string outputFolder, BuildSettings settings, BuildUsageTagGlobal globalUsage)
         {
             return ContentBuildInterface.WriteSceneSerializedFile(outputFolder, Scene, ProcessedScene, Command, settings, globalUsage, UsageSet, ReferenceMap, PreloadInfo, Info);
         }
-        
+
         /// <inheritdoc />
         public Hash128 GetHash128()
         {

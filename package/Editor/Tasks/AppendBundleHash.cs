@@ -8,7 +8,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
     public class AppendBundleHash : IBuildTask
     {
         public int Version { get { return 1; } }
-        
+
 #pragma warning disable 649
         [InjectContext(ContextUsage.In)]
         IBundleBuildParameters m_Parameters;
@@ -17,7 +17,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
         IBundleBuildResults m_Results;
 #pragma warning restore 649
 
-        public  ReturnCode Run()
+        public ReturnCode Run()
         {
             if (!m_Parameters.AppendHash)
                 return ReturnCode.SuccessNotRun;

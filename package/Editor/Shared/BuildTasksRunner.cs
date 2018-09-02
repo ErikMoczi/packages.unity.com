@@ -27,7 +27,7 @@ namespace UnityEditor.Build.Pipeline
                 BuildLogger.LogException(new ArgumentNullException("pipeline"));
                 return ReturnCode.Exception;
             }
-            
+
             // Avoid throwing exceptions in here as we don't want them bubbling up to calling user code
             if (context == null)
             {
@@ -61,7 +61,7 @@ namespace UnityEditor.Build.Pipeline
 
             return ReturnCode.Success;
         }
-        
+
         /// <summary>
         /// Run implementation with task profiler that takes a set of tasks, a context, runs returning the build results and prints out the profiler details.
         /// <seealso cref="IBuildTask"/>, <seealso cref="IBuildContext"/>, and <seealso cref="ReturnCode"/>
@@ -77,7 +77,7 @@ namespace UnityEditor.Build.Pipeline
                 BuildLogger.LogException(new ArgumentNullException("pipeline"));
                 return ReturnCode.Exception;
             }
-            
+
             // Avoid throwing exceptions in here as we don't want them bubbling up to calling user code
             if (context == null)
             {
@@ -103,7 +103,7 @@ namespace UnityEditor.Build.Pipeline
                         profiler.Print();
                         return ReturnCode.Canceled;
                     }
-                    
+
                     ContextInjector.Inject(context, task);
                     profiler.Start(count, task.GetType().Name);
                     var result = task.Run();
@@ -146,7 +146,7 @@ namespace UnityEditor.Build.Pipeline
             //    BuildLogger.LogException(new ArgumentNullException("pipeline"));
             //    return ReturnCode.Exception;
             //}
-            
+
             //// Avoid throwing exceptions in here as we don't want them bubbling up to calling user code
             //if (context == null)
             //{

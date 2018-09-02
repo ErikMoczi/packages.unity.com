@@ -11,14 +11,14 @@ namespace UnityEditor.Build.Pipeline.Tasks
     public class PreviewSceneDependencyData : IBuildTask
     {
         public int Version { get { return 1; } }
-        
+
 #pragma warning disable 649
         [InjectContext(ContextUsage.In)]
         IBuildParameters m_Parameters;
-        
+
         [InjectContext(ContextUsage.In)]
         IBuildContent m_Content;
-        
+
         [InjectContext]
         IDependencyData m_DependencyData;
 
@@ -49,7 +49,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
             IList<CachedInfo> cachedInfo = null;
             IList<CachedInfo> uncachedInfo = null;
             if (m_Parameters.UseCache && m_Cache != null)
-            { 
+            {
                 IList<CacheEntry> entries = m_Content.Scenes.Select(x => m_Cache.GetCacheEntry(x)).ToList();
                 m_Cache.LoadCachedData(entries, out cachedInfo);
 
@@ -75,7 +75,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 else
                 {
                     if (!m_Tracker.UpdateInfoUnchecked(scenePath))
-                    return ReturnCode.Canceled;
+                        return ReturnCode.Canceled;
 
                     var references = new HashSet<ObjectIdentifier>();
                     string[] dependencies = AssetDatabase.GetDependencies(scenePath);

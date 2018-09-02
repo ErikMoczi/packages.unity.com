@@ -24,7 +24,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
             files = files.Where(x => (File.GetAttributes(x.FullName) & FileAttributes.Hidden) != FileAttributes.Hidden && x.Extension != ".sbpGz").ToArray();
             if (files.Length == 0)
                 return false;
-            
+
             using (var archiveStream = new FileStream(archiveFilePath, FileMode.OpenOrCreate, FileAccess.Write))
             {
                 using (var gZipStream = new GZipStream(archiveStream, CompressionMode.Compress))

@@ -16,12 +16,17 @@ namespace UnityEditor.Build.Pipeline.Tests
             "\\Subdir\\File4.json"
         };
 
+        static string NormalizePath(string path)
+        {
+            return path.Replace("\\", "/");
+        }
+
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
             foreach (string file in k_SourceFiles)
             {
-                var filePath = k_SourceDirectory + file;
+                var filePath = NormalizePath(k_SourceDirectory + file);
                 var dir = Path.GetDirectoryName(filePath);
                 Directory.CreateDirectory(dir);
                 File.WriteAllText(filePath, filePath);
@@ -46,8 +51,8 @@ namespace UnityEditor.Build.Pipeline.Tests
 
             for (int i = 0; i < k_SourceFiles.Length; i++)
             {
-                var sourcePath = k_SourceDirectory + k_SourceFiles[i];
-                var targetPath = targetDirectory + k_SourceFiles[i];
+                var sourcePath = NormalizePath(k_SourceDirectory + k_SourceFiles[i]);
+                var targetPath = NormalizePath(targetDirectory + k_SourceFiles[i]);
                 FileAssert.Exists(targetPath);
                 FileAssert.AreEqual(sourcePath, targetPath);
             }

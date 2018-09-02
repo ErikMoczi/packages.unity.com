@@ -7,7 +7,7 @@ namespace UnityEditor.Build.Pipeline
     /// Struct containing detailed information about a built asset bundle
     /// </summary>
     [Serializable]
-    public struct BundleDetails
+    public struct BundleDetails : IEquatable<BundleDetails>
     {
         /// <summary>
         /// Specific file name on disk of the asset bundle.
@@ -26,29 +26,43 @@ namespace UnityEditor.Build.Pipeline
         /// </summary>
         public Hash128 Hash { get; set; }
 
+        /// <summary>
+        /// The array of all dependent asset bundles for this asset bundle.
+        /// </summary>
+        public string[] Dependencies { get; set; }
+
         public override bool Equals(object obj)
         {
-            // Check for null values and compare run-time types.
-            if (obj == null || typeof(BundleDetails) != obj.GetType()) 
+            if (ReferenceEquals(null, obj))
                 return false;
-
-            var rhs = (BundleDetails)obj;
-            return this == rhs;
+            return obj is BundleDetails && Equals((BundleDetails)obj);
         }
 
         public override int GetHashCode()
         {
-            return FileName.GetHashCode() ^ Crc.GetHashCode() ^ Hash.GetHashCode();
+            unchecked
+            {
+                var hashCode = (FileName != null ? FileName.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (int)Crc;
+                hashCode = (hashCode * 397) ^ Hash.GetHashCode();
+                hashCode = (hashCode * 397) ^ (Dependencies != null ? Dependencies.GetHashCode() : 0);
+                return hashCode;
+            }
         }
 
         public static bool operator ==(BundleDetails a, BundleDetails b)
         {
-            return a.FileName == b.FileName && a.Crc == b.Crc && a.Hash == b.Hash;
+            return a.Equals(b);
         }
 
         public static bool operator !=(BundleDetails a, BundleDetails b)
         {
             return !(a == b);
+        }
+
+        public bool Equals(BundleDetails other)
+        {
+            return string.Equals(FileName, other.FileName) && Crc == other.Crc && Hash.Equals(other.Hash) && Equals(Dependencies, other.Dependencies);
         }
     }
 }

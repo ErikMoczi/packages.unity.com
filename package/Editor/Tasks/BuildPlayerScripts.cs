@@ -8,7 +8,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
     public class BuildPlayerScripts : IBuildTask
     {
         public int Version { get { return 1; } }
-        
+
 #pragma warning disable 649
         [InjectContext]
         IBuildParameters m_Parameters;

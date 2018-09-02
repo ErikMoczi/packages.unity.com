@@ -12,7 +12,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
     public class WriteSerializedFiles : IBuildTask
     {
         public int Version { get { return 2; } }
-        
+
 #pragma warning disable 649
         [InjectContext(ContextUsage.In)]
         IBuildParameters m_Parameters;

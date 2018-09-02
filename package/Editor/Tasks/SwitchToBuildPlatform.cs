@@ -6,7 +6,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
     public class SwitchToBuildPlatform : IBuildTask
     {
         public int Version { get { return 1; } }
-        
+
 #pragma warning disable 649
         [InjectContext(ContextUsage.In)]
         IBuildParameters m_Parameters;

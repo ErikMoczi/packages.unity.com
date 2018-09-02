@@ -68,7 +68,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
                 m_Client.BeginTransaction(item.fileId);
                 m_Client.Upload(FileType.Info, item.stream);
 
-                string artifactsZip =  Path.GetTempFileName();
+                string artifactsZip = Path.GetTempFileName();
                 if (FileCompressor.Compress(item.artifactsPath, artifactsZip))
                 {
                     using (var stream = new FileStream(artifactsZip, FileMode.Open, FileAccess.Read))

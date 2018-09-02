@@ -24,7 +24,7 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// Target build platform group. <seealso cref="BuildTargetGroup"/>
         /// </summary>
         BuildTargetGroup Group { get; set; }
-        
+
         /// <summary>
         /// The set of build flags to use for building content.
         /// </summary>
@@ -78,7 +78,7 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// <param name="identifier">Identifier used to construct the BuildCompression struct.</param>
         /// <returns>Returns the BuildCompression struct to use for a specific identifier.</returns>
         BuildCompression GetCompressionForIdentifier(string identifier);
-        
+
         /// <summary>
         /// Constructs and returns the ScriptCompilationSettings struct to use for script compiling.
         /// </summary>

@@ -71,7 +71,7 @@ namespace UnityEditor.Build.Pipeline
 
             ReturnCode exitCode;
             result = new BundleBuildResults();
-            
+
             using (new SceneStateCleanup())
             using (new BuildInterfacesWrapper())
             using (var progressTracker = new ProgressTracker())
