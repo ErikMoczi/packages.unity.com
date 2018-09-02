@@ -18,15 +18,15 @@ For general questions and info, email us at [contact@procore3d.com](mailto:conta
 
 ## Unity 2018.1 and later (recommended)
 
-In Explorer (or Finder on macOS) navigate to your project directory. Open **manifest.json** found inside the **UnityPackageManager** directory and add ProBuilder as a dependency:
+In File Explorer (or Finder on macOS) navigate to your project directory. Open the manifest.json file (found inside the UnityPackageManager directory). In the manifest, add ProBuilder as a dependency:
 
 
 ```
 {
-	"dependencies": {
-		"com.unity.probuilder" : "3.0.0"
-	},
-	"registry":"http://staging-packages.unity.com"
+    "dependencies": {
+        "com.unity.probuilder" : "3.0.0-f.1"
+    },
+    "registry":"http://staging-packages.unity.com"
 }
 ```
 
@@ -40,21 +40,25 @@ To upgrade a Unity project with ProBuilder 2.9.8 or later, follow these instruct
 2. Edit the **manifest.json** as described above
 3. Follow the **Convert to Package Manager** utility instructions.
 
-If the **Convert to Package Manager** utility does not automatically open, you can manually start the process by opening `Tools > ProBuilder > Repair > Convert to Package Manager`.
+If the **Convert to Package Manager** utility does not open, you can start the process by opening:
 
+`Tools > ProBuilder > Repair > Convert to Package Manager.`
 
 ## Unity 2017.3 and earlier
 
-**Important** - The Asset Store version of ProBuilder will only receive critical bug fixes going forward. New features are available in the 2018.1 Package Manager version of ProBuilder.
+**Important**
 
-1. Open your Unity project and ensure you have no persistent errors (red-colored text) in the Console.
+The Asset Store version of ProBuilder will only receive critical bug fixes going forward. New features are available in the 2018.1 Package Manager version of ProBuilder.
+
+1. Open your Unity project
+1. Ensure you have no persistent errors (red-colored text) in the Console.
 1. From the top menu, choose `Window > Asset Store`.
 1. In the Asset Store window type "ProBuilder" into the search bar.
 1. Click the "ProBuilder" icon in the search results.
 1. Click the blue "Download" button, and wait for the download to complete.
 1. After Unity has downloaded the package, click "Import."
 1. An "Import Unity Package" window will appear. Click "Import" at the bottom-right.
-1. After the import process completes, choose `Tools > ProBuilder > ProBuilder Window` from the top menu to begin using ProBuilder.
+1. After the import process completes, choose `Tools > ProBuilder > ProBuilder Window` from the top menu.
 
 # Using ProBuilder
 
