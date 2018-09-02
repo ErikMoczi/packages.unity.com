@@ -12,9 +12,16 @@ namespace ResourceManagement.ResourceProviders
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
+            System.Action<IAsyncOperation<IList<object>>> action;
+            public InternalOp()
+            {
+                action = (op) => { UnityWebRequestAssetBundle.GetAssetBundle(Config.ExpandPathWithGlobalVars((m_context as IResourceLocation).id)).SendWebRequest().completed += OnComplete; };
+            }
+
             public override InternalProviderOperation<TObject> Start(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
-                loadDependencyOperation.completed += (obj) => UnityWebRequestAssetBundle.GetAssetBundle(Path.Combine("file://", Config.ExpandPathWithGlobalVars(loc.id))).SendWebRequest().completed += OnComplete;
+                m_context = loc;
+                loadDependencyOperation.completed += action;
                 return base.Start(loc, loadDependencyOperation);
             }
 

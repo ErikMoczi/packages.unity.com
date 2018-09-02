@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿#if RM_SAMPLES
+
+using UnityEngine;
 using EditorDiagnostics;
 
 internal class ProfilerStressTest : MonoBehaviour
@@ -25,3 +27,4 @@ internal class ProfilerStressTest : MonoBehaviour
         }
     }
 }
+#endif

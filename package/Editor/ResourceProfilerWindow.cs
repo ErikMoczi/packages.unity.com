@@ -57,9 +57,10 @@ namespace ResourceManagement.Util
         {
             if (Event.current.type != EventType.Repaint)
                 return;
-            var dataList = evt.m_data as List<string>;
-            if (dataList == null)
+            var dataListText = System.Text.Encoding.ASCII.GetString(evt.m_data);
+            if (dataListText == null)
                 return;
+            var dataList = dataListText.Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries);
             if (dataList[1].EndsWith(".bundle"))
             {
                 EditorGUI.TextArea(rect, "No preview available for AssetBundle");
@@ -90,10 +91,16 @@ namespace ResourceManagement.Util
                 default:
                 {
                     column -= 2;    //need to account for 2 columns that use build in fields
-                    var dataList = evt.m_data as List<string>;
-                    if (dataList == null || column >= dataList.Count)
-                        return false;
-                    EditorGUI.LabelField(cellRect, dataList[column]);
+                        if (evt.m_data != null && evt.m_data.Length > 0)
+                        {
+                            var dataListText = System.Text.Encoding.ASCII.GetString(evt.m_data);
+                            if (dataListText == null)
+                                return false;
+                            var dataList = dataListText.Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries);
+                            if (dataList == null || column >= dataList.Length)
+                                return false;
+                            EditorGUI.LabelField(cellRect, dataList[column]);
+                        }
                 }
                 break;
             }

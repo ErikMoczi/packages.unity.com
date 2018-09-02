@@ -51,9 +51,13 @@ namespace ResourceManagement.Util
             return var;
         }
 
+        static System.Collections.Generic.Dictionary<string, string> cachedPaths = new System.Collections.Generic.Dictionary<string, string>();
         public static string ExpandPathWithGlobalVars(string p)
         {
-            return ExpandWithVars(p, '{', '}', GetGlobalVar);
+            string val = null;
+            if (!cachedPaths.TryGetValue(p, out val))
+                cachedPaths.Add(p, val = ExpandWithVars(p, '{', '}', GetGlobalVar));
+            return val;
         }
 
         public static string ExpandWithVars(string p, char startDelim, char endDelim, Func<string, string> varFunc)

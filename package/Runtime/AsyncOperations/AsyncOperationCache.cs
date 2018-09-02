@@ -14,8 +14,8 @@ namespace ResourceManagement.AsyncOperations
 
         internal struct CacheKey
         {
-            readonly Type opType;
-            readonly Type objType;
+            public readonly Type opType;
+            public readonly Type objType;
 
             public CacheKey(Type opType, Type objType)
             {
@@ -40,7 +40,20 @@ namespace ResourceManagement.AsyncOperations
             }
         }
 
-        readonly Dictionary<CacheKey, Stack<IAsyncOperation>> cache = new Dictionary<CacheKey, Stack<IAsyncOperation>>();
+        class CacheKeyComparer : EqualityComparer<CacheKey>
+        {
+            public override int GetHashCode(CacheKey bx)
+            {
+                return bx.GetHashCode();
+            }
+
+            public override bool Equals(CacheKey b1, CacheKey b2)
+            {
+                return b1.opType == b2.opType && b1.objType == b2.objType;
+            }
+        }
+
+        readonly Dictionary<CacheKey, Stack<IAsyncOperation>> cache = new Dictionary<CacheKey, Stack<IAsyncOperation>>(new CacheKeyComparer());
 
         public void Release<TObject>(IAsyncOperation op)
             where TObject : class

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-
 //this is used by code surrounded by #if !UNITY_EDITOR, so dont remove even if it appears that it can be removed
 using UnityEngine.Networking.PlayerConnection;
 
@@ -16,9 +15,9 @@ namespace EditorDiagnostics
         public int m_stream;    //data stream
         public int m_frame;     //frame of the event
         public int m_value;      //data value of event
-        public object m_data;   //this must be serializable
+        public byte[] m_data;   //this is up to the ender/receiver to serialize/deserialize
 
-        public DiagnosticEvent(string graph, string parent, string id, int stream, int frame, int val, object data)
+        public DiagnosticEvent(string graph, string parent, string id, int stream, int frame, int val, byte[] data)
         {
             m_graph = graph;
             m_parent = parent;
@@ -31,27 +30,12 @@ namespace EditorDiagnostics
 
         public byte[] Serialize()
         {
-            System.IO.MemoryStream ms = new System.IO.MemoryStream();
-            System.Runtime.Serialization.Formatters.Binary.BinaryFormatter formatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-            formatter.Serialize(ms, this);
-            ms.Flush();
-            return ms.ToArray();
+            return System.Text.Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
         }
 
         public static DiagnosticEvent Deserialize(byte[] d)
         {
-            DiagnosticEvent evt = default(DiagnosticEvent);
-            try
-            {
-                if (d == null || d.Length < 8)
-                    return evt;
-                System.IO.MemoryStream ms = new System.IO.MemoryStream(d);
-                System.Runtime.Serialization.Formatters.Binary.BinaryFormatter formatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-                evt = (DiagnosticEvent)formatter.Deserialize(ms);
-                ms.Close();
-            }
-            catch (Exception) {}
-            return evt;
+            return JsonUtility.FromJson<DiagnosticEvent>(System.Text.Encoding.ASCII.GetString(d));
         }
     }
 

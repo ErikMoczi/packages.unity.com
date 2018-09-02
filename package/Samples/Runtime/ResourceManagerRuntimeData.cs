@@ -1,9 +1,9 @@
+#if RM_SAMPLES
 using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using ResourceManagement.ResourceProviders;
-
 namespace ResourceManagement.Samples
 {
     /*
@@ -130,6 +130,7 @@ namespace ResourceManagement.Samples
                 break;
             }
             EditorDiagnostics.EventCollector.profileEvents = profileEvents;
+            ResourceManager.m_postEvents = profileEvents;
         }
 
 #if UNITY_EDITOR
@@ -145,3 +146,4 @@ namespace ResourceManagement.Samples
 
     }
 }
+#endif

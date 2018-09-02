@@ -1,4 +1,6 @@
-﻿using EditorDiagnostics;
+﻿#if RM_SAMPLES
+
+using EditorDiagnostics;
 using UnityEngine;
 
 /*
@@ -30,3 +32,4 @@ internal class ProfilerStressTestWindow : EventViewerWindow
     }
 
 }
+#endif

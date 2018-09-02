@@ -48,6 +48,8 @@ namespace EditorDiagnostics
 
             foreach (var e in root.m_entry.m_children)
             {
+                if (!e.Value.HasDataAfterFrame(visibleStartTime))
+                    continue;
                 if (filterFunc(e.Value.graph))
                 {
                     var item = new DataStreamEntry(e.Value, root.depth + 1);
@@ -63,6 +65,7 @@ namespace EditorDiagnostics
             return IsItemMaximized(item.id) ? 100 : base.GetCustomRowHeight(row, item);
         }
 
+        float lastReloadTime = 0;
         public void OnGUI(Rect rect, int inspectFrame)
         {
             EditorGUI.DrawRect(GetGraphRect(), new Color(.15f, .15f, .15f, 1));
@@ -73,7 +76,11 @@ namespace EditorDiagnostics
             visibleDuration = Mathf.Max(300, (int)(multiColumnHeader.state.columns[2].width));
             if (m_data.m_isActive)
                 visibleStartTime = m_data.latestFrame - visibleDuration;
-
+            if (Time.unscaledTime - lastReloadTime > 1 && EditorApplication.isPlaying)
+            {
+                Reload();
+                lastReloadTime = Time.unscaledTime;
+            }
             base.OnGUI(rect);
         }
 
@@ -95,6 +102,7 @@ namespace EditorDiagnostics
             bool expanded = IsItemMaximized(id);
             maximizedState[id] = !expanded;
             Reload();
+            lastReloadTime = Time.unscaledTime;
         }
 
         protected override void RowGUI(RowGUIArgs args)
@@ -125,6 +133,7 @@ namespace EditorDiagnostics
                                 maximizedState[i] = !maximized;
                         }
                         Reload();
+                        lastReloadTime = Time.unscaledTime;
                     }
                 }
                 break;

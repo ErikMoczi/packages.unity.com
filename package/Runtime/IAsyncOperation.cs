@@ -9,12 +9,6 @@ namespace ResourceManagement
     public interface IAsyncOperation : IEnumerator
     {
         /// <summary>
-        /// Gets the operation identifier. e.g., an object address.
-        /// </summary>
-        /// <value>The identifier.</value>
-        string id { get; }
-
-        /// <summary>
         /// Gets a value indicating whether this <see cref="T:ResourceManagement.IAsyncOperation"/> is done.
         /// </summary>
         /// <value><c>true</c> if is done; otherwise, <c>false</c>.</value>
@@ -31,6 +25,13 @@ namespace ResourceManagement
         /// </summary>
         /// <value>The result.</value>
         object result { get; }
+
+        /// <summary>
+        /// Gets the context object related to this operation, usually set to the IResourceLocation.
+        /// </summary>
+        /// <value>The context object.</value>
+        object context { get; }
+
     }
 
     /// <summary>

@@ -8,7 +8,6 @@ namespace ResourceManagement.AsyncOperations
     {
         public EmptyGroupOperation()
         {
-            m_id = "";
             m_result = new TObject[0];
         }
 
@@ -17,7 +16,7 @@ namespace ResourceManagement.AsyncOperations
             // Do nothing
         }
 
-        public override LoadGroupOperation<TObject> Start(ICollection<IResourceLocation> locations, Func<IResourceLocation, IAsyncOperation<TObject>> loadFunc, Action<IAsyncOperation<TObject>> onComplete)
+        public override LoadGroupOperation<TObject> Start(IList<IResourceLocation> locations, Func<IResourceLocation, IAsyncOperation<TObject>> loadFunc, Action<IAsyncOperation<TObject>> onComplete)
         {
             return this;
         }

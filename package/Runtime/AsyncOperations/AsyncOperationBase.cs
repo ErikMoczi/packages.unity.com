@@ -11,11 +11,11 @@ namespace ResourceManagement.AsyncOperations
     /// </summary>
     public class AsyncOperationBase<T> : IAsyncOperation<T>
     {
-        protected string m_id;
         protected T m_result;
         event Action<IAsyncOperation<T>> m_completed;
+        protected object m_context;
 
-        public AsyncOperationBase(string id) { m_id = id; }
+        public AsyncOperationBase() { }
         public event Action<IAsyncOperation<T>> completed
         {
             add
@@ -36,14 +36,13 @@ namespace ResourceManagement.AsyncOperations
         public void Reset() {}
         public object Current { get { return result; } }
         object IAsyncOperation.result { get { return result; } }
-        public string id { get { return m_id; } }
         public virtual T result { get { return m_result; } }
         public virtual bool isDone { get { return !(EqualityComparer<T>.Default.Equals(result, default(T))); } }
         public virtual float percentComplete { get { return isDone ? 1f : 0f; } }
-
-        public void InvokeCompletionEvent(IAsyncOperation<T> op)
+        public object context { get { return m_context; } }
+        public void InvokeCompletionEvent()
         {
-            SetResult(op.result);
+            SetResult(result);
             if (m_completed != null)
             {
                 var tmpEvent = m_completed;

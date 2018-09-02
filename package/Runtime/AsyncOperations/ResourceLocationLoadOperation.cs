@@ -11,8 +11,6 @@ internal class ResourceLocationLoadOperation<TAddress> : AsyncOperationBase<IRes
     TAddress m_address;
     int m_depLoadCount;
 
-    public ResourceLocationLoadOperation() : base("") {}
-
     public ResourceLocationLoadOperation<TAddress> Start(TAddress address, List<IAsyncOperation<IResourceLocator>> locatorLoadOperations, IList<IResourceLocator> locators, Func<TAddress, IResourceLocation> getLocationFunc)
     {
         m_address = address;
@@ -51,7 +49,7 @@ internal class ResourceLocationLoadOperation<TAddress> : AsyncOperationBase<IRes
 
     protected virtual void OnComplete()
     {
-        SetResult(m_getLocationFunc(m_address));
-        InvokeCompletionEvent(this);
+        SetResult((m_context = m_getLocationFunc(m_address)) as IResourceLocation);
+        InvokeCompletionEvent();
     }
 }

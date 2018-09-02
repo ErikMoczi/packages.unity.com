@@ -9,6 +9,7 @@ namespace ResourceManagement.AsyncOperations
         protected int totalToLoad;
         int loadCount;
         bool allStarted;
+        Action<IAsyncOperation<TObject>> m_internalOnComplete;
         Action<IAsyncOperation<TObject>> m_action;
         List<IAsyncOperation<TObject>> m_ops;
 
@@ -18,39 +19,45 @@ namespace ResourceManagement.AsyncOperations
                 m_result.Add(op.result);
         }
 
-        public LoadGroupOperation() : base("")
+        public LoadGroupOperation() 
         {
-            m_ops = new List<IAsyncOperation<TObject>>();
-            m_result = new List<TObject>();
+            m_internalOnComplete = LoadGroupOperation_completed;
         }
 
-        public virtual LoadGroupOperation<TObject> Start(ICollection<IResourceLocation> locations, Func<IResourceLocation, IAsyncOperation<TObject>> loadFunc, Action<IAsyncOperation<TObject>> onComplete)
+        public virtual LoadGroupOperation<TObject> Start(IList<IResourceLocation> locations, Func<IResourceLocation, IAsyncOperation<TObject>> loadFunc, Action<IAsyncOperation<TObject>> onComplete)
         {
             totalToLoad = locations.Count;
             loadCount = 0;
             allStarted = false;
             m_action = onComplete;
-            m_result.Clear();
-            m_ops.Clear();
+            if(m_result == null)
+                m_result = new List<TObject>(locations.Count);
+            else
+                m_result.Clear();
+
+            if(m_ops == null)
+                m_ops = new List<IAsyncOperation<TObject>>(locations.Count);
+            else
+                m_ops.Clear();
 
             if (locations != null)
             {
-                foreach (var loc in locations)
+                for(int i = 0; i < locations.Count; i++)
                 {
-                    var op = loadFunc(loc);
+                    var op = loadFunc(locations[i]);
                     m_ops.Add(op);
-                    op.completed += LoadGroupOperation_completed;
+                    op.completed += m_internalOnComplete;
                 }
 
                 allStarted = true;
 
                 if (isDone)
-                    InvokeCompletionEvent(this);
+                    InvokeCompletionEvent();
             }
             else
             {
                 allStarted = true;
-                InvokeCompletionEvent(this);
+                InvokeCompletionEvent();
             }
 
             return this;
@@ -66,7 +73,7 @@ namespace ResourceManagement.AsyncOperations
             loadCount++;
 
             if (isDone)
-                InvokeCompletionEvent(this);
+                InvokeCompletionEvent();
         }
     }
 }

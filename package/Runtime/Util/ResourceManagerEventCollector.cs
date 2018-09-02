@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace ResourceManagement.Util
 {
     public static class ResourceManagerEventCollector
@@ -26,20 +24,27 @@ namespace ResourceManagement.Util
         public static string EventCategory = "ResourceManagerEvent";
         public static void PostEvent(ResourceManagerEventCollector.EventType type, IResourceLocation loc, int val)
         {
+            if (!ResourceManager.m_postEvents)
+                return;
             var parent = "";
             var id = "";
-            object data = null;
+            byte[] data = null;
             if (loc != null)
             {
                 id = loc.ToString();
                 if (loc.dependencies != null && loc.dependencies.Count > 0)
                     parent = loc.dependencies[0].ToString();
-                var dataList = new List<string>();
-                dataList.Add(loc.providerId.Substring(loc.providerId.LastIndexOf('.') + 1));
-                dataList.Add(loc.id);
+                var sb = new System.Text.StringBuilder(256);
+                sb.Append(loc.providerId.Substring(loc.providerId.LastIndexOf('.') + 1));
+                sb.Append(',');
+                sb.Append(loc.id);
+                sb.Append(',');
                 for (int i = 0; loc.dependencies != null && i < loc.dependencies.Count; i++)
-                    dataList.Add(loc.dependencies[i].ToString());
-                data = dataList;
+                {
+                    sb.Append(loc.dependencies[i].ToString());
+                    sb.Append(',');
+                }
+                data = System.Text.Encoding.ASCII.GetBytes(sb.ToString());
             }
             EditorDiagnostics.EventCollector.PostEvent(
                 new EditorDiagnostics.DiagnosticEvent(EventCategory, parent, id, (int)type, UnityEngine.Time.frameCount, val, data));

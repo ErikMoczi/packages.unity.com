@@ -89,38 +89,48 @@ namespace ResourceManagement.ResourceProviders.Experimental
 
         internal class InternalOp<TObject> : AsyncOperationBase<TObject> where TObject : class
         {
-            IResourceLocation m_location;
             TObject prefabResult;
             int m_startFrame;
-            public InternalOp() : base("") {}
+            Action<IAsyncOperation<TObject>> m_onCompleteAction;
 
-            public InternalOp<TObject> Start(IAsyncOperation<TObject> loadOp, IResourceLocation loc, TObject val = null)
+            public InternalOp() 
+            {
+                m_onCompleteAction = OnComplete;
+            }
+
+            public InternalOp<TObject> Start(IAsyncOperation<TObject> loadOp, IResourceLocation loc, TObject val)
             {
                 prefabResult = null;
                 m_result = val;
-                m_location = loc;
+                m_context = loc;
                 m_startFrame = Time.frameCount;
-                loadOp.completed += OnComplete;
+                if (loadOp != null)
+                    loadOp.completed += m_onCompleteAction;
+                else
+                    OnComplete(m_result);
                 return this;
+            }
+
+            void OnComplete(TObject res)
+            {
+                m_result = res;
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, m_context as IResourceLocation, Time.frameCount - m_startFrame);
+                InvokeCompletionEvent();
+                AsyncOperationCache.Instance.Release<TObject>(this);
             }
 
             void OnComplete(IAsyncOperation<TObject> op)
             {
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, m_location, Time.frameCount - m_startFrame);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, m_context as IResourceLocation, Time.frameCount - m_startFrame);
                 prefabResult = op.result;
+
                 if (prefabResult == null)
-                {
-                    Debug.LogWarning("NULL prefab on instantiate: " + m_location);
-                    InvokeCompletionEvent(this);
-                    AsyncOperationCache.Instance.Release<TObject>(this);
-                }
-                else
-                {
-                    if (m_result == null)
-                        m_result = Object.Instantiate(prefabResult as GameObject) as TObject;
-                    InvokeCompletionEvent(this);
-                    AsyncOperationCache.Instance.Release<TObject>(this);
-                }
+                    Debug.LogWarning("NULL prefab on instantiate: " + m_context);
+                else if (m_result == null)
+                    m_result = Object.Instantiate(prefabResult as GameObject) as TObject;
+
+                InvokeCompletionEvent();
+                AsyncOperationCache.Instance.Release<TObject>(this);
             }
         }
 
@@ -128,6 +138,7 @@ namespace ResourceManagement.ResourceProviders.Experimental
         {
             public IResourceLocation m_location;
             public float m_lastRefTime = 0;
+            float m_lastReleaseTime;
             public int m_holdCount = 0;
             public Stack<Object> m_instances = new Stack<Object>();
             public bool Empty { get { return m_instances.Count == 0; } }
@@ -159,11 +170,11 @@ namespace ResourceManagement.ResourceProviders.Experimental
             {
                 if (m_instances.Count > 0)
                 {
-                    if (Time.unscaledTime - m_lastRefTime > (1f / m_instances.Count) * releaseTime)  //the last item will take releaseTime seconds to drop...
+                    if ((m_instances.Count > 1 && Time.unscaledTime - m_lastReleaseTime > releaseTime) || Time.unscaledTime - m_lastRefTime > (1f / m_instances.Count) * releaseTime)  //the last item will take releaseTime seconds to drop...
                     {
-                        m_lastRefTime = Time.unscaledTime;
+                        m_lastReleaseTime = m_lastRefTime = Time.unscaledTime;
                         var inst = m_instances.Pop();
-                        m_loadProvider.Release(m_location, inst);
+                        m_loadProvider.Release(m_location, null);
                         GameObject.Destroy(inst);
                         ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.PoolCount, m_location, m_instances.Count);
                         if (m_instances.Count == 0 && m_holdCount == 0)
@@ -175,11 +186,11 @@ namespace ResourceManagement.ResourceProviders.Experimental
 
             internal IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IAsyncOperation<IList<object>> loadDependencyOperation) where TObject : Object
             {
+                if (m_instances.Count > 0)
+                    return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>().Start(null, m_location, Get<TObject>());
+
                 var depOp = loadProvider.ProvideAsync<TObject>(m_location, loadDependencyOperation);
-
-
-                var r = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>();
-                return r.Start(depOp, m_location);
+                return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>, TObject>().Start(depOp, m_location, null);
             }
         }
     }

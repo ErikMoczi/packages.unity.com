@@ -11,14 +11,15 @@ internal class ResourceLocationCollectionLoadOperation<TAddress> : AsyncOperatio
     Func<TAddress, IResourceLocation> m_getLocationFunc;
     List<TAddress> m_addressList;
     int m_depLoadCount;
-
-    public ResourceLocationCollectionLoadOperation() : base("")
+    Action<IAsyncOperation<IResourceLocator>> m_onCompleteAction;
+    public ResourceLocationCollectionLoadOperation()
     {
         m_addressList = new List<TAddress>();
         m_result = new List<IResourceLocation>();
+        m_onCompleteAction = OnLocatorLoadComplete;
     }
 
-    public virtual ResourceLocationCollectionLoadOperation<TAddress> Start(ICollection<TAddress> addressList, IList<IAsyncOperation<IResourceLocator>> locatorLoadOperations, IList<IResourceLocator> locators, Func<TAddress, IResourceLocation> getLocationFunc)
+    public virtual ResourceLocationCollectionLoadOperation<TAddress> Start(IList<TAddress> addressList, IList<IAsyncOperation<IResourceLocator>> locatorLoadOperations, IList<IResourceLocator> locators, Func<TAddress, IResourceLocation> getLocationFunc)
     {
         m_addressList.Clear();
         m_result.Clear();
@@ -31,8 +32,8 @@ internal class ResourceLocationCollectionLoadOperation<TAddress> : AsyncOperatio
 
         if (m_depLoadCount > 0)
         {
-            foreach (var op in locatorLoadOperations)
-                op.completed += OnLocatorLoadComplete;
+            for(int i = 0; i < locatorLoadOperations.Count; i++)
+                locatorLoadOperations[i].completed += m_onCompleteAction;
         }
         else
         {
@@ -62,6 +63,6 @@ internal class ResourceLocationCollectionLoadOperation<TAddress> : AsyncOperatio
         foreach (var address in m_addressList)
             m_result.Add(m_getLocationFunc(address));
 
-        InvokeCompletionEvent(this);
+        InvokeCompletionEvent();
     }
 }

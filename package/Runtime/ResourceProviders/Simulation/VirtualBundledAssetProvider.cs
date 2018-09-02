@@ -16,12 +16,15 @@ namespace ResourceManagement.ResourceProviders.Simulation
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
+            System.Action<IAsyncOperation<TObject>> onCompleteAction;
             public InternalProviderOperation<TObject> Start(IResourceLocation loc, int speed, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
+                if (onCompleteAction == null)
+                    onCompleteAction = OnComplete;
                 loadDependencyOperation.completed += (obj) => {
                         VirtualAssetBundle bundle;
                         if (obj.result != null && obj.result.Count > 0 && (bundle = obj.result[0] as VirtualAssetBundle) != null)
-                            bundle.LoadAssetAsync<TObject>(loc.id, speed).completed += OnComplete;
+                            bundle.LoadAssetAsync<TObject>(loc, speed).completed += onCompleteAction;
                         else
                             OnComplete();
                     };

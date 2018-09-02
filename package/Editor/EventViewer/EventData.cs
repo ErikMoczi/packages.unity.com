@@ -110,12 +110,31 @@ namespace EditorDiagnostics
                         }
                         return samples[0].value;
                     }
+
+                    internal bool HasDataAfterFrame(int frame)
+                    {
+                        return samples.Count > 0 && samples[samples.Count - 1].frame > frame;
+                    }
                 }
                 [SerializeField]
                 List<DataStream> m_streams = new List<DataStream>();
                 public string name;
                 public string graph;
                 public Dictionary<string, DataSet> m_children = null;
+                internal bool HasDataAfterFrame(int frame)
+                {
+                    foreach (var s in m_streams)
+                        if (s != null && s.HasDataAfterFrame(frame))
+                            return true;
+                    if (m_children != null)
+                    {
+                        foreach (var c in m_children)
+                            if (c.Value.HasDataAfterFrame(frame))
+                                return true;
+                    }
+                    return false;
+                }
+
                 public bool hasChildren { get { return m_children != null && m_children.Count > 0; } }
                 public DataSet() {}
                 public DataSet(string n, string g)

@@ -16,7 +16,7 @@ namespace ResourceManagement.ResourceProviders
             {
                 CompletionUpdater.UpdateUntilComplete(loc.ToString(), () => {
                     #if UNITY_EDITOR
-                        var res = UnityEditor.AssetDatabase.LoadAssetAtPath<Object>(ResourceLocation.id) as TObject;
+                        var res = UnityEditor.AssetDatabase.LoadAssetAtPath<Object>(loc.id) as TObject;
                         SetResult(res);
                     #endif
 

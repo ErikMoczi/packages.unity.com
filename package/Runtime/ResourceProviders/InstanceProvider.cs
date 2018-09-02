@@ -12,38 +12,35 @@ namespace ResourceManagement.ResourceProviders
         internal class InternalOp<TObject> : AsyncOperationBase<TObject>
             where TObject : class
         {
-            IResourceLocation m_location;
             TObject prefabResult;
             int m_startFrame;
-            public InternalOp() : base("") {}
+            Action<IAsyncOperation<TObject>> m_completeAction;
 
-            public InternalOp<TObject> Start(IAsyncOperation<TObject> loadOp, IResourceLocation loc, TObject val = null)
+            public InternalOp() 
+            {
+                m_completeAction = OnComplete;
+            }
+
+            public InternalOp<TObject> Start(IAsyncOperation<TObject> loadOp, IResourceLocation loc)
             {
                 prefabResult = null;
-                m_result = val;
-                m_location = loc;
+                m_result = null;
+                m_context = loc;
                 m_startFrame = Time.frameCount;
-                loadOp.completed += OnComplete;
+                loadOp.completed += m_completeAction;
                 return this;
             }
 
             void OnComplete(IAsyncOperation<TObject> op)
             {
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, m_location, Time.frameCount - m_startFrame);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, m_context as IResourceLocation, Time.frameCount - m_startFrame);
                 prefabResult = op.result;
                 if (prefabResult == null)
-                {
-                    Debug.Log("NULL prefab on instantiate: " + m_location);
-                    InvokeCompletionEvent(this);
-                    AsyncOperationCache.Instance.Release<TObject>(this);
-                }
-                else
-                {
-                    if (m_result == null)
-                        m_result = Object.Instantiate(prefabResult as GameObject) as TObject;
-                    InvokeCompletionEvent(this);
-                    AsyncOperationCache.Instance.Release<TObject>(this);
-                }
+                    Debug.Log("Unable to load asset to instantiate: " + m_context);
+                else if (m_result == null)
+                    m_result = Object.Instantiate(prefabResult as GameObject) as TObject;
+                InvokeCompletionEvent();
+                AsyncOperationCache.Instance.Release<TObject>(this);
             }
         }
 

@@ -1,3 +1,5 @@
+#if RM_SAMPLES
+
 using System.Collections.Generic;
 using UnityEditor;
 using System.IO;
@@ -205,3 +207,4 @@ namespace ResourceManagement.Samples
         }
     }
 }
+#endif

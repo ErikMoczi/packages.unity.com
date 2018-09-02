@@ -11,23 +11,19 @@ namespace ResourceManagement.ResourceProviders
     {
         class InternalOp : AsyncOperationBase<Scene>
         {
-            IResourceLocation m_location;
-
-            public InternalOp() : base(""){}
-
             public IAsyncOperation<Scene> Start(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation, LoadSceneMode loadMode)
             {
-                m_location = loc;
-                loadDependencyOperation.completed += (obj) => SceneManager.LoadSceneAsync(m_location.id, loadMode).completed += OnSceneLoaded;
+                m_context = loc;
+                loadDependencyOperation.completed += (obj) => SceneManager.LoadSceneAsync(loc.id, loadMode).completed += OnSceneLoaded;
                 return this;
             }
 
             void OnSceneLoaded(AsyncOperation op)
             {
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadSceneAsyncCompletion, m_location, 1);
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, m_location, 100);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadSceneAsyncCompletion, m_context as IResourceLocation, 1);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, m_context as IResourceLocation, 100);
                 m_result = SceneManager.GetActiveScene();
-                InvokeCompletionEvent(this);
+                InvokeCompletionEvent();
             }
 
             public override bool isDone
@@ -47,18 +43,13 @@ namespace ResourceManagement.ResourceProviders
 
         class InternalReleaseOp : AsyncOperationBase<Scene>
         {
-            IResourceLocation m_location;
-
-            public InternalReleaseOp() : base("") {}
-
             public IAsyncOperation<Scene> Start(IResourceLocation loc)
             {
-                m_location = loc;
+                m_context = loc;
                 m_result = SceneManager.GetSceneByPath(loc.id);
-
                 if (m_result.isLoaded)
                 {
-                    ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.ReleaseSceneAsyncRequest, m_location, 0);
+                    ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.ReleaseSceneAsyncRequest, m_context as IResourceLocation, 0);
                     SceneManager.UnloadSceneAsync(loc.id).completed += OnSceneUnloaded;
                 }
                 else
@@ -71,8 +62,8 @@ namespace ResourceManagement.ResourceProviders
 
             void OnSceneUnloaded(AsyncOperation op)
             {
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.ReleaseSceneAsyncCompletion, m_location, 0);
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, m_location, 0);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.ReleaseSceneAsyncCompletion, m_context as IResourceLocation, 0);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, m_context as IResourceLocation, 0);
             }
 
             public override bool isDone

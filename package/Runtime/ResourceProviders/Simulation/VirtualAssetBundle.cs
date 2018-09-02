@@ -15,6 +15,8 @@ namespace ResourceManagement.ResourceProviders.Simulation
         public List<string> assets = new List<string>();
         public List<int> sizes = new List<int>();
         List<IAsyncOperation> operations = new List<IAsyncOperation>();
+        [NonSerialized]
+        public VirtualAssetBundleManager m_manager;
         public VirtualAssetBundle() {}
         public VirtualAssetBundle(string n, bool local, int size, IEnumerable<string> a)
         {
@@ -27,42 +29,28 @@ namespace ResourceManagement.ResourceProviders.Simulation
                 sizes.Add(1024 * 1024); //each asset is 1MB for now...
         }
 
-        public TObject LoadAsset<TObject>(string id, int speed) where TObject : class
+        public IAsyncOperation<TObject> LoadAssetAsync<TObject>(IResourceLocation loc, int speed) where TObject : class
         {
 #if UNITY_EDITOR
-            if (loaded && assets.Contains(id))
+            if (loaded && assets.Contains(loc.id))
             {
-                if (speed > 0)
-                    System.Threading.Thread.Sleep((int)((sizes[assets.IndexOf(id)] / (float)speed) * 1000));
-                return UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(id) as TObject;
-            }
-#endif
-            Debug.Log("Unable to load asset " + id + " from simulated bundle " + name);
-            return default(TObject);
-        }
-
-        public IAsyncOperation<TObject> LoadAssetAsync<TObject>(string id, int speed) where TObject : class
-        {
-#if UNITY_EDITOR
-            if (loaded && assets.Contains(id))
-            {
-                var op = new LoadAssetOp<TObject>(this, id, sizes[assets.IndexOf(id)] / (float)speed);
+                var op = new LoadAssetOp<TObject>(loc, sizes[assets.IndexOf(loc.id)] / (float)speed);
                 operations.Add(op);
+                m_manager.AddToUpdateList(this);
                 return op;
             }
 #endif
-            Debug.Log("Unable to async load asset " + id + " from simulated bundle " + name);
+            Debug.Log("Unable to load asset " + loc.id + " from simulated bundle " + name);
             return null;
         }
 
         class LoadAssetOp<TObject> : AsyncOperationBase<TObject>  where TObject : class
         {
-            VirtualAssetBundle bundle;
             float loadTime;
             float startTime;
-            public LoadAssetOp(VirtualAssetBundle b, string id, float delay) : base(id)
+            public LoadAssetOp(IResourceLocation loc, float delay)
             {
-                bundle = b;
+                m_context = loc;
                 loadTime = (startTime = Time.unscaledTime) + delay;
             }
 
@@ -76,8 +64,10 @@ namespace ResourceManagement.ResourceProviders.Simulation
                         return true;
                     if (Time.unscaledTime > loadTime)
                     {
-                        m_result = bundle.LoadAsset<TObject>(id, 0);
-                        InvokeCompletionEvent(this);
+#if UNITY_EDITOR        //this only works in the editor
+                        m_result = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Object>((m_context as IResourceLocation).id) as TObject;
+#endif
+                        InvokeCompletionEvent();
                         return true;
                     }
                     return false;
@@ -85,7 +75,7 @@ namespace ResourceManagement.ResourceProviders.Simulation
             }
         }
 
-        public void UpdateAsyncOperations()
+        public bool UpdateAsyncOperations()
         {
             foreach (var o in operations)
             {
@@ -95,6 +85,7 @@ namespace ResourceManagement.ResourceProviders.Simulation
                     break;
                 }
             }
+            return operations.Count > 0;
         }
 
         //TODO: this needs to take into account the load of the entire system, not just a single asset load

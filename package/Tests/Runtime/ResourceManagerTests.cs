@@ -183,7 +183,7 @@ public class ResourceManagerTests : MonoBehaviour, IPrebuildSetup
 
         Assert.IsNotNull(GameObject.Find("Cube1(Clone)"));
 
-        ResourceManager.ReleaseInstance<GameObject, string>("Cube1", op.result as GameObject);
+        ResourceManager.ReleaseInstance<GameObject>(op.result as GameObject);
 
         yield return null;
         Assert.IsNull(GameObject.Find("Cube1(Clone)"));

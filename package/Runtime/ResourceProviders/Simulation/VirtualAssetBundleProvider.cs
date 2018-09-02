@@ -9,18 +9,14 @@ namespace ResourceManagement.ResourceProviders.Simulation
     internal class VirtualAssetBundleProvider : ResourceProviderBase
     {
         VirtualAssetBundleManager m_assetBundleManager;
-        bool m_allowSynchronous;
-
-        public VirtualAssetBundleProvider(VirtualAssetBundleManager abm, bool allowSynchronous = true)
+        string m_providerId;
+        public VirtualAssetBundleProvider(VirtualAssetBundleManager abm, string provId)
         {
             m_assetBundleManager = abm;
-            m_allowSynchronous = allowSynchronous;
+            m_providerId = provId;
         }
 
-        public override string providerId
-        {
-            get { return m_allowSynchronous ? typeof(LocalAssetBundleProvider).FullName : typeof(RemoteAssetBundleProvider).FullName; }
-        }
+        public override string providerId{ get { return m_providerId; } }
 
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
@@ -30,7 +26,7 @@ namespace ResourceManagement.ResourceProviders.Simulation
             public override InternalProviderOperation<TObject> Start(IResourceLocation loc, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
                 loadDependencyOperation.completed += (obj) => {
-                        assetBundleManager.LoadAsync(loc.id).completed += (IAsyncOperation<VirtualAssetBundle> op) => {
+                        assetBundleManager.LoadAsync(loc).completed += (IAsyncOperation<VirtualAssetBundle> op) => {
                             SetResult(op.result as TObject);
                             OnComplete();
                         };
@@ -51,8 +47,7 @@ namespace ResourceManagement.ResourceProviders.Simulation
 
         public override bool Release(IResourceLocation loc, object asset)
         {
-            m_assetBundleManager.Unload(loc.id);
-            return true;
+            return m_assetBundleManager.Unload(loc);
         }
     }
 }

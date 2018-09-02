@@ -14,74 +14,141 @@ namespace ResourceManagement
         static List<IResourceProvider> m_resourceProviders = new List<IResourceProvider>();
         static List<IAsyncOperation<IResourceLocator>> m_resourceLocatorLoadOperations = new List<IAsyncOperation<IResourceLocator>>();
 
+        //used to look up locations of instatiated objects in order to find the provider when they are released
+        static Dictionary<object, IResourceLocation> m_instanceToLocationMap = new Dictionary<object, IResourceLocation>();
+
+        //used to look up locations of assets in order to find the provider when they are released
+        static Dictionary<object, IResourceLocation> m_assetToLocationMap = new Dictionary<object, IResourceLocation>();
+
+        static public bool m_postEvents = true;
         class InternalAsyncOp<TObject> : AsyncOperationBase<TObject>
         {
-            public InternalAsyncOp() : base("") {}
-
+            Action<IAsyncOperation<TObject>> action;
             public IAsyncOperation<TObject> Start(IAsyncOperation<IResourceLocation> locationOp, Func<IResourceLocation, IAsyncOperation<TObject>> asyncFunc)
             {
+                m_context = locationOp.context;
+
+                if (action == null)
+                    action = (op2) =>
+                    {
+                        SetResult(op2.result);
+                        InvokeCompletionEvent();
+                    };
+
                 locationOp.completed += (IAsyncOperation<IResourceLocation> op) =>
                     {
-                        asyncFunc(op.result).completed += OnComplete;
+                        asyncFunc(op.result).completed += action;
                     };
 
                 return this;
-            }
-
-            void OnComplete(IAsyncOperation<TObject> op)
-            {
-                SetResult(op.result);
-                InvokeCompletionEvent(this);
             }
         }
 
         class InternalAsyncListOp<TObject> : AsyncOperationBase<IList<TObject>>
         {
-            public InternalAsyncListOp() : base("") {}
-
+            Action<IAsyncOperation<IList<TObject>>> action;
             public IAsyncOperation<IList<TObject>> Start(IAsyncOperation<IList<IResourceLocation>> locationOp, Func<IList<IResourceLocation>, IAsyncOperation<IList<TObject>>> asyncFunc)
             {
+                m_context = locationOp.context;
+
+                if (action == null)
+                    action = (op2) =>
+                    {
+                        SetResult(op2.result);
+                        InvokeCompletionEvent();
+                    };
+
                 locationOp.completed += (IAsyncOperation<IList<IResourceLocation>> op) =>
                     {
-                        asyncFunc(op.result).completed += OnComplete;
+                        asyncFunc(op.result).completed += action;
                     };
 
                 return this;
-            }
-
-            void OnComplete(IAsyncOperation<IList<TObject>> op)
-            {
-                SetResult(op.result);
-                InvokeCompletionEvent(this);
             }
         }
 
         static void Release_Internal<TObject>(IResourceLocation loc, TObject obj)
             where TObject : class
         {
-            foreach (var dep in loc.dependencies)
-                Release_Internal(dep, default(object));
+            if (loc.dependencies != null)
+            {
+                for (int i = 0; i < loc.dependencies.Count; i++)
+                    Release_Internal(loc.dependencies[i], default(object));
+            }
 
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.Release, loc, Time.frameCount);
             GetResourceProvider<TObject>(loc).Release(loc, obj);
         }
 
+        static Dictionary<Type, object> m_loadAsyncInternalCache = new Dictionary<Type, object>();
+        static Func<IResourceLocation, IAsyncOperation<TObject>> GetLoadAsyncInternalFunc<TObject>() where TObject : class
+        {
+            object res;
+            if (!m_loadAsyncInternalCache.TryGetValue(typeof(TObject), out res))
+                m_loadAsyncInternalCache.Add(typeof(TObject), res = (Func<IResourceLocation, IAsyncOperation<TObject>>)LoadAsync_Internal<TObject>);
+            return res as Func<IResourceLocation, IAsyncOperation<TObject>>;
+        }
+
+
+        static Dictionary<Type, object> m_loadAsyncInternalMapCache = new Dictionary<Type, object>();
         static IAsyncOperation<TObject> LoadAsync_Internal<TObject>(IResourceLocation loc)
             where TObject : class
         {
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncRequest, loc, Time.frameCount);
-            var groupOp = StartLoadGroupOperation(loc.dependencies, LoadAsync_Internal<object>, null);
-            return GetResourceProvider<TObject>(loc).ProvideAsync<TObject>(loc, groupOp);
+            var groupOp = StartLoadGroupOperation(loc.dependencies, GetLoadAsyncInternalFunc<object>(), null);
+            var op = GetResourceProvider<TObject>(loc).ProvideAsync<TObject>(loc, groupOp);
+
+            Debug.Assert(op.context is IResourceLocation, "IAsyncOperation.context is not an IResourceLocation for " + loc.id);
+
+            object res;
+            if (!m_loadAsyncInternalMapCache.TryGetValue(typeof(TObject), out res))
+            {
+                Action<IAsyncOperation<TObject>> action = (op2) =>
+                {
+                    if (op2.result != null && !m_assetToLocationMap.ContainsKey(op2.result))
+                        m_assetToLocationMap.Add(op2.result, op2.context as IResourceLocation);
+                };
+                m_loadAsyncInternalMapCache.Add(typeof(TObject), res = action);
+            }
+
+            op.completed += res as Action<IAsyncOperation<TObject>>;
+            return op;
         }
 
+        static Dictionary<Type, object> m_instantiateAsyncInternalCache = new Dictionary<Type, object>();
+        static Func<IResourceLocation, IAsyncOperation<TObject>> GetInstantiateAsyncInternalFunc<TObject>() where TObject : Object
+        {
+            object res;
+            if (!m_instantiateAsyncInternalCache.TryGetValue(typeof(TObject), out res))
+                m_instantiateAsyncInternalCache.Add(typeof(TObject), res = (Func<IResourceLocation, IAsyncOperation<TObject>>)InstantiateAsync_Internal<TObject>);
+            return res as Func<IResourceLocation, IAsyncOperation<TObject>>;
+        }
+
+        static Dictionary<Type, object> m_instantiateAsyncInternalMapCache = new Dictionary<Type, object>();
         static IAsyncOperation<TObject> InstantiateAsync_Internal<TObject>(IResourceLocation loc)
             where TObject : Object
         {
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncRequest, loc, Time.frameCount);
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncRequest, loc, Time.frameCount);
 
-            var groupOp = StartLoadGroupOperation(loc.dependencies, LoadAsync_Internal<object>, null);
-            return instanceProvider.ProvideInstanceAsync<TObject>(GetResourceProvider<TObject>(loc), loc, groupOp);
+            var groupOp = StartLoadGroupOperation(loc.dependencies, GetLoadAsyncInternalFunc<object>(), null);
+            var op = instanceProvider.ProvideInstanceAsync<TObject>(GetResourceProvider<TObject>(loc), loc, groupOp);
+
+            Debug.Assert(op.context is IResourceLocation, "IAsyncOperation.context is not an IResourceLocation for " + loc.id);
+
+            object res;
+            if (!m_instantiateAsyncInternalMapCache.TryGetValue(typeof(TObject), out res))
+            {
+                Action<IAsyncOperation<TObject>> action = (op2) =>
+                {
+                    if (op2.result != null && !m_instanceToLocationMap.ContainsKey(op2.result))
+                        m_instanceToLocationMap.Add(op2.result, op2.context as IResourceLocation);
+                };
+                m_instantiateAsyncInternalMapCache.Add(typeof(TObject), res = action);
+            }
+
+            op.completed += res as Action<IAsyncOperation<TObject>>;
+            return op;
         }
 
         static IAsyncOperation<TObject> StartInternalAsyncOp<TObject, TAddress>(TAddress address, Func<IResourceLocation, IAsyncOperation<TObject>> asyncFunc)
@@ -96,7 +163,7 @@ namespace ResourceManagement
             return asyncFunc(GetResourceLocation(address));
         }
 
-        static IAsyncOperation<IList<TObject>> StartInternalAsyncOp<TObject, TAddress>(ICollection<TAddress> addressList, Func<IList<IResourceLocation>, IAsyncOperation<IList<TObject>>> asyncFunc)
+        static IAsyncOperation<IList<TObject>> StartInternalAsyncOp<TObject, TAddress>(IList<TAddress> addressList, Func<IList<IResourceLocation>, IAsyncOperation<IList<TObject>>> asyncFunc)
         {
             if (m_resourceLocatorLoadOperations.Count > 0)
             {
@@ -112,7 +179,8 @@ namespace ResourceManagement
             return asyncFunc(locList);
         }
 
-        static LoadGroupOperation<TObject> StartLoadGroupOperation<TObject>(ICollection<IResourceLocation> locations, Func<IResourceLocation, IAsyncOperation<TObject>> loadFunc, Action<IAsyncOperation<TObject>> onComplete)
+        static Dictionary<Type, object> m_releaseCache = new Dictionary<Type, object>();
+        static LoadGroupOperation<TObject> StartLoadGroupOperation<TObject>(IList<IResourceLocation> locations, Func<IResourceLocation, IAsyncOperation<TObject>> loadFunc, Action<IAsyncOperation<TObject>> onComplete)
             where TObject : class
         {
             LoadGroupOperation<TObject> groupOp;
@@ -121,8 +189,12 @@ namespace ResourceManagement
                 groupOp = AsyncOperationCache.Instance.Acquire<LoadGroupOperation<TObject>, TObject>();
             else
                 groupOp = AsyncOperationCache.Instance.Acquire<EmptyGroupOperation<TObject>, TObject>();
+            
+            object releaseAction = null;
+            if (!m_releaseCache.TryGetValue(typeof(TObject), out releaseAction))
+                m_releaseCache.Add(typeof(TObject), releaseAction = (Action<IAsyncOperation<IList<TObject>>>)AsyncOperationCache.Instance.Release<TObject>);
 
-            groupOp.Start(locations, loadFunc, onComplete).completed += AsyncOperationCache.Instance.Release<object>;
+            groupOp.Start(locations, loadFunc, onComplete).completed += releaseAction as Action<IAsyncOperation<IList<TObject>>>;
             return groupOp;
         }
 
@@ -207,32 +279,42 @@ namespace ResourceManagement
         /// <summary>
         /// Release resources belonging to the <paramref name="obj"/> at the specified <paramref name="address"/>.
         /// </summary>
-        /// <param name="address">Address to release.</param>
         /// <param name="obj">Object to release.</param>
         /// <typeparam name="TObject">Object type.</typeparam>
-        /// <typeparam name="TAddress">Address type.</typeparam>
-        public static void Release<TObject, TAddress>(TAddress address, TObject obj)
+        public static void Release<TObject>(TObject obj)
             where TObject : class
         {
-            var loc = GetResourceLocation(address);
+            IResourceLocation loc = null;
+            if (!m_assetToLocationMap.TryGetValue(obj, out loc))
+            {
+                Debug.LogWarning("Unable to find location for instantiated object " + obj);
+                return;
+            }
+
             Release_Internal(loc, obj);
         }
 
         /// <summary>
         /// Releases resources belonging to the prefab instance.
         /// </summary>
-        /// <param name="address">Address of the prefab.</param>
         /// <param name="inst">Instance to release.</param>
         /// <typeparam name="TObject">Instantiated object type.</typeparam>
-        /// <typeparam name="TAddress">Address type.</typeparam>
-        public static void ReleaseInstance<TObject, TAddress>(TAddress address, TObject inst)
+        public static void ReleaseInstance<TObject>(TObject inst)
             where TObject : Object
         {
-            var loc = GetResourceLocation(address);
+            IResourceLocation loc = null;
+            if (!m_instanceToLocationMap.TryGetValue(inst, out loc))
+            {
+                Debug.LogWarning("Unable to find location for instantiated object " + inst);
+                return;
+            }
 
+            m_instanceToLocationMap.Remove(inst);
             if (loc.dependencies != null)
-                foreach (var dep in loc.dependencies)
-                    Release_Internal(dep, default(object));
+            {
+                for (int i = 0; i < loc.dependencies.Count; i++)
+                    Release_Internal(loc.dependencies[i], default(object));
+            }
 
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.ReleaseInstance, loc, Time.frameCount);
             instanceProvider.ReleaseInstance(GetResourceProvider<TObject>(loc), loc, inst);
@@ -248,7 +330,7 @@ namespace ResourceManagement
         public static IAsyncOperation<TObject> LoadAsync<TObject, TAddress>(TAddress address)
             where TObject : class
         {
-            return StartInternalAsyncOp(address, LoadAsync_Internal<TObject>);
+            return StartInternalAsyncOp(address, GetLoadAsyncInternalFunc<TObject>());
         }
 
         /// <summary>
@@ -260,7 +342,7 @@ namespace ResourceManagement
         public static IAsyncOperation<TObject> LoadAsync<TObject>(IResourceLocation location)
             where TObject : class
         {
-            return LoadAsync_Internal<TObject>(location);
+            return GetLoadAsyncInternalFunc<TObject>()(location);
         }
 
         /// <summary>
@@ -271,10 +353,10 @@ namespace ResourceManagement
         /// <param name="callback">This callback will be invoked once for each object that is loaded.</param>
         /// <typeparam name="TObject">Object type to load.</typeparam>
         /// <typeparam name="TAddress">Address type.</typeparam>
-        public static IAsyncOperation<IList<TObject>> LoadAllAsync<TObject, TAddress>(ICollection<TAddress> addresses, Action<IAsyncOperation<TObject>> callback)
+        public static IAsyncOperation<IList<TObject>> LoadAllAsync<TObject, TAddress>(IList<TAddress> addresses, Action<IAsyncOperation<TObject>> callback)
             where TObject : class
         {
-            return StartInternalAsyncOp(addresses, (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, LoadAsync_Internal<TObject>, callback); });
+            return StartInternalAsyncOp(addresses, (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, GetLoadAsyncInternalFunc<TObject>(), callback); });
         }
 
         /// <summary>
@@ -296,7 +378,7 @@ namespace ResourceManagement
         /// <param name="addresses">Collection of addresses for which to load dependencies.</param>
         /// <param name="callback">This callback will be invoked once for each object that is loaded.</param>
         /// <typeparam name="TAddress">Address type.</typeparam>
-        public static IAsyncOperation<IList<object>> PreloadDependenciesAllAsync<TAddress>(ICollection<TAddress> addresses, Action<IAsyncOperation<object>> callback)
+        public static IAsyncOperation<IList<object>> PreloadDependenciesAllAsync<TAddress>(IList<TAddress> addresses, Action<IAsyncOperation<object>> callback)
         {
             List<IResourceLocation> dependencyLocations = new List<IResourceLocation>();
             foreach (TAddress adr in addresses)
@@ -305,7 +387,7 @@ namespace ResourceManagement
                 dependencyLocations.AddRange(loc.dependencies);
             }
 
-            return StartInternalAsyncOp(dependencyLocations, (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, LoadAsync_Internal<object>, callback); });
+            return StartInternalAsyncOp(dependencyLocations, (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, GetLoadAsyncInternalFunc<object>(), callback); });
         }
 
         /// <summary>
@@ -318,7 +400,7 @@ namespace ResourceManagement
         public static IAsyncOperation<TObject> InstantiateAsync<TObject, TAddress>(TAddress address)
             where TObject : Object
         {
-            return StartInternalAsyncOp(address, InstantiateAsync_Internal<TObject>);
+            return StartInternalAsyncOp(address, GetInstantiateAsyncInternalFunc<TObject>());
         }
 
         /// <summary>
@@ -329,10 +411,10 @@ namespace ResourceManagement
         /// <param name="callback">This callback will be invoked once for each object that is instantiated.</param>
         /// <typeparam name="TObject">Instantiated object type.</typeparam>
         /// <typeparam name="TAddress">Address type.</typeparam>
-        public static IAsyncOperation<IList<TObject>> InstantiateAllAsync<TObject, TAddress>(ICollection<TAddress> addresses, Action<IAsyncOperation<TObject>> callback)
+        public static IAsyncOperation<IList<TObject>> InstantiateAllAsync<TObject, TAddress>(IList<TAddress> addresses, Action<IAsyncOperation<TObject>> callback)
             where TObject : Object
         {
-            return StartInternalAsyncOp(addresses, (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, InstantiateAsync_Internal<TObject>, callback); });
+            return StartInternalAsyncOp(addresses, (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, GetInstantiateAsyncInternalFunc<TObject>(), callback); });
         }
 
         /// <summary>
@@ -348,7 +430,7 @@ namespace ResourceManagement
                     ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadSceneAsyncRequest, loc, 1);
                     ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, loc, 0);
 
-                    var groupOp = StartLoadGroupOperation(loc.dependencies, LoadAsync_Internal<object>, null);
+                    var groupOp = StartLoadGroupOperation(loc.dependencies, GetLoadAsyncInternalFunc<object>(), null);
                     return sceneProvider.ProvideSceneAsync(loc, groupOp, loadMode);
                 });
         }

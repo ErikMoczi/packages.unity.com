@@ -1,3 +1,5 @@
+#if RM_SAMPLES
+
 using UnityEngine;
 using UnityEditor;
 
@@ -53,3 +55,4 @@ namespace ResourceManagement.Samples
         }
     }
 }
+#endif
