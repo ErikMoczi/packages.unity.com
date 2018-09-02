@@ -95,22 +95,23 @@ namespace UnityEditor.PackageManager.UI
             operation.GetAllPackageAsync(AddSearchPackageInfos); 
         }
 
-        public void AddSearchPackageInfos(IEnumerable<PackageInfo> searchPackageInfos)
+        private void AddSearchPackageInfos(IEnumerable<PackageInfo> searchPackageInfos)
         {
             var copyPackageInfo = new List<PackageInfo>(packageInfos);
-            foreach(var pi in searchPackageInfos)
-            {
-                if (Packages.ContainsKey(pi.Name) && Packages[pi.Name].Current.Version == pi.Version) 
-                    continue;
-                
-                copyPackageInfo.Add(pi);
-            }
+            copyPackageInfo.AddRange(searchPackageInfos.Where(pi => !Packages.ContainsKey(pi.Name) || Packages[pi.Name].Current == null || Packages[pi.Name].Current.Version != pi.Version));
+            copyPackageInfo.Sort(Comparison);
             SetPackageInfos(copyPackageInfo);
         }
-        public void SetPackageInfos(IEnumerable<PackageInfo> packageInfos)
+
+        private static int Comparison(PackageInfo left, PackageInfo right)
+        {
+            return string.Compare(left.DisplayName, right.DisplayName, StringComparison.Ordinal);
+        }
+
+        public void SetPackageInfos(IEnumerable<PackageInfo> newPackageInfos)
         {
             ClearPackagesInternal();
-            AddPackageInfos(packageInfos);
+            AddPackageInfos(newPackageInfos);
         }
 
         public void AddPackageInfo(PackageInfo packageInfo)

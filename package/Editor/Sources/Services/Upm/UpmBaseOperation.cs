@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEditor.PackageManager.Requests;
 
@@ -30,6 +31,12 @@ namespace UnityEditor.PackageManager.UI
                 displayName = new CultureInfo("en-US").TextInfo.ToTitleCase(displayName);
             }
 
+            // MOCK
+            // var state = info.version == info.latestVersion ?  PackageState.UpToDate : PackageState.Outdated,
+            var state = PackageState.UpToDate;
+            if (info.errors.Length > 0)
+                state = PackageState.Error;
+
             packages.Add(new PackageInfo()
                 {
                     Name = info.name,
@@ -40,13 +47,13 @@ namespace UnityEditor.PackageManager.UI
                     Description = info.description,
                     Category = info.category,
                     IsCurrent = isCurrent,
+                    Errors = info.errors.ToList(),
+                    
                     // MOCK
                     // Group = GroupName(info.originType),
                     Group = GroupName(info.name.StartsWith("com.unity.modules.") ? OriginType.Path : OriginType.Registry),
 
-                    // MOCK
-                    // State = info.version == info.latestVersion ?  PackageState.UpToDate : PackageState.Outdated,
-                    State = PackageState.UpToDate,
+                    State = state,
                     
                     // MOCK TO REMOVE
                     // OriginType = info.originType                    

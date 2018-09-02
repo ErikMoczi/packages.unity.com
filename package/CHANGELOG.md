@@ -4,7 +4,16 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.1.8] - 2017-XX-XX
+## [0.1.9] - 2017-11-09
+### Changes
+- Check for null in PackageCollection.
+- Show warnings.
+- Briefly shows text when switching filter.
+- Shows package errors correctly.
+- Order packages by package display name.
+- Cancel pending operations when switching filter.
+
+## [0.1.8] - 2017-11-08
 ### Changes
 - Adding mock for OriginType, State and Group
 - Rename "TestOperation..." to "MockOperation..."

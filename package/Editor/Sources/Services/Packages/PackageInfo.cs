@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Semver;
 using UnityEngine;
 
@@ -31,6 +32,9 @@ namespace UnityEditor.PackageManager.UI
         public string Group;
         [SerializeField] 
         public OriginType OriginType;
+
+        [SerializeField] 
+        public List<Error> Errors;
         
         public bool Equals(PackageInfo other)
         {

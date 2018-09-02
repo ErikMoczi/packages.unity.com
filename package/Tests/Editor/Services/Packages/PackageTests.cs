@@ -11,19 +11,6 @@ namespace UnityEditor.PackageManager.UI.Tests
         private Action<IAddOperation> OnAddOperation;
         private Action<IRemoveOperation> OnRemoveOperation;
 
-        [OneTimeSetUp]
-        public void OneTimeSetup()
-        {
-            Factory = new MockOperationFactory();
-            OperationFactory.Instance = Factory;
-        }
-
-        [OneTimeTearDown]
-        public void OneTimeTearDown()
-        {
-            OperationFactory.Reset();
-        }
-
         [TearDown]
         public void TearDown()
         {
@@ -37,7 +24,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             var packages = PackageSets.Instance.Many(kPackageTestName, 1, true);
             Assert.Throws<ArgumentException>(() => 
             {
-                var unused = new Package(null, packages);
+                new Package(null, packages);
             });
         }
 
@@ -47,7 +34,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             var packages = PackageSets.Instance.Many(kPackageTestName, 1, true);
             Assert.Throws<ArgumentException>(() => 
             {
-                var unused = new Package("", packages);
+                new Package("", packages);
             });
         }
 
@@ -56,7 +43,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             Assert.Throws<ArgumentNullException>(() => 
             {
-                var unused = new Package(kPackageTestName, null);
+                new Package(kPackageTestName, null);
             });
         }
 
@@ -66,7 +53,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             var packages = Enumerable.Empty<PackageInfo>();
             Assert.Throws<ArgumentException>(() => 
             {
-                var unused = new Package(kPackageTestName, packages);
+                new Package(kPackageTestName, packages);
             });
         }
         

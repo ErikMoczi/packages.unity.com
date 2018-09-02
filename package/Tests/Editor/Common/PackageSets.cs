@@ -93,7 +93,8 @@ namespace UnityEditor.PackageManager.UI.Tests
                 Tag = "",
                 Group = group,
                 Version = version,
-                IsCurrent = true
+                IsCurrent = true,
+                Errors = new List<Error>()
             };
 
             _count++;
@@ -163,7 +164,8 @@ namespace UnityEditor.PackageManager.UI.Tests
                     Tag = "",
                     Version = "1.0.1",
                     Group = PackageGroupOrigins.Packages.ToString(),
-                    IsCurrent = false
+                    IsCurrent = false,
+                    Errors = new List<Error>()
                 };
                 packages.Add(package);
             }
@@ -180,7 +182,8 @@ namespace UnityEditor.PackageManager.UI.Tests
                     Tag = "",
                     Version = "1.0.1",
                     Group = PackageGroupOrigins.Packages.ToString(),
-                    IsCurrent = false
+                    IsCurrent = false,
+                    Errors = new List<Error>()
                 };
                 packages.Add(package);
             }
@@ -197,7 +200,8 @@ namespace UnityEditor.PackageManager.UI.Tests
                     Tag = "",
                     Version = "1.0.1",
                     Group = PackageGroupOrigins.Packages.ToString(),
-                    IsCurrent = false
+                    IsCurrent = false,
+                    Errors = new List<Error>()
                 };
                 packages.Add(package);
             }
@@ -214,7 +218,8 @@ namespace UnityEditor.PackageManager.UI.Tests
                     Tag = "",
                     Version = "4.0.0",
                     Group = PackageGroupOrigins.Packages.ToString(),
-                    IsCurrent = false
+                    IsCurrent = false,
+                    Errors = new List<Error>()
                 };
                 packages.Add(package);
             }
@@ -231,7 +236,8 @@ namespace UnityEditor.PackageManager.UI.Tests
                     Tag = "",
                     Version = "0.0.1",
                     Group = PackageGroupOrigins.Packages.ToString(),
-                    IsCurrent = false
+                    IsCurrent = false,
+                    Errors = new List<Error>()
                 };
                 packages.Add(package);
             }

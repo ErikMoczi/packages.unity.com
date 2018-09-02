@@ -31,6 +31,13 @@ namespace UnityEditor.PackageManager.UI
             RemoveButton.clickable.clicked += RemoveClick;
             if (ViewDocButton != null) 
                 ViewDocButton.clickable.clicked += ViewDocClick;
+            
+            PackageCollection.Instance.OnFilterChanged += OnFilterChanged;
+        }
+
+        private void OnFilterChanged(PackageFilter obj)
+        {
+            root.Q<VisualContainer>(emptyId).visible = false;
         }
 
         public void SetPackage(Package package, PackageFilter filter)
@@ -54,6 +61,7 @@ namespace UnityEditor.PackageManager.UI
             this.filter = filter;
             this.package = package;
             var detailVisible = true;
+            Error error = null;
 
             if (package == null || package.Display == null)
             {
@@ -83,6 +91,9 @@ namespace UnityEditor.PackageManager.UI
                     root.Q<Label>("inPreview").AddToClassList("display-none");
                 root.Q<Label>("detailName").text = displayPackage.Name;
                 root.Q<ScrollView>("detailView").scrollOffset = new Vector2(0, 0);
+                
+                if (displayPackage.Errors.Count > 0)
+                    error = displayPackage.Errors.First();
 
                 RefreshAddButton();
                 RefreshRemoveButton();
@@ -95,7 +106,10 @@ namespace UnityEditor.PackageManager.UI
             root.Q<VisualContainer>("detail").visible = detailVisible;
             root.Q<VisualContainer>(emptyId).visible = !detailVisible;
             
-            DetailError.ClearError();
+            if (error != null)
+                SetError(error);
+            else
+                DetailError.ClearError();
         }
 
         private void OnAddOperation(IAddOperation operation)
@@ -113,9 +127,14 @@ namespace UnityEditor.PackageManager.UI
                 package.AddSignal.Operation = null;
             }
             
-            DetailError.AdjustSize(DetailView.verticalScroller.visible);
-            DetailError.SetError(error);
+            SetError(error);
             RefreshAddButton();
+        }
+
+        private void SetError(Error error)
+        {
+            DetailError.AdjustSize(DetailView.verticalScroller.visible);
+            DetailError.SetError(error);            
         }
 
         private void OnAddOperationSuccess(PackageInfo packageInfo)
@@ -139,8 +158,7 @@ namespace UnityEditor.PackageManager.UI
             package.RemoveSignal.Operation.OnOperationError -= OnRemoveOperationError;
             package.RemoveSignal.Operation = null;
             
-            DetailError.AdjustSize(DetailView.verticalScroller.visible);
-            DetailError.SetError(error);
+            SetError(error);
             RefreshRemoveButton();
         }
 
@@ -155,7 +173,7 @@ namespace UnityEditor.PackageManager.UI
             if (package.AddSignal.Operation != null)
             {
                 version = package.AddSignal.Operation.PackageInfo.Version;
-                actionLabel = GetUpdateButtonText(filter == PackageFilter.All ? "Adding" : "Updating to", version);
+                actionLabel = GetUpdateButtonText(displayPackage.IsCurrent ? "Updating to" : "Adding", version);
                 enableButton = false;
                 visibleFlag = true;
             }
