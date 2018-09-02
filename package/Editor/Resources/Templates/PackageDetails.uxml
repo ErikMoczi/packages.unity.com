@@ -34,6 +34,7 @@
                 </ui:VisualElement>
 
                 <ui:Label name="detailName"/>
+                <ui:Label name="detailAuthor"/>
                 <ui:Label name="detailPackageStatus"/>
                 <ui:Label name="detailModuleReference"/>
                 <ui:Label name="detailDesc"/>

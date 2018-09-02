@@ -138,17 +138,22 @@ namespace UnityEditor.PackageManager.UI
                 }
                 else
                 {
-                    UIUtils.SetElementDisplay(ViewChangelogButton, true);
+                    var currentVersion = package.Current;
+                    var hasUpdate = currentVersion != null && displayPackage.Version.CompareByPrecedence(currentVersion.Version) > 0;
+                    UIUtils.SetElementDisplay(ViewChangelogButton, displayPackage.IsCurrent || hasUpdate);
                     UIUtils.SetElementDisplay(ViewDocButton, true);
                 }
 
                 root.Q<Label>("detailName").text = displayPackage.Name;
                 root.Q<ScrollView>("detailView").scrollOffset = new Vector2(0, 0);
 
+                DetailModuleReference.text = "";
                 var isModule = PackageInfo.IsModule(displayPackage.Name);
-                if (PackageInfo.IsModule(displayPackage.Name) && string.IsNullOrEmpty(displayPackage.Description))
+                if (PackageInfo.IsModule(displayPackage.Name))
                 {
-                    DetailModuleReference.text = string.Format("This built in package controls the presence of the {0} module.", displayPackage.ModuleName);
+                    DetailModuleReference.text = displayPackage.Description;
+                    if (string.IsNullOrEmpty(displayPackage.Description))
+                        DetailModuleReference.text = string.Format("This built in package controls the presence of the {0} module.", displayPackage.ModuleName);
                 }
                 
                 // Show Status string on package if need be
@@ -183,10 +188,13 @@ namespace UnityEditor.PackageManager.UI
                     }
                 }
 
-                UIUtils.SetElementDisplayNonEmpty(DetailDesc);
+                DetailAuthor.text = string.Format("Author: {0}", displayPackage.Author ?? "Unity Technologies Inc.");
+
+                UIUtils.SetElementDisplay(DetailDesc, !isModule);
                 UIUtils.SetElementDisplay(DetailVersion, !isModule);
-                UIUtils.SetElementDisplay(DetailModuleReference, isModule && string.IsNullOrEmpty(displayPackage.Description));
+                UIUtils.SetElementDisplayNonEmpty(DetailModuleReference);
                 UIUtils.SetElementDisplayNonEmpty(DetailPackageStatus);
+                UIUtils.SetElementDisplayNonEmpty(DetailAuthor);
 
 
                 if (displayPackage.Errors.Count > 0)
@@ -354,7 +362,7 @@ namespace UnityEditor.PackageManager.UI
         {
             if (package.IsPackageManagerUI)
             {
-                if (!EditorUtility.DisplayDialog("", "Updating this package will temporary close Package Manager window, do you want to continue?", "Yes", "No")) 
+                if (!EditorUtility.DisplayDialog("", "Updating this package will temporarily close the Package Manager window. Do you want to continue?", "Yes", "No")) 
                     return;
                 
                 if (package.AddSignal.Operation != null)
@@ -425,8 +433,8 @@ namespace UnityEditor.PackageManager.UI
         private Label DetailPackageStatus { get { return root.Q<Label>("detailPackageStatus"); } }
         private Label DetailModuleReference { get { return root.Q<Label>("detailModuleReference"); } }
         private Label DetailVersion { get { return root.Q<Label>("detailVersion");  }}
+        private Label DetailAuthor { get { return root.Q<Label>("detailAuthor");  }}
         private VisualElement VersionContainer { get { return root.Q<Label>("versionContainer");  }}
-        
         internal VisualElement GetTag(PackageTag tag) {return root.Q<VisualElement>("tag-" + tag.ToString()); } 
     }
 }

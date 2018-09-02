@@ -87,7 +87,8 @@ namespace UnityEditor.PackageManager.UI
                     Errors = info.errors.ToList(),
                     Group = GroupName(origin),
                     State = state,
-                    Origin = origin
+                    Origin = origin,
+                    Author = null
                 };
                 
                 packages.Add(packageInfo);
@@ -164,7 +165,15 @@ namespace UnityEditor.PackageManager.UI
 
         private void OnDone()
         {
-            ProcessData();
+            try
+            {
+                ProcessData();
+            }
+            catch (Exception error)
+            {
+                Debug.LogError("Package Manager Window had an error while completing an operation: " + error);
+            }
+
             FinalizeOperation();
         }
 

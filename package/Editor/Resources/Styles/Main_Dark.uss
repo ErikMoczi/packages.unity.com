@@ -567,6 +567,12 @@
 #detailListView #detailView .detail #detailDesc.empty, #detailListView #detailView .detail #detailModuleReference.empty {
   font-style: italic;
 }
+#detailListView #detailView .detail #detailAuthor {
+  flex: 1;
+  font-size: 12;
+  word-wrap: true;
+  margin-bottom: 5;
+}
 #detailListView #detailView .detail #detailActions {
   flex: 0;
   flex-direction: row;

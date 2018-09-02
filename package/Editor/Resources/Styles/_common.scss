@@ -594,6 +594,14 @@ $spinner-normal-half-size: 8;
 				}
 			}
 
+			#detailAuthor {
+				flex: 1;
+				@include font-normal();
+				word-wrap: true;
+
+				@include margin(auto, auto, 5, auto);
+			}
+
 			#detailActions {
 				flex: 0;
 				flex-direction: row;

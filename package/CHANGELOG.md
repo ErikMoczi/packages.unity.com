@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2018-02-08
+- Closes window when manifest is invalid (note: this means the window reads the console log errors while opened)
+- Will no longer report errors infinitely when an exception is thrown during an operation
+- Only show "View Changes" when there is an update button
+- Fixes typos in dialog when updating package manager ui
+
 ## [1.7.0] - 2018-02-05
 - Added 'View Documentation' link to package details
 - Added 'View changes' link to package details

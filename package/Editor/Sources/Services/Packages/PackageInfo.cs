@@ -40,6 +40,8 @@ namespace UnityEditor.PackageManager.UI
         public List<Error> Errors;
         [SerializeField] 
         public bool IsRecommended;
+        [SerializeField] 
+        public string Author;
         
         public string PackageId {
             get

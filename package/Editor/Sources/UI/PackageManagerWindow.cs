@@ -1,3 +1,5 @@
+using System;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
 using UnityEditor.Experimental.UIElements;
@@ -12,25 +14,46 @@ namespace UnityEditor.PackageManager.UI
         // When object is created
         public void OnEnable()
         {
+            Application.logMessageReceived += OnApplicationOnLogMessageReceived;
+
             if (EditorGUIUtility.isProSkin)
                 this.GetRootVisualContainer().AddStyleSheetPath("Styles/Main_Dark");
             else
                 this.GetRootVisualContainer().AddStyleSheetPath("Styles/Main_Light");
 
-            var template = Resources.Load<VisualTreeAsset>("Templates/PackageManagerWindow").CloneTree(null);
-            this.GetRootVisualContainer().Add(template);
-            template.StretchToParentSize();
+            var windowResource = Resources.Load<VisualTreeAsset>("Templates/PackageManagerWindow");
+            if (windowResource != null)
+            {
+                var template = windowResource.CloneTree(null);
+                this.GetRootVisualContainer().Add(template);
+                template.StretchToParentSize();
 
-            PackageSearchFilterTabs.SetEnabled(false);
+                PackageSearchFilterTabs.SetEnabled(false);
 
-            PackageList.OnSelected += OnPackageSelected;
-            PackageList.OnLoaded += OnPackagesLoaded;
+                PackageList.OnSelected += OnPackageSelected;
+                PackageList.OnLoaded += OnPackagesLoaded;
+            }
         }
 
         public void OnDisable()
         {
-            PackageList.OnSelected -= OnPackageSelected;
-            PackageList.OnLoaded -= OnPackagesLoaded;
+            Application.logMessageReceived -= OnApplicationOnLogMessageReceived;
+            
+            // Package list item may not be valid here.
+            if (PackageList != null)
+            {
+                PackageList.OnSelected -= OnPackageSelected;
+                PackageList.OnLoaded -= OnPackagesLoaded;
+            }
+        }
+
+        // Temporary hack to make sure that the window does not stay opened while the manifest is invalid
+        // since this cause all the package's assets to be unloaded and the window to behave unpedictably.
+        // Should be removed once upm bubbles up its errors.
+        private void OnApplicationOnLogMessageReceived(string condition, string stackTrace, LogType type)
+        {
+            if (type == LogType.Error && condition.StartsWith("Failed to initialize project : ")) 
+                Close();
         }
 
         private void OnPackageSelected(Package package)
@@ -57,6 +80,9 @@ namespace UnityEditor.PackageManager.UI
         {
             get {return this.GetRootVisualContainer().Q<PackageSearchFilterTabs>("tabsGroup");}
         }
+        
+        internal Alert ErrorBanner { get { return this.GetRootVisualContainer().Q<Alert>("errorBanner"); } }
+        
 #endif
 
         [MenuItem("Window/Package Manager", priority = 1500)]
