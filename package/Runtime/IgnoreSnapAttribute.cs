@@ -1,4 +1,3 @@
-using UnityEngine;
 using System;
 
 namespace ProGrids.Runtime
@@ -15,7 +14,8 @@ namespace ProGrids.Runtime
 	}
 
 	/// <summary>
-	/// Tells ProGrids to check `bool IsSnapEnabled()` function on this object.
+	/// Tells ProGrids to check for a function named `bool IsSnapEnabled()` on this object. In this way you can
+	/// programmatically enable or disable snapping.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
 	public class ProGridsConditionalSnapAttribute : Attribute

@@ -1,4 +1,4 @@
-# ProGrids 3.0.0-preview.6
+# ProGrids 3.0.0-preview.7
 
 ## Features
 
@@ -23,9 +23,9 @@
 - Remove `pg_` suffix from class and file names.
 - Remove automatic About Window popup on update.
 
-## Changes from preview.5
+## Changes from preview.6
 
-- Fix missing image errors on first import.
+- Reset grid size and offset shortcut are now the same, fixing a conflict.
 
 # ProGrids 2.5.0-f.0
 

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ProGrids.Editor
 {
-	public static class Snapping
+	static class Snapping
 	{
 		const float k_Epsilon = .0001f;
 

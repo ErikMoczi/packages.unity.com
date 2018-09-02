@@ -206,7 +206,7 @@ namespace ProGrids.Editor
 		{
 			SnapEnabledOverride so;
 
-			if(s_SnapOverrideCache.TryGetValue(t, out so))
+			if (s_SnapOverrideCache.TryGetValue(t, out so))
 				return so.IsEnabled();
 
 			object[] attribs = null;
@@ -225,7 +225,7 @@ namespace ProGrids.Editor
 					if(hasNoSnapAttrib)
 					{
 						s_SnapOverrideCache.Add(t, new SnapIsEnabledOverride(!hasNoSnapAttrib));
-						return true;
+						return false;
 					}
 				}
 				else
@@ -237,7 +237,7 @@ namespace ProGrids.Editor
 					if(hasNoSnapAttrib)
 					{
 						s_SnapOverrideCache.Add(t, new SnapIsEnabledOverride(!hasNoSnapAttrib));
-						return true;
+						return false;
 					}
 				}
 

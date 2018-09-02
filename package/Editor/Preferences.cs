@@ -16,11 +16,12 @@ namespace ProGrids.Editor
 
 		static KeyCode s_IncreaseGridSize = KeyCode.Equals;
 		static KeyCode s_DecreaseGridSize = KeyCode.Minus;
-		static KeyCode s_ResetGridSize = KeyCode.Alpha0;
 		static KeyCode s_NudgePerspectiveBackward = KeyCode.LeftBracket;
 		static KeyCode s_NudgePerspectiveForward = KeyCode.RightBracket;
 		static KeyCode s_NudgePerspectiveReset = KeyCode.Alpha0;
 		static KeyCode s_CyclePerspective = KeyCode.Backslash;
+
+		static GUIContent s_ResetGridModifiers = new GUIContent("Reset Grid Modifiers", "Reset any grid adjustments made by Nudge or Increase / Decrease Size.");
 
 		static bool s_PrefsLoaded = false;
 
@@ -46,10 +47,9 @@ namespace ProGrids.Editor
 			GUILayout.Label("Shortcuts", EditorStyles.boldLabel);
 			s_IncreaseGridSize = (KeyCode)EditorGUILayout.EnumPopup("Increase Grid Size", s_IncreaseGridSize);
 			s_DecreaseGridSize = (KeyCode)EditorGUILayout.EnumPopup("Decrease Grid Size", s_DecreaseGridSize);
-			s_ResetGridSize = (KeyCode)EditorGUILayout.EnumPopup("Reset Grid Size", s_ResetGridSize);
 			s_NudgePerspectiveBackward = (KeyCode)EditorGUILayout.EnumPopup("Nudge Perspective Backward", s_NudgePerspectiveBackward);
 			s_NudgePerspectiveForward = (KeyCode)EditorGUILayout.EnumPopup("Nudge Perspective Forward", s_NudgePerspectiveForward);
-			s_NudgePerspectiveReset = (KeyCode)EditorGUILayout.EnumPopup("Nudge Perspective Reset", s_NudgePerspectiveReset);
+			s_NudgePerspectiveReset = (KeyCode)EditorGUILayout.EnumPopup(s_ResetGridModifiers, s_NudgePerspectiveReset);
 			s_CyclePerspective = (KeyCode)EditorGUILayout.EnumPopup("Cycle Perspective", s_CyclePerspective);
 
 			if (GUILayout.Button("Reset"))
@@ -79,17 +79,14 @@ namespace ProGrids.Editor
 			s_DecreaseGridSize = EditorPrefs.HasKey(PreferenceKeys.DecreaseGridSize)
 				? (KeyCode)EditorPrefs.GetInt(PreferenceKeys.DecreaseGridSize)
 				: KeyCode.Minus;
-			s_ResetGridSize = EditorPrefs.HasKey(PreferenceKeys.ResetGridSize)
-				? (KeyCode)EditorPrefs.GetInt(PreferenceKeys.ResetGridSize)
-				: KeyCode.Minus;
 			s_NudgePerspectiveBackward = EditorPrefs.HasKey(PreferenceKeys.NudgePerspectiveBackward)
 				? (KeyCode)EditorPrefs.GetInt(PreferenceKeys.NudgePerspectiveBackward)
 				: KeyCode.LeftBracket;
 			s_NudgePerspectiveForward = EditorPrefs.HasKey(PreferenceKeys.NudgePerspectiveForward)
 				? (KeyCode)EditorPrefs.GetInt(PreferenceKeys.NudgePerspectiveForward)
 				: KeyCode.RightBracket;
-			s_NudgePerspectiveReset = EditorPrefs.HasKey(PreferenceKeys.NudgePerspectiveReset)
-				? (KeyCode)EditorPrefs.GetInt(PreferenceKeys.NudgePerspectiveReset)
+			s_NudgePerspectiveReset = EditorPrefs.HasKey(PreferenceKeys.ResetGridShortcutModifiers)
+				? (KeyCode)EditorPrefs.GetInt(PreferenceKeys.ResetGridShortcutModifiers)
 				: KeyCode.Alpha0;
 			s_CyclePerspective = EditorPrefs.HasKey(PreferenceKeys.CyclePerspective)
 				? (KeyCode)EditorPrefs.GetInt(PreferenceKeys.CyclePerspective)
@@ -109,10 +106,9 @@ namespace ProGrids.Editor
 			EditorPrefs.SetBool(PreferenceKeys.SyncUnitySnap, s_SyncUnitySnap);
 			EditorPrefs.SetInt(PreferenceKeys.IncreaseGridSize, (int)s_IncreaseGridSize);
 			EditorPrefs.SetInt(PreferenceKeys.DecreaseGridSize, (int)s_DecreaseGridSize);
-			EditorPrefs.SetInt(PreferenceKeys.ResetGridSize, (int)s_ResetGridSize);
 			EditorPrefs.SetInt(PreferenceKeys.NudgePerspectiveBackward, (int)s_NudgePerspectiveBackward);
 			EditorPrefs.SetInt(PreferenceKeys.NudgePerspectiveForward, (int)s_NudgePerspectiveForward);
-			EditorPrefs.SetInt(PreferenceKeys.NudgePerspectiveReset, (int)s_NudgePerspectiveReset);
+			EditorPrefs.SetInt(PreferenceKeys.ResetGridShortcutModifiers, (int)s_NudgePerspectiveReset);
 			EditorPrefs.SetInt(PreferenceKeys.CyclePerspective, (int)s_CyclePerspective);
 			EditorPrefs.SetInt(PreferenceKeys.SnapMethod, (int) s_SnapMethod);
 
@@ -149,10 +145,9 @@ namespace ProGrids.Editor
 			EditorPrefs.DeleteKey(PreferenceKeys.ShowGrid);
 			EditorPrefs.DeleteKey(PreferenceKeys.IncreaseGridSize);
 			EditorPrefs.DeleteKey(PreferenceKeys.DecreaseGridSize);
-			EditorPrefs.DeleteKey(PreferenceKeys.ResetGridSize);
 			EditorPrefs.DeleteKey(PreferenceKeys.NudgePerspectiveBackward);
 			EditorPrefs.DeleteKey(PreferenceKeys.NudgePerspectiveForward);
-			EditorPrefs.DeleteKey(PreferenceKeys.NudgePerspectiveReset);
+			EditorPrefs.DeleteKey(PreferenceKeys.ResetGridShortcutModifiers);
 			EditorPrefs.DeleteKey(PreferenceKeys.CyclePerspective);
 
 			LoadPreferences();

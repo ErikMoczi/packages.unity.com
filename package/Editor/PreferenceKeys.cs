@@ -25,10 +25,10 @@ namespace ProGrids.Editor
 		public const string ShowGrid = "pg_Editor::ShowGrid";
 		public const string IncreaseGridSize = "pg_Editor::IncreaseGridSize";
 		public const string DecreaseGridSize = "pg_Editor::DecreaseGridSize";
-		public const string ResetGridSize = "pg_Editor::ResetGridSize";
 		public const string NudgePerspectiveBackward = "pg_Editor::NudgePerspectiveBackward";
 		public const string NudgePerspectiveForward = "pg_Editor::NudgePerspectiveForward";
-		public const string NudgePerspectiveReset = "pg_Editor::NudgePerspectiveReset";
+		// Previously this only affected the grid offset. 3.0.0 changed it to also affect grid size.
+		public const string ResetGridShortcutModifiers = "pg_Editor::NudgePerspectiveReset";
 		public const string CyclePerspective = "pg_Editor::CyclePerspective";
 		public const string AngleValue = "pg_Editor::AngleValue";
 		public const string SnapSettings = "ProGridsEditor::m_SnapSettings";

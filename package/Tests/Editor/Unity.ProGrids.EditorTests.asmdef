@@ -1,7 +1,8 @@
 {
     "name": "Unity.ProGrids.Editor.Tests",
     "references": [
-        "Unity.ProGrids.Editor"
+        "Unity.ProGrids.Editor",
+        "Unity.ProGrids"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

@@ -42,10 +42,9 @@ namespace ProGrids.Editor
 
 		KeyCode m_IncreaseGridSizeShortcut = KeyCode.Equals;
 		KeyCode m_DecreaseGridSizeShortcut = KeyCode.Minus;
-		KeyCode m_ResetGridSizeShortcut = KeyCode.Alpha0;
 		KeyCode m_NudgePerspectiveBackwardShortcut = KeyCode.LeftBracket;
 		KeyCode m_NudgePerspectiveForwardShortcut = KeyCode.RightBracket;
-		KeyCode m_NudgePerspectiveResetShortcut = KeyCode.Alpha0;
+		KeyCode m_ResetGridShortcutModifiers = KeyCode.Alpha0;
 		KeyCode m_CyclePerspectiveShortcut = KeyCode.Backslash;
 
 		float m_AlphaBump = .25f;
@@ -461,8 +460,8 @@ namespace ProGrids.Editor
 			m_NudgePerspectiveForwardShortcut = EditorPrefs.HasKey(PreferenceKeys.NudgePerspectiveForward)
 				? (KeyCode)EditorPrefs.GetInt(PreferenceKeys.NudgePerspectiveForward)
 				: KeyCode.RightBracket;
-			m_NudgePerspectiveResetShortcut = EditorPrefs.HasKey(PreferenceKeys.NudgePerspectiveReset)
-				? (KeyCode)EditorPrefs.GetInt(PreferenceKeys.NudgePerspectiveReset)
+			m_ResetGridShortcutModifiers = EditorPrefs.HasKey(PreferenceKeys.ResetGridShortcutModifiers)
+				? (KeyCode)EditorPrefs.GetInt(PreferenceKeys.ResetGridShortcutModifiers)
 				: KeyCode.Alpha0;
 			m_CyclePerspectiveShortcut = EditorPrefs.HasKey(PreferenceKeys.CyclePerspective)
 				? (KeyCode)EditorPrefs.GetInt(PreferenceKeys.CyclePerspective)
@@ -742,10 +741,6 @@ namespace ProGrids.Editor
 				{
 					DecreaseGridSize();
 				}
-				else if (currentEvent.keyCode == m_ResetGridSizeShortcut)
-				{
-					ResetGridSize();
-				}
 				else if (currentEvent.keyCode == m_NudgePerspectiveBackwardShortcut)
 				{
 					if (!FullGridEnabled && !GridIsOrthographic && m_GridIsLocked)
@@ -756,10 +751,12 @@ namespace ProGrids.Editor
 					if (!FullGridEnabled && !GridIsOrthographic && m_GridIsLocked)
 						MenuNudgePerspectiveForward();
 				}
-				else if (currentEvent.keyCode == m_NudgePerspectiveResetShortcut)
+				else if (currentEvent.keyCode == m_ResetGridShortcutModifiers)
 				{
 					if (!FullGridEnabled && !GridIsOrthographic && m_GridIsLocked)
 						MenuNudgePerspectiveReset();
+						
+					ResetGridSize();
 				}
 				else if (currentEvent.keyCode == m_CyclePerspectiveShortcut)
 				{
