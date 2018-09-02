@@ -48,7 +48,7 @@ namespace UnityEditor.PackageManager.UI
 
             UpdateButton.visible = false;
             RemoveButton.visible = false;
-            root.Q<VisualContainer>(emptyId).visible = false;
+            root.Q<VisualElement>(emptyId).visible = false;
 
             UpdateButton.clickable.clicked += UpdateClick;
             RemoveButton.clickable.clicked += RemoveClick;
@@ -66,7 +66,7 @@ namespace UnityEditor.PackageManager.UI
 
         private void OnFilterChanged(PackageFilter obj)
         {
-            root.Q<VisualContainer>(emptyId).visible = false;
+            root.Q<VisualElement>(emptyId).visible = false;
         }
 
         public void SetPackage(Package package, PackageFilter filter)
@@ -175,8 +175,8 @@ namespace UnityEditor.PackageManager.UI
             }
 
             // Set visibility
-            root.Q<VisualContainer>("detail").visible = detailVisible;
-            root.Q<VisualContainer>(emptyId).visible = !detailVisible;
+            root.Q<VisualElement>("detail").visible = detailVisible;
+            root.Q<VisualElement>(emptyId).visible = !detailVisible;
             
             if (error != null)
                 SetError(error);
@@ -354,6 +354,6 @@ namespace UnityEditor.PackageManager.UI
         private Label DetailModuleReference { get { return root.Q<Label>("detailModuleReference"); } }
         private Label DetailVersion { get { return root.Q<Label>("detailVersion");  }}
         
-        internal VisualContainer GetTag(PackageTag tag) {return root.Q<VisualContainer>("tag-" + tag.ToString()); } 
+        internal VisualElement GetTag(PackageTag tag) {return root.Q<VisualElement>("tag-" + tag.ToString()); } 
     }
 }

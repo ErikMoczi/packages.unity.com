@@ -95,7 +95,7 @@ namespace UnityEditor.PackageManager.UI
         private Label NameLabel { get { return root.Q<Label>("packageName"); } }
         private Label StateLabel { get { return root.Q<Label>("packageState"); } }
         private Label VersionLabel { get { return root.Q<Label>("packageVersion"); } }
-        private VisualContainer PackageContainer { get { return root.Q<VisualContainer>("packageContainer"); } }
+        private VisualElement PackageContainer { get { return root.Q<VisualElement>("packageContainer"); } }
         private LoadingSpinner Spinner { get { return root.Q<LoadingSpinner>("packageSpinner"); } }
 
         public static string GetIconStateId(PackageInfo packageInfo)

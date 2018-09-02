@@ -1,45 +1,45 @@
 <UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:upm="UnityEditor.PackageManager.UI">
-    <ui:VisualContainer name="detailsContainer">
+    <ui:VisualElement name="detailsContainer">
         <ui:ScrollView name="detailView">
-            <ui:VisualContainer name="detail" class="detail">
-                <ui:VisualContainer class="header">
+            <ui:VisualElement name="detail" class="detail">
+                <ui:VisualElement class="header">
                     <ui:Label name="detailTitle"/>
                     <ui:Button name="update" text="Update" class="button"/>
                     <ui:Button name="remove" text="Remove" class="button"/>
-                </ui:VisualContainer>
-                <ui:VisualContainer class="versionContainer">
+                </ui:VisualElement>
+                <ui:VisualElement class="versionContainer">
                     <ui:Label name="detailVersion"/>
-                     <ui:VisualContainer name="tag-alpha" class="tagLine display-none">
+                     <ui:VisualElement name="tag-alpha" class="tagLine display-none">
                         <ui:Label name="tag" class="tag" text="alpha"/>
-                    </ui:VisualContainer>
+                    </ui:VisualElement>
 
-                    <ui:VisualContainer name="tag-beta" class="tagLine display-none">
+                    <ui:VisualElement name="tag-beta" class="tagLine display-none">
                         <ui:Label name="tag" class="tag" text="beta"/>
-                    </ui:VisualContainer>
+                    </ui:VisualElement>
 
-                    <ui:VisualContainer name="tag-experimental" class="tagLine display-none">
+                    <ui:VisualElement name="tag-experimental" class="tagLine display-none">
                         <ui:Label name="tag" class="tag" text="experimental"/>
-                    </ui:VisualContainer>
+                    </ui:VisualElement>
 
-                    <ui:VisualContainer name="tag-recommended" class="tagLine display-none">
+                    <ui:VisualElement name="tag-recommended" class="tagLine display-none">
                         <ui:Label name="tag" class="tag" text="recommended"/>
-                    </ui:VisualContainer>
-                </ui:VisualContainer>
+                    </ui:VisualElement>
+                </ui:VisualElement>
 
                 <ui:Label name="detailName"/>
                 <ui:Label name="detailPackageStatus"/>
                 <ui:Label name="detailModuleReference"/>
                 <ui:Label name="detailDesc"/>
                 <!--
-                <ui:VisualContainer name="detailActions">
+                <ui:VisualElement name="detailActions">
                     <ui:Button name="viewDocumentation" text="View documentation..."/>
-                </ui:VisualContainer>
+                </ui:VisualElement>
                 -->
-            </ui:VisualContainer>
-            <ui:VisualContainer name="emptyArea" class="detail emptyArea">
+            </ui:VisualElement>
+            <ui:VisualElement name="emptyArea" class="detail emptyArea">
                 <ui:Label class="title" text="There is no package selected."/>
-            </ui:VisualContainer>
+            </ui:VisualElement>
         </ui:ScrollView>
         <upm:Alert name="detailError" class="display-none"/>
-    </ui:VisualContainer>
+    </ui:VisualElement>
 </UXML>

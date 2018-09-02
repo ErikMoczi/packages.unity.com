@@ -15,7 +15,7 @@ namespace UnityEditor.PackageManager.UI
     {
         private readonly VisualElement root;
         private bool collapsed;
-        private readonly VisualContainer listElement;
+        private readonly VisualElement listElement;
 
         internal readonly PackageGroupOrigins Origin;
 
@@ -68,9 +68,9 @@ namespace UnityEditor.PackageManager.UI
             return packageItem;
         }
         
-        private VisualContainer List { get { return root.Q<VisualContainer>("groupContainer"); } }
-        private VisualContainer ListContainer { get { return root.Q<VisualContainer>("groupContainerOuter"); } }
-        private VisualContainer Header { get { return root.Q<VisualContainer>("headerContainer"); } }        
+        private VisualElement List { get { return root.Q<VisualElement>("groupContainer"); } }
+        private VisualElement ListContainer { get { return root.Q<VisualElement>("groupContainerOuter"); } }
+        private VisualElement Header { get { return root.Q<VisualElement>("headerContainer"); } }        
         private Label HeaderTitle { get { return root.Q<Label>("headerTitle"); } }
         private Caret Caret { get { return root.Q<Caret>("headerExpandState"); } }
         internal bool Collapsed { get { return collapsed; } set { SetCollapsed(value); } }

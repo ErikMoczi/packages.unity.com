@@ -1,6 +1,6 @@
 <UXML xmlns:ui="UnityEngine.Experimental.UIElements">
-    <ui:VisualContainer name="alertContainer" class="alert">
+    <ui:VisualElement name="alertContainer" class="alert">
         <ui:Label name="alertMessage"/>
         <ui:Button name="close" text="Close" class="button"/>
-    </ui:VisualContainer>
+    </ui:VisualElement>
 </UXML>

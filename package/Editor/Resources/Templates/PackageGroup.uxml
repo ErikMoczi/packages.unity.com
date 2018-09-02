@@ -1,10 +1,10 @@
 <UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:upm="UnityEditor.PackageManager.UI">
-    <ui:VisualContainer name="groupContainerOuter">
-        <ui:VisualContainer name="headerContainer">
+    <ui:VisualElement name="groupContainerOuter">
+        <ui:VisualElement name="headerContainer">
             <upm:Caret name="headerExpandState"/>
             <ui:Label name="headerTitle" text="Default" />
-        </ui:VisualContainer>
+        </ui:VisualElement>
 
-        <ui:VisualContainer name="groupContainer" />
-    </ui:VisualContainer>
+        <ui:VisualElement name="groupContainer" />
+    </ui:VisualElement>
 </UXML>

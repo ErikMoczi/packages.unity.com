@@ -8,6 +8,7 @@ The "In Project" and "Install" filters allow you to show different lists of pack
 ▪ Install: Lists all discoverable packages and all previously downloaded packages. If a package is already installed in your project, it will show with a differently colored background.
 
 What's new:
+▪ Replace VisualContainer by VisualElement in code and templates.
 ▪ Move "Project->Packages->Manage" menu item to "Window->Package Manager"
 ▪ Show the latest version and description in tab "Install" instead of the current version
 ▪ Display "Recommended" tag properly
@@ -21,6 +22,7 @@ What's new:
 ▪ Extra messaging on package state
 ▪ Documentation update
 
-Unity Package Manager UI includes the following known limitation:
+Unity Package Manager UI includes the following known issues or limitation:
+▪ Using a cache server may not update your assemblies properly, please turn it off.
 ▪ Modifying the manifest.json by hand doesn't update the package list. You need to either re-open the window or change filter to force an update.
 ▪ Built-in packages can't be enable or disable right now.

@@ -34,8 +34,8 @@ namespace UnityEditor.PackageManager.UI
             Add(root);
             root.StretchToParentSize();
 
-            root.Q<VisualContainer>(emptyId).visible = false;
-            root.Q<VisualContainer>(loadingId).visible = true;
+            root.Q<VisualElement>(emptyId).visible = false;
+            root.Q<VisualElement>(loadingId).visible = true;
             LoadingSpinner.Start();
 
             PackageCollection.Instance.OnPackagesChanged += SetPackages;
@@ -72,9 +72,9 @@ namespace UnityEditor.PackageManager.UI
         {
             List.Clear();
             Groups.Clear();
-            ClearSelection();            
+            ClearSelection();
             Spinner.Stop();
-            root.Q<VisualContainer>(emptyId).visible = false;
+            root.Q<VisualElement>(emptyId).visible = false;
         }
         
         private void SetPackages(IEnumerable<Package> packages)
@@ -82,7 +82,7 @@ namespace UnityEditor.PackageManager.UI
             OnLoaded();
             ClearAll();
 
-            root.Q<VisualContainer>(loadingId).visible = false;
+            root.Q<VisualElement>(loadingId).visible = false;
             LoadingSpinner.Stop();
 
             foreach (var package in packages)
@@ -90,7 +90,7 @@ namespace UnityEditor.PackageManager.UI
                 AddPackage(package);                
             }
 
-            root.Q<VisualContainer>(emptyId).visible = !packages.Any();
+            root.Q<VisualElement>(emptyId).visible = !packages.Any();
         }
 
         private void AddPackage(Package package)
