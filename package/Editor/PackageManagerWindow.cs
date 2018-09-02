@@ -1,5 +1,3 @@
-#if ENABLE_PACKMAN
-
 using UnityEngine;
 using System;
 using System.Text;
@@ -371,5 +369,3 @@ namespace UnityEditor.PackageManager
         }
     }
 } // namespace
-
-#endif
