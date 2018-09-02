@@ -17,24 +17,24 @@ namespace UnityEngine.ResourceManagement
             DontDestroyOnLoad(gameObject);
         }
  
-        public static void AddProviders(Func<string, string> bundleNameConverter)
+        public static void AddProviders(Func<string, string> bundleNameConverter, int assetCacheSize, float assetCacheAge, int bundleCacheSize, float bundleCacheAge)
         {
             var virtualBundleData = VirtualAssetBundleRuntimeData.Load();
             if (virtualBundleData != null)
-                new GameObject("AssetBundleSimulator", typeof(VirtualAssetBundleManager)).GetComponent<VirtualAssetBundleManager>().Initialize(virtualBundleData, bundleNameConverter);
+                new GameObject("AssetBundleSimulator", typeof(VirtualAssetBundleManager)).GetComponent<VirtualAssetBundleManager>().Initialize(virtualBundleData, bundleNameConverter, assetCacheSize, assetCacheAge, bundleCacheSize, bundleCacheAge);
         }
 
 
-        public void Initialize(VirtualAssetBundleRuntimeData virtualBundleData, Func<string, string> bundleNameConverter)
+        public void Initialize(VirtualAssetBundleRuntimeData virtualBundleData, Func<string, string> bundleNameConverter, int assetCacheSize, float assetCacheAge, int bundleCacheSize, float buncleCacheAge)
         {
             Debug.Assert(virtualBundleData != null);
             m_localLoadSpeed = virtualBundleData.LocalLoadSpeed;
             m_remoteLoadSpeed = virtualBundleData.RemoteLoadSpeed;
             foreach (var b in virtualBundleData.AssetBundles)
                 m_allBundles.Add(bundleNameConverter(b.Name), b);
-            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(this, typeof(RemoteAssetBundleProvider).FullName)));
-            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(this, typeof(LocalAssetBundleProvider).FullName)));
-            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualBundledAssetProvider()));
+            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(this, typeof(RemoteAssetBundleProvider).FullName), bundleCacheSize, buncleCacheAge));
+            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(this, typeof(LocalAssetBundleProvider).FullName), bundleCacheSize, buncleCacheAge));
+            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualBundledAssetProvider(), assetCacheSize, assetCacheAge));
         }
 
         public bool Unload(IResourceLocation location)
