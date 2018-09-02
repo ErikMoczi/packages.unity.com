@@ -590,7 +590,7 @@
   border-color: #ffa44e;
   text-color: #ffa44e;
 }
-#detailListView #detailView .detail .tag.recommended {
+#detailListView #detailView .detail .tag.verified {
   border-color: #e4e4e4;
   text-color: #e4e4e4;
 }

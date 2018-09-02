@@ -4,8 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.9.0-beta] - 2018-02-27
+## [1.9.0] - 2018-03-11
+- Added caching for faster ui response time
 - Package Manager UI extension mechanism
+- Exposed APIs for the Package Manager UI extension mechanism
+
+## [1.8.2] - 2018-03-02
+- Modified Tags to reflect new package workflow (Preview -> Released(no tag) -> Verified)
 
 ## [1.8.1] - 2018-02-23
 - Do not display Recommended tag if package version is alpha, beta or experimental

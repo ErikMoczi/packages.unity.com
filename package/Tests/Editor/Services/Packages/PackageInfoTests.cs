@@ -8,7 +8,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         [Test]
         public void HasTag_WhenPreReleasePackageVersionTagWithPreReleaseName_ReturnsTrue()
         {
-            var tag = PackageTag.alpha.ToString();
+            var tag = PackageTag.preview.ToString();
             
             var info = new PackageInfo()
             {
@@ -22,7 +22,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         [Test]
         public void HasTag_WhenPackageVersionTagIsAnyCase_ReturnsTrue()
         {
-            var tag = "bEtA";
+            var tag = "pREview";
             
             var info = new PackageInfo()
             {
@@ -39,7 +39,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             var info = new PackageInfo()
             {
                 PackageId = kPackageTestName,
-                Version = new SemVersion(1, 0, 0, PackageTag.alpha.ToString())
+                Version = new SemVersion(1, 0, 0, PackageTag.preview.ToString())
             };
             
             Assert.AreEqual("1.0.0", info.VersionWithoutTag);

@@ -1,7 +1,9 @@
+using System.Collections.Generic;
 using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
+#if !UNITY_2018_2_OR_NEWER
     internal class AlertFactory : UxmlFactory<Alert>
     {
         protected override Alert DoCreate(IUxmlAttributes bag, CreationContext cc)
@@ -9,13 +11,53 @@ namespace UnityEditor.PackageManager.UI
             return new Alert(bag.GetPropertyString("text"));
         }
     }
-
+#endif
+    
     internal class Alert : VisualElement
     {
+#if UNITY_2018_2_OR_NEWER
+        internal class AlertFactory : UxmlFactory<Alert, AlertUxmlTraits> { }
+
+        internal class AlertUxmlTraits : VisualElementUxmlTraits
+        {
+            private UxmlStringAttributeDescription m_Text;
+
+            public AlertUxmlTraits()
+            {
+                m_Text = new UxmlStringAttributeDescription { name="text" };
+            }
+
+            public override IEnumerable<UxmlAttributeDescription> uxmlAttributesDescription
+            {
+                get
+                {
+                    foreach (var attr in base.uxmlAttributesDescription)
+                    {
+                        yield return attr;
+                    }
+
+                    yield return m_Text;
+                }
+            }
+
+            public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
+            {
+                base.Init(ve, bag, cc);
+
+                Alert alert = (Alert) ve;
+                alert.AlertMessage.text = m_Text.GetValueFromBag(bag);
+            }
+        }
+#endif
+        
         private const string TemplatePath = PackageManagerWindow.ResourcesPath + "Templates/Alert.uxml";
         private readonly VisualElement root;
         private const float originalPositionRight = 5.0f;
         private const float positionRightWithScroll = 12.0f;
+
+        public Alert() : this(string.Empty)
+        {
+        }
 
         public Alert(string text)
         {
@@ -29,7 +71,11 @@ namespace UnityEditor.PackageManager.UI
 
         public void SetError(Error error)
         {
-            AlertMessage.text = error.message ?? string.Format("An error occurred ({0})", error.errorCode.ToString());
+            var message = "An error occured.";
+            if (error != null)
+                message = error.message ?? string.Format("An error occurred ({0})", error.errorCode.ToString());
+
+            AlertMessage.text = message;
             RemoveFromClassList("display-none");
         }
 

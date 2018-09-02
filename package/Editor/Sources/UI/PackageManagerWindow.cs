@@ -27,7 +27,9 @@ namespace UnityEditor.PackageManager.UI
                 this.GetRootVisualContainer().Add(template);
                 template.StretchToParentSize();
 
-                PackageSearchFilterTabs.SetEnabled(false);
+                // Disable filter while fetching first results
+                if (!PackageCollection.Instance.HasFetchedPackageList())
+                    PackageSearchFilterTabs.SetEnabled(false);
 
                 PackageList.OnSelected += OnPackageSelected;
                 PackageList.OnLoaded += OnPackagesLoaded;

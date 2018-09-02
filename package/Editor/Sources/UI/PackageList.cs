@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace UnityEditor.PackageManager.UI
 {
+#if !UNITY_2018_2_OR_NEWER
     internal class PackageListFactory : UxmlFactory<PackageList>
     {
         protected override PackageList DoCreate(IUxmlAttributes bag, CreationContext cc)
@@ -13,9 +14,14 @@ namespace UnityEditor.PackageManager.UI
             return new PackageList();
         }
     }
+#endif
 
     internal class PackageList : VisualElement
     {
+#if UNITY_2018_2_OR_NEWER
+        internal class PackageListFactory : UxmlFactory<PackageList> { }
+#endif
+        
         private const string TemplatePath = PackageManagerWindow.ResourcesPath + "Templates/PackageList.uxml";
 
         public event Action<Package> OnSelected = delegate { };
@@ -40,6 +46,7 @@ namespace UnityEditor.PackageManager.UI
             root.Q<VisualElement>(loadingId).visible = true;
             root.Q<VisualElement>(loadingId).StretchToParentSize();
             root.Q<VisualElement>(loadingSpinnerId).clippingOptions = ClippingOptions.NoClipping;
+            root.Q<VisualElement>(loadingSpinnerId).parent.clippingOptions = ClippingOptions.ClipAndCacheContents;
             LoadingSpinner.Start();
 
             PackageCollection.Instance.OnPackagesChanged += SetPackages;
@@ -237,6 +244,13 @@ namespace UnityEditor.PackageManager.UI
         
         private void SetPackages(IEnumerable<Package> packages)
         {
+            if (PackageCollection.Instance.Filter == PackageFilter.Local)
+            {
+                packages = packages.Where(pkg => pkg.Current != null);
+            }
+
+            var previousSelection = selectedItem != null ? selectedItem.package : null;
+
             OnLoaded();
             ClearAll();
 
@@ -261,15 +275,18 @@ namespace UnityEditor.PackageManager.UI
             root.Q<VisualElement>(loadingId).visible = false;
             LoadingSpinner.Stop();
 
-            foreach (var package in packages)
+            foreach (var package in packages.OrderBy(pkg => pkg.Versions.FirstOrDefault() == null ? pkg.Name : pkg.Versions.FirstOrDefault().DisplayName))
             {
-                AddPackage(package);                
+                var item = AddPackage(package);
+
+                if (previousSelection != null && package.Name == previousSelection.Name)
+                    Select(item);
             }
 
             root.Q<VisualElement>(emptyId).visible = !packages.Any();
         }
 
-        private void AddPackage(Package package)
+        private PackageItem AddPackage(Package package)
         {
             var groupName = package.Latest.Group;
             var group = GetOrCreateGroup(groupName);
@@ -279,6 +296,8 @@ namespace UnityEditor.PackageManager.UI
                 Select(packageItem);
 
             packageItem.OnSelected += Select;
+
+            return packageItem;
         }
 
         private PackageGroup GetOrCreateGroup(string groupName)

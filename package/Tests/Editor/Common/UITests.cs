@@ -30,14 +30,14 @@ namespace UnityEditor.PackageManager.UI.Tests
 
             if (TestContext.CurrentContext.Result.FailCount <= 0)
             {
-                PackageCollection.Instance.UpdatePackageCollection();
+                PackageCollection.Instance.UpdatePackageCollection(true);
             }
         }
 
         protected void SetPackages(IEnumerable<PackageInfo> packages)
         {
             Factory.Packages = packages;
-            PackageCollection.Instance.UpdatePackageCollection();
+            PackageCollection.Instance.UpdatePackageCollection(true);
         }
 
         protected static Error MakeError(ErrorCode code, string message)

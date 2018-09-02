@@ -2,9 +2,7 @@
 {
     internal enum PackageTag
     {
-        alpha,
-        beta,
-        recommended,
-        experimental
+        preview,
+        verified
     }
 }

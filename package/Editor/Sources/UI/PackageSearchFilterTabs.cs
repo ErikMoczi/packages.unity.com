@@ -2,6 +2,7 @@
 
 namespace UnityEditor.PackageManager.UI
 {    
+#if !UNITY_2018_2_OR_NEWER
     internal class PackageSearchFilterTabsFactory : UxmlFactory<PackageSearchFilterTabs>
     {
         protected override PackageSearchFilterTabs DoCreate(IUxmlAttributes bag, CreationContext cc)
@@ -9,9 +10,14 @@ namespace UnityEditor.PackageManager.UI
             return new PackageSearchFilterTabs();
         }
     }
-
+#endif
+    
     internal class PackageSearchFilterTabs : VisualElement
     {
+#if UNITY_2018_2_OR_NEWER
+        internal class PackageSearchFilterTabsFactory : UxmlFactory<PackageSearchFilterTabs> { }
+#endif
+
         private const string TemplatePath = PackageManagerWindow.ResourcesPath + "Templates/PackageSearchFilterTabs.uxml";
         private readonly VisualElement root;
         private const string SelectedClassName = "selected";

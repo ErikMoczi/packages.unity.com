@@ -1,8 +1,10 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
+#if !UNITY_2018_2_OR_NEWER
     internal class LoadingSpinnerFactory : UxmlFactory<LoadingSpinner>
     {
         protected override LoadingSpinner DoCreate(IUxmlAttributes bag, CreationContext cc)
@@ -10,9 +12,22 @@ namespace UnityEditor.PackageManager.UI
             return new LoadingSpinner();
         }
     }
-
+#endif
+    
     internal class LoadingSpinner : VisualElement
     {
+#if UNITY_2018_2_OR_NEWER
+        internal class LoadingSpinnerFactory : UxmlFactory<LoadingSpinner, LoadingSpinnerUxmTraits> { }
+
+        internal class LoadingSpinnerUxmTraits : VisualElementUxmlTraits
+        {
+            public override IEnumerable<UxmlChildElementDescription> uxmlChildElementsDescription
+            {
+                get { yield break; }
+            }
+        }
+#endif
+
         public bool InvertColor { get; set; }
         public bool Started { get; private set; }
 
@@ -22,6 +37,7 @@ namespace UnityEditor.PackageManager.UI
         {
             InvertColor = false;
             Started = false;
+            clippingOptions = ClippingOptions.NoClipping;
             UIUtils.SetElementDisplay(this, false);
         }
 

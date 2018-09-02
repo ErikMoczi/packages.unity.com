@@ -77,7 +77,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             {
                 version = string.Format("1.0.{0}", _count);
                 if (Random.NextDouble() > 0.5)
-                    version += "-alpha";
+                    version += "-preview";
             }
 
             var group = UpmBaseOperation.GroupName(type);
@@ -90,7 +90,7 @@ namespace UnityEditor.PackageManager.UI.Tests
                 State = PackageState.UpToDate,
                 Group = group,
                 Version = version,
-                IsRecommended = false,
+                IsVerified = false,
                 IsCurrent = true,
                 IsLatest = false,
                 Origin = type,

@@ -2,9 +2,9 @@
 {
     internal class UpmOperationFactory : IOperationFactory
     {
-        public IListOperation CreateListOperation()
+        public IListOperation CreateListOperation(bool offlineMode = false)
         {
-            return new UpmListOperation();
+            return new UpmListOperation(offlineMode);
         }
 
         public ISearchOperation CreateSearchOperation()

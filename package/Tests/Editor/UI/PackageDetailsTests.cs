@@ -22,14 +22,12 @@ namespace UnityEditor.PackageManager.UI.Tests
             var packageInfo = PackageSets.Instance.Single();
             foreach (var tag in new List<string>
             {
-                PackageTag.alpha.ToString(),
-                PackageTag.beta.ToString(),
-                PackageTag.experimental.ToString(),
-                PackageTag.recommended.ToString(),
+                PackageTag.preview.ToString(),
+                PackageTag.verified.ToString(),
                 "usertag"        // Any other unsupported tag a user might use
             })
             {
-                packageInfo.IsRecommended = PackageTag.recommended.ToString() == tag;
+                packageInfo.IsVerified = PackageTag.verified.ToString() == tag;
                 packageInfo.Version = packageInfo.Version.Change(null, null, null, tag);            
                 var package = new Package(packageInfo.Name, new List<PackageInfo> {packageInfo});
                 var details = Container.Q<PackageDetails>("detailsGroup");

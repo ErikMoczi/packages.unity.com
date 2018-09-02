@@ -3,6 +3,7 @@ using System;
 
 namespace UnityEditor.PackageManager.UI
 {
+#if !UNITY_2018_2_OR_NEWER
     internal class PackageItemFactory : UxmlFactory<PackageItem>
     {
         protected override PackageItem DoCreate(IUxmlAttributes bag, CreationContext cc)
@@ -10,9 +11,14 @@ namespace UnityEditor.PackageManager.UI
             return new PackageItem();
         }
     }
+#endif
 
     internal class PackageItem : VisualElement
     {
+#if UNITY_2018_2_OR_NEWER
+        internal class PackageItemFactory : UxmlFactory<PackageItem> { }
+#endif
+        
         private const string TemplatePath = PackageManagerWindow.ResourcesPath + "Templates/PackageItem.uxml";
 
         public static string SelectedClassName = "selected";
@@ -30,12 +36,17 @@ namespace UnityEditor.PackageManager.UI
 
         public PackageGroup packageGroup;
 
-        public PackageItem(Package package = null)
+        public PackageItem() : this(null)
+        {
+        }
+
+        public PackageItem(Package package)
         {
             root = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath).CloneTree(null);
             Add(root);
             
             root.Q<VisualElement>(loadingSpinnerId).clippingOptions = ClippingOptions.NoClipping;
+            root.Q<VisualElement>(loadingSpinnerId).parent.clippingOptions = ClippingOptions.ClipAndCacheContents;
 
             root.AddManipulator(new Clickable(Select));
             if (package != null)
@@ -65,13 +76,27 @@ namespace UnityEditor.PackageManager.UI
 
         private void SetItem(Package package)
         {
-            if (Display(package) == null)
+            var displayPackage = Display(package);
+            if (displayPackage == null)
                 return;
-            
+                            
             this.package = package;
-            this.package.AddSignal.WhenOperation(OnPackageUpdate);
-            
             OnPackageChanged();
+            
+            this.package.AddSignal.WhenOperation(OnPackageAdd);
+            this.package.RemoveSignal.WhenOperation(OnPackageRemove);
+        }
+
+        private void OnPackageRemove(IRemoveOperation operation)
+        {
+            operation.OnOperationError += error => Spinner.Stop();
+            OnPackageUpdate();
+        }
+
+        private void OnPackageAdd(IAddOperation operation)
+        {
+            operation.OnOperationError += error => Spinner.Stop();
+            OnPackageUpdate();
         }
 
         private void OnPackageChanged()
@@ -100,7 +125,7 @@ namespace UnityEditor.PackageManager.UI
                 Spinner.Stop();
         }
 
-        private void OnPackageUpdate(IAddOperation operation)
+        private void OnPackageUpdate()
         {
             Spinner.Start();
         }

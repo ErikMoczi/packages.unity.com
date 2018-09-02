@@ -1,19 +1,25 @@
-<UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:upm="UnityEditor.PackageManager.UI">
-    <ui:VisualElement name="listContainerOuter">
-        <ui:VisualElement name="loadingAreaContainer">
-            <ui:VisualElement name="loadingArea">
-                <ui:Label name="loadingTitle" class="title" text="Loading packages"/>
-                <ui:Label name="loadingSpinnerContainer" class="loading">
+<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML 
+        xmlns:engine="UnityEngine.Experimental.UIElements" 
+        xmlns:upm="UnityEditor.PackageManager.UI"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="UnityEngine.Experimental.UIElements UIElementsSchema/UnityEngine.Experimental.UIElements.xsd
+                            UnityEditor.PackageManager.UI UIElementsSchema/UnityEditor.PackageManager.UI.xsd">
+    <engine:VisualElement name="listContainerOuter">
+        <engine:VisualElement name="loadingAreaContainer">
+            <engine:VisualElement name="loadingArea">
+                <engine:Label name="loadingTitle" class="title" text="Loading packages"/>
+                <engine:VisualElement name="loadingSpinnerContainer" class="loading">
                     <upm:LoadingSpinner name="loadingSpinner" class="largeSpinner"/>
-                </ui:Label>
-            </ui:VisualElement>
-        </ui:VisualElement>
+                </engine:VisualElement>
+            </engine:VisualElement>
+        </engine:VisualElement>
 
-        <ui:VisualElement name="listContainer">
-            <ui:ScrollView name="scrollView"/>
-            <ui:VisualElement name="emptyArea" class="list emptyArea">
-                <ui:Label class="title" text="There are no packages."/>
-            </ui:VisualElement>
-        </ui:VisualElement>
-    </ui:VisualElement>
-</UXML>
+        <engine:VisualElement name="listContainer">
+            <engine:ScrollView name="scrollView"/>
+            <engine:VisualElement name="emptyArea" class="list emptyArea">
+                <engine:Label class="title" text="There are no packages."/>
+            </engine:VisualElement>
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

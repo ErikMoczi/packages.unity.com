@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Semver;
 
 namespace UnityEditor.PackageManager.UI
@@ -23,7 +24,7 @@ namespace UnityEditor.PackageManager.UI
         public string Group { get; set; }
         public PackageOrigin Origin { get; set; }
         public List<Error> Errors { get; set; }
-        public bool IsRecommended { get; set; }
+        public bool IsVerified { get; set; }
         public string Author { get; set; }
         
         public PackageManager.PackageInfo Info { get; set; }
@@ -64,7 +65,10 @@ namespace UnityEditor.PackageManager.UI
 
         public bool HasTag(string tag)
         {
-            return string.Equals(Version.Prerelease, tag, StringComparison.CurrentCultureIgnoreCase);
+            if (string.IsNullOrEmpty(Version.Prerelease))
+                return false;
+
+            return String.Equals(Version.Prerelease.Split('.').First(), tag, StringComparison.CurrentCultureIgnoreCase);
         }
 
         public bool HasTag(PackageTag tag)

@@ -1,8 +1,10 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
+#if !UNITY_2018_2_OR_NEWER
     internal class PackageGroupFactory : UxmlFactory<PackageGroup>
     {
         protected override PackageGroup DoCreate(IUxmlAttributes bag, CreationContext cc)
@@ -10,9 +12,14 @@ namespace UnityEditor.PackageManager.UI
             return new PackageGroup(bag.GetPropertyString("name"));
         }
     }
-
+#endif
+    
     internal class PackageGroup : VisualElement
     {
+#if UNITY_2018_2_OR_NEWER
+        internal class PackageGroupFactory : UxmlFactory<PackageGroup> { }
+#endif
+
         private const string TemplatePath = PackageManagerWindow.ResourcesPath + "Templates/PackageGroup.uxml";
 
         private readonly VisualElement root;
@@ -26,6 +33,10 @@ namespace UnityEditor.PackageManager.UI
 
         public PackageItem firstPackage;
         public PackageItem lastPackage;
+
+        public PackageGroup() : this(String.Empty)
+        {
+        }
 
         public PackageGroup(string groupName)
         {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Experimental.UIElements;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace UnityEditor.PackageManager.UI.Tests
 {
@@ -188,10 +189,9 @@ namespace UnityEditor.PackageManager.UI.Tests
             var packages = PackageSets.Instance.Many(5);
             var current = packages.ToList().First();
 
-            SetPackages(packages);
-
             var error = MakeError(ErrorCode.Unknown, "Fake error");
             Factory.RemoveOperation = new MockRemoveOperation(Factory) {ForceError = error};
+            SetPackages(packages);
             PackageCollection.Instance.SetListPackageInfos(packages);
             var package = PackageCollection.Instance.GetPackageByName(current.Name);
             Assert.IsNotNull(package);
@@ -215,8 +215,8 @@ namespace UnityEditor.PackageManager.UI.Tests
             var packagesLocal = PackageSets.Instance.Many(2);
             var packagesAll = PackageSets.Instance.Many(5);
             
-            SetPackages(packagesLocal);
             Factory.SearchOperation = new MockSearchOperation(Factory, packagesAll);
+            SetPackages(packagesLocal);
 
             onPackageChangedEvent = packages =>
             {
@@ -229,6 +229,28 @@ namespace UnityEditor.PackageManager.UI.Tests
             PackageCollection.Instance.OnPackagesChanged += onPackageChangedEvent;
             
             PackageCollection.Instance.SetFilter(PackageFilter.All);
+        }
+
+        [Test]
+        public void ListPackages_UsesCache()
+        {
+            var packages = PackageSets.Instance.Many(2);
+            PackageCollection.Instance.SetFilter(PackageFilter.Local);                            // Set filter to use list
+            Factory.SearchOperation = new MockSearchOperation(Factory, packages);
+            SetPackages(packages);
+            
+            Assert.IsTrue(PackageCollection.Instance.HasFetchedPackageList());            // Make sure packages are cached
+        }
+
+        [Test]
+        public void SearchPackages_UsesCache()
+        {
+            var packages = PackageSets.Instance.Many(2);
+            PackageCollection.Instance.SetFilter(PackageFilter.All);                                // Set filter to use search
+            Factory.SearchOperation = new MockSearchOperation(Factory, packages);
+            SetPackages(packages);
+            
+            Assert.IsTrue(PackageCollection.Instance.HasFetchedSearchPackages());     // Make sure packages are cached
         }
     }
 }
