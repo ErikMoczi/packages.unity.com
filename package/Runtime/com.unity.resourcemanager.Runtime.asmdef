@@ -1,6 +1,3 @@
 {
-    "name": "com.unity.resourcemanager.Runtime",
-    "references": [],
-    "includePlatforms": [],
-    "excludePlatforms": []
+    "name": "com.unity.resourcemanager.Runtime"
 }

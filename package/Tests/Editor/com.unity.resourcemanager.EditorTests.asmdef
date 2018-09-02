@@ -3,6 +3,5 @@
     "references": [],
     "includePlatforms": [
         "Editor"
-    ],
-    "excludePlatforms": []
+    ]
 }

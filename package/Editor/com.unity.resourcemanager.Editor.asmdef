@@ -5,6 +5,5 @@
     ],
     "includePlatforms": [
         "Editor"
-    ],
-    "excludePlatforms": []
+    ]
 }
