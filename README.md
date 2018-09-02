@@ -1,1 +1,1 @@
-# tracking unity packages
+Editor tool used to manually manage Asset Bundle configuration.
