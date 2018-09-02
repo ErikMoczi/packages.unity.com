@@ -316,6 +316,8 @@ namespace TMPro
                 {
                     Debug.Log("Writing Asset file [" + assetFilePath + "].");
 
+                    AssetDatabase.UnloadAllFileStreams();
+
                     File.WriteAllText(projectPath + "/" + assetFilePath, assetDataFile);
                 }
 
