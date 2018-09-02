@@ -4,8 +4,9 @@
 - [Setting Up Your Development Environment](#development)
 - [API Overview](#api)
 - [Distributing](#distribution)
-- [Testing UPM Builds](#testing-upm-builds)
-- [Build for Asset Store](#building-asset-store-projects)
+- [Building Older Versions](#older-versions)
+- [Build for Asset Store](#asset-store)
+- [Building Docs](#documentation)
 
 # About
 
@@ -93,7 +94,7 @@ quad.Refresh();
 
 // If in editor, generate UV2 and collapse duplicate vertices with
 pb_EditorMeshUtility.Optimize(quad, true);
-// If at runtime, collapse duplicate vertices with 
+// If at runtime, collapse duplicate vertices with
 pb_MeshCompiler.CollapseSharedVertices(quad);
 ```
 
@@ -102,6 +103,8 @@ ProBuilder controls updating the UMesh via the `pb_Object::ToMesh` and
 `pb_Object::Refresh` functions.
 
 # Distribution
+
+Starting at version 3.0, ProBuilder is distributed as a Package Manager package. These instructions are for the current trunk (4.x and up). To update an older version of ProBuilder (2.x or 3.x), follow the instructions in **Building Older Versions**.
 
 Packages are created through a Gitlab pipeline, triggered by tags.
 
@@ -119,8 +122,28 @@ In addition to a tag, the version number needs to be set in the following places
 
 Once a build is verified with a [QA Report](https://drive.google.com/drive/u/0/folders/1neI43BrzpTmyHvE5Qe5TN8YVHTOp-5Dd) and cleared for release, modify the `package.json` file to omit the pre-release information (ex, `-f.0`) and tag the commit with a `vMajor.Minor.Patch`.
 
-## Asset Store
+- [QA Report](https://docs.google.com/document/d/1uGJV1Wkij_fqB_TeCAUDYoYoSiU1IryoKrjtzPRxN4g/edit)
+
+## Building Older Versions
+
+### ProBuilder 3.x
+
+Starting with 4.x, ProBuilder is distributed as source code using assembly definition files. ProBuilder 3.x was distributed in pre-compiled DLLs. To build a DLL package for a 3.x update:
+
+- [ ] Check out the `v3.x-release` branch
+- [ ] Check out the `com.unity.probuilder-dll` repository
+- [ ] Follow build instructions in the README of the `3.x` branch.
+
+### Asset Store
 
 If updating the Asset Store version of ProBuilder 2.x, check out a new branch from `v2.9.8f3` and follow the instructions in the readme.
 
 `git checkout v2.9.8f3 -b v2.10-dev`
+
+# Documentation
+
+To build the documentation, install the Pacakge Manager DocTools package to your project.
+
+https://gitlab.internal.unity3d.com/upm-packages/package-ux/package-manager-doctools/tree/master
+
+Then in the Package Manager UI, select the local version of ProBuilder and select "Generate Documentation."

@@ -9,7 +9,7 @@ using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UObject = UnityEngine.Object;
 
-namespace ProBuilder.AssetUtility
+namespace UnityEngine.ProBuilder.AssetIdRemapUtility
 {
 	class AssetIdRemapUtility : EditorWindow
 	{
@@ -17,10 +17,7 @@ namespace ProBuilder.AssetUtility
 
 		static readonly string[] k_RemapFilePaths = new string[]
 		{
-			"unitypackagemanager/com.unity.probuilder/ProBuilder/Upgrade/AssetIdRemap.json",
-			"packages/com.unity.probuilder/ProBuilder/Upgrade/AssetIdRemap.json",
-			"Assets/ProBuilder/Upgrade/AssetIdRemap.json",
-			"Assets/ProCore/ProBuilder/Upgrade/AssetIdRemap.json",
+			"Packages/com.unity.probuilder/Content/Upgrade/AssetIdRemap-4_0_0.json"
 		};
 
 		static readonly string[] k_AssetExtensionsToRemap = new string[]
@@ -172,6 +169,11 @@ namespace ProBuilder.AssetUtility
 
 			for(int i = 0, c = k_RemapFilePaths.Length; m_RemapFile == null && i < c; i++)
 				m_RemapFile = AssetDatabase.LoadAssetAtPath<TextAsset>(k_RemapFilePaths[i]);
+
+			if (m_RemapFile == null)
+			{
+				Debug.LogWarning("Could not find a valid asset id remap file!");
+			}
 
 			if (m_TreeViewState == null)
 				m_TreeViewState = new TreeViewState();
@@ -378,10 +380,10 @@ namespace ProBuilder.AssetUtility
 			if (ProjectContainsOldAssetIds())
 				state |= ConversionReadyState.DeprecatedAssetIdsFound;
 
-			if (PackageImporter.IsPreUpmProBuilderInProject())
+			if (PackageImporter.IsPreProBuilder4InProject())
 				state |= ConversionReadyState.AssetStoreInstallFound;
 
-			if(state == ConversionReadyState.Ready && PackageImporter.IsUpmProBuilderLoaded())
+			if(state == ConversionReadyState.Ready && PackageImporter.IsProBuilder4OrGreaterLoaded())
 				return ConversionReadyState.NoActionRequired;
 
 			state |= ValidateProjectTextSerialized();
@@ -396,7 +398,7 @@ namespace ProBuilder.AssetUtility
 
 		void ResetAssetsToDelete()
 		{
-			m_DeprecatedProBuilderFound = PackageImporter.IsPreUpmProBuilderInProject();
+			m_DeprecatedProBuilderFound = PackageImporter.IsPreProBuilder4InProject();
 
 			if (m_DeprecatedProBuilderFound && !ValidatePreUpmProBuilderRoot(m_DeprecatedProBuilderDirectory))
 				m_DeprecatedProBuilderDirectory = FindAssetStoreProBuilderInstall();
@@ -423,7 +425,7 @@ namespace ProBuilder.AssetUtility
 
 						if (string.IsNullOrEmpty(m_DeprecatedProBuilderDirectory))
 						{
-							Debug.LogWarning("Canceling ProBuilder Asset Store to Package Manager conversion. You may start this process again at any time by accessing the Tools>ProBuilder>Repair>Convert to Package Manager menu item.");
+							UnityEngine.Debug.LogWarning("Canceling ProBuilder Asset Store to Package Manager conversion. You may start this process again at any time by accessing the Tools>ProBuilder>Repair>Convert to Package Manager menu item.");
 							EditorApplication.delayCall += Close;
 							break;
 						}
@@ -447,7 +449,7 @@ namespace ProBuilder.AssetUtility
 				}
 				else if (res == k_DialogCancel)
 				{
-					Debug.LogWarning("Canceling ProBuilder Asset Store to Package Manager conversion. You may start this process again at any time by accessing the Tools>ProBuilder>Repair>Convert to Package Manager menu item.");
+					UnityEngine.Debug.LogWarning("Canceling ProBuilder Asset Store to Package Manager conversion. You may start this process again at any time by accessing the Tools>ProBuilder>Repair>Convert to Package Manager menu item.");
 					EditorApplication.delayCall += Close;
 				}
 			}
