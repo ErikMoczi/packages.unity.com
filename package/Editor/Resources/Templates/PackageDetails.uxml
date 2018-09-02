@@ -42,10 +42,6 @@
                 <engine:VisualElement name="detailCustomContainer" class="display-none"/>
 
                 <engine:VisualElement name="documentationContainer" class="display-none">
-                    <engine:VisualElement name="thirdPartyNoticeContainer" class="detailActions">
-                        <engine:Label name="thirdPartyNoticeLabel" class="" text="To view the third party softwares used by this package, click view licenses below."/>
-                    </engine:VisualElement>
-
                     <engine:VisualElement name="detailActions">
                         <engine:Button name="viewDocumentation" class="detailAction link" text="View documentation"/>
                         <engine:VisualElement name="changeLogContainer">

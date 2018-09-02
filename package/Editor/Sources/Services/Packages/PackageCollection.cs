@@ -21,6 +21,7 @@ namespace UnityEditor.PackageManager.UI
         private string selectedListPackage;
         private string selectedSearchPackage;
 
+        internal string lastUpdateTime;
         private List<PackageInfo> listPackagesOffline;
         private List<PackageInfo> listPackages;
         private List<PackageInfo> searchPackages;
@@ -132,10 +133,13 @@ namespace UnityEditor.PackageManager.UI
             return true;
         }
 
-        public void UpdatePackageCollection(bool rebuidDictionary = false)
+        public void UpdatePackageCollection(bool rebuildDictionary = false)
         {
-            if (rebuidDictionary)
+            if (rebuildDictionary)
+            {
+                lastUpdateTime = DateTime.Now.ToString("HH:mm");
                 RebuildPackageDictionary();
+            }
             if (packages.Any())
                 OnPackagesChanged(OrderedPackages());
         }

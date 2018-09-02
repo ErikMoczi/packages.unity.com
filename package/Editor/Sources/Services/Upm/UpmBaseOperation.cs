@@ -66,6 +66,7 @@ namespace UnityEditor.PackageManager.UI
             {
                 var isVersionCurrent = version == info.version && isCurrent;
                 var isBuiltIn = info.source == PackageSource.BuiltIn;
+                var isVerified = string.IsNullOrEmpty(SemVersion.Parse(version).Prerelease) && version == info.versions.recommended;
                 var state = (isBuiltIn || info.version == lastCompatible) ? PackageState.UpToDate : PackageState.Outdated;
                 
                 // Happens mostly when using a package that hasn't been in production yet.
@@ -85,7 +86,7 @@ namespace UnityEditor.PackageManager.UI
                     Category = info.category,
                     IsCurrent = isVersionCurrent,
                     IsLatest = version == lastCompatible,
-                    IsVerified = version == info.versions.recommended,
+                    IsVerified = isVerified,
                     Errors = info.errors.ToList(),
                     Group = GroupName(info.source),
                     State = state,

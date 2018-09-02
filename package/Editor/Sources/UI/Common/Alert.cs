@@ -28,6 +28,8 @@ namespace UnityEditor.PackageManager.UI
 
         public Alert()
         {
+            UIUtils.SetElementDisplay(this, false);
+
             root = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath).CloneTree(null);
             Add(root);
             root.StretchToParentSize();
@@ -38,8 +40,6 @@ namespace UnityEditor.PackageManager.UI
                     OnCloseError();
                 ClearError();
             };
-
-            visible = false;
         }
 
         public void SetError(Error error)
@@ -49,12 +49,12 @@ namespace UnityEditor.PackageManager.UI
                 message = error.message ?? string.Format("An error occurred ({0})", error.errorCode.ToString());
 
             AlertMessage.text = message;
-            RemoveFromClassList("display-none");
+            UIUtils.SetElementDisplay(this, true);
         }
 
         public void ClearError()
         {
-            AddToClassList("display-none");
+            UIUtils.SetElementDisplay(this, false);
             AdjustSize(false);
             AlertMessage.text = "";
             OnCloseError = null;

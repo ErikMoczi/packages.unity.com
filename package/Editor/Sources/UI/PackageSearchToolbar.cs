@@ -19,7 +19,7 @@ namespace UnityEditor.PackageManager.UI
 #if UNITY_2018_3_OR_NEWER
         internal new class UxmlFactory : UxmlFactory<PackageSearchToolbar> { }
 #endif
-        private const string kPlaceHolder = "Search by package name, prerelease or version number...";
+        private const string kPlaceHolder = "Search by package name, verified, preview or version number...";
         
         public event Action OnFocusChange = delegate { };
         public event Action<string> OnSearchChange = delegate { };

@@ -15,6 +15,7 @@
 
 .display-none {
   position: absolute;
+  overflow: hidden;
   border-radius: 0;
   width: 0;
   height: 0;
@@ -295,8 +296,6 @@
   padding-left: 0;
   padding-bottom: 0;
   padding-right: 0;
-}
-#detailListView .link:hover {
   cursor: link;
 }
 #detailListView .emptyArea {
@@ -528,7 +527,8 @@
 }
 #detailListView .package .status {
   flex: 0 0 14;
-  max-height: 14;
+  width: 14;
+  height: 14;
   margin-left: 2;
   margin-right: 0;
 }
@@ -607,9 +607,9 @@
   font-style: bold;
   word-wrap: true;
   margin-top: 0;
-  margin-left: 0;
+  margin-left: 4;
   margin-bottom: 0;
-  margin-right: 3;
+  margin-right: 0;
 }
 #detailListView #detailView .detail .header #detailsControls {
   flex: 1 0 0;
@@ -651,8 +651,11 @@
 #detailListView #detailView .detail .header #updateCombo #updateDropdownContainer .popup:focus {
   background-image: resource("Builtin Skins/LightSkin/Images/mini popup.png");
 }
+#detailListView #detailView .detail .header #updateCombo #updateDropdownContainer .popup:hover .textElement {
+  text-color: #000000;
+}
 #detailListView #detailView .detail .header #updateCombo #updateDropdownContainer .popup .textElement {
-  margin-top: 3;
+  margin-top: 2;
 }
 #detailListView #detailView .detail .header #updateCombo .action {
   flex: 0 0 auto;
@@ -666,6 +669,9 @@
   padding-bottom: 3;
   padding-right: 4;
   position-right: -3;
+}
+#detailListView #detailView .detail .header #updateCombo .action:hover {
+  text-color: #000000;
 }
 #detailListView #detailView .detail .header #updateContainer {
   height: 19;
@@ -768,10 +774,6 @@
   word-wrap: true;
   margin-bottom: 5;
 }
-#detailListView #detailView .detail #thirdPartyNoticeContainer {
-  margin-left: 4;
-  padding-left: 2;
-}
 #detailListView #detailView .detail #changeLogContainer, #detailListView #detailView .detail #viewLicensesContainer {
   flex: 0 0 auto;
   flex-direction: row;
@@ -835,7 +837,7 @@
   position-top: 5;
   position-left: 5;
   position-right: 5;
-  min-height: 50;
+  min-height: 200;
   word-wrap: true;
 }
 #detailListView #detailError.display-none {
@@ -894,6 +896,7 @@
 #detailListView #statusBarContainer #loadingContainer #loadingText {
   margin-left: 14;
   padding-left: 2;
+  font-style: italic;
 }
 #detailListView #statusBarContainer #loadingContainer #loadingText.icon {
   margin-left: 0;
@@ -960,10 +963,12 @@
 .alert #alertMessage {
   flex: 1 0 0;
   text-color: #f4f4f4;
+  word-wrap: true;
   overflow: hidden;
 }
 .alert #close {
   flex: 0 0 auto;
+  max-height: 30;
   position-left: 5;
   flex: 0 0 auto;
   padding-top: 3;

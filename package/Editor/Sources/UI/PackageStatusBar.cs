@@ -38,10 +38,18 @@ namespace UnityEditor.PackageManager.UI
             LastErrorMessage = string.Empty;
             operationsInProgress = new List<IBaseOperation>();
 
-            SetStatusMessage(StatusType.Normal, string.Empty);
+            SetDefaultMessage();
 
             PackageCollection.Instance.ListSignal.WhenOperation(OnListOrSearchOperation);
             PackageCollection.Instance.SearchSignal.WhenOperation(OnListOrSearchOperation);
+        }
+
+        private void SetDefaultMessage()
+        {
+            if(!string.IsNullOrEmpty(PackageCollection.Instance.lastUpdateTime))
+                SetStatusMessage(StatusType.Normal, "Last update " + PackageCollection.Instance.lastUpdateTime);
+            else
+                SetStatusMessage(StatusType.Normal, string.Empty);
         }
 
         private void OnListOrSearchOperation(IBaseOperation operation)
@@ -74,7 +82,7 @@ namespace UnityEditor.PackageManager.UI
             if (!string.IsNullOrEmpty(errorMessage))
                 SetStatusMessage(StatusType.Error, errorMessage);
             else
-                SetStatusMessage(StatusType.Normal, string.Empty);
+                SetDefaultMessage();
         }
 
         private void OnOperationError(Error error)

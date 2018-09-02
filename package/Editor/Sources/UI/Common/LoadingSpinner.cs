@@ -16,7 +16,20 @@ namespace UnityEditor.PackageManager.UI
     internal class LoadingSpinner : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
-        internal new class UxmlFactory : UxmlFactory<LoadingSpinner> { }
+        internal new class UxmlFactory : UxmlFactory<LoadingSpinner, UxmlTraits>
+        {
+        }
+        
+        // This works around an issue with UXML instantiation
+        // See https://fogbugz.unity3d.com/f/cases/1046459/
+        internal new class UxmlTraits : VisualElement.UxmlTraits
+        {
+            public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
+            {
+                base.Init(ve, bag, cc);
+                UIUtils.SetElementDisplay(ve, false);
+            }
+        }
 #endif
 
         public bool InvertColor { get; set; }

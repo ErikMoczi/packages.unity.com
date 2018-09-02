@@ -4,10 +4,17 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2018-05-31
+## [2.0.0] - 2018-06-11
+- Fixed cropped error message
+- Disabled downgrading Package Manager UI to incompatible versions
+- Updated docs to reflect the new UI
+- Fix incorrect verified tag on preview packages
+- UI Fixes:
+	- Change mouse cursor when hovering over links
+	- Tweak UI layout for better alignment
 - Fixed dropdown to work with 2018.3 editor
 - Updated style to reflect changes in VisualElements
-- Added packages serilization to avoid unnecessary refreshes
+- Added packages serialization to avoid unnecessary refreshes
 - Enable "View Documentation" Button on built-in packages, and make it point to the url contained in the description string
 - Added persistent error icon when there are package add or remove errors
 - Filter by name, category, version and release tag

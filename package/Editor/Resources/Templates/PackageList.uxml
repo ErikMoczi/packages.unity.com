@@ -7,7 +7,8 @@
                             UnityEditor.PackageManager.UI UIElementsSchema/UnityEditor.PackageManager.UI.xsd">
     <engine:VisualElement name="listContainerOuter">
         <engine:VisualElement name="listContainer">
-            <engine:ScrollView name="scrollView"/>
+            <!-- Specifying the vertical page size a workaround for https://fogbugz.unity3d.com/f/cases/1029430/ -->
+            <engine:ScrollView name="scrollView" vertical-page-size="10"/>
             <engine:VisualElement name="emptyArea" class="list emptyArea">
                 <engine:Label class="title" text="There are no packages."/>
             </engine:VisualElement>

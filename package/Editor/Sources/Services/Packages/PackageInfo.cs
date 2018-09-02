@@ -81,12 +81,6 @@ namespace UnityEditor.PackageManager.UI
             return !string.IsNullOrEmpty(GetPackageUrlRedirect(packageInfo.Name));
         }
 
-        public bool HasThirdPartyNotices(PackageInfo packageInfo)
-        {
-            // Packages with no docs have no third party notice
-            return !RedirectsToManual(packageInfo);
-        }
-
         public bool HasChangelog(PackageInfo packageInfo)
         {
             // Packages with no docs have no third party notice
