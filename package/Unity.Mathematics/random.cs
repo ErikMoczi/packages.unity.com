@@ -270,25 +270,25 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float NextFloat()    // [0, 1)
         {
-            return asfloat(0x3f80_0000 | (NextState() >> 9)) - 1.0f;
+            return asfloat(0x3f800000 | (NextState() >> 9)) - 1.0f;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float2 NextFloat2()  // [0, 1)
         {
-            return asfloat(0x3f80_0000 | (uint2(NextState(), NextState()) >> 9)) - 1.0f;
+            return asfloat(0x3f800000 | (uint2(NextState(), NextState()) >> 9)) - 1.0f;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3 NextFloat3()  // [0, 1)
         {
-            return asfloat(0x3f80_0000 | (uint3(NextState(), NextState(), NextState()) >> 9)) - 1.0f;
+            return asfloat(0x3f800000 | (uint3(NextState(), NextState(), NextState()) >> 9)) - 1.0f;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float4 NextFloat4()  // [0, 1)
         {
-            return asfloat(0x3f80_0000 | (uint4(NextState(), NextState(), NextState(), NextState()) >> 9)) - 1.0f;
+            return asfloat(0x3f800000 | (uint4(NextState(), NextState(), NextState(), NextState()) >> 9)) - 1.0f;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -313,7 +313,7 @@ namespace Unity.Mathematics
         public double NextDouble()  // [0, 1)
         {
             ulong sx = ((ulong)NextState() << 20) ^ NextState();
-            return asdouble(0x3ff0_0000_0000_0000 | sx) - 1.0;
+            return asdouble(0x3ff0000000000000 | sx) - 1.0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -321,8 +321,8 @@ namespace Unity.Mathematics
         {
             ulong sx = ((ulong)NextState() << 20) ^ NextState();
             ulong sy = ((ulong)NextState() << 20) ^ NextState();
-            return double2(asdouble(0x3ff0_0000_0000_0000 | sx),
-                           asdouble(0x3ff0_0000_0000_0000 | sy)) - 1.0;
+            return double2(asdouble(0x3ff0000000000000 | sx),
+                           asdouble(0x3ff0000000000000 | sy)) - 1.0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -331,9 +331,9 @@ namespace Unity.Mathematics
             ulong sx = ((ulong)NextState() << 20) ^ NextState();
             ulong sy = ((ulong)NextState() << 20) ^ NextState();
             ulong sz = ((ulong)NextState() << 20) ^ NextState();
-            return double3(asdouble(0x3ff0_0000_0000_0000 | sx),
-                           asdouble(0x3ff0_0000_0000_0000 | sy),
-                           asdouble(0x3ff0_0000_0000_0000 | sz)) - 1.0;
+            return double3(asdouble(0x3ff0000000000000 | sx),
+                           asdouble(0x3ff0000000000000 | sy),
+                           asdouble(0x3ff0000000000000 | sz)) - 1.0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -343,10 +343,10 @@ namespace Unity.Mathematics
             ulong sy = ((ulong)NextState() << 20) ^ NextState();
             ulong sz = ((ulong)NextState() << 20) ^ NextState();
             ulong sw = ((ulong)NextState() << 20) ^ NextState();
-            return double4(asdouble(0x3ff0_0000_0000_0000 | sx),
-                           asdouble(0x3ff0_0000_0000_0000 | sy),
-                           asdouble(0x3ff0_0000_0000_0000 | sz),
-                           asdouble(0x3ff0_0000_0000_0000 | sw)) - 1.0;
+            return double4(asdouble(0x3ff0000000000000 | sx),
+                           asdouble(0x3ff0000000000000 | sy),
+                           asdouble(0x3ff0000000000000 | sz),
+                           asdouble(0x3ff0000000000000 | sw)) - 1.0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -411,7 +411,7 @@ namespace Unity.Mathematics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Quaternion NextQuaternionRotation()  // Uniformly random rotation
+        public quaternion NextQuaternionRotation()  // Uniformly random rotation
         {
             float3 rnd = NextFloat3(float3(2.0f * (float)PI, 2.0f * (float)PI, 1.0f));
             float u1 = rnd.z;
@@ -424,8 +424,8 @@ namespace Unity.Mathematics
             float2 cos_theta_rho;
             sincos(theta_rho, out sin_theta_rho, out cos_theta_rho);
 
-            Quaternion q = Quaternion(i * sin_theta_rho.x, i * cos_theta_rho.x, j * sin_theta_rho.y, j * cos_theta_rho.y);
-            return Quaternion(select(q.value, -q.value, q.value.w < 0.0f));
+            quaternion q = quaternion(i * sin_theta_rho.x, i * cos_theta_rho.x, j * sin_theta_rho.y, j * cos_theta_rho.y);
+            return quaternion(select(q.value, -q.value, q.value.w < 0.0f));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

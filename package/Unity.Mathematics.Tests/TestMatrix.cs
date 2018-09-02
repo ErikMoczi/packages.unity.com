@@ -138,7 +138,7 @@ namespace Unity.Mathematics.Tests
         [Test]
         public void float3x3_constructor_quaternion()
         {
-            float3x3 m = float3x3(normalize(Quaternion(1.0f, 2.5f, 3.3f, 4.6f)));
+            float3x3 m = float3x3(normalize(quaternion(1.0f, 2.5f, 3.3f, 4.6f)));
 
             float3x3 r = float3x3( 0.12774f, -0.64529f, 0.75318f,
                                    0.89975f,  0.39491f, 0.18575f,
@@ -150,7 +150,7 @@ namespace Unity.Mathematics.Tests
         [Test]
         public void float4x4_constructor_quaternion_position()
         {
-            float4x4 m = float4x4(normalize(Quaternion(1.0f, 2.5f, 3.3f, 4.6f)), float3(1.0f, 2.0f, 3.0f));
+            float4x4 m = float4x4(normalize(quaternion(1.0f, 2.5f, 3.3f, 4.6f)), float3(1.0f, 2.0f, 3.0f));
 
             float4x4 r = float4x4( 0.12774f, -0.64529f, 0.75318f, 1.0f,
                                    0.89975f,  0.39491f, 0.18575f, 2.0f,
@@ -811,6 +811,35 @@ namespace Unity.Mathematics.Tests
             Assert.AreEqual(invA.c1.w, r.c1.w, epsilon);
             Assert.AreEqual(invA.c2.w, r.c2.w, epsilon);
             Assert.AreEqual(invA.c3.w, r.c3.w, epsilon);
+        }
+
+        [Test]
+        public void float3x4_fastinverse()
+        {
+            float4x4 a = test4x4_xyz;
+            a.c3 = float4(1, 2, 3, 1);
+
+            float3x4 b = float3x4(a.c0.xyz, a.c1.xyz, a.c2.xyz, a.c3.xyz);
+
+            float4x4 invA = inverse(a);
+            float3x4 fastInvB = fastinverse(b);
+
+            TestUtils.AreEqual(fastInvB.c0.xyz, invA.c0.xyz, 0.0001f);
+            TestUtils.AreEqual(fastInvB.c1.xyz, invA.c1.xyz, 0.0001f);
+            TestUtils.AreEqual(fastInvB.c2.xyz, invA.c2.xyz, 0.0001f);
+            TestUtils.AreEqual(fastInvB.c3.xyz, invA.c3.xyz, 0.0001f);
+        }
+
+        [Test]
+        public void float4x4_fastinverse()
+        {
+            float4x4 a = test4x4_xyz;
+            a.c3 = float4(1, 2, 3, 1);
+
+            float4x4 invA = inverse(a);
+            float4x4 fastInvA = fastinverse(a);
+
+            TestUtils.AreEqual(fastInvA, invA, 0.0001f);
         }
 
         [Test]

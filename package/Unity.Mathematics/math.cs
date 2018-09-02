@@ -64,11 +64,7 @@ namespace Unity.Mathematics
 
         // asuint
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint asuint(float v)
-        {
-            return (uint)asint(v);
-        }
-
+        public static uint asuint(float v) { return (uint)asint(v); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint2 asuint(float2 v) { return uint2(asuint(v.x), asuint(v.y)); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -85,6 +81,17 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint4 asuint(int4 v) { return uint4((uint)v.x, (uint)v.y, (uint)v.z, (uint)v.w); }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long aslong(double v)
+        {
+            LongDoubleUnion u;
+            u.longValue = 0;
+            u.doubleValue = v;
+            return u.longValue;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong asulong(double v) { return (ulong) aslong(v); }
 
         // asfloat
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -114,12 +121,89 @@ namespace Unity.Mathematics
         public static float4 asfloat(uint4 v) { return float4(asfloat(v.x), asfloat(v.y), asfloat(v.z), asfloat(v.w)); }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static double asdouble(ulong v)
+        public static double asdouble(long v)
         {
             LongDoubleUnion u;
             u.doubleValue = 0;
-            u.longValue = (long)v;
+            u.longValue = v;
             return u.doubleValue;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double asdouble(ulong v) { return asdouble((long)v); }
+
+        // isfinite
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool isfinite(float x) { return abs(x) < float.PositiveInfinity; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool2 isfinite(float2 x) { return abs(x) < float.PositiveInfinity; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool3 isfinite(float3 x) { return abs(x) < float.PositiveInfinity; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool4 isfinite(float4 x) { return abs(x) < float.PositiveInfinity; }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool isfinite(double x) { return abs(x) < double.PositiveInfinity; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool2 isfinite(double2 x) { return abs(x) < double.PositiveInfinity; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool3 isfinite(double3 x) { return abs(x) < double.PositiveInfinity; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool4 isfinite(double4 x) { return abs(x) < double.PositiveInfinity; }
+
+        // isinf
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool isinf(float x) { return abs(x) == float.PositiveInfinity; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool2 isinf(float2 x) { return abs(x) == float.PositiveInfinity; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool3 isinf(float3 x) { return abs(x) == float.PositiveInfinity; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool4 isinf(float4 x) { return abs(x) == float.PositiveInfinity; }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool isinf(double x) { return abs(x) == double.PositiveInfinity; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool2 isinf(double2 x) { return abs(x) == double.PositiveInfinity; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool3 isinf(double3 x) { return abs(x) == double.PositiveInfinity; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool4 isinf(double4 x) { return abs(x) == double.PositiveInfinity; }
+
+        // isnan
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool isnan(float x) { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }    //TODO: evaluate as (x != x) with burst intrinsic
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool2 isnan(float2 x) { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool3 isnan(float3 x) { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool4 isnan(float4 x) { return (asuint(x) & 0x7FFFFFFF) > 0x7F800000; }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool isnan(double x) { return (asulong(x) & 0x7FFFFFFFFFFFFFFF) > 0x7FF0000000000000; }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool2 isnan(double2 x) {
+            return bool2((asulong(x.x) & 0x7FFFFFFFFFFFFFFF) > 0x7FF0000000000000,
+                         (asulong(x.y) & 0x7FFFFFFFFFFFFFFF) > 0x7FF0000000000000);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool3 isnan(double3 x)
+        {
+            return bool3((asulong(x.x) & 0x7FFFFFFFFFFFFFFF) > 0x7FF0000000000000,
+                         (asulong(x.y) & 0x7FFFFFFFFFFFFFFF) > 0x7FF0000000000000,
+                         (asulong(x.z) & 0x7FFFFFFFFFFFFFFF) > 0x7FF0000000000000);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool4 isnan(double4 x)
+        {
+            return bool4((asulong(x.x) & 0x7FFFFFFFFFFFFFFF) > 0x7FF0000000000000,
+                         (asulong(x.y) & 0x7FFFFFFFFFFFFFFF) > 0x7FF0000000000000,
+                         (asulong(x.z) & 0x7FFFFFFFFFFFFFFF) > 0x7FF0000000000000,
+                         (asulong(x.w) & 0x7FFFFFFFFFFFFFFF) > 0x7FF0000000000000);
         }
 
         // min
@@ -199,22 +283,34 @@ namespace Unity.Mathematics
 
         // lerp
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float lerp(float a, float b, float w) { return a + w * (b - a); }
+        public static float lerp(float a, float b, float x) { return a + x * (b - a); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float2 lerp(float2 a, float2 b, float w) { return a + w * (b - a); }
+        public static float2 lerp(float2 a, float2 b, float x) { return a + x * (b - a); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3 lerp(float3 a, float3 b, float w) { return a + w * (b - a); }
+        public static float3 lerp(float3 a, float3 b, float x) { return a + x * (b - a); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float4 lerp(float4 a, float4 b, float w) { return a + w * (b - a); }
+        public static float4 lerp(float4 a, float4 b, float x) { return a + x * (b - a); }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double lerp(double a, double b, double w) { return a + w * (b - a); }
+        public static double lerp(double a, double b, double x) { return a + x * (b - a); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double2 lerp(double2 a, double2 b, double w) { return a + w * (b - a); }
+        public static double2 lerp(double2 a, double2 b, double x) { return a + x * (b - a); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double3 lerp(double3 a, double3 b, double w) { return a + w * (b - a); }
+        public static double3 lerp(double3 a, double3 b, double x) { return a + x * (b - a); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double4 lerp(double4 a, double4 b, double w) { return a + w * (b - a); }
+        public static double4 lerp(double4 a, double4 b, double x) { return a + x * (b - a); }
+
+        // unlerp - The inverse of lerp. unlerp(a, b, lerp(a, b, x)) = x
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float unlerp(float a, float b, float x) { return (x - a) / (b - a); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double unlerp(double a, double b, double x) { return (x - a) / (b - a); }
+
+        // remap - Linearly remaps a value x from [sa, sb] to [da, db]. lerp(da, db, unlerp(sa, sb, x));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float remap(float sa, float sb, float da, float db, float x) { return lerp(da, db, unlerp(sa, sb, x)); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double remap(double sa, double sb, double da, double db, double x) { return lerp(da, db, unlerp(sa, sb, x)); }
 
         // mad
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -386,6 +482,17 @@ namespace Unity.Mathematics
         public static double3 tan(double3 value) { return new double3(tan(value.x), tan(value.y), tan(value.z)); }
         public static double4 tan(double4 value) { return new double4(tan(value.x), tan(value.y), tan(value.z), tan(value.w)); }
 
+        // tanh
+        public static float tanh(float value) { return (float)System.Math.Tanh(value); }
+        public static float2 tanh(float2 value) { return new float2(tanh(value.x), tanh(value.y)); }
+        public static float3 tanh(float3 value) { return new float3(tanh(value.x), tanh(value.y), tanh(value.z)); }
+        public static float4 tanh(float4 value) { return new float4(tanh(value.x), tanh(value.y), tanh(value.z), tanh(value.w)); }
+
+        public static double tanh(double value) { return (double)System.Math.Tanh(value); }
+        public static double2 tanh(double2 value) { return new double2(tanh(value.x), tanh(value.y)); }
+        public static double3 tanh(double3 value) { return new double3(tanh(value.x), tanh(value.y), tanh(value.z)); }
+        public static double4 tanh(double4 value) { return new double4(tanh(value.x), tanh(value.y), tanh(value.z), tanh(value.w)); }
+
         // atan
         public static float atan(float value) { return (float)System.Math.Atan(value); }
         public static float2 atan(float2 value) { return new float2(atan(value.x), atan(value.y)); }
@@ -419,6 +526,17 @@ namespace Unity.Mathematics
         public static double3 cos(double3 a) { return new double3(cos(a.x), cos(a.y), cos(a.z)); }
         public static double4 cos(double4 a) { return new double4(cos(a.x), cos(a.y), cos(a.z), cos(a.w)); }
 
+        // cosh
+        public static float cosh(float a) { return (float)System.Math.Cosh(a); }
+        public static float2 cosh(float2 a) { return new float2(cosh(a.x), cosh(a.y)); }
+        public static float3 cosh(float3 a) { return new float3(cosh(a.x), cosh(a.y), cosh(a.z)); }
+        public static float4 cosh(float4 a) { return new float4(cosh(a.x), cosh(a.y), cosh(a.z), cosh(a.w)); }
+
+        public static double cosh(double a) { return (double)System.Math.Cosh(a); }
+        public static double2 cosh(double2 a) { return new double2(cosh(a.x), cosh(a.y)); }
+        public static double3 cosh(double3 a) { return new double3(cosh(a.x), cosh(a.y), cosh(a.z)); }
+        public static double4 cosh(double4 a) { return new double4(cosh(a.x), cosh(a.y), cosh(a.z), cosh(a.w)); }
+
         // acos
         public static float acos(float a) { return (float)System.Math.Acos((float)a); }
         public static float2 acos(float2 a) { return new float2(acos(a.x), acos(a.y)); }
@@ -440,6 +558,17 @@ namespace Unity.Mathematics
         public static double2 sin(double2 a) { return new double2(sin(a.x), sin(a.y)); }
         public static double3 sin(double3 a) { return new double3(sin(a.x), sin(a.y), sin(a.z)); }
         public static double4 sin(double4 a) { return new double4(sin(a.x), sin(a.y), sin(a.z), sin(a.w)); }
+
+        // sinh
+        public static float sinh(float a) { return (float)System.Math.Sinh((float)a); }
+        public static float2 sinh(float2 a) { return new float2(sinh(a.x), sinh(a.y)); }
+        public static float3 sinh(float3 a) { return new float3(sinh(a.x), sinh(a.y), sinh(a.z)); }
+        public static float4 sinh(float4 a) { return new float4(sinh(a.x), sinh(a.y), sinh(a.z), sinh(a.w)); }
+
+        public static double sinh(double a) { return (double)System.Math.Sinh(a); }
+        public static double2 sinh(double2 a) { return new double2(sinh(a.x), sinh(a.y)); }
+        public static double3 sinh(double3 a) { return new double3(sinh(a.x), sinh(a.y), sinh(a.z)); }
+        public static double4 sinh(double4 a) { return new double4(sinh(a.x), sinh(a.y), sinh(a.z), sinh(a.w)); }
 
         // asin
         public static float asin(float a) { return (float)System.Math.Asin((float)a); }
@@ -484,6 +613,17 @@ namespace Unity.Mathematics
         public static double2 round(double2 a) { return new double2(round(a.x), round(a.y)); }
         public static double3 round(double3 a) { return new double3(round(a.x), round(a.y), round(a.z)); }
         public static double4 round(double4 a) { return new double4(round(a.x), round(a.y), round(a.z), round(a.w)); }
+
+        // trunc
+        public static float trunc(float a) { return (float)System.Math.Truncate((float)a); }
+        public static float2 trunc(float2 a) { return new float2(trunc(a.x), trunc(a.y)); }
+        public static float3 trunc(float3 a) { return new float3(trunc(a.x), trunc(a.y), trunc(a.z)); }
+        public static float4 trunc(float4 a) { return new float4(trunc(a.x), trunc(a.y), trunc(a.z), trunc(a.w)); }
+
+        public static double trunc(double a) { return (double)System.Math.Truncate(a); }
+        public static double2 trunc(double2 a) { return new double2(trunc(a.x), trunc(a.y)); }
+        public static double3 trunc(double3 a) { return new double3(trunc(a.x), trunc(a.y), trunc(a.z)); }
+        public static double4 trunc(double4 a) { return new double4(trunc(a.x), trunc(a.y), trunc(a.z), trunc(a.w)); }
 
         // frac
         public static float frac(float a) { return a - floor(a); }
@@ -566,11 +706,33 @@ namespace Unity.Mathematics
         public static float3 exp(float3 a) { return new float3(exp(a.x), exp(a.y), exp(a.z)); }
         public static float4 exp(float4 a) { return new float4(exp(a.x), exp(a.y), exp(a.z), exp(a.w)); }
 
-        public static double exp(double x) { return (float)System.Math.Exp(x); }
+        public static double exp(double x) { return System.Math.Exp(x); }
         public static double2 exp(double2 a) { return new double2(exp(a.x), exp(a.y)); }
         public static double3 exp(double3 a) { return new double3(exp(a.x), exp(a.y), exp(a.z)); }
         public static double4 exp(double4 a) { return new double4(exp(a.x), exp(a.y), exp(a.z), exp(a.w)); }
 
+        // exp2
+        public static float exp2(float x) { return (float)System.Math.Pow(2.0f, (float)x); }
+        public static float2 exp2(float2 a) { return new float2(exp2(a.x), exp2(a.y)); }
+        public static float3 exp2(float3 a) { return new float3(exp2(a.x), exp2(a.y), exp2(a.z)); }
+        public static float4 exp2(float4 a) { return new float4(exp2(a.x), exp2(a.y), exp2(a.z), exp2(a.w)); }
+
+        public static double exp2(double x) { return System.Math.Pow(2.0, x); }
+        public static double2 exp2(double2 a) { return new double2(exp2(a.x), exp2(a.y)); }
+        public static double3 exp2(double3 a) { return new double3(exp2(a.x), exp2(a.y), exp2(a.z)); }
+        public static double4 exp2(double4 a) { return new double4(exp2(a.x), exp2(a.y), exp2(a.z), exp2(a.w)); }
+
+        // exp10
+        public static float exp10(float x) { return (float)System.Math.Exp((float)x); }
+        public static float2 exp10(float2 a) { return new float2(exp10(a.x), exp10(a.y)); }
+        public static float3 exp10(float3 a) { return new float3(exp10(a.x), exp10(a.y), exp10(a.z)); }
+        public static float4 exp10(float4 a) { return new float4(exp10(a.x), exp10(a.y), exp10(a.z), exp10(a.w)); }
+
+        public static double exp10(double x) { return System.Math.Pow(10.0, x); }
+        public static double2 exp10(double2 a) { return new double2(exp10(a.x), exp10(a.y)); }
+        public static double3 exp10(double3 a) { return new double3(exp10(a.x), exp10(a.y), exp10(a.z)); }
+        public static double4 exp10(double4 a) { return new double4(exp10(a.x), exp10(a.y), exp10(a.z), exp10(a.w)); }
+        
         // log
         public static float log(float x) { return (float)System.Math.Log((float)x); }
         public static float2 log(float2 a) { return new float2(log(a.x), log(a.y)); }
@@ -581,6 +743,17 @@ namespace Unity.Mathematics
         public static double2 log(double2 a) { return new double2(log(a.x), log(a.y)); }
         public static double3 log(double3 a) { return new double3(log(a.x), log(a.y), log(a.z)); }
         public static double4 log(double4 a) { return new double4(log(a.x), log(a.y), log(a.z), log(a.w)); }
+
+        // log2
+        public static float log2(float x) { return (float)System.Math.Log((float)x, 2.0f); }
+        public static float2 log2(float2 a) { return new float2(log2(a.x), log2(a.y)); }
+        public static float3 log2(float3 a) { return new float3(log2(a.x), log2(a.y), log2(a.z)); }
+        public static float4 log2(float4 a) { return new float4(log2(a.x), log2(a.y), log2(a.z), log2(a.w)); }
+
+        public static double log2(double x) { return (double)System.Math.Log(x, 2.0); }
+        public static double2 log2(double2 a) { return new double2(log2(a.x), log2(a.y)); }
+        public static double3 log2(double3 a) { return new double3(log2(a.x), log2(a.y), log2(a.z)); }
+        public static double4 log2(double4 a) { return new double4(log2(a.x), log2(a.y), log2(a.z), log2(a.w)); }
 
         // log10
         public static float log10(float x) { return (float)System.Math.Log10((float)x); }
@@ -603,6 +776,17 @@ namespace Unity.Mathematics
         public static double2 mod(double2 a, double2 b) { return new double2(a.x % b.x, a.y % b.y); }
         public static double3 mod(double3 a, double3 b) { return new double3(a.x % b.x, a.y % b.y, a.z % b.z); }
         public static double4 mod(double4 a, double4 b) { return new double4(a.x % b.x, a.y % b.y, a.z % b.z, a.w % b.w); }
+
+        // modf - Splits a value v into an integer part i and a fractional part. Both parts take the sign of the input
+        public static float modf(float v, out float i) { i = trunc(v); return v - i; }
+        public static float2 modf(float2 v, out float2 i) { i = trunc(v); return v - i; }
+        public static float3 modf(float3 v, out float3 i) { i = trunc(v); return v - i; }
+        public static float4 modf(float4 v, out float4 i) { i = trunc(v); return v - i; }
+
+        public static double modf(double v, out double i) { i = trunc(v); return v - i; }
+        public static double2 modf(double2 v, out double2 i) { i = trunc(v); return v - i; }
+        public static double3 modf(double3 v, out double3 i) { i = trunc(v); return v - i; }
+        public static double4 modf(double4 v, out double4 i) { i = trunc(v); return v - i; }
 
         // sqrt
         public static float sqrt(float a) { return (float)System.Math.Sqrt((float)a); }
@@ -923,6 +1107,88 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 reflect(double4 i, double4 n) { return i - 2 * n * dot(i, n); }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float refract(float i, float n, float eta)
+        {
+            float ni = dot(n, i);
+            float k = 1.0f - eta * eta * (1.0f - ni * ni);
+            return select(0.0f, eta * i - (eta * ni + sqrt(k)) * n, k >= 0);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float2 refract(float2 i, float2 n, float eta)
+        {
+            float ni = dot(n, i);
+            float k = 1.0f - eta * eta * (1.0f - ni * ni);
+            return select(0.0f, eta * i - (eta * ni + sqrt(k)) * n, k >= 0);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float3 refract(float3 i, float3 n, float eta)
+        {
+            float ni = dot(n, i);
+            float k = 1.0f - eta * eta * (1.0f - ni * ni);
+            return select(0.0f, eta * i - (eta * ni + sqrt(k)) * n, k >= 0);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 refract(float4 i, float4 n, float eta)
+        {
+            float ni = dot(n, i);
+            float k = 1.0f - eta * eta * (1.0f - ni * ni);
+            return select(0.0f, eta * i - (eta * ni + sqrt(k)) * n, k >= 0);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double refract(double i, double n, double eta)
+        {
+            double ni = dot(n, i);
+            double k = 1.0 - eta * eta * (1.0 - ni * ni);
+            return select(0.0f, eta * i - (eta * ni + sqrt(k)) * n, k >= 0);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double2 refract(double2 i, double2 n, double eta)
+        {
+            double ni = dot(n, i);
+            double k = 1.0 - eta * eta * (1.0 - ni * ni);
+            return select(0.0f, eta * i - (eta * ni + sqrt(k)) * n, k >= 0);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double3 refract(double3 i, double3 n, double eta)
+        {
+            double ni = dot(n, i);
+            double k = 1.0 - eta * eta * (1.0 - ni * ni);
+            return select(0.0f, eta * i - (eta * ni + sqrt(k)) * n, k >= 0);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double4 refract(double4 i, double4 n, double eta)
+        {
+            double ni = dot(n, i);
+            double k = 1.0 - eta * eta * (1.0 - ni * ni);
+            return select(0.0f, eta * i - (eta * ni + sqrt(k)) * n, k >= 0);
+        }
+
+        // Returns n if dot(i, ng) < 0, otherwise returns -N
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float faceforward(float n, float i, float ng) { return select(n, -n, dot(ng, i) >= 0.0f); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float2 faceforward(float2 n, float2 i, float2 ng) { return select(n, -n, dot(ng, i) >= 0.0f); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float3 faceforward(float3 n, float3 i, float3 ng) { return select(n, -n, dot(ng, i) >= 0.0f); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 faceforward(float4 n, float4 i, float4 ng) { return select(n, -n, dot(ng, i) >= 0.0f); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double faceforward(double n, double i, double ng) { return select(n, -n, dot(ng, i) >= 0.0f); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double2 faceforward(double2 n, double2 i, double2 ng) { return select(n, -n, dot(ng, i) >= 0.0f); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double3 faceforward(double3 n, double3 i, double3 ng) { return select(n, -n, dot(ng, i) >= 0.0f); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double4 faceforward(double4 n, double4 i, double4 ng) { return select(n, -n, dot(ng, i) >= 0.0f); }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void sincos(float x, out float s, out float c) { s = sin(x); c = cos(x); }
@@ -943,173 +1209,60 @@ namespace Unity.Mathematics
         public static void sincos(double4 x, out double4 s, out double4 c) { s = sin(x); c = cos(x); }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool lessThan(float x, float y) { return x < y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool2 lessThan(float2 x, float2 y) { return x < y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool3 lessThan(float3 x, float3 y) { return x < y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool4 lessThan(float4 x, float4 y) { return x < y; }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool lessThan(double x, double y) { return x < y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool2 lessThan(double2 x, double2 y) { return x < y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool3 lessThan(double3 x, double3 y) { return x < y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool4 lessThan(double4 x, double4 y) { return x < y; }
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool lessThanEqual(float x, float y) { return x <= y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool2 lessThanEqual(float2 x, float2 y) { return x <= y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool3 lessThanEqual(float3 x, float3 y) { return x <= y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool4 lessThanEqual(float4 x, float4 y) { return x <= y; }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool lessThanEqual(double x, double y) { return x <= y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool2 lessThanEqual(double2 x, double2 y) { return x <= y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool3 lessThanEqual(double3 x, double3 y) { return x <= y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool4 lessThanEqual(double4 x, double4 y) { return x <= y; }
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool greaterThan(float x, float y) { return x > y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool2 greaterThan(float2 x, float2 y) { return x > y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool3 greaterThan(float3 x, float3 y) { return x > y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool4 greaterThan(float4 x, float4 y) { return x > y; }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool greaterThan(double x, double y) { return x > y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool2 greaterThan(double2 x, double2 y) { return x > y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool3 greaterThan(double3 x, double3 y) { return x > y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool4 greaterThan(double4 x, double4 y) { return x > y; }
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool greaterThanEqual(float x, float y) { return x >= y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool2 greaterThanEqual(float2 x, float2 y) { return x >= y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool3 greaterThanEqual(float3 x, float3 y) { return x >= y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool4 greaterThanEqual(float4 x, float4 y) { return x >= y; }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool greaterThanEqual(double x, double y) { return x >= y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool2 greaterThanEqual(double2 x, double2 y) { return x >= y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool3 greaterThanEqual(double3 x, double3 y) { return x >= y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool4 greaterThanEqual(double4 x, double4 y) { return x >= y; }
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool equal(float x, float y) { return x == y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool2 equal(float2 x, float2 y) { return x == y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool3 equal(float3 x, float3 y) { return x == y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool4 equal(float4 x, float4 y) { return x == y; }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool equal(double x, double y) { return x == y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool2 equal(double2 x, double2 y) { return x == y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool3 equal(double3 x, double3 y) { return x == y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool4 equal(double4 x, double4 y) { return x == y; }
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool notEqual(float x, float y) { return x != y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool2 notEqual(float2 x, float2 y) { return x != y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool3 notEqual(float3 x, float3 y) { return x != y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool4 notEqual(float4 x, float4 y) { return x != y; }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool notEqual(double x, double y) { return x != y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool2 notEqual(double2 x, double2 y) { return x != y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool3 notEqual(double3 x, double3 y) { return x != y; }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool4 notEqual(double4 x, double4 y) { return x != y; }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3 up() { return new float3(0.0f,1.0f,0.0f); }
 
         // count bits
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int count_bits(uint v)
+        public static int countbits(uint v)
         {
-            v = v - ((v >> 1) & 0x5555_5555);
-            v = (v & 0x3333_3333) + ((v >> 2) & 0x3333_3333);
-            return (int)((((v + (v >> 4)) & 0x0F0F_0F0F) * 0x0101_0101) >> 24);
+            v = v - ((v >> 1) & 0x55555555);
+            v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
+            return (int)((((v + (v >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int2 count_bits(uint2 v)
+        public static int2 countbits(uint2 v)
         {
-            v = v - ((v >> 1) & 0x5555_5555);
-            v = (v & 0x3333_3333) + ((v >> 2) & 0x3333_3333);
-            return int2((((v + (v >> 4)) & 0x0F0F_0F0F) * 0x0101_0101) >> 24);
+            v = v - ((v >> 1) & 0x55555555);
+            v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
+            return int2((((v + (v >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int3 count_bits(uint3 v)
+        public static int3 countbits(uint3 v)
         {
-            v = v - ((v >> 1) & 0x5555_5555);
-            v = (v & 0x3333_3333) + ((v >> 2) & 0x3333_3333);
-            return int3((((v + (v >> 4)) & 0x0F0F_0F0F) * 0x0101_0101) >> 24);
+            v = v - ((v >> 1) & 0x55555555);
+            v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
+            return int3((((v + (v >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int4 count_bits(uint4 v)
+        public static int4 countbits(uint4 v)
         {
-            v = v - ((v >> 1) & 0x5555_5555);
-            v = (v & 0x3333_3333) + ((v >> 2) & 0x3333_3333);
-            return int4((((v + (v >> 4)) & 0x0F0F_0F0F) * 0x0101_0101) >> 24);
+            v = v - ((v >> 1) & 0x55555555);
+            v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
+            return int4((((v + (v >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int count_bits(int v) { return count_bits((uint)v); }
+        public static int countbits(int v) { return countbits((uint)v); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int2 count_bits(int2 v) { return count_bits((uint2)v); }
+        public static int2 countbits(int2 v) { return countbits((uint2)v); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int3 count_bits(int3 v) { return count_bits((uint3)v); }
+        public static int3 countbits(int3 v) { return countbits((uint3)v); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int4 count_bits(int4 v) { return count_bits((uint4)v); }
+        public static int4 countbits(int4 v) { return countbits((uint4)v); }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int count_bits(ulong v)
+        public static int countbits(ulong v)
         {
-            v = v - ((v >> 1) & 0x5555_5555_5555_5555);
-            v = (v & 0x3333_3333_3333_3333) + ((v >> 2) & 0x3333_3333_3333_3333);
-            return (int)((((v + (v >> 4)) & 0x0F0F_0F0F_0F0F_0F0F) * 0x0101_0101_0101_0101) >> 56);
+            v = v - ((v >> 1) & 0x5555555555555555);
+            v = (v & 0x3333333333333333) + ((v >> 2) & 0x3333333333333333);
+            return (int)((((v + (v >> 4)) & 0x0F0F0F0F0F0F0F0F) * 0x0101010101010101) >> 56);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int count_bits(long v) { return count_bits((ulong)v); }
+        public static int countbits(long v) { return countbits((ulong)v); }
 
         // leading zero count
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1119,7 +1272,7 @@ namespace Unity.Mathematics
                 return 32;
             LongDoubleUnion u;
             u.doubleValue = 0.0;
-            u.longValue = 0x4330_0000_0000_0000L + v;
+            u.longValue = 0x4330000000000000L + v;
             u.doubleValue -= 4503599627370496.0;
             return 0x41E - (int)(u.longValue >> 52);
         }
@@ -1152,7 +1305,7 @@ namespace Unity.Mathematics
 
             LongDoubleUnion u;
             u.doubleValue = 0.0;
-            u.longValue = 0x4330_0000_0000_0000L + bits;
+            u.longValue = 0x4330000000000000L + bits;
             u.doubleValue -= 4503599627370496.0;
             return offset - (int)(u.longValue >> 52);
         }
@@ -1170,7 +1323,7 @@ namespace Unity.Mathematics
             v &= (uint)-v;
             LongDoubleUnion u;
             u.doubleValue = 0.0;
-            u.longValue = 0x4330_0000_0000_0000L + v;
+            u.longValue = 0x4330000000000000L + v;
             u.doubleValue -= 4503599627370496.0;
             return (int)(u.longValue >> 52) - 0x3FF;
         }
@@ -1205,7 +1358,7 @@ namespace Unity.Mathematics
 
             LongDoubleUnion u;
             u.doubleValue = 0.0;
-            u.longValue = 0x4330_0000_0000_0000L + bits;
+            u.longValue = 0x4330000000000000L + bits;
             u.doubleValue -= 4503599627370496.0;
             return (int)(u.longValue >> 52) - offset;
         }
@@ -1213,6 +1366,64 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int tzcnt(long v) { return tzcnt((ulong)v); }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int reversebits(int x) { return (int)reversebits((uint)x); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int2 reversebits(int2 x) { return (int2)reversebits((uint2)x); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 reversebits(int3 x) { return (int3)reversebits((uint3)x); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int4 reversebits(int4 x) { return (int4)reversebits((uint4)x); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint reversebits(uint x) {
+            x = ((x >> 1) & 0x55555555) | ((x & 0x55555555) << 1);
+            x = ((x >> 2) & 0x33333333) | ((x & 0x33333333) << 2);
+            x = ((x >> 4) & 0x0F0F0F0F) | ((x & 0x0F0F0F0F) << 4);
+            x = ((x >> 8) & 0x00FF00FF) | ((x & 0x00FF00FF) << 8);
+            return (x >> 16) | (x << 16);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint2 reversebits(uint2 x)
+        {
+            x = ((x >> 1) & 0x55555555) | ((x & 0x55555555) << 1);
+            x = ((x >> 2) & 0x33333333) | ((x & 0x33333333) << 2);
+            x = ((x >> 4) & 0x0F0F0F0F) | ((x & 0x0F0F0F0F) << 4);
+            x = ((x >> 8) & 0x00FF00FF) | ((x & 0x00FF00FF) << 8);
+            return (x >> 16) | (x << 16);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint3 reversebits(uint3 x)
+        {
+            x = ((x >> 1) & 0x55555555) | ((x & 0x55555555) << 1);
+            x = ((x >> 2) & 0x33333333) | ((x & 0x33333333) << 2);
+            x = ((x >> 4) & 0x0F0F0F0F) | ((x & 0x0F0F0F0F) << 4);
+            x = ((x >> 8) & 0x00FF00FF) | ((x & 0x00FF00FF) << 8);
+            return (x >> 16) | (x << 16);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint4 reversebits(uint4 x)
+        {
+            x = ((x >> 1) & 0x55555555) | ((x & 0x55555555) << 1);
+            x = ((x >> 2) & 0x33333333) | ((x & 0x33333333) << 2);
+            x = ((x >> 4) & 0x0F0F0F0F) | ((x & 0x0F0F0F0F) << 4);
+            x = ((x >> 8) & 0x00FF00FF) | ((x & 0x00FF00FF) << 8);
+            return (x >> 16) | (x << 16);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong reversebits(ulong x)
+        {
+            x = ((x >> 1) & 0x5555555555555555ul) | ((x & 0x5555555555555555ul) << 1);
+            x = ((x >> 2) & 0x3333333333333333ul) | ((x & 0x3333333333333333ul) << 2);
+            x = ((x >> 4) & 0x0F0F0F0F0F0F0F0Ful) | ((x & 0x0F0F0F0F0F0F0F0Ful) << 4);
+            x = ((x >> 8) & 0x00FF00FF00FF00FFul) | ((x & 0x00FF00FF00FF00FFul) << 8);
+            x = ((x >> 16) & 0x0000FFFF0000FFFFul) | ((x & 0x0000FFFF0000FFFFul) << 16);
+            return (x >> 32) | (x << 32);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long reversebits(long x) { return (long)reversebits((ulong)x); }
 
         // SSE shuffles
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1226,7 +1437,6 @@ namespace Unity.Mathematics
         {
             return shuffle(a, b, ShuffleComponent.LeftX, ShuffleComponent.RightX, ShuffleComponent.LeftY, ShuffleComponent.RightY);
         }
-
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float4 unpackhi(float4 a, float4 b)
