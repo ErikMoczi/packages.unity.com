@@ -11,7 +11,7 @@ PluginImporter:
   - first:
       '': Any
     second:
-      enabled: 0
+      enabled: 1
       settings:
         Exclude N3DS: 1
         Exclude PS4: 1
