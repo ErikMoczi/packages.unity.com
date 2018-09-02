@@ -1,1 +1,1 @@
-Unity post-processing
+Unity post-processing framework (v2)

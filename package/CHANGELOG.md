@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.0.7-preview]
+
+### Fixed
+- Post-processing wasn't working on Unity 2018.3.
+
+### Added
+- Bloom now comes with a **Clamp** parameter to limit the amount of bloom that comes with ultra-bright pixels.
+
+## [2.0.6-preview]
+
+### Fixed
+- On large scenes, the first object you'd add to a profile could throw a `NullReferenceException`. ([#530](https://github.com/Unity-Technologies/PostProcessing/pull/530))
+- Dithering now works correctly in dark areas when working in Gamma mode.
+- Colored grain wasn't colored when `POSTFX_DEBUG_STATIC_GRAIN` was set.
+- No more warning in the console when `POSTFX_DEBUG_STATIC_GRAIN` is set.
+
+### Changed
+- Minor scripting API improvements. ([#530](https://github.com/Unity-Technologies/PostProcessing/pull/530))
+- More implicit casts for `VectorXParameter` and `ColorParameter` to `Vector2`, `Vector3` and `Vector4`.
+- Script-instantiated profiles in volumes are now properly supported in the inspector. ([#530](https://github.com/Unity-Technologies/PostProcessing/pull/530))
+- Improved volume UI & styling.
+
 ## [2.0.5-preview]
 
 ### Fixed
