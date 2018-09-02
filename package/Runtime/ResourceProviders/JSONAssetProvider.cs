@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine.Networking;
 
 namespace UnityEngine.ResourceManagement
@@ -7,7 +8,15 @@ namespace UnityEngine.ResourceManagement
     {
         public override TObject Convert<TObject>(DownloadHandler handler)
         {
-            return JsonUtility.FromJson<TObject>(handler.text);
+            try
+            {
+                return JsonUtility.FromJson<TObject>(handler.text);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                return default(TObject);
+            }
         }
     }
 }

@@ -30,7 +30,10 @@ namespace UnityEngine.ResourceManagement.Diagnostics
             {
                 var ec = FindObjectOfType<DiagnosticEventCollector>();
                 if (ec == null)
-                    new GameObject("EventCollector", typeof(DiagnosticEventCollector));
+                {
+                    var go = new GameObject("EventCollector", typeof(DiagnosticEventCollector));
+                    go.hideFlags = HideFlags.HideAndDontSave;
+                }
             }
             s_initialized = true;
         }

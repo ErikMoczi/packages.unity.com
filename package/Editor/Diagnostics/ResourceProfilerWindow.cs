@@ -113,13 +113,25 @@ namespace UnityEditor.ResourceManagement.Diagnostics
         {
             if (graphView == null)
                 return;
-
+            
             graphView.DefineGraph(ResourceManagerEventCollector.EventCategory, (int)ResourceManagerEventCollector.EventType.CacheEntryRefCount,
                 new GraphLayerBackgroundGraph((int)ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, (int)ResourceManagerEventCollector.EventType.CacheEntryRefCount, "LoadPercent", "Loaded", new Color(53 / 255f, 136 / 255f, 167 / 255f, .5f), new Color(53 / 255f, 136 / 255f, 167 / 255f, 1)),
                 new GraphLayerBarChartMesh((int)ResourceManagerEventCollector.EventType.CacheEntryRefCount, "RefCount", "Reference Count", new Color(123 / 255f, 158 / 255f, 6 / 255f, 1)),
-                new GraphLayerBarChartMesh((int)ResourceManagerEventCollector.EventType.PoolCount, "PoolSize", "Object Pool Count", new Color(204 / 255f, 113 / 255f, 0, 1)),
+                new GraphLayerBarChartMesh((int)ResourceManagerEventCollector.EventType.PoolCount, "PoolSize", "Object Pool Count", new Color(204 / 255f, 113 / 255f, 0, .75f)),
                 new GraphLayerEventMarker((int)ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, "", "", Color.white, Color.black),
                 new GraphLayerLabel((int)ResourceManagerEventCollector.EventType.CacheEntryRefCount, "RefCount", "Reference Count", new Color(123 / 255f, 158 / 255f, 6 / 255f, 1), (v) => v.ToString())
+                );
+
+            graphView.DefineGraph(ResourceManagerEventCollector.EventType.CacheLRUCount.ToString(), (int)ResourceManagerEventCollector.EventType.CacheLRUCount,
+                new GraphLayerBarChartMesh((int)ResourceManagerEventCollector.EventType.CacheLRUCount, "LRU", "LRU Count", new Color(12 / 255f, 6 / 255f, 158 / 255f, 1)),
+                new GraphLayerLabel((int)ResourceManagerEventCollector.EventType.CacheLRUCount, "LRU", "LRU Count", new Color(12 / 255f, 6 / 255f, 158 / 255f, 1), (v) => v.ToString())
+                );
+
+            graphView.DefineGraph(ResourceManagerEventCollector.EventType.AsyncOpCacheHitRatio.ToString(), (int)ResourceManagerEventCollector.EventType.AsyncOpCacheHitRatio,
+                new GraphLayerBarChartMesh((int)ResourceManagerEventCollector.EventType.AsyncOpCacheHitRatio, "Cache Hit %", "Cache Hit %", new Color(123 / 255f, 158 / 255f, 6 / 255f, 1)),
+                new GraphLayerBarChartMesh((int)ResourceManagerEventCollector.EventType.AsyncOpCacheCount, "Cache Count", "Cache Count", new Color(204 / 255f, 113 / 255f, 0, .75f)),
+                new GraphLayerLabel((int)ResourceManagerEventCollector.EventType.AsyncOpCacheHitRatio, "Cache Hit %", "Cache Hit %", new Color(123 / 255f, 158 / 255f, 6 / 255f, 1), (v) => v.ToString() + "%"),
+                new GraphLayerLabel((int)ResourceManagerEventCollector.EventType.AsyncOpCacheCount, "Cache Count", "Cache Count", new Color(204 / 255f, 113 / 255f, 0, 1), (v) => v.ToString())
                 );
         }
     }

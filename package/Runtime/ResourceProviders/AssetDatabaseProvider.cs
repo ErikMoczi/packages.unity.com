@@ -25,7 +25,8 @@ namespace UnityEngine.ResourceManagement
 
             void CompleteLoad()
             {
-                SetResult(UnityEditor.AssetDatabase.LoadAssetAtPath<Object>((Context as IResourceLocation).InternalId) as TObject);
+                var res = UnityEditor.AssetDatabase.LoadAssetAtPath((Context as IResourceLocation).InternalId, typeof(TObject));
+                SetResult(res as TObject);
                 OnComplete();
             }
 

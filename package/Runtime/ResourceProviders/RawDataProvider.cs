@@ -33,7 +33,11 @@ namespace UnityEngine.ResourceManagement
 
             public override TObject ConvertResult(AsyncOperation op)
             {
-                return m_convertFunc((op as UnityWebRequestAsyncOperation).webRequest.downloadHandler);
+                var webReq = (op as UnityWebRequestAsyncOperation).webRequest;
+                if (string.IsNullOrEmpty(webReq.error))
+                    return m_convertFunc(webReq.downloadHandler);
+                Debug.LogWarningFormat("RawDataProvider error loading from url {0}, error = {1}.", webReq.url, webReq.error);
+                return default(TObject);
             }
         }
 

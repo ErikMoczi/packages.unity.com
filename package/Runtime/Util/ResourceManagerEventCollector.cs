@@ -20,6 +20,10 @@ namespace UnityEngine.ResourceManagement.Diagnostics
             CacheEntryRefCount,
             CacheEntryLoadPercent,
             PoolCount,
+            DiagnosticEvents,
+            CacheLRUCount,
+            AsyncOpCacheHitRatio,
+            AsyncOpCacheCount,
         }
 
         public static string EventCategory = "ResourceManagerEvent";
@@ -48,7 +52,8 @@ namespace UnityEngine.ResourceManagement.Diagnostics
                 }
                 data = System.Text.Encoding.ASCII.GetBytes(sb.ToString());
             }
-            DiagnosticEventCollector.PostEvent(new DiagnosticEvent(EventCategory, parent, id, (int)type, Time.frameCount, eventValue, data));
+            var category = type >= EventType.DiagnosticEvents ? type.ToString() : EventCategory;
+            DiagnosticEventCollector.PostEvent(new DiagnosticEvent(category, parent, id, (int)type, Time.frameCount, eventValue, data));
         }
     }
 }

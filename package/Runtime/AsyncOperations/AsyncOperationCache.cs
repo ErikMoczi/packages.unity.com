@@ -1,5 +1,9 @@
+//#define POST_ASYNCOPERATIONCACHE__EVENTS
+
 using System;
 using System.Collections.Generic;
+using UnityEngine.ResourceManagement.Diagnostics;
+
 
 namespace UnityEngine.ResourceManagement
 {
@@ -7,18 +11,27 @@ namespace UnityEngine.ResourceManagement
     {
         public static readonly AsyncOperationCache Instance = new AsyncOperationCache();
         readonly Dictionary<CacheKey, Stack<IAsyncOperation>> m_cache = new Dictionary<CacheKey, Stack<IAsyncOperation>>(new CacheKeyComparer());
-        readonly Dictionary<CacheKey, Stack<IAsyncOperation>> m_delayedReleases = new Dictionary<CacheKey, Stack<IAsyncOperation>>(new CacheKeyComparer());
-        int m_delayedFrame = -1;
-
+#if POST_ASYNCOPERATIONCACHE__EVENTS
+        class Stats
+        {
+            internal int m_hits;
+            internal int m_misses;
+            internal string m_name;
+            internal int Value { get { return (int)(((float)m_hits / (m_hits + m_misses)) * 100); } }
+        }
+        Dictionary<CacheKey, Stats> m_stats = new Dictionary<CacheKey, Stats>(new CacheKeyComparer());
+#endif
         internal struct CacheKey
         {
             public Type opType { get; private set; }
             public Type objType { get; private set; }
+            internal int m_hashCode;
 
             internal CacheKey(Type opType, Type objType)
             {
                 this.opType = opType;
-                this.objType = objType;
+                this.objType = typeof(object);
+                m_hashCode = opType.GetHashCode();
             }
 
             public override string ToString()
@@ -28,18 +41,12 @@ namespace UnityEngine.ResourceManagement
 
             public override int GetHashCode()
             {
-                var hash = 23 * 37 + opType.GetHashCode();
-                return hash * 37 + objType.GetHashCode();
+                return m_hashCode;
             }
 
             public override bool Equals(object obj)
             {
-                if (!(obj is CacheKey))
-                    return false;
-
-                var test = (CacheKey)obj;
-
-                return (test.opType == opType && test.objType == objType);
+                return ((CacheKey)obj).m_hashCode == m_hashCode;
             }
         }
 
@@ -47,29 +54,33 @@ namespace UnityEngine.ResourceManagement
         {
             public override int GetHashCode(CacheKey bx)
             {
-                return bx.GetHashCode();
+                return bx.m_hashCode;
             }
 
             public override bool Equals(CacheKey b1, CacheKey b2)
             {
-                return b1.opType == b2.opType && b1.objType == b2.objType;
+                return b1.m_hashCode == b2.m_hashCode;
             }
         }
 
         public void Release<TObject>(IAsyncOperation operation)
         {
-            Debug.Assert(m_delayedReleases != null, "AsyncOperationCache.Release - m_cache == null.");
             if (operation == null)
                 throw new ArgumentNullException("operation");
             operation.Validate();
 
-            MoveDelayedOperationsToCache();
-
             var key = new CacheKey(operation.GetType(), typeof(TObject));
             Stack<IAsyncOperation> operationStack;
-            if (!m_delayedReleases.TryGetValue(key, out operationStack))
-                m_delayedReleases.Add(key, operationStack = new Stack<IAsyncOperation>());
+            if (!m_cache.TryGetValue(key, out operationStack))
+                m_cache.Add(key, operationStack = new Stack<IAsyncOperation>(5));
             operationStack.Push(operation);
+
+#if POST_ASYNCOPERATIONCACHE__EVENTS
+            Stats stat;
+            if (!m_stats.TryGetValue(key, out stat))
+                m_stats.Add(key, stat = new Stats() { m_name = string.Format("AsyncOperationCache[{0}]", key.opType.Name) });
+            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.AsyncOpCacheCount, stat.m_name, operationStack.Count);
+#endif
         }
 
         public TAsyncOperation Acquire<TAsyncOperation, TObject>()
@@ -77,42 +88,34 @@ namespace UnityEngine.ResourceManagement
         {
             Debug.Assert(m_cache != null, "AsyncOperationCache.Acquire - m_cache == null.");
 
-            MoveDelayedOperationsToCache();
+            var key = new CacheKey(typeof(TAsyncOperation), typeof(TObject));
 
             Stack<IAsyncOperation> operationStack;
-            var key = new CacheKey(typeof(TAsyncOperation), typeof(TObject));
+#if POST_ASYNCOPERATIONCACHE__EVENTS
+            Stats stat;
+            if (!m_stats.TryGetValue(key, out stat))
+                m_stats.Add(key, stat = new Stats() { m_name = string.Format("AsyncOperationCache[{0}]", key.opType.Name) });
+#endif
             if (m_cache.TryGetValue(key, out operationStack) && operationStack.Count > 0)
             {
                 var op = (TAsyncOperation)operationStack.Pop();
                 op.IsValid = true;
                 op.ResetStatus();
+#if POST_ASYNCOPERATIONCACHE__EVENTS
+                stat.m_hits++;
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.AsyncOpCacheHitRatio, stat.m_name, stat.Value);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.AsyncOpCacheCount, stat.m_name, operationStack.Count);
+#endif
                 return op;
             }
+#if POST_ASYNCOPERATIONCACHE__EVENTS
+            stat.m_misses++;
+            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.AsyncOpCacheHitRatio, stat.m_name, stat.Value);
+#endif
             var op2 = new TAsyncOperation();
             op2.IsValid = true;
             op2.ResetStatus();
             return op2;
-        }
-
-        void MoveDelayedOperationsToCache()
-        {
-            if (Time.frameCount > m_delayedFrame)
-            {
-                m_delayedFrame = Time.frameCount;
-                foreach (var kvp in m_delayedReleases)
-                {
-                    Stack<IAsyncOperation> operationStack;
-                    if (!m_cache.TryGetValue(kvp.Key, out operationStack))
-                        m_cache.Add(kvp.Key, operationStack = new Stack<IAsyncOperation>());
-                    foreach (var o in kvp.Value)
-                    {
-                        o.Validate();
-                        o.IsValid = false;
-                        operationStack.Push(o);
-                    }
-                    kvp.Value.Clear();
-                }
-            }
         }
 
         public void Clear()

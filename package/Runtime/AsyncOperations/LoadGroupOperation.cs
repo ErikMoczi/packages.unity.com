@@ -10,15 +10,26 @@ namespace UnityEngine.ResourceManagement
         Action<IAsyncOperation<TObject>> m_internalOnComplete;
         Action<IAsyncOperation<TObject>> m_action;
         List<IAsyncOperation<TObject>> m_operations = new List<IAsyncOperation<TObject>>();
+
         public LoadGroupOperation() 
         {
             m_internalOnComplete = LoadGroupOperation_completed;
+            Result = new List<TObject>();
+        }
+
+        public override void SetResult(IList<TObject> result)
+        {
+            Validate();
         }
 
         public override void ResetStatus()
         {
-            base.ResetStatus();
-            Result = null;
+            m_releaseToCacheOnCompletion = true;
+            m_status = AsyncOperationStatus.None;
+            m_error = null; 
+            m_context = null;
+
+            Result.Clear();
             m_operations.Clear();
         }
 
@@ -30,8 +41,6 @@ namespace UnityEngine.ResourceManagement
             m_loadedCount = 0;
             Context = locations;
             m_action = onComplete;
-            Result = new List<TObject>(locations.Count);
-            m_operations.Clear();
             for (int i = 0; i < locations.Count; i++)
             {
                 var op = loadFunc(locations[i]);
@@ -47,7 +56,7 @@ namespace UnityEngine.ResourceManagement
             get
             {
                 Validate();
-                return Result != null && Result.Count == m_loadedCount;
+                return Result.Count == m_loadedCount;
             }
         }
 

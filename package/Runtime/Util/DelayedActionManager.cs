@@ -52,9 +52,20 @@ namespace UnityEngine.ResourceManagement
         }
         List<DelegateInfo>[] m_actions = new List<DelegateInfo>[] { new List<DelegateInfo>(), new List<DelegateInfo>() };
         LinkedList<DelegateInfo> m_delayedActions = new LinkedList<DelegateInfo>();
-
+        Stack<LinkedListNode<DelegateInfo>> m_nodeCache = new Stack<LinkedListNode<DelegateInfo>>(10);
         int m_collectionIndex = 0;
         static DelayedActionManager m_instance;
+
+        LinkedListNode<DelegateInfo> GetNode(ref DelegateInfo del)
+        {
+            if (m_nodeCache.Count > 0)
+            {
+                var node = m_nodeCache.Pop();
+                node.Value = del;
+                return node;
+            }
+            return new LinkedListNode<DelegateInfo>(del);
+        }
 
         public static void AddAction(Delegate action, float delay, params object[] parameters)
         {
@@ -73,7 +84,7 @@ namespace UnityEngine.ResourceManagement
             {
                 if (m_delayedActions.Count == 0)
                 {
-                    m_delayedActions.AddFirst(del);
+                    m_delayedActions.AddFirst(GetNode(ref del));
                 }
                 else
                 {
@@ -82,9 +93,9 @@ namespace UnityEngine.ResourceManagement
                     while (n != null && n.Value.InvocationTime > del.InvocationTime)
                         n = n.Previous;
                     if (n == null)
-                        m_delayedActions.AddFirst(del);
+                        m_delayedActions.AddFirst(GetNode(ref del));
                     else
-                        m_delayedActions.AddBefore(n, del);
+                        m_delayedActions.AddBefore(n, GetNode(ref del));
                 }
             }
             else
@@ -104,6 +115,7 @@ namespace UnityEngine.ResourceManagement
             while (m_delayedActions.Count > 0 && m_delayedActions.First.Value.InvocationTime <= t)
             {
                 m_actions[m_collectionIndex].Add(m_delayedActions.First.Value);
+                m_nodeCache.Push(m_delayedActions.First);
                 m_delayedActions.RemoveFirst();
             }
 

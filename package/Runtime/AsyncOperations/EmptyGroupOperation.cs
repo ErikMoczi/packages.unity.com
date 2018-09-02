@@ -11,6 +11,10 @@ namespace UnityEngine.ResourceManagement
             Result = new TObject[0];
         }
 
+        public override void ResetStatus()
+        {
+        }
+
         public override LoadGroupOperation<TObject> Start(IList<IResourceLocation> locations, Func<IResourceLocation, IAsyncOperation<TObject>> loadFunc, Action<IAsyncOperation<TObject>> onComplete)
         {
             return this;

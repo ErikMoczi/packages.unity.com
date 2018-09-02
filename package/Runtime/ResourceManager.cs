@@ -83,7 +83,7 @@ namespace UnityEngine.ResourceManagement
         }
 
         //used to look up locations of instatiated objects in order to find the provider when they are released
-        static Dictionary<object, IResourceLocation> s_instanceToLocationMap = new Dictionary<object, IResourceLocation>();
+        static Dictionary<int, IResourceLocation> s_instanceToLocationMap = new Dictionary<int, IResourceLocation>();
 
         //used to look up locations of assets in order to find the provider when they are released
         static Dictionary<object, IResourceLocation> s_assetToLocationMap = new Dictionary<object, IResourceLocation>();
@@ -158,8 +158,6 @@ namespace UnityEngine.ResourceManagement
                 throw new ResourceProviderFailedException(provider, location, groupOp);
             operation.Validate();
 
-            //Debug.Assert(operation.Context is IResourceLocation, "IAsyncOperation.context is not an IResourceLocation for " + location.InternalId + ", op.context=" + operation.Context);
-
             object result;
             if (!s_loadAsyncInternalMapCache.TryGetValue(typeof(TObject), out result))
             {
@@ -190,8 +188,6 @@ namespace UnityEngine.ResourceManagement
         static IAsyncOperation<TObject> InstantiateAsync_Internal<TObject>(IResourceLocation location, InstantiationParameters instantiationParameters)
             where TObject : Object
         {
-            Debug.Assert(s_instantiateAsyncInternalMapCache != null, "ResourceManager.InstantiateAsync_Internal - s_instantiateAsyncInternalMapCache == null.");
-
             if (location == null)
                 throw new ArgumentNullException("location");
 
@@ -199,7 +195,6 @@ namespace UnityEngine.ResourceManagement
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncRequest, location, Time.frameCount);
 
             var groupOp = StartLoadGroupOperation(location.Dependencies, GetLoadAsyncInternalFunc<object>(), null);
-            Debug.Assert(groupOp != null, "ResourceManager.InstantiateAsync_Internal - groupOp == null.");
             groupOp.Validate();
 
             var provider = GetResourceProvider<TObject>(location);
@@ -210,7 +205,6 @@ namespace UnityEngine.ResourceManagement
             if (operation == null)
                 throw new ResourceProviderFailedException(provider, location, groupOp);
 
-            Debug.Assert(operation.Context is IResourceLocation, "IAsyncOperation.context is not an IResourceLocation for " + location.InternalId + ", op.context=" + operation.Context);
             operation.Validate();
 
             object result;
@@ -220,9 +214,9 @@ namespace UnityEngine.ResourceManagement
                 {
                     if (op2.Result != null)
                     {
-                        if (!s_instanceToLocationMap.ContainsKey(op2.Result))
+                        if (!s_instanceToLocationMap.ContainsKey(op2.Result.GetInstanceID()))
                         {
-                            s_instanceToLocationMap.Add(op2.Result, op2.Context as IResourceLocation);
+                            s_instanceToLocationMap.Add(op2.Result.GetInstanceID(), op2.Context as IResourceLocation);
                         }
                         else
                         {
@@ -238,24 +232,21 @@ namespace UnityEngine.ResourceManagement
             return operation;
         }
 
-       // static Dictionary<Type, object> s_releaseCache = new Dictionary<Type, object>();
         static LoadGroupOperation<TObject> StartLoadGroupOperation<TObject>(IList<IResourceLocation> locations, Func<IResourceLocation, IAsyncOperation<TObject>> loadFunction, Action<IAsyncOperation<TObject>> onComplete)
             where TObject : class
         {
-       //     Debug.Assert(s_releaseCache != null, "ResourceManager.StartLoadGroupOperation - s_releaseCache == null.");
-
             LoadGroupOperation<TObject> groupOp;
 
             if (locations != null && locations.Count > 0)
+            {
                 groupOp = AsyncOperationCache.Instance.Acquire<LoadGroupOperation<TObject>, TObject>();
+            }
             else
+            {
                 groupOp = AsyncOperationCache.Instance.Acquire<EmptyGroupOperation<TObject>, TObject>();
-            /*
-            object releaseAction = null;
-            if (!s_releaseCache.TryGetValue(typeof(TObject), out releaseAction))
-                s_releaseCache.Add(typeof(TObject), releaseAction = (Action<IAsyncOperation<IList<TObject>>>)AsyncOperationCache.Instance.Release<TObject>);
-                */
-            groupOp.Start(locations, loadFunction, onComplete);//.Completed += releaseAction as Action<IAsyncOperation<IList<TObject>>>;
+                AsyncOperationCache.Instance.Release<TObject>(groupOp);//release right away since it does nothing and can be shared...
+            }
+            groupOp.Start(locations, loadFunction, onComplete);
             return groupOp;
         }
 
@@ -377,7 +368,8 @@ namespace UnityEngine.ResourceManagement
             IResourceLocation loc = null;
             if (!s_assetToLocationMap.TryGetValue(asset, out loc))
             {
-                if (s_instanceToLocationMap.ContainsKey(asset))
+                var obj = asset as Object;
+                if (obj != null && s_instanceToLocationMap.ContainsKey(obj.GetInstanceID()))
                     Debug.LogWarningFormat("ResourceManager.Release() - parameter asset {0} is an instance. Instances must be released using ReleaseInstance().", asset);
                 else
                     Debug.LogWarningFormat("ResourceManager.Release() - unable to find location for asset {0}.", asset);
@@ -390,7 +382,6 @@ namespace UnityEngine.ResourceManagement
         public static void ReleaseInstance<TObject>(TObject instance, float delay)
             where TObject : Object
         {
-            Debug.Assert(s_instanceToLocationMap != null, "ResourceManager.ReleaseInstance - s_instanceToLocationMap == null.");
             if (instance == null)
                 throw new ArgumentNullException("instance", "Cannot release null instance.  It is possible that the object has been destroyed.");
             if (delay <= 0)
@@ -407,24 +398,22 @@ namespace UnityEngine.ResourceManagement
         public static void ReleaseInstance<TObject>(TObject instance)
             where TObject : Object
         {
-            Debug.Assert(s_instanceToLocationMap != null, "ResourceManager.ReleaseInstance - s_instanceToLocationMap == null.");
-
             if (InstanceProvider == null)
                 throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
             if (instance == null)
                 throw new ArgumentNullException("instance");
             IResourceLocation loc = null;
 
-            if (!s_instanceToLocationMap.TryGetValue(instance, out loc))
+            if (!s_instanceToLocationMap.TryGetValue(instance.GetInstanceID(), out loc))
             {
-                if(s_assetToLocationMap.ContainsKey(instance))
+                if (s_assetToLocationMap.ContainsKey(instance))
                     Debug.LogWarningFormat("ResourceManager.ReleaseInstance() - parameter instance {0} is an asset. Assets must be released using Release().", instance.GetInstanceID());
                 else
                     Debug.LogWarningFormat("ResourceManager.ReleaseInstance() - unable to find location for instance {0}.", instance.GetInstanceID());
                 return;
             }
 
-            s_instanceToLocationMap.Remove(instance);
+            s_instanceToLocationMap.Remove(instance.GetInstanceID());
 
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.ReleaseInstance, loc, Time.frameCount);
             if (InstanceProvider.ReleaseInstance(GetResourceProvider<TObject>(loc), loc, instance))

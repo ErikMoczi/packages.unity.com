@@ -8,13 +8,14 @@ namespace UnityEngine.ResourceManagement
     /// </summary>
     public abstract class AsyncOperationBase<TObject> : IAsyncOperation<TObject>
     {
-        TObject m_result;
-        AsyncOperationStatus m_status;
-        Exception m_error;
-        object m_context;
-        bool m_releaseToCacheOnCompletion = false;
-        event Action<IAsyncOperation> m_completedAction;
-        event Action<IAsyncOperation<TObject>> m_completedActionT;
+        protected TObject m_result;
+        protected AsyncOperationStatus m_status;
+        protected Exception m_error;
+        protected object m_context;
+        protected bool m_releaseToCacheOnCompletion = false;
+        Action<IAsyncOperation> m_completedAction;
+        List<Action<IAsyncOperation<TObject>>> m_completedActionT;
+
         protected AsyncOperationBase()
         {
             IsValid = true;
@@ -35,7 +36,7 @@ namespace UnityEngine.ResourceManagement
         {
             Validate();
             m_releaseToCacheOnCompletion = true;
-            if (IsDone)
+            if (!m_insideCompletionEvent && IsDone)
                 AsyncOperationCache.Instance.Release<TObject>(this);
         }
 
@@ -71,14 +72,20 @@ namespace UnityEngine.ResourceManagement
             {
                 Validate();
                 if (IsDone)
+                {
                     DelayedActionManager.AddAction(value, 0, this);
+                }
                 else
-                    m_completedActionT += value;
+                {
+                    if (m_completedActionT == null)
+                        m_completedActionT = new List<Action<IAsyncOperation<TObject>>>(2);
+                    m_completedActionT.Add(value);
+                }
             }
 
             remove
             {
-                m_completedActionT -= value;
+                m_completedActionT.Remove(value);
             }
         }
 		
@@ -192,25 +199,29 @@ namespace UnityEngine.ResourceManagement
             }
         }
 
+        bool m_insideCompletionEvent = false;
         public void InvokeCompletionEvent()
         {
             Validate();
+            m_insideCompletionEvent = true;
             if (m_completedActionT != null)
             {
-                var tmpEvent = m_completedActionT;
-                m_completedActionT = null;
-                try
+                for (int i = 0; i < m_completedActionT.Count; i++)
                 {
-                    tmpEvent(this);
+                    try
+                    {
+                        m_completedActionT[i](this);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogException(e);
+                        m_error = e;
+                        m_status = AsyncOperationStatus.Failed;
+                    }
                 }
-                catch (Exception e)
-                {
-					Debug.LogException(e);
-					m_error = e;
-                    m_status = AsyncOperationStatus.Failed;
-                }
+                m_completedActionT.Clear();
             }
-			
+
             if (m_completedAction != null)
             {
                 var tmpEvent = m_completedAction;
@@ -226,6 +237,7 @@ namespace UnityEngine.ResourceManagement
                     m_status = AsyncOperationStatus.Failed;
                 }
             }
+            m_insideCompletionEvent = false;
             if (m_releaseToCacheOnCompletion)
                 AsyncOperationCache.Instance.Release<TObject>(this);
         }

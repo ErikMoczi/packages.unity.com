@@ -110,7 +110,7 @@ namespace UnityEngine.ResourceManagement
                     return IsDone ? 1f : m_operation.PercentComplete;
                 }
             }
-            protected event Action<IAsyncOperation<TObject>> m_completedActionT;
+            List<Action<IAsyncOperation<TObject>>> m_completedActionT;
             protected event Action<IAsyncOperation> m_completedAction;
             public event Action<IAsyncOperation<TObject>> Completed
             {
@@ -118,14 +118,20 @@ namespace UnityEngine.ResourceManagement
                 {
                     Validate();
                     if (IsDone)
+                    {
                         DelayedActionManager.AddAction(value, 0, this);
+                    }
                     else
-                        m_completedActionT += value;
+                    {
+                        if (m_completedActionT == null)
+                            m_completedActionT = new List<Action<IAsyncOperation<TObject>>>(2);
+                        m_completedActionT.Add(value);
+                    }
                 }
 
                 remove
                 {
-                    m_completedActionT -= value;
+                    m_completedActionT.Remove(value);
                 }
             }
 
@@ -160,18 +166,20 @@ namespace UnityEngine.ResourceManagement
                 m_result = operation.Result;
                 if (m_completedActionT != null)
                 {
-                    var tmpEvent = m_completedActionT;
-                    m_completedActionT = null;
-                    try
+                    for (int i = 0; i < m_completedActionT.Count; i++)
                     {
-                        tmpEvent(this);
+                        try
+                        {
+                            m_completedActionT[i](this);
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogException(e);
+                            m_error = e;
+                            m_status = AsyncOperationStatus.Failed;
+                        }
                     }
-                    catch (Exception e)
-                    {
-                        Debug.LogException(e);
-                        m_error = e;
-                        m_status = AsyncOperationStatus.Failed;
-                    }
+                    m_completedActionT.Clear();
                 }
                 if (m_completedAction != null)
                 {
@@ -344,6 +352,7 @@ namespace UnityEngine.ResourceManagement
                     go.GetComponent<CachedProviderUpdater>().Init(this);
                     go.hideFlags = HideFlags.HideAndDontSave;
                 }
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheLRUCount, m_internalProvider.ProviderId, m_lru.Count);
             }
         }
 
@@ -352,11 +361,12 @@ namespace UnityEngine.ResourceManagement
             if (m_lru != null)
             {
                 float time = Time.unscaledTime;
-                while (m_lru.Last != null && m_lru.Last.Value.m_lastAccessTime > m_maxLRUAge && m_lru.Last.Value.IsDone)
+                while (m_lru.Last != null && (m_lru.Last.Value.m_lastAccessTime - time) > m_maxLRUAge && m_lru.Last.Value.IsDone)
                 {
                     m_lru.Last.Value.ReleaseAssets(m_internalProvider);
                     m_lru.RemoveLast();
                 }
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheLRUCount, m_internalProvider.ProviderId, m_lru.Count);
             }
         }
 
@@ -402,6 +412,7 @@ namespace UnityEngine.ResourceManagement
                             m_lru.Last.Value.ReleaseAssets(m_internalProvider);
                             m_lru.RemoveLast();
                         }
+                        ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheLRUCount, m_internalProvider.ProviderId + " LRU", m_lru.Count);
                     }
                     else
                     {
@@ -443,6 +454,7 @@ namespace UnityEngine.ResourceManagement
                             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, location, 1);
                             entryList = node.Value;
                             m_lru.Remove(node);
+                            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheLRUCount, m_internalProvider.ProviderId, m_lru.Count);
                             break;
                         }
                         node = node.Next;
