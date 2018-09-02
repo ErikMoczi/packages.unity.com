@@ -179,13 +179,13 @@ namespace TMPro.EditorUtilities
             if (Directory.Exists(packagePath))
             {
                 // Search default location for development package
-                if (Directory.Exists(packagePath + "/Assets/Packages/com.unity.TextMeshPro/GUISkins"))
+                if (Directory.Exists(packagePath + "/Assets/Packages/com.unity.TextMeshPro/Editor Resources"))
                 {
                     return "Assets/Packages/com.unity.TextMeshPro";
                 }
 
                 // Search for default location of normal TextMesh Pro AssetStore package
-                if (Directory.Exists(packagePath + "/Assets/TextMesh Pro/GUISkins"))
+                if (Directory.Exists(packagePath + "/Assets/TextMesh Pro/Editor Resources"))
                 {
                     return "Assets/TextMesh Pro";
                 }
@@ -212,13 +212,13 @@ namespace TMPro.EditorUtilities
             if (Directory.Exists(packagePath))
             {
                 // Search default location for development package
-                if (Directory.Exists(packagePath + "/Assets/Packages/com.unity.TextMeshPro/GUISkins"))
+                if (Directory.Exists(packagePath + "/Assets/Packages/com.unity.TextMeshPro/Editor Resources"))
                 {
                     return packagePath + "/Assets/Packages/com.unity.TextMeshPro";
                 }
 
                 // Search for default location of normal TextMesh Pro AssetStore package
-                if (Directory.Exists(packagePath + "/Assets/TextMesh Pro/GUISkins"))
+                if (Directory.Exists(packagePath + "/Assets/TextMesh Pro/Editor Resources"))
                 {
                     return packagePath + "/Assets/TextMesh Pro";
                 }
@@ -243,7 +243,7 @@ namespace TMPro.EditorUtilities
             for (int i = 0; i < paths.Length; i++)
             {
                 // Check if any of the matching directories contain a GUISkins directory.
-                if (Directory.Exists(paths[i] + "/GUISkins"))
+                if (Directory.Exists(paths[i] + "/Editor Resources"))
                 {
                     folderPath = paths[i].Replace(projectPath + "\\", "");
                     return folderPath;
