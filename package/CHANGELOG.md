@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.1-preview] - 2018-08-24
+- removed compile warning
+- Fixed an issue where we were not using the addressableNames field of the AssetBundleBuild struct
+
 ## [1.0.0-preview] - 2018-08-20
 - Fixed an issue in  ArchiveAndCompressBundles where previous output location was being used failing to copy cached bundles to the new location
 - Fixed an issue in BuildCache were built in plugin dlls did not have a hash version causing cache misses

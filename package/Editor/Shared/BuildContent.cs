@@ -98,7 +98,7 @@ namespace UnityEditor.Build.Pipeline
                     else if (bundleType != status)
                         throw new ArgumentException(string.Format("Asset Bundle '{0}' is invalid because it contains mixed Asset and Scene types.", bundleBuild.assetBundleName));
 
-                    string address = bundleBuild.addressableNames != null && i < bundleBuild.addressableNames.Length && string.IsNullOrEmpty(bundleBuild.addressableNames[i]) ?
+                    string address = bundleBuild.addressableNames != null && i < bundleBuild.addressableNames.Length && !string.IsNullOrEmpty(bundleBuild.addressableNames[i]) ?
                         bundleBuild.addressableNames[i] : AssetDatabase.GUIDToAssetPath(asset.ToString());
 
                     // Add the guid to the bundle map
