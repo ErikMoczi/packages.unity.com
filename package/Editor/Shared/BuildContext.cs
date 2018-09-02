@@ -1,25 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEditor.Build.Interfaces;
+using UnityEditor.Build.Pipeline.Interfaces;
 
-namespace UnityEditor.Build
+namespace UnityEditor.Build.Pipeline
 {
+    /// <summary>
+    /// Basic implementation of IBuildContext. Stores data generated during a build.
+    /// <seealso cref="IBuildContext"/>
+    /// </summary>
     public class BuildContext : IBuildContext
     {
         Dictionary<Type, IContextObject> m_ContextObjects;
 
+        /// <summary>
+        /// Default constructor
+        /// </summary>
         public BuildContext()
         {
             m_ContextObjects = new Dictionary<Type, IContextObject>();
         }
 
+        /// <summary>
+        /// Default constructor, adds the passed in parameters to the context.
+        /// </summary>
+        /// <param name="buildParams">The set of initial parameters to add to the context.</param>
         public BuildContext(params IContextObject[] buildParams)
         {
             m_ContextObjects = new Dictionary<Type, IContextObject>();
             foreach (var buildParam in buildParams)
                 SetContextObject(buildParam);
         }
-
+        
+        /// <inheritdoc />
         public void SetContextObject<T>(IContextObject contextObject) where T : IContextObject
         {
             var type = typeof(T);
@@ -29,7 +41,8 @@ namespace UnityEditor.Build
                 throw new InvalidOperationException(string.Format("'{0}' is not of passed in type '{1}'.", contextObject.GetType(), type));
             m_ContextObjects[typeof(T)] = contextObject;
         }
-
+        
+        /// <inheritdoc />
         public void SetContextObject(IContextObject contextObject)
         {
             var iCType = typeof(IContextObject);
@@ -41,27 +54,32 @@ namespace UnityEditor.Build
                 m_ContextObjects[iType] = contextObject;
             }
         }
-
+        
+        /// <inheritdoc />
         public bool ContainsContextObject<T>() where T : IContextObject
         {
             return ContainsContextObject(typeof(T));
         }
-
+        
+        /// <inheritdoc />
         public bool ContainsContextObject(Type type)
         {
             return m_ContextObjects.ContainsKey(type);
         }
-
+        
+        /// <inheritdoc />
         public T GetContextObject<T>() where T : IContextObject
         {
             return (T)m_ContextObjects[typeof(T)];
         }
-
+        
+        /// <inheritdoc />
         public IContextObject GetContextObject(Type type)
         {
             return m_ContextObjects[type];
         }
-
+        
+        /// <inheritdoc />
         public bool TryGetContextObject<T>(out T contextObject) where T : IContextObject
         {
             IContextObject cachedContextObject;

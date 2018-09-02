@@ -1,20 +1,30 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.Build.Interfaces;
-using UnityEditor.Build.Tasks;
+using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Pipeline.Tasks;
 
-namespace UnityEditor.Build
+namespace UnityEditor.Build.Pipeline
 {
+    /// <summary>
+    /// Basic static class containing preset build pipeline task collections.
+    /// </summary>
     public static class DefaultBuildTasks
     {
+        /// <summary>
+        /// Enum of the different preset build pipelines
+        /// </summary>
         public enum Presets
         {
             PlayerScriptsOnly,
-            AssetBundleCompatible,
-            AutopackReleaseContent,
-            //AutopackFastDeployContent,
+            AssetBundleCompatible
         }
 
+        /// <summary>
+        /// Constructs and returns an IList containing the build tasks in the correct order for the preset build pipeline.
+        /// </summary>
+        /// <param name="preset">The preset build pipeline to construct and return.</param>
+        /// <param name="compileScripts">The boolean to allow bypassing script compilation of a preset build pipeline if supported.</param>
+        /// <returns>IList containing the build tasks in the correct order for the preset build pipeline.</returns>
         public static IList<IBuildTask> Create(Presets preset, bool compileScripts = true)
         {
             switch (preset)
@@ -23,8 +33,6 @@ namespace UnityEditor.Build
                     return PlayerScriptsOnly();
                 case Presets.AssetBundleCompatible:
                     return AssetBundleCompatible(compileScripts);
-                case Presets.AutopackReleaseContent:
-                    return AutopackReleaseContent(compileScripts);
                 default:
                     throw new NotImplementedException(string.Format("Presets for '{0}' not yet implemented.", preset));
             }
@@ -51,42 +59,6 @@ namespace UnityEditor.Build
 
             // Writing
             // - Empty
-
-            return buildTasks;
-        }
-
-        static IList<IBuildTask> AutopackReleaseContent(bool compileScripts)
-        {
-            var buildTasks = new List<IBuildTask>();
-
-            // Setup
-            buildTasks.Add(new ProjectInCleanState());
-            buildTasks.Add(new SwitchToBuildPlatform());
-            buildTasks.Add(new RebuildAtlasCache());
-
-            // Player Scripts
-            if (compileScripts)
-            {
-                buildTasks.Add(new BuildPlayerScripts());
-                buildTasks.Add(new SetBundleSettingsTypeDB());
-                buildTasks.Add(new PostScriptsCallback());
-            }
-
-            // Dependency
-            buildTasks.Add(new CalculateSceneDependencyData());
-            buildTasks.Add(new CalculateAssetDependencyData());
-            buildTasks.Add(new StripUnusedSpriteSources());
-            buildTasks.Add(new PostDependencyCallback());
-
-            // Packing
-            buildTasks.Add(new GenerateReleaseAutoPacking());
-            buildTasks.Add(new GenerateCommands());
-            buildTasks.Add(new PostPackingCallback());
-
-            // Writing
-            buildTasks.Add(new WriteSerializedFiles());
-            buildTasks.Add(new CopySerializedFiles());
-            buildTasks.Add(new PostWritingCallback());
 
             return buildTasks;
         }

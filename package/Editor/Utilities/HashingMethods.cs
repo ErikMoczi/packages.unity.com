@@ -4,14 +4,21 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using UnityEngine;
 
-namespace UnityEditor.Build.Utilities
+namespace UnityEditor.Build.Pipeline.Utilities
 {
     public static class HashingMethods
     {
         static Hash128 ToHash128(byte[] hash)
         {
-            return new Hash128(BitConverter.ToUInt32(hash, 0), BitConverter.ToUInt32(hash, 4),
+            var result = new Hash128(BitConverter.ToUInt32(hash, 0), BitConverter.ToUInt32(hash, 4),
                 BitConverter.ToUInt32(hash, 8), BitConverter.ToUInt32(hash, 12));
+            return result;
+        }
+        static GUID ToGUID(byte[] hash)
+        {
+            var resultStr = BitConverter.ToString(hash).Replace("-", "").ToLower();
+            var result = new GUID(resultStr);
+            return result;
         }
 
         public static byte[] CalculateStreamMD5(Stream stream)
@@ -59,6 +66,7 @@ namespace UnityEditor.Build.Utilities
                     if (obj != null)
                         formatter.Serialize(stream, obj);
                 }
+
                 hash = CalculateStreamMD5(stream);
             }
             return hash;
@@ -68,6 +76,12 @@ namespace UnityEditor.Build.Utilities
         {
             byte[] hash = CalculateMD5(objects);
             return ToHash128(hash);
+        }
+
+        public static GUID CalculateMD5Guid(params object[] objects)
+        {
+            byte[] hash = CalculateMD5(objects);
+            return ToGUID(hash);
         }
 
         public static byte[] CalculateFileMD5(string filePath)

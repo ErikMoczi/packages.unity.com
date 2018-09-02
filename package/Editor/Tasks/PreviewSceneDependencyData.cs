@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using UnityEditor.Build.Interfaces;
-using UnityEditor.Build.Utilities;
-using UnityEditor.Experimental.Build.AssetBundle;
-using UnityEngine;
+using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Pipeline.Utilities;
 
-namespace UnityEditor.Build.Tasks
+namespace UnityEditor.Build.Pipeline.Tasks
 {
     public struct PreviewSceneDependencyData : IBuildTask
     {
@@ -21,24 +20,12 @@ namespace UnityEditor.Build.Tasks
         {
             IProgressTracker tracker;
             context.TryGetContextObject(out tracker);
-            return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IBuildContent>(), context.GetContextObject<IDependencyData>(), tracker);
+            IBuildCache cache;
+            context.TryGetContextObject(out cache);
+            return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IBuildContent>(), context.GetContextObject<IDependencyData>(), tracker, cache);
         }
 
-        static Hash128 CalculateInputHash(bool useCache, GUID asset, BuildSettings settings)
-        {
-            if (!useCache)
-                return new Hash128();
-
-            string path = AssetDatabase.GUIDToAssetPath(asset.ToString());
-            string assetHash = AssetDatabase.GetAssetDependencyHash(path).ToString();
-            string[] dependencies = AssetDatabase.GetDependencies(path);
-            var dependencyHashes = new string[dependencies.Length];
-            for (int i = 0; i < dependencies.Length; ++i)
-                dependencyHashes[i] = AssetDatabase.GetAssetDependencyHash(dependencies[i]).ToString();
-            return HashingMethods.CalculateMD5Hash(k_Version, assetHash, dependencyHashes, settings);
-        }
-
-        public static ReturnCodes Run(IBuildParameters parameters, IBuildContent content, IDependencyData dependencyData, IProgressTracker tracker = null)
+        public static ReturnCodes Run(IBuildParameters parameters, IBuildContent content, IDependencyData dependencyData, IProgressTracker tracker = null, IBuildCache cache = null)
         {
             foreach (GUID asset in content.Scenes)
             {
@@ -47,14 +34,19 @@ namespace UnityEditor.Build.Tasks
                 var usageTags = new BuildUsageTagSet();
                 var sceneInfo = new SceneDependencyInfo();
 
-                Hash128 hash = CalculateInputHash(parameters.UseCache, asset, parameters.GetContentBuildSettings());
-                if (TryLoadFromCache(parameters.UseCache, hash, ref sceneInfo, ref usageTags))
+                var cacheEntry = new CacheEntry { guid = asset };
+                if (parameters.UseCache && cache != null)
                 {
-                    if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", scenePath)))
-                        return ReturnCodes.Canceled;
+                    cacheEntry = cache.GetCacheEntry(asset);
+                    var result = cache.IsCacheEntryValid(cacheEntry);
+                    if (result && cache.TryLoadFromCache(cacheEntry, ref sceneInfo, ref usageTags))
+                    {
+                        if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", scenePath)))
+                            return ReturnCodes.Canceled;
 
-                    SetOutputInformation(asset, sceneInfo, usageTags, dependencyData);
-                    continue;
+                        SetOutputInformation(asset, sceneInfo, usageTags, dependencyData);
+                        continue;
+                    }
                 }
 
                 if (!tracker.UpdateInfoUnchecked(scenePath))
@@ -67,8 +59,9 @@ namespace UnityEditor.Build.Tasks
                     var assetGuid = new GUID(AssetDatabase.AssetPathToGUID(assetPath));
                     if (!ValidationMethods.ValidAsset(assetGuid))
                         continue;
-                    var assetIncludes = BundleBuildInterface.GetPlayerObjectIdentifiersInAsset(assetGuid, parameters.Target);
-                    var assetReferences = BundleBuildInterface.GetPlayerDependenciesForObjects(assetIncludes, parameters.Target, parameters.ScriptInfo);
+                    // TODO: Use Cache to speed this up?
+                    var assetIncludes = ContentBuildInterface.GetPlayerObjectIdentifiersInAsset(assetGuid, parameters.Target);
+                    var assetReferences = ContentBuildInterface.GetPlayerDependenciesForObjects(assetIncludes, parameters.Target, parameters.ScriptInfo);
                     references.UnionWith(assetIncludes);
                     references.UnionWith(assetReferences);
                 }
@@ -81,8 +74,8 @@ namespace UnityEditor.Build.Tasks
 
                 SetOutputInformation(asset, sceneInfo, usageTags, dependencyData);
 
-                if (!TrySaveToCache(parameters.UseCache, hash, sceneInfo, usageTags))
-                    BuildLogger.LogWarning("Unable to cache SceneDependency results for asset '{0}'.", scenePath);
+                if (parameters.UseCache && cache != null && !cache.TrySaveToCache(cacheEntry, sceneInfo, usageTags))
+                    BuildLogger.LogWarning("Unable to cache PreviewSceneDependencyData results for asset '{0}'.", AssetDatabase.GUIDToAssetPath(asset.ToString()));
             }
 
             return ReturnCodes.Success;
@@ -93,27 +86,6 @@ namespace UnityEditor.Build.Tasks
             // Add generated scene information to BuildDependencyData
             dependencyData.SceneInfo.Add(asset, sceneInfo);
             dependencyData.SceneUsage.Add(asset, usageTags);
-        }
-
-        static bool TryLoadFromCache(bool useCache, Hash128 hash, ref SceneDependencyInfo sceneInfo, ref BuildUsageTagSet usageTags)
-        {
-            SceneDependencyInfo cachedSceneInfo;
-            BuildUsageTagSet cachedUsageTags;
-            if (useCache && BuildCache.TryLoadCachedResults(hash, out cachedSceneInfo) && BuildCache.TryLoadCachedResults(hash, out cachedUsageTags))
-            {
-                sceneInfo = cachedSceneInfo;
-                usageTags = cachedUsageTags;
-                return true;
-            }
-
-            return false;
-        }
-
-        static bool TrySaveToCache(bool useCache, Hash128 hash, SceneDependencyInfo sceneInfo, BuildUsageTagSet usageTags)
-        {
-            if (useCache && !(BuildCache.SaveCachedResults(hash, sceneInfo) && BuildCache.SaveCachedResults(hash, usageTags)))
-                return false;
-            return true;
         }
     }
 }

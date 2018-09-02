@@ -1,8 +1,8 @@
 ﻿using System;
-using UnityEditor.Build.Interfaces;
+using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Sprites;
 
-namespace UnityEditor.Build.Tasks
+namespace UnityEditor.Build.Pipeline.Tasks
 {
     public struct RebuildAtlasCache : IBuildTask
     {

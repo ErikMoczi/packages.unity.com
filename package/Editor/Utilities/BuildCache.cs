@@ -1,26 +1,338 @@
-﻿//#define BUILD_CACHE_DEBUG
-
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
+#if !NET_4_6
+using System.Threading;
+#endif
+using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEngine;
 
-namespace UnityEditor.Build.Utilities
+namespace UnityEditor.Build.Pipeline.Utilities
 {
-    public static class BuildCache
+    public class BuildCache : IBuildCache
     {
-        private const string kCachePath = "Library/BuildCache";
-
-        public static string GetPathForCachedResults(Hash128 hash)
+        interface ICachedDependency
         {
-            var file = hash.ToString();
-            return string.Format("{0}/{1}/{2}/Results", kCachePath, file.Substring(0, 2), file);
+            CacheEntry asset { get; set; }
+            CacheEntry[] dependencies { get; set; }
         }
 
-        public static string GetPathForCachedArtifacts(Hash128 hash)
+        [Serializable]
+        struct CachedDependency<T> : ICachedDependency
         {
-            var file = hash.ToString();
-            return string.Format("{0}/{1}/{2}/Artifacts", kCachePath, file.Substring(0, 2), file);
+            public CacheEntry asset { get; set; }
+            public CacheEntry[] dependencies { get; set; }
+
+            public T info;
+            public BuildUsageTagSet usage;
+
+            public CachedDependency(T assetInfo, BuildUsageTagSet assetUsage) : this()
+            {
+                asset = new CacheEntry();
+                dependencies = null;
+                info = assetInfo;
+                usage = assetUsage;
+            }
+        }
+
+        internal const string kCachePath = "Library/BuildCache";
+        internal const string kDependencyCachePath = "Library/BuildCache/Dependency";
+        internal const string kArtifactCachePath = "Library/BuildCache/Artifact";
+
+        Dictionary<GUID, Hash128> m_HashCache = new Dictionary<GUID, Hash128>();
+
+        Dictionary<CacheEntry, ICachedDependency> m_DependencyCache = new Dictionary<CacheEntry, ICachedDependency>();
+
+        public static string GetDependencyCacheDirectory(CacheEntry cacheEntry)
+        {
+            Directory.CreateDirectory(kDependencyCachePath);
+            return kDependencyCachePath;
+        }
+
+        string IBuildCache.GetDependencyCacheDirectory(CacheEntry cacheEntry)
+        {
+            return GetDependencyCacheDirectory(cacheEntry);
+        }
+
+        public static string GetArtifactCacheDirectory(CacheEntry cacheEntry)
+        {
+            var folder = string.Format("{0}/{1}/{2}", kArtifactCachePath, cacheEntry.guid, cacheEntry.hash);
+            Directory.CreateDirectory(folder);
+            return folder;
+        }
+
+        string IBuildCache.GetArtifactCacheDirectory(CacheEntry cacheEntry)
+        {
+            return GetArtifactCacheDirectory(cacheEntry);
+        }
+
+        public CacheEntry GetCacheEntry(GUID asset)
+        {
+            var entry = new CacheEntry { guid = asset };
+            if (m_HashCache.TryGetValue(asset, out entry.hash))
+                return entry;
+
+            string path = AssetDatabase.GUIDToAssetPath(asset.ToString());
+            string assetHash = AssetDatabase.GetAssetDependencyHash(path).ToString();
+
+            entry.hash = Hash128.Parse(assetHash);
+            m_HashCache[asset] = entry.hash;
+            return entry;
+        }
+
+        static bool LoadFromCache(CacheEntry cacheEntry, out ICachedDependency cachedDependency)
+        {
+            // TODO: Cache server integration
+            try
+            {
+                var file = string.Format("{0}/{1}_{2}.bytes", GetDependencyCacheDirectory(cacheEntry), cacheEntry.guid, cacheEntry.hash);
+                if (!File.Exists(file))
+                {
+                    cachedDependency = default(ICachedDependency);
+                    return false;
+                }
+
+                var formatter = new BinaryFormatter();
+                using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read))
+                    cachedDependency = (ICachedDependency)formatter.Deserialize(stream);
+            }
+            catch (Exception e)
+            {
+                BuildLogger.LogException(e);
+                cachedDependency = default(ICachedDependency);
+                return false;
+            }
+            return true;
+        }
+
+        static bool LoadFromCache<T>(CacheEntry cacheEntry, out T results)
+        {
+            // TODO: Cache server integration
+            try
+            {
+                var file = string.Format("{0}/{1}.bytes", GetArtifactCacheDirectory(cacheEntry), typeof(T).Name);
+                if (!File.Exists(file))
+                {
+                    results = default(T);
+                    return false;
+                }
+
+                var formatter = new BinaryFormatter();
+                using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read))
+                    results = (T)formatter.Deserialize(stream);
+            }
+            catch (Exception e)
+            {
+                BuildLogger.LogException(e);
+                results = default(T);
+                return false;
+            }
+            return true;
+        }
+
+        public bool IsCacheEntryValid(CacheEntry cacheEntry)
+        {
+            ICachedDependency cachedDependency;
+            if (!m_DependencyCache.TryGetValue(cacheEntry, out cachedDependency))
+            {
+                if (!LoadFromCache(cacheEntry, out cachedDependency))
+                    return false;
+            }
+
+            foreach (CacheEntry dependency in cachedDependency.dependencies)
+            {
+                if (dependency == GetCacheEntry(dependency.guid))
+                    continue;
+                return false;
+            }
+
+            m_DependencyCache[cacheEntry] = cachedDependency;
+            return true;
+        }
+
+        public bool TryLoadFromCache(CacheEntry cacheEntry, ref AssetLoadInfo info, ref BuildUsageTagSet usage)
+        {
+            ICachedDependency cachedDependency;
+            if (!m_DependencyCache.TryGetValue(cacheEntry, out cachedDependency))
+                return false;
+
+            if (cachedDependency is CachedDependency<AssetLoadInfo>)
+            {
+                var dependency = (CachedDependency<AssetLoadInfo>)cachedDependency;
+                info = dependency.info;
+                usage = dependency.usage;
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool TryLoadFromCache(CacheEntry cacheEntry, ref SceneDependencyInfo info, ref BuildUsageTagSet usage)
+        {
+            ICachedDependency cachedDependency;
+            if (!m_DependencyCache.TryGetValue(cacheEntry, out cachedDependency))
+                return false;
+
+            if (cachedDependency is CachedDependency<SceneDependencyInfo>)
+            {
+                var dependency = (CachedDependency<SceneDependencyInfo>)cachedDependency;
+                info = dependency.info;
+                usage = dependency.usage;
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool TryLoadFromCache<T>(CacheEntry cacheEntry, ref T results)
+        {
+            T cachedResults;
+            var success = LoadFromCache(cacheEntry, out cachedResults);
+            if (success)
+                results = cachedResults;
+            return success;
+        }
+
+        public bool TryLoadFromCache<T1, T2>(CacheEntry cacheEntry, ref T1 results1, ref T2 results2)
+        {
+            //TODO: try and batch the load into one file
+            T1 cachedResults1;
+            T2 cachedResults2;
+            var success = LoadFromCache(cacheEntry, out cachedResults1);
+            success = LoadFromCache(cacheEntry, out cachedResults2) & success;
+            if (success)
+            {
+                results1 = cachedResults1;
+                results2 = cachedResults2;
+            }
+            return success;
+        }
+
+#if NET_4_6
+        static async void WriteToFile(string file, byte[] data)
+        {
+            using (var fileStream = new FileStream(file, FileMode.OpenOrCreate, FileAccess.Write))
+                await fileStream.WriteAsync(data, 0, data.Length);
+        }
+#else
+        struct FileWrite
+        {
+            public string file;
+            public byte[] data;
+        }
+
+        static void Write(object data)
+        {
+            var fileWrite = (FileWrite)data;
+            using (var fileStream = new FileStream(fileWrite.file, FileMode.OpenOrCreate, FileAccess.Write))
+                fileStream.Write(fileWrite.data, 0, fileWrite.data.Length);
+        }
+
+        public static void WriteToFile(string file, byte[] data)
+        {
+            var fileWrite = new FileWrite
+            {
+                file = file,
+                data = data
+            };
+
+            ThreadPool.QueueUserWorkItem(Write, fileWrite);
+        }
+#endif
+
+        static bool SaveToCache(CacheEntry cacheEntry, ICachedDependency cachedDependency)
+        {
+            // TODO: Cache server integration
+            try
+            {
+                var file = string.Format("{0}/{1}_{2}.bytes", GetDependencyCacheDirectory(cacheEntry), cacheEntry.guid, cacheEntry.hash);
+                var formatter = new BinaryFormatter();
+                using (var stream = new MemoryStream())
+                {
+                    formatter.Serialize(stream, cachedDependency);
+                    WriteToFile(file, stream.ToArray());
+                }
+            }
+            catch (Exception e)
+            {
+                BuildLogger.LogException(e);
+                return false;
+            }
+            return true;
+        }
+
+        static bool SaveToCache<T>(CacheEntry cacheEntry, T results)
+        {
+            // TODO: Cache server integration
+            try
+            {
+                var file = string.Format("{0}/{1}.bytes", GetArtifactCacheDirectory(cacheEntry), typeof(T).Name);
+                var formatter = new BinaryFormatter();
+                using (var stream = new MemoryStream())
+                {
+                    formatter.Serialize(stream, results);
+                    WriteToFile(file, stream.ToArray());
+                }
+            }
+            catch (Exception e)
+            {
+                BuildLogger.LogException(e);
+                return false;
+            }
+            return true;
+        }
+
+        public bool TrySaveToCache(CacheEntry cacheEntry, AssetLoadInfo info, BuildUsageTagSet usage)
+        {
+            ICachedDependency dependency = new CachedDependency<AssetLoadInfo>(info, usage);
+            dependency.asset = cacheEntry;
+
+            var dependencies = new HashSet<CacheEntry>();
+            foreach (var reference in info.referencedObjects)
+            {
+                CacheEntry entry = GetCacheEntry(reference.guid);
+                dependencies.Add(entry);
+            }
+            dependency.dependencies = dependencies.ToArray();
+            m_DependencyCache[cacheEntry] = dependency;
+            
+            var success = SaveToCache(cacheEntry, dependency);
+            return success;
+        }
+
+        public bool TrySaveToCache(CacheEntry cacheEntry, SceneDependencyInfo info, BuildUsageTagSet usage)
+        {
+            ICachedDependency dependency = new CachedDependency<SceneDependencyInfo>(info, usage);
+            dependency.asset = cacheEntry;
+
+            var dependencies = new HashSet<CacheEntry>();
+            foreach (var reference in info.referencedObjects)
+            {
+                CacheEntry entry = GetCacheEntry(reference.guid);
+                dependencies.Add(entry);
+            }
+            dependency.dependencies = dependencies.ToArray();
+            m_DependencyCache[cacheEntry] = dependency;
+            
+            var success = SaveToCache(cacheEntry, dependency);
+            return success;
+        }
+
+        public bool TrySaveToCache<T>(CacheEntry cacheEntry, T results)
+        {
+            var success = SaveToCache(cacheEntry, results);
+            return success;
+        }
+
+        public bool TrySaveToCache<T1, T2>(CacheEntry cacheEntry, T1 results1, T2 results2)
+        {
+            //TODO: try and batch the save into one file
+            var success = SaveToCache(cacheEntry, results1);
+            success &= SaveToCache(cacheEntry, results2);
+            return success;
         }
 
         [MenuItem("Window/Build Pipeline/Purge Build Cache", priority = 10)]
@@ -28,145 +340,8 @@ namespace UnityEditor.Build.Utilities
         {
             if (!EditorUtility.DisplayDialog("Purge Build Cache", "Do you really want to purge your entire build cache?", "Yes", "No"))
                 return;
-
             if (Directory.Exists(kCachePath))
                 Directory.Delete(kCachePath, true);
-        }
-
-        public static bool TryLoadCachedResults<T>(Hash128 hash, out T results)
-        {
-            var path = GetPathForCachedResults(hash);
-            var filePath = string.Format("{0}/{1}", path, typeof(T).Name);
-            if (!File.Exists(filePath))
-            {
-                BuildLogger.LogCache("false TryLoadCachedResults<{0}>({1}, out ...)", typeof(T).Name, hash.ToString());
-                results = default(T);
-                return false;
-            }
-
-            try
-            {
-                var formatter = new BinaryFormatter();
-                using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-                    results = (T)formatter.Deserialize(stream);
-                BuildLogger.LogCache("true TryLoadCachedResults<{0}>({1}, out ...)", typeof(T).Name, hash.ToString());
-                return true;
-            }
-            catch (Exception e)
-            {
-                BuildLogger.LogCache("Exception TryLoadCachedResults<{0}>({1}, out ...)", typeof(T).Name, hash.ToString());
-                BuildLogger.LogException(e);
-                results = default(T);
-                return false;
-            }
-        }
-
-        public static bool TryLoadCachedArtifacts(Hash128 hash, out string[] artifactPaths, out string rootCachePath)
-        {
-            rootCachePath = GetPathForCachedArtifacts(hash);
-            if (!Directory.Exists(rootCachePath))
-            {
-                BuildLogger.LogCache("false TryLoadCachedArtifacts({0}, out ..., out ...)", hash.ToString());
-                artifactPaths = null;
-                return false;
-            }
-
-            artifactPaths = Directory.GetFiles(rootCachePath, "*", SearchOption.AllDirectories);
-            BuildLogger.Log("true TryLoadCachedArtifacts({0}, out ..., out ...)", hash.ToString());
-            return true;
-        }
-
-        public static bool TryLoadCachedResultsAndArtifacts<T>(Hash128 hash, out T results, out string[] artifactPaths, out string rootCachePath)
-        {
-            BuildLogger.LogCache("TryLoadCachedResultsAndArtifacts<{0}({1}, out ..., out ..., out ...)", typeof(T).Name, hash.ToString());
-            artifactPaths = null;
-            rootCachePath = GetPathForCachedArtifacts(hash);
-            if (!TryLoadCachedResults(hash, out results))
-                return false;
-
-            return TryLoadCachedArtifacts(hash, out artifactPaths, out rootCachePath);
-        }
-
-        public static bool SaveCachedResults<T>(Hash128 hash, T results)
-        {
-            var path = GetPathForCachedResults(hash);
-            var filePath = string.Format("{0}/{1}", path, typeof(T).Name);
-
-            try
-            {
-                Directory.CreateDirectory(path);
-                var formatter = new BinaryFormatter();
-                using (var stream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
-                    formatter.Serialize(stream, results);
-            }
-            catch (Exception e)
-            {
-                BuildLogger.LogCache("Exception SaveCachedResults<{0}>({1}, T ...)", typeof(T).Name, hash.ToString());
-                BuildLogger.LogException(e);
-                if (Directory.Exists(path))
-                    Directory.Delete(path, true);
-                return false;
-            }
-            BuildLogger.LogCache("true SaveCachedResults<{0}>({1}, T ...)", typeof(T).Name, hash.ToString());
-            return true;
-        }
-
-        public static bool SaveCachedArtifacts(Hash128 hash, string[] artifactPaths, string rootPath)
-        {
-            var path = GetPathForCachedArtifacts(hash);
-
-            var result = true;
-            try
-            {
-                Directory.CreateDirectory(path);
-                foreach (var artifact in artifactPaths)
-                {
-                    var source = string.Format("{0}/{1}", rootPath, artifact);
-                    if (!File.Exists(source))
-                    {
-                        BuildLogger.LogWarning("Unable to find source file '{0}' to add to the build cache.", artifact);
-                        result = false;
-                        continue;
-                    }
-                    else if (result)
-                    {
-                        var copyToPath = string.Format("{0}/{1}", path, artifact);
-                        var directory = Path.GetDirectoryName(copyToPath);
-                        Directory.CreateDirectory(directory);
-                        File.Copy(source, copyToPath, true);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                BuildLogger.LogException(e);
-                if (Directory.Exists(path))
-                    Directory.Delete(path, true);
-                return false;
-            }
-
-            if (!result && Directory.Exists(path))
-                Directory.Delete(path, true);
-
-            BuildLogger.LogCache("{0} SaveCachedArtifacts({1}, string[] ..., string ...)", result, hash.ToString());
-            return result;
-        }
-
-        public static bool SaveCachedResultsAndArtifacts<T>(Hash128 hash, T results, string[] artifactPaths, string rootPath)
-        {
-            BuildLogger.LogCache("SaveCachedResultsAndArtifacts<{0}({1}, T ..., string[] ..., string ...)", typeof(T).Name, hash.ToString());
-            if (SaveCachedResults(hash, results) && SaveCachedArtifacts(hash, artifactPaths, rootPath))
-                return true;
-
-            var path = GetPathForCachedResults(hash);
-            if (Directory.Exists(path))
-                Directory.Delete(path, true);
-
-            path = GetPathForCachedArtifacts(hash);
-            if (Directory.Exists(path))
-                Directory.Delete(path, true);
-
-            return false;
         }
     }
 }

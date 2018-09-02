@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.Build.Interfaces;
-using UnityEditor.Build.Utilities;
-using UnityEditor.Experimental.Build.AssetBundle;
-using UnityEngine;
+using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Pipeline.Utilities;
 
-namespace UnityEditor.Build.Tasks
+namespace UnityEditor.Build.Pipeline.Tasks
 {
     public struct StripUnusedSpriteSources : IBuildTask
     {
@@ -18,26 +17,30 @@ namespace UnityEditor.Build.Tasks
 
         public ReturnCodes Run(IBuildContext context)
         {
-            return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IDependencyData>());
+            IBuildCache cache;
+            context.TryGetContextObject(out cache);
+            return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IDependencyData>(), cache);
         }
 
-        static Hash128 CalculateInputHash(bool useCache, IDependencyData dependencyData)
+        static void CalcualteCacheEntry(IDependencyData dependencyData, ref CacheEntry cacheEntry)
         {
-            if (!useCache)
-                return new Hash128();
-
-            return HashingMethods.CalculateMD5Hash(k_Version, dependencyData.AssetInfo, dependencyData.SceneInfo);
+            cacheEntry.hash = HashingMethods.CalculateMD5Hash(k_Version, dependencyData.AssetInfo, dependencyData.SceneInfo);
+            cacheEntry.guid = HashingMethods.CalculateMD5Guid("StripUnusedSpriteSources");
         }
 
-        public static ReturnCodes Run(IBuildParameters parameters, IDependencyData dependencyData)
+        public static ReturnCodes Run(IBuildParameters parameters, IDependencyData dependencyData, IBuildCache cache = null)
         {
             var spriteSourceRef = new Dictionary<ObjectIdentifier, int>();
 
-            Hash128 hash = CalculateInputHash(parameters.UseCache, dependencyData);
-            if (TryLoadFromCache(parameters.UseCache, hash, ref spriteSourceRef))
+            var cacheEntry = new CacheEntry();
+            if (parameters.UseCache && cache != null)
             {
-                SetOutputInformation(spriteSourceRef, dependencyData);
-                return ReturnCodes.SuccessCached;
+                CalcualteCacheEntry(dependencyData, ref cacheEntry);
+                if (cache.TryLoadFromCache(cacheEntry, ref spriteSourceRef))
+                {
+                    SetOutputInformation(spriteSourceRef, dependencyData);
+                    return ReturnCodes.SuccessCached;
+                }
             }
 
             // CreateBundle sprite source ref count map
@@ -75,7 +78,7 @@ namespace UnityEditor.Build.Tasks
 
             SetOutputInformation(spriteSourceRef, dependencyData);
 
-            if (!TrySaveToCache(parameters.UseCache, hash, spriteSourceRef))
+            if (parameters.UseCache && cache != null && !cache.TrySaveToCache(cacheEntry, spriteSourceRef))
                 BuildLogger.LogWarning("Unable to cache StripUnusedSpriteSources results.");
 
             return ReturnCodes.Success;
@@ -91,25 +94,6 @@ namespace UnityEditor.Build.Tasks
                 var assetInfo = dependencyData.AssetInfo[source.Key.guid];
                 assetInfo.includedObjects.RemoveAt(0);
             }
-        }
-
-        static bool TryLoadFromCache(bool useCache, Hash128 hash, ref Dictionary<ObjectIdentifier, int> spriteSourceRef)
-        {
-            Dictionary<ObjectIdentifier, int> cachedSpriteSourceRef;
-            if (useCache && BuildCache.TryLoadCachedResults(hash, out cachedSpriteSourceRef))
-            {
-                spriteSourceRef = cachedSpriteSourceRef;
-                return true;
-            }
-
-            return false;
-        }
-
-        static bool TrySaveToCache(bool useCache, Hash128 hash, Dictionary<ObjectIdentifier, int> spriteSourceRef)
-        {
-            if (useCache && !BuildCache.SaveCachedResults(hash, spriteSourceRef))
-                return false;
-            return true;
         }
     }
 }

@@ -1,21 +1,28 @@
 ﻿using System;
-using UnityEditor.Experimental.Build;
-using UnityEditor.Experimental.Build.AssetBundle;
+using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Pipeline.Utilities;
+using UnityEngine;
 
-namespace UnityEditor.Build.WriteTypes
+namespace UnityEditor.Build.Pipeline.WriteTypes
 {
     [Serializable]
     public struct AssetBundleWriteOperation : IWriteOperation
     {
-        public WriteCommand command { get; set; }
-        public BuildUsageTagSet usageSet { get; set; }
-        public BuildReferenceMap referenceMap { get; set; }
+        public WriteCommand Command { get; set; }
+        public BuildUsageTagSet UsageSet { get; set; }
+        public BuildReferenceMap ReferenceMap { get; set; }
 
-        public AssetBundleInfo info { get; set; }
+        public AssetBundleInfo Info { get; set; }
 
         public WriteResult Write(string outputFolder, BuildSettings settings, BuildUsageTagGlobal globalUsage)
         {
-            return BundleBuildInterface.WriteSerializedFile(outputFolder, command, settings, globalUsage, usageSet, referenceMap, info);
+            return ContentBuildInterface.WriteSerializedFile(outputFolder, Command, settings, globalUsage, UsageSet, ReferenceMap, Info);
+        }
+
+        public Hash128 GetHash128()
+        {
+            return HashingMethods.CalculateMD5Hash(Command, UsageSet.GetHash128(), ReferenceMap.GetHash128(), Info);
         }
     }
 }

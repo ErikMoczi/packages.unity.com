@@ -1,19 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEditor.Build.Interfaces;
-using UnityEditor.Build.Utilities;
-using UnityEditor.Experimental.Build.AssetBundle;
+using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Pipeline.Utilities;
 
-namespace UnityEditor.Build
+namespace UnityEditor.Build.Pipeline
 {
+    /// <summary>
+    /// Basic implementation of IBuildContent. Stores the list of Assets to feed the Scriptable Build Pipeline.
+    /// <seealso cref="IBuildContent"/>
+    /// </summary>
     [Serializable]
     public class BuildContent : IBuildContent
     {
+        /// <inheritdoc />
         public List<GUID> Assets { get; private set; }
-
+        
+        /// <inheritdoc />
         public List<GUID> Scenes { get; private set; }
 
+        /// <summary>
+        /// Default constructor, takes a set of Assets and converts them to the appropriate properties.
+        /// </summary>
+        /// <param name="assets">The set of Assets identified by GUID to ensure are packaged with the build</param>
         public BuildContent(IEnumerable<GUID> assets)
         {
             Assets = new List<GUID>();
@@ -30,44 +38,31 @@ namespace UnityEditor.Build
             }
         }
     }
-
+    
+    /// <summary>
+    /// Basic implementation of IBundleBuildContent. Stores the list of Assets with explicit Asset Bundle layout to feed the Scriptable Build Pipeline.
+    /// <seealso cref="IBundleBuildContent"/>
+    /// </summary>
     [Serializable]
-    public class BundleContent : IBundleContent
+    public class BundleBuildContent : IBundleBuildContent
     {
+        /// <inheritdoc />
         public List<GUID> Assets { get; private set; }
-
+        
+        /// <inheritdoc />
         public List<GUID> Scenes { get; private set; }
-
+        
+        /// <inheritdoc />
         public Dictionary<GUID, string> Addresses { get; private set; }
-
+        
+        /// <inheritdoc />
         public Dictionary<string, List<GUID>> BundleLayout { get; private set; }
 
-        public BundleContent(BuildInput bundleInput)
-        {
-            Assets = new List<GUID>();
-            Scenes = new List<GUID>();
-            Addresses = new Dictionary<GUID, string>();
-            BundleLayout = new Dictionary<string, List<GUID>>();
-
-            foreach (BuildInput.Definition bundle in bundleInput.definitions)
-            {
-                List<GUID> guids;
-                BundleLayout.GetOrAdd(bundle.assetBundleName, out guids);
-                foreach (var assetInfo in bundle.explicitAssets)
-                {
-                    guids.Add(assetInfo.asset);
-                    Addresses.Add(assetInfo.asset, string.IsNullOrEmpty(assetInfo.address) ? AssetDatabase.GUIDToAssetPath(assetInfo.asset.ToString()) : assetInfo.address);
-                    if (ValidationMethods.ValidAsset(assetInfo.asset))
-                        Assets.Add(assetInfo.asset);
-                    else if (ValidationMethods.ValidScene(assetInfo.asset))
-                        Scenes.Add(assetInfo.asset);
-                    else
-                        throw new ArgumentException(string.Format("Asset '{0}' is not a valid Asset or Scene.", assetInfo.asset));
-                }
-            }
-        }
-
-        public BundleContent(IEnumerable<AssetBundleBuild> bundleBuilds)
+        /// <summary>
+        /// Default constructor, takes a set of AssetBundleBuild and converts them to the appropriate properties.
+        /// </summary>
+        /// <param name="bundleBuilds">The set of AssetbundleBuild to be built.</param>
+        public BundleBuildContent(IEnumerable<AssetBundleBuild> bundleBuilds)
         {
             Assets = new List<GUID>();
             Scenes = new List<GUID>();

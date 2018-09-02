@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace UnityEditor.Build.Utilities
+namespace UnityEditor.Build.Pipeline.Utilities
 {
     public class BuildStateCleanup : IDisposable
     {

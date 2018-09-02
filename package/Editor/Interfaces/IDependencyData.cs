@@ -1,14 +1,31 @@
 ﻿using System.Collections.Generic;
-using UnityEditor.Experimental.Build.AssetBundle;
+using UnityEditor.Build.Content;
 
-namespace UnityEditor.Build.Interfaces
+namespace UnityEditor.Build.Pipeline.Interfaces
 {
+    /// <summary>
+    /// Base interface for the dependency data container
+    /// </summary>
     public interface IDependencyData : IContextObject
     {
+        /// <summary>
+        /// Map of Asset to dependency data.
+        /// </summary>
         Dictionary<GUID, AssetLoadInfo> AssetInfo { get; }
+
+        /// <summary>
+        /// Map of Asset to usage data.
+        /// </summary>
         Dictionary<GUID, BuildUsageTagSet> AssetUsage { get; }
 
+        /// <summary>
+        /// Map of Scene to dependency data.
+        /// </summary>
         Dictionary<GUID, SceneDependencyInfo> SceneInfo { get; }
+
+        /// <summary>
+        /// Map of Scene to usage data.
+        /// </summary>
         Dictionary<GUID, BuildUsageTagSet> SceneUsage { get; }
     }
 }

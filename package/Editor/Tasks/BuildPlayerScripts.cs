@@ -1,9 +1,9 @@
 ﻿using System;
-using UnityEditor.Build.Interfaces;
-using UnityEditor.Build.Utilities;
-using UnityEditor.Experimental.Build.Player;
+using UnityEditor.Build.Pipeline.Utilities;
+using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Player;
 
-namespace UnityEditor.Build.Tasks
+namespace UnityEditor.Build.Pipeline.Tasks
 {
     public struct BuildPlayerScripts : IBuildTask
     {

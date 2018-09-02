@@ -2,12 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnityEditor.Build.Interfaces;
-using UnityEditor.Build.Utilities;
-using UnityEditor.Experimental.Build.AssetBundle;
-using UnityEngine;
+using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Pipeline.Utilities;
 
-namespace UnityEditor.Build.Tasks
+namespace UnityEditor.Build.Pipeline.Tasks
 {
     public struct ArchiveAndCompressBundles : IBuildTask
     {
@@ -21,21 +20,22 @@ namespace UnityEditor.Build.Tasks
         {
             IProgressTracker tracker;
             context.TryGetContextObject(out tracker);
-            return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IBundleWriteData>(), context.GetContextObject<IBundleBuildResults>(), tracker);
+            IBuildCache cache;
+            context.TryGetContextObject(out cache);
+            return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IBundleWriteData>(), context.GetContextObject<IBundleBuildResults>(), tracker, cache);
         }
 
-        static Hash128 CalculateInputHash(bool useCache, ResourceFile[] resources, BuildCompression compression)
+        static void CalcualteCacheEntry(ResourceFile[] resources, BuildCompression compression, string bundleName, ref CacheEntry cacheEntry)
         {
-            if (!useCache)
-                return new Hash128();
-
             var fileHashes = new List<string>();
             foreach (ResourceFile resource in resources)
-                fileHashes.Add(HashingMethods.CalculateFileMD5Hash(resource.fileName).ToString());
-            return HashingMethods.CalculateMD5Hash(k_Version, fileHashes, compression);
+                fileHashes.Add(HashingMethods.CalculateFileMD5(resource.fileName).ToString());
+
+            cacheEntry.guid = HashingMethods.CalculateMD5Guid("ArchiveAndCompressBundles", bundleName);
+            cacheEntry.hash = HashingMethods.CalculateMD5Hash(k_Version, fileHashes, compression);
         }
 
-        public static ReturnCodes Run(IBuildParameters parameters, IBundleWriteData writeData, IBundleBuildResults results, IProgressTracker tracker = null)
+        public static ReturnCodes Run(IBuildParameters parameters, IBundleWriteData writeData, IBundleBuildResults results, IProgressTracker tracker = null, IBuildCache cache = null)
         {
             Dictionary<string, List<WriteResult>> bundleToResults = new Dictionary<string, List<WriteResult>>();
             foreach (var result in results.WriteResults)
@@ -50,52 +50,40 @@ namespace UnityEditor.Build.Tasks
             {
                 ResourceFile[] resourceFiles = bundle.Value.SelectMany(x => x.resourceFiles).ToArray();
                 BuildCompression compression = parameters.GetCompressionForIdentifier(bundle.Key);
-                Hash128 hash = CalculateInputHash(parameters.UseCache, resourceFiles, compression);
-
-                var finalPath = string.Format("{0}/{1}", parameters.OutputFolder, bundle.Key);
-                var writePath = string.Format("{0}/{1}", parameters.GetTempOrCacheBuildPath(hash), bundle.Key);
 
                 var details = new BundleDetails();
-                if (TryLoadFromCache(parameters.UseCache, hash, ref details))
-                {
-                    if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", bundle.Key)))
-                        return ReturnCodes.Canceled;
+                // TODO: Not fond of how caching is handled for archiving, rewrite it
+                var writePath = string.Format("{0}/{1}", parameters.TempOutputFolder, bundle.Key);
 
-                    SetOutputInformation(writePath, finalPath, bundle.Key, details, results);
-                    continue;
+                var cacheEntry = new CacheEntry();
+                if (parameters.UseCache && cache != null)
+                {
+                    CalcualteCacheEntry(resourceFiles, compression, bundle.Key, ref cacheEntry);
+                    writePath = string.Format("{0}/{1}", cache.GetArtifactCacheDirectory(cacheEntry), bundle.Key);
+                    if (cache.TryLoadFromCache(cacheEntry, ref details))
+                    {
+                        if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", bundle.Key)))
+                            return ReturnCodes.Canceled;
+
+                        details.fileName = string.Format("{0}/{1}", parameters.OutputFolder, bundle.Key);
+                        SetOutputInformation(writePath, details.fileName, bundle.Key, details, results);
+                        continue;
+                    }
                 }
 
                 if (!tracker.UpdateInfoUnchecked(bundle.Key))
                     return ReturnCodes.Canceled;
 
-                details.fileName = finalPath;
-                details.crc = BundleBuildInterface.ArchiveAndCompress(resourceFiles, writePath, compression);
+                details.fileName = string.Format("{0}/{1}", parameters.OutputFolder, bundle.Key);
+                details.crc = ContentBuildInterface.ArchiveAndCompress(resourceFiles, writePath, compression);
                 details.hash = HashingMethods.CalculateFileMD5Hash(writePath);
-                SetOutputInformation(writePath, finalPath, bundle.Key, details, results);
+                SetOutputInformation(writePath, details.fileName, bundle.Key, details, results);
 
-                if (!TrySaveToCache(parameters.UseCache, hash, details))
+                if (parameters.UseCache && cache != null && !cache.TrySaveToCache(cacheEntry, details))
                     BuildLogger.LogWarning("Unable to cache ArchiveAndCompressBundles result for bundle {0}.", bundle.Key);
             }
 
             return ReturnCodes.Success;
-        }
-
-        static bool TryLoadFromCache(bool useCache, Hash128 hash, ref BundleDetails details)
-        {
-            BundleDetails cachedDetails;
-            if (useCache && BuildCache.TryLoadCachedResults(hash, out cachedDetails))
-            {
-                details = cachedDetails;
-                return true;
-            }
-            return false;
-        }
-
-        static bool TrySaveToCache(bool useCache, Hash128 hash, BundleDetails details)
-        {
-            if (useCache && !BuildCache.SaveCachedResults(hash, details))
-                return false;
-            return true;
         }
 
         static void SetOutputInformation(string writePath, string finalPath, string bundleName, BundleDetails details, IBundleBuildResults results)

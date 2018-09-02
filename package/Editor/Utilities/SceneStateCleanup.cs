@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEditor.Build.Pipeline.Utilities;
 using UnityEditor.SceneManagement;
 
 namespace UnityEditor.Build.Utilities

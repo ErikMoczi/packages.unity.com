@@ -1,12 +1,22 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.Build.Interfaces;
-using UnityEditor.Build.Utilities;
+using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Pipeline.Utilities;
 
-namespace UnityEditor.Build
+namespace UnityEditor.Build.Pipeline
 {
+    /// <summary>
+    /// Basic static class containing default implementations for BuildTask validation and running.
+    /// </summary>
     public static class BuildTasksRunner
     {
+        /// <summary>
+        /// Basic run implementation that takes a set of tasks, a context, and runs returning the build results.
+        /// <seealso cref="IBuildTask"/>, <seealso cref="IBuildContext"/>, and <seealso cref="ReturnCodes"/>
+        /// </summary>
+        /// <param name="pipeline">The set of build tasks to run.</param>
+        /// <param name="context">The build context to use for this run.</param>
+        /// <returns>Return code with status information about success or failure causes.</returns>
         public static ReturnCodes Run(IList<IBuildTask> pipeline, IBuildContext context)
         {
             IProgressTracker tracker;
@@ -33,6 +43,13 @@ namespace UnityEditor.Build
             return ReturnCodes.Success;
         }
 
+        /// <summary>
+        /// Basic validate implementation that takes a set of tasks, a context, and does checks to ensure the task requirements are all satisfied.
+        /// <seealso cref="IBuildTask"/>, <seealso cref="IBuildContext"/>, and <seealso cref="ReturnCodes"/>
+        /// </summary>
+        /// <param name="pipeline">The set of build tasks to run.</param>
+        /// <param name="context">The build context to use for this run.</param>
+        /// <returns>Return code with status information about success or failure causes.</returns>
         public static ReturnCodes Validate(IList<IBuildTask> pipeline, IBuildContext context)
         {
             var requiredTypes = new HashSet<Type>();

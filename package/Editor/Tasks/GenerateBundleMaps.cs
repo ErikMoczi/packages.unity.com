@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.Build.Interfaces;
-using UnityEditor.Experimental.Build.AssetBundle;
+using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Pipeline.Utilities;
 
-namespace UnityEditor.Build.Tasks
+namespace UnityEditor.Build.Pipeline.Tasks
 {
     public struct GenerateBundleMaps : IBuildTask
     {
@@ -21,11 +22,12 @@ namespace UnityEditor.Build.Tasks
 
         public static ReturnCodes Run(IDependencyData dependencyData, IBundleWriteData writeData)
         {
+            Dictionary<string, HashSet<string>> filesMapped = new Dictionary<string, HashSet<string>>();
             foreach (var assetFilesPair in writeData.AssetToFiles)
             {
                 // Generate BuildReferenceMap map
-                AddReferencesForFiles(assetFilesPair.Value, writeData);
-
+                AddReferencesForFiles(assetFilesPair.Value, writeData, filesMapped);
+                
                 // Generate BuildUsageTagSet map
                 AddUsageSetForFiles(assetFilesPair.Key, assetFilesPair.Value, dependencyData, writeData);
             }
@@ -33,18 +35,24 @@ namespace UnityEditor.Build.Tasks
             return ReturnCodes.Success;
         }
 
-        static void AddReferencesForFiles(IList<string> files, IBundleWriteData writeData)
+        static void AddReferencesForFiles(IList<string> files, IBundleWriteData writeData, Dictionary<string, HashSet<string>> filesMapped)
         {
+            HashSet<string> visited;
+            filesMapped.GetOrAdd(files[0], out visited);
+
             BuildReferenceMap referenceMap;
             if (!writeData.FileToReferenceMap.TryGetValue(files[0], out referenceMap))
             {
                 referenceMap = new BuildReferenceMap();
                 writeData.FileToReferenceMap.Add(files[0], referenceMap);
             }
-
-            var fileToCommand = writeData.WriteOperations.ToDictionary(x => x.command.internalName, x => x.command);
+            
+            var fileToCommand = writeData.WriteOperations.ToDictionary(x => x.Command.internalName, x => x.Command);
             foreach (var file in files)
             {
+                if (!visited.Add(file))
+                    continue;
+                
                 var command = fileToCommand[file];
                 referenceMap.AddMappings(file, command.serializeObjects.ToArray());
             }

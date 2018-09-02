@@ -1,4 +1,4 @@
-﻿namespace UnityEditor.Build
+﻿namespace UnityEditor.Build.Pipeline
 {
     public enum ReturnCodes
     {

@@ -1,68 +1,92 @@
 ﻿using System;
-using System.IO;
-using UnityEditor.Build.Interfaces;
-using UnityEditor.Build.Utilities;
-using UnityEditor.Experimental.Build.AssetBundle;
-using UnityEditor.Experimental.Build.Player;
-using UnityEngine;
+using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Content;
+using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Player;
 
-namespace UnityEditor.Build
+namespace UnityEditor.Build.Pipeline
 {
+    /// <summary>
+    /// Basic implementation of IBuildParameters. Stores the set of parameters passed into the Scriptable Build Pipeline.
+    /// <seealso cref="IBuildParameters"/>
+    /// </summary>
     [Serializable]
     public class BuildParameters : IBuildParameters
     {
+        /// <inheritdoc />
         public BuildTarget Target { get; set; }
+        /// <inheritdoc />
         public BuildTargetGroup Group { get; set; }
         
+        /// <inheritdoc />
+        public ContentBuildFlags ContentBuildFlags { get; set; }
+        
+        /// <inheritdoc />
         public TypeDB ScriptInfo { get; set; }
+        /// <inheritdoc />
         public ScriptCompilationOptions ScriptOptions { get; set; }
 
+        /// <summary>
+        /// Default compression option to use for all built content files
+        /// </summary>
         public BuildCompression BundleCompression { get; set; }
-
+        
+        /// <inheritdoc />
         public string OutputFolder { get; set; }
-        public string TempOutputFolder { get; protected set; }
+
+        string m_TempOutputFolder;
+        /// <inheritdoc />
+        public string TempOutputFolder
+        {
+            get { return m_TempOutputFolder; }
+            set
+            {
+                if (string.IsNullOrEmpty(value))
+                    throw new ArgumentException("Argument cannot be null or empty.", "TempOutputFolder");
+                m_TempOutputFolder = value;
+            }
+        }
+        /// <inheritdoc />
         public bool UseCache { get; set; }
 
-        public BuildParameters(BuildTarget target, BuildTargetGroup group, string outputFolder, string tempOutputFolder)
+        /// <summary>
+        /// Default constructor, requires the target, group and output parameters at minimum for a successful build.
+        /// </summary>
+        /// <param name="target">The target for building content.</param>
+        /// <param name="group">The group for building content.</param>
+        /// <param name="outputFolder">The final output location for built content.</param>
+        public BuildParameters(BuildTarget target, BuildTargetGroup group, string outputFolder)
         {
             if (string.IsNullOrEmpty(outputFolder))
                 throw new ArgumentException("Argument cannot be null or empty.", "outputFolder");
-            if (string.IsNullOrEmpty(tempOutputFolder))
-                throw new ArgumentException("Argument cannot be null or empty.", "tempOutputFolder");
 
             Target = target;
             Group = group;
             // TODO: Validate target & group
-            
+
             ScriptInfo = null;
             ScriptOptions = ScriptCompilationOptions.None;
 
             BundleCompression = BuildCompression.DefaultLZMA;
 
             OutputFolder = outputFolder;
-            TempOutputFolder = tempOutputFolder;
+            TempOutputFolder = ContentPipeline.kTempBuildPath;
             UseCache = true;
         }
-
-        public string GetTempOrCacheBuildPath(Hash128 hash)
-        {
-            var path = TempOutputFolder;
-            if (UseCache)
-                path = BuildCache.GetPathForCachedArtifacts(hash);
-            Directory.CreateDirectory(path);
-            return path;
-        }
-
+        
+        /// <inheritdoc />
         public BuildSettings GetContentBuildSettings()
         {
             return new BuildSettings
             {
                 group = Group,
                 target = Target,
-                typeDB = ScriptInfo
+                typeDB = ScriptInfo,
+                buildFlags = ContentBuildFlags
             };
         }
-
+        
+        /// <inheritdoc />
         public ScriptCompilationSettings GetScriptCompilationSettings()
         {
             return new ScriptCompilationSettings
@@ -72,7 +96,8 @@ namespace UnityEditor.Build
                 options = ScriptOptions
             };
         }
-
+        
+        /// <inheritdoc />
         public BuildCompression GetCompressionForIdentifier(string identifier)
         {
             return BundleCompression;

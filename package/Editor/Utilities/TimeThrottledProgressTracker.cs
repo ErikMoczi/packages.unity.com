@@ -1,5 +1,5 @@
 ﻿using System;
-using UnityEditor.Build.Interfaces;
+using UnityEditor.Build.Pipeline.Interfaces;
 
 namespace UnityEditor.Build.Utilities
 {

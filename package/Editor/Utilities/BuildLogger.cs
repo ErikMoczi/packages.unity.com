@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 
-namespace UnityEditor.Build.Utilities
+namespace UnityEditor.Build.Pipeline.Utilities
 {
     public static class BuildLogger
     {

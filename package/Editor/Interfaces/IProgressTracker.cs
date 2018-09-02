@@ -1,33 +1,32 @@
-﻿using System.Text.RegularExpressions;
-
-namespace UnityEditor.Build.Interfaces
+﻿namespace UnityEditor.Build.Pipeline.Interfaces
 {
+    /// <summary>
+    /// Base interface for the build progress tracker
+    /// </summary>
     public interface IProgressTracker : IContextObject
     {
+        /// <summary>
+        /// Number of build tasks to run
+        /// </summary>
         int TaskCount { get; set; }
 
+        /// <summary>
+        /// Current 0.0f to 1.0f progress though the TaskCount
+        /// </summary>
         float Progress { get; }
 
+        /// <summary>
+        /// Increments and updated the title of the progress bar.
+        /// </summary>
+        /// <param name="taskTitle">The title to display on the progress bar.</param>
+        /// <returns><c>false</c> if the build should not continue due to user interaction with the progress bar; otherwise, <c>true</c>.</returns>
         bool UpdateTask(string taskTitle);
 
+        /// <summary>
+        /// Updates the secondary information display of the progress bar.
+        /// </summary>
+        /// <param name="taskInfo">The secondary information to display on the progress bar.</param>
+        /// <returns><c>false</c> if the build should not continue due to user interaction with the progress bar; otherwise, <c>true</c>.</returns>
         bool UpdateInfo(string taskInfo);
-    }
-
-    public static class TrackerExtensions
-    {
-        public static string HumanReadable(this string camelCased)
-        {
-            return Regex.Replace(camelCased, @"(\B[A-Z]+?(?=[A-Z][^A-Z])|\B[A-Z]+?(?=[^A-Z]))", " $1");
-        }
-
-        public static bool UpdateTaskUnchecked(this IProgressTracker tracker, string taskTitle)
-        {
-            return tracker == null || tracker.UpdateTask(taskTitle);
-        }
-
-        public static bool UpdateInfoUnchecked(this IProgressTracker tracker, string taskInfo)
-        {
-            return tracker == null || tracker.UpdateInfo(taskInfo);
-        }
     }
 }

@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
+using UnityEditor.Build.Content;
+using UnityEngine;
 
-namespace UnityEditor.Build.Utilities
+namespace UnityEditor.Build.Pipeline.Utilities
 {
-    internal static class ExtensionMethods
+    static class ExtensionMethods
     {
         public static bool IsNullOrEmpty<T>(this ICollection<T> collection)
         {
@@ -39,6 +41,11 @@ namespace UnityEditor.Build.Utilities
             var t = array[index2];
             array[index2] = array[index1];
             array[index1] = t;
+        }
+
+        public static Hash128 GetHash128(this BuildSettings settings)
+        {
+            return HashingMethods.CalculateMD5Hash(settings.target, settings.group, settings.buildFlags, settings.typeDB.GetHash128());
         }
     }
 }

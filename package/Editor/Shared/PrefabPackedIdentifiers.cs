@@ -1,19 +1,25 @@
 ﻿using System;
-using UnityEditor.Build.Interfaces;
-using UnityEditor.Build.Utilities;
-using UnityEditor.Experimental.Build.AssetBundle;
+using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Pipeline.Utilities;
 using UnityEngine;
 
-namespace UnityEditor.Build
+namespace UnityEditor.Build.Pipeline
 {
+    /// <summary>
+    /// Generates a deterministic identifier using a MD5 hash algorithm and does not require object ordering to be deterministic.
+    /// This algorithm ensures objects coming from the same asset are packed closer together and can improve loading performance under certain situations.
+    /// </summary>
     public struct PrefabPackedIdentifiers : IDeterministicIdentifiers
     {
+        /// <inheritdoc />
         public string GenerateInternalFileName(string name)
         {
             Hash128 hash = HashingMethods.CalculateMD5Hash(name);
             return string.Format("CAB-{0}", hash);
         }
-
+        
+        /// <inheritdoc />
         public long SerializationIndexFromObjectIdentifier(ObjectIdentifier objectID)
         {
             byte[] assetHash = HashingMethods.CalculateMD5(objectID.guid, objectID.filePath);

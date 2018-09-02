@@ -3,9 +3,9 @@ using System.IO;
 using System.Linq;
 using UnityEditor.SceneManagement;
 
-namespace UnityEditor.Build.Utilities
+namespace UnityEditor.Build.Pipeline.Utilities
 {
-    internal static class ValidationMethods
+    static class ValidationMethods
     {
         public static bool ValidScene(GUID asset)
         {

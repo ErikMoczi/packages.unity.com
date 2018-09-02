@@ -1,49 +1,71 @@
-﻿using UnityEditor.Experimental.Build.AssetBundle;
-using UnityEditor.Experimental.Build.Player;
-using UnityEngine;
+﻿using UnityEditor.Build.Content;
+using UnityEditor.Build.Player;
 
-namespace UnityEditor.Build.Interfaces
+namespace UnityEditor.Build.Pipeline.Interfaces
 {
-    //public interface IScriptParameters : IContextObject
-    //{
-    //    BuildTarget Target { get; set; }
-    //    BuildTargetGroup Group { get; set; }
-    //    ScriptCompilationOptions ScriptOptions { get; set; }
-
-    //    ScriptCompilationSettings GetScriptCompilationSettings();
-    //}
-
-    //public interface IContentParameters : IContextObject
-    //{
-    //    BuildTarget Target { get; set; }
-    //    BuildTargetGroup Group { get; set; }
-    //    TypeDB ScriptInfo { get; set; }
-
-    //    BuildSettings GetContentBuildSettings();
-
-    //    BuildCompression GetCompressionForIdentifier(string identifier);
-    //}
-
-
-    public interface IBuildParameters : IContextObject//IScriptParameters, IContentParameters
+    /// <summary>
+    /// Base interface for the parameters container
+    /// </summary>
+    public interface IBuildParameters : IContextObject
     {
+        /// <summary>
+        /// Target build platform. <seealso cref="BuildTarget"/>
+        /// </summary>
         BuildTarget Target { get; set; }
-        BuildTargetGroup Group { get; set; }
 
+        /// <summary>
+        /// Target build platform group. <seealso cref="BuildTargetGroup"/>
+        /// </summary>
+        BuildTargetGroup Group { get; set; }
+        
+        /// <summary>
+        /// The set of build flags to use for building content.
+        /// </summary>
+        ContentBuildFlags ContentBuildFlags { get; set; }
+
+        /// <summary>
+        /// Scripting type information to use when building content.
+        /// Setting this to a previously cached value will prevent the default script compiling step.
+        /// </summary>
         TypeDB ScriptInfo { get; set; }
 
+        /// <summary>
+        /// Script compilation options to use for the script compiling step.
+        /// </summary>
         ScriptCompilationOptions ScriptOptions { get; set; }
 
+        /// <summary>
+        /// Final output location where built content will be written.
+        /// </summary>
         string OutputFolder { get; set; }
-        string TempOutputFolder { get; }
+
+        /// <summary>
+        /// Temporary location to be used for artifacts generated during the build but are not part of the final output.
+        /// </summary>
+        string TempOutputFolder { get; set; }
+
+        /// <summary>
+        /// Enables the use of the build cache if set to true.
+        /// </summary>
         bool UseCache { get; set; }
 
-        string GetTempOrCacheBuildPath(Hash128 hash);
-
+        /// <summary>
+        /// Constructs and returns the BuildSettings struct to use for content building.
+        /// </summary>
+        /// <returns>Returns the BuildSettings struct to use for content building.</returns>
         BuildSettings GetContentBuildSettings();
 
+        /// <summary>
+        /// Constructs and returns the BuildCompression struct to use for the specified identifier.
+        /// </summary>
+        /// <param name="identifier">Identifier used to construct the BuildCompression struct.</param>
+        /// <returns>Returns the BuildCompression struct to use for a specific identifier.</returns>
         BuildCompression GetCompressionForIdentifier(string identifier);
-
+        
+        /// <summary>
+        /// Constructs and returns the ScriptCompilationSettings struct to use for script compiling.
+        /// </summary>
+        /// <returns>Returns the ScriptCompilationSettings struct to use for script compiling.</returns>
         ScriptCompilationSettings GetScriptCompilationSettings();
     }
 }

@@ -1,29 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEditor.Build.Interfaces;
-using UnityEditor.Build.Utilities;
+using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Pipeline.Utilities;
 
-namespace UnityEditor.Build.Tasks
+namespace UnityEditor.Build.Pipeline.Tasks
 {
     public struct ValidateBundleAssignments : IBuildTask
     {
         const int k_Version = 1;
         public int Version { get { return k_Version; } }
 
-        static readonly Type[] k_RequiredTypes = { typeof(IBundleContent) };
+        static readonly Type[] k_RequiredTypes = { typeof(IBundleBuildContent) };
         public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
 
         public ReturnCodes Run(IBuildContext context)
         {
-            return Run(context.GetContextObject<IBundleContent>());
+            return Run(context.GetContextObject<IBundleBuildContent>());
         }
 
-        public static ReturnCodes Run(IBundleContent content)
+        public static ReturnCodes Run(IBundleBuildContent buildContent)
         {
-            if (content.BundleLayout.IsNullOrEmpty())
+            if (buildContent.BundleLayout.IsNullOrEmpty())
                 return ReturnCodes.Success;
 
-            foreach (KeyValuePair<string, List<GUID>> bundle in content.BundleLayout)
+            foreach (KeyValuePair<string, List<GUID>> bundle in buildContent.BundleLayout)
             {
                 if (ValidationMethods.ValidAssetBundle(bundle.Value))
                     continue;

@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.Build.Interfaces;
-using UnityEditor.Build.Utilities;
-using UnityEditor.Experimental.Build.AssetBundle;
+using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Pipeline.Utilities;
 
-namespace UnityEditor.Build.Tasks
+namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class GenerateBundlePacking : IBuildTask
     {
@@ -21,7 +21,7 @@ namespace UnityEditor.Build.Tasks
             get { return k_Version; }
         }
 
-        static readonly Type[] k_RequiredTypes = { typeof(IBundleContent), typeof(IDependencyData), typeof(IBundleWriteData), typeof(IDeterministicIdentifiers) };
+        static readonly Type[] k_RequiredTypes = { typeof(IBundleBuildContent), typeof(IDependencyData), typeof(IBundleWriteData), typeof(IDeterministicIdentifiers) };
 
         public Type[] RequiredContextTypes
         {
@@ -30,16 +30,16 @@ namespace UnityEditor.Build.Tasks
 
         public ReturnCodes Run(IBuildContext context)
         {
-            return Run(context.GetContextObject<IBundleContent>(), context.GetContextObject<IDependencyData>(), context.GetContextObject<IBundleWriteData>(),
+            return Run(context.GetContextObject<IBundleBuildContent>(), context.GetContextObject<IDependencyData>(), context.GetContextObject<IBundleWriteData>(),
                 context.GetContextObject<IDeterministicIdentifiers>());
         }
 
-        public static ReturnCodes Run(IBundleContent content, IDependencyData dependencyData, IBundleWriteData writeData, IDeterministicIdentifiers packingMethod)
+        public static ReturnCodes Run(IBundleBuildContent buildContent, IDependencyData dependencyData, IBundleWriteData writeData, IDeterministicIdentifiers packingMethod)
         {
             Dictionary<GUID, List<GUID>> AssetToReferences = new Dictionary<GUID, List<GUID>>();
 
             // Pack each asset bundle
-            foreach (var bundle in content.BundleLayout)
+            foreach (var bundle in buildContent.BundleLayout)
             {
                 if (ValidationMethods.ValidAssetBundle(bundle.Value))
                     PackAssetBundle(bundle.Key, bundle.Value, dependencyData, writeData, packingMethod, AssetToReferences);
@@ -48,7 +48,7 @@ namespace UnityEditor.Build.Tasks
             }
 
             // Calculate Asset file load dependency list
-            foreach (var bundle in content.BundleLayout)
+            foreach (var bundle in buildContent.BundleLayout)
             {
                 foreach (var asset in bundle.Value)
                 {

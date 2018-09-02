@@ -1,12 +1,10 @@
 ﻿using System;
-using UnityEditor.Build.WriteTypes;
-using UnityEditor.Build.Interfaces;
-using UnityEditor.Build.Utilities;
-using UnityEditor.Experimental.Build;
-using UnityEditor.Experimental.Build.AssetBundle;
-using UnityEngine;
+using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Pipeline.Utilities;
+using UnityEditor.Build.Pipeline.WriteTypes;
 
-namespace UnityEditor.Build.Tasks
+namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class WriteSerializedFiles : IBuildTask
     {
@@ -20,21 +18,22 @@ namespace UnityEditor.Build.Tasks
         {
             IProgressTracker tracker;
             context.TryGetContextObject(out tracker);
-            return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IDependencyData>(), context.GetContextObject<IWriteData>(), context.GetContextObject<IBuildResults>(), tracker);
+            IBuildCache cache;
+            context.TryGetContextObject(out cache);
+            return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IDependencyData>(), context.GetContextObject<IWriteData>(), context.GetContextObject<IBuildResults>(), tracker, cache);
         }
 
-        protected static Hash128 CalculateInputHash(bool useCache, IWriteOperation operation, BuildSettings settings, BuildUsageTagGlobal globalUsage)
+        static void CalcualteCacheEntry(IWriteOperation operation, BuildSettings settings, BuildUsageTagGlobal globalUsage, ref CacheEntry cacheEntry)
         {
-            if (!useCache)
-                return new Hash128();
+            string[] assetHashes = new string[operation.Command.serializeObjects.Count];
+            for (var index = 0; index < operation.Command.serializeObjects.Count; index++)
+                assetHashes[index] = AssetDatabase.GetAssetDependencyHash(operation.Command.serializeObjects[index].serializationObject.guid.ToString()).ToString();
 
-            string[] assetHashes = new string[operation.command.serializeObjects.Count];
-            for (var index = 0; index < operation.command.serializeObjects.Count; index++)
-                assetHashes[index] = AssetDatabase.GetAssetDependencyHash(operation.command.serializeObjects[index].serializationObject.guid.ToString()).ToString();
-            return HashingMethods.CalculateMD5Hash(k_Version, operation, assetHashes, settings, globalUsage);
+            cacheEntry.hash = HashingMethods.CalculateMD5Hash(k_Version, operation.GetHash128(), assetHashes, settings.GetHash128(), globalUsage);
+            cacheEntry.guid = HashingMethods.CalculateMD5Guid("WriteSerializedFiles", operation.Command.internalName);
         }
 
-        public static ReturnCodes Run(IBuildParameters parameters, IDependencyData dependencyData, IWriteData writeData, IBuildResults results, IProgressTracker tracker = null)
+        public static ReturnCodes Run(IBuildParameters parameters, IDependencyData dependencyData, IWriteData writeData, IBuildResults results, IProgressTracker tracker = null, IBuildCache cache = null)
         {
             BuildUsageTagGlobal globalUSage = new BuildUsageTagGlobal();
             foreach (var sceneInfo in dependencyData.SceneInfo)
@@ -42,25 +41,31 @@ namespace UnityEditor.Build.Tasks
 
             foreach (var op in writeData.WriteOperations)
             {
-                Hash128 hash = CalculateInputHash(parameters.UseCache, op, parameters.GetContentBuildSettings(), globalUSage);
                 WriteResult result = new WriteResult();
-                if (TryLoadFromCache(parameters.UseCache, hash, ref result))
-                {
-                    if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", op.command.internalName)))
-                        return ReturnCodes.Canceled;
 
-                    SetOutputInformation(op.command.internalName, result, results);
-                    continue;
+                var cacheEntry = new CacheEntry();
+                if (parameters.UseCache && cache != null)
+                {
+                    CalcualteCacheEntry(op, parameters.GetContentBuildSettings(), globalUSage, ref cacheEntry);
+                    if (cache.TryLoadFromCache(cacheEntry, ref result))
+                    {
+                        if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", op.Command.internalName)))
+                            return ReturnCodes.Canceled;
+
+                        SetOutputInformation(op.Command.internalName, result, results);
+                        continue;
+                    }
                 }
 
-                if (!tracker.UpdateInfoUnchecked(op.command.internalName))
+                if (!tracker.UpdateInfoUnchecked(op.Command.internalName))
                     return ReturnCodes.Canceled;
 
-                result = op.Write(parameters.GetTempOrCacheBuildPath(hash), parameters.GetContentBuildSettings(), globalUSage);
-                SetOutputInformation(op.command.internalName, result, results);
+                var outputFolder = parameters.UseCache && cache != null ? cache.GetArtifactCacheDirectory(cacheEntry) : parameters.TempOutputFolder;
+                result = op.Write(outputFolder, parameters.GetContentBuildSettings(), globalUSage);
+                SetOutputInformation(op.Command.internalName, result, results);
 
-                if (!TrySaveToCache(parameters.UseCache, hash, result))
-                    BuildLogger.LogWarning("Unable to cache WriteSerializedFiles result for file {0}.", op.command.internalName);
+                if (parameters.UseCache && cache != null && !cache.TrySaveToCache(cacheEntry, result))
+                    BuildLogger.LogWarning("Unable to cache WriteSerializedFiles result for file {0}.", op.Command.internalName);
             }
 
             return ReturnCodes.Success;
@@ -69,24 +74,6 @@ namespace UnityEditor.Build.Tasks
         static void SetOutputInformation(string fileName, WriteResult result, IBuildResults results)
         {
             results.WriteResults.Add(fileName, result);
-        }
-
-        static bool TryLoadFromCache(bool useCache, Hash128 hash, ref WriteResult result)
-        {
-            WriteResult cachedResult;
-            if (useCache && BuildCache.TryLoadCachedResults(hash, out cachedResult))
-            {
-                result = cachedResult;
-                return true;
-            }
-            return false;
-        }
-
-        static bool TrySaveToCache(bool useCache, Hash128 hash, WriteResult result)
-        {
-            if (useCache && !BuildCache.SaveCachedResults(hash, result))
-                return false;
-            return true;
         }
     }
 }
