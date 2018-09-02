@@ -20,7 +20,7 @@ $unity-background: #383838;
 //--------------------------------------------------------------------------------------------------
 
 $unity-background-light-contrast: #3c3c3c;			// For dark contrast, use: #404040 and #232323
-$unity-background-dark-contrast: #707070;			//
+$unity-background-dark-contrast: #707070;			//	$
 $unity-text-color-highlight: #f4f4f4;
 
 $unity-installed-color-highlight: rgba(255,255,254,0.4);
@@ -54,7 +54,10 @@ $background-status-error: "Images/error";
 $background-spinner-normal: "Images/Spinner/Dark/loading";
 $background-spinner-large: "Images/Spinner/Dark/loading";
 
+$popup-background: resource("Builtin Skins/DarkSkin/Images/mini popup.png");
+
 //--------------------------------------------------------------------------------------------------
 // Common stylesheet
 //--------------------------------------------------------------------------------------------------
 @import "common";
+

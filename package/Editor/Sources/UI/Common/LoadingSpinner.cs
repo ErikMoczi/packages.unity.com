@@ -13,13 +13,13 @@ namespace UnityEditor.PackageManager.UI
         }
     }
 #endif
-    
+
     internal class LoadingSpinner : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
-        internal class LoadingSpinnerFactory : UxmlFactory<LoadingSpinner, LoadingSpinnerUxmTraits> { }
+        internal new class UxmlFactory : UxmlFactory<LoadingSpinner, UxmlTraits> { }
 
-        internal class LoadingSpinnerUxmTraits : VisualElementUxmlTraits
+        internal new class UxmlTraits : VisualElement.UxmlTraits
         {
             public override IEnumerable<UxmlChildElementDescription> uxmlChildElementsDescription
             {
@@ -45,7 +45,7 @@ namespace UnityEditor.PackageManager.UI
         {
             if (parent == null)
                 return;
-            
+
             parent.transform.rotation = Quaternion.Euler(0, 0, rotation);
             rotation += 3;
             if (rotation > 360)
@@ -57,8 +57,15 @@ namespace UnityEditor.PackageManager.UI
             if (Started)
                 return;
 
+            // Weird hack to make sure loading spinner doesn't generate an error every frame.
+            // Cannot put in constructor as it give really strange result.
+            if (parent != null)
+                parent.clippingOptions = ClippingOptions.NoClipping;
+            if (parent != null && parent.parent != null)
+                parent.parent.clippingOptions = ClippingOptions.ClipAndCacheContents;
+
             rotation = 0;
-            
+
             EditorApplication.update += UpdateProgress;
 
             Started = true;
@@ -69,7 +76,7 @@ namespace UnityEditor.PackageManager.UI
         {
             if (!Started)
                 return;
-            
+
             EditorApplication.update -= UpdateProgress;
 
             Started = false;

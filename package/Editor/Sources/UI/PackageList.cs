@@ -19,42 +19,32 @@ namespace UnityEditor.PackageManager.UI
     internal class PackageList : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
-        internal class PackageListFactory : UxmlFactory<PackageList> { }
+        internal new class UxmlFactory : UxmlFactory<PackageList> { }
 #endif
-        
-        private const string TemplatePath = PackageManagerWindow.ResourcesPath + "Templates/PackageList.uxml";
 
         public event Action<Package> OnSelected = delegate { };
         public event Action OnLoaded = delegate { };
 
         private readonly VisualElement root;
         private const string emptyId = "emptyArea";
-        private const string loadingId = "loadingAreaContainer";
-        private const string loadingSpinnerId = "loadingSpinnerContainer";
         private PackageItem selectedItem;
         private List<PackageGroup> Groups;
 
         public PackageList()
         {
             Groups = new List<PackageGroup>();
-            
-            root = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath).CloneTree(null);
+
+            root = Resources.GetTemplate("PackageList.uxml");
             Add(root);
             root.StretchToParentSize();
 
             root.Q<VisualElement>(emptyId).visible = false;
-            root.Q<VisualElement>(loadingId).visible = true;
-            root.Q<VisualElement>(loadingId).StretchToParentSize();
-            root.Q<VisualElement>(loadingSpinnerId).clippingOptions = ClippingOptions.NoClipping;
-            root.Q<VisualElement>(loadingSpinnerId).parent.clippingOptions = ClippingOptions.ClipAndCacheContents;
-            LoadingSpinner.Start();
 
             PackageCollection.Instance.OnPackagesChanged += SetPackages;
-            PackageCollection.Instance.OnFilterChanged += OnFilterChanged;
-            
+
             RegisterCallback<AttachToPanelEvent>(OnEnterPanel);
             RegisterCallback<DetachFromPanelEvent>(OnLeavePanel);
-            
+
             Reload();
         }
 
@@ -72,7 +62,7 @@ namespace UnityEditor.PackageManager.UI
         {
             if (selectedItem == null)
                 return;
-            
+
             var minY = List.worldBound.yMin;
             var maxY = List.worldBound.yMax;
             var itemMinY = selectedItem.worldBound.yMin;
@@ -95,7 +85,7 @@ namespace UnityEditor.PackageManager.UI
         {
             if (selectedItem == null)
                 return;
-            
+
             if (evt.keyCode == KeyCode.UpArrow)
             {
                 if (selectedItem.previousItem != null)
@@ -111,8 +101,8 @@ namespace UnityEditor.PackageManager.UI
                 }
                 evt.StopPropagation();
                 return;
-            } 
-            
+            }
+
             if (evt.keyCode == KeyCode.DownArrow)
             {
                 if (selectedItem.nextItem != null)
@@ -129,7 +119,7 @@ namespace UnityEditor.PackageManager.UI
                 evt.StopPropagation();
                 return;
             }
-            
+
 #if UNITY_2018_3_OR_NEWER
             if (evt.keyCode == KeyCode.LeftArrow)
             {
@@ -143,7 +133,7 @@ namespace UnityEditor.PackageManager.UI
                             selectedItem.packageGroup.nextGroup.SetCollapsed(false);
                             Select(selectedItem.packageGroup.nextGroup.firstPackage);
                             ScrollIfNeeded();
-                        } 
+                        }
                         else if (selectedItem.packageGroup.previousGroup != null)
                         {
                             selectedItem.packageGroup.previousGroup.SetCollapsed(false);
@@ -183,7 +173,7 @@ namespace UnityEditor.PackageManager.UI
                 evt.StopPropagation();
                 return;
             }
-            
+
             if (evt.keyCode == KeyCode.PageDown)
             {
                 if (selectedItem.packageGroup != null)
@@ -197,7 +187,7 @@ namespace UnityEditor.PackageManager.UI
                     {
                         if (selectedItem.packageGroup.nextGroup.Collapsed)
                             selectedItem.packageGroup.nextGroup.SetCollapsed(false);
-                        
+
                         Select(selectedItem.packageGroup.nextGroup.firstPackage);
                         ScrollIfNeeded();
                     }
@@ -208,17 +198,6 @@ namespace UnityEditor.PackageManager.UI
                     }
                 }
                 evt.StopPropagation();
-            }
-        }
-
-
-        private void OnFilterChanged(PackageFilter filter)
-        {
-            ClearAll();
-            if (!LoadingSpinner.Started)
-            {
-                root.Q<VisualElement>(loadingId).visible = true;
-                LoadingSpinner.Start();
             }
         }
 
@@ -236,13 +215,8 @@ namespace UnityEditor.PackageManager.UI
             ClearSelection();
 
             root.Q<VisualElement>(emptyId).visible = false;
-            if (LoadingSpinner.Started)
-            {
-                root.Q<VisualElement>(loadingId).visible = false;
-                LoadingSpinner.Stop();
-            }
         }
-        
+
         private void SetPackages(IEnumerable<Package> packages)
         {
             if (PackageCollection.Instance.Filter == PackageFilter.Local)
@@ -273,9 +247,6 @@ namespace UnityEditor.PackageManager.UI
             UIUtils.SetElementDisplay(builtInGroup, false);
 #endif
 
-            root.Q<VisualElement>(loadingId).visible = false;
-            LoadingSpinner.Stop();
-
             foreach (var package in packages.OrderBy(pkg => pkg.Versions.FirstOrDefault() == null ? pkg.Name : pkg.Versions.FirstOrDefault().DisplayName))
             {
                 var item = AddPackage(package);
@@ -289,7 +260,7 @@ namespace UnityEditor.PackageManager.UI
 
         private PackageItem AddPackage(Package package)
         {
-            var groupName = package.Latest.Group;
+            string groupName = package.Latest.Group;
             var group = GetOrCreateGroup(groupName);
             var packageItem = group.AddPackage(package);
 
@@ -326,9 +297,9 @@ namespace UnityEditor.PackageManager.UI
 
         private void ClearSelection()
         {
-            Select(null);            
+            Select(null);
         }
-        
+
         private void Select(PackageItem packageItem)
         {
             if (packageItem == selectedItem)
@@ -336,16 +307,15 @@ namespace UnityEditor.PackageManager.UI
 
             if (selectedItem != null)
                 selectedItem.SetSelected(false);        // Clear Previous selection
-            
+
             selectedItem = packageItem;
-            if (selectedItem == null) 
+            if (selectedItem == null)
                 return;
-            
+
             selectedItem.SetSelected(true);
             OnSelected(selectedItem.package);
         }
 
         private ScrollView List { get { return root.Q<ScrollView>("scrollView"); } }
-        private LoadingSpinner LoadingSpinner { get { return root.Q<LoadingSpinner>("loadingSpinner"); } }
     }
 }

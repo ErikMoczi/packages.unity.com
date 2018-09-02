@@ -21,8 +21,8 @@ namespace UnityEditor.PackageManager.UI
         private IEnumerable<PackageInfo> LastListOfflinePackages = null;
         private IEnumerable<PackageInfo> LastListPackages = null;
         private IEnumerable<PackageInfo> LastSearchPackages = null;
-        private ISearchOperation searchOperation;
-        private IListOperation listOperation;
+        public ISearchOperation searchOperation;
+        public IListOperation listOperation;
         private IListOperation listOperationOffline;
 
         public PackageFilter Filter
@@ -126,7 +126,7 @@ namespace UnityEditor.PackageManager.UI
             {
                 var operation = OperationFactory.Instance.CreateListOperation();
                 listOperation = operation;
-                operation.GetPackageListAsync(infos => { LastListPackages = infos; }, error => { ClearPackages(); });
+                operation.GetPackageListAsync(infos => { LastListPackages = infos; });
             }
         }
 
@@ -136,7 +136,7 @@ namespace UnityEditor.PackageManager.UI
             {
                 var operation = OperationFactory.Instance.CreateSearchOperation();
                 searchOperation = operation;
-                operation.GetAllPackageAsync(infos => { LastSearchPackages = infos; }, error => { ClearPackages(); });
+                operation.GetAllPackageAsync(infos => { LastSearchPackages = infos; });
             }
         }
 
@@ -150,8 +150,11 @@ namespace UnityEditor.PackageManager.UI
         private void ListPackagesOffline()
         {
             if (LastListPackages != null)
+            {
                 SetListPackageInfos(LastListPackages);
-            
+                return;
+            }
+
             if (listOperationOffline == null)
                 FetchListOfflineCache();
 
@@ -190,7 +193,10 @@ namespace UnityEditor.PackageManager.UI
         private void OnListOperationFinalized()
         {
             listOperation = null;
-            SetListPackageInfos(LastListPackages);
+            if (LastListPackages != null)
+            {
+                SetListPackageInfos(LastListPackages);
+            }
         }
 
         private void CancelListOffline()
@@ -226,14 +232,17 @@ namespace UnityEditor.PackageManager.UI
 
         private void OnSearchOperationFinalized()
         {
-            SetSearchPackageInfos(LastSearchPackages);
+            if (LastSearchPackages != null)
+            {
+                SetSearchPackageInfos(LastSearchPackages);
+            }
         }
 
         private void SetSearchPackageInfos(IEnumerable<PackageInfo> searchPackageInfos)
         {
             searchOperation = null;
             var copyPackageInfo = new List<PackageInfo>(packageInfos);
-            copyPackageInfo.AddRange(searchPackageInfos.Where(pi => !Packages.ContainsKey(pi.Name) || Packages[pi.Name].Current == null || Packages[pi.Name].Current.Version != pi.Version));
+            copyPackageInfo.AddRange(searchPackageInfos.Where(pi => !Packages.ContainsKey(pi.Name) || Packages[pi.Name].Versions.All(v => v.Version != pi.Version)));
 
             LastSearchPackages = copyPackageInfo;
 

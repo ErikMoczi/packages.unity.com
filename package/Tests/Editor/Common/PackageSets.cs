@@ -65,11 +65,11 @@ namespace UnityEditor.PackageManager.UI.Tests
 
         public PackageInfo Single(string name = null, string version = null)
         {
-            var type = Random.NextDouble() > 0.5 ? PackageOrigin.Unknown : PackageOrigin.Registry;
+            var type = Random.NextDouble() > 0.5 ? PackageSource.Unknown : PackageSource.Registry;
             return Single(type, name, version);
         }
 
-        public PackageInfo Single(PackageOrigin type, string name = null, string version = null)
+        public PackageInfo Single(PackageSource type, string name = null, string version = null, bool isCurrent = true, bool isVerified = false)
         {
             if (name == null)
                 name = RandomString(Random.Next(5, 10));
@@ -90,8 +90,8 @@ namespace UnityEditor.PackageManager.UI.Tests
                 State = PackageState.UpToDate,
                 Group = group,
                 Version = version,
-                IsVerified = false,
-                IsCurrent = true,
+                IsVerified = isVerified,
+                IsCurrent = isCurrent,
                 IsLatest = false,
                 Origin = type,
                 Errors = new List<Error>()
@@ -262,8 +262,8 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             const string name = "TestOutdated";
 
-            var packageA = Single(PackageOrigin.Registry, name, "0.0.1");
-            var packageB = Single(PackageOrigin.Registry, name, "0.0.2");
+            var packageA = Single(PackageSource.Registry, name, "0.0.1");
+            var packageB = Single(PackageSource.Registry, name, "0.0.2");
             packageA.State = PackageState.Outdated;
             packageB.IsCurrent = true;
             packageB.IsLatest = false;

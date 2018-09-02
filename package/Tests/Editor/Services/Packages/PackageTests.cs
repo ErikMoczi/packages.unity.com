@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using Semver;
+using UnityEngine;
 
 namespace UnityEditor.PackageManager.UI.Tests
 {
@@ -236,7 +237,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             var packages = new List<PackageInfo>
             {
-                PackageSets.Instance.Single(PackageOrigin.Unknown, Package.packageManagerUIName, "1.0.0")
+                PackageSets.Instance.Single(PackageSource.Unknown, Package.packageManagerUIName, "1.0.0")
             };
             var package = new Package(Package.packageManagerUIName, packages);
             
@@ -315,6 +316,187 @@ namespace UnityEditor.PackageManager.UI.Tests
             var package = new Package(kPackageTestName, packages);
             
             Assert.AreEqual(orderPackages, package.Versions);
+        }
+
+        //
+        // Version Comparison tests
+        //
+        private static string name = "test";
+
+        [Test]
+        public void VersionUpdate_Current_lessthen_Verified()
+        {
+            var package = new Package(name, new List<PackageInfo>
+            {
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", true), 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false, true),        // Verified
+                PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0", false)
+            });
+
+            Assert.IsTrue(package.LatestUpdate.Version == "2.0.0");
+        }
+
+        [Test]
+        public void VersionUpdate_Current_equalto_Verified()
+        {
+            var package = new Package(name, new List<PackageInfo>
+            {
+                PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", true, true),         // Verified
+                PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0", false)
+            });
+
+            Assert.IsTrue(package.LatestUpdate.Version == "2.0.0");
+        }
+
+        [Test]
+        public void VersionUpdate_Current_greaterthen_Verified()
+        {
+            var package = new Package(name, new List<PackageInfo>
+            {
+                PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0", true), 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false, true),        // Verified
+            });
+
+            Assert.IsTrue(package.LatestUpdate.Version == "3.0.0");
+        }
+
+        [Test]
+        public void VersionUpdate_Current_greaterthen_Verified_WithLatest()
+        {
+            var package = new Package(name, new List<PackageInfo>
+            {
+                PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0", true), 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false, true),        // Verified
+                PackageSets.Instance.Single(PackageSource.Registry, name, "4.0.0", false)
+            });
+
+            Assert.IsTrue(package.LatestUpdate.Version == "4.0.0");
+        }
+
+        [Test]
+        public void VersionUpdate_NoVerified_Current_lessthen_Latest()
+        {
+            var package = new Package(name, new List<PackageInfo>
+            {
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", true), 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false),
+                PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0", false)
+            });
+
+            Assert.IsTrue(package.LatestUpdate.Version == "3.0.0");
+        }
+
+        [Test]
+        public void VersionUpdate_NoVerified_Current_equalto_Latest()
+        {
+            var package = new Package(name, new List<PackageInfo>
+            {
+                PackageSets.Instance.Single(PackageSource.Registry, name, "0.0.0", false), 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", true) 
+            });
+
+            Assert.IsTrue(package.LatestUpdate.Version == "1.0.0");
+        }
+        
+        [Test]
+        public void VersionUpdate_NoCurrent_WithVerified()
+        {
+            var package = new Package(name, new List<PackageInfo>
+            {
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false, true),    // verified 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false)
+            });
+
+            Assert.IsTrue(package.LatestUpdate.Version == "1.0.0");
+        }
+
+        [Test]
+        public void VersionUpdate_NoCurrent_Latest()
+        {
+            var package = new Package(name, new List<PackageInfo>
+            {
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false), 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false)
+            });
+
+            Assert.IsTrue(package.LatestUpdate.Version == "2.0.0");
+        }
+
+        [Test]
+        public void VersionUpdate_NoCurrent_Latest_WithPreview()
+        {
+            var package = new Package(name, new List<PackageInfo>
+            {
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false), 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false),
+                PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0-preview", false)
+            });
+
+            Assert.IsTrue(package.LatestUpdate.Version == "2.0.0");
+        }
+
+        [Test]
+        public void VersionUpdate_NoCurrent_Verified_WithPreview()
+        {
+            var package = new Package(name, new List<PackageInfo>
+            {
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false, true),    // verified 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false),
+                PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0-preview", false)
+            });
+
+            Assert.IsTrue(package.LatestUpdate.Version == "1.0.0");
+        }
+
+        [Test]
+        public void VersionUpdate_NoCurrent_OnlyPreviews()
+        {
+            var package = new Package(name, new List<PackageInfo>
+            {
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0-preview", false), 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0-preview", false)
+            });
+
+            Assert.IsTrue(package.LatestUpdate.Version == "2.0.0-preview");
+        }
+
+        [Test]
+        public void VersionUpdate_CurrentPreview_WithVerified()
+        {
+            var package = new Package(name, new List<PackageInfo>
+            {
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false, true),    // verified 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false),
+                PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0-preview", true)    // current
+            });
+
+            Assert.IsTrue(package.LatestUpdate.Version == "3.0.0-preview");
+        }
+        
+        [Test]
+        public void VersionUpdate_CurrentPreview_WithLatestPreview()
+        {
+            var package = new Package(name, new List<PackageInfo>
+            {
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false, true),    // verified 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false),
+                PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0-preview", true),    // current
+                PackageSets.Instance.Single(PackageSource.Registry, name, "4.0.0-preview", false)
+            });
+
+            Assert.IsTrue(package.LatestUpdate.Version == "4.0.0-preview");
+        }
+        
+        [Test]
+        public void VersionUpdate_CurrentEmbedded()
+        {
+            var package = new Package(name, new List<PackageInfo>
+            {
+                PackageSets.Instance.Single(PackageSource.Embedded, name, "1.0.0", true), 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false, true),    // verified
+            });
+
+            Assert.IsTrue(package.LatestUpdate.Version == "1.0.0");
         }
     }
 }

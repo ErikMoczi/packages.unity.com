@@ -6,6 +6,8 @@ namespace UnityEditor.PackageManager.UI.Tests
     {
         public event Action<Error> OnOperationError { add { } remove { } }
         public event Action OnOperationFinalized { add { } remove { } }
+        
+        public bool IsCompleted { get; protected set; }
 
         public Error ForceError { protected get; set; } // Allow external component to force an error on the requests (eg: testing)
 

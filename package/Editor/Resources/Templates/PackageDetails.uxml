@@ -9,12 +9,19 @@
         <engine:ScrollView name="detailView">
             <engine:VisualElement name="detail" class="detail">
                 <engine:VisualElement class="header">
-                    <engine:Label name="detailTitle"/>
-                    <engine:VisualElement name="updateContainer">
-                        <engine:Button name="update" text="Update" class="button"/>
-                        <engine:Button name="viewChangelog" class="link" text="View Changes"/>
+                    <engine:VisualElement name="titleContainer">
+                        <engine:Label name="detailTitle"/>
                     </engine:VisualElement>
-                    <engine:Button name="remove" text="Remove" class="button"/>
+                    <engine:VisualElement name="detailsControls">
+                        <engine:VisualElement name="updateContainer">
+                            <engine:VisualElement name="updateCombo" class="combo">
+                                <engine:Button name="update" text="Update" class="action"/>
+                                <engine:VisualElement name="updateDropdownContainer" class="button last"/>
+                            </engine:VisualElement>
+                        </engine:VisualElement>
+                        <engine:Button name="updateBuiltIn" text="Enable" class="button"/>
+                        <engine:Button name="remove" text="Remove" class="button"/>
+                    </engine:VisualElement>
                 </engine:VisualElement>
                 <engine:VisualElement class="versionContainer">
                     <engine:Label name="detailVersion"/>
@@ -30,7 +37,9 @@
                 <engine:VisualElement name="detailCustomContainer" class="display-none"/>
 
                 <engine:VisualElement name="detailActions">
-                    <engine:Button name="viewDocumentation" text="View Documentation" class="link display-none"/>
+                    <engine:Button name="viewDocumentation" class="detailAction link display-none" text="View Documentation"/>
+                    <engine:Label name="detailActionsSeparator" text="-" class="detailActionSeparator display-none"/>
+                    <engine:Button name="viewChangelog" class="detailAction link display-none" text="View Changelog"/>
                 </engine:VisualElement>
 
                 <engine:Label name="detailName"/>

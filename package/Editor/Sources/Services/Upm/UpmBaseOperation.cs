@@ -10,10 +10,10 @@ namespace UnityEditor.PackageManager.UI
 {    
     internal abstract class UpmBaseOperation : IBaseOperation
     {
-        public static string GroupName(PackageOrigin origin)
+        public static string GroupName(PackageSource origin)
         {
             var group = PackageGroupOrigins.Packages.ToString();
-            if (origin == PackageOrigin.Builtin)
+            if (origin == PackageSource.BuiltIn)
                 group = PackageGroupOrigins.BuiltInPackages.ToString();
 
             return group;
@@ -21,7 +21,6 @@ namespace UnityEditor.PackageManager.UI
 
         protected static IEnumerable<PackageInfo> FromUpmPackageInfo(PackageManager.PackageInfo info, bool isCurrent=true)
         {
-            var origin = PackageInfo.IsModule(info.name) ? PackageOrigin.Builtin : PackageOrigin.Registry;
             var packages = new List<PackageInfo>();
             var displayName = info.displayName;
             if (string.IsNullOrEmpty(displayName))
@@ -66,7 +65,7 @@ namespace UnityEditor.PackageManager.UI
             foreach(var version in versions)
             {
                 var isVersionCurrent = version == info.version && isCurrent;
-                var state = (origin == PackageOrigin.Builtin || info.version == lastCompatible) ? PackageState.UpToDate : PackageState.Outdated;
+                var state = (info.source == PackageSource.BuiltIn || info.version == lastCompatible) ? PackageState.UpToDate : PackageState.Outdated;
                 
                 // Happens mostly when using a package that hasn't been in production yet.
                 if (info.versions.all.Length <= 0)
@@ -87,9 +86,9 @@ namespace UnityEditor.PackageManager.UI
                     IsLatest = version == lastCompatible,
                     IsVerified = version == info.versions.recommended,
                     Errors = info.errors.ToList(),
-                    Group = GroupName(origin),
+                    Group = GroupName(info.source),
                     State = state,
-                    Origin = origin,
+                    Origin = info.source,
                     Author = null,
                     Info = info
                 };
@@ -107,6 +106,8 @@ namespace UnityEditor.PackageManager.UI
         
         public Error ForceError { get; set; }                // Allow external component to force an error on the requests (eg: testing)
         public Error Error { get; protected set; }        // Keep last error
+        
+        public bool IsCompleted { get; protected set; }
 
         protected abstract Request CreateRequest();
         
@@ -196,6 +197,7 @@ namespace UnityEditor.PackageManager.UI
         {
             EditorApplication.update -= Progress;
             OnOperationFinalized();
+            IsCompleted = true;
         }
 
         public void Cancel()
@@ -203,6 +205,7 @@ namespace UnityEditor.PackageManager.UI
             EditorApplication.update -= Progress;
             OnOperationError = delegate { };
             OnOperationFinalized = delegate { };
+            IsCompleted = true;
         }
 
         private bool TryForcedError()

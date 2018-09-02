@@ -5,12 +5,11 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="UnityEngine.Experimental.UIElements UIElementsSchema/UnityEngine.Experimental.UIElements.xsd
                             UnityEditor.PackageManager.UI UIElementsSchema/UnityEditor.PackageManager.UI.xsd">
-    <engine:VisualElement name="listContainerOuter">
-        <engine:VisualElement name="listContainer">
-            <engine:ScrollView name="scrollView"/>
-            <engine:VisualElement name="emptyArea" class="list emptyArea">
-                <engine:Label class="title" text="There are no packages."/>
-            </engine:VisualElement>
-        </engine:VisualElement>
+    <engine:VisualElement name="loadingContainer">
+        <engine:Label name="loadingSpinnerContainer" class="loading">
+            <upm:LoadingSpinner name="packageSpinner" class="spinner"/>
+        </engine:Label>
+        <engine:Label name="loadingText" text="Loading Packages"/>
     </engine:VisualElement>
 </engine:UXML>
+

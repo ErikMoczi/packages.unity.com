@@ -54,7 +54,10 @@ $background-status-error: "Images/error";
 $background-spinner-normal: "Images/Spinner/Light/loading";
 $background-spinner-large: "Images/Spinner/Light/loading";
 
+$popup-background: resource("Builtin Skins/LightSkin/Images/mini popup.png");
+
 //--------------------------------------------------------------------------------------------------
 // Common stylesheet
 //--------------------------------------------------------------------------------------------------
 @import "common";
+

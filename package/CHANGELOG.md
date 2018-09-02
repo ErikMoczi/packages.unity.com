@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.9.8] - 2018-05-01
+- Fixed package to work with 2018.3
+- Deprecated 2018.1 because of its inability to update without error
+
+## [1.9.6] - 2018-04-10
+- Added ability to choose a package version
+- Added loading indicator when retrieving package lists
+
+## [1.9.5] - 2018-03-28
+- Optimize packages list loading
+- Fixes for UXML factories changes in Unity
+- UI Fixes:
+	- "View changes" update position and label should say "View Changelog"
+	- Packages list should not have padding
+	- preview and verified tags should be lower case everywhere
+	- the package displayed name should stay on 1 line
+
 ## [1.9.3] - 2018-03-11
 - Added caching for faster UI response time
 - Exposed APIs for the Package Manager UI extension mechanism

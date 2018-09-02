@@ -22,7 +22,7 @@ namespace UnityEditor.PackageManager.UI
         public bool IsCurrent { get; set; }
         public bool IsLatest { get; set; }
         public string Group { get; set; }
-        public PackageOrigin Origin { get; set; }
+        public PackageSource Origin { get; set; }
         public List<Error> Errors { get; set; }
         public bool IsVerified { get; set; }
         public string Author { get; set; }
@@ -76,6 +76,28 @@ namespace UnityEditor.PackageManager.UI
             return HasTag(tag.ToString());
         }
 
+        // Is it a pre-release (alpha/beta/experimental/preview)?
+        //        Current logic is any tag is considered pre-release, except recommended
+        public bool IsPreRelease
+        {
+            get { return !string.IsNullOrEmpty(Version.Prerelease) && !IsVerified; }
+        }
+
+        // A version is user visible if it has a supported tag (or no tag at all)
+        public bool IsUserVisible
+        {
+            get { return string.IsNullOrEmpty(Version.Prerelease) || HasTag(PackageTag.preview) || IsVerified; }
+        }
+        
         public string VersionWithoutTag { get { return Version.VersionOnly(); } }
+        
+        public bool IsVersionLocked
+        {
+            get
+            {
+                return Origin == PackageSource.Embedded || Origin == PackageSource.Git ||
+                    Origin == PackageSource.BuiltIn || Origin == PackageSource.Local;
+            }
+        }
     }
 }

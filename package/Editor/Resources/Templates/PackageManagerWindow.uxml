@@ -10,6 +10,7 @@
             <engine:VisualElement name="packageListGroup">
                 <upm:PackageSearchFilterTabs name="tabsGroup" />
                 <upm:PackageList name="packageList" />
+                <upm:PackagesLoading name="packagesLoading" />
             </engine:VisualElement>
             <upm:PackageDetails name="detailsGroup" />
         </engine:VisualElement>

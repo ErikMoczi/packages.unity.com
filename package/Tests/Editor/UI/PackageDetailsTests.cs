@@ -31,7 +31,7 @@ namespace UnityEditor.PackageManager.UI.Tests
                 packageInfo.Version = packageInfo.Version.Change(null, null, null, tag);            
                 var package = new Package(packageInfo.Name, new List<PackageInfo> {packageInfo});
                 var details = Container.Q<PackageDetails>("detailsGroup");
-                details.SetPackage(package, PackageFilter.Local);
+                details.SetPackage(package);
 
                 // Check for every UI-supported tags that visibility is correct
                 foreach (var itemTag in PackageDetails.SupportedTags())
@@ -46,7 +46,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         }
 
         [Test]
-        public void Show_CorrectPackage()
+        public void Show_CorrectPackage_PerFilter()
         {
             var packageInfos = PackageSets.Instance.Outdated();
             SetPackages(packageInfos);
@@ -55,10 +55,87 @@ namespace UnityEditor.PackageManager.UI.Tests
                 
             var details = Container.Q<PackageDetails>("detailsGroup");
             PackageCollection.Instance.SetFilter(PackageFilter.Local);
-            Assert.IsTrue(details.Display(package) == packageInfos[0]);
+            Assert.IsTrue(details.Display(package).Name == packageInfos[0].Name);
 
             PackageCollection.Instance.SetFilter(PackageFilter.All);
-            Assert.IsTrue(details.Display(package) == packageInfos[1]);
+            Assert.IsTrue(details.Display(package).Name == packageInfos[1].Name);
         }
+
+        [Test]
+        public void Show_CorrectLabel_UpToDate()
+        {
+            SetPackages(new List<PackageInfo> {PackageSets.Instance.Single(PackageSource.Registry, "name", "1.0.0", true)});
+
+            var details = Container.Q<PackageDetails>("detailsGroup");
+            Assert.IsTrue(details.UpdateButton.text == PackageDetails.PackageActionVerbs[(int)PackageDetails.PackageAction.UpToDate]);
+            Assert.IsFalse(details.UpdateButton.enabledSelf);
+            Assert.IsTrue(details.VersionPopup.enabledSelf);
+        }
+
+        [Test]
+        public void Show_CorrectLabel_Install()
+        {
+            SetPackages(new List<PackageInfo> {PackageSets.Instance.Single(PackageSource.Registry, "name", "1.0.0", false)});
+
+            PackageCollection.Instance.SetFilter(PackageFilter.All);
+
+            var details = Container.Q<PackageDetails>("detailsGroup");
+            Assert.IsTrue(details.UpdateButton.text == PackageDetails.PackageActionVerbs[(int)PackageDetails.PackageAction.Add]);
+            Assert.IsTrue(details.UpdateButton.enabledSelf);
+            Assert.IsTrue(details.VersionPopup.enabledSelf);
+        }
+
+        [Test]
+        public void Show_CorrectLabel_UpdateTo()
+        {
+            SetPackages(new List<PackageInfo> 
+            {
+                PackageSets.Instance.Single(PackageSource.Registry, "name", "1.0.0", true),
+                PackageSets.Instance.Single(PackageSource.Registry, "name", "2.0.0", false)
+            });
+
+            var details = Container.Q<PackageDetails>("detailsGroup");
+            Assert.IsTrue(details.UpdateButton.text == PackageDetails.PackageActionVerbs[(int)PackageDetails.PackageAction.Update]);
+            Assert.IsTrue(details.UpdateButton.enabledSelf);
+            Assert.IsTrue(details.VersionPopup.enabledSelf);
+        }
+        
+        [Test]
+        public void Show_CorrectLabel_Embedded()
+        {
+            SetPackages(new List<PackageInfo> 
+            {
+                PackageSets.Instance.Single(PackageSource.Embedded, "name", "1.0.0", true),
+                PackageSets.Instance.Single(PackageSource.Registry, "name", "2.0.0", false)
+            });
+
+            var details = Container.Q<PackageDetails>("detailsGroup");
+            Assert.IsTrue(details.UpdateButton.text == PackageDetails.PackageActionVerbs[(int)PackageDetails.PackageAction.Embedded]);
+            Assert.IsFalse(details.UpdateButton.enabledSelf);
+            Assert.IsFalse(details.VersionPopup.enabledSelf);
+        }
+        
+        [Test]
+        public void Show_CorrectLabel_LocalFolder()
+        {
+            SetPackages(new List<PackageInfo> {PackageSets.Instance.Single(PackageSource.Local, "name", "1.0.0")});
+
+            var details = Container.Q<PackageDetails>("detailsGroup");
+            Assert.IsTrue(details.UpdateButton.text == PackageDetails.PackageActionVerbs[(int)PackageDetails.PackageAction.Local]);
+            Assert.IsFalse(details.UpdateButton.enabledSelf);
+            Assert.False(details.VersionPopup.enabledSelf);
+        }
+        
+        [Test]
+        public void Show_CorrectLabel_Git()
+        {
+            SetPackages(new List<PackageInfo> {PackageSets.Instance.Single(PackageSource.Git, "name", "1.0.0")});
+
+            var details = Container.Q<PackageDetails>("detailsGroup");
+            Assert.IsTrue(details.UpdateButton.text == PackageDetails.PackageActionVerbs[(int)PackageDetails.PackageAction.Git]);
+            Assert.IsFalse(details.UpdateButton.enabledSelf);
+            Assert.IsFalse(details.VersionPopup.enabledSelf);
+        }
+        
     }
 }

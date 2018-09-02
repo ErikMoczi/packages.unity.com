@@ -7,6 +7,8 @@ namespace UnityEditor.PackageManager.UI
         event Action<Error> OnOperationError;
         event Action OnOperationFinalized;
 
+        bool IsCompleted { get; }
+        
         void Cancel();
     }
 }

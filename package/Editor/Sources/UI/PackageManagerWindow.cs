@@ -48,7 +48,7 @@ namespace UnityEditor.PackageManager.UI
 
         private void OnPackageSelected(Package package)
         {
-            PackageDetails.SetPackage(package, PackageSearchFilterTabs.CurrentFilter);
+            PackageDetails.SetPackage(package);
         }
 
         private void OnPackagesLoaded()
@@ -79,12 +79,8 @@ namespace UnityEditor.PackageManager.UI
         internal static void ShowPackageManagerWindow()
         {
 #if UNITY_2018_1_OR_NEWER
-            // Make sure we are not registered on callback anymore
-            AssemblyReloadEvents.beforeAssemblyReload -= ShowPackageManagerWindow;
-
             var window = GetWindow<PackageManagerWindow>(false, "Packages", true);
             window.minSize = new Vector2(700, 250);
-            window.maxSize = new Vector2(1400, 1400);
             window.Show();
 #else
             EditorUtility.DisplayDialog("Unsupported Unity Version", string.Format("The Package Manager requires Unity Version {0} or higher to operate.", targetVersionNumber), "Ok");

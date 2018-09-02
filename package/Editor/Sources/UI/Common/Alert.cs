@@ -12,32 +12,19 @@ namespace UnityEditor.PackageManager.UI
         }
     }
 #endif
-    
+
     internal class Alert : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
-        internal class AlertFactory : UxmlFactory<Alert, AlertUxmlTraits> { }
+        internal new class UxmlFactory : UxmlFactory<Alert, UxmlTraits> { }
 
-        internal class AlertUxmlTraits : VisualElementUxmlTraits
+        internal new class UxmlTraits : VisualElement.UxmlTraits
         {
             private UxmlStringAttributeDescription m_Text;
 
-            public AlertUxmlTraits()
+            public UxmlTraits()
             {
                 m_Text = new UxmlStringAttributeDescription { name="text" };
-            }
-
-            public override IEnumerable<UxmlAttributeDescription> uxmlAttributesDescription
-            {
-                get
-                {
-                    foreach (var attr in base.uxmlAttributesDescription)
-                    {
-                        yield return attr;
-                    }
-
-                    yield return m_Text;
-                }
             }
 
             public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
@@ -49,7 +36,7 @@ namespace UnityEditor.PackageManager.UI
             }
         }
 #endif
-        
+
         private const string TemplatePath = PackageManagerWindow.ResourcesPath + "Templates/Alert.uxml";
         private readonly VisualElement root;
         private const float originalPositionRight = 5.0f;
@@ -85,7 +72,7 @@ namespace UnityEditor.PackageManager.UI
             AdjustSize(false);
             AlertMessage.text = "";
         }
-        
+
         public void AdjustSize(bool verticalScrollerVisible)
         {
             if (verticalScrollerVisible)
@@ -93,7 +80,7 @@ namespace UnityEditor.PackageManager.UI
             else
                 style.positionRight = originalPositionRight;
         }
-        
+
         private Label AlertMessage { get { return root.Q<Label>("alertMessage"); } }
         private Button CloseButton { get { return root.Q<Button>("close"); } }
     }

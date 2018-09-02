@@ -13,14 +13,12 @@ namespace UnityEditor.PackageManager.UI
         }
     }
 #endif
-    
+
     internal class PackageGroup : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
-        internal class PackageGroupFactory : UxmlFactory<PackageGroup> { }
+        internal new class UxmlFactory : UxmlFactory<PackageGroup> { }
 #endif
-
-        private const string TemplatePath = PackageManagerWindow.ResourcesPath + "Templates/PackageGroup.uxml";
 
         private readonly VisualElement root;
         private bool collapsed;
@@ -41,7 +39,7 @@ namespace UnityEditor.PackageManager.UI
         public PackageGroup(string groupName)
         {
             name = groupName;
-            root = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath).CloneTree(null);
+            root = Resources.GetTemplate("PackageGroup.uxml");
             Add(root);
             listElement = List;
 
@@ -51,7 +49,7 @@ namespace UnityEditor.PackageManager.UI
             List.style.marginLeft = 0;
             Header.style.height = 0;
 #endif
-            
+
             if (string.IsNullOrEmpty(groupName) || groupName != PackageGroupOrigins.BuiltInPackages.ToString())
             {
                 HeaderTitle.text = "Packages";
@@ -85,7 +83,7 @@ namespace UnityEditor.PackageManager.UI
         {
             SetCollapsed(!Collapsed);
         }
-        
+
         internal PackageItem AddPackage(Package package)
         {
             var packageItem = new PackageItem(package) {packageGroup = this};
@@ -96,18 +94,18 @@ namespace UnityEditor.PackageManager.UI
                 packageItem.previousItem = lastItem;
                 packageItem.nextItem = null;
             }
-            
+
             listElement.Add(packageItem);
-            
+
             if (firstPackage == null) firstPackage = packageItem;
             lastPackage = packageItem;
-            
+
             return packageItem;
         }
-        
+
         private VisualElement List { get { return root.Q<VisualElement>("groupContainer"); } }
         private VisualElement ListContainer { get { return root.Q<VisualElement>("groupContainerOuter"); } }
-        private VisualElement Header { get { return root.Q<VisualElement>("headerContainer"); } }        
+        private VisualElement Header { get { return root.Q<VisualElement>("headerContainer"); } }
         private Label HeaderTitle { get { return root.Q<Label>("headerTitle"); } }
         private Label Caret { get { return root.Q<Label>("headerCaret"); } }
         internal bool Collapsed { get { return collapsed; } set { SetCollapsed(value); } }

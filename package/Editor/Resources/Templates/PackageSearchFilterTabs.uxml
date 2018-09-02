@@ -3,7 +3,7 @@
         xmlns:engine="UnityEngine.Experimental.UIElements"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="UnityEngine.Experimental.UIElements UIElementsSchema/UnityEngine.Experimental.UIElements.xsd">
-    <engine:VisualElement name="tabs">
+    <engine:VisualElement name="tabs" class="combo">
         <engine:Label name="local" text="In Project" class="button first"/>
         <engine:Label name="all" text="All" class="button last"/>
     </engine:VisualElement>
