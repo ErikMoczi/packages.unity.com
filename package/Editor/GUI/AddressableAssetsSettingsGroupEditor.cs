@@ -78,9 +78,12 @@ namespace UnityEditor.AddressableAssets
             return s;
         }
 
+        [NonSerialized]
         GUIStyle searchStyle = null;
+        [NonSerialized]
         GUIStyle buttonStyle = null;
         bool previewMode = false;
+        [NonSerialized]
         public Texture2D cogIcon = null;
 
         //TODO - this is a temp hack until we have better speed settings

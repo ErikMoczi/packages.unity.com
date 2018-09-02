@@ -9,7 +9,7 @@ namespace UnityEditor.AddressableAssets
     internal class ProjectConfigData
     {
         [System.Serializable]
-        private class ConfigSaveData : AssetPostprocessor
+        private class ConfigSaveData
         {
             [SerializeField]
             internal bool m_postProfilerEvents = false;
