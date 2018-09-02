@@ -42,8 +42,9 @@ namespace UnityEditor.Build.Pipeline
         /// <param name="buildContent">Set of content and explicit asset bundle layout to build.</param>
         /// <param name="result">Results from building the content and explicit asset bundle layout.</param>
         /// <param name="taskList">Custom task list for building asset bundles.</param>
+        /// <param name="contextObjects">Additional context objects to make available to the build.</param>
         /// <returns>Return code with status information about success or failure causes.</returns>
-        public static ReturnCode BuildAssetBundles(IBuildParameters buildParameters, IBundleBuildContent buildContent, out IBundleBuildResults result, IList<IBuildTask> taskList)
+        public static ReturnCode BuildAssetBundles(IBuildParameters buildParameters, IBundleBuildContent buildContent, out IBundleBuildResults result, IList<IBuildTask> taskList, params IContextObject[] contextObjects)
         {
             // Avoid throwing exceptions in here as we don't want them bubbling up to calling user code
             if (buildParameters == null)
@@ -66,35 +67,39 @@ namespace UnityEditor.Build.Pipeline
 
             using (var progressTracker = new ProgressTracker())
             {
-                Directory.CreateDirectory(buildParameters.TempOutputFolder);
-
-                var buildContext = new BuildContext();
-                try
+                using (var wrapper = new BuildInterfacesWrapper())
                 {
-                    buildContext.SetContextObject(buildParameters);
-                    buildContext.SetContextObject(buildContent);
-                    buildContext.SetContextObject(result);
-                    buildContext.SetContextObject(progressTracker);
-                    buildContext.SetContextObject(new BuildCache());
-                    buildContext.SetContextObject(new Unity5PackedIdentifiers());
-                    buildContext.SetContextObject(new BuildDependencyData());
-                    buildContext.SetContextObject(new BundleWriteData());
-                    buildContext.SetContextObject(BuildCallbacks);
-                }
-                catch (Exception e)
-                {
-                    // Avoid throwing exceptions in here as we don't want them bubbling up to calling user code
-                    result = null;
-                    BuildLogger.LogException(e);
-                    return ReturnCode.Exception;
-                }
-                
-                exitCode = BuildTasksRunner.Validate(taskList, buildContext);
-                if (exitCode >= ReturnCode.Success)
-                    exitCode = BuildTasksRunner.Run(taskList, buildContext);
+                    Directory.CreateDirectory(buildParameters.TempOutputFolder);
 
-                if (Directory.Exists(buildParameters.TempOutputFolder))
-                    Directory.Delete(buildParameters.TempOutputFolder, true);
+                    BuildContext buildContext;
+                    try
+                    {
+                        buildContext = new BuildContext(contextObjects);
+                        buildContext.SetContextObject(buildParameters);
+                        buildContext.SetContextObject(buildContent);
+                        buildContext.SetContextObject(result);
+                        buildContext.SetContextObject(progressTracker);
+                        buildContext.SetContextObject(new BuildCache());
+                        buildContext.SetContextObject(new Unity5PackedIdentifiers());
+                        buildContext.SetContextObject(new BuildDependencyData());
+                        buildContext.SetContextObject(new BundleWriteData());
+                        buildContext.SetContextObject(BuildCallbacks);
+                    }
+                    catch (Exception e)
+                    {
+                        // Avoid throwing exceptions in here as we don't want them bubbling up to calling user code
+                        result = null;
+                        BuildLogger.LogException(e);
+                        return ReturnCode.Exception;
+                    }
+
+                    exitCode = BuildTasksRunner.Validate(taskList, buildContext);
+                    if (exitCode >= ReturnCode.Success)
+                        exitCode = BuildTasksRunner.Run(taskList, buildContext);
+
+                    if (Directory.Exists(buildParameters.TempOutputFolder))
+                        Directory.Delete(buildParameters.TempOutputFolder, true);
+                }
             }
             return exitCode;
         }

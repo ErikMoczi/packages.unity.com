@@ -26,12 +26,16 @@ namespace UnityEditor.Build.Pipeline
         /// <param name="buildParams">The set of initial parameters to add to the context.</param>
         public BuildContext(params IContextObject[] buildParams)
         {
-            if (buildParams == null)
-                throw new ArgumentNullException("buildParams");
-
             m_ContextObjects = new Dictionary<Type, IContextObject>();
+
+            if (buildParams == null)
+                return;
+
             foreach (var buildParam in buildParams)
-                SetContextObject(buildParam);
+            {
+                if (buildParam != null)
+                    SetContextObject(buildParam);
+            }
         }
         
         /// <inheritdoc />

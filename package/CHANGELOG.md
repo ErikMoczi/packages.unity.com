@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.0.11-preview] - 2018-05-01
+- Updated BuildAssetBundles API to also take custom context objects
+- 
 ## [0.0.10-preview] - 2018-04-26
 - Added BuildAssetBundles API that takes a custom task list
 - Added null checks for BuildSettings.typeDB & AssetBundleBuild.addressableNames
