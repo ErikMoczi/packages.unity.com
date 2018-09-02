@@ -53,10 +53,10 @@
 }
 
 @mixin slice($top, $right, $bottom, $left) {
-	@if $top != 'auto' {slice-top: $top;}
-	@if $left != 'auto' {slice-left: $left;}
-	@if $bottom != 'auto' {slice-bottom: $bottom;}
-	@if $right != 'auto' {slice-right: $right;}
+	@if $top != 'auto' {-unity-slice-top: $top;}
+	@if $left != 'auto' {-unity-slice-left: $left;}
+	@if $bottom != 'auto' {-unity-slice-bottom: $bottom;}
+	@if $right != 'auto' {-unity-slice-right: $right;}
 }
 
 @mixin slice-box($size) {
@@ -64,10 +64,10 @@
 }
 
 @mixin position($top, $right, $bottom, $left) {
-	@if $top != 'auto' {position-top: $top;}
-	@if $left != 'auto' {position-left: $left;}
-	@if $bottom != 'auto' {position-bottom: $bottom;}
-	@if $right != 'auto' {position-right: $right;}
+	@if $top != 'auto' {top: $top;}
+	@if $left != 'auto' {left: $left;}
+	@if $bottom != 'auto' {bottom: $bottom;}
+	@if $right != 'auto' {right: $right;}
 }
 
 @mixin text-clip() {
@@ -76,17 +76,17 @@
 
 @mixin selected-element() {
 	background-color: $unity-list-selected-background;
-	text-color: $unity-text-color-highlight;
+	color: $unity-text-color-highlight;
 }
 
 @mixin active-tab() {
 	background-color: $unity-background-dark-contrast;
-	text-color: $unity-text-color-highlight;
+	color: $unity-text-color-highlight;
 }
 
 @mixin inactive-tab() {
 	background-color: $unity-background-light-contrast;
-	text-color: $unity-text-color;
+	color: $unity-text-color;
 }
 
 @mixin button($top, $right, $bottom, $left) {
@@ -104,10 +104,10 @@
 		max-height: 0;
 		min-width: 0;
 		max-width: 0;
-		border-top: 0;
-		border-left: 0;
-		border-bottom: 0;
-		border-right: 0;
+		border-top-width: 0;
+		border-left-width: 0;
+		border-bottom-width: 0;
+		border-right-width: 0;
 		min-width: 0;
 		@include border-box(0);
 		@include padding-box(0);
@@ -117,7 +117,7 @@
 	}
 
 	&:hover {
-		text-color: $unity-text-color;
+		color: $unity-text-color;
 	}
 }
 
@@ -142,7 +142,7 @@
 //--------------------------------------------------------------------------------------------------
 
 #container {
-	position-type: absolute;
+	-unity-position: absolute;
 	@include position(0, 0, 0, 0);
 }
 
@@ -156,10 +156,10 @@
 	max-height: 0;
 	min-width: 0;
 	max-width: 0;
-	border-top: 0;
-	border-left: 0;
-	border-bottom: 0;
-	border-right: 0;
+	border-top-width: 0;
+	border-left-width: 0;
+	border-bottom-width: 0;
+	border-right-width: 0;
 	@include border-box(0);
 	@include padding-box(0);
 	@include margin-box(0);
@@ -180,10 +180,10 @@
 	@include padding(1, 3, 1, 3);
 	@include font-small();
 	border-radius: 5;
-	text-alignment: middle-center;
+	-unity-text-align: middle-center;
 
 	border-color: #000000;
-	text-color: #000000;
+	color: #000000;
 }
 
 $spinner-large-size: 32;
@@ -209,7 +209,7 @@ $toolbar-height: 18;
 		.toolbarButton {
 			flex: 1 0 0;
 			font-size: 9;
-			text-alignment: middle-center;
+			-unity-text-align: middle-center;
 			background-image: $toolbar-button-background;
 			@include button-box(0);
 			@include margin(0, -1, 0, 0);
@@ -276,7 +276,7 @@ $toolbar-height: 18;
 		}
 
 		&.placeholder {
-			text-color: $unity-background-dark-contrast;
+			color: $unity-background-dark-contrast;
 		}
 	}
 
@@ -305,7 +305,7 @@ $toolbar-height: 18;
 	flex-direction: row;
 
 	.link {
-		text-color: $link-text-color;
+		color: $link-text-color;
 		background: rgba(0, 0, 0, 0);
 		background-image: none;
 		@include margin-box(0);
@@ -318,12 +318,12 @@ $toolbar-height: 18;
 		@extend .column;
 
 		.title {
-			text-alignment: middle-center;
+			-unity-text-align: middle-center;
 			font-size: 14;
 		}
 
 		.loading {
-			position-type: relative;
+			-unity-position: relative;
 			@include position($spinner-normal-half-size, auto, auto, $spinner-normal-half-size);
 
 			@include border-box(0);
@@ -341,20 +341,20 @@ $toolbar-height: 18;
 	#headerTitle {
 		flex: 1 0 0;
 		font-size: 12;
-		font-style: bold;
-		text-color: $unity-text-color;
+		-unity-font-style: bold;
+		color: $unity-text-color;
 	}
 
 	#headerCaret {
 		flex: 0 0 auto;
 		font-size: 12;
-		font-style: bold;
-		text-color: $unity-text-color;
+		-unity-font-style: bold;
+		color: $unity-text-color;
 		min-width: 16;
 	}
 
 	#spinnerContainer {
-		position-type: absolute;
+		-unity-position: absolute;
 		@include position(3, 0, auto, 2);
 		width: 14;
 
@@ -364,7 +364,7 @@ $toolbar-height: 18;
 	}
 
 	.loading {
-		position-type: relative;
+		-unity-position: relative;
 		@include position($spinner-normal-half-size, auto, auto, $spinner-normal-half-size);
 
 		@include border-box(0);
@@ -399,11 +399,11 @@ $toolbar-height: 18;
 			@include padding(2, 6, 3, 6);
 			@include slice(4, $background-button-slice-middle, 4, $background-button-slice-middle);
 
-			text-alignment: middle-center;
-			border-left: 0;
-			border-top: 0;
-			border-right: 0;
-			border-bottom: 0;
+			-unity-text-align: middle-center;
+			border-left-width: 0;
+			border-top-width: 0;
+			border-right-width: 0;
+			border-bottom-width: 0;
 			background-image: $background-mid-button;
 
 			border-top-right-radius: 0;
@@ -413,7 +413,7 @@ $toolbar-height: 18;
 
 			&.selected {
 				background-image: $background-mid-button-selected;
-				text-color: $unity-text-color-highlight;
+				color: $unity-text-color-highlight;
 			}
 
 			&.first {
@@ -481,7 +481,7 @@ $toolbar-height: 18;
 			@extend .column;
 
 			#VerticalScroller {
-				position-bottom: 0;
+				bottom: 0;
 			}
 
 			#HorizontalScroller {
@@ -489,18 +489,18 @@ $toolbar-height: 18;
 			}
 
 			#ContentViewport {
-				position-bottom: 0;
+				bottom: 0;
 
 				#ContentView {
-					position-right: 0;
-					position-left: 0;
+					right: 0;
+					left: 0;
 				}
 			}
 		}
 
 		#noResult {
 			#noResultText {
-				word-wrap: true;
+				-unity-word-wrap: true;
 			}
 		}
 	}
@@ -520,7 +520,7 @@ $toolbar-height: 18;
 			@include selected-element();
 
 			#packageName, #packageVersion {
-				text-color: $unity-text-color-highlight;
+				color: $unity-text-color-highlight;
 			}
 		}
 
@@ -578,7 +578,7 @@ $toolbar-height: 18;
 		#detailsContainer {
 			flex: 1 0 0;
 			flex-direction: column;
-			position-type: relative;
+			-unity-position: relative;
 		}
 	}
 
@@ -586,13 +586,13 @@ $toolbar-height: 18;
 		flex: 1 0 0;
 
 		#VerticalScroller {
-			position-bottom: 0;
+			bottom: 0;
 		}
 
 		#ContentViewport {
 
 			#ContentView {
-				position-type: absolute;
+				-unity-position: absolute;
 				@include position(0, 0, auto, 0);
 			}
 		}
@@ -614,8 +614,8 @@ $toolbar-height: 18;
 
 					#detailTitle {
 						font-size: 18;
-						font-style: bold;
-						word-wrap: true;
+						-unity-font-style: bold;
+						-unity-word-wrap: true;
 						@include margin(0, 0, 0, 4);
 					}
 				}
@@ -672,8 +672,7 @@ $toolbar-height: 18;
 						@include margin-box(0);
 						@include font-normal();
 						@include padding(2, 4, 3, 4);
-						position-right: -3;
-
+						right: -3;
 						&:hover {
 							text-color: $unity-text-color;
 						}
@@ -705,13 +704,13 @@ $toolbar-height: 18;
 			#detailName {
 				flex: 1 0 0;
 				max-height: 20;
-				font-style: italic;
+				-unity-font-style: italic;
 			}
 
 			#detailPackageStatus {
 				flex: 1 0 0;
-				font-style: bold;
-				word-wrap: true;
+				-unity-font-style: bold;
+				-unity-word-wrap: true;
 			}
 
 			#detailTag {
@@ -720,29 +719,29 @@ $toolbar-height: 18;
 				border-radius: 5;
 				border-color: rgb(180, 180, 180);
 				@include border-box(2);
-				text-alignment: middle-center;
+				-unity-text-align: middle-center;
 			}
 
 			#detailDesc, #detailModuleReference {
 				flex: 1 0 0;
 				@include font-normal();
-				word-wrap: true;
+				-unity-word-wrap: true;
 
 				&.empty {
-					font-style: italic;
+					-unity-font-style: italic;
 				}
 			}
 
 			#detailAuthor {
 				flex: 1 0 0;
 				@include font-normal();
-				word-wrap: true;
+				-unity-word-wrap: true;
 			}
 
 			#detailCategory {
 				flex: 1 0 0;
 				@include font-normal();
-				word-wrap: true;
+				-unity-word-wrap: true;
 
 				@include margin(auto, auto, 5, auto);
 			}
@@ -762,25 +761,25 @@ $toolbar-height: 18;
 				.detailAction {
 					@include margin(auto, 0, auto, 0);
 					@include padding(auto, 2, auto, 2);
-					border-left: 2;
-					border-right: 2;
+					border-left-width: 2;
+					border-right-width: 2;
 				}
 
 				.detailActionSeparator {
 					@include margin(auto, 0, auto, 0);
 					@include padding(auto, 0, auto, 0);
-					border-left: 0;
-					border-right: 0;
+					border-left-width: 0;
+					border-right-width: 0;
 				}
 
 				#thirdPartyNoticeLabel {
 					@include margin(4, 0, 4, 0);
 					@include padding-box(0);
-					word-wrap: true;
+					-unity-word-wrap: true;
 				}
 
 				#viewThirdParty {
-					border-right: 0;
+					border-right-width: 0;
 				}
 			}
 
@@ -796,11 +795,11 @@ $toolbar-height: 18;
 
 			.tag {
 				border-color: $package-tag-color;
-				text-color: $package-tag-color;
+				color: $package-tag-color;
 
 				&.verified {
 					border-color: $package-tag-recommended-color;
-					text-color: $package-tag-recommended-color;
+					color: $package-tag-recommended-color;
 				}
 			}
 
@@ -818,10 +817,10 @@ $toolbar-height: 18;
 	}
 
 	#detailError {
-		position-type: absolute;
+		-unity-position: absolute;
 		@include position(5, 5, auto, 5);
 		min-height: 200;
-		word-wrap: true;
+		-unity-word-wrap: true;
 
 		&.display-none {
 			@include position(0, 0, 0, 0);
@@ -836,7 +835,7 @@ $toolbar-height: 18;
 	}
 
 	#packageStatusBar {
-		position-type: relative;
+		-unity-position: relative;
 
 		flex: 0 0 auto;
 		@include margin(2, 0, 0, 0);
@@ -888,7 +887,7 @@ $toolbar-height: 18;
 	}
 
 	#packageAddFromUrlField {
-		position-type: absolute;
+		-unity-position: absolute;
 		@include position(-35, 0, 0, 0);
 	}
 
@@ -906,7 +905,7 @@ $toolbar-height: 18;
 		#urlTextField {
 			flex: 1 0 0;
 			height: 20;
-			text-alignment: middle-left;
+			-unity-text-align: middle-left;
 		}
 
 		#addFromUrlButton {
@@ -926,8 +925,8 @@ $toolbar-height: 18;
 
 	#alertMessage {
 		flex: 1 0 0;
-		text-color: $unity-text-color-highlight;
-		word-wrap: true;
+		color: $unity-text-color-highlight;
+		-unity-word-wrap: true;
 		@include text-clip();
 	}
 
