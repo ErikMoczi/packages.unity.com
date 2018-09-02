@@ -61,13 +61,20 @@ namespace UnityEngine.ResourceManagement
 
         static List<IResourceLocator> s_resourceLocators = new List<IResourceLocator>();
         static List<IResourceProvider> s_resourceProviders = new List<IResourceProvider>();
-        static List<IAsyncOperation> s_initializationOperations = new List<IAsyncOperation>();
         static Action s_initializationCompletionCallback;
         static bool s_initializationCompleted = false;
+
         /// <summary>
         /// This is used to tell the resourcemanager that all initialization events have completed. It will normally be called from loading catalogs, but tests will need to call it before running.
         /// </summary>
+
         static public void SetReady()
+        {
+            if(!s_initializationCompleted)
+                DelayedActionManager.AddAction((Action)InvokeReadyCallbacks);
+        }
+
+        static void InvokeReadyCallbacks()
         {
             s_initializationCompleted = true;
             try
@@ -287,30 +294,6 @@ namespace UnityEngine.ResourceManagement
         /// </summary>
         /// <value>The scene provider.</value>
         public static ISceneProvider SceneProvider { get; set; }
-
-        /// <summary>
-        /// Queues a resource locator load operation. While there are unfinished load operatiosn for resource locations, all provide
-        /// load operations will be defered until the queue is empty.
-        /// </summary>
-        /// <param name="operation">An IAsyncOperation that loads an IResourceLocator</param>
-        public static void QueueInitializationOperation(IAsyncOperation operation)
-        {
-            if (operation == null)
-                throw new ArgumentNullException("operation");
-
-            s_initializationCompleted = false;
-            s_initializationOperations.Add(operation);
-            operation.Completed += (op2) => RemoveInitializationOperation(op2);
-        }
-
-        internal static void RemoveInitializationOperation(IAsyncOperation operation)
-        {
-            if (operation == null)
-                throw new ArgumentNullException("operation");
-            s_initializationOperations.Remove(operation);
-            if (s_initializationOperations.Count == 0)
-                SetReady();
-        }
 
         /// <summary>
         /// Resolve an <paramref name="key"/> to an <see cref="IResourceLocation"/>
@@ -544,8 +527,6 @@ namespace UnityEngine.ResourceManagement
 
         static IAsyncOperation<IList<TObject>> StartInternalAsyncOp<TObject, TKey>(IList<TKey> keyList, Func<IList<IResourceLocation>, IAsyncOperation<IList<TObject>>> asyncFunction)
         {
-            Debug.Assert(s_initializationOperations != null, "ResourceManager.StartInternalAsyncOp - s_initializationOperations == null.");
-
             if (asyncFunction == null)
                 throw new ArgumentNullException("asyncFunction");
 
@@ -681,8 +662,6 @@ namespace UnityEngine.ResourceManagement
         internal static IAsyncOperation<IList<TObject>> InstantiateAllAsync<TObject, TKey>(IList<TKey> keys, Action<IAsyncOperation<TObject>> callback, InstantiationParameters instantiateParameters)
             where TObject : Object
         {
-            Debug.Assert(s_initializationOperations != null, "ResourceManager.InstantiateAllAsync - s_initializationOperations == null.");
-
             if (!s_initializationCompleted)
             {
                 var locationOp = AsyncOperationCache.Instance.Acquire<InstanceLocationListOperation<TKey, TObject>, object>();

@@ -5,8 +5,8 @@ namespace UnityEngine.ResourceManagement
 {
     internal class VirtualBundledAssetProvider : ResourceProviderBase
     {
-        public int loadSpeed;
-        public VirtualBundledAssetProvider(int speed) { loadSpeed = speed; }
+        public uint loadSpeed;
+        public VirtualBundledAssetProvider(uint speed) { loadSpeed = speed; }
         public override string ProviderId
         {
             get { return typeof(BundledAssetProvider).FullName; }
@@ -16,7 +16,7 @@ namespace UnityEngine.ResourceManagement
             where TObject : class
         {
             System.Action<IAsyncOperation<TObject>> onCompleteAction;
-            public InternalProviderOperation<TObject> Start(IResourceLocation location, int speed, IAsyncOperation<IList<object>> loadDependencyOperation)
+            public InternalProviderOperation<TObject> Start(IResourceLocation location, uint speed, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
                 Result = null;
                 if (onCompleteAction == null)

@@ -17,6 +17,21 @@ public class ResourceManagerTests : IPrebuildSetup
     private string k_ResourcesFolder = "Assets/TestAssetsToBeDeleted/TestResources/Resources/";
 
     private Dictionary<string, bool> k_GeneratedFilesToCleanup;
+    bool m_resourceManagerInitialized = false;
+
+    IEnumerator WaitForRMInit()
+    {
+        while (!m_resourceManagerInitialized)
+            yield return null;
+
+        ResourceManager.ResourceLocators.Clear();
+        ResourceManager.ResourceProviders.Clear();
+        ResourceManager.ResourceProviders.Add(new LegacyResourcesProvider());
+        ResourceManager.ResourceLocators.Add(new LegacyResourcesLocator());
+        ResourceManager.ResourceLocators.Add(new ResourceLocationLocator());
+        ResourceManager.InstanceProvider = new InstanceProvider();
+
+    }
 
     public void Setup()
     {
@@ -51,7 +66,12 @@ public class ResourceManagerTests : IPrebuildSetup
                 k_GeneratedFilesToCleanup[path] = true;
         }
 
-        ResourceManager.SetReady();
+        ResourceManager.InitializationComplete += OnResourceManagerInitilized;
+    }
+
+    private void OnResourceManagerInitilized()
+    {
+        m_resourceManagerInitialized = true;
     }
 
     [OneTimeTearDown]
@@ -69,11 +89,10 @@ public class ResourceManagerTests : IPrebuildSetup
         }
     }
 
-    [UnityTest]
+[UnityTest]
     public IEnumerator CanLoadAssetsFrom_ResourcesFolder_WithCallback()
     {
-        ResourceManager.ResourceProviders.Add(new LegacyResourcesProvider());
-        ResourceManager.ResourceLocators.Add(new LegacyResourcesLocator());
+        yield return WaitForRMInit();
 
         string cubePath = k_ResourcesFolder + "Cube.prefab";
         GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -96,8 +115,7 @@ public class ResourceManagerTests : IPrebuildSetup
     [UnityTest]
     public IEnumerator CanLoadFrom_ResourceFolder_WithAsyncOperation()
     {
-        ResourceManager.ResourceProviders.Add(new LegacyResourcesProvider());
-        ResourceManager.ResourceLocators.Add(new LegacyResourcesLocator());
+        yield return WaitForRMInit();
 
         string cubePath = k_ResourcesFolder + "Cube.prefab";
         GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -118,8 +136,7 @@ public class ResourceManagerTests : IPrebuildSetup
     [UnityTest]
     public IEnumerator CanLoadAllAssets_FromResourcesFolder()
     {
-        ResourceManager.ResourceProviders.Add(new LegacyResourcesProvider());
-        ResourceManager.ResourceLocators.Add(new LegacyResourcesLocator());
+        yield return WaitForRMInit();
 
         string cubePath = k_ResourcesFolder + "Cube.prefab";
         string cube1Path = k_ResourcesFolder + "Cube1.prefab";
@@ -148,9 +165,7 @@ public class ResourceManagerTests : IPrebuildSetup
     [UnityTest]
     public IEnumerator GetResourceLocation()
     {
-        ResourceManager.ResourceProviders.Add(new LegacyResourcesProvider());
-        ResourceManager.ResourceLocators.Add(new LegacyResourcesLocator());
-        ResourceManager.ResourceLocators.Add(new ResourceLocationLocator());
+        yield return WaitForRMInit();
 
         string cubePath = k_ResourcesFolder + "Cube.prefab";
         GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -168,12 +183,10 @@ public class ResourceManagerTests : IPrebuildSetup
         DestroyAsset(cubePath);
     }
 
-    [Test]
-    public void GetResourceProvider()
+    [UnityTest]
+    public IEnumerator GetResourceProvider()
     {
-        IResourceProvider p = new LegacyResourcesProvider();
-        ResourceManager.ResourceProviders.Add(p);
-        ResourceManager.ResourceLocators.Add(new LegacyResourcesLocator());
+        yield return WaitForRMInit();
 
         string cubePath = k_ResourcesFolder + "Cube.prefab";
         GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -184,16 +197,14 @@ public class ResourceManagerTests : IPrebuildSetup
         IResourceLocation location = ResourceManager.GetResourceLocation("Cube");
         IResourceProvider provider = ResourceManager.GetResourceProvider<GameObject>(location);
 
-        Assert.AreEqual(p.ProviderId, provider.ProviderId);
+        Assert.AreEqual(typeof(LegacyResourcesProvider).FullName, provider.ProviderId);
         DestroyAsset(cubePath);
     }
 
     [UnityTest]
     public IEnumerator InstansiateObject_Async()
     {
-        ResourceManager.ResourceProviders.Add(new LegacyResourcesProvider());
-        ResourceManager.ResourceLocators.Add(new LegacyResourcesLocator());
-        ResourceManager.InstanceProvider = new InstanceProvider();
+        yield return WaitForRMInit();
 
         string cubePath = k_ResourcesFolder + "Cube1.prefab";
         GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -214,9 +225,7 @@ public class ResourceManagerTests : IPrebuildSetup
     [UnityTest]
     public IEnumerator InstansiateAllObjects_Async()
     {
-        ResourceManager.ResourceProviders.Add(new LegacyResourcesProvider());
-        ResourceManager.ResourceLocators.Add(new LegacyResourcesLocator());
-        ResourceManager.InstanceProvider = new InstanceProvider();
+        yield return WaitForRMInit();
 
         string cubePath = k_ResourcesFolder + "Cube.prefab";
         string cube1Path = k_ResourcesFolder + "Cube1.prefab";
@@ -254,9 +263,7 @@ public class ResourceManagerTests : IPrebuildSetup
     [UnityTest]
     public IEnumerator LoadAllDependencies_FromResourceLocation()
     {
-        IResourceProvider provider = new LegacyResourcesProvider();
-        ResourceManager.ResourceProviders.Add(provider);
-        ResourceManager.ResourceLocators.Add(new LegacyResourcesLocator());
+        yield return WaitForRMInit();
 
         string cubePath = k_ResourcesFolder + "Cube.prefab";
         string cube1Path = k_ResourcesFolder + "Cube1.prefab";
@@ -271,7 +278,7 @@ public class ResourceManagerTests : IPrebuildSetup
         IResourceLocation dep1 = ResourceManager.GetResourceLocation("Cube1");
         IResourceLocation dep2 = ResourceManager.GetResourceLocation("Cube2");
         IResourceLocation[] deps = new IResourceLocation[] { dep1, dep2 };
-        IResourceLocation location = new ResourceLocationBase<string>("Cube", "Cube", provider.ProviderId, deps);
+        IResourceLocation location = new ResourceLocationBase<string>("Cube", "Cube", typeof(LegacyResourcesProvider).FullName, deps);
 
         List<GameObject> loadedDependencies = new List<GameObject>();
         IAsyncOperation asyncOperation = ResourceManager.PreloadDependenciesAsync(location, (op) =>
@@ -290,9 +297,7 @@ public class ResourceManagerTests : IPrebuildSetup
     [UnityTest]
     public IEnumerator ReleaseInstance()
     {
-        ResourceManager.ResourceProviders.Add(new LegacyResourcesProvider());
-        ResourceManager.ResourceLocators.Add(new LegacyResourcesLocator());
-        ResourceManager.InstanceProvider = new InstanceProvider();
+        yield return WaitForRMInit();
 
         string cube1Path = k_ResourcesFolder + "Cube1.prefab";
         GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -314,8 +319,7 @@ public class ResourceManagerTests : IPrebuildSetup
     [UnityTest]
     public IEnumerator LoadAllObjects_Async()
     {
-        ResourceManager.ResourceProviders.Add(new LegacyResourcesProvider());
-        ResourceManager.ResourceLocators.Add(new LegacyResourcesLocator());
+        yield return WaitForRMInit();
 
         string cubePath = k_ResourcesFolder + "Cube.prefab";
         string cube1Path = k_ResourcesFolder + "Cube1.prefab";

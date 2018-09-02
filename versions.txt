@@ -52,3 +52,4 @@
 2.0.8-preview
 2.0.9-preview
 2.0.11-preview
+2.0.12-preview

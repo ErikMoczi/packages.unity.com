@@ -10,8 +10,8 @@ namespace UnityEngine.ResourceManagement
         Dictionary<string, LoadAssetBundleOp> m_loadBundleOperations = new Dictionary<string, LoadAssetBundleOp>();
         Dictionary<string, VirtualAssetBundle> m_updatingBundles = new Dictionary<string, VirtualAssetBundle>();
 
-        int m_remoteLoadSpeed = 1024 * 100; //100 KB per second
-        int m_localLoadSpeed = 1024 * 1024 * 10; //10 MB per second
+        uint m_remoteLoadSpeed = 1024 * 100; //100 KB per second
+        uint m_localLoadSpeed = 1024 * 1024 * 10; //10 MB per second
 
         private void Awake()
         {

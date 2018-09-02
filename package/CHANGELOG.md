@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.0.12-preview] - 2018-03-28
+- fixed unit tests that were attempting to utilize data before initialization was done.
+
 ## [2.0.11-preview] - 2018-03-27
 - Fixed race condition bug during wait-for-initialization.
 - unit test updates

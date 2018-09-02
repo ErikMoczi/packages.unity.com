@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement
 {
-    internal class DelayedActionManager : MonoBehaviour
+    public class DelayedActionManager : MonoBehaviour
     {
 
         struct DelegateInfo
@@ -67,7 +67,7 @@ namespace UnityEngine.ResourceManagement
             return new LinkedListNode<DelegateInfo>(del);
         }
 
-        public static void AddAction(Delegate action, float delay, params object[] parameters)
+        public static void AddAction(Delegate action, float delay = 0, params object[] parameters)
         {
             if (m_instance == null)
             {

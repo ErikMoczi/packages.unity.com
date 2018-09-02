@@ -12,7 +12,7 @@ namespace UnityEngine.ResourceManagement
         [SerializeField]
         bool m_isLocal;
         [SerializeField]
-        int m_size;
+        uint m_size;
         [SerializeField]
         List<string> m_assets = new List<string>();
         [SerializeField]
@@ -25,7 +25,7 @@ namespace UnityEngine.ResourceManagement
         public string Name { get { return m_name; } }
 
         public VirtualAssetBundle() {}
-        public VirtualAssetBundle(string name, bool local, int size, IEnumerable<string> assets)
+        public VirtualAssetBundle(string name, bool local, uint size, IEnumerable<string> assets)
         {
             m_name = name;
             m_size = size;
@@ -54,7 +54,7 @@ namespace UnityEngine.ResourceManagement
 
         }
 
-        public IAsyncOperation<TObject> LoadAssetAsync<TObject>(IResourceLocation location, int speed) where TObject : class
+        public IAsyncOperation<TObject> LoadAssetAsync<TObject>(IResourceLocation location, uint speed) where TObject : class
         {
             if (location == null)
                 throw new ArgumentException("IResourceLocation location cannot be null.");
@@ -115,7 +115,7 @@ namespace UnityEngine.ResourceManagement
         }
 
         //TODO: this needs to take into account the load of the entire system, not just a single asset load
-        internal float GetLoadTime(int localLoadSpeed, int remoteLoadSpeed)
+        internal float GetLoadTime(uint localLoadSpeed, uint remoteLoadSpeed)
         {
             if (m_isLocal)
                 return m_size / (float)localLoadSpeed;
