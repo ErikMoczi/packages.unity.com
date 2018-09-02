@@ -53,6 +53,7 @@ namespace UnityEngine.AddressableAssets
                     if (op.Result != null)
                     {
                         Addressables.ResourceLocators.Add(op.Result.CreateLocator());
+                        Addressables.ResourceLocators.Add(new AssetReferenceLocator());
                         SetResult(true);
                         InvokeCompletionEvent();
                     }

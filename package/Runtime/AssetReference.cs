@@ -110,7 +110,7 @@ namespace UnityEngine.AddressableAssets
         }
 #endif
     }
-    /*
+    
     internal class AssetReferenceLocator : IResourceLocator
     {
         public bool Locate(object key, out IList<IResourceLocation> locations)
@@ -119,10 +119,10 @@ namespace UnityEngine.AddressableAssets
             var ar = key as AssetReference;
             if (ar == null)
                 return false;
-            return Addressables.GetResourceLocations(ar.assetGUID, out locations);
+            return Addressables.GetResourceLocations(ar.RuntimeKey, out locations);
         }
     }
-    */
+    
     /// <summary>
     /// TODO - doc
     /// </summary>
