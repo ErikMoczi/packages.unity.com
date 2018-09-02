@@ -1,8 +1,3 @@
-// Copyright (C) 2014 - 2016 Stephan Bouchard - All Rights Reserved
-// This code can only be used under the standard Unity Asset Store End User License Agreement
-// A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
-
-
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;
@@ -207,7 +202,8 @@ namespace TMPro.EditorUtilities
             m_targetMaterial = m_textComponent.fontSharedMaterial;
 
             // Set material inspector visibility
-            UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(m_targetMaterial, m_foldout.materialInspector);
+            if (m_targetMaterial != null)
+                UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(m_targetMaterial, m_foldout.materialInspector);
 
             // Find all Material Presets matching the current Font Asset Material
             m_materialPresetNames = GetMaterialPresets();
@@ -219,7 +215,8 @@ namespace TMPro.EditorUtilities
             //Debug.Log("OnDisable() for GUIEditor Panel called.");
 
             // Set material inspector visibility
-            m_foldout.materialInspector = UnityEditorInternal.InternalEditorUtility.GetIsInspectorExpanded(m_targetMaterial);
+            if (m_targetMaterial != null)
+                m_foldout.materialInspector = UnityEditorInternal.InternalEditorUtility.GetIsInspectorExpanded(m_targetMaterial);
 
             Undo.undoRedoPerformed -= OnUndoRedo;  
         }
