@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace UnityEditor
 {
-    public class StandardEventsImporter : IPreprocessBuild
+    public class StandardEventsImporter : IPreprocessBuildWithReport
     {
         public int callbackOrder { get { return 0; } }
         public void OnPreprocessBuild(Build.Reporting.BuildReport report)
