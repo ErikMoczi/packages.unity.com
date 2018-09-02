@@ -225,6 +225,11 @@ namespace UnityEngine.AddressableAssets
                 Debug.LogWarningFormat("RecordInstance() - parameter location cannot be null.");
                 return;
             }
+            if (!gameObject.scene.IsValid() || !gameObject.scene.isLoaded)
+            {
+                Debug.LogWarningFormat("RecordInstance() - scene is not valid and loaded " + gameObject.scene);
+                return;
+            }
 
             s_instanceToLocationMap.Add(gameObject, location);
             s_instanceToScene.Add(gameObject, gameObject.scene);
@@ -325,6 +330,17 @@ namespace UnityEngine.AddressableAssets
         {
             if (!InitializationOperation.IsDone)
                 return AsyncOperationCache.Instance.Acquire<ChainOperation<TObject, bool>>().Start(InitializationOperation, (op) => LoadAsset<TObject>(key)).Retain();
+
+            if (typeof(IResourceLocation).IsAssignableFrom(typeof(TObject)))
+            {
+                var op = new EmptyOperation<IResourceLocation>();
+                IList<IResourceLocation> locs;
+                if(GetResourceLocations(key, out locs))
+                    op.SetResult(locs[0]);
+                return op as IAsyncOperation<TObject>;
+            }
+            
+
 
             IList<IResourceLocation> locations;
             if(GetResourceLocations(key, out locations))
@@ -661,7 +677,7 @@ namespace UnityEngine.AddressableAssets
         public static IAsyncOperation<Scene> LoadScene(object key, LoadSceneMode loadMode = LoadSceneMode.Single)
         {
             if (!InitializationOperation.IsDone)
-                return AsyncOperationCache.Instance.Acquire<ChainOperation<Scene, bool>>().Start(InitializationOperation, (op) => LoadScene(key)).Retain();
+                return AsyncOperationCache.Instance.Acquire<ChainOperation<Scene, bool>>().Start(InitializationOperation, (op) => LoadScene(key, loadMode)).Retain();
 
             IList<IResourceLocation> locations;
             if (!GetResourceLocations(key, out locations))

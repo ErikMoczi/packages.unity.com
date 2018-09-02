@@ -9,7 +9,11 @@ namespace UnityEngine.AddressableAssets
     {
         public InitializationOperation()
         {
-            AddResourceProviders();
+            ResourceManager.SceneProvider = new SceneProvider();
+            ResourceManager.ResourceProviders.Add(new JsonAssetProvider());
+            ResourceManager.ResourceProviders.Add(new TextDataProvider());
+            ResourceManager.ResourceProviders.Add(new ContentCatalogProvider());
+
             var playerSettingsLocation = AAConfig.ExpandPathWithGlobalVariables(ResourceManagerRuntimeData.PlayerSettingsLoadLocation);
             var runtimeDataLocation = new ResourceLocationBase("RuntimeData", playerSettingsLocation, typeof(JsonAssetProvider).FullName);
             Context = runtimeDataLocation;
@@ -21,6 +25,9 @@ namespace UnityEngine.AddressableAssets
             if (op.Result == null)
                 throw new Exception("Unable to load runtime data.");
             var rtd = op.Result;
+            AddResourceProviders(rtd.assetCacheSize, rtd.assetCacheAge, rtd.bundleCacheSize, rtd.bundleCacheAge);
+
+
             DiagnosticEventCollector.ProfileEvents = rtd.profileEvents;
             AAConfig.AddCachedValue("ContentVersion", rtd.contentVersion);
             if (rtd.usePooledInstanceProvider)
@@ -43,7 +50,6 @@ namespace UnityEngine.AddressableAssets
                 {
                     if (op.Result != null)
                     {
-                        Debug.LogFormat("Loaded content catalog from {0}", op.Context);
                         Addressables.ResourceLocators.Clear();
                         Addressables.ResourceLocators.Add(op.Result.Create());
                         Addressables.ResourceLocators.Add(new AssetReferenceLocator());
@@ -67,19 +73,14 @@ namespace UnityEngine.AddressableAssets
             }
         }
 
-        private void AddResourceProviders()
+        private void AddResourceProviders(int assetCacheSize, float assetCacheAge, int bundleCacheSize, float bundleCacheAge)
         {
-            ResourceManager.SceneProvider = new SceneProvider();
-            
-            ResourceManager.ResourceProviders.Add(new JsonAssetProvider());
-            ResourceManager.ResourceProviders.Add(new TextDataProvider());
-            ResourceManager.ResourceProviders.Add(new ContentCatalogProvider());
 
             if (!Application.isEditor)
             {
-                ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new BundledAssetProvider()));
-                ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new LocalAssetBundleProvider()));
-                ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new RemoteAssetBundleProvider()));
+                ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new BundledAssetProvider(), assetCacheSize, assetCacheAge));
+                ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new LocalAssetBundleProvider(), bundleCacheSize, bundleCacheAge));
+                ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new RemoteAssetBundleProvider(), bundleCacheSize, bundleCacheAge));
             }
             else
             {
@@ -88,16 +89,16 @@ namespace UnityEngine.AddressableAssets
                 switch (playMode)
                 {
                     case ResourceManagerRuntimeData.EditorPlayMode.FastMode:
-                        ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new AssetDatabaseProvider()));
+                        ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new AssetDatabaseProvider(), assetCacheSize, assetCacheAge));
                         break;
                     case ResourceManagerRuntimeData.EditorPlayMode.VirtualMode:
-                        VirtualAssetBundleManager.AddProviders(AAConfig.ExpandPathWithGlobalVariables);
+                        VirtualAssetBundleManager.AddProviders(AAConfig.ExpandPathWithGlobalVariables, assetCacheSize, assetCacheAge, bundleCacheSize, bundleCacheAge);
                         break;
                     case ResourceManagerRuntimeData.EditorPlayMode.PackedMode:
                         {
-                            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new BundledAssetProvider()));
-                            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new LocalAssetBundleProvider()));
-                            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new RemoteAssetBundleProvider()));
+                            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new BundledAssetProvider(), assetCacheSize, assetCacheAge));
+                            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new LocalAssetBundleProvider(), bundleCacheSize, bundleCacheAge));
+                            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new RemoteAssetBundleProvider(), bundleCacheSize, bundleCacheAge));
                         }
                         break;
                 }

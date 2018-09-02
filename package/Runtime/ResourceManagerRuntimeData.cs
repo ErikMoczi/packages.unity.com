@@ -48,7 +48,10 @@ namespace UnityEngine.AddressableAssets
         /// TODO - doc
         /// </summary>
         public string contentVersion = "undefined";
- 
+        public int assetCacheSize = 25;
+        public float assetCacheAge = 5;
+        public int bundleCacheSize = 5;
+        public float bundleCacheAge = 5;
 #if UNITY_EDITOR
 
         static string LibrarySettingsLocation(string mode)

@@ -63,7 +63,7 @@ public class AddressablesVirtualModeTests : AddressablesBaseTests
             bundle.OnAfterDeserialize();
             virtualBundleData.AssetBundles.Add(bundle);
         }
-        new GameObject("AssetBundleSimulator", typeof(VirtualAssetBundleManager)).GetComponent<VirtualAssetBundleManager>().Initialize(virtualBundleData, (s) => s);
+        new GameObject("AssetBundleSimulator", typeof(VirtualAssetBundleManager)).GetComponent<VirtualAssetBundleManager>().Initialize(virtualBundleData, (s) => s, 0, 0, 0, 0);
     }
 
 }
