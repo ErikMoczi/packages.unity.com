@@ -1,10 +1,23 @@
 // GENERATED CODE
+using System;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
+
 #pragma warning disable 0660, 0661
+
 namespace Unity.Mathematics
 {
-    public partial struct float4 : System.IEquatable<float4>
+    [DebuggerTypeProxy(typeof(float4.DebuggerProxy))]
+    [System.Serializable]
+    public partial struct float4 : System.IEquatable<float4>, IFormattable
     {
+        public float x;
+        public float y;
+        public float z;
+        public float w;
+
+        public static readonly float4 zero = new float4(0.0f,   0.0f,   0.0f,   0.0f);
+
         // constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float4(float x, float y, float z, float w)
@@ -78,6 +91,108 @@ namespace Unity.Mathematics
             this.w = xyzw.w;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float4(float v)
+        {
+            this.x = v;
+            this.y = v;
+            this.z = v;
+            this.w = v;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float4(bool v)
+        {
+            this.x = v ? 1.0f : 0.0f;
+            this.y = v ? 1.0f : 0.0f;
+            this.z = v ? 1.0f : 0.0f;
+            this.w = v ? 1.0f : 0.0f;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float4(bool4 v)
+        {
+            this.x = v.x ? 1.0f : 0.0f;
+            this.y = v.y ? 1.0f : 0.0f;
+            this.z = v.z ? 1.0f : 0.0f;
+            this.w = v.w ? 1.0f : 0.0f;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float4(int v)
+        {
+            this.x = v;
+            this.y = v;
+            this.z = v;
+            this.w = v;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float4(int4 v)
+        {
+            this.x = v.x;
+            this.y = v.y;
+            this.z = v.z;
+            this.w = v.w;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float4(uint v)
+        {
+            this.x = v;
+            this.y = v;
+            this.z = v;
+            this.w = v;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float4(uint4 v)
+        {
+            this.x = v.x;
+            this.y = v.y;
+            this.z = v.z;
+            this.w = v.w;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float4(double v)
+        {
+            this.x = (float)v;
+            this.y = (float)v;
+            this.z = (float)v;
+            this.w = (float)v;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float4(double4 v)
+        {
+            this.x = (float)v.x;
+            this.y = (float)v.y;
+            this.z = (float)v.z;
+            this.w = (float)v.w;
+        }
+
+
+        // conversions
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator float4(float v) { return new float4(v); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator float4(bool v) { return new float4(v); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator float4(bool4 v) { return new float4(v); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator float4(int v) { return new float4(v); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator float4(int4 v) { return new float4(v); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator float4(uint v) { return new float4(v); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator float4(uint4 v) { return new float4(v); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator float4(double v) { return new float4(v); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator float4(double4 v) { return new float4(v); }
+
 
         // mul
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -111,6 +226,24 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float4 operator / (float lhs, float4 rhs) { return new float4 (lhs / rhs.x, lhs / rhs.y, lhs / rhs.z, lhs / rhs.w); }
 
+        // mod
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 operator % (float4 lhs, float4 rhs) { return new float4 (lhs.x % rhs.x, lhs.y % rhs.y, lhs.z % rhs.z, lhs.w % rhs.w); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 operator % (float4 lhs, float rhs) { return new float4 (lhs.x % rhs, lhs.y % rhs, lhs.z % rhs, lhs.w % rhs); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 operator % (float lhs, float4 rhs) { return new float4 (lhs % rhs.x, lhs % rhs.y, lhs % rhs.z, lhs % rhs.w); }
+
+        // increment
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 operator ++ (float4 val) { return new float4 (++val.x, ++val.y, ++val.z, ++val.w); }
+
+
+        // decrement
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 operator -- (float4 val) { return new float4 (--val.x, --val.y, --val.z, --val.w); }
+
+
         // smaller 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator < (float4 lhs, float4 rhs) { return new bool4 (lhs.x < rhs.x, lhs.y < rhs.y, lhs.z < rhs.z, lhs.w < rhs.w); }
@@ -142,9 +275,13 @@ namespace Unity.Mathematics
         // neg 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float4 operator - (float4 val) { return new float4 (-val.x, -val.y, -val.z, -val.w); }
+
+
         // plus 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float4 operator + (float4 val) { return new float4 (+val.x, +val.y, +val.z, +val.w); }
+
+
         // equal 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator == (float4 lhs, float4 rhs) { return new bool4 (lhs.x == rhs.x, lhs.y == rhs.y, lhs.z == rhs.z, lhs.w == rhs.w); }
@@ -160,31 +297,6 @@ namespace Unity.Mathematics
         public static bool4 operator != (float4 lhs, float rhs) { return new bool4 (lhs.x != rhs, lhs.y != rhs, lhs.z != rhs, lhs.w != rhs); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator != (float lhs, float4 rhs) { return new bool4 (lhs != rhs.x, lhs != rhs.y, lhs != rhs.z, lhs != rhs.w); }
-
-        // Equals 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(float4 rhs)  { return x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w; }
-
-        // [int index] 
-        unsafe public float this[int index]
-        {
-            get
-            {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                if ((uint)index >= 4)
-                    throw new System.ArgumentException("index must be between[0...3]");
-#endif
-                fixed (float4* array = &this) { return ((float*)array)[index]; }
-            }
-            set
-            {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                if ((uint)index >= 4)
-                    throw new System.ArgumentException("index must be between[0...3]");
-#endif
-                fixed (float* array = &x) { array[index] = value; }
-            }
-        }
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public float4 xxxx
         {
@@ -2993,6 +3105,67 @@ namespace Unity.Mathematics
         }
 
 
+
+        // [int index] 
+        unsafe public float this[int index]
+        {
+            get
+            {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                if ((uint)index >= 4)
+                    throw new System.ArgumentException("index must be between[0...3]");
+#endif
+                fixed (float4* array = &this) { return ((float*)array)[index]; }
+            }
+            set
+            {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                if ((uint)index >= 4)
+                    throw new System.ArgumentException("index must be between[0...3]");
+#endif
+                fixed (float* array = &x) { array[index] = value; }
+            }
+        }
+
+        // Equals 
+        public bool Equals(float4 rhs) { return x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override bool Equals(object o) { return Equals((float4)o); }
+
+
+        // GetHashCode 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override int GetHashCode() { return (int)math.hash(this); }
+
+
+        // ToString 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override string ToString()
+        {
+            return string.Format("float4({0}f, {1}f, {2}f, {3}f)", x, y, z, w);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public string ToString(string format, IFormatProvider formatProvider)
+        {
+            return string.Format("float4({0}f, {1}f, {2}f, {3}f)", x.ToString(format, formatProvider), y.ToString(format, formatProvider), z.ToString(format, formatProvider), w.ToString(format, formatProvider));
+        }
+
+        internal sealed class DebuggerProxy
+        {
+            public float x;
+            public float y;
+            public float z;
+            public float w;
+            public DebuggerProxy(float4 v)
+            {
+                x = v.x;
+                y = v.y;
+                z = v.z;
+                w = v.w;
+            }
+        }
+
     }
 
     public static partial class math
@@ -3020,6 +3193,104 @@ namespace Unity.Mathematics
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float4 float4(float4 xyzw) { return new float4(xyzw); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 float4(float v) { return new float4(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 float4(bool v) { return new float4(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 float4(bool4 v) { return new float4(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 float4(int v) { return new float4(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 float4(int4 v) { return new float4(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 float4(uint v) { return new float4(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 float4(uint4 v) { return new float4(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 float4(double v) { return new float4(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 float4(double4 v) { return new float4(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint hash(float4 v)
+        {
+            return csum(asuint(v) * uint4(0xAF836EE1u, 0xB130C137u, 0x54834775u, 0x7C022221u)) + 0xA2D00EDFu;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint4 hash_wide(float4 v)
+        {
+            return (asuint(v) * uint4(0xA8977779u, 0x9F1C739Bu, 0x4B1BD187u, 0x9DF50593u)) + 0xF18EEB85u;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static float select_shuffle_component(float4 a, float4 b, ShuffleComponent component)
+        {
+            switch(component)
+            {
+                case ShuffleComponent.LeftX:
+                    return a.x;
+                case ShuffleComponent.LeftY:
+                    return a.y;
+                case ShuffleComponent.LeftZ:
+                    return a.z;
+                case ShuffleComponent.LeftW:
+                    return a.w;
+                case ShuffleComponent.RightX:
+                    return b.x;
+                case ShuffleComponent.RightY:
+                    return b.y;
+                case ShuffleComponent.RightZ:
+                    return b.z;
+                case ShuffleComponent.RightW:
+                    return b.w;
+                default:
+                    throw new System.ArgumentException("Invalid shuffle component: " + component);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float shuffle(float4 a, float4 b, ShuffleComponent x)
+        {
+            return select_shuffle_component(a, b, x);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float2 shuffle(float4 a, float4 b, ShuffleComponent x, ShuffleComponent y)
+        {
+            return float2(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float3 shuffle(float4 a, float4 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z)
+        {
+            return float3(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y),
+                select_shuffle_component(a, b, z));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 shuffle(float4 a, float4 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z, ShuffleComponent w)
+        {
+            return float4(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y),
+                select_shuffle_component(a, b, z),
+                select_shuffle_component(a, b, w));
+        }
 
     }
 }

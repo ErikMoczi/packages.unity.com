@@ -1,10 +1,22 @@
 // GENERATED CODE
+using System;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
+
 #pragma warning disable 0660, 0661
+
 namespace Unity.Mathematics
 {
-    public partial struct int3 : System.IEquatable<int3>
+    [DebuggerTypeProxy(typeof(int3.DebuggerProxy))]
+    [System.Serializable]
+    public partial struct int3 : System.IEquatable<int3>, IFormattable
     {
+        public int x;
+        public int y;
+        public int z;
+
+        public static readonly int3 zero = new int3(0,   0,   0);
+
         // constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int3(int x, int y, int z)
@@ -37,6 +49,99 @@ namespace Unity.Mathematics
             this.y = xyz.y;
             this.z = xyz.z;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int3(int v)
+        {
+            this.x = v;
+            this.y = v;
+            this.z = v;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int3(bool v)
+        {
+            this.x = v ? 1 : 0;
+            this.y = v ? 1 : 0;
+            this.z = v ? 1 : 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int3(bool3 v)
+        {
+            this.x = v.x ? 1 : 0;
+            this.y = v.y ? 1 : 0;
+            this.z = v.z ? 1 : 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int3(uint v)
+        {
+            this.x = (int)v;
+            this.y = (int)v;
+            this.z = (int)v;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int3(uint3 v)
+        {
+            this.x = (int)v.x;
+            this.y = (int)v.y;
+            this.z = (int)v.z;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int3(float v)
+        {
+            this.x = (int)v;
+            this.y = (int)v;
+            this.z = (int)v;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int3(float3 v)
+        {
+            this.x = (int)v.x;
+            this.y = (int)v.y;
+            this.z = (int)v.z;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int3(double v)
+        {
+            this.x = (int)v;
+            this.y = (int)v;
+            this.z = (int)v;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int3(double3 v)
+        {
+            this.x = (int)v.x;
+            this.y = (int)v.y;
+            this.z = (int)v.z;
+        }
+
+
+        // conversions
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator int3(int v) { return new int3(v); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator int3(bool v) { return new int3(v); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator int3(bool3 v) { return new int3(v); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator int3(uint v) { return new int3(v); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator int3(uint3 v) { return new int3(v); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator int3(float v) { return new int3(v); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator int3(float3 v) { return new int3(v); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator int3(double v) { return new int3(v); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator int3(double3 v) { return new int3(v); }
 
 
         // mul
@@ -71,6 +176,24 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int3 operator / (int lhs, int3 rhs) { return new int3 (lhs / rhs.x, lhs / rhs.y, lhs / rhs.z); }
 
+        // mod
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 operator % (int3 lhs, int3 rhs) { return new int3 (lhs.x % rhs.x, lhs.y % rhs.y, lhs.z % rhs.z); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 operator % (int3 lhs, int rhs) { return new int3 (lhs.x % rhs, lhs.y % rhs, lhs.z % rhs); }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 operator % (int lhs, int3 rhs) { return new int3 (lhs % rhs.x, lhs % rhs.y, lhs % rhs.z); }
+
+        // increment
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 operator ++ (int3 val) { return new int3 (++val.x, ++val.y, ++val.z); }
+
+
+        // decrement
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 operator -- (int3 val) { return new int3 (--val.x, --val.y, --val.z); }
+
+
         // smaller 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator < (int3 lhs, int3 rhs) { return new bool3 (lhs.x < rhs.x, lhs.y < rhs.y, lhs.z < rhs.z); }
@@ -102,9 +225,13 @@ namespace Unity.Mathematics
         // neg 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int3 operator - (int3 val) { return new int3 (-val.x, -val.y, -val.z); }
+
+
         // plus 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int3 operator + (int3 val) { return new int3 (+val.x, +val.y, +val.z); }
+
+
         // left shift
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int3 operator << (int3 lhs, int rhs) { return new int3 (lhs.x << rhs, lhs.y << rhs, lhs.z << rhs); }
@@ -129,30 +256,10 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator != (int lhs, int3 rhs) { return new bool3 (lhs != rhs.x, lhs != rhs.y, lhs != rhs.z); }
 
-        // Equals 
+        // operator ~ 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(int3 rhs)  { return x == rhs.x && y == rhs.y && z == rhs.z; }
+        public static int3 operator ~ (int3 val) { return new int3 (~val.x, ~val.y, ~val.z); }
 
-        // [int index] 
-        unsafe public int this[int index]
-        {
-            get
-            {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                if ((uint)index >= 3)
-                    throw new System.ArgumentException("index must be between[0...2]");
-#endif
-                fixed (int3* array = &this) { return ((int*)array)[index]; }
-            }
-            set
-            {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                if ((uint)index >= 3)
-                    throw new System.ArgumentException("index must be between[0...2]");
-#endif
-                fixed (int* array = &x) { array[index] = value; }
-            }
-        }
 
         // operator &
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -177,10 +284,7 @@ namespace Unity.Mathematics
         public static int3 operator ^ (int3 lhs, int rhs) { return new int3 (lhs.x ^ rhs, lhs.y ^ rhs, lhs.z ^ rhs); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int3 operator ^ (int lhs, int3 rhs) { return new int3 (lhs ^ rhs.x, lhs ^ rhs.y, lhs ^ rhs.z); }
-
-        // operator ~ 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int3 operator ~ (int3 val) { return new int3 (~val.x, ~val.y, ~val.z); }        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public int4 xxxx
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1140,6 +1244,65 @@ namespace Unity.Mathematics
         }
 
 
+
+        // [int index] 
+        unsafe public int this[int index]
+        {
+            get
+            {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                if ((uint)index >= 3)
+                    throw new System.ArgumentException("index must be between[0...2]");
+#endif
+                fixed (int3* array = &this) { return ((int*)array)[index]; }
+            }
+            set
+            {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                if ((uint)index >= 3)
+                    throw new System.ArgumentException("index must be between[0...2]");
+#endif
+                fixed (int* array = &x) { array[index] = value; }
+            }
+        }
+
+        // Equals 
+        public bool Equals(int3 rhs) { return x == rhs.x && y == rhs.y && z == rhs.z; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override bool Equals(object o) { return Equals((int3)o); }
+
+
+        // GetHashCode 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override int GetHashCode() { return (int)math.hash(this); }
+
+
+        // ToString 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override string ToString()
+        {
+            return string.Format("int3({0}, {1}, {2})", x, y, z);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public string ToString(string format, IFormatProvider formatProvider)
+        {
+            return string.Format("int3({0}, {1}, {2})", x.ToString(format, formatProvider), y.ToString(format, formatProvider), z.ToString(format, formatProvider));
+        }
+
+        internal sealed class DebuggerProxy
+        {
+            public int x;
+            public int y;
+            public int z;
+            public DebuggerProxy(int3 v)
+            {
+                x = v.x;
+                y = v.y;
+                z = v.z;
+            }
+        }
+
     }
 
     public static partial class math
@@ -1155,6 +1318,100 @@ namespace Unity.Mathematics
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int3 int3(int3 xyz) { return new int3(xyz); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 int3(int v) { return new int3(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 int3(bool v) { return new int3(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 int3(bool3 v) { return new int3(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 int3(uint v) { return new int3(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 int3(uint3 v) { return new int3(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 int3(float v) { return new int3(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 int3(float3 v) { return new int3(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 int3(double v) { return new int3(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 int3(double3 v) { return new int3(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint hash(int3 v)
+        {
+            return csum(asuint(v) * uint3(0xD4DFF6D3u, 0xCB634F4Du, 0x9B13B92Du)) + 0x4ABF0813u;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint3 hash_wide(int3 v)
+        {
+            return (asuint(v) * uint3(0x86068063u, 0xD75513F9u, 0x5AB3E8CDu)) + 0x676E8407u;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static int select_shuffle_component(int3 a, int3 b, ShuffleComponent component)
+        {
+            switch(component)
+            {
+                case ShuffleComponent.LeftX:
+                    return a.x;
+                case ShuffleComponent.LeftY:
+                    return a.y;
+                case ShuffleComponent.LeftZ:
+                    return a.z;
+                case ShuffleComponent.RightX:
+                    return b.x;
+                case ShuffleComponent.RightY:
+                    return b.y;
+                case ShuffleComponent.RightZ:
+                    return b.z;
+                default:
+                    throw new System.ArgumentException("Invalid shuffle component: " + component);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int shuffle(int3 a, int3 b, ShuffleComponent x)
+        {
+            return select_shuffle_component(a, b, x);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int2 shuffle(int3 a, int3 b, ShuffleComponent x, ShuffleComponent y)
+        {
+            return int2(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 shuffle(int3 a, int3 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z)
+        {
+            return int3(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y),
+                select_shuffle_component(a, b, z));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int4 shuffle(int3 a, int3 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z, ShuffleComponent w)
+        {
+            return int4(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y),
+                select_shuffle_component(a, b, z),
+                select_shuffle_component(a, b, w));
+        }
 
     }
 }

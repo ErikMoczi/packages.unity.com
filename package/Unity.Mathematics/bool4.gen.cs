@@ -1,10 +1,27 @@
 // GENERATED CODE
+using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
+
 #pragma warning disable 0660, 0661
+
 namespace Unity.Mathematics
 {
+    [DebuggerTypeProxy(typeof(bool4.DebuggerProxy))]
+    [System.Serializable]
     public partial struct bool4 : System.IEquatable<bool4>
     {
+        [MarshalAs(UnmanagedType.U1)]
+        public bool x;
+        [MarshalAs(UnmanagedType.U1)]
+        public bool y;
+        [MarshalAs(UnmanagedType.U1)]
+        public bool z;
+        [MarshalAs(UnmanagedType.U1)]
+        public bool w;
+
+
         // constructors
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool4(bool x, bool y, bool z, bool w)
@@ -78,6 +95,20 @@ namespace Unity.Mathematics
             this.w = xyzw.w;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool4(bool v)
+        {
+            this.x = v;
+            this.y = v;
+            this.z = v;
+            this.w = v;
+        }
+
+
+        // conversions
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator bool4(bool v) { return new bool4(v); }
+
 
         // equal 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -94,31 +125,6 @@ namespace Unity.Mathematics
         public static bool4 operator != (bool4 lhs, bool rhs) { return new bool4 (lhs.x != rhs, lhs.y != rhs, lhs.z != rhs, lhs.w != rhs); }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator != (bool lhs, bool4 rhs) { return new bool4 (lhs != rhs.x, lhs != rhs.y, lhs != rhs.z, lhs != rhs.w); }
-
-        // Equals 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(bool4 rhs)  { return x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w; }
-
-        // [int index] 
-        unsafe public bool this[int index]
-        {
-            get
-            {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                if ((uint)index >= 4)
-                    throw new System.ArgumentException("index must be between[0...3]");
-#endif
-                fixed (bool4* array = &this) { return ((bool*)array)[index]; }
-            }
-            set
-            {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                if ((uint)index >= 4)
-                    throw new System.ArgumentException("index must be between[0...3]");
-#endif
-                fixed (bool* array = &x) { array[index] = value; }
-            }
-        }
 
         // operator &
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2951,6 +2957,61 @@ namespace Unity.Mathematics
         }
 
 
+
+        // [int index] 
+        unsafe public bool this[int index]
+        {
+            get
+            {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                if ((uint)index >= 4)
+                    throw new System.ArgumentException("index must be between[0...3]");
+#endif
+                fixed (bool4* array = &this) { return ((bool*)array)[index]; }
+            }
+            set
+            {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                if ((uint)index >= 4)
+                    throw new System.ArgumentException("index must be between[0...3]");
+#endif
+                fixed (bool* array = &x) { array[index] = value; }
+            }
+        }
+
+        // Equals 
+        public bool Equals(bool4 rhs) { return x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override bool Equals(object o) { return Equals((bool4)o); }
+
+
+        // GetHashCode 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override int GetHashCode() { return (int)math.hash(this); }
+
+
+        // ToString 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override string ToString()
+        {
+            return string.Format("bool4({0}, {1}, {2}, {3})", x, y, z, w);
+        }
+
+        internal sealed class DebuggerProxy
+        {
+            public bool x;
+            public bool y;
+            public bool z;
+            public bool w;
+            public DebuggerProxy(bool4 v)
+            {
+                x = v.x;
+                y = v.y;
+                z = v.z;
+                w = v.w;
+            }
+        }
+
     }
 
     public static partial class math
@@ -2978,6 +3039,80 @@ namespace Unity.Mathematics
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 bool4(bool4 xyzw) { return new bool4(xyzw); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool4 bool4(bool v) { return new bool4(v); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint hash(bool4 v)
+        {
+            return csum(select(uint4(0xC53F4755u, 0x6985C229u, 0xE133B0B3u, 0xC3E0A3B9u), uint4(0xFE31134Fu, 0x712A34D7u, 0x9D77A59Bu, 0x4942CA39u), v));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint4 hash_wide(bool4 v)
+        {
+            return (select(uint4(0xB40EC62Du, 0x565ED63Fu, 0x93C30C2Bu, 0xDCAF0351u), uint4(0x6E050B01u, 0x750FDBF5u, 0x7F3DD499u, 0x52EAAEBBu), v));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool select_shuffle_component(bool4 a, bool4 b, ShuffleComponent component)
+        {
+            switch(component)
+            {
+                case ShuffleComponent.LeftX:
+                    return a.x;
+                case ShuffleComponent.LeftY:
+                    return a.y;
+                case ShuffleComponent.LeftZ:
+                    return a.z;
+                case ShuffleComponent.LeftW:
+                    return a.w;
+                case ShuffleComponent.RightX:
+                    return b.x;
+                case ShuffleComponent.RightY:
+                    return b.y;
+                case ShuffleComponent.RightZ:
+                    return b.z;
+                case ShuffleComponent.RightW:
+                    return b.w;
+                default:
+                    throw new System.ArgumentException("Invalid shuffle component: " + component);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool shuffle(bool4 a, bool4 b, ShuffleComponent x)
+        {
+            return select_shuffle_component(a, b, x);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool2 shuffle(bool4 a, bool4 b, ShuffleComponent x, ShuffleComponent y)
+        {
+            return bool2(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool3 shuffle(bool4 a, bool4 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z)
+        {
+            return bool3(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y),
+                select_shuffle_component(a, b, z));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool4 shuffle(bool4 a, bool4 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z, ShuffleComponent w)
+        {
+            return bool4(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y),
+                select_shuffle_component(a, b, z),
+                select_shuffle_component(a, b, w));
+        }
 
     }
 }
