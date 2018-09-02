@@ -22,6 +22,7 @@ namespace UnityEditor.AddressableAssets
 
                 public string m_id;
                 public string m_value;
+                public ProfileEntry() { }
                 public ProfileEntry(string id, string v)
                 {
                     m_id = id;
@@ -173,7 +174,7 @@ namespace UnityEditor.AddressableAssets
             [SerializeField]
             bool m_inlineUsage;
             public bool InlineUsage { get { return m_inlineUsage; } }
-
+            public ProfileIDData() { }
             public ProfileIDData(string entryId, string entryName, bool inline = false)
             {
                 m_id = entryId;
@@ -244,6 +245,11 @@ namespace UnityEditor.AddressableAssets
             return AAConfig.ExpandWithVariables(varString, '[', ']', getVal);
         }
 
+        internal void Validate(AddressableAssetSettings addressableAssetSettings)
+        {
+            CreateDefaultProfile();
+        }
+
         internal const string k_rootProfileName = "Default";
         internal string CreateDefaultProfile()
         {
@@ -287,6 +293,10 @@ namespace UnityEditor.AddressableAssets
 
             if (root == null)
                 return false;
+
+            foreach (var i in profileEntryNames)
+                if (string.IsNullOrEmpty(i.Id) || string.IsNullOrEmpty(i.Name))
+                    return false;
 
             var rootValueCount = root.values.Count;
             foreach (var profile in m_profiles)

@@ -330,9 +330,20 @@ namespace UnityEditor.AddressableAssets
         private static void AddAddressableScenesToEditorBuildSettingsSceneList(List<AddressableAssetEntry> entries, ResourceManagerRuntimeData runtimeData)
         {
             var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+            var sceneSet = new HashSet<string>();
+            foreach (var s in scenes)
+            {
+                if (!sceneSet.Add(s.guid.ToString()))
+                    Debug.LogWarningFormat("Scene {0} is duplicated in EditorBuildSettings.scenes list.", s.path);
+            }
             foreach (var entry in entries)
-                if(entry.isScene)
+            {
+                if (entry.isScene && !sceneSet.Contains(entry.guid))
+                {
+                    sceneSet.Add(entry.guid);
                     scenes.Add(new EditorBuildSettingsScene(new GUID(entry.guid), true));
+                }
+            }
             EditorBuildSettings.scenes = scenes.ToArray();
         }
 

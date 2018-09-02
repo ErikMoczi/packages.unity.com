@@ -60,6 +60,12 @@ namespace UnityEditor.AddressableAssets
             }
         }
 
+        internal void SetNameIfInvalid(string name)
+        {
+            if (string.IsNullOrEmpty(m_name))
+                m_name = name;
+        }
+
         public bool IsProcessorType(Type processorType)
         {
             return m_processorClass == processorType.FullName && m_processorAssembly == processorType.Assembly.FullName;
@@ -199,6 +205,26 @@ namespace UnityEditor.AddressableAssets
                 m_readOnly = true;
 
             m_data.OnSetData += OnDataModified;
+        }
+
+        internal void Validate(AddressableAssetSettings addressableAssetSettings)
+        {
+            if (m_processorAssembly == null)
+            {
+                var editorList = GetAssetEntry(AddressableAssetEntry.EditorSceneListName);
+                if (editorList != null)
+                {
+                    SetProcessorType(typeof(PlayerDataAssetGroupProcessor));
+                    if (m_name == null)
+                        m_name = AddressableAssetSettings.PlayerDataGroupName;
+                }
+                else
+                {
+                    SetProcessorType(typeof(BundledAssetGroupProcessor));
+                    if (m_name == null)
+                        m_name = m_settings.FindUniqueGroupName("Packed Content Group");
+                }
+            }
         }
 
         void OnDataModified(string key, object val, bool isNew)

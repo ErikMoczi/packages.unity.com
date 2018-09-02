@@ -83,5 +83,10 @@ namespace UnityEditor.AddressableAssets
         {
             m_Settings = settings;
         }
+
+        internal void Validate(AddressableAssetSettings addressableAssetSettings)
+        {
+            
+        }
     }
 }

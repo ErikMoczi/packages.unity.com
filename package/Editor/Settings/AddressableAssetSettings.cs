@@ -212,10 +212,37 @@ namespace UnityEditor.AddressableAssets
 
         public void OnAfterDeserialize()
         {
-            foreach (var g in groups)
-               g.OnAfterDeserialize(this);
+            string[] groupNames = new string[] { PlayerDataGroupName, DefaultLocalGroupName, "Remote Group" };
+            for (int i = 0; i < groups.Count; i++)
+            {
+                var g = groups[i];
+                g.SetNameIfInvalid(groupNames[Mathf.Clamp(i, 0, groupNames.Length - 1)]);
+                g.OnAfterDeserialize(this);
+            }
             profileSettings.OnAfterDeserialize(this);
             buildSettings.OnAfterDeserialize(this);
+        }
+
+        public void OnEnable()
+        {
+            Validate();
+        }
+
+        void Validate()
+        {
+            if (m_buildSettings == null)
+                m_buildSettings = new AddressableAssetBuildSettings();
+            if (m_profileSettings == null)
+                m_profileSettings = new AddressableAssetProfileSettings();
+            if (m_labelTable == null)
+                m_labelTable = new LabelTable();
+            if (string.IsNullOrEmpty(m_activeProfileId))
+                m_activeProfileId = m_profileSettings.CreateDefaultProfile();
+
+            foreach (var g in groups)
+                g.Validate(this);
+            profileSettings.Validate(this);
+            buildSettings.Validate(this);
         }
 
         internal const string PlayerDataGroupName = "Built In Data";
@@ -479,7 +506,7 @@ namespace UnityEditor.AddressableAssets
             return g;
         }
 
-        string FindUniqueGroupName(string name)
+        internal string FindUniqueGroupName(string name)
         {
             var validName = name;
             int index = 1;

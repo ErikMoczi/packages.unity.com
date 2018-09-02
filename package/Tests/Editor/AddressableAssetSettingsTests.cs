@@ -18,12 +18,6 @@ namespace UnityEditor.AddressableAssets.Tests
         }
 
         [Test]
-        public void VerifyBuildTargetProfileVariable()
-        {
-            Assert.AreEqual(EditorUserBuildSettings.activeBuildTarget.ToString(), AddressableAssetProfileSettings.ProfileIDData.Evaluate(settings.profileSettings, settings.activeProfileId, "[BuildTarget]"));
-        }
-
-        [Test]
         public void AddRemovelabel()
         {
             const string labelName = "Newlabel";

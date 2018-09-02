@@ -1231,14 +1231,20 @@ namespace UnityEditor.AddressableAssets
 
         protected void RemoveEntry(object context)
         {
-            List<AssetEntryTreeViewItem> selectedNodes = context as List<AssetEntryTreeViewItem>;
-            var entries = new List<AddressableAssetEntry>();
-            foreach (var item in selectedNodes)
+            if (EditorUtility.DisplayDialog("Entry Deletion", "Are you sure you want to delete the selected entries?", "Yes", "No"))
             {
-                editor.settings.RemoveAssetEntry(item.entry.guid, false);
-                entries.Add(item.entry);
+                List<AssetEntryTreeViewItem> selectedNodes = context as List<AssetEntryTreeViewItem>;
+                var entries = new List<AddressableAssetEntry>();
+                foreach (var item in selectedNodes)
+                {
+                    if (item.entry != null)
+                    {
+                        editor.settings.RemoveAssetEntry(item.entry.guid, false);
+                        entries.Add(item.entry);
+                    }
+                }
+                editor.settings.PostModificationEvent(AddressableAssetSettings.ModificationEvent.EntryRemoved, entries);
             }
-            editor.settings.PostModificationEvent(AddressableAssetSettings.ModificationEvent.EntryRemoved, entries);
         }
 
         protected void RenameItem(object context)
@@ -1300,16 +1306,25 @@ namespace UnityEditor.AddressableAssets
 
         protected override void KeyEvent()
         {
-            if (Event.current.keyCode == KeyCode.Delete && GetSelection().Count > 0)
+            if (Event.current.type == EventType.KeyUp && Event.current.keyCode == KeyCode.Delete && GetSelection().Count > 0)
             {
                 List<AssetEntryTreeViewItem> selectedNodes = new List<AssetEntryTreeViewItem>();
+                bool allGroups = true;
+                bool allEntries = true;
                 foreach (var nodeID in GetSelection())
                 {
                     var item = FindItemInVisibleRows(nodeID) as AssetEntryTreeViewItem;
                     if (item != null)
                         selectedNodes.Add(item);
+                    if (item.entry == null)
+                        allEntries = false;
+                    else
+                        allGroups = false;
                 }
-                RemoveEntry(selectedNodes);
+                if(allEntries)
+                    RemoveEntry(selectedNodes);
+                if (allGroups)
+                    RemoveGroup(selectedNodes);
             }
         }
 
