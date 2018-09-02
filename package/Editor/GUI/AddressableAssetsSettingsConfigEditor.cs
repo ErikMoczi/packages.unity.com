@@ -20,8 +20,7 @@ namespace UnityEditor.AddressableAssets
         public bool OnGUI(Rect pos)
         {
             var bs = settingsObject.buildSettings;
-
-            MyExtensionMethods.DrawOutline(pos, 1f);
+            
             GUILayout.BeginArea(pos);
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, false, false, GUILayout.MaxWidth(pos.width));
 

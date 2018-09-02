@@ -11,19 +11,23 @@ namespace UnityEditor.AddressableAssets
         AddressableAssetsSettingsConfigEditor m_configEditor = null;
         [SerializeField]
         ProfileSettingsEditor m_profileEditor = null;
+        [SerializeField]
+        AssetSettingsPreview m_previewEditor = null;
+        [SerializeField]
+        AssetPublishEditor m_publishEditor = null;
+
         enum TabList
         {
             Assets = 0,
             Config,
             Profile,
             Preview,
+            Publish,
         }
         [SerializeField]
         int currentTab = 0;
-        string[] labels = new string[4] { "Assets", "Config", "Profiles", "Preview" };
+        string[] labels = new string[5] { "Assets", "Config", "Profiles", "Preview", "Publish" };
 
-        [SerializeField]
-        AssetSettingsPreview m_previewEditor = null;
 
         [SerializeField]
         bool m_ignoreLegacyBundles = false;  
@@ -48,6 +52,8 @@ namespace UnityEditor.AddressableAssets
                 m_groupEditor.OnEnable();
             if (m_configEditor != null)
                 m_configEditor.OnEnable();
+            if (m_publishEditor != null)
+                m_publishEditor.OnEnable();
         }
 
         public void OnDisable()
@@ -56,6 +62,8 @@ namespace UnityEditor.AddressableAssets
                 m_groupEditor.OnDisable();
             if (m_configEditor != null)
                 m_configEditor.OnDisable();
+            if (m_publishEditor != null)
+                m_publishEditor.OnDisable();
         }
 
         internal void OfferToConvert()
@@ -130,7 +138,6 @@ namespace UnityEditor.AddressableAssets
                             m_groupEditor = new AddressableAssetsSettingsGroupEditor(this);
                             m_groupEditor.OnEnable();
                         }
-
                         if (m_groupEditor.OnGUI(contentRect))
                             Repaint();
                         break;
@@ -141,7 +148,6 @@ namespace UnityEditor.AddressableAssets
                             m_configEditor = new AddressableAssetsSettingsConfigEditor();
                             m_configEditor.OnEnable();
                         }
-
                         if (m_configEditor.OnGUI(contentRect))
                             Repaint();
                         break;
@@ -149,15 +155,22 @@ namespace UnityEditor.AddressableAssets
                     case (int)TabList.Profile:
                         if (m_profileEditor == null)
                             m_profileEditor = new ProfileSettingsEditor();
-
                         m_profileEditor.OnGUI(contentRect);
                         break;
 
                     case (int)TabList.Preview:
                         if (m_previewEditor == null)
                             m_previewEditor = new AssetSettingsPreview();
-
                         m_previewEditor.OnGUI(contentRect);
+                        break;
+
+                    case (int)TabList.Publish:
+                        if (m_publishEditor == null)
+                        {
+                            m_publishEditor = new AssetPublishEditor();
+                            m_publishEditor.OnEnable();
+                        }
+                        m_publishEditor.OnGUI(contentRect);
                         break;
                 }
             }

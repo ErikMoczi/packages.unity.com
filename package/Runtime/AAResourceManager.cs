@@ -21,15 +21,21 @@ namespace UnityEngine.AddressableAssets
             public IAsyncOperation<IList<TAddress>> Start(string label)
             {
                 m_label = label;
-                ResourceManager.initializationComplete += m_onInitCompleteAction;
+                ResourceManager.InitializationComplete += m_onInitCompleteAction;
                 return this;
             }
 
             private void OnInitComplete()
             {
-                SetResult(GetAddresses(m_label));
+                var addresses = GetAddresses(m_label);
+                if (addresses == null)
+                {
+                    Debug.LogWarningFormat("Unable to find addresses from label '{0}'.", m_label);
+                    addresses = new List<TAddress>();
+                }
+                SetResult(addresses);
                 InvokeCompletionEvent();
-                AsyncOperationCache.Instance.Release<IList<TAddress>>(this);
+                ReleaseToCache();
             }
 
             private IList<TAddress> GetAddresses(string label)
@@ -69,20 +75,30 @@ namespace UnityEngine.AddressableAssets
             public IAsyncOperation<IList<TObject>> Start(string label, Action<IAsyncOperation<TObject>> callback)
             {
                 m_callback = callback;
-                GetAddressesAsync<TKey>(label).completed += m_onAddressesLoadedAction;
+                GetAddressesAsync<TKey>(label).Completed += m_onAddressesLoadedAction;
                 return this;
             }
 
             private void OnAddressesLoaded(IAsyncOperation<IList<TKey>> operation)
             {
-                ResourceManager.LoadAllAsync(operation.Result, m_callback).completed += m_onAllAssetsLoadedAction;
+                if (operation.Result == null || operation.Result.Count == 0)
+                {
+                    Debug.LogWarningFormat("No addresses found.");
+                    SetResult(new List<TObject>());
+                    InvokeCompletionEvent();
+                    ReleaseToCache();
+                }
+                else
+                {
+                    ResourceManager.LoadAllAsync(operation.Result, m_callback).Completed += m_onAllAssetsLoadedAction;
+                }
             }
 
             private void OnAllAssetsLoaded(IAsyncOperation<IList<TObject>> operation)
             {
                 SetResult(operation.Result);
                 InvokeCompletionEvent();
-                AsyncOperationCache.Instance.Release<IList<TObject>>(this);
+                ReleaseToCache();
             }
         }
         /// <summary>
@@ -111,20 +127,30 @@ namespace UnityEngine.AddressableAssets
                 m_parent = parent;
                 m_instantiateInWorldSpace = instantiateInWorldSpace;
                 m_callback = callback;
-                GetAddressesAsync<TKey>(label).completed += m_onAddressesLoadedAction;
+                GetAddressesAsync<TKey>(label).Completed += m_onAddressesLoadedAction;
                 return this;
             }
 
             private void OnAddressesLoaded(IAsyncOperation<IList<TKey>> operation)
             {
-                ResourceManager.InstantiateAllAsync(operation.Result, m_callback, m_parent, m_instantiateInWorldSpace).completed += m_onInstancesLoadedAction;
+                if (operation.Result == null || operation.Result.Count == 0)
+                {
+                    Debug.LogWarningFormat("No addresses found.");
+                    SetResult(new List<TObject>());
+                    InvokeCompletionEvent();
+                    ReleaseToCache();
+                }
+                else
+                {
+                    ResourceManager.InstantiateAllAsync(operation.Result, m_callback, m_parent, m_instantiateInWorldSpace).Completed += m_onInstancesLoadedAction;
+                }
             }
 
             private void OnInstancesLoaded(IAsyncOperation<IList<TObject>> obj)
             {
                 SetResult(obj.Result);
                 InvokeCompletionEvent();
-                AsyncOperationCache.Instance.Release<IList<TObject>>(this);
+                ReleaseToCache();
             }
         }
 
@@ -135,6 +161,56 @@ namespace UnityEngine.AddressableAssets
         {
             return AsyncOperationCache.Instance.Acquire<InstantiateAllByLabelOperation<string, TObject>, IList<TObject>>().Start(label, callback, parent, instantiateInWorldSpace);
         }
+
+        class PreloadAllByLabelOperation<TKey> : AsyncOperationBase<IList<object>>
+        {
+            Action<IAsyncOperation<object>> m_callback;
+            Action<IAsyncOperation<IList<TKey>>> m_onAddressesLoadedAction;
+            Action<IAsyncOperation<IList<object>>> m_onAllAssetsLoadedAction;
+            public PreloadAllByLabelOperation()
+            {
+                m_onAddressesLoadedAction = OnAddressesLoaded;
+                m_onAllAssetsLoadedAction = OnAllAssetsLoaded;
+            }
+            public IAsyncOperation<IList<object>> Start(string label, Action<IAsyncOperation<object>> callback)
+            {
+                m_callback = callback;
+                GetAddressesAsync<TKey>(label).Completed += m_onAddressesLoadedAction;
+                return this;
+            }
+
+            private void OnAddressesLoaded(IAsyncOperation<IList<TKey>> operation)
+            {
+                if (operation.Result == null || operation.Result.Count == 0)
+                {
+                    Debug.LogWarningFormat("No addresses found.");
+                    SetResult(new List<object>());
+                    InvokeCompletionEvent();
+                    ReleaseToCache();
+                }
+                else
+                {
+                    ResourceManager.PreloadDependenciesAllAsync<TKey>(operation.Result, m_callback).Completed += m_onAllAssetsLoadedAction;
+                }
+            }
+
+
+            private void OnAllAssetsLoaded(IAsyncOperation<IList<object>> operation)
+            {
+                SetResult(operation.Result);
+                InvokeCompletionEvent();
+                ReleaseToCache();
+            }
+        }
+
+        /// <summary>
+        /// Preloads dependencies of multiple assets from a label.  A callback can be passed in to handle each asset load as it completes.
+        /// </summary>
+        public static IAsyncOperation<IList<object>> PreloadAllByLabelAsync(string label, Action<IAsyncOperation<object>> callback)
+        {
+            return AsyncOperationCache.Instance.Acquire<PreloadAllByLabelOperation<string>, IList<object>>().Start(label, callback);
+        }
+
         /// <summary>
         /// Release a loaded asset.  The asset is ref counted so it may not be unloaded immediately.
         /// </summary>

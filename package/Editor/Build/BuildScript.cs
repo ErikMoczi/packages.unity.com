@@ -107,7 +107,7 @@ namespace UnityEditor.AddressableAssets
             {
                 if (enteringPlayMode && runtimeData.resourceProviderMode != ResourceManagerRuntimeData.EditorPlayMode.PackedMode)
                     AddAddressableScenesToEditorBuildSettingsSceneList(aaSettings, runtimeData);
-                Debug.Log("Loaded cached runtime data in " + timer.Elapsed.TotalSeconds + " secs.");
+               // Debug.Log("Loaded cached runtime data in " + timer.Elapsed.TotalSeconds + " secs.");
                 return true;
             }
 
@@ -207,13 +207,13 @@ namespace UnityEditor.AddressableAssets
             {
                 ResourceLocationData remoteLocation = new ResourceLocationData("RemoteCatalog", "",
                     aaSettings.buildSettings.remoteCatalogLocation.Evaluate(aaSettings.profileSettings, aaSettings.activeProfile),
-                    typeof(JSONAssetProvider).FullName, ResourceLocationData.LocationType.String, 0, "", null);
+                    typeof(JsonAssetProvider).FullName, ResourceLocationData.LocationType.String, 0, "", null);
                 runtimeData.catalogLocations.Add(remoteLocation);
             }
 
             ResourceLocationData localCatalogLocation = new ResourceLocationData("LocalCatalog", "",
                 ResourceManagerRuntimeData.PlayerCatalogLoadLocation, 
-                typeof(JSONAssetProvider).FullName, ResourceLocationData.LocationType.String, 0, "", null);
+                typeof(JsonAssetProvider).FullName, ResourceLocationData.LocationType.String, 0, "", null);
             runtimeData.catalogLocations.Add(localCatalogLocation);
 
 

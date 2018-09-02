@@ -60,33 +60,17 @@ namespace UnityEngine.AddressableAssets
             ResourceManager.s_postEvents = true;
 
             ResourceManager.ResourceLocators.Add(new ResourceLocationLocator());
-            ResourceManager.ResourceProviders.Add(new JSONAssetProvider());
-            var runtimeDataLocation = new ResourceLocationBase<string>("RuntimeData", PlayerSettingsLoadLocation, typeof(JSONAssetProvider).FullName);
+            ResourceManager.ResourceProviders.Add(new JsonAssetProvider());
+            var runtimeDataLocation = new ResourceLocationBase<string>("RuntimeData", PlayerSettingsLoadLocation, typeof(JsonAssetProvider).FullName);
             var initOperation = ResourceManager.LoadAsync<ResourceManagerRuntimeData, IResourceLocation>(runtimeDataLocation);
             ResourceManager.QueueInitializationOperation(initOperation);
-            initOperation.completed += (op) =>
+            initOperation.Completed += (op) =>
             {
                 if(op.Result != null)
                     op.Result.Init();
             };
         }
-        /*
-                IResourceLocation GenerateFastModeResourceLocationFromAssetReference(AssetReference ar)
-                {
-                    IResourceLocation loc = null;
-        #if UNITY_EDITOR
-                    var path = UnityEditor.AssetDatabase.GUIDToAssetPath(ar.assetGUID);
-                    var i = path.ToLower().LastIndexOf("/resources/");
-                    if (i >= 0)
-                        loc = new ResourceManagement.ResourceLocations.LegacyResourcesLocation(Path.GetFileNameWithoutExtension(path.Substring(i + "/resources/".Length)));
-                    else
-                        loc = ResourceManager.GetResourceLocation(ar.assetGUID);
-        #else
-                    Debug.LogWarning("Cannot use Fast Mode resource locations in the player.");
-        #endif
-                    return loc;
-                }
-                */
+
         internal void Init()
         {
             if (!Application.isEditor && resourceProviderMode != EditorPlayMode.PackedMode)
@@ -121,10 +105,8 @@ namespace UnityEngine.AddressableAssets
 
             var loadOp = ResourceManager.LoadAsync<ResourceLocationList, IResourceLocation>(catalogLocation);
             ResourceManager.QueueInitializationOperation(loadOp);
-            loadOp.completed += (op) =>
+            loadOp.Completed += (op) =>
             {
-                Debug.LogFormat("Loaded {0} locations from {1}.", op.Result.locations.Count, op.Context);
-
                 if (op.Result != null)
                     AddContentCatalogs(op.Result);
                 else
