@@ -1,0 +1,38 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	Development	//
+OnGUI	Editor/PackageManagerWindow.cs	/^        void OnGUI()$/;"	m	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+OperationStatusToStringBuffer	Editor/PackageManagerWindow.cs	/^        private void OperationStatusToStringBuffer(OperationStatus operationStatus)$/;"	m	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+PackageManagerWindow	Editor/PackageManagerWindow.cs	/^    class PackageManagerWindow : EditorWindow$/;"	c	namespace:UnityEditor.PackageManager
+Progression	Editor/PackageManagerWindow.cs	/^    class Progression$/;"	c	namespace:UnityEditor.PackageManager
+Render	Editor/PackageManagerWindow.cs	/^        public string Render()$/;"	m	class:UnityEditor.PackageManager.Progression
+ResetView	Editor/PackageManagerWindow.cs	/^        private void ResetView()$/;"	m	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+ShowWindow	Editor/PackageManagerWindow.cs	/^        public static void  ShowWindow()$/;"	m	class:UnityEditor.PackageManager.PackageManagerWindow
+Tick	Editor/PackageManagerWindow.cs	/^        public bool Tick()$/;"	m	class:UnityEditor.PackageManager.Progression
+UnityEditor.PackageManager	Editor/PackageManagerWindow.cs	/^namespace UnityEditor.PackageManager$/;"	n
+Update	Editor/PackageManagerWindow.cs	/^        void Update()$/;"	m	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+UpmPackageInfoToStringBuffer	Editor/PackageManagerWindow.cs	/^        private void UpmPackageInfoToStringBuffer(UpmPackageInfo packageInfo, bool addIndentation)$/;"	m	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+addButton	Editor/PackageManagerWindow.cs	/^        private string addButton = "Add";$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+addInputStr	Editor/PackageManagerWindow.cs	/^        private string addInputStr = "stitchmeup@1.0.1";$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+listButton	Editor/PackageManagerWindow.cs	/^        private string listButton = "List";$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+operationError	Editor/PackageManagerWindow.cs	/^        private bool operationError = false;$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+operationId	Editor/PackageManagerWindow.cs	/^        private long operationId = -1;$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+operationRunning	Editor/PackageManagerWindow.cs	/^        private bool operationRunning = false;$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+outdatedButton	Editor/PackageManagerWindow.cs	/^        private string outdatedButton = "Outdated";$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+packageId	Editor/PackageManagerWindow.cs	/^        private string packageId = "";$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+progression	Editor/PackageManagerWindow.cs	/^        private Progression progression = new Progression();$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+progressionGlyph	Editor/PackageManagerWindow.cs	/^        private string progressionGlyph = "";$/;"	f	class:UnityEditor.PackageManager.Progression	file:
+progressionGlyphs	Editor/PackageManagerWindow.cs	/^        private static string[] progressionGlyphs = new[] {"", ".", "..", "..."};$/;"	f	class:UnityEditor.PackageManager.Progression	file:
+progressionTime	Editor/PackageManagerWindow.cs	/^        private float progressionTime = 0.0f;$/;"	f	class:UnityEditor.PackageManager.Progression	file:
+removeButton	Editor/PackageManagerWindow.cs	/^        private string removeButton = "Remove";$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+removeInputStr	Editor/PackageManagerWindow.cs	/^        private string removeInputStr = "stitchmeup";$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+resolveButton	Editor/PackageManagerWindow.cs	/^        private string resolveButton = "Resolve";$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+resultText	Editor/PackageManagerWindow.cs	/^        private string resultText = "";$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+sb	Editor/PackageManagerWindow.cs	/^        private StringBuilder sb = new StringBuilder();$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+scrollPosition	Editor/PackageManagerWindow.cs	/^        private Vector2 scrollPosition;$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+searchButton	Editor/PackageManagerWindow.cs	/^        private string searchButton = "Search";$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+searchInputStr	Editor/PackageManagerWindow.cs	/^        private string searchInputStr = "stitchmeup";$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
+type	Editor/PackageManagerWindow.cs	/^        private int type = 0;$/;"	f	class:UnityEditor.PackageManager.PackageManagerWindow	file:
