@@ -1,0 +1,9 @@
+{
+    "name": "UnityEditor.StandardEvents",
+    "references": [],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
