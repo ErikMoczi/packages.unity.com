@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Experimental.UIElements;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace UnityEditor.PackageManager.UI.Tests
 {
@@ -188,10 +189,9 @@ namespace UnityEditor.PackageManager.UI.Tests
             var packages = PackageSets.Instance.Many(5);
             var current = packages.ToList().First();
 
-            SetPackages(packages);
-
             var error = MakeError(ErrorCode.Unknown, "Fake error");
             Factory.RemoveOperation = new MockRemoveOperation(Factory) {ForceError = error};
+            SetPackages(packages);
             PackageCollection.Instance.SetListPackageInfos(packages);
             var package = PackageCollection.Instance.GetPackageByName(current.Name);
             Assert.IsNotNull(package);
@@ -215,8 +215,8 @@ namespace UnityEditor.PackageManager.UI.Tests
             var packagesLocal = PackageSets.Instance.Many(2);
             var packagesAll = PackageSets.Instance.Many(5);
             
-            SetPackages(packagesLocal);
             Factory.SearchOperation = new MockSearchOperation(Factory, packagesAll);
+            SetPackages(packagesLocal);
 
             onPackageChangedEvent = packages =>
             {
