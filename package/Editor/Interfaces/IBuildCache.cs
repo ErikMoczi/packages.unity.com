@@ -1,4 +1,5 @@
-﻿using UnityEditor.Build.Content;
+﻿using System.Collections.Generic;
+using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline.Utilities;
 
 namespace UnityEditor.Build.Pipeline.Interfaces
@@ -28,6 +29,14 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// <param name="asset">GUID identifier for an asset from the Asset Database</param>
         /// <returns>CacheEntry representing current asset.</returns>
         CacheEntry GetCacheEntry(GUID asset);
+
+        /// <summary>
+        /// Generates a set of CacheEntries for the passed in assets.
+        /// </summary>
+        /// <param name="assets">The GUIDs that need cache entries.</param>
+        /// <param name="cacheEntries">Out set of all cache entries.</param>
+        /// <returns><c>true</c> if all the assets have generated valid cache entries; otherwise, <c>false</c>.</returns>
+        bool GetCacheEntries(IEnumerable<GUID> assets, out HashSet<CacheEntry> cacheEntries);
 
         /// <summary>
         /// Validates a cacheEntry and its dependencies.

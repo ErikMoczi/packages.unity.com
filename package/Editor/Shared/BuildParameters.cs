@@ -2,6 +2,7 @@
 using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Player;
+using UnityEngine;
 
 namespace UnityEditor.Build.Pipeline
 {
@@ -65,9 +66,11 @@ namespace UnityEditor.Build.Pipeline
 
             ScriptInfo = null;
             ScriptOptions = ScriptCompilationOptions.None;
-
+#if UNITY_2018_3_OR_NEWER
+            BundleCompression = BuildCompression.LZMA;
+#else
             BundleCompression = BuildCompression.DefaultLZMA;
-
+#endif
             OutputFolder = outputFolder;
             TempOutputFolder = ContentPipeline.kTempBuildPath;
             UseCache = true;

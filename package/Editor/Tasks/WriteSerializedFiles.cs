@@ -1,13 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Utilities;
+using UnityEngine;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class WriteSerializedFiles : IBuildTask
     {
-        const int k_Version = 1;
+        const int k_Version = 2;
         public int Version { get { return k_Version; } }
 
         static readonly Type[] k_RequiredTypes = { typeof(IBuildParameters), typeof(IDependencyData), typeof(IWriteData), typeof(IBuildResults) };
@@ -25,13 +28,13 @@ namespace UnityEditor.Build.Pipeline.Tasks
             return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IDependencyData>(), context.GetContextObject<IWriteData>(), context.GetContextObject<IBuildResults>(), tracker, cache);
         }
 
-        static void CalcualteCacheEntry(IWriteOperation operation, BuildSettings settings, BuildUsageTagGlobal globalUsage, ref CacheEntry cacheEntry)
+        static void CalcualteCacheEntry(IBuildCache cache, IWriteOperation operation, BuildSettings settings, BuildUsageTagGlobal globalUsage, ref CacheEntry cacheEntry)
         {
-            string[] assetHashes = new string[operation.Command.serializeObjects.Count];
-            for (var index = 0; index < operation.Command.serializeObjects.Count; index++)
-                assetHashes[index] = AssetDatabase.GetAssetDependencyHash(operation.Command.serializeObjects[index].serializationObject.guid.ToString()).ToString();
+            HashSet<CacheEntry> dependencies;
+            bool validHashes = cache.GetCacheEntries(operation.Command.serializeObjects.Select(x => x.serializationObject.guid), out dependencies);
 
-            cacheEntry.Hash = HashingMethods.CalculateMD5Hash(k_Version, operation.GetHash128(), assetHashes, settings.GetHash128(), globalUsage);
+            // Using dependencies.ToArray() here because Old Mono Runtime doesn't implement HashSet serialization
+            cacheEntry.Hash = !validHashes ? new Hash128() : HashingMethods.CalculateMD5Hash(k_Version, operation.GetHash128(), dependencies.ToArray(), settings.GetHash128(), globalUsage);
             cacheEntry.Guid = HashingMethods.CalculateMD5Guid("WriteSerializedFiles", operation.Command.internalName);
         }
 
@@ -48,7 +51,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 var cacheEntry = new CacheEntry();
                 if (parameters.UseCache && cache != null)
                 {
-                    CalcualteCacheEntry(op, parameters.GetContentBuildSettings(), globalUSage, ref cacheEntry);
+                    CalcualteCacheEntry(cache, op, parameters.GetContentBuildSettings(), globalUSage, ref cacheEntry);
                     if (cache.TryLoadFromCache(cacheEntry, ref result))
                     {
                         if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", op.Command.internalName)))

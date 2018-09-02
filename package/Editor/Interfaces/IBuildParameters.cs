@@ -1,5 +1,6 @@
 ﻿using UnityEditor.Build.Content;
 using UnityEditor.Build.Player;
+using UnityEngine;
 
 namespace UnityEditor.Build.Pipeline.Interfaces
 {

@@ -9,6 +9,11 @@ namespace UnityEditor.Build.Pipeline.Utilities
         public Hash128 Hash  { get; set; }
         public GUID Guid  { get; set; }
 
+        public bool IsValid()
+        {
+            return Hash.isValid && !Guid.Empty();
+        }
+
         public override bool Equals(object obj)
         {
             if (!(obj is CacheEntry))

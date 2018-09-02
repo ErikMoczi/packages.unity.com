@@ -14,6 +14,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
                 BitConverter.ToUInt32(hash, 8), BitConverter.ToUInt32(hash, 12));
             return result;
         }
+
         static GUID ToGUID(byte[] hash)
         {
             var resultStr = BitConverter.ToString(hash).Replace("-", "").ToLower();

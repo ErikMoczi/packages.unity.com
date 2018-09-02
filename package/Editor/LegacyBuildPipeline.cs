@@ -53,12 +53,21 @@ namespace UnityEditor.Build.Pipeline
             var group = BuildPipeline.GetBuildTargetGroup(targetPlatform);
             var buildParams = new BuildParameters(targetPlatform, group, outputPath);
 
+#if UNITY_2018_3_OR_NEWER
+            if ((assetBundleOptions & BuildAssetBundleOptions.ChunkBasedCompression) != 0)
+                buildParams.BundleCompression = BuildCompression.LZ4;
+            else if ((assetBundleOptions & BuildAssetBundleOptions.UncompressedAssetBundle) != 0)
+                buildParams.BundleCompression = BuildCompression.Uncompressed;
+            else
+                buildParams.BundleCompression = BuildCompression.LZMA;
+#else
             if ((assetBundleOptions & BuildAssetBundleOptions.ChunkBasedCompression) != 0)
                 buildParams.BundleCompression = BuildCompression.DefaultLZ4;
             else if ((assetBundleOptions & BuildAssetBundleOptions.UncompressedAssetBundle) != 0)
                 buildParams.BundleCompression = BuildCompression.DefaultUncompressed;
             else
                 buildParams.BundleCompression = BuildCompression.DefaultLZMA;
+#endif
 
             if ((assetBundleOptions & BuildAssetBundleOptions.DisableWriteTypeTree) != 0)
                 buildParams.ContentBuildFlags |= ContentBuildFlags.DisableWriteTypeTree;

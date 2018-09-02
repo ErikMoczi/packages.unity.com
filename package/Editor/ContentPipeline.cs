@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor.Build.Pipeline.Interfaces;
@@ -65,7 +64,7 @@ namespace UnityEditor.Build.Pipeline
             ReturnCode exitCode;
             result = new BundleBuildResults();
 
-            //using (var progressTracker = new ProgressTracker())
+            using (var progressTracker = new ProgressTracker())
             {
                 using (var wrapper = new BuildInterfacesWrapper())
                 {
@@ -78,7 +77,7 @@ namespace UnityEditor.Build.Pipeline
                         buildContext.SetContextObject(buildParameters);
                         buildContext.SetContextObject(buildContent);
                         buildContext.SetContextObject(result);
-              //          buildContext.SetContextObject(progressTracker);
+                        buildContext.SetContextObject(progressTracker);
                         buildContext.SetContextObject(new BuildCache());
                         buildContext.SetContextObject(new Unity5PackedIdentifiers());
                         buildContext.SetContextObject(new BuildDependencyData());

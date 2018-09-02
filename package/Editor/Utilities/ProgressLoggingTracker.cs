@@ -11,8 +11,8 @@ namespace UnityEditor.Build.Pipeline.Utilities
 
         public override bool UpdateTask(string taskTitle)
         {
-            BuildLogger.Log(string.Format("[{0}] {1:P2} Running Task: '{2}'", DateTime.Now.ToString(), Progress.ToString(), CurrentTaskTitle));
-            return base.UpdateInfo(taskTitle);
+            BuildLogger.Log(string.Format("[{0}] {1:P2} Running Task: '{2}'", DateTime.Now.ToString(), Progress.ToString(), taskTitle));
+            return base.UpdateTask(taskTitle);
         }
 
         public override bool UpdateInfo(string taskInfo)
