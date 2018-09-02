@@ -521,7 +521,7 @@ namespace UnityEditor.PackageManager.UI
             VersionPopup.SetEnabled(enableVersionButton);
             button.text = GetButtonText(action, inprogress, version);
 
-            UIUtils.SetElementDisplay(UpdateBuiltIn, isBuiltIn);
+            UIUtils.SetElementDisplay(UpdateBuiltIn, isBuiltIn && action != PackageAction.Update);
             UIUtils.SetElementDisplay(UpdateCombo, !isBuiltIn);
             UIUtils.SetElementDisplay(UpdateButton, !isBuiltIn);
         }
@@ -554,7 +554,7 @@ namespace UnityEditor.PackageManager.UI
                     enableButton = false;
                 }
 
-                if (package.Current.IsVersionLocked)
+                if (package.Current.IsVersionLocked && current.Origin != PackageSource.BuiltIn)
                 {
                     enableButton = false;
                     visibleFlag = false;

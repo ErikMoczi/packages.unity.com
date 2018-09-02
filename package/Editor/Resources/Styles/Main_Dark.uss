@@ -41,12 +41,12 @@
 }
 
 .row, #detailListView .combo, #detailListView #detailView .detail #detailActions, #detailListView #detailView .detail .versionContainer, #detailListView #detailView .detail .tagLine {
-  flex: 1;
+  flex: 1 0 0;
   flex-direction: row;
 }
 
 .column, #detailListView .emptyArea, #detailListView #packageListGroup #listContainerOuter, #detailListView #packageListGroup #packageList, #detailListView #packageListGroup #listContainer, #detailListView #packageListGroup #listGroups, #detailListView #packageListGroup #scrollView {
-  flex: 1;
+  flex: 1 0 0;
   flex-direction: column;
 }
 
@@ -67,7 +67,7 @@
 }
 
 #detailListView {
-  flex: 1;
+  flex: 1 0 0;
   flex-direction: row;
 }
 #detailListView .link {
@@ -87,7 +87,7 @@
   cursor: link;
 }
 #detailListView .emptyArea {
-  flex: 1;
+  flex: 1 0 0;
   position-type: absolute;
   position-top: 0;
   position-left: 0;
@@ -124,13 +124,13 @@
   max-height: 16;
 }
 #detailListView #headerTitle {
-  flex: 1;
+  flex: 1 0 0;
   font-size: 12;
   font-style: bold;
   text-color: #b4b4b4;
 }
 #detailListView #headerCaret {
-  flex: 0;
+  flex: 0 0 auto;
   font-size: 12;
   font-style: bold;
   text-color: #b4b4b4;
@@ -141,7 +141,7 @@
   position-top: 0;
   position-left: 0;
   position-right: 0;
-  flex: 0.1;
+  flex: 0.1 0 0;
   flex-direction: column;
   align-items: center;
 }
@@ -247,7 +247,7 @@
   background-image: resource("Images/Dark/btnRightOn");
 }
 #detailListView .combo .button.small {
-  flex: 0.5;
+  flex: 0.5 0 0;
   padding-top: 0;
   padding-left: 0;
   padding-bottom: 0;
@@ -267,7 +267,7 @@
   margin-right: 0;
 }
 #detailListView #packageListGroup #groupContainerOuter #headerContainer {
-  flex: 1;
+  flex: 1 0 0;
   flex-direction: row;
   align-items: center;
   margin-top: 0;
@@ -310,7 +310,7 @@
   position-left: 0;
 }
 #detailListView .package {
-  flex: 1;
+  flex: 1 0 0;
   flex-direction: row;
   align-items: center;
   margin-top: 0;
@@ -335,7 +335,7 @@
   background-color: #424242;
 }
 #detailListView .package .name {
-  flex: 1;
+  flex: 1 0 0;
   font-size: 12;
   margin-right: 5;
   overflow: hidden;
@@ -344,9 +344,8 @@
   font-size: 9;
 }
 #detailListView .package .status {
-  flex: 0;
-  width: 14;
-  height: 14;
+  flex: 0 0 14;
+  max-height: 14;
 }
 #detailListView .package .status.outdated {
   background-image: resource("Images/Dark/download");
@@ -358,17 +357,17 @@
   background-image: resource("Images/error");
 }
 #detailListView #detailsGroup {
-  flex: 1;
+  flex: 1 0 0;
   border-left-width: 1px;
   border-color: rgba(0, 0, 0, 0.5);
 }
 #detailListView #detailsGroup #detailsContainer {
-  flex: 1;
+  flex: 1 0 0;
   flex-direction: column;
   position-type: relative;
 }
 #detailListView #detailView {
-  flex: 1;
+  flex: 1 0 0;
 }
 #detailListView #detailView #VerticalScroller {
   position-bottom: 0;
@@ -380,7 +379,7 @@
   position-right: 0;
 }
 #detailListView #detailView .detail {
-  flex: 1;
+  flex: 1 0 0;
   flex-direction: column;
   padding-top: 5;
   padding-left: 5;
@@ -388,13 +387,13 @@
   padding-right: 5;
 }
 #detailListView #detailView .detail .header {
-  flex: 1;
+  flex: 1 0 0;
   flex-direction: row;
   align-items: flex-start;
   margin-bottom: 8;
 }
 #detailListView #detailView .detail .header #titleContainer {
-  flex: 0.9;
+  flex: 0.9 0 0;
 }
 #detailListView #detailView .detail .header #titleContainer #detailTitle {
   font-size: 18;
@@ -406,7 +405,7 @@
   margin-right: 3;
 }
 #detailListView #detailView .detail .header #detailsControls {
-  flex: 1;
+  flex: 1 0 0;
   height: 19;
   flex-direction: row;
   align-items: center;
@@ -417,7 +416,7 @@
   margin-right: 0;
 }
 #detailListView #detailView .detail .header #updateCombo {
-  flex: 1;
+  flex: 1 0 0;
   height: 19;
   align-items: center;
   margin-top: 0;
@@ -429,11 +428,14 @@
   padding-bottom: 0;
   padding-right: 0;
 }
+#detailListView #detailView .detail .header #updateCombo #update {
+  flex: 0 0 auto;
+}
 #detailListView #detailView .detail .header #updateCombo #updateDropdownContainer {
   min-width: 65;
   max-width: 150;
   height: 19;
-  flex: 0;
+  flex: 0 0 auto;
 }
 #detailListView #detailView .detail .header #updateCombo #updateDropdownContainer .popup {
   font-size: 12;
@@ -442,8 +444,11 @@
 #detailListView #detailView .detail .header #updateCombo #updateDropdownContainer .popup:focus {
   background-image: resource("Builtin Skins/DarkSkin/Images/mini popup.png");
 }
+#detailListView #detailView .detail .header #updateCombo #updateDropdownContainer .popup .textElement {
+  margin-top: 3;
+}
 #detailListView #detailView .detail .header #updateCombo .action {
-  flex: 0;
+  flex: 0 0 auto;
   margin-top: 0;
   margin-left: 0;
   margin-bottom: 0;
@@ -457,7 +462,7 @@
 }
 #detailListView #detailView .detail .header #updateContainer {
   height: 19;
-  flex: 1;
+  flex: 1 0 0;
   align-items: flex-end;
   padding-top: 0;
   padding-left: 0;
@@ -467,7 +472,7 @@
 #detailListView #detailView .detail .header .button {
   height: 19;
   font-size: 12;
-  flex: 0;
+  flex: 0 0 auto;
   padding-top: 3;
   padding-left: 3;
   padding-bottom: 4;
@@ -511,17 +516,16 @@
   text-color: #b4b4b4;
 }
 #detailListView #detailView .detail #detailVersion {
-  flex: 1;
   font-size: 16;
   max-height: 30;
 }
 #detailListView #detailView .detail #detailName {
-  flex: 1;
+  flex: 1 0 0;
   max-height: 20;
   font-style: italic;
 }
 #detailListView #detailView .detail #detailPackageStatus {
-  flex: 1;
+  flex: 1 0 0;
   font-style: bold;
   word-wrap: true;
 }
@@ -537,7 +541,7 @@
   text-alignment: middle-center;
 }
 #detailListView #detailView .detail #detailDesc, #detailListView #detailView .detail #detailModuleReference {
-  flex: 1;
+  flex: 1 0 0;
   font-size: 12;
   word-wrap: true;
 }
@@ -545,13 +549,13 @@
   font-style: italic;
 }
 #detailListView #detailView .detail #detailAuthor {
-  flex: 1;
+  flex: 1 0 0;
   font-size: 12;
   word-wrap: true;
   margin-bottom: 5;
 }
 #detailListView #detailView .detail #detailActions {
-  flex: 0;
+  flex: 0 0 auto;
   flex-direction: row;
   margin-left: 2;
 }
@@ -573,9 +577,10 @@
 }
 #detailListView #detailView .detail .versionContainer {
   align-items: center;
+  justify-content: flex-start;
 }
 #detailListView #detailView .detail .versionContainer #detailVersion {
-  flex: 0;
+  flex: 0 0 auto;
 }
 #detailListView #detailView .detail .tag {
   border-color: #ffa44e;
@@ -616,7 +621,7 @@
   margin-right: 0;
 }
 #detailListView #packagesLoading {
-  flex: 0;
+  flex: 0 0 auto;
   margin-top: 2;
   margin-left: 0;
   margin-bottom: 2;
@@ -652,14 +657,14 @@
   padding-right: 10;
 }
 .alert #alertMessage {
-  flex: 1;
+  flex: 1 0 0;
   text-color: #f4f4f4;
   overflow: hidden;
 }
 .alert #close {
-  flex: 0;
+  flex: 0 0 auto;
   position-left: 5;
-  flex: 0;
+  flex: 0 0 auto;
   padding-top: 3;
   padding-left: 3;
   padding-bottom: 4;
@@ -704,22 +709,22 @@
 }
 
 .spinner {
-  flex: 0;
+  flex: 0 0 auto;
   position-top: -8;
   position-left: -8;
-  width: 16;
-  height: 16;
+  min-width: 16;
+  min-height: 16;
   max-width: 16;
   max-height: 16;
   background-image: resource("Images/Spinner/Dark/loading");
 }
 
 .largeSpinner {
-  flex: 0;
+  flex: 0 0 auto;
   position-top: -16;
   position-left: -16;
-  width: 32;
-  height: 32;
+  min-width: 32;
+  min-height: 32;
   max-width: 32;
   max-height: 32;
   background-image: resource("Images/Spinner/Dark/loading");

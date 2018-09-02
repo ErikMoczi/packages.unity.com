@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [2.0.0] - 2018-05-14
 - Fixed dropdown to work with 2018.3 editor
+- Updated style to reflect changes in VisualElements
+- Fixed issue on built-in package enable/disable button not shown
 
 ## [1.9.9] - 2018-05-09
 - Only show user visible versions in the UI

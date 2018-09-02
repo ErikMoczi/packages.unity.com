@@ -41,3 +41,4 @@
 1.9.11-preview.1
 1.9.11
 2.0.0-preview.1
+2.0.0-preview.2

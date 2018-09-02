@@ -90,7 +90,7 @@
 }
 
 @mixin button($top, $right, $bottom, $left) {
-	flex: 0;
+	flex: 0 0 auto;
 
 	@include padding($top, $right, $bottom, $left);
 	@include slice(4, 6, 4, 6);
@@ -163,12 +163,12 @@
 }
 
 .row {
-	flex: 1;
+	flex: 1 0 0;
 	flex-direction: row;
 }
 
 .column {
-	flex: 1;
+	flex: 1 0 0;
 	flex-direction: column;
 }
 
@@ -189,7 +189,7 @@ $spinner-normal-size: 16;
 $spinner-normal-half-size: 8;
 
 #detailListView {
-	flex: 1;
+	flex: 1 0 0;
 	flex-direction: row;
 
 	.link {
@@ -205,7 +205,7 @@ $spinner-normal-half-size: 8;
 	}
 
 	.emptyArea {
-		flex: 1;
+		flex: 1 0 0;
 		position-type: absolute;
 		@include position(0, 0, auto, 0);
 		@extend .column;
@@ -233,14 +233,14 @@ $spinner-normal-half-size: 8;
 	}
 
 	#headerTitle {
-		flex: 1;
+		flex: 1 0 0;
 		font-size: 12;
 		font-style: bold;
 		text-color: $unity-text-color;
 	}
 
 	#headerCaret {
-		flex: 0;
+		flex: 0 0 auto;
 		font-size: 12;
 		font-style: bold;
 		text-color: $unity-text-color;
@@ -251,7 +251,7 @@ $spinner-normal-half-size: 8;
 		position-type: absolute;
 		@include position(0, 0, auto, 0);
 
-		flex: 0.1;
+		flex: 0.1 0 0;
 		flex-direction: column;
 		align-items: center;
 	}
@@ -329,7 +329,7 @@ $spinner-normal-half-size: 8;
 
 
 			&.small {
-				flex: 0.5;
+				flex: 0.5 0 0;
 				@include padding(0, 0, 0, 0);
 			}
 		}
@@ -356,7 +356,7 @@ $spinner-normal-half-size: 8;
 			@include margin(0, 0, 5, 0);
 
 			#headerContainer {
-				flex: 1;
+				flex: 1 0 0;
 				flex-direction: row;
 				align-items: center;
 
@@ -409,7 +409,7 @@ $spinner-normal-half-size: 8;
 	// Package Item
 	//--------------------------------------------------------------------------------------------------
 	.package {
-		flex: 1;
+		flex: 1 0 0;
 		flex-direction: row;
 		align-items: center;
 		@include margin(0, 0, 0, 0);
@@ -433,7 +433,7 @@ $spinner-normal-half-size: 8;
 		}
 
 		.name {
-			flex: 1;
+			flex: 1 0 0;
 			@include font-normal();
 			margin-right: 5;
 			@include text-clip();
@@ -444,9 +444,8 @@ $spinner-normal-half-size: 8;
 		}
 
 		.status {
-			flex: 0;
-			width: 14;
-			height: 14;
+			flex: 0 0 14;
+			max-height: 14;
 
 			&.outdated {
  				background-image: resource($background-status-outdated);
@@ -466,19 +465,19 @@ $spinner-normal-half-size: 8;
 	// Package Details
 	//--------------------------------------------------------------------------------------------------
 	#detailsGroup {
-		flex: 1;
+		flex: 1 0 0;
 		border-left-width: 1px;
 		border-color: rgba(0,0,0, 0.5);
 
 		#detailsContainer {
-			flex: 1;
+			flex: 1 0 0;
 			flex-direction: column;
 			position-type: relative;
 		}
 	}
 
 	#detailView {
-		flex: 1;
+		flex: 1 0 0;
 
 		#VerticalScroller {
 			position-bottom: 0;
@@ -493,19 +492,19 @@ $spinner-normal-half-size: 8;
 		}
 
 		.detail {
-			flex: 1;
+			flex: 1 0 0;
 			flex-direction: column;
 			@include padding-box(5);
 
 			.header {
-				flex: 1;
+				flex: 1 0 0;
 				flex-direction: row;
 				align-items: flex-start;
 
 				margin-bottom: 8;
 
 				#titleContainer {
-					flex: 0.9;
+					flex: 0.9 0 0;
 
 					#detailTitle {
 						font-size: 18;
@@ -517,7 +516,7 @@ $spinner-normal-half-size: 8;
 
 				$controls-height: 19;
 				#detailsControls {
-					flex: 1;
+					flex: 1 0 0;
 					height: $controls-height;
 					flex-direction: row;
 					align-items: center;
@@ -526,17 +525,21 @@ $spinner-normal-half-size: 8;
 				}
 
 				#updateCombo {
-					flex: 1;
+					flex: 1 0 0;
 					height: $controls-height;
 					align-items: center;
 					@include margin(0, 0, 0, 0);
 					@include padding(0, 0, 0, 0);
 
+					#update {
+						flex: 0 0 auto;
+					}
+
 					#updateDropdownContainer {
 						min-width: 65;
 						max-width: 150;
 						height: $controls-height;
-						flex: 0;
+						flex: 0 0 auto;
 
 						.popup {
 							@include font-normal();
@@ -545,11 +548,15 @@ $spinner-normal-half-size: 8;
 							&:focus {
 								background-image: $popup-background;
 							}
+
+							.textElement {
+								margin-top: 3;
+							}
 						}
 					}
 
 					.action {
-						flex: 0; // Make buttons take all the parent's free space
+						flex: 0 0 auto;
 						@include margin-box(0);
 						@include font-normal();
 						@include padding(2, 4, 3, 4);
@@ -559,7 +566,7 @@ $spinner-normal-half-size: 8;
 
 				#updateContainer {
 					height: $controls-height;
-					flex: 1;
+					flex: 1 0 0;
 					align-items: flex-end;
 
 					@include padding-box(0);
@@ -575,19 +582,18 @@ $spinner-normal-half-size: 8;
 			}
 
 			#detailVersion {
-				flex: 1;
 				font-size: 16;
 				max-height: 30;
 			}
 
 			#detailName {
-				flex: 1;
+				flex: 1 0 0;
 				max-height: 20;
 				font-style: italic;
 			}
 
 			#detailPackageStatus {
-				flex: 1;
+				flex: 1 0 0;
 				font-style: bold;
 				word-wrap: true;
 			}
@@ -602,7 +608,7 @@ $spinner-normal-half-size: 8;
 			}
 
 			#detailDesc, #detailModuleReference {
-				flex: 1;
+				flex: 1 0 0;
 				@include font-normal();
 				word-wrap: true;
 
@@ -612,7 +618,7 @@ $spinner-normal-half-size: 8;
 			}
 
 			#detailAuthor {
-				flex: 1;
+				flex: 1 0 0;
 				@include font-normal();
 				word-wrap: true;
 
@@ -620,7 +626,7 @@ $spinner-normal-half-size: 8;
 			}
 
 			#detailActions {
-				flex: 0;
+				flex: 0 0 auto;
 				flex-direction: row;
 				margin-left: 2;
 
@@ -644,9 +650,10 @@ $spinner-normal-half-size: 8;
 			.versionContainer {
 				@extend .row;
 				align-items: center;
+				justify-content: flex-start;
 
 				#detailVersion {
-					flex: 0;
+					flex: 0 0 auto;
 				}
 			}
 
@@ -691,7 +698,7 @@ $spinner-normal-half-size: 8;
 	}
 
 	#packagesLoading {
-		flex: 0;
+		flex: 0 0 auto;
 		@include margin(2, 0, 2, 0);
 
 		border-color: rgba(0, 0, 0, 0.5);
@@ -721,35 +728,35 @@ $spinner-normal-half-size: 8;
 	@include padding(5, 10, 5, 10);
 
 	#alertMessage {
-		flex: 1;
+		flex: 1 0 0;
 		text-color: $unity-text-color-highlight;
 		@include text-clip();
 	}
 
 	#close {
-		flex: 0;
+		flex: 0 0 auto;
 		@include position(auto, auto, auto, 5);
 		@include button(3,3,4,3);
 	}
 }
 
 .spinner {
-	flex: 0;
+	flex: 0 0 auto;
 	@include position(-$spinner-normal-half-size, auto, auto, -$spinner-normal-half-size);
 
-	width: $spinner-normal-size;
-	height: $spinner-normal-size;
+	min-width: $spinner-normal-size;
+	min-height: $spinner-normal-size;
 	max-width: $spinner-normal-size;
 	max-height: $spinner-normal-size;
 	background-image: resource($background-spinner-normal);
 }
 
 .largeSpinner {
-	flex: 0;
+	flex: 0 0 auto;
 	@include position(-$spinner-large-half-size, auto, auto, -$spinner-large-half-size);
 
-	width: $spinner-large-size;
-	height: $spinner-large-size;
+	min-width: $spinner-large-size;
+	min-height: $spinner-large-size;
 	max-width: $spinner-large-size;
 	max-height: $spinner-large-size;
 	background-image: resource($background-spinner-large);
