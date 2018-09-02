@@ -35,7 +35,6 @@ namespace UnityEngine.AddressableAssets
                 }
                 SetResult(addresses);
                 InvokeCompletionEvent();
-                ReleaseToCache();
             }
 
             private IList<TAddress> GetAddresses(string label)
@@ -59,7 +58,7 @@ namespace UnityEngine.AddressableAssets
         /// </summary>
         public static IAsyncOperation<IList<TAddress>> GetAddressesAsync<TAddress>(string label)
         {
-            return AsyncOperationCache.Instance.Acquire<AddressListOperation<TAddress>, IList<TAddress>>().Start(label);
+            return AsyncOperationCache.Instance.Acquire<AddressListOperation<TAddress>, IList<TAddress>>().Start(label).Acquire();
         }
 
         class LoadAllByLabelOperation<TKey, TObject> : AsyncOperationBase<IList<TObject>> where TObject : class
@@ -86,7 +85,6 @@ namespace UnityEngine.AddressableAssets
                     Debug.LogWarningFormat("No addresses found.");
                     SetResult(new List<TObject>());
                     InvokeCompletionEvent();
-                    ReleaseToCache();
                 }
                 else
                 {
@@ -98,7 +96,6 @@ namespace UnityEngine.AddressableAssets
             {
                 SetResult(operation.Result);
                 InvokeCompletionEvent();
-                ReleaseToCache();
             }
         }
         /// <summary>
@@ -106,7 +103,7 @@ namespace UnityEngine.AddressableAssets
         /// </summary>
         public static IAsyncOperation<IList<TObject>> LoadAllByLabelAsync<TObject>(string label, Action<IAsyncOperation<TObject>> callback) where TObject : class
         {
-            return AsyncOperationCache.Instance.Acquire<LoadAllByLabelOperation<string, TObject>, IList<TObject>>().Start(label, callback);
+            return AsyncOperationCache.Instance.Acquire<LoadAllByLabelOperation<string, TObject>, IList<TObject>>().Start(label, callback).Acquire();
         }
 
 
@@ -138,7 +135,6 @@ namespace UnityEngine.AddressableAssets
                     Debug.LogWarningFormat("No addresses found.");
                     SetResult(new List<TObject>());
                     InvokeCompletionEvent();
-                    ReleaseToCache();
                 }
                 else
                 {
@@ -150,7 +146,6 @@ namespace UnityEngine.AddressableAssets
             {
                 SetResult(obj.Result);
                 InvokeCompletionEvent();
-                ReleaseToCache();
             }
         }
 
@@ -159,7 +154,7 @@ namespace UnityEngine.AddressableAssets
         /// </summary>
         public static IAsyncOperation<IList<TObject>> InstantiateAllByLabelAsync<TObject>(string label, Action<IAsyncOperation<TObject>> callback, Transform parent = null, bool instantiateInWorldSpace = false) where TObject : Object
         {
-            return AsyncOperationCache.Instance.Acquire<InstantiateAllByLabelOperation<string, TObject>, IList<TObject>>().Start(label, callback, parent, instantiateInWorldSpace);
+            return AsyncOperationCache.Instance.Acquire<InstantiateAllByLabelOperation<string, TObject>, IList<TObject>>().Start(label, callback, parent, instantiateInWorldSpace).Acquire();
         }
 
         class PreloadAllByLabelOperation<TKey> : AsyncOperationBase<IList<object>>
@@ -186,7 +181,6 @@ namespace UnityEngine.AddressableAssets
                     Debug.LogWarningFormat("No addresses found.");
                     SetResult(new List<object>());
                     InvokeCompletionEvent();
-                    ReleaseToCache();
                 }
                 else
                 {
@@ -199,7 +193,6 @@ namespace UnityEngine.AddressableAssets
             {
                 SetResult(operation.Result);
                 InvokeCompletionEvent();
-                ReleaseToCache();
             }
         }
 
@@ -208,7 +201,7 @@ namespace UnityEngine.AddressableAssets
         /// </summary>
         public static IAsyncOperation<IList<object>> PreloadAllByLabelAsync(string label, Action<IAsyncOperation<object>> callback)
         {
-            return AsyncOperationCache.Instance.Acquire<PreloadAllByLabelOperation<string>, IList<object>>().Start(label, callback);
+            return AsyncOperationCache.Instance.Acquire<PreloadAllByLabelOperation<string>, IList<object>>().Start(label, callback).Acquire();
         }
 
         /// <summary>
