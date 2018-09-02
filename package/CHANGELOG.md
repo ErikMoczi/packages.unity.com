@@ -3,8 +3,16 @@ This is the release of the TextMesh Pro UPM package. This release is the equival
 
 See the following link for the Release Notes for version 1.0.56.xx.0b2 of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [1.2.0] - 2018-01-23
+### Changes
+- Package version # increased to 1.2.0 which is the first release for Unity 2018.2.
+
+## [1.1.0] - 2018-01-23
+### Changes
+- Package version # increased to 1.1.0 which is the first release for Unity 2018.1. 
+
 ## [1.0.27] - 2018-01-16
-### Fix
+### Changes
 - Fixed an issue where setting the TMP_InputField.text property to null would result in an error.
 - Fixed issue with Raycast Target state not getting serialized properly when saving / reloading a scene.
 - Changed reference to PrefabUtility.GetPrefabParent() to PrefabUtility.GetCorrespondingObjectFromSource() to reflect public API change in 2018.2
