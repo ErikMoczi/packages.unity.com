@@ -1,41 +1,31 @@
-# ProGrids 3.0.0-preview.5
+# ProGrids 3.0.0-preview.6
 
 ## Features
 
 - New About window.
 - Now distributed as Package Manager module.
 - Project now uses Assembly Definition files to reduce compilation overhead.
+- Add a shortcut to reset the snap multiplier (alpha numeric 0 by default).
 
 ## Bug Fixes
 
 - Temporary objects are now longer created in scene files.
+- Fix grid rendering on top of UI elements.
+- Remove duplicate snap on scale pref in Prefences pane.
+- Remove duplicate preference fields from in-scene settings window.
+- Fix single key shortcuts not working.
+- Fix snapping multiple objects not undoing to original state.
+- Fix multiple objects snapping to first selected transform instead of the active transform.
 
 ## Changes
 
+- Change color of "close" button to light blue.
 - Remove `pg_` suffix from class and file names.
-
-## Changes from preview.4
-
-- Fix errors on importing from Package Manager to clean project.
-- Fix grid rendering on top of UI elements.
-- Fix grid multiplier shortcuts not refreshing the scene.
-- Fix grid multiplier not being accounted for in UI.
-- Add a shortcut to reset the snap multiplier (alpha numeric 0 by default).
-
-## Changes from preview.3
-
-- Fix "SnapEnabled" preference not persisting domain reloads.
-- Repaint grid when changing preferences.
-- Remove duplicate snap on scale pref in Prefences pane.
 - Remove automatic About Window popup on update.
 
-## Changes from preview.2
+## Changes from preview.5
 
-- Change color of "close" button to light blue.
-- Remove duplicate preference fields from in-scene settings window.
-- Fix single key toggle shortcuts not working.
-- Fix snapping multiple objects not undoing to original state.
-- Fix multiple objects snapping to first selected transform instead of the active transform.
+- Fix missing image errors on first import.
 
 # ProGrids 2.5.0-f.0
 

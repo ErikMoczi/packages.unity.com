@@ -58,6 +58,12 @@ namespace ProGrids.Editor
 				Texture2D iconButtonNormal = IconUtility.LoadIcon("ProGrids2_Button_Normal.png");
 				Texture2D iconButtonHover = IconUtility.LoadIcon("ProGrids2_Button_Hover.png");
 
+				extendoOpen = IconUtility.LoadIcon("ProGrids2_MenuExtendo_Open.png");
+				extendoClosed = IconUtility.LoadIcon("ProGrids2_MenuExtendo_Close.png");
+				
+				extendoStyle.normal.background = extendoOpen;
+				extendoStyle.hover.background = extendoOpen;
+
 				if (iconButtonNormal == null)
 				{
 					gridButtonStyleBlank = new GUIStyle("button");

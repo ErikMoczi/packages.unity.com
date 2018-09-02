@@ -366,7 +366,7 @@ namespace ProGrids.Editor
 		{
 			s_Instance = this;
 			RegisterDelegates();
-			
+
 			// this can fail on the first import to a new project when the toolbar was opened in a previous project.
 			// the editor scripts compile and run before unity has a chance to load the resources, resulting in no assets
 			// being loaded and the toolbar not rendering properly. don't throw an error because it only occurs in a very
@@ -469,9 +469,6 @@ namespace ProGrids.Editor
 				: KeyCode.Backslash;
 
 			m_GridIsLocked = EditorPrefs.GetBool(PreferenceKeys.LockGrid);
-
-			extendoOpen = IconUtility.LoadIcon("ProGrids2_MenuExtendo_Open.png");
-			extendoClosed = IconUtility.LoadIcon("ProGrids2_MenuExtendo_Close.png");
 
 			menuOpen = EditorPrefs.GetBool(PreferenceKeys.ProGridsIsExtended, true);
 

@@ -4,7 +4,7 @@ Simple, functional grids and snapping for:
 
 - Aligning items and prefabs
 - Greyboxing in ProBuilder
-- Eliminating mesh gaps leaks
+- Eliminating mesh gaps
 - Modular level design
 
 ## Requirements

@@ -1,1 +1,1 @@
-Grid snapping in the Scene View.
+Grid snapping in the scene view.
