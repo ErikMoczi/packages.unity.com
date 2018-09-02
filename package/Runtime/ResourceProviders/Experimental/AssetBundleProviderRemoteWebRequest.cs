@@ -76,7 +76,6 @@ namespace UnityEngine.ResourceManagement
                 m_data.Close();
                 m_data.Dispose();
                 m_data = null;
-                ReleaseToCache();
             }
 
             public void Dispose()

@@ -12,6 +12,7 @@ namespace UnityEngine.ResourceManagement
         AsyncOperationStatus m_status;
         Exception m_error;
         object m_context;
+        bool m_releaseToCacheOnCompletion = false;
         event Action<IAsyncOperation> m_completedAction;
         event Action<IAsyncOperation<TObject>> m_completedActionT;
         protected AsyncOperationBase()
@@ -21,21 +22,44 @@ namespace UnityEngine.ResourceManagement
 
         public bool IsValid { get; set; }
 
+        public override string ToString()
+        {
+            var instId = "";
+            var or = m_result as Object;
+            if (or != null)
+                instId = "(" + or.GetInstanceID().ToString() + ")";
+            return base.ToString() +  " result = " + m_result + instId + ", status = " + m_status + ", Valid = " + IsValid + ", canRelease = " + m_releaseToCacheOnCompletion;
+        }
+
+        public virtual void Release()
+        {
+            Validate();
+            m_releaseToCacheOnCompletion = true;
+            if (IsDone)
+                AsyncOperationCache.Instance.Release<TObject>(this);
+        }
+
+        public IAsyncOperation<TObject> Acquire()
+        {
+            Validate();
+            m_releaseToCacheOnCompletion = false;
+            return this;
+        }
+
         public virtual void ResetStatus()
         {
+            m_releaseToCacheOnCompletion = true;
             m_status = AsyncOperationStatus.None;
             m_error = null;
             m_result = default(TObject);
             m_context = null;
         }
 
-        public bool BlockReleaseToCache { get; set; }
-
         public bool Validate()
         {
             if (!IsValid)
             {
-                Debug.LogError("INVALID OPERATION STATE!");
+                Debug.LogError("INVALID OPERATION STATE: " + this);
                 return false;
             }
             return true;
@@ -202,6 +226,8 @@ namespace UnityEngine.ResourceManagement
                     m_status = AsyncOperationStatus.Failed;
                 }
             }
+            if (m_releaseToCacheOnCompletion)
+                AsyncOperationCache.Instance.Release<TObject>(this);
         }
 
         public virtual void SetResult(TObject result)
@@ -211,10 +237,5 @@ namespace UnityEngine.ResourceManagement
             m_status = (m_result == null) ? AsyncOperationStatus.Failed : AsyncOperationStatus.Succeeded;
         }
 
-        public virtual void ReleaseToCache(bool force = false)
-        {
-            if(force || !BlockReleaseToCache)
-                AsyncOperationCache.Instance.Release<TObject>(this);
-        }
     }
 }

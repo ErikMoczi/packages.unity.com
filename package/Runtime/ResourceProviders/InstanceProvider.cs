@@ -46,7 +46,6 @@ namespace UnityEngine.ResourceManagement
                     Result = m_instParams.Instantiate(prefabResult);
                 }
                 InvokeCompletionEvent();
-                ReleaseToCache();
             }
         }
 

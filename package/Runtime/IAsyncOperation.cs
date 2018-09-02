@@ -23,11 +23,19 @@ namespace UnityEngine.ResourceManagement
         /// </summary>
         /// <value><c>true</c> if is done; otherwise, <c>false</c>.</value>
         AsyncOperationStatus Status { get; }
+        /// <summary>
+        /// internal integrity check
+        /// </summary>
+        /// <returns></returns>
         bool Validate();
+        /// <summary>
+        /// used by Validate to ensure operation is in correct state
+        /// </summary>
         bool IsValid { get; set; }
-        ////bool DelayReturnToCache { get; set; }
-        bool BlockReleaseToCache { get; set; }
-        void ReleaseToCache(bool force = false);
+        /// <summary>
+        /// Release operation back to internal cache. This can be used to avoid garbage collection.
+        /// </summary>
+        void Release();
         /// <summary>
         /// Gets a value indicating whether this <see cref="T:ResourceManagement.IAsyncOperation"/> is done.
         /// </summary>
@@ -78,7 +86,11 @@ namespace UnityEngine.ResourceManagement
         /// </summary>
         /// <value>The result.</value>
         new T Result { get; }
-
+        /// <summary>
+        /// Internally marks operations to not automatically release back to the cache.
+        /// </summary>
+        /// <returns>Passes back this</returns>
+        IAsyncOperation<T> Acquire();
         /// <summary>
         /// Occurs when completed.
         /// </summary>

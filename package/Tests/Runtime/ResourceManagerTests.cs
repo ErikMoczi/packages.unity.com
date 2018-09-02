@@ -55,11 +55,10 @@ public class ResourceManagerTests : MonoBehaviour, IPrebuildSetup
         Destroy(go);
 
         IAsyncOperation op = ResourceManager.LoadAsync<GameObject, string>("Cube");
-        op.BlockReleaseToCache = false;
         yield return op;
 
         GameObject cube = op.Result as GameObject;
-        op.ReleaseToCache(true);
+        op.Release();
         Assert.IsNotNull(cube);
 
         DestroyAsset(cubePath);
@@ -229,9 +228,8 @@ public class ResourceManagerTests : MonoBehaviour, IPrebuildSetup
             {
                 loadedDependencies.Add(op.Result as GameObject);
             });
-        asyncOperation.BlockReleaseToCache = true;
         yield return asyncOperation;
-        asyncOperation.ReleaseToCache(true);
+        asyncOperation.Release();
 
         Assert.AreEqual(2, loadedDependencies.Count);
         DestroyAsset(cubePath);
@@ -252,13 +250,12 @@ public class ResourceManagerTests : MonoBehaviour, IPrebuildSetup
         Destroy(go);
 
         IAsyncOperation op = ResourceManager.InstantiateAsync<GameObject, string>("Cube1");
-        op.BlockReleaseToCache = true;
         yield return op;
 
         Assert.IsNotNull(GameObject.Find("Cube1(Clone)"));
 
         ResourceManager.ReleaseInstance<GameObject>(op.Result as GameObject);
-        op.ReleaseToCache(true);
+        op.Release();
         yield return null;
         Assert.IsNull(GameObject.Find("Cube1(Clone)"));
         DestroyAsset(cube1Path);
@@ -288,9 +285,8 @@ public class ResourceManagerTests : MonoBehaviour, IPrebuildSetup
                 GameObject go = op.Result as GameObject;
                 loadedObjects.Add(go);
             });
-        loadOp.BlockReleaseToCache = true;
         yield return loadOp;
-        loadOp.ReleaseToCache(true);
+        loadOp.Release();
 
         Assert.AreEqual(2, loadedObjects.Count);
         DestroyAsset(cubePath);

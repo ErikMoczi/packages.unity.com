@@ -160,6 +160,7 @@ namespace UnityEngine.ResourceManagement
 
             var groupOp = StartLoadGroupOperation(location.Dependencies, GetLoadAsyncInternalFunc<object>(), null);
             Debug.Assert(groupOp != null, "ResourceManager.InstantiateAsync_Internal - groupOp == null.");
+            groupOp.Validate();
 
             var provider = GetResourceProvider<TObject>(location);
             if (provider == null)
@@ -170,6 +171,7 @@ namespace UnityEngine.ResourceManagement
                 throw new ResourceProviderFailedException(provider, location, groupOp);
 
             Debug.Assert(operation.Context is IResourceLocation, "IAsyncOperation.context is not an IResourceLocation for " + location.InternalId + ", op.context=" + operation.Context);
+            operation.Validate();
 
             object result;
             if (!s_instantiateAsyncInternalMapCache.TryGetValue(typeof(TObject), out result))
@@ -192,6 +194,7 @@ namespace UnityEngine.ResourceManagement
             }
 
             operation.Completed += result as Action<IAsyncOperation<TObject>>;
+            operation.Validate();
             return operation;
         }
 
@@ -400,7 +403,6 @@ namespace UnityEngine.ResourceManagement
                     {
                         SetResult(loadOp.Result);
                         InvokeCompletionEvent();
-                        ReleaseToCache();
                     };
                 }
             }
@@ -435,7 +437,6 @@ namespace UnityEngine.ResourceManagement
                     {
                         SetResult(loadOp.Result);
                         InvokeCompletionEvent();
-                        ReleaseToCache();
                     };
                 }
             }
@@ -475,7 +476,6 @@ namespace UnityEngine.ResourceManagement
                     {
                         SetResult(loadOp.Result);
                         InvokeCompletionEvent();
-                        ReleaseToCache();
                     };
                 }
             }
@@ -540,7 +540,6 @@ namespace UnityEngine.ResourceManagement
                     {
                         SetResult(loadOp.Result);
                         InvokeCompletionEvent();
-                        ReleaseToCache();
                     };
                 }
             }
@@ -576,7 +575,7 @@ namespace UnityEngine.ResourceManagement
         public static IAsyncOperation<TObject> LoadAsync<TObject, TKey>(TKey key)
             where TObject : class
         {
-            return StartInternalAsyncOp(key, GetLoadAsyncInternalFunc<TObject>());
+            return StartInternalAsyncOp(key, GetLoadAsyncInternalFunc<TObject>()).Acquire();
         }
 
         /// <summary>
@@ -588,7 +587,7 @@ namespace UnityEngine.ResourceManagement
         public static IAsyncOperation<TObject> LoadAsync<TObject>(IResourceLocation location)
             where TObject : class
         {
-            return GetLoadAsyncInternalFunc<TObject>()(location);
+            return GetLoadAsyncInternalFunc<TObject>()(location).Acquire();
         }
 
         /// <summary>
@@ -605,7 +604,7 @@ namespace UnityEngine.ResourceManagement
             if (keys == null)
                 throw new ArgumentNullException("keys");
 
-            return StartInternalAsyncOp(keys, (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, GetLoadAsyncInternalFunc<TObject>(), callback); });
+            return StartInternalAsyncOp(keys, (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, GetLoadAsyncInternalFunc<TObject>(), callback); }).Acquire();
         }
 
         /// <summary>
@@ -617,7 +616,7 @@ namespace UnityEngine.ResourceManagement
         /// <typeparam name="TKey">key type.</typeparam>
         public static IAsyncOperation<IList<object>> PreloadDependenciesAsync<TKey>(TKey key, Action<IAsyncOperation<object>> callback)
         {
-            return PreloadDependenciesAllAsync(new List<TKey> { key }, callback);
+            return PreloadDependenciesAllAsync(new List<TKey> { key }, callback).Acquire();
         }
 
         /// <summary>
@@ -639,7 +638,7 @@ namespace UnityEngine.ResourceManagement
                 dependencyLocations.AddRange(loc.Dependencies);
             }
 
-            return StartInternalAsyncOp(dependencyLocations, (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, GetLoadAsyncInternalFunc<object>(), callback); });
+            return StartInternalAsyncOp(dependencyLocations, (IList<IResourceLocation> locs) => { return StartLoadGroupOperation(locs, GetLoadAsyncInternalFunc<object>(), callback); }).Acquire();
         }
 
         /// <summary>
@@ -655,7 +654,7 @@ namespace UnityEngine.ResourceManagement
             if (InstanceProvider == null)
                 throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
 
-            return StartInternalAsyncInstantiateOp(key, GetInstantiateAsyncInternalFunc<TObject>(), instantiateParameters);
+            return StartInternalAsyncInstantiateOp(key, GetInstantiateAsyncInternalFunc<TObject>(), instantiateParameters).Acquire();
         }
 
         public static IAsyncOperation<TObject> InstantiateAsync<TObject, TKey>(TKey key, Transform parent = null, bool instantiateInWorldSpace = false) where TObject : Object
@@ -663,7 +662,7 @@ namespace UnityEngine.ResourceManagement
             if (InstanceProvider == null)
                 throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
 
-            return StartInternalAsyncInstantiateOp(key, GetInstantiateAsyncInternalFunc<TObject>(), new InstantiationParameters(parent, instantiateInWorldSpace));
+            return StartInternalAsyncInstantiateOp(key, GetInstantiateAsyncInternalFunc<TObject>(), new InstantiationParameters(parent, instantiateInWorldSpace)).Acquire();
         }
 
         public static IAsyncOperation<TObject> InstantiateAsync<TObject, TKey>(TKey key, Vector3 position, Quaternion rotation, Transform parent = null) where TObject : Object
@@ -671,7 +670,7 @@ namespace UnityEngine.ResourceManagement
             if (InstanceProvider == null)
                 throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
 
-            return StartInternalAsyncInstantiateOp(key, GetInstantiateAsyncInternalFunc<TObject>(), new InstantiationParameters(position, rotation, parent));
+            return StartInternalAsyncInstantiateOp(key, GetInstantiateAsyncInternalFunc<TObject>(), new InstantiationParameters(position, rotation, parent)).Acquire();
         }
 
         /// <summary>
@@ -691,7 +690,7 @@ namespace UnityEngine.ResourceManagement
             if (InstanceProvider == null)
                 throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
 
-            return InstantiateAllAsync<TObject, TKey>(keys, callback, new InstantiationParameters(parent, instantiateInWorldSpace));
+            return InstantiateAllAsync<TObject, TKey>(keys, callback, new InstantiationParameters(parent, instantiateInWorldSpace)).Acquire();
         }
 
         internal static IAsyncOperation<IList<TObject>> InstantiateAllAsync<TObject, TKey>(IList<TKey> keys, Action<IAsyncOperation<TObject>> callback, InstantiationParameters instantiateParameters)
@@ -748,7 +747,7 @@ namespace UnityEngine.ResourceManagement
 
                     var groupOp = StartLoadGroupOperation(location.Dependencies, GetLoadAsyncInternalFunc<object>(), null);
                     return SceneProvider.ProvideSceneAsync(location, groupOp, loadMode);
-                });
+                }).Acquire();
         }
 
         /// <summary>
@@ -762,7 +761,7 @@ namespace UnityEngine.ResourceManagement
             if (SceneProvider == null)
                 throw new NullReferenceException("ResourceManager.SceneProvider is null.  Assign a valid ISceneProvider object before using.");
 
-            return StartInternalAsyncOp(key, SceneProvider.ReleaseSceneAsync);
+            return StartInternalAsyncOp(key, SceneProvider.ReleaseSceneAsync).Acquire();
         }
     }
 }

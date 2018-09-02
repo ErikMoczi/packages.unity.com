@@ -7,8 +7,8 @@ namespace UnityEngine.ResourceManagement
     {
         public static readonly AsyncOperationCache Instance = new AsyncOperationCache();
         readonly Dictionary<CacheKey, Stack<IAsyncOperation>> m_cache = new Dictionary<CacheKey, Stack<IAsyncOperation>>(new CacheKeyComparer());
-        readonly Dictionary<CacheKey, Stack<IAsyncOperation>> m_lobby = new Dictionary<CacheKey, Stack<IAsyncOperation>>(new CacheKeyComparer());
-        int m_lobbyFrame = -1;
+        readonly Dictionary<CacheKey, Stack<IAsyncOperation>> m_delayedReleases = new Dictionary<CacheKey, Stack<IAsyncOperation>>(new CacheKeyComparer());
+        int m_delayedFrame = -1;
 
         internal struct CacheKey
         {
@@ -58,21 +58,17 @@ namespace UnityEngine.ResourceManagement
 
         public void Release<TObject>(IAsyncOperation operation)
         {
-            Debug.Assert(m_lobby != null, "AsyncOperationCache.Release - m_cache == null.");
+            Debug.Assert(m_delayedReleases != null, "AsyncOperationCache.Release - m_cache == null.");
             if (operation == null)
                 throw new ArgumentNullException("operation");
+            operation.Validate();
 
             MoveDelayedOperationsToCache();
 
             var key = new CacheKey(operation.GetType(), typeof(TObject));
             Stack<IAsyncOperation> operationStack;
-            if (!m_lobby.TryGetValue(key, out operationStack))
-            {
-//                Diagnostics.ResourceManagerEventCollector.PostEvent(Diagnostics.ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, key, 0);
-//                Diagnostics.ResourceManagerEventCollector.PostEvent(Diagnostics.ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, key, 100);
-                m_lobby.Add(key, operationStack = new Stack<IAsyncOperation>());
-            }
-//            Diagnostics.ResourceManagerEventCollector.PostEvent(Diagnostics.ResourceManagerEventCollector.EventType.CacheEntryRefCount, key, operationStack.Count); 
+            if (!m_delayedReleases.TryGetValue(key, out operationStack))
+                m_delayedReleases.Add(key, operationStack = new Stack<IAsyncOperation>());
             operationStack.Push(operation);
         }
 
@@ -89,7 +85,7 @@ namespace UnityEngine.ResourceManagement
             {
                 var op = (TAsyncOperation)operationStack.Pop();
                 op.IsValid = true;
-//                Diagnostics.ResourceManagerEventCollector.PostEvent(Diagnostics.ResourceManagerEventCollector.EventType.CacheEntryRefCount, key, operationStack.Count);
+                op.ResetStatus();
                 return op;
             }
             var op2 = new TAsyncOperation();
@@ -100,17 +96,17 @@ namespace UnityEngine.ResourceManagement
 
         void MoveDelayedOperationsToCache()
         {
-            if (Time.frameCount > m_lobbyFrame)
+            if (Time.frameCount > m_delayedFrame)
             {
-                m_lobbyFrame = Time.frameCount;
-                foreach (var kvp in m_lobby)
+                m_delayedFrame = Time.frameCount;
+                foreach (var kvp in m_delayedReleases)
                 {
                     Stack<IAsyncOperation> operationStack;
                     if (!m_cache.TryGetValue(kvp.Key, out operationStack))
                         m_cache.Add(kvp.Key, operationStack = new Stack<IAsyncOperation>());
                     foreach (var o in kvp.Value)
                     {
-                        o.ResetStatus();
+                        o.Validate();
                         o.IsValid = false;
                         operationStack.Push(o);
                     }

@@ -31,7 +31,6 @@ namespace UnityEngine.ResourceManagement
             Validate();
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncCompletion, Context, Time.frameCount - startFrame);
             InvokeCompletionEvent();
-            ReleaseToCache();
         }
 
         public abstract TObject ConvertResult(AsyncOperation op);

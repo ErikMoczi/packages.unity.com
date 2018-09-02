@@ -21,15 +21,16 @@ namespace UnityEngine.ResourceManagement
                     return m_result;
                 }
             }
-            public abstract void ReleaseToCacheInternal();
+            public abstract void ReleaseInternalOperation();
         }
 
         internal class CacheEntry<TObject> : CacheEntry, IAsyncOperation<TObject>
             where TObject : class
         {
-            IAsyncOperation m_operation;
+            IAsyncOperation<TObject> m_operation;
             AsyncOperationStatus m_status;
             Exception m_error;
+
             public AsyncOperationStatus Status
             {
                 get
@@ -38,6 +39,7 @@ namespace UnityEngine.ResourceManagement
                     return m_status > AsyncOperationStatus.None ? m_status : m_operation.Status;
                 }
             }
+
             public Exception OperationException
             {
                 get
@@ -46,6 +48,7 @@ namespace UnityEngine.ResourceManagement
                     return m_error != null ? m_error : m_operation.OperationException;
                 }
             }
+
             new public TObject Result
             {
                 get
@@ -54,6 +57,7 @@ namespace UnityEngine.ResourceManagement
                     return m_result as TObject;
                 }
             }
+
             public override bool IsDone
             {
                 get
@@ -62,6 +66,7 @@ namespace UnityEngine.ResourceManagement
                     return !(EqualityComparer<TObject>.Default.Equals(Result, default(TObject)));
                 }
             }
+
             public object Current
             {
                 get
@@ -70,11 +75,13 @@ namespace UnityEngine.ResourceManagement
                     return m_result;
                 }
             }
+
             public bool MoveNext()
             {
                 Validate();
                 return m_result == null;
             }
+
             public object Context
             {
                 get
@@ -83,25 +90,22 @@ namespace UnityEngine.ResourceManagement
                     return m_operation.Context;
                 }
             }
+
             public void Reset()
             {
             }
-            public bool IsValid { get { return m_operation.IsValid; } set { } }
+
+            public bool IsValid { get { return m_operation != null && m_operation.IsValid; } set { } }
 
             public void ResetStatus()
             {
                 //should never be called as this operation doe not end up in cache
             }
 
-            public bool BlockReleaseToCache { get; set; }
-            public void ReleaseToCache(bool force = false)
+            public override void ReleaseInternalOperation()
             {
-                //This object will never be released to cache
-            }
-
-            public override void ReleaseToCacheInternal()
-            {
-                m_operation.ReleaseToCache(true);
+                m_operation.Release();
+                m_operation = null;
             }
 
             public override float PercentComplete
@@ -147,12 +151,11 @@ namespace UnityEngine.ResourceManagement
                     m_completedAction -= value;
                 }
             }
+
             public CacheEntry(CacheList cacheList, IAsyncOperation<TObject> operation)
             {
-                IsValid = true;
                 m_cacheList = cacheList;
-                m_operation = operation;
-                m_operation.BlockReleaseToCache = true;
+                m_operation = operation.Acquire();
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, Context, 0);
                 operation.Completed += OnComplete;
             }
@@ -208,6 +211,16 @@ namespace UnityEngine.ResourceManagement
                     return false;
                 }
                 return true;
+            }
+
+            public IAsyncOperation<TObject> Acquire()
+            {
+                return this;
+            }
+
+            public void Release()
+            {
+                //do nothing
             }
         }
 
@@ -286,7 +299,7 @@ namespace UnityEngine.ResourceManagement
                 {
                     if (!provider.Release(m_location, e.Result))
                         Debug.LogWarning("Failed to release location " + m_location);
-                    e.ReleaseToCacheInternal();
+                    e.ReleaseInternalOperation();
                 }
             }
         }

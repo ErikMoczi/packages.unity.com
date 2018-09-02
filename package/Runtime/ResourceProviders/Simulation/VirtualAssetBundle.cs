@@ -61,7 +61,7 @@ namespace UnityEngine.ResourceManagement
 
             if (m_loaded && m_assets.Contains(location.InternalId))
             {
-                var op = new LoadAssetOp<TObject>(location, m_sizes[m_assets.IndexOf(location.InternalId)] / (float)speed);
+                var op = new LoadAssetOp<TObject>(location, m_sizes[m_assets.IndexOf(location.InternalId)] / (float)speed).Acquire();
                 m_operations.Add(op);
                 m_manager.AddToUpdateList(this);
                 return op;

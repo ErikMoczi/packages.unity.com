@@ -80,11 +80,13 @@ namespace UnityEngine.ResourceManagement
         {
             TObject prefabResult;
             int m_startFrame;
-            Action<IAsyncOperation<TObject>> m_onCompleteAction;
+            Action<IAsyncOperation<TObject>> m_onLoadOperationCompleteAction;
+            Action<TObject> m_onValidResultCompleteAction;
             InstantiationParameters m_instParams;
             public InternalOp() 
             {
-                m_onCompleteAction = OnComplete;
+                m_onLoadOperationCompleteAction = OnLoadComplete;
+                m_onValidResultCompleteAction = OnInstantComplete;
             }
 
             public InternalOp<TObject> Start(IAsyncOperation<TObject> loadOperation, IResourceLocation location, TObject value, InstantiationParameters instantiateParameters)
@@ -96,13 +98,14 @@ namespace UnityEngine.ResourceManagement
                 Context = location;
                 m_startFrame = Time.frameCount;
                 if (loadOperation != null)
-                    loadOperation.Completed += m_onCompleteAction;
+                    loadOperation.Completed += m_onLoadOperationCompleteAction;
                 else
-                    OnComplete(Result);
+                    DelayedActionManager.AddAction(m_onValidResultCompleteAction, Result);
+
                 return this;
             }
 
-            void OnComplete(TObject res)
+            void OnInstantComplete(TObject res)
             {
                 Validate();
                 Result = res;
@@ -126,10 +129,9 @@ namespace UnityEngine.ResourceManagement
                 }
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, Context, Time.frameCount - m_startFrame);
                 InvokeCompletionEvent();
-                ReleaseToCache();
             }
 
-            void OnComplete(IAsyncOperation<TObject> operation)
+            void OnLoadComplete(IAsyncOperation<TObject> operation)
             {
                 Validate();
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, Context, Time.frameCount - m_startFrame);
@@ -145,7 +147,6 @@ namespace UnityEngine.ResourceManagement
                 }
 
                 InvokeCompletionEvent();
-                ReleaseToCache();
             }
         }
 

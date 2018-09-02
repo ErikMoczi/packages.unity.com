@@ -43,6 +43,7 @@ namespace UnityEngine.ResourceManagement
             {
                 this.manager = manager;
                 Context = location;
+                Acquire();
                 bundleName = ResourceManagerConfig.ExpandPathWithGlobalVariables(location.InternalId);
                 loadTime = Time.unscaledTime + delay;
             }
