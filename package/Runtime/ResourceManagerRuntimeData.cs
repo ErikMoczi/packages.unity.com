@@ -20,7 +20,7 @@ namespace UnityEngine.AddressableAssets
             if (mode == EditorPlayMode.PackedMode)
                 return "file://{UnityEngine.Application.streamingAssetsPath}/Addressables_settings.json";
             var p = System.IO.Path.GetDirectoryName(UnityEngine.Application.dataPath);
-            return "file://" + System.IO.Path.Combine(p, "/Library/Addressables_settings_" + mode + ".json");
+            return "file://" + System.IO.Path.Combine(p, "Library/Addressables_settings_" + mode + ".json");
         }
 
         public static string GetPlayerCatalogLoadLocation(EditorPlayMode mode)
@@ -28,7 +28,7 @@ namespace UnityEngine.AddressableAssets
             if (mode == EditorPlayMode.PackedMode)
                 return "file://{UnityEngine.Application.streamingAssetsPath}/Addressables_catalog.json";
             var p = System.IO.Path.GetDirectoryName(UnityEngine.Application.dataPath);
-            return "file://" + System.IO.Path.Combine(p, "/Library/Addressables_catalog_" + mode + ".json");
+            return "file://" + System.IO.Path.Combine(p, "Library/Addressables_catalog_" + mode + ".json");
         }
 
         /// <summary>

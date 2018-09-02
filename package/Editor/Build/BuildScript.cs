@@ -114,11 +114,11 @@ namespace UnityEditor.AddressableAssets
                 buildTasks.Add(new CalculateSceneDependencyData());
             buildTasks.Add(new CalculateAssetDependencyData());
             buildTasks.Add(new StripUnusedSpriteSources());
-            buildTasks.Add(new CreateBuiltInShadersBundle("UnityBuiltInShaders"));
+            //buildTasks.Add(new CreateBuiltInShadersBundle("UnityBuiltInShaders"));
             
             // Packing
             buildTasks.Add(new GenerateBundlePacking());
-            buildTasks.Add(new UpdateBundleObjectLayout());
+            //buildTasks.Add(new UpdateBundleObjectLayout());
             buildTasks.Add(new GenerateLocationListsTask());
             if (playMode == ResourceManagerRuntimeData.EditorPlayMode.VirtualMode)
             {
