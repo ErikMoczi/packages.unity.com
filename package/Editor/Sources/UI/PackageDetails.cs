@@ -127,7 +127,12 @@ namespace UnityEditor.PackageManager.UI
                 root.Q<Label>("detailTitle").text = displayPackage.DisplayName;
                 DetailVersion.text = "Version " + displayPackage.VersionWithoutTag;
 
-                UIUtils.SetElementDisplay(GetTag(PackageTag.recommended), displayPackage.IsRecommended);
+                if (displayPackage.HasTag(PackageTag.alpha) || displayPackage.HasTag(PackageTag.beta) ||
+                    displayPackage.HasTag(PackageTag.experimental))
+                    UIUtils.SetElementDisplay(GetTag(PackageTag.recommended), false);
+                else
+                    UIUtils.SetElementDisplay(GetTag(PackageTag.recommended), displayPackage.IsRecommended);
+
                 foreach (var tag in SupportedTags())
                     UIUtils.SetElementDisplay(GetTag(tag), displayPackage.HasTag(tag));
                                 
