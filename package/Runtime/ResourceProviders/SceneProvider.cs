@@ -7,6 +7,23 @@ namespace UnityEngine.ResourceManagement
 {
     public class SceneProvider : ISceneProvider
     {
+        static Scene GetSceneFromLocation(IResourceLocation location)
+        {
+            var path = location.InternalId;
+            if (!path.EndsWith(".unity"))
+                path = path + ".unity";
+            if (!path.StartsWith("Assets/"))
+                path = "Assets/" + path;
+
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                if (scene.path == path)
+                    return scene;
+            }
+            return default(Scene);
+        }
+
         class InternalOp : AsyncOperationBase<Scene>
         {
             LoadSceneMode m_loadMode;
@@ -32,7 +49,7 @@ namespace UnityEngine.ResourceManagement
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadSceneAsyncCompletion, Context, 1);
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, Context, 100);
                
-                SetResult(SceneManager.GetActiveScene());
+                SetResult(GetSceneFromLocation(Context as IResourceLocation));
                 InvokeCompletionEvent();
             }
 
@@ -63,17 +80,14 @@ namespace UnityEngine.ResourceManagement
             {
                 Validate();
                 Context = location;
-                Result = SceneManager.GetSceneByPath(location.InternalId);
-                if (Result.isLoaded)
+                var scene = GetSceneFromLocation(location);
+                if (scene.IsValid())
                 {
                     ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.ReleaseSceneAsyncRequest, Context, 0);
-                    SceneManager.UnloadSceneAsync(location.InternalId).completed += OnSceneUnloaded;
+                    var unloadOp = SceneManager.UnloadSceneAsync(scene);
+                    if (unloadOp != null)
+                        unloadOp.completed += OnSceneUnloaded;
                 }
-                else
-                {
-                    Debug.LogWarning("Tried to unload a scene that was not loaded:" + location.InternalId);
-                }
-
                 return this;
             }
 

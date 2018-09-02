@@ -92,7 +92,7 @@ namespace UnityEngine.ResourceManagement
                     if (Time.unscaledTime > loadTime)
                     {
                         var assetPath = (Context as IResourceLocation).InternalId;
-                        Result = UnityEditor.AssetDatabase.LoadAssetAtPath<Object>(assetPath) as TObject;
+                        Result = UnityEditor.AssetDatabase.LoadAssetAtPath(assetPath, typeof(TObject)) as TObject;
                         InvokeCompletionEvent();
                         return true;
                     }

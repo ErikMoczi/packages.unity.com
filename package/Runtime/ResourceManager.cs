@@ -64,6 +64,58 @@ namespace UnityEngine.ResourceManagement
         static Action s_initializationCompletionCallback;
         static bool s_initializationCompleted = false;
 
+        static Dictionary<int, HashSet<GameObject>> s_sceneToInstanceIds = new Dictionary<int, HashSet<GameObject>>();
+        public static void OnSceneUnloaded(Scene scene)
+        {
+            HashSet<GameObject> instanceIds = null;
+            if (s_sceneToInstanceIds.TryGetValue(scene.GetHashCode(), out instanceIds))
+            {
+                foreach (var go in instanceIds)
+                {
+                    var i = go.GetInstanceID();
+                    IResourceLocation loc;
+                    if (s_instanceToLocationMap.TryGetValue(i, out loc))
+                    {
+                        if (!s_instanceToSceneMap.Remove(i))
+                            Debug.LogFormat("Scene not found for instance {0}", i);
+                        s_instanceToLocationMap.Remove(i);
+                        ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.ReleaseInstance, loc, Time.frameCount);
+
+                        if (InstanceProvider.ReleaseInstance(GetResourceProvider<object>(loc), loc, null))
+                            Release_Internal<Object>(loc, null);
+                    }
+                    else
+                    {
+                        //object has already been released
+                        Debug.LogFormat("Object instance {0} has already been released.", i);
+                    }
+                }
+                s_sceneToInstanceIds.Remove(scene.GetHashCode());
+            }
+        }
+
+        static void RecordInstanceSceneChange(GameObject go, int previousScene, int currentScene)
+        {
+            HashSet<GameObject> instanceIds = null;
+            if (!s_sceneToInstanceIds.TryGetValue(previousScene, out instanceIds))
+                Debug.LogFormat("Unable to find instance table for instance {0}.", go.GetInstanceID());
+            else
+                instanceIds.Remove(go);
+            if (!s_sceneToInstanceIds.TryGetValue(currentScene, out instanceIds))
+                s_sceneToInstanceIds.Add(currentScene, instanceIds = new HashSet<GameObject>());
+            instanceIds.Add(go);
+
+            s_instanceToSceneMap[go.GetInstanceID()] = currentScene;
+
+        }
+        /// <summary>
+        /// Notify the ResourceManager that a tracked instance has changed scenes so that it can be released properly when the scene is unloaded.
+        /// </summary>
+        public static void RecordInstanceSceneChange(GameObject go, Scene previousScene, Scene currentScene)
+        {
+            RecordInstanceSceneChange(go, previousScene.GetHashCode(), currentScene.GetHashCode());
+        }
+
         /// <summary>
         /// This is used to tell the resourcemanager that all initialization events have completed. It will normally be called from loading catalogs, but tests will need to call it before running.
         /// </summary>
@@ -91,6 +143,7 @@ namespace UnityEngine.ResourceManagement
 
         //used to look up locations of instatiated objects in order to find the provider when they are released
         static Dictionary<int, IResourceLocation> s_instanceToLocationMap = new Dictionary<int, IResourceLocation>();
+        static Dictionary<int, int> s_instanceToSceneMap = new Dictionary<int, int>();
 
         //used to look up locations of assets in order to find the provider when they are released
         static Dictionary<object, IResourceLocation> s_assetToLocationMap = new Dictionary<object, IResourceLocation>();
@@ -228,6 +281,16 @@ namespace UnityEngine.ResourceManagement
                         else
                         {
                             Debug.LogErrorFormat("s_instanceToLocationMap.Add failed for {0}, context={1}", op2.Result.GetInstanceID(), op2.Context);
+                        }
+                        var go = op2.Result as GameObject;
+                        if (go != null)
+                        {
+                            Scene targetScene = go.scene;
+                            HashSet<GameObject> instancesInScene;
+                            if (!s_sceneToInstanceIds.TryGetValue(targetScene.GetHashCode(), out instancesInScene))
+                                s_sceneToInstanceIds.Add(targetScene.GetHashCode(), instancesInScene = new HashSet<GameObject>());
+                            instancesInScene.Add(go);
+                            s_instanceToSceneMap.Add(op2.Result.GetInstanceID(), targetScene.GetHashCode());
                         }
                     }
                 };
@@ -386,7 +449,6 @@ namespace UnityEngine.ResourceManagement
             if (instance == null)
                 throw new ArgumentNullException("instance");
             IResourceLocation loc = null;
-
             if (!s_instanceToLocationMap.TryGetValue(instance.GetInstanceID(), out loc))
             {
                 if (s_assetToLocationMap.ContainsKey(instance))
@@ -396,6 +458,32 @@ namespace UnityEngine.ResourceManagement
                 return;
             }
 
+            int sceneID = 0;
+            if (!s_instanceToSceneMap.TryGetValue(instance.GetInstanceID(), out sceneID))
+            {
+                Debug.LogWarningFormat("Unable to find scene for instance {0}", instance.GetInstanceID());
+            }
+            else
+            {
+                var go = instance as GameObject;
+                if (go != null)
+                {
+                    HashSet<GameObject> instances;
+                    if (!s_sceneToInstanceIds.TryGetValue(sceneID, out instances))
+                    {
+                        Debug.LogFormat("Instance {0} was not found in scene table for scene {1},  use ResourceManager.RecordInstanceSceneChange to ensure proper asset reference counts.", instance.GetInstanceID(), sceneID);
+                    }
+                    else
+                    {
+                        if (!instances.Remove(go))
+                        {
+                            Debug.LogFormat("Instance {0} was not found in scene table for scene {1},  use ResourceManager.RecordInstanceSceneChange to ensure proper asset reference counts.", instance.GetInstanceID(), sceneID);
+                        }
+                    }
+                }
+                s_instanceToSceneMap.Remove(instance.GetInstanceID());
+            }
+            
             s_instanceToLocationMap.Remove(instance.GetInstanceID());
 
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.ReleaseInstance, loc, Time.frameCount);
@@ -692,6 +780,31 @@ namespace UnityEngine.ResourceManagement
             return instAllOp.Start(locations, (loc) => { return InstantiateAsync_Internal<TObject>(loc, instantiateParameters); }, callback);
         }
 
+        static void ValidateSceneInstances()
+        {
+            var objectsThatNeedToBeFixed = new List<KeyValuePair<int, GameObject>>();
+            foreach (var kvp in s_sceneToInstanceIds)
+            {
+                foreach (var go in kvp.Value)
+                {
+                    if (go == null)
+                    {
+                        Debug.LogWarningFormat("GameObject instance has been destroyed, use ResourceManager.ReleaseInstance to ensure proper reference counts.");
+                    }
+                    else
+                    {
+                        if (go.scene.GetHashCode() != kvp.Key)
+                        {
+                            Debug.LogWarningFormat("GameObject instance {0} has been moved to from scene {1} to scene {2}.  When moving tracked instances, use ResourceManager.RecordInstanceSceneChange to ensure that reference counts are accurate.", go, kvp.Key, go.scene.GetHashCode());
+                            objectsThatNeedToBeFixed.Add(new KeyValuePair<int, GameObject>(kvp.Key, go));
+                        }
+                    }
+                }
+            }
+
+            foreach (var go in objectsThatNeedToBeFixed)
+                RecordInstanceSceneChange(go.Value, go.Key, go.Value.scene.GetHashCode()); 
+        }
 
         /// <summary>
         /// Asynchronously loads the scene a the given <paramref name="key"/>.
@@ -704,6 +817,9 @@ namespace UnityEngine.ResourceManagement
         {
             if (SceneProvider == null)
                 throw new NullReferenceException("ResourceManager.SceneProvider is null.  Assign a valid ISceneProvider object before using.");
+
+            if (loadMode == LoadSceneMode.Single)
+                ValidateSceneInstances();
 
             return StartInternalAsyncOp(key, (IResourceLocation location) => {
                     ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadSceneAsyncRequest, location, 1);
@@ -724,7 +840,7 @@ namespace UnityEngine.ResourceManagement
         {
             if (SceneProvider == null)
                 throw new NullReferenceException("ResourceManager.SceneProvider is null.  Assign a valid ISceneProvider object before using.");
-
+            ValidateSceneInstances();
             return StartInternalAsyncOp(key, SceneProvider.ReleaseSceneAsync).Acquire();
         }
     }

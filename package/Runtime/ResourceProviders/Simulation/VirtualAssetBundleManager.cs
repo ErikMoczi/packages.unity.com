@@ -44,7 +44,7 @@ namespace UnityEngine.ResourceManagement
                 this.manager = manager;
                 Context = location;
                 Acquire();
-                bundleName = ResourceManagerConfig.ExpandPathWithGlobalVariables(location.InternalId);
+                bundleName = location.InternalId;
                 loadTime = Time.unscaledTime + delay;
             }
 
@@ -61,27 +61,27 @@ namespace UnityEngine.ResourceManagement
             }
         }
 
-        public static void AddProviders()
+        public static void AddProviders(Func<string, string> bundleNameConverter)
         {
             var virtualBundleData = VirtualAssetBundleRuntimeData.Load();
             if (virtualBundleData != null)
             {
                 var go = new GameObject("AssetBundleSimulator", typeof(VirtualAssetBundleManager));
                 var simABManager = go.GetComponent<VirtualAssetBundleManager>();
-                simABManager.Initialize(virtualBundleData);
+                simABManager.Initialize(virtualBundleData, bundleNameConverter);
                 ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(simABManager, typeof(RemoteAssetBundleProvider).FullName)));
                 ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(simABManager, typeof(LocalAssetBundleProvider).FullName)));
                 ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualBundledAssetProvider(simABManager.m_localLoadSpeed)));
             }
         }
 
-        private void Initialize(VirtualAssetBundleRuntimeData virtualBundleData)
+        private void Initialize(VirtualAssetBundleRuntimeData virtualBundleData, Func<string, string> bundleNameConverter)
         {
             Debug.Assert(virtualBundleData != null);
             m_localLoadSpeed = virtualBundleData.LocalLoadSpeed;
             m_remoteLoadSpeed = virtualBundleData.RemoteLoadSpeed;
             foreach (var b in virtualBundleData.AssetBundles)
-                m_allBundles.Add(ResourceManagerConfig.ExpandPathWithGlobalVariables(b.Name), b);
+                m_allBundles.Add(bundleNameConverter(b.Name), b);
         }
 
         float GetBundleLoadTime(string id)
@@ -93,7 +93,7 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new ArgumentException("IResourceLocation location cannot be null.");
-            return Unload(ResourceManagerConfig.ExpandPathWithGlobalVariables(location.InternalId));
+            return Unload(location.InternalId);
         }
 
         public IAsyncOperation<VirtualAssetBundle> LoadAsync(IResourceLocation location)
@@ -102,7 +102,7 @@ namespace UnityEngine.ResourceManagement
                 throw new ArgumentException("IResourceLocation location cannot be null.");
 
             LoadAssetBundleOp op = null;
-            var bundleName = ResourceManagerConfig.ExpandPathWithGlobalVariables(location.InternalId);
+            var bundleName = location.InternalId;
             if (!m_loadBundleOperations.TryGetValue(bundleName, out op))
                 m_loadBundleOperations.Add(bundleName, op = new LoadAssetBundleOp(this, location, GetBundleLoadTime(bundleName)));
             return op;

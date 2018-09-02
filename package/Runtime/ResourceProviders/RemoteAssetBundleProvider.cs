@@ -13,7 +13,7 @@ namespace UnityEngine.ResourceManagement
             {
                 action = (op) => 
                 {
-                    var bundleURL = ResourceManagerConfig.ExpandPathWithGlobalVariables((Context as IResourceLocation).InternalId);
+                    var bundleURL = (Context as IResourceLocation).InternalId;
                     var reqOp = UnityWebRequestAssetBundle.GetAssetBundle(bundleURL).SendWebRequest();
                     if (reqOp.isDone)
                         DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);

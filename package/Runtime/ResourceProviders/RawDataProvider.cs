@@ -13,7 +13,7 @@ namespace UnityEngine.ResourceManagement
             {
                 action = (op) => 
                 {
-                    var url = ResourceManagerConfig.ExpandPathWithGlobalVariables((Context as IResourceLocation).InternalId);
+                    var url = (Context as IResourceLocation).InternalId;
                     var reqOp = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET, new DownloadHandlerBuffer(), null).SendWebRequest();
                     if (reqOp.isDone)
                         DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, reqOp);
