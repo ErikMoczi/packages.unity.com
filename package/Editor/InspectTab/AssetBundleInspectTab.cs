@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEditor.IMGUI.Controls;
 using System.Collections.Generic;
 using System.IO;
-//using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Linq;
 
 namespace AssetBundleBrowser
@@ -71,15 +71,15 @@ namespace AssetBundleBrowser
             dataPath = dataPath.Replace("\\", "/");
             dataPath += "/Library/AssetBundleBrowserInspect.dat";
 
-            //if (File.Exists(dataPath))
-            //{
-            //    BinaryFormatter bf = new BinaryFormatter();
-            //    FileStream file = File.Open(dataPath, FileMode.Open);
-            //    var data = bf.Deserialize(file) as InspectTabData;
-            //    if (data != null)
-            //        m_Data = data;
-            //    file.Close();
-            //}
+            if (File.Exists(dataPath))
+            {
+                BinaryFormatter bf = new BinaryFormatter();
+                FileStream file = File.Open(dataPath, FileMode.Open);
+                var data = bf.Deserialize(file) as InspectTabData;
+                if (data != null)
+                    m_Data = data;
+                file.Close();
+            }
 
 
             if (m_BundleList == null)
@@ -97,15 +97,15 @@ namespace AssetBundleBrowser
         {
             ClearData();
 
-            //var dataPath = System.IO.Path.GetFullPath(".");
-            //dataPath = dataPath.Replace("\\", "/");
-            //dataPath += "/Library/AssetBundleBrowserInspect.dat";
+            var dataPath = System.IO.Path.GetFullPath(".");
+            dataPath = dataPath.Replace("\\", "/");
+            dataPath += "/Library/AssetBundleBrowserInspect.dat";
 
-            //BinaryFormatter bf = new BinaryFormatter();
-            //FileStream file = File.Create(dataPath);
+            BinaryFormatter bf = new BinaryFormatter();
+            FileStream file = File.Create(dataPath);
 
-            //bf.Serialize(file, m_Data);
-            //file.Close();
+            bf.Serialize(file, m_Data);
+            file.Close();
         }
 
         internal void OnGUI(Rect pos)

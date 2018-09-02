@@ -72,7 +72,6 @@ namespace AssetBundleBrowser
                 m_InspectTab = new AssetBundleInspectTab();
             m_InspectTab.OnEnable(subPos, this);
 
-            Debug.Log("we are enabled");
             m_RefreshTexture = EditorGUIUtility.FindTexture("Refresh");
             
             InitDataSources();
@@ -175,10 +174,7 @@ namespace AssetBundleBrowser
                         m_InspectTab.RefreshBundles();
                     break;
             }
-            if (m_RefreshTexture == null)
-                Debug.Log("tex is null");
-            //if (position == null)
-            //    Debug.Log("pos is null");
+
             float toolbarWidth = position.width - k_ToolbarPadding * 4 - m_RefreshTexture.width;
             //string[] labels = new string[2] { "Configure", "Build"};
             string[] labels = new string[3] { "Configure", "Build", "Inspect" };
