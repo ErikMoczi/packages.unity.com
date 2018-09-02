@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.0.20-preview] - 2018-05-02
+ - Added support for extracting Built-In Shaders to a common bundle
+ - Added build task for generating extra data for sprite loading edge case
+ - fix build related bugs introduced in 0.0.19.
+
 ## [0.0.19-preview] - 2018-05-01
  - Complete UI rework.
 	- Moved all functionality to one tab

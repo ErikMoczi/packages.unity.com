@@ -105,6 +105,52 @@ namespace UnityEditor.AddressableAssets
 
         public static System.Action<BuildResult> buildCompleted;
 
+
+        static IList<IBuildTask> RuntimeDataBuildTasks(ResourceManagerRuntimeData.EditorPlayMode playMode)
+        {
+            var buildTasks = new List<IBuildTask>();
+            
+            // Setup
+            buildTasks.Add(new ProjectInCleanState());
+            buildTasks.Add(new ValidateBundleAssignments());
+            buildTasks.Add(new SwitchToBuildPlatform());
+            buildTasks.Add(new RebuildSpriteAtlasCache());
+            
+            // Player Scripts
+            buildTasks.Add(new BuildPlayerScripts());
+            buildTasks.Add(new SetBundleSettingsTypeDB());
+            
+            // Dependency
+            if (playMode == ResourceManagerRuntimeData.EditorPlayMode.VirtualMode)
+                buildTasks.Add(new PreviewSceneDependencyData());
+            else
+                buildTasks.Add(new CalculateSceneDependencyData());
+            buildTasks.Add(new CalculateAssetDependencyData());
+            buildTasks.Add(new StripUnusedSpriteSources());
+            buildTasks.Add(new CreateBuiltInShadersBundle("UnityBuiltInShaders"));
+            
+            // Packing
+            buildTasks.Add(new GenerateBundlePacking());
+            buildTasks.Add(new UpdateBundleObjectLayout());
+            buildTasks.Add(new GenerateLocationListsTask());
+            if (playMode == ResourceManagerRuntimeData.EditorPlayMode.VirtualMode)
+            {
+                buildTasks.Add(new WriteVirtualBundleDataTask());
+            }
+            else
+            {
+                buildTasks.Add(new GenerateBundleCommands());
+                buildTasks.Add(new GenerateSpritePathMaps());
+                buildTasks.Add(new GenerateBundleMaps());
+
+                // Writing
+                buildTasks.Add(new WriteSerializedFiles());
+                buildTasks.Add(new ArchiveAndCompressBundles());
+                buildTasks.Add(new PostProcessBundlesTask());
+            }
+            return buildTasks;
+        }
+
         public static bool PrepareRuntimeData(bool isPlayerBuild, bool isDevBuild, bool allowProfilerEvents, bool forceRebuild, bool enteringPlayMode, BuildTargetGroup buildTargetGroup, BuildTarget buildTarget)
         {
             var timer = new System.Diagnostics.Stopwatch();
@@ -184,35 +230,7 @@ namespace UnityEditor.AddressableAssets
                     var buildParams = new BuildParameters(buildTarget, buildTargetGroup, aaSettings.buildSettings.bundleBuildPath);
                     buildParams.UseCache = true; // aaSettings.buildSettings.useCache && !forceRebuild;
 
-                    var buildTasks = new List<IBuildTask>();
-                    buildTasks.Add(new ProjectInCleanState());
-                    buildTasks.Add(new ValidateBundleAssignments());
-                    buildTasks.Add(new SwitchToBuildPlatform());
-                    buildTasks.Add(new RebuildAtlasCache());
-                    buildTasks.Add(new BuildPlayerScripts());
-                    buildTasks.Add(new SetBundleSettingsTypeDB());
-
-                    if (playMode == ResourceManagerRuntimeData.EditorPlayMode.VirtualMode)
-                        buildTasks.Add(new PreviewSceneDependencyData());
-                    else
-                        buildTasks.Add(new CalculateSceneDependencyData());
-
-                    buildTasks.Add(new CalculateAssetDependencyData());
-                    buildTasks.Add(new StripUnusedSpriteSources());
-                    buildTasks.Add(new GenerateBundlePacking());
-                    buildTasks.Add(new GenerateLocationListsTask());
-                    if (playMode == ResourceManagerRuntimeData.EditorPlayMode.VirtualMode)
-                    {
-                        buildTasks.Add(new WriteVirtualBundleDataTask());
-                    }
-                    else
-                    {
-                        buildTasks.Add(new GenerateBundleCommands());
-                        buildTasks.Add(new GenerateBundleMaps());
-                        buildTasks.Add(new WriteSerializedFiles());
-                        buildTasks.Add(new ArchiveAndCompressBundles());
-                        buildTasks.Add(new PostProcessBundlesTask());
-                    }
+                    var buildTasks = RuntimeDataBuildTasks(playMode); 
 
                     var aaContext = new AddressableAssetsBuildContext
                     {
@@ -275,11 +293,14 @@ namespace UnityEditor.AddressableAssets
 
         internal static bool PreviewDependencyInfo(out BuildDependencyData depData, out BundleWriteData bundleWriteData)
         {
-            depData = null;
-            bundleWriteData = null;
             var aaSettings = AddressableAssetSettings.GetDefault(false, false);
             if (aaSettings == null)
+            {
+                depData = null;
+                bundleWriteData = null;
                 return false;
+            }
+
             SceneManagerState.Record();
 
             var runtimeData = new ResourceManagerRuntimeData();
@@ -289,7 +310,11 @@ namespace UnityEditor.AddressableAssets
                 assetGroup.processor.ProcessGroup(aaSettings, assetGroup, allBundleInputDefs, contentCatalog.locations);
 
             if (allBundleInputDefs.Count == 0)
+            {
+                depData = null;
+                bundleWriteData = null;
                 return false;
+            }
 
             var buildParams = new BuildParameters(EditorUserBuildSettings.activeBuildTarget, BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget), aaSettings.buildSettings.bundleBuildPath);
             buildParams.UseCache = true;
@@ -301,23 +326,36 @@ namespace UnityEditor.AddressableAssets
                 m_contentCatalog = contentCatalog
             };
 
+            IBuildContext buildContext = null;
             var buildTasks = new List<IBuildTask>();
             buildTasks.Add(new ProjectInCleanState());
             buildTasks.Add(new ValidateBundleAssignments());
             buildTasks.Add(new SwitchToBuildPlatform());
-            buildTasks.Add(new RebuildAtlasCache());
+            buildTasks.Add(new RebuildSpriteAtlasCache());
             buildTasks.Add(new BuildPlayerScripts());
             buildTasks.Add(new SetBundleSettingsTypeDB());
             buildTasks.Add(new PreviewSceneDependencyData());
             buildTasks.Add(new CalculateAssetDependencyData());
             buildTasks.Add(new StripUnusedSpriteSources());
             buildTasks.Add(new GenerateBundlePacking());
+            buildTasks.Add(new InlineTaskRunner(context =>
+            {
+                buildContext = context;
+                return ReturnCode.Success;
+            }));
 
             IBundleBuildResults results;
             var exitCode = ContentPipeline.BuildAssetBundles(buildParams, new BundleBuildContent(allBundleInputDefs), out results, buildTasks, aaContext);
 
             if (exitCode < ReturnCode.Success)
+            {
+                depData = null;
+                bundleWriteData = null;
                 return false;
+            }
+            
+            depData = (BuildDependencyData)buildContext.GetContextObject<IDependencyData>();
+            bundleWriteData = (BundleWriteData)buildContext.GetContextObject<IWriteData>();
             return true;
         }
     }
