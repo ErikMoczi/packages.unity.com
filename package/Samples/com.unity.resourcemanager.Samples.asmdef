@@ -5,7 +5,6 @@
       "com.unity.resourcemanager.Runtime"
     ],
     "includePlatforms": [
-        "Editor"
     ],
     "excludePlatforms": []
 }
