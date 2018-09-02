@@ -32,6 +32,7 @@ namespace UnityEditor.AddressableAssets
     /// </summary>
     public class BuildScript
     {
+        static int codeVersion = 1;
         [InitializeOnLoadMethod]
         static void Init()
         {
@@ -104,7 +105,7 @@ namespace UnityEditor.AddressableAssets
             if (aaSettings == null)
                 return true;
 
-            var settingsHash = aaSettings.currentHash.ToString();
+            var settingsHash = aaSettings.currentHash.ToString() + codeVersion;
             ResourceManagerRuntimeData runtimeData = null;
             ResourceLocationList contentCatalog = null;
 
@@ -205,7 +206,7 @@ namespace UnityEditor.AddressableAssets
 
             if (enteringPlayMode && runtimeData.resourceProviderMode != ResourceManagerRuntimeData.EditorPlayMode.PackedMode)
                 AddAddressableScenesToEditorBuildSettingsSceneList(aaSettings, runtimeData);
-            runtimeData.contentVersion = aaSettings.profileSettings.GetValueByName(aaSettings.activeProfile, "ContentVersion");
+            runtimeData.contentVersion = "0";// aaSettings.profileSettings.GetValueByName(aaSettings.activeProfile, "ContentVersion");
             runtimeData.settingsHash = settingsHash;
             var catalogLocations = new List<ResourceLocationData>();
             foreach (var assetGroup in aaSettings.groups)

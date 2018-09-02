@@ -149,9 +149,12 @@ namespace UnityEditor.AddressableAssets
                 foreach (var e in g.entries)
                 {
                     if (!excludeFilters || !string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(e.guid)))
-                        results.Add(e);
-                    if (includeImplicitAssets)
-                        e.GatherAllAssets(results, this);
+                    {
+                        if (includeImplicitAssets)
+                            e.GatherAllAssets(results, this);
+                        else
+                            results.Add(e);
+                    }
                 }
             }
             return results;
