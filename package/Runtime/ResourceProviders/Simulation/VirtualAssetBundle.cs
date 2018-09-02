@@ -4,17 +4,34 @@ using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// Contains data needed to simulate a bundled asset
+    /// </summary>
     [Serializable]
     public class VirtualAssetBundleEntry
     {
         [SerializeField]
         string m_name;
+        /// <summary>
+        /// The name of the asset.
+        /// </summary>
         public string Name { get { return m_name; } }
         [SerializeField]
         long m_size;
+        /// <summary>
+        /// The file size of the asset, in bytes.
+        /// </summary>
         public long Size { get { return m_size; } }
 
+        /// <summary>
+        /// Construct a new VirtualAssetBundleEntry
+        /// </summary>
         public VirtualAssetBundleEntry() { }
+        /// <summary>
+        /// Construct a new VirtualAssetBundleEntry
+        /// </summary>
+        /// <param name="name">The name of the asset.</param>
+        /// <param name="size">The size of the asset, in bytes.</param>
         public VirtualAssetBundleEntry(string name, long size)
         {
             m_name = name;
@@ -22,6 +39,9 @@ namespace UnityEngine.ResourceManagement
         }
     }
 
+    /// <summary>
+    /// Contains data need to simulate an asset bundle.
+    /// </summary>
     [Serializable]
     public class VirtualAssetBundle : ISerializationCallbackReceiver
     {
@@ -45,14 +65,25 @@ namespace UnityEngine.ResourceManagement
         LoadAssetBundleOp m_bundleLoadOperation;
         List<IVirtualLoadable> m_assetLoadOperations = new List<IVirtualLoadable>();
         Dictionary<string, VirtualAssetBundleEntry> m_assetMap;
-
+        /// <summary>
+        /// The name of the bundle.
+        /// </summary>
         public string Name { get { return m_name; } }
+        /// <summary>
+        /// The assets contained in the bundle.
+        /// </summary>
         public List<VirtualAssetBundleEntry> Assets { get { return m_serializedAssets; } }
 
+        /// <summary>
+        /// Construct a new VirtualAssetBundle object.
+        /// </summary>
         public VirtualAssetBundle()
         {
         }
 
+        /// <summary>
+        /// The percent of data that has been loaded.
+        /// </summary>
         public float PercentComplete
         {
             get
@@ -61,6 +92,11 @@ namespace UnityEngine.ResourceManagement
             }
         }
 
+        /// <summary>
+        /// Construct a new VirtualAssetBundle
+        /// </summary>
+        /// <param name="name">The name of the bundle.</param>
+        /// <param name="local">Is the bundle local or remote.  This is used to determine which bandwidth value to use when simulating loading.</param>
         public VirtualAssetBundle(string name, bool local)
         {
             m_latency = .1f;
@@ -70,16 +106,27 @@ namespace UnityEngine.ResourceManagement
             m_dataBytesLoaded = 0;
         }
 
+        /// <summary>
+        /// Set the size of the bundle.
+        /// </summary>
+        /// <param name="dataSize">The size of the data.</param>
+        /// <param name="headerSize">The size of the header.</param>
         public void SetSize(long dataSize, long headerSize)
         {
             m_headerSize = headerSize;
             m_dataSize = dataSize;
         }
 
+        /// <summary>
+        /// Not used
+        /// </summary>
         public void OnBeforeSerialize()
         {
         }
 
+        /// <summary>
+        /// Load serialized data into runtime structures.
+        /// </summary>
         public void OnAfterDeserialize()
         {
             m_assetMap = new Dictionary<string, VirtualAssetBundleEntry>();
@@ -168,20 +215,25 @@ namespace UnityEngine.ResourceManagement
             return (m_bundleLoadOperation = new LoadAssetBundleOp(location, this));
         }
 
-
+        /// <summary>
+        /// Load an asset via its location.  The asset will actually be loaded via the AssetDatabase API.
+        /// </summary>
+        /// <typeparam name="TObject"></typeparam>
+        /// <param name="location"></param>
+        /// <returns></returns>
         public IAsyncOperation<TObject> LoadAssetAsync<TObject>(IResourceLocation location) where TObject : class
         {
             if (location == null)
                 throw new ArgumentException("IResourceLocation location cannot be null.");
             if (m_bundleLoadOperation == null)
-                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new ResourceManagerException("LoadAssetAsync called on unloaded bundle " + m_name));
+                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new ResourceManagerException("LoadAssetAsync called on unloaded bundle " + m_name));
 
             if (!m_bundleLoadOperation.IsDone)
-                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new ResourceManagerException("LoadAssetAsync called on loading bundle " + m_name));
+                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new ResourceManagerException("LoadAssetAsync called on loading bundle " + m_name));
 
             VirtualAssetBundleEntry assetInfo;
             if (!m_assetMap.TryGetValue(location.InternalId, out assetInfo))
-                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new ResourceManagerException(string.Format("Unable to load asset {0} from simulated bundle {1}.", location.InternalId, Name)));
+                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new ResourceManagerException(string.Format("Unable to load asset {0} from simulated bundle {1}.", location.InternalId, Name)));
 
             LoadAssetOp<TObject> op = new LoadAssetOp<TObject>(location, assetInfo);
             m_assetLoadOperations.Add(op);

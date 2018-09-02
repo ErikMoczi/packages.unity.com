@@ -3,17 +3,29 @@ using UnityEngine.Networking;
 
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// Contains cache information to be used by the AssetBundleProvider
+    /// </summary>
     [System.Serializable]
     public class AssetBundleCacheInfo
     {
         [SerializeField]
         string m_hash;
+        /// <summary>
+        /// Hash value of the asset bundle.
+        /// </summary>
         public string Hash { get { return m_hash; } set { m_hash = value; } }
         [SerializeField]
         uint m_crc;
+        /// <summary>
+        /// CRC value of the bundle.
+        /// </summary>
         public uint Crc { get { return m_crc; } set { m_crc = value; } }
     }
 
+    /// <summary>
+    /// IResourceProvider for asset bundles.  Loads bundles via UnityWebRequestAssetBundle API if the internalId contains "://".  If not, it will load the bundle via AssetBundle.LoadFromFileAsync.
+    /// </summary>
     public class AssetBundleProvider : ResourceProviderBase
     {
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
@@ -32,7 +44,7 @@ namespace UnityEngine.ResourceManagement
                         if (path.Contains("://"))
                         {
                             var cacheInfo = (Context as IResourceLocation).Data as AssetBundleCacheInfo;
-                            if(cacheInfo != null && !string.IsNullOrEmpty(cacheInfo.Hash) && cacheInfo.Crc != 0)
+                            if (cacheInfo != null && !string.IsNullOrEmpty(cacheInfo.Hash) && cacheInfo.Crc != 0)
                                 m_requestOperation = UnityWebRequestAssetBundle.GetAssetBundle(path, Hash128.Parse(cacheInfo.Hash), cacheInfo.Crc).SendWebRequest();
                             else
                                 m_requestOperation = UnityWebRequestAssetBundle.GetAssetBundle(path).SendWebRequest();
@@ -85,7 +97,7 @@ namespace UnityEngine.ResourceManagement
                 return base.Start(location);
             }
 
-            public override TObject ConvertResult(AsyncOperation op)
+            internal override TObject ConvertResult(AsyncOperation op)
             {
                 var localReq = op as AssetBundleCreateRequest;
                 if (localReq != null)
@@ -102,7 +114,7 @@ namespace UnityEngine.ResourceManagement
                 return default(TObject);
             }
         }
-
+        /// <inheritdoc/>
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             if (location == null)
@@ -111,6 +123,12 @@ namespace UnityEngine.ResourceManagement
             return operation.Start(location, loadDependencyOperation);
         }
 
+        /// <summary>
+        /// Releases the asset bundle via AssetBundle.Unload(true).
+        /// </summary>
+        /// <param name="location"></param>
+        /// <param name="asset"></param>
+        /// <returns></returns>
         public override bool Release(IResourceLocation location, object asset)
         {
             if (location == null)

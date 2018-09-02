@@ -3,8 +3,12 @@ using UnityEngine.Networking;
 
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// Provides a Texture2d object from a remote url using UnityWebRequestTexture.GetTexture.
+    /// </summary>
     public class RemoteTextureProvider : ResourceProviderBase
     {
+        /// <inheritdoc/>
         public override bool CanProvide<TObject>(IResourceLocation location)
         {
             return base.CanProvide<TObject>(location) && ResourceManagerConfig.IsInstance<TObject, Texture2D>();
@@ -47,18 +51,20 @@ namespace UnityEngine.ResourceManagement
                     return reqPer * .25f + m_dependencyOperation.PercentComplete * .75f;
                 }
             }
-            public override TObject ConvertResult(AsyncOperation op)
+            internal override TObject ConvertResult(AsyncOperation op)
             {
                 return ((op as UnityWebRequestAsyncOperation).webRequest.downloadHandler as DownloadHandlerTexture).texture as TObject;
             }
         }
 
+        /// <inheritdoc/>
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
             return operation.Start(location, loadDependencyOperation);
         }
 
+        /// <inheritdoc/>
         public override bool Release(IResourceLocation location, object asset)
         {
             if (location == null)

@@ -15,7 +15,7 @@ namespace UnityEngine.ResourceManagement
         {
             if (string.IsNullOrEmpty(name))
                 throw new ArgumentNullException("name");
-            if(func == null)
+            if (func == null)
                 throw new ArgumentNullException("func");
 
             new GameObject(name).AddComponent<CompletionUpdater>().operation = func;

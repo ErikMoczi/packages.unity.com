@@ -6,26 +6,39 @@ using UnityEngine.Networking.PlayerConnection;
 
 namespace UnityEngine.ResourceManagement.Diagnostics
 {
+    /// <summary>
+    /// Collects ResourceManager events and passed them on the registered event handlers.  In editor play mode, events are passed directly to the ResourceManager profiler window.  
+    /// In player builds, events are sent to the editor via the EditorConnection API.
+    /// </summary>
     public class DiagnosticEventCollector : MonoBehaviour
     {
-        static public Guid EventGuid { get { return new Guid(1, 2, 3, new byte[] { 20, 1, 32, 32, 4, 9, 6, 44 }); } }
+        /// <summary>
+        /// The message id used to register this class with the EditorConnection
+        /// </summary>
+        /// <value>Guid of message id</value>
+        static public Guid EditorConnectionMessageId { get { return new Guid(1, 2, 3, new byte[] { 20, 1, 32, 32, 4, 9, 6, 44 }); } }
+        /// <summary>
+        /// Get or set whether ResourceManager events are enabled
+        /// </summary>
+        /// <value>Enabled state of profiler events</value>
+        static public bool ResourceManagerProfilerEventsEnabled { get; set; }
+
         static readonly List<DiagnosticEvent> s_unhandledEvents = new List<DiagnosticEvent>();
         static Action<DiagnosticEvent> s_eventHandlers;
-        static public bool ProfileEvents { get; set; }
         static bool s_initialized = false;
         static int s_startFrame = -1;
         static List<int> s_frameEventCounts = new List<int>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        public static void SendFirstFrameEvent()
+        internal static void SendFirstFrameEvent()
         {
-            if (ProfileEvents)
+            if (ResourceManagerProfilerEventsEnabled)
                 PostEvent(new DiagnosticEvent("EventCount", "", "Events", 0, 0, 0, null));
         }
 
-        public static void Initialize()
+        internal static void Initialize()
         {
-            if (ProfileEvents)
+            if (ResourceManagerProfilerEventsEnabled)
             {
                 var ec = FindObjectOfType<DiagnosticEventCollector>();
                 if (ec == null)
@@ -37,6 +50,10 @@ namespace UnityEngine.ResourceManagement.Diagnostics
             s_initialized = true;
         }
 
+        /// <summary>
+        /// Register event handler
+        /// </summary>
+        /// <param name="handler">Method or delegate that will handle the events</param>
         public static void RegisterEventHandler(Action<DiagnosticEvent> handler)
         {
             Debug.Assert(s_unhandledEvents != null, "DiagnosticEventCollector.RegisterEventHandler - s_unhandledEvents == null.");
@@ -48,6 +65,10 @@ namespace UnityEngine.ResourceManagement.Diagnostics
             s_unhandledEvents.Clear();
         }
 
+        /// <summary>
+        /// Unregister event hander
+        /// </summary>
+        /// <param name="handler">Method or delegate that will handle the events</param>
         public static void UnregisterEventHandler(Action<DiagnosticEvent> handler)
         {
             if (handler == null)
@@ -66,12 +87,16 @@ namespace UnityEngine.ResourceManagement.Diagnostics
             s_frameEventCounts[index]++;
         }
 
+        /// <summary>
+        /// Send a <cref="DiagnosticEvent"/> event to all registered handlers
+        /// </summary>
+        /// <param name="diagnosticEvent">The event to send</param>
         public static void PostEvent(DiagnosticEvent diagnosticEvent)
         {
             if (!s_initialized)
                 Initialize();
 
-            if (!ProfileEvents)
+            if (!ResourceManagerProfilerEventsEnabled)
                 return;
 
             Debug.Assert(s_unhandledEvents != null, "DiagnosticEventCollector.PostEvent - s_unhandledEvents == null.");
@@ -88,7 +113,7 @@ namespace UnityEngine.ResourceManagement.Diagnostics
         private void Awake()
         {
 #if !UNITY_EDITOR
-            RegisterEventHandler((DiagnosticEvent diagnosticEvent) => {PlayerConnection.instance.Send(EventGuid, diagnosticEvent.Serialize()); });
+            RegisterEventHandler((DiagnosticEvent diagnosticEvent) => {PlayerConnection.instance.Send(EditorConnectionMessageId, diagnosticEvent.Serialize()); });
 #endif
             SendEventCounts();
             DontDestroyOnLoad(gameObject);

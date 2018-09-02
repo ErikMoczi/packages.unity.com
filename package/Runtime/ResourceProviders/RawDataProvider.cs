@@ -3,6 +3,9 @@ using UnityEngine.Networking;
 
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// Provides raw text from a local or remote URL.
+    /// </summary>
     public abstract class RawDataProvider : ResourceProviderBase
     {
         internal class InternalOp<TObject> : InternalProviderOperation<TObject> where TObject : class
@@ -13,7 +16,7 @@ namespace UnityEngine.ResourceManagement
             UnityWebRequestAsyncOperation m_requestOperation;
             public InternalOp()
             {
-                action = (op) => 
+                action = (op) =>
                 {
                     if (op == null || op.Status == AsyncOperationStatus.Succeeded)
                     {
@@ -66,7 +69,7 @@ namespace UnityEngine.ResourceManagement
                 return base.Start(location);
             }
 
-            public override TObject ConvertResult(AsyncOperation op)
+            internal override TObject ConvertResult(AsyncOperation op)
             {
                 var webReq = (op as UnityWebRequestAsyncOperation).webRequest;
                 if (string.IsNullOrEmpty(webReq.error))
@@ -76,11 +79,21 @@ namespace UnityEngine.ResourceManagement
             }
         }
 
-        public virtual TObject Convert<TObject>(DownloadHandler handler) where TObject : class
-        {
-            return default(TObject);
-        }
+        /// <summary>
+        /// Method to convert the text into the object type requested.  Usually the text contains a JSON formatted serialized object.
+        /// </summary>
+        /// <typeparam name="TObject">The object type to convert the text to.</typeparam>
+        /// <param name="text">The text to be converted.</param>
+        /// <returns>The converted object.</returns>
+        public abstract TObject Convert<TObject>(DownloadHandler handler) where TObject : class;
 
+        /// <summary>
+        /// Provides raw text data from the location.
+        /// </summary>
+        /// <typeparam name="TObject">Object type.</typeparam>
+        /// <param name="location">Location of the data to load.</param>
+        /// <param name="loadDependencyOperation">Depency operation.</param>
+        /// <returns>Operation to load the raw data.</returns>
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             if (location == null)

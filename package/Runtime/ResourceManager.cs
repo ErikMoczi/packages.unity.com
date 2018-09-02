@@ -5,6 +5,9 @@ using UnityEngine.ResourceManagement.Diagnostics;
 
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// Entry point for ResourceManager API
+    /// </summary>
     public static partial class ResourceManager
     {
         static List<IResourceProvider> s_resourceProviders = new List<IResourceProvider>();
@@ -66,11 +69,11 @@ namespace UnityEngine.ResourceManagement
             where TObject : class
         {
             if (location == null)
-                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new ArgumentNullException("location"));
+                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new ArgumentNullException("location"));
 
             var provider = GetResourceProvider<TObject>(location);
             if (provider == null)
-                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new UnknownResourceProviderException(location));
+                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new UnknownResourceProviderException(location));
             return provider.Provide<TObject>(location, LoadDependencies(location)).Retain();
         }
 
@@ -86,7 +89,7 @@ namespace UnityEngine.ResourceManagement
             where TObject : class
         {
             if (locations == null)
-                return new EmptyOperation<IList<TObject>>().Start(null, locations, null, new ArgumentNullException("locations"));
+                return new CompletedOperation<IList<TObject>>().Start(null, locations, null, new ArgumentNullException("locations"));
             return AsyncOperationCache.Instance.Acquire<GroupOperation<TObject>>().Start(locations, callback, ProvideResource<TObject>).Retain();
         }
 
@@ -126,10 +129,10 @@ namespace UnityEngine.ResourceManagement
                 throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
 
             if (location == null)
-                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new ArgumentNullException("location"));
+                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new ArgumentNullException("location"));
             var provider = GetResourceProvider<TObject>(location);
             if (provider == null)
-                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new UnknownResourceProviderException(location));
+                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new UnknownResourceProviderException(location));
 
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncRequest, location, Time.frameCount);
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncRequest, location, Time.frameCount);
@@ -150,7 +153,7 @@ namespace UnityEngine.ResourceManagement
                 throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
 
             if (locations == null)
-                return new EmptyOperation<IList<TObject>>().Start(null, locations, null, new ArgumentNullException("locations"));
+                return new CompletedOperation<IList<TObject>>().Start(null, locations, null, new ArgumentNullException("locations"));
 
             return AsyncOperationCache.Instance.Acquire<GroupOperation<TObject>>().Start(locations, callback, ProvideInstance<TObject>, instantiateParameters).Retain();
         }
@@ -184,7 +187,7 @@ namespace UnityEngine.ResourceManagement
             if (SceneProvider == null)
                 throw new NullReferenceException("ResourceManager.SceneProvider is null.  Assign a valid ISceneProvider object before using.");
             if (location == null)
-                return new EmptyOperation<Scene>().Start(location, location, default(Scene), new ArgumentNullException("location"));
+                return new CompletedOperation<Scene>().Start(location, location, default(Scene), new ArgumentNullException("location"));
 
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadSceneAsyncRequest, location, 1);
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, location, 0);
@@ -195,18 +198,35 @@ namespace UnityEngine.ResourceManagement
         /// <summary>
         /// Asynchronously unloads the scene.
         /// </summary>
+        /// <param name="scene">The scene to unload.</param>
+        /// <param name="location">key of the scene to unload.</param>
         /// <returns>Async operation for the scene unload.</returns>
-        /// <param name="key">key of the scene to unload.</param>
-        /// <typeparam name="TKey">key type.</typeparam>
-        public static IAsyncOperation<Scene> ReleaseScene(IResourceLocation location, Scene scene)
+        public static IAsyncOperation<Scene> ReleaseScene(Scene scene, IResourceLocation location)
         {
             if (SceneProvider == null)
                 throw new NullReferenceException("ResourceManager.SceneProvider is null.  Assign a valid ISceneProvider object before using.");
             if (location == null)
-                return new EmptyOperation<Scene>().Start(location, location, default(Scene), new ArgumentNullException("location"));
+                return new CompletedOperation<Scene>().Start(location, location, default(Scene), new ArgumentNullException("location"));
             return SceneProvider.ReleaseSceneAsync(location, scene).Retain();
         }
 
+        /// <summary>
+        /// Asynchronously unloads the scene.
+        /// </summary>
+        /// <param name="location">The location of the scene to unload.</param>
+        /// <param name="scene">The scene to unload.</param>
+        /// <returns>Async operation for the scene unload.</returns>
+        [Obsolete("Use ReleaseScene(Scene scene, IResourceLocation location) instead.  The parameter order has been changed to be consistent with other ResourceManager API.")]
+        public static IAsyncOperation<Scene> ReleaseScene(IResourceLocation location, Scene scene)
+        {
+            return ReleaseScene(scene, location);
+        }
+
+        /// <summary>
+        /// Asynchronously dependencies of a location.
+        /// </summary>
+        /// <returns>Async operation for the dependency loads.</returns>
+        /// <param name="location">location to load dependencies for.</param>
         public static IAsyncOperation<IList<object>> LoadDependencies(IResourceLocation location)
         {
             if (location == null || !location.HasDependencies)

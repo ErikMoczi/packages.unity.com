@@ -58,7 +58,7 @@ namespace UnityEngine.ResourceManagement
         /// </summary>
         /// <value>The context object.</value>
         object Context { get; }
-        
+
         /// <summary>
         /// Gets the key related to this operation, usually set to the address.
         /// </summary>
@@ -75,17 +75,17 @@ namespace UnityEngine.ResourceManagement
         /// <value>The exception.</value>
         Exception OperationException { get; }
 
-		/// <summary>
-		/// Gets the result.
-		/// </summary>
-		/// <value>The result.</value>
-		object Result { get; }
-	}
+        /// <summary>
+        /// Gets the result.
+        /// </summary>
+        /// <value>The result.</value>
+        object Result { get; }
+    }
 
-	/// <summary>
-	/// Templated version of IAsyncOperation, provides templated overrides where possible
-	/// </summary>
-	public interface IAsyncOperation<T> : IAsyncOperation
+    /// <summary>
+    /// Templated version of IAsyncOperation, provides templated overrides where possible
+    /// </summary>
+    public interface IAsyncOperation<T> : IAsyncOperation
     {
         /// <summary>
         /// Gets the result as the templated type.

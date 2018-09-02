@@ -4,6 +4,9 @@ using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// Provides assets loaded via the AssetDatabase API.  This provider is only available in the editor and is used for fast iteration or to simulate asset bundles when in play mode.
+    /// </summary>
     public class AssetDatabaseProvider : ResourceProviderBase
     {
         float m_loadDelay = .1f;
@@ -30,10 +33,11 @@ namespace UnityEngine.ResourceManagement
                 OnComplete();
             }
 
-            public override TObject ConvertResult(AsyncOperation op) { return null; }
+            internal override TObject ConvertResult(AsyncOperation op) { return null; }
         }
 
 
+        /// <inheritdoc/>
         public override bool CanProvide<TObject>(IResourceLocation location)
         {
             if (!base.CanProvide<TObject>(location))
@@ -42,8 +46,7 @@ namespace UnityEngine.ResourceManagement
             return t == typeof(object) || typeof(UnityEngine.Object).IsAssignableFrom(t);
         }
 
-
-
+        /// <inheritdoc/>
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             if (location == null)
@@ -51,6 +54,7 @@ namespace UnityEngine.ResourceManagement
             return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>().Start(location, m_loadDelay);
         }
 
+        /// <inheritdoc/>
         public override bool Release(IResourceLocation location, object asset)
         {
             if (location == null)

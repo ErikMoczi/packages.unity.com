@@ -13,7 +13,7 @@ namespace UnityEngine.ResourceManagement
             m_providerId = provId;
         }
 
-        public override string ProviderId{ get { return m_providerId; } }
+        public override string ProviderId { get { return m_providerId; } }
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
@@ -70,7 +70,7 @@ namespace UnityEngine.ResourceManagement
                 return base.Start(location);
             }
 
-            public override TObject ConvertResult(AsyncOperation op) { return null; }
+            internal override TObject ConvertResult(AsyncOperation op) { return null; }
         }
 
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)

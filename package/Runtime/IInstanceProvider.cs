@@ -61,6 +61,12 @@ namespace UnityEngine.ResourceManagement
             m_setPositionRotation = true;
         }
 
+        /// <summary>
+        /// Instantiate an object with the parameters of this object.
+        /// <param name="source">Object to instantiate.</param>
+        /// <returns>Instantiated object.</returns>
+        /// <typeparam name="TObject">Object type. This type must be of type UnityEngine.Object.</typeparam>
+        /// </summary>
         virtual public TObject Instantiate<TObject>(TObject source) where TObject : Object
         {
             TObject result;

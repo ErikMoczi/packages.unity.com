@@ -2,6 +2,9 @@ using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// Provides assets stored in an asset bundle.
+    /// </summary>
     public class BundledAssetProvider : ResourceProviderBase
     {
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
@@ -49,22 +52,24 @@ namespace UnityEngine.ResourceManagement
                 }
             }
 
-            public override TObject ConvertResult(AsyncOperation op)
+            internal override TObject ConvertResult(AsyncOperation op)
             {
                 return (op as AssetBundleRequest).asset as TObject;
             }
         }
 
+        /// <inheritdoc/>
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             if (location == null)
                 throw new System.ArgumentNullException("location");
             if (loadDependencyOperation == null)
-                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new System.ArgumentNullException("IAsyncOperation<IList<object>> loadDependencyOperation"));
+                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new System.ArgumentNullException("IAsyncOperation<IList<object>> loadDependencyOperation"));
 
             return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>().Start(location, loadDependencyOperation);
         }
 
+        /// <inheritdoc/>
         public override bool Release(IResourceLocation location, object asset)
         {
             if (location == null)

@@ -7,8 +7,14 @@ using UnityEngine.ResourceManagement.Diagnostics;
 
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// This class allows for recycling IAsyncOperation object in order to reduce GC load.
+    /// </summary>
     public class AsyncOperationCache
     {
+        /// <summary>
+        /// The singleton AsyncOperationCache instance.
+        /// </summary>
         public static readonly AsyncOperationCache Instance = new AsyncOperationCache();
         readonly Dictionary<Type, Stack<IAsyncOperation>> m_cache = new Dictionary<Type, Stack<IAsyncOperation>>();
 #if POST_ASYNCOPERATIONCACHE__EVENTS
@@ -21,7 +27,10 @@ namespace UnityEngine.ResourceManagement
         }
         Dictionary<Type, Stats> m_stats = new Dictionary<Type, Stats>();
 #endif
-
+        /// <summary>
+        /// Release a completed IAsyncOperation back into the cache.  ResetStatus will be called on the operation before it is used again.
+        /// </summary>
+        /// <param name="operation">The operation to release.</param>
         public void Release(IAsyncOperation operation)
         {
             if (operation == null)
@@ -41,6 +50,11 @@ namespace UnityEngine.ResourceManagement
 #endif
         }
 
+        /// <summary>
+        /// Acquire an IAsyncOperation.
+        /// </summary>
+        /// <typeparam name="TAsyncOperation">The type of IAsyncOperation to be returned.</typeparam>
+        /// <returns>An IAsyncOperation of type TAsyncOperation.</returns>
         public TAsyncOperation Acquire<TAsyncOperation>()
             where TAsyncOperation : IAsyncOperation, new()
         {
@@ -73,7 +87,9 @@ namespace UnityEngine.ResourceManagement
             op2.ResetStatus();
             return op2;
         }
-
+        /// <summary>
+        /// Clear all cached IAsyncOperation object.
+        /// </summary>
         public void Clear()
         {
             Debug.Assert(m_cache != null, "AsyncOperationCache.Clear - m_cache == null.");

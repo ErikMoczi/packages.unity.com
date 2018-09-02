@@ -2,6 +2,9 @@ using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// Provides assets loaded via Resources.LoadAsync API.
+    /// </summary>
     public class LegacyResourcesProvider : ResourceProviderBase
     {
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
@@ -27,12 +30,13 @@ namespace UnityEngine.ResourceManagement
                     return m_requestOperation.progress;
                 }
             }
-            public override TObject ConvertResult(AsyncOperation op)
+            internal override TObject ConvertResult(AsyncOperation op)
             {
                 return (op as ResourceRequest).asset as TObject;
             }
         }
 
+        /// <inheritdoc/>
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             if (location == null)
@@ -40,6 +44,7 @@ namespace UnityEngine.ResourceManagement
             return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>().StartOp(location);
         }
 
+        /// <inheritdoc/>
         public override bool Release(IResourceLocation location, object asset)
         {
             if (location == null)

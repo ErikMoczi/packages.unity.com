@@ -4,6 +4,9 @@ using UnityEngine.ResourceManagement.Diagnostics;
 
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// Provider that can wrap other IResourceProvders and add caching and reference counting of objects.
+    /// </summary>
     public class CachedProvider : IResourceProvider
     {
         internal abstract class CacheEntry
@@ -297,7 +300,7 @@ namespace UnityEngine.ResourceManagement
                 return null;
             }
 
-            public CacheEntry<TObject> CreateEntry<TObject>(IAsyncOperation<TObject> operation) 
+            public CacheEntry<TObject> CreateEntry<TObject>(IAsyncOperation<TObject> operation)
                 where TObject : class
             {
                 var entry = new CacheEntry<TObject>(this, operation);
@@ -353,6 +356,12 @@ namespace UnityEngine.ResourceManagement
         int m_maxLRUCount;
         float m_maxLRUAge;
 
+        /// <summary>
+        /// Construct a new CachedProvider object.
+        /// </summary>
+        /// <param name="provider">The internal provider that will handle the loading and releasing of the objects.</param>
+        /// <param name="maxCacheItemCount">How many items to keep in the cache.</param>
+        /// <param name="maxCacheItemAge">How long to keep items in the cache.</param>
         public CachedProvider(IResourceProvider provider, int maxCacheItemCount = 0, float maxCacheItemAge = 0)
         {
             m_internalProvider = provider;
@@ -372,7 +381,7 @@ namespace UnityEngine.ResourceManagement
         }
 
         private void UpdateLRU()
-        {          
+        {
             if (m_lru != null)
             {
                 float time = Time.unscaledTime;
@@ -385,10 +394,13 @@ namespace UnityEngine.ResourceManagement
             }
         }
 
- 
+
+        /// <inheritdoc/>
         public override string ToString() { return "CachedProvider[" + m_internalProvider + "]"; }
+        /// <inheritdoc/>
         public string ProviderId { get { return m_internalProvider.ProviderId; } }
 
+        /// <inheritdoc/>
         public bool CanProvide<TObject>(IResourceLocation location)
             where TObject : class
         {
@@ -396,6 +408,12 @@ namespace UnityEngine.ResourceManagement
         }
 
         Action<CacheList> m_retryReleaseEntryAction;
+        /// <summary>
+        /// Releasing an object to a CachedProvider will decrease it reference count, which may result in the object getting actually released.  Released objects are added to an in memory cache.
+        /// </summary>
+        /// <param name="location">The location of the object.</param>
+        /// <param name="asset">The object to release.</param>
+        /// <returns>True if the reference count reaches 0 and the asset is released.</returns>
         public bool Release(IResourceLocation location, object asset)
         {
             CacheList entryList = null;
@@ -448,6 +466,13 @@ namespace UnityEngine.ResourceManagement
             ReleaseCache(e);
         }
 
+        /// <summary>
+        /// Provide the requested object.  The cache will be checked first for existing objects.  If not found, the internal IResourceProvider will be used to provide the object.  The reference count for the asset will be incremented.
+        /// </summary>
+        /// <typeparam name="TObject"></typeparam>
+        /// <param name="location"></param>
+        /// <param name="loadDependencyOperation"></param>
+        /// <returns></returns>
         public IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             where TObject : class
         {

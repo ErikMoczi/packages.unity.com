@@ -1,8 +1,19 @@
 
 namespace UnityEngine.ResourceManagement.Diagnostics
 {
+    /// <summary>
+    /// This class defines the category and event types for the ResourceManager
+    /// </summary>
     public static class ResourceManagerEventCollector
     {
+        /// <summary>
+        /// Category for all ResourceManager events
+        /// </summary>
+        public const string EventCategory = "ResourceManagerEvent";
+
+        /// <summary>
+        /// Event types that will be sent by the ResourceManager
+        /// </summary>
         public enum EventType
         {
             None,
@@ -26,7 +37,7 @@ namespace UnityEngine.ResourceManagement.Diagnostics
             AsyncOpCacheCount,
         }
 
-        public static string EventCategory = "ResourceManagerEvent";
+        
         static string PrettyPath(string p, bool keepExtension)
         {
             var slashIndex = p.LastIndexOf('/');
@@ -41,9 +52,15 @@ namespace UnityEngine.ResourceManagement.Diagnostics
             return p;
         }
 
+        /// <summary>
+        /// Send an event to all registered event handlers
+        /// </summary>
+        /// <param name="type">The event type.</param>
+        /// <param name="context">The context of the event. If this is an IResourceLocation, information will be passed along in the event data field.</param>
+        /// <param name="eventValue">The value of the event.</param>
         public static void PostEvent(EventType type, object context, int eventValue)
         {
-            if (!DiagnosticEventCollector.ProfileEvents)
+            if (!DiagnosticEventCollector.ResourceManagerProfilerEventsEnabled)
                 return;
             var parent = "";
             var id = context.ToString();

@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace UnityEngine.ResourceManagement
 {
-    public static class ResourceManagerConfig
+    internal static class ResourceManagerConfig
     {
         public static bool IsInstance<T1, T2>()
         {

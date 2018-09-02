@@ -5,13 +5,16 @@ using System;
 
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// Provides Scene objects.
+    /// </summary>
     public class SceneProvider : ISceneProvider
     {
         class InternalOp : AsyncOperationBase<Scene>
         {
             LoadSceneMode m_loadMode;
             Scene m_scene;
-            System.Action<IAsyncOperation<IList<object>>> action;
+            Action<IAsyncOperation<IList<object>>> action;
             IAsyncOperation m_dependencyOperation;
             AsyncOperation m_requestOperation;
 
@@ -24,7 +27,7 @@ namespace UnityEngine.ResourceManagement
                         m_requestOperation = SceneManager.LoadSceneAsync((Context as IResourceLocation).InternalId, m_loadMode);
                         m_scene = SceneManager.GetSceneAt(SceneManager.sceneCount - 1);
                         if (m_requestOperation == null || m_requestOperation.isDone)
-                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnSceneLoaded, 0, m_requestOperation);
+                            DelayedActionManager.AddAction((Action<AsyncOperation>)OnSceneLoaded, 0, m_requestOperation);
                         else
                             m_requestOperation.completed += OnSceneLoaded;
                     }
@@ -82,7 +85,7 @@ namespace UnityEngine.ResourceManagement
                 }
             }
         }
-
+        /// <inheritdoc/>
         public IAsyncOperation<Scene> ProvideSceneAsync(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, LoadSceneMode loadMode)
         {
             if (location == null)
@@ -92,13 +95,17 @@ namespace UnityEngine.ResourceManagement
 
         class InternalReleaseOp : AsyncOperationBase<Scene>
         {
+            Scene m_scene;
             public IAsyncOperation<Scene> Start(IResourceLocation location, Scene scene)
             {
                 Validate();
+                m_scene = scene;
                 Context = location;
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.ReleaseSceneAsyncRequest, Context, 0);
                 var unloadOp = SceneManager.UnloadSceneAsync(scene);
-                if (unloadOp != null)
+                if (unloadOp.isDone)
+                    DelayedActionManager.AddAction((Action<AsyncOperation>)OnSceneUnloaded, 0, unloadOp);
+                else
                     unloadOp.completed += OnSceneUnloaded;
                 return this;
             }
@@ -108,6 +115,8 @@ namespace UnityEngine.ResourceManagement
                 Validate();
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.ReleaseSceneAsyncCompletion, Context, 0);
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, Context, 0);
+                SetResult(m_scene);
+                InvokeCompletionEvent();
             }
 
             public override bool IsDone
@@ -120,6 +129,7 @@ namespace UnityEngine.ResourceManagement
             }
         }
 
+        /// <inheritdoc/>
         public IAsyncOperation<Scene> ReleaseSceneAsync(IResourceLocation location, Scene scene)
         {
             return AsyncOperationCache.Instance.Acquire<InternalReleaseOp>().Start(location, scene);

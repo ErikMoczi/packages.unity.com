@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// This object allows for scheduling the invocation of Actions until a specified time has elapsed.  It is used to delay callbacks until the end of the current frame in the case that the callback is assigned when an operation is already complete.
+    /// </summary>
     public class DelayedActionManager : MonoBehaviour
     {
 
@@ -19,7 +22,7 @@ namespace UnityEngine.ResourceManagement
                 m_id = s_id++;
                 m_target = p;
                 m_invocationTime = invocationTime;
-                if (m_delegate.Method== null)
+                if (m_delegate.Method == null)
                     Debug.LogErrorFormat("NULL delegate.Method");
             }
 
@@ -66,7 +69,9 @@ namespace UnityEngine.ResourceManagement
             }
             return new LinkedListNode<DelegateInfo>(del);
         }
-
+        /// <summary>
+        /// Destroy the current object
+        /// </summary>
         public static void Clear()
         {
             if (m_instance != null)
@@ -79,6 +84,12 @@ namespace UnityEngine.ResourceManagement
             m_destroyOnCompletion = true;
         }
 
+        /// <summary>
+        /// Schedule an action to execute after a time delay.  If delay is less than or equal 0, the action will wait until the LateUpdate of this object to be invoked.
+        /// </summary>
+        /// <param name="action">The delegate to invoke.</param>
+        /// <param name="delay">Time delay to wait until invocation.  If less than or equal to 0, the action will be invoked during the LateUpdate call of the current frame.</param>
+        /// <param name="parameters">The parameters to be passed to the action when invoked.</param>
         public static void AddAction(Delegate action, float delay = 0, params object[] parameters)
         {
             if (m_instance == null)
@@ -100,7 +111,7 @@ namespace UnityEngine.ResourceManagement
                 }
                 else
                 {
-                    
+
                     var n = m_delayedActions.Last;
                     while (n != null && n.Value.InvocationTime > del.InvocationTime)
                         n = n.Previous;
@@ -120,6 +131,9 @@ namespace UnityEngine.ResourceManagement
             DontDestroyOnLoad(gameObject);
         }
 
+        /// <summary>
+        /// Returns whether the DelayedActionManager is created and has pending actions to run.
+        /// </summary>
         public static bool IsActive
         {
             get

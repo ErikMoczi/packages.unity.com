@@ -4,6 +4,9 @@ using UnityEngine.ResourceManagement.Diagnostics;
 
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// Basic implementation of IInstanceProvider.
+    /// </summary>
     public class InstanceProvider : IInstanceProvider
     {
         internal class InternalOp<TObject> : AsyncOperationBase<TObject>
@@ -14,7 +17,7 @@ namespace UnityEngine.ResourceManagement
             Action<IAsyncOperation<TObject>> m_completeAction;
             InstantiationParameters m_instParams;
 
-            public InternalOp() 
+            public InternalOp()
             {
                 m_completeAction = OnComplete;
             }
@@ -49,6 +52,7 @@ namespace UnityEngine.ResourceManagement
             }
         }
 
+        /// <inheritdoc/>
         public bool CanProvideInstance<TObject>(IResourceProvider loadProvider, IResourceLocation location)
             where TObject : Object
         {
@@ -57,6 +61,7 @@ namespace UnityEngine.ResourceManagement
             return loadProvider.CanProvide<TObject>(location) && ResourceManagerConfig.IsInstance<TObject, GameObject>();
         }
 
+        /// <inheritdoc/>
         public IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, InstantiationParameters instantiateParameters)
             where TObject : Object
         {
@@ -72,6 +77,7 @@ namespace UnityEngine.ResourceManagement
             return operation.Start(depOp, location, instantiateParameters);
         }
 
+        /// <inheritdoc/>
         public bool ReleaseInstance(IResourceProvider loadProvider, IResourceLocation location, Object instance)
         {
             if (loadProvider == null)

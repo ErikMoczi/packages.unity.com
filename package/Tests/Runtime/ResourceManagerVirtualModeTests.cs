@@ -35,7 +35,7 @@ public class ResourceManagerVirtualModeTests : ResourceManagerBaseTests
             var isLocal = i % 2 == 0;
             var b = new VirtualAssetBundle("bundle" + i, isLocal);
             var bundleLocation = new ResourceLocationBase(b.Name, b.Name, typeof(AssetBundleProvider).FullName);
-            for (int a = 0; a < 10; a++) 
+            for (int a = 0; a < 10; a++)
             {
                 var name = b.Name + "_asset" + a;
                 var path = RootFolder + "/" + name + ".prefab";
@@ -48,10 +48,10 @@ public class ResourceManagerVirtualModeTests : ResourceManagerBaseTests
                 b.Assets.Add(asset);
                 k_locations.Add(new ResourceLocationBase(name, path, typeof(BundledAssetProvider).FullName, bundleLocation, sharedBundleLocations[UnityEngine.Random.Range(0, sharedBundleLocations.Count)], sharedBundleLocations[UnityEngine.Random.Range(0, sharedBundleLocations.Count)]));
             }
-            b.OnAfterDeserialize(); 
+            b.OnAfterDeserialize();
             virtualBundleData.AssetBundles.Add(b);
         }
-        
-        new GameObject("AssetBundleSimulator", typeof(VirtualAssetBundleManager)).GetComponent<VirtualAssetBundleManager>().Initialize(virtualBundleData, (s)=>s, 0, 0, 0, 0);
+
+        new GameObject("AssetBundleSimulator", typeof(VirtualAssetBundleManager)).GetComponent<VirtualAssetBundleManager>().Initialize(virtualBundleData, (s) => s, 0, 0, 0, 0);
     }
 }

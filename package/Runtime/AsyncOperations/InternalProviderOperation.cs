@@ -8,7 +8,7 @@ namespace UnityEngine.ResourceManagement
     {
         int startFrame;
 
-        public virtual InternalProviderOperation<TObject> Start(IResourceLocation location)
+        internal virtual InternalProviderOperation<TObject> Start(IResourceLocation location)
         {
             Validate();
             if (location == null)
@@ -21,7 +21,7 @@ namespace UnityEngine.ResourceManagement
         protected virtual void OnComplete(IAsyncOperation<TObject> op)
         {
             Validate();
-            if(op.Status != AsyncOperationStatus.Succeeded)
+            if (op.Status != AsyncOperationStatus.Succeeded)
                 m_error = op.OperationException;
 
             SetResult(op.Result);
@@ -51,7 +51,7 @@ namespace UnityEngine.ResourceManagement
             InvokeCompletionEvent();
         }
 
-        public virtual TObject ConvertResult(AsyncOperation op)
+        internal virtual TObject ConvertResult(AsyncOperation op)
         {
             return default(TObject);
         }

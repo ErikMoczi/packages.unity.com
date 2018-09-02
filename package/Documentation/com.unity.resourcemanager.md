@@ -12,7 +12,7 @@ Unity 2018.1 or greater
 
 ## Locations and Providers
 
-The __ResourceManager__ API defines following three interfaces:
+The __ResourceManager__ API defines two interfaces:
 
 * `IResourceLocation`: The interface a class must implement to specify the location, loading method, and dependencies of an asset resource. The instantiated object contains the information needed to load an asset. Creating a resource location does not load the asset.
 

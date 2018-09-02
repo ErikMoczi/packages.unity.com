@@ -3,15 +3,20 @@ using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// Base class for IResourceProvider.
+    /// </summary>
     public abstract class ResourceProviderBase : IResourceProvider
     {
-        protected ResourceProviderBase() {}
+        protected ResourceProviderBase() { }
 
+        /// <inheritdoc/>
         public virtual string ProviderId
         {
             get { return GetType().FullName; }
         }
 
+        /// <inheritdoc/>
         public virtual bool CanProvide<TObject>(IResourceLocation location)
             where TObject : class
         {
@@ -20,14 +25,17 @@ namespace UnityEngine.ResourceManagement
             return ProviderId.Equals(location.ProviderId, System.StringComparison.Ordinal);
         }
 
+        /// <inheritdoc/>
         public override string ToString()
         {
             return string.Format("[{0}]", ProviderId);
         }
 
+        /// <inheritdoc/>
         public abstract IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         where TObject : class;
 
+        /// <inheritdoc/>
         public virtual bool Release(IResourceLocation location, object asset)
         {
             if (location == null)

@@ -4,11 +4,19 @@ using UnityEngine.ResourceManagement.Diagnostics;
 
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// Implementation of IInstanceProvider that uses an internal pool of created objects. It relies on an internal provider to load the source object that will be instantiated.
+    /// </summary>
     public class PooledInstanceProvider : IInstanceProvider
     {
         internal Dictionary<IResourceLocation, InstancePool> m_pools = new Dictionary<IResourceLocation, InstancePool>();
 
         float m_releaseTime;
+        /// <summary>
+        /// Construct a new PooledInstanceProvider.
+        /// </summary>
+        /// <param name="name">The name of the GameObject to be created.</param>
+        /// <param name="releaseTime">Controls how long object stay in the pool.  The pool will reduce faster the larger it is.  This value roughly represents how many seconds it will take for a pool to completely empty once it contains only 1 item.</param>
         public PooledInstanceProvider(string name, float releaseTime)
         {
             m_releaseTime = releaseTime;
@@ -17,11 +25,13 @@ namespace UnityEngine.ResourceManagement
             go.hideFlags = HideFlags.HideAndDontSave;
         }
 
+        /// <inheritdoc/>
         public bool CanProvideInstance<TObject>(IResourceProvider loadProvider, IResourceLocation location) where TObject : Object
         {
-            return loadProvider!= null && loadProvider.CanProvide<TObject>(location) && ResourceManagerConfig.IsInstance<TObject, GameObject>();
+            return loadProvider != null && loadProvider.CanProvide<TObject>(location) && ResourceManagerConfig.IsInstance<TObject, GameObject>();
         }
 
+        /// <inheritdoc/>
         public IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, InstantiationParameters instantiateParameters) where TObject : Object
         {
             if (location == null)
@@ -36,6 +46,7 @@ namespace UnityEngine.ResourceManagement
             return pool.ProvideInstanceAsync<TObject>(loadProvider, loadDependencyOperation, instantiateParameters);
         }
 
+        /// <inheritdoc/>
         public bool ReleaseInstance(IResourceProvider loadProvider, IResourceLocation location, Object instance)
         {
             InstancePool pool;
@@ -46,7 +57,7 @@ namespace UnityEngine.ResourceManagement
             return false;
         }
 
-        public void Update()
+        internal void Update()
         {
             foreach (var p in m_pools)
             {
@@ -81,7 +92,7 @@ namespace UnityEngine.ResourceManagement
             Action<IAsyncOperation<TObject>> m_onLoadOperationCompleteAction;
             Action<TObject> m_onValidResultCompleteAction;
             InstantiationParameters m_instParams;
-            public InternalOp() 
+            public InternalOp()
             {
                 m_onLoadOperationCompleteAction = OnLoadComplete;
                 m_onValidResultCompleteAction = OnInstantComplete;
@@ -110,7 +121,7 @@ namespace UnityEngine.ResourceManagement
                 var go = Result as GameObject;
                 if (go != null)
                 {
-                    if(m_instParams.Parent != null)
+                    if (m_instParams.Parent != null)
                         go.transform.SetParent(m_instParams.Parent);
                     if (m_instParams.SetPositionRotation)
                     {
@@ -179,7 +190,7 @@ namespace UnityEngine.ResourceManagement
                 m_instances.Push(gameObject);
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.PoolCount, m_location, m_instances.Count);
             }
-            
+
             void ReleaseInternal(IResourceProvider provider, IResourceLocation location)
             {
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.Release, location, Time.frameCount);
@@ -187,7 +198,7 @@ namespace UnityEngine.ResourceManagement
                 for (int i = 0; location.Dependencies != null && i < location.Dependencies.Count; i++)
                     ReleaseInternal(ResourceManager.GetResourceProvider<object>(location.Dependencies[i]), location.Dependencies[i]);
             }
-            
+
             internal bool Update(float releaseTime)
             {
                 if (m_instances.Count > 0)

@@ -7,6 +7,10 @@ using UnityEngine.ResourceManagement.Diagnostics;
 #if !UNITY_METRO
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// Loads an asset bundle via the AssetBundle.LoadFromStreamAsync API.  The bundle is downloaded via WebRequest as a byte array and bypasses the normal asset bundle loading code.
+    /// This is provided as an example to extend to support cases such as using the .NET HttpClient API or injecting a decryption layer into loading bundles.
+    /// </summary>
     public class AssetBundleProviderRemoteWebRequest : ResourceProviderBase
     {
         internal class InternalOp<TObject> : AsyncOperationBase<TObject>, IDisposable
@@ -90,12 +94,14 @@ namespace UnityEngine.ResourceManagement
             }
         }
 
+        /// <inheritdoc/>
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
             return operation.Start(location);
         }
 
+        /// <inheritdoc/>
         public override bool Release(IResourceLocation location, object asset)
         {
             if (location == null)
@@ -107,7 +113,7 @@ namespace UnityEngine.ResourceManagement
         }
     }
 
-    public sealed class ChunkedMemoryStream : Stream
+    internal sealed class ChunkedMemoryStream : Stream
     {
         const int BufferSize = 65536;
         readonly List<byte[]> m_chunks;
@@ -135,7 +141,7 @@ namespace UnityEngine.ResourceManagement
         byte[] CurrentChunk { get { return m_chunks[Convert.ToInt32(m_position / BufferSize)]; } }
         int PositionInChunk { get { return Convert.ToInt32(m_position % BufferSize); } }
         int RemainingBytesInCurrentChunk { get { return CurrentChunk.Length - PositionInChunk; } }
-        public override void Flush() {}
+        public override void Flush() { }
 
         public override long Position
         {

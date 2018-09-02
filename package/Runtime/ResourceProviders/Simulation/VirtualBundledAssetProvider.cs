@@ -24,7 +24,7 @@ namespace UnityEngine.ResourceManagement
                     onCompleteAction = OnComplete;
                 m_requestOperation = null;
                 m_dependencyOperation = loadDependencyOperation;
-                loadDependencyOperation.Completed += (obj) => 
+                loadDependencyOperation.Completed += (obj) =>
                 {
                     VirtualAssetBundle bundle;
                     if (obj.Result != null && obj.Result.Count > 0 && (bundle = obj.Result[0] as VirtualAssetBundle) != null)
@@ -51,7 +51,7 @@ namespace UnityEngine.ResourceManagement
                     return reqPer * .25f + m_dependencyOperation.PercentComplete * .75f;
                 }
             }
-            public override TObject ConvertResult(AsyncOperation operation) { return null; }
+            internal override TObject ConvertResult(AsyncOperation operation) { return null; }
         }
 
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
@@ -59,7 +59,7 @@ namespace UnityEngine.ResourceManagement
             if (location == null)
                 throw new System.ArgumentNullException("location");
             if (loadDependencyOperation == null)
-                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new System.ArgumentNullException("IAsyncOperation<IList<object>> loadDependencyOperation"));
+                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new System.ArgumentNullException("IAsyncOperation<IList<object>> loadDependencyOperation"));
             var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
             return operation.Start(location, loadDependencyOperation);
         }
