@@ -120,7 +120,7 @@ namespace UnityEditor.PackageManager.UI
                 return;
             }
 
-#if UNITY_2018_3_OR_NEWER
+#if UNITY_2018_2_OR_NEWER
             if (evt.keyCode == KeyCode.LeftArrow)
             {
                 if (selectedItem.packageGroup != null)

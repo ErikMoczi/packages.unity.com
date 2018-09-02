@@ -35,3 +35,4 @@
 1.9.8
 1.9.9-preview.1
 1.9.9-preview.2
+1.9.9-preview.3
