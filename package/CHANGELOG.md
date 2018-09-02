@@ -1,4 +1,4 @@
-# ProGrids 3.0.0-b.0
+# ProGrids 3.0.0-preview.2
 
 ## Features
 
@@ -9,6 +9,10 @@
 ## Bug Fixes
 
 - Temporary objects are now longer created in scene files.
+
+## Changes
+
+- Remove `pg_` suffix from class and file names.
 
 # ProGrids 2.5.0-f.0
 
