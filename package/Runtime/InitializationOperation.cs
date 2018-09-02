@@ -15,7 +15,8 @@ namespace UnityEngine.AddressableAssets
             ResourceManager.ResourceProviders.Add(new JsonAssetProvider());
             ResourceManager.ResourceProviders.Add(new TextDataProvider());
             ResourceManager.ResourceProviders.Add(new ContentCatalogProvider());
-
+            //needed to prevent stripping for this value
+            var sap = Application.streamingAssetsPath;
             var playerSettingsLocation = AAConfig.ExpandPathWithGlobalVariables(ResourceManagerRuntimeData.GetPlayerSettingsLoadLocation(m_playMode));
             var runtimeDataLocation = new ResourceLocationBase("RuntimeData", playerSettingsLocation, typeof(JsonAssetProvider).FullName);
             Context = runtimeDataLocation;
