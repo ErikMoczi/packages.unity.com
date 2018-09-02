@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Only show user visible versions in the UI
 - Added modules in the UI
 - Added ability to view licenses
+- Renamed documentation folder to avoid being loaded in editor
 
 ## [1.9.8] - 2018-05-01
 - Fixed package to work with 2018.3
