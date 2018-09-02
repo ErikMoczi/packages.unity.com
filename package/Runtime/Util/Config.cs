@@ -4,7 +4,9 @@ namespace ResourceManagement.Util
 {
     public static class Config
     {
+#if !UNITY_METRO
         static System.Collections.Generic.Dictionary<string, string> cachedValues = new System.Collections.Generic.Dictionary<string, string>();
+#endif
         public static string GetGlobalVar(string var)
         {
 #if UNITY_METRO
