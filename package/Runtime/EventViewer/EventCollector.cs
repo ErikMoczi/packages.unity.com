@@ -50,7 +50,8 @@ namespace EditorDiagnostics
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         public static void SendFirstFrameEvent()
         {
-            PostEvent(new DiagnosticEvent("EventCount", "", "Events", 0, 0, 0, null));
+            if(profileEvents)
+                PostEvent(new DiagnosticEvent("EventCount", "", "Events", 0, 0, 0, null));
         }
 
         public static void Initialize()

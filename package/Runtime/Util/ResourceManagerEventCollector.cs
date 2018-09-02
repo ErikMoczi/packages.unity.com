@@ -22,13 +22,14 @@ namespace ResourceManagement.Util
         }
 
         public static string EventCategory = "ResourceManagerEvent";
-        public static void PostEvent(ResourceManagerEventCollector.EventType type, IResourceLocation loc, int val)
+        public static void PostEvent(ResourceManagerEventCollector.EventType type, object context, int val)
         {
             if (!ResourceManager.m_postEvents)
                 return;
             var parent = "";
             var id = "";
             byte[] data = null;
+            var loc = context as IResourceLocation;
             if (loc != null)
             {
                 id = loc.ToString();

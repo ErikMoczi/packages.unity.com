@@ -26,6 +26,7 @@ namespace ResourceManagement.AsyncOperations
 
         public virtual LoadGroupOperation<TObject> Start(IList<IResourceLocation> locations, Func<IResourceLocation, IAsyncOperation<TObject>> loadFunc, Action<IAsyncOperation<TObject>> onComplete)
         {
+            UnityEngine.Debug.Assert(locations != null, "Null location list passed into LoadGroupOperation");
             totalToLoad = locations.Count;
             loadCount = 0;
             allStarted = false;
@@ -40,25 +41,17 @@ namespace ResourceManagement.AsyncOperations
             else
                 m_ops.Clear();
 
-            if (locations != null)
+            for(int i = 0; i < locations.Count; i++)
             {
-                for(int i = 0; i < locations.Count; i++)
-                {
-                    var op = loadFunc(locations[i]);
-                    m_ops.Add(op);
-                    op.completed += m_internalOnComplete;
-                }
-
-                allStarted = true;
-
-                if (isDone)
-                    InvokeCompletionEvent();
+                var op = loadFunc(locations[i]);
+                m_ops.Add(op);
+                op.completed += m_internalOnComplete;
             }
-            else
-            {
-                allStarted = true;
+
+            allStarted = true;
+
+            if (isDone)
                 InvokeCompletionEvent();
-            }
 
             return this;
         }

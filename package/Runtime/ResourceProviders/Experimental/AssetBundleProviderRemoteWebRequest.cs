@@ -67,7 +67,7 @@ namespace ResourceManagement.ResourceProviders.Experimental
 
             void InternalOp_completed(AsyncOperation obj)
             {
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncCompletion, m_context as IResourceLocation, Time.frameCount - m_startFrame);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncCompletion, m_context, Time.frameCount - m_startFrame);
                 m_result = (obj as AssetBundleCreateRequest).assetBundle as TObject;
                 InvokeCompletionEvent();
                 AsyncOperationCache.Instance.Release<TObject>(this);

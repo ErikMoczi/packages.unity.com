@@ -114,14 +114,14 @@ namespace ResourceManagement.ResourceProviders.Experimental
             void OnComplete(TObject res)
             {
                 m_result = res;
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, m_context as IResourceLocation, Time.frameCount - m_startFrame);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, m_context, Time.frameCount - m_startFrame);
                 InvokeCompletionEvent();
                 AsyncOperationCache.Instance.Release<TObject>(this);
             }
 
             void OnComplete(IAsyncOperation<TObject> op)
             {
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, m_context as IResourceLocation, Time.frameCount - m_startFrame);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, m_context, Time.frameCount - m_startFrame);
                 prefabResult = op.result;
 
                 if (prefabResult == null)

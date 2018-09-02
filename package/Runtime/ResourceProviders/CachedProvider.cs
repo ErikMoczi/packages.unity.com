@@ -51,7 +51,7 @@ namespace ResourceManagement.ResourceProviders
             {
                 m_cacheList = cl;
                 m_operation = op;
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, context as IResourceLocation, 0);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, context, 0);
                 op.completed += OnComplete;
             }
 
@@ -64,7 +64,7 @@ namespace ResourceManagement.ResourceProviders
                     m_onComplete = null;
                     tmpEvent(this);
                 }
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, context as IResourceLocation, 100);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, context, 100);
             }
 
             internal override bool CanProvide<T1>(IResourceLocation loc)
@@ -152,12 +152,6 @@ namespace ResourceManagement.ResourceProviders
             }
         }
 
-        internal Dictionary<int, CacheList> m_cache = new Dictionary<int, CacheList>();
-        protected IResourceProvider m_internalProvider;
-        LinkedList<CacheList> m_lru;
-        int m_maxLRUCount = 0;
-        float m_maxLRUAge = 10;
-
         class CachedProviderUpdater : UnityEngine.MonoBehaviour
         {
             CachedProvider m_Provider;
@@ -169,24 +163,17 @@ namespace ResourceManagement.ResourceProviders
 
             private void Update()
             {
-                m_Provider.Update();
+                m_Provider.UpdateLRU();
             }
         }
 
-        private void Update()
-        {          
-            if (m_lru != null)
-            {
-                float time = UnityEngine.Time.unscaledTime;
-                while (m_lru.Last != null && m_lru.Last.Value.m_lastAccessTime > m_maxLRUAge)
-                {
-                    m_lru.Last.Value.ReleaseAssets(m_internalProvider);
-                    m_lru.RemoveLast();
-                }
-            }
-        }
+        internal Dictionary<int, CacheList> m_cache = new Dictionary<int, CacheList>();
+        protected IResourceProvider m_internalProvider;
+        LinkedList<CacheList> m_lru;
+        int m_maxLRUCount;
+        float m_maxLRUAge;
 
-        public CachedProvider(IResourceProvider prov, int lruCount = 0, float lruMaxAge = 5)
+        public CachedProvider(IResourceProvider prov, int lruCount = 0, float lruMaxAge = 0)
         {
             m_internalProvider = prov;
             m_maxLRUCount = lruCount;
@@ -203,6 +190,20 @@ namespace ResourceManagement.ResourceProviders
             }
         }
 
+        private void UpdateLRU()
+        {          
+            if (m_lru != null)
+            {
+                float time = UnityEngine.Time.unscaledTime;
+                while (m_lru.Last != null && m_lru.Last.Value.m_lastAccessTime > m_maxLRUAge)
+                {
+                    m_lru.Last.Value.ReleaseAssets(m_internalProvider);
+                    m_lru.RemoveLast();
+                }
+            }
+        }
+
+ 
         public override string ToString() { return "CachedProvider[" + m_internalProvider + "]"; }
         public string providerId { get { return m_internalProvider.providerId; } }
 

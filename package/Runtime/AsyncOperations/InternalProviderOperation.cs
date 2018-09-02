@@ -26,7 +26,7 @@ namespace ResourceManagement.AsyncOperations
 
         protected virtual void OnComplete()
         {
-            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncCompletion, m_context as IResourceLocation, Time.frameCount - startFrame);
+            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncCompletion, m_context, Time.frameCount - startFrame);
             InvokeCompletionEvent();
             AsyncOperationCache.Instance.Release<TObject>(this);
         }
