@@ -1,0 +1,13 @@
+{
+	"name": "com.unity.addressables",
+	"displayName": "Addressables System",
+	"version": "0.0.1-alpha",
+	"unity": "2018.2",
+	"description": "TODO...",
+	"keywords": ["asset", "resources", "bundle", "bundles", "assetbundles"],
+	"category": "",
+	"dependencies": {
+		"com.unity.resourcemanager": "2.0.1-alpha",
+		"com.unity.scriptablebuildpipeline": "0.0.1-alpha"
+	}
+}
