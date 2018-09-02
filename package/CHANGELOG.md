@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.0.6-preview] - 2018-03-13
+- API rework
+- bug fixes
+- removed content catalog settings
+- improved error checking/logging
+- bug fixes
+
 ## [1.6.0] - 2018-01-24
 - updating description in docs.
 - Refactored async init.
