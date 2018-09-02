@@ -11,6 +11,8 @@ namespace UnityEditor.PackageManager.UI
         [SerializeField]
         private Action<IEnumerable<PackageInfo>> _doneCallbackAction;
 
+        public bool OfflineMode { get; set; }
+
         public void GetPackageListAsync(Action<IEnumerable<PackageInfo>> doneCallbackAction, Action<Error> errorCallbackAction = null)
         {
             this._doneCallbackAction = doneCallbackAction;
@@ -21,7 +23,7 @@ namespace UnityEditor.PackageManager.UI
 
         protected override Request CreateRequest()
         {
-            return Client.List();            
+            return Client.List(OfflineMode);            
         }
 
         protected override void ProcessData()

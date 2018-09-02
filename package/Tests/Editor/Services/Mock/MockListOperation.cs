@@ -5,6 +5,8 @@ namespace UnityEditor.PackageManager.UI.Tests
 {
     internal class MockListOperation : MockOperation, IListOperation
     {
+        public bool OfflineMode { get; set; }
+
         public MockListOperation(MockOperationFactory factory) : base(factory)
         {
         }

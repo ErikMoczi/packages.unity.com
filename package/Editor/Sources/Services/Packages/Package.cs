@@ -62,7 +62,7 @@ namespace UnityEditor.PackageManager.UI
             var operation = OperationFactory.Instance.CreateAddOperation();
             OnAddOperationSuccessEvent = p => 
             {
-                PackageCollection.Instance.Reset();
+                PackageCollection.Instance.UpdatePackageCollection(true);
             };
             OnAddOperationFinalizedEvent = () =>
             {
@@ -94,7 +94,7 @@ namespace UnityEditor.PackageManager.UI
             var operation = OperationFactory.Instance.CreateRemoveOperation();
             OnRemoveOperationSuccessEvent = () =>
             {
-                PackageCollection.Instance.RefreshPackages();
+                PackageCollection.Instance.UpdatePackageCollection(true);
             };
             OnRemoveOperationFinalizedEvent = () =>
             {

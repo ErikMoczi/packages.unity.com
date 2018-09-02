@@ -40,6 +40,8 @@ namespace UnityEditor.PackageManager.UI
 
                 versions.Sort((left, right) =>
                 {
+                    if (left == null || right == null) return 0;
+                    
                     SemVersion leftVersion = left;
                     SemVersion righVersion = right;
                     return leftVersion.CompareByPrecedence(righVersion);

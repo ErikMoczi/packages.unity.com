@@ -219,9 +219,12 @@ namespace UnityEditor.PackageManager.UI
             // Set visibility
             root.Q<VisualElement>("detail").visible = detailVisible;
             root.Q<VisualElement>(emptyId).visible = !detailVisible;
-            
+
             if (error != null)
+            {
+                Debug.LogError("Error with package details: " + error.message);
                 SetError(error);
+            }
             else
                 DetailError.ClearError();
         }
@@ -426,7 +429,7 @@ namespace UnityEditor.PackageManager.UI
 
         private void ViewChangelogClick()
         {
-            var packageInfo = Display(package);
+            var packageInfo = package.Latest;
             var url = string.Format("http://docs.unity3d.com/Packages/{0}/changelog/CHANGELOG.html", packageInfo.ShortVersionId);
             Application.OpenURL(url);
         }

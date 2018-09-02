@@ -135,7 +135,6 @@ namespace Semver
             var match = parseEx.Match(version);
             if (!match.Success)
             {
-                Debug.LogWarning("Invalid version: " + version);
                 return new SemVersion(0);
             }
 

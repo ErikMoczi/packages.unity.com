@@ -123,7 +123,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             };
 
             PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
-            PackageCollection.Instance.SetPackageInfos(Enumerable.Empty<PackageInfo>());
+            PackageCollection.Instance.SetListPackageInfos(Enumerable.Empty<PackageInfo>());
             Assert.IsTrue(wasCalled);
         }
 
@@ -137,7 +137,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             };
 
             PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
-            PackageCollection.Instance.AddPackageInfos(Enumerable.Empty<PackageInfo>());
+            PackageCollection.Instance.SetListPackageInfos(Enumerable.Empty<PackageInfo>());
             Assert.IsTrue(wasCalled);
         }
 

@@ -12,7 +12,8 @@ namespace UnityEditor.PackageManager.UI.Tests
         [SetUp]
         public void Setup()
         {
-            PackageCollection.Instance.Reset();
+            PackageCollection.Instance.SetFilter(PackageFilter.Local);
+            PackageCollection.Instance.UpdatePackageCollection(true);
             SetPackages(null);
             Factory.ResetOperations();
         }

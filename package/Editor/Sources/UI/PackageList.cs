@@ -216,7 +216,7 @@ namespace UnityEditor.PackageManager.UI
         private static void Reload()
         {
             // Force a re-init to initial condition
-            PackageCollection.Instance.Reset();
+            PackageCollection.Instance.UpdatePackageCollection(true);
         }
 
         private void ClearAll()
@@ -235,6 +235,8 @@ namespace UnityEditor.PackageManager.UI
         
         private void SetPackages(IEnumerable<Package> packages)
         {
+            var previousSelection = selectedItem != null ? selectedItem.package : null;
+
             OnLoaded();
             ClearAll();
 
@@ -261,13 +263,16 @@ namespace UnityEditor.PackageManager.UI
 
             foreach (var package in packages)
             {
-                AddPackage(package);                
+                var item = AddPackage(package);
+
+                if (previousSelection != null && package.Name == previousSelection.Name)
+                    Select(item);
             }
 
             root.Q<VisualElement>(emptyId).visible = !packages.Any();
         }
 
-        private void AddPackage(Package package)
+        private PackageItem AddPackage(Package package)
         {
             var groupName = package.Latest.Group;
             var group = GetOrCreateGroup(groupName);
@@ -277,6 +282,8 @@ namespace UnityEditor.PackageManager.UI
                 Select(packageItem);
 
             packageItem.OnSelected += Select;
+
+            return packageItem;
         }
 
         private PackageGroup GetOrCreateGroup(string groupName)
