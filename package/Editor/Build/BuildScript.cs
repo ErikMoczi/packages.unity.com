@@ -86,6 +86,11 @@ namespace UnityEditor.AddressableAssets
                     WriteVirtualBundleDataTask.Run(aaSettings, runtimeData, contentCatalog);
             }
 
+            var catalogLocations = new List<ResourceLocationData>();
+            foreach (var assetGroup in aaSettings.groups)
+                assetGroup.processor.CreateCatalog(aaSettings, assetGroup, contentCatalog, catalogLocations);
+            runtimeData.catalogLocations.locations.AddRange(catalogLocations.OrderBy(s => s.m_address));
+
             return runtimeData.CopyFromLibraryToPlayer(aaSettings.buildSettings.editorPlayMode.ToString());
         }
 
@@ -127,7 +132,7 @@ namespace UnityEditor.AddressableAssets
                     if (t == null)
                         continue;
 
-                    contentCatalog.locations.Add(new ResourceLocationData(a.address, a.guid, a.GetAssetLoadPath(false), typeof(AssetDatabaseProvider).FullName, ResourceLocationData.LocationType.String, aaSettings.labelTable.GetMask(a.labels), t.FullName, null));
+                    contentCatalog.locations.Add(new ResourceLocationData(a.address, a.guid, a.GetAssetLoadPath(false), typeof(AssetDatabaseProvider).FullName, true, ResourceLocationData.LocationType.String, aaSettings.labelTable.GetMask(a.labels), t.FullName, null));
                 }
             }
             else
@@ -152,7 +157,7 @@ namespace UnityEditor.AddressableAssets
                     {
                         var buildParams = new BuildParameters(buildTarget, buildTargetGroup, aaSettings.buildSettings.bundleBuildPath, ContentPipeline.kTempBuildPath);
                         buildParams.UseCache = aaSettings.buildSettings.useCache && !forceRebuild;
-                        using (var buildCleanup = new BuildStateCleanup(true, buildParams.TempOutputFolder))
+                        using (var buildCleanup = new BuildStateCleanup(buildParams.TempOutputFolder))
                         {
                             var buildContext = new BuildContext(new BundleContent(allBundleInputDefs), new Unity5PackedIdentifiers(), buildParams, dependencyData, bundleWriteData, bundleBuildResults);//, progressTracker);
                             buildContext.SetContextObject(new AddressableAssetsBuildContext() { m_settings = aaSettings, m_runtimeData = runtimeData, m_bundleToAssetGroup = bundleToAssetGroup, m_contentCatalog = contentCatalog });
@@ -200,34 +205,14 @@ namespace UnityEditor.AddressableAssets
 
             if (enteringPlayMode && runtimeData.resourceProviderMode != ResourceManagerRuntimeData.EditorPlayMode.PackedMode)
                 AddAddressableScenesToEditorBuildSettingsSceneList(aaSettings, runtimeData);
-
+            runtimeData.contentVersion = aaSettings.profileSettings.GetValueByName(aaSettings.activeProfile, "version");
             runtimeData.settingsHash = settingsHash;
-
-            if (aaSettings.buildSettings.downloadRemoteCatalog)
-            {
-                ResourceLocationData remoteLocation = new ResourceLocationData("RemoteCatalog", "",
-                    aaSettings.buildSettings.remoteCatalogLocation.Evaluate(aaSettings.profileSettings, aaSettings.activeProfile),
-                    typeof(JsonAssetProvider).FullName, ResourceLocationData.LocationType.String, 0, "", null);
-                runtimeData.catalogLocations.Add(remoteLocation);
-            }
-
-            ResourceLocationData localCatalogLocation = new ResourceLocationData("LocalCatalog", "",
-                ResourceManagerRuntimeData.PlayerCatalogLoadLocation, 
-                typeof(JsonAssetProvider).FullName, ResourceLocationData.LocationType.String, 0, "", null);
-            runtimeData.catalogLocations.Add(localCatalogLocation);
-
+            var catalogLocations = new List<ResourceLocationData>();
+            foreach (var assetGroup in aaSettings.groups)
+                assetGroup.processor.CreateCatalog(aaSettings, assetGroup, contentCatalog, catalogLocations);
+            runtimeData.catalogLocations.locations.AddRange(catalogLocations.OrderBy(s => s.m_address));
 
             runtimeData.Save(contentCatalog, aaSettings.buildSettings.editorPlayMode.ToString());
-            var catalogBuildLocation = aaSettings.buildSettings.remoteCatalogBuildLocation.Evaluate(aaSettings.profileSettings, aaSettings.activeProfile);
-            if (!string.IsNullOrEmpty(catalogBuildLocation))
-            {
-                var dirName = Path.GetDirectoryName(catalogBuildLocation);
-                if (!string.IsNullOrEmpty(dirName)  && !Directory.Exists(dirName))
-                    Directory.CreateDirectory(dirName);
-                if (File.Exists(catalogBuildLocation))
-                    File.Delete(catalogBuildLocation);
-                File.Copy(ResourceManagerRuntimeData.PlayerCatalogLocation, catalogBuildLocation);
-            }
 
             Debug.Log("Processed  " + aaSettings.assetEntries.Count() + " addressable assets in " + timer.Elapsed.TotalSeconds + " secs.");
             Resources.UnloadUnusedAssets();
@@ -267,7 +252,7 @@ namespace UnityEditor.AddressableAssets
             {
                 var buildParams = new BuildParameters(EditorUserBuildSettings.activeBuildTarget, BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget), aaSettings.buildSettings.bundleBuildPath, ContentPipeline.kTempBuildPath);
                 buildParams.UseCache = aaSettings.buildSettings.useCache;
-                using (var buildCleanup = new BuildStateCleanup(true, buildParams.TempOutputFolder))
+                using (var buildCleanup = new BuildStateCleanup(buildParams.TempOutputFolder))
                 {
                     var buildContext = new BuildContext(new BundleContent(allBundleInputDefs), new Unity5PackedIdentifiers(), buildParams, depData = new BuildDependencyData(), bundleWriteData = new BundleWriteData(), new BundleBuildResults(), progressTracker);
                     buildContext.SetContextObject(new AddressableAssetsBuildContext() { m_settings = aaSettings, m_runtimeData = runtimeData, m_contentCatalog = contentCatalog });

@@ -102,7 +102,7 @@ namespace UnityEditor.AddressableAssets
             {
                 get
                 {
-                    if (m_remoteCatalogLocation == null)
+                    if (m_remoteCatalogLocation == null || string.IsNullOrEmpty(m_remoteCatalogLocation.value))
                     {
                         if (m_Settings != null)
                             remoteCatalogLocation = m_Settings.profileSettings.CreateProfileValue(m_Settings.profileSettings.GetVariableIdFromName("RemoteCatalogURL"));
@@ -127,7 +127,7 @@ namespace UnityEditor.AddressableAssets
             {
                 get {
 
-                    if (m_remoteCatalogBuildLocation == null)
+                    if (m_remoteCatalogBuildLocation == null || string.IsNullOrEmpty(m_remoteCatalogBuildLocation.value))
                     {
                         if (m_Settings != null)
                             remoteCatalogBuildLocation = m_Settings.profileSettings.CreateProfileValue(m_Settings.profileSettings.GetVariableIdFromName("RemoteBuildPath"));

@@ -16,7 +16,9 @@ namespace UnityEditor.AddressableAssets
 
         public ReturnCodes Run(IBuildContext context)
         {
-            return Run(context.GetContextObject<IAddressableAssetsBuildContext>(), context.GetContextObject<IBundleWriteData>(), context.GetContextObject<IBuildResults>(), context.GetContextObject<IProgressTracker>());
+            IProgressTracker tracker;
+            context.TryGetContextObject(out tracker);
+            return Run(context.GetContextObject<IAddressableAssetsBuildContext>(), context.GetContextObject<IBundleWriteData>(), context.GetContextObject<IBuildResults>(), tracker);
         }
 
         public static ReturnCodes Run(IAddressableAssetsBuildContext aaContext, IBundleWriteData writeData, IBuildResults results, IProgressTracker tracker)

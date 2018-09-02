@@ -40,16 +40,21 @@ namespace UnityEngine.AddressableAssets
         /// <summary>
         /// List of catalog locations to download in order (try remote first, then local)
         /// </summary>
-        public List<ResourceLocationData> catalogLocations = new List<ResourceLocationData>();
+        //public List<ResourceLocationData> catalogLocations = new List<ResourceLocationData>();
+        public ResourceLocationList catalogLocations = new ResourceLocationList();
         /// <summary>
         /// TODO - doc
         /// </summary>
-        public bool usePooledInstanceProvider = true;
+        public bool usePooledInstanceProvider = false;
         /// <summary>
         /// TODO - doc
         /// </summary>
         public bool profileEvents = true;
- 
+        /// <summary>
+        /// TODO - doc
+        /// </summary>
+        public string contentVersion = "0";
+
         /// <summary>
         /// TODO - doc
         /// </summary>
@@ -58,9 +63,10 @@ namespace UnityEngine.AddressableAssets
         {
             DiagnosticEventCollector.ProfileEvents = true;
             ResourceManager.s_postEvents = true;
-
             ResourceManager.ResourceLocators.Add(new ResourceLocationLocator());
             ResourceManager.ResourceProviders.Add(new JsonAssetProvider());
+            ResourceManager.ResourceProviders.Add(new TextDataProvider());
+            ResourceManager.ResourceProviders.Add(new ContentCatalogProvider());
             var runtimeDataLocation = new ResourceLocationBase<string>("RuntimeData", PlayerSettingsLoadLocation, typeof(JsonAssetProvider).FullName);
             var initOperation = ResourceManager.LoadAsync<ResourceManagerRuntimeData, IResourceLocation>(runtimeDataLocation);
             ResourceManager.QueueInitializationOperation(initOperation);
@@ -76,6 +82,8 @@ namespace UnityEngine.AddressableAssets
             if (!Application.isEditor && resourceProviderMode != EditorPlayMode.PackedMode)
                 throw new Exception("Unsupported resource provider mode in player: " + resourceProviderMode);
 
+            ResourceManagerConfig.AddCachedValue("version", contentVersion);
+
             if (usePooledInstanceProvider)
                 ResourceManager.InstanceProvider = new PooledInstanceProvider("PooledInstanceProvider", 2);
             else
@@ -90,28 +98,30 @@ namespace UnityEngine.AddressableAssets
 
             ResourceManager.ResourceLocators.Add(new ResourceLocationLocator());
             ResourceManager.ResourceLocators.Add(new AssetReferenceLocator((assetRef) => ResourceManager.GetResourceLocation(assetRef.assetGUID)));
-
+            AddContentCatalogs(catalogLocations);
             LoadContentCatalog(0);
         }
 
         void LoadContentCatalog(int index)
         {
-            if (index >= catalogLocations.Count)
-            {
-                Debug.Log("Failed to load any content catalogs.");
-                return;
-            }
-            var catalogLocation = catalogLocations[index].Create();
-
-            var loadOp = ResourceManager.LoadAsync<ResourceLocationList, IResourceLocation>(catalogLocation);
+            while (index < catalogLocations.locations.Count && !catalogLocations.locations[index].m_isLoadable)
+                index++;
+            var loadOp = ResourceManager.LoadAsync<ResourceLocationList, string>(catalogLocations.locations[index].m_address);
             ResourceManager.QueueInitializationOperation(loadOp);
             loadOp.Completed += (op) =>
             {
                 if (op.Result != null)
+                {
                     AddContentCatalogs(op.Result);
+                }
                 else
-                    LoadContentCatalog(index + 1);
-            };
+                {
+                    if (index + 1 >= catalogLocations.locations.Count)
+                        Debug.LogError("Failed to load content catalog.");
+                    else
+                        LoadContentCatalog(index + 1);
+                }
+            }; 
         }
 
         private void AddResourceProviders()
@@ -120,7 +130,7 @@ namespace UnityEngine.AddressableAssets
             {
 #if UNITY_EDITOR
                 case EditorPlayMode.FastMode:
-                    ResourceManager.ResourceProviders.Insert(0, new AssetDatabaseProvider());
+                    ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new AssetDatabaseProvider()));
                     break;
                 case EditorPlayMode.VirtualMode:
                     VirtualAssetBundleManager.AddProviders();
@@ -171,6 +181,9 @@ namespace UnityEngine.AddressableAssets
             {
                 IResourceLocation loc = kvp.Value;
                 ResourceLocationData rlData = dataMap[kvp.Key];
+                if (!rlData.m_isLoadable)
+                    continue;
+
                 switch (rlData.m_type)
                 {
                     case ResourceLocationData.LocationType.String: AddToCatalog(locList.labels, ccString, loc, rlData.m_labelMask); break;

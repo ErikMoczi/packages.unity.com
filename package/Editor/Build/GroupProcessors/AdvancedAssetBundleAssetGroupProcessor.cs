@@ -9,28 +9,66 @@ namespace UnityEditor.AddressableAssets
     [Description("Advanced Packed Content")]
     public class AdvancedAssetBundleAssetGroupProcessor : AssetBundleAssetGroupProcessor
     {
+    
+        [SerializeField]
+        protected AddressableAssetSettings.ProfileSettings.ProfileValue m_buildPath;
+
+        [SerializeField]
+        protected AddressableAssetSettings.ProfileSettings.ProfileValue m_loadPrefix;
+
+        [SerializeField]
+        protected AddressableAssetSettings.ProfileSettings.ProfileValue m_bundleLoadProvider;
+
         /// <summary>
         /// TODO - doc
         /// </summary>
-        public AddressableAssetSettings.ProfileSettings.ProfileValue buildPath;
+        public AddressableAssetSettings.ProfileSettings.ProfileValue buildPath
+        {
+            get
+            {
+                var settings = AddressableAssetSettings.GetDefault(false, false);
+                if ((m_buildPath == null || string.IsNullOrEmpty(m_buildPath.value)) && settings != null)
+                    m_buildPath = settings.profileSettings.CreateProfileValue(settings.profileSettings.GetVariableIdFromName("StreamingAsssetsBuildPath"));
+                return m_buildPath;
+            }
+        }
         /// <summary>
         /// TODO - doc
         /// </summary>
-        public AddressableAssetSettings.ProfileSettings.ProfileValue loadPrefix;
+        public AddressableAssetSettings.ProfileSettings.ProfileValue loadPrefix
+        {
+            get
+            {
+                var settings = AddressableAssetSettings.GetDefault(false, false);
+                if ((m_loadPrefix == null || string.IsNullOrEmpty(m_loadPrefix.value)) && settings != null)
+                    m_loadPrefix = settings.profileSettings.CreateProfileValue(settings.profileSettings.GetVariableIdFromName("StreamingAssetsLoadPrefix"));
+                return m_loadPrefix;
+            }
+        }
         /// <summary>
         /// TODO - doc
         /// </summary>
-        public AddressableAssetSettings.ProfileSettings.ProfileValue bundleLoadProvider;
+        public AddressableAssetSettings.ProfileSettings.ProfileValue bundleLoadProvider
+        {
+            get
+            {
+                var settings = AddressableAssetSettings.GetDefault(false, false);
+                if (m_bundleLoadProvider == null || string.IsNullOrEmpty(m_bundleLoadProvider.value) && settings != null)
+                    settings.profileSettings.CreateProfileValue(typeof(RemoteAssetBundleProvider).FullName, true);
+                return m_bundleLoadProvider;
+            }
+        }
 
 
         internal override void Initialize(AddressableAssetSettings settings)
         {
-            if(buildPath == null)
-                buildPath = settings.profileSettings.CreateProfileValue("StreamingAsssetsBuildPath");
-            if(loadPrefix == null)
-                loadPrefix = settings.profileSettings.CreateProfileValue("StreamingAssetsLoadPrefix");
-            if(bundleLoadProvider == null)
-                bundleLoadProvider = settings.profileSettings.CreateProfileValue(typeof(RemoteAssetBundleProvider).FullName, true);
+            Debug.Log("Initialize");
+            if (m_buildPath == null || string.IsNullOrEmpty(m_buildPath.value))
+                m_buildPath = settings.profileSettings.CreateProfileValue(settings.profileSettings.GetVariableIdFromName("StreamingAsssetsBuildPath"));
+            if (m_loadPrefix == null || string.IsNullOrEmpty(m_loadPrefix.value))
+                m_loadPrefix = settings.profileSettings.CreateProfileValue(settings.profileSettings.GetVariableIdFromName("StreamingAssetsLoadPrefix"));
+            if (m_bundleLoadProvider == null || string.IsNullOrEmpty(m_bundleLoadProvider.value))
+                m_bundleLoadProvider = settings.profileSettings.CreateProfileValue(typeof(RemoteAssetBundleProvider).FullName, true);
         }
 
         /// <summary>
@@ -78,7 +116,7 @@ namespace UnityEditor.AddressableAssets
             {
                 bundleMode = newBundleMode;
                 modified = true;
-            }
+            } 
             modified |= ProfileSettingsEditor.ValueGUI(settings, "Build Path", buildPath);
             modified |= ProfileSettingsEditor.ValueGUI(settings, "Load Prefix", loadPrefix);
             modified |= ProfileSettingsEditor.ValueGUI(settings, "Load Method", bundleLoadProvider);

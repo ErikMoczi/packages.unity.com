@@ -19,6 +19,9 @@ namespace UnityEditor.AddressableAssets
 
         public bool OnGUI(Rect pos)
         {
+            if (settingsObject == null)
+                return false;
+
             var bs = settingsObject.buildSettings;
             
             GUILayout.BeginArea(pos);
@@ -59,7 +62,7 @@ namespace UnityEditor.AddressableAssets
                     break;
             }
 
-            using (new EditorGUI.DisabledScope(bs.editorPlayMode == ResourceManagerRuntimeData.EditorPlayMode.FastMode))
+           // using (new EditorGUI.DisabledScope(bs.editorPlayMode == ResourceManagerRuntimeData.EditorPlayMode.FastMode))
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
@@ -70,7 +73,7 @@ namespace UnityEditor.AddressableAssets
                 GUILayout.EndHorizontal();
             }
             EditorGUI.indentLevel--;
-
+            /*
             bs.downloadRemoteCatalog = EditorGUILayout.ToggleLeft(new GUIContent("Download Remote Catalog", "Download remote catalog on game startup"), bs.downloadRemoteCatalog);
             using (new EditorGUI.DisabledScope(!bs.downloadRemoteCatalog))
             {
@@ -80,7 +83,7 @@ namespace UnityEditor.AddressableAssets
                 ProfileSettingsEditor.ValueGUI(settingsObject, "Build Location", bs.remoteCatalogBuildLocation);
                 EditorGUI.indentLevel--;
             }
-            
+            */
             bs.postProfilerEvents = EditorGUILayout.ToggleLeft("Send Profiler Events", bs.postProfilerEvents);
             
             GUILayout.EndScrollView();
@@ -95,6 +98,9 @@ namespace UnityEditor.AddressableAssets
 
         internal void OnEnable()
         {
+            if (settingsObject == null)
+                return;
+
             //LoadData...
             var dataPath = System.IO.Path.GetFullPath(".");
             dataPath = dataPath.Replace("\\", "/");
@@ -119,6 +125,9 @@ namespace UnityEditor.AddressableAssets
 
         internal void OnDisable()
         {
+            if (settingsObject == null)
+                return;
+
             var dataPath = System.IO.Path.GetFullPath(".");
             dataPath = dataPath.Replace("\\", "/");
             dataPath += "/Library/AddressablesConfig.dat";

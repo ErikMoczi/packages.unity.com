@@ -149,7 +149,7 @@ namespace UnityEditor.AddressableAssets
         internal IEnumerable<AssetGroup.AssetEntry> assetEntries
         { get { return m_allEntries.Values; } }
 
-        internal void RemoveAssetEntry(string guid)
+        public void RemoveAssetEntry(string guid)
         {
             var entry = FindAssetEntry(guid);
             if (entry != null)
@@ -217,7 +217,7 @@ namespace UnityEditor.AddressableAssets
             return aa;
         }
 
-        internal AssetGroup FindGroup(string name)
+        public AssetGroup FindGroup(string name)
         {
             return groups.Find(s => s.name == name);
         }
@@ -411,11 +411,11 @@ namespace UnityEditor.AddressableAssets
             if (string.IsNullOrEmpty(name))
                 name = proc.displayName + " Group";
             string validName = FindUniqueGroupName(name);
-            var path = System.IO.Path.GetDirectoryName(pathForAsset) + "/" + processorType + "_" + validName + ".asset";
+            var path = Path.GetDirectoryName(pathForAsset) + "/" + processorType + "_" + validName + ".asset";
             AssetDatabase.CreateAsset(proc, path);
             var guid = AssetDatabase.AssetPathToGUID(path);
-            AssetDatabase.MoveAsset(path, System.IO.Path.GetDirectoryName(pathForAsset) + "/" + guid.ToString() + ".asset");
-            var g = new AssetGroup(validName, proc, setAsDefaultGroup, guid, groups.Count);
+            AssetDatabase.MoveAsset(path, Path.GetDirectoryName(pathForAsset) + "/" + guid.ToString() + ".asset");
+            var g = new AssetGroup(validName, proc, setAsDefaultGroup, guid);
             groups.Add(g);
             PostModificationEvent(ModificationEvent.GroupAdded, g);
             return g;

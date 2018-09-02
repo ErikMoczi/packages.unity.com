@@ -300,20 +300,19 @@ namespace UnityEditor.AddressableAssets
                 {
                     var defaultId = AddProfile("Default", null);
                     SetValueByName(defaultId, "BuildTarget", "[UnityEditor.EditorUserBuildSettings.activeBuildTarget]");
-                    SetValueByName(defaultId, "StreamingAsssetsBuildPath", "Assets/StreamingAssets");
-                    SetValueByName(defaultId, "StreamingAssetsLoadPrefix", "{UnityEngine.Application.streamingAssetsPath}");
-                    SetValueByName(defaultId, "RemoteBuildPath", "ServerData");
-                    SetValueByName(defaultId, "RemoteLoadPrefix", "http://localhost");
-                    SetValueByName(defaultId, "RemoteCatalogURL", "[RemoteLoadPrefix]/[BuildTarget]/catalog.json");
-                    SetValueByName(defaultId, "RemoteCatalogProvider", "ResourceManagment.ResourceProviders.JSONAssetProvider");
+                    SetValueByName(defaultId, "LocalBuildPath", "Assets/StreamingAssets");
+                    SetValueByName(defaultId, "LocalLoadPrefix", "file://{UnityEngine.Application.streamingAssetsPath}");
+                    SetValueByName(defaultId, "RemoteBuildPath", "ServerData/[BuildTarget]");
+                    SetValueByName(defaultId, "RemoteLoadPrefix", "http://localhost/[BuildTarget]");
+                    SetValueByName(defaultId, "version", "1");
 
                     var devId = AddProfile("Dev", defaultId);
-                    SetValueByName(devId, "RemoteBuildPath", "DevServerData");
-                    SetValueByName(devId, "RemoteLoadPrefix", "http://devserver");
+                    SetValueByName(devId, "RemoteBuildPath", "DevServerData/[BuildTarget]");
+                    SetValueByName(devId, "RemoteLoadPrefix", "http://devserver/[BuildTarget]");
 
                     var prodId = AddProfile("Production", defaultId);
-                    SetValueByName(prodId, "RemoteBuildPath", "ProductionServerData");
-                    SetValueByName(prodId, "RemoteLoadPrefix", "http://productionserver");
+                    SetValueByName(prodId, "RemoteBuildPath", "ProductionServerData/[BuildTarget]");
+                    SetValueByName(prodId, "RemoteLoadPrefix", "http://productionserver/[BuildTarget]");
                 }
                 return m_profiles[0].m_id;
             }

@@ -23,18 +23,25 @@ namespace UnityEditor.AddressableAssets
             [SerializeField]
             internal string name;
 
-            [SerializeField]
-            internal int priority = 0;
-
             /// <summary>
             /// TODO - doc
             /// </summary>
             [SerializeField]
             internal string guid;
+
             /// <summary>
             /// TODO - doc
             /// </summary>
-            internal string displayName { get { return name; } }
+            public string displayName
+            {
+                get { return name; }
+                set
+                {
+                    name = value;
+                    PostModificationEvent(ModificationEvent.GroupRenamed, this);
+                }
+            }
+
             private Dictionary<string, AssetEntry> entryMap = new Dictionary<string, AssetEntry>();
             [SerializeField]
             private List<AssetEntry> m_serializeEntries = new List<AssetEntry>();
@@ -42,7 +49,7 @@ namespace UnityEditor.AddressableAssets
             /// <summary>
             /// TODO - doc
             /// </summary>
-            internal Dictionary<string, AssetEntry>.ValueCollection entries
+            public Dictionary<string, AssetEntry>.ValueCollection entries
             {
                 get { return entryMap.Values;  }
             }
@@ -51,6 +58,10 @@ namespace UnityEditor.AddressableAssets
             /// </summary>
             [SerializeField]
             internal AssetGroupProcessor processor;
+            /// <summary>
+            /// TODO - doc
+            /// </summary>
+            public AssetGroupProcessor Procesor { get { return processor; } }
             /// <summary>
             /// TODO - doc
             /// </summary>
@@ -107,11 +118,11 @@ namespace UnityEditor.AddressableAssets
             /// TODO - doc
             /// </summary>
             internal AssetGroup() {}
-            internal AssetGroup(string n, AssetGroupProcessor p, bool setAsDefault, string g, int pri)
+            internal AssetGroup(string n, AssetGroupProcessor p, bool setAsDefault, string g)
             {
                 name = n;
-                priority = pri;
                 processor = p;
+               
                 isDefault = setAsDefault;
                 guid = g;
                 readOnly = false;
@@ -139,7 +150,7 @@ namespace UnityEditor.AddressableAssets
             /// <summary>
             /// TODO - doc
             /// </summary>
-            internal AssetEntry GetAssetEntry(string guid)
+            public AssetEntry GetAssetEntry(string guid)
             {
                 if (entryMap.ContainsKey(guid))
                     return entryMap[guid];

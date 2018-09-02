@@ -38,7 +38,7 @@ namespace UnityEditor.AddressableAssets
             Dictionary<GUID, List<string>> assetsToBundles,
             List<ResourceLocationData> locations)
         {
-            locations.Add(new ResourceLocationData(bundleName, string.Empty, GetBundleLoadPath(settings, bundleName), GetBundleLoadProvider(settings), ResourceLocationData.LocationType.String, 0, typeof(UnityEngine.AssetBundle).FullName, null));
+            locations.Add(new ResourceLocationData(bundleName, string.Empty, GetBundleLoadPath(settings, bundleName), GetBundleLoadProvider(settings), false, ResourceLocationData.LocationType.String, 0, typeof(UnityEngine.AssetBundle).FullName, null));
 
             foreach (var a in assetsInBundle)
             {  
@@ -50,7 +50,7 @@ namespace UnityEditor.AddressableAssets
                 if (t == null)
                     Debug.Log("Can't get asset type for " + assetEntry.assetPath);
                 var assetPath = assetEntry.GetAssetLoadPath(settings.buildSettings.editorPlayMode == ResourceManagerRuntimeData.EditorPlayMode.PackedMode);
-                locations.Add(new ResourceLocationData(assetEntry.address, assetEntry.guid, assetPath, GetAssetLoadProvider(settings), ResourceLocationData.LocationType.String, settings.labelTable.GetMask(assetEntry.labels), assetType, assetsToBundles[a].ToArray()));
+                locations.Add(new ResourceLocationData(assetEntry.address, assetEntry.guid, assetPath, GetAssetLoadProvider(settings), true, ResourceLocationData.LocationType.String, settings.labelTable.GetMask(assetEntry.labels), assetType, assetsToBundles[a].ToArray()));
             }
         }
 

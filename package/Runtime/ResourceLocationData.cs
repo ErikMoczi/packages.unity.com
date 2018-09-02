@@ -48,10 +48,6 @@ namespace UnityEngine.AddressableAssets
         /// <summary>
         /// TODO - doc
         /// </summary>
-        public string data;
-        /// <summary>
-        /// TODO - doc
-        /// </summary>
         public long m_labelMask;
         /// <summary>
         /// TODO - doc
@@ -60,8 +56,10 @@ namespace UnityEngine.AddressableAssets
         /// <summary>
         /// TODO - doc
         /// </summary>
-        public ResourceLocationData(string address, string guid, string id, string provider, LocationType locationType = LocationType.String, long labels = 0, string objectType = "", string[] dependencies = null)
+        public bool m_isLoadable;
+        public ResourceLocationData(string address, string guid, string id, string provider, bool isLoadable, LocationType locationType = LocationType.String, long labels = 0, string objectType = "", string[] dependencies = null)
         {
+            m_isLoadable = isLoadable;
             m_address = address;
             m_guid = guid;
             m_id = id;
@@ -77,7 +75,7 @@ namespace UnityEngine.AddressableAssets
         /// </summary>
         public IResourceLocation Create()
         {
-            switch (m_type)
+             switch (m_type)
             {
                 case LocationType.String: return new ResourceLocationBase<string>(m_address, m_id, m_provider);
                 case LocationType.Int: return new ResourceLocationBase<int>(int.Parse(m_address), m_id, m_provider);
