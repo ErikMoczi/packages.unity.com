@@ -626,7 +626,7 @@ $spinner-normal-half-size: 8;
 				border-color: $package-tag-color;
 				text-color: $package-tag-color;
 
-				&.recommended {
+				&.verified {
 					border-color: $package-tag-recommended-color;
 					text-color: $package-tag-recommended-color;
 				}
