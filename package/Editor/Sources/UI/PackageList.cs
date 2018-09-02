@@ -121,6 +121,7 @@ namespace UnityEditor.PackageManager.UI
                 return;
             }
             
+#if UNITY_2018_2_OR_NEWER
             if (evt.keyCode == KeyCode.LeftArrow)
             {
                 if (selectedItem.packageGroup != null)
@@ -145,6 +146,7 @@ namespace UnityEditor.PackageManager.UI
                 evt.StopPropagation();
                 return;
             }
+#endif
 
             if (evt.keyCode == KeyCode.PageUp)
             {
@@ -245,9 +247,14 @@ namespace UnityEditor.PackageManager.UI
             List.Add(builtInGroup);
 
             packagesGroup.previousGroup = null;
+#if UNITY_2018_2_OR_NEWER
             packagesGroup.nextGroup = builtInGroup;
             builtInGroup.previousGroup = packagesGroup;
             builtInGroup.nextGroup = null;
+#else
+            packagesGroup.nextGroup = null;
+            UIUtils.SetElementDisplay(builtInGroup, false);
+#endif
 
             root.Q<VisualElement>(loadingId).visible = false;
             LoadingSpinner.Stop();

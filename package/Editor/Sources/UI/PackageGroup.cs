@@ -34,7 +34,13 @@ namespace UnityEditor.PackageManager.UI
             Add(root);
             listElement = List;
 
+#if UNITY_2018_2_OR_NEWER
             Header.AddManipulator(new Clickable(ToggleCollapse));
+#else
+            List.style.marginLeft = 0;
+            Header.style.height = 0;
+#endif
+            
             if (string.IsNullOrEmpty(groupName) || groupName != PackageGroupOrigins.BuiltInPackages.ToString())
             {
                 HeaderTitle.text = "Packages";

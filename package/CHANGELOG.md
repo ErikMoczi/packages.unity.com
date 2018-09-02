@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2018-02-16
+- Hide built-in packages
+- Fix packages sorting in All tab
+
 ## [1.7.3] - 2018-02-16
 - Will no longer loop error report with an invalid manifest
 
