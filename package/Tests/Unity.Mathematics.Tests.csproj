@@ -54,7 +54,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Unity.Mathematics\Unity.Mathematics.csproj">
+    <ProjectReference Include="..\Unity.Mathematics\Unity.Mathematics\Unity.Mathematics.csproj">
       <Project>{19810344-7387-4155-935f-bdd5cc61f0bf}</Project>
       <Name>Unity.Mathematics</Name>
     </ProjectReference>
