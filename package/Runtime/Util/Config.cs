@@ -14,8 +14,8 @@ namespace ResourceManagement.Util
             if (cachedValues.TryGetValue(var, out cachedValue))
                 return cachedValue;
 
-            var className = var.Substring(0, i);
-            var propName = var.Substring(i + 1);
+            //var className = var.Substring(0, i); 
+            //var propName = var.Substring(i + 1);
             //foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
             //{
             //    Type t = a.GetType(className, false, false);
