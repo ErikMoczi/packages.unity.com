@@ -23,7 +23,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             SearchOperation = null;
         }
 
-        public IListOperation CreateListOperation(bool offlineMode = false)
+        public IListOperation CreateListOperation()
         {          
             return new MockListOperation(this);
         }

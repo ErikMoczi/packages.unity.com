@@ -24,8 +24,8 @@ namespace UnityEditor.PackageManager.UI
             Started = false;
             UIUtils.SetElementDisplay(this, false);
         }
-        
-        void UpdateProgress()
+
+        private void UpdateProgress()
         {
             if (parent == null)
                 return;

@@ -83,6 +83,9 @@
   padding-bottom: 0;
   padding-right: 0;
 }
+#detailListView .link:hover {
+  cursor: link;
+}
 #detailListView .emptyArea {
   flex: 1;
   position-type: absolute;
@@ -547,7 +550,6 @@
 #detailListView #detailView .detail #detailPackageStatus {
   flex: 1;
   font-style: bold;
-  word-wrap: true;
 }
 #detailListView #detailView .detail #detailTag {
   width: 60;
@@ -588,7 +590,7 @@
   border-color: #d25a00;
   text-color: #d25a00;
 }
-#detailListView #detailView .detail .tag.verified {
+#detailListView #detailView .detail .tag.recommended {
   border-color: #000;
   text-color: #000;
 }

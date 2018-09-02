@@ -6,7 +6,7 @@
     /// </summary>
     internal interface IOperationFactory
     {
-        IListOperation CreateListOperation(bool offlineMode = false);
+        IListOperation CreateListOperation();
         ISearchOperation CreateSearchOperation();
         IAddOperation CreateAddOperation();
         IRemoveOperation CreateRemoveOperation();

@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+﻿using UnityEngine.Experimental.UIElements;
 using System;
 
 namespace UnityEditor.PackageManager.UI
@@ -14,6 +13,8 @@ namespace UnityEditor.PackageManager.UI
 
     internal class PackageItem : VisualElement
     {
+        private const string TemplatePath = PackageManagerWindow.ResourcesPath + "Templates/PackageItem.uxml";
+
         public static string SelectedClassName = "selected";
         
         public event Action<PackageItem> OnSelected = delegate { };
@@ -31,7 +32,7 @@ namespace UnityEditor.PackageManager.UI
 
         public PackageItem(Package package = null)
         {
-            root = Resources.Load<VisualTreeAsset>("Templates/PackageItem").CloneTree(null);
+            root = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath).CloneTree(null);
             Add(root);
             
             root.Q<VisualElement>(loadingSpinnerId).clippingOptions = ClippingOptions.NoClipping;
@@ -64,27 +65,13 @@ namespace UnityEditor.PackageManager.UI
 
         private void SetItem(Package package)
         {
-            var displayPackage = Display(package);
-            if (displayPackage == null)
+            if (Display(package) == null)
                 return;
-                            
-            this.package = package;
-            OnPackageChanged();
             
-            this.package.AddSignal.WhenOperation(OnPackageAdd);
-            this.package.RemoveSignal.WhenOperation(OnPackageRemove);
-        }
-
-        private void OnPackageRemove(IRemoveOperation operation)
-        {
-            operation.OnOperationError += error => Spinner.Stop();
-            OnPackageUpdate();
-        }
-
-        private void OnPackageAdd(IAddOperation operation)
-        {
-            operation.OnOperationError += error => Spinner.Stop();
-            OnPackageUpdate();
+            this.package = package;
+            this.package.AddSignal.WhenOperation(OnPackageUpdate);
+            
+            OnPackageChanged();
         }
 
         private void OnPackageChanged()
@@ -113,7 +100,7 @@ namespace UnityEditor.PackageManager.UI
                 Spinner.Stop();
         }
 
-        private void OnPackageUpdate()
+        private void OnPackageUpdate(IAddOperation operation)
         {
             Spinner.Start();
         }

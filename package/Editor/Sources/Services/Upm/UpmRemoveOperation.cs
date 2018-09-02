@@ -9,9 +9,9 @@ namespace UnityEditor.PackageManager.UI
         [SerializeField]
         private PackageInfo _package;
 
-        public event Action OnOperationSuccess = delegate { };
+        public event Action<PackageInfo> OnOperationSuccess = delegate { };
 
-        public void RemovePackageAsync(PackageInfo package, Action doneCallbackAction = null,  Action<Error> errorCallbackAction = null)
+        public void RemovePackageAsync(PackageInfo package, Action<PackageInfo> doneCallbackAction = null,  Action<Error> errorCallbackAction = null)
         {
             _package = package;
             OnOperationError += errorCallbackAction;
@@ -27,7 +27,7 @@ namespace UnityEditor.PackageManager.UI
 
         protected override void ProcessData()
         {
-            OnOperationSuccess();
+            OnOperationSuccess(_package);
         }
     }
 }

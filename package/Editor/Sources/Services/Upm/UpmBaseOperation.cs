@@ -40,8 +40,6 @@ namespace UnityEditor.PackageManager.UI
 
                 versions.Sort((left, right) =>
                 {
-                    if (left == null || right == null) return 0;
-                    
                     SemVersion leftVersion = left;
                     SemVersion righVersion = right;
                     return leftVersion.CompareByPrecedence(righVersion);
@@ -85,12 +83,13 @@ namespace UnityEditor.PackageManager.UI
                     Category = info.category,
                     IsCurrent = isVersionCurrent,
                     IsLatest = version == lastCompatible,
-                    IsVerified = version == info.versions.recommended,
+                    IsRecommended = version == info.versions.recommended,
                     Errors = info.errors.ToList(),
                     Group = GroupName(origin),
                     State = state,
                     Origin = origin,
-                    Author = null
+                    Author = null,
+                    Info = info
                 };
                 
                 packages.Add(packageInfo);
@@ -161,11 +160,7 @@ namespace UnityEditor.PackageManager.UI
             {
                 Error = error;
 
-                var message = "Cannot perform upm operation.";
-                if (error != null)
-                    message = "Cannot perform upm operation: " + Error.message + " [" + Error.errorCode + "]";
-                
-                Debug.LogError(message);
+                Debug.LogError("Cannot perform upm operation: " + Error.message + " [" + Error.errorCode + "]");
 
                 OnOperationError(Error);
             }

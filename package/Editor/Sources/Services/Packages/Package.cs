@@ -10,9 +10,11 @@ namespace UnityEditor.PackageManager.UI
     {
         internal const string packageManagerUIName = "com.unity.package-manager-ui";
         private readonly string packageName;
-        private readonly IEnumerable<PackageInfo> source;
+        internal IEnumerable<PackageInfo> source;
 
-        public Package(string packageName, IEnumerable<PackageInfo> infos)
+        public string PackageName { get { return packageName; } }
+
+        internal Package(string packageName, IEnumerable<PackageInfo> infos)
         {
             if (string.IsNullOrEmpty(packageName))
                 throw new ArgumentException("Cannot be empty or null", "packageName");
@@ -25,9 +27,9 @@ namespace UnityEditor.PackageManager.UI
         }
 
         public PackageInfo Current { get { return Versions.FirstOrDefault(package => package.IsCurrent); } }
-        public PackageInfo Latest { get { return Versions.FirstOrDefault(package => package.IsLatest) ?? Versions.LastOrDefault(); } }
+        public PackageInfo Latest { get { return Versions.FirstOrDefault(package => package.IsLatest) ?? Versions.Last(); } }
                 
-        public IEnumerable<PackageInfo> Versions { get { return source.OrderBy(package => package.Version); } }
+        internal IEnumerable<PackageInfo> Versions { get { return source.OrderBy(package => package.Version); } }
         public string Name { get { return packageName; } }
 
         public bool IsPackageManagerUI
@@ -49,12 +51,12 @@ namespace UnityEditor.PackageManager.UI
         }
         
         [SerializeField]
-        public readonly OperationSignal<IAddOperation> AddSignal = new OperationSignal<IAddOperation>();
+        internal readonly OperationSignal<IAddOperation> AddSignal = new OperationSignal<IAddOperation>();
 
         private Action<PackageInfo> OnAddOperationSuccessEvent;
         private Action OnAddOperationFinalizedEvent;
         
-        public void Add(PackageInfo packageInfo)
+        internal void Add(PackageInfo packageInfo)
         {
             if (packageInfo == Current)
                 return;
@@ -78,24 +80,21 @@ namespace UnityEditor.PackageManager.UI
             operation.AddPackageAsync(packageInfo);
         }
 
-        public void Update()
+        internal void Update()
         {
             Add(Latest);
         }
 
         [SerializeField]
-        public readonly OperationSignal<IRemoveOperation> RemoveSignal = new OperationSignal<IRemoveOperation>();
+        internal readonly OperationSignal<IRemoveOperation> RemoveSignal = new OperationSignal<IRemoveOperation>();
 
-        private Action OnRemoveOperationSuccessEvent;
+        private Action<PackageInfo> OnRemoveOperationSuccessEvent;
         private Action OnRemoveOperationFinalizedEvent;
 
         public void Remove()
         {
-            if (Current == null)
-                return;
-                    
             var operation = OperationFactory.Instance.CreateRemoveOperation();
-            OnRemoveOperationSuccessEvent = () =>
+            OnRemoveOperationSuccessEvent = p =>
             {
                 PackageCollection.Instance.UpdatePackageCollection(true);
             };

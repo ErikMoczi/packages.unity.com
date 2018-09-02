@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Semver;
-using UnityEngine;
-using UnityEngine.UI;
 
 namespace UnityEditor.PackageManager.UI
 {
-    [Serializable]
     internal class PackageInfo : IEquatable<PackageInfo>
     {
         public static bool IsModule(string packageName)
@@ -15,34 +11,22 @@ namespace UnityEditor.PackageManager.UI
             return packageName.StartsWith("com.unity.modules.");
         }
 
-        [SerializeField]
-        public string Name;
-        [SerializeField]
-        public string DisplayName;
-        [SerializeField]
+        public string Name { get; set; }
+        public string DisplayName { get; set; }
         private string _PackageId;
-        [SerializeField]
-        public SemVersion Version;
-        [SerializeField]
-        public string Description;
-        [SerializeField]
-        public string Category;
-        [SerializeField]
-        public PackageState State;
-        [SerializeField]
-        public bool IsCurrent;
-        [SerializeField]
-        public bool IsLatest;
-        [SerializeField]
-        public string Group;
-        [SerializeField] 
-        public PackageOrigin Origin;
-        [SerializeField] 
-        public List<Error> Errors;
-        [SerializeField] 
-        public bool IsVerified;
-        [SerializeField] 
-        public string Author;
+        public SemVersion Version { get; set; }
+        public string Description { get; set; }
+        public string Category { get; set; }
+        public PackageState State { get; set; }
+        public bool IsCurrent { get; set; }
+        public bool IsLatest { get; set; }
+        public string Group { get; set; }
+        public PackageOrigin Origin { get; set; }
+        public List<Error> Errors { get; set; }
+        public bool IsRecommended { get; set; }
+        public string Author { get; set; }
+        
+        public PackageManager.PackageInfo Info { get; set; }
         
         public string PackageId {
             get
@@ -58,8 +42,8 @@ namespace UnityEditor.PackageManager.UI
         }
 
         // This will always be <name>@<version>, even for an embedded package.
-        public string VersionId {get { return string.Format("{0}@{1}", Name.ToLower(), Version); }}
-        public string ShortVersionId {get { return string.Format("{0}@{1}", Name.ToLower(), Version.ShortVersion()); }}
+        public string VersionId { get { return string.Format("{0}@{1}", Name.ToLower(), Version); } }
+        public string ShortVersionId { get { return string.Format("{0}@{1}", Name.ToLower(), Version.ShortVersion()); } }
 
         public string ModuleName { get { return IsModule(Name) ? DisplayName : ""; } }
 
@@ -80,10 +64,7 @@ namespace UnityEditor.PackageManager.UI
 
         public bool HasTag(string tag)
         {
-            if (string.IsNullOrEmpty(Version.Prerelease))
-                return false;
-
-            return String.Equals(Version.Prerelease.Split('.').First(), tag, StringComparison.CurrentCultureIgnoreCase);
+            return string.Equals(Version.Prerelease, tag, StringComparison.CurrentCultureIgnoreCase);
         }
 
         public bool HasTag(PackageTag tag)

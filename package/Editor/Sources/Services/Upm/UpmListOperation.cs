@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor.PackageManager.Requests;
-using System.Linq;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -10,13 +9,6 @@ namespace UnityEditor.PackageManager.UI
     {
         [SerializeField]
         private Action<IEnumerable<PackageInfo>> _doneCallbackAction;
-
-        public UpmListOperation(bool offlineMode) : base() 
-        {
-            OfflineMode = offlineMode;
-        }
-
-        public bool OfflineMode { get; set; }
 
         public void GetPackageListAsync(Action<IEnumerable<PackageInfo>> doneCallbackAction, Action<Error> errorCallbackAction = null)
         {
@@ -28,7 +20,7 @@ namespace UnityEditor.PackageManager.UI
 
         protected override Request CreateRequest()
         {
-            return Client.List(OfflineMode);            
+            return Client.List();            
         }
 
         protected override void ProcessData()

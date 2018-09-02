@@ -16,6 +16,8 @@ namespace UnityEditor.PackageManager.UI
 
     internal class PackageList : VisualElement
     {
+        private const string TemplatePath = PackageManagerWindow.ResourcesPath + "Templates/PackageList.uxml";
+
         public event Action<Package> OnSelected = delegate { };
         public event Action OnLoaded = delegate { };
 
@@ -30,7 +32,7 @@ namespace UnityEditor.PackageManager.UI
         {
             Groups = new List<PackageGroup>();
             
-            root = Resources.Load<VisualTreeAsset>("Templates/PackageList").CloneTree(null);
+            root = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath).CloneTree(null);
             Add(root);
             root.StretchToParentSize();
 
@@ -216,7 +218,6 @@ namespace UnityEditor.PackageManager.UI
         private static void Reload()
         {
             // Force a re-init to initial condition
-            PackageCollection.Instance.SetFilter(PackageFilter.Local, false);
             PackageCollection.Instance.UpdatePackageCollection(true);
         }
 
@@ -236,13 +237,6 @@ namespace UnityEditor.PackageManager.UI
         
         private void SetPackages(IEnumerable<Package> packages)
         {
-            if (PackageCollection.Instance.Filter == PackageFilter.Local)
-            {
-                packages = packages.Where(pkg => pkg.Current != null);
-            }
-
-            var previousSelection = selectedItem != null ? selectedItem.package : null;
-
             OnLoaded();
             ClearAll();
 
@@ -267,18 +261,15 @@ namespace UnityEditor.PackageManager.UI
             root.Q<VisualElement>(loadingId).visible = false;
             LoadingSpinner.Stop();
 
-            foreach (var package in packages.OrderBy(pkg => pkg.Versions.FirstOrDefault() == null ? pkg.Name : pkg.Versions.FirstOrDefault().DisplayName))
+            foreach (var package in packages)
             {
-                var item = AddPackage(package);
-
-                if (previousSelection != null && package.Name == previousSelection.Name)
-                    Select(item);
+                AddPackage(package);                
             }
 
             root.Q<VisualElement>(emptyId).visible = !packages.Any();
         }
 
-        private PackageItem AddPackage(Package package)
+        private void AddPackage(Package package)
         {
             var groupName = package.Latest.Group;
             var group = GetOrCreateGroup(groupName);
@@ -288,8 +279,6 @@ namespace UnityEditor.PackageManager.UI
                 Select(packageItem);
 
             packageItem.OnSelected += Select;
-
-            return packageItem;
         }
 
         private PackageGroup GetOrCreateGroup(string groupName)

@@ -1,4 +1,3 @@
-using UnityEngine;
 using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
@@ -13,13 +12,14 @@ namespace UnityEditor.PackageManager.UI
 
     internal class Alert : VisualElement
     {
+        private const string TemplatePath = PackageManagerWindow.ResourcesPath + "Templates/Alert.uxml";
         private readonly VisualElement root;
         private const float originalPositionRight = 5.0f;
         private const float positionRightWithScroll = 12.0f;
 
         public Alert(string text)
         {
-            root = Resources.Load<VisualTreeAsset>("Templates/Alert").CloneTree(null);
+            root = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath).CloneTree(null);
             Add(root);
             root.StretchToParentSize();
 
@@ -29,11 +29,7 @@ namespace UnityEditor.PackageManager.UI
 
         public void SetError(Error error)
         {
-            var message = "An error occured.";
-            if (error != null)
-                message = error.message ?? string.Format("An error occurred ({0})", error.errorCode.ToString());
-
-            AlertMessage.text = message;
+            AlertMessage.text = error.message ?? string.Format("An error occurred ({0})", error.errorCode.ToString());
             RemoveFromClassList("display-none");
         }
 

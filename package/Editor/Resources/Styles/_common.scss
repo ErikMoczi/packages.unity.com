@@ -115,7 +115,7 @@
 	}
 
 	&:hover {
-		text-color: $unity-text-color
+		text-color: $unity-text-color;
 	}
 }
 
@@ -198,6 +198,10 @@ $spinner-normal-half-size: 8;
 		background-image: none;
 		@include margin-box(0);
 		@include padding-box(0);
+
+		&:hover {
+			cursor: link;
+		}
 	}
 
 	.emptyArea {
@@ -573,7 +577,6 @@ $spinner-normal-half-size: 8;
 			#detailPackageStatus {
 				flex: 1;
 				font-style: bold;
-				word-wrap: true;
 			}
 
 			#detailTag {
@@ -622,7 +625,7 @@ $spinner-normal-half-size: 8;
 				border-color: $package-tag-color;
 				text-color: $package-tag-color;
 
-				&.verified {
+				&.recommended {
 					border-color: $package-tag-recommended-color;
 					text-color: $package-tag-recommended-color;
 				}

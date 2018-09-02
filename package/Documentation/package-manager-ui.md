@@ -9,7 +9,7 @@ The Package Manager window displays a [list view](#PackManLists) on the left and
 
 <a name="PackManLists"></a>
 ## Finding packages
-By default, the Package Manager window displays the list of packages in the **In Project** mode, so that only the packages already installed in your project appear in the list.
+By default, the Package Manager window displays the list of packages in the **In Project** mode, so that only the packages already installed in your project appear in the list. 
 
 To expand the list to include all available packages, click the **All** button. The list now displays everything registered in the [package registry](#PackManRegistry), regardless of whether they are already installed in the project.
 
@@ -23,13 +23,13 @@ The pane on the right side of the Package Manager window displays details about 
 ![Details pane](Images/PackageManagerUI-DetailsPane.png)
 
 These details include the following information:
- - (A) The display name
+ - (A) The display name 
  - (B) The version number (and tag, if available)
- - \(C\) The link to open the package documentation page
- - (D) The official package name from the registry starting with `com.unity.`
+ - \(C\) The link to open the package documentation page 
+ - (D) The official package name from the registry starting with `com.unity.` 
  - (E) The author
  - (F) The installation or update status
- - (G) A brief description
+ - (G) A brief description 
  - (H) Buttons to install, remove, or update the package
  - (I) The link to open the package change log
 
@@ -42,10 +42,9 @@ The Package Manager uses the following values:
 
 | **Tag** | **Meaning** |
 |--|--|
-| `verified` | Unity's Quality Assurance team has officially verified that this package works with a specific version of the Editor. |
-| `preview` | This package is at an early stage of the release cycle and may not have been documented and fully validated by either the development team or Unity's Quality Assurance team. |
-
-A Package without a tag is considered production quality.
+| `recommended` | Unity has officially tested and approved this package. |
+| `alpha` or `beta` | This package is at an early stage of the release cycle and may not have been documented and validated by either the development team or Unity's Quality Assurance team. |
+| `experimental` | This package is in development. |
 
 ### Finding more information
 You can find out more about a package by viewing its documentation. 
@@ -73,7 +72,7 @@ You can perform a variety of tasks through the Package Manager window:
 ![Install button](Images/PackageManagerUI-InstallButton.png)
 
 To install a new package:
- 1. Open the Project Manager window and click the **All** button.
+ 1. Open the Project Manager window and click the **All** button. 
  2. Select the package you want to install from the **Packages** list. The package information appears in the Details pane.
  3. Click the **Install X.X.X** button. When the progress bar finishes, the new package is ready to use.
 
@@ -82,8 +81,8 @@ To install a new package:
 ![Remove button](Images/PackageManagerUI-RemoveButton.png)
 
 To remove an installed package:
- 1. Open the Project Manager window.
- 2. Click the **In Project** button if you are in **All** mode.
+ 1. Open the Project Manager window. 
+ 2. Click the **In Project** button if you are in **All** mode. 
  3. Select the package you want to remove from the **Packages** list. The package information appears in the Details pane.
  4. Click the **Remove X.X.X** button. When the progress bar finishes, the package disappears from the list.
 
@@ -153,7 +152,7 @@ Package manifests support the following values:
 | `category` | String |The category this packages is in. For example, `"Forces"`. |
 | `dependencies` | Object |A list of packages that this package depends on, expressed as a JSON dictionary where the key is the package name and the value is the version number. Unity downloads all dependencies and loads them into the project alongside this package. |
 
-Example of a `package.json` file:
+Example of a `package.json` file: 
 
 	{
 		"name": "com.unity.package-4",
@@ -198,8 +197,6 @@ The Package Manager includes the following known limitations:
 ## Documentation revision history
 |Date|Reason|
 |---|---|
-|Mar 13, 2018|Documentation updated (final edits). Matches package version 1.8.2.|
-|Mar 2, 2018|Documentation updated. Matches package version 1.8.2.|
 |Feb 19, 2018|Documentation updated. Matches package version 1.8.0.|
 |Feb 8, 2018|Documentation updated. Matches package version 1.7.0.|
 |Feb 6, 2018|Documentation cleaned up. Matches package version 1.6.1.|

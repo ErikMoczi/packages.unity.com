@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+﻿using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {    
@@ -13,6 +12,7 @@ namespace UnityEditor.PackageManager.UI
 
     internal class PackageSearchFilterTabs : VisualElement
     {
+        private const string TemplatePath = PackageManagerWindow.ResourcesPath + "Templates/PackageSearchFilterTabs.uxml";
         private readonly VisualElement root;
         private const string SelectedClassName = "selected";
 
@@ -20,7 +20,7 @@ namespace UnityEditor.PackageManager.UI
 
         public PackageSearchFilterTabs()
         {
-            root = Resources.Load<VisualTreeAsset>("Templates/PackageSearchFilterTabs").CloneTree(null);
+            root = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath).CloneTree(null);
             Add(root);
             root.StretchToParentSize();
 

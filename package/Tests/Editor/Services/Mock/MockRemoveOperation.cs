@@ -7,14 +7,15 @@ namespace UnityEditor.PackageManager.UI.Tests
     {
         public new event Action<Error> OnOperationError = delegate { };
         public new event Action OnOperationFinalized = delegate { };
-        public event Action OnOperationSuccess = delegate { };
+        public event Action<PackageInfo> OnOperationSuccess = delegate { };
+
+        public PackageInfo PackageInfo { get; set; }
 
         public MockRemoveOperation(MockOperationFactory factory) : base(factory)
         {
         }
 
-        public void RemovePackageAsync(PackageInfo packageInfo, Action doneCallbackAction,
-            Action<Error> errorCallbackAction = null)
+        public void RemovePackageAsync(PackageInfo packageInfo, Action<PackageInfo> doneCallbackAction, Action<Error> errorCallbackAction = null)
         {
             if (ForceError != null)
             {
@@ -31,9 +32,9 @@ namespace UnityEditor.PackageManager.UI.Tests
                 select package);
 
             if (doneCallbackAction != null)
-                doneCallbackAction();
+                doneCallbackAction(packageInfo);
 
-            OnOperationSuccess();
+            OnOperationSuccess(packageInfo);
             OnOperationFinalized();
         }
         

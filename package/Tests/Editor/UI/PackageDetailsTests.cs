@@ -1,9 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Experimental.UIElements;
 using NUnit.Framework;
-using UnityEditor.Experimental.Build;
 
 namespace UnityEditor.PackageManager.UI.Tests
 {
@@ -24,12 +22,14 @@ namespace UnityEditor.PackageManager.UI.Tests
             var packageInfo = PackageSets.Instance.Single();
             foreach (var tag in new List<string>
             {
-                PackageTag.preview.ToString(),
-                PackageTag.verified.ToString(),
+                PackageTag.alpha.ToString(),
+                PackageTag.beta.ToString(),
+                PackageTag.experimental.ToString(),
+                PackageTag.recommended.ToString(),
                 "usertag"        // Any other unsupported tag a user might use
             })
             {
-                packageInfo.IsVerified = PackageTag.verified.ToString() == tag;
+                packageInfo.IsRecommended = PackageTag.recommended.ToString() == tag;
                 packageInfo.Version = packageInfo.Version.Change(null, null, null, tag);            
                 var package = new Package(packageInfo.Name, new List<PackageInfo> {packageInfo});
                 var details = Container.Q<PackageDetails>("detailsGroup");

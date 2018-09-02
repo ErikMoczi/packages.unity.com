@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor.PackageManager.Requests;
-using System.Linq;
 
 namespace UnityEditor.PackageManager.UI
 {

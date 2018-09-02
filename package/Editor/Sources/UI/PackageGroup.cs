@@ -1,7 +1,5 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using UnityEngine.Experimental.UIElements;
-using UnityEngine;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -15,6 +13,8 @@ namespace UnityEditor.PackageManager.UI
 
     internal class PackageGroup : VisualElement
     {
+        private const string TemplatePath = PackageManagerWindow.ResourcesPath + "Templates/PackageGroup.uxml";
+
         private readonly VisualElement root;
         private bool collapsed;
         private readonly VisualElement listElement;
@@ -30,7 +30,7 @@ namespace UnityEditor.PackageManager.UI
         public PackageGroup(string groupName)
         {
             name = groupName;
-            root = Resources.Load<VisualTreeAsset>("Templates/PackageGroup").CloneTree(null);
+            root = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath).CloneTree(null);
             Add(root);
             listElement = List;
 
