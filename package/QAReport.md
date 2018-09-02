@@ -22,3 +22,4 @@
 | For all async operations, execute them via Coroutines                                      | manual testing                                                   | issues creating unit tests. Intending to add later |
 
 
+(1) Addressables is not ready yet and will be a seperate package. so passing status is not-applicable
