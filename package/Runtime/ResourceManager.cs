@@ -66,11 +66,11 @@ namespace UnityEngine.ResourceManagement
             where TObject : class
         {
             if (location == null)
-                return new EmptyOperation<TObject>().Start(location, default(TObject), new ArgumentNullException("IResourceLocation location"));
+                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new ArgumentNullException("location"));
 
             var provider = GetResourceProvider<TObject>(location);
             if (provider == null)
-                return new EmptyOperation<TObject>().Start(location, default(TObject), new UnknownResourceProviderException(location));
+                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new UnknownResourceProviderException(location));
             return provider.Provide<TObject>(location, LoadDependencies(location)).Retain();
         }
 
@@ -86,7 +86,7 @@ namespace UnityEngine.ResourceManagement
             where TObject : class
         {
             if (locations == null)
-                return new EmptyOperation<IList<TObject>>().Start(null, null, new ArgumentNullException("IList<IResourceLocation> locations"));
+                return new EmptyOperation<IList<TObject>>().Start(null, locations, null, new ArgumentNullException("locations"));
             return AsyncOperationCache.Instance.Acquire<GroupOperation<TObject>>().Start(locations, callback, ProvideResource<TObject>).Retain();
         }
 
@@ -126,10 +126,10 @@ namespace UnityEngine.ResourceManagement
                 throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
 
             if (location == null)
-                return new EmptyOperation<TObject>().Start(location, default(TObject), new ArgumentNullException("IResourceLocation location"));
+                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new ArgumentNullException("location"));
             var provider = GetResourceProvider<TObject>(location);
             if (provider == null)
-                return new EmptyOperation<TObject>().Start(location, default(TObject), new UnknownResourceProviderException(location));
+                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new UnknownResourceProviderException(location));
 
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncRequest, location, Time.frameCount);
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncRequest, location, Time.frameCount);
@@ -150,9 +150,9 @@ namespace UnityEngine.ResourceManagement
                 throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
 
             if (locations == null)
-                return new EmptyOperation<IList<TObject>>().Start(null, null, new ArgumentNullException("IList<IResourceLocation> locations"));
+                return new EmptyOperation<IList<TObject>>().Start(null, locations, null, new ArgumentNullException("locations"));
 
-            return new GroupOperation<TObject>().Start(locations, callback, ProvideInstance<TObject>, instantiateParameters).Retain();
+            return AsyncOperationCache.Instance.Acquire<GroupOperation<TObject>>().Start(locations, callback, ProvideInstance<TObject>, instantiateParameters).Retain();
         }
 
         /// <summary>
@@ -184,7 +184,7 @@ namespace UnityEngine.ResourceManagement
             if (SceneProvider == null)
                 throw new NullReferenceException("ResourceManager.SceneProvider is null.  Assign a valid ISceneProvider object before using.");
             if (location == null)
-                return new EmptyOperation<Scene>().Start(location, default(Scene), new ArgumentNullException("IResourceLocation location"));
+                return new EmptyOperation<Scene>().Start(location, location, default(Scene), new ArgumentNullException("location"));
 
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadSceneAsyncRequest, location, 1);
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, location, 0);
@@ -203,7 +203,7 @@ namespace UnityEngine.ResourceManagement
             if (SceneProvider == null)
                 throw new NullReferenceException("ResourceManager.SceneProvider is null.  Assign a valid ISceneProvider object before using.");
             if (location == null)
-                return new EmptyOperation<Scene>().Start(location, default(Scene), new ArgumentNullException("IResourceLocation location"));
+                return new EmptyOperation<Scene>().Start(location, location, default(Scene), new ArgumentNullException("location"));
             return SceneProvider.ReleaseSceneAsync(location, scene).Retain();
         }
 

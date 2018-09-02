@@ -3,15 +3,19 @@ using UnityEngine.Networking;
 
 namespace UnityEngine.ResourceManagement
 {
+    [System.Serializable]
+    public class AssetBundleCacheInfo
+    {
+        [SerializeField]
+        string m_hash;
+        public string Hash { get { return m_hash; } set { m_hash = value; } }
+        [SerializeField]
+        uint m_crc;
+        public uint Crc { get { return m_crc; } set { m_crc = value; } }
+    }
+
     public class AssetBundleProvider : ResourceProviderBase
     {
-        [System.Serializable]
-        public class CacheInfo
-        {
-            public string m_hash;
-            public uint m_crc;
-        }
-
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
@@ -27,9 +31,9 @@ namespace UnityEngine.ResourceManagement
                         var path = (Context as IResourceLocation).InternalId;
                         if (path.Contains("://"))
                         {
-                            var cacheInfo = (Context as IResourceLocation).Data as CacheInfo;
-                            if(cacheInfo != null && !string.IsNullOrEmpty(cacheInfo.m_hash) && cacheInfo.m_crc != 0)
-                                m_requestOperation = UnityWebRequestAssetBundle.GetAssetBundle(path, Hash128.Parse(cacheInfo.m_hash), cacheInfo.m_crc).SendWebRequest();
+                            var cacheInfo = (Context as IResourceLocation).Data as AssetBundleCacheInfo;
+                            if(cacheInfo != null && !string.IsNullOrEmpty(cacheInfo.Hash) && cacheInfo.Crc != 0)
+                                m_requestOperation = UnityWebRequestAssetBundle.GetAssetBundle(path, Hash128.Parse(cacheInfo.Hash), cacheInfo.Crc).SendWebRequest();
                             else
                                 m_requestOperation = UnityWebRequestAssetBundle.GetAssetBundle(path).SendWebRequest();
                         }

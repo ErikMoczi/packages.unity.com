@@ -18,7 +18,7 @@ namespace UnityEngine.ResourceManagement.Diagnostics
         [SerializeField]
         private int m_value;      //data value of event
         [SerializeField]
-        private byte[] m_data;   //this is up to the ender/receiver to serialize/deserialize
+        private byte[] m_data;   //this is up to the sender/receiver to serialize/deserialize
 
         public string Graph { get { return m_graph; } }
         public string Parent { get { return m_parent; } }

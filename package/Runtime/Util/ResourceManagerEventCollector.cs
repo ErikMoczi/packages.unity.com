@@ -27,6 +27,20 @@ namespace UnityEngine.ResourceManagement.Diagnostics
         }
 
         public static string EventCategory = "ResourceManagerEvent";
+        static string PrettyPath(string p, bool keepExtension)
+        {
+            var slashIndex = p.LastIndexOf('/');
+            if (slashIndex > 0)
+                p = p.Substring(slashIndex + 1);
+            if (!keepExtension)
+            {
+                slashIndex = p.LastIndexOf('.');
+                if (slashIndex > 0)
+                    p = p.Substring(0, slashIndex);
+            }
+            return p;
+        }
+
         public static void PostEvent(EventType type, object context, int eventValue)
         {
             if (!DiagnosticEventCollector.ProfileEvents)
@@ -37,18 +51,20 @@ namespace UnityEngine.ResourceManagement.Diagnostics
             var loc = context as IResourceLocation;
             if (loc != null)
             {
-                id = loc.ToString();
-                if (loc.HasDependencies)
-                    parent = loc.Dependencies[0].ToString();
+                id = PrettyPath(loc.InternalId, false);
                 var sb = new System.Text.StringBuilder(256);
                 sb.Append(loc.ProviderId.Substring(loc.ProviderId.LastIndexOf('.') + 1));
                 sb.Append('!');
                 sb.Append(loc.InternalId);
                 sb.Append('!');
-                for (int i = 0; loc.HasDependencies && i < loc.Dependencies.Count; i++)
+                if (loc.HasDependencies)
                 {
-                    sb.Append(loc.Dependencies[i].ToString());
-                    sb.Append(',');
+                    parent = PrettyPath(loc.Dependencies[0].InternalId, false);
+                    for (int i = 0; i < loc.Dependencies.Count; i++)
+                    {
+                        sb.Append(PrettyPath(loc.Dependencies[i].InternalId, true));
+                        sb.Append(',');
+                    }
                 }
                 data = System.Text.Encoding.ASCII.GetBytes(sb.ToString());
             }

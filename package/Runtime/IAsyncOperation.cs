@@ -58,6 +58,12 @@ namespace UnityEngine.ResourceManagement
         /// </summary>
         /// <value>The context object.</value>
         object Context { get; }
+        
+        /// <summary>
+        /// Gets the key related to this operation, usually set to the address.
+        /// </summary>
+        /// <value>The context object.</value>
+        object Key { get; set; }
 
         /// <summary>
         /// Occurs when completed.

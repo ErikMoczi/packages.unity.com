@@ -5,6 +5,24 @@ using System.Collections.Generic;
 namespace UnityEngine.ResourceManagement
 {
     [Serializable]
+    public class VirtualAssetBundleEntry
+    {
+        [SerializeField]
+        string m_name;
+        public string Name { get { return m_name; } }
+        [SerializeField]
+        long m_size;
+        public long Size { get { return m_size; } }
+
+        public VirtualAssetBundleEntry() { }
+        public VirtualAssetBundleEntry(string name, long size)
+        {
+            m_name = name;
+            m_size = size;
+        }
+    }
+
+    [Serializable]
     public class VirtualAssetBundle : ISerializationCallbackReceiver
     {
         [SerializeField]
@@ -18,31 +36,18 @@ namespace UnityEngine.ResourceManagement
         [SerializeField]
         float m_latency;
 
-        [Serializable]
-        public class AssetInfo
-        {
-            public string m_name;
-            public long m_size;
-            public AssetInfo() { }
-            public AssetInfo(string name, long size)
-            {
-                m_name = name;
-                m_size = size;
-            }
-        }
-
         [SerializeField]
-        List<AssetInfo> m_serializedAssets = new List<AssetInfo>();
+        List<VirtualAssetBundleEntry> m_serializedAssets = new List<VirtualAssetBundleEntry>();
 
         long m_headerBytesLoaded;
         long m_dataBytesLoaded;
 
         LoadAssetBundleOp m_bundleLoadOperation;
         List<IVirtualLoadable> m_assetLoadOperations = new List<IVirtualLoadable>();
-        Dictionary<string, AssetInfo> m_assetMap;
+        Dictionary<string, VirtualAssetBundleEntry> m_assetMap;
 
         public string Name { get { return m_name; } }
-        public List<AssetInfo> Assets { get { return m_serializedAssets; } }
+        public List<VirtualAssetBundleEntry> Assets { get { return m_serializedAssets; } }
 
         public VirtualAssetBundle()
         {
@@ -77,9 +82,9 @@ namespace UnityEngine.ResourceManagement
 
         public void OnAfterDeserialize()
         {
-            m_assetMap = new Dictionary<string, AssetInfo>();
+            m_assetMap = new Dictionary<string, VirtualAssetBundleEntry>();
             foreach (var a in m_serializedAssets)
-                m_assetMap.Add(a.m_name, a);
+                m_assetMap.Add(a.Name, a);
         }
 
         class LoadAssetBundleOp : AsyncOperationBase<VirtualAssetBundle>
@@ -169,14 +174,14 @@ namespace UnityEngine.ResourceManagement
             if (location == null)
                 throw new ArgumentException("IResourceLocation location cannot be null.");
             if (m_bundleLoadOperation == null)
-                return new EmptyOperation<TObject>().Start(location, default(TObject), new Exception("LoadAssetAsync called on unloaded bundle " + m_name));
+                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new ResourceManagerException("LoadAssetAsync called on unloaded bundle " + m_name));
 
             if (!m_bundleLoadOperation.IsDone)
-                return new EmptyOperation<TObject>().Start(location, default(TObject), new Exception("LoadAssetAsync called on loading bundle " + m_name));
+                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new ResourceManagerException("LoadAssetAsync called on loading bundle " + m_name));
 
-            AssetInfo assetInfo;
+            VirtualAssetBundleEntry assetInfo;
             if (!m_assetMap.TryGetValue(location.InternalId, out assetInfo))
-                return new EmptyOperation<TObject>().Start(location, default(TObject), new Exception(string.Format("Unable to load asset {0} from simulated bundle {1}.", location.InternalId, Name)));
+                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new ResourceManagerException(string.Format("Unable to load asset {0} from simulated bundle {1}.", location.InternalId, Name)));
 
             LoadAssetOp<TObject> op = new LoadAssetOp<TObject>(location, assetInfo);
             m_assetLoadOperations.Add(op);
@@ -206,15 +211,15 @@ namespace UnityEngine.ResourceManagement
         {
             long m_bytesLoaded;
             float m_lastUpdateTime;
-            AssetInfo m_assetInfo;
-            public LoadAssetOp(IResourceLocation location, AssetInfo assetInfo)
+            VirtualAssetBundleEntry m_assetInfo;
+            public LoadAssetOp(IResourceLocation location, VirtualAssetBundleEntry assetInfo)
             {
                 Context = location;
                 m_assetInfo = assetInfo;
                 m_lastUpdateTime = Time.realtimeSinceStartup;
             }
 
-            public override float PercentComplete { get { return Mathf.Clamp01((float)(m_bytesLoaded / m_assetInfo.m_size)); } }
+            public override float PercentComplete { get { return Mathf.Clamp01((float)(m_bytesLoaded / m_assetInfo.Size)); } }
             public bool Load(long localBandwidth, long remoteBandwidth)
             {
                 if (Time.unscaledTime > m_lastUpdateTime)
@@ -222,7 +227,7 @@ namespace UnityEngine.ResourceManagement
                     m_bytesLoaded += (long)Math.Ceiling((Time.unscaledTime - m_lastUpdateTime) * localBandwidth);
                     m_lastUpdateTime = Time.unscaledDeltaTime;
                 }
-                if (m_bytesLoaded < m_assetInfo.m_size)
+                if (m_bytesLoaded < m_assetInfo.Size)
                     return true;
                 var assetPath = (Context as IResourceLocation).InternalId;
                 SetResult(UnityEditor.AssetDatabase.LoadAssetAtPath(assetPath, typeof(TObject)) as TObject);

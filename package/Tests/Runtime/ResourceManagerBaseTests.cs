@@ -69,6 +69,13 @@ public abstract class ResourceManagerBaseTests : IPrebuildSetup
 
 
     [UnityTest]
+    public IEnumerator VerifyKey()
+    {
+        ResourceManager.ProvideResource<GameObject>(k_locations[0]).Completed += (op) => Assert.IsNotNull(op.Key == k_locations[0]);
+        yield return null;
+    }
+
+    [UnityTest]
     public IEnumerator CanProvideWithYield()
     {
         var op = ResourceManager.ProvideResource<GameObject>(k_locations[0]);

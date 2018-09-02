@@ -92,6 +92,19 @@ namespace UnityEngine.ResourceManagement
                 }
             }
 
+            public object Key
+            {
+                get
+                {
+                    Validate();
+                    return m_operation.Key;
+                }
+                set
+                {
+                    m_operation.Key = value;
+                }
+            }
+
 
             public bool IsValid { get { return m_operation != null && m_operation.IsValid; } set { } }
 
@@ -164,6 +177,23 @@ namespace UnityEngine.ResourceManagement
             {
                 Validate();
                 m_result = operation.Result;
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, Context, 100);
+                if (m_completedAction != null)
+                {
+                    var tmpEvent = m_completedAction;
+                    m_completedAction = null;
+                    try
+                    {
+                        tmpEvent(this);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogException(e);
+                        m_error = e;
+                        m_status = AsyncOperationStatus.Failed;
+                    }
+                }
+
                 if (m_completedActionT != null)
                 {
                     for (int i = 0; i < m_completedActionT.Count; i++)
@@ -181,22 +211,7 @@ namespace UnityEngine.ResourceManagement
                     }
                     m_completedActionT.Clear();
                 }
-                if (m_completedAction != null)
-                {
-                    var tmpEvent = m_completedAction;
-                    m_completedAction = null;
-                    try
-                    {
-                        tmpEvent(this);
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogException(e);
-                        m_error = e;
-                        m_status = AsyncOperationStatus.Failed;
-                    }
-                }
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, Context, 100);
+
             }
 
             internal override bool CanProvide<T1>(IResourceLocation location)

@@ -12,6 +12,7 @@ namespace UnityEngine.ResourceManagement
         protected AsyncOperationStatus m_status;
         protected Exception m_error;
         protected object m_context;
+        protected object m_key;
         protected bool m_releaseToCacheOnCompletion = false;
         Action<IAsyncOperation> m_completedAction;
         List<Action<IAsyncOperation<TObject>>> m_completedActionT;
@@ -29,7 +30,7 @@ namespace UnityEngine.ResourceManagement
             var or = m_result as Object;
             if (or != null)
                 instId = "(" + or.GetInstanceID().ToString() + ")";
-            return base.ToString() +  " result = " + m_result + instId + ", status = " + m_status + ", Valid = " + IsValid + ", canRelease = " + m_releaseToCacheOnCompletion;
+            return base.ToString() +  " result = " + m_result + instId + ", status = " + m_status + ", valid = " + IsValid + ", canRelease = " + m_releaseToCacheOnCompletion;
         }
 
         public virtual void Release()
@@ -54,6 +55,7 @@ namespace UnityEngine.ResourceManagement
             m_error = null;
             m_result = default(TObject);
             m_context = null;
+            m_key = null;
         }
 
         public bool Validate()
@@ -136,6 +138,10 @@ namespace UnityEngine.ResourceManagement
                 Validate();
                 return m_error;
             }
+            protected set
+            {
+                m_error = value;
+            }
         }
 
         public bool MoveNext()
@@ -193,12 +199,42 @@ namespace UnityEngine.ResourceManagement
                 m_context = value;
             }
         }
+        public virtual object Key
+        {
+            get
+            {
+                Validate();
+                return m_key;
+            }
+            set
+            {
+                Validate();
+                m_key = value;
+            }
+        }
 
         bool m_insideCompletionEvent = false;
         public void InvokeCompletionEvent()
         {
             Validate();
             m_insideCompletionEvent = true;
+
+            if (m_completedAction != null)
+            {
+                var tmpEvent = m_completedAction;
+                m_completedAction = null;
+                try
+                {
+                    tmpEvent(this);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                    m_error = e;
+                    m_status = AsyncOperationStatus.Failed;
+                }
+            }
+
             if (m_completedActionT != null)
             {
                 for (int i = 0; i < m_completedActionT.Count; i++)
@@ -216,22 +252,6 @@ namespace UnityEngine.ResourceManagement
                 }
                 m_completedActionT.Clear();
             }
-
-            if (m_completedAction != null)
-            {
-                var tmpEvent = m_completedAction;
-				m_completedAction = null;
-                try
-                {
-                    tmpEvent(this);
-                }
-                catch (Exception e)
-                {
-					Debug.LogException(e);
-                    m_error = e;
-                    m_status = AsyncOperationStatus.Failed;
-                }
-            }
             m_insideCompletionEvent = false;
             if (m_releaseToCacheOnCompletion)
                 AsyncOperationCache.Instance.Release(this);
@@ -246,12 +266,29 @@ namespace UnityEngine.ResourceManagement
 
     }
 
+    public class CompletedOperation<TObject> : AsyncOperationBase<TObject>
+    {
+        public CompletedOperation(object context, object key, TObject val, Exception error = null)
+        {
+            Context = context;
+            OperationException = error;
+            Key = key;
+            SetResult(val);
+        }
+        public virtual IAsyncOperation<TObject> Start()
+        {
+            DelayedActionManager.AddAction((Action)InvokeCompletionEvent, 0);
+            return this;
+        }
+    }
+
     public class EmptyOperation<TObject> : AsyncOperationBase<TObject>
     {
-        public virtual IAsyncOperation<TObject> Start(object context, TObject val, System.Exception error = null)
+        public virtual IAsyncOperation<TObject> Start(object context, object key, TObject val, Exception error = null)
         {
-            m_context = context;
-            m_error = error;
+            Context = context;
+            OperationException = error;
+            Key = key;
             SetResult(val);
             DelayedActionManager.AddAction((Action)InvokeCompletionEvent, 0);
             return this;
@@ -263,9 +300,11 @@ namespace UnityEngine.ResourceManagement
         Func<TObjectDependency, IAsyncOperation<TObject>> m_func;
         IAsyncOperation m_dependencyOperation;
         IAsyncOperation m_dependentOperation;
-        public virtual IAsyncOperation<TObject> Start(IAsyncOperation<TObjectDependency> dependency, Func<TObjectDependency, IAsyncOperation<TObject>> func)
+        public virtual IAsyncOperation<TObject> Start(object context, object key, IAsyncOperation<TObjectDependency> dependency, Func<TObjectDependency, IAsyncOperation<TObject>> func)
         {
             m_func = func;
+            Context = context;
+            Key = key;
             m_dependencyOperation = dependency;
             m_dependentOperation = null;
             dependency.Completed += OnDependencyCompleted;
@@ -292,7 +331,8 @@ namespace UnityEngine.ResourceManagement
             m_dependencyOperation = null;
             var funcOp = m_func(op.Result);
             m_dependentOperation = funcOp;
-            m_context = funcOp.Context;
+            Context = funcOp.Context;
+            funcOp.Key = Key;
             op.Release();
             funcOp.Completed += OnFuncCompleted;
         }
@@ -301,6 +341,22 @@ namespace UnityEngine.ResourceManagement
         {
             SetResult(op.Result);
             InvokeCompletionEvent();
+        }
+
+        public override object Key
+        {
+            get
+            {
+                Validate();
+                return m_key;
+            }
+            set
+            {
+                Validate();
+                m_key = value;
+                if (m_dependencyOperation != null)
+                    m_dependencyOperation.Key = Key;
+            }
         }
     }
 
@@ -332,6 +388,25 @@ namespace UnityEngine.ResourceManagement
             m_operations = null;
         }
 
+        public override object Key
+        {
+            get
+            {
+                Validate();
+                return m_key;
+            }
+            set
+            {
+                Validate();
+                m_key = value;
+                if (m_operations != null)
+                {
+                    foreach (var op in m_operations)
+                        op.Key = Key;
+                }
+            }
+        }
+
         public virtual IAsyncOperation<IList<TObject>> Start(IList<IResourceLocation> locations, Action<IAsyncOperation<TObject>> callback, Func<IResourceLocation, IAsyncOperation<TObject>> func)
         {
             m_context = locations;
@@ -342,6 +417,7 @@ namespace UnityEngine.ResourceManagement
             {
                 Result.Add(default(TObject));
                 var op = func(o);
+                op.Key = Key;
                 m_operations.Add(op);
                 op.Completed += m_internalOnComplete;
             }
@@ -358,6 +434,7 @@ namespace UnityEngine.ResourceManagement
             {
                 Result.Add(default(TObject));
                 var op = func(o, funcParams);
+                op.Key = Key;
                 m_operations.Add(op);
                 op.Completed += m_internalOnComplete;
             }

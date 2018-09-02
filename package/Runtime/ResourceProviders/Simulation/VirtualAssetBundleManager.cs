@@ -47,8 +47,10 @@ namespace UnityEngine.ResourceManagement
                 Debug.LogWarningFormat("Unable to unload virtual bundle {0}.", location);
                 return false;
             }
-
-            m_activeBundles.Remove(location.InternalId);
+            if (updatingActiveBundles)
+                m_pendingOperations.Add(location.InternalId, null);
+            else
+                m_activeBundles.Remove(location.InternalId);
             return bundle.Unload();
         }
 
@@ -58,12 +60,17 @@ namespace UnityEngine.ResourceManagement
                 throw new ArgumentException("IResourceLocation location cannot be null.");
             VirtualAssetBundle bundle;
             if (!m_allBundles.TryGetValue(location.InternalId, out bundle))
-                return new EmptyOperation<VirtualAssetBundle>().Start(location, default(VirtualAssetBundle), new Exception(string.Format("Unable to unload virtual bundle {0}.", location)));
+                return new EmptyOperation<VirtualAssetBundle>().Start(location, location, default(VirtualAssetBundle), new ResourceManagerException(string.Format("Unable to unload virtual bundle {0}.", location)));
 
-            m_activeBundles.Add(location.InternalId, bundle);
+            if (updatingActiveBundles)
+                m_pendingOperations.Add(location.InternalId, bundle);
+            else
+                m_activeBundles.Add(location.InternalId, bundle);
             return bundle.StartLoad(location);
         }
 
+        bool updatingActiveBundles = false;
+        Dictionary<string, VirtualAssetBundle> m_pendingOperations = new Dictionary<string, VirtualAssetBundle>();
         public void Update()
         {
             long localCount = 0;
@@ -73,8 +80,21 @@ namespace UnityEngine.ResourceManagement
 
             long localBW = localCount > 1 ? (m_localLoadSpeed / localCount) : m_localLoadSpeed;
             long remoteBW = remoteCount > 1 ? (m_remoteLoadSpeed / remoteCount) : m_remoteLoadSpeed;
+            updatingActiveBundles = true;
             foreach (var b in m_activeBundles)
                 b.Value.UpdateAsyncOperations(localBW, remoteBW);
+            updatingActiveBundles = false;
+            if (m_pendingOperations.Count > 0)
+            {
+                foreach (var o in m_pendingOperations)
+                {
+                    if (o.Value == null)
+                        m_activeBundles.Remove(o.Key);
+                    else
+                        m_activeBundles.Add(o.Key, o.Value);
+                }
+                m_pendingOperations.Clear();
+            }
         }
     }
 }

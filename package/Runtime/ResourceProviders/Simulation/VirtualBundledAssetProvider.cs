@@ -59,7 +59,7 @@ namespace UnityEngine.ResourceManagement
             if (location == null)
                 throw new System.ArgumentNullException("location");
             if (loadDependencyOperation == null)
-                return new EmptyOperation<TObject>().Start(location, default(TObject), new System.ArgumentNullException("IAsyncOperation<IList<object>> loadDependencyOperation"));
+                return new EmptyOperation<TObject>().Start(location, location, default(TObject), new System.ArgumentNullException("IAsyncOperation<IList<object>> loadDependencyOperation"));
             var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
             return operation.Start(location, loadDependencyOperation);
         }

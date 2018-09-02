@@ -44,7 +44,7 @@ public class ResourceManagerVirtualModeTests : ResourceManagerBaseTests
                 PrefabUtility.CreatePrefab(path, go);
                 UnityEngine.Object.Destroy(go);
 
-                var asset = new VirtualAssetBundle.AssetInfo(path, UnityEngine.Random.Range(1024, 1024 * 1024));
+                var asset = new VirtualAssetBundleEntry(path, UnityEngine.Random.Range(1024, 1024 * 1024));
                 b.Assets.Add(asset);
                 k_locations.Add(new ResourceLocationBase(name, path, typeof(BundledAssetProvider).FullName, bundleLocation, sharedBundleLocations[UnityEngine.Random.Range(0, sharedBundleLocations.Count)], sharedBundleLocations[UnityEngine.Random.Range(0, sharedBundleLocations.Count)]));
             }
