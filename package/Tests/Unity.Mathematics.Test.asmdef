@@ -1,0 +1,12 @@
+﻿{
+    "name": "Unity.Mathematics.Test",
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "references": [
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}
