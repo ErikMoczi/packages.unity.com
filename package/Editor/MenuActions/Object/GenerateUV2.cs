@@ -1,10 +1,5 @@
 using UnityEngine.ProBuilder;
 using UnityEngine;
-using UnityEditor;
-using UnityEditor.ProBuilder.UI;
-using EditorGUILayout = UnityEditor.EditorGUILayout;
-using EditorStyles = UnityEditor.EditorStyles;
-using EditorUtility = UnityEditor.ProBuilder.EditorUtility;
 
 namespace UnityEditor.ProBuilder.Actions
 {
@@ -50,20 +45,30 @@ namespace UnityEditor.ProBuilder.Actions
 			@"Create UV2 maps for all selected objects.\n\nCan optionally be set to Generate UV2 for the entire scene in the options panel."
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			if (generateUV2PerObject)
-				return MeshSelection.Top().Length > 0;
+			get
+			{
+				if (generateUV2PerObject)
+					return MeshSelection.TopInternal().Length > 0;
 
-			return true;
+				return true;
+			}
 		}
 
-		public override MenuActionState AltState()
+		protected override MenuActionState optionsMenuState
 		{
-			return MenuActionState.VisibleAndEnabled;
+			get { return MenuActionState.VisibleAndEnabled; }
 		}
 
-		public override void OnSettingsGUI()
+		protected override void OnSettingsDisable()
+		{
+			base.OnSettingsDisable();
+			if(uv2Editor != null)
+				Object.DestroyImmediate(uv2Editor);
+		}
+
+		protected override void OnSettingsGUI()
 		{
 			GUILayout.Label("Generate UV2 Options", EditorStyles.boldLabel);
 
@@ -78,7 +83,7 @@ namespace UnityEditor.ProBuilder.Actions
 			if (EditorGUI.EndChangeCheck())
 				disableAutoUV2Generation = !enableAutoUV2;
 
-			EditorUtility.CreateCachedEditor<UnwrapParametersEditor>(MeshSelection.Top(), ref uv2Editor);
+			EditorUtility.CreateCachedEditor<UnwrapParametersEditor>(MeshSelection.TopInternal(), ref uv2Editor);
 
 			if (uv2Editor != null)
 			{
@@ -94,7 +99,7 @@ namespace UnityEditor.ProBuilder.Actions
 
 		public override ActionResult DoAction()
 		{
-			ProBuilderMesh[] selected = generateUV2PerObject ? MeshSelection.Top() : GameObject.FindObjectsOfType<ProBuilderMesh>();
+			ProBuilderMesh[] selected = generateUV2PerObject ? MeshSelection.TopInternal() : GameObject.FindObjectsOfType<ProBuilderMesh>();
 			return DoGenerateUV2(selected);
 		}
 

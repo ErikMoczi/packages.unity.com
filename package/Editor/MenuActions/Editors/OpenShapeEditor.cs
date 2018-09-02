@@ -21,15 +21,25 @@ namespace UnityEditor.ProBuilder.Actions
 			keyCommandSuper, keyCommandShift, 'K'
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			return true;
+			get { return true; }
+		}
+
+		protected override MenuActionState optionsMenuState
+		{
+			get { return MenuActionState.VisibleAndEnabled; }
 		}
 
 		public override ActionResult DoAction()
 		{
+			ShapeEditor.MenuCreateCube();
+			return new ActionResult(ActionResult.Status.Success, "Create Shape");
+		}
+
+		protected override void DoAlternativeAction()
+		{
 			ShapeEditor.MenuOpenShapeCreator();
-			return new ActionResult(ActionResult.Status.Success, "Open Shape Tool");
 		}
 	}
 }

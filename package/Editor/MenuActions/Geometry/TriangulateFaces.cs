@@ -28,26 +28,32 @@ namespace UnityEditor.ProBuilder.Actions
 			"Break all selected faces down to triangles."
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			return ProBuilderEditor.instance != null &&
-				editLevel == EditLevel.Geometry &&
-				MeshSelection.Top().Sum(x => x.selectedFaceCount) > 0;
+			get
+			{
+				return ProBuilderEditor.instance != null &&
+					editLevel == EditLevel.Geometry &&
+					MeshSelection.TopInternal().Sum(x => x.selectedFaceCount) > 0;
+			}
 		}
 
-		public override bool IsHidden()
+		public override bool hidden
 		{
-			return editLevel != EditLevel.Geometry ||
-				(PreferencesInternal.GetBool(PreferenceKeys.pbElementSelectIsHamFisted) && selectionMode != SelectMode.Face);
+			get
+			{
+				return editLevel != EditLevel.Geometry ||
+					(PreferencesInternal.GetBool(PreferenceKeys.pbElementSelectIsHamFisted) && componentMode != ComponentMode.Face);
+			}
 		}
 
 		public override ActionResult DoAction()
 		{
 			ActionResult res = ActionResult.NoSelection;
 
-			UndoUtility.RecordSelection(MeshSelection.Top(), "Triangulate Faces");
+			UndoUtility.RecordSelection(MeshSelection.TopInternal(), "Triangulate Faces");
 
-			foreach (ProBuilderMesh pb in MeshSelection.Top())
+			foreach (ProBuilderMesh pb in MeshSelection.TopInternal())
 			{
 				pb.ToMesh();
 				Face[] triangulatedFaces = pb.ToTriangles(pb.selectedFacesInternal);

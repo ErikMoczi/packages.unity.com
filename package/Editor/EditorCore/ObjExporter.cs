@@ -144,9 +144,10 @@ namespace UnityEditor.ProBuilder
 				List<Vector4> uv3;
 				List<Vector4> uv4;
 
-				MeshAttributes attribs = MeshAttributes.Position | MeshAttributes.Normal | MeshAttributes.UV0;
-				if(options.vertexColors) attribs = attribs | MeshAttributes.Color;
-				Vertex.GetArrays(model.vertices, out positions, out colors, out textures0, out normals, out tangent, out uv2, out uv3, out uv4, attribs);
+				MeshArrays attribs = MeshArrays.Position | MeshArrays.Normal | MeshArrays.Texture0;
+				if (options.vertexColors)
+					attribs = attribs | MeshArrays.Color;
+				Vertex.GetArrays(model.vertexes, out positions, out colors, out textures0, out normals, out tangent, out uv2, out uv3, out uv4, attribs);
 
 				// Can skip this entirely if handedness matches Unity & not applying transforms.
 				// matrix is set to identity if not applying transforms.
@@ -212,28 +213,28 @@ namespace UnityEditor.ProBuilder
 					else
 						sb.AppendLine(string.Format("usemtl {0}", "null"));
 
-					int[] indices = submesh.m_Indices;
+					int[] indexes = submesh.m_Indexes;
 					int inc = submesh.m_Topology == MeshTopology.Quads ? 4 : 3;
 
-					for(int ff = 0; ff < indices.Length; ff += inc)
+					for(int ff = 0; ff < indexes.Length; ff += inc)
 					{
 						if(inc == 4)
 						{
 							if(reverseWinding)
 							{
 								sb.AppendLine(string.Format(CultureInfo.InvariantCulture, "f {0}/{0}/{0} {1}/{1}/{1} {2}/{2}/{2} {3}/{3}/{3}",
-									indices[ff + 3] + triangleOffset,
-									indices[ff + 2] + triangleOffset,
-									indices[ff + 1] + triangleOffset,
-									indices[ff + 0] + triangleOffset));
+									indexes[ff + 3] + triangleOffset,
+									indexes[ff + 2] + triangleOffset,
+									indexes[ff + 1] + triangleOffset,
+									indexes[ff + 0] + triangleOffset));
 							}
 							else
 							{
 								sb.AppendLine(string.Format(CultureInfo.InvariantCulture, "f {0}/{0}/{0} {1}/{1}/{1} {2}/{2}/{2} {3}/{3}/{3}",
-									indices[ff + 0] + triangleOffset,
-									indices[ff + 1] + triangleOffset,
-									indices[ff + 2] + triangleOffset,
-									indices[ff + 3] + triangleOffset));
+									indexes[ff + 0] + triangleOffset,
+									indexes[ff + 1] + triangleOffset,
+									indexes[ff + 2] + triangleOffset,
+									indexes[ff + 3] + triangleOffset));
 							}
 						}
 						else
@@ -241,16 +242,16 @@ namespace UnityEditor.ProBuilder
 							if(reverseWinding)
 							{
 								sb.AppendLine(string.Format(CultureInfo.InvariantCulture, "f {0}/{0}/{0} {1}/{1}/{1} {2}/{2}/{2}",
-									indices[ff + 2] + triangleOffset,
-									indices[ff + 1] + triangleOffset,
-									indices[ff + 0] + triangleOffset));
+									indexes[ff + 2] + triangleOffset,
+									indexes[ff + 1] + triangleOffset,
+									indexes[ff + 0] + triangleOffset));
 							}
 							else
 							{
 								sb.AppendLine(string.Format(CultureInfo.InvariantCulture, "f {0}/{0}/{0} {1}/{1}/{1} {2}/{2}/{2}",
-									indices[ff + 0] + triangleOffset,
-									indices[ff + 1] + triangleOffset,
-									indices[ff + 2] + triangleOffset));
+									indexes[ff + 0] + triangleOffset,
+									indexes[ff + 1] + triangleOffset,
+									indexes[ff + 2] + triangleOffset));
 							}
 						}
 					}

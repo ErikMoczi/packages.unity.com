@@ -20,22 +20,28 @@ namespace UnityEditor.ProBuilder.Actions
 			keyCommandAlt, 'N'
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			return ProBuilderEditor.instance != null &&
-				MeshSelection.Top().Any(x => x.selectedFaceCount > 0);
+			get
+			{
+				return ProBuilderEditor.instance != null &&
+					MeshSelection.TopInternal().Any(x => x.selectedFaceCount > 0);
+			}
 		}
 
-		public override bool IsHidden()
+		public override bool hidden
 		{
-			return ProBuilderEditor.instance == null ||
-				ProBuilderEditor.instance.editLevel != EditLevel.Geometry ||
-				ProBuilderEditor.instance.selectionMode != SelectMode.Face;
+			get
+			{
+				return ProBuilderEditor.instance == null ||
+					ProBuilderEditor.editLevel != EditLevel.Geometry ||
+					ProBuilderEditor.componentMode != ComponentMode.Face;
+			}
 		}
 
 		public override ActionResult DoAction()
 		{
-			return MenuCommands.MenuFlipNormals(MeshSelection.Top());
+			return MenuCommands.MenuFlipNormals(MeshSelection.TopInternal());
 		}
 	}
 }

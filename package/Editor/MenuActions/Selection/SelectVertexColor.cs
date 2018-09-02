@@ -35,27 +35,33 @@ namespace UnityEditor.ProBuilder.Actions
 			"Selects all faces matching the selected vertex colors."
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			return ProBuilderEditor.instance != null &&
-				ProBuilderEditor.instance.editLevel != EditLevel.Top &&
-				MeshSelection.Top().Any(x => x.selectedVertexCount > 0);
+			get
+			{
+				return ProBuilderEditor.instance != null &&
+					ProBuilderEditor.editLevel != EditLevel.Top &&
+					MeshSelection.TopInternal().Any(x => x.selectedVertexCount > 0);
+			}
 		}
 
-		public override bool IsHidden()
+		public override bool hidden
 		{
-			return editLevel != EditLevel.Geometry;
+			get { return editLevel != EditLevel.Geometry; }
 		}
 
-		public override MenuActionState AltState()
+		protected override MenuActionState optionsMenuState
 		{
-			if (IsEnabled() && ProBuilderEditor.instance.editLevel == EditLevel.Geometry)
-				return MenuActionState.VisibleAndEnabled;
+			get
+			{
+				if (enabled && ProBuilderEditor.editLevel == EditLevel.Geometry)
+					return MenuActionState.VisibleAndEnabled;
 
-			return MenuActionState.Visible;
+				return MenuActionState.Visible;
+			}
 		}
 
-		public override void OnSettingsGUI()
+		protected override void OnSettingsGUI()
 		{
 			GUILayout.Label("Select by Vertex Color Options", EditorStyles.boldLabel);
 
@@ -79,24 +85,24 @@ namespace UnityEditor.ProBuilder.Actions
 
 		public override ActionResult DoAction()
 		{
-			UndoUtility.RecordSelection(MeshSelection.Top(), "Select Faces with Vertex Colors");
+			UndoUtility.RecordSelection(MeshSelection.TopInternal(), "Select Faces with Vertex Colors");
 
 			HashSet<Color32> colors = new HashSet<Color32>();
 
-			foreach (ProBuilderMesh pb in MeshSelection.Top())
+			foreach (ProBuilderMesh pb in MeshSelection.TopInternal())
 			{
 				Color[] mesh_colors = pb.colorsInternal;
 
 				if (mesh_colors == null || mesh_colors.Length != pb.vertexCount)
 					continue;
 
-				foreach (int i in pb.selectedIndicesInternal)
+				foreach (int i in pb.selectedIndexesInternal)
 					colors.Add(mesh_colors[i]);
 			}
 
 			List<GameObject> newSelection = new List<GameObject>();
 			bool selectionOnly = PreferencesInternal.GetBool("pb_restrictSelectColorToCurrentSelection");
-			ProBuilderMesh[] pool = selectionOnly ? MeshSelection.Top() : Object.FindObjectsOfType<ProBuilderMesh>();
+			ProBuilderMesh[] pool = selectionOnly ? MeshSelection.TopInternal() : Object.FindObjectsOfType<ProBuilderMesh>();
 
 			foreach (ProBuilderMesh pb in pool)
 			{
@@ -110,7 +116,7 @@ namespace UnityEditor.ProBuilder.Actions
 
 				for (int i = 0; i < faces.Length; i++)
 				{
-					int[] tris = faces[i].distinctIndices;
+					int[] tris = faces[i].distinctIndexesInternal;
 
 					for (int n = 0; n < tris.Length; n++)
 					{

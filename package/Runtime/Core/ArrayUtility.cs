@@ -6,19 +6,19 @@ namespace UnityEngine.ProBuilder
 {
 	static class ArrayUtility
 	{
-		public static T[] ValuesWithIndices<T>(this T[] arr, int[] indices)
+		public static T[] ValuesWithIndexes<T>(this T[] arr, int[] indexes)
 		{
-			T[] vals = new T[indices.Length];
-			for(int i = 0; i < indices.Length; i++)
-				vals[i] = arr[indices[i]];
+			T[] vals = new T[indexes.Length];
+			for(int i = 0; i < indexes.Length; i++)
+				vals[i] = arr[indexes[i]];
 			return vals;
 		}
 
-		public static List<T> ValuesWithIndices<T>(this List<T> arr, IList<int> indices)
+		public static List<T> ValuesWithIndexes<T>(this List<T> arr, IList<int> indexes)
 		{
-			List<T> vals = new List<T>(indices.Count);
+			List<T> vals = new List<T>(indexes.Count);
 
-			foreach(var i in indices)
+			foreach(var i in indexes)
 				vals.Add(arr[i]);
 
 			return vals;
@@ -69,33 +69,30 @@ namespace UnityEngine.ProBuilder
 			return newArray;
 		}
 
-		/**
-		 * Remove elements at @indices from an array.
-		 */
-		public static T[] RemoveAt<T>(this IList<T> list, IEnumerable<int> indices)
+		public static T[] RemoveAt<T>(this IList<T> list, IEnumerable<int> indexes)
 		{
-			List<int> indices_sorted = new List<int>(indices);
-			indices_sorted.Sort();
-			return SortedRemoveAt(list, indices_sorted);
+			List<int> sorted = new List<int>(indexes);
+			sorted.Sort();
+			return SortedRemoveAt(list, sorted);
 		}
 
 		/**
-		 * Remove elements at @indices from an array, but accepts a pre-sorted indices list.
+		 * Remove elements at indexes from an array, but accepts a pre-sorted indexes list.
 		 */
-		public static T[] SortedRemoveAt<T>(this IList<T> list, IList<int> sorted_indices)
+		public static T[] SortedRemoveAt<T>(this IList<T> list, IList<int> sorted)
 		{
-			int indices_length = sorted_indices.Count;
+			int indexeSortedCount = sorted.Count;
 			int len = list.Count;
 
-			T[] newArray = new T[len - indices_length];
+			T[] newArray = new T[len - indexeSortedCount];
 			int n = 0;
 
 			for(int i = 0; i < len; i++)
 			{
-				if(n < indices_length && sorted_indices[n] == i)
+				if(n < indexeSortedCount && sorted[n] == i)
 				{
-					// handle duplicate indices
-					while(n < indices_length && sorted_indices[n] == i)
+					// handle duplicate indexes
+					while(n < indexeSortedCount && sorted[n] == i)
 						n++;
 
 					continue;
@@ -170,11 +167,6 @@ namespace UnityEngine.ProBuilder
 			return 0;
 		}
 
-		public static T[] Fill<T>(T val, int length)
-		{
-			return FilledArray<T>(val, length);
-		}
-
 		public static List<T> Fill<T>(System.Func<int, T> ctor, int length)
 		{
 			List<T> list = new List<T>(length);
@@ -183,7 +175,7 @@ namespace UnityEngine.ProBuilder
 			return list;
 		}
 
-		public static T[] FilledArray<T>(T val, int length)
+		public static T[] Fill<T>(T val, int length)
 		{
 			T[] arr = new T[length];
 			for(int i = 0; i < length; i++) {
@@ -207,18 +199,19 @@ namespace UnityEngine.ProBuilder
 		}
 
 		/**
-		 * True if any value is present in both arrays, setting index_a and index_b to the index in the
-		 * array of each match.
+		 * True if any value is present in both arrays, setting index_a and index_b to the index in the array of each match.
 		 */
 		public static bool ContainsMatch<T>(this T[] a, T[] b, out int index_a, out int index_b)
 		{
 			index_b = -1;
-			for(index_a = 0; index_a < a.Length; index_a++)
+			for (index_a = 0; index_a < a.Length; index_a++)
 			{
-				index_b = System.Array.IndexOf(b, a[index_a]);
-				if(index_b > -1) return true;//ind;
+				index_b = Array.IndexOf(b, a[index_a]);
+				if (index_b > -1)
+					return true; //ind;
 			}
-			return false;// ind;
+
+			return false; // ind;
 		}
 
 		/**

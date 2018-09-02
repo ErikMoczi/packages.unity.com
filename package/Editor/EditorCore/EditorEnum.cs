@@ -2,15 +2,6 @@
 namespace UnityEditor.ProBuilder
 {
 	/// <summary>
-	/// The default tool to use when opening the vertex color editor from the pb_Editor window.
-	/// </summary>
-	enum VertexColorTool
-	{
-		Palette,
-		Painter
-	}
-
-	/// <summary>
 	/// Where the sceneview toolbar sits in relation the scene view rect.
 	/// </summary>
 	enum SceneToolbarLocation
@@ -27,7 +18,7 @@ namespace UnityEditor.ProBuilder
 	/// How the handle gizmo is oriented with regards to the current element selection.
 	/// </summary>
 	/// <remarks>
-	/// This overrides the Unity Pivot / Global setting when editing vertices, faces, or edges.
+	/// This overrides the Unity Pivot / Global setting when editing vertexes, faces, or edges.
 	/// </remarks>
 	/// <remarks>Editor only.</remarks>
 	public enum HandleAlignment
@@ -41,7 +32,7 @@ namespace UnityEditor.ProBuilder
 		/// </summary>
 		Local = 1,
 		/// <summary>
-		/// The gizmo is aligned relative to the currently selected face. When editing vertices or edges, this falls back to <see cref="Local"/> alignment.
+		/// The gizmo is aligned relative to the currently selected face. When editing vertexes or edges, this falls back to <see cref="Local"/> alignment.
 		/// </summary>
 		Plane = 2
 	}

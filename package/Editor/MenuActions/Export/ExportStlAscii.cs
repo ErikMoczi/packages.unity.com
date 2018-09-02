@@ -24,19 +24,23 @@ namespace UnityEditor.ProBuilder.Actions
 			@"Export an Stl model file."
 		);
 
-		public override bool IsHidden() { return true; }
-
-		public override bool IsEnabled()
+		public override bool hidden
 		{
-			return Selection.gameObjects != null && Selection.gameObjects.Length > 0;
+			get { return true; }
+		}
+
+		public override bool enabled
+		{
+			get { return Selection.gameObjects != null && Selection.gameObjects.Length > 0; }
 		}
 
 		public override ActionResult DoAction()
 		{
-			if(!string.IsNullOrEmpty(ExportWithFileDialog(Selection.gameObjects, FileType.Ascii)))
-				return new ActionResult(ActionResult.Status.Success, "Export STL");
-			else
+			if(string.IsNullOrEmpty(ExportWithFileDialog(Selection.gameObjects, FileType.Ascii)))
 				return new ActionResult(ActionResult.Status.Canceled, "User Canceled");
+
+			AssetDatabase.Refresh();
+			return new ActionResult(ActionResult.Status.Success, "Export STL");
 		}
 
 		public static string ExportWithFileDialog(GameObject[] gameObjects, FileType type)

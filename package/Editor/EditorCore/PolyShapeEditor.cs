@@ -27,7 +27,7 @@ namespace UnityEditor.ProBuilder
 		static float s_HeightMouseOffset;
 		bool m_NextMouseUpAdvancesMode = false;
 		List<GameObject> m_IgnorePick = new List<GameObject>();
-		bool m_IsModifyingVertices = false;
+		bool m_IsModifyingVertexes = false;
 
 		PolyShape polygon
 		{
@@ -50,7 +50,7 @@ namespace UnityEditor.ProBuilder
 				return;
 			}
 
-			ProBuilderEditor.onEditLevelChanged += OnEditLevelChanged;
+			ProBuilderEditor.selectModeChanged += OnSelectModeChanged;
 			m_LineMesh = new Mesh();
 			m_LineMaterial = CreateHighlightLineMaterial();
 			Undo.undoRedoPerformed += UndoRedoPerformed;
@@ -64,7 +64,7 @@ namespace UnityEditor.ProBuilder
 
 		void OnDisable()
 		{
-			ProBuilderEditor.onEditLevelChanged -= OnEditLevelChanged;
+			ProBuilderEditor.selectModeChanged -= OnSelectModeChanged;
 			GameObject.DestroyImmediate(m_LineMesh);
 			GameObject.DestroyImmediate(m_LineMaterial);
 			EditorApplication.update -= Update;
@@ -109,8 +109,6 @@ namespace UnityEditor.ProBuilder
 			}
 
 			EditorGUI.BeginChangeCheck();
-
-			polygon.material = (Material) EditorGUILayout.ObjectField("Material", polygon.material, typeof(Material), false);
 
 			float extrude = polygon.extrude;
 			extrude = EditorGUILayout.FloatField("Extrusion", extrude);
@@ -337,7 +335,7 @@ namespace UnityEditor.ProBuilder
 					SetPolyEditMode(PolyShape.PolyEditMode.Height);
 			}
 
-			if(	m_IsModifyingVertices && (
+			if(	m_IsModifyingVertexes && (
 				evt.type == EventType.MouseUp ||
 				evt.type == EventType.Ignore ||
 				evt.type == EventType.KeyDown ||
@@ -669,7 +667,7 @@ namespace UnityEditor.ProBuilder
 
 			Vector3[] ver = new Vector3[vc];
 			Vector2[] uvs = new Vector2[vc];
-			int[] indices = new int[vc];
+			int[] indexes = new int[vc];
 			int cnt = points.Count;
 			float distance = 0f;
 
@@ -683,14 +681,14 @@ namespace UnityEditor.ProBuilder
 
 				ver[i] = points[i % cnt];
 				uvs[i] = new Vector2(distance, 1f);
-				indices[i] = i;
+				indexes[i] = i;
 			}
 
 			m_LineMesh.Clear();
 			m_LineMesh.name = "Poly Shape Guide";
 			m_LineMesh.vertices = ver;
 			m_LineMesh.uv = uvs;
-			m_LineMesh.SetIndices(indices, MeshTopology.LineStrip, 0);
+			m_LineMesh.SetIndices(indexes, MeshTopology.LineStrip, 0);
 			m_LineMaterial.SetFloat("_LineDistance", distance);
 		}
 
@@ -705,21 +703,21 @@ namespace UnityEditor.ProBuilder
 			return Mathf.Abs(Mathf.Abs(dot) - 1f) < .01f;
 		}
 
-		void OnEditLevelChanged(int editLevel)
+		void OnSelectModeChanged(SelectMode selectMode)
 		{
-			if( polygon != null && polygon.polyEditMode != PolyShape.PolyEditMode.None && ((EditLevel)editLevel) != EditLevel.Plugin)
+			if( polygon != null && polygon.polyEditMode != PolyShape.PolyEditMode.None && selectMode != SelectMode.None)
 				polygon.polyEditMode = PolyShape.PolyEditMode.None;
 		}
 
 		void OnBeginVertexMovement()
 		{
-			if(!m_IsModifyingVertices)
-				m_IsModifyingVertices = true;
+			if(!m_IsModifyingVertexes)
+				m_IsModifyingVertexes = true;
 		}
 
 		void OnFinishVertexMovement()
 		{
-			m_IsModifyingVertices = false;
+			m_IsModifyingVertexes = false;
 			RebuildPolyShapeMesh(polygon);
 		}
 

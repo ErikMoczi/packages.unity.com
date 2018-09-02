@@ -23,28 +23,29 @@ namespace UnityEditor.ProBuilder
 		/// <value>
 		/// Raised any time the ProBuilder editor refreshes the selection. This is called every frame when interacting with mesh elements, and after any mesh operation.
 		/// </value>
-		public static event Action<ProBuilderMesh[]> onSelectionUpdate;
+		public static event Action<ProBuilderMesh[]> selectionUpdated;
 
         /// <value>
         /// Called when vertex modifications are complete.
         /// </value>
-        public static event Action<ProBuilderMesh[]> onVertexMovementFinish;
+        public static event Action<ProBuilderMesh[]> afterMeshModification;
 
         /// <value>
         /// Called immediately prior to beginning vertex modifications. The ProBuilderMesh will be in un-altered state at this point (meaning ProBuilderMesh.ToMesh and ProBuilderMesh.Refresh have been called, but not Optimize).
         /// </value>
-        public static event Action<ProBuilderMesh[]> onVertexMovementBegin;
+        public static event Action<ProBuilderMesh[]> beforeMeshModification;
 
 		/// <value>
 		/// Raised when the EditLevel is changed.
 		/// </value>
-        public static event Action<int> onEditLevelChanged;
+        public static event Action<SelectMode> selectModeChanged;
 
         // Toggles for Face, Vertex, and Edge mode.
         const int k_SelectModeLength = 3;
 
 		static EditorToolbar s_EditorToolbar;
 		static ProBuilderEditor s_Instance;
+		EditorMeshHandles m_EditorMeshHandles;
 
 		GUIContent[] m_EditModeIcons;
 		GUIStyle VertexTranslationInfoStyle;
@@ -58,7 +59,7 @@ namespace UnityEditor.ProBuilder
 		bool m_IsIconGui;
 		MethodInfo m_FindNearestVertex;
 		EditLevel m_PreviousEditLevel;
-		SelectMode m_PreviousSelectMode;
+		ComponentMode m_PreviousComponentMode;
 		HandleAlignment m_PreviousHandleAlignment;
 		Shortcut[] m_Shortcuts;
 		SceneToolbarLocation m_SceneToolbarLocation;
@@ -110,7 +111,6 @@ namespace UnityEditor.ProBuilder
 
 		Edge[][] m_UniversalEdges = new Edge[0][];
 		Vector3 m_HandlePivotWorld = Vector3.zero;
-		Dictionary<int, int>[] m_SharedIndicesDictionary = new Dictionary<int, int>[0];
 
 		internal Edge[][] selectedUniversalEdges
 		{
@@ -120,7 +120,7 @@ namespace UnityEditor.ProBuilder
 		/// <summary>
 		/// Faces that need to be refreshed when moving or modifying the actual selection
 		/// </summary>
-		public Dictionary<ProBuilderMesh, List<Face>> selectedFacesInEditZone { get; private set; }
+		internal Dictionary<ProBuilderMesh, List<Face>> selectedFacesInEditZone { get; private set; }
 
 		Matrix4x4 handleMatrix = Matrix4x4.identity;
 		Quaternion handleRotation = new Quaternion(0f, 0f, 0f, 1f);
@@ -132,11 +132,11 @@ namespace UnityEditor.ProBuilder
 		// All selected pb_Objects
 		internal ProBuilderMesh[] selection = new ProBuilderMesh[0];
 
-		// Sum of all vertices selected
+		// Sum of all vertexes selected
 		int m_SelectedVertexCount;
 
-		// Sum of all vertices selected, not counting duplicates on common positions
-		int m_SelectedVerticesCommon;
+		// Sum of all vertexes selected, not counting duplicates on common positions
+		int m_SelectedVertexesCommon;
 
 		// Sum of all faces selected
 		int m_SelectedFaceCount;
@@ -145,7 +145,7 @@ namespace UnityEditor.ProBuilder
 		int m_SelectedEdgeCount;
 
 		internal int selectedVertexCount { get { return m_SelectedVertexCount; } }
-		internal int selectedVertexCommonCount { get { return m_SelectedVerticesCommon; } }
+		internal int selectedVertexCommonCount { get { return m_SelectedVertexesCommon; } }
 		internal int selectedFaceCount { get { return m_SelectedFaceCount; } }
 		internal int selectedEdgeCount { get { return m_SelectedEdgeCount; } }
 
@@ -157,13 +157,59 @@ namespace UnityEditor.ProBuilder
 		/// <value>
 		/// Get the current @"UnityEngine.ProBuilder.EditLevel".
 		/// </value>
-		public EditLevel editLevel { get; private set; }
+		internal static EditLevel editLevel { get; private set; }
 
 		/// <summary>
 		/// Get the current @"UnityEngine.ProBuilder.SelectMode".
 		/// </summary>
 		/// <value>The SelectMode currently set.</value>
-		public SelectMode selectionMode { get; private set; }
+		internal static ComponentMode componentMode { get; private set; }
+
+		/// <value>
+		/// Get and set the current SelectMode.
+		/// </value>
+		public static SelectMode selectMode
+		{
+			get
+			{
+				if (s_Instance != null)
+					return EditorUtility.GetSelectMode(editLevel, componentMode);
+
+				// for backwards compatibility reasons `Object` is returned when editor is closed
+				return SelectMode.Object;
+			}
+
+			set
+			{
+				if (s_Instance == null)
+					return;
+
+				switch (value)
+				{
+					case SelectMode.None:
+						s_Instance.SetEditLevel(EditLevel.Plugin);
+						break;
+					case SelectMode.Object:
+						s_Instance.SetEditLevel(EditLevel.Top);
+						break;
+					case SelectMode.Vertex:
+						s_Instance.SetEditLevel(EditLevel.Geometry);
+						s_Instance.SetSelectionMode(ComponentMode.Vertex);
+						break;
+					case SelectMode.Edge:
+						s_Instance.SetEditLevel(EditLevel.Geometry);
+						s_Instance.SetSelectionMode(ComponentMode.Edge);
+						break;
+					case SelectMode.Face:
+						s_Instance.SetEditLevel(EditLevel.Geometry);
+						s_Instance.SetSelectionMode(ComponentMode.Face);
+						break;
+					case SelectMode.Texture:
+						s_Instance.SetEditLevel(EditLevel.Texture);
+						break;
+				}
+			}
+		}
 
 		/// <summary>
 		/// Get the alignment of the ProBuilder transform gizmo.
@@ -218,11 +264,20 @@ namespace UnityEditor.ProBuilder
 			editor.isFloatingWindow = !PreferencesInternal.GetBool(PreferenceKeys.pbDefaultOpenInDockableWindow);
 		}
 
+		void OnBecameVisible()
+		{
+			// fixes maximizing/unmaximizing
+			s_Instance = this;
+		}
+
 		internal void OnEnable()
 		{
 			s_Instance = this;
 
-			MeshHandles.Initialize();
+			if (m_EditorMeshHandles != null)
+				m_EditorMeshHandles.Dispose();
+
+			m_EditorMeshHandles = new EditorMeshHandles();
 
 			SceneView.onSceneGUIDelegate -= this.OnSceneGUI;
 			SceneView.onSceneGUIDelegate += this.OnSceneGUI;
@@ -232,7 +287,7 @@ namespace UnityEditor.ProBuilder
 
 			ProGridsToolbarOpen(ProGridsInterface.SceneToolbarIsExtended());
 
-			MeshSelection.onObjectSelectionChanged += OnObjectSelectionChanged;
+			MeshSelection.objectSelectionChanged += OnObjectSelectionChanged;
 
 #if !UNITY_2018_2_OR_NEWER
 			s_ResetOnSceneGUIState = typeof(SceneView).GetMethod("ResetOnSceneGUIState", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -247,8 +302,8 @@ namespace UnityEditor.ProBuilder
 			m_FindNearestVertex = typeof(HandleUtility).GetMethod("FindNearestVertex",
 				BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Instance);
 
-			if (onEditLevelChanged != null)
-				onEditLevelChanged((int) editLevel);
+			if (selectModeChanged != null)
+				selectModeChanged(EditorUtility.GetSelectMode(editLevel, componentMode));
 		}
 
 		void OnDisable()
@@ -262,15 +317,15 @@ namespace UnityEditor.ProBuilder
 
 			UpdateSelection();
 
-			MeshHandles.Destroy();
+			m_EditorMeshHandles.Dispose();
 
-			if (onSelectionUpdate != null)
-				onSelectionUpdate(null);
+			if (selectionUpdated != null)
+				selectionUpdated(null);
 
 			ProGridsInterface.UnsubscribePushToGridEvent(PushToGrid);
 			SceneView.onSceneGUIDelegate -= this.OnSceneGUI;
 			PreferencesInternal.SetInt(PreferenceKeys.pbHandleAlignment, (int) handleAlignment);
-			MeshSelection.onObjectSelectionChanged -= OnObjectSelectionChanged;
+			MeshSelection.objectSelectionChanged -= OnObjectSelectionChanged;
 
 			// re-enable unity wireframe
 			// todo set wireframe override in pb_Selection, no pb_Editor
@@ -290,7 +345,7 @@ namespace UnityEditor.ProBuilder
 			PreferencesUpdater.CheckEditorPrefsVersion();
 
 			editLevel = PreferencesInternal.GetEnum<EditLevel>(PreferenceKeys.pbDefaultEditLevel);
-			selectionMode = PreferencesInternal.GetEnum<SelectMode>(PreferenceKeys.pbDefaultSelectionMode);
+			componentMode = PreferencesInternal.GetEnum<ComponentMode>(PreferenceKeys.pbDefaultSelectionMode);
 			handleAlignment = PreferencesInternal.GetEnum<HandleAlignment>(PreferenceKeys.pbHandleAlignment);
 			m_ShowSceneInfo = PreferencesInternal.GetBool(PreferenceKeys.pbShowSceneInfo);
 			m_ShowPreselectionHighlight = PreferencesInternal.GetBool(PreferenceKeys.pbShowPreselectionHighlight);
@@ -358,11 +413,11 @@ namespace UnityEditor.ProBuilder
 		/// <summary>
 		/// Rebuild the mesh wireframe and selection caches.
 		/// </summary>
-		/// <param name="vertexCountChanged">An optional parameter that allows Refresh to skip some more expensive calculations when rebuilding caches if the vertex count and face layout has not changed.</param>
-		public static void Refresh(bool vertexCountChanged = true)
+		/// <param name="vertexCountMayHaveChanged">An optional parameter that allows Refresh to skip some more expensive calculations when rebuilding caches if the vertex count and face layout has not changed.</param>
+		public static void Refresh(bool vertexCountMayHaveChanged = true)
 		{
 			if (instance != null)
-				instance.UpdateSelection(vertexCountChanged);
+				instance.UpdateSelection(vertexCountMayHaveChanged);
 		}
 
 		void OnGUI()
@@ -481,7 +536,8 @@ namespace UnityEditor.ProBuilder
 			if (m_CurrentEvent.type == EventType.MouseUp && m_CurrentEvent.button == 1 || m_CurrentEvent.type == EventType.Ignore)
 				m_IsRightMouseDown = false;
 
-			MeshHandles.DoGUI(selectionMode);
+			if(editLevel != EditLevel.Top)
+				m_EditorMeshHandles.DrawSceneHandles(selectMode);
 
 			DrawHandleGUI(sceneView);
 
@@ -500,7 +556,7 @@ namespace UnityEditor.ProBuilder
 					m_CurrentEvent.Use();
 			}
 
-			// Finished moving vertices, scaling, or adjusting uvs
+			// Finished moving vertexes, scaling, or adjusting uvs
 			if ((m_IsMovingElements || m_IsMovingTextures) && GUIUtility.hotControl < 1)
 			{
 				OnFinishVertexModification();
@@ -514,7 +570,7 @@ namespace UnityEditor.ProBuilder
 				&& editLevel == EditLevel.Geometry)
 			{
 				m_Hovering.CopyTo(m_HoveringPrevious);
-				EditorSceneViewPicker.MouseRayHitTest(m_CurrentEvent.mousePosition, selectionMode, m_ScenePickerPreferences, m_Hovering);
+				EditorSceneViewPicker.MouseRayHitTest(m_CurrentEvent.mousePosition, componentMode, m_ScenePickerPreferences, m_Hovering);
 				if (!m_Hovering.Equals(m_HoveringPrevious))
 					SceneView.RepaintAll();
 			}
@@ -573,7 +629,7 @@ namespace UnityEditor.ProBuilder
 			}
 
 			// This prevents us from selecting other objects in the scene,
-			// and allows for the selection of faces / vertices.
+			// and allows for the selection of faces / vertexes.
 			int controlID = GUIUtility.GetControlID(FocusType.Passive);
 			HandleUtility.AddDefaultControl(controlID);
 
@@ -609,7 +665,7 @@ namespace UnityEditor.ProBuilder
 				{
 					m_IsReadyForMouseDrag = false;
 					m_IsDragging = false;
-					EditorSceneViewPicker.DoMouseDrag(m_MouseDragRect, selectionMode, m_ScenePickerPreferences);
+					EditorSceneViewPicker.DoMouseDrag(m_MouseDragRect, componentMode, m_ScenePickerPreferences);
 				}
 
 				if (m_WasDoubleClick)
@@ -629,7 +685,7 @@ namespace UnityEditor.ProBuilder
 						if (UVEditor.instance)
 							UVEditor.instance.ResetUserPivot();
 
-						EditorSceneViewPicker.DoMouseClick(m_CurrentEvent, selectionMode, m_ScenePickerPreferences);
+						EditorSceneViewPicker.DoMouseClick(m_CurrentEvent, componentMode, m_ScenePickerPreferences);
 						UpdateSelection();
 						SceneView.RepaintAll();
 					}
@@ -641,7 +697,7 @@ namespace UnityEditor.ProBuilder
 						if (UVEditor.instance)
 							UVEditor.instance.ResetUserPivot();
 
-						EditorSceneViewPicker.DoMouseDrag(m_MouseDragRect, selectionMode, m_ScenePickerPreferences);
+						EditorSceneViewPicker.DoMouseDrag(m_MouseDragRect, componentMode, m_ScenePickerPreferences);
 					}
 				}
 			}
@@ -649,18 +705,18 @@ namespace UnityEditor.ProBuilder
 
 		void DoubleClick(Event e)
 		{
-			var mesh = EditorSceneViewPicker.DoMouseClick(m_CurrentEvent, selectionMode, m_ScenePickerPreferences);
+			var mesh = EditorSceneViewPicker.DoMouseClick(m_CurrentEvent, componentMode, m_ScenePickerPreferences);
 
 			if (mesh != null)
 			{
-				if (selectionMode == SelectMode.Edge)
+				if (componentMode == ComponentMode.Edge)
 				{
 					if (e.shift)
 						MenuCommands.MenuRingSelection(selection);
 					else
 						MenuCommands.MenuLoopSelection(selection);
 				}
-				else if (selectionMode == SelectMode.Face)
+				else if (componentMode == ComponentMode.Face)
 				{
 					if ((e.modifiers & (EventModifiers.Control | EventModifiers.Shift)) ==
 					    (EventModifiers.Control | EventModifiers.Shift))
@@ -769,11 +825,16 @@ namespace UnityEditor.ProBuilder
 
 				for (int i = 0; i < selection.Length; i++)
 				{
-					selection[i].TranslateVerticesInWorldSpace(selection[i].selectedIndicesInternal, diff, m_SnapEnabled ? m_SnapValue : 0f,
-						m_SnapAxisConstraint, m_SharedIndicesDictionary[i]);
-					selection[i].RefreshUV(selectedFacesInEditZone[selection[i]]);
-					selection[i].Refresh(RefreshMask.Normals);
-					selection[i].mesh.RecalculateBounds();
+					var mesh = selection[i];
+
+					mesh.TranslateVertexesInWorldSpace(mesh.selectedIndexesInternal,
+						diff,
+						m_SnapEnabled ? m_SnapValue : 0f,
+						m_SnapAxisConstraint);
+
+					mesh.RefreshUV(selectedFacesInEditZone[mesh]);
+					mesh.Refresh(RefreshMask.Normals);
+					mesh.mesh.RecalculateBounds();
 				}
 
 				Internal_UpdateSelectionFast();
@@ -815,7 +876,7 @@ namespace UnityEditor.ProBuilder
 
 					for (int i = 0; i < selection.Length; i++)
 					{
-						m_VertexPositions[i] = selection[i].positionsInternal.ValuesWithIndices(selection[i].selectedIndicesInternal);
+						m_VertexPositions[i] = selection[i].positionsInternal.ValuesWithIndexes(selection[i].selectedIndexesInternal);
 						m_VertexOffset[i] = Math.Average(m_VertexPositions[i]);
 					}
 				}
@@ -827,18 +888,19 @@ namespace UnityEditor.ProBuilder
 				bool gotoLocal = m_SelectedFaceCount < 1;
 
 				// if(pref_snapEnabled)
-				// 	pbUndo.RecordSelection(selection as Object[], "Move Vertices");
+				// 	pbUndo.RecordSelection(selection as Object[], "Move vertexes");
 
 				for (int i = 0; i < selection.Length; i++)
 				{
 					// get the plane rotation in local space
+					var mesh = selection[i];
 					Vector3 nrm = Math.Normal(m_VertexPositions[i]);
 					Quaternion localRot = Quaternion.LookRotation(nrm == Vector3.zero ? Vector3.forward : nrm, Vector3.up);
 
-					Vector3[] v = selection[i].positionsInternal;
-					IntArray[] sharedIndices = selection[i].sharedIndicesInternal;
+					Vector3[] v = mesh.positionsInternal;
+					List<int> coincident = new List<int>();
 
-					for (int n = 0; n < selection[i].selectedIndicesInternal.Length; n++)
+					for (int n = 0; n < mesh.selectedIndexesInternal.Length; n++)
 					{
 						switch (handleAlignment)
 						{
@@ -850,7 +912,7 @@ namespace UnityEditor.ProBuilder
 								if (gotoLocal)
 									goto case HandleAlignment.Local;
 
-								// move center of vertices to 0,0,0 and set rotation as close to identity as possible
+								// move center of vertexes to 0,0,0 and set rotation as close to identity as possible
 								over = Quaternion.Inverse(localRot) * (m_VertexPositions[i][n] - m_VertexOffset[i]);
 
 								// apply scale
@@ -863,10 +925,10 @@ namespace UnityEditor.ProBuilder
 								// re-apply world position offset
 								ver += m_VertexOffset[i];
 
-								int[] array = sharedIndices[m_SharedIndicesDictionary[i][selection[i].selectedIndicesInternal[n]]].array;
+								mesh.GetCoincidentVertexes(mesh.selectedIndexesInternal[n], coincident);
 
-								for (int t = 0; t < array.Length; t++)
-									v[array[t]] = ver;
+								for (int t = 0, c = coincident.Count; t < c; t++)
+									v[coincident[t]] = ver;
 
 								break;
 							}
@@ -882,20 +944,20 @@ namespace UnityEditor.ProBuilder
 								ver += m_VertexOffset[i];
 								// set vertex in local space on pb-Object
 
-								int[] array = sharedIndices[m_SharedIndicesDictionary[i][selection[i].selectedIndicesInternal[n]]].array;
+								mesh.GetCoincidentVertexes(mesh.selectedIndexesInternal[n], coincident);
 
-								for (int t = 0; t < array.Length; t++)
-									v[array[t]] = ver;
+								for (int t = 0, c = coincident.Count; t < c; t++)
+									v[coincident[t]] = ver;
 
 								break;
 							}
 						}
 					}
 
-					selection[i].mesh.vertices = v;
-					selection[i].RefreshUV(selectedFacesInEditZone[selection[i]]);
-					selection[i].Refresh(RefreshMask.Normals);
-					selection[i].mesh.RecalculateBounds();
+					mesh.mesh.vertices = v;
+					mesh.RefreshUV(selectedFacesInEditZone[selection[i]]);
+					mesh.Refresh(RefreshMask.Normals);
+					mesh.mesh.RecalculateBounds();
 				}
 
 				Internal_UpdateSelectionFast();
@@ -939,12 +1001,12 @@ namespace UnityEditor.ProBuilder
 
 					for (int i = 0; i < selection.Length; i++)
 					{
-						Vector3[] vertices = selection[i].positionsInternal;
-						int[] triangles = selection[i].selectedIndicesInternal;
+						Vector3[] vertexes = selection[i].positionsInternal;
+						int[] triangles = selection[i].selectedIndexesInternal;
 						m_VertexPositions[i] = new Vector3[triangles.Length];
 
 						for (int nn = 0; nn < triangles.Length; nn++)
-							m_VertexPositions[i][nn] = selection[i].transform.TransformPoint(vertices[triangles[nn]]);
+							m_VertexPositions[i][nn] = selection[i].transform.TransformPoint(vertexes[triangles[nn]]);
 
 						if (handleAlignment == HandleAlignment.World)
 							m_VertexOffset[i] = m_ElementHandlePosition;
@@ -955,21 +1017,21 @@ namespace UnityEditor.ProBuilder
 
 				// profiler.BeginSample("Calc Matrix");
 				Quaternion transformedRotation = m_RotationInitialInverse * m_HandleRotation;
+				List<int> coincident = new List<int>();
 
 				// profiler.BeginSample("matrix mult");
-				Vector3 ver; // resulting vertex from modification
 				for (int i = 0; i < selection.Length; i++)
 				{
 					Vector3[] v = selection[i].positionsInternal;
-					IntArray[] sharedIndices = selection[i].sharedIndicesInternal;
+					SharedVertex[] sharedIndexes = selection[i].sharedVertexesInternal;
 
 					Quaternion lr = m_RotationInitial; // selection[0].transform.localRotation;
 					Quaternion ilr = m_RotationInitialInverse; // Quaternion.Inverse(lr);
 
-					for (int n = 0; n < selection[i].selectedIndicesInternal.Length; n++)
+					for (int n = 0; n < selection[i].selectedIndexesInternal.Length; n++)
 					{
 						// move vertex to relative origin from center of selection
-						ver = ilr * (m_VertexPositions[i][n] - m_VertexOffset[i]);
+						Vector3 ver = ilr * (m_VertexPositions[i][n] - m_VertexOffset[i]);
 
 						// rotate
 						ver = transformedRotation * ver;
@@ -977,10 +1039,10 @@ namespace UnityEditor.ProBuilder
 						// move vertex back to locally offset position
 						ver = (lr * ver) + m_VertexOffset[i];
 
-						int[] array = sharedIndices[m_SharedIndicesDictionary[i][selection[i].selectedIndicesInternal[n]]].array;
+						selection[i].GetCoincidentVertexes(selection[i].selectedIndexesInternal[n], coincident);
 
-						for (int t = 0; t < array.Length; t++)
-							v[array[t]] = selection[i].transform.InverseTransformPoint(ver);
+						for (int t = 0, c = coincident.Count; t < c; t++)
+							v[coincident[t]] = selection[i].transform.InverseTransformPoint(ver);
 					}
 
 					selection[i].mesh.vertices = v;
@@ -1010,11 +1072,11 @@ namespace UnityEditor.ProBuilder
 			foreach (ProBuilderMesh pb in selection)
 			{
 				// @todo - If caching normals, remove this 'ToMesh' and move
-				Undo.RegisterCompleteObjectUndo(selection, "Extrude Vertices");
+				Undo.RegisterCompleteObjectUndo(selection, "Extrude Vertexes");
 
-				switch (selectionMode)
+				switch (componentMode)
 				{
-					case SelectMode.Edge:
+					case ComponentMode.Edge:
 						if (pb.selectedFaceCount > 0)
 							goto default;
 
@@ -1148,7 +1210,16 @@ namespace UnityEditor.ProBuilder
 			if (m_CurrentEvent.type == EventType.Repaint
 				&& m_Hovering != null
 				&& editLevel == EditLevel.Geometry)
-				EditorHandleUtility.DrawSceneSelection(m_Hovering);
+			{
+				try
+				{
+					m_EditorMeshHandles.DrawSceneSelection(m_Hovering);
+				}
+				catch
+				{
+					; // this happens on undo, when c++ object is destroyed but c# side thinks it's still alive
+				}
+			}
 
 			using (new HandleGUI())
 			{
@@ -1156,7 +1227,7 @@ namespace UnityEditor.ProBuilder
 				int screenHeight = (int) sceneView.position.height;
 
 				int currentSelectionMode =
-					(editLevel != EditLevel.Top && editLevel != EditLevel.Plugin) ? ((int) selectionMode) + 1 : 0;
+					(editLevel != EditLevel.Top && editLevel != EditLevel.Plugin) ? ((int) componentMode) + 1 : 0;
 
 				switch (m_SceneToolbarLocation)
 				{
@@ -1208,7 +1279,7 @@ namespace UnityEditor.ProBuilder
 						if (editLevel != EditLevel.Geometry)
 							SetEditLevel(EditLevel.Geometry);
 
-						SetSelectionMode((SelectMode) (currentSelectionMode - 1));
+						SetSelectionMode((ComponentMode) (currentSelectionMode - 1));
 					}
 				}
 
@@ -1352,7 +1423,7 @@ namespace UnityEditor.ProBuilder
 					if (editLevel == EditLevel.Top)
 						SetEditLevel(EditLevel.Geometry);
 
-					SetSelectionMode(SelectMode.Vertex);
+					SetSelectionMode(ComponentMode.Vertex);
 					return true;
 				}
 
@@ -1364,7 +1435,7 @@ namespace UnityEditor.ProBuilder
 					if (editLevel == EditLevel.Top)
 						SetEditLevel(EditLevel.Geometry);
 
-					SetSelectionMode(SelectMode.Edge);
+					SetSelectionMode(ComponentMode.Edge);
 					return true;
 				}
 
@@ -1376,7 +1447,7 @@ namespace UnityEditor.ProBuilder
 					if (editLevel == EditLevel.Top)
 						SetEditLevel(EditLevel.Geometry);
 
-					SetSelectionMode(SelectMode.Face);
+					SetSelectionMode(ComponentMode.Face);
 					return true;
 				}
 
@@ -1403,17 +1474,17 @@ namespace UnityEditor.ProBuilder
 						return false;
 
 					ToggleSelectionMode();
-					switch (selectionMode)
+					switch (componentMode)
 					{
-						case SelectMode.Face:
+						case ComponentMode.Face:
 							EditorUtility.ShowNotification("Editing Faces");
 							break;
 
-						case SelectMode.Vertex:
-							EditorUtility.ShowNotification("Editing Vertices");
+						case ComponentMode.Vertex:
+							EditorUtility.ShowNotification("Editing Vertexes");
 							break;
 
-						case SelectMode.Edge:
+						case ComponentMode.Edge:
 							EditorUtility.ShowNotification("Editing Edges");
 							break;
 					}
@@ -1445,9 +1516,9 @@ namespace UnityEditor.ProBuilder
 						{
 							UndoUtility.RecordObjects(new Object[2] { pbo, pbo.transform }, "Set Pivot");
 
-							if (pbo.selectedIndicesInternal.Length > 0)
+							if (pbo.selectedIndexesInternal.Length > 0)
 							{
-								pbo.CenterPivot(pbo.selectedIndicesInternal);
+								pbo.CenterPivot(pbo.selectedIndexesInternal);
 							}
 							else
 							{
@@ -1516,25 +1587,25 @@ namespace UnityEditor.ProBuilder
 		/// </summary>
 		internal void ToggleSelectionMode()
 		{
-			int smode = (int) selectionMode;
+			int smode = (int) componentMode;
 			smode++;
 			if (smode >= k_SelectModeLength)
 				smode = 0;
-			SetSelectionMode((SelectMode) smode);
+			SetSelectionMode((ComponentMode) smode);
 		}
 
 		/// <summary>
 		/// Sets what mesh attributes are editable in the scene.
 		/// </summary>
-		/// <seealso cref="UnityEngine.ProBuilder.SelectMode"/>
+		/// <seealso cref="ComponentMode"/>
 		/// <param name="mode">The @"UnityEngine.ProBuilder.SelectMode" to engage.</param>
-		public void SetSelectionMode(SelectMode mode)
+		internal void SetSelectionMode(ComponentMode mode)
 		{
-			selectionMode = mode;
+			componentMode = mode;
 
 			Internal_UpdateSelectionFast();
 
-			PreferencesInternal.SetInt(PreferenceKeys.pbDefaultSelectionMode, (int) selectionMode);
+			PreferencesInternal.SetInt(PreferenceKeys.pbDefaultSelectionMode, (int) componentMode);
 
 			SceneView.RepaintAll();
 		}
@@ -1551,7 +1622,7 @@ namespace UnityEditor.ProBuilder
 		/// Set the @"UnityEngine.ProBuilder.EditLevel".
 		/// </summary>
 		/// <param name="editMode">The new EditLevel to engage.</param>
-		public void SetEditLevel(EditLevel editMode)
+		internal void SetEditLevel(EditLevel editMode)
 		{
 			m_PreviousEditLevel = editLevel;
 			editLevel = editMode;
@@ -1582,7 +1653,7 @@ namespace UnityEditor.ProBuilder
 				case EditLevel.Texture:
 
 					m_PreviousHandleAlignment = handleAlignment;
-					m_PreviousSelectMode = selectionMode;
+					m_PreviousComponentMode = componentMode;
 
 					SetHandleAlignment(HandleAlignment.Plane);
 					break;
@@ -1592,27 +1663,27 @@ namespace UnityEditor.ProBuilder
 
 			if (m_PreviousEditLevel == EditLevel.Texture && editMode != EditLevel.Texture)
 			{
-				SetSelectionMode(m_PreviousSelectMode);
+				SetSelectionMode(m_PreviousComponentMode);
 				SetHandleAlignment(m_PreviousHandleAlignment);
 			}
 
 			if (editLevel != EditLevel.Texture)
 				PreferencesInternal.SetInt(PreferenceKeys.pbDefaultEditLevel, (int) editLevel);
 
-			if (onEditLevelChanged != null)
-				onEditLevelChanged((int) editLevel);
+			if (selectModeChanged != null)
+				selectModeChanged(EditorUtility.GetSelectMode(editLevel, componentMode));
 		}
 
 		/// <summary>
 		/// Rebuild the wireframe selection caches.
 		/// </summary>
-		/// <param name="forceUpdate">Force update if mesh attributes have been added or removed, or the face indices have been altered.</param>
+		/// <param name="forceUpdate">Force update if mesh attributes have been added or removed, or the face indexes have been altered.</param>
 		void UpdateSelection(bool forceUpdate = true)
 		{
 			m_SelectedVertexCount = 0;
 			m_SelectedFaceCount = 0;
 			m_SelectedEdgeCount = 0;
-			m_SelectedVerticesCommon = 0;
+			m_SelectedVertexesCommon = 0;
 			ProBuilderMesh[] t_selection = selection;
 			selection = InternalUtility.GetComponents<ProBuilderMesh>(Selection.transforms);
 
@@ -1632,12 +1703,9 @@ namespace UnityEditor.ProBuilder
 				forceUpdate = true;
 
 				m_UniversalEdges = new Edge[selection.Length][];
-				m_SharedIndicesDictionary = new Dictionary<int, int>[selection.Length];
+
 				for (int i = 0; i < selection.Length; i++)
-				{
-					m_SharedIndicesDictionary[i] = selection[i].sharedIndicesInternal.ToDictionary();
-					m_UniversalEdges[i] = EdgeExtension.GetUniversalEdges(EdgeExtension.AllEdges(selection[i].facesInternal), m_SharedIndicesDictionary[i]);
-				}
+					m_UniversalEdges[i] = selection[i].GetSharedVertexHandleEdges(selection[i].facesInternal.SelectMany(x => x.edges)).ToArray();
 			}
 
 			m_HandlePivotWorld = Vector3.zero;
@@ -1648,65 +1716,75 @@ namespace UnityEditor.ProBuilder
 
 			for (var i = 0; i < selection.Length; i++)
 			{
-				var lookup = m_SharedIndicesDictionary[i];
+				ProBuilderMesh mesh = selection[i];
+
 				used.Clear();
+				var lookup = mesh.sharedVertexLookup;
 
-				ProBuilderMesh pb = selection[i];
-
-				if (!boundsInitialized && pb.selectedVertexCount > 0)
+				if (!boundsInitialized && mesh.selectedVertexCount > 0)
 				{
 					boundsInitialized = true;
-					min = pb.transform.TransformPoint(pb.positionsInternal[pb.selectedIndicesInternal[0]]);
+					min = mesh.transform.TransformPoint(mesh.positionsInternal[mesh.selectedIndexesInternal[0]]);
 					max = min;
 				}
 
-				if (pb.selectedVertexCount > 0)
+				if (mesh.selectedVertexCount > 0)
 				{
-					var indices = pb.selectedIndicesInternal;
+					var indexes = mesh.selectedIndexesInternal;
 
-					for (int n = 0, c = pb.selectedVertexCount; n < c; n++)
+					for (int n = 0, c = mesh.selectedVertexCount; n < c; n++)
 					{
-						if (used.Add(lookup[indices[n]]))
+						if (used.Add(lookup[indexes[n]]))
 						{
-							Vector3 v = pb.transform.TransformPoint(pb.positionsInternal[indices[n]]);
+							Vector3 v = mesh.transform.TransformPoint(mesh.positionsInternal[indexes[n]]);
 							min = Vector3.Min(min, v);
 							max = Vector3.Max(max, v);
 						}
 					}
 
-					m_SelectedVerticesCommon += used.Count;
+					m_SelectedVertexesCommon += used.Count;
 				}
 
-				selectedFacesInEditZone.Add(pb, ElementSelection.GetNeighborFaces(pb, pb.selectedIndicesInternal, m_SharedIndicesDictionary[i]));
+				selectedFacesInEditZone.Add(mesh, ElementSelection.GetNeighborFaces(mesh, mesh.selectedIndexesInternal));
 
-				m_SelectedVertexCount += selection[i].selectedIndicesInternal.Length;
-				m_SelectedFaceCount += selection[i].selectedFaceCount;
-				m_SelectedEdgeCount += selection[i].selectedEdgeCount;
+				m_SelectedVertexCount += mesh.selectedIndexesInternal.Length;
+				m_SelectedFaceCount += mesh.selectedFaceCount;
+				m_SelectedEdgeCount += mesh.selectedEdgeCount;
 			}
 
 			m_HandlePivotWorld = (max + min) * .5f;
-			MeshHandles.RebuildGraphics(selection, m_SharedIndicesDictionary, editLevel, selectionMode);
+
 			UpdateHandleRotation();
 			UpdateTextureHandles();
 			m_HandleRotation = handleRotation;
 
-			if (onSelectionUpdate != null)
-				onSelectionUpdate(selection);
+			if (selectionUpdated != null)
+				selectionUpdated(selection);
 
 			UpdateSceneInfo();
+
+			try
+			{
+				m_EditorMeshHandles.RebuildSelectedHandles(MeshSelection.Top(), componentMode);
+			}
+			catch
+			{
+				// happens on undo when c++ object is gone but c# isn't in the know
+				m_EditorMeshHandles.ClearHandles();
+			}
 		}
 
 		void UpdateSceneInfo()
 		{
 			m_SceneInfo.text = string.Format(
-				"Faces: <b>{0}</b>\nTriangles: <b>{1}</b>\nVertices: <b>{2} ({3})</b>\n\nSelected Faces: <b>{4}</b>\nSelected Edges: <b>{5}</b>\nSelected Vertices: <b>{6} ({7})</b>",
+				"Faces: <b>{0}</b>\nTriangles: <b>{1}</b>\nVertexes: <b>{2} ({3})</b>\n\nSelected Faces: <b>{4}</b>\nSelected Edges: <b>{5}</b>\nSelected Vertexes: <b>{6} ({7})</b>",
 				MeshSelection.totalFaceCount,
 				MeshSelection.totalTriangleCountCompiled,
 				MeshSelection.totalCommonVertexCount,
 				MeshSelection.totalVertexCountOptimized,
 				m_SelectedFaceCount,
 				m_SelectedEdgeCount,
-				m_SelectedVerticesCommon,
+				m_SelectedVertexesCommon,
 				m_SelectedVertexCount);
 		}
 
@@ -1723,8 +1801,8 @@ namespace UnityEditor.ProBuilder
 			for (int i = 0; i < selection.Length; i++)
 			{
 				ProBuilderMesh pb = selection[i];
-				Vector3[] vertices = pb.positionsInternal;
-				int[] indices = pb.selectedIndicesInternal;
+				Vector3[] positions = pb.positionsInternal;
+				int[] indexes = pb.selectedIndexesInternal;
 
 				if (pb == null) continue;
 
@@ -1733,14 +1811,14 @@ namespace UnityEditor.ProBuilder
 					if (!boundsInitialized)
 					{
 						boundsInitialized = true;
-						min = pb.transform.TransformPoint(vertices[indices[0]]);
+						min = pb.transform.TransformPoint(positions[indexes[0]]);
 						max = min;
 					}
 
 					for (int n = 0; n < selection[i].selectedVertexCount; n++)
 					{
-						min = Vector3.Min(min, pb.transform.TransformPoint(vertices[indices[n]]));
-						max = Vector3.Max(max, pb.transform.TransformPoint(vertices[indices[n]]));
+						min = Vector3.Min(min, pb.transform.TransformPoint(positions[indexes[n]]));
+						max = Vector3.Max(max, pb.transform.TransformPoint(positions[indexes[n]]));
 					}
 				}
 
@@ -1751,15 +1829,16 @@ namespace UnityEditor.ProBuilder
 
 			m_HandlePivotWorld = (max + min) / 2f;
 
-			MeshHandles.RebuildGraphics(selection, m_SharedIndicesDictionary, editLevel, selectionMode);
-
 			UpdateHandleRotation();
 			m_HandleRotation = handleRotation;
 
-			if (onSelectionUpdate != null)
-				onSelectionUpdate(selection);
+			if (selectionUpdated != null)
+				selectionUpdated(selection);
 
 			UpdateSceneInfo();
+
+			// todo
+			m_EditorMeshHandles.RebuildSelectedHandles(MeshSelection.Top(), componentMode);
 		}
 
 		internal void ClearElementSelection()
@@ -1796,7 +1875,7 @@ namespace UnityEditor.ProBuilder
 					bitan = Vector3.right;
 				}
 
-				handleMatrix *= Matrix4x4.TRS(Math.GetBounds(pb.positionsInternal.ValuesWithIndices(face.distinctIndices)).center,
+				handleMatrix *= Matrix4x4.TRS(Math.GetBounds(pb.positionsInternal.ValuesWithIndexes(face.distinctIndexesInternal)).center,
 					Quaternion.LookRotation(nrm, bitan), Vector3.one);
 			}
 		}
@@ -1949,17 +2028,17 @@ namespace UnityEditor.ProBuilder
 
 			for (int i = 0; i < selection.Length; i++)
 			{
-				ProBuilderMesh pb = selection[i];
+				ProBuilderMesh mesh = selection[i];
 
-				int[] indices = pb.selectedVertexCount > 0
-					? pb.sharedIndicesInternal.AllIndexesWithValues(pb.selectedIndicesInternal).ToArray()
-					: pb.mesh.triangles;
+				var indexes = mesh.selectedVertexCount > 0
+					? mesh.GetCoincidentVertexes(mesh.selectedIndexesInternal)
+					: mesh.facesInternal.SelectMany(x => x.distinctIndexes);
 
-				Snapping.SnapVertices(pb, indices, Vector3.one * snapVal);
+				Snapping.SnapVertexes(mesh, indexes, Vector3.one * snapVal);
 
-				pb.ToMesh();
-				pb.Refresh();
-				pb.Optimize();
+				mesh.ToMesh();
+				mesh.Refresh();
+				mesh.Optimize();
 			}
 
 			Internal_UpdateSelectionFast();
@@ -1982,26 +2061,26 @@ namespace UnityEditor.ProBuilder
 
 		/// <summary>
 		/// When beginning a vertex modification, nuke the UV2 and rebuild the mesh using PB data so that triangles
-		/// match vertices (and no inserted vertices from the Unwrapping.GenerateSecondaryUVSet() remain).
+		/// match vertexes (and no inserted vertexes from the Unwrapping.GenerateSecondaryUVSet() remain).
 		/// </summary>
 		void OnBeginVertexMovement()
 		{
 			switch (m_CurrentTool)
 			{
 				case Tool.Move:
-					UndoUtility.RegisterCompleteObjectUndo(selection, "Translate Vertices");
+					UndoUtility.RegisterCompleteObjectUndo(selection, "Translate Vertexes");
 					break;
 
 				case Tool.Rotate:
-					UndoUtility.RegisterCompleteObjectUndo(selection, "Rotate Vertices");
+					UndoUtility.RegisterCompleteObjectUndo(selection, "Rotate Vertexes");
 					break;
 
 				case Tool.Scale:
-					UndoUtility.RegisterCompleteObjectUndo(selection, "Scale Vertices");
+					UndoUtility.RegisterCompleteObjectUndo(selection, "Scale Vertexes");
 					break;
 
 				default:
-					UndoUtility.RegisterCompleteObjectUndo(selection, "Modify Vertices");
+					UndoUtility.RegisterCompleteObjectUndo(selection, "Modify Vertexes");
 					break;
 			}
 
@@ -2018,8 +2097,8 @@ namespace UnityEditor.ProBuilder
 				pb.Refresh();
 			}
 
-			if (onVertexMovementBegin != null)
-				onVertexMovementBegin(selection);
+			if (beforeMeshModification != null)
+				beforeMeshModification(selection);
 		}
 
 		void OnFinishVertexModification()
@@ -2050,8 +2129,8 @@ namespace UnityEditor.ProBuilder
 				m_IsMovingElements = false;
 			}
 
-			if (onVertexMovementFinish != null)
-				onVertexMovementFinish(selection);
+			if (afterMeshModification != null)
+				afterMeshModification(selection);
 		}
 
 		/// <summary>

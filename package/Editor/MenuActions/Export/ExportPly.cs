@@ -23,21 +23,25 @@ namespace UnityEditor.ProBuilder.Actions
 			"Export a Stanford PLY file."
 		);
 
-		public override bool IsHidden() { return true; }
-
-		public override bool IsEnabled()
+		public override bool hidden
 		{
-			return Selection.gameObjects != null && Selection.gameObjects.Length > 0;
+			get { return true; }
+		}
+
+		public override bool enabled
+		{
+			get { return Selection.gameObjects != null && Selection.gameObjects.Length > 0; }
 		}
 
 		public override ActionResult DoAction()
 		{
-			string res = ExportWithFileDialog(MeshSelection.Top());
+			string res = ExportWithFileDialog(MeshSelection.TopInternal());
 
-			if( string.IsNullOrEmpty(res) )
+			if (string.IsNullOrEmpty(res))
 				return new ActionResult(ActionResult.Status.Canceled, "User Canceled");
-			else
-				return new ActionResult(ActionResult.Status.Success, "Export PLY");
+
+			AssetDatabase.Refresh();
+			return new ActionResult(ActionResult.Status.Success, "Export PLY");
 		}
 
 		/**
@@ -75,7 +79,7 @@ namespace UnityEditor.ProBuilder.Actions
 			return res;
 		}
 
-		private static string DoExport(string path, IEnumerable<ProBuilderMesh> models, PlyOptions options)
+		static string DoExport(string path, IEnumerable<ProBuilderMesh> models, PlyOptions options)
 		{
 			string name = Path.GetFileNameWithoutExtension(path);
 			string directory = Path.GetDirectoryName(path);

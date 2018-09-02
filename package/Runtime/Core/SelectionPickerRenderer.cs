@@ -137,7 +137,7 @@ namespace UnityEngine.ProBuilder
 		}
 
 		/// <summary>
-		/// Select vertex indices contained within a rect.
+		/// Select vertex indexes contained within a rect.
 		/// </summary>
 		/// <param name="camera"></param>
 		/// <param name="pickerRect"></param>
@@ -145,8 +145,8 @@ namespace UnityEngine.ProBuilder
 		/// <param name="doDepthTest"></param>
 		/// <param name="renderTextureWidth"></param>
 		/// <param name="renderTextureHeight"></param>
-		/// <returns>A dictionary of pb_Object selected vertex indices.</returns>
-		public static Dictionary<ProBuilderMesh, HashSet<int>> PickVerticesInRect(
+		/// <returns>A dictionary of pb_Object selected vertex indexes.</returns>
+		public static Dictionary<ProBuilderMesh, HashSet<int>> PickVertexesInRect(
 			Camera camera,
 			Rect pickerRect,
 			IList<ProBuilderMesh> selection,
@@ -173,7 +173,7 @@ namespace UnityEngine.ProBuilder
 			UObject.DestroyImmediate(tex);
 
 			SimpleTuple<ProBuilderMesh, int> hit;
-			HashSet<int> indices = null;
+			HashSet<int> indexes = null;
 			HashSet<uint> used = new HashSet<uint>();
 
 			for(int y = oy; y < System.Math.Min(oy + height, imageHeight); y++)
@@ -188,8 +188,8 @@ namespace UnityEngine.ProBuilder
 
 					if( used.Add(v) && map.TryGetValue(v, out hit) )
 					{
-						if(selected.TryGetValue(hit.item1, out indices))
-							indices.Add(hit.item2);
+						if(selected.TryGetValue(hit.item1, out indexes))
+							indexes.Add(hit.item2);
 						else
 							selected.Add(hit.item1, new HashSet<int>() { hit.item2 });
 					}
@@ -324,9 +324,9 @@ namespace UnityEngine.ProBuilder
 		{
 			var pickerObjects = GenerateFacePickingObjects(selection, out map);
 
-			BuiltinMaterials.FacePickerMaterial.SetColor(k_FacePickerOcclusionTintUniform, k_Whitef);
+			BuiltinMaterials.facePickerMaterial.SetColor(k_FacePickerOcclusionTintUniform, k_Whitef);
 
-			Texture2D tex = RenderWithReplacementShader(camera, BuiltinMaterials.SelectionPickerShader, "ProBuilderPicker", width, height);
+			Texture2D tex = RenderWithReplacementShader(camera, BuiltinMaterials.selectionPickerShader, "ProBuilderPicker", width, height);
 
 			foreach(GameObject go in pickerObjects)
 			{
@@ -359,9 +359,9 @@ namespace UnityEngine.ProBuilder
 
 			GenerateVertexPickingObjects(selection, doDepthTest, out map, out depthObjects, out pickerObjects);
 
-			BuiltinMaterials.FacePickerMaterial.SetColor(k_FacePickerOcclusionTintUniform, k_Blackf);
+			BuiltinMaterials.facePickerMaterial.SetColor(k_FacePickerOcclusionTintUniform, k_Blackf);
 
-			Texture2D tex = RenderWithReplacementShader(camera, BuiltinMaterials.SelectionPickerShader, "ProBuilderPicker", width, height);
+			Texture2D tex = RenderWithReplacementShader(camera, BuiltinMaterials.selectionPickerShader, "ProBuilderPicker", width, height);
 
 			for(int i = 0, c = pickerObjects.Length; i < c; i++)
 			{
@@ -401,9 +401,9 @@ namespace UnityEngine.ProBuilder
 			GameObject[] depthObjects, pickerObjects;
 			GenerateEdgePickingObjects(selection, doDepthTest, out map, out depthObjects, out pickerObjects);
 
-			BuiltinMaterials.FacePickerMaterial.SetColor(k_FacePickerOcclusionTintUniform, k_Blackf);
+			BuiltinMaterials.facePickerMaterial.SetColor(k_FacePickerOcclusionTintUniform, k_Blackf);
 
-			Texture2D tex = RenderWithReplacementShader(camera, BuiltinMaterials.SelectionPickerShader, "ProBuilderPicker", width, height);
+			Texture2D tex = RenderWithReplacementShader(camera, BuiltinMaterials.selectionPickerShader, "ProBuilderPicker", width, height);
 
 			for(int i = 0, c = pickerObjects.Length; i < c; i++)
 			{
@@ -440,7 +440,7 @@ namespace UnityEngine.ProBuilder
 
 				Mesh m = new Mesh();
 				m.vertices = pb.positionsInternal;
-				m.triangles = pb.facesInternal.SelectMany(x => x.indices).ToArray();
+				m.triangles = pb.facesInternal.SelectMany(x => x.indexesInternal).ToArray();
 				Color32[] colors = new Color32[m.vertexCount];
 
 				foreach(Face f in pb.facesInternal)
@@ -448,14 +448,14 @@ namespace UnityEngine.ProBuilder
 					Color32 color = EncodeRGBA(index++);
 					map.Add(DecodeRGBA(color), new SimpleTuple<ProBuilderMesh, Face>(pb, f));
 
-					for(int n = 0; n < f.distinctIndices.Length; n++)
-						colors[f.distinctIndices[n]] = color;
+					for(int n = 0; n < f.distinctIndexesInternal.Length; n++)
+						colors[f.distinctIndexesInternal[n]] = color;
 				}
 
 				m.colors32 = colors;
 
 				go.AddComponent<MeshFilter>().sharedMesh = m;
-				go.AddComponent<MeshRenderer>().sharedMaterial = BuiltinMaterials.FacePickerMaterial;
+				go.AddComponent<MeshRenderer>().sharedMaterial = BuiltinMaterials.facePickerMaterial;
 
 				pickerObjects[i] = go;
 			}
@@ -473,7 +473,7 @@ namespace UnityEngine.ProBuilder
 			map = new Dictionary<uint, SimpleTuple<ProBuilderMesh, int>>();
 
 			// don't start at 0 because that means one vertex would be black, matching
-			// the color used to cull hidden vertices.
+			// the color used to cull hidden vertexes.
 			uint index = 0x02;
 			int selectionCount = selection.Count;
 			pickerObjects = new GameObject[selectionCount];
@@ -485,7 +485,7 @@ namespace UnityEngine.ProBuilder
 				GameObject go = InternalUtility.EmptyGameObjectWithTransform(pb.transform);
 				go.name = pb.name + "  (Vertex Billboards)";
 				go.AddComponent<MeshFilter>().sharedMesh = BuildVertexMesh(pb, map, ref index);
-				go.AddComponent<MeshRenderer>().sharedMaterial = BuiltinMaterials.VertexPickerMaterial;
+				go.AddComponent<MeshRenderer>().sharedMaterial = BuiltinMaterials.vertexPickerMaterial;
 				pickerObjects[i] = go;
 			}
 
@@ -500,7 +500,7 @@ namespace UnityEngine.ProBuilder
 					GameObject go = InternalUtility.EmptyGameObjectWithTransform(pb.transform);
 					go.name = pb.name + "  (Depth Mask)";
 					go.AddComponent<MeshFilter>().sharedMesh = pb.mesh;
-					go.AddComponent<MeshRenderer>().sharedMaterial = BuiltinMaterials.FacePickerMaterial;
+					go.AddComponent<MeshRenderer>().sharedMaterial = BuiltinMaterials.facePickerMaterial;
 					depthObjects[i] = go;
 				}
 			}
@@ -530,7 +530,7 @@ namespace UnityEngine.ProBuilder
 				GameObject go = InternalUtility.EmptyGameObjectWithTransform(pb.transform);
 				go.name = pb.name + "  (Edge Billboards)";
 				go.AddComponent<MeshFilter>().sharedMesh = BuildEdgeMesh(pb, map, ref index);
-				go.AddComponent<MeshRenderer>().sharedMaterial = BuiltinMaterials.EdgePickerMaterial;
+				go.AddComponent<MeshRenderer>().sharedMaterial = BuiltinMaterials.edgePickerMaterial;
 				pickerObjects[i] = go;
 			}
 
@@ -545,7 +545,7 @@ namespace UnityEngine.ProBuilder
 					GameObject go = InternalUtility.EmptyGameObjectWithTransform(pb.transform);
 					go.name = pb.name + "  (Depth Mask)";
 					go.AddComponent<MeshFilter>().sharedMesh = pb.mesh;
-					go.AddComponent<MeshRenderer>().sharedMaterial = BuiltinMaterials.FacePickerMaterial;
+					go.AddComponent<MeshRenderer>().sharedMaterial = BuiltinMaterials.facePickerMaterial;
 					depthObjects[i] = go;
 				}
 			}
@@ -557,7 +557,7 @@ namespace UnityEngine.ProBuilder
 
 		static Mesh BuildVertexMesh(ProBuilderMesh pb, Dictionary<uint, SimpleTuple<ProBuilderMesh, int>> map, ref uint index)
 		{
-			int length = System.Math.Min(pb.sharedIndicesInternal.Length, ushort.MaxValue / 4 - 1);
+			int length = System.Math.Min(pb.sharedVertexesInternal.Length, ushort.MaxValue / 4 - 1);
 
 			Vector3[] 	t_billboards 		= new Vector3[ length * 4 ];
 			Vector2[] 	t_uvs 				= new Vector2[ length * 4 ];
@@ -573,7 +573,7 @@ namespace UnityEngine.ProBuilder
 
 			for(int i = 0; i < length; i++)
 			{
-				Vector3 v = pb.positionsInternal[pb.sharedIndicesInternal[i][0]];
+				Vector3 v = pb.positionsInternal[pb.sharedVertexesInternal[i][0]];
 
 				t_billboards[t+0] = v;
 				t_billboards[t+1] = v;
@@ -642,8 +642,8 @@ namespace UnityEngine.ProBuilder
 				{
 					var edge = pb.facesInternal[i].edgesInternal[n];
 
-					Vector3 a = pb.positionsInternal[edge.x];
-					Vector3 b = pb.positionsInternal[edge.y];
+					Vector3 a = pb.positionsInternal[edge.a];
+					Vector3 b = pb.positionsInternal[edge.b];
 					int positionIndex = edgeIndex * 2;
 
 					positions[positionIndex + 0] = a;

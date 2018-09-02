@@ -141,7 +141,6 @@ namespace UnityEditor.ProBuilder
 			 */
 			GUILayout.Label("Handles & Colors", EditorStyles.boldLabel);
 
-			pbShowPreselectionHighlight = EditorGUILayout.Toggle("Show Preselection Highlight", pbShowPreselectionHighlight);
 			pbUseUnityColors = EditorGUILayout.Toggle("Use Unity Colors", pbUseUnityColors);
 
 			if (!pbUseUnityColors)
@@ -158,7 +157,7 @@ namespace UnityEditor.ProBuilder
 
 			pbVertexHandleSize = EditorGUILayout.Slider("Vertex Size", pbVertexHandleSize, 1f, 10f);
 
-			bool geoLine = MeshHandles.geometryShadersSupported;
+			bool geoLine = BuiltinMaterials.geometryShadersSupported;
 			GUI.enabled = geoLine;
 			pbLineHandleSize = EditorGUILayout.Slider("Line Size", geoLine ? pbLineHandleSize : 0f, 0f, 3f);
 			pbWireframeSize = EditorGUILayout.Slider("Wireframe Size", geoLine ? pbWireframeSize : 0f, 0f, 3f);
@@ -195,7 +194,7 @@ namespace UnityEditor.ProBuilder
 
 			pbElementSelectIsHamFisted = !EditorGUILayout.Toggle(
 				new GUIContent("Precise Element Selection",
-					"When enabled you will be able to select object faces when in Vertex of Edge mode by clicking the center of a face.  When disabled, edge and vertex selection will always be restricted to the nearest element."),
+					"When enabled you will be able to select object faces when in vertex or edge mode by clicking the center of a face.  When disabled, edge and vertex selection will always be restricted to the nearest element."),
 				!pbElementSelectIsHamFisted);
 
 			pbForceVertexPivot =
@@ -220,11 +219,14 @@ namespace UnityEditor.ProBuilder
 				new GUIContent("Experimental Features",
 					"Enables some experimental new features that we're trying out.  These may be incomplete or buggy, so please exercise caution when making use of this functionality!"),
 				pbEnableExperimental);
+
 			pbMeshesAreAssets =
 				EditorGUILayout.Toggle(
 					new GUIContent("Meshes Are Assets",
 						"Experimental!  Instead of storing mesh data in the scene, this toggle creates a Mesh cache in the Project that ProBuilder will use."),
 					pbMeshesAreAssets);
+
+			pbShowPreselectionHighlight = EditorGUILayout.Toggle("Show Preselection Highlight", pbShowPreselectionHighlight);
 
 			GUILayout.Space(4);
 
@@ -413,7 +415,7 @@ namespace UnityEditor.ProBuilder
 			defaultShortcuts[s_ShortcutIndex].key = key;
 
 			GUILayout.Label("Modifiers", EditorStyles.boldLabel);
-			// EnumMaskField returns a bit-mask where the flags correspond to the indices of the enum, not the enum values,
+			// EnumMaskField returns a bit-mask where the flags correspond to the indexes of the enum, not the enum values,
 			// so this isn't technically correct.
 #if UNITY_2017_3_OR_NEWER
 			EventModifiers em = (EventModifiers) defaultShortcuts[s_ShortcutIndex].eventModifiers;
@@ -525,10 +527,7 @@ namespace UnityEditor.ProBuilder
 			PreferencesInternal.SetFloat(PreferenceKeys.pbUVGridSnapValue, pbUVGridSnapValue, PreferenceLocation.Global);
 
 			if (ProBuilderEditor.instance != null)
-			{
-				MeshHandles.Destroy();
 				ProBuilderEditor.instance.OnEnable();
-			}
 
 			SceneView.RepaintAll();
 		}

@@ -22,14 +22,14 @@ namespace UnityEditor.ProBuilder.Actions
 			"Creates a new shape by clicking around a perimeter and extruding."
 		);
 
-		public override bool IsHidden()
+		public override bool hidden
 		{
-			return false;
+			get { return false; }
 		}
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			return true;
+			get { return true; }
 		}
 
 		public override ActionResult DoAction()
@@ -38,6 +38,10 @@ namespace UnityEditor.ProBuilder.Actions
 			PolyShape poly = go.AddComponent<PolyShape>();
 			ProBuilderMesh pb = poly.gameObject.AddComponent<ProBuilderMesh>();
 			pb.CreateShapeFromPolygon(poly.m_Points, poly.extrude, poly.flipNormals);
+			var mat = PreferencesInternal.GetMaterial(PreferenceKeys.pbDefaultMaterial);
+			foreach (var face in pb.facesInternal)
+				face.material = mat;
+			pb.gameObject.GetComponent<MeshRenderer>().sharedMaterial = mat;
 			EditorUtility.InitObject(pb);
 			MeshSelection.SetSelection(go);
 			UndoUtility.RegisterCreatedObjectUndo(go, "Create Poly Shape");

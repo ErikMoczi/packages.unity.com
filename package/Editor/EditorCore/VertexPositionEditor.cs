@@ -17,15 +17,13 @@ namespace UnityEditor.ProBuilder
 
 		class VertexEditorSelection
 		{
-			public Dictionary<int, int> lookup;
 			public bool isVisible = false;
 			public IEnumerable<int> common;
 
-			public VertexEditorSelection(Dictionary<int, int> lookup, bool visible, int[] indices)
+			public VertexEditorSelection(ProBuilderMesh mesh, bool visible, IEnumerable<int> indexes)
 			{
-				this.lookup = lookup;
 				this.isVisible = visible;
-				this.common = IntArrayUtility.GetCommonIndices(lookup, indices);
+				this.common = mesh.GetCoincidentVertexes(indexes);
 			}
 		}
 
@@ -48,7 +46,7 @@ namespace UnityEditor.ProBuilder
 			EVEN = EditorGUIUtility.isProSkin ? new Color(.18f, .18f, .18f, 1f) : new Color(.85f, .85f, .85f, 1f);
 			ODD = EditorGUIUtility.isProSkin ? new Color(.15f, .15f, .15f, 1f) : new Color(.80f, .80f, .80f, 1f);
 
-			ProBuilderEditor.onSelectionUpdate += OnSelectionUpdate;
+			ProBuilderEditor.selectionUpdated += OnSelectionUpdate;
 			SceneView.onSceneGUIDelegate += OnSceneGUI;
 
 			if(ProBuilderEditor.instance != null)
@@ -57,7 +55,7 @@ namespace UnityEditor.ProBuilder
 
 		void OnDisable()
 		{
-			ProBuilderEditor.onSelectionUpdate -= OnSelectionUpdate;
+			ProBuilderEditor.selectionUpdated -= OnSelectionUpdate;
 			SceneView.onSceneGUIDelegate -= OnSceneGUI;
 		}
 
@@ -71,21 +69,20 @@ namespace UnityEditor.ProBuilder
 				return;
 			}
 
-			Dictionary<ProBuilderMesh, VertexEditorSelection> res = new Dictionary<ProBuilderMesh, VertexEditorSelection>();
+			var res = new Dictionary<ProBuilderMesh, VertexEditorSelection>();
 
-			foreach(ProBuilderMesh pb in newSelection)
+			foreach(var mesh in newSelection)
 			{
 				VertexEditorSelection sel;
 
-				if(selection.TryGetValue(pb, out sel))
+				if(selection.TryGetValue(mesh, out sel))
 				{
-					sel.lookup = pb.sharedIndicesInternal.ToDictionary();
-					sel.common = IntArrayUtility.GetCommonIndices(sel.lookup, pb.selectedIndicesInternal);
-					res.Add(pb, sel);
+					sel.common = mesh.GetCoincidentVertexes(mesh.selectedIndexesInternal);
+					res.Add(mesh, sel);
 				}
 				else
 				{
-					res.Add(pb, new VertexEditorSelection(pb.sharedIndicesInternal.ToDictionary(), true, pb.selectedIndicesInternal));
+					res.Add(mesh, new VertexEditorSelection(mesh, true, mesh.selectedIndexesInternal));
 				}
 			}
 
@@ -174,7 +171,7 @@ namespace UnityEditor.ProBuilder
 
 							GUILayout.Label(u.ToString(), GUILayout.MinWidth(32), GUILayout.MaxWidth(32));
 
-							Vector3 v = pb.positionsInternal[pb.sharedIndicesInternal[u][0]];
+							Vector3 v = pb.positionsInternal[pb.sharedVertexesInternal[u][0]];
 
 							if(worldSpace) v = transform.TransformPoint(v);
 
@@ -229,13 +226,13 @@ namespace UnityEditor.ProBuilder
 				if(!sel.isVisible)
 					continue;
 
-				Vector3[] vertices = pb.positionsInternal;
+				Vector3[] positions = pb.positionsInternal;
 
 				foreach(int i in sel.common)
 				{
-					int[] indices = pb.sharedIndicesInternal[i];
+					var indexes = pb.sharedVertexesInternal[i];
 
-					Vector3 point = pb.transform.TransformPoint(vertices[indices[0]]);
+					Vector3 point = pb.transform.TransformPoint(positions[indexes[0]]);
 
 					Vector2 cen = HandleUtility.WorldToGUIPoint(point);
 

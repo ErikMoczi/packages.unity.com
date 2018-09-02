@@ -49,17 +49,17 @@ namespace UnityEditor.ProBuilder.Actions
 			@"Mirroring objects will duplicate an flip objects on the specified axes."
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			return ProBuilderEditor.instance != null && MeshSelection.Top().Length > 0;
+			get { return ProBuilderEditor.instance != null && MeshSelection.TopInternal().Length > 0; }
 		}
 
-		public override MenuActionState AltState()
+		protected override MenuActionState optionsMenuState
 		{
-			return MenuActionState.VisibleAndEnabled;
+			get { return MenuActionState.VisibleAndEnabled; }
 		}
 
-		public override void OnSettingsGUI()
+		protected override void OnSettingsGUI()
 		{
 			GUILayout.Label("Mirror Settings", EditorStyles.boldLabel);
 
@@ -103,7 +103,7 @@ namespace UnityEditor.ProBuilder.Actions
 
 			List<GameObject> res  = new List<GameObject>();
 
-			foreach(ProBuilderMesh pb in MeshSelection.Top())
+			foreach(ProBuilderMesh pb in MeshSelection.TopInternal())
 				res.Add( Mirror(pb, scale, duplicate).gameObject );
 
 			MeshSelection.SetSelection(res);

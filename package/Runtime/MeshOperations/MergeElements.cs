@@ -11,13 +11,13 @@ namespace UnityEngine.ProBuilder.MeshOperations
 	static class MergeElements
 	{
 		/// <summary>
-		/// Merge each pair of faces to a single face. Indices are combined, but otherwise the properties of the first face in the pair take precedence. Returns a list of the new faces created.
+		/// Merge each pair of faces to a single face. Indexes are combined, but otherwise the properties of the first face in the pair take precedence. Returns a list of the new faces created.
 		/// </summary>
 		/// <param name="target"></param>
 		/// <param name="pairs"></param>
-		/// <param name="collapseCoincidentVertices"></param>
+		/// <param name="collapseCoincidentVertexes"></param>
 		/// <returns></returns>
-		public static List<Face> MergePairs(ProBuilderMesh target, IEnumerable<SimpleTuple<Face, Face>> pairs, bool collapseCoincidentVertices = true)
+		public static List<Face> MergePairs(ProBuilderMesh target, IEnumerable<SimpleTuple<Face, Face>> pairs, bool collapseCoincidentVertexes = true)
 		{
 			HashSet<Face> remove = new HashSet<Face>();
 			List<Face> add = new List<Face>();
@@ -26,22 +26,22 @@ namespace UnityEngine.ProBuilder.MeshOperations
 			{
 				Face left = pair.item1;
 				Face right = pair.item2;
-				int leftLength = left.indices.Length;
-				int rightLength = right.indices.Length;
-				int[] indices = new int[leftLength + rightLength];
-				System.Array.Copy(left.indices, 0, indices, 0, leftLength);
-				System.Array.Copy(right.indices, 0, indices, leftLength, rightLength);
-				add.Add(new Face(indices, left.material, left.uv, left.smoothingGroup, left.textureGroup, left.elementGroup, left.manualUV));
+				int leftLength = left.indexesInternal.Length;
+				int rightLength = right.indexesInternal.Length;
+				int[] indexes = new int[leftLength + rightLength];
+				System.Array.Copy(left.indexesInternal, 0, indexes, 0, leftLength);
+				System.Array.Copy(right.indexesInternal, 0, indexes, leftLength, rightLength);
+				add.Add(new Face(indexes, left.material, left.uv, left.smoothingGroup, left.textureGroup, left.elementGroup, left.manualUV));
 				remove.Add(left);
 				remove.Add(right);
 			}
 
 			List<Face> faces = target.facesInternal.Where(x => !remove.Contains(x)).ToList();
 			faces.AddRange(add);
-			target.SetFaces(faces);
+			target.faces = faces;
 
-			if(collapseCoincidentVertices)
-				CollapseCoincidentVertices(target, add);
+			if(collapseCoincidentVertexes)
+				CollapseCoincidentVertexes(target, add);
 
 			return add;
 		}
@@ -50,8 +50,8 @@ namespace UnityEngine.ProBuilder.MeshOperations
 		/// Merge a collection of faces to a single face. This function does not
 		///	perform any sanity checks, it just merges faces. It's the caller's
 		///	responsibility to make sure that the input is valid.
-		///	In addition to merging faces this method also removes duplicate vertices
-		///	created as a result of merging previously common vertices.
+		///	In addition to merging faces this method also removes duplicate vertexes
+		///	created as a result of merging previously common vertexes.
 		/// </summary>
 		/// <param name="target"></param>
 		/// <param name="faces"></param>
@@ -65,7 +65,7 @@ namespace UnityEngine.ProBuilder.MeshOperations
 
 			Face first = faces.First();
 
-			Face mergedFace = new Face(faces.SelectMany(x => x.indices).ToArray(),
+			Face mergedFace = new Face(faces.SelectMany(x => x.indexesInternal).ToArray(),
 				first.material,
 				first.uv,
 				first.smoothingGroup,
@@ -87,42 +87,42 @@ namespace UnityEngine.ProBuilder.MeshOperations
 
 			rebuiltFaces[n] = mergedFace;
 
-			target.SetFaces(rebuiltFaces);
+			target.faces = rebuiltFaces;
 
-			CollapseCoincidentVertices(target, new Face[] { mergedFace });
+			CollapseCoincidentVertexes(target, new Face[] { mergedFace });
 
 			return mergedFace;
 		}
 
 		/// <summary>
-		/// Condense co-incident vertex positions per-face. Vertices must already be marked as shared in the sharedIndices
+		/// Condense co-incident vertex positions per-face. vertexes must already be marked as shared in the sharedIndexes
 		/// array to be considered. This method is really only useful after merging faces.
 		/// </summary>
-		/// <param name="pb"></param>
+		/// <param name="mesh"></param>
 		/// <param name="faces"></param>
-		internal static void CollapseCoincidentVertices(ProBuilderMesh pb, IEnumerable<Face> faces)
+		internal static void CollapseCoincidentVertexes(ProBuilderMesh mesh, IEnumerable<Face> faces)
 		{
-			Dictionary<int, int> lookup = pb.sharedIndicesInternal.ToDictionary();
+			Dictionary<int, int> lookup = mesh.sharedVertexLookup;
 			Dictionary<int, int> matches = new Dictionary<int, int>();
 
 			foreach(Face face in faces)
 			{
 				matches.Clear();
 
-				for(int i = 0; i < face.indices.Length; i++)
+				for(int i = 0; i < face.indexesInternal.Length; i++)
 				{
-					int common = lookup[face.indices[i]];
+					int common = lookup[face.indexesInternal[i]];
 
 					if(matches.ContainsKey(common))
-						face.indices[i] = matches[common];
+						face.indexesInternal[i] = matches[common];
 					else
-						matches.Add(common, face.indices[i]);
+						matches.Add(common, face.indexesInternal[i]);
 				}
 
 				face.InvalidateCache();
 			}
 
-			pb.RemoveUnusedVertices();
+			mesh.RemoveUnusedVertexes();
 		}
 	}
 }

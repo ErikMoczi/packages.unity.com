@@ -6,33 +6,36 @@ namespace UnityEngine.ProBuilder
 {
 	/// <summary>
 	/// Utilities for working with smoothing groups. Smoothing groups are how ProBuilder defines hard and soft edges.
+	/// ProBuilder calculates vertex normals by first calculating the normal for every face, which in turn is applied to each
+	/// vertex that makes up the face. Afterwards, each vertex normal is averaged with coincident vertexes belonging to the
+	/// same smoothing group.
 	/// </summary>
 	public static class Smoothing
 	{
 		/// <value>
 		/// Faces with smoothingGroup = 0 are hard edges. Historically negative values were sometimes also written as hard edges.
 		/// </value>
-		public const int smoothingGroupNone = 0;
+		internal const int smoothingGroupNone = 0;
 
 		/// <value>
 		/// Smoothing groups 1-24 are smooth.
 		/// </value>
-		public const int smoothRangeMin = 1;
+		internal const int smoothRangeMin = 1;
 
 		/// <value>
 		/// Smoothing groups 1-24 are smooth.
 		/// </value>
-		public const int smoothRangeMax = 24;
+		internal const int smoothRangeMax = 24;
 
 		/// <value>
 		/// Smoothing groups 25-42 are hard. Note that this is obsolete, and generally hard faces should be marked smoothingGroupNone.
 		/// </value>
-		public const int hardRangeMin = 25;
+		internal const int hardRangeMin = 25;
 
 		/// <value>
 		/// Smoothing groups 25-42 are hard. Note that this is soon to be obsolete, and generally hard faces should be marked smoothingGroupNone.
 		/// </value>
-		public const int hardRangeMax = 42;
+		internal const int hardRangeMax = 42;
 
 		/// <summary>
 		/// Get the first available unused smoothing group.
@@ -143,19 +146,24 @@ namespace UnityEngine.ProBuilder
 		{
 			bool foundSmoothEdge = false;
 
-			foreach(WingedEdge border in wing)
+			using (var it = new WingedEdgeEnumerator(wing))
 			{
-				if(border.opposite == null)
-					continue;
-
-				if( border.opposite.face.smoothingGroup == Smoothing.smoothingGroupNone
-				    && IsSoftEdge(normals, border.edge, border.opposite.edge, angleThreshold) )
+				while (it.MoveNext())
 				{
-					if(processed.Add(border.opposite.face))
+					var border = it.Current;
+
+					if (border.opposite == null)
+						continue;
+
+					if (border.opposite.face.smoothingGroup == Smoothing.smoothingGroupNone
+						&& IsSoftEdge(normals, border.edge, border.opposite.edge, angleThreshold))
 					{
-						foundSmoothEdge = true;
-						border.opposite.face.smoothingGroup = wing.face.smoothingGroup;
-						FindSoftEdgesRecursive(normals, border.opposite, angleThreshold, processed);
+						if (processed.Add(border.opposite.face))
+						{
+							foundSmoothEdge = true;
+							border.opposite.face.smoothingGroup = wing.face.smoothingGroup;
+							FindSoftEdgesRecursive(normals, border.opposite, angleThreshold, processed);
+						}
 					}
 				}
 			}
@@ -165,10 +173,10 @@ namespace UnityEngine.ProBuilder
 
 		static bool IsSoftEdge(Vector3[] normals, EdgeLookup left, EdgeLookup right, float threshold)
 		{
-			Vector3 lx = normals[left.local.x];
-			Vector3 ly = normals[left.local.y];
-			Vector3 rx = normals[right.common.x == left.common.x ? right.local.x : right.local.y];
-			Vector3 ry = normals[right.common.y == left.common.y ? right.local.y : right.local.x];
+			Vector3 lx = normals[left.local.a];
+			Vector3 ly = normals[left.local.b];
+			Vector3 rx = normals[right.common.a == left.common.a ? right.local.a : right.local.b];
+			Vector3 ry = normals[right.common.b == left.common.b ? right.local.b : right.local.a];
 			lx.Normalize();
 			ly.Normalize();
 			rx.Normalize();

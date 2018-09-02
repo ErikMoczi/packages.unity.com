@@ -6,7 +6,7 @@
 	public static class MeshTransform
 	{
 		/// <summary>
-		/// Center the mesh pivot at the average of a set of vertices.
+		/// Center the mesh pivot at the average of a set of vertexes.
 		/// </summary>
 		/// <param name="mesh">The target mesh.</param>
 		/// <param name="indexes">The indexes of the positions to average to find the new pivot.</param>
@@ -36,7 +36,7 @@
 			mesh.transform.position = center;
 
 			mesh.ToMesh();
-			mesh.TranslateVerticesInWorldSpace(mesh.mesh.triangles, dir);
+			mesh.TranslateVertexesInWorldSpace(mesh.mesh.triangles, dir);
 			mesh.Refresh();
 		}
 
@@ -53,12 +53,12 @@
             Vector3 offset = mesh.transform.position - worldPosition;
 			mesh.transform.position = worldPosition;
 			mesh.ToMesh();
-			mesh.TranslateVerticesInWorldSpace(mesh.mesh.triangles, offset);
+			mesh.TranslateVertexesInWorldSpace(mesh.mesh.triangles, offset);
 			mesh.Refresh();
 		}
 
 		/// <summary>
-		/// Scale vertices and set transform.localScale to Vector3.one.
+		/// Scale vertexes and set transform.localScale to Vector3.one.
 		/// </summary>
 		/// <param name="mesh">The target mesh.</param>
 		public static void FreezeScaleTransform(this ProBuilderMesh mesh)

@@ -4,9 +4,7 @@ using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine.ProBuilder;
-using UnityEngine.Rendering;
 using RaycastHit = UnityEngine.ProBuilder.RaycastHit;
 
 namespace UnityEditor.ProBuilder
@@ -57,45 +55,6 @@ namespace UnityEditor.ProBuilder
 					s_HandleMaterial = (Material) EditorGUIUtility.LoadRequired("SceneView/2DHandleLines.mat");
 
 				return s_HandleMaterial;
-			}
-		}
-
-		static Material s_UnlitVertexColorMaterial = null;
-
-		public static Material unlitVertexColorMaterial
-		{
-			get
-			{
-				if (s_UnlitVertexColorMaterial == null)
-				{
-					Shader unlitVertexColorShader = Shader.Find("ProBuilder/UnlitVertexColor");
-
-					if (unlitVertexColorShader == null)
-					{
-						s_UnlitVertexColorMaterial = handleMaterial;
-					}
-					else
-					{
-						s_UnlitVertexColorMaterial = new Material(unlitVertexColorShader);
-						s_UnlitVertexColorMaterial.hideFlags = HideFlags.HideAndDontSave;
-					}
-				}
-
-				return s_UnlitVertexColorMaterial;
-			}
-		}
-
-		static Material s_EdgeMaterial = null;
-
-		public static Material edgeMaterial
-		{
-			get
-			{
-				if(s_EdgeMaterial == null)
-					s_EdgeMaterial = (Material) EditorGUIUtility.LoadRequired("SceneView/HandleLines.mat");
-					// _edgeMaterial = (Material)EditorGUIUtility.LoadRequired("SceneView/VertexSelectionMaterial.mat");
-
-				return s_EdgeMaterial;
 			}
 		}
 
@@ -221,7 +180,7 @@ namespace UnityEditor.ProBuilder
 			return newPosition;
 		}
 
-		static Vector2 initialDirection;
+		static Vector2 s_InitialDirection;
 
 		/// <summary>
 		/// A 2D rotation handle. Behaves like HandleUtility.RotationHandle
@@ -260,9 +219,9 @@ namespace UnityEditor.ProBuilder
 				{
 					case EventType.MouseDrag:
 
-						newRotation = Vector2.Angle(initialDirection, currentDirection);
+						newRotation = Vector2.Angle(s_InitialDirection, currentDirection);
 
-						if(Vector2.Dot(new Vector2(-initialDirection.y, initialDirection.x), currentDirection) < 0)
+						if(Vector2.Dot(new Vector2(-s_InitialDirection.y, s_InitialDirection.x), currentDirection) < 0)
 							newRotation = 360f-newRotation;
 						break;
 
@@ -280,7 +239,7 @@ namespace UnityEditor.ProBuilder
 					{
 						currentId = id;
 						initialMousePosition = mousePosition;
-						initialDirection = (initialMousePosition-position).normalized;
+						s_InitialDirection = (initialMousePosition-position).normalized;
 						handleOffset = position-mousePosition;
 					}
 				}
@@ -432,6 +391,14 @@ namespace UnityEditor.ProBuilder
 			while( nearestGameObject != null );
 		}
 
+		internal static void GetHovered(Vector2 mousePosition, List<GameObject> list)
+		{
+			list.Clear();
+			var go = HandleUtility.PickGameObject(mousePosition, false);
+			if (go != null)
+				list.Add(go);
+		}
+
 		/**
 		 * Given two Vector2[] arrays, find the nearest two points within maxDelta and return the difference in offset.
 		 * @param points First Vector2[] array.
@@ -502,32 +469,32 @@ namespace UnityEditor.ProBuilder
 		/// returns the index of the segment that best matched (source modified
 		/// from UnityEngine.HandleUtility class).
 		/// </summary>
-		/// <param name="vertices"></param>
+		/// <param name="vertexes"></param>
 		/// <param name="index"></param>
 		/// <param name="distanceToLine"></param>
 		/// <param name="closeLoop"></param>
 		/// <param name="trs"></param>
 		/// <returns></returns>
-		public static Vector3 ClosestPointToPolyLine(List<Vector3> vertices, out int index, out float distanceToLine, bool closeLoop = false, Transform trs = null)
+		public static Vector3 ClosestPointToPolyLine(List<Vector3> vertexes, out int index, out float distanceToLine, bool closeLoop = false, Transform trs = null)
 		{
 			distanceToLine = Mathf.Infinity;
 
 			if(trs != null)
-				distanceToLine = HandleUtility.DistanceToLine(trs.TransformPoint(vertices[0]), trs.TransformPoint(vertices[1]));
+				distanceToLine = HandleUtility.DistanceToLine(trs.TransformPoint(vertexes[0]), trs.TransformPoint(vertexes[1]));
 			else
-				distanceToLine = HandleUtility.DistanceToLine(vertices[0], vertices[1]);
+				distanceToLine = HandleUtility.DistanceToLine(vertexes[0], vertexes[1]);
 
 			index = 0;
-			int count = vertices.Count;
+			int count = vertexes.Count;
 
 			for (int i = 2; i < (closeLoop ? count + 1 : count); i++)
 			{
 				var distance = 0f;
 
 				if(trs != null)
-					distance = HandleUtility.DistanceToLine(trs.TransformPoint(vertices[i - 1]), trs.TransformPoint(vertices[i % count]));
+					distance = HandleUtility.DistanceToLine(trs.TransformPoint(vertexes[i - 1]), trs.TransformPoint(vertexes[i % count]));
 				else
-					distance = HandleUtility.DistanceToLine(vertices[i - 1], vertices[i % count]);
+					distance = HandleUtility.DistanceToLine(vertexes[i - 1], vertexes[i % count]);
 
 				if (distance < distanceToLine)
 				{
@@ -536,8 +503,8 @@ namespace UnityEditor.ProBuilder
 				}
 			}
 
-			Vector3 point_a = trs != null ? trs.TransformPoint(vertices[index]) : vertices[index];
-			Vector3 point_b = trs != null ? trs.TransformPoint(vertices[(index + 1) % count]) : vertices[index + 1];
+			Vector3 point_a = trs != null ? trs.TransformPoint(vertexes[index]) : vertexes[index];
+			Vector3 point_b = trs != null ? trs.TransformPoint(vertexes[(index + 1) % count]) : vertexes[index + 1];
 
 			index++;
 
@@ -553,180 +520,6 @@ namespace UnityEditor.ProBuilder
 			Vector3 p = Vector3.Lerp(point_a, point_b, Mathf.Clamp01(travel));
 
 			return trs != null ? trs.InverseTransformPoint(p) : p;
-		}
-
-		/**
-		 * Generate a line segment bounds representation.
-		 */
-		public static Mesh BoundsWireframe(Bounds bounds, Color color, ref Mesh m)
-		{
-			Vector3 cen = bounds.center;
-			Vector3 ext = bounds.extents + (bounds.extents.normalized * .02f);
-
-			// Draw Wireframe
-			List<Vector3> v = new List<Vector3>();
-
-			v.AddRange( DrawBoundsEdge(cen, -ext.x, -ext.y, -ext.z, .2f) );
-			v.AddRange( DrawBoundsEdge(cen, -ext.x, -ext.y,  ext.z, .2f) );
-			v.AddRange( DrawBoundsEdge(cen,  ext.x, -ext.y, -ext.z, .2f) );
-			v.AddRange( DrawBoundsEdge(cen,  ext.x, -ext.y,  ext.z, .2f) );
-
-			v.AddRange( DrawBoundsEdge(cen, -ext.x,  ext.y, -ext.z, .2f) );
-			v.AddRange( DrawBoundsEdge(cen, -ext.x,  ext.y,  ext.z, .2f) );
-			v.AddRange( DrawBoundsEdge(cen,  ext.x,  ext.y, -ext.z, .2f) );
-			v.AddRange( DrawBoundsEdge(cen,  ext.x,  ext.y,  ext.z, .2f) );
-
-			Vector2[] u = new Vector2[48];
-			int[] t = new int[48];
-			Color[] c = new Color[48];
-
-			for(int i = 0; i < 48; i++)
-			{
-				t[i] = i;
-				u[i] = Vector2.zero;
-				c[i] = color;
-				c[i].a = .5f;
-			}
-
-			m.Clear();
-			m.vertices = v.ToArray();
-			m.subMeshCount = 1;
-			m.SetIndices(t, MeshTopology.Lines, 0);
-
-			m.uv = u;
-			m.normals = v.ToArray();
-			m.colors = c;
-
-			return m;
-		}
-
-		static Vector3[] DrawBoundsEdge(Vector3 center, float x, float y, float z, float size)
-		{
-			Vector3 p = center;
-			Vector3[] v = new Vector3[6];
-
-			p.x += x;
-			p.y += y;
-			p.z += z;
-
-			v[0] = p;
-			v[1] = (p + ( -(x/Mathf.Abs(x)) * Vector3.right 	* Mathf.Min(size, Mathf.Abs(x))));
-
-			v[2] = p;
-			v[3] = (p + ( -(y/Mathf.Abs(y)) * Vector3.up 		* Mathf.Min(size, Mathf.Abs(y))));
-
-			v[4] = p;
-			v[5] = (p + ( -(z/Mathf.Abs(z)) * Vector3.forward 	* Mathf.Min(size, Mathf.Abs(z))));
-
-			return v;
-		}
-
-		static MethodInfo s_ApplyWireMaterial = null;
-
-		static object[] s_ApplyWireMaterialArgs = new object[]
-		{
-			CompareFunction.Always
-		};
-
-		internal static bool BeginDrawingLines(CompareFunction zTest)
-		{
-			if (Event.current.type != EventType.Repaint)
-				return false;
-
-			if (!MeshHandles.geometryShadersSupported ||
-			    !MeshHandles.lineMaterial.SetPass(0))
-			{
-				if (s_ApplyWireMaterial == null)
-				{
-					s_ApplyWireMaterial = typeof(HandleUtility).GetMethod(
-						"ApplyWireMaterial",
-						BindingFlags.Static | BindingFlags.NonPublic,
-						null,
-						new System.Type[] { typeof(CompareFunction) },
-						null);
-
-					if (s_ApplyWireMaterial == null)
-					{
-						Log.Info("Failed to find wire material, stopping draw lines.");
-						return false;
-					}
-				}
-
-				s_ApplyWireMaterialArgs[0] = zTest;
-				s_ApplyWireMaterial.Invoke(null, s_ApplyWireMaterialArgs);
-			}
-
-			GL.PushMatrix();
-			GL.Begin(GL.LINES);
-
-			return true;
-		}
-
-		internal static void EndDrawingLines()
-		{
-			GL.End();
-			GL.PopMatrix();
-		}
-
-		internal static void DrawSceneSelection(SceneSelection selection)
-		{
-			var mesh = selection.mesh;
-
-			if (mesh == null)
-				return;
-
-			var positions = mesh.positionsInternal;
-
-			// Draw nearest edge
-			if (selection.face != null)
-			{
-				MeshHandles.faceMaterial.SetColor("_Color", MeshHandles.preselectionColor);
-
-				if (!MeshHandles.faceMaterial.SetPass(0))
-					return;
-
-				GL.PushMatrix();
-				GL.Begin(GL.TRIANGLES);
-				GL.MultMatrix(mesh.transform.localToWorldMatrix);
-
-				var face = selection.face;
-				var ind = face.indices;
-
-				for (int i = 0, c = ind.Length; i < c; i += 3)
-				{
-					GL.Vertex(positions[ind[i]]);
-					GL.Vertex(positions[ind[i+1]]);
-					GL.Vertex(positions[ind[i+2]]);
-				}
-
-				GL.End();
-				GL.PopMatrix();
-			}
-			else if (selection.edge != Edge.Empty)
-			{
-				if (BeginDrawingLines(Handles.zTest))
-				{
-					MeshHandles.lineMaterial.SetColor("_Color", Color.white);
-					GL.Color(MeshHandles.preselectionColor);
-
-					GL.MultMatrix(mesh.transform.localToWorldMatrix);
-					GL.Vertex(positions[selection.edge.x]);
-					GL.Vertex(positions[selection.edge.y]);
-
-					EndDrawingLines();
-				}
-			}
-			else if (selection.vertex > -1)
-			{
-				// todo
-				var size = .25f / (PreferencesInternal.GetFloat(PreferenceKeys.pbVertexHandleSize) * EditorGUIUtility.pixelsPerPoint);
-
-				using (new Handles.DrawingScope(MeshHandles.preselectionColor, mesh.transform.localToWorldMatrix))
-				{
-					var pos = positions[selection.vertex];
-					Handles.DotHandleCap(-1, pos, Quaternion.identity, HandleUtility.GetHandleSize(pos) * size, Event.current.type);
-				}
-			}
 		}
 	}
 }

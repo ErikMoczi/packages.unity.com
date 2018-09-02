@@ -145,18 +145,18 @@ namespace UnityEngine.ProBuilder
 			{
 				if(faces != null)
 				{
-					target.GeometryWithVerticesFaces(positions, faces);
+					target.RebuildWithPositionsAndFaces(positions, faces);
 				}
 				else
 				{
-					target.SetPositions(positions);
+					target.positions = positions;
 					target.ToMesh();
 					target.Refresh(RefreshMask.UV | RefreshMask.Colors | RefreshMask.Normals | RefreshMask.Tangents);
 				}
 			}
 			else
 			{
-				target = ProBuilderMesh.CreateInstanceWithVerticesFaces(positions, faces);
+				target = ProBuilderMesh.Create(positions, faces);
 			}
 		}
 

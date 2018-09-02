@@ -14,13 +14,13 @@ namespace UnityEngine.ProBuilder.MeshOperations
 	{
 		/// <summary>
 		/// Given a set of points this method will format the points into a boundary contour and triangulate, returning
-		/// a set of indices that corresponds to the original ordering.
+		/// a set of indexes that corresponds to the original ordering.
 		/// </summary>
 		/// <param name="points"></param>
-		/// <param name="indices"></param>
+		/// <param name="indexes"></param>
 		/// <param name="convex"></param>
 		/// <returns></returns>
-		public static bool SortAndTriangulate(IList<Vector2> points, out List<int> indices, bool convex = false)
+		public static bool SortAndTriangulate(IList<Vector2> points, out List<int> indexes, bool convex = false)
 		{
 			IList<Vector2> sorted = Projection.Sort(points, SortMethod.CounterClockwise);
 
@@ -29,37 +29,37 @@ namespace UnityEngine.ProBuilder.MeshOperations
 			for(int i = 0; i < sorted.Count; i++)
 				map.Add(i, points.IndexOf(sorted[i]));
 
-			if(!Triangulate(sorted, out indices, convex))
+			if(!Triangulate(sorted, out indexes, convex))
 				return false;
 
-			for(int i = 0; i < indices.Count; i++)
-				indices[i] = map[indices[i]];
+			for(int i = 0; i < indexes.Count; i++)
+				indexes[i] = map[indexes[i]];
 
 			return true;
 		}
 
 		/// <summary>
-		/// Attempts to triangulate a set of vertices. If unordered is specified as false vertices will not be re-ordered before triangulation.
+		/// Attempts to triangulate a set of vertexes. If unordered is specified as false vertexes will not be re-ordered before triangulation.
 		/// </summary>
-		/// <param name="vertices"></param>
+		/// <param name="vertexes"></param>
 		/// <param name="triangles"></param>
 		/// <param name="unordered"></param>
 		/// <param name="convex"></param>
 		/// <returns></returns>
-		public static bool TriangulateVertices(IList<Vertex> vertices, out List<int> triangles, bool unordered = true, bool convex = false)
+		public static bool TriangulateVertexes(IList<Vertex> vertexes, out List<int> triangles, bool unordered = true, bool convex = false)
 		{
-			Vector3[] facePoints = new Vector3[vertices.Count];
+			Vector3[] facePoints = new Vector3[vertexes.Count];
 
-			for(int i = 0; i < vertices.Count; ++i)
-				facePoints[i] = vertices[i].position;
+			for(int i = 0; i < vertexes.Count; ++i)
+				facePoints[i] = vertexes[i].position;
 
-			return TriangulateVertices(facePoints, out triangles, unordered, convex);
+			return TriangulateVertexes(facePoints, out triangles, unordered, convex);
 		}
 
-		public static bool TriangulateVertices(Vector3[] vertices, out List<int> triangles, bool unordered = true, bool convex = false)
+		public static bool TriangulateVertexes(Vector3[] vertexes, out List<int> triangles, bool unordered = true, bool convex = false)
 		{
 			triangles = null;
-			int vertexCount = vertices == null ? 0 : vertices.Length;
+			int vertexCount = vertexes == null ? 0 : vertexes.Length;
 
 			if(vertexCount < 3)
 				return false;
@@ -70,8 +70,8 @@ namespace UnityEngine.ProBuilder.MeshOperations
 				return true;
 			}
 
-			Vector3 normal = Projection.FindBestPlane(vertices).normal;
-			Vector2[] points2d = Projection.PlanarProject(vertices, normal);
+			Vector3 normal = Projection.FindBestPlane(vertexes).normal;
+			Vector2[] points2d = Projection.PlanarProject(vertexes, normal);
 
 			if(unordered)
 				return Triangulation.SortAndTriangulate(points2d, out triangles, convex);
@@ -80,15 +80,15 @@ namespace UnityEngine.ProBuilder.MeshOperations
 		}
 
 		/// <summary>
-		/// Given a set of points ordered counter-clockwise along a contour, return triangle indices.
+		/// Given a set of points ordered counter-clockwise along a contour, return triangle indexes.
 		/// </summary>
 		/// <param name="points"></param>
-		/// <param name="indices"></param>
+		/// <param name="indexes"></param>
 		/// <param name="convex">Triangulation may optionally be set to convex, which will result in some a convex shape.</param>
 		/// <returns></returns>
-		public static bool Triangulate(IList<Vector2> points, out List<int> indices, bool convex = false)
+		public static bool Triangulate(IList<Vector2> points, out List<int> indexes, bool convex = false)
 		{
-			indices = new List<int>();
+			indexes = new List<int>();
 
 			int index = 0;
 
@@ -110,25 +110,25 @@ namespace UnityEngine.ProBuilder.MeshOperations
 			{
 				if(d.Points[0].Index < 0 || d.Points[1].Index < 0 || d.Points[2].Index < 0)
 				{
-					Log.Warning("Triangulation failed: Additional vertices were inserted.");
+					Log.Warning("Triangulation failed: Additional vertexes were inserted.");
 					return false;
 				}
 
-				indices.Add( d.Points[0].Index );
-				indices.Add( d.Points[1].Index );
-				indices.Add( d.Points[2].Index );
+				indexes.Add( d.Points[0].Index );
+				indexes.Add( d.Points[1].Index );
+				indexes.Add( d.Points[2].Index );
 			}
 
 			WindingOrder originalWinding = SurfaceTopology.GetWindingOrder(points);
 
 			// if the re-triangulated first tri doesn't match the winding order of the original
-			// vertices, flip 'em
+			// vertexes, flip 'em
 			if( SurfaceTopology.GetWindingOrder(new Vector2[3]{
-				points[indices[0]],
-				points[indices[1]],
-				points[indices[2]],
+				points[indexes[0]],
+				points[indexes[1]],
+				points[indexes[2]],
 				}) != originalWinding)
-				indices.Reverse();
+				indexes.Reverse();
 
 			return true;
 		}

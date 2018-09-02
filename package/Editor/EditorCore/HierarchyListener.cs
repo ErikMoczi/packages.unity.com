@@ -20,13 +20,11 @@ namespace UnityEditor.ProBuilder
  #if UNITY_2018_1_OR_NEWER
 			EditorApplication.hierarchyChanged += HierarchyWindowChanged;
  #else
-			EditorApplication.hierarchyWindowChanged -= HierarchyWindowChanged;
 			EditorApplication.hierarchyWindowChanged += HierarchyWindowChanged;
  #endif
 
 			// prefabInstanceUpdated is not called when dragging out of Project view,
 			// or when creating a prefab or reverting.  OnHierarchyChange captures those.
-			PrefabUtility.prefabInstanceUpdated -= PrefabInstanceUpdated;
 			PrefabUtility.prefabInstanceUpdated += PrefabInstanceUpdated;
 		}
 
@@ -59,10 +57,8 @@ namespace UnityEditor.ProBuilder
 				foreach(ProBuilderMesh pb in Selection.transforms.GetComponents<ProBuilderMesh>())
 				{
 					if(!meshesAreAssets)
-						EditorUtility.EnsureMeshSyncState(pb);
+						EditorUtility.SynchronizeWithMeshFilter(pb);
 				}
-
-				ProBuilderEditor.Refresh();
 			}
 		}
 	}

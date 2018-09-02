@@ -52,22 +52,6 @@ namespace UnityEngine.ProBuilder.MeshOperations
             set { m_SmoothingThreshold = value; }
         }
 
-        /// <value>
-        /// Basic mesh import settings. Imports quads, and smoothes faces with a threshold of 1 degree.
-        /// </value>
-        public static MeshImportSettings Default
-        {
-            get
-            {
-                return new MeshImportSettings()
-                {
-                    m_Quads = true,
-                    m_Smoothing = true,
-                    m_SmoothingThreshold = 1f
-                };
-            }
-        }
-
         public override string ToString()
         {
             return string.Format("quads: {0}\nsmoothing: {1}\nthreshold: {2}",
@@ -90,7 +74,7 @@ namespace UnityEngine.ProBuilder.MeshOperations
 		};
 
 		ProBuilderMesh m_Mesh;
-		Vertex[] m_Vertices;
+		Vertex[] m_Vertexes;
 
 		/// <summary>
 		/// Create a new MeshImporter instance.
@@ -107,7 +91,7 @@ namespace UnityEngine.ProBuilder.MeshOperations
 		/// <param name="gameObject">The GameObject to search for MeshFilter and MeshRenderer data.</param>
 		/// <param name="importSettings">Optional settings parameter defines import customization properties.</param>
 		/// <returns>True if the mesh data was successfully translated to the ProBuilderMesh target, false if something went wrong.</returns>
-		public bool Import(GameObject gameObject, MeshImportSettings importSettings = null)
+		internal bool Import(GameObject gameObject, MeshImportSettings importSettings = null)
 		{
             if (gameObject == null)
                 throw new ArgumentNullException("gameObject");
@@ -131,7 +115,7 @@ namespace UnityEngine.ProBuilder.MeshOperations
 		/// <param name="materials">The materials array corresponding to the originalMesh submeshes.</param>
 		/// <param name="importSettings">Optional settings parameter defines import customization properties.</param>
 		/// <returns>True if the mesh data was successfully translated to the ProBuilderMesh target, false if something went wrong.</returns>
-		/// <exception cref="NotImplementedException">Import only supports triangle and quad mesh topologies.</exception>
+		/// <exception cref="NotSupportedException">Import only supports triangle and quad mesh topologies.</exception>
 		public bool Import(Mesh originalMesh, Material[] materials, MeshImportSettings importSettings = null)
 		{
             if (originalMesh == null)
@@ -143,42 +127,42 @@ namespace UnityEngine.ProBuilder.MeshOperations
             if (importSettings == null)
 				importSettings = k_DefaultImportSettings;
 
-			// When importing the mesh is always split into triangles with no vertices shared
-			// between faces. In a later step co-incident vertices are collapsed (eg, before
+			// When importing the mesh is always split into triangles with no vertexes shared
+			// between faces. In a later step co-incident vertexes are collapsed (eg, before
 			// leaving the Import function).
-			Vertex[] sourceVertices = Vertex.GetVertices(originalMesh);
-			List<Vertex> splitVertices = new List<Vertex>();
+			Vertex[] sourceVertexes = originalMesh.GetVertexes();
+			List<Vertex> splitVertexes = new List<Vertex>();
 			List<Face> faces = new List<Face>();
 
-			// Fill in Faces array with just the position indices. In the next step we'll
+			// Fill in Faces array with just the position indexes. In the next step we'll
 			// figure out smoothing groups & merging
 			int vertexIndex = 0;
 			int materialCount = materials != null ? materials.Length : 0;
 
 			for(int subMeshIndex = 0; subMeshIndex < originalMesh.subMeshCount; subMeshIndex++)
 			{
-				Material material = materialCount > 0 ? materials[subMeshIndex % materialCount] : BuiltinMaterials.DefaultMaterial;
+				Material material = materialCount > 0 ? materials[subMeshIndex % materialCount] : BuiltinMaterials.defaultMaterial;
 
 				switch(originalMesh.GetTopology(subMeshIndex))
 				{
 					case UnityEngine.MeshTopology.Triangles:
 					{
-						int[] indices = originalMesh.GetIndices(subMeshIndex);
+						int[] indexes = originalMesh.GetIndices(subMeshIndex);
 
-						for(int tri = 0; tri < indices.Length; tri += 3)
+						for(int tri = 0; tri < indexes.Length; tri += 3)
 						{
 							faces.Add(new Face(
 								new int[] { vertexIndex, vertexIndex + 1, vertexIndex + 2 },
 								material,
-								new AutoUnwrapSettings(),
+								AutoUnwrapSettings.tile,
 								Smoothing.smoothingGroupNone,
 								-1,
 								-1,
 								true));
 
-							splitVertices.Add(sourceVertices[indices[tri  ]]);
-							splitVertices.Add(sourceVertices[indices[tri+1]]);
-							splitVertices.Add(sourceVertices[indices[tri+2]]);
+							splitVertexes.Add(sourceVertexes[indexes[tri  ]]);
+							splitVertexes.Add(sourceVertexes[indexes[tri+1]]);
+							splitVertexes.Add(sourceVertexes[indexes[tri+2]]);
 
 							vertexIndex += 3;
 						}
@@ -187,24 +171,24 @@ namespace UnityEngine.ProBuilder.MeshOperations
 
 					case UnityEngine.MeshTopology.Quads:
 					{
-						int[] indices = originalMesh.GetIndices(subMeshIndex);
+						int[] indexes = originalMesh.GetIndices(subMeshIndex);
 
-						for(int quad = 0; quad < indices.Length; quad += 4)
+						for(int quad = 0; quad < indexes.Length; quad += 4)
 						{
 							faces.Add(new Face(new int[] {
 								vertexIndex    , vertexIndex + 1, vertexIndex + 2,
 								vertexIndex + 1, vertexIndex + 2, vertexIndex + 3 },
 								material,
-								new AutoUnwrapSettings(),
+								AutoUnwrapSettings.tile,
 								Smoothing.smoothingGroupNone,
 								-1,
 								-1,
 								true));
 
-							splitVertices.Add(sourceVertices[indices[quad  ]]);
-							splitVertices.Add(sourceVertices[indices[quad+1]]);
-							splitVertices.Add(sourceVertices[indices[quad+2]]);
-							splitVertices.Add(sourceVertices[indices[quad+3]]);
+							splitVertexes.Add(sourceVertexes[indexes[quad  ]]);
+							splitVertexes.Add(sourceVertexes[indexes[quad+1]]);
+							splitVertexes.Add(sourceVertexes[indexes[quad+2]]);
+							splitVertexes.Add(sourceVertexes[indexes[quad+3]]);
 
 							vertexIndex += 4;
 						}
@@ -212,17 +196,17 @@ namespace UnityEngine.ProBuilder.MeshOperations
 					break;
 
 					default:
-						throw new System.NotImplementedException("ProBuilder only supports importing triangle and quad meshes.");
+						throw new System.NotSupportedException("ProBuilder only supports importing triangle and quad meshes.");
 				}
 			}
 
-			m_Vertices = splitVertices.ToArray();
+			m_Vertexes = splitVertexes.ToArray();
 
 			m_Mesh.Clear();
-			m_Mesh.SetVertices(m_Vertices);
-			m_Mesh.SetFaces(faces);
-			m_Mesh.SetSharedIndexes(IntArrayUtility.GetSharedIndexesWithPositions(m_Mesh.positionsInternal));
-			m_Mesh.SetSharedIndexesUV(new IntArray[0]);
+			m_Mesh.SetVertexes(m_Vertexes);
+			m_Mesh.faces = faces;
+			m_Mesh.sharedVertexes = SharedVertex.GetSharedVertexesWithPositions(m_Mesh.positionsInternal);
+			m_Mesh.sharedTextures = new SharedVertex[0];
 
 			HashSet<Face> processed = new HashSet<Face>();
 
@@ -235,12 +219,17 @@ namespace UnityEngine.ProBuilder.MeshOperations
 
 				for(int i = 0; i < wings.Count; i++)
 				{
-					foreach(WingedEdge border in wings[i])
+					using(var it = new WingedEdgeEnumerator(wings[i]))
 					{
-						if(border.opposite != null && !connections.ContainsKey(border.edge))
+						while(it.MoveNext())
 						{
-							float score = GetQuadScore(border, border.opposite);
-							connections.Add(border.edge, score);
+							var border = it.Current;
+
+							if (border.opposite != null && !connections.ContainsKey(border.edge))
+							{
+								float score = GetQuadScore(border, border.opposite);
+								connections.Add(border.edge, score);
+							}
 						}
 					}
 				}
@@ -256,20 +245,25 @@ namespace UnityEngine.ProBuilder.MeshOperations
 					float bestScore = 0f;
 					Face buddy = null;
 
-					foreach(WingedEdge border in face)
+					using (var it = new WingedEdgeEnumerator(face))
 					{
-						if(border.opposite != null && processed.Contains(border.opposite.face))
-							continue;
-
-						float borderScore;
-
-						// only add it if the opposite face's best score is also this face
-						if( connections.TryGetValue(border.edge, out borderScore) &&
-							borderScore > bestScore &&
-							face.face == GetBestQuadConnection(border.opposite, connections))
+						while(it.MoveNext())
 						{
-							bestScore = borderScore;
-							buddy = border.opposite.face;
+							var border = it.Current;
+
+							if (border.opposite != null && processed.Contains(border.opposite.face))
+								continue;
+
+							float borderScore;
+
+							// only add it if the opposite face's best score is also this face
+							if (connections.TryGetValue(border.edge, out borderScore) &&
+								borderScore > bestScore &&
+								face.face == GetBestQuadConnection(border.opposite, connections))
+							{
+								bestScore = borderScore;
+								buddy = border.opposite.face;
+							}
 						}
 					}
 
@@ -280,15 +274,15 @@ namespace UnityEngine.ProBuilder.MeshOperations
 					}
 				}
 
-				// don't collapse coincident vertices if smoothing is enabled, we need the original normals intact
+				// don't collapse coincident vertexes if smoothing is enabled, we need the original normals intact
 				MergeElements.MergePairs(m_Mesh, quads, !importSettings.smoothing);
 			}
 
 			if(importSettings.smoothing)
 			{
-				Smoothing.ApplySmoothingGroups(m_Mesh, m_Mesh.facesInternal, importSettings.smoothingAngle, m_Vertices.Select(x => x.normal).ToArray());
-				// After smoothing has been applied go back and weld coincident vertices created by MergePairs.
-				MergeElements.CollapseCoincidentVertices(m_Mesh, m_Mesh.facesInternal);
+				Smoothing.ApplySmoothingGroups(m_Mesh, m_Mesh.facesInternal, importSettings.smoothingAngle, m_Vertexes.Select(x => x.normal).ToArray());
+				// After smoothing has been applied go back and weld coincident vertexes created by MergePairs.
+				MergeElements.CollapseCoincidentVertexes(m_Mesh, m_Mesh.facesInternal);
 			}
 
 			return false;
@@ -299,14 +293,19 @@ namespace UnityEngine.ProBuilder.MeshOperations
 			float score = 0f;
 			Face face = null;
 
-			foreach(WingedEdge border in wing)
+			using (var it = new WingedEdgeEnumerator(wing))
 			{
-				float s = 0f;
-
-				if(connections.TryGetValue(border.edge, out s) && s > score)
+				while(it.MoveNext())
 				{
-					score = connections[border.edge];
-					face = border.opposite.face;
+					var border = it.Current;
+					
+					float s = 0f;
+
+					if (connections.TryGetValue(border.edge, out s) && s > score)
+					{
+						score = connections[border.edge];
+						face = border.opposite.face;
+					}
 				}
 			}
 
@@ -326,8 +325,8 @@ namespace UnityEngine.ProBuilder.MeshOperations
 				return 0f;
 
 			// first check normals
-			Vector3 leftNormal = Math.Normal(m_Vertices[quad[0]].position, m_Vertices[quad[1]].position, m_Vertices[quad[2]].position);
-			Vector3 rightNormal = Math.Normal(m_Vertices[quad[2]].position, m_Vertices[quad[3]].position, m_Vertices[quad[0]].position);
+			Vector3 leftNormal = Math.Normal(m_Vertexes[quad[0]].position, m_Vertexes[quad[1]].position, m_Vertexes[quad[2]].position);
+			Vector3 rightNormal = Math.Normal(m_Vertexes[quad[2]].position, m_Vertexes[quad[3]].position, m_Vertexes[quad[0]].position);
 
 			float score = Vector3.Dot(leftNormal, rightNormal);
 
@@ -335,10 +334,10 @@ namespace UnityEngine.ProBuilder.MeshOperations
 				return 0f;
 
 			// next is right-angle-ness check
-			Vector3 a = (m_Vertices[quad[1]].position - m_Vertices[quad[0]].position);
-			Vector3 b = (m_Vertices[quad[2]].position - m_Vertices[quad[1]].position);
-			Vector3 c = (m_Vertices[quad[3]].position - m_Vertices[quad[2]].position);
-			Vector3 d = (m_Vertices[quad[0]].position - m_Vertices[quad[3]].position);
+			Vector3 a = (m_Vertexes[quad[1]].position - m_Vertexes[quad[0]].position);
+			Vector3 b = (m_Vertexes[quad[2]].position - m_Vertexes[quad[1]].position);
+			Vector3 c = (m_Vertexes[quad[3]].position - m_Vertexes[quad[2]].position);
+			Vector3 d = (m_Vertexes[quad[0]].position - m_Vertexes[quad[3]].position);
 
 			a.Normalize();
 			b.Normalize();

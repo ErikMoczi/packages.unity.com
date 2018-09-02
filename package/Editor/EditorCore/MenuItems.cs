@@ -44,7 +44,7 @@ namespace UnityEditor.ProBuilder
 			ProBuilderEditor e = ProBuilderEditor.instance;
 
 			return e != null &&
-			       e.editLevel == EditLevel.Geometry &&
+			       ProBuilderEditor.editLevel == EditLevel.Geometry &&
 			       selection != null &&
 			       selection.Length > 0 &&
 			       (selection.Any(x => x.selectedEdgeCount > 0) || selection.Any(x => x.selectedFacesInternal.Length > 0));
@@ -60,26 +60,26 @@ namespace UnityEditor.ProBuilder
 		[MenuItem("Tools/" + PreferenceKeys.pluginTitle + "/Selection/Select Ring &r", true, PreferenceKeys.menuSelection)]
 		private static bool MenuVerifyRingLoop()
 		{
-			if (editor == null || editor.editLevel != EditLevel.Geometry)
+			if (editor == null || ProBuilderEditor.editLevel != EditLevel.Geometry)
 				return false;
 
-			if (editor.selectionMode == SelectMode.Edge)
-				return MeshSelection.Top().Any(x => x.selectedEdgeCount > 0);
-			else if (editor.selectionMode == SelectMode.Face)
-				return MeshSelection.Top().Any(x => x.selectedFaceCount > 0);
+			if (ProBuilderEditor.componentMode == ComponentMode.Edge)
+				return MeshSelection.TopInternal().Any(x => x.selectedEdgeCount > 0);
+			else if (ProBuilderEditor.componentMode == ComponentMode.Face)
+				return MeshSelection.TopInternal().Any(x => x.selectedFaceCount > 0);
 			return false;
 		}
 
 		[MenuItem("Tools/" + PreferenceKeys.pluginTitle + "/Selection/Select Loop &l", false, PreferenceKeys.menuSelection)]
 		private static void MenuSelectLoop()
 		{
-			switch (editor.selectionMode)
+			switch (ProBuilderEditor.componentMode)
 			{
-				case SelectMode.Edge:
+				case ComponentMode.Edge:
 					MenuCommands.MenuLoopSelection(selection);
 					break;
 
-				case SelectMode.Face:
+				case ComponentMode.Face:
 					MenuCommands.MenuLoopFaces(selection);
 					break;
 			}
@@ -88,13 +88,13 @@ namespace UnityEditor.ProBuilder
 		[MenuItem("Tools/" + PreferenceKeys.pluginTitle + "/Selection/Select Ring &r", false, PreferenceKeys.menuSelection)]
 		private static void MenuSelectRing()
 		{
-			switch (editor.selectionMode)
+			switch (ProBuilderEditor.componentMode)
 			{
-				case SelectMode.Edge:
+				case ComponentMode.Edge:
 					MenuCommands.MenuRingSelection(selection);
 					break;
 
-				case SelectMode.Face:
+				case ComponentMode.Face:
 					MenuCommands.MenuRingFaces(selection);
 					break;
 			}

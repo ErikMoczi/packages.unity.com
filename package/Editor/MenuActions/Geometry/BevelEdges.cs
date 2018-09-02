@@ -22,26 +22,32 @@ namespace UnityEditor.ProBuilder.Actions
 			@"Smooth the selected edges by adding a slanted face connecting the two adjacent faces."
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			return 	ProBuilderEditor.instance != null &&
-					ProBuilderEditor.instance.editLevel == EditLevel.Geometry &&
-					MeshSelection.Top().Any(x => x.selectedEdgeCount > 0);
+			get
+			{
+				return ProBuilderEditor.instance != null &&
+					ProBuilderEditor.editLevel == EditLevel.Geometry &&
+					MeshSelection.TopInternal().Any(x => x.selectedEdgeCount > 0);
+			}
 		}
 
-		public override MenuActionState AltState()
+		protected override MenuActionState optionsMenuState
 		{
-			return MenuActionState.VisibleAndEnabled;
+			get { return MenuActionState.VisibleAndEnabled; }
 		}
 
-		public override bool IsHidden()
+		public override bool hidden
 		{
-			return 	ProBuilderEditor.instance == null ||
+			get
+			{
+				return ProBuilderEditor.instance == null ||
 					editLevel != EditLevel.Geometry ||
-					(selectionMode & (SelectMode.Face | SelectMode.Edge)) == 0;
+					(componentMode & (ComponentMode.Face | ComponentMode.Edge)) == 0;
+			}
 		}
 
-		public override void OnSettingsGUI()
+		protected override void OnSettingsGUI()
 		{
 			GUILayout.Label("Bevel Edge Settings", EditorStyles.boldLabel);
 
@@ -65,7 +71,7 @@ namespace UnityEditor.ProBuilder.Actions
 
 		public override ActionResult DoAction()
 		{
-			return MenuCommands.MenuBevelEdges(MeshSelection.Top());
+			return MenuCommands.MenuBevelEdges(MeshSelection.TopInternal());
 		}
 	}
 }

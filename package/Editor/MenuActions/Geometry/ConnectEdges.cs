@@ -21,25 +21,30 @@ namespace UnityEditor.ProBuilder.Actions
 			keyCommandAlt, 'E'
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			return ProBuilderEditor.instance != null &&
-				ProBuilderEditor.instance.editLevel == EditLevel.Geometry &&
-				ProBuilderEditor.instance.selectionMode == SelectMode.Edge &&
-				MeshSelection.Top().Any(x => x.selectedEdgeCount > 1);
+			get
+			{
+				return ProBuilderEditor.instance != null &&
+					ProBuilderEditor.editLevel == EditLevel.Geometry &&
+					ProBuilderEditor.componentMode == ComponentMode.Edge &&
+					MeshSelection.TopInternal().Any(x => x.selectedEdgeCount > 1);
+			}
 		}
 
-		public override bool IsHidden()
+		public override bool hidden
 		{
-			return 	ProBuilderEditor.instance == null ||
-					ProBuilderEditor.instance.editLevel != EditLevel.Geometry ||
-					ProBuilderEditor.instance.selectionMode != SelectMode.Edge;
-
+			get
+			{
+				return ProBuilderEditor.instance == null ||
+					ProBuilderEditor.editLevel != EditLevel.Geometry ||
+					ProBuilderEditor.componentMode != ComponentMode.Edge;
+			}
 		}
 
 		public override ActionResult DoAction()
 		{
-			return MenuCommands.MenuConnectEdges(MeshSelection.Top());
+			return MenuCommands.MenuConnectEdges(MeshSelection.TopInternal());
 		}
 	}
 }

@@ -16,7 +16,7 @@ namespace UnityEngine.ProBuilder
 		[Obsolete("Use pb_Material.Default")]
 		public static Material DefaultMaterial
 		{
-			get { return BuiltinMaterials.DefaultMaterial; }
+			get { return BuiltinMaterials.defaultMaterial; }
 		}
 
 		internal const HideFlags k_EditorHideFlags = (HideFlags) (1 | 2 | 4 | 8);
@@ -131,7 +131,7 @@ namespace UnityEngine.ProBuilder
 		internal const string pbLineHandleSize = "pbLineHandleSize";
 		internal const string pbWireframeSize = "pbWireframeSize";
 
-		/// The maximum allowed distance between vertices to weld.
+		/// The maximum allowed distance between vertexes to weld.
 		internal const string pbWeldDistance = "pbWeldDistance";
 
 		internal const string pbExtrudeDistance = "pbExtrudeDistance";

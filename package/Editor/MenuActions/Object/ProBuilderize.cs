@@ -43,20 +43,23 @@ namespace UnityEditor.ProBuilder.Actions
 			@"Creates ProBuilder-modifiable objects from meshes."
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			int meshCount = Selection.transforms.SelectMany(x => x.GetComponentsInChildren<MeshFilter>()).Count();
+			get
+			{
+				int meshCount = Selection.transforms.SelectMany(x => x.GetComponentsInChildren<MeshFilter>()).Count();
 
-			return meshCount > 0 &&
-				meshCount != MeshSelection.Top().Length;
+				return meshCount > 0 &&
+					meshCount != MeshSelection.TopInternal().Length;
+			}
 		}
 
-		public override MenuActionState AltState()
+		protected override MenuActionState optionsMenuState
 		{
-			return MenuActionState.VisibleAndEnabled;
+			get { return MenuActionState.VisibleAndEnabled; }
 		}
 
-		public override void OnSettingsGUI()
+		protected override void OnSettingsGUI()
 		{
 			GUILayout.Label("ProBuilderize Options", EditorStyles.boldLabel);
 
@@ -84,7 +87,7 @@ namespace UnityEditor.ProBuilder.Actions
 
 			GUILayout.FlexibleSpace();
 
-			GUI.enabled = IsEnabled();
+			GUI.enabled = enabled;
 
 			if (GUILayout.Button("ProBuilderize"))
 				EditorUtility.ShowNotification(DoAction().notification);

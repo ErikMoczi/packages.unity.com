@@ -8,22 +8,22 @@ using System;
 namespace UnityEngine.ProBuilder.MeshOperations
 {
 	/// <summary>
-	/// Store face rebuild data with indices to mark which vertices are new.
+	/// Store face rebuild data with indexes to mark which vertexes are new.
 	/// </summary>
 	sealed class ConnectFaceRebuildData
 	{
 		public FaceRebuildData faceRebuildData;
-		public List<int> newVertexIndices;
+		public List<int> newVertexIndexes;
 
-		public ConnectFaceRebuildData(FaceRebuildData faceRebuildData, List<int> newVertexIndices)
+		public ConnectFaceRebuildData(FaceRebuildData faceRebuildData, List<int> newVertexIndexes)
 		{
 			this.faceRebuildData = faceRebuildData;
-			this.newVertexIndices = newVertexIndices;
+			this.newVertexIndexes = newVertexIndexes;
 		}
 	};
 
 	/// <summary>
-	/// Utility class for connecting edges, faces, and vertices.
+	/// Utility class for connecting edges, faces, and vertexes.
 	/// </summary>
 	public static class ConnectElements
 	{
@@ -61,8 +61,8 @@ namespace UnityEngine.ProBuilder.MeshOperations
 		/// Inserts edges connecting a list of indexes.
 		/// </summary>
 		/// <param name="mesh">The target mesh.</param>
-		/// <param name="indexes">A list of indices (corresponding to the @"UnityEngine.ProBuilder.ProBuilderMesh.positions" array) to connect with new edges.</param>
-		/// <returns>A list of newly created vertex indices.</returns>
+		/// <param name="indexes">A list of indexes (corresponding to the @"UnityEngine.ProBuilder.ProBuilderMesh.positions" array) to connect with new edges.</param>
+		/// <returns>Because this function may modify the ordering of the positions array, a new array containing the equivalent values of the passed connected indexes is returned.</returns>
 		public static int[] Connect(this ProBuilderMesh mesh, IList<int> indexes)
 		{
             if (mesh == null)
@@ -71,26 +71,26 @@ namespace UnityEngine.ProBuilder.MeshOperations
             if (indexes == null)
                 throw new ArgumentNullException("indexes");
 
-			int sharedIndexOffset = mesh.sharedIndicesInternal.Length;
-			Dictionary<int, int> lookup = mesh.sharedIndicesInternal.ToDictionary();
+			int sharedIndexOffset = mesh.sharedVertexesInternal.Length;
+			Dictionary<int, int> lookup = mesh.sharedVertexLookup;
 
 			HashSet<int> distinct = new HashSet<int>(indexes.Select(x=>lookup[x]));
 			HashSet<int> affected = new HashSet<int>();
 
 			foreach(int i in distinct)
-				affected.UnionWith(mesh.sharedIndicesInternal[i].array);
+				affected.UnionWith(mesh.sharedVertexesInternal[i].arrayInternal);
 
 			Dictionary<Face, List<int>> splits = new Dictionary<Face, List<int>>();
-			List<Vertex> vertices = new List<Vertex>(Vertex.GetVertices(mesh));
+			List<Vertex> vertexes = new List<Vertex>(mesh.GetVertexes());
 
 			foreach(Face face in mesh.facesInternal)
 			{
-				int[] faceIndices = face.distinctIndices;
+				int[] f = face.distinctIndexesInternal;
 
-				for(int i = 0; i < faceIndices.Length; i++)
+				for(int i = 0; i < f.Length; i++)
 				{
-					if( affected.Contains(faceIndices[i]) )
-						splits.AddOrAppend(face, faceIndices[i]);
+					if( affected.Contains(f[i]) )
+						splits.AddOrAppend(face, f[i]);
 				}
 			}
 
@@ -104,8 +104,8 @@ namespace UnityEngine.ProBuilder.MeshOperations
 				Face face = split.Key;
 
 				List<ConnectFaceRebuildData> res = split.Value.Count == 2 ?
-					ConnectIndicesInFace(face, split.Value[0], split.Value[1], vertices, lookup) :
-					ConnectIndicesInFace(face, split.Value, vertices, lookup, sharedIndexOffset++);
+					ConnectIndexesPerFace(face, split.Value[0], split.Value[1], vertexes, lookup) :
+					ConnectIndexesPerFace(face, split.Value, vertexes, lookup, sharedIndexOffset++);
 
 				if(res == null)
 					continue;
@@ -131,28 +131,25 @@ namespace UnityEngine.ProBuilder.MeshOperations
 				appendFaces.AddRange(res);
 			}
 
-			FaceRebuildData.Apply( appendFaces.Select(x => x.faceRebuildData), mesh, vertices, null, lookup, null );
-			mesh.SetSharedIndexes(lookup);
-			mesh.SetSharedIndexesUV(new IntArray[0]);
+			FaceRebuildData.Apply( appendFaces.Select(x => x.faceRebuildData), mesh, vertexes, null );
 			int removedVertexCount = mesh.DeleteFaces(successfulSplits).Length;
+			lookup = mesh.sharedVertexLookup;
 
-			lookup = mesh.sharedIndicesInternal.ToDictionary();
-
-			HashSet<int> newVertexIndices = new HashSet<int>();
+			HashSet<int> newVertexIndexes = new HashSet<int>();
 
 			for(int i = 0; i < appendFaces.Count; i++)
-				for(int n = 0; n < appendFaces[i].newVertexIndices.Count; n++)
-					newVertexIndices.Add( lookup[appendFaces[i].newVertexIndices[n] + (appendFaces[i].faceRebuildData.Offset() - removedVertexCount)] );
+				for(int n = 0; n < appendFaces[i].newVertexIndexes.Count; n++)
+					newVertexIndexes.Add( lookup[appendFaces[i].newVertexIndexes[n] + (appendFaces[i].faceRebuildData.Offset() - removedVertexCount)] );
 
 			mesh.ToMesh();
 
-            return newVertexIndices.Select(x => mesh.sharedIndicesInternal[x][0]).ToArray();
+            return newVertexIndexes.Select(x => mesh.sharedVertexesInternal[x][0]).ToArray();
 		}
 
 		/// <summary>
 		/// Inserts new edges connecting the passed edges, optionally restricting new edge insertion to faces in faceMask.
 		/// </summary>
-		/// <param name="pb"></param>
+		/// <param name="mesh"></param>
 		/// <param name="edges"></param>
 		/// <param name="addedFaces"></param>
 		/// <param name="connections"></param>
@@ -161,7 +158,7 @@ namespace UnityEngine.ProBuilder.MeshOperations
 		/// <param name="faceMask"></param>
 		/// <returns></returns>
 		static ActionResult Connect(
-			this ProBuilderMesh pb,
+			this ProBuilderMesh mesh,
 			IEnumerable<Edge> edges,
 			out Face[] addedFaces,
 			out Edge[] connections,
@@ -169,19 +166,19 @@ namespace UnityEngine.ProBuilder.MeshOperations
 			bool returnEdges = false,
 			HashSet<Face> faceMask = null)
 		{
-			Dictionary<int, int> lookup = pb.sharedIndicesInternal.ToDictionary();
-			Dictionary<int, int> lookupUV = pb.sharedIndicesUVInternal != null ? pb.sharedIndicesUVInternal.ToDictionary() : null;
+			Dictionary<int, int> lookup = mesh.sharedVertexLookup;
+			Dictionary<int, int> lookupUV = mesh.sharedTextureLookup;
 			HashSet<EdgeLookup> distinctEdges = new HashSet<EdgeLookup>(EdgeLookup.GetEdgeLookup(edges, lookup));
-			List<WingedEdge> wings = WingedEdge.GetWingedEdges(pb);
+			List<WingedEdge> wings = WingedEdge.GetWingedEdges(mesh);
 
 			// map each edge to a face so that we have a list of all touched faces with their to-be-subdivided edges
 			Dictionary<Face, List<WingedEdge>> touched = new Dictionary<Face, List<WingedEdge>>();
-			List<WingedEdge> faceEdges;
 
 			foreach(WingedEdge wing in wings)
 			{
 				if( distinctEdges.Contains(wing.edge) )
 				{
+					List<WingedEdge> faceEdges;
 					if(touched.TryGetValue(wing.face, out faceEdges))
 						faceEdges.Add(wing);
 					else
@@ -213,12 +210,12 @@ namespace UnityEngine.ProBuilder.MeshOperations
 				affected.Add(kvp.Key, kvp.Value);
 			}
 
-			List<Vertex> vertices = new List<Vertex>( Vertex.GetVertices(pb) );
+			List<Vertex> vertexes = new List<Vertex>( mesh.GetVertexes() );
 			List<ConnectFaceRebuildData> results = new List<ConnectFaceRebuildData>();
 			// just the faces that where connected with > 1 edge
 			List<Face> connectedFaces = new List<Face>();
 
-			HashSet<int> usedTextureGroups = new HashSet<int>(pb.facesInternal.Select(x => x.textureGroup));
+			HashSet<int> usedTextureGroups = new HashSet<int>(mesh.facesInternal.Select(x => x.textureGroup));
 			int newTextureGroupIndex = 1;
 
 			// do the splits
@@ -227,13 +224,13 @@ namespace UnityEngine.ProBuilder.MeshOperations
 				Face face = split.Key;
 				List<WingedEdge> targetEdges = split.Value;
 				int inserts = targetEdges.Count;
-				Vector3 nrm = Math.Normal(vertices, face.indices);
+				Vector3 nrm = Math.Normal(vertexes, face.indexesInternal);
 
 				if(inserts == 1 || (faceMask != null && !faceMask.Contains(face)))
 				{
-					ConnectFaceRebuildData c = InsertVertices(face, targetEdges, vertices);
+					ConnectFaceRebuildData c = InsertVertexes(face, targetEdges, vertexes);
 
-					Vector3 fn = Math.Normal(c.faceRebuildData.vertices, c.faceRebuildData.face.indices);
+					Vector3 fn = Math.Normal(c.faceRebuildData.vertexes, c.faceRebuildData.face.indexesInternal);
 
 					if(Vector3.Dot(nrm, fn) < 0)
 						c.faceRebuildData.face.Reverse();
@@ -244,8 +241,8 @@ namespace UnityEngine.ProBuilder.MeshOperations
 				if(inserts > 1)
 				{
 					List<ConnectFaceRebuildData> res = inserts == 2 ?
-						ConnectEdgesInFace(face, targetEdges[0], targetEdges[1], vertices) :
-						ConnectEdgesInFace(face, targetEdges, vertices);
+						ConnectEdgesInFace(face, targetEdges[0], targetEdges[1], vertexes) :
+						ConnectEdgesInFace(face, targetEdges, vertexes);
 
 					if(face.textureGroup < 0)
 					{
@@ -259,7 +256,7 @@ namespace UnityEngine.ProBuilder.MeshOperations
 					{
 						connectedFaces.Add(c.faceRebuildData.face);
 
-						Vector3 fn = Math.Normal(c.faceRebuildData.vertices, c.faceRebuildData.face.indices);
+						Vector3 fn = Math.Normal(c.faceRebuildData.vertexes, c.faceRebuildData.face.indexesInternal);
 
 						if(Vector3.Dot(nrm, fn) < 0)
 							c.faceRebuildData.face.Reverse();
@@ -275,25 +272,25 @@ namespace UnityEngine.ProBuilder.MeshOperations
 				}
 			}
 
-			FaceRebuildData.Apply(results.Select(x => x.faceRebuildData), pb, vertices, null, lookup, lookupUV);
+			FaceRebuildData.Apply(results.Select(x => x.faceRebuildData), mesh, vertexes, null);
 
-			pb.SetSharedIndexesUV(new IntArray[0]);
-			int removedVertexCount = pb.DeleteFaces(affected.Keys).Length;
-			pb.SetSharedIndexes(IntArrayUtility.GetSharedIndexesWithPositions(pb.positionsInternal));
-			pb.ToMesh();
+			mesh.sharedTextures = new SharedVertex[0];
+			int removedVertexCount = mesh.DeleteFaces(affected.Keys).Length;
+			mesh.sharedVertexes = SharedVertex.GetSharedVertexesWithPositions(mesh.positionsInternal);
+			mesh.ToMesh();
 
 			// figure out where the new edges where inserted
 			if(returnEdges)
 			{
-				// offset the newVertexIndices by whatever the FaceRebuildData did so we can search for the new edges by index
-				HashSet<int> appendedIndices = new HashSet<int>();
+				// offset the newVertexIndexes by whatever the FaceRebuildData did so we can search for the new edges by index
+				var appended = new HashSet<int>();
 
 				for(int n = 0; n < results.Count; n++)
-					for(int i = 0; i < results[n].newVertexIndices.Count; i++)
-						appendedIndices.Add( ( results[n].newVertexIndices[i] + results[n].faceRebuildData.Offset() ) - removedVertexCount );
+					for(int i = 0; i < results[n].newVertexIndexes.Count; i++)
+						appended.Add( ( results[n].newVertexIndexes[i] + results[n].faceRebuildData.Offset() ) - removedVertexCount );
 
-				Dictionary<int, int> lup = pb.sharedIndicesInternal.ToDictionary();
-				IEnumerable<Edge> newEdges = results.SelectMany(x => x.faceRebuildData.face.edgesInternal).Where(x => appendedIndices.Contains(x.x) && appendedIndices.Contains(x.y));
+				Dictionary<int, int> lup = mesh.sharedVertexLookup;
+				IEnumerable<Edge> newEdges = results.SelectMany(x => x.faceRebuildData.face.edgesInternal).Where(x => appended.Contains(x.a) && appended.Contains(x.b));
 				IEnumerable<EdgeLookup> distNewEdges = EdgeLookup.GetEdgeLookup(newEdges, lup);
 
 				connections = distNewEdges.Distinct().Select(x => x.local).ToArray();
@@ -317,51 +314,51 @@ namespace UnityEngine.ProBuilder.MeshOperations
 		/// <param name="face"></param>
 		/// <param name="a"></param>
 		/// <param name="b"></param>
-		/// <param name="vertices"></param>
+		/// <param name="vertexes"></param>
 		/// <returns></returns>
 		static List<ConnectFaceRebuildData> ConnectEdgesInFace(
 			Face face,
 			WingedEdge a,
 			WingedEdge b,
-			List<Vertex> vertices)
+			List<Vertex> vertexes)
 		{
 			List<Edge> perimeter = WingedEdge.SortEdgesByAdjacency(face);
 
-			List<Vertex>[] n_vertices = new List<Vertex>[2] {
+			List<Vertex>[] n_vertexes = new List<Vertex>[2] {
 				new List<Vertex>(),
 				new List<Vertex>()
 			};
 
-			List<int>[] n_indices = new List<int>[2] {
+			List<int>[] n_indexes = new List<int>[2] {
 				new List<int>(),
 				new List<int>()
 			};
 
 			int index = 0;
 
-			// creates two new polygon perimeter lines by stepping the current face perimeter and inserting new vertices where edges match
+			// creates two new polygon perimeter lines by stepping the current face perimeter and inserting new vertexes where edges match
 			for(int i = 0; i < perimeter.Count; i++)
 			{
-				n_vertices[index % 2].Add(vertices[perimeter[i].x]);
+				n_vertexes[index % 2].Add(vertexes[perimeter[i].a]);
 
 				if(perimeter[i].Equals(a.edge.local) || perimeter[i].Equals(b.edge.local))
 				{
-					Vertex mix = Vertex.Mix(vertices[perimeter[i].x], vertices[perimeter[i].y], .5f);
+					Vertex mix = Vertex.Mix(vertexes[perimeter[i].a], vertexes[perimeter[i].b], .5f);
 
-					n_indices[index % 2].Add(n_vertices[index % 2].Count);
-					n_vertices[index % 2].Add(mix);
+					n_indexes[index % 2].Add(n_vertexes[index % 2].Count);
+					n_vertexes[index % 2].Add(mix);
 					index++;
-					n_indices[index % 2].Add(n_vertices[index % 2].Count);
-					n_vertices[index % 2].Add(mix);
+					n_indexes[index % 2].Add(n_vertexes[index % 2].Count);
+					n_vertexes[index % 2].Add(mix);
 				}
 			}
 
 			List<ConnectFaceRebuildData> faces = new List<ConnectFaceRebuildData>();
 
-			for(int i = 0; i < n_vertices.Length; i++)
+			for(int i = 0; i < n_vertexes.Length; i++)
 			{
-				FaceRebuildData f = AppendElements.FaceWithVertices(n_vertices[i], false);
-				faces.Add(new ConnectFaceRebuildData(f, n_indices[i]));
+				FaceRebuildData f = AppendElements.FaceWithVertexes(n_vertexes[i], false);
+				faces.Add(new ConnectFaceRebuildData(f, n_indexes[i]));
 			}
 
 			return faces;
@@ -372,80 +369,80 @@ namespace UnityEngine.ProBuilder.MeshOperations
 		/// </summary>
 		/// <param name="face"></param>
 		/// <param name="edges"></param>
-		/// <param name="vertices"></param>
+		/// <param name="vertexes"></param>
 		/// <returns></returns>
 		static List<ConnectFaceRebuildData> ConnectEdgesInFace(
 			Face face,
 			List<WingedEdge> edges,
-			List<Vertex> vertices)
+			List<Vertex> vertexes)
 		{
 			List<Edge> perimeter = WingedEdge.SortEdgesByAdjacency(face);
 			int splitCount = edges.Count;
 
-			Vertex centroid = Vertex.Average(vertices, face.distinctIndices);
+			Vertex centroid = Vertex.Average(vertexes, face.distinctIndexesInternal);
 
-			List<List<Vertex>> n_vertices = ArrayUtility.Fill<List<Vertex>>(x => { return new List<Vertex>(); }, splitCount);
-			List<List<int>> n_indices = ArrayUtility.Fill<List<int>>(x => { return new List<int>(); }, splitCount);
+			List<List<Vertex>> n_vertexes = ArrayUtility.Fill<List<Vertex>>(x => { return new List<Vertex>(); }, splitCount);
+			List<List<int>> n_indexes = ArrayUtility.Fill<List<int>>(x => { return new List<int>(); }, splitCount);
 
 			HashSet<Edge> edgesToSplit = new HashSet<Edge>(edges.Select(x => x.edge.local));
 
 			int index = 0;
 
-			// creates two new polygon perimeter lines by stepping the current face perimeter and inserting new vertices where edges match
+			// creates two new polygon perimeter lines by stepping the current face perimeter and inserting new vertexes where edges match
 			for(int i = 0; i < perimeter.Count; i++)
 			{
-				n_vertices[index % splitCount].Add(vertices[perimeter[i].x]);
+				n_vertexes[index % splitCount].Add(vertexes[perimeter[i].a]);
 
 				if( edgesToSplit.Contains(perimeter[i]) )
 				{
-					Vertex mix = Vertex.Mix(vertices[perimeter[i].x], vertices[perimeter[i].y], .5f);
+					Vertex mix = Vertex.Mix(vertexes[perimeter[i].a], vertexes[perimeter[i].b], .5f);
 
 					// split current poly line
-					n_indices[index].Add(n_vertices[index].Count);
-					n_vertices[index].Add(mix);
+					n_indexes[index].Add(n_vertexes[index].Count);
+					n_vertexes[index].Add(mix);
 
 					// add the centroid vertex
-					n_indices[index].Add(n_vertices[index].Count);
-					n_vertices[index].Add(centroid);
+					n_indexes[index].Add(n_vertexes[index].Count);
+					n_vertexes[index].Add(centroid);
 
 					// advance the poly line index
 					index = (index + 1) % splitCount;
 
 					// then add the edge center vertex and move on
-					n_vertices[index].Add(mix);
+					n_vertexes[index].Add(mix);
 				}
 			}
 
 			List<ConnectFaceRebuildData> faces = new List<ConnectFaceRebuildData>();
 
-			for(int i = 0; i < n_vertices.Count; i++)
+			for(int i = 0; i < n_vertexes.Count; i++)
 			{
-				FaceRebuildData f = AppendElements.FaceWithVertices(n_vertices[i], false);
-				faces.Add(new ConnectFaceRebuildData(f, n_indices[i]));
+				FaceRebuildData f = AppendElements.FaceWithVertexes(n_vertexes[i], false);
+				faces.Add(new ConnectFaceRebuildData(f, n_indexes[i]));
 			}
 
 			return faces;
 		}
 
-		static ConnectFaceRebuildData InsertVertices(Face face, List<WingedEdge> edges, List<Vertex> vertices)
+		static ConnectFaceRebuildData InsertVertexes(Face face, List<WingedEdge> edges, List<Vertex> vertexes)
 		{
 			List<Edge> perimeter = WingedEdge.SortEdgesByAdjacency(face);
-			List<Vertex> n_vertices = new List<Vertex>();
-			List<int> newVertexIndices = new List<int>();
+			List<Vertex> n_vertexes = new List<Vertex>();
+			List<int> newVertexIndexes = new List<int>();
 			HashSet<Edge> affected = new HashSet<Edge>( edges.Select(x=>x.edge.local) );
 
 			for(int i = 0; i < perimeter.Count; i++)
 			{
-				n_vertices.Add(vertices[perimeter[i].x]);
+				n_vertexes.Add(vertexes[perimeter[i].a]);
 
 				if(affected.Contains(perimeter[i]))
 				{
-					newVertexIndices.Add(n_vertices.Count);
-					n_vertices.Add(Vertex.Mix(vertices[perimeter[i].x], vertices[perimeter[i].y], .5f));
+					newVertexIndexes.Add(n_vertexes.Count);
+					n_vertexes.Add(Vertex.Mix(vertexes[perimeter[i].a], vertexes[perimeter[i].b], .5f));
 				}
 			}
 
-			FaceRebuildData res = AppendElements.FaceWithVertices(n_vertices, false);
+			FaceRebuildData res = AppendElements.FaceWithVertexes(n_vertexes, false);
 
 			res.face.textureGroup 	= face.textureGroup;
 			res.face.uv 			= new AutoUnwrapSettings(face.uv);
@@ -453,29 +450,29 @@ namespace UnityEngine.ProBuilder.MeshOperations
 			res.face.manualUV 		= face.manualUV;
 			res.face.material 		= face.material;
 
-			return new ConnectFaceRebuildData(res, newVertexIndices);
+			return new ConnectFaceRebuildData(res, newVertexIndexes);
 		}
 
-		static List<ConnectFaceRebuildData> ConnectIndicesInFace(
+		static List<ConnectFaceRebuildData> ConnectIndexesPerFace(
 			Face face,
 			int a,
 			int b,
-			List<Vertex> vertices,
+			List<Vertex> vertexes,
 			Dictionary<int, int> lookup)
 		{
 			List<Edge> perimeter = WingedEdge.SortEdgesByAdjacency(face);
 
-			List<Vertex>[] n_vertices = new List<Vertex>[] {
+			List<Vertex>[] n_vertexes = new List<Vertex>[] {
 				new List<Vertex>(),
 				new List<Vertex>()
 			};
 
-			List<int>[] n_sharedIndices = new List<int>[] {
+			List<int>[] n_sharedIndexes = new List<int>[] {
 				new List<int>(),
 				new List<int>()
 			};
 
-			List<int>[] n_indices = new List<int>[] {
+			List<int>[] n_indexes = new List<int>[] {
 				new List<int>(),
 				new List<int>()
 			};
@@ -484,104 +481,104 @@ namespace UnityEngine.ProBuilder.MeshOperations
 
 			for(int i = 0; i < perimeter.Count; i++)
 			{
-				// trying to connect two vertices that are already connected
+				// trying to connect two vertexes that are already connected
 				if(perimeter[i].Contains(a) && perimeter[i].Contains(b))
 					return null;
 
-				int cur = perimeter[i].x;
+				int cur = perimeter[i].a;
 
-				n_vertices[index].Add(vertices[cur]);
-				n_sharedIndices[index].Add(lookup[cur]);
+				n_vertexes[index].Add(vertexes[cur]);
+				n_sharedIndexes[index].Add(lookup[cur]);
 
 				if(cur == a || cur == b)
 				{
 					index = (index + 1) % 2;
 
-					n_indices[index].Add(n_vertices[index].Count);
-					n_vertices[index].Add(vertices[cur]);
-					n_sharedIndices[index].Add(lookup[cur]);
+					n_indexes[index].Add(n_vertexes[index].Count);
+					n_vertexes[index].Add(vertexes[cur]);
+					n_sharedIndexes[index].Add(lookup[cur]);
 				}
 			}
 
 			List<ConnectFaceRebuildData> faces = new List<ConnectFaceRebuildData>();
-			Vector3 nrm = Math.Normal(vertices, face.indices);
+			Vector3 nrm = Math.Normal(vertexes, face.indexesInternal);
 
-			for(int i = 0; i < n_vertices.Length; i++)
+			for(int i = 0; i < n_vertexes.Length; i++)
 			{
-				FaceRebuildData f = AppendElements.FaceWithVertices(n_vertices[i], false);
-				f.sharedIndices = n_sharedIndices[i];
+				FaceRebuildData f = AppendElements.FaceWithVertexes(n_vertexes[i], false);
+				f.sharedIndexes = n_sharedIndexes[i];
 
-				Vector3 fn = Math.Normal(n_vertices[i], f.face.indices);
+				Vector3 fn = Math.Normal(n_vertexes[i], f.face.indexesInternal);
 
 				if(Vector3.Dot(nrm, fn) < 0)
 					f.face.Reverse();
 
-				faces.Add(new ConnectFaceRebuildData(f, n_indices[i]));
+				faces.Add(new ConnectFaceRebuildData(f, n_indexes[i]));
 			}
 
 			return faces;
 		}
 
-		static List<ConnectFaceRebuildData> ConnectIndicesInFace(
+		static List<ConnectFaceRebuildData> ConnectIndexesPerFace(
 			Face face,
-			List<int> indices,
-			List<Vertex> vertices,
+			List<int> indexes,
+			List<Vertex> vertexes,
 			Dictionary<int, int> lookup,
 			int sharedIndexOffset)
 		{
-			if(indices.Count < 3)
+			if(indexes.Count < 3)
 				return null;
 
 			List<Edge> perimeter = WingedEdge.SortEdgesByAdjacency(face);
 
-			int splitCount = indices.Count;
+			int splitCount = indexes.Count;
 
-			List<List<Vertex>> n_vertices = ArrayUtility.Fill<List<Vertex>>(x => { return new List<Vertex>(); }, splitCount);
-			List<List<int>> n_sharedIndices = ArrayUtility.Fill<List<int>>(x => { return new List<int>(); }, splitCount);
-			List<List<int>> n_indices = ArrayUtility.Fill<List<int>>(x => { return new List<int>(); }, splitCount);
+			List<List<Vertex>> n_vertexes = ArrayUtility.Fill<List<Vertex>>(x => { return new List<Vertex>(); }, splitCount);
+			List<List<int>> n_sharedIndexes = ArrayUtility.Fill<List<int>>(x => { return new List<int>(); }, splitCount);
+			List<List<int>> n_indexes = ArrayUtility.Fill<List<int>>(x => { return new List<int>(); }, splitCount);
 
-			Vertex center = Vertex.Average(vertices, indices);
-			Vector3 nrm = Math.Normal(vertices, face.indices);
+			Vertex center = Vertex.Average(vertexes, indexes);
+			Vector3 nrm = Math.Normal(vertexes, face.indexesInternal);
 
 			int index = 0;
 
 			for(int i = 0; i < perimeter.Count; i++)
 			{
-				int cur = perimeter[i].x;
+				int cur = perimeter[i].a;
 
-				n_vertices[index].Add(vertices[cur]);
-				n_sharedIndices[index].Add(lookup[cur]);
+				n_vertexes[index].Add(vertexes[cur]);
+				n_sharedIndexes[index].Add(lookup[cur]);
 
-				if( indices.Contains(cur) )
+				if( indexes.Contains(cur) )
 				{
-					n_indices[index].Add(n_vertices[index].Count);
-					n_vertices[index].Add(center);
-					n_sharedIndices[index].Add(sharedIndexOffset);
+					n_indexes[index].Add(n_vertexes[index].Count);
+					n_vertexes[index].Add(center);
+					n_sharedIndexes[index].Add(sharedIndexOffset);
 
 					index = (index + 1) % splitCount;
 
-					n_indices[index].Add(n_vertices[index].Count);
-					n_vertices[index].Add(vertices[cur]);
-					n_sharedIndices[index].Add(lookup[cur]);
+					n_indexes[index].Add(n_vertexes[index].Count);
+					n_vertexes[index].Add(vertexes[cur]);
+					n_sharedIndexes[index].Add(lookup[cur]);
 				}
 			}
 
 			List<ConnectFaceRebuildData> faces = new List<ConnectFaceRebuildData>();
 
-			for(int i = 0; i < n_vertices.Count; i++)
+			for(int i = 0; i < n_vertexes.Count; i++)
 			{
-				if(n_vertices[i].Count < 3)
+				if(n_vertexes[i].Count < 3)
 					continue;
 
-				FaceRebuildData f = AppendElements.FaceWithVertices(n_vertices[i], false);
-				f.sharedIndices = n_sharedIndices[i];
+				FaceRebuildData f = AppendElements.FaceWithVertexes(n_vertexes[i], false);
+				f.sharedIndexes = n_sharedIndexes[i];
 
-				Vector3 fn = Math.Normal(n_vertices[i], f.face.indices);
+				Vector3 fn = Math.Normal(n_vertexes[i], f.face.indexesInternal);
 
 				if(Vector3.Dot(nrm, fn) < 0)
 					f.face.Reverse();
 
-				faces.Add(new ConnectFaceRebuildData(f, n_indices[i]));
+				faces.Add(new ConnectFaceRebuildData(f, n_indexes[i]));
 			}
 
 			return faces;

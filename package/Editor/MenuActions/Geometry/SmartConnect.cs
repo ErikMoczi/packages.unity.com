@@ -20,29 +20,32 @@ namespace UnityEditor.ProBuilder.Actions
 			keyCommandAlt, 'E'
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			return ProBuilderEditor.instance != null &&
-				ProBuilderEditor.instance.editLevel == EditLevel.Geometry &&
-				ProBuilderEditor.instance.selectionMode != SelectMode.Face &&
-				MeshSelection.Top().Any(x => x.selectedVertexCount > 1);
+			get
+			{
+				return ProBuilderEditor.instance != null &&
+					ProBuilderEditor.editLevel == EditLevel.Geometry &&
+					ProBuilderEditor.componentMode != ComponentMode.Face &&
+					MeshSelection.TopInternal().Any(x => x.selectedVertexCount > 1);
+			}
 		}
 
-		public override bool IsHidden()
+		public override bool hidden
 		{
-			return true;
+			get { return true; }
 		}
 
 		public override ActionResult DoAction()
 		{
-			switch (ProBuilderEditor.instance.selectionMode)
+			switch (ProBuilderEditor.componentMode)
 			{
-				case SelectMode.Vertex:
-					return MenuCommands.MenuConnectVertices(MeshSelection.Top());
+				case ComponentMode.Vertex:
+					return MenuCommands.MenuConnectVertexes(MeshSelection.TopInternal());
 
-				case SelectMode.Edge:
+				case ComponentMode.Edge:
 				default:
-					return MenuCommands.MenuConnectEdges(MeshSelection.Top());
+					return MenuCommands.MenuConnectEdges(MeshSelection.TopInternal());
 
 				// default:
 				// 	return pb_Menu_Commands.MenuSubdivideFace(selection);

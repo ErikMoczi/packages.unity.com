@@ -42,33 +42,33 @@ namespace UnityEditor.ProBuilder
 	    /// <remarks>
 	    /// Use this where you wish to add a top level menu item.
 	    /// </remarks>
-        public const string probuilderMenuPath = "Tools/ProBuilder/";
+        internal const string probuilderMenuPath = "Tools/ProBuilder/";
 
 	    /// <value>
 	    /// The unicode character for the control key symbol on Windows, or command key on macOS.
 	    /// </value>
-        protected const char keyCommandSuper = PreferenceKeys.CMD_SUPER;
+        internal const char keyCommandSuper = PreferenceKeys.CMD_SUPER;
 
 	    /// <value>
 	    /// The unicode character for the shift key symbol.
 	    /// </value>
-	    protected const char keyCommandShift = PreferenceKeys.CMD_SHIFT;
+	    internal const char keyCommandShift = PreferenceKeys.CMD_SHIFT;
 
 	    /// <value>
 	    /// The unicode character for the option key symbol on macOS.
 	    /// </value>
 	    /// <seealso cref="keyCommandAlt"/>
-        protected const char keyCommandOption = PreferenceKeys.CMD_OPTION;
+        internal const char keyCommandOption = PreferenceKeys.CMD_OPTION;
 
 	    /// <value>
 	    /// The unicode character for the alt key symbol on Windows.
 	    /// </value>
-        protected const char keyCommandAlt = PreferenceKeys.CMD_ALT;
+        internal const char keyCommandAlt = PreferenceKeys.CMD_ALT;
 
 	    /// <value>
 	    /// The unicode character for the delete key symbol.
 	    /// </value>
-        protected const char keyCommandDelete = PreferenceKeys.CMD_DELETE;
+        internal const char keyCommandDelete = PreferenceKeys.CMD_DELETE;
 
         static readonly GUIContent AltButtonContent = new GUIContent("+", "");
 
@@ -78,7 +78,7 @@ namespace UnityEditor.ProBuilder
 
         protected MenuAction()
         {
-            isIconMode = PreferencesInternal.GetBool(PreferenceKeys.pbIconGUI);
+            iconMode = PreferencesInternal.GetBool(PreferenceKeys.pbIconGUI);
         }
 
 		/// <summary>
@@ -121,25 +121,16 @@ namespace UnityEditor.ProBuilder
             }
         }
 
-	    /// <value>
-	    /// Get the <see cref="EditLevel"/> as set by the currently open <see cref="ProBuilderEditor"/>.
-	    /// </value>
-        protected static EditLevel editLevel { get { return ProBuilderEditor.instance ? ProBuilderEditor.instance.editLevel : EditLevel.Top; } }
+	    internal static EditLevel editLevel { get { return ProBuilderEditor.instance ? ProBuilderEditor.editLevel : EditLevel.Top; } }
 
-	    /// <value>
-	    /// Get the <see cref="SelectMode"/> as set by the currently open <see cref="ProBuilderEditor"/>.
-	    /// </value>
-        protected static SelectMode selectionMode { get { return ProBuilderEditor.instance ? ProBuilderEditor.instance.selectionMode : SelectMode.Face; } }
+	    internal static ComponentMode componentMode { get { return ProBuilderEditor.instance ? ProBuilderEditor.componentMode : ComponentMode.Face; } }
 
         Texture2D m_DesaturatedIcon = null;
 
 	    /// <summary>
 	    /// By default this function will look for an image named `${icon}_disabled`. If your disabled icon is somewhere else override this function.
 	    /// </summary>
-	    /// <remarks>
-	    /// Note that unlike <see cref="icon"> this function caches the result.
-	    /// </remarks>
-        protected virtual Texture2D desaturatedIcon
+        protected virtual Texture2D disabledIcon
         {
             get
             {
@@ -199,47 +190,56 @@ namespace UnityEditor.ProBuilder
 		/// </value>
 	    protected virtual bool hasFileMenuEntry { get { return true; } }
 
-		/// <summary>
-		/// Is the current mode and selection valid for this action?
-		/// </summary>
-		/// <returns>A flag indicating both the visibility and enabled state for an action.</returns>
-	    public MenuActionState ActionState()
-        {
-            if (IsHidden())
-                return MenuActionState.Hidden;
-            if (IsEnabled())
-                return MenuActionState.VisibleAndEnabled;
-            return MenuActionState.Visible;
-        }
+	    /// <summary>
+	    /// Is the current mode and selection valid for this action?
+	    /// </summary>
+	    /// <value>A flag indicating both the visibility and enabled state for an action.</value>
+	    public MenuActionState menuActionState
+	    {
+		    get
+		    {
+			    if (hidden)
+				    return MenuActionState.Hidden;
+			    if (enabled)
+				    return MenuActionState.VisibleAndEnabled;
+			    return MenuActionState.Visible;
+		    }
+	    }
 
-		/// <summary>
-		/// A check for whether or not the action is valid given the current selection.
-		/// </summary>
-		/// <seealso cref="IsHidden"/>
-		/// <returns>True if this action is valid with current selection and mode.</returns>
-	    public abstract bool IsEnabled();
+	    /// <summary>
+	    /// A check for whether or not the action is valid given the current selection.
+	    /// </summary>
+	    /// <seealso cref="IsHidden"/>
+	    /// <value>True if this action is valid with current selection and mode.</value>
+	    public abstract bool enabled { get; }
 
-		/// <summary>
-		/// Is this action visible in the ProBuilder toolbar?
-		/// </summary>
-		/// <remarks>This returns false by default.</remarks>
-		/// <seealso cref="IsEnabled"/>
-		/// <returns>True if this action should be shown in the toolbar with the current mode and settings, false otherwise.</returns>
-	    public virtual bool IsHidden() { return false; }
+	    /// <summary>
+	    /// Is this action visible in the ProBuilder toolbar?
+	    /// </summary>
+	    /// <remarks>This returns false by default.</remarks>
+	    /// <seealso cref="IsEnabled"/>
+	    /// <value>True if this action should be shown in the toolbar with the current mode and settings, false otherwise.</value>
+	    public virtual bool hidden
+	    {
+		    get { return false; }
+	    }
 
 	    /// <summary>
 	    /// Get a flag indicating the visibility and enabled state of an extra options menu modifier for this action.
 	    /// </summary>
-	    /// <returns>A flag specifying whether an options icon should be displayed for this action button. If your action implements some etra options, you must also implement OnSettingsGUI.</returns>
-        public virtual MenuActionState AltState() { return MenuActionState.Hidden; }
+	    /// <value>A flag specifying whether an options icon should be displayed for this action button. If your action implements some etra options, you must also implement OnSettingsGUI.</value>
+	    protected virtual MenuActionState optionsMenuState
+	    {
+		    get { return MenuActionState.Hidden; }
+	    }
 
-		/// <summary>
+	    /// <summary>
 		/// Perform whatever action this menu item is supposed to do. You are resposible for implementing Undo.
 		/// </summary>
 		/// <returns>A new ActionResult with a summary of the state of the action's success.</returns>
 	    public abstract ActionResult DoAction();
 
-        void DoAlt()
+        protected virtual void DoAlternativeAction()
         {
             MenuOption.Show(OnSettingsGUI, OnSettingsEnable, OnSettingsDisable);
         }
@@ -247,19 +247,19 @@ namespace UnityEditor.ProBuilder
 	    /// <summary>
 	    /// Implement the extra settings GUI for your action in this method.
 	    /// </summary>
-        public virtual void OnSettingsGUI() { }
+        protected virtual void OnSettingsGUI() { }
 
 	    /// <summary>
 	    /// Called when the settings window is opened.
 	    /// </summary>
-        public virtual void OnSettingsEnable() { }
+	    protected virtual void OnSettingsEnable() { }
 
 		/// <summary>
 		/// Called when the settings window is closed.
 		/// </summary>
-	    public virtual void OnSettingsDisable() { }
+		protected virtual void OnSettingsDisable() { }
 
-        protected bool isIconMode { get; set; }
+        protected bool iconMode { get; set; }
 
         /// <summary>
         /// Draw a menu button.  Returns true if the button is active and settings are enabled, false if settings are not enabled.
@@ -272,19 +272,19 @@ namespace UnityEditor.ProBuilder
         internal bool DoButton(bool isHorizontal, bool showOptions, ref Rect optionsRect, params GUILayoutOption[] layoutOptions)
 		{
 			bool wasEnabled = GUI.enabled;
-			bool buttonEnabled = (ActionState() & MenuActionState.Enabled) == MenuActionState.Enabled;
+			bool buttonEnabled = (menuActionState & MenuActionState.Enabled) == MenuActionState.Enabled;
 
 			GUI.enabled = buttonEnabled;
 
 			GUI.backgroundColor = Color.white;
 
-			if(isIconMode)
+			if(iconMode)
 			{
-				if( GUILayout.Button(buttonEnabled || !desaturatedIcon ? icon : desaturatedIcon, ToolbarGroupUtility.GetStyle(group, isHorizontal), layoutOptions) )
+				if( GUILayout.Button(buttonEnabled || !disabledIcon ? icon : disabledIcon, ToolbarGroupUtility.GetStyle(group, isHorizontal), layoutOptions) )
 				{
-					if(showOptions && (AltState() & MenuActionState.VisibleAndEnabled) == MenuActionState.VisibleAndEnabled)
+					if(showOptions && (optionsMenuState & MenuActionState.VisibleAndEnabled) == MenuActionState.VisibleAndEnabled)
 					{
-						DoAlt();
+						DoAlternativeAction();
 					}
 					else
 					{
@@ -293,7 +293,7 @@ namespace UnityEditor.ProBuilder
 					}
 				}
 
-				if((AltState() & MenuActionState.VisibleAndEnabled) == MenuActionState.VisibleAndEnabled)
+				if((optionsMenuState & MenuActionState.VisibleAndEnabled) == MenuActionState.VisibleAndEnabled)
 				{
 					Rect r = GUILayoutUtility.GetLastRect();
 					r.x = r.x + r.width - 16;
@@ -323,14 +323,14 @@ namespace UnityEditor.ProBuilder
 						ActionResult res = DoAction();
 						EditorUtility.ShowNotification(res.notification);
 					}
-					MenuActionState altState = AltState();
+					MenuActionState altState = optionsMenuState;
 
 					if( (altState & MenuActionState.Visible) == MenuActionState.Visible )
 					{
 						GUI.enabled = GUI.enabled && (altState & MenuActionState.Enabled) == MenuActionState.Enabled;
 
 						if(DoAltButton(GUILayout.MaxWidth(21), GUILayout.MaxHeight(16)))
-							DoAlt();
+							DoAlternativeAction();
 					}
 				GUILayout.EndHorizontal();
 
@@ -354,7 +354,7 @@ namespace UnityEditor.ProBuilder
 		/// <returns></returns>
 	    internal Vector2 GetSize(bool isHorizontal)
 		{
-			if(isIconMode)
+			if(iconMode)
 			{
 				m_LastCalculatedSize = ToolbarGroupUtility.GetStyle(ToolbarGroup.Object, isHorizontal).CalcSize(UI.EditorGUIUtility.TempGUIContent(null, null, icon));
 			}

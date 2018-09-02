@@ -38,24 +38,30 @@ namespace UnityEditor.ProBuilder.Actions
 			"Selects a loop of connected faces.\n\n<b>Shortcut</b>: Shift + Double Click on Face."
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			return ProBuilderEditor.instance != null &&
-				ProBuilderEditor.instance.editLevel == EditLevel.Geometry &&
-				ProBuilderEditor.instance.selectionMode == SelectMode.Face &&
-				MeshSelection.Top().Sum(x => x.selectedFaceCount) > 0;
+			get
+			{
+				return ProBuilderEditor.instance != null &&
+					ProBuilderEditor.editLevel == EditLevel.Geometry &&
+					ProBuilderEditor.componentMode == ComponentMode.Face &&
+					MeshSelection.TopInternal().Sum(x => x.selectedFaceCount) > 0;
+			}
 		}
 
-		public override bool IsHidden()
+		public override bool hidden
 		{
-			return ProBuilderEditor.instance == null ||
-				ProBuilderEditor.instance.editLevel != EditLevel.Geometry ||
-				ProBuilderEditor.instance.selectionMode != SelectMode.Face;
+			get
+			{
+				return ProBuilderEditor.instance == null ||
+					ProBuilderEditor.editLevel != EditLevel.Geometry ||
+					ProBuilderEditor.componentMode != ComponentMode.Face;
+			}
 		}
 
 		public override ActionResult DoAction()
 		{
-			return MenuCommands.MenuLoopFaces(MeshSelection.Top());
+			return MenuCommands.MenuLoopFaces(MeshSelection.TopInternal());
 		}
 	}
 }

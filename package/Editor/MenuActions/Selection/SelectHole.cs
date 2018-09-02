@@ -29,49 +29,55 @@ namespace UnityEditor.ProBuilder.Actions
 		private static readonly TooltipContent s_Tooltip = new TooltipContent
 		(
 			"Select Holes",
-			"Selects holes on the mesh.\n\nUses the current element selection, or tests the whole mesh if no edges or vertices are selected."
+			"Selects holes on the mesh.\n\nUses the current element selection, or tests the whole mesh if no edges or vertexes are selected."
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			if (ProBuilderEditor.instance == null)
-				return false;
+			get
+			{
+				if (ProBuilderEditor.instance == null)
+					return false;
 
-			if (ProBuilderEditor.instance.editLevel != EditLevel.Geometry)
-				return false;
+				if (ProBuilderEditor.editLevel != EditLevel.Geometry)
+					return false;
 
-			if (ProBuilderEditor.instance.selectionMode != SelectMode.Edge && ProBuilderEditor.instance.selectionMode != SelectMode.Vertex)
-				return false;
+				if (ProBuilderEditor.componentMode != ComponentMode.Edge && ProBuilderEditor.componentMode != ComponentMode.Vertex)
+					return false;
 
-			if (MeshSelection.Top().Length < 1)
-				return false;
+				if (MeshSelection.TopInternal().Length < 1)
+					return false;
 
-			return true;
+				return true;
+			}
 		}
 
-		public override bool IsHidden()
+		public override bool hidden
 		{
-			if (ProBuilderEditor.instance.editLevel != EditLevel.Geometry)
-				return true;
+			get
+			{
+				if (ProBuilderEditor.editLevel != EditLevel.Geometry)
+					return true;
 
-			if (ProBuilderEditor.instance.selectionMode != SelectMode.Edge && ProBuilderEditor.instance.selectionMode != SelectMode.Vertex)
-				return true;
+				if (ProBuilderEditor.componentMode != ComponentMode.Edge && ProBuilderEditor.componentMode != ComponentMode.Vertex)
+					return true;
 
-			return false;
+				return false;
+			}
 		}
 
 		public override ActionResult DoAction()
 		{
-			UndoUtility.RecordSelection(MeshSelection.Top(), "Select Hole");
+			UndoUtility.RecordSelection(MeshSelection.TopInternal(), "Select Hole");
 
 			ActionResult res = ActionResult.NoSelection;
 
-			foreach (ProBuilderMesh pb in MeshSelection.Top())
+			foreach (ProBuilderMesh pb in MeshSelection.TopInternal())
 			{
-				bool selectAll = pb.selectedIndicesInternal == null || pb.selectedIndicesInternal.Length < 1;
-				IEnumerable<int> indices = selectAll ? pb.facesInternal.SelectMany(x => x.ToTriangles()) : pb.selectedIndicesInternal;
+				bool selectAll = pb.selectedIndexesInternal == null || pb.selectedIndexesInternal.Length < 1;
+				IEnumerable<int> indexes = selectAll ? pb.facesInternal.SelectMany(x => x.indexes) : pb.selectedIndexesInternal;
 
-				List<List<Edge>> holes = ElementSelection.FindHoles(pb, indices);
+				List<List<Edge>> holes = ElementSelection.FindHoles(pb, indexes);
 
 				res = new ActionResult(ActionResult.Status.Success, holes.Count > 0 ? string.Format("{0} holes found", holes.Count) : "No Holes in Selection");
 

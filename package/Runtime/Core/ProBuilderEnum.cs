@@ -4,12 +4,45 @@ using System.Collections;
 namespace UnityEngine.ProBuilder
 {
 	/// <summary>
-	/// Element selection mode.
+	/// Defines what objects are selectable for the scene tool.
 	/// </summary>
 	public enum SelectMode
 	{
+		// note: intentionally not marked as a flag for now
+
 		/// <summary>
-		/// Vertices are selectable.
+		/// No selection mode defined.
+		/// </summary>
+		None = 0 << 0,
+		/// <summary>
+		/// Objects are selectable.
+		/// </summary>
+		Object = 1 << 0,
+		/// <summary>
+		/// Vertexes are selectable.
+		/// </summary>
+		Vertex = 1 << 1,
+		/// <summary>
+		/// Edges are selectable.
+		/// </summary>
+		Edge = 1 << 2,
+		/// <summary>
+		/// Faces are selectable.
+		/// </summary>
+		Face = 1 << 3,
+		/// <summary>
+		/// Texture coordinates are selectable.
+		/// </summary>
+		Texture = 1 << 4
+	}
+
+	/// <summary>
+	/// Element selection mode.
+	/// </summary>
+	enum ComponentMode
+	{
+		/// <summary>
+		/// Vertexes are selectable.
 		/// </summary>
 		Vertex = 0x0,
 		/// <summary>
@@ -25,14 +58,14 @@ namespace UnityEngine.ProBuilder
 	/// <summary>
 	/// Defines what the current tool interacts with in the scene view.
 	/// </summary>'
-	public enum EditLevel
+	internal enum EditLevel
 	{
 		/// <summary>
 		/// The transform tools interact with GameObjects.
 		/// </summary>
 		Top = 0,
 		/// <summary>
-		/// The current tool interacts with mesh geometry (faces, edges, vertices).
+		/// The current tool interacts with mesh geometry (faces, edges, vertexes).
 		/// </summary>
 		Geometry = 1,
 		/// <summary>
@@ -167,11 +200,11 @@ namespace UnityEngine.ProBuilder
 	public enum SortMethod
 	{
 		/// <summary>
-		/// Order the vertices clockwise.
+		/// Order the vertexes clockwise.
 		/// </summary>
 		Clockwise,
 		/// <summary>
-		/// Order the vertices counter-clockwise.
+		/// Order the vertexes counter-clockwise.
 		/// </summary>
 		CounterClockwise
 	};
@@ -244,28 +277,32 @@ namespace UnityEngine.ProBuilder
     /// Mesh attributes bitmask.
     /// </summary>
     [System.Flags]
-    public enum MeshAttributes
+    public enum MeshArrays
     {
         /// <summary>
         /// Vertex positions.
         /// </summary>
         Position = 0x1,
         /// <summary>
-        /// Vertex UV.
+        /// First UV channel.
         /// </summary>
-        UV0 = 0x2,
+        Texture0 = 0x2,
         /// <summary>
-        /// Vertex UV2.
+        /// Second UV channel. Commonly called UV2 or Lightmap UVs in Unity terms.
         /// </summary>
-        UV1 = 0x4,
+        Texture1 = 0x4,
         /// <summary>
-        /// Vertex UV3.
+        /// Second UV channel. Commonly called UV2 or Lightmap UVs in Unity terms.
         /// </summary>
-        UV2 = 0x8,
+        Lightmap = 0x4,
+        /// <summary>
+        /// Third UV channel.
+        /// </summary>
+        Texture2 = 0x8,
         /// <summary>
         /// Vertex UV4.
         /// </summary>
-        UV3 = 0x10,
+        Texture3 = 0x10,
         /// <summary>
         /// Vertex colors.
         /// </summary>

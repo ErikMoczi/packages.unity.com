@@ -19,21 +19,27 @@ namespace UnityEditor.ProBuilder.Actions
 			"Creates a new object (or submesh) from the selected faces."
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			return ProBuilderEditor.instance != null &&
-				MeshSelection.Top().Sum(x => x.selectedFaceCount) > 0;
+			get
+			{
+				return ProBuilderEditor.instance != null &&
+					MeshSelection.TopInternal().Sum(x => x.selectedFaceCount) > 0;
+			}
 		}
 
-		public override bool IsHidden()
+		public override bool hidden
 		{
-			return 	editLevel != EditLevel.Geometry ||
-					(PreferencesInternal.GetBool(PreferenceKeys.pbElementSelectIsHamFisted) && selectionMode != SelectMode.Face);
+			get
+			{
+				return editLevel != EditLevel.Geometry ||
+					(PreferencesInternal.GetBool(PreferenceKeys.pbElementSelectIsHamFisted) && componentMode != ComponentMode.Face);
+			}
 		}
 
-		public override MenuActionState AltState()
+		protected override MenuActionState optionsMenuState
 		{
-			return MenuActionState.VisibleAndEnabled;
+			get { return MenuActionState.VisibleAndEnabled; }
 		}
 
 		enum DetachSetting
@@ -42,7 +48,7 @@ namespace UnityEditor.ProBuilder.Actions
 			Submesh
 		};
 
-		public override void OnSettingsGUI()
+		protected override void OnSettingsGUI()
 		{
 			GUILayout.Label("Detach Face Settings", EditorStyles.boldLabel);
 
@@ -66,7 +72,7 @@ namespace UnityEditor.ProBuilder.Actions
 
 		public override ActionResult DoAction()
 		{
-			return MenuCommands.MenuDetachFaces(MeshSelection.Top());
+			return MenuCommands.MenuDetachFaces(MeshSelection.TopInternal());
 		}
 	}
 }

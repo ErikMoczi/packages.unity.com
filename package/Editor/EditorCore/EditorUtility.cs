@@ -32,7 +32,7 @@ namespace UnityEditor.ProBuilder
 		/// <remarks>
 		/// This is only called when an object is initialized in editor, and created by ProBuilder menu items.
 		/// </remarks>
-		public static event Action<ProBuilderMesh> onObjectCreated = null;
+		public static event Action<ProBuilderMesh> meshCreated = null;
 
 		/// <summary>
 		/// Set the selected render state for an object. In Unity 5.4 and lower, this just toggles wireframe on or off.
@@ -68,7 +68,7 @@ namespace UnityEditor.ProBuilder
 		/// </summary>
 		/// <param name="message">The text to display in the notification.</param>
 		/// <seealso cref="RemoveNotification"/>
-		public static void ShowNotification(string message)
+		internal static void ShowNotification(string message)
 		{
 			SceneView scnview = SceneView.lastActiveSceneView;
 			if(scnview == null)
@@ -81,7 +81,7 @@ namespace UnityEditor.ProBuilder
 		/// <param name="window">The EditorWindow to display this notification in.</param>
 		/// <param name="message">The text to display in the notification.</param>
 		/// <exception cref="ArgumentNullException">Window is null.</exception>
-		public static void ShowNotification(EditorWindow window, string message)
+		internal static void ShowNotification(EditorWindow window, string message)
 		{
 			if(PreferencesInternal.HasKey(PreferenceKeys.pbShowEditorNotifications) && !PreferencesInternal.GetBool(PreferenceKeys.pbShowEditorNotifications))
 				return;
@@ -105,7 +105,7 @@ namespace UnityEditor.ProBuilder
 		/// </summary>
 		/// <param name="window">The EditorWindow from which all currently displayed notifications will be removed.</param>
 		/// <exception cref="ArgumentNullException">Thrown if window is null.</exception>
-		public static void RemoveNotification(EditorWindow window)
+		internal static void RemoveNotification(EditorWindow window)
 		{
             if (window == null)
                 throw new ArgumentNullException("window");
@@ -153,14 +153,14 @@ namespace UnityEditor.ProBuilder
 		/// Ensure that this object has a valid mesh reference, and the geometry is current. If it is not valid, this function will attempt to repair the sync state.
 		/// </summary>
 		/// <param name="mesh">The component to test.</param>
-		/// <seealso cref="ProBuilderMesh.Verify"/>
-		public static void EnsureMeshSyncState(ProBuilderMesh mesh)
+		/// <seealso cref="ProBuilderMesh.meshSyncState"/>
+		public static void SynchronizeWithMeshFilter(ProBuilderMesh mesh)
 		{
             if (mesh == null)
                 throw new ArgumentNullException("mesh");
 
 		 	Mesh oldMesh = mesh.mesh;
-	 		MeshSyncState reason = mesh.Verify();
+	 		MeshSyncState reason = mesh.meshSyncState;
 			bool meshesAreAssets = PreferencesInternal.GetBool(PreferenceKeys.pbMeshesAreAssets);
 
 			if( reason != MeshSyncState.None )
@@ -168,6 +168,7 @@ namespace UnityEditor.ProBuilder
 				if (reason == MeshSyncState.Null)
 				{
 					mesh.Rebuild();
+					mesh.Optimize();
 				}
 				else
 				/**
@@ -238,7 +239,7 @@ namespace UnityEditor.ProBuilder
 		{
 			ShadowCastingMode scm = PreferencesInternal.GetEnum<ShadowCastingMode>(PreferenceKeys.pbShadowCastingMode);
 			pb.GetComponent<MeshRenderer>().shadowCastingMode = scm;
-			ScreenCenter( pb.gameObject );
+			ScreenCenter(pb.gameObject);
 
 			var flags = PreferencesInternal.HasKey(PreferenceKeys.pbDefaultStaticFlags)
 				? PreferencesInternal.GetEnum<StaticEditorFlags>(PreferenceKeys.pbDefaultStaticFlags)
@@ -265,8 +266,8 @@ namespace UnityEditor.ProBuilder
 
 			pb.Optimize();
 
-			if( onObjectCreated != null )
-				onObjectCreated(pb);
+			if( meshCreated != null )
+				meshCreated(pb);
 		}
 
 		/**
@@ -291,24 +292,25 @@ namespace UnityEditor.ProBuilder
 			return GetSceneView().pivot;
 		}
 
-		/**
-		 * If pb_Preferences_Internal.say to set pivot to corner and ProGrids or PB pref says snap to grid, do it.
-		 * @param indicesToCenterPivot If any values are passed here, the pivot is set to an average of all vertices at indices.  If null, the first vertex is used as the pivot.
-		 */
-		internal static void SetPivotAndSnapWithPref(ProBuilderMesh pb, int[] indicesToCenterPivot)
+		/// <summary>
+		/// Set the pivot point of a mesh.
+		/// </summary>
+		/// <param name="mesh"></param>
+		/// <param name="vertexes">If any values are passed here, the pivot is set to an average of all vertexes at indexes. If null, the first vertex is used as the pivot.</param>
+		internal static void SetPivotAndSnapWithPref(ProBuilderMesh mesh, int[] vertexes)
 		{
 			if(PreferencesInternal.GetBool(PreferenceKeys.pbForceGridPivot))
-				pb.CenterPivot( indicesToCenterPivot == null ? new int[1]{0} : indicesToCenterPivot );
+				mesh.CenterPivot( vertexes == null ? new int[1]{0} : vertexes );
 			else
-				pb.CenterPivot(indicesToCenterPivot);
+				mesh.CenterPivot(vertexes);
 
 			if(ProGridsInterface.SnapEnabled())
-				pb.transform.position = Snapping.SnapValue(pb.transform.position, ProGridsInterface.SnapValue());
+				mesh.transform.position = Snapping.SnapValue(mesh.transform.position, ProGridsInterface.SnapValue());
 			else
 			if(PreferencesInternal.GetBool(PreferenceKeys.pbForceVertexPivot))
-				pb.transform.position = Snapping.SnapValue(pb.transform.position, 1f);
+				mesh.transform.position = Snapping.SnapValue(mesh.transform.position, 1f);
 
-			pb.Optimize();
+			mesh.Optimize();
 		}
 
 		/**
@@ -383,6 +385,62 @@ namespace UnityEditor.ProBuilder
 			#else
 			UnityEditor.Editor.CreateCachedEditor(targetObjects, typeof(T), ref previousEditor);
 			#endif
+		}
+
+		internal static SelectMode GetSelectMode(EditLevel edit, ComponentMode component)
+		{
+			switch (edit)
+			{
+				case EditLevel.Top:
+					return SelectMode.Object;
+
+				case EditLevel.Geometry:
+					{
+						switch (component)
+						{
+							case ComponentMode.Vertex:
+								return SelectMode.Vertex;
+							case ComponentMode.Edge:
+								return SelectMode.Edge;
+							default:
+								return SelectMode.Face;
+						}
+					}
+
+				case EditLevel.Texture:
+					return SelectMode.Texture;
+
+				default:
+					return SelectMode.None;
+			}
+		}
+
+		internal static EditLevel GetEditLevel(SelectMode mode)
+		{
+			switch (mode)
+			{
+				case SelectMode.Object:
+					return EditLevel.Top;
+				case SelectMode.Texture:
+					return EditLevel.Texture;
+				case SelectMode.None:
+					return EditLevel.Plugin;
+				default:
+					return EditLevel.Geometry;
+			}
+		}
+
+		internal static ComponentMode GetComponentMode(SelectMode mode)
+		{
+			switch (mode)
+			{
+				case SelectMode.Vertex:
+					return ComponentMode.Vertex;
+				case SelectMode.Edge:
+					return ComponentMode.Edge;
+				default:
+					return ComponentMode.Face;
+			}
 		}
 	}
 }

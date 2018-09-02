@@ -14,21 +14,11 @@ namespace UnityEditor.ProBuilder
 		const string k_MeshCacheDirectoryName = "ProBuilderMeshCache";
 		static string k_MeshCacheDirectory = "Assets/ProBuilder Data/ProBuilderMeshCache";
 
-		/// <summary>
-		/// Subscribe to this event to be notified when ProBuilder is going to optimize a mesh. Optimization includes collapsing coincident vertices to a single vertex where possible, and generating lightmap UVs).
-		/// </summary>
-		/// <value>
-		/// Return true to override this process, false to let ProBuilder optimize the mesh.
-		/// </value>
-		/// <seealso cref="Optimize"/>
-		/// <seealso cref="onMeshOptimized"/>
-		public static event Func<bool, ProBuilderMesh> onCheckSkipMeshOptimization = null;
-
 		/// <value>
 		/// This callback is raised after a ProBuilderMesh has been successfully optimized.
 		/// </value>
 		/// <seealso cref="Optimize"/>
-		public static event Action<ProBuilderMesh, Mesh> onMeshOptimized = null;
+		public static event Action<ProBuilderMesh, Mesh> meshOptimized = null;
 
 		/// <summary>
 		/// Optmizes the mesh geometry, and generates a UV2 channel (if automatic lightmap generation is enabled).
@@ -48,9 +38,6 @@ namespace UnityEditor.ProBuilder
 
 			bool skipMeshProcessing = false;
 
-			if (onCheckSkipMeshOptimization != null)
-				skipMeshProcessing = onCheckSkipMeshOptimization(mesh);
-
 			// @todo Support mesh compression for topologies other than Triangles.
 			for(int i = 0; !skipMeshProcessing && i < umesh.subMeshCount; i++)
 				if(umesh.GetTopology(i) != MeshTopology.Triangles)
@@ -62,10 +49,10 @@ namespace UnityEditor.ProBuilder
 			{
 				// if generating UV2, the process is to manually split the mesh into individual triangles,
 				// generate uv2, then re-assemble with vertex collapsing where possible.
-				// if not generating uv2, just collapse vertices.
+				// if not generating uv2, just collapse vertexes.
 				if(!PreferencesInternal.GetBool(PreferenceKeys.pbDisableAutoUV2Generation) || forceRebuildUV2)
 				{
-					Vertex[] vertices = UnityEngine.ProBuilder.MeshUtility.GeneratePerTriangleMesh(umesh);
+					Vertex[] vertexes = UnityEngine.ProBuilder.MeshUtility.GeneratePerTriangleMesh(umesh);
 
 					float time = Time.realtimeSinceStartup;
 
@@ -73,15 +60,14 @@ namespace UnityEditor.ProBuilder
 
 					Vector2[] uv2 = Unwrapping.GeneratePerTriangleUV(umesh, unwrap);
 
-					// If GenerateUV2() takes longer than 3 seconds (!), show a warning prompting user
-					// to disable auto-uv2 generation.
+					// If GenerateUV2() takes longer than 3 seconds (!), show a warning prompting user to disable auto-uv2 generation.
 					if( (Time.realtimeSinceStartup - time) > 3f )
-						Log.Warning(string.Format("Generate UV2 for \"{0}\" took {1} seconds!  You may want to consider disabling Auto-UV2 generation in the `Preferences > ProBuilder` tab.", mesh.name, (Time.realtimeSinceStartup - time).ToString("F2")));
+						Log.Warning(string.Format("Generate UV2 for \"{0}\" took {1} seconds! You may want to consider disabling Auto-UV2 generation in the `Preferences > ProBuilder` tab.", mesh.name, (Time.realtimeSinceStartup - time).ToString("F2")));
 
-					if(uv2.Length == vertices.Length)
+					if(uv2.Length == vertexes.Length)
 					{
 						for(int i = 0; i < uv2.Length; i++)
-							vertices[i].uv2 = uv2[i];
+							vertexes[i].uv2 = uv2[i];
 
 						hasUv2 = true;
 					}
@@ -90,19 +76,19 @@ namespace UnityEditor.ProBuilder
 						Log.Warning("Generate UV2 failed - the returned size of UV2 array != mesh.vertexCount");
 					}
 
-					UnityEngine.ProBuilder.MeshUtility.CollapseSharedVertices(umesh, vertices);
+					UnityEngine.ProBuilder.MeshUtility.CollapseSharedVertexes(umesh, vertexes);
 				}
 				else
 				{
-					UnityEngine.ProBuilder.MeshUtility.CollapseSharedVertices(umesh);
+					UnityEngine.ProBuilder.MeshUtility.CollapseSharedVertexes(umesh);
 				}
 			}
 
 			if(PreferencesInternal.GetBool(PreferenceKeys.pbManageLightmappingStaticFlag, false))
 				Lightmapping.SetLightmapStaticFlagEnabled(mesh, hasUv2);
 
-			if(onMeshOptimized != null)
-				onMeshOptimized(mesh, umesh);
+			if(meshOptimized != null)
+				meshOptimized(mesh, umesh);
 
 			if(PreferencesInternal.GetBool(PreferenceKeys.pbMeshesAreAssets))
 				TryCacheMesh(mesh);

@@ -29,14 +29,14 @@ namespace UnityEditor.ProBuilder.Actions
 			@"Set the pivot point to world coordinates (0,0,0) and clear all Transform values while keeping the mesh in place."
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			return ProBuilderEditor.instance != null && MeshSelection.Top().Length > 0;
+			get { return ProBuilderEditor.instance != null && MeshSelection.TopInternal().Length > 0; }
 		}
 
 		public override ActionResult DoAction()
 		{
-			return MenuCommands.MenuFreezeTransforms(MeshSelection.Top());
+			return MenuCommands.MenuFreezeTransforms(MeshSelection.TopInternal());
 		}
 	}
 }

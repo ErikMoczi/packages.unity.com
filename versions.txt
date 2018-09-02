@@ -28,3 +28,4 @@
 4.0.0-preview.4
 4.0.0-preview.5
 4.0.0-preview.6
+4.0.0-preview.7

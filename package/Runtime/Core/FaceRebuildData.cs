@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -11,12 +12,12 @@ namespace UnityEngine.ProBuilder
 #pragma warning disable 0649
 		// new pb_Face
 		public Face face;
-		// new vertices (all vertices required to rebuild, not just new)
-		public List<Vertex> vertices;
-		// shared indices pointers (must match vertices length)
-		public List<int> sharedIndices;
-		// shared UV indices pointers (must match vertices length)
-		public List<int> sharedIndicesUV;
+		// new vertexes (all vertexes required to rebuild, not just new)
+		public List<Vertex> vertexes;
+		// shared indexes pointers (must match vertexes length)
+		public List<int> sharedIndexes;
+		// shared UV indexes pointers (must match vertexes length)
+		public List<int> sharedIndexesUV;
 		// The offset applied to this face via Apply() call.
 		private int _appliedOffset = 0;
 #pragma warning restore 0649
@@ -31,82 +32,78 @@ namespace UnityEngine.ProBuilder
 
 		public override string ToString()
 		{
-			return string.Format("{0}\n{1}", vertices.ToString(", "), sharedIndices.ToString(", "));
+			return string.Format("{0}\n{1}", vertexes.ToString(", "), sharedIndexes.ToString(", "));
 		}
 
 		public static void Apply(
 			IEnumerable<FaceRebuildData> newFaces,
-			ProBuilderMesh pb,
-			List<Vertex> vertices = null,
-			List<Face> faces = null,
-			Dictionary<int, int> lookup = null,
-			Dictionary<int, int> lookupUV = null)
+			ProBuilderMesh mesh,
+			List<Vertex> vertexes = null,
+			List<Face> faces = null)
 		{
-			List<Face> _faces = faces == null ? new List<Face>(pb.facesInternal) : faces;
+			if (faces == null)
+				faces = new List<Face>(mesh.facesInternal);
 
-			if(vertices == null)
-				vertices = new List<Vertex>( Vertex.GetVertices(pb) );
+			if(vertexes == null)
+				vertexes = new List<Vertex>( mesh.GetVertexes() );
 
-			if(lookup == null)
-				lookup = pb.sharedIndicesInternal.ToDictionary();
+			var lookup = mesh.sharedVertexLookup;
+			var lookupUV = mesh.sharedTextureLookup;
 
-			if(lookupUV == null)
-				lookupUV = pb.sharedIndicesUVInternal != null ? pb.sharedIndicesUVInternal.ToDictionary() : null;
+			Apply(newFaces, vertexes, faces, lookup, lookupUV);
 
-			FaceRebuildData.Apply(newFaces, vertices, _faces, lookup, lookupUV);
-
-			pb.SetVertices(vertices);
-			pb.SetFaces(_faces.ToArray());
-			pb.SetSharedIndexes(lookup);
-			pb.SetSharedIndexesUV(lookupUV);
+			mesh.SetVertexes(vertexes);
+			mesh.faces = faces;
+			mesh.SetSharedVertexes(lookup);
+			mesh.SetSharedTextures(lookupUV);
 		}
 
 		/// <summary>
-		/// Shift face rebuild data to appropriate positions and update the vertex, face, and shared indices arrays.
+		/// Shift face rebuild data to appropriate positions and update the vertex, face, and shared indexes arrays.
 		/// </summary>
 		/// <param name="newFaces"></param>
-		/// <param name="vertices"></param>
+		/// <param name="vertexes"></param>
 		/// <param name="faces"></param>
-		/// <param name="sharedIndices"></param>
-		/// <param name="sharedIndicesUV"></param>
+		/// <param name="sharedVertexLookup"></param>
+		/// <param name="sharedTextureLookup"></param>
 		public static void Apply(
 			IEnumerable<FaceRebuildData> newFaces,
-			List<Vertex> vertices,
+			List<Vertex> vertexes,
 			List<Face> faces,
-			Dictionary<int, int> sharedIndices,
-			Dictionary<int, int> sharedIndicesUV = null)
+			Dictionary<int, int> sharedVertexLookup,
+			Dictionary<int, int> sharedTextureLookup = null)
 		{
-			int index = vertices.Count;
+			int index = vertexes.Count;
 
 			foreach(FaceRebuildData rd in newFaces)
 			{
 				Face face = rd.face;
-				int faceVertexCount = rd.vertices.Count;
+				int faceVertexCount = rd.vertexes.Count;
 
-				bool hasSharedIndices 	= sharedIndices != null && rd.sharedIndices != null && rd.sharedIndices.Count == faceVertexCount;
-				bool hasSharedIndicesUV = sharedIndicesUV != null && rd.sharedIndicesUV != null && rd.sharedIndicesUV.Count == faceVertexCount;
+				bool hasSharedIndexes = sharedVertexLookup != null && rd.sharedIndexes != null && rd.sharedIndexes.Count == faceVertexCount;
+				bool hasSharedIndexesUV = sharedTextureLookup != null && rd.sharedIndexesUV != null && rd.sharedIndexesUV.Count == faceVertexCount;
 
 				for(int n = 0; n < faceVertexCount; n++)
 				{
 					int localIndex = n;
 
-					if(sharedIndices != null)
-						sharedIndices.Add(localIndex + index, hasSharedIndices ? rd.sharedIndices[localIndex] : -1);
+					if(sharedVertexLookup != null)
+						sharedVertexLookup.Add(localIndex + index, hasSharedIndexes ? rd.sharedIndexes[localIndex] : -1);
 
-					if(sharedIndicesUV != null)
-						sharedIndicesUV.Add(localIndex + index, hasSharedIndicesUV ? rd.sharedIndicesUV[localIndex] : -1);
+					if (sharedTextureLookup != null && hasSharedIndexesUV)
+						sharedTextureLookup.Add(localIndex + index, rd.sharedIndexesUV[localIndex]);
 				}
 
 				rd._appliedOffset = index;
-				int[] indices = face.indices;
+				int[] faceIndexes = face.indexesInternal;
 
-				for(int n = 0, c = indices.Length; n < c; n++)
-					indices[n] += index;
+				for(int n = 0, c = faceIndexes.Length; n < c; n++)
+					faceIndexes[n] += index;
 
-				index += rd.vertices.Count;
-				face.indices = indices;
+				index += rd.vertexes.Count;
+				face.indexesInternal = faceIndexes;
 				faces.Add(face);
-				vertices.AddRange(rd.vertices);
+				vertexes.AddRange(rd.vertexes);
 			}
 		}
 	}

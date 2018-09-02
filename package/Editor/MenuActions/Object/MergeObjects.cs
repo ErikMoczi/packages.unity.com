@@ -29,14 +29,14 @@ namespace UnityEditor.ProBuilder.Actions
 			@"Merges all selected ProBuilder objects to a single mesh."
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			return ProBuilderEditor.instance != null && MeshSelection.Top().Length > 1;
+			get { return ProBuilderEditor.instance != null && MeshSelection.TopInternal().Length > 1; }
 		}
 
 		public override ActionResult DoAction()
 		{
-			return MenuCommands.MenuMergeObjects(MeshSelection.Top());
+			return MenuCommands.MenuMergeObjects(MeshSelection.TopInternal());
 		}
 	}
 }

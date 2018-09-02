@@ -5,7 +5,6 @@ using System.Linq;
 using System;
 using System.Collections.ObjectModel;
 using System.Text;
-using UnityEngine.AI;
 
 namespace UnityEngine.ProBuilder
 {
@@ -42,7 +41,7 @@ namespace UnityEngine.ProBuilder
 		Vector4 m_UV4;
 
 		[SerializeField]
-		MeshAttributes m_Attributes;
+		MeshArrays m_Attributes;
 
 		/// <value>
 		/// The position in model space.
@@ -162,57 +161,57 @@ namespace UnityEngine.ProBuilder
 		/// </summary>
 		/// <param name="attribute">The attribute or attributes to test for.</param>
 		/// <returns>True if this vertex has the specified attributes set, false if they are default values.</returns>
-		public bool HasAttribute(MeshAttributes attribute)
+		public bool HasArrays(MeshArrays attribute)
 		{
 			return (m_Attributes & attribute) == attribute;
 		}
 
 		bool hasPosition
 		{
-			get { return (m_Attributes & MeshAttributes.Position) == MeshAttributes.Position; }
-			set { m_Attributes = value ? (m_Attributes | MeshAttributes.Position) : (m_Attributes & ~(MeshAttributes.Position)); }
+			get { return (m_Attributes & MeshArrays.Position) == MeshArrays.Position; }
+			set { m_Attributes = value ? (m_Attributes | MeshArrays.Position) : (m_Attributes & ~(MeshArrays.Position)); }
 		}
 
 		bool hasColor
 		{
-			get { return (m_Attributes & MeshAttributes.Color) == MeshAttributes.Color; }
-			set { m_Attributes = value ? (m_Attributes | MeshAttributes.Color) : (m_Attributes & ~(MeshAttributes.Color)); }
+			get { return (m_Attributes & MeshArrays.Color) == MeshArrays.Color; }
+			set { m_Attributes = value ? (m_Attributes | MeshArrays.Color) : (m_Attributes & ~(MeshArrays.Color)); }
 		}
 
 		bool hasNormal
 		{
-			get { return (m_Attributes & MeshAttributes.Normal) == MeshAttributes.Normal; }
-			set { m_Attributes = value ? (m_Attributes | MeshAttributes.Normal) : (m_Attributes & ~(MeshAttributes.Normal)); }
+			get { return (m_Attributes & MeshArrays.Normal) == MeshArrays.Normal; }
+			set { m_Attributes = value ? (m_Attributes | MeshArrays.Normal) : (m_Attributes & ~(MeshArrays.Normal)); }
 		}
 
 		bool hasTangent
 		{
-			get { return (m_Attributes & MeshAttributes.Tangent) == MeshAttributes.Tangent; }
-			set { m_Attributes = value ? (m_Attributes | MeshAttributes.Tangent) : (m_Attributes & ~(MeshAttributes.Tangent)); }
+			get { return (m_Attributes & MeshArrays.Tangent) == MeshArrays.Tangent; }
+			set { m_Attributes = value ? (m_Attributes | MeshArrays.Tangent) : (m_Attributes & ~(MeshArrays.Tangent)); }
 		}
 
 		bool hasUV0
 		{
-			get { return (m_Attributes & MeshAttributes.UV0) == MeshAttributes.UV0; }
-			set { m_Attributes = value ? (m_Attributes | MeshAttributes.UV0) : (m_Attributes & ~(MeshAttributes.UV0)); }
+			get { return (m_Attributes & MeshArrays.Texture0) == MeshArrays.Texture0; }
+			set { m_Attributes = value ? (m_Attributes | MeshArrays.Texture0) : (m_Attributes & ~(MeshArrays.Texture0)); }
 		}
 
 		bool hasUV2
 		{
-			get { return (m_Attributes & MeshAttributes.UV1) == MeshAttributes.UV1; }
-			set { m_Attributes = value ? (m_Attributes | MeshAttributes.UV1) : (m_Attributes & ~(MeshAttributes.UV1)); }
+			get { return (m_Attributes & MeshArrays.Texture1) == MeshArrays.Texture1; }
+			set { m_Attributes = value ? (m_Attributes | MeshArrays.Texture1) : (m_Attributes & ~(MeshArrays.Texture1)); }
 		}
 
 		bool hasUV3
 		{
-			get { return (m_Attributes & MeshAttributes.UV2) == MeshAttributes.UV2; }
-			set { m_Attributes = value ? (m_Attributes | MeshAttributes.UV2) : (m_Attributes & ~(MeshAttributes.UV2)); }
+			get { return (m_Attributes & MeshArrays.Texture2) == MeshArrays.Texture2; }
+			set { m_Attributes = value ? (m_Attributes | MeshArrays.Texture2) : (m_Attributes & ~(MeshArrays.Texture2)); }
 		}
 
 		bool hasUV4
 		{
-			get { return (m_Attributes & MeshAttributes.UV3) == MeshAttributes.UV3; }
-			set { m_Attributes = value ? (m_Attributes | MeshAttributes.UV3) : (m_Attributes & ~(MeshAttributes.UV3)); }
+			get { return (m_Attributes & MeshArrays.Texture3) == MeshArrays.Texture3; }
+			set { m_Attributes = value ? (m_Attributes | MeshArrays.Texture3) : (m_Attributes & ~(MeshArrays.Texture3)); }
 		}
 
 		/// <summary>
@@ -297,7 +296,10 @@ namespace UnityEngine.ProBuilder
 
 		/// <inheritdoc cref="Vertex.Equals(Vertex)"/>
         public static bool operator ==(Vertex a, Vertex b)
-        {
+		{
+			if (ReferenceEquals(a, b))
+				return true;
+
             if(object.ReferenceEquals(a, null) || object.ReferenceEquals(b, null))
                 return false;
 
@@ -318,6 +320,9 @@ namespace UnityEngine.ProBuilder
 		/// <summary>
 		/// Addition is performed component-wise for every property.
 		/// </summary>
+		/// <remarks>
+		/// Color, normal, and tangent values are not normalized within this function. If you are expecting unit vectors, make sure to normalize these properties.
+		/// </remarks>
 		/// <param name="a">Left side addition parameter.</param>
 		/// <param name="b">Right side addition parameter.</param>
 		/// <returns>A new Vertex with the sum of a + b.</returns>
@@ -329,6 +334,9 @@ namespace UnityEngine.ProBuilder
 		/// <summary>
 		/// Addition is performed component-wise for every property.
 		/// </summary>
+		/// <remarks>
+		/// Color, normal, and tangent values are not normalized within this function. If you are expecting unit vectors, make sure to normalize these properties.
+		/// </remarks>
 		/// <param name="a">Left side addition parameter.</param>
 		/// <param name="b">Right side addition parameter.</param>
 		/// <returns>A new Vertex with the sum of a + b.</returns>
@@ -342,6 +350,9 @@ namespace UnityEngine.ProBuilder
 		/// <summary>
 		/// Addition is performed component-wise for every property.
 		/// </summary>
+		/// <remarks>
+		/// Color, normal, and tangent values are not normalized within this function. If you are expecting unit vectors, make sure to normalize these properties.
+		/// </remarks>
 		/// <param name="b">Right side addition parameter.</param>
 		public void Add(Vertex b)
 		{
@@ -361,6 +372,9 @@ namespace UnityEngine.ProBuilder
 		/// <summary>
 		/// Subtraction is performed component-wise for every property.
 		/// </summary>
+		/// <remarks>
+		/// Color, normal, and tangent values are not normalized within this function. If you are expecting unit vectors, make sure to normalize these properties.
+		/// </remarks>
 		/// <param name="a">Left side subtraction parameter.</param>
 		/// <param name="b">Right side subtraction parameter.</param>
 		/// <returns>A new Vertex with the sum of a - b.</returns>
@@ -372,6 +386,9 @@ namespace UnityEngine.ProBuilder
 		/// <summary>
 		/// Subtraction is performed component-wise for every property.
 		/// </summary>
+		/// <remarks>
+		/// Color, normal, and tangent values are not normalized within this function. If you are expecting unit vectors, make sure to normalize these properties.
+		/// </remarks>
 		/// <param name="a">Left side subtraction parameter.</param>
 		/// <param name="b">Right side subtraction parameter.</param>
 		/// <returns>A new Vertex with the sum of a - b.</returns>
@@ -385,6 +402,9 @@ namespace UnityEngine.ProBuilder
 		/// <summary>
 		/// Subtraction is performed component-wise for every property.
 		/// </summary>
+		/// <remarks>
+		/// Color, normal, and tangent values are not normalized within this function. If you are expecting unit vectors, make sure to normalize these properties.
+		/// </remarks>
 		/// <param name="b">Right side subtraction parameter.</param>
         public void Subtract(Vertex b)
 		{
@@ -404,6 +424,9 @@ namespace UnityEngine.ProBuilder
 		/// <summary>
 		/// Multiplication is performed component-wise for every property.
 		/// </summary>
+		/// <remarks>
+		/// Color, normal, and tangent values are not normalized within this function. If you are expecting unit vectors, make sure to normalize these properties.
+		/// </remarks>
 		/// <param name="a">Left side multiplication parameter.</param>
 		/// <param name="value">Right side multiplication parameter.</param>
 		/// <returns>A new Vertex with the sum of a * b.</returns>
@@ -428,6 +451,9 @@ namespace UnityEngine.ProBuilder
 		/// <summary>
 		/// Multiplication is performed component-wise for every property.
 		/// </summary>
+		/// <remarks>
+		/// Color, normal, and tangent values are not normalized within this function. If you are expecting unit vectors, make sure to normalize these properties.
+		/// </remarks>
 		/// <param name="value">Right side multiplication parameter.</param>
 		public void Multiply(float value)
 		{
@@ -444,6 +470,9 @@ namespace UnityEngine.ProBuilder
 		/// <summary>
 		/// Division is performed component-wise for every property.
 		/// </summary>
+		/// <remarks>
+		/// Color, normal, and tangent values are not normalized within this function. If you are expecting unit vectors, make sure to normalize these properties.
+		/// </remarks>
 		/// <param name="a">Left side division parameter.</param>
 		/// <param name="value">Right side division parameter.</param>
 		/// <returns>A new Vertex with the sum of a / b.</returns>
@@ -455,6 +484,9 @@ namespace UnityEngine.ProBuilder
 		/// <summary>
 		/// Division is performed component-wise for every property.
 		/// </summary>
+		/// <remarks>
+		/// Color, normal, and tangent values are not normalized within this function. If you are expecting unit vectors, make sure to normalize these properties.
+		/// </remarks>
 		/// <param name="a">Left side division parameter.</param>
 		/// <param name="value">Right side division parameter.</param>
 		/// <returns>A new Vertex with the sum of a / b.</returns>
@@ -468,6 +500,9 @@ namespace UnityEngine.ProBuilder
 		/// <summary>
 		/// Division is performed component-wise for every property.
 		/// </summary>
+		/// <remarks>
+		/// Color, normal, and tangent values are not normalized within this function. If you are expecting unit vectors, make sure to normalize these properties.
+		/// </remarks>
 		/// <param name="value">Right side Division parameter.</param>
 		public void Divide(float value)
 		{
@@ -518,202 +553,13 @@ namespace UnityEngine.ProBuilder
 		}
 
 		/// <summary>
-		/// Creates a new array of vertices with values from a @"UnityEngine.ProBuilder.ProBuilderMesh" component.
-		/// </summary>
-		/// <param name="mesh">The source mesh.</param>
-		/// <param name="indexes">An optional list of indices pointing to the mesh attribute indexes to include in the returned Vertex array.</param>
-		/// <returns>An array of vertices.</returns>
-		public static Vertex[] GetVertices(ProBuilderMesh mesh, IList<int> indexes = null)
-		{
-			if (mesh == null)
-				throw new ArgumentNullException("mesh");
-
-			int meshVertexCount = mesh.vertexCount;
-			int vertexCount = indexes != null ? indexes.Count : mesh.vertexCount;
-
-			Vertex[] v = new Vertex[vertexCount];
-
-			Vector3[] positions = mesh.positionsInternal;
-			Color[] colors = mesh.colorsInternal;
-			Vector2[] uv0s = mesh.texturesInternal;
-			Vector4[] tangents = mesh.GetTangents();
-			Vector3[] normals = mesh.GetNormals();
-			Vector2[] uv2s = mesh.mesh != null ? mesh.mesh.uv2 : null;
-
-			List<Vector4> uv3s = new List<Vector4>();
-			List<Vector4> uv4s = new List<Vector4>();
-
-			mesh.GetUVs(2, uv3s);
-			mesh.GetUVs(3, uv4s);
-
-			bool _hasPositions = positions != null && positions.Count() == meshVertexCount;
-			bool _hasColors = colors != null && colors.Count() == meshVertexCount;
-			bool _hasNormals = normals != null && normals.Count() == meshVertexCount;
-			bool _hasTangents = tangents != null && tangents.Count() == meshVertexCount;
-			bool _hasUv0 = uv0s != null && uv0s.Count() == meshVertexCount;
-			bool _hasUv2 = uv2s != null && uv2s.Count() == meshVertexCount;
-			bool _hasUv3 = uv3s.Count() == meshVertexCount;
-			bool _hasUv4 = uv4s.Count() == meshVertexCount;
-
-			for (int i = 0; i < vertexCount; i++)
-			{
-				v[i] = new Vertex();
-				int ind = indexes == null ? i : indexes[i];
-
-				if (_hasPositions)
-				{
-					v[i].hasPosition = true;
-					v[i].m_Position = positions[ind];
-				}
-
-				if (_hasColors)
-				{
-					v[i].hasColor = true;
-					v[i].m_Color = colors[ind];
-				}
-
-				if (_hasNormals)
-				{
-					v[i].hasNormal = true;
-					v[i].m_Normal = normals[ind];
-				}
-
-				if (_hasTangents)
-				{
-					v[i].hasTangent = true;
-					v[i].m_Tangent = tangents[ind];
-				}
-
-				if (_hasUv0)
-				{
-					v[i].hasUV0 = true;
-					v[i].m_UV0 = uv0s[ind];
-				}
-
-				if (_hasUv2)
-				{
-					v[i].hasUV2 = true;
-					v[i].m_UV2 = uv2s[ind];
-				}
-
-				if (_hasUv3)
-				{
-					v[i].hasUV3 = true;
-					v[i].m_UV3 = uv3s[ind];
-				}
-
-				if (_hasUv4)
-				{
-					v[i].hasUV4 = true;
-					v[i].m_UV4 = uv4s[ind];
-				}
-			}
-
-			return v;
-		}
-
-		/// <summary>
-		/// Creates a new array of vertices with values from a UnityEngine.Mesh.
-		/// </summary>
-		/// <param name="mesh">The source mesh.</param>
-		/// <returns>An array of vertices.</returns>
-		public static Vertex[] GetVertices(Mesh mesh)
-		{
-			if (mesh == null)
-				return null;
-
-			int vertexCount = mesh.vertexCount;
-			Vertex[] v = new Vertex[vertexCount];
-
-			Vector3[] positions = mesh.vertices;
-			Color[] colors = mesh.colors;
-			Vector3[] normals = mesh.normals;
-			Vector4[] tangents = mesh.tangents;
-			Vector2[] uv0s = mesh.uv;
-			Vector2[] uv2s = mesh.uv2;
-#if !UNITY_4_7 && !UNITY_5_0
-			List<Vector4> uv3s = new List<Vector4>();
-			List<Vector4> uv4s = new List<Vector4>();
-			mesh.GetUVs(2, uv3s);
-			mesh.GetUVs(3, uv4s);
-#endif
-
-			bool _hasPositions = positions != null && positions.Count() == vertexCount;
-			bool _hasColors = colors != null && colors.Count() == vertexCount;
-			bool _hasNormals = normals != null && normals.Count() == vertexCount;
-			bool _hasTangents = tangents != null && tangents.Count() == vertexCount;
-			bool _hasUv0 = uv0s != null && uv0s.Count() == vertexCount;
-			bool _hasUv2 = uv2s != null && uv2s.Count() == vertexCount;
-#if !UNITY_4_7 && !UNITY_5_0
-			bool _hasUv3 = uv3s != null && uv3s.Count() == vertexCount;
-			bool _hasUv4 = uv4s != null && uv4s.Count() == vertexCount;
-#endif
-
-			for (int i = 0; i < vertexCount; i++)
-			{
-				v[i] = new Vertex();
-
-				if (_hasPositions)
-				{
-					v[i].hasPosition = true;
-					v[i].m_Position = positions[i];
-				}
-
-				if (_hasColors)
-				{
-					v[i].hasColor = true;
-					v[i].m_Color = colors[i];
-				}
-
-				if (_hasNormals)
-				{
-					v[i].hasNormal = true;
-					v[i].m_Normal = normals[i];
-				}
-
-				if (_hasTangents)
-				{
-					v[i].hasTangent = true;
-					v[i].m_Tangent = tangents[i];
-				}
-
-				if (_hasUv0)
-				{
-					v[i].hasUV0 = true;
-					v[i].m_UV0 = uv0s[i];
-				}
-
-				if (_hasUv2)
-				{
-					v[i].hasUV2 = true;
-					v[i].m_UV2 = uv2s[i];
-				}
-#if !UNITY_4_7 && !UNITY_5_0
-				if (_hasUv3)
-				{
-					v[i].hasUV3 = true;
-					v[i].m_UV3 = uv3s[i];
-				}
-
-				if (_hasUv4)
-				{
-					v[i].hasUV4 = true;
-					v[i].m_UV4 = uv4s[i];
-				}
-#endif
-			}
-
-			return v;
-		}
-
-		/// <summary>
 		/// Allocate and fill all attribute arrays. This method will fill all arrays, regardless of whether or not real data populates the values (check what attributes a Vertex contains with HasAttribute()).
 		/// </summary>
 		/// <remarks>
 		/// If you are using this function to rebuild a mesh, use SetMesh instead. SetMesh handles setting null arrays where appropriate for you.
 		/// </remarks>
 		/// <seealso cref="SetMesh"/>
-		/// <param name="vertices">The source vertices.</param>
+		/// <param name="vertexes">The source vertexes.</param>
 		/// <param name="position">A new array of the vertex position values.</param>
 		/// <param name="color">A new array of the vertex color values.</param>
 		/// <param name="uv0">A new array of the vertex uv0 values.</param>
@@ -723,7 +569,7 @@ namespace UnityEngine.ProBuilder
 		/// <param name="uv3">A new array of the vertex uv3 values.</param>
 		/// <param name="uv4">A new array of the vertex uv4 values.</param>
 		public static void GetArrays(
-			IList<Vertex> vertices,
+			IList<Vertex> vertexes,
 			out Vector3[] position,
 			out Color[] color,
 			out Vector2[] uv0,
@@ -733,7 +579,7 @@ namespace UnityEngine.ProBuilder
 			out List<Vector4> uv3,
 			out List<Vector4> uv4)
 		{
-			GetArrays(vertices, out position, out color, out uv0, out normal, out tangent, out uv2, out uv3, out uv4, MeshAttributes.All);
+			GetArrays(vertexes, out position, out color, out uv0, out normal, out tangent, out uv2, out uv3, out uv4, MeshArrays.All);
 		}
 
 		/// <summary>
@@ -743,7 +589,7 @@ namespace UnityEngine.ProBuilder
 		/// If you are using this function to rebuild a mesh, use SetMesh instead. SetMesh handles setting null arrays where appropriate for you.
 		/// </remarks>
 		/// <seealso cref="SetMesh"/>
-		/// <param name="vertices">The source vertices.</param>
+		/// <param name="vertexes">The source vertexes.</param>
 		/// <param name="position">A new array of the vertex position values if requested by the attributes parameter, or null.</param>
 		/// <param name="color">A new array of the vertex color values if requested by the attributes parameter, or null.</param>
 		/// <param name="uv0">A new array of the vertex uv0 values if requested by the attributes parameter, or null.</param>
@@ -753,9 +599,9 @@ namespace UnityEngine.ProBuilder
 		/// <param name="uv3">A new array of the vertex uv3 values if requested by the attributes parameter, or null.</param>
 		/// <param name="uv4">A new array of the vertex uv4 values if requested by the attributes parameter, or null.</param>
 		/// <param name="attributes">A flag with the MeshAttributes requested.</param>
-		/// <seealso cref="HasAttribute"/>
+		/// <seealso cref="HasArrays"/>
 		public static void GetArrays(
-			IList<Vertex> vertices,
+			IList<Vertex> vertexes,
 			out Vector3[] position,
 			out Color[] color,
 			out Vector2[] uv0,
@@ -764,22 +610,22 @@ namespace UnityEngine.ProBuilder
 			out Vector2[] uv2,
 			out List<Vector4> uv3,
 			out List<Vector4> uv4,
-			MeshAttributes attributes)
+			MeshArrays attributes)
 		{
-			if (vertices == null)
-				throw new ArgumentNullException("vertices");
+			if (vertexes == null)
+				throw new ArgumentNullException("vertexes");
 
-			int vc = vertices.Count;
-			var first = vertices[0];
+			int vc = vertexes.Count;
+			var first = vc < 1 ? new Vertex() : vertexes[0];
 
-			bool hasPosition = ((attributes & MeshAttributes.Position) == MeshAttributes.Position) && first.hasPosition;
-			bool hasColor = ((attributes & MeshAttributes.Color) == MeshAttributes.Color) && first.hasColor;
-			bool hasUv0 = ((attributes & MeshAttributes.UV0) == MeshAttributes.UV0) && first.hasUV0;
-			bool hasNormal = ((attributes & MeshAttributes.Normal) == MeshAttributes.Normal) && first.hasNormal;
-			bool hasTangent = ((attributes & MeshAttributes.Tangent) == MeshAttributes.Tangent) && first.hasTangent;
-			bool hasUv2 = ((attributes & MeshAttributes.UV1) == MeshAttributes.UV1) && first.hasUV2;
-			bool hasUv3 = ((attributes & MeshAttributes.UV2) == MeshAttributes.UV2) && first.hasUV3;
-			bool hasUv4 = ((attributes & MeshAttributes.UV3) == MeshAttributes.UV3) && first.hasUV4;
+			bool hasPosition = ((attributes & MeshArrays.Position) == MeshArrays.Position) && first.hasPosition;
+			bool hasColor = ((attributes & MeshArrays.Color) == MeshArrays.Color) && first.hasColor;
+			bool hasUv0 = ((attributes & MeshArrays.Texture0) == MeshArrays.Texture0) && first.hasUV0;
+			bool hasNormal = ((attributes & MeshArrays.Normal) == MeshArrays.Normal) && first.hasNormal;
+			bool hasTangent = ((attributes & MeshArrays.Tangent) == MeshArrays.Tangent) && first.hasTangent;
+			bool hasUv2 = ((attributes & MeshArrays.Texture1) == MeshArrays.Texture1) && first.hasUV2;
+			bool hasUv3 = ((attributes & MeshArrays.Texture2) == MeshArrays.Texture2) && first.hasUV3;
+			bool hasUv4 = ((attributes & MeshArrays.Texture3) == MeshArrays.Texture3) && first.hasUV4;
 
 			position = hasPosition ? new Vector3[vc] : null;
 			color = hasColor ? new Color[vc] : null;
@@ -792,14 +638,14 @@ namespace UnityEngine.ProBuilder
 
 			for (int i = 0; i < vc; i++)
 			{
-				if (hasPosition) position[i] = vertices[i].m_Position;
-				if (hasColor) color[i] = vertices[i].m_Color;
-				if (hasUv0) uv0[i] = vertices[i].m_UV0;
-				if (hasNormal) normal[i] = vertices[i].m_Normal;
-				if (hasTangent) tangent[i] = vertices[i].m_Tangent;
-				if (hasUv2) uv2[i] = vertices[i].m_UV2;
-				if (hasUv3) uv3.Add(vertices[i].m_UV3);
-				if (hasUv4) uv4.Add(vertices[i].m_UV4);
+				if (hasPosition) position[i] = vertexes[i].m_Position;
+				if (hasColor) color[i] = vertexes[i].m_Color;
+				if (hasUv0) uv0[i] = vertexes[i].m_UV0;
+				if (hasNormal) normal[i] = vertexes[i].m_Normal;
+				if (hasTangent) tangent[i] = vertexes[i].m_Tangent;
+				if (hasUv2) uv2[i] = vertexes[i].m_UV2;
+				if (hasUv3) uv3.Add(vertexes[i].m_UV3);
+				if (hasUv4) uv4.Add(vertexes[i].m_UV4);
 			}
 		}
 
@@ -807,14 +653,14 @@ namespace UnityEngine.ProBuilder
 		/// Replace mesh values with vertex array. Mesh is cleared during this function, so be sure to set the triangles after calling.
 		/// </summary>
 		/// <param name="mesh">The target mesh.</param>
-		/// <param name="vertices">The vertices to replace the mesh attributes with.</param>
-		public static void SetMesh(Mesh mesh, IList<Vertex> vertices)
+		/// <param name="vertexes">The vertexes to replace the mesh attributes with.</param>
+		public static void SetMesh(Mesh mesh, IList<Vertex> vertexes)
 		{
 			if (mesh == null)
 				throw new ArgumentNullException("mesh");
 
-			if (vertices == null)
-				throw new ArgumentNullException("vertices");
+			if (vertexes == null)
+				throw new ArgumentNullException("vertexes");
 
 			Vector3[] positions = null;
 			Color[] colors = null;
@@ -825,7 +671,7 @@ namespace UnityEngine.ProBuilder
 			List<Vector4> uv3s = null;
 			List<Vector4> uv4s = null;
 
-			GetArrays(vertices, out positions,
+			GetArrays(vertexes, out positions,
 				out colors,
 				out uv0s,
 				out normals,
@@ -836,7 +682,7 @@ namespace UnityEngine.ProBuilder
 
 			mesh.Clear();
 
-			Vertex first = vertices[0];
+			Vertex first = vertexes[0];
 
 			if (first.hasPosition) mesh.vertices = positions;
 			if (first.hasColor) mesh.colors = colors;
@@ -855,19 +701,19 @@ namespace UnityEngine.ProBuilder
 		}
 
 		/// <summary>
-		/// Average all vertices to a single vertex.
+		/// Average all vertexes to a single vertex.
 		/// </summary>
-		/// <param name="vertices">A list of vertices.</param>
-		/// <param name="indexes">If indexes is null, all vertices will be averaged. If indexes is provided, only the vertices referenced by the indexes array are averaged.</param>
+		/// <param name="vertexes">A list of vertexes.</param>
+		/// <param name="indexes">If indexes is null, all vertexes will be averaged. If indexes is provided, only the vertexes referenced by the indexes array are averaged.</param>
 		/// <returns>An averaged vertex value.</returns>
-		public static Vertex Average(IList<Vertex> vertices, IList<int> indexes = null)
+		public static Vertex Average(IList<Vertex> vertexes, IList<int> indexes = null)
 		{
-			if (vertices == null)
-				throw new ArgumentNullException("vertices");
+			if (vertexes == null)
+				throw new ArgumentNullException("vertexes");
 
 			Vertex v = new Vertex();
 
-			int vertexCount = indexes != null ? indexes.Count : vertices.Count;
+			int vertexCount = indexes != null ? indexes.Count : vertexes.Count;
 
 			int normalCount = 0,
 				tangentCount = 0,
@@ -879,38 +725,38 @@ namespace UnityEngine.ProBuilder
 			{
 				int index = indexes == null ? i : indexes[i];
 
-				v.m_Position += vertices[index].m_Position;
-				v.m_Color += vertices[index].m_Color;
-				v.m_UV0 += vertices[index].m_UV0;
+				v.m_Position += vertexes[index].m_Position;
+				v.m_Color += vertexes[index].m_Color;
+				v.m_UV0 += vertexes[index].m_UV0;
 
-				if (vertices[index].hasNormal)
+				if (vertexes[index].hasNormal)
 				{
 					normalCount++;
-					v.m_Normal += vertices[index].m_Normal;
+					v.m_Normal += vertexes[index].m_Normal;
 				}
 
-				if (vertices[index].hasTangent)
+				if (vertexes[index].hasTangent)
 				{
 					tangentCount++;
-					v.m_Tangent += vertices[index].m_Tangent;
+					v.m_Tangent += vertexes[index].m_Tangent;
 				}
 
-				if (vertices[index].hasUV2)
+				if (vertexes[index].hasUV2)
 				{
 					uv2Count++;
-					v.m_UV2 += vertices[index].m_UV2;
+					v.m_UV2 += vertexes[index].m_UV2;
 				}
 
-				if (vertices[index].hasUV3)
+				if (vertexes[index].hasUV3)
 				{
 					uv3Count++;
-					v.m_UV3 += vertices[index].m_UV3;
+					v.m_UV3 += vertexes[index].m_UV3;
 				}
 
-				if (vertices[index].hasUV4)
+				if (vertexes[index].hasUV4)
 				{
 					uv4Count++;
-					v.m_UV4 += vertices[index].m_UV4;
+					v.m_UV4 += vertexes[index].m_UV4;
 				}
 			}
 
@@ -928,7 +774,7 @@ namespace UnityEngine.ProBuilder
 		}
 
 		/// <summary>
-		/// Linearly interpolate between two vertices.
+		/// Linearly interpolate between two vertexes.
 		/// </summary>
 		/// <param name="x">Left parameter.</param>
 		/// <param name="y">Right parameter.</param>
@@ -937,7 +783,7 @@ namespace UnityEngine.ProBuilder
 		public static Vertex Mix(Vertex x, Vertex y, float weight)
 		{
 			if (x == null || y == null)
-				throw new ArgumentNullException("x", "Mix does accept null vertices.");
+				throw new ArgumentNullException("x", "Mix does accept null vertexes.");
 
 			float i = 1f - weight;
 

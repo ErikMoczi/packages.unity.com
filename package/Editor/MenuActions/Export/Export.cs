@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.ProBuilder.UI;
@@ -9,12 +10,10 @@ using UnityEditor.ProBuilder;
 using EditorGUILayout = UnityEditor.EditorGUILayout;
 using EditorGUIUtility = UnityEditor.EditorGUIUtility;
 using EditorStyles = UnityEditor.EditorStyles;
+using Object = UnityEngine.Object;
 
 namespace UnityEditor.ProBuilder.Actions
 {
-	/**
-	 *	Menu item and options for exporting meshes.
-	 */
 	sealed class Export : MenuAction
 	{
 		public override ToolbarGroup group { get { return ToolbarGroup.Object; } }
@@ -30,28 +29,28 @@ namespace UnityEditor.ProBuilder.Actions
 		GUIContent gc_ObjExportCopyTextures = new GUIContent("Copy Textures", "With Copy Textures enabled the exporter will copy material textures to the destination directory. If false the material library will point to the texture path within the Unity project. If you're exporting models with the intention of editing in an external 3D modeler then re-importing, disable this option to avoid duplicate textures in your project.");
 		GUIContent gc_ObjExportVertexColors = new GUIContent("Vertex Colors", "Some 3D modeling applications will read and write vertex colors as an unofficial extension to the OBJ format.\n\nWarning! Enabling this can break compatibility with some other 3D modeling applications.");
 		GUIContent gc_ObjTextureOffsetScale = new GUIContent("Texture Offset, Scale", "Write texture map offset and scale to the material library. Not all 3D modeling applications support this specificiation, and some will fail to load materials that define these values.");
-		GUIContent gc_ObjQuads = new GUIContent("Export Quads", "Where possible, faces will be exported as quads instead of triangles. Note that this can result in a larger exported mesh (ProBuilder will not merge shared vertices with this option enabled).");
+		GUIContent gc_ObjQuads = new GUIContent("Export Quads", "Where possible, faces will be exported as quads instead of triangles. Note that this can result in a larger exported mesh (ProBuilder will not merge shared vertexes with this option enabled).");
 
 		// Options for each export format
-		private bool m_ExportRecursive;
-		private bool m_ExportAsGroup;
+		bool m_ExportRecursive;
+		bool m_ExportAsGroup;
 
 		// obj specific
-		private bool m_ObjExportRightHanded;
-		private bool m_ObjExportCopyTextures;
-		private bool m_ObjApplyTransform;
-		private bool m_ObjExportVertexColors;
-		private bool m_ObjTextureOffsetScale;
-		private bool m_ObjQuads;
+		bool m_ObjExportRightHanded;
+		bool m_ObjExportCopyTextures;
+		bool m_ObjApplyTransform;
+		bool m_ObjExportVertexColors;
+		bool m_ObjTextureOffsetScale;
+		bool m_ObjQuads;
 
 		// stl specific
-		private Parabox.STL.FileType m_StlExportFormat = Parabox.STL.FileType.Ascii;
+		FileType m_StlExportFormat = FileType.Ascii;
 
 		// ply specific
-		private bool m_PlyExportIsRightHanded;
-		private bool m_PlyApplyTransform;
-		private bool m_PlyQuads;
-		private bool m_PlyNGons;
+		bool m_PlyExportIsRightHanded;
+		bool m_PlyApplyTransform;
+		bool m_PlyQuads;
+		bool m_PlyNGons;
 
 		public enum ExportFormat
 		{
@@ -61,9 +60,9 @@ namespace UnityEditor.ProBuilder.Actions
 			Asset
 		}
 
-		const ExportFormat DefaultFormat = ExportFormat.Obj;
+		const ExportFormat k_DefaultFormat = ExportFormat.Obj;
 
-		private ExportFormat m_ExportFormat = DefaultFormat;
+		ExportFormat m_ExportFormat = k_DefaultFormat;
 
 		static readonly TooltipContent _tooltip = new TooltipContent
 		(
@@ -73,7 +72,7 @@ namespace UnityEditor.ProBuilder.Actions
 
 		public Export()
 		{
-			m_ExportFormat = (ExportFormat) PreferencesInternal.GetInt("pbDefaultExportFormat", (int) DefaultFormat);
+			m_ExportFormat = (ExportFormat) PreferencesInternal.GetInt("pbDefaultExportFormat", (int) k_DefaultFormat);
 
 			// Recursively select meshes in selection (ie, use GetComponentsInChildren).
 			m_ExportRecursive = PreferencesInternal.GetBool("pbExportRecursive", false);
@@ -97,19 +96,22 @@ namespace UnityEditor.ProBuilder.Actions
 			m_PlyNGons = PreferencesInternal.GetBool("pbPlyNGons", false);
 		}
 
-		public override bool IsHidden() { return false; }
-
-		public override bool IsEnabled()
+		public override bool hidden
 		{
-			return Selection.gameObjects != null && Selection.gameObjects.Length > 0;
+			get { return false; }
 		}
 
-		public override MenuActionState AltState()
+		public override bool enabled
 		{
-			return MenuActionState.VisibleAndEnabled;
+			get { return Selection.gameObjects != null && Selection.gameObjects.Length > 0; }
 		}
 
-		public override void OnSettingsGUI()
+		protected override MenuActionState optionsMenuState
+		{
+			get { return MenuActionState.VisibleAndEnabled; }
+		}
+
+		protected override void OnSettingsGUI()
 		{
 			GUILayout.Label("Export Settings", EditorStyles.boldLabel);
 
@@ -142,7 +144,7 @@ namespace UnityEditor.ProBuilder.Actions
 				DoAction();
 		}
 
-		private void ObjExportOptions()
+		void ObjExportOptions()
 		{
 			EditorGUI.BeginChangeCheck();
 
@@ -215,9 +217,9 @@ namespace UnityEditor.ProBuilder.Actions
 		{
 			string res = null;
 
-			IEnumerable<ProBuilderMesh> meshes = m_ExportRecursive ? MeshSelection.All() : MeshSelection.Top();
+			IEnumerable<ProBuilderMesh> meshes = m_ExportRecursive ? MeshSelection.All() : MeshSelection.TopInternal();
 
-			if(meshes == null || meshes.Count() < 1)
+			if(meshes == null || !meshes.Any())
 			{
 				return new ActionResult(ActionResult.Status.Canceled, "No Meshes Selected");
 			}
@@ -253,22 +255,17 @@ namespace UnityEditor.ProBuilder.Actions
 			}
 
 			if( string.IsNullOrEmpty(res) )
-			{
 				return new ActionResult(ActionResult.Status.Canceled, "User Canceled");
-			}
-			else
-			{
-				if(res.Contains(Application.dataPath))
-				{
-					AssetDatabase.Refresh();
-					string projectPath = string.Format("Assets{0}", res.Replace(Application.dataPath, ""));
-					Object o = AssetDatabase.LoadAssetAtPath<GameObject>(projectPath);
-					if(o != null)
-						EditorGUIUtility.PingObject(o);
-				}
 
-				return new ActionResult(ActionResult.Status.Success, "Export " + m_ExportFormat);
+			if(res.Replace("\\", "/").IndexOf(Application.dataPath.Replace("\\", "/"), StringComparison.InvariantCultureIgnoreCase) > -1)
+			{
+				string projectPath = string.Format("Assets{0}", res.Replace(Application.dataPath, ""));
+				Object o = AssetDatabase.LoadAssetAtPath<GameObject>(projectPath);
+				if(o != null)
+					EditorGUIUtility.PingObject(o);
 			}
+
+			return new ActionResult(ActionResult.Status.Success, "Export " + m_ExportFormat);
 		}
 	}
 }

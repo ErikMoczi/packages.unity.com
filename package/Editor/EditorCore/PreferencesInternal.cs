@@ -49,7 +49,7 @@ namespace UnityEditor.ProBuilder
 			{ PreferenceKeys.pbEnableExperimental, false },
 			{ PreferenceKeys.pbMeshesAreAssets, false },
 			{ PreferenceKeys.pbSelectedFaceDither, true },
-			{ PreferenceKeys.pbShowPreselectionHighlight, true },
+			{ PreferenceKeys.pbShowPreselectionHighlight, false },
 		};
 
 		static Dictionary<string, float> s_FloatDefaults = new Dictionary<string, float>()
@@ -71,7 +71,6 @@ namespace UnityEditor.ProBuilder
 			{ PreferenceKeys.pbDefaultSelectionMode, 0 },
 			{ PreferenceKeys.pbHandleAlignment, 0 },
 			{ PreferenceKeys.pbDefaultCollider, (int) ColliderType.MeshCollider },
-			{ PreferenceKeys.pbVertexColorTool, (int) VertexColorTool.Painter },
 			{ PreferenceKeys.pbToolbarLocation, (int) SceneToolbarLocation.UpperCenter },
 			{ PreferenceKeys.pbDefaultEntity, (int) EntityType.Detail },
 			{ PreferenceKeys.pbDragSelectMode, (int) SelectionModifierBehavior.Difference },
@@ -286,18 +285,18 @@ namespace UnityEditor.ProBuilder
 					if(EditorPrefs.HasKey(key))
 					{
 						if(EditorPrefs.GetString(key) == "Default-Diffuse")
-							return BuiltinMaterials.UnityDefaultDiffuse;
+							return BuiltinMaterials.GetLegacyDiffuse();
 
 						mat = (Material) AssetDatabase.LoadAssetAtPath(EditorPrefs.GetString(key), typeof(Material));
 					}
 					break;
 
 				default:
-					return BuiltinMaterials.DefaultMaterial;
+					return BuiltinMaterials.defaultMaterial;
 			}
 
 			if(!mat)
-				mat = BuiltinMaterials.DefaultMaterial;
+				mat = BuiltinMaterials.defaultMaterial;
 
 			return mat;
 		}

@@ -30,14 +30,14 @@ namespace UnityEditor.ProBuilder.Actions
 			"Apply the Trigger material and adds a collider marked as a trigger. The MeshRenderer will be automatically turned off on entering play mode."
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			return ProBuilderEditor.instance != null && MeshSelection.Top().Length > 0;
+			get { return ProBuilderEditor.instance != null && MeshSelection.TopInternal().Length > 0; }
 		}
 
 		public override ActionResult DoAction()
 		{
-			foreach (ProBuilderMesh pb in MeshSelection.All())
+			foreach (ProBuilderMesh pb in MeshSelection.Top())
 			{
 				var existing = pb.GetComponents<EntityBehaviour>();
 
@@ -62,7 +62,7 @@ namespace UnityEditor.ProBuilder.Actions
 				Undo.AddComponent<TriggerBehaviour>(pb.gameObject).Initialize();
 			}
 
-			int selectionCount = MeshSelection.All().Length;
+			int selectionCount = MeshSelection.TopInternal().Length;
 
 			if (selectionCount < 1)
 				return new ActionResult(ActionResult.Status.NoChange, "Set Trigger\nNo objects selected");

@@ -19,35 +19,40 @@ namespace UnityEditor.ProBuilder.Actions
 		static readonly TooltipContent _tooltip = new TooltipContent
 		(
 			"Fill Hole",
-			@"Create a new face connecting all selected vertices."
+			@"Create a new face connecting all selected vertexes."
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			return ProBuilderEditor.instance != null &&
-				ProBuilderEditor.instance.editLevel == EditLevel.Geometry &&
-				ProBuilderEditor.instance.selectionMode != SelectMode.Face &&
-				MeshSelection.Top().Length > 0;
+			get
+			{
+				return ProBuilderEditor.instance != null &&
+					ProBuilderEditor.editLevel == EditLevel.Geometry &&
+					ProBuilderEditor.componentMode != ComponentMode.Face &&
+					MeshSelection.TopInternal().Length > 0;
+			}
 		}
 
-		public override bool IsHidden()
+		public override bool hidden
 		{
-			return ProBuilderEditor.instance == null ||
-				ProBuilderEditor.instance.editLevel != EditLevel.Geometry ||
-				ProBuilderEditor.instance.selectionMode == SelectMode.Face;
-
+			get
+			{
+				return ProBuilderEditor.instance == null ||
+					ProBuilderEditor.editLevel != EditLevel.Geometry ||
+					ProBuilderEditor.componentMode == ComponentMode.Face;
+			}
 		}
 
-		public override MenuActionState AltState()
+		protected override MenuActionState optionsMenuState
 		{
-			return MenuActionState.VisibleAndEnabled;
+			get { return MenuActionState.VisibleAndEnabled; }
 		}
 
-		public override void OnSettingsGUI()
+		protected override void OnSettingsGUI()
 		{
 			GUILayout.Label("Fill Hole Settings", EditorStyles.boldLabel);
 
-			EditorGUILayout.HelpBox("Fill Hole can optionally fill entire holes (default) or just the selected vertices on the hole edges.\n\nIf no elements are selected, the entire object will be scanned for holes.", MessageType.Info);
+			EditorGUILayout.HelpBox("Fill Hole can optionally fill entire holes (default) or just the selected vertexes on the hole edges.\n\nIf no elements are selected, the entire object will be scanned for holes.", MessageType.Info);
 
 			bool wholePath = PreferencesInternal.GetBool(PreferenceKeys.pbFillHoleSelectsEntirePath);
 
@@ -66,7 +71,7 @@ namespace UnityEditor.ProBuilder.Actions
 
 		public override ActionResult DoAction()
 		{
-			return MenuCommands.MenuFillHole(MeshSelection.Top());
+			return MenuCommands.MenuFillHole(MeshSelection.TopInternal());
 		}
 	}
 }

@@ -193,31 +193,31 @@ namespace UnityEditor.ProBuilder
 
 			ProBuilderEditor editor = ProBuilderEditor.instance;
 
-			if (editor && editor.editLevel == EditLevel.Geometry)
+			if (editor && ProBuilderEditor.editLevel == EditLevel.Geometry)
 			{
-				switch (editor.selectionMode)
+				switch (ProBuilderEditor.componentMode)
 				{
-					case SelectMode.Face:
-						foreach (ProBuilderMesh pb in selection)
+					case ComponentMode.Face:
+						foreach (ProBuilderMesh mesh in selection)
 						{
-							Color[] colors = pb.colorsInternal;
+							Color[] colors = mesh.GetColors();
 
-							foreach (int i in pb.selectedIndicesInternal)
+							foreach (int i in mesh.selectedIndexesInternal)
 								colors[i] = col;
 
-							pb.SetColors(colors);
+							mesh.colors = colors;
 						}
 						break;
-					case SelectMode.Edge:
-					case SelectMode.Vertex:
-						foreach (ProBuilderMesh pb in selection)
+					case ComponentMode.Edge:
+					case ComponentMode.Vertex:
+						foreach (var mesh in selection)
 						{
-							Color[] colors = pb.colorsInternal;
+							Color[] colors = mesh.GetColors();
 
-							foreach (int i in pb.sharedIndicesInternal.AllIndexesWithValues(pb.selectedIndicesInternal))
+							foreach (int i in mesh.GetCoincidentVertexes(mesh.selectedIndexesInternal))
 								colors[i] = col;
 
-							pb.SetColors(colors);
+							mesh.colors = colors;
 						}
 						break;
 				}
