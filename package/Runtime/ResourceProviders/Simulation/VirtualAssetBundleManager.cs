@@ -87,7 +87,7 @@ namespace ResourceManagement.ResourceProviders.Simulation
             }
         }
 
-        internal static void AddProviders()
+        public static void AddProviders()
         {
             var virtualBundleData = JsonUtility.FromJson<VirtualAssetBundleRuntimeData>(System.IO.File.ReadAllText(Application.streamingAssetsPath + "/VirtualAssetBundleData.json"));
             if (virtualBundleData != null)
