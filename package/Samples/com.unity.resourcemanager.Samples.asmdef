@@ -1,7 +1,7 @@
 {
     "name": "com.unity.resourcemanager.Samples",
     "references": [
-      "com.unity.resourcemanager.Editor"
+      "com.unity.resourcemanager.Editor",
       "com.unity.resourcemanager.Runtime"
     ],
     "includePlatforms": [
