@@ -5,7 +5,7 @@ and create a new package uploaded to staging.
 
 **Do not commit to the Package Manager mirror**.
 
-## development setup
+## Development
 
 ProGrids is distributed as a Package Manager package. See [UPM Template](https://gitlab.internal.unity3d.com/upm-packages/upm-package-template)
 for more information on Package Manager.
@@ -14,7 +14,7 @@ The easiest way to work on packages is by setting up an empty Unity project, the
 
 ```
 #!/bin/sh
-git clone git@gitlab.internal.unity3d.com:world-building/progrids.git
+git clone $(progrids repository url)
 mkdir MyDevProject
 mkdir MyDevProject/Assets
 mkdir MyDevProject/Packages
@@ -36,7 +36,7 @@ echo "{
 - [ ] Update `CHANGELOG.md`
 - [ ] Update `Editor/Version.cs`
 - [ ] `git tag` commit with `-preview.{build}` ([semantic versioning](https://semver.org/))\*
-- [ ] Complete QAReport.md
+- [ ] Complete a new [QA Report](https://drive.google.com/drive/u/0/folders/1jwQWHOMR2GPSaDPwLUp1aeTrbOmobkLy)
 
 \* ProGrids specific tagging:
 
@@ -45,7 +45,10 @@ echo "{
 
 ### Testing
 
-- [QA Report](https://docs.google.com/document/d/1uGJV1Wkij_fqB_TeCAUDYoYoSiU1IryoKrjtzPRxN4g/edit)
+- [ ] Create a new Unity project with the targeted Unity version (check in `package.json` for this value)
+- [ ] Add `"registry":"http://staging-packages.unity.com"` to the `Packages/manifest.json`
+- [ ] Install the staged ProGrids version (specified in `package.json`)
+- [ ] Complete a new [QA Report]((https://drive.google.com/drive/u/0/folders/1jwQWHOMR2GPSaDPwLUp1aeTrbOmobkLy))
 
 ### Publish to Production
 

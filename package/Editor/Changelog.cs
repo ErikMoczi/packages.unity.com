@@ -7,17 +7,16 @@ using System.Text.RegularExpressions;
 
 namespace UnityEditor.ProGrids
 {
-
 	[Serializable]
 	class ChangelogEntry
 	{
 		[SerializeField]
-		VersionInfo m_VersionInfo;
+		SemVer m_VersionInfo;
 
 		[SerializeField]
 		string m_ReleaseNotes;
 
-		public VersionInfo versionInfo
+		public SemVer versionInfo
 		{
 			get { return m_VersionInfo; }
 		}
@@ -27,7 +26,7 @@ namespace UnityEditor.ProGrids
 			get { return m_ReleaseNotes; }
 		}
 
-		public ChangelogEntry(VersionInfo version, string releaseNotes)
+		public ChangelogEntry(SemVer version, string releaseNotes)
 		{
 			m_VersionInfo = version;
 			m_ReleaseNotes = releaseNotes;
@@ -88,7 +87,7 @@ namespace UnityEditor.ProGrids
 			var date = Regex.Match(version, k_VersionDatePattern);
 
 			if (mark.Success)
-				return new ChangelogEntry(new VersionInfo(mark.Value, date.Value), contents.Trim());
+				return new ChangelogEntry(new SemVer(mark.Value, date.Value), contents.Trim());
 
 			return null;
 		}

@@ -2,6 +2,6 @@ namespace UnityEditor.ProGrids
 {
 	static class Version
 	{
-		public static readonly VersionInfo current = new VersionInfo("3.0.2-preview", "en-US: 05/08/2018");
+		public static readonly SemVer current = new SemVer("3.0.3-preview.0", "2018-05-29");
 	}
 }

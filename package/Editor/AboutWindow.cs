@@ -1,8 +1,6 @@
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
-using UnityEditor;
 
 namespace UnityEditor.ProGrids
 {
@@ -37,7 +35,7 @@ namespace UnityEditor.ProGrids
 		public static readonly Color k_FontBlueHover = HexToColor(0x008BEF);
 
 		const string k_ProductName = "ProGrids";
-		VersionInfo m_ChangeLogVersionInfo;
+		SemVer m_ChangeLogVersionInfo;
 		string m_ChangeLogRichText = "";
 
 		internal static GUIStyle bannerStyle,

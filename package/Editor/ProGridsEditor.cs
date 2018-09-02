@@ -424,7 +424,7 @@ namespace UnityEditor.ProGrids
 			UnregisterDelegates();
 
 			SceneView.onSceneGUIDelegate += OnSceneGUI;
-			EditorUtility.RegisterOnPreSceneGUIDelegate(OnPreSceneGUI);
+			SceneView.onSceneGUIDelegate += DrawSceneGrid;
 			EditorApplication.update += UpdateToolbar;
 			Selection.selectionChanged += OnSelectionChange;
 			Undo.undoRedoPerformed += ResetActiveTransformValues;
@@ -437,7 +437,7 @@ namespace UnityEditor.ProGrids
 			m_IsEnabled = false;
 
 			SceneView.onSceneGUIDelegate -= OnSceneGUI;
-			EditorUtility.UnregisterOnPreSceneGUIDelegate(OnPreSceneGUI);
+			SceneView.onSceneGUIDelegate -= DrawSceneGrid;
 			EditorApplication.update -= UpdateToolbar;
 			Selection.selectionChanged -= OnSelectionChange;
 			Undo.undoRedoPerformed -= ResetActiveTransformValues;
@@ -536,7 +536,7 @@ namespace UnityEditor.ProGrids
 				DoTransformSnapping(currentEvent, view.camera);
 		}
 
-		void OnPreSceneGUI(SceneView view)
+		void DrawSceneGrid(SceneView view)
 		{
 			var currentEvent = Event.current;
 
