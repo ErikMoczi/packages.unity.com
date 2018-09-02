@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2017-12-12
+### Changes
+- Add assembly definition files
+- Force SemVer to use .NetStandard
+- Fix ValidationSuiteTests tests
+- Handle compatible versions returned in PackageInfo
+
 ## [1.2.0] - 2017-11-16
 ### Fixes
 - Fix flickering test When_Default_FirstPackageUIElement_HasSelectedClass, use package only
@@ -46,6 +53,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Rename "TestOperation..." to "MockOperation..."
 - The tab install will now list all available packages
 - Move Captain in its own package.
+- UpmPackageInfo was renamed to PackageInfo in Packman API
 
 ## [0.1.7] - 2017-11-01
 ### Added

@@ -61,7 +61,6 @@
 
 @mixin text-clip() {
 	overflow: hidden;
-	text-clipping: clip; // Without this, text doesn't actually get clip by overflow:hidden (uss bug?)
 }
 
 @mixin selected-element() {
@@ -82,14 +81,28 @@
 @mixin button($top, $right, $bottom, $left) {
 	flex: 0;
 
-	background-image: none;
-	border-color: rgba(0, 0, 0, 0.5);
-	border-radius: 5;
-	@include border-box(1);
 	@include padding($top, $right, $bottom, $left);
 
 	&:hover {
 		text-color: $unity-text-color-highlight;
+	}
+
+	&.display-none {
+		position: absolute;
+		border-radius: 0;
+		width: 0;
+		height: 0;
+		min-height: 0;
+		max-height: 0;
+		min-width: 0;
+		max-width: 0;
+		border-top: 0;
+		border-left: 0;
+		border-bottom: 0;
+		border-right: 0;
+		@include border-box(0);
+		@include padding-box(0);
+		@include margin-box(0);
 	}
 }
 
@@ -108,10 +121,17 @@
 
 .display-none {
 	position: absolute;
+	border-radius: 0;
 	width: 0;
 	height: 0;
 	min-height: 0;
 	max-height: 0;
+	min-width: 0;
+	max-width: 0;
+	border-top: 0;
+	border-left: 0;
+	border-bottom: 0;
+	border-right: 0;
 	@include border-box(0);
 	@include padding-box(0);
 	@include margin-box(0);
@@ -297,7 +317,7 @@
 			#packageName, #packageVersion {
 				text-color: $unity-text-color-highlight;
 			}
-			
+
 			&.installed {
 				background-color: $unity-installed-color-highlight;
 			}
@@ -314,9 +334,9 @@
 				@include selected-element();
 			}
 		}
-		
+
 		&.installed {
-			
+
 			font-style: italic;
 			background-color: $installed-package-background-color;
 
@@ -366,7 +386,7 @@
 			position-type: relative;
 		}
 	}
-	
+
 	#detailView {
 		flex: 1;
 
@@ -391,13 +411,14 @@
 				flex: 1;
 				flex-direction: row;
 				align-items: center;
+				height: 40;
 
 				#update {
-					@include button-box(1);
+					@include button(3,3,4,3);
 				}
 
 				#remove {
-					@include button-box(1);
+					@include button(3,3,4,3);
 				}
 			}
 
@@ -446,7 +467,7 @@
 				border-top: 20px;
 
 				#viewDocumentation {
-					@include button-box(1);
+					@include button(3,3,4,3);
 				}
 			}
 			.versionContainer {
@@ -459,16 +480,16 @@
 					background-image: resource("Images/preview");
 					width: 44;
 					height: 18;
-				} 
+				}
 			}
 		}
 	}
-	
+
 	#detailError {
 		position-type: absolute;
 		@include position(5, 5, auto, 5);
 		height: 50px;
-		
+
 		&.display-none {
 			@include position(0, 0, 0, 0);
 			width: 0;
@@ -489,17 +510,17 @@
 
 	@include border-box(1);
 	@include padding(5, 10, 5, 10);
-	
+
 	#alertMessage {
 		flex: 1;
 		text-color: $unity-text-color-highlight;
 		@include text-clip();
 	}
-	
+
 	#close {
 		flex: 0;
 		@include position(auto, auto, auto, 5);
-		@include button-box(1);
+		@include button(3,3,4,3);
 	}
 }
 

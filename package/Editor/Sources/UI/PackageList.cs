@@ -90,7 +90,7 @@ namespace UnityEditor.PackageManager.UI
             var group = GetOrCreateGroup(groupName);
             var packageItem = group.AddPackage(package);
 
-            if (selected == null)
+            if (selected == null && !group.Collapsed)
                 Select(package, packageItem);
 
             packageItem.OnSelected += Select;

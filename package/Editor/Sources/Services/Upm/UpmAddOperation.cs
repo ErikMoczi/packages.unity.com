@@ -17,7 +17,7 @@ namespace UnityEditor.PackageManager.UI
             PackageInfo = packageInfo;
             OnOperationError += errorCallbackAction;
             OnOperationSuccess += doneCallbackAction;
-            
+
             Start();
         }
 

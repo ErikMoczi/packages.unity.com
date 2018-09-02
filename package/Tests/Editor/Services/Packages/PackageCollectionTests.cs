@@ -23,7 +23,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             PackageCollection.Instance.OnFilterChanged -= OnFilterChangeEvent;
             PackageCollection.Instance.OnPackagesChanged -= OnPackagesChangeEvent;
         }
-        
+
         [Test]
         public void Constructor_Instance_FilterIsLocal()
         {
@@ -44,12 +44,12 @@ namespace UnityEditor.PackageManager.UI.Tests
             {
                 wasCalled = true;
             };
-            
+
             PackageCollection.Instance.OnFilterChanged += OnFilterChangeEvent;
             PackageCollection.Instance.SetFilter(PackageFilter.All, false);
             Assert.IsTrue(wasCalled);
         }
-        
+
         [Test]
         public void SetFilter_WhenNoFilterChange_FilterChangeEventIsNotPropagated()
         {
@@ -58,12 +58,12 @@ namespace UnityEditor.PackageManager.UI.Tests
             {
                 wasCalled = true;
             };
-            
+
             PackageCollection.Instance.OnFilterChanged += OnFilterChangeEvent;
             PackageCollection.Instance.SetFilter(PackageFilter.Local, false);
             Assert.IsFalse(wasCalled);
         }
-        
+
         [Test]
         public void SetFilter_WhenFilterChange_FilterIsChanged()
         {
@@ -79,7 +79,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             {
                 wasCalled = true;
             };
-            
+
             PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
             PackageCollection.Instance.SetFilter(PackageFilter.Local);
             Assert.IsFalse(wasCalled);
@@ -93,7 +93,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             {
                 wasCalled = true;
             };
-            
+
             PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
             PackageCollection.Instance.SetFilter(PackageFilter.All, false);
             Assert.IsFalse(wasCalled);
@@ -107,7 +107,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             {
                 wasCalled = true;
             };
-            
+
             PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
             PackageCollection.Instance.SetFilter(PackageFilter.Local, false);
             Assert.IsFalse(wasCalled);
@@ -121,12 +121,12 @@ namespace UnityEditor.PackageManager.UI.Tests
             {
                 wasCalled = true;
             };
-            
+
             PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
             PackageCollection.Instance.SetPackageInfos(Enumerable.Empty<PackageInfo>());
             Assert.IsTrue(wasCalled);
         }
-        
+
         [Test]
         public void AddPackageInfos_PackagesChangeEventIsPropagated()
         {
@@ -135,12 +135,12 @@ namespace UnityEditor.PackageManager.UI.Tests
             {
                 wasCalled = true;
             };
-            
+
             PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
             PackageCollection.Instance.AddPackageInfos(Enumerable.Empty<PackageInfo>());
             Assert.IsTrue(wasCalled);
         }
-        
+
         [Test]
         public void AddPackageInfo_PackagesChangeEventIsPropagated()
         {
@@ -149,12 +149,19 @@ namespace UnityEditor.PackageManager.UI.Tests
             {
                 wasCalled = true;
             };
-            
+
             PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
-            PackageCollection.Instance.AddPackageInfo(new PackageInfo() { Name = kPackageTestName, Version = new SemVersion(1,0,0)});
+            var info = new PackageInfo() {
+              Name = kPackageTestName,
+              Version = new SemVersion(1,0,0),
+              IsCurrent = true,
+              Group = "Test",
+              Errors = new List<Error>()
+            };
+            PackageCollection.Instance.AddPackageInfo(info);
             Assert.IsTrue(wasCalled);
         }
-        
+
         [Test]
         public void ClearPackages_PackagesChangeEventIsPropagated()
         {
@@ -163,7 +170,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             {
                 wasCalled = true;
             };
-            
+
             PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
             PackageCollection.Instance.ClearPackages();
             Assert.IsTrue(wasCalled);

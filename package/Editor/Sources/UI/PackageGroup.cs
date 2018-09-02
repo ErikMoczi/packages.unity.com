@@ -58,7 +58,7 @@ namespace UnityEditor.PackageManager.UI
 
         private void ToggleCollapse()
         {
-            SetCollapsed(!collapsed);
+            SetCollapsed(!Collapsed);
         }
         
         internal PackageItem AddPackage(Package package)
@@ -73,5 +73,6 @@ namespace UnityEditor.PackageManager.UI
         private VisualContainer Header { get { return root.Q<VisualContainer>("headerContainer"); } }        
         private Label HeaderTitle { get { return root.Q<Label>("headerTitle"); } }
         private Caret Caret { get { return root.Q<Caret>("headerExpandState"); } }
+        internal bool Collapsed { get { return collapsed; } set { SetCollapsed(value); } }
     }
 }

@@ -25,7 +25,7 @@ namespace UnityEditor.PackageManager.UI
         }
 
         public PackageInfo Current { get { return Versions.FirstOrDefault(package => package.IsCurrent); } }
-        public PackageInfo Latest { get { return Versions.LastOrDefault(package => package != null); } }
+        public PackageInfo Latest { get { return Versions.LastOrDefault(package => package.IsLatest); } }
         
         // Package version to display
         public PackageInfo Display { get { return Current ?? Latest; }}

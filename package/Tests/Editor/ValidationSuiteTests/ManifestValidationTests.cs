@@ -3,7 +3,6 @@ using NUnit.Framework;
 using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
 using UnityEngine;
 
-
 namespace UnityEditor.PackageManager.ValidationSuite.Tests
 {
     internal class ManifestValidationTests
@@ -24,7 +23,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         [TearDown]
         public void TearDown()
         {
-            if (!Directory.Exists(testDirectory))
+            if (Directory.Exists(testDirectory))
             {
                 Directory.Delete(testDirectory, true);
             }

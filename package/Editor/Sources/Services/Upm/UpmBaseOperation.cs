@@ -12,15 +12,13 @@ namespace UnityEditor.PackageManager.UI
         public static string GroupName(OriginType origin)
         {
             var group = PackageGroupOrigins.Packages.ToString();
-            // MOCKED
-            //if (origin == OriginType.Builtin)
-            if (origin == OriginType.Path)
+            if (origin == OriginType.Builtin)
                 group = PackageGroupOrigins.BuiltInPackages.ToString();
 
             return group;
         }
 
-        protected static IEnumerable<PackageInfo> FromUpmPackageInfo(UpmPackageInfo info, bool isCurrent=true)
+        protected static IEnumerable<PackageInfo> FromUpmPackageInfo(PackageManager.PackageInfo info, bool isCurrent=true)
         {
             var packages = new List<PackageInfo>();
             var displayName = info.displayName;
@@ -31,60 +29,37 @@ namespace UnityEditor.PackageManager.UI
                 displayName = new CultureInfo("en-US").TextInfo.ToTitleCase(displayName);
             }
 
-            // MOCK
-            // var state = info.version == info.latestVersion ?  PackageState.UpToDate : PackageState.Outdated,
-            var state = PackageState.UpToDate;
-            if (info.errors.Length > 0)
-                state = PackageState.Error;
+            var versions = new List<string>();
+            versions.AddRange(info.versions.compatible);
+            if (versions.All(version => version != info.version))
+            {
+                versions.Add(info.version);
+            }
+            
+            foreach(var version in versions)
+            {
+                var state = info.version == info.versions.latestCompatible ? PackageState.UpToDate : PackageState.Outdated;
+                if (info.errors.Length > 0)
+                    state = PackageState.Error;
 
-            packages.Add(new PackageInfo()
+                var packageInfo = new PackageInfo
                 {
                     Name = info.name,
                     DisplayName = displayName,
-                    PackageId = info.packageId.ToLower(),
-                    Tag = info.tag,
-                    Version = info.version,
+                    PackageId = version == info.version ? info.packageId : null,
+                    Version = version,
                     Description = info.description,
                     Category = info.category,
-                    IsCurrent = isCurrent,
+                    IsCurrent = version == info.version && isCurrent,
+                    IsLatest = version == info.versions.latestCompatible,
                     Errors = info.errors.ToList(),
-                    
-                    // MOCK
-                    // Group = GroupName(info.originType),
-                    Group = GroupName(PackageInfo.IsModule(info.name) ? OriginType.Path : OriginType.Registry),
-
+                    Group = GroupName(info.originType),
                     State = state,
-                    
-                    // MOCK TO REMOVE
-                    // OriginType = info.originType                    
-                    OriginType = PackageInfo.IsModule(info.name) ? OriginType.Path : OriginType.Registry
-                }
-            );
-
-            /* Mock remove this
-            foreach(var version in info.versions)
-            {
-                if (version != info.version.ToString())
-                {
-                    packages.Add(new PackageInfo()
-                        {
-                            Name = info.name,
-                            DisplayName = displayName,
-                            PackageId = info.packageId.ToLower(),
-                            Version = version,
-                            Tag = info.tag,
-                            Category = info.category,
-                            IsCurrent = false,
-                            State = info.version == info.latestVersion ?  PackageState.UpToDate : PackageState.Outdated,
-                            Group = GroupName(info.originType),
-                            OriginType = info.originType
-                        }
-                    );   
-                }
+                    OriginType = info.originType
+                };
+                
+                packages.Add(packageInfo);
             }
-            */
-
-
 
             return packages;
         }

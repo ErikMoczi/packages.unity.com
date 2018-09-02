@@ -68,9 +68,34 @@ namespace UnityEditor.PackageManager.UI.Tests
                 var children = packageGroup.Query(null, "package").Build().ToList().Count;
 
                 if (groupHeader == PackageGroupOrigins.Packages)
-                    Assert.IsTrue(children > 0);           // Make sure it is not collapsed
+                    Assert.IsTrue(packageGroup.Collapsed);           // Make sure it is not collapsed
                 else if (groupHeader == PackageGroupOrigins.BuiltInPackages)
+                    Assert.IsFalse(packageGroup.Collapsed);        // Make sure it is collapsed
+            }
+        }
+        
+
+        [Test]
+        public void When_Default_PackageGroupsCollapsedState_Has_NoChildren()
+        {
+            SetPackages(PackageSets.Instance.Many(5));
+            
+            var packageGroups = Container.Query<PackageGroup>("groupContainerOuter").Build().ToList();
+            foreach (var packageGroup in packageGroups)
+            {
+                var groupHeader = packageGroup.Origin;
+                var children = packageGroup.Query(null, "package").Build().ToList().Count;
+
+                if (groupHeader == PackageGroupOrigins.Packages)
+                {
+                    Assert.IsTrue(packageGroup.Collapsed);           // Make sure it is not collapsed
+                    Assert.IsTrue(children > 0);           // Make sure it is not collapsed
+                }
+                else if (groupHeader == PackageGroupOrigins.BuiltInPackages)
+                {
+                    Assert.IsFalse(packageGroup.Collapsed);        // Make sure it is collapsed
                     Assert.IsTrue(children == 0);        // Make sure it is collapsed
+                }
             }
         }
 

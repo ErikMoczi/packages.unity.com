@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-    
+
 namespace UnityEditor.PackageManager.UI.Tests
 {
     internal class PackageSets
@@ -20,18 +20,18 @@ namespace UnityEditor.PackageManager.UI.Tests
         private static readonly string[] Words = new[] { "lorem", "ipsum", "dolor", "sit", "amet", "consectetuer",
             "adipiscing", "elit", "sed", "diam", "nonummy", "nibh", "euismod",
             "tincidunt", "ut", "laoreet", "dolore", "magna", "aliquam", "erat" };
-        
-        private static string LoremIpsum(int numParagraphs, int minSentences, int maxSentences, int minWords, int maxWords) 
+
+        private static string LoremIpsum(int numParagraphs, int minSentences, int maxSentences, int minWords, int maxWords)
         {
             var result = new StringBuilder();
 
-            for (var p = 0; p < numParagraphs; p++) 
+            for (var p = 0; p < numParagraphs; p++)
             {
                 var numSentences = Random.Next(maxSentences - minSentences) + minSentences + 1;
-                for (var s = 0; s < numSentences; s++) 
+                for (var s = 0; s < numSentences; s++)
                 {
                     var numWords = Random.Next(maxWords - minWords) + minWords + 1;
-                    for (var w = 0; w < numWords; w++) 
+                    for (var w = 0; w < numWords; w++)
                     {
                         if (p == 0 && s == 0 && w == 0)
                         {
@@ -46,7 +46,7 @@ namespace UnityEditor.PackageManager.UI.Tests
                                 result.Append (firstWord);
                             }
                             else
-                            { 
+                            {
                                 result.Append (" ");
                                 result.Append (Words [Random.Next (Words.Length)]);
                             }
@@ -70,7 +70,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             var type = Random.NextDouble() > 0.5 ? OriginType.Unknown : OriginType.Registry;
             return Single(type, name, version);
         }
-        
+
         public PackageInfo Single(OriginType type, string name = null, string version = null)
         {
             if (name == null)
@@ -90,10 +90,11 @@ namespace UnityEditor.PackageManager.UI.Tests
                 Description = LoremIpsum(Random.Next(3,5), 2, 10, 5, 20),
                 PackageId = string.Format("com.unity.{0}@{1}", name, version),
                 State = PackageState.UpToDate,
-                Tag = "",
                 Group = group,
                 Version = version,
                 IsCurrent = true,
+                IsLatest = false,
+                OriginType = type,
                 Errors = new List<Error>()
             };
 
@@ -106,7 +107,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             return Many(null, count, onlyPackageGroup);
         }
-        
+
         public List<PackageInfo> Many(string name, int count, bool onlyPackageGroup = false)
         {
             var packages = new List<PackageInfo>();
@@ -115,7 +116,7 @@ namespace UnityEditor.PackageManager.UI.Tests
                 var package = Single(name);
                 packages.Add(package);
             }
-            
+
             // At least one is set to a module and one to a package
             if (packages.Count > 1)
             {
@@ -129,7 +130,20 @@ namespace UnityEditor.PackageManager.UI.Tests
             if (name != null)
             {
                 packages.SetCurrent(false);
-                packages.First().IsCurrent = true;
+                packages.SetLatest(false);
+
+                if (count > 1)
+                {
+                    packages.First().IsCurrent = true;
+                    packages.First().IsLatest = false;
+                    packages.Last().IsCurrent = false;
+                    packages.Last().IsLatest = true;
+                }
+                else
+                {
+                    packages.First().IsCurrent = true;
+                    packages.First().IsLatest = true;
+                }
             }
 
             return packages;
@@ -161,10 +175,10 @@ namespace UnityEditor.PackageManager.UI.Tests
                     Description = LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
                     PackageId = "a@1.0.1",
                     State = PackageState.UpToDate,
-                    Tag = "",
                     Version = "1.0.1",
                     Group = PackageGroupOrigins.Packages.ToString(),
-                    IsCurrent = false,
+                    IsCurrent = true,
+                    IsLatest = true,
                     Errors = new List<Error>()
                 };
                 packages.Add(package);
@@ -179,10 +193,10 @@ namespace UnityEditor.PackageManager.UI.Tests
                     Description = LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
                     PackageId = "b@1.0.1",
                     State = PackageState.UpToDate,
-                    Tag = "",
                     Version = "1.0.1",
                     Group = PackageGroupOrigins.Packages.ToString(),
-                    IsCurrent = false,
+                    IsCurrent = true,
+                    IsLatest = true,
                     Errors = new List<Error>()
                 };
                 packages.Add(package);
@@ -197,15 +211,15 @@ namespace UnityEditor.PackageManager.UI.Tests
                     Description = LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
                     PackageId = "c@1.0.1",
                     State = PackageState.UpToDate,
-                    Tag = "",
                     Version = "1.0.1",
                     Group = PackageGroupOrigins.Packages.ToString(),
-                    IsCurrent = false,
+                    IsCurrent = true,
+                    IsLatest = true,
                     Errors = new List<Error>()
                 };
                 packages.Add(package);
             }
-            
+
             if (PackageCollection.Instance.GetPackageByName("d") == null)
             {
                 var package = new PackageInfo
@@ -215,10 +229,10 @@ namespace UnityEditor.PackageManager.UI.Tests
                     Description = "Non existing package", //LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
                     PackageId = "d@4.0.0",
                     State = PackageState.UpToDate,
-                    Tag = "",
                     Version = "4.0.0",
                     Group = PackageGroupOrigins.Packages.ToString(),
-                    IsCurrent = false,
+                    IsCurrent = true,
+                    IsLatest = true,
                     Errors = new List<Error>()
                 };
                 packages.Add(package);
@@ -233,10 +247,10 @@ namespace UnityEditor.PackageManager.UI.Tests
                     Description = LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
                     PackageId = "nonexistingpackage@0.0.1",
                     State = PackageState.UpToDate,
-                    Tag = "",
                     Version = "0.0.1",
                     Group = PackageGroupOrigins.Packages.ToString(),
-                    IsCurrent = false,
+                    IsCurrent = true,
+                    IsLatest = true,
                     Errors = new List<Error>()
                 };
                 packages.Add(package);
@@ -248,14 +262,19 @@ namespace UnityEditor.PackageManager.UI.Tests
         public List<PackageInfo> Outdated()
         {
             const string name = "TestOutdated";
-            
-            var packageA = Single(OriginType.Unknown, name, "0.0.1");
-            var packageB = Single(OriginType.Unknown, name, "0.0.2");
+
+            var packageA = Single(OriginType.Registry, name, "0.0.1");
+            var packageB = Single(OriginType.Registry, name, "0.0.2");
             packageA.State = PackageState.Outdated;
+            packageB.IsCurrent = true;
+            packageB.IsLatest = false;
+
+            packageB.State = PackageState.UpToDate;
             packageB.IsCurrent = false;
+            packageB.IsLatest = true;
 
             var packages = new List<PackageInfo> {packageA, packageB};
-            
+
             return packages;
         }
     }

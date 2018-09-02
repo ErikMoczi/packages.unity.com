@@ -1,5 +1,7 @@
 ﻿using System.IO;
 using System.Linq;
+using System;
+using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
 
 namespace UnityEditor.PackageManager.ValidationSuite.UI
 {
@@ -11,23 +13,37 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
         internal static void ShowPackageManagerWindow()
         {
             // ***** Hack *****  Until we have a better way to test a particular package, find the first package.
-            var path = FindFirstPackagePath();
+            var projectPath = FindFirstPackagePath();
 
-            if (string.IsNullOrEmpty(path))
+            if (string.IsNullOrEmpty(projectPath))
             {
                 EditorUtility.DisplayDialog("Invalid Operation", "No packages found in project", "OK");
                 return;
             }
 
-            // Clear output file content
-            File.WriteAllText(resultsFilePath, string.Format("Validation Suite Results for package \"{0}\"\r\n\r\n", path));
+            // ***** HACK ****** until upm has an api to pack a folder, we will do it ourselves.
+            var tempPath = System.IO.Path.GetTempPath();
 
-            // Check that we are using the right Unity version before we proceed.
-            // Eventually, we could launch different functionality here based on version.
-            string version = UnityEngine.Application.unityVersion;
-            ValidationSuite testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, path);
+            try{
+                var packageName = Utilities.CreatePackage(projectPath, tempPath);
+                
+                // Clear output file content                
+                File.WriteAllText(resultsFilePath, string.Format("Validation Suite Results for package \"{0}\"\r\n\r\n", projectPath));
 
-            testSuite.RunAsync();
+                var packageInfo = Utilities.GetDataFromJson<ManifestValidation.ManifestData>(Path.Combine(projectPath, Utilities.PackageJsonFilename));
+                var packagePath = Utilities.ExtractPackage(packageName, tempPath, packageInfo.name);
+                
+                // Check that we are using the right Unity version before we proceed.
+                // Eventually, we could launch different functionality here based on version.
+                string version = UnityEngine.Application.unityVersion;
+                ValidationSuite testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, packagePath);
+
+                testSuite.RunAsync();
+            }
+            catch(Exception e)
+            {
+                File.AppendAllText(resultsFilePath, string.Format("\r\nTest Setup Error: \"{0}\"\r\n", e.Message));
+            }
         }
 
         // This is called after every tests completes

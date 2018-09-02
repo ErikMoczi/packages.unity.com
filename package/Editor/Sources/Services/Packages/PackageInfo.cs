@@ -20,11 +20,9 @@ namespace UnityEditor.PackageManager.UI
         [SerializeField]
         public string DisplayName;
         [SerializeField]
-        public string PackageId;
+        private string _PackageId;
         [SerializeField]
         public SemVersion Version;
-        [SerializeField]
-        public string Tag;
         [SerializeField]
         public string Description;
         [SerializeField]
@@ -32,13 +30,28 @@ namespace UnityEditor.PackageManager.UI
         [SerializeField]
         public PackageState State;
         [SerializeField]
-        public bool IsCurrent;        
+        public bool IsCurrent;
+        [SerializeField]
+        public bool IsLatest;
         [SerializeField]
         public string Group;
         [SerializeField] 
         public OriginType OriginType;
         [SerializeField] 
         public List<Error> Errors;
+        
+        public string PackageId {
+            get
+            {
+                if (_PackageId != null) 
+                    return _PackageId;
+                return string.Format("{0}@{1}", Name.ToLower(), Version);
+            }
+            set
+            {
+                _PackageId = value;
+            }
+        }
 
         public string ModuleName { get { return IsModule(Name) ? DisplayName : ""; } }
 
@@ -46,8 +59,10 @@ namespace UnityEditor.PackageManager.UI
         {
             if (other == null) 
                 return false;
+            if (other == this)
+                return true;
             
-            return PackageId == other.PackageId;
+            return Name == other.Name && Version == other.Version;
         }
 
         public override int GetHashCode()

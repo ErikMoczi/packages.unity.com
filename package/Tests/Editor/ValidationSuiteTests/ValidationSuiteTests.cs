@@ -53,7 +53,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             // which uses reflection to find all tests.
             var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, "c:\\Path");
 
-            Assert.AreEqual(1, validationSuite.ValidationTests.Where(t => t.TestName == "___FakeValidationTest___").Count());
+            Assert.AreEqual(1, validationSuite.ValidationTests.Where(t => t.TestName == "Manifest Validation").Count());
         }
 
         [Test]

@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Semver;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
@@ -188,7 +188,7 @@ namespace UnityEditor.PackageManager.UI
                 enableButton = false;
                 visibleFlag = true;
             }
-            else if (displayPackage.IsCurrent && package.Latest.Version != package.Current.Version)
+            else if (displayPackage.IsCurrent && package.Latest != null && package.Latest.Version != package.Current.Version)
             {
                 version = package.Latest.Version;
                 actionLabel = GetUpdateButtonText("Update to", version);

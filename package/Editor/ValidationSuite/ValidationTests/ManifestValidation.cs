@@ -4,12 +4,20 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Semver;
 using UnityEngine;
+using UnityEditor.PackageManager.ValidationSuite.UI;
 
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
     internal class ManifestValidation : BaseValidation
     {
-        private const string ManifestFileName = "package.json";
+        internal class ManifestData
+        {
+            public string name = "";
+            public string description = "";
+            public string version = "";
+            public string unity = "";
+        }
+        
         private const string PackageNamePrefix = "com.unity.";
         private const string UpmRegex = @"^[a-z0-9][a-z0-9-._]{0,213}$";
         private const int MinDescriptionSize = 20;
@@ -34,7 +42,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             // Start by declaring victory
             TestState = TestState.Succeeded;
 
-            var manifestPath = Path.Combine(packagePath, ManifestFileName);
+            var manifestPath = Path.Combine(packagePath, Utilities.PackageJsonFilename);
 
             if (!File.Exists(manifestPath))
             {
@@ -112,14 +120,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 TestState = TestState.Failed;
                 TestOutput.Add("In package.json, \"unity\" is pointing to a version different from the editor you are using.  Validation needs to happen on the right version of the editor.");
             }
-        }
-
-        internal class ManifestData
-        {
-            public string name;
-            public string description;
-            public string version;
-            public string unity;
         }
     }
 }

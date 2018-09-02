@@ -159,6 +159,5 @@ namespace UnityEditor.PackageManager.UI
             Packages.TryGetValue(name, out package);
             return package;
         }
-        
     }
 }

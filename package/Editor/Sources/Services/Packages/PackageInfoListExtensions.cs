@@ -3,13 +3,8 @@ using System.Linq;
 
 namespace UnityEditor.PackageManager.UI
 {
-    internal static class PackageInfoListExtensions 
+    internal static class PackageInfoListExtensions
     {
-        public static PackageInfo ById(this IEnumerable<PackageInfo> list, string id)
-        {
-            return (from package in list where package.PackageId == id select package).FirstOrDefault();
-        }
-        
         public static IEnumerable<PackageInfo> ByName(this IEnumerable<PackageInfo> list, string name)
         {
             return from package in list where package.Name == name select package;
@@ -23,9 +18,12 @@ namespace UnityEditor.PackageManager.UI
             }
         }
 
-        public static bool ContainsPackage(this IEnumerable<PackageInfo> list, string id)
+        public static void SetLatest(this IEnumerable<PackageInfo> list, bool latest = true)
         {
-            return list.ById(id) != null;
+            foreach (var package in list)
+            {
+                package.IsLatest = latest;
+            }
         }
 
         public static void SetGroup(this IEnumerable<PackageInfo> list, string group)
