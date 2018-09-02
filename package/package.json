@@ -1,6 +1,6 @@
 {
 	"name": "com.unity.package-manager-ui",
-	"version": "0.1.9",
+	"version": "1.0.0",
 	"unity": "2018.1",
 	"description": "Unity Package Manager user interface, where a project's packages can be managed, and new packages can be discovered.",
 	"keywords": [

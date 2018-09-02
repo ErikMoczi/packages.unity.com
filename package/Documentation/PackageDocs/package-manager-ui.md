@@ -1,112 +1,138 @@
-### **_Package Documentation Template_**
+### **_Package Manager Documentation_**
 
-*Use this template to create preliminary, high-level documentation meant to introduce users to the feature and the sample files included in this package. When writing your documentation, do the following:*
+# About Package Manager
 
-1. *Follow instructions in italics.*
+<img src="Images/window.png">
 
-2. *Replace angle brackets with the appropriate text. For example, replace "&lt;package name&gt;" with the official name of the package.*
+Use the package manager to manage which packages are available in your project.
 
-3. *Delete sections that do not apply to your package. For example, a package with sample files does not have a "Using &lt;package_name&gt;" section, so this section can be removed.*
+#### What is a package?
 
-4. *After documentation is completed, make sure you delete all instructions and examples in italic (including this preamble).*
+A package contains additional features to enhance various part of your project. This can include any aspect of Unity, from the editor 
+itself to the runtime. Packages can also provide you with assets such as textures and objects.
 
-# About &lt;package name&gt;
+# Using the Package Manager
 
-*Name the heading of the first topic after the official name of the package. Check with your Product Manager to ensure that the package is named correctly.*
+#### Opening the Package Manager Window
 
-*This first topic includes a brief, high-level explanation of the package and, if applicable, provides links to Unity Manual topics.*
+<img src="Images/menuitem.png">
 
-*There are two types of packages: a) packages that include features that augment the Unity Editor, or b) packages that include sample files. Choose one of the following introductory paragraphs that best fits the package:*
+To open the package manager window, simply go into the *Project* menu, then into the *Packages* sub-menu and finally 
+click on the *Manage* menu item.
 
-*a)*
-Use the &lt;package name&gt; package to &lt;list of the main uses for the package&gt;. For example, use &lt;package name&gt; to create/generate/extend/capture &lt;mention major use case, or a good example of what the package can be used for&gt;. The &lt;package name&gt; package also includes &lt;other relevant features or uses&gt;.
+#### Packages List
 
-*or*
+<img src="Images/list.png" height="500px">
 
-*b)*
-The &lt;package name&gt; package includes examples of &lt;name of asset type, model, prefabs, and/or other GameObjects in the package&gt;. For more information, see &lt;xref to topic in the Unity Manual&gt;.
+This lists a series of packages organized by group. Simply click on a package to get its detailed information
+on the right pane. If a package has errors, is in conflict or has newer versions available, you will see
+a status icon next to its name.
 
-*Examples (For reference. Do not include in the final documentation file):*
+##### Filters
 
-*a)*
-*Use the Unity Recorder package to capture and save in-game data. For example, use Unity Recorder to record an mp4 file during a game session. The Unity Recorder package also includes an interface for setting-up and triggering recording sessions.*
+<img src="Images/filters.png" height="100px">
 
-*b)*
-*The Timeline Examples package includes examples of Timeline assets, Timeline Instances, animation, GameObjects, and scripts that illustrate how to use Unity's Timeline. For more information, see [ Unity's Timeline](https://docs.unity3d.com/Manual/TimelineSection.html) in the [Unity Manual](https://docs.unity3d.com). For licensing and usage, see Package Licensing.*
+The *In Project* and *Install* filters allow you to show different lists of packages.
+
+###### In Project
+
+Lists the packages that are currently available in your project.
+
+###### Install
+
+Lists all the packages, including ones that are not installed in you project. If a package is installed, it will
+show with a differently colored background.
+
+##### Groups
+
+<img src="Images/groups.png" height="100px">
+
+Packages are organized by groups for easier browsing and display.
+
+###### Packages
+
+These are the packages that are either installed by default or added manually to Unity.
+
+###### Built-in Packages
+
+These are the packages that are bundled with the editor and that affect your game's build in some way. 
+You can remove the built-in packages that you don't need in order to reduce you game's build size.
+
+##### Preview
+
+<img src="Images/preview.png" height="150px">
+
+The preview tag next to the version in the package details indicates that this package
+is not yet officially tested and approved by Unity. It is used as a mechanism to give the ability
+to users to preview a package's features before it has been fully documented and validated
+by either the development team or Unity's Quality Assurance team.
+
+#### Package Actions
+
+##### Update
+
+<img src="Images/update.png" height="150px">
+
+This button found in the details section of a package allows you to update a package to the version
+on the button's label. Updating a package should add any new functionality instantly, if available.
+A restart should not be necessary.
+
+##### Add
+
+<img src="Images/add.png" height="150px">
+
+This button found in the details section of a package allows you to add a package with the version
+on the button's label. Adding a package should add the new functionality instantly, a restart should
+not be necessary.
+
+##### Remove
+
+<img src="Images/remove.png" height="150px">
+
+This button found in the details section of a package allows you to remove a package. Be aware that removing
+a package will also remove its related functionality, so parts of your editor or runtime may disappear. Also,
+if the package is required by another package, it may not be removed.
+
+## Manifest
+
+While not essential to use the package manager, it can be useful to know some of its inner workings.
+
+One such aspect is the manifest file where all the packages used in a project are listed. This file is named
+`manifest.json` and can be found in the `UnityPackageManager` folder of your project. The
+file format is *Json*, which is a popular data file format. All the packages of your project are listed under
+the *dependencies* property of the manifest. Since *Json* is a text format, you can copy the dependencies
+by hand from one project to the other by simply editing the file. Once the manifest file is modified, simply
+going back into the Unity Editor will update to reflect all changes, and any new package will be added
+automatically.
+
+# Technical Details
 
 ## Requirements
 
-*This subtopic includes a bullet list with the compatible versions of Unity. This subtopic may also include additional requirements or recommendations. An example includes a dependency on other packages.*
+This Package Manager version is compatible with the following versions of the Unity Editor:
 
-This &lt;package name&gt; version &lt;package version&gt; is compatible with the following versions of the Unity Editor:
-
-* 2017.2 and later (recommended)
-* 2017.1
-* 5.6
-
-To use this package, you must have the following packages installed:
-
-* &lt;package name with link to Github repository&gt;
-* &lt;package name with link to Github repository&gt;
-* &lt;package name with link to Github repository&gt;
+* 2018.1 and later (recommended)
 
 ## Known Limitations
 
-*This section lists the known limitations with this version of the package.*If there are no known limitations, or if the limitations are trivial, exclude this section.** An example is provided:*
+The Package Manager includes the following known limitations:
 
-The &lt;package name&gt; version &lt;package version&gt; includes the following known limitations:
+* Modifying the manifest.json by hand doesn't update the package list. You need to either re-open the window or change filters 
+to force an update.
 
-* &lt;brief one-line description of first limitation.&gt;
-* &lt;brief one-line description of second limitation.&gt;
-* &lt;and so on&gt;
-
-*Example (For reference. Do not include in the final documentation file):*
-
-*The Unity Recorder version 1.0 has the following limitations:*
-
-* *The Unity Recorder does not support sound.*
-* *The Recorder window and Recorder properties are not available in standalone players.*
-* *MP4 encoding is only available on Windows.*
-
-# Installing &lt;package name&gt;
-
-*This section should always begin with a cross-reference to the official Unity Manual topic on how to install packages. If the package requires special installation instructions, include these steps in this section.*
-
-&lt;The text and cross-reference is still to be determined. It will be added by the Documentation Team.&gt;
-
-# Package Contents
-
-*This subtopic includes a table with an alphabetical list of filenames and a brief description of each file. If the package includes folders with many motion files, assets, models, or other example files, you can include the name of the parent folder with a generic description for all files within the folder. Examples of file and folder descriptions are included in the table below. Use these examples as a basis for the descriptions of files and folders in your package.*
+## Package Contents
 
 The following table provides an alphabetical list of the important files and folders included in this package.
 
 |Folder or Filename|Description|
 |---|---|
-|license.pdf|Document with licensing and copyright information on the contents of the package.<br>Consult this document before using the package contents in your projects and scenes.|
-|motion files|Folder containing cleaned motion capture files for animating humanoid characters.|
-|shaders|Folder containing different materials, shaders, and lighting examples.|
+|Documentation|Folder containing the documentation's sources.|
+|Editor|Folder containing the source code for the package manager window.|
+|Tests|Folder containing the package manager tests.|
 
-# Using &lt;package name&gt;
-
-*Exactly what is included in this section depends on the type of package.*
-
-*a)*
-*For packages that augment the Unity Editor with additional features, this section should include wor**kflow and/or reference documentation:*
-
-* *At a minimum, this section should include reference documentation that describes the windows, editors, and properties that the package adds to Unity. This reference documentation should include screen grabs, a list of settings, an explanation of what each setting does, and the default values of each setting.*
-* *Ideally, this section should also include a workflow: a list of steps that the user can easily follow that demonstrates how to use the feature. This list of steps should include screen grabs to better describe how to use the feature.*
-
-*b)*
-*For packages that include sample files, this section may include detailed information on how the user can use these sample files in their projects and scenes. If this section is too repetitive compared to the Package Contents section, do not include this section.*
-
-# Document Revision History
-
-*This section includes the revision history of the document. The revision history tracks when a document is created, edited, and updated. If you create or update a document, you must add a new row describing the revision.  The Documentation Team also uses this table to track when a document is edited and its editing level. An example is provided:*
+## Documentation Revision History
 
 |Date|Reason|
 |---|---|
-|Sept 12, 2017|Unedited. Published to package.|
-|Sept 10, 2017|Document updated for package version 1.1.New features: <li>audio support for capturing MP4s.<li>Instructions on saving Recorder prefabs|
-|Sept 5, 2017|Limited edit by Documentation Team. Published to package.|
-|Aug 25, 2017|Document created. Matches package version 1.0.|
+|Nov 7, 2017|Document created. Matches package version 1.0.0.|
 

@@ -99,19 +99,13 @@ namespace UnityEditor.PackageManager.UI
         {
             var copyPackageInfo = new List<PackageInfo>(packageInfos);
             copyPackageInfo.AddRange(searchPackageInfos.Where(pi => !Packages.ContainsKey(pi.Name) || Packages[pi.Name].Current == null || Packages[pi.Name].Current.Version != pi.Version));
-            copyPackageInfo.Sort(Comparison);
             SetPackageInfos(copyPackageInfo);
         }
 
-        private static int Comparison(PackageInfo left, PackageInfo right)
-        {
-            return string.Compare(left.DisplayName, right.DisplayName, StringComparison.Ordinal);
-        }
-
-        public void SetPackageInfos(IEnumerable<PackageInfo> newPackageInfos)
+        public void SetPackageInfos(IEnumerable<PackageInfo> packageInfos)
         {
             ClearPackagesInternal();
-            AddPackageInfos(newPackageInfos);
+            AddPackageInfos(packageInfos);
         }
 
         public void AddPackageInfo(PackageInfo packageInfo)
@@ -125,7 +119,7 @@ namespace UnityEditor.PackageManager.UI
             if (packageInfos == null)
                 packageInfos = Enumerable.Empty<PackageInfo>();
 
-            foreach (var packageInfo in packageInfos)
+            foreach (var packageInfo in packageInfos.OrderBy(p => p.DisplayName))
             {
                 AddPackageInfoInternal(packageInfo);
             }
