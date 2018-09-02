@@ -1,3 +1,6 @@
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEditor;
 
@@ -169,8 +172,9 @@ namespace UnityEditor.ProGrids
 
 			if (!string.IsNullOrEmpty(raw))
 			{
-				// todo
-				VersionUtil.FormatChangelog(raw, out m_ChangeLogVersionInfo, out m_ChangeLogRichText);
+				var log = new Changelog(raw);
+				m_ChangeLogVersionInfo = log.entries.First().versionInfo;
+				m_ChangeLogRichText = ConvertReleaseNotesToRichText(log.entries.First().releaseNotes);
 			}
 
 			if (m_ChangeLogVersionInfo == null)
@@ -233,18 +237,21 @@ namespace UnityEditor.ProGrids
 			GUILayout.Label(Version.Current.ToString("R"));
 		}
 
-		/// <summary>
-		/// Draw a horizontal line across the screen and update the guilayout.
-		/// </summary>
-		void HorizontalLine()
+		string ConvertReleaseNotesToRichText(string contents)
 		{
-			Rect r = GUILayoutUtility.GetLastRect();
-			Color og = GUI.backgroundColor;
-			GUI.backgroundColor = Color.black;
-			GUI.Box(new Rect(0f, r.y + r.height + 2, Screen.width, 2f), "");
-			GUI.backgroundColor = og;
+			try
+			{
+				string formattedChangelog = contents;
+				formattedChangelog = Regex.Replace(formattedChangelog, "^-", "\u2022", RegexOptions.Multiline);
+				formattedChangelog = Regex.Replace(formattedChangelog, @"(?<=^###\\s).*", "<size=16><b>${0}</b></size>", RegexOptions.Multiline);
+				formattedChangelog = Regex.Replace(formattedChangelog, @"^###\ ", "", RegexOptions.Multiline);
+				return formattedChangelog;
+			}
+			catch
+			{
+			}
 
-			GUILayout.Space(6);
+			return contents;
 		}
 	}
 }

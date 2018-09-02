@@ -43,6 +43,10 @@ echo "{
 - Pre-release versions are marked appended with "preview" and an optional increment.
 - Release versions are major, minor, and patch values only.
 
+### Testing
+
+- [QA Report](https://docs.google.com/document/d/1uGJV1Wkij_fqB_TeCAUDYoYoSiU1IryoKrjtzPRxN4g/edit)
+
 ### Publish to Production
 
 After a staging package is approved by QA:

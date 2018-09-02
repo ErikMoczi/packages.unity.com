@@ -88,7 +88,7 @@ namespace UnityEditor.ProGrids
 			m_Build = build;
 			m_Type = type;
 			m_Metadata = metadata;
-			m_Date = string.IsNullOrEmpty(date) ? DateTime.Now.ToString("en-US: MM/dd/yyyy") : date;
+			m_Date = string.IsNullOrEmpty(date) ? DateTime.Now.ToString("en-US: MM-dd-yyyy") : date;
 			m_RawString = ToString();
 		}
 
