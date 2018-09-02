@@ -32,7 +32,11 @@ namespace UnityEngine.ResourceManagement
 
             public override TObject ConvertResult(AsyncOperation operation)
             {
-                return ((operation as UnityWebRequestAsyncOperation).webRequest.downloadHandler as DownloadHandlerAssetBundle).assetBundle as TObject;
+                var webReq = (operation as UnityWebRequestAsyncOperation).webRequest;
+                if (string.IsNullOrEmpty(webReq.error))
+                    return ((operation as UnityWebRequestAsyncOperation).webRequest.downloadHandler as DownloadHandlerAssetBundle).assetBundle as TObject;
+                m_error = new System.Exception(string.Format("RemoteAssetBundleProvider unable to load from url {0}, result='{1}'.", webReq.url, webReq.error));
+                return default(TObject);
             }
         }
 
