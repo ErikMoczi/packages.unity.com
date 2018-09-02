@@ -2,7 +2,7 @@ The ResourceManager is an extendable high level API that asynchronously loads an
 
 The specific method and location of loading assets is abstracted. With the proper extension, assets can be loading from a variety of locations (Resources, Bundles, etc) all through a single API. 
 
-The overall goal is that regardless of what your setup is, or where you are loading from, you always load in the same way. For example, you can call 
+The overall goal is that regardless of what your setup is, or where you are loading from, you always load in the same way. For example, you can call: 
 ResourceManager.LoadAsync<Texture, string>("myTexture");
  and have that be loaded regardless of where it came from. 
 
