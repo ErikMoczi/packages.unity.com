@@ -683,7 +683,7 @@ namespace UnityEditor.AddressableAssets
             groups.Add(group);
             if (!Directory.Exists(GroupFolder))
                 Directory.CreateDirectory(GroupFolder);
-            AssetDatabase.CreateAsset(group, GroupFolder + "/" + groupName + ".asset");
+            AssetDatabase.CreateAsset(group, GroupFolder + "/" + validName + ".asset");
             if (setAsDefaultGroup)
                 DefaultGroup = group;
             if (postEvent)

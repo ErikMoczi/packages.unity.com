@@ -148,7 +148,7 @@ namespace UnityEditor.AddressableAssets
                 {
                     //GUIUtility.hotControl = 0;
                     var menu = new GenericMenu();
-                    menu.AddItem(new GUIContent("Build Packed Data"), false, OnBuildData);
+                    //menu.AddItem(new GUIContent("Build Packed Data"), false, OnBuildData);
                     menu.AddItem(new GUIContent("Clean/All Cached Data"), false, OnCleanAll);
                     menu.AddItem(new GUIContent("Clean/Addressables Cache"), false, OnCleanAddressables);
                     menu.AddItem(new GUIContent("Clean/Build Pipeline Cache"), false, OnCleanSBP);
@@ -235,7 +235,7 @@ namespace UnityEditor.AddressableAssets
         {
             ProjectConfigData.editorPlayMode = UnityEngine.AddressableAssets.ResourceManagerRuntimeData.EditorPlayMode.PackedMode;
         }
-        
+
         void OnSendProfileClick()
         {
             ProjectConfigData.postProfilerEvents = !ProjectConfigData.postProfilerEvents;
@@ -425,6 +425,20 @@ namespace UnityEditor.AddressableAssets
         {
             SortChildren(rootItem);
             Reload();
+        }
+        protected override void SelectionChanged(IList<int> selectedIds)
+        {
+            base.SelectionChanged(selectedIds);
+
+            if (selectedIds.Count == 1)
+            {
+                var item = FindItemInVisibleRows(selectedIds[0]);
+                if (item != null && item.group != null)
+                {
+                    Selection.activeObject = item.group;
+                }
+            }
+
         }
 
         protected override TreeViewItem BuildRoot()
@@ -1297,6 +1311,10 @@ namespace UnityEditor.AddressableAssets
                         s_types = new List<Type>();
                         try
                         {
+                            //manually add our internal classes as they won't show up in the assembly march.
+                            s_types.Add(typeof(BundledAssetGroupProcessor));
+
+                            //find all public processors
                             var rootType = typeof(AssetGroupProcessor);
                             foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
                             {

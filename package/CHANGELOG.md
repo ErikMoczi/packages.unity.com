@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.3.1-preview] - 2018-08-22
+ - Adjusted UI slightly so single-clicking groups shows their inspector.
+ - removed not-helpful "Build/Build Packed Data" item from menu.  
+ - fixed bug where you could no longer create groups, and group assets were not named correctly
+
 ## [0.3.0-preview] - 2018-08-20
  - implemented content update workflow.  Added a dropdown to the "Build" button on main window's toolbar.   
     - "Build/Prepare for Content Update" will detect assets in locked bundles (bundles flagged as static, by default all local bundles).
