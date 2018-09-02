@@ -4,7 +4,7 @@ The ResourceManager is an extendable high level API that asynchronously loads an
 
 ### Requires Unity 2018.1+
 
-The specific method and location of loading assets is abstract. With the proper extension, assets can be loading from a variety of locations (Resources, Bundles, etc) all through a single API. The overall goal is that regardless of what your setup is, or where you are loading from, you always load in the same way. For example, you can call _ResourceManager.LoadAsync<Texture, string>("myTexture");_ and have that be loaded regardless of where it came from.
+The specific method and location of loading assets is abstracted. With the proper extension, assets can be loading from a variety of locations (Resources, Bundles, etc) all through a single API. The overall goal is that regardless of what your setup is, or where you are loading from, you always load in the same way. For example, you can call _ResourceManager.LoadAsync<Texture, string>("myTexture");_ and have that be loaded regardless of where it came from.
 This package can function as a standalone package, but will be extended in the future via high-level packages that add custom IResourceLocator and IResourceProvider interfaces. See the Samples directory for help on how to use it as a standalone package.
 
 ## Locators, Locations & Providers
