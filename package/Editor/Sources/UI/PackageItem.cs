@@ -3,7 +3,7 @@ using System;
 
 namespace UnityEditor.PackageManager.UI
 {
-#if !UNITY_2018_2_OR_NEWER
+#if !UNITY_2018_3_OR_NEWER
     internal class PackageItemFactory : UxmlFactory<PackageItem>
     {
         protected override PackageItem DoCreate(IUxmlAttributes bag, CreationContext cc)
@@ -15,7 +15,7 @@ namespace UnityEditor.PackageManager.UI
 
     internal class PackageItem : VisualElement
     {
-#if UNITY_2018_2_OR_NEWER
+#if UNITY_2018_3_OR_NEWER
         internal class PackageItemFactory : UxmlFactory<PackageItem> { }
 #endif
         

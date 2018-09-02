@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace UnityEditor.PackageManager.UI
 {
-#if !UNITY_2018_2_OR_NEWER
+#if !UNITY_2018_3_OR_NEWER
     internal class PackageListFactory : UxmlFactory<PackageList>
     {
         protected override PackageList DoCreate(IUxmlAttributes bag, CreationContext cc)
@@ -18,7 +18,7 @@ namespace UnityEditor.PackageManager.UI
 
     internal class PackageList : VisualElement
     {
-#if UNITY_2018_2_OR_NEWER
+#if UNITY_2018_3_OR_NEWER
         internal class PackageListFactory : UxmlFactory<PackageList> { }
 #endif
         
@@ -130,7 +130,7 @@ namespace UnityEditor.PackageManager.UI
                 return;
             }
             
-#if UNITY_2018_2_OR_NEWER
+#if UNITY_2018_3_OR_NEWER
             if (evt.keyCode == KeyCode.LeftArrow)
             {
                 if (selectedItem.packageGroup != null)
@@ -263,7 +263,7 @@ namespace UnityEditor.PackageManager.UI
             List.Add(builtInGroup);
 
             packagesGroup.previousGroup = null;
-#if UNITY_2018_2_OR_NEWER
+#if UNITY_2018_3_OR_NEWER
             packagesGroup.nextGroup = builtInGroup;
             builtInGroup.previousGroup = packagesGroup;
             builtInGroup.nextGroup = null;

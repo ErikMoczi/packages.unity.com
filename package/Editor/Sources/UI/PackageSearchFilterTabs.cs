@@ -2,7 +2,7 @@
 
 namespace UnityEditor.PackageManager.UI
 {    
-#if !UNITY_2018_2_OR_NEWER
+#if !UNITY_2018_3_OR_NEWER
     internal class PackageSearchFilterTabsFactory : UxmlFactory<PackageSearchFilterTabs>
     {
         protected override PackageSearchFilterTabs DoCreate(IUxmlAttributes bag, CreationContext cc)
@@ -14,7 +14,7 @@ namespace UnityEditor.PackageManager.UI
     
     internal class PackageSearchFilterTabs : VisualElement
     {
-#if UNITY_2018_2_OR_NEWER
+#if UNITY_2018_3_OR_NEWER
         internal class PackageSearchFilterTabsFactory : UxmlFactory<PackageSearchFilterTabs> { }
 #endif
 

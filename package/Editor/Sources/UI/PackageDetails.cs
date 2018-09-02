@@ -6,7 +6,7 @@ using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
-#if !UNITY_2018_2_OR_NEWER
+#if !UNITY_2018_3_OR_NEWER
     internal class PackageDetailsFactory : UxmlFactory<PackageDetails>
     {
         protected override PackageDetails DoCreate(IUxmlAttributes bag, CreationContext cc)
@@ -18,7 +18,7 @@ namespace UnityEditor.PackageManager.UI
 
     internal class PackageDetails : VisualElement
     {
-#if UNITY_2018_2_OR_NEWER
+#if UNITY_2018_3_OR_NEWER
         internal class PackageDetailsFactory : UxmlFactory<PackageDetails> { }
 #endif
         

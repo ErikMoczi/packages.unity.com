@@ -4,7 +4,7 @@ using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
-#if !UNITY_2018_2_OR_NEWER
+#if !UNITY_2018_3_OR_NEWER
     internal class LoadingSpinnerFactory : UxmlFactory<LoadingSpinner>
     {
         protected override LoadingSpinner DoCreate(IUxmlAttributes bag, CreationContext cc)
@@ -16,7 +16,7 @@ namespace UnityEditor.PackageManager.UI
     
     internal class LoadingSpinner : VisualElement
     {
-#if UNITY_2018_2_OR_NEWER
+#if UNITY_2018_3_OR_NEWER
         internal class LoadingSpinnerFactory : UxmlFactory<LoadingSpinner, LoadingSpinnerUxmTraits> { }
 
         internal class LoadingSpinnerUxmTraits : VisualElementUxmlTraits

@@ -3,7 +3,7 @@ using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
-#if !UNITY_2018_2_OR_NEWER
+#if !UNITY_2018_3_OR_NEWER
     internal class AlertFactory : UxmlFactory<Alert>
     {
         protected override Alert DoCreate(IUxmlAttributes bag, CreationContext cc)
@@ -15,7 +15,7 @@ namespace UnityEditor.PackageManager.UI
     
     internal class Alert : VisualElement
     {
-#if UNITY_2018_2_OR_NEWER
+#if UNITY_2018_3_OR_NEWER
         internal class AlertFactory : UxmlFactory<Alert, AlertUxmlTraits> { }
 
         internal class AlertUxmlTraits : VisualElementUxmlTraits
