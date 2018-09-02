@@ -48,8 +48,15 @@ namespace UnityEngine.Analytics.Tests
             }
             else
             {
-                Assert.DoesNotThrow(() => m_Result = AnalyticsEvent.StoreItemClick(storeType, itemId, itemName));
-                EvaluateAnalyticsResult(m_Result);
+                if (string.IsNullOrEmpty(itemId))
+                {
+                    Assert.Throws<ArgumentException>(() => AnalyticsEvent.StoreItemClick(storeType, itemId));
+                }
+                else
+                {
+                    Assert.DoesNotThrow(() => m_Result = AnalyticsEvent.StoreItemClick(storeType, itemId, itemName));
+                    EvaluateAnalyticsResult(m_Result);
+                }
             }
         }
 
