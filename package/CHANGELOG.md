@@ -1,4 +1,4 @@
-# ProBuilder 3.0.0-f.1
+# ProBuilder 3.0.0
 
 ## Features
 

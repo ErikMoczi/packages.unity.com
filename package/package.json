@@ -1,6 +1,6 @@
 {
 	"name": "com.unity.probuilder",
-	"version": "3.0.0-f.1",
+	"version": "3.0.0",
 	"unity": "2018.1",
 	"description": "ProBuilder is a 3D modeling plugin that makes level design super fast.",
 	"keywords": [ "3d", "model", "mesh", "modeling", "geometry", "shape", "cube", "blender", "max", "maya", "fbx", "obj", "level", "design", "block", "greybox", "graybox", "whitebox", "prototype", "probuilder" ],
