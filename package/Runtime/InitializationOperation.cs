@@ -43,7 +43,7 @@ namespace UnityEngine.AddressableAssets
 
         void LoadContentCatalog(ResourceManagerRuntimeData rtd, int index)
         {
-            while (index < rtd.catalogLocations.Count && !rtd.catalogLocations[index].m_isLoadable)
+            while (index < rtd.catalogLocations.Count && rtd.catalogLocations[index].m_internalId.EndsWith(".hash"))
                 index++;
             IList<IResourceLocation> locations;
             if (Addressables.GetResourceLocations(rtd.catalogLocations[index].m_address, out locations))
@@ -82,8 +82,7 @@ namespace UnityEngine.AddressableAssets
             if (!Application.isEditor)
             {
                 ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new BundledAssetProvider(), assetCacheSize, assetCacheAge));
-                ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new LocalAssetBundleProvider(), bundleCacheSize, bundleCacheAge));
-                ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new RemoteAssetBundleProvider(), bundleCacheSize, bundleCacheAge));
+                ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new AssetBundleProvider(), bundleCacheSize, bundleCacheAge));
             }
             else
             {
@@ -99,8 +98,7 @@ namespace UnityEngine.AddressableAssets
                     case ResourceManagerRuntimeData.EditorPlayMode.PackedMode:
                         {
                             ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new BundledAssetProvider(), assetCacheSize, assetCacheAge));
-                            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new LocalAssetBundleProvider(), bundleCacheSize, bundleCacheAge));
-                            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new RemoteAssetBundleProvider(), bundleCacheSize, bundleCacheAge));
+                            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new AssetBundleProvider(), bundleCacheSize, bundleCacheAge));
                         }
                         break;
                 }
