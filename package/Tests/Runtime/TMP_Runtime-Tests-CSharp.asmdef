@@ -1,0 +1,9 @@
+{
+    "name": "TMP_Runtime-Tests-CSharp",
+    "references": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": []
+}

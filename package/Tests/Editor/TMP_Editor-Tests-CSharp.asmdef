@@ -1,0 +1,11 @@
+{
+    "name": "TMP_Editor-Tests-CSharp",
+    "references": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
