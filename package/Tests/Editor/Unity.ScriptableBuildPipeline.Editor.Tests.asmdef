@@ -1,0 +1,12 @@
+﻿{
+    "name": "Unity.ScriptableBuildPipeline.Editor.Tests",
+    "references": [
+        "Unity.ScriptableBuildPipeline.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}
