@@ -10,13 +10,13 @@ namespace UnityEditor.Build.Pipeline
     /// Generates a deterministic identifier using a MD5 hash algorithm and does not require object ordering to be deterministic.
     /// This algorithm ensures objects coming from the same asset are packed closer together and can improve loading performance under certain situations.
     /// </summary>
-    public struct PrefabPackedIdentifiers : IDeterministicIdentifiers
+    public class PrefabPackedIdentifiers : IDeterministicIdentifiers
     {
         /// <inheritdoc />
         public string GenerateInternalFileName(string name)
         {
             Hash128 hash = HashingMethods.CalculateMD5Hash(name);
-            return string.Format("CAB-{0}", hash);
+            return string.Format("CAB-{0}", hash.ToString());
         }
         
         /// <inheritdoc />

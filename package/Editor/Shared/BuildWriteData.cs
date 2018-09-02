@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline.Interfaces;
-using UnityEditor.Build.Pipeline.WriteTypes;
 
 namespace UnityEditor.Build.Pipeline
 {

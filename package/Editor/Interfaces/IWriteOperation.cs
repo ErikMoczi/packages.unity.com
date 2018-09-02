@@ -24,7 +24,6 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// The specific reference data for objects in the write command.
         /// <seealso cref="BuildReferenceMap"/>
         /// </summary>
-
         BuildReferenceMap ReferenceMap { get; set; }
 
         /// <summary>

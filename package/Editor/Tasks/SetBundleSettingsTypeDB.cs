@@ -3,7 +3,7 @@ using UnityEditor.Build.Pipeline.Interfaces;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
-    public struct SetBundleSettingsTypeDB : IBuildTask
+    public class SetBundleSettingsTypeDB : IBuildTask
     {
         const int k_Version = 1;
         public int Version { get { return k_Version; } }
@@ -11,15 +11,18 @@ namespace UnityEditor.Build.Pipeline.Tasks
         static readonly Type[] k_RequiredTypes = { typeof(IBuildResults), typeof(IBuildParameters) };
         public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
 
-        public ReturnCodes Run(IBuildContext context)
+        public ReturnCode Run(IBuildContext context)
         {
+            if (context == null)
+                throw new ArgumentNullException("context");
+
             return Run(context.GetContextObject<IBuildResults>(), context.GetContextObject<IBuildParameters>());
         }
 
-        public static ReturnCodes Run(IBuildResults results, IBuildParameters parameters)
+        static ReturnCode Run(IBuildResults results, IBuildParameters parameters)
         {
             parameters.ScriptInfo = results.ScriptResults.typeDB;
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         }
     }
 }

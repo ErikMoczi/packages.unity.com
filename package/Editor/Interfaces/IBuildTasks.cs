@@ -24,6 +24,6 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// </summary>
         /// <param name="context"><seealso cref="IBuildContent"/> that contains the required data types to run.</param>
         /// <returns>Return code with status information about success or failure causes.</returns>
-        ReturnCodes Run(IBuildContext context);
+        ReturnCode Run(IBuildContext context);
     }
 }

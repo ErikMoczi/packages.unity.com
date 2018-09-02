@@ -5,7 +5,7 @@ using UnityEditor.Build.Pipeline.Utilities;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
-    public struct ValidateBundleAssignments : IBuildTask
+    public class ValidateBundleAssignments : IBuildTask
     {
         const int k_Version = 1;
         public int Version { get { return k_Version; } }
@@ -13,15 +13,18 @@ namespace UnityEditor.Build.Pipeline.Tasks
         static readonly Type[] k_RequiredTypes = { typeof(IBundleBuildContent) };
         public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
 
-        public ReturnCodes Run(IBuildContext context)
+        public ReturnCode Run(IBuildContext context)
         {
+            if (context == null)
+                throw new ArgumentNullException("context");
+
             return Run(context.GetContextObject<IBundleBuildContent>());
         }
 
-        public static ReturnCodes Run(IBundleBuildContent buildContent)
+        static ReturnCode Run(IBundleBuildContent buildContent)
         {
             if (buildContent.BundleLayout.IsNullOrEmpty())
-                return ReturnCodes.Success;
+                return ReturnCode.Success;
 
             foreach (KeyValuePair<string, List<GUID>> bundle in buildContent.BundleLayout)
             {
@@ -32,10 +35,10 @@ namespace UnityEditor.Build.Pipeline.Tasks
                     continue;
 
                 BuildLogger.LogError("Bundle '{0}' contains mixed assets and scenes.", bundle.Key);
-                return ReturnCodes.Error;
+                return ReturnCode.Error;
             }
 
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         }
     }
 }

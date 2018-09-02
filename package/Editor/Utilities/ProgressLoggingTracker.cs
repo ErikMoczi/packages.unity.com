@@ -6,25 +6,25 @@ namespace UnityEditor.Build.Pipeline.Utilities
     {
         public ProgressLoggingTracker()
         {
-            BuildLogger.Log(string.Format("[{0}] Progress Tracker Started.", DateTime.Now));
+            BuildLogger.Log(string.Format("[{0}] Progress Tracker Started.", DateTime.Now.ToString()));
         }
 
         public override bool UpdateTask(string taskTitle)
         {
-            BuildLogger.Log(string.Format("[{0}] {1:P2} Running Task: '{2}'", DateTime.Now, Progress, m_CurrentTaskTitle));
+            BuildLogger.Log(string.Format("[{0}] {1:P2} Running Task: '{2}'", DateTime.Now.ToString(), Progress.ToString(), CurrentTaskTitle));
             return base.UpdateInfo(taskTitle);
         }
 
         public override bool UpdateInfo(string taskInfo)
         {
-            BuildLogger.Log(string.Format("[{0}] {1:P2} Running Task: '{2}' Information: '{3}'", DateTime.Now, Progress, m_CurrentTaskTitle, taskInfo));
+            BuildLogger.Log(string.Format("[{0}] {1:P2} Running Task: '{2}' Information: '{3}'", DateTime.Now.ToString(), Progress.ToString(), CurrentTaskTitle, taskInfo));
             return base.UpdateInfo(taskInfo);
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            BuildLogger.Log(string.Format("[{0}] Progress Tracker Completed.", DateTime.Now));
-            base.Dispose();
+            BuildLogger.Log(string.Format("[{0}] Progress Tracker Completed.", DateTime.Now.ToString()));
+            base.Dispose(disposing);
         }
     }
 }

@@ -7,7 +7,7 @@ using UnityEditor.Build.Pipeline.Utilities;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
-    public struct StripUnusedSpriteSources : IBuildTask
+    public class StripUnusedSpriteSources : IBuildTask
     {
         const int k_Version = 1;
         public int Version { get { return k_Version; } }
@@ -15,8 +15,11 @@ namespace UnityEditor.Build.Pipeline.Tasks
         static readonly Type[] k_RequiredTypes = { typeof(IBuildParameters), typeof(IDependencyData) };
         public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
 
-        public ReturnCodes Run(IBuildContext context)
+        public ReturnCode Run(IBuildContext context)
         {
+            if (context == null)
+                throw new ArgumentNullException("context");
+
             IBuildCache cache;
             context.TryGetContextObject(out cache);
             return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IDependencyData>(), cache);
@@ -24,11 +27,11 @@ namespace UnityEditor.Build.Pipeline.Tasks
 
         static void CalcualteCacheEntry(IDependencyData dependencyData, ref CacheEntry cacheEntry)
         {
-            cacheEntry.hash = HashingMethods.CalculateMD5Hash(k_Version, dependencyData.AssetInfo, dependencyData.SceneInfo);
-            cacheEntry.guid = HashingMethods.CalculateMD5Guid("StripUnusedSpriteSources");
+            cacheEntry.Hash = HashingMethods.CalculateMD5Hash(k_Version, dependencyData.AssetInfo, dependencyData.SceneInfo);
+            cacheEntry.Guid = HashingMethods.CalculateMD5Guid("StripUnusedSpriteSources");
         }
 
-        public static ReturnCodes Run(IBuildParameters parameters, IDependencyData dependencyData, IBuildCache cache = null)
+        static ReturnCode Run(IBuildParameters parameters, IDependencyData dependencyData, IBuildCache cache = null)
         {
             var spriteSourceRef = new Dictionary<ObjectIdentifier, int>();
 
@@ -39,7 +42,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 if (cache.TryLoadFromCache(cacheEntry, ref spriteSourceRef))
                 {
                     SetOutputInformation(spriteSourceRef, dependencyData);
-                    return ReturnCodes.SuccessCached;
+                    return ReturnCode.SuccessCached;
                 }
             }
 
@@ -81,7 +84,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
             if (parameters.UseCache && cache != null && !cache.TrySaveToCache(cacheEntry, spriteSourceRef))
                 BuildLogger.LogWarning("Unable to cache StripUnusedSpriteSources results.");
 
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         }
 
         static void SetOutputInformation(Dictionary<ObjectIdentifier, int> spriteSourceRef, IDependencyData dependencyData)

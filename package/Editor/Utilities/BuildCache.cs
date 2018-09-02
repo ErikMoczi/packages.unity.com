@@ -21,7 +21,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
         }
 
         [Serializable]
-        struct CachedDependency<T> : ICachedDependency
+        class CachedDependency<T> : ICachedDependency
         {
             public CacheEntry asset { get; set; }
             public CacheEntry[] dependencies { get; set; }
@@ -29,7 +29,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
             public T info;
             public BuildUsageTagSet usage;
 
-            public CachedDependency(T assetInfo, BuildUsageTagSet assetUsage) : this()
+            public CachedDependency(T assetInfo, BuildUsageTagSet assetUsage)
             {
                 asset = new CacheEntry();
                 dependencies = null;
@@ -59,7 +59,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
 
         public static string GetArtifactCacheDirectory(CacheEntry cacheEntry)
         {
-            var folder = string.Format("{0}/{1}/{2}", kArtifactCachePath, cacheEntry.guid, cacheEntry.hash);
+            var folder = string.Format("{0}/{1}/{2}", kArtifactCachePath, cacheEntry.Guid.ToString(), cacheEntry.Hash.ToString());
             Directory.CreateDirectory(folder);
             return folder;
         }
@@ -71,15 +71,19 @@ namespace UnityEditor.Build.Pipeline.Utilities
 
         public CacheEntry GetCacheEntry(GUID asset)
         {
-            var entry = new CacheEntry { guid = asset };
-            if (m_HashCache.TryGetValue(asset, out entry.hash))
+            var entry = new CacheEntry { Guid = asset };
+            Hash128 hash;
+            if (m_HashCache.TryGetValue(asset, out hash))
+            {
+                entry.Hash = hash;
                 return entry;
+            }
 
             string path = AssetDatabase.GUIDToAssetPath(asset.ToString());
             string assetHash = AssetDatabase.GetAssetDependencyHash(path).ToString();
 
-            entry.hash = Hash128.Parse(assetHash);
-            m_HashCache[asset] = entry.hash;
+            entry.Hash = Hash128.Parse(assetHash);
+            m_HashCache[asset] = entry.Hash;
             return entry;
         }
 
@@ -88,7 +92,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
             // TODO: Cache server integration
             try
             {
-                var file = string.Format("{0}/{1}_{2}.bytes", GetDependencyCacheDirectory(cacheEntry), cacheEntry.guid, cacheEntry.hash);
+                var file = string.Format("{0}/{1}_{2}.bytes", GetDependencyCacheDirectory(cacheEntry), cacheEntry.Guid.ToString(), cacheEntry.Hash.ToString());
                 if (!File.Exists(file))
                 {
                     cachedDependency = default(ICachedDependency);
@@ -144,7 +148,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
 
             foreach (CacheEntry dependency in cachedDependency.dependencies)
             {
-                if (dependency == GetCacheEntry(dependency.guid))
+                if (dependency == GetCacheEntry(dependency.Guid))
                     continue;
                 return false;
             }
@@ -248,7 +252,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
             // TODO: Cache server integration
             try
             {
-                var file = string.Format("{0}/{1}_{2}.bytes", GetDependencyCacheDirectory(cacheEntry), cacheEntry.guid, cacheEntry.hash);
+                var file = string.Format("{0}/{1}_{2}.bytes", GetDependencyCacheDirectory(cacheEntry), cacheEntry.Guid.ToString(), cacheEntry.Hash.ToString());
                 var formatter = new BinaryFormatter();
                 using (var stream = new MemoryStream())
                 {

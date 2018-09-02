@@ -8,6 +8,8 @@ namespace UnityEditor.Build.Utilities
     {
         SceneSetup[] m_Scenes;
 
+        bool m_Disposed = false;
+
         public SceneStateCleanup()
         {
             m_Scenes = EditorSceneManager.GetSceneManagerSetup();
@@ -15,10 +17,24 @@ namespace UnityEditor.Build.Utilities
 
         public void Dispose()
         {
-            if (!m_Scenes.IsNullOrEmpty())
-                EditorSceneManager.RestoreSceneManagerSetup(m_Scenes);
-            else
-                EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (m_Disposed)
+                return;
+
+            if (disposing)
+            {
+                if (!m_Scenes.IsNullOrEmpty())
+                    EditorSceneManager.RestoreSceneManagerSetup(m_Scenes);
+                else
+                    EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
+            }
+
+            m_Disposed = true;
         }
     }
 }

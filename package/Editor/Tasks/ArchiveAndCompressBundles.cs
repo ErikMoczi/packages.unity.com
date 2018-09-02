@@ -8,7 +8,7 @@ using UnityEditor.Build.Pipeline.Utilities;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
-    public struct ArchiveAndCompressBundles : IBuildTask
+    public class ArchiveAndCompressBundles : IBuildTask
     {
         const int k_Version = 1;
         public int Version { get { return k_Version; } }
@@ -16,8 +16,11 @@ namespace UnityEditor.Build.Pipeline.Tasks
         static readonly Type[] k_RequiredTypes = { typeof(IBuildParameters), typeof(IBundleWriteData), typeof(IBundleBuildResults) };
         public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
 
-        public ReturnCodes Run(IBuildContext context)
+        public ReturnCode Run(IBuildContext context)
         {
+            if (context == null)
+                throw new ArgumentNullException("context");
+
             IProgressTracker tracker;
             context.TryGetContextObject(out tracker);
             IBuildCache cache;
@@ -31,11 +34,11 @@ namespace UnityEditor.Build.Pipeline.Tasks
             foreach (ResourceFile resource in resources)
                 fileHashes.Add(HashingMethods.CalculateFileMD5(resource.fileName).ToString());
 
-            cacheEntry.guid = HashingMethods.CalculateMD5Guid("ArchiveAndCompressBundles", bundleName);
-            cacheEntry.hash = HashingMethods.CalculateMD5Hash(k_Version, fileHashes, compression);
+            cacheEntry.Guid = HashingMethods.CalculateMD5Guid("ArchiveAndCompressBundles", bundleName);
+            cacheEntry.Hash = HashingMethods.CalculateMD5Hash(k_Version, fileHashes, compression);
         }
 
-        public static ReturnCodes Run(IBuildParameters parameters, IBundleWriteData writeData, IBundleBuildResults results, IProgressTracker tracker = null, IBuildCache cache = null)
+        static ReturnCode Run(IBuildParameters parameters, IBundleWriteData writeData, IBundleBuildResults results, IProgressTracker tracker = null, IBuildCache cache = null)
         {
             Dictionary<string, List<WriteResult>> bundleToResults = new Dictionary<string, List<WriteResult>>();
             foreach (var result in results.WriteResults)
@@ -63,27 +66,27 @@ namespace UnityEditor.Build.Pipeline.Tasks
                     if (cache.TryLoadFromCache(cacheEntry, ref details))
                     {
                         if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", bundle.Key)))
-                            return ReturnCodes.Canceled;
+                            return ReturnCode.Canceled;
 
-                        details.fileName = string.Format("{0}/{1}", parameters.OutputFolder, bundle.Key);
-                        SetOutputInformation(writePath, details.fileName, bundle.Key, details, results);
+                        details.FileName = string.Format("{0}/{1}", parameters.OutputFolder, bundle.Key);
+                        SetOutputInformation(writePath, details.FileName, bundle.Key, details, results);
                         continue;
                     }
                 }
 
                 if (!tracker.UpdateInfoUnchecked(bundle.Key))
-                    return ReturnCodes.Canceled;
+                    return ReturnCode.Canceled;
 
-                details.fileName = string.Format("{0}/{1}", parameters.OutputFolder, bundle.Key);
-                details.crc = ContentBuildInterface.ArchiveAndCompress(resourceFiles, writePath, compression);
-                details.hash = HashingMethods.CalculateFileMD5Hash(writePath);
-                SetOutputInformation(writePath, details.fileName, bundle.Key, details, results);
+                details.FileName = string.Format("{0}/{1}", parameters.OutputFolder, bundle.Key);
+                details.Crc = ContentBuildInterface.ArchiveAndCompress(resourceFiles, writePath, compression);
+                details.Hash = HashingMethods.CalculateFileMD5Hash(writePath);
+                SetOutputInformation(writePath, details.FileName, bundle.Key, details, results);
 
                 if (parameters.UseCache && cache != null && !cache.TrySaveToCache(cacheEntry, details))
                     BuildLogger.LogWarning("Unable to cache ArchiveAndCompressBundles result for bundle {0}.", bundle.Key);
             }
 
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         }
 
         static void SetOutputInformation(string writePath, string finalPath, string bundleName, BundleDetails details, IBundleBuildResults results)

@@ -4,37 +4,28 @@ using System.Linq;
 using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Utilities;
+using UnityEditor.Build.Utilities;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class GenerateBundlePacking : IBuildTask
     {
-        // TODO: Move to utility file
-        public const string k_UnityDefaultResourcePath = "library/unity default resources";
-        public const string k_AssetBundleNameFormat = "archive:/{0}/{0}";
-        public const string k_SceneBundleNameFormat = "archive:/{0}/{1}.sharedAssets";
-
         const int k_Version = 1;
-
-        public int Version
-        {
-            get { return k_Version; }
-        }
+        public int Version { get { return k_Version; } }
 
         static readonly Type[] k_RequiredTypes = { typeof(IBundleBuildContent), typeof(IDependencyData), typeof(IBundleWriteData), typeof(IDeterministicIdentifiers) };
+        public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
 
-        public Type[] RequiredContextTypes
+        public ReturnCode Run(IBuildContext context)
         {
-            get { return k_RequiredTypes; }
-        }
+            if (context == null)
+                throw new ArgumentNullException("context");
 
-        public ReturnCodes Run(IBuildContext context)
-        {
             return Run(context.GetContextObject<IBundleBuildContent>(), context.GetContextObject<IDependencyData>(), context.GetContextObject<IBundleWriteData>(),
                 context.GetContextObject<IDeterministicIdentifiers>());
         }
 
-        public static ReturnCodes Run(IBundleBuildContent buildContent, IDependencyData dependencyData, IBundleWriteData writeData, IDeterministicIdentifiers packingMethod)
+        static ReturnCode Run(IBundleBuildContent buildContent, IDependencyData dependencyData, IBundleWriteData writeData, IDeterministicIdentifiers packingMethod)
         {
             Dictionary<GUID, List<GUID>> AssetToReferences = new Dictionary<GUID, List<GUID>>();
 
@@ -63,12 +54,12 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 }
             }
 
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         }
 
         static void PackAssetBundle(string bundleName, List<GUID> includedAssets, IDependencyData dependencyData, IBundleWriteData writeData, IDeterministicIdentifiers packingMethod, Dictionary<GUID, List<GUID>> assetToReferences)
         {
-            var internalName = string.Format(k_AssetBundleNameFormat, packingMethod.GenerateInternalFileName(bundleName));
+            var internalName = string.Format(CommonStrings.AssetBundleNameFormat, packingMethod.GenerateInternalFileName(bundleName));
 
             var allObjects = new HashSet<ObjectIdentifier>();
             foreach (var asset in includedAssets)
@@ -97,7 +88,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 var internalSceneName = packingMethod.GenerateInternalFileName(scenePath);
                 if (string.IsNullOrEmpty(firstFileName))
                     firstFileName = internalSceneName;
-                var internalName = string.Format(k_SceneBundleNameFormat, firstFileName, internalSceneName);
+                var internalName = string.Format(CommonStrings.SceneBundleNameFormat, firstFileName, internalSceneName);
 
                 SceneDependencyInfo sceneInfo = dependencyData.SceneInfo[scene];
 
@@ -119,7 +110,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
             for (int i = references.Count - 1; i >= 0; --i)
             {
                 var reference = references[i];
-                if (reference.filePath == k_UnityDefaultResourcePath)
+                if (reference.filePath == CommonStrings.UnityDefaultResourcePath)
                 {
                     references.RemoveAt(i);
                     continue; // TODO: Fix this so we can pull these in

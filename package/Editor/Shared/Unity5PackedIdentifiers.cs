@@ -8,11 +8,9 @@ namespace UnityEditor.Build.Pipeline
 {
     /// <summary>
     /// Generates a deterministic identifier using a MD4 hash algorithm and does not require object ordering to be deterministic.
-#pragma warning disable 1574
-    /// This algorithm generates identical results to what is used internally in <seealso cref="BuildPipeline.BuildAssetBundles"/>.
-#pragma warning restore 1574
+    /// This algorithm generates identical results to what is used internally in <seealso cref="BuildPipeline.BuildAssetbundles"/>.
     /// </summary>
-    public struct Unity5PackedIdentifiers : IDeterministicIdentifiers
+    public class Unity5PackedIdentifiers : IDeterministicIdentifiers
     {
         /// <inheritdoc />
         public string GenerateInternalFileName(string name)

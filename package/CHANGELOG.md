@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.0.9-preview] - 2018-04-04
+- Added documentation for IWriteOperation implementations
+- Added documentation for ReturnCodes, LegacyBuildPipeline, and ContentPipeline
+- Ran Unity code analysis & cleaned up warnings (boxing, performance issues, name consistency)
+- Breaking api change: Changed build tasks' public static run method to private.
+- Added null checks and ArgumentNullExceptions
+
 ## [0.0.8-preview] - 2018-03-27
 - Test rename & meta file cleanup
 - Added documentation for shared classes / structs

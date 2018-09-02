@@ -13,53 +13,53 @@ namespace UnityEditor.Build.Pipeline
         /// <summary>
         /// Func delegate for the callback after scripts have been compiled.
         /// </summary>
-        public Func<IBuildParameters, IBuildResults, ReturnCodes> PostScriptsCallbacks { get; set; }
+        public Func<IBuildParameters, IBuildResults, ReturnCode> PostScriptsCallbacks { get; set; }
         
         /// <summary>
         /// Func delegate for the callback after dependency calculation has occurred.
         /// </summary>
-        public Func<IBuildParameters, IDependencyData, ReturnCodes> PostDependencyCallback { get; set; }
+        public Func<IBuildParameters, IDependencyData, ReturnCode> PostDependencyCallback { get; set; }
         
         /// <summary>
         /// Func delegate for the callback after packing has occurred.
         /// </summary>
-        public Func<IBuildParameters, IDependencyData, IWriteData, ReturnCodes> PostPackingCallback { get; set; }
+        public Func<IBuildParameters, IDependencyData, IWriteData, ReturnCode> PostPackingCallback { get; set; }
         
         /// <summary>
         /// Func delegate for the callback after writing content has occurred.
         /// </summary>
-        public Func<IBuildParameters, IDependencyData, IWriteData, IBuildResults, ReturnCodes> PostWritingCallback { get; set; }
+        public Func<IBuildParameters, IDependencyData, IWriteData, IBuildResults, ReturnCode> PostWritingCallback { get; set; }
         
         /// <inheritdoc />
-        public ReturnCodes PostScripts(IBuildParameters buildParameters, IBuildResults buildResults)
+        public ReturnCode PostScripts(IBuildParameters buildParameters, IBuildResults buildResults)
         {
             if (PostScriptsCallbacks != null)
                 return PostScriptsCallbacks(buildParameters, buildResults);
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         }
         
         /// <inheritdoc />
-        public ReturnCodes PostDependency(IBuildParameters buildParameters, IDependencyData dependencyData)
+        public ReturnCode PostDependency(IBuildParameters buildParameters, IDependencyData dependencyData)
         {
             if (PostDependencyCallback != null)
                 return PostDependencyCallback(buildParameters, dependencyData);
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         }
         
         /// <inheritdoc />
-        public ReturnCodes PostPacking(IBuildParameters buildParameters, IDependencyData dependencyData, IWriteData writeData)
+        public ReturnCode PostPacking(IBuildParameters buildParameters, IDependencyData dependencyData, IWriteData writeData)
         {
             if (PostPackingCallback != null)
                 return PostPackingCallback(buildParameters, dependencyData, writeData);
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         }
         
         /// <inheritdoc />
-        public ReturnCodes PostWriting(IBuildParameters buildParameters, IDependencyData dependencyData, IWriteData writeData, IBuildResults buildResults)
+        public ReturnCode PostWriting(IBuildParameters buildParameters, IDependencyData dependencyData, IWriteData writeData, IBuildResults buildResults)
         {
             if (PostWritingCallback != null)
                 return PostWritingCallback(buildParameters, dependencyData, writeData, buildResults);
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         }
     }
 }

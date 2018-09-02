@@ -2,7 +2,6 @@
 using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Utilities;
-using UnityEditor.Build.Pipeline.WriteTypes;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
@@ -14,8 +13,11 @@ namespace UnityEditor.Build.Pipeline.Tasks
         static readonly Type[] k_RequiredTypes = { typeof(IBuildParameters), typeof(IDependencyData), typeof(IWriteData), typeof(IBuildResults) };
         public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
 
-        public ReturnCodes Run(IBuildContext context)
+        public ReturnCode Run(IBuildContext context)
         {
+            if (context == null)
+                throw new ArgumentNullException("context");
+
             IProgressTracker tracker;
             context.TryGetContextObject(out tracker);
             IBuildCache cache;
@@ -29,11 +31,11 @@ namespace UnityEditor.Build.Pipeline.Tasks
             for (var index = 0; index < operation.Command.serializeObjects.Count; index++)
                 assetHashes[index] = AssetDatabase.GetAssetDependencyHash(operation.Command.serializeObjects[index].serializationObject.guid.ToString()).ToString();
 
-            cacheEntry.hash = HashingMethods.CalculateMD5Hash(k_Version, operation.GetHash128(), assetHashes, settings.GetHash128(), globalUsage);
-            cacheEntry.guid = HashingMethods.CalculateMD5Guid("WriteSerializedFiles", operation.Command.internalName);
+            cacheEntry.Hash = HashingMethods.CalculateMD5Hash(k_Version, operation.GetHash128(), assetHashes, settings.GetHash128(), globalUsage);
+            cacheEntry.Guid = HashingMethods.CalculateMD5Guid("WriteSerializedFiles", operation.Command.internalName);
         }
 
-        public static ReturnCodes Run(IBuildParameters parameters, IDependencyData dependencyData, IWriteData writeData, IBuildResults results, IProgressTracker tracker = null, IBuildCache cache = null)
+        static ReturnCode Run(IBuildParameters parameters, IDependencyData dependencyData, IWriteData writeData, IBuildResults results, IProgressTracker tracker = null, IBuildCache cache = null)
         {
             BuildUsageTagGlobal globalUSage = new BuildUsageTagGlobal();
             foreach (var sceneInfo in dependencyData.SceneInfo)
@@ -50,7 +52,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                     if (cache.TryLoadFromCache(cacheEntry, ref result))
                     {
                         if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", op.Command.internalName)))
-                            return ReturnCodes.Canceled;
+                            return ReturnCode.Canceled;
 
                         SetOutputInformation(op.Command.internalName, result, results);
                         continue;
@@ -58,7 +60,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 }
 
                 if (!tracker.UpdateInfoUnchecked(op.Command.internalName))
-                    return ReturnCodes.Canceled;
+                    return ReturnCode.Canceled;
 
                 var outputFolder = parameters.UseCache && cache != null ? cache.GetArtifactCacheDirectory(cacheEntry) : parameters.TempOutputFolder;
                 result = op.Write(outputFolder, parameters.GetContentBuildSettings(), globalUSage);
@@ -68,7 +70,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                     BuildLogger.LogWarning("Unable to cache WriteSerializedFiles result for file {0}.", op.Command.internalName);
             }
 
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         }
 
         static void SetOutputInformation(string fileName, WriteResult result, IBuildResults results)

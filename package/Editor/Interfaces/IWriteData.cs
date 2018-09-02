@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEditor.Build.Content;
-using UnityEditor.Build.Pipeline.WriteTypes;
 
 namespace UnityEditor.Build.Pipeline.Interfaces
 {

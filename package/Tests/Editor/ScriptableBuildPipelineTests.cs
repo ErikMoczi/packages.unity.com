@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline;
-using UnityEditor.Build.Pipeline.Content;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Tasks;
 
@@ -41,6 +40,13 @@ class ScriptableBuildPipelineTests
         CleanupFolders();
     }
 
+    public static ReturnCode RunTask<T>(params IContextObject[] args) where T : IBuildTask
+    {
+        IBuildContext context = new BuildContext(args);
+        IBuildTask instance = Activator.CreateInstance<T>();
+        return instance.Run(context);
+    }
+
     [UnityTest]
     public IEnumerator BuildPipeline_AssetBundleBuild_DoesNotResetUnsavedScene()
     {
@@ -58,8 +64,8 @@ class ScriptableBuildPipelineTests
         IBundleBuildContent buildContent = GetBundleContent();
         IBundleBuildResults results;
 
-        ReturnCodes code = ContentPipeline.BuildAssetBundles(buildParameters, buildContent, out results);
-        Assert.AreEqual(ReturnCodes.UnsavedChanges, code);
+        ReturnCode exitCode = ContentPipeline.BuildAssetBundles(buildParameters, buildContent, out results);
+        Assert.AreEqual(ReturnCode.UnsavedChanges, exitCode);
 
         Assert.AreEqual("testScene", EditorSceneManager.GetActiveScene().name);
         objectWeAdded = GameObject.Find("Cube");
@@ -71,11 +77,14 @@ class ScriptableBuildPipelineTests
     {
         Scene s = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
         yield return null;
-        ReturnCodes code = ProjectInCleanState.Run();
-        Assert.AreEqual(ReturnCodes.Success, code);
+
+        ReturnCode exitCode = RunTask<ProjectInCleanState>();
+        Assert.AreEqual(ReturnCode.Success, exitCode);
+
         EditorSceneManager.MarkSceneDirty(s);
-        code = ProjectInCleanState.Run();
-        Assert.AreEqual(ReturnCodes.UnsavedChanges, code);
+
+        exitCode = RunTask<ProjectInCleanState>();
+        Assert.AreEqual(ReturnCode.UnsavedChanges, exitCode);
     }
 
 
@@ -86,9 +95,9 @@ class ScriptableBuildPipelineTests
         IDependencyData dependencyData = new BuildDependencyData();
         IWriteData writeData = new BuildWriteData();
         IBuildResults results = new BuildResults();
-
-        ReturnCodes code = WriteSerializedFiles.Run(buildParams, dependencyData, writeData, results);
-        Assert.AreEqual(ReturnCodes.Success, code);
+        
+        ReturnCode exitCode = RunTask<WriteSerializedFiles>(buildParams, dependencyData, writeData, results);
+        Assert.AreEqual(ReturnCode.Success, exitCode);
     }
 
     [Test]
@@ -98,9 +107,9 @@ class ScriptableBuildPipelineTests
         IDependencyData dep = GetDependancyData();
         IBundleWriteData writeData = new BundleWriteData();
         IDeterministicIdentifiers determinsiticId = new PrefabPackedIdentifiers();
-
-        ReturnCodes code = GenerateBundlePacking.Run(buildContent, dep, writeData, determinsiticId);
-        Assert.AreEqual(ReturnCodes.Success, code);
+        
+        ReturnCode exitCode = RunTask<GenerateBundlePacking>(buildContent, dep, writeData, determinsiticId);
+        Assert.AreEqual(ReturnCode.Success, exitCode);
     }
 
     [Test]
@@ -110,11 +119,11 @@ class ScriptableBuildPipelineTests
         IDependencyData dep = GetDependancyData();
         IBundleWriteData writeData = new BundleWriteData();
         IDeterministicIdentifiers determinsiticId = new PrefabPackedIdentifiers();
-
-        GenerateBundlePacking.Run(buildContent, dep, writeData, determinsiticId);
-
-        ReturnCodes code = GenerateBundleCommands.Run(buildContent, dep, writeData, determinsiticId);
-        Assert.AreEqual(ReturnCodes.Success, code);
+        
+        RunTask<GenerateBundlePacking>(buildContent, dep, writeData, determinsiticId);
+        
+        ReturnCode exitCode = RunTask<GenerateBundleCommands>(buildContent, dep, writeData, determinsiticId);
+        Assert.AreEqual(ReturnCode.Success, exitCode);
     }
 
     [Test]
@@ -122,9 +131,9 @@ class ScriptableBuildPipelineTests
     {
         IDependencyData dep = GetDependancyData();
         IBundleWriteData writeData = new BundleWriteData();
-
-        ReturnCodes code = GenerateBundleMaps.Run(dep, writeData);
-        Assert.AreEqual(ReturnCodes.Success, code);
+        
+        ReturnCode exitCode = RunTask<GenerateBundleMaps>(dep, writeData);
+        Assert.AreEqual(ReturnCode.Success, exitCode);
     }
 
     [Test]
@@ -139,11 +148,11 @@ class ScriptableBuildPipelineTests
         callback.PostPackingCallback = (parameters, data, arg3) =>
         {
             packingCallbackCalled = true;
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         };
-
-        ReturnCodes code = PostPackingCallback.Run(buildParams, dep, writeData, callback);
-        Assert.AreEqual(ReturnCodes.Success, code);
+        
+        ReturnCode exitCode = RunTask<PostPackingCallback>(buildParams, dep, writeData, callback);
+        Assert.AreEqual(ReturnCode.Success, exitCode);
         Assert.IsTrue(packingCallbackCalled);
     }
 
@@ -152,7 +161,7 @@ class ScriptableBuildPipelineTests
     {
         bool writingCallbackCalled = false;
 
-        IBuildParameters buildParameters = GetBuildParameters(k_FolderPath, k_TmpPath);
+        IBuildParameters buildParams = GetBuildParameters(k_FolderPath, k_TmpPath);
         IDependencyData dep = GetDependancyData();
         IWriteData writeData = new BuildWriteData();
         IBuildResults results = new BuildResults();
@@ -160,11 +169,11 @@ class ScriptableBuildPipelineTests
         callback.PostWritingCallback = (parameters, data, arg3, arg4) =>
         {
             writingCallbackCalled = true;
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         };
 
-        ReturnCodes code = PostWritingCallback.Run(buildParameters, dep, writeData, results, callback);
-        Assert.AreEqual(ReturnCodes.Success, code);
+        ReturnCode exitCode = RunTask<PostWritingCallback>(buildParams, dep, writeData, results, callback);
+        Assert.AreEqual(ReturnCode.Success, exitCode);
         Assert.IsTrue(writingCallbackCalled);
     }
 
@@ -179,11 +188,11 @@ class ScriptableBuildPipelineTests
         callback.PostDependencyCallback = (parameters, data) =>
         {
             dependencyCallbackCalled = true;
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         };
 
-        ReturnCodes code = PostDependencyCallback.Run(buildParameters, dep, callback);
-        Assert.AreEqual(ReturnCodes.Success, code);
+        ReturnCode exitCode = RunTask<PostDependencyCallback>(buildParameters, dep, callback);
+        Assert.AreEqual(ReturnCode.Success, exitCode);
         Assert.IsTrue(dependencyCallbackCalled);
     }
 
@@ -198,11 +207,11 @@ class ScriptableBuildPipelineTests
         callback.PostScriptsCallbacks = (parameters, buildResults) =>
         {
             scriptsCallbackCalled = true;
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         };
 
-        ReturnCodes code = PostScriptsCallback.Run(buildParameters, results, callback);
-        Assert.AreEqual(ReturnCodes.Success, code);
+        ReturnCode exitCode = RunTask<PostScriptsCallback>(buildParameters, results, callback);
+        Assert.AreEqual(ReturnCode.Success, exitCode);
         Assert.IsTrue(scriptsCallbackCalled);
     }
 

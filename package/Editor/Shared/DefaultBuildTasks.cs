@@ -13,7 +13,7 @@ namespace UnityEditor.Build.Pipeline
         /// <summary>
         /// Enum of the different preset build pipelines
         /// </summary>
-        public enum Presets
+        public enum Preset
         {
             PlayerScriptsOnly,
             AssetBundleCompatible
@@ -25,16 +25,16 @@ namespace UnityEditor.Build.Pipeline
         /// <param name="preset">The preset build pipeline to construct and return.</param>
         /// <param name="compileScripts">The boolean to allow bypassing script compilation of a preset build pipeline if supported.</param>
         /// <returns>IList containing the build tasks in the correct order for the preset build pipeline.</returns>
-        public static IList<IBuildTask> Create(Presets preset, bool compileScripts = true)
+        public static IList<IBuildTask> Create(Preset preset, bool compileScripts = true)
         {
             switch (preset)
             {
-                case Presets.PlayerScriptsOnly:
+                case Preset.PlayerScriptsOnly:
                     return PlayerScriptsOnly();
-                case Presets.AssetBundleCompatible:
+                case Preset.AssetBundleCompatible:
                     return AssetBundleCompatible(compileScripts);
                 default:
-                    throw new NotImplementedException(string.Format("Presets for '{0}' not yet implemented.", preset));
+                    throw new NotImplementedException(string.Format("Preset for '{0}' not yet implemented.", preset));
             }
         }
 

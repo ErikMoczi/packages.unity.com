@@ -18,7 +18,7 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// <param name="buildParameters">Parameters passed into the build pipeline.</param>
         /// <param name="buildResults">Results from the script building step.</param>
         /// <returns>Return code from processing the callbacks.</returns>
-        ReturnCodes PostScripts(IBuildParameters buildParameters, IBuildResults buildResults);
+        ReturnCode PostScripts(IBuildParameters buildParameters, IBuildResults buildResults);
     }
     
     /// <summary>
@@ -32,7 +32,7 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// <param name="buildParameters">Parameters passed into the build pipeline.</param>
         /// <param name="dependencyData">Results from the dependency calculation step.</param>
         /// <returns>Return code from processing the callbacks.</returns>
-        ReturnCodes PostDependency(IBuildParameters buildParameters, IDependencyData dependencyData);
+        ReturnCode PostDependency(IBuildParameters buildParameters, IDependencyData dependencyData);
     }
     
     /// <summary>
@@ -47,7 +47,7 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// <param name="dependencyData">Results from the dependency calculation step.</param>
         /// <param name="writeData">Results from the packing step.</param>
         /// <returns>Return code from processing the callbacks.</returns>
-        ReturnCodes PostPacking(IBuildParameters buildParameters, IDependencyData dependencyData, IWriteData writeData);
+        ReturnCode PostPacking(IBuildParameters buildParameters, IDependencyData dependencyData, IWriteData writeData);
     }
     
     /// <summary>
@@ -63,7 +63,7 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// <param name="writeData">Results from the packing step.</param>
         /// <param name="buildResults">Results from the writing step.</param>
         /// <returns>Return code from processing the callbacks.</returns>
-        ReturnCodes PostWriting(IBuildParameters buildParameters, IDependencyData dependencyData, IWriteData writeData, IBuildResults buildResults);
+        ReturnCode PostWriting(IBuildParameters buildParameters, IDependencyData dependencyData, IWriteData writeData, IBuildResults buildResults);
     }
 
     /// <summary>

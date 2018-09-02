@@ -7,7 +7,7 @@ using UnityEditor.Build.Pipeline.Utilities;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
-    public struct GenerateBundleMaps : IBuildTask
+    public class GenerateBundleMaps : IBuildTask
     {
         const int k_Version = 1;
         public int Version { get { return k_Version; } }
@@ -15,12 +15,15 @@ namespace UnityEditor.Build.Pipeline.Tasks
         static readonly Type[] k_RequiredTypes = { typeof(IDependencyData), typeof(IBundleWriteData) };
         public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
 
-        public ReturnCodes Run(IBuildContext context)
+        public ReturnCode Run(IBuildContext context)
         {
+            if (context == null)
+                throw new ArgumentNullException("context");
+
             return Run(context.GetContextObject<IDependencyData>(), context.GetContextObject<IBundleWriteData>());
         }
 
-        public static ReturnCodes Run(IDependencyData dependencyData, IBundleWriteData writeData)
+        static ReturnCode Run(IDependencyData dependencyData, IBundleWriteData writeData)
         {
             Dictionary<string, HashSet<string>> filesMapped = new Dictionary<string, HashSet<string>>();
             foreach (var assetFilesPair in writeData.AssetToFiles)
@@ -32,7 +35,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 AddUsageSetForFiles(assetFilesPair.Key, assetFilesPair.Value, dependencyData, writeData);
             }
 
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         }
 
         static void AddReferencesForFiles(IList<string> files, IBundleWriteData writeData, Dictionary<string, HashSet<string>> filesMapped)

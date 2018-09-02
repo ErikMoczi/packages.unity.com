@@ -9,7 +9,7 @@ using UnityEditor.Build.Pipeline.WriteTypes;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
-    public struct GenerateBundleCommands : IBuildTask
+    public class GenerateBundleCommands : IBuildTask
     {
         const int k_Version = 1;
         public int Version { get { return k_Version; } }
@@ -17,13 +17,16 @@ namespace UnityEditor.Build.Pipeline.Tasks
         static readonly Type[] k_RequiredTypes = { typeof(IBundleBuildContent), typeof(IDependencyData), typeof(IBundleWriteData), typeof(IDeterministicIdentifiers) };
         public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
 
-        public ReturnCodes Run(IBuildContext context)
+        public ReturnCode Run(IBuildContext context)
         {
+            if (context == null)
+                throw new ArgumentNullException("context");
+
             return Run(context.GetContextObject<IBundleBuildContent>(), context.GetContextObject<IDependencyData>(), context.GetContextObject<IBundleWriteData>(),
                 context.GetContextObject<IDeterministicIdentifiers>());
         }
 
-        public static ReturnCodes Run(IBundleBuildContent buildContent, IDependencyData dependencyData, IBundleWriteData writeData, IDeterministicIdentifiers packingMethod)
+        static ReturnCode Run(IBundleBuildContent buildContent, IDependencyData dependencyData, IBundleWriteData writeData, IDeterministicIdentifiers packingMethod)
         {
             foreach (var bundlePair in buildContent.BundleLayout)
             {
@@ -38,7 +41,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                         CreateSceneDataCommand(writeData.AssetToFiles[bundlePair.Value[i]][0], bundlePair.Value[i], dependencyData, writeData);
                 }
             }
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         }
 
         static WriteCommand CreateWriteCommand(string internalName, List<ObjectIdentifier> objects, IDeterministicIdentifiers packingMethod)

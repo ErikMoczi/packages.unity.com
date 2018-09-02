@@ -6,7 +6,7 @@ using UnityEditor.Build.Pipeline.Utilities;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
-    public struct CalculateAssetDependencyData : IBuildTask
+    public class CalculateAssetDependencyData : IBuildTask
     {
         const int k_Version = 1;
         public int Version { get { return k_Version; } }
@@ -14,8 +14,11 @@ namespace UnityEditor.Build.Pipeline.Tasks
         static readonly Type[] k_RequiredTypes = { typeof(IBuildParameters), typeof(IBuildContent), typeof(IDependencyData) };
         public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
 
-        public ReturnCodes Run(IBuildContext context)
+        public ReturnCode Run(IBuildContext context)
         {
+            if (context == null)
+                throw new ArgumentNullException("context");
+
             IProgressTracker tracker;
             context.TryGetContextObject(out tracker);
             IBuildCache cache;
@@ -23,7 +26,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
             return Run(context.GetContextObject<IBuildParameters>(), context.GetContextObject<IBuildContent>(), context.GetContextObject<IDependencyData>(), tracker, cache);
         }
 
-        public static ReturnCodes Run(IBuildParameters parameters, IBuildContent content, IDependencyData dependencyData, IProgressTracker tracker = null, IBuildCache cache = null)
+        static ReturnCode Run(IBuildParameters parameters, IBuildContent content, IDependencyData dependencyData, IProgressTracker tracker = null, IBuildCache cache = null)
         {
             var globalUsage = new BuildUsageTagGlobal();
             foreach (SceneDependencyInfo sceneInfo in dependencyData.SceneInfo.Values)
@@ -35,7 +38,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 var usageTags = new BuildUsageTagSet();
                 string assetPath = AssetDatabase.GUIDToAssetPath(asset.ToString());
 
-                var cacheEntry = new CacheEntry { guid = asset };
+                var cacheEntry = new CacheEntry { Guid = asset };
                 if (parameters.UseCache && cache != null)
                 {
                     cacheEntry = cache.GetCacheEntry(asset);
@@ -43,7 +46,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                     if (result && cache.TryLoadFromCache(cacheEntry, ref assetInfo, ref usageTags))
                     {
                         if (!tracker.UpdateInfoUnchecked(string.Format("{0} (Cached)", assetPath)))
-                            return ReturnCodes.Canceled;
+                            return ReturnCode.Canceled;
 
                         SetOutputInformation(asset, assetInfo, usageTags, dependencyData);
                         continue;
@@ -51,7 +54,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 }
 
                 if (!tracker.UpdateInfoUnchecked(assetPath))
-                    return ReturnCodes.Canceled;
+                    return ReturnCode.Canceled;
 
                 assetInfo.asset = asset;
                 assetInfo.includedObjects = new List<ObjectIdentifier>(ContentBuildInterface.GetPlayerObjectIdentifiersInAsset(asset, parameters.Target));
@@ -64,7 +67,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                     BuildLogger.LogWarning("Unable to cache AssetCachedDependency results for asset '{0}'.", AssetDatabase.GUIDToAssetPath(asset.ToString()));
             }
 
-            return ReturnCodes.Success;
+            return ReturnCode.Success;
         }
 
         static void SetOutputInformation(GUID asset, AssetLoadInfo assetInfo, BuildUsageTagSet usageTags, IDependencyData dependencyData)

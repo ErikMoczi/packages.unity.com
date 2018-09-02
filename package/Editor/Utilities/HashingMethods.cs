@@ -23,6 +23,9 @@ namespace UnityEditor.Build.Pipeline.Utilities
 
         public static byte[] CalculateStreamMD5(Stream stream)
         {
+            if (stream == null)
+                throw new ArgumentNullException("stream");
+
             byte[] hash;
             stream.Position = 0;
             using (var md5 = MD5.Create())
@@ -57,6 +60,9 @@ namespace UnityEditor.Build.Pipeline.Utilities
 
         public static byte[] CalculateMD5(params object[] objects)
         {
+            if (objects == null)
+                throw new ArgumentNullException("objects");
+
             byte[] hash;
             var formatter = new BinaryFormatter();
             using (var stream = new MemoryStream())

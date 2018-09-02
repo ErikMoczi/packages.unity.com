@@ -4,7 +4,7 @@ using UnityEditor.Build.Pipeline.Utilities;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
-    public struct ProjectInCleanState : IBuildTask
+    public class ProjectInCleanState : IBuildTask
     {
         const int k_Version = 1;
         public int Version { get { return k_Version; } }
@@ -12,16 +12,16 @@ namespace UnityEditor.Build.Pipeline.Tasks
         static readonly Type[] k_RequiredTypes = { };
         public Type[] RequiredContextTypes { get { return k_RequiredTypes; } }
 
-        public ReturnCodes Run(IBuildContext context)
+        public ReturnCode Run(IBuildContext context)
         {
             return Run();
         }
 
-        public static ReturnCodes Run()
+        static ReturnCode Run()
         {
             if (ValidationMethods.HasDirtyScenes())
-                return ReturnCodes.UnsavedChanges;
-            return ReturnCodes.Success;
+                return ReturnCode.UnsavedChanges;
+            return ReturnCode.Success;
         }
     }
 }

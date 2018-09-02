@@ -26,6 +26,9 @@ namespace UnityEditor.Build.Pipeline
         /// <param name="buildParams">The set of initial parameters to add to the context.</param>
         public BuildContext(params IContextObject[] buildParams)
         {
+            if (buildParams == null)
+                throw new ArgumentNullException("buildParams");
+
             m_ContextObjects = new Dictionary<Type, IContextObject>();
             foreach (var buildParam in buildParams)
                 SetContextObject(buildParam);
@@ -34,6 +37,9 @@ namespace UnityEditor.Build.Pipeline
         /// <inheritdoc />
         public void SetContextObject<T>(IContextObject contextObject) where T : IContextObject
         {
+            if (contextObject == null)
+                throw new ArgumentNullException("contextObject");
+
             var type = typeof(T);
             if (!type.IsInterface)
                 throw new InvalidOperationException(string.Format("Passed in type '{0}' is not an interface.", type));
@@ -45,6 +51,9 @@ namespace UnityEditor.Build.Pipeline
         /// <inheritdoc />
         public void SetContextObject(IContextObject contextObject)
         {
+            if (contextObject == null)
+                throw new ArgumentNullException("contextObject");
+
             var iCType = typeof(IContextObject);
             Type[] iTypes = contextObject.GetType().GetInterfaces();
             foreach (var iType in iTypes)
@@ -64,6 +73,9 @@ namespace UnityEditor.Build.Pipeline
         /// <inheritdoc />
         public bool ContainsContextObject(Type type)
         {
+            if (type == null)
+                throw new ArgumentNullException("type");
+
             return m_ContextObjects.ContainsKey(type);
         }
         
@@ -76,6 +88,9 @@ namespace UnityEditor.Build.Pipeline
         /// <inheritdoc />
         public IContextObject GetContextObject(Type type)
         {
+            if (type == null)
+                throw new ArgumentNullException("type");
+
             return m_ContextObjects[type];
         }
         

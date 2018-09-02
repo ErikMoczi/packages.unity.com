@@ -65,6 +65,9 @@ namespace UnityEditor.Build.Pipeline.Utilities
 
         protected override void HashCore(byte[] array, int ibStart, int cbSize)
         {
+            if (array == null)
+                throw new ArgumentNullException("array");
+
             for (var i = 0; i < cbSize; i++)
             {
                 var b = array[ibStart + i];

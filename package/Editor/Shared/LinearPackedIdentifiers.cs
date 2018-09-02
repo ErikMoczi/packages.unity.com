@@ -8,7 +8,7 @@ namespace UnityEditor.Build.Pipeline
     /// <summary>
     /// Generates identifiers linearly for built content. Only deterministic if object order and initial Index is deterministic.
     /// </summary>
-    public struct LinearPackedIdentifiers : IDeterministicIdentifiers
+    public class LinearPackedIdentifiers : IDeterministicIdentifiers
     {
         /// <summary>
         /// The index at which to start linear id assignment.
@@ -19,7 +19,7 @@ namespace UnityEditor.Build.Pipeline
         /// Default constructor, takes an initial index at which to start linear id assignment.
         /// </summary>
         /// <param name="index">Initial index at which to start linear id assignment.</param>
-        public LinearPackedIdentifiers(long index) : this()
+        public LinearPackedIdentifiers(long index)
         {
             Index = index;
         }
@@ -28,7 +28,7 @@ namespace UnityEditor.Build.Pipeline
         public string GenerateInternalFileName(string name)
         {
             Hash128 hash = HashingMethods.CalculateMD5Hash(name);
-            return string.Format("CAB-{0}", hash);
+            return string.Format("CAB-{0}", hash.ToString());
         }
         
         /// <inheritdoc />

@@ -24,6 +24,9 @@ namespace UnityEditor.Build.Pipeline
         /// <param name="assets">The set of Assets identified by GUID to ensure are packaged with the build</param>
         public BuildContent(IEnumerable<GUID> assets)
         {
+            if (assets == null)
+                throw new ArgumentNullException("assets");
+
             Assets = new List<GUID>();
             Scenes = new List<GUID>();
 
@@ -34,7 +37,7 @@ namespace UnityEditor.Build.Pipeline
                 else if (ValidationMethods.ValidScene(asset))
                     Scenes.Add(asset);
                 else
-                    throw new ArgumentException(string.Format("Asset '{0}' is not a valid Asset or Scene.", asset));
+                    throw new ArgumentException(string.Format("Asset '{0}' is not a valid Asset or Scene.", asset.ToString()));
             }
         }
     }
@@ -64,6 +67,9 @@ namespace UnityEditor.Build.Pipeline
         /// <param name="bundleBuilds">The set of AssetbundleBuild to be built.</param>
         public BundleBuildContent(IEnumerable<AssetBundleBuild> bundleBuilds)
         {
+            if (bundleBuilds == null)
+                throw new ArgumentNullException("bundleBuilds");
+
             Assets = new List<GUID>();
             Scenes = new List<GUID>();
             Addresses = new Dictionary<GUID, string>();

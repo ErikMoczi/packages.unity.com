@@ -1,6 +1,5 @@
 ﻿using System;
 using UnityEditor.Build.Content;
-using UnityEditor.Build.Pipeline.Content;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Player;
 
@@ -42,7 +41,7 @@ namespace UnityEditor.Build.Pipeline
             set
             {
                 if (string.IsNullOrEmpty(value))
-                    throw new ArgumentException("Argument cannot be null or empty.", "TempOutputFolder");
+                    throw new ArgumentException("Argument cannot be null or empty.", "value");
                 m_TempOutputFolder = value;
             }
         }
