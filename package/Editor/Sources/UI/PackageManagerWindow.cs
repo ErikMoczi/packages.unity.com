@@ -81,7 +81,7 @@ namespace UnityEditor.PackageManager.UI
             // Make sure we are not registered on callback anymore
             AssemblyReloadEvents.beforeAssemblyReload -= ShowPackageManagerWindow;
 
-            var window = GetWindow<PackageManagerWindow>(false, "Package Manager", true);
+            var window = GetWindow<PackageManagerWindow>(false, "Packages", true);
             window.minSize = new Vector2(700, 250);
             window.maxSize = new Vector2(1400, 1400);
             window.Show();

@@ -145,7 +145,7 @@ namespace UnityEditor.PackageManager.UI.Tests
                 }
             }
 
-            return packages;
+            return packages.OrderBy(p => p.DisplayName).ToList();
         }
 
         public List<PackageInfo> TestData()

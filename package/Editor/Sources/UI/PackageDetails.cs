@@ -265,14 +265,18 @@ namespace UnityEditor.PackageManager.UI
 
         private void OnRemoveOperation(IRemoveOperation operation)
         {
+            operation.OnOperationError -= OnRemoveOperationError;    // Make sure we are not already registered
             operation.OnOperationError += OnRemoveOperationError;
         }
 
         private void OnRemoveOperationError(Error error)
         {
-            package.RemoveSignal.Operation.OnOperationError -= OnRemoveOperationError;
-            package.RemoveSignal.Operation = null;
-            
+            if (package.RemoveSignal.Operation != null)
+            {
+                package.RemoveSignal.Operation.OnOperationError -= OnRemoveOperationError;
+                package.RemoveSignal.Operation = null;
+            }
+
             SetError(error);
             RefreshRemoveButton();
         }
