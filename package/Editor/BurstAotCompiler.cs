@@ -1,12 +1,10 @@
 #if ENABLE_BURST_AOT
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Burst.Compiler.IL;
 using Unity.Burst.LowLevel;
-using Unity.Jobs.LowLevel.Unsafe;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -18,18 +16,6 @@ namespace Unity.Burst.Editor
 {
     using static BurstCompilerOptions;
 
-    struct BurstOutputCombination
-    {
-        public readonly TargetCpu TargetCpu;
-        public readonly string OutputPath;
-
-        public BurstOutputCombination(string outputPath, TargetCpu targetCpu = TargetCpu.Auto)
-        {
-            TargetCpu = targetCpu;
-            OutputPath = outputPath;
-        }
-    }
-
     internal class BurstAotCompiler : IPostBuildPlayerScriptDLLs
     {
         private const string BurstAotCompilerExecutable = "bcl.exe";
@@ -40,8 +26,8 @@ namespace Unity.Burst.Editor
         int IOrderedCallback.callbackOrder => 0;
         public void OnPostBuildPlayerScriptDLLs(BuildReport report)
         {
-            // Early exit if not activated/supported
-            if (!JobsUtility.JobCompilerEnabled || !IsSupportedPlatform(report.summary.platform))
+            // Early exit if burst is not activated or the platform is not supported
+            if (!BurstEditorOptions.EnableBurstCompilation || !IsSupportedPlatform(report.summary.platform))
             {
                 return;
             }
@@ -65,7 +51,8 @@ namespace Unity.Burst.Editor
                 commonOptions.Add(GetOption(OptionAotMethod, methodFullSignature));
             }
 
-            var targetPlatform = GetTargetPlatform(report.summary.platform);
+            var targetCpu = TargetCpu.Auto;
+            var targetPlatform = GetTargetPlatformAndDefaultCpu(report.summary.platform, out targetCpu);
             commonOptions.Add(GetOption(OptionPlatform, targetPlatform));
 
             if (!BurstEditorOptions.EnableBurstSafetyChecks)
@@ -120,38 +107,68 @@ namespace Unity.Burst.Editor
                     break;
             }
 
-            BurstOutputCombination[] combinations;
+            var combinations = new List<BurstOutputCombination>();
 
             if (targetPlatform == TargetPlatform.macOS)
             {
                 // NOTE: OSX has a special folder for the plugin
                 // Declared in GetStagingAreaPluginsFolder
                 // PlatformDependent\OSXPlayer\Extensions\Managed\OSXDesktopStandalonePostProcessor.cs
-                combinations = new[] { new BurstOutputCombination("UnityPlayer.app/Contents/Plugins") };
+                combinations.Add(new BurstOutputCombination("UnityPlayer.app/Contents/Plugins", targetCpu));
             }
             else if (targetPlatform == TargetPlatform.iOS)
             {
+                // Check if we are under il2cpp as we may have to force a CPU backend for it
+                // TODO: Should use report.summary.platformGroup instead?
+                bool isUsingIL2CPP = PlayerSettings.GetScriptingBackend(BuildTargetGroup.Standalone) == ScriptingImplementation.IL2CPP;
+
+                if (!isUsingIL2CPP)
+                {
+                    var targetArchitecture = (IOSArchitecture)UnityEditor.PlayerSettings.GetArchitecture(report.summary.platformGroup);
+                    switch (targetArchitecture)
+                    {
+                        case IOSArchitecture.ARMv7:
+                            targetCpu = TargetCpu.ARMV7A_NEON32;
+                            break;
+                        case IOSArchitecture.ARM64:
+                            targetCpu = TargetCpu.ARMV8A_AARCH64;
+                            break;
+                        case IOSArchitecture.Universal:
+                            // TODO: How do we proceed here?
+                            targetCpu = TargetCpu.ARMV7A_NEON32;
+                            break;
+                    }
+                }
+
                 // PlatformDependent\iPhonePlayer\Extensions\Common\BuildPostProcessor.cs
-                // TODO: Add support for CPU (v8, arm64...)
-                combinations = new[] { new BurstOutputCombination("Frameworks") };
+                combinations.Add(new BurstOutputCombination("Frameworks", targetCpu));
             }
             else if (targetPlatform == TargetPlatform.Android)
             {
-                // TODO: Add support for CPU (v8, arm64...)
-                combinations = new[] { new BurstOutputCombination("libs/armeabi-v7a") };
+                var androidTargetArch = UnityEditor.PlayerSettings.Android.targetArchitectures;
+                if ((androidTargetArch & AndroidArchitecture.ARMv7) != 0)
+                {
+                    combinations.Add(new BurstOutputCombination("libs/armeabi-v7a", TargetCpu.ARMV7A_NEON32));
+                }
+                if ((androidTargetArch & AndroidArchitecture.ARM64) != 0)
+                {
+                    combinations.Add(new BurstOutputCombination("libs/arm64-v8a", TargetCpu.ARMV8A_AARCH64));
+                }
+                if ((androidTargetArch & AndroidArchitecture.X86) != 0)
+                {
+                    combinations.Add(new BurstOutputCombination("libs/x86", TargetCpu.X86_SSE2));
+                }
             }
             else if (targetPlatform == TargetPlatform.UWP)
             {
-                combinations = new[]
-                {
-                    new BurstOutputCombination("Plugins/x64", TargetCpu.Auto),
-                    new BurstOutputCombination("Plugins/x86", TargetCpu.X86_SSE2),
-                    new BurstOutputCombination("Plugins/ARM", TargetCpu.THUMB2_NEON32),
-                };
+                // TODO: Make it configurable for x86 (sse2, sse4)
+                combinations.Add(new BurstOutputCombination("Plugins/x64", TargetCpu.X64_SSE4));
+                combinations.Add(new BurstOutputCombination("Plugins/x86", TargetCpu.X86_SSE2));
+                combinations.Add(new BurstOutputCombination("Plugins/ARM", TargetCpu.THUMB2_NEON32));
             }
             else
             {
-                combinations = new[] { new BurstOutputCombination("Data/Plugins/") };
+                combinations.Add(new BurstOutputCombination("Data/Plugins/", targetCpu));
             }
 
             foreach (var combination in combinations)
@@ -173,49 +190,88 @@ namespace Unity.Burst.Editor
             }
         }
 
-        public static TargetPlatform GetTargetPlatform(BuildTarget target)
+        public static TargetPlatform GetTargetPlatformAndDefaultCpu(BuildTarget target, out TargetCpu targetCpu)
         {
-            switch (target)
+            var platform = TryGetTargetPlatform(target, out targetCpu);
+            if (!platform.HasValue)
             {
-                case BuildTarget.StandaloneWindows64:
-                    return TargetPlatform.Windows;
-                case BuildTarget.StandaloneOSX:
-                    return TargetPlatform.macOS;
-                case BuildTarget.StandaloneLinux64:
-                    return TargetPlatform.Linux;
-                case BuildTarget.WSAPlayer:
-                    return TargetPlatform.UWP;
-                case BuildTarget.XboxOne:
-                    return TargetPlatform.XboxOne;
-                case BuildTarget.PS4:
-                    return TargetPlatform.PS4;
-                case BuildTarget.Android:
-                    return TargetPlatform.Android;
-                case BuildTarget.iOS:
-                    return TargetPlatform.iOS;
+                throw new NotSupportedException("The target platform " + target + " is not supported by the burst compiler");
             }
-
-            throw new NotSupportedException("The target platform " + target + " is not supported by the burst compiler");
+            return platform.Value;
         }
 
         public static bool IsSupportedPlatform(BuildTarget target)
         {
-            // NOTE: Update GetTatgetPlatform accordingly
+            TargetCpu cpu;
+            return TryGetTargetPlatform(target, out cpu).HasValue;
+        }
+
+        public static TargetPlatform? TryGetTargetPlatform(BuildTarget target, out TargetCpu targetCpu)
+        {
+            // TODO: Add support for multi-CPU switch
+            targetCpu = TargetCpu.Auto;
             switch (target)
             {
+                case BuildTarget.StandaloneWindows:
+                    targetCpu = TargetCpu.X86_SSE4;
+                    return TargetPlatform.Windows;
                 case BuildTarget.StandaloneWindows64:
+                    targetCpu = TargetCpu.X64_SSE4;
+                    return TargetPlatform.Windows;
                 case BuildTarget.StandaloneOSX:
+                    targetCpu = TargetCpu.X64_SSE4;
+                    return TargetPlatform.macOS;
+                case BuildTarget.StandaloneLinux:
+                    targetCpu = TargetCpu.X86_SSE4;
+                    return TargetPlatform.Linux;
                 case BuildTarget.StandaloneLinux64:
+                    targetCpu = TargetCpu.X64_SSE4;
+                    return TargetPlatform.Linux;
                 case BuildTarget.WSAPlayer:
+                    targetCpu = TargetCpu.X64_SSE4;
+                    return TargetPlatform.UWP;
                 case BuildTarget.XboxOne:
+                    targetCpu = TargetCpu.X64_SSE4;
+                    return TargetPlatform.XboxOne;
                 case BuildTarget.PS4:
+                    targetCpu = TargetCpu.X64_SSE4;
+                    return TargetPlatform.PS4;
                 case BuildTarget.Android:
+                    targetCpu = TargetCpu.ARMV7A_NEON32;
+                    return TargetPlatform.Android;
                 case BuildTarget.iOS:
-                    return true;
+                    targetCpu = TargetCpu.ARMV7A_NEON32;
+                    return TargetPlatform.iOS;
             }
-
-            return false;
+            return null;
         }
+
+        /// <summary>
+        /// Not exposed by Unity Editor today.
+        /// This is a copy of the Architecture enum from `PlatformDependent\iPhonePlayer\Extensions\Common\BuildPostProcessor.cs` 
+        /// </summary>
+        private enum IOSArchitecture
+        {
+            ARMv7,
+            ARM64,
+            Universal
+        }
+
+        /// <summary>
+        /// Defines an output path (for the generated code) and the target CPU 
+        /// </summary>
+        private struct BurstOutputCombination
+        {
+            public readonly TargetCpu TargetCpu;
+            public readonly string OutputPath;
+
+            public BurstOutputCombination(string outputPath, TargetCpu targetCpu)
+            {
+                TargetCpu = targetCpu;
+                OutputPath = outputPath;
+            }
+        }
+
     }
 }
 #endif

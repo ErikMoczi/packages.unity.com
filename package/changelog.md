@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4-preview.12
+
+- Fix a bug in codegen that was collapsing methods overload of System.Threading.Interlocked to the same method
+
 ## 0.2.4-preview.11
 
 - Fix exception in codegen when accessing readonly static fields from different control flow paths 

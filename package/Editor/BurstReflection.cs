@@ -152,10 +152,26 @@ namespace Unity.Burst.Editor
             if (attr.Accuracy != Accuracy.Std)
                 AddOption(builder, GetOption(OptionFastMath));
 
-            if (!string.IsNullOrWhiteSpace(attr.Options))
+            // Add custom options
+            if (attr.Options != null)
             {
-                AddOption(builder, attr.Options);
+                foreach (var option in attr.Options)
+                {
+                    if (!string.IsNullOrEmpty(option))
+                    {
+                        AddOption(builder, option);
+                    }
+                }
             }
+
+            // Allow to configure the backend from BurstCompile.Backend attribute
+            var backendName = attr.Backend ?? BurstCompiler.BackendName;
+            var backendPath = BurstCompiler.ResolveBackendPath(backendName);
+            if (backendPath != null)
+            {
+                AddOption(builder, GetOption(OptionBackend, backendPath));
+            }
+
             //Debug.Log($"ExtractBurstCompilerOptions: {type} {optimizationFlags}");
 
             // AddOption(builder, GetOption(OptionJitEnableModuleCachingDebugger));
@@ -170,7 +186,7 @@ namespace Unity.Burst.Editor
         private static void AddOption(StringBuilder builder, string option)
         {
             if (builder.Length != 0)
-                builder.Append(' ');
+                builder.Append('\n'); // Use \n to separate options
 
             builder.Append(option);
         }

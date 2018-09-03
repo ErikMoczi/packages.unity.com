@@ -26,7 +26,9 @@ namespace Unity.Burst
 
         public bool CompileSynchronously { get; set; }
 
-        public string Options { get; set; }
+        public string Backend { get; set; }
+
+        public string[] Options { get; set; }
 
         public BurstCompileAttribute()
         {

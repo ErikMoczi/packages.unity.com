@@ -37,11 +37,11 @@ namespace Unity.Burst.Editor
 
         private static readonly string[] DisasmOptions =
         {
-            " " + GetOption(OptionDump, NativeDumpFlags.Asm),
-            " " + GetOption(OptionDump, NativeDumpFlags.IL),
-            " " + GetOption(OptionDump, NativeDumpFlags.IR),
-            " " + GetOption(OptionDump, NativeDumpFlags.IROptimized),
-            " " + GetOption(OptionDump, NativeDumpFlags.IRPassAnalysis)
+            "\n" + GetOption(OptionDump, NativeDumpFlags.Asm),
+            "\n" + GetOption(OptionDump, NativeDumpFlags.IL),
+            "\n" + GetOption(OptionDump, NativeDumpFlags.IR),
+            "\n" + GetOption(OptionDump, NativeDumpFlags.IROptimized),
+            "\n" + GetOption(OptionDump, NativeDumpFlags.IRPassAnalysis)
         };
 
         private static readonly string[] CodeGenOptions =
@@ -185,17 +185,18 @@ namespace Unity.Burst.Editor
 
                 if (doRefresh)
                 {
+                    // TODO: refactor this code with a proper AppendOption to avoid these "\n"
                     var options = new StringBuilder();
                     if (!_safetyChecks)
-                        options.Append(" " + GetOption(OptionDisableSafetyChecks) + " " + GetOption(OptionNoAlias));
+                        options.Append("\n" + GetOption(OptionDisableSafetyChecks) + "\n" + GetOption(OptionNoAlias));
 
-                    if (!_optimizations) options.Append(" " + GetOption(OptionDisableOpt));
+                    if (!_optimizations) options.Append("\n" + GetOption(OptionDisableOpt));
 
-                    if (_fastMath) options.Append(" " + GetOption(OptionFastMath));
+                    if (_fastMath) options.Append("\n" + GetOption(OptionFastMath));
 
-                    options.AppendFormat(" " + GetOption(OptionTarget, CodeGenOptions[_codeGenOptions]));
+                    options.AppendFormat("\n" + GetOption(OptionTarget, CodeGenOptions[_codeGenOptions]));
 
-                    var baseOptions = options.ToString().Trim(' ');
+                    var baseOptions = options.ToString().Trim('\n', ' ');
 
                     target.Disassembly = new string[DisasmOptions.Length];
 
