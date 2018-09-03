@@ -1,5 +1,4 @@
 using System;
-using NUnit.Framework;
 using UnityEngine;
 
 namespace UnityEditor.Experimental.U2D.Common
@@ -62,8 +61,8 @@ namespace UnityEditor.Experimental.U2D.Common
                 int adjustXRight = 0, adjustYRight = 0;
                 left.AdjustSizeNotRoot(rect.width, rect.height, dw, dh, out adjustXLeft, out adjustYLeft);
                 right.AdjustSizeNotRoot(rect.width, rect.height, dw, dh, out adjustXRight, out adjustYRight);
-                Assert.AreEqual(dw, Mathf.Max(adjustXLeft, adjustXRight));
-                Assert.AreEqual(dh, Mathf.Max(adjustYLeft, adjustYRight));
+                // Assert.AreEqual(dw, Mathf.Max(adjustXLeft, adjustXRight));
+                // Assert.AreEqual(dh, Mathf.Max(adjustYLeft, adjustYRight));
             }
 
             rect.width += dw;

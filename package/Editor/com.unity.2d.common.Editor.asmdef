@@ -1,0 +1,10 @@
+{
+    "name": "com.unity.2d.common.Editor",
+    "references": [
+      "com.unity.2d.common.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

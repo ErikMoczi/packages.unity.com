@@ -127,6 +127,11 @@ namespace UnityEngine.Experimental.U2D.TriangleNet
         /// </summary>
         public int[] MaxAngleHistogram { get { return maxAngles; } }
 
+        double meshArea = 0;
+        /// <summary>
+        /// Gets the total mesh area.
+        /// </summary>
+        public double MeshArea { get { return meshArea; } }
         #endregion
 
         #region Private methods
@@ -252,6 +257,7 @@ namespace UnityEngine.Experimental.U2D.TriangleNet
             maxArea = 0.0;
             minAngle = 0.0;
             maxAngle = 2.0;
+            meshArea = 0.0;
 
             bool acuteBiggest = true;
             bool acuteBiggestTri = true;
@@ -298,6 +304,8 @@ namespace UnityEngine.Experimental.U2D.TriangleNet
                 //triarea = Primitives.CounterClockwise(p[0], p[1], p[2]);
                 triArea = Math.Abs((p[2].x - p[0].x) * (p[1].y - p[0].y) -
                         (p[1].x - p[0].x) * (p[2].y - p[0].y));
+
+                meshArea += triArea;
 
                 if (triArea < minArea)
                 {

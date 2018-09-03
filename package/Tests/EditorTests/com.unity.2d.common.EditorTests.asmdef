@@ -1,0 +1,14 @@
+{
+    "name": "com.unity.2d.common.EditorTests",
+    "references": [
+        "com.unity.2d.common.Editor",
+        "com.unity.2d.common.Runtime"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

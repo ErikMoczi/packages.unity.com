@@ -28,7 +28,12 @@ namespace UnityEditor.Experimental.U2D.Common
 
         public static ISpriteEditorDataProvider GetISpriteEditorDataProviderFromPath(string importedAsset)
         {
-            return SpriteDataProviderUtility.GetDataProviderFromPath(importedAsset);
+            return AssetImporter.GetAtPath(importedAsset) as ISpriteEditorDataProvider;
+        }
+
+        public static void GenerateOutline(Texture2D texture, Rect rect, float detail, byte alphaTolerance, bool holeDetection, out Vector2[][] paths)
+        {
+            SpriteUtility.GenerateOutline(texture, rect, detail, alphaTolerance, holeDetection, out paths);
         }
     }
 }
