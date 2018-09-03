@@ -230,8 +230,11 @@ namespace Unity.VectorGraphics.Editor
             wantedRect.center = r.center;
 
             var previewTex = BuildPreviewTexture(sprite, (int)wantedRect.width, (int)wantedRect.height);
-            EditorGUI.DrawTextureTransparent(r, previewTex, ScaleMode.ScaleToFit);
-            UnityEngine.Object.DestroyImmediate(previewTex);
+            if (previewTex != null)
+            {
+                EditorGUI.DrawTextureTransparent(r, previewTex, ScaleMode.ScaleToFit);
+                UnityEngine.Object.DestroyImmediate(previewTex);
+            }
         }
 
         internal static Texture2D BuildPreviewTexture(Sprite sprite, int width, int height)

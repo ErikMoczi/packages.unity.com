@@ -11,6 +11,9 @@ namespace Unity.VectorGraphics
     {
         internal static BezierSegment[] BuildEllipsePath(Vector2 p0, Vector2 p1, float rotation, float rx, float ry, bool largeArc, bool sweep)
         {
+            if ((p1-p0).magnitude < VectorUtils.Epsilon)
+                return new BezierSegment[0];
+
             Vector2 c;
             float theta1;
             float sweepTheta;

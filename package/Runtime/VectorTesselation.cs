@@ -97,7 +97,7 @@ namespace Unity.VectorGraphics
             List<UInt16> inds = new List<UInt16>((int)(verts.Capacity * 1.5f)); // Usually every 4 verts represent a quad that uses 6 indices
 
             var patternIt = new PathPatternIterator(pathProps.stroke.pattern, pathProps.stroke.patternOffset);
-            var pathIt = new PathDistanceForwardIterator(RemoveEmptySegments(contour.segments), contour.closed, tessellateOptions.maxCordDeviationSquared, tessellateOptions.maxTanAngleDeviationCosine, tessellateOptions.samplingStepSize);
+            var pathIt = new PathDistanceForwardIterator(contour.segments, contour.closed, tessellateOptions.maxCordDeviationSquared, tessellateOptions.maxTanAngleDeviationCosine, tessellateOptions.samplingStepSize);
 
             JoiningInfo[] joiningInfo = new JoiningInfo[2];
             HandleNewSegmentJoining(pathIt, patternIt, joiningInfo, pathProps.stroke.halfThickness, segmentLengths);
@@ -404,6 +404,11 @@ namespace Unity.VectorGraphics
             {
                 joinInfo.posThicknessClosingPoint = VectorUtils.IntersectLines(joinInfo.posThicknessEnd, joinInfo.posThicknessEnd + joinInfo.tanAtEnd, joinInfo.posThicknessStart, joinInfo.posThicknessStart + joinInfo.tanAtStart);
                 joinInfo.negThicknessClosingPoint = VectorUtils.IntersectLines(joinInfo.negThicknessEnd, joinInfo.negThicknessEnd + joinInfo.tanAtEnd, joinInfo.negThicknessStart, joinInfo.negThicknessStart + joinInfo.tanAtStart);
+
+                if (float.IsInfinity(joinInfo.posThicknessClosingPoint.x) || float.IsInfinity(joinInfo.posThicknessClosingPoint.y))
+                    joinInfo.posThicknessClosingPoint = joinInfo.joinPos;
+                if (float.IsInfinity(joinInfo.negThicknessClosingPoint.x) || float.IsInfinity(joinInfo.negThicknessClosingPoint.y))
+                    joinInfo.negThicknessClosingPoint = joinInfo.joinPos;
             }
 
             // Should we round the positive thickness side or the negative thickness side?
@@ -744,7 +749,9 @@ namespace Unity.VectorGraphics
             {
                 float y = radius - tessellateOptions.maxCordDeviation;
                 float cordHalfLength = Mathf.Sqrt(radius * radius - y * y);
-                stepDivisor = Mathf.Min(stepDivisor, Mathf.Asin(cordHalfLength / radius));
+                float div = Mathf.Min(stepDivisor, Mathf.Asin(cordHalfLength / radius));
+                if (div > VectorUtils.Epsilon)
+                    stepDivisor = div;
             }
 
             if (tessellateOptions.maxTanAngleDeviation < Mathf.PI * 0.5f)

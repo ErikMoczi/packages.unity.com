@@ -248,6 +248,9 @@ namespace Unity.VectorGraphics
         /// <returns>A Texture2D object containing the rendered vector sprite</returns>
         public static Texture2D RenderSpriteToTexture2D(Sprite sprite, int width, int height, Material mat, int antiAliasing = 1)
         {
+            if (width <= 0 || height <= 0)
+                return null;
+
             var tex = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
             tex.antiAliasing = antiAliasing;
 

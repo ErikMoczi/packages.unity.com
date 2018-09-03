@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -82,7 +83,7 @@ namespace Unity.VectorGraphics.Editor
         /// <param name="ctx">The asset import context of the scripted importer</param>
         public override void OnImportAsset(AssetImportContext ctx)
         {
-            var sceneInfo = SVGParser.ImportSVG(System.IO.Path.GetFullPath(ctx.assetPath));
+            var sceneInfo = SVGParser.ImportSVG(new StreamReader(ctx.assetPath));
             if (sceneInfo.scene == null || sceneInfo.scene.root == null)
                 throw new Exception("Wowzers!");
 

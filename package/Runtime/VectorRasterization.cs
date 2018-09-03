@@ -8,6 +8,9 @@ namespace Unity.VectorGraphics
     {
         static Color SampleGradient(GradientStop[] stops, float u)
         {
+            if (stops == null)
+                return Color.white;
+
             int stop;
             for (stop = 0; stop < stops.Length; stop++)
             {

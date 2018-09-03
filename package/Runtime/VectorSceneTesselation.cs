@@ -149,6 +149,15 @@ namespace Unity.VectorGraphics
                         continue;
                     }
 
+                    var vectorPath = drawable as Path;
+                    if (vectorPath != null)
+                    {
+                        var shape = VectorUtils.TraceShape(vectorPath.contour, vectorPath.pathProps.stroke, tessellationOptions);
+                        if (shape.Length > 0)
+                            shapes.Add(shape.Select(v => nodeInfo.worldTransform * v).ToArray());
+                        continue;
+                    }
+
                     var vectorRect = drawable as Rectangle;
                     if (vectorRect != null)
                     {
@@ -186,17 +195,24 @@ namespace Unity.VectorGraphics
 
                 foreach (var c in vectorShape.contours)
                 {
-                    var contour = new List<ContourVertex>(100);
+                    var contour = new List<Vector2>(100);
                     foreach (var v in VectorUtils.TraceShape(c, vectorShape.pathProps.stroke, tessellationOptions))
-                    {
-                        var tv = mat.MultiplyPoint(v);
-                        contour.Add(new ContourVertex() { Position = new Vec3() { X = tv.x, Y = tv.y, Z = 0.0f }});
-                    }
-                    tess.AddContour(contour.ToArray(), ContourOrientation.Original);
+                        contour.Add(mat.MultiplyPoint(v));
+
+                    tess.AddContour(contour.Select(v => new ContourVertex() { Position = new Vec3() { X = v.x, Y = v.y }}).ToArray(), ContourOrientation.Original);
                 }
 
                 var windingRule = (vectorShape.fill.mode == FillMode.OddEven) ? WindingRule.EvenOdd : WindingRule.NonZero; 
-                tess.Tessellate(windingRule, ElementType.Polygons, 3);
+                try
+                {
+                    tess.Tessellate(windingRule, ElementType.Polygons, 3);
+                }
+                catch (System.Exception)
+                {
+                    Debug.LogWarning("Shape tessellation failed, skipping...");
+                    UnityEngine.Profiling.Profiler.EndSample();
+                    return;
+                }
 
                 var indices = tess.Elements.Select(i => (UInt16)i);
                 var vertices = tess.Vertices.Select(v => invMat.MultiplyPoint(new Vector2(v.Position.X, v.Position.Y)));

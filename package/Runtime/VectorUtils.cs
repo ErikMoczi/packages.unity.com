@@ -202,8 +202,7 @@ namespace Unity.VectorGraphics
                 if (intersects.Length > 0)
                 {
                     VectorUtils.SplitSegment(seg, intersects[0], out subSeg1, out subSeg2);
-                    if (subSeg2.p0 != subSeg2.p1 || subSeg2.p1 != subSeg2.p2 || subSeg2.p2 != subSeg2.p3 || subSeg2.p3 != subSeg2.p0)
-                        seg = subSeg2;
+                    seg = subSeg2;
                 }
 
                 p1 = new Vector2(Mathf.Cos(sweepAngleRads), Mathf.Sin(sweepAngleRads)) * 2.0f;
@@ -211,11 +210,11 @@ namespace Unity.VectorGraphics
                 if (intersects.Length > 0)
                 {
                     VectorUtils.SplitSegment(seg, intersects[0], out subSeg1, out subSeg2);
-                    if (subSeg1.p0 != subSeg1.p1 || subSeg1.p1 != subSeg1.p2 || subSeg1.p2 != subSeg1.p3 || subSeg1.p3 != subSeg1.p0)
-                        seg = subSeg1;
+                    seg = subSeg1;
                 }
 
-                segments.Add(seg);
+                if (!VectorUtils.IsEmptySegment(seg))
+                    segments.Add(seg);
             }
 
             for (int i = 0; i < segments.Count; ++i)
@@ -985,18 +984,9 @@ namespace Unity.VectorGraphics
             return Bounds(vertices);
         }
 
-        internal static IList<BezierPathSegment> RemoveEmptySegments(IList<BezierPathSegment> path)
+        internal static bool IsEmptySegment(BezierSegment bs)
         {
-            var segments = new List<BezierPathSegment>(path.Count);
-            for (int i = 0; i < path.Count; ++i)
-            {
-                var currSeg = path[i];
-                var nextSeg = path[(i + 1) % path.Count];
-                if (currSeg.p0 == currSeg.p1 && currSeg.p0 == currSeg.p2 && currSeg.p0 == nextSeg.p0)
-                    continue;
-                segments.Add(currSeg);
-            }
-            return segments;
+            return bs.p0 == bs.p1 && bs.p0 == bs.p2 && bs.p0 == bs.p3;
         }
     } // VectorUtils class
 
