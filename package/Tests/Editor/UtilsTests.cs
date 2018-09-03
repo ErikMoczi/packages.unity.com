@@ -253,6 +253,15 @@ public class UtilsTests
     }
 
     [Test]
+    public void MakeArc_MakesArcInClockwiseDirection()
+    {
+        var path = VectorUtils.MakeArc(Vector2.zero, 0.0f, Mathf.PI / 2, 1.0f);
+        Assert.AreEqual(2, path.Length);
+        Assert.AreEqual(0.0f, path[1].P0.x, VectorUtils.Epsilon);
+        Assert.AreEqual(1.0f, path[1].P0.y, VectorUtils.Epsilon);
+    }
+
+    [Test]
     public void MakeArc_ReturnsMultipleSegmentsWhenArcSpansMoreThanOneQuadrant()
     {
         var path = VectorUtils.MakeArc(Vector2.zero, 0.0f, Mathf.PI, 1.0f);
