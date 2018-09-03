@@ -38,11 +38,12 @@ namespace UnityEngine.Experimental.U2D.IK
 
         protected override void DoPrepare()
         {
+            var lengths = m_Chain.lengths;
             m_Positions[0] = m_Chain.transforms[0].position;
             m_Positions[1] = m_Chain.transforms[1].position;
             m_Positions[2] = m_Chain.transforms[2].position;
-            m_Lengths[0] = m_Chain.lengths[0];
-            m_Lengths[1] = m_Chain.lengths[1];
+            m_Lengths[0] = lengths[0];
+            m_Lengths[1] = lengths[1];
         }
 
         protected override void DoUpdateIK(List<Vector3> effectorPositions)

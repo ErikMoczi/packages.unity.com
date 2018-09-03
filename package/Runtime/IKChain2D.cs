@@ -70,7 +70,16 @@ namespace UnityEngine.Experimental.U2D.IK
 
         public float[] lengths
         {
-            get { return m_Lengths; }
+            get
+            {
+                if(isValid)
+                {
+                    PrepareLengths();
+                    return m_Lengths;
+                }
+
+                return null;
+            }
         }
 
         private bool Validate()
@@ -84,8 +93,6 @@ namespace UnityEngine.Experimental.U2D.IK
             if (m_DefaultLocalRotations == null || m_DefaultLocalRotations.Length != transformCount)
                 return false;
             if (m_StoredLocalRotations ==  null || m_StoredLocalRotations.Length != transformCount)
-                return false;
-            if (m_Lengths == null || m_Lengths.Length != transformCount - 1)
                 return false;
             if (rootTransform == null)
                 return false;
@@ -102,7 +109,6 @@ namespace UnityEngine.Experimental.U2D.IK
                 return;
 
             m_Transforms = new Transform[transformCount];
-            m_Lengths = new float[transformCount - 1];
             m_DefaultLocalRotations = new Quaternion[transformCount];
             m_StoredLocalRotations = new Quaternion[transformCount];
 
@@ -114,18 +120,18 @@ namespace UnityEngine.Experimental.U2D.IK
                 m_Transforms[index] = currentTransform;
                 m_DefaultLocalRotations[index] = currentTransform.localRotation;
 
-                if (currentTransform.parent && index > 0)
-                    m_Lengths[index - 1] = (currentTransform.position - currentTransform.parent.position).magnitude;
-
                 currentTransform = currentTransform.parent;
                 --index;
             }
         }
 
-        public void Prepare()
+        private void PrepareLengths()
         {
             var currentTransform = target;
             int index = transformCount - 1;
+
+            if (m_Lengths == null || m_Lengths.Length != transformCount - 1)
+                m_Lengths = new float[transformCount - 1];
 
             while (currentTransform && index >= 0)
             {

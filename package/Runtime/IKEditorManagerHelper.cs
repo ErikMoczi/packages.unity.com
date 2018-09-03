@@ -8,7 +8,6 @@ namespace UnityEditor.Experimental.U2D.IK
     [ExecuteInEditMode]
     internal class IKEditorManagerHelper : MonoBehaviour
     {
-        public delegate void OnLateUpdate();
         public UnityEvent onLateUpdate = new UnityEvent();
 
         void LateUpdate()

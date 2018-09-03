@@ -106,8 +106,6 @@ namespace UnityEngine.Experimental.U2D.IK
 
                 if (m_RestoreDefaultPose)
                     chain.RestoreDefaultPose(constrainTargetRotation);
-
-                chain.Prepare();
             }
 
             DoPrepare();

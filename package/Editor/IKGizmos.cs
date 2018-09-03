@@ -214,10 +214,8 @@ namespace UnityEditor.Experimental.U2D.IK
         {
             var size = HandleUtility.GetHandleSize(chain.target.position);
             var scaleFactor = 1f;
-
-            chain.Prepare();
-            
-            foreach (var length in chain.lengths)
+            var lengths = chain.lengths;
+            foreach (var length in lengths)
                 scaleFactor = Mathf.Max(scaleFactor, length);
 
             return FadeFromSize(color, size, kFadeStart * scaleFactor, kFadeEnd * scaleFactor);
