@@ -94,7 +94,7 @@ namespace Unity.VectorGraphics
                 Fill = rect.Fill,
                 FillTransform = rect.FillTransform
             };
-            VectorUtils.TessellateShape(shape, geoms, tessellationOptions);
+            VectorUtils.TessellateShape(shape, geoms, tessellationOptions, true);
         }
 
         /// <summary>Builds a BezierContour from a Rectangle.</summary>

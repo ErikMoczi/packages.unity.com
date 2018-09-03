@@ -1,6 +1,7 @@
 using System;
 using NUnit.Framework;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.TestTools;
@@ -142,6 +143,54 @@ public class TessellatorTests
         VectorUtils.TessellateRectBorder(new Rect(0, 0, 100, 50), 2.0f, out vertices, out indices);
 
         Assert.AreEqual(8, indices.Length / 3);
+    }
+
+    [Test]
+    public void TessellateConvexContour_GeneratesTriangleFan()
+    {
+        // Build a square shape, flag it as convex
+        var shape = new Shape() {
+            Contours = new BezierContour[] {
+                new BezierContour() {
+                    Segments = new BezierPathSegment[] {
+                        new BezierPathSegment() { P0 = new Vector2(0,0),  P1 = new Vector2(0.25f, 0), P2 = new Vector2(0.75f, 0) },
+                        new BezierPathSegment() { P0 = new Vector2(1,0),  P1 = new Vector2(1, 0.25f), P2 = new Vector2(1, 0.75f) },
+                        new BezierPathSegment() { P0 = new Vector2(1,1),  P1 = new Vector2(0.75f, 1), P2 = new Vector2(0.25f, 1) },
+                        new BezierPathSegment() { P0 = new Vector2(0,1),  P1 = new Vector2(0, 0.75f), P2 = new Vector2(0, 0.25f) },
+                        new BezierPathSegment() { P0 = new Vector2(0,0) }
+                    },
+                    Closed = true
+                }
+            },
+            Fill = new SolidFill() { Color = Color.red },
+            IsConvex = true
+        };
+
+        var scene = new Scene() { Root = new SceneNode() { Drawables = new List<IDrawable> { shape } } };
+        var geoms = VectorUtils.TessellateScene(scene, MakeTessOptions(1000));
+        Assert.AreEqual(1, geoms.Count);
+
+        var geom = geoms[0];
+        Assert.AreEqual(5, geom.Vertices.Length);
+        Assert.AreEqual(12, geom.Indices.Length);
+        Assert.AreEqual(new Vector2(0.5f, 0.5f), geom.Vertices[0]);
+        Assert.AreEqual(new Vector2(0.0f, 0.0f), geom.Vertices[1]);
+        Assert.AreEqual(new Vector2(1.0f, 0.0f), geom.Vertices[2]);
+        Assert.AreEqual(new Vector2(1.0f, 1.0f), geom.Vertices[3]);
+        Assert.AreEqual(new Vector2(0.0f, 1.0f), geom.Vertices[4]);
+
+        Assert.AreEqual(0, geom.Indices[0]);
+        Assert.AreEqual(1, geom.Indices[1]);
+        Assert.AreEqual(2, geom.Indices[2]);
+        Assert.AreEqual(0, geom.Indices[3]);
+        Assert.AreEqual(2, geom.Indices[4]);
+        Assert.AreEqual(3, geom.Indices[5]);
+        Assert.AreEqual(0, geom.Indices[6]);
+        Assert.AreEqual(3, geom.Indices[7]);
+        Assert.AreEqual(4, geom.Indices[8]);
+        Assert.AreEqual(0, geom.Indices[9]);
+        Assert.AreEqual(4, geom.Indices[10]);
+        Assert.AreEqual(1, geom.Indices[11]);
     }
 
     private Path MakeLine(Vector2 from, Vector2 to, float width)

@@ -74,7 +74,8 @@ namespace Unity.VectorGraphics
                     var vectorShape = drawable as Shape;
                     if (vectorShape != null)
                     {
-                        TessellateShape(vectorShape, geoms, tessellationOptions);
+                        bool isConvex = vectorShape.IsConvex && vectorShape.Contours.Length == 1;
+                        TessellateShape(vectorShape, geoms, tessellationOptions, isConvex);
                         continue;
                     }
 
@@ -172,56 +173,27 @@ namespace Unity.VectorGraphics
             return shapes;
         }
 
-        internal static void TessellateShape(Shape vectorShape, List<Geometry> geoms, TessellationOptions tessellationOptions)
+        private static void TessellateShape(Shape vectorShape, List<Geometry> geoms, TessellationOptions tessellationOptions, bool isConvex)
         {
             UnityEngine.Profiling.Profiler.BeginSample("TessellateShape");
 
             // Don't generate any geometry for pattern fills since these are generated from another SceneNode
             if (vectorShape.Fill != null && !(vectorShape.Fill is PatternFill))
             {
-                UnityEngine.Profiling.Profiler.BeginSample("LibTess");
-
                 Color shapeColor = Color.white;
                 if (vectorShape.Fill is SolidFill)
                     shapeColor = ((SolidFill)vectorShape.Fill).Color;
 
                 shapeColor.a *= vectorShape.Fill.Opacity;
 
-                var tess = new Tess();
-
-                var angle = 45.0f * Mathf.Deg2Rad;
-                var mat = Matrix2D.Rotate(angle);
-                var invMat = Matrix2D.Rotate(-angle);
-
-                foreach (var c in vectorShape.Contours)
+                if (isConvex && vectorShape.Contours.Length == 1)
                 {
-                    var contour = new List<Vector2>(100);
-                    foreach (var v in VectorUtils.TraceShape(c, vectorShape.PathProps.Stroke, tessellationOptions))
-                        contour.Add(mat.MultiplyPoint(v));
-
-                    tess.AddContour(contour.Select(v => new ContourVertex() { Position = new Vec3() { X = v.x, Y = v.y }}).ToArray(), ContourOrientation.Original);
+                    TessellateConvexContour(vectorShape, vectorShape.PathProps.Stroke, shapeColor, geoms, tessellationOptions);
                 }
-
-                var windingRule = (vectorShape.Fill.Mode == FillMode.OddEven) ? WindingRule.EvenOdd : WindingRule.NonZero; 
-                try
+                else
                 {
-                    tess.Tessellate(windingRule, ElementType.Polygons, 3);
+                    TessellateShapeLibTess(vectorShape, shapeColor, geoms, tessellationOptions);
                 }
-                catch (System.Exception)
-                {
-                    Debug.LogWarning("Shape tessellation failed, skipping...");
-                    UnityEngine.Profiling.Profiler.EndSample();
-                    return;
-                }
-
-                var indices = tess.Elements.Select(i => (UInt16)i);
-                var vertices = tess.Vertices.Select(v => invMat.MultiplyPoint(new Vector2(v.Position.X, v.Position.Y)));
-
-                if (indices.Count() > 0)
-                {
-                    geoms.Add(new Geometry() { Vertices = vertices.ToArray(), Indices = indices.ToArray(), Color = shapeColor, Fill = vectorShape.Fill, FillTransform = vectorShape.FillTransform });
-                }
-                UnityEngine.Profiling.Profiler.EndSample();
             }
 
             var stroke = vectorShape.PathProps.Stroke;
@@ -237,6 +209,88 @@ namespace Unity.VectorGraphics
                         geoms.Add(new Geometry() { Vertices = strokeVerts, Indices = strokeIndices, Color = vectorShape.PathProps.Stroke.Color });
                     }
                 }
+            }
+
+            UnityEngine.Profiling.Profiler.EndSample();
+        }
+
+        private static void TessellateConvexContour(Shape shape, Stroke stroke, Color color, List<Geometry> geoms, TessellationOptions tessellationOptions)
+        {
+            if (shape.Contours.Length != 1 || shape.Contours[0].Segments.Length == 0)
+                return;
+
+            UnityEngine.Profiling.Profiler.BeginSample("TessellateConvexContour");
+
+            // Compute geometric mean
+            var contour = shape.Contours[0];
+            var mean = Vector2.zero;
+            foreach (var seg in contour.Segments)
+                mean += seg.P0;
+
+            int length = contour.Segments.Length;
+            if (contour.Closed)
+            {
+                mean -= contour.Segments.Last().P0;
+                --length;
+            }
+            mean /= length;
+
+            // Trace the shape and build triangle fan
+            var tracedShape = VectorUtils.TraceShape(contour, stroke, tessellationOptions);
+            var vertices = new Vector2[tracedShape.Length + 1];
+            var indices = new UInt16[tracedShape.Length * 3];
+
+            vertices[0] = mean;
+            for (int i = 0; i < tracedShape.Length; ++i)
+            {
+                vertices[i + 1] = tracedShape[i];
+                indices[i * 3] = 0;
+                indices[i * 3 + 1] = (UInt16)(i + 1);
+                indices[i * 3 + 2] = ((i + 2) >= vertices.Length) ? (UInt16)1 : (UInt16)(i + 2);
+            }
+
+            geoms.Add(new Geometry() { Vertices = vertices, Indices = indices, Color = color, Fill = shape.Fill, FillTransform = shape.FillTransform });
+
+            UnityEngine.Profiling.Profiler.EndSample();
+        }
+
+        private static void TessellateShapeLibTess(Shape vectorShape, Color color, List<Geometry> geoms, TessellationOptions tessellationOptions)
+        {
+            UnityEngine.Profiling.Profiler.BeginSample("LibTess");
+
+            var tess = new Tess();
+
+            var angle = 45.0f * Mathf.Deg2Rad;
+            var mat = Matrix2D.Rotate(angle);
+            var invMat = Matrix2D.Rotate(-angle);
+
+            foreach (var c in vectorShape.Contours)
+            {
+                var contour = new List<Vector2>(100);
+                foreach (var v in VectorUtils.TraceShape(c, vectorShape.PathProps.Stroke, tessellationOptions))
+                    contour.Add(mat.MultiplyPoint(v));
+
+                tess.AddContour(contour.Select(v => new ContourVertex() { Position = new Vec3() { X = v.x, Y = v.y } }).ToArray(), ContourOrientation.Original);
+            }
+
+            var windingRule = (vectorShape.Fill.Mode == FillMode.OddEven) ? WindingRule.EvenOdd : WindingRule.NonZero;
+            try
+            {
+                tess.Tessellate(windingRule, ElementType.Polygons, 3);
+            }
+            catch (System.Exception)
+            {
+                Debug.LogWarning("Shape tessellation failed, skipping...");
+                UnityEngine.Profiling.Profiler.EndSample();
+                return;
+            }
+
+            var indices = tess.Elements.Select(i => (UInt16)i);
+            var vertices = tess.Vertices.Select(v => invMat.MultiplyPoint(new Vector2(v.Position.X, v.Position.Y)));
+
+            if (indices.Count() > 0)
+            {
+                geoms.Add(new Geometry() { Vertices = vertices.ToArray(), Indices = indices.ToArray(), Color = color, Fill = vectorShape.Fill, FillTransform = vectorShape.FillTransform });
             }
 
             UnityEngine.Profiling.Profiler.EndSample();

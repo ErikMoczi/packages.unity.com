@@ -296,8 +296,17 @@ namespace Unity.VectorGraphics
     public class Shape : Filled
     {
         /// <summary>All the contours defining the shape.</summary>
-        /// <remarks>Some of these coutours may be holes in the shape, depending on the fill mode used <see cref="FillMode"/>.</remarks>
+        /// <remarks>
+        /// Some of these coutours may be holes in the shape, depending on the fill mode used <see cref="FillMode"/>.
+        /// </remarks>
         public BezierContour[] Contours { get; set; }
+
+        /// <summary>Whether the specified contours are convex or not</summary>
+        /// <remarks>
+        /// Set this to true when you know the shape contours are convex.
+        /// This will allow for a faster tessellation process in some circumstances.
+        /// </remarks>
+        public bool IsConvex { get; set; }
     }
 
     /// <summary>A node inside a hierarchy.</summary>

@@ -80,7 +80,10 @@ namespace Unity.VectorGraphics.Editor
         /// <param name="ctx">The asset import context of the scripted importer</param>
         public override void OnImportAsset(AssetImportContext ctx)
         {
-            var sceneInfo = SVGParser.ImportSVG(new StreamReader(ctx.assetPath));
+            SVGParser.SceneInfo sceneInfo;
+            using (var stream = new StreamReader(ctx.assetPath))
+                sceneInfo = SVGParser.ImportSVG(stream);
+
             if (sceneInfo.Scene == null || sceneInfo.Scene.Root == null)
                 throw new Exception("Wowzers!");
 

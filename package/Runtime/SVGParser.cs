@@ -603,7 +603,7 @@ namespace Unity.VectorGraphics
                     throw node.GetException("polyline 'points' do not even specify one line");
 
                 var shape = new Shape() { Fill = fill };
-                shape.PathProps = new PathProperties() { Stroke = stroke, Head = strokeEnding, Tail = strokeEnding };
+                shape.PathProps = new PathProperties() { Stroke = stroke, Corners = strokeCorner, Head = strokeEnding, Tail = strokeEnding };
                 shape.Contours = new BezierContour[] {
                      new BezierContour() { Segments = new BezierPathSegment[pointsString.Length / 2] }
                 };
