@@ -142,11 +142,5 @@ namespace UnityEngine.XR.ARFoundation
         {
             ARSubsystemManager.DestroySubsystems();
         }
-
-        void Awake()
-        {
-            // Kick this off immediately so we have the answer as soon as possible
-            StartCoroutine(ARSubsystemManager.CheckAvailability());
-        }
     }
 }

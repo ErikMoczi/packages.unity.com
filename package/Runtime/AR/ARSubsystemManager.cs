@@ -469,12 +469,7 @@ namespace UnityEngine.XR.ARFoundation
             sessionSubsystem.Stop();
             systemState = ARSystemState.Ready;
         }
-
-        static ARSubsystemManager()
-        {
-            CreateSubsystems();
-        }
-
+        
         static void RaiseSessionDestroyedEvent()
         {
             if (sessionDestroyed != null)

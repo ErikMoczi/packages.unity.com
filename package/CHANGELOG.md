@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-preview.16] - 2018-07-26
+### Change
+- Removed static constructor from `ARSubsystemManager`. This allows access to the manager without forcing the creation of the subsystems, making the initialization more flexible.
+
 ## [1.0.0-preview.15] - 2018-07-26
 ### Fixes
 - `ARPlane.vertexChangedThreshold` is no longer allowed to be negative.
