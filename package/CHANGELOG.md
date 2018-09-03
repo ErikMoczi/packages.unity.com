@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.36] - 2018-8-27
+
+### ProfilerMarkers now take params as arguments
+
 ## [0.1.35] - 2018-8-27
 
 ### Measure.Method improvements

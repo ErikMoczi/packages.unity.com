@@ -19,7 +19,7 @@ namespace Unity.PerformanceTesting.Measurements
         private int m_Warmup = -1;
         private bool m_RecordFrametime = true;
 
-        public FramesMeasurement ProfilerMarkers(SampleGroupDefinition[] profilerDefinitions)
+        public FramesMeasurement ProfilerMarkers(params SampleGroupDefinition[] profilerDefinitions)
         {
             m_ProfilerDefinitions = profilerDefinitions;
             return this;

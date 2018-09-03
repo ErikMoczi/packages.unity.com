@@ -26,7 +26,7 @@ namespace Unity.PerformanceTesting
             return new ScopeMeasurement(sampleGroupDefinition);
         }
         
-        public static ProfilerMeasurement ProfilerMarkers(SampleGroupDefinition[] sampleGroupDefinitions)
+        public static ProfilerMeasurement ProfilerMarkers(params SampleGroupDefinition[] sampleGroupDefinitions)
         {
             return new ProfilerMeasurement(sampleGroupDefinitions);
         }

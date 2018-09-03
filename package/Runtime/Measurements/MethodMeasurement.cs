@@ -32,14 +32,14 @@ namespace Unity.PerformanceTesting.Measurements
             m_GCRecorder = Recorder.Get("GC.Alloc");
         }
 
-        public MethodMeasurement ProfilerMarkers(SampleGroupDefinition[] profilerDefinitions)
+        public MethodMeasurement ProfilerMarkers(params SampleGroupDefinition[] profilerDefinitions)
         {
             if (profilerDefinitions == null) return this;
             AddProfilerMarkers(profilerDefinitions);
             return this;
         }
 
-        private void AddProfilerMarkers(SampleGroupDefinition[] samplesGroup)
+        private void AddProfilerMarkers(params SampleGroupDefinition[] samplesGroup)
         {
             foreach (var sample in samplesGroup)
             {

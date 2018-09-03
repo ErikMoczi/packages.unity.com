@@ -11,7 +11,7 @@ YourProject/Packages/manifest.json
 ``` json
 {
     "dependencies": {
-        "com.unity.test-framework.performance": "0.1.35-preview",
+        "com.unity.test-framework.performance": "0.1.36-preview",
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0",
         "com.unity.modules.vr": "1.0.0"
