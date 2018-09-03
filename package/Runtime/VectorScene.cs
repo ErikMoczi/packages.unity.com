@@ -4,22 +4,63 @@ using UnityEngine;
 namespace Unity.VectorGraphics
 {
     /// <summary>The gradient fill types.</summary>
-    public enum GradientFillType { Linear, Radial }
+    public enum GradientFillType
+    {
+        /// <summary>A linear gradient.</summary>
+        Linear,
 
-    /// <summary>The path corner types.</summary>
-    public enum PathCorner { Tipped, Round, Beveled }
+        /// <summary>A radial gradient, centered at the radial focus of the gradient fill.</summary>
+        Radial
+    }
+
+    /// <summary>The path corner types, for joining path segments together.</summary>
+    public enum PathCorner
+    {
+        /// <summary>A tipped corner with a sharp edge.</summary>
+        Tipped,
+
+        /// <summary>A rounded corner.</summary>
+        Round,
+
+        /// <summary>A beveled corner.</summary>
+        Beveled
+    }
 
     /// <summary>The path ending types.</summary>
-    public enum PathEnding { Chop, Square, Round }
+    public enum PathEnding
+    {
+        /// <summary>A square path ending.</summary>
+        Chop,
+
+        /// <summary>A square path ending with a small extrusion.</summary>
+        Square,
+
+        /// <summary>A rounded path ending.</summary>
+        Round
+    }
 
     /// <summary>The fill mode types.</summary>
-    public enum FillMode { NonZero, OddEven }
+    public enum FillMode
+    {
+        /// <summary>Determines the "insideness" of the shape by evaluating the direction of the edges crossed.</summary>
+        NonZero,
 
-    /// <summary>The addressing mode types, defining how textures or gradients behave when being addressed outside their unit range.</summary>
-    public enum AddressMode { Wrap, Clamp, Mirror }
+        /// <summary>Determines the "insideness" of the shape by counting the number of edges crossed.</summary>
+        OddEven
+    }
 
-    /// <summary>How the scene nodes should clip their children.</summary>
-    public enum ClippingMode { NoClip, Intersection, Union, Difference, Xor }
+    /// <summary>The addressing mode, defining how textures or gradients behave when being addressed outside their unit range.</summary>
+    public enum AddressMode
+    {
+        /// <summary>Textures/gradients are wrapping around with a repeating pattern.</summary>
+        Wrap,
+
+        /// <summary>Textures/gradients are clamped on the borders.</summary>
+        Clamp,
+
+        /// <summary>Textures/gradients are repeated with a mirroring pattern.</summary>
+        Mirror
+    }
 
     /// <summary>The gradient stops used for gradient fills.</summary>
     public struct GradientStop
@@ -85,16 +126,24 @@ namespace Unity.VectorGraphics
     /// <summary>The IFill interface is implemented by filling techniques (solid, texture or gradient).</summary>
     public interface IFill
     {
+        /// <summary>The filling method (non-zero or even-odd) of the fill.</summary>
         FillMode mode { get; set; }
+
+        /// <summary>The opacity of the fill.</summary>
+        float opacity { get; set; }
     }
 
     /// <summary>Fills a shape with a single color.</summary>
     public class SolidFill : IFill
     {
-        /// <summary>The color of the fill.</summary>        
+        /// <summary>The color of the fill.</summary>
         public Color color { get; set; }
 
-        /// <summary>The fill mode.</summary>
+        /// <summary>The opacity of the fill.</summary>
+        public float opacity { get { return m_Opacity; } set { m_Opacity = value; } }
+        private float m_Opacity = 1.0f;
+
+        /// <summary>The filling method (non-zero or even-odd) of the fill.</summary>
         public FillMode mode { get; set; }
     }
 
@@ -112,13 +161,17 @@ namespace Unity.VectorGraphics
         /// <summary>An array of stops defining the gradient colors.</summary>
         public GradientStop[] stops { get; set; }
 
-        /// <summary>The fill mode.</summary>
+        /// <summary>The filling method (non-zero or even-odd) of the fill.</summary>
         public FillMode mode { get; set; }
 
-        /// <summary>The adressing mode.</summary>
+        /// <summary>The opacity of the fill.</summary>
+        public float opacity { get { return m_Opacity; } set { m_Opacity = value; } }
+        private float m_Opacity = 1.0f;
+
+        /// <summary>The adressing mode (wrap, clamp or mirror) of this fill.</summary>
         public AddressMode addressing { get; set; }
 
-        /// <summary>A position within the unit circle (-1,1) where 0 falls in the middle of the fill circle/ellipse.</summary>
+        /// <summary>A position within the unit circle (-1,1) where 0 falls in the middle of the fill.</summary>
         public Vector2 radialFocus { get; set; }
     }
 
@@ -127,12 +180,33 @@ namespace Unity.VectorGraphics
     {
         /// <summary>The texture to fill the shape with.</summary>
         public Texture2D texture { get; set; }
-    
-        /// <summary>The fill mode.</summary>
+
+        /// <summary>The filling method (non-zero or even-odd) of the fill.</summary>
         public FillMode mode { get; set; }
-    
-        /// <summary>The addressing mode.</summary>
+
+        /// <summary>The opacity of the fill.</summary>
+        public float opacity { get { return m_Opacity; } set { m_Opacity = value; } }
+        private float m_Opacity = 1.0f;
+
+        /// <summary>The adressing mode (wrap, clamp or mirror) of this fill.</summary>
         public AddressMode addressing { get; set; }
+    }
+
+    /// <summary>Fills a shape with a pattern.</summary>
+    public class PatternFill : IFill
+    {
+        /// <summary>The filling method (non-zero or even-odd) of the fill.</summary>
+        public FillMode mode { get; set; }
+
+        /// <summary>The opacity of the fill.</summary>
+        public float opacity { get { return m_Opacity; } set { m_Opacity = value; } }
+        private float m_Opacity = 1.0f;
+
+        /// <summary>The root node of the pattern</summary>
+        public SceneNode pattern { get; set; }
+
+        /// <summary>The rectangle that is repeated</summary>
+        public Rect rect { get; set; }
     }
 
     /// <summary>Defines how strokes should be rendered.</summary>
@@ -188,7 +262,8 @@ namespace Unity.VectorGraphics
         public IFill fill { get; set; }
 
         /// <summary>A transformation specific to the fill.</summary>
-        public Matrix2D fillTransform { get; set; }
+        public Matrix2D fillTransform { get { return m_FillTransform; } set { m_FillTransform = value; } }
+        private Matrix2D m_FillTransform = Matrix2D.identity;
 
         /// <summary>The path properties.</summary>
         public PathProperties pathProps { get; set; }
@@ -221,7 +296,7 @@ namespace Unity.VectorGraphics
     public class Shape : Filled
     {
         /// <summary>All the contours defining the shape.</summary>
-        /// <remarks>Some of these coutours may be holes in the shape, depending on the fill mode used.</remarks>
+        /// <remarks>Some of these coutours may be holes in the shape, depending on the fill mode used <see cref="FillMode"/>.</remarks>
         public BezierContour[] contours { get; set; }
     }
 
@@ -235,7 +310,8 @@ namespace Unity.VectorGraphics
         public List<IDrawable> drawables { get; set; }
 
         /// <summary>The transform of the node.</summary>
-        public Matrix2D transform { get; set; }
+        public Matrix2D transform { get { return m_Transform; } set { m_Transform = value; } }
+        private Matrix2D m_Transform = Matrix2D.identity;
 
         /// <summary>A clipper hierarchy that will clip this node.</summary>
         public SceneNode clipper { get; set; }

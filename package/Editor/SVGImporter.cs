@@ -13,6 +13,7 @@ using UnityEngine.Experimental.Rendering;
 
 namespace Unity.VectorGraphics.Editor
 {
+    /// <summary>The SVG importer class.</summary>
     [Serializable]
     [ScriptedImporter(1, "svg")]
     public class SVGImporter : ScriptedImporter, ISpriteEditorDataProvider
@@ -103,9 +104,9 @@ namespace Unity.VectorGraphics.Editor
             tessOptions.samplingStepSize = 1.0f / (float)samplingStepDist;
             tessOptions.stepDistance = stepDist;
 
-            var geometry = VectorUtils.TessellateNodeHierarchy(sceneInfo.scene.root, tessOptions, sceneInfo.nodeOpacity);
+            var geometry = VectorUtils.TessellateScene(sceneInfo.scene, tessOptions, sceneInfo.nodeOpacity);
 
-            var sprite = VectorUtils.BuildSprite(geometry, svgPixelsPerUnit, alignment, customPivot, gradientResolution);
+            var sprite = VectorUtils.BuildSprite(geometry, svgPixelsPerUnit, alignment, customPivot, gradientResolution, true);
 
             GenerateAsset(ctx, sprite);
         }
@@ -122,26 +123,29 @@ namespace Unity.VectorGraphics.Editor
 
             ctx.AddObjectToAsset("sprite", sprite);
 
+            Material mat = null;
+
             if (sprite.texture != null)
             {
-                // When texture is present, create a prefab with the VectorGradient shader
-                var gameObject = new GameObject(name);
-                var spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
-                spriteRenderer.sprite = sprite;
-
-                var svgMaterial = AssetDatabase.LoadMainAssetAtPath(kPackagePath + "/Runtime/Materials/Unlit_VectorGradient.mat") as Material;
-                spriteRenderer.material = svgMaterial;
-
+                // When texture is present, use the VectorGradient shader
+                mat = AssetDatabase.LoadMainAssetAtPath(kPackagePath + "/Runtime/Materials/Unlit_VectorGradient.mat") as Material;
                 sprite.texture.name = name + "Atlas";
-
-                ctx.AddObjectToAsset("texAtlas", sprite.texture);
-                ctx.AddObjectToAsset("gameObject", gameObject);
-                ctx.SetMainObject(gameObject);
             }
             else
             {
-                ctx.SetMainObject(sprite);
+                mat = AssetDatabase.LoadMainAssetAtPath(kPackagePath + "/Runtime/Materials/Unlit_Vector.mat") as Material;                
             }
+
+            var gameObject = new GameObject(name);
+            var spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
+            spriteRenderer.sprite = sprite;
+            spriteRenderer.material = mat;
+
+            if (sprite.texture != null)
+                ctx.AddObjectToAsset("texAtlas", sprite.texture);
+
+            ctx.AddObjectToAsset("gameObject", gameObject);
+            ctx.SetMainObject(gameObject);
         }
 
         private void ComputeTessellationOptions(SVGParser.SceneInfo sceneInfo, int targetResolution, float multiplier, out float stepDist, out float maxCord, out float maxTangent)
@@ -179,11 +183,39 @@ namespace Unity.VectorGraphics.Editor
         internal void TextureSizeForSpriteEditor(out int width, out int height)
         {
             var sprite = GetImportedSprite(assetPath);
-            var size = (Vector2)sprite.bounds.size;
-            size.x *= svgPixelsPerUnit;
-            size.y *= svgPixelsPerUnit;
-            width = (int)size.x;
-            height = (int)size.y;
+            var size = ((Vector2)sprite.bounds.size) * svgPixelsPerUnit;
+            width = (int)(size.x + 0.5f);
+            height = (int)(size.y + 0.5f);
+        }
+
+        private static Material s_VectorMat = null;
+        private static Material s_GradientMat = null;
+
+        internal static Material GetSVGSpriteMaterial(Sprite sprite)
+        {
+            if (sprite == null)
+                return null;
+            
+            Material mat = null;
+            if (sprite.texture != null)
+            {
+                if (s_GradientMat == null)
+                {
+                    string gradientMatPath = "Packages/com.unity.vectorgraphics/Runtime/Materials/Unlit_VectorGradient.mat";
+                    s_GradientMat = AssetDatabase.LoadMainAssetAtPath(gradientMatPath) as Material;
+                }
+                mat = new Material(s_GradientMat);
+            }
+            else
+            {
+                if (s_VectorMat == null)
+                {
+                    string vectorMatPath = "Packages/com.unity.vectorgraphics/Runtime/Materials/Unlit_Vector.mat";
+                    s_VectorMat = AssetDatabase.LoadMainAssetAtPath(vectorMatPath) as Material;
+                }
+                mat = new Material(s_VectorMat);
+            }
+            return mat;
         }
 
         // ISpriteEditorDataProvider methods
@@ -225,7 +257,6 @@ namespace Unity.VectorGraphics.Editor
         void ISpriteEditorDataProvider.Apply()
         {
             var so = new SerializedObject(this);
-            m_SpriteData.Apply(so);
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 

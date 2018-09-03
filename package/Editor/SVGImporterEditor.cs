@@ -13,7 +13,7 @@ using UnityEngine.Experimental.Rendering;
 namespace Unity.VectorGraphics.Editor
 {
     [CustomEditor(typeof(SVGImporter))]
-    public class SVGImporterEditor : ScriptedImporterEditor
+    internal class SVGImporterEditor : ScriptedImporterEditor
     {
         private enum SettingsType
         {
@@ -83,7 +83,6 @@ namespace Unity.VectorGraphics.Editor
             new GUIContent("Custom")
         };
 
-        /// <summary>Enables the editor</summary>
         public override void OnEnable()
         {
             m_PixelsPerUnit = serializedObject.FindProperty("svgPixelsPerUnit");
@@ -103,7 +102,6 @@ namespace Unity.VectorGraphics.Editor
             m_EnableAnimationTools = serializedObject.FindProperty("enableAnimationTools");
         }
 
-        /// <summary>Draws the inspector editor</summary>
         public override void OnInspectorGUI()
         {
             EditorGUILayout.PropertyField(m_PixelsPerUnit, m_PixelsPerUnitText);
@@ -202,19 +200,11 @@ namespace Unity.VectorGraphics.Editor
             return AssetDatabase.IsValidFolder("Packages/com.unity.2d.animation");
         }
 
-        /// <summary>Checks if this editor has a preview GUI</summary>
-        /// <returns>True if the editor has a preview GUI, or false othersize</returns>
         public override bool HasPreviewGUI()
         {
             return true;
         }
 
-        /// <summary>Renders a static preview of the SVG asset</summary>
-        /// <params name="assetPath">The path of the SVG asset</param>
-        /// <params name="subAssets">The sub-assets of the main SVG asset</param>
-        /// <params name="width">The requested preview width</param>
-        /// <params name="height">The requested preview height</param>
-        /// <returns>A rendered texture of the SVG asset</returns>
         public override Texture2D RenderStaticPreview(string assetPath, UnityEngine.Object[] subAssets, int width, int height)
         {
             var sprite = SVGImporter.GetImportedSprite(assetTarget);
@@ -224,9 +214,6 @@ namespace Unity.VectorGraphics.Editor
             return BuildPreviewTexture(sprite, width, height);
         }
 
-        /// <summary>Renders the preview GUI</summary>
-        /// <param name="r">The rectangle in which to render the preview GUI</param>
-        /// <param name="background">The GUI background</param>
         public override void OnPreviewGUI(Rect r, GUIStyle background)
         {
             if (Event.current.type != EventType.Repaint)
@@ -249,7 +236,7 @@ namespace Unity.VectorGraphics.Editor
 
         internal static Texture2D BuildPreviewTexture(Sprite sprite, int width, int height)
         {
-            return VectorUtils.RenderSpriteToTexture2D(sprite, width, height, 4);
+            return VectorUtils.RenderSpriteToTexture2D(sprite, width, height, SVGImporter.GetSVGSpriteMaterial(sprite), 4);
         }
     }
 }

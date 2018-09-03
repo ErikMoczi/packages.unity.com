@@ -12,10 +12,11 @@ This Vector Graphics package version 1.0.0 is compatible with the following vers
 
 The SVG importer from this package implements a subset of the SVG 1.1 specification, with some limitations:
 
-* Clipping/masking is not yet supported [(SVG 1.1 section 14)](https://www.w3.org/TR/SVG11/masking.html)
-* Patterns are not yet supported [(SVG 1.1 section 13.3)](https://www.w3.org/TR/SVG11/pservers.html#Patterns)
 * Text elements are not yet supported [(SVG 1.1 section 10)](https://www.w3.org/TR/SVG11/text.html)
+* Per-pixel masking is not supported [(SVG 1.1 section 14.4)](https://www.w3.org/TR/SVG11/masking.html#Masking)
+* Filter effects are not supported [(SVG 1.1 section 15)](https://www.w3.org/TR/SVG11/filters.html)
 * Any interactivity feature are not supported [(SVG 1.1 section 16)](https://www.w3.org/TR/SVG11/interact.html)
+* Animations are not supported [(SVG 1.1 section 19)](https://www.w3.org/TR/SVG11/animate.html)
 
 # Using Vector Graphics
 
@@ -41,7 +42,7 @@ The tessellation settings can be provided in two ways: **Basic** or **Advanced**
 
 ![SVG importer advanced properties](images/svg_inspector_advanced.png)
 
-If you want full control over the tessellation of the SVG document, you can specify the following advanced settings:
+<a name="advanced-importer-settings"></a>If you want full control over the tessellation of the SVG document, you can specify the following advanced settings:
 
 **Step Distance**: Distance at which vertices will be generated along the paths. Lower values will result in a more dense tesselation.
 
@@ -63,7 +64,7 @@ Classes and methods are provided to work with vector data directly in code.  The
 
 The whole API is designed as a set of simple classes and structures that holds the vector data together.  This is accompanied by static methods to manipulate and transform this data.
 
-At the core of the Vector Graphics package lives the `Scene` class, which stores a graph of vector objects.  Its `root` property is an instance of `SceneNode`, which contains a list of drawable items, a list of child nodes and a transform.
+At the core of the Vector Graphics package lives the `Scene` class, which stores a graph of vector objects.  Its `root` property is an instance of `SceneNode`, which contains a list of drawable items, a list of child nodes, a transform and a clipper (see [clipping](#clipping)).
 
 ```
 public class SceneNode
@@ -71,6 +72,7 @@ public class SceneNode
     public List<SceneNode> children { get; set; }
     public List<IDrawable> drawables { get; set; }
     public Matrix2D transform { get; set; }
+    public SceneNode clipper { get; set; }
 }
 ```
 
@@ -202,18 +204,41 @@ The filling classes also provide a fill mode, which determines how holes are def
 
 ![EvenOdd Fill](images/fill_evenodd.png)
 
+### <a name="clipping"></a> Clipping
+
+The `SceneNode` class has a `clipper` member which will clip the content of the node.
+
+![Clipper](images/clipper.png)
+
+In the above example, the repeating square shapes are clipped by an ellipse. In code, this can be done like so:
+
+```
+var ellipse = new SceneNode() {
+	drawables = new List<IDrawable> { VectorUtils.MakeEllipse(ellipse, Vector2.zero, 50, 100) }
+};
+
+var squaresPattern = ...;
+
+var squaresClipped = new SceneNode() {
+	children = new List<SceneNode> { squaresPattern },
+	clipper = ellipse
+};
+```
+
+Note that only shapes can act as a clipper (any strokes defined in the clipper will be ignored).  The content being clipped can be any shapes and/or strokes.
+
+*Warning: The clipping process may be an expensive operation. Clipping simple shapes with a simple clipper may perform reasonably, but any complex shape and/or clipper may cause the framerate to drop significantly.*
+
 ### Vector Graphics Rendering
 
-> Note: We currently rely on tessellation for vector graphics rendering.  However, we have  plans to provide native "pixel perfect" rendering that won't require any tessellation at all.  Stay tuned!
-
-Once you have a `VectorScene` instance in hand, you can tessellate it using the following `VectorUtils` method:
+The vector graphics elements can be rendered on screen by first getting a tessellated (triangulated) version of the scene.  Once you have a `VectorScene` instance in hand, you can tessellate it using the following `VectorUtils` method:
 
 ```
-public static List<Geometry> TesselateVectorScene(Scene scene, TesselationOptions options);
+public static List<Geometry> TessellateScene(Scene scene, TesselationOptions options);
 
 ```
 
-The `TesselationOptions` are reminiscent of the importer settings discussed earlier:
+The `TesselationOptions` are reminiscent of the [advanced importer settings](#advanced-importer-settings) discussed earlier:
 
 ```
 public struct TesselationOptions
@@ -227,44 +252,87 @@ public struct TesselationOptions
 
 Note that `maxTanAngleDeviation` is specified in radians.
 
-To disable the `maxCordDeviation` constraint, set it to `float.MaxValue`.  To disable the `maxTanAngleDeviation` constraint, set it to `Mathf.PI/2.0f`.  Disabling the constraints will make the tessellation faster, but will generate more vertices.
+To disable the `maxCordDeviation` constraint, set it to `float.MaxValue`.  To disable the `maxTanAngleDeviation` constraint, set it to `Mathf.PI/2.0f`.  Disabling the constraints will make the tessellation faster, but may generate more vertices.
 
-The resulting list of `Geometry` objects contains all the vertices and accompanying information required to render the scene properly:
+The resulting list of `Geometry` objects contains all the vertices and accompanying information required to render the scene properly.
+
+
+#### Textures and gradients atlases
+
+If the scene has any texture and/or gradients, you will have to generate a texture atlas and fill the UVs of the geometry.  These methods are part of the `VectorUtils` class:
 
 ```
-public class Geometry
-{
-    public Vector2[] vertices;
-    public Vector2[] uvs;
-    public UInt16[] indices;
-    public Color color;
-    public Matrix2D worldTransform;
-    public IFill fill;
-    public Matrix2D fillTransform;
-}
-``` 
+public static TextureAtlas GenerateAtlas(
+	IEnumerable<Geometry> geoms, // The geometry generated by the TessellateScene method
+	uint rasterSize);            // The desired atlas size (128 is enough for most purposes)
+
+
+public static void FillUVs(
+	IEnumerable<Geometry> geoms, // The geometry for which the UVs will be filled
+	TextureAtlas texAtlas);      // The texture atlas generated by the GenerateAtlas method
+```
+
+The `GenerateAtlas` method is an expensive operation. Therefore, the resulting `Texture2D` object should be cached whenever possible.  You only need to regenerate the atlas if any texture and/or gradient changed inside the scene.
+
+The `FillUVs` method is cheap, and should be called if the vertices changed inside the geometry.
+
+#### Drawing a tessellated scene
 
 You can render the geometry in several ways. For example:
 
-* Using Unity's low level graphics library (the `GL` class)
-* Building a `Mesh` asset
+* Filling a `Mesh` asset
 * Building a `Sprite` asset
+* Using Unity's low level graphics library
 
-Building a `Sprite` asset is the simplest solution, and this package provides a helper method to build a sprite asset from the tessellated geometry in the `VectorUtils` class:
+For any of these methods, you should use the provided materials to draw the tessellated vector graphics content. If the scene contains texture and/or gradients, you should use the following material:
+
+```
+var mat = new Material(Shader.Find("Unlit/VectorGradient"));
+```
+
+Otherwise, you can use:
+
+```
+var mat = new Material(Shader.Find("Unlit/Vector"));
+```
+
+Filling a mesh asset can be done by the following `VectorUtils` method:
+
+```
+public static void FillMesh(
+	Mesh mesh,               // The mesh to fill, which will be cleared before filling
+	List<Geometry> geoms,    // The geometry resulting from the "TessellateScene" call
+	float svgPixelsPerUnit,  // How many "SVG units" should fit in a "Unity unit"
+	bool flipYAxis = false); // If true, the Y-axis will point downward
+```
+
+Building a sprite asset can be done by the following `VectorUtils` method:
 
 ```
 public static Sprite BuildSprite(
-	List<Geometry> geoms,       // The geometry resulting from the "TesselateVectorScene" call
+	List<Geometry> geoms,       // The geometry resulting from the "TesselateScene" call
 	float svgPixelsPerUnit,     // How many "SVG units" should fit in a "Unity unit"
 	Alignment alignment,        // The sprite alignement
 	Vector2 customPivot,        // If alignment is "Custom", this will be used as the custom pivot
 	UInt16 gradientResolution); // The resolution used for the gradient texture
 ```
 
-We also provide a utility method in the `VectorUtils` class that renders the generated sprite using low-level `GL` commands:
+You can render a sprite to a `Texture2D` by using the following `VectorUtils` method:
 
 ```
-public static void RenderSprite(Sprite sprite, Material mat);
+public static Texture2D RenderSpriteToTexture2D(
+	Sprite sprite,          // The sprite to draw
+	int width, int height,  // The texture dimensions
+	Material mat,           // The material to use (should be Unlit_Vector or Unlit_VectorGradient)
+	int antiAliasing = 1);  // The number of samples per pixel
+```
+
+We also provide a method to render the generated sprite using immediate mode `GL` commands.  The vertex coordinates to draw in a unit square (between 0 and 1 in both X and Y directions).  This is in the `VectorUtils` class:
+
+```
+public static void RenderSprite(
+	Sprite sprite,  // The sprite to draw
+	Material mat);  // The material to use (should be Unlit_Vector or Unlit_VectorGradient)
 ```
 
 
@@ -272,5 +340,6 @@ public static void RenderSprite(Sprite sprite, Material mat);
 
 |Date|Reason|
 |---|---|
-|Feb 01, 2018|Document created. Matches Vector Graphics version 0.0.1.|
+|Mar 20, 2018|Updated public APIs documentation. Matches Vector Graphics version 1.0.3-experimental.|
+|Feb 01, 2018|Document created. Matches Vector Graphics version 1.0.2-experimental.|
 

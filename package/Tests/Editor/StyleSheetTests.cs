@@ -6,7 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VectorGraphics.Editor;
 
-public class StyleSheetTests : MonoBehaviour
+public class StyleSheetTests
 {
     [Test]
     public void Tokenize_TokenizesTokens()

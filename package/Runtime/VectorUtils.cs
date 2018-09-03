@@ -58,20 +58,24 @@ namespace Unity.VectorGraphics
         /// <param name="pos">The position of the ellipse, relative to its center.</param>
         /// <param name="radiusX">The X axis of the ellipse.</param>
         /// <param name="radiusY">The Y axis of the ellipse.</param>
-        public static void MakeEllipse(Rectangle rect, Vector2 pos, float radiusX, float radiusY)
+        /// <returns>A rectangle object with rounded corners to form an ellipse</returns>
+        public static Rectangle MakeEllipse(Vector2 pos, float radiusX, float radiusY)
         {
+            var rect = new Rectangle();
             rect.position = new Vector2(pos.x - radiusX, pos.y - radiusY);
             rect.size = new Vector2(radiusX + radiusX, radiusY + radiusY);
             rect.radiusTL = rect.radiusTR = rect.radiusBL = rect.radiusBR = new Vector2(radiusX, radiusY);
+            return rect;
         }
 
         /// <summary>Builds an circle.</summary>
         /// <param name="rect">The Rectangle that will be rounded to hold the circle.</param>
         /// <param name="pos">The position of the circle, relative to its center.</param>
         /// <param name="radius">The radius of the circle.</param>
-        public static void MakeCircle(Rectangle rect, Vector2 pos, float radius)
+        /// <returns>A rectangle object with rounded corners to form a circle</returns>
+        public static Rectangle MakeCircle(Vector2 pos, float radius)
         {
-            MakeEllipse(rect, pos, radius, radius);
+            return MakeEllipse(pos, radius, radius);
         }
 
         /// <summary>Computes the bounds of a BezierContour.</summary>
@@ -597,11 +601,20 @@ namespace Unity.VectorGraphics
             }
         }
 
-        /// <summary>Structure holding the SceneNode computed transforms and opacities.</summary>
+        /// <summary>Structure holding the SceneNode computed transforms, opacities and enumeration path.</summary>
+        /// <remarks>This helper structure is used by the WorldTransformedSceneNodes method.</remarks>
         public struct SceneNodeWorldTransform
         {
+            /// <summary>The node we are currently visiting.</summary>
             public SceneNode node;
+
+            /// <summary>The parent of the node we are currently visiting.</summary>
+            public SceneNode parent;
+
+            /// <summary>The accumulated world transform of this node.</summary>
             public Matrix2D worldTransform;
+
+            /// <summary>The accumulated world opacity of this node.</summary>
             public float worldOpacity;
         }
 
@@ -615,9 +628,12 @@ namespace Unity.VectorGraphics
             {
                 node = child,
                 worldTransform = parent.worldTransform * child.transform,
-                worldOpacity = parent.worldOpacity * childOpacity
+                worldOpacity = parent.worldOpacity * childOpacity,
+                parent = parent.node
             };
+
             yield return childWorldTransform;
+
             if (child.children != null)
             {
                 foreach (var c in child.children)
@@ -631,10 +647,16 @@ namespace Unity.VectorGraphics
         /// <summary>Iterates through every nodes under a root with computed transform and opacities.</summary>
         /// <param name="root">The starting node of the hierarchy</param>
         /// <param name="nodeOpacities">Storage for the resulting node opacities, may be null</param>
-        /// <param name="postOrder">Post-order node listing if true, in-order if false</param>
+        /// <returns>An enumeration of every node with their pre-computed world transforms, opacities and paths.</returns>
         public static IEnumerable<SceneNodeWorldTransform> WorldTransformedSceneNodes(SceneNode root, Dictionary<SceneNode, float> nodeOpacities)
         {
-            return WorldTransformedSceneNodes(root, nodeOpacities, new SceneNodeWorldTransform() { node = root, worldTransform = Matrix2D.identity, worldOpacity = 1 });
+            var rootNodeWorldTransform = new SceneNodeWorldTransform() {
+                node = root,
+                worldTransform = Matrix2D.identity,
+                worldOpacity = 1,
+                parent = null
+            };
+            return WorldTransformedSceneNodes(root, nodeOpacities, rootNodeWorldTransform);
         }
 
         /// <summary>Realigns the vertices inside their axis-aligned bounding-box.</summary>
@@ -892,7 +914,7 @@ namespace Unity.VectorGraphics
                     {
                         var vertices = new Vector2[] {
                             tnode.worldTransform * rect.position,
-                            tnode.worldTransform * rect.size
+                            tnode.worldTransform * (rect.size + rect.position)
                         };
                         var bbox = Bounds(vertices);
                         drawableMin = Vector2.Min(drawableMin, bbox.min);

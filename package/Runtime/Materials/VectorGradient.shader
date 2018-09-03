@@ -32,14 +32,14 @@
             struct appdata
             {
                 float4 vertex : POSITION;
-                float4 color    : COLOR;
+                fixed4 color : COLOR;
                 float2 uv : TEXCOORD0;
                 float2 settingIndex : TEXCOORD2;
             };
 
             struct v2f
             {
-                float4 color : COLOR;
+                fixed4 color : COLOR;
                 float2 uv : TEXCOORD0; // uv.z is used for setting index
                 float2 settingIndex : TEXCOORD2;
                 float4 vertex : SV_POSITION;
@@ -54,7 +54,11 @@
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
+                #ifdef UNITY_COLORSPACE_GAMMA
                 o.color = v.color;
+                #else
+                o.color = fixed4(GammaToLinearSpace(v.color.rgb), v.color.a);
+                #endif
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 o.settingIndex = v.settingIndex;
                 return o;
@@ -105,7 +109,7 @@
                 //    xy = size.x
                 //    zw = size.y
 
-                int settingBase = (int)i.settingIndex.x * 3;
+                int settingBase = ((int)(i.settingIndex.x + 0.5f)) * 3;
                 float2 texelSize = _MainTex_TexelSize.xy;
                 float2 settingUV = float2(settingBase + 0.5f, 0.5f) * texelSize;
 
@@ -130,7 +134,12 @@
                 float2 size = unpackFloat2(tex2D(_MainTex, settingUV+nextUV*2) * 255) * texelSize;
                 uv = uv * size + pos;
 
-                return tex2D(_MainTex, uv) * i.color;
+                fixed4 texColor = tex2D(_MainTex, uv);
+                #ifndef UNITY_COLORSPACE_GAMMA
+                texColor = fixed4(GammaToLinearSpace(texColor.rgb), texColor.a);
+                #endif
+
+                return texColor * i.color;
             }
             ENDCG
         }

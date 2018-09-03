@@ -7,7 +7,8 @@ using UnityEngine;
 
 namespace Unity.VectorGraphics.Editor
 {
-    class SVGParser
+    /// <summary>Reads an SVG document and builds a vector scene.</summary>
+    public class SVGParser
     {
         /// <summary>A structure containing the SVG scene data.</summary>
         public struct SceneInfo
@@ -61,9 +62,9 @@ namespace Unity.VectorGraphics.Editor
         }
     }
 
-    class XmlReaderIterator
+    internal class XmlReaderIterator
     {
-        public class Node
+        internal class Node
         {
             public Node(XmlReader reader) { this.reader = reader; name = reader.Name; depth = reader.Depth; }
             public string Name { get { return name; } }
@@ -133,7 +134,7 @@ namespace Unity.VectorGraphics.Editor
         bool currentElementVisited;
     }
 
-    class SVGFormatException : Exception
+    internal class SVGFormatException : Exception
     {
         public SVGFormatException() {}
         public SVGFormatException(string message) : base(ComposeMessage(null, message)) {}
@@ -150,14 +151,14 @@ namespace Unity.VectorGraphics.Editor
         }
     }
 
-    class SVGDictionary : Dictionary<string, object> {}
+    internal class SVGDictionary : Dictionary<string, object> {}
 
-    class SVGDocument
+    internal class SVGDocument
     {
         public SVGDocument(XmlReader docReader, float dpi, Scene scene, int windowWidth, int windowHeight)
         {
             allElems = new ElemHandler[]
-            { circle, defs, ellipse, g, image, line, linearGradient, path, polygon, polyline, radialGradient, clipPath, rect, symbol, use, style };
+            { circle, defs, ellipse, g, image, line, linearGradient, path, polygon, polyline, radialGradient, clipPath, pattern, mask, rect, symbol, use, style };
 
             // These elements excluded below should not be immediatelly part of the hierarchy and can only be referenced
             elemsToAddToHierarchy = new HashSet<ElemHandler>(new ElemHandler[]
@@ -179,7 +180,7 @@ namespace Unity.VectorGraphics.Editor
                 throw new SVGFormatException("Document doesn't have 'svg' root");
             svg();
 
-            PostProcess();
+            PostProcess(scene.root);
         }
 
         public Dictionary<SceneNode, float> NodeOpacities { get { return nodeOpacity; } }
@@ -246,13 +247,14 @@ namespace Unity.VectorGraphics.Editor
             float cy = AttribLengthVal(node, "cy", 0.0f, DimType.Height);
             float r = AttribLengthVal(node, "r", 0.0f, DimType.Length);
 
-            var pathProps = new PathProperties() { stroke = stroke, head = strokeEnding, tail = strokeEnding, corners = strokeCorner };
-            var rect = new Rectangle() { pathProps = pathProps, fill = fill };
-            VectorUtils.MakeCircle(rect, new Vector2(cx, cy), r);
-            sceneNode.drawables = new List<IDrawable>(1);
-            sceneNode.drawables.Add(rect);
+            var circle = VectorUtils.MakeCircle(new Vector2(cx, cy), r);
+            circle.pathProps = new PathProperties() { stroke = stroke, head = strokeEnding, tail = strokeEnding, corners = strokeCorner };
+            circle.fill = fill;
 
-            ParseClip(node, sceneNode);
+            sceneNode.drawables = new List<IDrawable>(1);
+            sceneNode.drawables.Add(circle);
+
+            ParseClipAndMask(node, sceneNode);
 
             AddToSVGDictionaryIfPossible(node, sceneNode);
             if (ShouldDeclareSupportedChildren(node))
@@ -293,13 +295,14 @@ namespace Unity.VectorGraphics.Editor
             float rx = AttribLengthVal(node, "rx", 0.0f, DimType.Length);
             float ry = AttribLengthVal(node, "ry", 0.0f, DimType.Length);
 
-            var pathProps = new PathProperties() { stroke = stroke, corners = strokeCorner, head = strokeEnding, tail = strokeEnding };
-            var rect = new Rectangle() { pathProps = pathProps, fill = fill };
-            VectorUtils.MakeEllipse(rect, new Vector2(cx, cy), rx, ry);
-            sceneNode.drawables = new List<IDrawable>(1);
-            sceneNode.drawables.Add(rect);
+            var ellipse = VectorUtils.MakeEllipse(new Vector2(cx, cy), rx, ry);
+            ellipse.pathProps = new PathProperties() { stroke = stroke, corners = strokeCorner, head = strokeEnding, tail = strokeEnding };
+            ellipse.fill = fill;
 
-            ParseClip(node, sceneNode);
+            sceneNode.drawables = new List<IDrawable>(1);
+            sceneNode.drawables.Add(ellipse);
+
+            ParseClipAndMask(node, sceneNode);
 
             AddToSVGDictionaryIfPossible(node, sceneNode);
             if (ShouldDeclareSupportedChildren(node))
@@ -314,7 +317,7 @@ namespace Unity.VectorGraphics.Editor
             ParseOpacity(sceneNode);
             sceneNode.transform = SVGAttribParser.ParseTransform(node);
 
-            ParseClip(node, sceneNode);
+            ParseClipAndMask(node, sceneNode);
 
             AddToSVGDictionaryIfPossible(node, sceneNode);
             if (ShouldDeclareSupportedChildren(node))
@@ -371,7 +374,7 @@ namespace Unity.VectorGraphics.Editor
                 sceneNode.drawables = new List<IDrawable>(1);
                 sceneNode.drawables.Add(rect);
 
-                ParseClip(node, sceneNode);
+                ParseClipAndMask(node, sceneNode);
             }
 
             AddToSVGDictionaryIfPossible(node, sceneNode);
@@ -401,7 +404,7 @@ namespace Unity.VectorGraphics.Editor
             sceneNode.drawables = new List<IDrawable>(1);
             sceneNode.drawables.Add(path);
 
-            ParseClip(node, sceneNode);
+            ParseClipAndMask(node, sceneNode);
 
             AddToSVGDictionaryIfPossible(node, sceneNode);
             if (ShouldDeclareSupportedChildren(node))
@@ -512,7 +515,7 @@ namespace Unity.VectorGraphics.Editor
                 AddToSVGDictionaryIfPossible(node, sceneNode);
             }
 
-            ParseClip(node, sceneNode);
+            ParseClipAndMask(node, sceneNode);
 
             if (ShouldDeclareSupportedChildren(node))
                 SupportElems(node);  // No children supported
@@ -560,7 +563,7 @@ namespace Unity.VectorGraphics.Editor
                 sceneNode.drawables.Add(shape);
             }
 
-            ParseClip(node, sceneNode);
+            ParseClipAndMask(node, sceneNode);
 
             AddToSVGDictionaryIfPossible(node, sceneNode);
             if (ShouldDeclareSupportedChildren(node))
@@ -607,7 +610,7 @@ namespace Unity.VectorGraphics.Editor
                 sceneNode.drawables.Add(path);
             }
 
-            ParseClip(node, sceneNode);
+            ParseClipAndMask(node, sceneNode);
 
             AddToSVGDictionaryIfPossible(node, sceneNode);
             if (ShouldDeclareSupportedChildren(node))
@@ -689,8 +692,11 @@ namespace Unity.VectorGraphics.Editor
         void clipPath()
         {
             var node = docReader.VisitCurrent();
-            var clipRoot = new SceneNode(); // A new scene node instead of one precreated for us
-            clipRoot.transform = Matrix2D.identity;
+
+             // A new scene node instead of one precreated for us
+            var clipRoot = new SceneNode() {
+                transform = Matrix2D.identity
+            };
 
             bool relativeToWorld;
             switch (node["clipPathUnits"])
@@ -708,6 +714,8 @@ namespace Unity.VectorGraphics.Editor
                     throw node.GetUnsupportedAttribValException("clipPathUnits");
             }
 
+            clipData[clipRoot] = new ClipData() { worldRelative = relativeToWorld };
+
             AddToSVGDictionaryIfPossible(node, clipRoot);
             if (ShouldDeclareSupportedChildren(node))
                 SupportElems(node, allElems);
@@ -716,8 +724,131 @@ namespace Unity.VectorGraphics.Editor
             ParseChildren(node, node.Name);
             if (currentSceneNode.Pop() != clipRoot)
                 throw SVGFormatException.StackError;
-            
-            clipData[clipRoot] = new ClipData() { worldRelative = relativeToWorld };
+        }
+
+        void pattern()
+        {
+            var node = docReader.VisitCurrent();
+
+            // A new scene node instead of one precreated for us
+            var patternRoot = new SceneNode() {
+                transform = Matrix2D.identity
+            };
+
+            bool relativeToWorld = false;
+            switch (node["patternUnits"])
+            {
+                case null:
+                case "objectBoundingBox":
+                    relativeToWorld = false;
+                    break;
+
+                case "userSpaceOnUse":
+                    relativeToWorld = true;
+                    break;
+
+                default:
+                    throw node.GetUnsupportedAttribValException("patternUnits");
+            }
+
+            bool contentRelativeToWorld = true;
+            switch (node["patternContentUnits"])
+            {
+                case null:
+                case "userSpaceOnUse":
+                    contentRelativeToWorld = true;
+                    break;
+
+                case "objectBoundingBox":
+                    contentRelativeToWorld = false;
+                    break;
+
+                default:
+                    throw node.GetUnsupportedAttribValException("patternContentUnits");
+            }
+
+            var x = AttribLengthVal(node["x"], node, "x", 0.0f, DimType.Width);
+            var y = AttribLengthVal(node["y"], node, "y", 0.0f, DimType.Height);
+            var w = AttribLengthVal(node["width"], node, "width", 0.0f, DimType.Width);
+            var h = AttribLengthVal(node["height"], node, "height", 0.0f, DimType.Height);
+
+            var patternTransform = SVGAttribParser.ParseTransform(node, "patternTransform");
+
+            patternData[patternRoot] = new PatternData() {
+                worldRelative = relativeToWorld,
+                contentWorldRelative = contentRelativeToWorld,
+                patternTransform = patternTransform
+            };
+
+            var fill = new PatternFill() { 
+                pattern = patternRoot,
+                rect = new Rect(x, y, w, h)
+            };
+
+            AddToSVGDictionaryIfPossible(node, fill);
+            if (ShouldDeclareSupportedChildren(node))
+                SupportElems(node, allElems);
+
+            currentSceneNode.Push(patternRoot);
+            ParseChildren(node, node.Name);
+            if (currentSceneNode.Pop() != patternRoot)
+                throw SVGFormatException.StackError;
+        }
+
+        void mask()
+        {
+            var node = docReader.VisitCurrent();
+
+            // A new scene node instead of one precreated for us
+            var maskRoot = new SceneNode() {
+                transform = Matrix2D.identity
+            };
+
+            bool relativeToWorld;
+            switch (node["maskUnits"])
+            {
+                case null:
+                case "userSpaceOnUse":
+                    relativeToWorld = true;
+                    break;
+
+                case "objectBoundingBox":
+                    relativeToWorld = false;
+                    break;
+
+                default:
+                    throw node.GetUnsupportedAttribValException("maskUnits");
+            }
+
+            bool contentRelativeToWorld;
+            switch (node["maskContentUnits"])
+            {
+                case null:
+                case "userSpaceOnUse":
+                    contentRelativeToWorld = true;
+                    break;
+
+                case "objectBoundingBox":
+                    contentRelativeToWorld = false;
+                    break;
+
+                default:
+                    throw node.GetUnsupportedAttribValException("maskContentUnits");
+            }
+
+            maskData[maskRoot] = new MaskData() {
+                worldRelative = relativeToWorld,
+                contentWorldRelative = contentRelativeToWorld,
+            };
+
+            AddToSVGDictionaryIfPossible(node, maskRoot);
+            if (ShouldDeclareSupportedChildren(node))
+                SupportElems(node, allElems);
+
+            currentSceneNode.Push(maskRoot);
+            ParseChildren(node, node.Name);
+            if (currentSceneNode.Pop() != maskRoot)
+                throw SVGFormatException.StackError;
         }
 
         void rect()
@@ -756,7 +887,7 @@ namespace Unity.VectorGraphics.Editor
             sceneNode.drawables = new List<IDrawable>(1);
             sceneNode.drawables.Add(rect);
 
-            ParseClip(node, sceneNode);
+            ParseClipAndMask(node, sceneNode);
 
             AddToSVGDictionaryIfPossible(node, sceneNode);
             if (ShouldDeclareSupportedChildren(node))
@@ -859,7 +990,7 @@ namespace Unity.VectorGraphics.Editor
             if (currentSceneNode.Pop() != sceneNode)
                 throw SVGFormatException.StackError;
 
-            ParseClip(node, sceneNode);
+            ParseClipAndMask(node, sceneNode);
         }
 
         void use()
@@ -885,7 +1016,7 @@ namespace Unity.VectorGraphics.Editor
                 sceneNode.children = new List<SceneNode>();
             sceneNode.children.Add(referencedNode);
 
-            ParseClip(node, sceneNode);
+            ParseClipAndMask(node, sceneNode);
 
             AddToSVGDictionaryIfPossible(node, sceneNode);
             if (ShouldDeclareSupportedChildren(node))
@@ -1162,6 +1293,12 @@ namespace Unity.VectorGraphics.Editor
             return opacity;
         }
 
+        void ParseClipAndMask(XmlReaderIterator.Node node, SceneNode sceneNode)
+        {
+            ParseClip(node, sceneNode);
+            ParseMask(node, sceneNode);
+        }
+
         void ParseClip(XmlReaderIterator.Node node, SceneNode sceneNode)
         {
             string reference = null;
@@ -1169,27 +1306,57 @@ namespace Unity.VectorGraphics.Editor
             if (clipPath != null)
                 reference = SVGAttribParser.ParseURLRef(clipPath);
 
-            if (reference != null)
+            if (reference == null)
+                return;
+
+            var clipper = SVGAttribParser.ParseRelativeRef(reference, svgObjects) as SceneNode;
+            var clipperRoot = clipper;
+
+            ClipData data;
+            if (clipData.TryGetValue(clipper, out data) && !data.worldRelative)
             {
-                var clipper = SVGAttribParser.ParseRelativeRef(reference, svgObjects) as SceneNode;
-                var clipperRoot = clipper;
+                // If the referenced clip path units is in bounding-box space, we add an intermediate
+                // node to scale the content to the correct size.
+                var rect = VectorUtils.SceneNodeBounds(sceneNode);
+                var transform = Matrix2D.Translate(rect.position) * Matrix2D.Scale(rect.size);
 
-                ClipData data;
-                if (clipData.TryGetValue(clipper, out data) && !data.worldRelative)
-                {
-                    // If the referenced clip path units is in bounding-box space, we add an intermediate
-                    // node to scale the content to the correct size.
-                    var rect = VectorUtils.SceneNodeBounds(sceneNode);
-                    var transform = Matrix2D.Translate(rect.position) * Matrix2D.Scale(rect.size);
-
-                    clipperRoot = new SceneNode() {
-                        children = new List<SceneNode> { clipper },
-                        transform = transform
-                    };
-                }
-
-                sceneNode.clipper = clipperRoot;
+                clipperRoot = new SceneNode() {
+                    children = new List<SceneNode> { clipper },
+                    transform = transform
+                };
             }
+
+            sceneNode.clipper = clipperRoot;
+        }
+
+        void ParseMask(XmlReaderIterator.Node node, SceneNode sceneNode)
+        {
+            string reference = null;
+            string maskRef = node["mask"];
+            if (maskRef != null)
+                reference = SVGAttribParser.ParseURLRef(maskRef);
+
+            if (reference == null)
+                return;
+
+            var maskPath = SVGAttribParser.ParseRelativeRef(reference, svgObjects) as SceneNode;
+            var maskRoot = maskPath;
+
+            MaskData data;
+            if (maskData.TryGetValue(maskPath, out data) && !data.contentWorldRelative)
+            {
+                // If the referenced mask units is in bounding-box space, we add an intermediate
+                // node to scale the content to the correct size.
+                var rect = VectorUtils.SceneNodeBounds(sceneNode);
+                var transform = Matrix2D.Translate(rect.position) * Matrix2D.Scale(rect.size);
+
+                maskRoot = new SceneNode() {
+                    children = new List<SceneNode> { maskPath },
+                    transform = transform
+                };
+            }
+
+            sceneNode.clipper = maskRoot;
         }
 
         #endregion
@@ -1227,10 +1394,20 @@ namespace Unity.VectorGraphics.Editor
         #endregion
 
         #region Post-processing
-        void PostProcess()
+
+        struct HierarchyUpdate
         {
-            // Adjust gradient fills on all objects
-            foreach (var nodeInfo in VectorUtils.WorldTransformedSceneNodes(scene.root, nodeOpacity))
+            public SceneNode parent;
+            public SceneNode newNode;
+            public SceneNode replaceNode;
+        }
+
+        void PostProcess(SceneNode root)
+        {
+            var hierarchyUpdates = new List<HierarchyUpdate>();
+
+            // Adjust fills on all objects
+            foreach (var nodeInfo in VectorUtils.WorldTransformedSceneNodes(root, nodeOpacity))
             {
                 if (nodeInfo.node.drawables == null)
                     continue;
@@ -1238,12 +1415,36 @@ namespace Unity.VectorGraphics.Editor
                 {
                     Filled filled = drawable as Filled;
                     if (filled != null)
-                        AdjustFill(nodeInfo.node, nodeInfo.worldTransform, filled);
+                    {
+                        if (filled.fill is GradientFill)
+                        {
+                            AdjustGradientFill(nodeInfo.node, nodeInfo.worldTransform, filled);
+                        }
+                        else if (filled.fill is PatternFill)
+                        {
+                            var fillNode = AdjustPatternFill(nodeInfo.node, nodeInfo.worldTransform, filled);
+                            if (fillNode != null)
+                            {
+                                hierarchyUpdates.Add(new HierarchyUpdate() {
+                                    parent = nodeInfo.parent,
+                                    newNode = fillNode,
+                                    replaceNode = nodeInfo.node
+                                });
+                            }
+                        }
+                    }
                 }
+            }
+
+            foreach (var update in hierarchyUpdates)
+            {
+                var index = update.parent.children.IndexOf(update.replaceNode);
+                update.parent.children.RemoveAt(index);
+                update.parent.children.Insert(index, update.newNode);
             }
         }
 
-        void AdjustFill(SceneNode node, Matrix2D worldTransform, Filled filledObj)
+        void AdjustGradientFill(SceneNode node, Matrix2D worldTransform, Filled filledObj)
         {
             GradientFill fill = filledObj.fill as GradientFill;
             if (fill == null)
@@ -1349,15 +1550,108 @@ namespace Unity.VectorGraphics.Editor
             filledObj.fillTransform = Matrix2D.Scale(boundsInv) * gradTransform * extInfo.fillTransform.Inverse() * uvToWorld;
         }
 
-        void AdjustPath(SceneNode node, BezierContour contour, PathProperties pathProps)
+        SceneNode AdjustPatternFill(SceneNode node, Matrix2D worldTransform, Filled filledObj)
         {
-            if ((pathProps.stroke == null) || (pathProps.stroke.pattern == null) ||
-                (pathProps.stroke.pattern.Length == 0) || (pathProps.stroke.pattern[0] >= 0.0f))
-                return;
-            int patternCount = pathProps.stroke.pattern.Length;
-            float pathLength = VectorUtils.SegmentsLength(contour.segments, contour.closed);
-            for (int i = 0; i < patternCount; i++)
-                pathProps.stroke.pattern[i] = -pathProps.stroke.pattern[i] * pathLength;
+            PatternFill patternFill = filledObj.fill as PatternFill;
+            if (patternFill == null ||
+                Mathf.Abs(patternFill.rect.width) < VectorUtils.Epsilon ||
+                Mathf.Abs(patternFill.rect.height) < VectorUtils.Epsilon)
+            {
+                return null;
+            }
+            
+            var data = patternData[patternFill.pattern];
+
+            var nodeBounds = VectorUtils.SceneNodeBounds(node);
+            var patternRect = patternFill.rect;
+            if (!data.worldRelative)
+            {
+                patternRect.position *= nodeBounds.size;
+                patternRect.size *= nodeBounds.size;
+            }
+
+            // The pattern fill will create a new clipped node containing the repeating pattern
+            // as well as a sibling containing the original node. This will replace the original node.
+            var replacementNode = new SceneNode() {
+                transform = node.transform,
+                children = new List<SceneNode>(2)
+            };
+            node.transform = Matrix2D.identity;
+
+            // The pattern node will be wrapped in a scaling node if content isn't world relative
+            var patternNode = patternFill.pattern;
+            if (!data.contentWorldRelative)
+            {
+                patternNode = new SceneNode() {
+                    transform = Matrix2D.Scale(nodeBounds.size),
+                    children = new List<SceneNode> { patternFill.pattern }
+                };
+            }
+
+            PostProcess(patternNode); // This will take care of adjusting gradients/inner-patterns
+
+            // Duplicate the filling pattern
+            var grid = new SceneNode() {
+                transform = data.patternTransform,
+                children = new List<SceneNode>(20)
+            };
+
+            var fill = new SceneNode() {
+                transform = Matrix2D.identity,
+                children = new List<SceneNode> { grid },
+                clipper = node
+            };
+
+            // SVG patterns are clipped in their respective "boxes"
+            var box = new SceneNode() {
+                transform = Matrix2D.identity,
+                drawables = new List<IDrawable> { new Rectangle() { size = patternRect.size } }
+            };
+
+            // Compute the bounds of the shape to be filled, taking into account the pattern transform
+            var bounds = VectorUtils.SceneNodeBounds(node);
+            var invPatternTransform = data.patternTransform.Inverse();
+            var boundVerts = new Vector2[] {
+                invPatternTransform * new Vector2(bounds.xMin, bounds.yMin),
+                invPatternTransform * new Vector2(bounds.xMax, bounds.yMin),
+                invPatternTransform * new Vector2(bounds.xMax, bounds.yMax),
+                invPatternTransform * new Vector2(bounds.xMin, bounds.yMax)
+            };
+            bounds = VectorUtils.Bounds(boundVerts);
+
+            const int kMaxReps = 5000;
+            float xCount = bounds.xMax / patternRect.width;
+            float yCount = bounds.yMax / patternRect.height;
+            if (Mathf.Abs(patternRect.width) < VectorUtils.Epsilon ||
+                Mathf.Abs(patternRect.height) < VectorUtils.Epsilon ||
+                (xCount*yCount) > kMaxReps)
+            {
+                Debug.LogWarning("Ignoring pattern which would result in too many repetitions");
+                return null;
+            }
+
+            // Start the pattern filling process
+            var offset = patternRect.position;
+            float xStart = (int)(bounds.x / patternRect.width) * patternRect.width - patternRect.width;
+            float yStart = (int)(bounds.y / patternRect.height) * patternRect.height - patternRect.height;
+
+            for (float y = yStart; y < bounds.yMax; y += patternRect.height)
+            {
+                for (float x = xStart; x < bounds.xMax; x += patternRect.width)
+                {
+                    var pattern = new SceneNode() {
+                        transform = Matrix2D.Translate(new Vector2(x, y) + offset),
+                        children = new List<SceneNode> { patternNode },
+                        clipper = box
+                    };
+                    grid.children.Add(pattern);
+                }
+            }
+
+            replacementNode.children.Add(fill);
+            replacementNode.children.Add(node);
+
+            return replacementNode;
         }
 
         #endregion
@@ -1390,6 +1684,8 @@ namespace Unity.VectorGraphics.Editor
         Dictionary<SceneNode, NodeGlobalSceneState> nodeGlobalSceneState = new Dictionary<SceneNode, NodeGlobalSceneState>();
         Dictionary<SceneNode, float> nodeOpacity = new Dictionary<SceneNode, float>();
         Dictionary<SceneNode, ClipData> clipData = new Dictionary<SceneNode, ClipData>();
+        Dictionary<SceneNode, PatternData> patternData = new Dictionary<SceneNode, PatternData>();
+        Dictionary<SceneNode, MaskData> maskData = new Dictionary<SceneNode, MaskData>();
         Stack<Vector2> currentContainerSize = new Stack<Vector2>();
         Stack<SceneNode> currentSceneNode = new Stack<SceneNode>();
         GradientFill currentGradientFill;
@@ -1422,6 +1718,19 @@ namespace Unity.VectorGraphics.Editor
         struct ClipData
         {
             public bool worldRelative;
+        }
+
+        struct PatternData
+        {
+            public bool worldRelative;
+            public bool contentWorldRelative;
+            public Matrix2D patternTransform;
+        }
+
+        struct MaskData
+        {
+            public bool worldRelative;
+            public bool contentWorldRelative;
         }
     }
 
@@ -1608,7 +1917,7 @@ namespace Unity.VectorGraphics.Editor
         SVGStyleSheet globalStyleSheet;
     }
 
-    class SVGAttribParser
+    internal class SVGAttribParser
     {
         public static List<BezierContour> ParsePath(XmlReaderIterator.Node node)
         {
@@ -1737,7 +2046,7 @@ namespace Unity.VectorGraphics.Editor
             // Named color
             if (namedColors == null)
                 namedColors = new NamedWebColorDictionary();
-            return namedColors[colorString];
+            return namedColors[colorString.ToLower()];
         }
 
         public static string ParseURLRef(string url)
@@ -1965,6 +2274,10 @@ namespace Unity.VectorGraphics.Editor
                             fill = (new SVGAttribParser(paintParts[1], attribName, opacity, mode, dict, false)).fill;
                         else Debug.LogWarning("Referencing non-existent paint (" + reference + ")");
                     }
+
+                    if (fill != null)
+                        fill.opacity = opacity;
+    
                     return;
                 }
             }
@@ -2154,759 +2467,154 @@ namespace Unity.VectorGraphics.Editor
     {
         public NamedWebColorDictionary()
         {
-            this["snow"] = new Color(255 / 255.0f, 250 / 255.0f, 250 / 255.0f);
-            this["ghost white"] = new Color(248 / 255.0f, 248 / 255.0f, 255 / 255.0f);
-            this["GhostWhite"] = new Color(248 / 255.0f, 248 / 255.0f, 255 / 255.0f);
-            this["white smoke"] = new Color(245 / 255.0f, 245 / 255.0f, 245 / 255.0f);
-            this["WhiteSmoke"] = new Color(245 / 255.0f, 245 / 255.0f, 245 / 255.0f);
-            this["gainsboro"] = new Color(220 / 255.0f, 220 / 255.0f, 220 / 255.0f);
-            this["floral white"] = new Color(255 / 255.0f, 250 / 255.0f, 240 / 255.0f);
-            this["FloralWhite"] = new Color(255 / 255.0f, 250 / 255.0f, 240 / 255.0f);
-            this["old lace"] = new Color(253 / 255.0f, 245 / 255.0f, 230 / 255.0f);
-            this["OldLace"] = new Color(253 / 255.0f, 245 / 255.0f, 230 / 255.0f);
-            this["linen"] = new Color(250 / 255.0f, 240 / 255.0f, 230 / 255.0f);
-            this["antique white"] = new Color(250 / 255.0f, 235 / 255.0f, 215 / 255.0f);
-            this["AntiqueWhite"] = new Color(250 / 255.0f, 235 / 255.0f, 215 / 255.0f);
-            this["papaya whip"] = new Color(255 / 255.0f, 239 / 255.0f, 213 / 255.0f);
-            this["PapayaWhip"] = new Color(255 / 255.0f, 239 / 255.0f, 213 / 255.0f);
-            this["blanched almond"] = new Color(255 / 255.0f, 235 / 255.0f, 205 / 255.0f);
-            this["BlanchedAlmond"] = new Color(255 / 255.0f, 235 / 255.0f, 205 / 255.0f);
-            this["bisque"] = new Color(255 / 255.0f, 228 / 255.0f, 196 / 255.0f);
-            this["peach puff"] = new Color(255 / 255.0f, 218 / 255.0f, 185 / 255.0f);
-            this["PeachPuff"] = new Color(255 / 255.0f, 218 / 255.0f, 185 / 255.0f);
-            this["navajo white"] = new Color(255 / 255.0f, 222 / 255.0f, 173 / 255.0f);
-            this["NavajoWhite"] = new Color(255 / 255.0f, 222 / 255.0f, 173 / 255.0f);
-            this["moccasin"] = new Color(255 / 255.0f, 228 / 255.0f, 181 / 255.0f);
-            this["cornsilk"] = new Color(255 / 255.0f, 248 / 255.0f, 220 / 255.0f);
-            this["ivory"] = new Color(255 / 255.0f, 255 / 255.0f, 240 / 255.0f);
-            this["lemon chiffon"] = new Color(255 / 255.0f, 250 / 255.0f, 205 / 255.0f);
-            this["LemonChiffon"] = new Color(255 / 255.0f, 250 / 255.0f, 205 / 255.0f);
-            this["seashell"] = new Color(255 / 255.0f, 245 / 255.0f, 238 / 255.0f);
-            this["honeydew"] = new Color(240 / 255.0f, 255 / 255.0f, 240 / 255.0f);
-            this["mint cream"] = new Color(245 / 255.0f, 255 / 255.0f, 250 / 255.0f);
-            this["MintCream"] = new Color(245 / 255.0f, 255 / 255.0f, 250 / 255.0f);
-            this["azure"] = new Color(240 / 255.0f, 255 / 255.0f, 255 / 255.0f);
-            this["alice blue"] = new Color(240 / 255.0f, 248 / 255.0f, 255 / 255.0f);
-            this["AliceBlue"] = new Color(240 / 255.0f, 248 / 255.0f, 255 / 255.0f);
-            this["lavender"] = new Color(230 / 255.0f, 230 / 255.0f, 250 / 255.0f);
-            this["lavender blush"] = new Color(255 / 255.0f, 240 / 255.0f, 245 / 255.0f);
-            this["LavenderBlush"] = new Color(255 / 255.0f, 240 / 255.0f, 245 / 255.0f);
-            this["misty rose"] = new Color(255 / 255.0f, 228 / 255.0f, 225 / 255.0f);
-            this["MistyRose"] = new Color(255 / 255.0f, 228 / 255.0f, 225 / 255.0f);
-            this["white"] = new Color(255 / 255.0f, 255 / 255.0f, 255 / 255.0f);
-            this["black"] = new Color(0 / 255.0f, 0 / 255.0f, 0 / 255.0f);
-            this["dark slate"] = new Color(47 / 255.0f, 79 / 255.0f, 79 / 255.0f);
-            this["DarkSlateGray"] = new Color(47 / 255.0f, 79 / 255.0f, 79 / 255.0f);
-            this["dark slate"] = new Color(47 / 255.0f, 79 / 255.0f, 79 / 255.0f);
-            this["DarkSlateGrey"] = new Color(47 / 255.0f, 79 / 255.0f, 79 / 255.0f);
-            this["dim gray"] = new Color(105 / 255.0f, 105 / 255.0f, 105 / 255.0f);
-            this["DimGray"] = new Color(105 / 255.0f, 105 / 255.0f, 105 / 255.0f);
-            this["dim grey"] = new Color(105 / 255.0f, 105 / 255.0f, 105 / 255.0f);
-            this["DimGrey"] = new Color(105 / 255.0f, 105 / 255.0f, 105 / 255.0f);
-            this["slate gray"] = new Color(112 / 255.0f, 128 / 255.0f, 144 / 255.0f);
-            this["SlateGray"] = new Color(112 / 255.0f, 128 / 255.0f, 144 / 255.0f);
-            this["slate grey"] = new Color(112 / 255.0f, 128 / 255.0f, 144 / 255.0f);
-            this["SlateGrey"] = new Color(112 / 255.0f, 128 / 255.0f, 144 / 255.0f);
-            this["light slate"] = new Color(119 / 255.0f, 136 / 255.0f, 153 / 255.0f);
-            this["LightSlateGray"] = new Color(119 / 255.0f, 136 / 255.0f, 153 / 255.0f);
-            this["light slate"] = new Color(119 / 255.0f, 136 / 255.0f, 153 / 255.0f);
-            this["LightSlateGrey"] = new Color(119 / 255.0f, 136 / 255.0f, 153 / 255.0f);
-            this["gray"] = new Color(190 / 255.0f, 190 / 255.0f, 190 / 255.0f);
-            this["grey"] = new Color(190 / 255.0f, 190 / 255.0f, 190 / 255.0f);
-            this["light grey"] = new Color(211 / 255.0f, 211 / 255.0f, 211 / 255.0f);
-            this["LightGrey"] = new Color(211 / 255.0f, 211 / 255.0f, 211 / 255.0f);
-            this["light gray"] = new Color(211 / 255.0f, 211 / 255.0f, 211 / 255.0f);
-            this["LightGray"] = new Color(211 / 255.0f, 211 / 255.0f, 211 / 255.0f);
-            this["midnight blue"] = new Color(25 / 255.0f, 25 / 255.0f, 112 / 255.0f);
-            this["MidnightBlue"] = new Color(25 / 255.0f, 25 / 255.0f, 112 / 255.0f);
-            this["navy"] = new Color(0 / 255.0f, 0 / 255.0f, 128 / 255.0f);
-            this["navy blue"] = new Color(0 / 255.0f, 0 / 255.0f, 128 / 255.0f);
-            this["NavyBlue"] = new Color(0 / 255.0f, 0 / 255.0f, 128 / 255.0f);
-            this["cornflower blue"] = new Color(100 / 255.0f, 149 / 255.0f, 237 / 255.0f);
-            this["CornflowerBlue"] = new Color(100 / 255.0f, 149 / 255.0f, 237 / 255.0f);
-            this["dark slate"] = new Color(72 / 255.0f, 61 / 255.0f, 139 / 255.0f);
-            this["DarkSlateBlue"] = new Color(72 / 255.0f, 61 / 255.0f, 139 / 255.0f);
-            this["slate blue"] = new Color(106 / 255.0f, 90 / 255.0f, 205 / 255.0f);
-            this["SlateBlue"] = new Color(106 / 255.0f, 90 / 255.0f, 205 / 255.0f);
-            this["medium slate"] = new Color(123 / 255.0f, 104 / 255.0f, 238 / 255.0f);
-            this["MediumSlateBlue"] = new Color(123 / 255.0f, 104 / 255.0f, 238 / 255.0f);
-            this["light slate"] = new Color(132 / 255.0f, 112 / 255.0f, 255 / 255.0f);
-            this["LightSlateBlue"] = new Color(132 / 255.0f, 112 / 255.0f, 255 / 255.0f);
-            this["medium blue"] = new Color(0 / 255.0f, 0 / 255.0f, 205 / 255.0f);
-            this["MediumBlue"] = new Color(0 / 255.0f, 0 / 255.0f, 205 / 255.0f);
-            this["royal blue"] = new Color(65 / 255.0f, 105 / 255.0f, 225 / 255.0f);
-            this["RoyalBlue"] = new Color(65 / 255.0f, 105 / 255.0f, 225 / 255.0f);
-            this["blue"] = new Color(0 / 255.0f, 0 / 255.0f, 255 / 255.0f);
-            this["dodger blue"] = new Color(30 / 255.0f, 144 / 255.0f, 255 / 255.0f);
-            this["DodgerBlue"] = new Color(30 / 255.0f, 144 / 255.0f, 255 / 255.0f);
-            this["deep sky"] = new Color(0 / 255.0f, 191 / 255.0f, 255 / 255.0f);
-            this["DeepSkyBlue"] = new Color(0 / 255.0f, 191 / 255.0f, 255 / 255.0f);
-            this["sky blue"] = new Color(135 / 255.0f, 206 / 255.0f, 235 / 255.0f);
-            this["SkyBlue"] = new Color(135 / 255.0f, 206 / 255.0f, 235 / 255.0f);
-            this["light sky"] = new Color(135 / 255.0f, 206 / 255.0f, 250 / 255.0f);
-            this["LightSkyBlue"] = new Color(135 / 255.0f, 206 / 255.0f, 250 / 255.0f);
-            this["steel blue"] = new Color(70 / 255.0f, 130 / 255.0f, 180 / 255.0f);
-            this["SteelBlue"] = new Color(70 / 255.0f, 130 / 255.0f, 180 / 255.0f);
-            this["light steel"] = new Color(176 / 255.0f, 196 / 255.0f, 222 / 255.0f);
-            this["LightSteelBlue"] = new Color(176 / 255.0f, 196 / 255.0f, 222 / 255.0f);
-            this["light blue"] = new Color(173 / 255.0f, 216 / 255.0f, 230 / 255.0f);
-            this["LightBlue"] = new Color(173 / 255.0f, 216 / 255.0f, 230 / 255.0f);
-            this["powder blue"] = new Color(176 / 255.0f, 224 / 255.0f, 230 / 255.0f);
-            this["PowderBlue"] = new Color(176 / 255.0f, 224 / 255.0f, 230 / 255.0f);
-            this["pale turquoise"] = new Color(175 / 255.0f, 238 / 255.0f, 238 / 255.0f);
-            this["PaleTurquoise"] = new Color(175 / 255.0f, 238 / 255.0f, 238 / 255.0f);
-            this["dark turquoise"] = new Color(0 / 255.0f, 206 / 255.0f, 209 / 255.0f);
-            this["DarkTurquoise"] = new Color(0 / 255.0f, 206 / 255.0f, 209 / 255.0f);
-            this["medium turquoise"] = new Color(72 / 255.0f, 209 / 255.0f, 204 / 255.0f);
-            this["MediumTurquoise"] = new Color(72 / 255.0f, 209 / 255.0f, 204 / 255.0f);
-            this["turquoise"] = new Color(64 / 255.0f, 224 / 255.0f, 208 / 255.0f);
-            this["cyan"] = new Color(0 / 255.0f, 255 / 255.0f, 255 / 255.0f);
-            this["light cyan"] = new Color(224 / 255.0f, 255 / 255.0f, 255 / 255.0f);
-            this["LightCyan"] = new Color(224 / 255.0f, 255 / 255.0f, 255 / 255.0f);
-            this["cadet blue"] = new Color(95 / 255.0f, 158 / 255.0f, 160 / 255.0f);
-            this["CadetBlue"] = new Color(95 / 255.0f, 158 / 255.0f, 160 / 255.0f);
-            this["medium aquamarine"] = new Color(102 / 255.0f, 205 / 255.0f, 170 / 255.0f);
-            this["MediumAquamarine"] = new Color(102 / 255.0f, 205 / 255.0f, 170 / 255.0f);
-            this["aquamarine"] = new Color(127 / 255.0f, 255 / 255.0f, 212 / 255.0f);
-            this["dark green"] = new Color(0 / 255.0f, 100 / 255.0f, 0 / 255.0f);
-            this["DarkGreen"] = new Color(0 / 255.0f, 100 / 255.0f, 0 / 255.0f);
-            this["dark olive"] = new Color(85 / 255.0f, 107 / 255.0f, 47 / 255.0f);
-            this["DarkOliveGreen"] = new Color(85 / 255.0f, 107 / 255.0f, 47 / 255.0f);
-            this["dark sea"] = new Color(143 / 255.0f, 188 / 255.0f, 143 / 255.0f);
-            this["DarkSeaGreen"] = new Color(143 / 255.0f, 188 / 255.0f, 143 / 255.0f);
-            this["sea green"] = new Color(46 / 255.0f, 139 / 255.0f, 87 / 255.0f);
-            this["SeaGreen"] = new Color(46 / 255.0f, 139 / 255.0f, 87 / 255.0f);
-            this["medium sea"] = new Color(60 / 255.0f, 179 / 255.0f, 113 / 255.0f);
-            this["MediumSeaGreen"] = new Color(60 / 255.0f, 179 / 255.0f, 113 / 255.0f);
-            this["light sea"] = new Color(32 / 255.0f, 178 / 255.0f, 170 / 255.0f);
-            this["LightSeaGreen"] = new Color(32 / 255.0f, 178 / 255.0f, 170 / 255.0f);
-            this["pale green"] = new Color(152 / 255.0f, 251 / 255.0f, 152 / 255.0f);
-            this["PaleGreen"] = new Color(152 / 255.0f, 251 / 255.0f, 152 / 255.0f);
-            this["spring green"] = new Color(0 / 255.0f, 255 / 255.0f, 127 / 255.0f);
-            this["SpringGreen"] = new Color(0 / 255.0f, 255 / 255.0f, 127 / 255.0f);
-            this["lawn green"] = new Color(124 / 255.0f, 252 / 255.0f, 0 / 255.0f);
-            this["LawnGreen"] = new Color(124 / 255.0f, 252 / 255.0f, 0 / 255.0f);
-            this["green"] = new Color(0 / 255.0f, 255 / 255.0f, 0 / 255.0f);
-            this["chartreuse"] = new Color(127 / 255.0f, 255 / 255.0f, 0 / 255.0f);
-            this["medium spring"] = new Color(0 / 255.0f, 250 / 255.0f, 154 / 255.0f);
-            this["MediumSpringGreen"] = new Color(0 / 255.0f, 250 / 255.0f, 154 / 255.0f);
-            this["green yellow"] = new Color(173 / 255.0f, 255 / 255.0f, 47 / 255.0f);
-            this["GreenYellow"] = new Color(173 / 255.0f, 255 / 255.0f, 47 / 255.0f);
-            this["lime"] = new Color(0 / 255.0f, 255 / 255.0f, 0 / 255.0f);
-            this["lime green"] = new Color(50 / 255.0f, 205 / 255.0f, 50 / 255.0f);
-            this["LimeGreen"] = new Color(50 / 255.0f, 205 / 255.0f, 50 / 255.0f);
-            this["yellow green"] = new Color(154 / 255.0f, 205 / 255.0f, 50 / 255.0f);
-            this["YellowGreen"] = new Color(154 / 255.0f, 205 / 255.0f, 50 / 255.0f);
-            this["forest green"] = new Color(34 / 255.0f, 139 / 255.0f, 34 / 255.0f);
-            this["ForestGreen"] = new Color(34 / 255.0f, 139 / 255.0f, 34 / 255.0f);
-            this["olive drab"] = new Color(107 / 255.0f, 142 / 255.0f, 35 / 255.0f);
-            this["OliveDrab"] = new Color(107 / 255.0f, 142 / 255.0f, 35 / 255.0f);
-            this["dark khaki"] = new Color(189 / 255.0f, 183 / 255.0f, 107 / 255.0f);
-            this["DarkKhaki"] = new Color(189 / 255.0f, 183 / 255.0f, 107 / 255.0f);
-            this["khaki"] = new Color(240 / 255.0f, 230 / 255.0f, 140 / 255.0f);
-            this["pale goldenrod"] = new Color(238 / 255.0f, 232 / 255.0f, 170 / 255.0f);
-            this["PaleGoldenrod"] = new Color(238 / 255.0f, 232 / 255.0f, 170 / 255.0f);
-            this["light goldenrod"] = new Color(250 / 255.0f, 250 / 255.0f, 210 / 255.0f);
-            this["LightGoldenrodYellow"] = new Color(250 / 255.0f, 250 / 255.0f, 210 / 255.0f);
-            this["light yellow"] = new Color(255 / 255.0f, 255 / 255.0f, 224 / 255.0f);
-            this["LightYellow"] = new Color(255 / 255.0f, 255 / 255.0f, 224 / 255.0f);
-            this["yellow"] = new Color(255 / 255.0f, 255 / 255.0f, 0 / 255.0f);
-            this["gold"] = new Color(255 / 255.0f, 215 / 255.0f, 0 / 255.0f);
-            this["light goldenrod"] = new Color(238 / 255.0f, 221 / 255.0f, 130 / 255.0f);
-            this["LightGoldenrod"] = new Color(238 / 255.0f, 221 / 255.0f, 130 / 255.0f);
-            this["goldenrod"] = new Color(218 / 255.0f, 165 / 255.0f, 32 / 255.0f);
-            this["dark goldenrod"] = new Color(184 / 255.0f, 134 / 255.0f, 11 / 255.0f);
-            this["DarkGoldenrod"] = new Color(184 / 255.0f, 134 / 255.0f, 11 / 255.0f);
-            this["rosy brown"] = new Color(188 / 255.0f, 143 / 255.0f, 143 / 255.0f);
-            this["RosyBrown"] = new Color(188 / 255.0f, 143 / 255.0f, 143 / 255.0f);
-            this["indian red"] = new Color(205 / 255.0f, 92 / 255.0f, 92 / 255.0f);
-            this["IndianRed"] = new Color(205 / 255.0f, 92 / 255.0f, 92 / 255.0f);
-            this["saddle brown"] = new Color(139 / 255.0f, 69 / 255.0f, 19 / 255.0f);
-            this["SaddleBrown"] = new Color(139 / 255.0f, 69 / 255.0f, 19 / 255.0f);
-            this["sienna"] = new Color(160 / 255.0f, 82 / 255.0f, 45 / 255.0f);
-            this["peru"] = new Color(205 / 255.0f, 133 / 255.0f, 63 / 255.0f);
-            this["burlywood"] = new Color(222 / 255.0f, 184 / 255.0f, 135 / 255.0f);
-            this["beige"] = new Color(245 / 255.0f, 245 / 255.0f, 220 / 255.0f);
-            this["wheat"] = new Color(245 / 255.0f, 222 / 255.0f, 179 / 255.0f);
-            this["sandy brown"] = new Color(244 / 255.0f, 164 / 255.0f, 96 / 255.0f);
-            this["SandyBrown"] = new Color(244 / 255.0f, 164 / 255.0f, 96 / 255.0f);
-            this["tan"] = new Color(210 / 255.0f, 180 / 255.0f, 140 / 255.0f);
-            this["chocolate"] = new Color(210 / 255.0f, 105 / 255.0f, 30 / 255.0f);
-            this["firebrick"] = new Color(178 / 255.0f, 34 / 255.0f, 34 / 255.0f);
-            this["brown"] = new Color(165 / 255.0f, 42 / 255.0f, 42 / 255.0f);
-            this["dark salmon"] = new Color(233 / 255.0f, 150 / 255.0f, 122 / 255.0f);
-            this["DarkSalmon"] = new Color(233 / 255.0f, 150 / 255.0f, 122 / 255.0f);
-            this["salmon"] = new Color(250 / 255.0f, 128 / 255.0f, 114 / 255.0f);
-            this["light salmon"] = new Color(255 / 255.0f, 160 / 255.0f, 122 / 255.0f);
-            this["LightSalmon"] = new Color(255 / 255.0f, 160 / 255.0f, 122 / 255.0f);
-            this["orange"] = new Color(255 / 255.0f, 165 / 255.0f, 0 / 255.0f);
-            this["dark orange"] = new Color(255 / 255.0f, 140 / 255.0f, 0 / 255.0f);
-            this["DarkOrange"] = new Color(255 / 255.0f, 140 / 255.0f, 0 / 255.0f);
-            this["coral"] = new Color(255 / 255.0f, 127 / 255.0f, 80 / 255.0f);
-            this["light coral"] = new Color(240 / 255.0f, 128 / 255.0f, 128 / 255.0f);
-            this["LightCoral"] = new Color(240 / 255.0f, 128 / 255.0f, 128 / 255.0f);
-            this["tomato"] = new Color(255 / 255.0f, 99 / 255.0f, 71 / 255.0f);
-            this["orange red"] = new Color(255 / 255.0f, 69 / 255.0f, 0 / 255.0f);
-            this["OrangeRed"] = new Color(255 / 255.0f, 69 / 255.0f, 0 / 255.0f);
-            this["red"] = new Color(255 / 255.0f, 0 / 255.0f, 0 / 255.0f);
-            this["hot pink"] = new Color(255 / 255.0f, 105 / 255.0f, 180 / 255.0f);
-            this["HotPink"] = new Color(255 / 255.0f, 105 / 255.0f, 180 / 255.0f);
-            this["deep pink"] = new Color(255 / 255.0f, 20 / 255.0f, 147 / 255.0f);
-            this["DeepPink"] = new Color(255 / 255.0f, 20 / 255.0f, 147 / 255.0f);
-            this["pink"] = new Color(255 / 255.0f, 192 / 255.0f, 203 / 255.0f);
-            this["light pink"] = new Color(255 / 255.0f, 182 / 255.0f, 193 / 255.0f);
-            this["LightPink"] = new Color(255 / 255.0f, 182 / 255.0f, 193 / 255.0f);
-            this["pale violet"] = new Color(219 / 255.0f, 112 / 255.0f, 147 / 255.0f);
-            this["PaleVioletRed"] = new Color(219 / 255.0f, 112 / 255.0f, 147 / 255.0f);
-            this["maroon"] = new Color(176 / 255.0f, 48 / 255.0f, 96 / 255.0f);
-            this["medium violet"] = new Color(199 / 255.0f, 21 / 255.0f, 133 / 255.0f);
-            this["MediumVioletRed"] = new Color(199 / 255.0f, 21 / 255.0f, 133 / 255.0f);
-            this["violet red"] = new Color(208 / 255.0f, 32 / 255.0f, 144 / 255.0f);
-            this["VioletRed"] = new Color(208 / 255.0f, 32 / 255.0f, 144 / 255.0f);
-            this["magenta"] = new Color(255 / 255.0f, 0 / 255.0f, 255 / 255.0f);
-            this["violet"] = new Color(238 / 255.0f, 130 / 255.0f, 238 / 255.0f);
-            this["plum"] = new Color(221 / 255.0f, 160 / 255.0f, 221 / 255.0f);
-            this["orchid"] = new Color(218 / 255.0f, 112 / 255.0f, 214 / 255.0f);
-            this["medium orchid"] = new Color(186 / 255.0f, 85 / 255.0f, 211 / 255.0f);
-            this["MediumOrchid"] = new Color(186 / 255.0f, 85 / 255.0f, 211 / 255.0f);
-            this["dark orchid"] = new Color(153 / 255.0f, 50 / 255.0f, 204 / 255.0f);
-            this["DarkOrchid"] = new Color(153 / 255.0f, 50 / 255.0f, 204 / 255.0f);
-            this["dark violet"] = new Color(148 / 255.0f, 0 / 255.0f, 211 / 255.0f);
-            this["DarkViolet"] = new Color(148 / 255.0f, 0 / 255.0f, 211 / 255.0f);
-            this["blue violet"] = new Color(138 / 255.0f, 43 / 255.0f, 226 / 255.0f);
-            this["BlueViolet"] = new Color(138 / 255.0f, 43 / 255.0f, 226 / 255.0f);
-            this["purple"] = new Color(160 / 255.0f, 32 / 255.0f, 240 / 255.0f);
-            this["medium purple"] = new Color(147 / 255.0f, 112 / 255.0f, 219 / 255.0f);
-            this["MediumPurple"] = new Color(147 / 255.0f, 112 / 255.0f, 219 / 255.0f);
-            this["thistle"] = new Color(216 / 255.0f, 191 / 255.0f, 216 / 255.0f);
-            this["snow1"] = new Color(255 / 255.0f, 250 / 255.0f, 250 / 255.0f);
-            this["snow2"] = new Color(238 / 255.0f, 233 / 255.0f, 233 / 255.0f);
-            this["snow3"] = new Color(205 / 255.0f, 201 / 255.0f, 201 / 255.0f);
-            this["snow4"] = new Color(139 / 255.0f, 137 / 255.0f, 137 / 255.0f);
-            this["seashell1"] = new Color(255 / 255.0f, 245 / 255.0f, 238 / 255.0f);
-            this["seashell2"] = new Color(238 / 255.0f, 229 / 255.0f, 222 / 255.0f);
-            this["seashell3"] = new Color(205 / 255.0f, 197 / 255.0f, 191 / 255.0f);
-            this["seashell4"] = new Color(139 / 255.0f, 134 / 255.0f, 130 / 255.0f);
-            this["AntiqueWhite1"] = new Color(255 / 255.0f, 239 / 255.0f, 219 / 255.0f);
-            this["AntiqueWhite2"] = new Color(238 / 255.0f, 223 / 255.0f, 204 / 255.0f);
-            this["AntiqueWhite3"] = new Color(205 / 255.0f, 192 / 255.0f, 176 / 255.0f);
-            this["AntiqueWhite4"] = new Color(139 / 255.0f, 131 / 255.0f, 120 / 255.0f);
-            this["bisque1"] = new Color(255 / 255.0f, 228 / 255.0f, 196 / 255.0f);
-            this["bisque2"] = new Color(238 / 255.0f, 213 / 255.0f, 183 / 255.0f);
-            this["bisque3"] = new Color(205 / 255.0f, 183 / 255.0f, 158 / 255.0f);
-            this["bisque4"] = new Color(139 / 255.0f, 125 / 255.0f, 107 / 255.0f);
-            this["PeachPuff1"] = new Color(255 / 255.0f, 218 / 255.0f, 185 / 255.0f);
-            this["PeachPuff2"] = new Color(238 / 255.0f, 203 / 255.0f, 173 / 255.0f);
-            this["PeachPuff3"] = new Color(205 / 255.0f, 175 / 255.0f, 149 / 255.0f);
-            this["PeachPuff4"] = new Color(139 / 255.0f, 119 / 255.0f, 101 / 255.0f);
-            this["NavajoWhite1"] = new Color(255 / 255.0f, 222 / 255.0f, 173 / 255.0f);
-            this["NavajoWhite2"] = new Color(238 / 255.0f, 207 / 255.0f, 161 / 255.0f);
-            this["NavajoWhite3"] = new Color(205 / 255.0f, 179 / 255.0f, 139 / 255.0f);
-            this["NavajoWhite4"] = new Color(139 / 255.0f, 121 / 255.0f, 94 / 255.0f);
-            this["LemonChiffon1"] = new Color(255 / 255.0f, 250 / 255.0f, 205 / 255.0f);
-            this["LemonChiffon2"] = new Color(238 / 255.0f, 233 / 255.0f, 191 / 255.0f);
-            this["LemonChiffon3"] = new Color(205 / 255.0f, 201 / 255.0f, 165 / 255.0f);
-            this["LemonChiffon4"] = new Color(139 / 255.0f, 137 / 255.0f, 112 / 255.0f);
-            this["cornsilk1"] = new Color(255 / 255.0f, 248 / 255.0f, 220 / 255.0f);
-            this["cornsilk2"] = new Color(238 / 255.0f, 232 / 255.0f, 205 / 255.0f);
-            this["cornsilk3"] = new Color(205 / 255.0f, 200 / 255.0f, 177 / 255.0f);
-            this["cornsilk4"] = new Color(139 / 255.0f, 136 / 255.0f, 120 / 255.0f);
-            this["ivory1"] = new Color(255 / 255.0f, 255 / 255.0f, 240 / 255.0f);
-            this["ivory2"] = new Color(238 / 255.0f, 238 / 255.0f, 224 / 255.0f);
-            this["ivory3"] = new Color(205 / 255.0f, 205 / 255.0f, 193 / 255.0f);
-            this["ivory4"] = new Color(139 / 255.0f, 139 / 255.0f, 131 / 255.0f);
-            this["honeydew1"] = new Color(240 / 255.0f, 255 / 255.0f, 240 / 255.0f);
-            this["honeydew2"] = new Color(224 / 255.0f, 238 / 255.0f, 224 / 255.0f);
-            this["honeydew3"] = new Color(193 / 255.0f, 205 / 255.0f, 193 / 255.0f);
-            this["honeydew4"] = new Color(131 / 255.0f, 139 / 255.0f, 131 / 255.0f);
-            this["LavenderBlush1"] = new Color(255 / 255.0f, 240 / 255.0f, 245 / 255.0f);
-            this["LavenderBlush2"] = new Color(238 / 255.0f, 224 / 255.0f, 229 / 255.0f);
-            this["LavenderBlush3"] = new Color(205 / 255.0f, 193 / 255.0f, 197 / 255.0f);
-            this["LavenderBlush4"] = new Color(139 / 255.0f, 131 / 255.0f, 134 / 255.0f);
-            this["MistyRose1"] = new Color(255 / 255.0f, 228 / 255.0f, 225 / 255.0f);
-            this["MistyRose2"] = new Color(238 / 255.0f, 213 / 255.0f, 210 / 255.0f);
-            this["MistyRose3"] = new Color(205 / 255.0f, 183 / 255.0f, 181 / 255.0f);
-            this["MistyRose4"] = new Color(139 / 255.0f, 125 / 255.0f, 123 / 255.0f);
-            this["azure1"] = new Color(240 / 255.0f, 255 / 255.0f, 255 / 255.0f);
-            this["azure2"] = new Color(224 / 255.0f, 238 / 255.0f, 238 / 255.0f);
-            this["azure3"] = new Color(193 / 255.0f, 205 / 255.0f, 205 / 255.0f);
-            this["azure4"] = new Color(131 / 255.0f, 139 / 255.0f, 139 / 255.0f);
-            this["SlateBlue1"] = new Color(131 / 255.0f, 111 / 255.0f, 255 / 255.0f);
-            this["SlateBlue2"] = new Color(122 / 255.0f, 103 / 255.0f, 238 / 255.0f);
-            this["SlateBlue3"] = new Color(105 / 255.0f, 89 / 255.0f, 205 / 255.0f);
-            this["SlateBlue4"] = new Color(71 / 255.0f, 60 / 255.0f, 139 / 255.0f);
-            this["RoyalBlue1"] = new Color(72 / 255.0f, 118 / 255.0f, 255 / 255.0f);
-            this["RoyalBlue2"] = new Color(67 / 255.0f, 110 / 255.0f, 238 / 255.0f);
-            this["RoyalBlue3"] = new Color(58 / 255.0f, 95 / 255.0f, 205 / 255.0f);
-            this["RoyalBlue4"] = new Color(39 / 255.0f, 64 / 255.0f, 139 / 255.0f);
-            this["blue1"] = new Color(0 / 255.0f, 0 / 255.0f, 255 / 255.0f);
-            this["blue2"] = new Color(0 / 255.0f, 0 / 255.0f, 238 / 255.0f);
-            this["blue3"] = new Color(0 / 255.0f, 0 / 255.0f, 205 / 255.0f);
-            this["blue4"] = new Color(0 / 255.0f, 0 / 255.0f, 139 / 255.0f);
-            this["DodgerBlue1"] = new Color(30 / 255.0f, 144 / 255.0f, 255 / 255.0f);
-            this["DodgerBlue2"] = new Color(28 / 255.0f, 134 / 255.0f, 238 / 255.0f);
-            this["DodgerBlue3"] = new Color(24 / 255.0f, 116 / 255.0f, 205 / 255.0f);
-            this["DodgerBlue4"] = new Color(16 / 255.0f, 78 / 255.0f, 139 / 255.0f);
-            this["SteelBlue1"] = new Color(99 / 255.0f, 184 / 255.0f, 255 / 255.0f);
-            this["SteelBlue2"] = new Color(92 / 255.0f, 172 / 255.0f, 238 / 255.0f);
-            this["SteelBlue3"] = new Color(79 / 255.0f, 148 / 255.0f, 205 / 255.0f);
-            this["SteelBlue4"] = new Color(54 / 255.0f, 100 / 255.0f, 139 / 255.0f);
-            this["DeepSkyBlue1"] = new Color(0 / 255.0f, 191 / 255.0f, 255 / 255.0f);
-            this["DeepSkyBlue2"] = new Color(0 / 255.0f, 178 / 255.0f, 238 / 255.0f);
-            this["DeepSkyBlue3"] = new Color(0 / 255.0f, 154 / 255.0f, 205 / 255.0f);
-            this["DeepSkyBlue4"] = new Color(0 / 255.0f, 104 / 255.0f, 139 / 255.0f);
-            this["SkyBlue1"] = new Color(135 / 255.0f, 206 / 255.0f, 255 / 255.0f);
-            this["SkyBlue2"] = new Color(126 / 255.0f, 192 / 255.0f, 238 / 255.0f);
-            this["SkyBlue3"] = new Color(108 / 255.0f, 166 / 255.0f, 205 / 255.0f);
-            this["SkyBlue4"] = new Color(74 / 255.0f, 112 / 255.0f, 139 / 255.0f);
-            this["LightSkyBlue1"] = new Color(176 / 255.0f, 226 / 255.0f, 255 / 255.0f);
-            this["LightSkyBlue2"] = new Color(164 / 255.0f, 211 / 255.0f, 238 / 255.0f);
-            this["LightSkyBlue3"] = new Color(141 / 255.0f, 182 / 255.0f, 205 / 255.0f);
-            this["LightSkyBlue4"] = new Color(96 / 255.0f, 123 / 255.0f, 139 / 255.0f);
-            this["SlateGray1"] = new Color(198 / 255.0f, 226 / 255.0f, 255 / 255.0f);
-            this["SlateGray2"] = new Color(185 / 255.0f, 211 / 255.0f, 238 / 255.0f);
-            this["SlateGray3"] = new Color(159 / 255.0f, 182 / 255.0f, 205 / 255.0f);
-            this["SlateGray4"] = new Color(108 / 255.0f, 123 / 255.0f, 139 / 255.0f);
-            this["LightSteelBlue1"] = new Color(202 / 255.0f, 225 / 255.0f, 255 / 255.0f);
-            this["LightSteelBlue2"] = new Color(188 / 255.0f, 210 / 255.0f, 238 / 255.0f);
-            this["LightSteelBlue3"] = new Color(162 / 255.0f, 181 / 255.0f, 205 / 255.0f);
-            this["LightSteelBlue4"] = new Color(110 / 255.0f, 123 / 255.0f, 139 / 255.0f);
-            this["LightBlue1"] = new Color(191 / 255.0f, 239 / 255.0f, 255 / 255.0f);
-            this["LightBlue2"] = new Color(178 / 255.0f, 223 / 255.0f, 238 / 255.0f);
-            this["LightBlue3"] = new Color(154 / 255.0f, 192 / 255.0f, 205 / 255.0f);
-            this["LightBlue4"] = new Color(104 / 255.0f, 131 / 255.0f, 139 / 255.0f);
-            this["LightCyan1"] = new Color(224 / 255.0f, 255 / 255.0f, 255 / 255.0f);
-            this["LightCyan2"] = new Color(209 / 255.0f, 238 / 255.0f, 238 / 255.0f);
-            this["LightCyan3"] = new Color(180 / 255.0f, 205 / 255.0f, 205 / 255.0f);
-            this["LightCyan4"] = new Color(122 / 255.0f, 139 / 255.0f, 139 / 255.0f);
-            this["PaleTurquoise1"] = new Color(187 / 255.0f, 255 / 255.0f, 255 / 255.0f);
-            this["PaleTurquoise2"] = new Color(174 / 255.0f, 238 / 255.0f, 238 / 255.0f);
-            this["PaleTurquoise3"] = new Color(150 / 255.0f, 205 / 255.0f, 205 / 255.0f);
-            this["PaleTurquoise4"] = new Color(102 / 255.0f, 139 / 255.0f, 139 / 255.0f);
-            this["CadetBlue1"] = new Color(152 / 255.0f, 245 / 255.0f, 255 / 255.0f);
-            this["CadetBlue2"] = new Color(142 / 255.0f, 229 / 255.0f, 238 / 255.0f);
-            this["CadetBlue3"] = new Color(122 / 255.0f, 197 / 255.0f, 205 / 255.0f);
-            this["CadetBlue4"] = new Color(83 / 255.0f, 134 / 255.0f, 139 / 255.0f);
-            this["turquoise1"] = new Color(0 / 255.0f, 245 / 255.0f, 255 / 255.0f);
-            this["turquoise2"] = new Color(0 / 255.0f, 229 / 255.0f, 238 / 255.0f);
-            this["turquoise3"] = new Color(0 / 255.0f, 197 / 255.0f, 205 / 255.0f);
-            this["turquoise4"] = new Color(0 / 255.0f, 134 / 255.0f, 139 / 255.0f);
-            this["cyan1"] = new Color(0 / 255.0f, 255 / 255.0f, 255 / 255.0f);
-            this["cyan2"] = new Color(0 / 255.0f, 238 / 255.0f, 238 / 255.0f);
-            this["cyan3"] = new Color(0 / 255.0f, 205 / 255.0f, 205 / 255.0f);
-            this["cyan4"] = new Color(0 / 255.0f, 139 / 255.0f, 139 / 255.0f);
-            this["DarkSlateGray1"] = new Color(151 / 255.0f, 255 / 255.0f, 255 / 255.0f);
-            this["DarkSlateGray2"] = new Color(141 / 255.0f, 238 / 255.0f, 238 / 255.0f);
-            this["DarkSlateGray3"] = new Color(121 / 255.0f, 205 / 255.0f, 205 / 255.0f);
-            this["DarkSlateGray4"] = new Color(82 / 255.0f, 139 / 255.0f, 139 / 255.0f);
-            this["aquamarine1"] = new Color(127 / 255.0f, 255 / 255.0f, 212 / 255.0f);
-            this["aquamarine2"] = new Color(118 / 255.0f, 238 / 255.0f, 198 / 255.0f);
-            this["aquamarine3"] = new Color(102 / 255.0f, 205 / 255.0f, 170 / 255.0f);
-            this["aquamarine4"] = new Color(69 / 255.0f, 139 / 255.0f, 116 / 255.0f);
-            this["DarkSeaGreen1"] = new Color(193 / 255.0f, 255 / 255.0f, 193 / 255.0f);
-            this["DarkSeaGreen2"] = new Color(180 / 255.0f, 238 / 255.0f, 180 / 255.0f);
-            this["DarkSeaGreen3"] = new Color(155 / 255.0f, 205 / 255.0f, 155 / 255.0f);
-            this["DarkSeaGreen4"] = new Color(105 / 255.0f, 139 / 255.0f, 105 / 255.0f);
-            this["SeaGreen1"] = new Color(84 / 255.0f, 255 / 255.0f, 159 / 255.0f);
-            this["SeaGreen2"] = new Color(78 / 255.0f, 238 / 255.0f, 148 / 255.0f);
-            this["SeaGreen3"] = new Color(67 / 255.0f, 205 / 255.0f, 128 / 255.0f);
-            this["SeaGreen4"] = new Color(46 / 255.0f, 139 / 255.0f, 87 / 255.0f);
-            this["PaleGreen1"] = new Color(154 / 255.0f, 255 / 255.0f, 154 / 255.0f);
-            this["PaleGreen2"] = new Color(144 / 255.0f, 238 / 255.0f, 144 / 255.0f);
-            this["PaleGreen3"] = new Color(124 / 255.0f, 205 / 255.0f, 124 / 255.0f);
-            this["PaleGreen4"] = new Color(84 / 255.0f, 139 / 255.0f, 84 / 255.0f);
-            this["SpringGreen1"] = new Color(0 / 255.0f, 255 / 255.0f, 127 / 255.0f);
-            this["SpringGreen2"] = new Color(0 / 255.0f, 238 / 255.0f, 118 / 255.0f);
-            this["SpringGreen3"] = new Color(0 / 255.0f, 205 / 255.0f, 102 / 255.0f);
-            this["SpringGreen4"] = new Color(0 / 255.0f, 139 / 255.0f, 69 / 255.0f);
-            this["green1"] = new Color(0 / 255.0f, 255 / 255.0f, 0 / 255.0f);
-            this["green2"] = new Color(0 / 255.0f, 238 / 255.0f, 0 / 255.0f);
-            this["green3"] = new Color(0 / 255.0f, 205 / 255.0f, 0 / 255.0f);
-            this["green4"] = new Color(0 / 255.0f, 139 / 255.0f, 0 / 255.0f);
-            this["chartreuse1"] = new Color(127 / 255.0f, 255 / 255.0f, 0 / 255.0f);
-            this["chartreuse2"] = new Color(118 / 255.0f, 238 / 255.0f, 0 / 255.0f);
-            this["chartreuse3"] = new Color(102 / 255.0f, 205 / 255.0f, 0 / 255.0f);
-            this["chartreuse4"] = new Color(69 / 255.0f, 139 / 255.0f, 0 / 255.0f);
-            this["OliveDrab1"] = new Color(192 / 255.0f, 255 / 255.0f, 62 / 255.0f);
-            this["OliveDrab2"] = new Color(179 / 255.0f, 238 / 255.0f, 58 / 255.0f);
-            this["OliveDrab3"] = new Color(154 / 255.0f, 205 / 255.0f, 50 / 255.0f);
-            this["OliveDrab4"] = new Color(105 / 255.0f, 139 / 255.0f, 34 / 255.0f);
-            this["DarkOliveGreen1"] = new Color(202 / 255.0f, 255 / 255.0f, 112 / 255.0f);
-            this["DarkOliveGreen2"] = new Color(188 / 255.0f, 238 / 255.0f, 104 / 255.0f);
-            this["DarkOliveGreen3"] = new Color(162 / 255.0f, 205 / 255.0f, 90 / 255.0f);
-            this["DarkOliveGreen4"] = new Color(110 / 255.0f, 139 / 255.0f, 61 / 255.0f);
-            this["khaki1"] = new Color(255 / 255.0f, 246 / 255.0f, 143 / 255.0f);
-            this["khaki2"] = new Color(238 / 255.0f, 230 / 255.0f, 133 / 255.0f);
-            this["khaki3"] = new Color(205 / 255.0f, 198 / 255.0f, 115 / 255.0f);
-            this["khaki4"] = new Color(139 / 255.0f, 134 / 255.0f, 78 / 255.0f);
-            this["LightGoldenrod1"] = new Color(255 / 255.0f, 236 / 255.0f, 139 / 255.0f);
-            this["LightGoldenrod2"] = new Color(238 / 255.0f, 220 / 255.0f, 130 / 255.0f);
-            this["LightGoldenrod3"] = new Color(205 / 255.0f, 190 / 255.0f, 112 / 255.0f);
-            this["LightGoldenrod4"] = new Color(139 / 255.0f, 129 / 255.0f, 76 / 255.0f);
-            this["LightYellow1"] = new Color(255 / 255.0f, 255 / 255.0f, 224 / 255.0f);
-            this["LightYellow2"] = new Color(238 / 255.0f, 238 / 255.0f, 209 / 255.0f);
-            this["LightYellow3"] = new Color(205 / 255.0f, 205 / 255.0f, 180 / 255.0f);
-            this["LightYellow4"] = new Color(139 / 255.0f, 139 / 255.0f, 122 / 255.0f);
-            this["yellow1"] = new Color(255 / 255.0f, 255 / 255.0f, 0 / 255.0f);
-            this["yellow2"] = new Color(238 / 255.0f, 238 / 255.0f, 0 / 255.0f);
-            this["yellow3"] = new Color(205 / 255.0f, 205 / 255.0f, 0 / 255.0f);
-            this["yellow4"] = new Color(139 / 255.0f, 139 / 255.0f, 0 / 255.0f);
-            this["gold1"] = new Color(255 / 255.0f, 215 / 255.0f, 0 / 255.0f);
-            this["gold2"] = new Color(238 / 255.0f, 201 / 255.0f, 0 / 255.0f);
-            this["gold3"] = new Color(205 / 255.0f, 173 / 255.0f, 0 / 255.0f);
-            this["gold4"] = new Color(139 / 255.0f, 117 / 255.0f, 0 / 255.0f);
-            this["goldenrod1"] = new Color(255 / 255.0f, 193 / 255.0f, 37 / 255.0f);
-            this["goldenrod2"] = new Color(238 / 255.0f, 180 / 255.0f, 34 / 255.0f);
-            this["goldenrod3"] = new Color(205 / 255.0f, 155 / 255.0f, 29 / 255.0f);
-            this["goldenrod4"] = new Color(139 / 255.0f, 105 / 255.0f, 20 / 255.0f);
-            this["DarkGoldenrod1"] = new Color(255 / 255.0f, 185 / 255.0f, 15 / 255.0f);
-            this["DarkGoldenrod2"] = new Color(238 / 255.0f, 173 / 255.0f, 14 / 255.0f);
-            this["DarkGoldenrod3"] = new Color(205 / 255.0f, 149 / 255.0f, 12 / 255.0f);
-            this["DarkGoldenrod4"] = new Color(139 / 255.0f, 101 / 255.0f, 8 / 255.0f);
-            this["RosyBrown1"] = new Color(255 / 255.0f, 193 / 255.0f, 193 / 255.0f);
-            this["RosyBrown2"] = new Color(238 / 255.0f, 180 / 255.0f, 180 / 255.0f);
-            this["RosyBrown3"] = new Color(205 / 255.0f, 155 / 255.0f, 155 / 255.0f);
-            this["RosyBrown4"] = new Color(139 / 255.0f, 105 / 255.0f, 105 / 255.0f);
-            this["IndianRed1"] = new Color(255 / 255.0f, 106 / 255.0f, 106 / 255.0f);
-            this["IndianRed2"] = new Color(238 / 255.0f, 99 / 255.0f, 99 / 255.0f);
-            this["IndianRed3"] = new Color(205 / 255.0f, 85 / 255.0f, 85 / 255.0f);
-            this["IndianRed4"] = new Color(139 / 255.0f, 58 / 255.0f, 58 / 255.0f);
-            this["sienna1"] = new Color(255 / 255.0f, 130 / 255.0f, 71 / 255.0f);
-            this["sienna2"] = new Color(238 / 255.0f, 121 / 255.0f, 66 / 255.0f);
-            this["sienna3"] = new Color(205 / 255.0f, 104 / 255.0f, 57 / 255.0f);
-            this["sienna4"] = new Color(139 / 255.0f, 71 / 255.0f, 38 / 255.0f);
-            this["burlywood1"] = new Color(255 / 255.0f, 211 / 255.0f, 155 / 255.0f);
-            this["burlywood2"] = new Color(238 / 255.0f, 197 / 255.0f, 145 / 255.0f);
-            this["burlywood3"] = new Color(205 / 255.0f, 170 / 255.0f, 125 / 255.0f);
-            this["burlywood4"] = new Color(139 / 255.0f, 115 / 255.0f, 85 / 255.0f);
-            this["wheat1"] = new Color(255 / 255.0f, 231 / 255.0f, 186 / 255.0f);
-            this["wheat2"] = new Color(238 / 255.0f, 216 / 255.0f, 174 / 255.0f);
-            this["wheat3"] = new Color(205 / 255.0f, 186 / 255.0f, 150 / 255.0f);
-            this["wheat4"] = new Color(139 / 255.0f, 126 / 255.0f, 102 / 255.0f);
-            this["tan1"] = new Color(255 / 255.0f, 165 / 255.0f, 79 / 255.0f);
-            this["tan2"] = new Color(238 / 255.0f, 154 / 255.0f, 73 / 255.0f);
-            this["tan3"] = new Color(205 / 255.0f, 133 / 255.0f, 63 / 255.0f);
-            this["tan4"] = new Color(139 / 255.0f, 90 / 255.0f, 43 / 255.0f);
-            this["chocolate1"] = new Color(255 / 255.0f, 127 / 255.0f, 36 / 255.0f);
-            this["chocolate2"] = new Color(238 / 255.0f, 118 / 255.0f, 33 / 255.0f);
-            this["chocolate3"] = new Color(205 / 255.0f, 102 / 255.0f, 29 / 255.0f);
-            this["chocolate4"] = new Color(139 / 255.0f, 69 / 255.0f, 19 / 255.0f);
-            this["firebrick1"] = new Color(255 / 255.0f, 48 / 255.0f, 48 / 255.0f);
-            this["firebrick2"] = new Color(238 / 255.0f, 44 / 255.0f, 44 / 255.0f);
-            this["firebrick3"] = new Color(205 / 255.0f, 38 / 255.0f, 38 / 255.0f);
-            this["firebrick4"] = new Color(139 / 255.0f, 26 / 255.0f, 26 / 255.0f);
-            this["brown1"] = new Color(255 / 255.0f, 64 / 255.0f, 64 / 255.0f);
-            this["brown2"] = new Color(238 / 255.0f, 59 / 255.0f, 59 / 255.0f);
-            this["brown3"] = new Color(205 / 255.0f, 51 / 255.0f, 51 / 255.0f);
-            this["brown4"] = new Color(139 / 255.0f, 35 / 255.0f, 35 / 255.0f);
-            this["salmon1"] = new Color(255 / 255.0f, 140 / 255.0f, 105 / 255.0f);
-            this["salmon2"] = new Color(238 / 255.0f, 130 / 255.0f, 98 / 255.0f);
-            this["salmon3"] = new Color(205 / 255.0f, 112 / 255.0f, 84 / 255.0f);
-            this["salmon4"] = new Color(139 / 255.0f, 76 / 255.0f, 57 / 255.0f);
-            this["LightSalmon1"] = new Color(255 / 255.0f, 160 / 255.0f, 122 / 255.0f);
-            this["LightSalmon2"] = new Color(238 / 255.0f, 149 / 255.0f, 114 / 255.0f);
-            this["LightSalmon3"] = new Color(205 / 255.0f, 129 / 255.0f, 98 / 255.0f);
-            this["LightSalmon4"] = new Color(139 / 255.0f, 87 / 255.0f, 66 / 255.0f);
-            this["orange1"] = new Color(255 / 255.0f, 165 / 255.0f, 0 / 255.0f);
-            this["orange2"] = new Color(238 / 255.0f, 154 / 255.0f, 0 / 255.0f);
-            this["orange3"] = new Color(205 / 255.0f, 133 / 255.0f, 0 / 255.0f);
-            this["orange4"] = new Color(139 / 255.0f, 90 / 255.0f, 0 / 255.0f);
-            this["DarkOrange1"] = new Color(255 / 255.0f, 127 / 255.0f, 0 / 255.0f);
-            this["DarkOrange2"] = new Color(238 / 255.0f, 118 / 255.0f, 0 / 255.0f);
-            this["DarkOrange3"] = new Color(205 / 255.0f, 102 / 255.0f, 0 / 255.0f);
-            this["DarkOrange4"] = new Color(139 / 255.0f, 69 / 255.0f, 0 / 255.0f);
-            this["coral1"] = new Color(255 / 255.0f, 114 / 255.0f, 86 / 255.0f);
-            this["coral2"] = new Color(238 / 255.0f, 106 / 255.0f, 80 / 255.0f);
-            this["coral3"] = new Color(205 / 255.0f, 91 / 255.0f, 69 / 255.0f);
-            this["coral4"] = new Color(139 / 255.0f, 62 / 255.0f, 47 / 255.0f);
-            this["tomato1"] = new Color(255 / 255.0f, 99 / 255.0f, 71 / 255.0f);
-            this["tomato2"] = new Color(238 / 255.0f, 92 / 255.0f, 66 / 255.0f);
-            this["tomato3"] = new Color(205 / 255.0f, 79 / 255.0f, 57 / 255.0f);
-            this["tomato4"] = new Color(139 / 255.0f, 54 / 255.0f, 38 / 255.0f);
-            this["OrangeRed1"] = new Color(255 / 255.0f, 69 / 255.0f, 0 / 255.0f);
-            this["OrangeRed2"] = new Color(238 / 255.0f, 64 / 255.0f, 0 / 255.0f);
-            this["OrangeRed3"] = new Color(205 / 255.0f, 55 / 255.0f, 0 / 255.0f);
-            this["OrangeRed4"] = new Color(139 / 255.0f, 37 / 255.0f, 0 / 255.0f);
-            this["red1"] = new Color(255 / 255.0f, 0 / 255.0f, 0 / 255.0f);
-            this["red2"] = new Color(238 / 255.0f, 0 / 255.0f, 0 / 255.0f);
-            this["red3"] = new Color(205 / 255.0f, 0 / 255.0f, 0 / 255.0f);
-            this["red4"] = new Color(139 / 255.0f, 0 / 255.0f, 0 / 255.0f);
-            this["DeepPink1"] = new Color(255 / 255.0f, 20 / 255.0f, 147 / 255.0f);
-            this["DeepPink2"] = new Color(238 / 255.0f, 18 / 255.0f, 137 / 255.0f);
-            this["DeepPink3"] = new Color(205 / 255.0f, 16 / 255.0f, 118 / 255.0f);
-            this["DeepPink4"] = new Color(139 / 255.0f, 10 / 255.0f, 80 / 255.0f);
-            this["HotPink1"] = new Color(255 / 255.0f, 110 / 255.0f, 180 / 255.0f);
-            this["HotPink2"] = new Color(238 / 255.0f, 106 / 255.0f, 167 / 255.0f);
-            this["HotPink3"] = new Color(205 / 255.0f, 96 / 255.0f, 144 / 255.0f);
-            this["HotPink4"] = new Color(139 / 255.0f, 58 / 255.0f, 98 / 255.0f);
-            this["pink1"] = new Color(255 / 255.0f, 181 / 255.0f, 197 / 255.0f);
-            this["pink2"] = new Color(238 / 255.0f, 169 / 255.0f, 184 / 255.0f);
-            this["pink3"] = new Color(205 / 255.0f, 145 / 255.0f, 158 / 255.0f);
-            this["pink4"] = new Color(139 / 255.0f, 99 / 255.0f, 108 / 255.0f);
-            this["LightPink1"] = new Color(255 / 255.0f, 174 / 255.0f, 185 / 255.0f);
-            this["LightPink2"] = new Color(238 / 255.0f, 162 / 255.0f, 173 / 255.0f);
-            this["LightPink3"] = new Color(205 / 255.0f, 140 / 255.0f, 149 / 255.0f);
-            this["LightPink4"] = new Color(139 / 255.0f, 95 / 255.0f, 101 / 255.0f);
-            this["PaleVioletRed1"] = new Color(255 / 255.0f, 130 / 255.0f, 171 / 255.0f);
-            this["PaleVioletRed2"] = new Color(238 / 255.0f, 121 / 255.0f, 159 / 255.0f);
-            this["PaleVioletRed3"] = new Color(205 / 255.0f, 104 / 255.0f, 137 / 255.0f);
-            this["PaleVioletRed4"] = new Color(139 / 255.0f, 71 / 255.0f, 93 / 255.0f);
-            this["maroon1"] = new Color(255 / 255.0f, 52 / 255.0f, 179 / 255.0f);
-            this["maroon2"] = new Color(238 / 255.0f, 48 / 255.0f, 167 / 255.0f);
-            this["maroon3"] = new Color(205 / 255.0f, 41 / 255.0f, 144 / 255.0f);
-            this["maroon4"] = new Color(139 / 255.0f, 28 / 255.0f, 98 / 255.0f);
-            this["VioletRed1"] = new Color(255 / 255.0f, 62 / 255.0f, 150 / 255.0f);
-            this["VioletRed2"] = new Color(238 / 255.0f, 58 / 255.0f, 140 / 255.0f);
-            this["VioletRed3"] = new Color(205 / 255.0f, 50 / 255.0f, 120 / 255.0f);
-            this["VioletRed4"] = new Color(139 / 255.0f, 34 / 255.0f, 82 / 255.0f);
-            this["magenta1"] = new Color(255 / 255.0f, 0 / 255.0f, 255 / 255.0f);
-            this["magenta2"] = new Color(238 / 255.0f, 0 / 255.0f, 238 / 255.0f);
-            this["magenta3"] = new Color(205 / 255.0f, 0 / 255.0f, 205 / 255.0f);
-            this["magenta4"] = new Color(139 / 255.0f, 0 / 255.0f, 139 / 255.0f);
-            this["orchid1"] = new Color(255 / 255.0f, 131 / 255.0f, 250 / 255.0f);
-            this["orchid2"] = new Color(238 / 255.0f, 122 / 255.0f, 233 / 255.0f);
-            this["orchid3"] = new Color(205 / 255.0f, 105 / 255.0f, 201 / 255.0f);
-            this["orchid4"] = new Color(139 / 255.0f, 71 / 255.0f, 137 / 255.0f);
-            this["plum1"] = new Color(255 / 255.0f, 187 / 255.0f, 255 / 255.0f);
-            this["plum2"] = new Color(238 / 255.0f, 174 / 255.0f, 238 / 255.0f);
-            this["plum3"] = new Color(205 / 255.0f, 150 / 255.0f, 205 / 255.0f);
-            this["plum4"] = new Color(139 / 255.0f, 102 / 255.0f, 139 / 255.0f);
-            this["MediumOrchid1"] = new Color(224 / 255.0f, 102 / 255.0f, 255 / 255.0f);
-            this["MediumOrchid2"] = new Color(209 / 255.0f, 95 / 255.0f, 238 / 255.0f);
-            this["MediumOrchid3"] = new Color(180 / 255.0f, 82 / 255.0f, 205 / 255.0f);
-            this["MediumOrchid4"] = new Color(122 / 255.0f, 55 / 255.0f, 139 / 255.0f);
-            this["DarkOrchid1"] = new Color(191 / 255.0f, 62 / 255.0f, 255 / 255.0f);
-            this["DarkOrchid2"] = new Color(178 / 255.0f, 58 / 255.0f, 238 / 255.0f);
-            this["DarkOrchid3"] = new Color(154 / 255.0f, 50 / 255.0f, 205 / 255.0f);
-            this["DarkOrchid4"] = new Color(104 / 255.0f, 34 / 255.0f, 139 / 255.0f);
-            this["purple1"] = new Color(155 / 255.0f, 48 / 255.0f, 255 / 255.0f);
-            this["purple2"] = new Color(145 / 255.0f, 44 / 255.0f, 238 / 255.0f);
-            this["purple3"] = new Color(125 / 255.0f, 38 / 255.0f, 205 / 255.0f);
-            this["purple4"] = new Color(85 / 255.0f, 26 / 255.0f, 139 / 255.0f);
-            this["MediumPurple1"] = new Color(171 / 255.0f, 130 / 255.0f, 255 / 255.0f);
-            this["MediumPurple2"] = new Color(159 / 255.0f, 121 / 255.0f, 238 / 255.0f);
-            this["MediumPurple3"] = new Color(137 / 255.0f, 104 / 255.0f, 205 / 255.0f);
-            this["MediumPurple4"] = new Color(93 / 255.0f, 71 / 255.0f, 139 / 255.0f);
-            this["thistle1"] = new Color(255 / 255.0f, 225 / 255.0f, 255 / 255.0f);
-            this["thistle2"] = new Color(238 / 255.0f, 210 / 255.0f, 238 / 255.0f);
-            this["thistle3"] = new Color(205 / 255.0f, 181 / 255.0f, 205 / 255.0f);
-            this["thistle4"] = new Color(139 / 255.0f, 123 / 255.0f, 139 / 255.0f);
-            this["gray0"] = new Color(0 / 255.0f, 0 / 255.0f, 0 / 255.0f);
-            this["grey0"] = new Color(0 / 255.0f, 0 / 255.0f, 0 / 255.0f);
-            this["gray1"] = new Color(3 / 255.0f, 3 / 255.0f, 3 / 255.0f);
-            this["grey1"] = new Color(3 / 255.0f, 3 / 255.0f, 3 / 255.0f);
-            this["gray2"] = new Color(5 / 255.0f, 5 / 255.0f, 5 / 255.0f);
-            this["grey2"] = new Color(5 / 255.0f, 5 / 255.0f, 5 / 255.0f);
-            this["gray3"] = new Color(8 / 255.0f, 8 / 255.0f, 8 / 255.0f);
-            this["grey3"] = new Color(8 / 255.0f, 8 / 255.0f, 8 / 255.0f);
-            this["gray4"] = new Color(10 / 255.0f, 10 / 255.0f, 10 / 255.0f);
-            this["grey4"] = new Color(10 / 255.0f, 10 / 255.0f, 10 / 255.0f);
-            this["gray5"] = new Color(13 / 255.0f, 13 / 255.0f, 13 / 255.0f);
-            this["grey5"] = new Color(13 / 255.0f, 13 / 255.0f, 13 / 255.0f);
-            this["gray6"] = new Color(15 / 255.0f, 15 / 255.0f, 15 / 255.0f);
-            this["grey6"] = new Color(15 / 255.0f, 15 / 255.0f, 15 / 255.0f);
-            this["gray7"] = new Color(18 / 255.0f, 18 / 255.0f, 18 / 255.0f);
-            this["grey7"] = new Color(18 / 255.0f, 18 / 255.0f, 18 / 255.0f);
-            this["gray8"] = new Color(20 / 255.0f, 20 / 255.0f, 20 / 255.0f);
-            this["grey8"] = new Color(20 / 255.0f, 20 / 255.0f, 20 / 255.0f);
-            this["gray9"] = new Color(23 / 255.0f, 23 / 255.0f, 23 / 255.0f);
-            this["grey9"] = new Color(23 / 255.0f, 23 / 255.0f, 23 / 255.0f);
-            this["gray10"] = new Color(26 / 255.0f, 26 / 255.0f, 26 / 255.0f);
-            this["grey10"] = new Color(26 / 255.0f, 26 / 255.0f, 26 / 255.0f);
-            this["gray11"] = new Color(28 / 255.0f, 28 / 255.0f, 28 / 255.0f);
-            this["grey11"] = new Color(28 / 255.0f, 28 / 255.0f, 28 / 255.0f);
-            this["gray12"] = new Color(31 / 255.0f, 31 / 255.0f, 31 / 255.0f);
-            this["grey12"] = new Color(31 / 255.0f, 31 / 255.0f, 31 / 255.0f);
-            this["gray13"] = new Color(33 / 255.0f, 33 / 255.0f, 33 / 255.0f);
-            this["grey13"] = new Color(33 / 255.0f, 33 / 255.0f, 33 / 255.0f);
-            this["gray14"] = new Color(36 / 255.0f, 36 / 255.0f, 36 / 255.0f);
-            this["grey14"] = new Color(36 / 255.0f, 36 / 255.0f, 36 / 255.0f);
-            this["gray15"] = new Color(38 / 255.0f, 38 / 255.0f, 38 / 255.0f);
-            this["grey15"] = new Color(38 / 255.0f, 38 / 255.0f, 38 / 255.0f);
-            this["gray16"] = new Color(41 / 255.0f, 41 / 255.0f, 41 / 255.0f);
-            this["grey16"] = new Color(41 / 255.0f, 41 / 255.0f, 41 / 255.0f);
-            this["gray17"] = new Color(43 / 255.0f, 43 / 255.0f, 43 / 255.0f);
-            this["grey17"] = new Color(43 / 255.0f, 43 / 255.0f, 43 / 255.0f);
-            this["gray18"] = new Color(46 / 255.0f, 46 / 255.0f, 46 / 255.0f);
-            this["grey18"] = new Color(46 / 255.0f, 46 / 255.0f, 46 / 255.0f);
-            this["gray19"] = new Color(48 / 255.0f, 48 / 255.0f, 48 / 255.0f);
-            this["grey19"] = new Color(48 / 255.0f, 48 / 255.0f, 48 / 255.0f);
-            this["gray20"] = new Color(51 / 255.0f, 51 / 255.0f, 51 / 255.0f);
-            this["grey20"] = new Color(51 / 255.0f, 51 / 255.0f, 51 / 255.0f);
-            this["gray21"] = new Color(54 / 255.0f, 54 / 255.0f, 54 / 255.0f);
-            this["grey21"] = new Color(54 / 255.0f, 54 / 255.0f, 54 / 255.0f);
-            this["gray22"] = new Color(56 / 255.0f, 56 / 255.0f, 56 / 255.0f);
-            this["grey22"] = new Color(56 / 255.0f, 56 / 255.0f, 56 / 255.0f);
-            this["gray23"] = new Color(59 / 255.0f, 59 / 255.0f, 59 / 255.0f);
-            this["grey23"] = new Color(59 / 255.0f, 59 / 255.0f, 59 / 255.0f);
-            this["gray24"] = new Color(61 / 255.0f, 61 / 255.0f, 61 / 255.0f);
-            this["grey24"] = new Color(61 / 255.0f, 61 / 255.0f, 61 / 255.0f);
-            this["gray25"] = new Color(64 / 255.0f, 64 / 255.0f, 64 / 255.0f);
-            this["grey25"] = new Color(64 / 255.0f, 64 / 255.0f, 64 / 255.0f);
-            this["gray26"] = new Color(66 / 255.0f, 66 / 255.0f, 66 / 255.0f);
-            this["grey26"] = new Color(66 / 255.0f, 66 / 255.0f, 66 / 255.0f);
-            this["gray27"] = new Color(69 / 255.0f, 69 / 255.0f, 69 / 255.0f);
-            this["grey27"] = new Color(69 / 255.0f, 69 / 255.0f, 69 / 255.0f);
-            this["gray28"] = new Color(71 / 255.0f, 71 / 255.0f, 71 / 255.0f);
-            this["grey28"] = new Color(71 / 255.0f, 71 / 255.0f, 71 / 255.0f);
-            this["gray29"] = new Color(74 / 255.0f, 74 / 255.0f, 74 / 255.0f);
-            this["grey29"] = new Color(74 / 255.0f, 74 / 255.0f, 74 / 255.0f);
-            this["gray30"] = new Color(77 / 255.0f, 77 / 255.0f, 77 / 255.0f);
-            this["grey30"] = new Color(77 / 255.0f, 77 / 255.0f, 77 / 255.0f);
-            this["gray31"] = new Color(79 / 255.0f, 79 / 255.0f, 79 / 255.0f);
-            this["grey31"] = new Color(79 / 255.0f, 79 / 255.0f, 79 / 255.0f);
-            this["gray32"] = new Color(82 / 255.0f, 82 / 255.0f, 82 / 255.0f);
-            this["grey32"] = new Color(82 / 255.0f, 82 / 255.0f, 82 / 255.0f);
-            this["gray33"] = new Color(84 / 255.0f, 84 / 255.0f, 84 / 255.0f);
-            this["grey33"] = new Color(84 / 255.0f, 84 / 255.0f, 84 / 255.0f);
-            this["gray34"] = new Color(87 / 255.0f, 87 / 255.0f, 87 / 255.0f);
-            this["grey34"] = new Color(87 / 255.0f, 87 / 255.0f, 87 / 255.0f);
-            this["gray35"] = new Color(89 / 255.0f, 89 / 255.0f, 89 / 255.0f);
-            this["grey35"] = new Color(89 / 255.0f, 89 / 255.0f, 89 / 255.0f);
-            this["gray36"] = new Color(92 / 255.0f, 92 / 255.0f, 92 / 255.0f);
-            this["grey36"] = new Color(92 / 255.0f, 92 / 255.0f, 92 / 255.0f);
-            this["gray37"] = new Color(94 / 255.0f, 94 / 255.0f, 94 / 255.0f);
-            this["grey37"] = new Color(94 / 255.0f, 94 / 255.0f, 94 / 255.0f);
-            this["gray38"] = new Color(97 / 255.0f, 97 / 255.0f, 97 / 255.0f);
-            this["grey38"] = new Color(97 / 255.0f, 97 / 255.0f, 97 / 255.0f);
-            this["gray39"] = new Color(99 / 255.0f, 99 / 255.0f, 99 / 255.0f);
-            this["grey39"] = new Color(99 / 255.0f, 99 / 255.0f, 99 / 255.0f);
-            this["gray40"] = new Color(102 / 255.0f, 102 / 255.0f, 102 / 255.0f);
-            this["grey40"] = new Color(102 / 255.0f, 102 / 255.0f, 102 / 255.0f);
-            this["gray41"] = new Color(105 / 255.0f, 105 / 255.0f, 105 / 255.0f);
-            this["grey41"] = new Color(105 / 255.0f, 105 / 255.0f, 105 / 255.0f);
-            this["gray42"] = new Color(107 / 255.0f, 107 / 255.0f, 107 / 255.0f);
-            this["grey42"] = new Color(107 / 255.0f, 107 / 255.0f, 107 / 255.0f);
-            this["gray43"] = new Color(110 / 255.0f, 110 / 255.0f, 110 / 255.0f);
-            this["grey43"] = new Color(110 / 255.0f, 110 / 255.0f, 110 / 255.0f);
-            this["gray44"] = new Color(112 / 255.0f, 112 / 255.0f, 112 / 255.0f);
-            this["grey44"] = new Color(112 / 255.0f, 112 / 255.0f, 112 / 255.0f);
-            this["gray45"] = new Color(115 / 255.0f, 115 / 255.0f, 115 / 255.0f);
-            this["grey45"] = new Color(115 / 255.0f, 115 / 255.0f, 115 / 255.0f);
-            this["gray46"] = new Color(117 / 255.0f, 117 / 255.0f, 117 / 255.0f);
-            this["grey46"] = new Color(117 / 255.0f, 117 / 255.0f, 117 / 255.0f);
-            this["gray47"] = new Color(120 / 255.0f, 120 / 255.0f, 120 / 255.0f);
-            this["grey47"] = new Color(120 / 255.0f, 120 / 255.0f, 120 / 255.0f);
-            this["gray48"] = new Color(122 / 255.0f, 122 / 255.0f, 122 / 255.0f);
-            this["grey48"] = new Color(122 / 255.0f, 122 / 255.0f, 122 / 255.0f);
-            this["gray49"] = new Color(125 / 255.0f, 125 / 255.0f, 125 / 255.0f);
-            this["grey49"] = new Color(125 / 255.0f, 125 / 255.0f, 125 / 255.0f);
-            this["gray50"] = new Color(127 / 255.0f, 127 / 255.0f, 127 / 255.0f);
-            this["grey50"] = new Color(127 / 255.0f, 127 / 255.0f, 127 / 255.0f);
-            this["gray51"] = new Color(130 / 255.0f, 130 / 255.0f, 130 / 255.0f);
-            this["grey51"] = new Color(130 / 255.0f, 130 / 255.0f, 130 / 255.0f);
-            this["gray52"] = new Color(133 / 255.0f, 133 / 255.0f, 133 / 255.0f);
-            this["grey52"] = new Color(133 / 255.0f, 133 / 255.0f, 133 / 255.0f);
-            this["gray53"] = new Color(135 / 255.0f, 135 / 255.0f, 135 / 255.0f);
-            this["grey53"] = new Color(135 / 255.0f, 135 / 255.0f, 135 / 255.0f);
-            this["gray54"] = new Color(138 / 255.0f, 138 / 255.0f, 138 / 255.0f);
-            this["grey54"] = new Color(138 / 255.0f, 138 / 255.0f, 138 / 255.0f);
-            this["gray55"] = new Color(140 / 255.0f, 140 / 255.0f, 140 / 255.0f);
-            this["grey55"] = new Color(140 / 255.0f, 140 / 255.0f, 140 / 255.0f);
-            this["gray56"] = new Color(143 / 255.0f, 143 / 255.0f, 143 / 255.0f);
-            this["grey56"] = new Color(143 / 255.0f, 143 / 255.0f, 143 / 255.0f);
-            this["gray57"] = new Color(145 / 255.0f, 145 / 255.0f, 145 / 255.0f);
-            this["grey57"] = new Color(145 / 255.0f, 145 / 255.0f, 145 / 255.0f);
-            this["gray58"] = new Color(148 / 255.0f, 148 / 255.0f, 148 / 255.0f);
-            this["grey58"] = new Color(148 / 255.0f, 148 / 255.0f, 148 / 255.0f);
-            this["gray59"] = new Color(150 / 255.0f, 150 / 255.0f, 150 / 255.0f);
-            this["grey59"] = new Color(150 / 255.0f, 150 / 255.0f, 150 / 255.0f);
-            this["gray60"] = new Color(153 / 255.0f, 153 / 255.0f, 153 / 255.0f);
-            this["grey60"] = new Color(153 / 255.0f, 153 / 255.0f, 153 / 255.0f);
-            this["gray61"] = new Color(156 / 255.0f, 156 / 255.0f, 156 / 255.0f);
-            this["grey61"] = new Color(156 / 255.0f, 156 / 255.0f, 156 / 255.0f);
-            this["gray62"] = new Color(158 / 255.0f, 158 / 255.0f, 158 / 255.0f);
-            this["grey62"] = new Color(158 / 255.0f, 158 / 255.0f, 158 / 255.0f);
-            this["gray63"] = new Color(161 / 255.0f, 161 / 255.0f, 161 / 255.0f);
-            this["grey63"] = new Color(161 / 255.0f, 161 / 255.0f, 161 / 255.0f);
-            this["gray64"] = new Color(163 / 255.0f, 163 / 255.0f, 163 / 255.0f);
-            this["grey64"] = new Color(163 / 255.0f, 163 / 255.0f, 163 / 255.0f);
-            this["gray65"] = new Color(166 / 255.0f, 166 / 255.0f, 166 / 255.0f);
-            this["grey65"] = new Color(166 / 255.0f, 166 / 255.0f, 166 / 255.0f);
-            this["gray66"] = new Color(168 / 255.0f, 168 / 255.0f, 168 / 255.0f);
-            this["grey66"] = new Color(168 / 255.0f, 168 / 255.0f, 168 / 255.0f);
-            this["gray67"] = new Color(171 / 255.0f, 171 / 255.0f, 171 / 255.0f);
-            this["grey67"] = new Color(171 / 255.0f, 171 / 255.0f, 171 / 255.0f);
-            this["gray68"] = new Color(173 / 255.0f, 173 / 255.0f, 173 / 255.0f);
-            this["grey68"] = new Color(173 / 255.0f, 173 / 255.0f, 173 / 255.0f);
-            this["gray69"] = new Color(176 / 255.0f, 176 / 255.0f, 176 / 255.0f);
-            this["grey69"] = new Color(176 / 255.0f, 176 / 255.0f, 176 / 255.0f);
-            this["gray70"] = new Color(179 / 255.0f, 179 / 255.0f, 179 / 255.0f);
-            this["grey70"] = new Color(179 / 255.0f, 179 / 255.0f, 179 / 255.0f);
-            this["gray71"] = new Color(181 / 255.0f, 181 / 255.0f, 181 / 255.0f);
-            this["grey71"] = new Color(181 / 255.0f, 181 / 255.0f, 181 / 255.0f);
-            this["gray72"] = new Color(184 / 255.0f, 184 / 255.0f, 184 / 255.0f);
-            this["grey72"] = new Color(184 / 255.0f, 184 / 255.0f, 184 / 255.0f);
-            this["gray73"] = new Color(186 / 255.0f, 186 / 255.0f, 186 / 255.0f);
-            this["grey73"] = new Color(186 / 255.0f, 186 / 255.0f, 186 / 255.0f);
-            this["gray74"] = new Color(189 / 255.0f, 189 / 255.0f, 189 / 255.0f);
-            this["grey74"] = new Color(189 / 255.0f, 189 / 255.0f, 189 / 255.0f);
-            this["gray75"] = new Color(191 / 255.0f, 191 / 255.0f, 191 / 255.0f);
-            this["grey75"] = new Color(191 / 255.0f, 191 / 255.0f, 191 / 255.0f);
-            this["gray76"] = new Color(194 / 255.0f, 194 / 255.0f, 194 / 255.0f);
-            this["grey76"] = new Color(194 / 255.0f, 194 / 255.0f, 194 / 255.0f);
-            this["gray77"] = new Color(196 / 255.0f, 196 / 255.0f, 196 / 255.0f);
-            this["grey77"] = new Color(196 / 255.0f, 196 / 255.0f, 196 / 255.0f);
-            this["gray78"] = new Color(199 / 255.0f, 199 / 255.0f, 199 / 255.0f);
-            this["grey78"] = new Color(199 / 255.0f, 199 / 255.0f, 199 / 255.0f);
-            this["gray79"] = new Color(201 / 255.0f, 201 / 255.0f, 201 / 255.0f);
-            this["grey79"] = new Color(201 / 255.0f, 201 / 255.0f, 201 / 255.0f);
-            this["gray80"] = new Color(204 / 255.0f, 204 / 255.0f, 204 / 255.0f);
-            this["grey80"] = new Color(204 / 255.0f, 204 / 255.0f, 204 / 255.0f);
-            this["gray81"] = new Color(207 / 255.0f, 207 / 255.0f, 207 / 255.0f);
-            this["grey81"] = new Color(207 / 255.0f, 207 / 255.0f, 207 / 255.0f);
-            this["gray82"] = new Color(209 / 255.0f, 209 / 255.0f, 209 / 255.0f);
-            this["grey82"] = new Color(209 / 255.0f, 209 / 255.0f, 209 / 255.0f);
-            this["gray83"] = new Color(212 / 255.0f, 212 / 255.0f, 212 / 255.0f);
-            this["grey83"] = new Color(212 / 255.0f, 212 / 255.0f, 212 / 255.0f);
-            this["gray84"] = new Color(214 / 255.0f, 214 / 255.0f, 214 / 255.0f);
-            this["grey84"] = new Color(214 / 255.0f, 214 / 255.0f, 214 / 255.0f);
-            this["gray85"] = new Color(217 / 255.0f, 217 / 255.0f, 217 / 255.0f);
-            this["grey85"] = new Color(217 / 255.0f, 217 / 255.0f, 217 / 255.0f);
-            this["gray86"] = new Color(219 / 255.0f, 219 / 255.0f, 219 / 255.0f);
-            this["grey86"] = new Color(219 / 255.0f, 219 / 255.0f, 219 / 255.0f);
-            this["gray87"] = new Color(222 / 255.0f, 222 / 255.0f, 222 / 255.0f);
-            this["grey87"] = new Color(222 / 255.0f, 222 / 255.0f, 222 / 255.0f);
-            this["gray88"] = new Color(224 / 255.0f, 224 / 255.0f, 224 / 255.0f);
-            this["grey88"] = new Color(224 / 255.0f, 224 / 255.0f, 224 / 255.0f);
-            this["gray89"] = new Color(227 / 255.0f, 227 / 255.0f, 227 / 255.0f);
-            this["grey89"] = new Color(227 / 255.0f, 227 / 255.0f, 227 / 255.0f);
-            this["gray90"] = new Color(229 / 255.0f, 229 / 255.0f, 229 / 255.0f);
-            this["grey90"] = new Color(229 / 255.0f, 229 / 255.0f, 229 / 255.0f);
-            this["gray91"] = new Color(232 / 255.0f, 232 / 255.0f, 232 / 255.0f);
-            this["grey91"] = new Color(232 / 255.0f, 232 / 255.0f, 232 / 255.0f);
-            this["gray92"] = new Color(235 / 255.0f, 235 / 255.0f, 235 / 255.0f);
-            this["grey92"] = new Color(235 / 255.0f, 235 / 255.0f, 235 / 255.0f);
-            this["gray93"] = new Color(237 / 255.0f, 237 / 255.0f, 237 / 255.0f);
-            this["grey93"] = new Color(237 / 255.0f, 237 / 255.0f, 237 / 255.0f);
-            this["gray94"] = new Color(240 / 255.0f, 240 / 255.0f, 240 / 255.0f);
-            this["grey94"] = new Color(240 / 255.0f, 240 / 255.0f, 240 / 255.0f);
-            this["gray95"] = new Color(242 / 255.0f, 242 / 255.0f, 242 / 255.0f);
-            this["grey95"] = new Color(242 / 255.0f, 242 / 255.0f, 242 / 255.0f);
-            this["gray96"] = new Color(245 / 255.0f, 245 / 255.0f, 245 / 255.0f);
-            this["grey96"] = new Color(245 / 255.0f, 245 / 255.0f, 245 / 255.0f);
-            this["gray97"] = new Color(247 / 255.0f, 247 / 255.0f, 247 / 255.0f);
-            this["grey97"] = new Color(247 / 255.0f, 247 / 255.0f, 247 / 255.0f);
-            this["gray98"] = new Color(250 / 255.0f, 250 / 255.0f, 250 / 255.0f);
-            this["grey98"] = new Color(250 / 255.0f, 250 / 255.0f, 250 / 255.0f);
-            this["gray99"] = new Color(252 / 255.0f, 252 / 255.0f, 252 / 255.0f);
-            this["grey99"] = new Color(252 / 255.0f, 252 / 255.0f, 252 / 255.0f);
-            this["gray100"] = new Color(255 / 255.0f, 255 / 255.0f, 255 / 255.0f);
-            this["grey100"] = new Color(255 / 255.0f, 255 / 255.0f, 255 / 255.0f);
-            this["dark grey"] = new Color(169 / 255.0f, 169 / 255.0f, 169 / 255.0f);
-            this["DarkGrey"] = new Color(169 / 255.0f, 169 / 255.0f, 169 / 255.0f);
-            this["dark gray"] = new Color(169 / 255.0f, 169 / 255.0f, 169 / 255.0f);
-            this["DarkGray"] = new Color(169 / 255.0f, 169 / 255.0f, 169 / 255.0f);
-            this["dark blue"] = new Color(0 / 255.0f, 0 / 255.0f, 139 / 255.0f);
-            this["DarkBlue"] = new Color(0 / 255.0f, 0 / 255.0f, 139 / 255.0f);
-            this["dark cyan"] = new Color(0 / 255.0f, 139 / 255.0f, 139 / 255.0f);
-            this["DarkCyan"] = new Color(0 / 255.0f, 139 / 255.0f, 139 / 255.0f);
-            this["dark magenta"] = new Color(139 / 255.0f, 0 / 255.0f, 139 / 255.0f);
-            this["DarkMagenta"] = new Color(139 / 255.0f, 0 / 255.0f, 139 / 255.0f);
-            this["dark red"] = new Color(139 / 255.0f, 0 / 255.0f, 0 / 255.0f);
-            this["DarkRed"] = new Color(139 / 255.0f, 0 / 255.0f, 0 / 255.0f);
-            this["light green"] = new Color(144 / 255.0f, 238 / 255.0f, 144 / 255.0f);
-            this["LightGreen"] = new Color(144 / 255.0f, 238 / 255.0f, 144 / 255.0f);
+            this["aliceblue"] = new Color(240.0f / 255.0f, 248.0f / 255.0f, 255.0f / 255.0f);
+            this["antiquewhite"] = new Color(250.0f / 255.0f, 235.0f / 255.0f, 215.0f / 255.0f);
+            this["aqua"] = new Color(0.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f);
+            this["aquamarine"] = new Color(127.0f / 255.0f, 255.0f / 255.0f, 212.0f / 255.0f);
+            this["azure"] = new Color(240.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f);
+            this["beige"] = new Color(245.0f / 255.0f, 245.0f / 255.0f, 220.0f / 255.0f);
+            this["bisque"] = new Color(255.0f / 255.0f, 228.0f / 255.0f, 196.0f / 255.0f);
+            this["black"] = new Color(0.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f);
+            this["blanchedalmond"] = new Color(255.0f / 255.0f, 235.0f / 255.0f, 205.0f / 255.0f);
+            this["blue"] = new Color(0.0f / 255.0f, 0.0f / 255.0f, 255.0f / 255.0f);
+            this["blueviolet"] = new Color(138.0f / 255.0f, 43.0f / 255.0f, 226.0f / 255.0f);
+            this["brown"] = new Color(165.0f / 255.0f, 42.0f / 255.0f, 42.0f / 255.0f);
+            this["burlywood"] = new Color(222.0f / 255.0f, 184.0f / 255.0f, 135.0f / 255.0f);
+            this["cadetblue"] = new Color(95.0f / 255.0f, 158.0f / 255.0f, 160.0f / 255.0f);
+            this["chartreuse"] = new Color(127.0f / 255.0f, 255.0f / 255.0f, 0.0f / 255.0f);
+            this["chocolate"] = new Color(210.0f / 255.0f, 105.0f / 255.0f, 30.0f / 255.0f);
+            this["coral"] = new Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f);
+            this["cornflowerblue"] = new Color(100.0f / 255.0f, 149.0f / 255.0f, 237.0f / 255.0f);
+            this["cornsilk"] = new Color(255.0f / 255.0f, 248.0f / 255.0f, 220.0f / 255.0f);
+            this["crimson"] = new Color(220.0f / 255.0f, 20.0f / 255.0f, 60.0f / 255.0f);
+            this["cyan"] = new Color(0.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f);
+            this["darkblue"] = new Color(0.0f / 255.0f, 0.0f / 255.0f, 139.0f / 255.0f);
+            this["darkcyan"] = new Color(0.0f / 255.0f, 139.0f / 255.0f, 139.0f / 255.0f);
+            this["darkgoldenrod"] = new Color(184.0f / 255.0f, 134.0f / 255.0f, 11.0f / 255.0f);
+            this["darkgray"] = new Color(169.0f / 255.0f, 169.0f / 255.0f, 169.0f / 255.0f);
+            this["darkgrey"] = new Color(169.0f / 255.0f, 169.0f / 255.0f, 169.0f / 255.0f);
+            this["darkgreen"] = new Color(0.0f / 255.0f, 100.0f / 255.0f, 0.0f / 255.0f);
+            this["darkkhaki"] = new Color(189.0f / 255.0f, 183.0f / 255.0f, 107.0f / 255.0f);
+            this["darkmagenta"] = new Color(139.0f / 255.0f, 0.0f / 255.0f, 139.0f / 255.0f);
+            this["darkolivegreen"] = new Color(85.0f / 255.0f, 107.0f / 255.0f, 47.0f / 255.0f);
+            this["darkorange"] = new Color(255.0f / 255.0f, 140.0f / 255.0f, 0.0f / 255.0f);
+            this["darkorchid"] = new Color(153.0f / 255.0f, 50.0f / 255.0f, 204.0f / 255.0f);
+            this["darkred"] = new Color(139.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f);
+            this["darksalmon"] = new Color(233.0f / 255.0f, 150.0f / 255.0f, 122.0f / 255.0f);
+            this["darkseagreen"] = new Color(143.0f / 255.0f, 188.0f / 255.0f, 143.0f / 255.0f);
+            this["darkslateblue"] = new Color(72.0f / 255.0f, 61.0f / 255.0f, 139.0f / 255.0f);
+            this["darkslategray"] = new Color(47.0f / 255.0f, 79.0f / 255.0f, 79.0f / 255.0f);
+            this["darkslategrey"] = new Color(47.0f / 255.0f, 79.0f / 255.0f, 79.0f / 255.0f);
+            this["darkturquoise"] = new Color(0.0f / 255.0f, 206.0f / 255.0f, 209.0f / 255.0f);
+            this["darkviolet"] = new Color(148.0f / 255.0f, 0.0f / 255.0f, 211.0f / 255.0f);
+            this["deeppink"] = new Color(255.0f / 255.0f, 20.0f / 255.0f, 147.0f / 255.0f);
+            this["deepskyblue"] = new Color(0.0f / 255.0f, 191.0f / 255.0f, 255.0f / 255.0f);
+            this["dimgray"] = new Color(105.0f / 255.0f, 105.0f / 255.0f, 105.0f / 255.0f);
+            this["dimgrey"] = new Color(105.0f / 255.0f, 105.0f / 255.0f, 105.0f / 255.0f);
+            this["dodgerblue"] = new Color(30.0f / 255.0f, 144.0f / 255.0f, 255.0f / 255.0f);
+            this["firebrick"] = new Color(178.0f / 255.0f, 34.0f / 255.0f, 34.0f / 255.0f);
+            this["floralwhite"] = new Color(255.0f / 255.0f, 250.0f / 255.0f, 240.0f / 255.0f);
+            this["forestgreen"] = new Color(34.0f / 255.0f, 139.0f / 255.0f, 34.0f / 255.0f);
+            this["fuchsia"] = new Color(255.0f / 255.0f, 0.0f / 255.0f, 255.0f / 255.0f);
+            this["gainsboro"] = new Color(220.0f / 255.0f, 220.0f / 255.0f, 220.0f / 255.0f);
+            this["ghostwhite"] = new Color(248.0f / 255.0f, 248.0f / 255.0f, 255.0f / 255.0f);
+            this["gold"] = new Color(255.0f / 255.0f, 215.0f / 255.0f, 0.0f / 255.0f);
+            this["goldenrod"] = new Color(218.0f / 255.0f, 165.0f / 255.0f, 32.0f / 255.0f);
+            this["gray"] = new Color(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f);
+            this["grey"] = new Color(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f);
+            this["green"] = new Color(0.0f / 255.0f, 128.0f / 255.0f, 0.0f / 255.0f);
+            this["greenyellow"] = new Color(173.0f / 255.0f, 255.0f / 255.0f, 47.0f / 255.0f);
+            this["honeydew"] = new Color(240.0f / 255.0f, 255.0f / 255.0f, 240.0f / 255.0f);
+            this["hotpink"] = new Color(255.0f / 255.0f, 105.0f / 255.0f, 180.0f / 255.0f);
+            this["indianred"] = new Color(205.0f / 255.0f, 92.0f / 255.0f, 92.0f / 255.0f);
+            this["indigo"] = new Color(75.0f / 255.0f, 0.0f / 255.0f, 130.0f / 255.0f);
+            this["ivory"] = new Color(255.0f / 255.0f, 255.0f / 255.0f, 240.0f / 255.0f);
+            this["khaki"] = new Color(240.0f / 255.0f, 230.0f / 255.0f, 140.0f / 255.0f);
+            this["lavender"] = new Color(230.0f / 255.0f, 230.0f / 255.0f, 250.0f / 255.0f);
+            this["lavenderblush"] = new Color(255.0f / 255.0f, 240.0f / 255.0f, 245.0f / 255.0f);
+            this["lawngreen"] = new Color(124.0f / 255.0f, 252.0f / 255.0f, 0.0f / 255.0f);
+            this["lemonchiffon"] = new Color(255.0f / 255.0f, 250.0f / 255.0f, 205.0f / 255.0f);
+            this["lightblue"] = new Color(173.0f / 255.0f, 216.0f / 255.0f, 230.0f / 255.0f);
+            this["lightcoral"] = new Color(240.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f);
+            this["lightcyan"] = new Color(224.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f);
+            this["lightgoldenrodyellow"] = new Color(250.0f / 255.0f, 250.0f / 255.0f, 210.0f / 255.0f);
+            this["lightgray"] = new Color(211.0f / 255.0f, 211.0f / 255.0f, 211.0f / 255.0f);
+            this["lightgrey"] = new Color(211.0f / 255.0f, 211.0f / 255.0f, 211.0f / 255.0f);
+            this["lightgreen"] = new Color(144.0f / 255.0f, 238.0f / 255.0f, 144.0f / 255.0f);
+            this["lightpink"] = new Color(255.0f / 255.0f, 182.0f / 255.0f, 193.0f / 255.0f);
+            this["lightsalmon"] = new Color(255.0f / 255.0f, 160.0f / 255.0f, 122.0f / 255.0f);
+            this["lightseagreen"] = new Color(32.0f / 255.0f, 178.0f / 255.0f, 170.0f / 255.0f);
+            this["lightskyblue"] = new Color(135.0f / 255.0f, 206.0f / 255.0f, 250.0f / 255.0f);
+            this["lightslategray"] = new Color(119.0f / 255.0f, 136.0f / 255.0f, 153.0f / 255.0f);
+            this["lightslategrey"] = new Color(119.0f / 255.0f, 136.0f / 255.0f, 153.0f / 255.0f);
+            this["lightsteelblue"] = new Color(176.0f / 255.0f, 196.0f / 255.0f, 222.0f / 255.0f);
+            this["lightyellow"] = new Color(255.0f / 255.0f, 255.0f / 255.0f, 224.0f / 255.0f);
+            this["lime"] = new Color(0.0f / 255.0f, 255.0f / 255.0f, 0.0f / 255.0f);
+            this["limegreen"] = new Color(50.0f / 255.0f, 205.0f / 255.0f, 50.0f / 255.0f);
+            this["linen"] = new Color(250.0f / 255.0f, 240.0f / 255.0f, 230.0f / 255.0f);
+            this["magenta"] = new Color(255.0f / 255.0f, 0.0f / 255.0f, 255.0f / 255.0f);
+            this["maroon"] = new Color(128.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f);
+            this["mediumaquamarine"] = new Color(102.0f / 255.0f, 205.0f / 255.0f, 170.0f / 255.0f);
+            this["mediumblue"] = new Color(0.0f / 255.0f, 0.0f / 255.0f, 205.0f / 255.0f);
+            this["mediumorchid"] = new Color(186.0f / 255.0f, 85.0f / 255.0f, 211.0f / 255.0f);
+            this["mediumpurple"] = new Color(147.0f / 255.0f, 112.0f / 255.0f, 219.0f / 255.0f);
+            this["mediumseagreen"] = new Color(60.0f / 255.0f, 179.0f / 255.0f, 113.0f / 255.0f);
+            this["mediumslateblue"] = new Color(123.0f / 255.0f, 104.0f / 255.0f, 238.0f / 255.0f);
+            this["mediumspringgreen"] = new Color(0.0f / 255.0f, 250.0f / 255.0f, 154.0f / 255.0f);
+            this["mediumturquoise"] = new Color(72.0f / 255.0f, 209.0f / 255.0f, 204.0f / 255.0f);
+            this["mediumvioletred"] = new Color(199.0f / 255.0f, 21.0f / 255.0f, 133.0f / 255.0f);
+            this["midnightblue"] = new Color(25.0f / 255.0f, 25.0f / 255.0f, 112.0f / 255.0f);
+            this["mintcream"] = new Color(245.0f / 255.0f, 255.0f / 255.0f, 250.0f / 255.0f);
+            this["mistyrose"] = new Color(255.0f / 255.0f, 228.0f / 255.0f, 225.0f / 255.0f);
+            this["moccasin"] = new Color(255.0f / 255.0f, 228.0f / 255.0f, 181.0f / 255.0f);
+            this["navajowhite"] = new Color(255.0f / 255.0f, 222.0f / 255.0f, 173.0f / 255.0f);
+            this["navy"] = new Color(0.0f / 255.0f, 0.0f / 255.0f, 128.0f / 255.0f);
+            this["oldlace"] = new Color(253.0f / 255.0f, 245.0f / 255.0f, 230.0f / 255.0f);
+            this["olive"] = new Color(128.0f / 255.0f, 128.0f / 255.0f, 0.0f / 255.0f);
+            this["olivedrab"] = new Color(107.0f / 255.0f, 142.0f / 255.0f, 35.0f / 255.0f);
+            this["orange"] = new Color(255.0f / 255.0f, 165.0f / 255.0f, 0.0f / 255.0f);
+            this["orangered"] = new Color(255.0f / 255.0f, 69.0f / 255.0f, 0.0f / 255.0f);
+            this["orchid"] = new Color(218.0f / 255.0f, 112.0f / 255.0f, 214.0f / 255.0f);
+            this["palegoldenrod"] = new Color(238.0f / 255.0f, 232.0f / 255.0f, 170.0f / 255.0f);
+            this["palegreen"] = new Color(152.0f / 255.0f, 251.0f / 255.0f, 152.0f / 255.0f);
+            this["paleturquoise"] = new Color(175.0f / 255.0f, 238.0f / 255.0f, 238.0f / 255.0f);
+            this["palevioletred"] = new Color(219.0f / 255.0f, 112.0f / 255.0f, 147.0f / 255.0f);
+            this["papayawhip"] = new Color(255.0f / 255.0f, 239.0f / 255.0f, 213.0f / 255.0f);
+            this["peachpuff"] = new Color(255.0f / 255.0f, 218.0f / 255.0f, 185.0f / 255.0f);
+            this["peru"] = new Color(205.0f / 255.0f, 133.0f / 255.0f, 63.0f / 255.0f);
+            this["pink"] = new Color(255.0f / 255.0f, 192.0f / 255.0f, 203.0f / 255.0f);
+            this["plum"] = new Color(221.0f / 255.0f, 160.0f / 255.0f, 221.0f / 255.0f);
+            this["powderblue"] = new Color(176.0f / 255.0f, 224.0f / 255.0f, 230.0f / 255.0f);
+            this["purple"] = new Color(128.0f / 255.0f, 0.0f / 255.0f, 128.0f / 255.0f);
+            this["rebeccapurple"] = new Color(102.0f / 255.0f, 51.0f / 255.0f, 153.0f / 255.0f);
+            this["red"] = new Color(255.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f);
+            this["rosybrown"] = new Color(188.0f / 255.0f, 143.0f / 255.0f, 143.0f / 255.0f);
+            this["royalblue"] = new Color(65.0f / 255.0f, 105.0f / 255.0f, 225.0f / 255.0f);
+            this["saddlebrown"] = new Color(139.0f / 255.0f, 69.0f / 255.0f, 19.0f / 255.0f);
+            this["salmon"] = new Color(250.0f / 255.0f, 128.0f / 255.0f, 114.0f / 255.0f);
+            this["sandybrown"] = new Color(244.0f / 255.0f, 164.0f / 255.0f, 96.0f / 255.0f);
+            this["seagreen"] = new Color(46.0f / 255.0f, 139.0f / 255.0f, 87.0f / 255.0f);
+            this["seashell"] = new Color(255.0f / 255.0f, 245.0f / 255.0f, 238.0f / 255.0f);
+            this["sienna"] = new Color(160.0f / 255.0f, 82.0f / 255.0f, 45.0f / 255.0f);
+            this["silver"] = new Color(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f);
+            this["skyblue"] = new Color(135.0f / 255.0f, 206.0f / 255.0f, 235.0f / 255.0f);
+            this["slateblue"] = new Color(106.0f / 255.0f, 90.0f / 255.0f, 205.0f / 255.0f);
+            this["slategray"] = new Color(112.0f / 255.0f, 128.0f / 255.0f, 144.0f / 255.0f);
+            this["slategrey"] = new Color(112.0f / 255.0f, 128.0f / 255.0f, 144.0f / 255.0f);
+            this["snow"] = new Color(255.0f / 255.0f, 250.0f / 255.0f, 250.0f / 255.0f);
+            this["springgreen"] = new Color(0.0f / 255.0f, 255.0f / 255.0f, 127.0f / 255.0f);
+            this["steelblue"] = new Color(70.0f / 255.0f, 130.0f / 255.0f, 180.0f / 255.0f);
+            this["tan"] = new Color(210.0f / 255.0f, 180.0f / 255.0f, 140.0f / 255.0f);
+            this["teal"] = new Color(0.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f);
+            this["thistle"] = new Color(216.0f / 255.0f, 191.0f / 255.0f, 216.0f / 255.0f);
+            this["tomato"] = new Color(255.0f / 255.0f, 99.0f / 255.0f, 71.0f / 255.0f);
+            this["turquoise"] = new Color(64.0f / 255.0f, 224.0f / 255.0f, 208.0f / 255.0f);
+            this["violet"] = new Color(238.0f / 255.0f, 130.0f / 255.0f, 238.0f / 255.0f);
+            this["wheat"] = new Color(245.0f / 255.0f, 222.0f / 255.0f, 179.0f / 255.0f);
+            this["white"] = new Color(255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f);
+            this["whitesmoke"] = new Color(245.0f / 255.0f, 245.0f / 255.0f, 245.0f / 255.0f);
+            this["yellow"] = new Color(255.0f / 255.0f, 255.0f / 255.0f, 0.0f / 255.0f);
+            this["yellowgreen"] = new Color(154.0f / 255.0f, 205.0f / 255.0f, 50.0f / 255.0f);
         }
     } // The boring NamedWebColorDictionary class
 } // namespace

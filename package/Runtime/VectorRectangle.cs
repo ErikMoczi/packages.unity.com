@@ -28,6 +28,32 @@ namespace Unity.VectorGraphics
             }
         }
 
+        internal static Vector2[] TraceRectangle(Rectangle rect, Stroke stroke, TessellationOptions tessellationOptions)
+        {
+            var width = rect.size.x;
+            var height = rect.size.y;
+
+            if (width <= VectorUtils.Epsilon || height <= VectorUtils.Epsilon)
+                return null;
+
+            if (IsSimpleRectangle(rect))
+            {
+                // Fast path, square corners, no patterns
+                var r = new Rect(rect.position, rect.size);
+                return new Vector2[] {
+                    new Vector2(r.xMin, r.yMin),
+                    new Vector2(r.xMax, r.yMin),
+                    new Vector2(r.xMax, r.yMax),
+                    new Vector2(r.xMin, r.yMax)
+                };
+            }
+            else
+            {
+                var contour = BuildRoundedRectangleContour(rect);
+                return VectorUtils.TraceShape(contour, stroke, tessellationOptions);    
+            }
+        }
+
         private static void TessellateRectangleSquareCorners(Rectangle rect, List<Geometry> geoms)
         {
             var x = rect.position.x;
@@ -35,7 +61,8 @@ namespace Unity.VectorGraphics
             var width = rect.size.x;
             var height = rect.size.y;
 
-            if (rect.fill != null)
+            // Don't generate any geometry for pattern fills since these are generated from another SceneNode
+            if (rect.fill != null && !(rect.fill is PatternFill))
             {
                 Vector2[] vertices;
                 UInt16[] indices;
@@ -43,6 +70,7 @@ namespace Unity.VectorGraphics
 
                 var solidFill = rect.fill as SolidFill;
                 var color = solidFill != null ? solidFill.color : Color.white;
+                color.a *= rect.fill.opacity;
 
                 geoms.Add(new Geometry() { vertices = vertices, indices = indices, color = color, fill = rect.fill, fillTransform = rect.fillTransform });
             }
