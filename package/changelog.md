@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4-preview.20
+
+- Prepare the user documentation for a public release
+
 ## 0.2.4-preview.19
 
 - Fix compilation error with generics when types are coming from different assemblies
