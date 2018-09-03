@@ -19,3 +19,4 @@
 1.0.2-experimental
 1.0.3-experimental
 1.0.4-experimental
+1.0.5-experimental

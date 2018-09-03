@@ -1,6 +1,6 @@
 {
 	"name": "com.unity.vectorgraphics",
-	"version": "1.0.4-experimental",
+	"version": "1.0.5-experimental",
 	"unity": "2018.1",
 	"description": "Vector graphics importers and related utilities.",
 	"keywords": ["vector", "graphics", "svg", "importer"],
