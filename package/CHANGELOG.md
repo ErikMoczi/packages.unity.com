@@ -1,5 +1,10 @@
 # Changelog
 
+
+## [0.1.27] - 2018-5-31
+
+### Add meta files to npm ignore
+
 ## [0.1.26] - 2018-5-31
 
 ### Preparing package for moving to public registry
