@@ -41,11 +41,11 @@ namespace UnityEditor.Experimental.U2D.Common
         /// <param name="outPackedBufferHeight">Packed iamge buffer's height</param>
         /// <param name="outPackedRect">Location of each image buffers in the packed buffer</param>
         /// <param name="outUVTransform">Translation data from image original buffer to packed buffer</param>
-        public static void Pack(NativeArray<byte>[] buffers, int width, int height, int padding, out NativeArray<byte> outPackedBuffer, out int outPackedBufferWidth, out int outPackedBufferHeight, out RectInt[] outPackedRect, out Vector2Int[] outUVTransform)
+        public static void Pack(NativeArray<Color32>[] buffers, int width, int height, int padding, out NativeArray<Color32> outPackedBuffer, out int outPackedBufferWidth, out int outPackedBufferHeight, out RectInt[] outPackedRect, out Vector2Int[] outUVTransform)
         {
             UnityEngine.Profiling.Profiler.BeginSample("Pack");
             // Determine the area that contains data in the buffer
-            outPackedBuffer = default(NativeArray<byte>);
+            outPackedBuffer = default(NativeArray<Color32>);
             try
             {
                 var tightRects = FindTightRectJob.Execute(buffers, width, height);
@@ -55,8 +55,8 @@ namespace UnityEditor.Experimental.U2D.Common
                 {
                     outUVTransform[i] = new Vector2Int(outPackedRect[i].x - tightRects[i].x, outPackedRect[i].y - tightRects[i].y);
                 }
-                outPackedBuffer = new NativeArray<byte>(outPackedBufferWidth * outPackedBufferHeight * 4, Allocator.Temp);
-                Blit(outPackedBuffer, outPackedRect, outPackedBufferWidth * 4, buffers, tightRects, width * 4, padding);
+                outPackedBuffer = new NativeArray<Color32>(outPackedBufferWidth * outPackedBufferHeight, Allocator.Temp);
+                Blit(outPackedBuffer, outPackedRect, outPackedBufferWidth, buffers, tightRects, width, padding);
             }
             catch (Exception ex)
             {
@@ -105,11 +105,9 @@ namespace UnityEditor.Experimental.U2D.Common
             return root;
         }
 
-        static unsafe void Blit(NativeArray<byte> buffer, RectInt[] blitToArea, int bufferbytesPerRow, NativeArray<byte>[] originalBuffer, RectInt[] blitFromArea, int bytesPerRow, int padding)
+        static unsafe void Blit(NativeArray<Color32> buffer, RectInt[] blitToArea, int bufferbytesPerRow, NativeArray<Color32>[] originalBuffer, RectInt[] blitFromArea, int bytesPerRow, int padding)
         {
             UnityEngine.Profiling.Profiler.BeginSample("Blit");
-            bytesPerRow /= 4;
-            bufferbytesPerRow /= 4;
             var c = (Color32*)buffer.GetUnsafePtr().ToPointer();
             for (int bufferIndex = 0; bufferIndex < blitToArea.Length && bufferIndex < originalBuffer.Length && bufferIndex < blitFromArea.Length; ++bufferIndex)
             {

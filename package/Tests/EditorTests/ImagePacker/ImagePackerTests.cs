@@ -182,29 +182,26 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
             }
 
             // Setup color buffers
-            NativeArray<byte>[] buffers = new NativeArray<byte>[rects.Length];
+            NativeArray<Color32>[] buffers = new NativeArray<Color32>[rects.Length];
             for (int i = 0; i < rects.Length; ++i)
             {
-                buffers[i] = new NativeArray<byte>(maxWidth * maxHeight * 4, Allocator.Temp);
+                buffers[i] = new NativeArray<Color32>(maxWidth * maxHeight, Allocator.Temp);
                 for (int j = 0; j < maxHeight; ++j)
                 {
                     for (int k = 0; k < maxWidth; ++k)
                     {
-                        int bufferIndex = (j * maxWidth  + k) * 4;
+                        int bufferIndex = (j * maxWidth  + k);
                         if (k >= rects[i].width || j >= rects[i].height)
-                            buffers[i][bufferIndex + 3] = 0;
+                            buffers[i][bufferIndex] = new Color32(0,0,0,0);
                         else
                         {
-                            buffers[i][bufferIndex] = (byte)i;
-                            buffers[i][bufferIndex + 1] = (byte)i;
-                            buffers[i][bufferIndex + 2] = (byte)i;
-                            buffers[i][bufferIndex + 3] = 255;
+                            buffers[i][bufferIndex] = new Color32((byte)i ,(byte)i , (byte)i, 255);
                         }
                     }
                 }
             }
 
-            NativeArray<byte> packedBuffer;
+            NativeArray<Color32> packedBuffer;
             Vector2Int[] uvTransform;
             ImagePacker.Pack(buffers, maxWidth, maxHeight, padding, out packedBuffer, out packedWidth, out packedHeight, out packedRect, out uvTransform);
             Assert.AreEqual(expectedSize.x, packedWidth);
@@ -212,7 +209,7 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
             Assert.AreEqual(rects.Length, packedRect.Length);
 
             // Ensure all rects exists
-            int bytesPerRow = packedWidth * 4;
+            int bytesPerRow = packedWidth;
             for (int i = 0; i < packedRect.Length; ++i)
             {
                 // Ensure rect doesn't overlap with other rects
@@ -245,14 +242,14 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
                 buffers[i].Dispose();
         }
 
-        bool PixelColorEqual(NativeArray<byte> buffer, int bufferWidth, int bytesPerRow, int x, int y, Color32 expected)
+        bool PixelColorEqual(NativeArray<Color32> buffer, int bufferWidth, int bytesPerRow, int x, int y, Color32 expected)
         {
             int bytesPerPixel = bytesPerRow / bufferWidth;
 
-            return buffer[y * bytesPerRow + x * bytesPerPixel] == expected.r &&
-                buffer[y * bytesPerRow + x * bytesPerPixel + 1] == expected.g &&
-                buffer[y * bytesPerRow + x * bytesPerPixel + 2] == expected.b &&
-                buffer[y * bytesPerRow + x * bytesPerPixel + 3] == expected.a;
+            return buffer[y * bytesPerRow + x * bytesPerPixel].r == expected.r &&
+                buffer[y * bytesPerRow + x * bytesPerPixel].g == expected.g &&
+                buffer[y * bytesPerRow + x * bytesPerPixel].b == expected.b &&
+            buffer[y * bytesPerRow + x * bytesPerPixel].a == expected.a;
         }
     }
 }

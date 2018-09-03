@@ -40,7 +40,7 @@ namespace UnityEditor.Experimental.U2D.Common
             m_Output[index] = rect;
         }
 
-        public static RectInt[] Execute(NativeArray<byte>[] buffers, int width, int height)
+        public static RectInt[] Execute(NativeArray<Color32>[] buffers, int width, int height)
         {
             var job = new FindTightRectJob();
             job.m_Buffers = new NativeArray<IntPtr>(buffers.Length, Allocator.TempJob);

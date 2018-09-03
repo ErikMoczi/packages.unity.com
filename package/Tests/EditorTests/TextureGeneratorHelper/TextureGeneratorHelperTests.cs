@@ -12,7 +12,7 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
     {
         public struct GenerateSpriteTestCase
         {
-            public byte[] buffer;
+            public Color32[] buffer;
             public int bufferWidth;
             public int bufferHeight;
             public TextureSettings settings;
@@ -31,7 +31,7 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
 
         private static IEnumerable<TestCaseData> GenerateSpriteTestCases()
         {
-            var buffer = new byte[64 * 64 * 4];
+            var buffer = new Color32[64 * 64];
 
             var settings = new TextureSettings();
 
@@ -169,8 +169,8 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
         [Test, TestCaseSource("GenerateSpriteTestCases")]
         public void GenerateSpriteTests(GenerateSpriteTestCase testCase)
         {
-            var nativeBuffer = new NativeArray<byte>(testCase.buffer, Allocator.Temp);
-            var output = TextureGeneratorHelper.GenerateTextureSprite(nativeBuffer.GetUnsafeReadOnlyPtr(), testCase.bufferWidth, testCase.bufferHeight, testCase.settings, testCase.platformSettings, testCase.spriteSettings, testCase.alphaSettings, testCase.mipmapSettings, testCase.wrapSettings);
+            var nativeBuffer = new NativeArray<Color32>(testCase.buffer, Allocator.Temp);
+            var output = TextureGeneratorHelper.GenerateTextureSprite(nativeBuffer, testCase.bufferWidth, testCase.bufferHeight, testCase.settings, testCase.platformSettings, testCase.spriteSettings, testCase.alphaSettings, testCase.mipmapSettings, testCase.wrapSettings);
             nativeBuffer.Dispose();
             //Verify texture is generated
             Assert.NotNull(output.texture);
