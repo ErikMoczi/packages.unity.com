@@ -1,2 +1,2 @@
 using System.Runtime.CompilerServices;
-[assembly: InternalsVisibleTo("com.unity.2d.ik.Editor")]
+[assembly: InternalsVisibleTo("Unity.2D.IK.Editor")]
