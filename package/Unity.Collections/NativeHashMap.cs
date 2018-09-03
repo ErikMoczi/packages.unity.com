@@ -831,7 +831,8 @@ namespace Unity.Collections
     
     public interface IJobNativeMultiHashMapMergedSharedKeyIndices
     {
-        void Execute(int firstIndex, int index);
+        void ExecuteFirst(int index);
+        void ExecuteNext(int firstIndex, int index);
     }
 
     public static class JobNativeMultiHashMapUniqueHashExtensions
@@ -883,14 +884,25 @@ namespace Unity.Collections
                             NativeMultiHashMapIterator<TKey> it;
                             fullData.HashMap.TryGetFirstValue(key, out firstValue, out it);
                             
+                            if (firstValue == value)
+                            {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                            var startIndex = math.min(firstValue, value);
-                            var lastIndex = math.max(firstValue, value);
-                            var rangeLength = (lastIndex - startIndex) + 1;
 
-                            JobsUtility.PatchBufferMinMaxRanges(bufferRangePatchData, UnsafeUtility.AddressOf(ref fullData), startIndex, rangeLength);
+                                JobsUtility.PatchBufferMinMaxRanges(bufferRangePatchData, UnsafeUtility.AddressOf(ref fullData), value, 1);
 #endif
-                            fullData.JobData.Execute(firstValue, value);
+                                fullData.JobData.ExecuteFirst(value);
+                            }
+                            else
+                            {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                                var startIndex = math.min(firstValue, value);
+                                var lastIndex = math.max(firstValue, value);
+                                var rangeLength = (lastIndex - startIndex) + 1;
+
+                                JobsUtility.PatchBufferMinMaxRanges(bufferRangePatchData, UnsafeUtility.AddressOf(ref fullData), startIndex, rangeLength);
+#endif
+                                fullData.JobData.ExecuteNext(firstValue, value);
+                            }
                             
                             entryIndex = nextPtrs[entryIndex];
                         }

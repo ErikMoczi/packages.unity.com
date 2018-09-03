@@ -159,14 +159,13 @@ public class NativeHashMapTests_InJobs : NativeHashMapTestsFixture
         [NativeDisableParallelForRestriction] public NativeArray<int> sharedCount;
         [NativeDisableParallelForRestriction] public NativeArray<int> sharedIndices;
 
-        public void Execute(int firstIndex, int index)
+        public void ExecuteFirst(int index)
         {
-            if (firstIndex == index)
-            {
-               sharedIndices[index] = index;
-               return;
-            }
+            sharedIndices[index] = index;
+        }
 
+        public void ExecuteNext(int firstIndex, int index)
+        {
             sharedIndices[index] = firstIndex;
             sharedCount[firstIndex]++;
         }
