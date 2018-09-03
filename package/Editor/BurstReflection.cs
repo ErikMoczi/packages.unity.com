@@ -104,7 +104,7 @@ namespace Unity.Burst.Editor
                 AddOption(builder, "-enable-synchronous-compilation");
 
             if (attr.Accuracy != Accuracy.Std)
-                AddOption(builder, "--fast-math");
+                AddOption(builder, "-fast-math");
 
             //Debug.Log($"ExtractBurstCompilerOptions: {type} {optimizationFlags}");
 
