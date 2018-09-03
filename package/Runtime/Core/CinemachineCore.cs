@@ -405,7 +405,8 @@ namespace Cinemachine
         /// Try to find a CinemachineBrain to associate with a
         /// Cinemachine Virtual Camera.  The first CinemachineBrain
         /// in which this Cinemachine Virtual Camera is live will be used.
-        /// If none, then the first active CinemachineBrain will be used.
+        /// If none, then the first active CinemachineBrain with the correct 
+        /// layer filter will be used.  
         /// Brains with OutputCamera == null will not be returned.
         /// Final result may be null.
         /// </summary>

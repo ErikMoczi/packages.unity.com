@@ -116,9 +116,6 @@ namespace Cinemachine
         [Tooltip("This event will fire whenever a virtual camera goes live.  If a blend is involved, then the event will fire on the first frame of the blend.")]
         public VcamEvent m_CameraActivatedEvent = new VcamEvent();
 
-        /// <summary>Internal support for opaque post-processing module</summary>
-        public Component PostProcessingComponent { get; set; }
-
         /// <summary>
         /// API for the Unity Editor.
         /// Show this camera no matter what.  This is static, and so affects all Cinemachine brains.
@@ -720,10 +717,18 @@ namespace Cinemachine
             Camera cam = OutputCamera;
             if (cam != null)
             {
-                cam.fieldOfView = state.Lens.FieldOfView;
-                cam.orthographicSize = state.Lens.OrthographicSize;
                 cam.nearClipPlane = state.Lens.NearClipPlane;
                 cam.farClipPlane = state.Lens.FarClipPlane;
+                cam.fieldOfView = state.Lens.FieldOfView;
+                if (cam.orthographic)
+                    cam.orthographicSize = state.Lens.OrthographicSize;
+#if UNITY_2018_2_OR_NEWER
+                else
+                {
+                    cam.usePhysicalProperties = state.Lens.IsPhysicalCamera;
+                    cam.lensShift = state.Lens.LensShift;
+                }
+#endif
             }
             if (CinemachineCore.CameraUpdatedEvent != null)
                 CinemachineCore.CameraUpdatedEvent.Invoke(this);

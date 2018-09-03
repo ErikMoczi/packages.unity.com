@@ -107,7 +107,7 @@ namespace Cinemachine
         /// </summary>
         /// <param name="deltaTime">Delta time in seconds</param>
         /// <returns>Returns <b>true</b> if this axis' input was non-zero this Update,
-        /// <b>flase</b> otherwise</returns>
+        /// <b>false</b> otherwise</returns>
         public bool Update(float deltaTime)
         {
             if (!string.IsNullOrEmpty(m_InputAxisName))
@@ -197,8 +197,8 @@ namespace Cinemachine
             return m_MaxSpeed;
         }
 
-        /// <summary>Value range is locked, i.e. not adjustable by the user</summary>
-        internal bool ValueRangeLocked { get; set; }
+        /// <summary>Value range is locked, i.e. not adjustable by the user (used by editor)</summary>
+        public bool ValueRangeLocked { get; set; }
 
 
         /// <summary>Helper for automatic axis recentering</summary>

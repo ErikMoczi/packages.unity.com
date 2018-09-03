@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace Cinemachine.Editor
 {
     [CustomEditor(typeof(CinemachineCollider))]
-    public sealed class CinemachineColliderEditor : BaseEditor<CinemachineCollider>
+    internal sealed class CinemachineColliderEditor : BaseEditor<CinemachineCollider>
     {
         protected override List<string> GetExcludedPropertiesInInspector()
         {
@@ -17,16 +17,13 @@ namespace Cinemachine.Editor
                 excluded.Add(FieldPath(x => x.m_Strategy));
                 excluded.Add(FieldPath(x => x.m_MaximumEffort));
                 excluded.Add(FieldPath(x => x.m_Damping));
+                excluded.Add(FieldPath(x => x.m_DampingWhenOccluded));
+                excluded.Add(FieldPath(x => x.m_SmoothingTime));
             }
             else if (Target.m_Strategy == CinemachineCollider.ResolutionStrategy.PullCameraForward)
             {
                 excluded.Add(FieldPath(x => x.m_MaximumEffort));
             }
-            //else if (Target.m_Strategy == CinemachineCollider.ResolutionStrategy.ShortestWayOut)
-            //{
-            //    excluded.Add(FieldPath(x => x.m_DistanceLimit));
-            //    excluded.Add(FieldPath(x => x.m_MaximumEffort));
-            //}
             return excluded;
         }
 

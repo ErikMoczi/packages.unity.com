@@ -108,18 +108,6 @@ namespace Cinemachine
             m_MinimumOrthoSize = Mathf.Max(0.01f, m_MinimumOrthoSize);
             m_MaximumOrthoSize = Mathf.Max(m_MinimumOrthoSize, m_MaximumOrthoSize);
         }
-
-        /// <summary>Get LookAt target as CinemachineTargetGroup, or null if target is not a group</summary>
-        public CinemachineTargetGroup TargetGroup 
-        { 
-            get
-            {
-                Transform lookAt = LookAtTarget;
-                if (lookAt != null)
-                    return lookAt.GetComponent<CinemachineTargetGroup>();
-                return null;
-            }
-        }
         
         /// <summary>Applies the composer rules and orients the camera accordingly</summary>
         /// <param name="curState">The current camera state</param>
@@ -128,7 +116,7 @@ namespace Cinemachine
         public override void MutateCameraState(ref CameraState curState, float deltaTime)
         {
             // Can't do anything without a group to look at
-            CinemachineTargetGroup group = TargetGroup;
+            CinemachineTargetGroup group = LookAtTargetGroup;
             if (group == null)
             {
                 base.MutateCameraState(ref curState, deltaTime);
@@ -154,12 +142,12 @@ namespace Cinemachine
 
             // Get the bounding box from that POV in view space, and find its width
             Bounds bounds = group.BoundingBox;
-            m_lastBoundsMatrix = Matrix4x4.TRS(
+            LastBoundsMatrix = Matrix4x4.TRS(
                     bounds.center - (fwd * bounds.extents.magnitude),
                     Quaternion.LookRotation(fwd, curState.ReferenceUp), Vector3.one);
-            m_LastBounds = group.GetViewSpaceBoundingBox(m_lastBoundsMatrix);
-            float targetHeight = GetTargetHeight(m_LastBounds);
-            Vector3 targetPos = m_lastBoundsMatrix.MultiplyPoint3x4(m_LastBounds.center);
+            LastBounds = group.GetViewSpaceBoundingBox(LastBoundsMatrix);
+            float targetHeight = GetTargetHeight(LastBounds);
+            Vector3 targetPos = LastBoundsMatrix.MultiplyPoint3x4(LastBounds.center);
 
             // Apply damping
             if (deltaTime >= 0)
@@ -178,7 +166,7 @@ namespace Cinemachine
                 float targetDistance = targetHeight / (2f * Mathf.Tan(currentFOV * Mathf.Deg2Rad / 2f));
 
                 // target the near surface of the bounding box
-                float cameraDistance = targetDistance + m_LastBounds.extents.z;
+                float cameraDistance = targetDistance + LastBounds.extents.z;
 
                 // Clamp to respect min/max distance settings
                 cameraDistance = Mathf.Clamp(
@@ -193,7 +181,7 @@ namespace Cinemachine
             if (curState.Lens.Orthographic || m_AdjustmentMode != AdjustmentMode.DollyOnly)
             {
                 float nearBoundsDistance = (TrackedPoint - curState.CorrectedPosition).magnitude
-                    - m_LastBounds.extents.z;
+                    - LastBounds.extents.z;
                 float currentFOV = 179;
                 if (nearBoundsDistance > Epsilon)
                     currentFOV = 2f * Mathf.Atan(targetHeight / (2 * nearBoundsDistance)) * Mathf.Rad2Deg;
@@ -212,10 +200,10 @@ namespace Cinemachine
         float m_prevTargetHeight; // State for damping
 
         /// <summary>For editor visulaization of the calculated bounding box of the group</summary>
-        public Bounds m_LastBounds { get; private set; }
+        public Bounds LastBounds { get; private set; }
 
         /// <summary>For editor visualization of the calculated bounding box of the group</summary>
-        public Matrix4x4 m_lastBoundsMatrix { get; private set; }
+        public Matrix4x4 LastBoundsMatrix { get; private set; }
 
         float GetTargetHeight(Bounds b)
         {

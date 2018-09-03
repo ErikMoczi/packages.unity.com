@@ -43,7 +43,7 @@ namespace Cinemachine
 
         /// <summary>Internal API for the editor.  Do not use this filed.</summary>
         [SerializeField, HideInInspector, NoSaveDuringPlay]
-        public CinemachineVirtualCameraBase[] m_ChildCameras = null;
+        internal CinemachineVirtualCameraBase[] m_ChildCameras = null;
 
         /// <summary>Wait this many seconds before activating a new child camera</summary>
         [Tooltip("Wait this many seconds before activating a new child camera")]
@@ -392,20 +392,6 @@ namespace Cinemachine
                         fromCameraName, toCameraName, blend);
             }
             return blend;
-        }
-
-        private CinemachineBlend CreateBlend(
-            ICinemachineCamera camA, ICinemachineCamera camB, 
-            CinemachineBlendDefinition blendDef,
-            CinemachineBlend activeBlend, float deltaTime)
-        {
-            if (blendDef.BlendCurve == null || blendDef.m_Time <= 0 || (camA == null && camB == null))
-                return null;
-            if (activeBlend != null)
-                camA = new BlendSourceVirtualCamera(activeBlend, deltaTime);
-            else if (camA == null)
-                camA = new StaticPointVirtualCamera(State, "(none)");
-            return new CinemachineBlend(camA, camB, blendDef.BlendCurve, blendDef.m_Time, 0);
         }
 
         /// <summary>Notification that this virtual camera is going live.

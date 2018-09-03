@@ -37,7 +37,7 @@ namespace Cinemachine
 
         /// <summary>Internal API for the editor.  Do not use this field</summary>
         [SerializeField][HideInInspector][NoSaveDuringPlay]
-        public CinemachineVirtualCameraBase[] m_ChildCameras = null;
+        internal CinemachineVirtualCameraBase[] m_ChildCameras = null;
 
         /// <summary>This represents a single entry in the instrunction list of the BlendListCamera.</summary>
         [Serializable]
@@ -228,7 +228,7 @@ namespace Cinemachine
         }
 
         /// <summary>Makes sure the internal child cache is up to date</summary>
-        public void OnTransformChildrenChanged()
+        void OnTransformChildrenChanged()
         {
             InvalidateListOfChildren();
         }
@@ -278,7 +278,7 @@ namespace Cinemachine
 
         /// <summary>Internal API for the inspector editor.</summary>
         /// // GML todo: make this private, part of UpdateListOfChildren()
-        public void ValidateInstructions()
+        internal void ValidateInstructions()
         {
             if (m_Instructions == null)
                 m_Instructions = new Instruction[0];
@@ -322,20 +322,6 @@ namespace Cinemachine
                 }
             }
             //UnityEngine.Profiling.Profiler.EndSample();
-        }
-
-        private CinemachineBlend CreateBlend(
-            ICinemachineCamera camA, ICinemachineCamera camB, 
-            CinemachineBlendDefinition blend,
-            CinemachineBlend activeBlend, float deltaTime)
-        {
-            if (blend.BlendCurve == null || blend.m_Time <= 0 || (camA == null && camB == null))
-                return null;
-            if (activeBlend != null)
-                camA = new BlendSourceVirtualCamera(activeBlend, deltaTime);
-            else if (camA == null)
-                camA = new StaticPointVirtualCamera(State, "(none)");
-            return new CinemachineBlend(camA, camB, blend.BlendCurve, blend.m_Time, 0);
         }
     }
 }

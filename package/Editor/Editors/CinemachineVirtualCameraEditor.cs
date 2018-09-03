@@ -77,15 +77,18 @@ namespace Cinemachine.Editor
 
         void OnPositionDragged(Vector3 delta)
         {
-            foreach (UnityEditor.Editor e in m_componentEditors)
+            if (m_componentEditors != null)
             {
-                if (e != null)
+                foreach (UnityEditor.Editor e in m_componentEditors)
                 {
-                    MethodInfo mi = e.GetType().GetMethod("OnVcamPositionDragged"
-                        , BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
-                    if (mi != null && e.target != null)
+                    if (e != null)
                     {
-                        mi.Invoke(e, new object[] { delta } );
+                        MethodInfo mi = e.GetType().GetMethod("OnVcamPositionDragged"
+                            , BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                        if (mi != null && e.target != null)
+                        {
+                            mi.Invoke(e, new object[] { delta } );
+                        }
                     }
                 }
             }
@@ -113,14 +116,14 @@ namespace Cinemachine.Editor
                 if (sStageData[index].PopupOptions.Length <= 1)
                     continue;
 
-                const float indentOffset = 6;
+                const float indentOffset = 4;
 
                 GUIStyle stageBoxStyle = GUI.skin.box;
                 EditorGUILayout.BeginVertical(stageBoxStyle);
                 Rect rect = EditorGUILayout.GetControlRect(true);
 
                 // Don't use PrefixLabel() because it will link the enabled status of field and label
-                GUIContent label = new GUIContent(NicifyName(stage.ToString()));
+                GUIContent label = new GUIContent(InspectorUtility.NicifyClassName(stage.ToString()));
                 if (m_stageError[index])
                     label.image = EditorGUIUtility.IconContent("console.warnicon.sml").image;
                 float labelWidth = EditorGUIUtility.labelWidth - (indentOffset + EditorGUI.indentLevel * 15);
@@ -176,13 +179,16 @@ namespace Cinemachine.Editor
 
         UnityEditor.Editor GetEditorForPipelineStage(CinemachineCore.Stage stage)
         {
-            foreach (UnityEditor.Editor e in m_componentEditors)
+            if (m_componentEditors != null)
             {
-                if (e != null)
+                foreach (UnityEditor.Editor e in m_componentEditors)
                 {
-                    CinemachineComponentBase c = e.target as CinemachineComponentBase;
-                    if (c != null && c.Stage == stage)
-                        return e;
+                    if (e != null)
+                    {
+                        CinemachineComponentBase c = e.target as CinemachineComponentBase;
+                        if (c != null && c.Stage == stage)
+                            return e;
+                    }
                 }
             }
             return null;
@@ -315,17 +321,10 @@ namespace Cinemachine.Editor
                         names[n] = new GUIContent((useSimple) ? "Do nothing" : "none");
                     }
                     else
-                        names[n] = new GUIContent(NicifyName(sStageData[i].types[n].Name));
+                        names[n] = new GUIContent(InspectorUtility.NicifyClassName(sStageData[i].types[n].Name));
                 }
                 sStageData[i].PopupOptions = names;
             }
-        }
-
-        static string NicifyName(string name)
-        {
-            if (name.StartsWith("Cinemachine"))
-                name = name.Substring(11); // Trim the prefix
-            return ObjectNames.NicifyVariableName(name);
         }
 
         void UpdateInstanceData()
