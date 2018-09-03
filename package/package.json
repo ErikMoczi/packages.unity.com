@@ -1,11 +1,11 @@
 {
     "name": "com.unity.2d.animation",
-    "version": "1.0.7-experimental",
+    "version": "1.0.8-experimental",
     "unity": "2018.1",
     "description": "2D Animation",
     "keywords": ["2d", "animation"],
     "category": "2D",
     "dependencies": {
-        "com.unity.2d.common": "1.0.4-experimental"
+        "com.unity.2d.common": "1.0.5-experimental"
     }
 }
