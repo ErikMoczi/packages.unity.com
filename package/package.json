@@ -1,6 +1,6 @@
 {
     "name": "com.unity.2d.spriteshape",
-    "version": "1.0.8-experimental",
+    "version": "1.0.9-experimental",
     "unity": "2018.1",
     "description": "SpriteShape Runtime & Editor Package",
     "keywords": ["2d", "shape", "spriteshape", "smartsprite", "spline", "terrain2d"],
