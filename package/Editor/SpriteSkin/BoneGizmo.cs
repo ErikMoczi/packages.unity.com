@@ -19,8 +19,9 @@ namespace UnityEditor.Experimental.U2D.Animation
                     GameObject go = Selection.activeGameObject;
                     if (go != null)
                     {
-                        var ss = go.GetComponentInParent<SpriteSkin>();
-                        if (ss != null)
+                        var root = go.transform.root;
+                        var sss = root.GetComponentsInChildren<SpriteSkin>();
+                        foreach (var ss in sss)
                             DrawBoneGizmo(ss, GizmoType.InSelectionHierarchy);
                     }
                 };

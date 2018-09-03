@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEditor;
+using System;
 using System.Collections.Generic;
 using UnityEngine.Experimental.U2D;
 
@@ -9,7 +10,6 @@ namespace UnityEditor.Experimental.U2D.Animation
     {
         public const float kEditorLineHeight = 18f;
 
-        // These Don't belong here.
         public static float DistanceToSegment(Vector3 p1, Vector3 p2)
         {
             p1 = HandleUtility.WorldToGUIPoint(p1);
@@ -70,67 +70,85 @@ namespace UnityEditor.Experimental.U2D.Animation
             return names.ToArray();
         }
 
-        // This method do not presume the input bone list in certain order.
-        // It will return the converted bone in the original order source passed in.
-        public static List<SpriteBone> ConvertBoneFromLocalSpaceToTextureSpace(List<SpriteBone> source, Vector3 offset)
+        public static void UpdateLocalToWorldMatrices(List<SpriteBoneData> spriteBoneDataList, Matrix4x4 rootMatrix, ref Matrix4x4[] localToWorldMatrices)
         {
-            List<SpriteBone> result = new List<SpriteBone>(source);
-            Matrix4x4[] matrices = new Matrix4x4[source.Count];
-            bool[] calculatedMatrix = new bool[source.Count];
+            if (localToWorldMatrices == null || localToWorldMatrices.Length != spriteBoneDataList.Count)
+                localToWorldMatrices = new Matrix4x4[spriteBoneDataList.Count];
+
+            bool[] calculatedMatrix = new bool[spriteBoneDataList.Count];
 
             var processedBoneCount = 0;
-            while (processedBoneCount < source.Count)
+            while (processedBoneCount < spriteBoneDataList.Count)
             {
-                for (var i = 0; i < source.Count; ++i)
+                int oldCount = processedBoneCount;
+
+                for (var i = 0; i < spriteBoneDataList.Count; ++i)
                 {
                     if (calculatedMatrix[i])
                         continue;
 
-                    var sourceBone = source[i];
+                    var sourceBone = spriteBoneDataList[i];
                     if (sourceBone.parentId != -1 && !calculatedMatrix[sourceBone.parentId])
                         continue;
 
-                    var m = Matrix4x4.identity;
-                    var position = new Vector3();
-                    var rotation = new Quaternion();
+                    var localToWorldMatrix = Matrix4x4.identity;
+                    localToWorldMatrix.SetTRS(sourceBone.localPosition, sourceBone.localRotation, Vector3.one);
 
-                    //avoid processing z as it contains bone depth temporaly
-                    Vector3 bonePosition = (Vector2)sourceBone.position;
-                    
                     if (sourceBone.parentId == -1)
-                    {
-                        m.SetTRS(bonePosition + offset, sourceBone.rotation, Vector3.one);
-                        
-                        position = bonePosition + offset;
-                        rotation = sourceBone.rotation;
-                    }
+                        localToWorldMatrix = rootMatrix * localToWorldMatrix;
                     else if (calculatedMatrix[sourceBone.parentId])
-                    {
-                        var parentM = matrices[sourceBone.parentId];
-                        m = parentM * Matrix4x4.Translate(bonePosition) * Matrix4x4.Rotate(sourceBone.rotation);
-                        
-                        position = parentM.MultiplyPoint(bonePosition);
-                        rotation = parentM.rotation * sourceBone.rotation;
-                    }
+                        localToWorldMatrix = localToWorldMatrices[sourceBone.parentId] * localToWorldMatrix;
 
-                    //We are temporaly storing bone depth in z
-                    position.z = sourceBone.position.z;
-
-                    var sb = new SpriteBone();
-                    sb.name = sourceBone.name;
-                    sb.parentId = sourceBone.parentId;
-                    sb.length = sourceBone.length;
-                    sb.position = position;
-                    sb.rotation = rotation;
-                    result[i] = sb;
-
-                    matrices[i] = m;
+                    localToWorldMatrices[i] = localToWorldMatrix;
                     calculatedMatrix[i] = true;
                     processedBoneCount++;
                 }
+
+                if (oldCount == processedBoneCount)
+                    throw new ArgumentException("Invalid hierarchy detected");
+            }
+        }
+
+        public static List<SpriteBoneData> CreateSpriteBoneData(List<SpriteBone> spriteBoneList, Matrix4x4 rootMatrix)
+        {
+            List<SpriteBoneData> spriteBoneDataList = new List<SpriteBoneData>(spriteBoneList.Count);
+
+            foreach (var spriteBone in spriteBoneList)
+            {
+                spriteBoneDataList.Add(new SpriteBoneData()
+                {
+                    name = spriteBone.name,
+                    parentId = spriteBone.parentId,
+                    localPosition = spriteBone.position,
+                    localRotation = spriteBone.rotation,
+                    depth = spriteBone.position.z,
+                    length = spriteBone.length
+                });
             }
 
-            return result;
+            Matrix4x4[] localToWorldMatrices = null;
+            MeshModuleUtility.UpdateLocalToWorldMatrices(spriteBoneDataList, rootMatrix, ref localToWorldMatrices);
+
+            for (int i = 0; i < spriteBoneDataList.Count; ++i)
+            {
+                var spriteBoneData = spriteBoneDataList[i];
+                spriteBoneData.position = localToWorldMatrices[i].MultiplyPoint(Vector2.zero);
+                spriteBoneData.endPosition = localToWorldMatrices[i].MultiplyPoint(Vector2.right * spriteBoneData.length);
+            }
+
+            return spriteBoneDataList;
+        }
+
+        public static void DrawMesh(Mesh mesh, Material material)
+        {
+            Debug.Assert(mesh != null);
+            Debug.Assert(material != null);
+
+            if (Event.current.type != EventType.Repaint)
+                return;
+
+            material.SetPass(0);
+            Graphics.DrawMeshNow(mesh, Handles.matrix * GUI.matrix);
         }
 
         public static Vector2 ClampPositionToRect(Vector2 position, Rect rect)
@@ -205,6 +223,12 @@ namespace UnityEditor.Experimental.U2D.Animation
             coords.y = (d11 * d20 - d01 * d21) * invDenom;
             coords.z = (d00 * d21 - d01 * d20) * invDenom;
             coords.x = 1f - coords.y - coords.z;
+        }
+
+        public static Quaternion NormalizeQuaternion(Quaternion q)
+        {
+            Vector4 v = new Vector4(q.x, q.y, q.z, q.w).normalized;
+            return new Quaternion(v.x, v.y, v.z, v.w);
         }
     }
 }

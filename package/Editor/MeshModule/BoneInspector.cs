@@ -36,23 +36,17 @@ namespace UnityEditor.Experimental.U2D.Animation
             Debug.Assert(selection != null);
             Debug.Assert(selection.Count == 1);
 
-            SpriteBone bone = spriteMeshData.bones[selection.single];
-            
-            Vector3 position = bone.position;
+            SpriteBoneData bone = spriteMeshData.bones[selection.single];
 
             EditorGUI.BeginChangeCheck();
 
-            position.z = (float)EditorGUILayout.IntField("Bone Depth", Mathf.RoundToInt(position.z));
+            float depth = (float)EditorGUILayout.IntField("Bone Depth", Mathf.RoundToInt(bone.depth));
 
-            if(EditorGUI.EndChangeCheck())
+            if (EditorGUI.EndChangeCheck())
             {
                 Undo.RegisterCompleteObjectUndo(undoableObject, "Edit Depth");
 
-                bone.position = position;
-
-                spriteMeshData.bones[selection.single] = bone;
-
-                spriteMeshData.SortTrianglesByDepth();
+                bone.depth = depth;
             }
         }
     }

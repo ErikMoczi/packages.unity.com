@@ -2,8 +2,8 @@
 Shader "Hidden/MeshModule-GUITextureClip"
 {
     Properties {
-    	_MainTex ("Texture", Any) = "white" {}
-    	_Color("Color", Color) = (1,1,1,1)
+        _MainTex ("Texture", Any) = "white" {}
+        _ColorOpacity ("ColorOpacity", Float) = 1
     }
 
     CGINCLUDE
@@ -32,7 +32,7 @@ Shader "Hidden/MeshModule-GUITextureClip"
     sampler2D _GUIClipTexture;
 
     uniform float4 _MainTex_ST;
-    uniform fixed4 _Color;
+    uniform fixed _ColorOpacity;
     uniform float4x4 unity_GUIClipTextureMatrix;
 
     v2f vert (appdata_t v)
@@ -50,7 +50,8 @@ Shader "Hidden/MeshModule-GUITextureClip"
 
     fixed4 frag (v2f i) : SV_Target
     {
-        fixed4 col = tex2D(_MainTex, i.texcoord) * i.color * _Color;
+        fixed4 col = tex2D(_MainTex, i.texcoord);
+        col = lerp(col, i.color, _ColorOpacity);
         col.a *= tex2D(_GUIClipTexture, i.clipUV).a;
         return col;
     }

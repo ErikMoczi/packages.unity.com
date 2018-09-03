@@ -160,6 +160,25 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
+        public static Matrix4x4 CalculateRootMatrix(this SpriteMeshData spriteMeshData)
+        {
+            Matrix4x4 rootMatrix = new Matrix4x4();
+            rootMatrix.SetTRS(spriteMeshData.frame.position, Quaternion.identity, Vector3.one);
+            return rootMatrix;
+        }
+
+        public static void UpdateSpriteBoneDataWorldPosition(this SpriteMeshData spriteMeshData, Matrix4x4[] localToWorldMatrices)
+        {
+            Debug.Assert(spriteMeshData.bones.Count == localToWorldMatrices.Length);
+
+            for (int i = 0; i < spriteMeshData.bones.Count; ++i)
+            {
+                var spriteBoneData = spriteMeshData.bones[i];
+                spriteBoneData.position = localToWorldMatrices[i].MultiplyPoint(Vector2.zero);
+                spriteBoneData.endPosition = localToWorldMatrices[i].MultiplyPoint(Vector2.right * spriteBoneData.length);
+            }
+        }
+
         public static bool FindTriangle(this SpriteMeshData spriteMeshData, Vector2 point, out Vector3Int indices, out Vector3 barycentricCoords)
         {
             indices = Vector3Int.zero;
@@ -284,7 +303,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             {
                 if (bone.length > 0f)
                 {
-                    Vector2 endPosition = bone.position + bone.rotation * Vector3.right * bone.length * 0.99f;
+                    Vector2 endPosition = bone.position + (bone.endPosition - bone.position).normalized * bone.length * 0.99f;
+
                     int index1 = FindPoint(pointList, bone.position, 0.01f);
                     int index2 = FindPoint(pointList, endPosition, 0.01f);
 
@@ -323,10 +343,10 @@ namespace UnityEditor.Experimental.U2D.Animation
                 if (spriteMeshData.bones.Count > 0)
                 {
                     BoneWeight boneWeight = spriteMeshData.vertices[i].editableBoneWeight.ToBoneWeight(false);
-                    float orderBone0 = spriteMeshData.bones[boneWeight.boneIndex0].position.z;
-                    float orderBone1 = spriteMeshData.bones[boneWeight.boneIndex1].position.z;
-                    float orderBone2 = spriteMeshData.bones[boneWeight.boneIndex2].position.z;
-                    float orderBone3 = spriteMeshData.bones[boneWeight.boneIndex3].position.z;
+                    float orderBone0 = spriteMeshData.bones[boneWeight.boneIndex0].depth;
+                    float orderBone1 = spriteMeshData.bones[boneWeight.boneIndex1].depth;
+                    float orderBone2 = spriteMeshData.bones[boneWeight.boneIndex2].depth;
+                    float orderBone3 = spriteMeshData.bones[boneWeight.boneIndex3].depth;
 
                     vertexOrder = orderBone0 * boneWeight.weight0 + orderBone1 * boneWeight.weight1 + orderBone2 * boneWeight.weight2 + orderBone3 * boneWeight.weight3;
                 }

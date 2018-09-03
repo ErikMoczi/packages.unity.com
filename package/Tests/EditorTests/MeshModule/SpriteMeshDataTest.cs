@@ -10,7 +10,7 @@ using UnityEditor.U2D.Interface;
 using UnityEngine.U2D.Interface;
 using UnityEngine.Experimental.U2D;
 
-namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshDataTest
+namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMesh
 {
     [TestFixture]
     public class SpriteMeshDataTest
@@ -410,8 +410,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshDataT
             m_SpriteMeshData.vertices[0].editableBoneWeight.SetFromBoneWeight(new BoneWeight() { weight0 = 1f });
             m_SpriteMeshData.vertices[1].editableBoneWeight.SetFromBoneWeight(new BoneWeight() { boneIndex0 = 1, weight0 = 1f });
             m_SpriteMeshData.indices.AddRange(new int[] { 0, 0, 0, 1, 1, 1 });
-            m_SpriteMeshData.bones.Add(new SpriteBone() { position = Vector3.forward });
-            m_SpriteMeshData.bones.Add(new SpriteBone() { position = -Vector3.forward });
+            m_SpriteMeshData.bones.Add(new SpriteBoneData() { depth = 1 });
+            m_SpriteMeshData.bones.Add(new SpriteBoneData() { depth = -1 });
 
             m_SpriteMeshData.SortTrianglesByDepth();
 
@@ -464,129 +464,111 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshDataT
                 }
             };
 
-            Vector2 kOffset = Vector2.one;
-            var expected = new SpriteBone[5]
+            var expectedPositions = new List<Vector2>();
+            expectedPositions.Add(new Vector2(1f, 1f));
+            expectedPositions.Add(new Vector2(0.5f, 1.8660f));
+            expectedPositions.Add(new Vector2(0.5f, 2.8660f));
+            expectedPositions.Add(new Vector2(0.5f, 0.8660f));
+            expectedPositions.Add(new Vector2(1f, 0f));
+
+            var expectedEndPositions = new List<Vector2>();
+            expectedEndPositions.Add(new Vector2(1.8660f, 1.5f));
+            expectedEndPositions.Add(new Vector2(0.5f, 3.3660f));
+            expectedEndPositions.Add(new Vector2(0.5f, 4.3660f));
+            expectedEndPositions.Add(new Vector2(-1.6650f, -0.383974f));
+            expectedEndPositions.Add(new Vector2(0.133974f, -0.5f));
+
+            var testcase = new TestCaseData(originalMetadata.ToList(), expectedPositions, expectedEndPositions);
+            testcase.SetName("Normal Hierarchical order");
+            yield return testcase;
+
+            originalMetadata = new SpriteBone[5]
             {
                 new SpriteBone()
                 {
-                    name = "root",
-                    parentId = -1,
-                    position = Vector2.one + kOffset,
-                    rotation = Quaternion.Euler(0.0f, 0.0f, 30.0f),
-                    length = 1.0f
-                },
-                new SpriteBone()
-                {
-                    name = "child1",
-                    parentId = 0,
-                    position = new Vector2(1.5f, 2.866025f),
-                    rotation = Quaternion.Euler(0.0f, 0.0f, 90.0f),
-                    length = 1.5f
-                },
-                new SpriteBone()
-                {
-                    name = "child2",
+                    name = "child4",
                     parentId = 1,
-                    position = new Vector2(1.5f, 3.866025f),
-                    rotation = Quaternion.Euler(0.0f, 0.0f, 90.0f),
-                    length = 1.5f
+                    position = Vector3.up,
+                    rotation = Quaternion.identity,
+                    length = 1.0f
                 },
                 new SpriteBone()
                 {
                     name = "child3",
-                    parentId = 1,
-                    position = new Vector2(1.5f, 1.866025f),
-                    rotation = Quaternion.Euler(0.0f, 0.0f, 210.0f),
+                    parentId = 3,
+                    position = Vector3.left,
+                    rotation = Quaternion.Euler(0.0f, 0.0f, 120.0f),
                     length = 2.5f
                 },
                 new SpriteBone()
                 {
-                    name = "child4",
+                    name = "child2",
                     parentId = 3,
-                    position = new Vector2(2.0f, 1.0f),
-                    rotation = Quaternion.Euler(0.0f, 0.0f, 210.0f),
+                    position = Vector3.right,
+                    rotation = Quaternion.identity,
+                    length = 1.5f
+                },
+                new SpriteBone()
+                {
+                    name = "child1",
+                    parentId = 4,
+                    position = Vector3.up,
+                    rotation = Quaternion.Euler(0.0f, 0.0f, 60.0f),
+                    length = 1.5f
+                },
+                new SpriteBone()
+                {
+                    name = "root",
+                    parentId = -1,
+                    position = Vector2.one,
+                    rotation = Quaternion.Euler(0.0f, 0.0f, 30.0f),
                     length = 1.0f
                 }
             };
 
-            var testcase = new TestCaseData(originalMetadata.ToList(), expected.ToList(), kOffset);
-            testcase.SetName("Normal Hierarchical order");
-            yield return testcase;
+            expectedPositions = new List<Vector2>();
+            expectedPositions.Add(new Vector2(1f, 0f));
+            expectedPositions.Add(new Vector2(0.5f, 0.8660f));
+            expectedPositions.Add(new Vector2(0.5f, 2.8660f));
+            expectedPositions.Add(new Vector2(0.5f, 1.8660f));
+            expectedPositions.Add(new Vector2(1f, 1f));
 
-            var reservedOriginal = new List<SpriteBone>();
-            var originalBone = originalMetadata[4];
-            originalBone.parentId = 1;
-            reservedOriginal.Add(originalBone);
+            expectedEndPositions = new List<Vector2>();
+            expectedEndPositions.Add(new Vector2(0.133974f, -0.5f));
+            expectedEndPositions.Add(new Vector2(-1.6650f, -0.383974f));
+            expectedEndPositions.Add(new Vector2(0.5f, 4.3660f));
+            expectedEndPositions.Add(new Vector2(0.5f, 3.3660f));
+            expectedEndPositions.Add(new Vector2(1.8660f, 1.5f));
 
-            originalBone = originalMetadata[3];
-            originalBone.parentId = 3;
-            reservedOriginal.Add(originalBone);
-
-            originalBone = originalMetadata[2];
-            originalBone.parentId = 3;
-            reservedOriginal.Add(originalBone);
-
-            originalBone = originalMetadata[1];
-            originalBone.parentId = 4;
-            reservedOriginal.Add(originalBone);
-
-            originalBone = originalMetadata[0];
-            reservedOriginal.Add(originalBone);
-
-            var reversedExpected = new List<SpriteBone>();
-            var expectedBone = expected[4];
-            expectedBone.parentId = 1;
-            reversedExpected.Add(expectedBone);
-
-            expectedBone = expected[3];
-            expectedBone.parentId = 3;
-            reversedExpected.Add(expectedBone);
-
-            expectedBone = expected[2];
-            expectedBone.parentId = 3;
-            reversedExpected.Add(expectedBone);
-
-            expectedBone = expected[1];
-            expectedBone.parentId = 4;
-            reversedExpected.Add(expectedBone);
-
-            expectedBone = expected[0];
-            reversedExpected.Add(expectedBone);
-
-            testcase = new TestCaseData(reservedOriginal, reversedExpected, kOffset);
+            testcase = new TestCaseData(originalMetadata.ToList(), expectedPositions, expectedEndPositions);
             testcase.SetName("Reversed Hierarchical order");
             yield return testcase;
         }
 
         [Test, TestCaseSource("BoneMetadataCases")]
-        public void ConvertBoneMetadataToTextureSpace_RegardlessOfOrder(List<SpriteBone> original, List<SpriteBone> expected, Vector2 offset)
+        public void ConvertBoneMetadataToTextureSpace_RegardlessOfOrder(List<SpriteBone> original, List<Vector2> expectedPositions, List<Vector2> expectedEndPosition)
         {
-            var converted = MeshModuleUtility.ConvertBoneFromLocalSpaceToTextureSpace(original, offset);
+            List<SpriteBoneData> spriteBoneData = MeshModuleUtility.CreateSpriteBoneData(original, Matrix4x4.identity);
 
-            VerifyApproximatedSpriteBones(expected.ToArray(), converted.ToArray());
+            VerifyApproximatedSpriteBones(spriteBoneData, expectedPositions, expectedEndPosition);
         }
 
-        private static void VerifyApproximatedSpriteBones(SpriteBone[] expected, SpriteBone[] actual)
+        private static void VerifyApproximatedSpriteBones(List<SpriteBoneData> spriteBoneData, List<Vector2> expectedPosition, List<Vector2> expectedEndPosition)
         {
             const double kLooseEqual = 0.001;
-            Assert.AreEqual(expected.Length, actual.Length);
-            for (var i = 0; i < expected.Length; ++i)
+            Assert.AreEqual(spriteBoneData.Count, expectedPosition.Count);
+            Assert.AreEqual(spriteBoneData.Count, expectedEndPosition.Count);
+
+            for (var i = 0; i < spriteBoneData.Count; ++i)
             {
-                var expectedBone = expected[i];
-                var actualBone = actual[i];
+                var boneData = spriteBoneData[i];
+                var position = expectedPosition[i];
+                var endPosition = expectedEndPosition[i];
 
-                Assert.AreEqual(expectedBone.name, actualBone.name, "Name not matched at #{0}", i);
-                Assert.AreEqual(expectedBone.parentId, actualBone.parentId, "ParentId not matched at #{0}", i);
-                Assert.AreEqual(expectedBone.length, actualBone.length, kLooseEqual, "Length not matched at #{0}", i);
-                Assert.AreEqual(expectedBone.position.x, actualBone.position.x, kLooseEqual, "Position X not matched at #{0}", i);
-                Assert.AreEqual(expectedBone.position.y, actualBone.position.y, kLooseEqual, "Position Y not matched at #{0}", i);
-                Assert.AreEqual(expectedBone.position.z, actualBone.position.z, kLooseEqual, "Position Z not matched at #{0}", i);
-
-                var expectedEuler = expectedBone.rotation.eulerAngles;
-                var actualEuler = actualBone.rotation.eulerAngles;
-                Assert.AreEqual(expectedEuler.x, actualEuler.x, kLooseEqual, "Rotation X not matched at #{0}", i);
-                Assert.AreEqual(expectedEuler.y, actualEuler.y, kLooseEqual, "Rotation Y not matched at #{0}", i);
-                Assert.AreEqual(expectedEuler.z, actualEuler.z, kLooseEqual, "Rotation Z not matched at #{0}", i);
+                Assert.AreEqual(position.x, boneData.position.x, kLooseEqual, "Position X not matched at #{0}", i);
+                Assert.AreEqual(position.y, boneData.position.y, kLooseEqual, "Position Y not matched at #{0}", i);
+                Assert.AreEqual(endPosition.x, boneData.endPosition.x, kLooseEqual, "EndPosition X not matched at #{0}", i);
+                Assert.AreEqual(endPosition.y, boneData.endPosition.y, kLooseEqual, "EndPosition Y not matched at #{0}", i);
             }
         }
     }

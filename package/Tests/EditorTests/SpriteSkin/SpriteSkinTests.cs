@@ -171,7 +171,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SpriteSkin
         {
             var deformedVertices = new NativeArray<Vector3>(sprite.GetVertexCount(), Allocator.Persistent);
             Transform[] transforms = SpriteBoneUtility.Rebind(rootBone.transform, sprite.GetBones());
-            var handle = SpriteBoneUtility.Deform(sprite, deformedVertices, go.transform.worldToLocalMatrix, transforms);
+            var handle = SpriteBoneUtility.Deform(sprite, sprite.GetBindPoses(), sprite.GetBoneWeights(), deformedVertices, go.transform.worldToLocalMatrix, transforms);
             handle.Complete();
             return deformedVertices;
         }
@@ -181,7 +181,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SpriteSkin
             var minMax = new NativeArray<Vector3>(2, Allocator.Temp);
             var deformedVertices = new NativeArray<Vector3>(sprite.GetVertexCount(), Allocator.Persistent);
             Transform[] transforms = SpriteBoneUtility.Rebind(rootBone.transform, sprite.GetBones());
-            var deformJobHandle = SpriteBoneUtility.Deform(sprite, deformedVertices, go.transform.worldToLocalMatrix, transforms);
+            var deformJobHandle = SpriteBoneUtility.Deform(sprite, sprite.GetBindPoses(), sprite.GetBoneWeights(), deformedVertices, go.transform.worldToLocalMatrix, transforms);
             var boundsHandle = SpriteBoneUtility.CalculateBounds(deformedVertices, minMax, deformJobHandle);
             boundsHandle.Complete();
 
@@ -278,6 +278,36 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SpriteSkin
         {
             TestAABBOnDeformAndReset(go1, riggedSprite);
             TestAABBOnDeformAndReset(go2, riggedSprite);
+        }
+
+        [Test]
+        public void SkinnedSprite_IncorrectBindPosesThrowsException()
+        {
+            GameObject rootBone = SpriteBoneUtility.CreateSkeleton(riggedSprite.GetBones(), go1, null);
+            Transform[] transforms = SpriteBoneUtility.Rebind(rootBone.transform, riggedSprite.GetBones());
+            var deformedVertices = new NativeArray<Vector3>(riggedSprite.GetVertexCount(), Allocator.Persistent);
+
+            NativeArray<Matrix4x4> tmpBindPoses = new NativeArray<Matrix4x4>(1, Allocator.Temp);
+            Assert.Throws<InvalidOperationException>(
+                () => { SpriteBoneUtility.Deform(riggedSprite, tmpBindPoses, riggedSprite.GetBoneWeights(), deformedVertices, go1.transform.worldToLocalMatrix, transforms); },
+                "boneTransforms must have same size as bindPoses");
+            tmpBindPoses.Dispose();
+            deformedVertices.Dispose();
+        }
+
+        [Test]
+        public void SkinnedSprite_IncorrectBindWeightsThrowsException()
+        {
+            GameObject rootBone = SpriteBoneUtility.CreateSkeleton(riggedSprite.GetBones(), go1, null);
+            Transform[] transforms = SpriteBoneUtility.Rebind(rootBone.transform, riggedSprite.GetBones());
+            var deformedVertices = new NativeArray<Vector3>(riggedSprite.GetVertexCount(), Allocator.Persistent);
+
+            NativeArray<BoneWeight> tmpBoneWeights = new NativeArray<BoneWeight>(1, Allocator.Temp);
+            Assert.Throws<InvalidOperationException>(
+                () => { SpriteBoneUtility.Deform(riggedSprite, riggedSprite.GetBindPoses(), tmpBoneWeights, deformedVertices, go1.transform.worldToLocalMatrix, transforms); },
+                "boneWeights must have same size as inVertices");
+            tmpBoneWeights.Dispose();
+            deformedVertices.Dispose();
         }
 
         [Test]

@@ -8,7 +8,7 @@ using UnityEditor;
 using NSubstitute;
 using NUnit.Framework.Constraints;
 
-namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshControllerTest
+namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMesh
 {
     [TestFixture]
     public class SpriteMeshControllerTest
@@ -35,7 +35,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshContr
             m_ClosestEdge = -1;
 
             m_View = Substitute.For<ISpriteMeshView>();
-            m_View.mousePosition.Returns(x => m_MousePosition);
+            m_View.mouseWorldPosition.Returns(x => m_MousePosition);
             m_View.hoveredVertex.Returns(x => m_HoveredVertex);
             m_View.hoveredEdge.Returns(x => m_HoveredEdge);
             m_View.closestEdge.Returns(x => m_ClosestEdge);
@@ -123,10 +123,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshContr
 
             m_SpriteMeshData.indices.AddRange(new int[] { 0, 1, 2, 0, 2, 3 });
 
-            m_SpriteMeshData.bones.Add(new SpriteBone());
-            m_SpriteMeshData.bones.Add(new SpriteBone());
-            m_SpriteMeshData.bones.Add(new SpriteBone());
-            m_SpriteMeshData.bones.Add(new SpriteBone());
+            m_SpriteMeshData.bones.Add(new SpriteBoneData());
+            m_SpriteMeshData.bones.Add(new SpriteBoneData());
+            m_SpriteMeshData.bones.Add(new SpriteBoneData());
+            m_SpriteMeshData.bones.Add(new SpriteBoneData());
 
             m_MousePosition = new Vector2(0.25f, 0.75f);
 
@@ -511,8 +511,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshContr
             m_SpriteMeshData.vertices[0].editableBoneWeight.SetFromBoneWeight(new BoneWeight() { boneIndex0 = 0, weight0 = 1f });
             m_SpriteMeshData.vertices[1].editableBoneWeight.SetFromBoneWeight(new BoneWeight() { boneIndex0 = 1, weight0 = 1f });
 
-            m_SpriteMeshData.bones.Add(new SpriteBone());
-            m_SpriteMeshData.bones.Add(new SpriteBone());
+            m_SpriteMeshData.bones.Add(new SpriteBoneData());
+            m_SpriteMeshData.bones.Add(new SpriteBoneData());
 
             m_HoveredVertex = -1;
             m_HoveredEdge = -1;

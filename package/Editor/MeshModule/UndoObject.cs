@@ -7,6 +7,7 @@ namespace UnityEditor.Experimental.U2D.Animation
     {
         void RegisterCompleteObjectUndo(string name);
         void IncrementCurrentGroup();
+        void RevertAllInCurrentGroup();
     }
 
     internal class UndoObject : IUndoObject
@@ -26,6 +27,11 @@ namespace UnityEditor.Experimental.U2D.Animation
         public void IncrementCurrentGroup()
         {
             Undo.IncrementCurrentGroup();
+        }
+
+        public void RevertAllInCurrentGroup()
+        {
+            Undo.RevertAllInCurrentGroup();
         }
 
         private ScriptableObject m_UndoObject;

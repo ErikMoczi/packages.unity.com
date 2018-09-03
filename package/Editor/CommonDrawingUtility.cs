@@ -167,6 +167,29 @@ namespace UnityEditor.Experimental.U2D.Animation
             return Color.HSVToRGB(hue, 1f, 1f);
         }
 
+        public static void DrawGUIStyleCap(int controlID, Vector3 position, Quaternion rotation, float size, GUIStyle guiStyle)
+        {
+            if (Event.current.type != EventType.Repaint)
+                return;
+
+            if (Camera.current && Vector3.Dot(position - Camera.current.transform.position, Camera.current.transform.forward) < 0f)
+                return;
+
+            Handles.BeginGUI();
+            guiStyle.Draw(GetGUIStyleRect(guiStyle, position), GUIContent.none, controlID);
+            Handles.EndGUI();
+        }
+
+        private static Rect GetGUIStyleRect(GUIStyle style, Vector3 position)
+        {
+            Vector2 vector = HandleUtility.WorldToGUIPoint(position);
+
+            float fixedWidth = style.fixedWidth;
+            float fixedHeight = style.fixedHeight;
+
+            return new Rect(vector.x - fixedWidth / 2f, vector.y - fixedHeight / 2f, fixedWidth, fixedHeight);
+        }
+
         public static void DrawRect(Rect rect, Vector3 position, Quaternion rotation, Color color, float rectAlpha, float outlineAlpha)
         {
             if (Event.current.type != EventType.Repaint)

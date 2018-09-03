@@ -28,7 +28,6 @@ namespace UnityEditor.Experimental.U2D.Animation
     public class SpriteMeshModule : SpriteEditorModuleBase
     {
         private const float kFilterTolerance = 0.01f;
-        private const int kNiceColorCount = 6;
 
         private static class Contents
         {
@@ -98,14 +97,16 @@ namespace UnityEditor.Experimental.U2D.Animation
             Undo.undoRedoPerformed += UndoRedoPerformed;
             spriteEditor.enableMouseMoveEvent = true;
 
+            IGUIWrapper guiWrapper = new GUIWrapper();
             m_SpriteMeshCache = ScriptableObject.CreateInstance<SpriteMeshCache>();
             m_Triangulator = new Triangulator();
             m_WeightGenerator = new BoundedBiharmonicWeightsGenerator();
             m_OutlineGenerator = new OutlineGenerator();
             m_UndoObject = new UndoObject(m_SpriteMeshCache);
             m_SpriteMeshController = new SpriteMeshController();
-            m_SpriteMeshView = new SpriteMeshView();
-            m_BoneGUI = new BoneGUI();
+            m_SpriteMeshView = new SpriteMeshView(guiWrapper);
+            m_BindPoseController = new BindPoseController();
+            m_BindPoseView = new BindPoseView(guiWrapper);
             m_RectSelectionTool = new RectSelectionTool(m_SpriteMeshCache);
             m_UnselectTool = new UnselectTool(m_SpriteMeshCache);
             m_WeightEditor = new WeightEditor();
@@ -113,37 +114,40 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_SliderWeightTool = new SliderWeightTool();
             m_WeightInspector = new WeightInspector(m_SpriteMeshCache);
             m_BoneInspector = new BoneInspector(m_SpriteMeshCache);
+            m_MeshPreview = new MeshPreview();
 
             var dataProvider = spriteEditor.GetDataProvider<ISpriteEditorDataProvider>();
             var boneProvider = spriteEditor.GetDataProvider<ISpriteBoneDataProvider>();
             var spriteMeshProvider = spriteEditor.GetDataProvider<ISpriteMeshDataProvider>();
             var spriteRects = dataProvider.GetSpriteRects();
+            var textureProvider = spriteEditor.GetDataProvider<ITextureDataProvider>();
+
+            m_MeshPreview.texture = textureProvider.texture;
 
             for (var i = 0; i < spriteRects.Length; i++)
             {
                 var spriteRect = spriteRects[i];
-                var data = new SpriteMeshData();
-                data.spriteID = spriteRect.spriteID;
-                data.frame = spriteRect.rect;
-
-                var importedBones = boneProvider.GetBones(spriteRect.spriteID);
-                data.bones = MeshModuleUtility.ConvertBoneFromLocalSpaceToTextureSpace(importedBones, data.frame.position);
+                var spriteMeshData = new SpriteMeshData();
+                spriteMeshData.spriteID = spriteRect.spriteID;
+                spriteMeshData.frame = spriteRect.rect;
+                spriteMeshData.pivot = spriteRect.rect.position + Vector2.Scale(spriteRect.rect.size, spriteRect.pivot);
+                spriteMeshData.bones = MeshModuleUtility.CreateSpriteBoneData(boneProvider.GetBones(spriteRect.spriteID), spriteMeshData.CalculateRootMatrix());
 
                 var metaVertices = spriteMeshProvider.GetVertices(spriteRect.spriteID);
                 foreach (var mv in metaVertices)
                 {
                     var v = new Vertex2D(mv.position + spriteRect.rect.position, mv.boneWeight);
-                    data.vertices.Add(v);
+                    spriteMeshData.vertices.Add(v);
                 }
 
-                data.indices = new List<int>(spriteMeshProvider.GetIndices(spriteRect.spriteID));
+                spriteMeshData.indices = new List<int>(spriteMeshProvider.GetIndices(spriteRect.spriteID));
 
                 Vector2Int[] edges = spriteMeshProvider.GetEdges(spriteRect.spriteID);
 
                 foreach (var e in edges)
-                    data.edges.Add(new Edge(e.x, e.y));
+                    spriteMeshData.edges.Add(new Edge(e.x, e.y));
 
-                m_SpriteMeshCache.AddSpriteMeshData(data);
+                m_SpriteMeshCache.AddSpriteMeshData(spriteMeshData);
             }
 
             m_WeightEditorWindow = new ModuleWindow(Contents.weightEditor.text, new Rect(0f, 0f, 300f, 195f));
@@ -151,13 +155,17 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             m_InspectorWindow = new ModuleWindow(Contents.inspector.text, new Rect(0f, 0f, 300f, 95f));
 
-            InitializeMesh();
-            InitializeMaterials();
-
             m_GenerateGeometryMenuContents.settings = m_GenerateGeometrySettings;
             m_GenerateGeometryMenuContents.onGenerateGeometry = OnGenerateGeometry;
 
-            m_MeshDirty = true;
+            m_BindPoseController.onSkinPreviewChanged += () =>
+                {
+                    m_MeshPreview.SetSkinningDirty();
+                };
+
+            m_MeshPreview.SetMeshDirty();
+
+            m_CachedSpriteMeshData = selectedSpriteMeshData;
         }
 
         private void DoBoneSelectionInspector()
@@ -171,7 +179,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             if (EditorGUI.EndChangeCheck())
             {
-                m_IndicesDirty = true;
+                m_MeshPreview.SetIndicesDirty();
                 spriteEditor.SetDataModified();
             }
         }
@@ -183,7 +191,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             if (EditorGUI.EndChangeCheck())
             {
-                m_ColorsDirty = true;
+                m_MeshPreview.SetWeightsDirty();
                 spriteEditor.SetDataModified();
             }
         }
@@ -199,14 +207,13 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_BrushWeightTool = null;
             m_SliderWeightTool = null;
             m_WeightEditorWindow = null;
-            InvalidateMesh();
+            m_MeshPreview.Dispose();
             InvalidateSpriteMeshCache();
-            InvalidateMaterials();
         }
 
         private void UndoRedoPerformed()
         {
-            m_MeshDirty = true;
+            m_MeshPreview.SetMeshDirty();
         }
 
         public override bool CanBeActivated()
@@ -241,34 +248,36 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             SetupElements();
 
-            if (selectedSpriteMeshData != null)
+            if (m_CachedSpriteMeshData != null)
             {
-                PrepareMesh();
+                m_MeshPreview.Prepare();
 
                 if (m_SpriteMeshCache.mode == Mode.Weights)
-                    DrawWeights();
+                    MeshModuleUtility.DrawMesh(m_MeshPreview.mesh, m_MeshPreview.meterial);
 
-                DrawTriangles();
+                m_MeshPreview.DrawTriangles();
 
-                EditorGUI.BeginChangeCheck();
-
-                m_SpriteMeshController.OnGUI();
-
-                if (EditorGUI.EndChangeCheck())
+                if (!m_BindPoseController.inSkinningPreview)
                 {
-                    m_VerticesDirty = true;
-                    m_IndicesDirty = true;
-                    spriteEditor.SetDataModified();
+                    EditorGUI.BeginChangeCheck();
+
+                    m_SpriteMeshController.OnGUI();
+
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        m_MeshPreview.SetVerticesDirty();
+                        m_MeshPreview.SetIndicesDirty();
+                        spriteEditor.SetDataModified();
+                    }
                 }
 
                 if (m_SpriteMeshCache.mode == Mode.Weights)
-                    m_BoneGUI.DoBoneGUI();
+                    m_BindPoseController.DoBoneGUI();
 
                 m_RectSelectionTool.OnGUI();
                 m_UnselectTool.OnGUI();
 
-                if (m_SpriteMeshCache.mode == Mode.Weights && m_SpriteMeshCache.selectedWeightTool == WeightTool.Brush &&
-                    (m_BoneGUI.hoveredBone == -1 || m_BoneGUI.selection.IsSelected(m_BoneGUI.hoveredBone)))
+                if (m_SpriteMeshCache.mode == Mode.Weights && m_SpriteMeshCache.selectedWeightTool == WeightTool.Brush && m_BindPoseView.hoveredBone == -1)
                 {
                     EditorGUI.BeginChangeCheck();
 
@@ -276,7 +285,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                     if (EditorGUI.EndChangeCheck())
                     {
-                        m_ColorsDirty = true;
+                        m_MeshPreview.SetWeightsDirty();
                         spriteEditor.SetDataModified();
                     }
                 }
@@ -285,12 +294,14 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         private void HandleSpriteRectSelectionChange()
         {
-            if ((selectedSpriteMeshData == null || HandleUtility.nearestControl == m_RectSelectionTool.controlID || HandleUtility.nearestControl == m_BrushWeightTool.controlID) &&
+            if ((m_CachedSpriteMeshData == null || HandleUtility.nearestControl == m_RectSelectionTool.controlID || HandleUtility.nearestControl == m_BrushWeightTool.controlID) &&
                 Event.current.clickCount == 2 && spriteEditor.HandleSpriteSelection())
             {
+                m_CachedSpriteMeshData = selectedSpriteMeshData;
+
                 Undo.RegisterCompleteObjectUndo(m_SpriteMeshCache, Undo.GetCurrentGroupName());
 
-                m_MeshDirty = true;
+                m_MeshPreview.SetMeshDirty();
                 m_SpriteMeshCache.boneSelection.Clear();
                 m_SpriteMeshCache.selection.Clear();
             }
@@ -298,7 +309,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public override void DoToolbarGUI(Rect drawArea)
         {
-            using (new EditorGUI.DisabledScope(spriteEditor.editingDisabled || selectedSpriteMeshData == null))
+            using (new EditorGUI.DisabledScope(spriteEditor.editingDisabled || m_CachedSpriteMeshData == null))
             {
                 GUILayout.BeginArea(drawArea);
                 EditorGUILayout.BeginHorizontal();
@@ -366,9 +377,9 @@ namespace UnityEditor.Experimental.U2D.Animation
             {
                 Undo.RegisterCompleteObjectUndo(m_SpriteMeshCache, "Edit Weights");
 
-                selectedSpriteMeshData.CalculateWeights(m_WeightGenerator, m_SpriteMeshCache.selection, kFilterTolerance);
+                m_CachedSpriteMeshData.CalculateWeights(m_WeightGenerator, m_SpriteMeshCache.selection, kFilterTolerance);
 
-                m_ColorsDirty = true;
+                m_MeshPreview.SetWeightsDirty();
                 spriteEditor.SetDataModified();
             }
 
@@ -376,9 +387,9 @@ namespace UnityEditor.Experimental.U2D.Animation
             {
                 Undo.RegisterCompleteObjectUndo(m_SpriteMeshCache, "Edit Weights");
 
-                selectedSpriteMeshData.CalculateWeightsSafe(m_WeightGenerator, m_SpriteMeshCache.selection, kFilterTolerance);
+                m_CachedSpriteMeshData.CalculateWeightsSafe(m_WeightGenerator, m_SpriteMeshCache.selection, kFilterTolerance);
 
-                m_ColorsDirty = true;
+                m_MeshPreview.SetWeightsDirty();
                 spriteEditor.SetDataModified();
             }
 
@@ -386,9 +397,9 @@ namespace UnityEditor.Experimental.U2D.Animation
             {
                 Undo.RegisterCompleteObjectUndo(m_SpriteMeshCache, "Edit Weights");
 
-                selectedSpriteMeshData.NormalizeWeights(m_SpriteMeshCache.selection);
+                m_CachedSpriteMeshData.NormalizeWeights(m_SpriteMeshCache.selection);
 
-                m_ColorsDirty = true;
+                m_MeshPreview.SetWeightsDirty();
                 spriteEditor.SetDataModified();
             }
 
@@ -396,21 +407,21 @@ namespace UnityEditor.Experimental.U2D.Animation
             {
                 Undo.RegisterCompleteObjectUndo(m_SpriteMeshCache, "Edit Weights");
 
-                selectedSpriteMeshData.ClearWeights(m_SpriteMeshCache.selection);
+                m_CachedSpriteMeshData.ClearWeights(m_SpriteMeshCache.selection);
 
-                m_ColorsDirty = true;
+                m_MeshPreview.SetWeightsDirty();
                 spriteEditor.SetDataModified();
             }
 
             GUILayout.Box(m_Styles.RGBIcon, m_Styles.preLabel);
-            m_Opacity = GUILayout.HorizontalSlider(m_Opacity, 0.25f, 1f, m_Styles.preSlider, m_Styles.preSliderThumb, GUILayout.MinWidth(60));
+            m_Opacity = GUILayout.HorizontalSlider(m_Opacity, 0f, 1f, m_Styles.preSlider, m_Styles.preSliderThumb, GUILayout.MinWidth(60));
             GUILayout.Box(m_Styles.BoneIcon, m_Styles.preLabel);
-            m_BoneGUI.boneOpacity = GUILayout.HorizontalSlider(m_BoneGUI.boneOpacity, 0.25f, 1f, m_Styles.preSlider, m_Styles.preSliderThumb, GUILayout.MinWidth(60));
+            m_BindPoseView.boneOpacity = GUILayout.HorizontalSlider(m_BindPoseView.boneOpacity, 0.25f, 1f, m_Styles.preSlider, m_Styles.preSliderThumb, GUILayout.MinWidth(60));
         }
 
         private void DoWindowsGUI()
         {
-            if (selectedSpriteMeshData == null)
+            if (m_CachedSpriteMeshData == null)
                 return;
 
             if (m_SpriteMeshCache.mode == Mode.Geometry)
@@ -489,7 +500,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                 if (EditorGUI.EndChangeCheck())
                 {
-                    m_ColorsDirty = true;
+                    m_MeshPreview.SetWeightsDirty();
                     spriteEditor.SetDataModified();
 
                     CheckBoneSelectionChanged();
@@ -517,6 +528,8 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                 foreach (var spriteMeshData in m_SpriteMeshCache)
                 {
+                    spriteMeshData.SortTrianglesByDepth();
+
                     List<Vertex2DMetaData> vmd = new List<Vertex2DMetaData>(spriteMeshData.vertices.Count);
                     foreach (var v in spriteMeshData.vertices)
                         vmd.Add(new Vertex2DMetaData() { position = v.position - spriteMeshData.frame.position, boneWeight = v.editableBoneWeight.ToBoneWeight(true) });
@@ -533,9 +546,9 @@ namespace UnityEditor.Experimental.U2D.Animation
                     for (int i = 0; i < bones.Count; ++i)
                     {
                         SpriteBone original = bones[i];
-                        SpriteBone bone = spriteMeshData.bones[i];
+                        SpriteBoneData bone = spriteMeshData.bones[i];
                         Vector3 position = original.position;
-                        position.z = bone.position.z;
+                        position.z = bone.depth;
                         original.position = position;
                         bones[i] = original;
                     }
@@ -552,7 +565,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         void SetupElements()
         {
             m_SpriteMeshController.spriteMeshView = m_SpriteMeshView;
-            m_SpriteMeshController.spriteMeshData = selectedSpriteMeshData;
+            m_SpriteMeshController.spriteMeshData = m_CachedSpriteMeshData;
             m_SpriteMeshController.selection = m_SpriteMeshCache.selection;
             m_SpriteMeshController.triangulator = m_Triangulator;
 
@@ -564,18 +577,24 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (m_SpriteMeshCache.mode == Mode.Weights)
                 m_SpriteMeshView.mode = SpriteMeshViewMode.Selection;
 
-            m_BoneGUI.spriteMeshdata = selectedSpriteMeshData;
-            m_BoneGUI.selection = m_SpriteMeshCache.boneSelection;
-            m_BoneGUI.undoObject = m_UndoObject;
-            m_BoneGUI.defaultControlID = defaultControlID;
+            m_BindPoseController.spriteMeshData = m_CachedSpriteMeshData;
+            m_BindPoseController.selection = m_SpriteMeshCache.boneSelection;
+            m_BindPoseController.undoObject = m_UndoObject;
+            m_BindPoseController.bindPoseView = m_BindPoseView;
+            m_BindPoseView.defaultControlID = defaultControlID;
+
+            m_MeshPreview.spriteMeshData = m_CachedSpriteMeshData;
+            m_MeshPreview.opacity = m_Opacity;
+            m_MeshPreview.localToWorldMatrices = m_BindPoseController.localToWorldMatrices;
+            m_MeshPreview.enableSkinning = m_BindPoseController.inSkinningPreview;
 
             m_RectSelectionTool.vertices = null;
             m_RectSelectionTool.selection = null;
             m_UnselectTool.selection = null;
 
-            if (selectedSpriteMeshData != null)
+            if (m_CachedSpriteMeshData != null)
             {
-                m_RectSelectionTool.vertices = selectedSpriteMeshData.vertices;
+                m_RectSelectionTool.vertices = m_CachedSpriteMeshData.vertices;
                 m_RectSelectionTool.selection = m_SpriteMeshCache.selection;
                 m_UnselectTool.selection = m_SpriteMeshCache.selection;
             }
@@ -583,9 +602,9 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (m_SpriteMeshCache.selection.Count == 0)
                 m_UnselectTool.selection = m_SpriteMeshCache.boneSelection;
 
-            m_WeightInspector.spriteMeshData = selectedSpriteMeshData;
+            m_WeightInspector.spriteMeshData = m_CachedSpriteMeshData;
             m_WeightInspector.selection = m_SpriteMeshCache.selection;
-            m_BoneInspector.spriteMeshData = selectedSpriteMeshData;
+            m_BoneInspector.spriteMeshData = m_CachedSpriteMeshData;
             m_BoneInspector.selection = m_SpriteMeshCache.boneSelection;
 
             Rect inspectorRect = m_InspectorWindow.rect;
@@ -605,7 +624,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_InspectorWindow.rect = inspectorRect;
             m_InspectorWindow.DockBottomLeft(spriteEditor.windowDimension, new Vector2(10f, -10f));
 
-            m_WeightEditor.spriteMeshData = selectedSpriteMeshData;
+            m_WeightEditor.spriteMeshData = m_CachedSpriteMeshData;
             m_WeightEditor.undoObject = m_UndoObject;
             m_WeightEditor.boneIndex = m_SpriteMeshCache.boneSelection.single;
             m_WeightEditor.selection = m_SpriteMeshCache.selection;
@@ -617,29 +636,6 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_WeightEditorWindow.DockBottomRight(spriteEditor.windowDimension, new Vector2(-10f, -10f));
         }
 
-        private void InitializeMesh()
-        {
-            InvalidateMesh();
-
-            m_Mesh = new Mesh();
-            m_Mesh.MarkDynamic();
-            m_Mesh.hideFlags = HideFlags.DontSave;
-        }
-
-        private void InitializeMaterials()
-        {
-            Debug.Assert(m_MaterialVertexColor == null);
-
-            m_MaterialVertexColor = new Material(Shader.Find("Hidden/MeshModule-GUITextureClip"));
-            m_MaterialVertexColor.hideFlags = HideFlags.DontSave;
-        }
-
-        private void InvalidateMesh()
-        {
-            if (m_Mesh)
-                UnityEngine.Object.DestroyImmediate(m_Mesh);
-        }
-
         private void InvalidateSpriteMeshCache()
         {
             if (m_SpriteMeshCache)
@@ -647,12 +643,6 @@ namespace UnityEditor.Experimental.U2D.Animation
                 Undo.ClearUndo(m_SpriteMeshCache);
                 UnityEngine.Object.DestroyImmediate(m_SpriteMeshCache);
             }
-        }
-
-        private void InvalidateMaterials()
-        {
-            if (m_MaterialVertexColor)
-                UnityEngine.Object.DestroyImmediate(m_MaterialVertexColor);
         }
 
         private void Repaint()
@@ -674,136 +664,39 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        private void DrawTriangles()
-        {
-            if (Event.current.type != EventType.Repaint)
-                return;
-
-            CommonDrawingUtility.DrawTriangleLines(m_Vertices, m_Indices, 1f, Color.white.AlphaMultiplied(0.35f));
-        }
-
-        private void DrawWeights()
-        {
-            Debug.Assert(m_MaterialVertexColor != null);
-
-            if (Event.current.type != EventType.Repaint)
-                return;
-
-            m_MaterialVertexColor.SetColor("_Color", Color.white.AlphaMultiplied(m_Opacity));
-            DrawMesh(m_MaterialVertexColor);
-        }
-
-        private void PrepareColors()
-        {
-            Debug.Assert(selectedSpriteMeshData != null);
-
-            m_Colors.Clear();
-
-            for (int i = 0; i < selectedSpriteMeshData.vertices.Count; ++i)
-            {
-                BoneWeight boneWeight = selectedSpriteMeshData.vertices[i].editableBoneWeight.ToBoneWeight(true);
-
-                m_Colors.Add(CommonDrawingUtility.CalculateNiceColor(boneWeight.boneIndex0, kNiceColorCount) * boneWeight.weight0 +
-                    CommonDrawingUtility.CalculateNiceColor(boneWeight.boneIndex1, kNiceColorCount) * boneWeight.weight1 +
-                    CommonDrawingUtility.CalculateNiceColor(boneWeight.boneIndex2, kNiceColorCount) * boneWeight.weight2 +
-                    CommonDrawingUtility.CalculateNiceColor(boneWeight.boneIndex3, kNiceColorCount) * boneWeight.weight3);
-            }
-        }
-
-        private void PrepareMesh()
-        {
-            Debug.Assert(selectedSpriteMeshData != null);
-            Debug.Assert(m_Mesh != null);
-
-            m_MeshDirty |= (m_Vertices.Count != selectedSpriteMeshData.vertices.Count);
-
-            if (m_MeshDirty)
-            {
-                m_Mesh.Clear();
-                m_VerticesDirty = true;
-                m_IndicesDirty = true;
-                m_ColorsDirty = true;
-            }
-
-            if (m_VerticesDirty)
-            {
-                m_Vertices.Clear();
-
-                for (int i = 0; i < selectedSpriteMeshData.vertices.Count; ++i)
-                    m_Vertices.Add(selectedSpriteMeshData.vertices[i].position);
-
-                m_Mesh.SetVertices(m_Vertices);
-                m_VerticesDirty = false;
-            }
-
-            if (m_IndicesDirty)
-            {
-                m_Indices.Clear();
-
-                for (int i = 0; i < selectedSpriteMeshData.indices.Count; ++i)
-                {
-                    int index = selectedSpriteMeshData.indices[i];
-                    m_Indices.Add(index);
-                }
-
-                m_Mesh.SetTriangles(m_Indices, 0);
-                m_IndicesDirty = false;
-            }
-
-            if (m_ColorsDirty)
-            {
-                PrepareColors();
-
-                m_Mesh.SetColors(m_Colors);
-                m_ColorsDirty = false;
-            }
-
-            m_MeshDirty = false;
-        }
-
-        private void DrawMesh(Material material)
-        {
-            Debug.Assert(m_Mesh != null);
-            Debug.Assert(material != null);
-
-            material.SetPass(0);
-
-            Graphics.DrawMeshNow(m_Mesh, Handles.matrix * GUI.matrix);
-        }
-
         private void OnGenerateGeometry()
         {
             Undo.RegisterCompleteObjectUndo(m_SpriteMeshCache, "Generate Geometry");
 
             m_SpriteMeshCache.selection.Clear();
 
-            selectedSpriteMeshData.OutlineFromAlpha(m_OutlineGenerator, spriteEditor.GetDataProvider<ITextureDataProvider>(), m_GenerateGeometrySettings.outlineDetail, m_GenerateGeometrySettings.alphaTolerance);
-            selectedSpriteMeshData.Triangulate(m_Triangulator);
+            m_CachedSpriteMeshData.OutlineFromAlpha(m_OutlineGenerator, spriteEditor.GetDataProvider<ITextureDataProvider>(), m_GenerateGeometrySettings.outlineDetail, m_GenerateGeometrySettings.alphaTolerance);
+            m_CachedSpriteMeshData.Triangulate(m_Triangulator);
 
             if (m_GenerateGeometrySettings.subdividePercent > 0f)
             {
                 float largestAreaFactor = Mathf.Lerp(0.5f, 0.05f, m_GenerateGeometrySettings.subdividePercent / 100f);
-                selectedSpriteMeshData.Subdivide(m_Triangulator, largestAreaFactor);
+                m_CachedSpriteMeshData.Subdivide(m_Triangulator, largestAreaFactor);
             }
 
-            m_MeshDirty = true;
+            m_MeshPreview.SetMeshDirty();
             spriteEditor.SetDataModified();
             Repaint();
         }
 
         private Styles m_Styles;
         private int m_PrevNearestControl = -1;
+        private SpriteMeshData m_CachedSpriteMeshData;
         private float m_Opacity = 1f;
         private SpriteMeshCache m_SpriteMeshCache;
         private ITriangulator m_Triangulator;
         private IWeightsGenerator m_WeightGenerator;
         private IOutlineGenerator m_OutlineGenerator;
         private UndoObject m_UndoObject;
-        private Mesh m_Mesh;
-        private Material m_MaterialVertexColor;
         private SpriteMeshController m_SpriteMeshController;
         private SpriteMeshView m_SpriteMeshView;
-        private BoneGUI m_BoneGUI;
+        private BindPoseController m_BindPoseController;
+        private BindPoseView m_BindPoseView;
         private RectSelectionTool m_RectSelectionTool;
         private UnselectTool m_UnselectTool;
         private WeightEditor m_WeightEditor;
@@ -813,15 +706,9 @@ namespace UnityEditor.Experimental.U2D.Animation
         private SliderWeightTool m_SliderWeightTool;
         private ModuleWindow m_WeightEditorWindow;
         private ModuleWindow m_InspectorWindow;
-        private List<Vector3> m_Vertices = new List<Vector3>();
-        private List<int> m_Indices = new List<int>();
-        private List<Color> m_Colors = new List<Color>();
-        private bool m_MeshDirty = true;
-        private bool m_VerticesDirty = true;
-        private bool m_IndicesDirty = true;
-        private bool m_ColorsDirty = true;
         private GenerateGeometryMenuContents m_GenerateGeometryMenuContents = new GenerateGeometryMenuContents();
         private GenerateGeometrySettings m_GenerateGeometrySettings = new GenerateGeometrySettings();
         private Rect m_GenerateButtonRect;
+        private MeshPreview m_MeshPreview;
     }
 }

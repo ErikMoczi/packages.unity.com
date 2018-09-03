@@ -5,7 +5,8 @@
         "com.unity.2d.common.Runtime",
         "com.unity.2d.animation.Editor",
         "com.unity.2d.animation.Runtime",
-        "Unity.InternalAPIEngineBridge.001"
+        "Unity.InternalAPIEngineBridge.001",
+        "com.unity.2d.triangle.Runtime"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"
@@ -13,5 +14,6 @@
     "includePlatforms": [
         "Editor"
     ],
-    "excludePlatforms": []
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
 }

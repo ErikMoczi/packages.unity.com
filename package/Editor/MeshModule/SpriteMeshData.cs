@@ -7,13 +7,27 @@ using UnityEngine.Experimental.U2D;
 namespace UnityEditor.Experimental.U2D.Animation
 {
     [Serializable]
+    internal class SpriteBoneData
+    {
+        public string name;
+        public int parentId;
+        public Vector2 localPosition;
+        public Quaternion localRotation;
+        public Vector2 position;
+        public Vector2 endPosition;
+        public float depth;
+        public float length;
+    }
+
+    [Serializable]
     internal class SpriteMeshData
     {
         public GUID spriteID;
         public Rect frame;
+        public Vector2 pivot;
         public List<Vertex2D> vertices = new List<Vertex2D>();
         public List<int> indices = new List<int>();
-        public List<SpriteBone> bones = new List<SpriteBone>();
+        public List<SpriteBoneData> bones = new List<SpriteBoneData>();
         public List<Edge> edges = new List<Edge>();
 
         public void CreateVertex(Vector2 position)

@@ -11,7 +11,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTest
+namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
 {
     internal class WeightEditorTestBase
     {
@@ -40,10 +40,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
             m_WeightEditor.undoObject = m_UndoObject;
         }
 
-        private List<SpriteBone> CreateBones()
+        private List<SpriteBoneData> CreateBones()
         {
-            List<SpriteBone> bones = new List<SpriteBone>();
-            bones.Add(new SpriteBone() {
+            List<SpriteBone> spriteBones = new List<SpriteBone>();
+            spriteBones.Add(new SpriteBone() {
                 name = "root",
                 length = 1f,
                 parentId = -1,
@@ -51,7 +51,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
                 rotation = Quaternion.identity
             });
 
-            bones.Add(new SpriteBone() {
+            spriteBones.Add(new SpriteBone() {
                 name = "bone 0",
                 length = 1f,
                 parentId = 0,
@@ -59,7 +59,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
                 rotation = Quaternion.identity
             });
 
-            return bones;
+            return MeshModuleUtility.CreateSpriteBoneData(spriteBones, Matrix4x4.identity);
         }
 
         private List<Vertex2D> CreateVertices()
@@ -539,17 +539,17 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
 
             expected = new BoneWeight();
             expected.boneIndex0 = 1;
-            expected.weight0 = 0.666666687f;
+            expected.weight0 = 0.666666627f;
             expected.boneIndex1 = 0;
-            expected.weight1 = 0.333333313f;
+            expected.weight1 = 0.333333373f;
 
             AssertBoneWeight(expected, m_SpriteMeshData.vertices[2].editableBoneWeight.ToBoneWeight(false));
 
             expected = new BoneWeight();
             expected.boneIndex0 = 1;
-            expected.weight0 = 0.666666687f;
+            expected.weight0 = 0.666666627f;
             expected.boneIndex1 = 0;
-            expected.weight1 = 0.333333313f;
+            expected.weight1 = 0.333333373f;
 
             AssertBoneWeight(expected, m_SpriteMeshData.vertices[3].editableBoneWeight.ToBoneWeight(false));
 

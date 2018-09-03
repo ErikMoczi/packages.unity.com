@@ -69,6 +69,11 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             return false;
         }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
     }
     
     internal class BonePresenter

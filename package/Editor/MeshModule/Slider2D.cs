@@ -26,7 +26,6 @@ namespace UnityEditor.Experimental.U2D.Animation
                         s_DragStartScreenPosition = Event.current.mousePosition;
                         Vector2 b = HandleUtility.WorldToGUIPoint(position);
                         s_DragScreenOffset = s_CurrentMousePosition - b;
-                        EditorGUIUtility.SetWantsMouseJumping(0);
 
                         Event.current.Use();
                     }

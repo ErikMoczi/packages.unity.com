@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Experimental.U2D.Common;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -76,7 +77,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 return false;
 
             // GUIClip.Unclip sets the mouse position to include the windows tab.
-            Vector2 mousePosition = GUIClip.Unclip(Event.current.mousePosition) - (GUIClip.topmostRect.position - GUIClip.GetTopRect().position);
+            Vector2 mousePosition = InternalEngineBridge.GUIUnclip(Event.current.mousePosition) - (InternalEngineBridge.GetGUIClipTopMostRect().position - InternalEngineBridge.GetGUIClipTopRect().position);
             return toolbarWindowRect.Contains(mousePosition) || infoWindowRect.Contains(mousePosition);
         }
     }

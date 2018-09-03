@@ -185,7 +185,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 Event.current.Use();
             }
 
-            if ((GUIUtility.hotControl == controlID || HandleUtility.nearestControl == controlID) && eventType == EventType.Repaint)
+            if ((GUIUtility.hotControl == controlID || (GUIUtility.hotControl == 0 && HandleUtility.nearestControl == controlID)) && eventType == EventType.Repaint)
             {
                 Color oldColor =  Handles.color;
 

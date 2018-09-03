@@ -8,9 +8,8 @@ using UnityEngine.TestTools;
 using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTest;
 
-namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.BoundedBiharmonicWeightsTest
+namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
 {
     [TestFixture]
     internal class BoundedBiharmonicWeightsTest : WeightEditorTestBase
@@ -305,8 +304,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.BoundedBiharmon
         [Test]
         public void OneBoneOutsideMesh_ReturnZeroInfluences()
         {
-            SpriteBone spriteBone = m_SpriteMeshData.bones[0];
-            spriteBone.position += Vector3.right * 10f;
+            SpriteBoneData spriteBone = m_SpriteMeshData.bones[0];
+            spriteBone.position += Vector2.right * 10f;
             m_SpriteMeshData.bones[0] = spriteBone;
 
             BoneWeight[] boneWeights = CalculateWeights();
@@ -389,8 +388,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.BoundedBiharmon
         [Test]
         public void OneBonePartiallyOutsideMesh_CreatesInfluencesForBothBones()
         {
-            SpriteBone spriteBone = m_SpriteMeshData.bones[0];
-            spriteBone.position += Vector3.left * 0.5f;
+            SpriteBoneData spriteBone = m_SpriteMeshData.bones[0];
+            spriteBone.position += Vector2.left * 0.5f;
             m_SpriteMeshData.bones[0] = spriteBone;
 
             BoneWeight[] boneWeights = CalculateWeights();
@@ -473,12 +472,12 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.BoundedBiharmon
         [Test]
         public void TwoBonesOutsideMesh_ReturnsZeroInfluences()
         {
-            SpriteBone spriteBone = m_SpriteMeshData.bones[0];
-            spriteBone.position += Vector3.right * 10f;
+            SpriteBoneData spriteBone = m_SpriteMeshData.bones[0];
+            spriteBone.position += Vector2.right * 10f;
             m_SpriteMeshData.bones[0] = spriteBone;
 
             spriteBone = m_SpriteMeshData.bones[1];
-            spriteBone.position += Vector3.right * 10f;
+            spriteBone.position += Vector2.right * 10f;
             m_SpriteMeshData.bones[1] = spriteBone;
 
             BoneWeight[] boneWeights = CalculateWeights();

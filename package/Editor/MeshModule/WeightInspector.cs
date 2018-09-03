@@ -11,7 +11,23 @@ namespace UnityEditor.Experimental.U2D.Animation
 {
     internal class WeightInspector : IGUITool
     {
-        public SpriteMeshData spriteMeshData { get; set; }
+        public SpriteMeshData spriteMeshData
+        {
+            get { return m_SpriteMeshData; }
+            set
+            {
+                if(m_SpriteMeshData != value)
+                {
+                    m_SpriteMeshData = value;
+                    m_CachedBoneNames = null;
+                    
+                    if(m_SpriteMeshData != null)
+                        m_CachedBoneNames = MeshModuleUtility.GetBoneNameList(m_SpriteMeshData);
+                }
+            }
+        }
+
+        public GUIContent[] boneNames { get { return m_CachedBoneNames; } }
         public ScriptableObject undoableObject { get; private set; }
         public ISelection selection { get; set; }
         public int controlID { get { return 0; } }
@@ -109,5 +125,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             EditorGUIUtility.labelWidth = -1;
             EditorGUIUtility.fieldWidth = -1;
         }
+
+        private SpriteMeshData m_SpriteMeshData;
+        private GUIContent[] m_CachedBoneNames;
     }
 }

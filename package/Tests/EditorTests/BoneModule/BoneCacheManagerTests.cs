@@ -361,7 +361,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             m_BoneDPMock.GetBones(m_SpriteId).Returns(new List<SpriteBone>());
             m_CacheManager = new BoneCacheManager(m_BoneDPMock, m_MeshDPMock);
 
-            var uniqueBoneList = m_CacheManager.GetSpriteBoneRawData(m_SpriteId);
+            m_CacheManager.GetSpriteBoneRawData(m_SpriteId);
+
             m_Model = new BoneModel(() => { });
             m_CacheManager.Apply();
 

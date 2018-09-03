@@ -100,7 +100,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                     spriteMeshView.DrawEdge(startPosition, endPosition);
             }
 
-            if (spriteMeshView.hoveredEdge != -1 && spriteMeshView.IsActionActive(MeshEditorAction.SelectEdge))
+            if (spriteMeshView.IsActionActive(MeshEditorAction.SelectEdge))
             {
                 Edge hoveredEdge = spriteMeshData.edges[spriteMeshView.hoveredEdge];
                 Vector2 startPosition = spriteMeshData.vertices[hoveredEdge.index1].position;
@@ -126,7 +126,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (spriteMeshView.mode == SpriteMeshViewMode.CreateVertex &&
                 spriteMeshView.IsActionActive(MeshEditorAction.CreateVertex))
             {
-                Vector2 clampedMousePos = ClampToFrame(spriteMeshView.mousePosition);
+                Vector2 clampedMousePos = ClampToFrame(spriteMeshView.mouseWorldPosition);
 
                 if (spriteMeshView.hoveredEdge != -1)
                 {
@@ -171,7 +171,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (!spriteMeshView.IsActionActive(MeshEditorAction.SplitEdge))
                 return;
 
-            Vector2 clampedMousePos = ClampToFrame(spriteMeshView.mousePosition);
+            Vector2 clampedMousePos = ClampToFrame(spriteMeshView.mouseWorldPosition);
 
             Edge closestEdge = spriteMeshData.edges[spriteMeshView.closestEdge];
 
@@ -224,19 +224,19 @@ namespace UnityEditor.Experimental.U2D.Animation
         private void HandleCreateVertex()
         {
             if (spriteMeshView.DoCreateVertex())
-                CreateVertex(spriteMeshView.mousePosition, spriteMeshView.hoveredEdge);
+                CreateVertex(spriteMeshView.mouseWorldPosition, spriteMeshView.hoveredEdge);
         }
 
         private void HandleSplitEdge()
         {
             if (spriteMeshView.DoSplitEdge())
-                SplitEdge(spriteMeshView.mousePosition, spriteMeshView.closestEdge);
+                SplitEdge(spriteMeshView.mouseWorldPosition, spriteMeshView.closestEdge);
         }
 
         private void HandleCreateEdge()
         {
             if (spriteMeshView.DoCreateEdge())
-                CreateEdge(spriteMeshView.mousePosition, spriteMeshView.hoveredVertex, spriteMeshView.hoveredEdge);
+                CreateEdge(spriteMeshView.mouseWorldPosition, spriteMeshView.hoveredVertex, spriteMeshView.hoveredEdge);
         }
 
         private void HandleMoveEdge()
@@ -343,16 +343,19 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (index < 0)
                 throw new ArgumentException("Index out of range");
 
-            undoObject.RegisterCompleteObjectUndo("Selection");
-
             bool selected = selection.IsSelected(index);
             if (selected)
             {
                 if (additiveToggle)
+                {
+                    undoObject.RegisterCompleteObjectUndo("Selection");
                     selection.Select(index, false);
+                }
             }
             else
             {
+                undoObject.RegisterCompleteObjectUndo("Selection");
+
                 if (!additiveToggle)
                     ClearSelection();
 
@@ -525,7 +528,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         private void UpdateEdgeInstersection()
         {
             if (selection.Count == 1)
-                m_EdgeIntersectionResult = CalculateEdgeIntersection(selection.single, spriteMeshView.hoveredVertex, spriteMeshView.hoveredEdge, ClampToFrame(spriteMeshView.mousePosition));
+                m_EdgeIntersectionResult = CalculateEdgeIntersection(selection.single, spriteMeshView.hoveredVertex, spriteMeshView.hoveredEdge, ClampToFrame(spriteMeshView.mouseWorldPosition));
         }
 
         private EdgeIntersectionResult CalculateEdgeIntersection(int vertexIndex, int hoveredVertexIndex, int hoveredEdgeIndex, Vector2 targetPosition)

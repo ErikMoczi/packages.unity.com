@@ -12,6 +12,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             EditableBoneWeight editableBoneWeight = new EditableBoneWeight();
 
             editableBoneWeight.SetFromBoneWeight(boneWeight);
+            editableBoneWeight.UnifyChannelsWithSameBoneIndex();
 
             return editableBoneWeight;
         }
@@ -20,10 +21,10 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             editableBoneWeight.Clear();
 
-            editableBoneWeight.AddChannel(new BoneWeightData(boneWeight.boneIndex0, boneWeight.weight0), !HasBoneIndex(editableBoneWeight, boneWeight.boneIndex0) && boneWeight.weight0 > 0f);
-            editableBoneWeight.AddChannel(new BoneWeightData(boneWeight.boneIndex1, boneWeight.weight1), !HasBoneIndex(editableBoneWeight, boneWeight.boneIndex1) && boneWeight.weight1 > 0f);
-            editableBoneWeight.AddChannel(new BoneWeightData(boneWeight.boneIndex2, boneWeight.weight2), !HasBoneIndex(editableBoneWeight, boneWeight.boneIndex2) && boneWeight.weight2 > 0f);
-            editableBoneWeight.AddChannel(new BoneWeightData(boneWeight.boneIndex3, boneWeight.weight3), !HasBoneIndex(editableBoneWeight, boneWeight.boneIndex3) && boneWeight.weight3 > 0f);
+            editableBoneWeight.AddChannel(new BoneWeightData(boneWeight.boneIndex0, boneWeight.weight0), boneWeight.weight0 > 0f);
+            editableBoneWeight.AddChannel(new BoneWeightData(boneWeight.boneIndex1, boneWeight.weight1), boneWeight.weight1 > 0f);
+            editableBoneWeight.AddChannel(new BoneWeightData(boneWeight.boneIndex2, boneWeight.weight2), boneWeight.weight2 > 0f);
+            editableBoneWeight.AddChannel(new BoneWeightData(boneWeight.boneIndex3, boneWeight.weight3), boneWeight.weight3 > 0f);
         }
 
         public static BoneWeight ToBoneWeight(this EditableBoneWeight editableBoneWeight, bool sortByWeight)

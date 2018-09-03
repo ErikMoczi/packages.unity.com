@@ -775,8 +775,6 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
         [Test]
         public void WithNoBoneSelected_SkipShowingInfo()
         {
-            var bones = GenerateAttachedRootAndChild();
-
             m_BonePresenter.DoInfoPanel(Rect.zero);
 
             string dummyName = "";

@@ -8,7 +8,7 @@ using UnityEditor.U2D;
 using UnityEditor.U2D.Interface;
 using UnityEngine.U2D.Interface;
 
-namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.EditableBoneWeightTest
+namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
 {
     [TestFixture]
     public class EditableBoneWeightTest
@@ -101,7 +101,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.EditableBoneWei
         }
 
         [Test]
-        public void CreateFromBoneWeight_WithRepetedBoneIndices_CreatesFourChannels_DisablingTheRepeatedIndices()
+        public void CreateFromBoneWeight_WithRepetedBoneIndices_CreatesFourChannels_UnifyingTheRepeatedIndices()
         {
             BoneWeight boneWeight = new BoneWeight();
             boneWeight.boneIndex0 = 0;
@@ -119,10 +119,25 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.EditableBoneWei
             Assert.True(editableBoneWeight.IsChannelEnabled(1), "Channel should be enabled.");
             Assert.False(editableBoneWeight.IsChannelEnabled(2), "Channel should be disabled.");
             Assert.False(editableBoneWeight.IsChannelEnabled(3), "Channel should be disabled.");
-            Assert.AreEqual(new BoneWeightData(0, 0.1f), editableBoneWeight.GetBoneWeightData(0), "Channel has incorrect data.");
-            Assert.AreEqual(new BoneWeightData(1, 0.2f), editableBoneWeight.GetBoneWeightData(1), "Channel has incorrect data.");
-            Assert.AreEqual(new BoneWeightData(0, 0.3f), editableBoneWeight.GetBoneWeightData(2), "Channel has incorrect data.");
-            Assert.AreEqual(new BoneWeightData(1, 0.4f), editableBoneWeight.GetBoneWeightData(3), "Channel has incorrect data.");
+            Assert.AreEqual(0, editableBoneWeight.GetBoneWeightData(0).boneIndex, "Incorrect bone index");
+            Assert.AreEqual(1, editableBoneWeight.GetBoneWeightData(1).boneIndex, "Incorrect bone index");
+            Assert.AreEqual(0, editableBoneWeight.GetBoneWeightData(2).boneIndex, "Incorrect bone index");
+            Assert.AreEqual(1, editableBoneWeight.GetBoneWeightData(3).boneIndex, "Incorrect bone index");
+            Assert.AreEqual(0.4f, editableBoneWeight.GetBoneWeightData(0).weight, 0.00001f, "Incorrect weight");
+            Assert.AreEqual(0.6f, editableBoneWeight.GetBoneWeightData(1).weight, "Incorrect weight");
+            Assert.AreEqual(0f, editableBoneWeight.GetBoneWeightData(2).weight, "Incorrect weight");
+            Assert.AreEqual(0f, editableBoneWeight.GetBoneWeightData(3).weight, "Incorrect weight");
+        }
+
+        [Test]
+        public void SetBoneWeightData_DisablesChannelsWithZeroWeight()
+        {
+            EditableBoneWeight e = new EditableBoneWeight();
+            e.SetFromBoneWeight(new BoneWeight());
+            Assert.IsFalse(e.IsChannelEnabled(0), "Channel should be disabled");
+            Assert.IsFalse(e.IsChannelEnabled(1), "Channel should be disabled");
+            Assert.IsFalse(e.IsChannelEnabled(2), "Channel should be disabled");
+            Assert.IsFalse(e.IsChannelEnabled(3), "Channel should be disabled");
         }
 
         [Test]

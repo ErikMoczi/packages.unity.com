@@ -91,7 +91,7 @@ namespace UnityEngine.Experimental.U2D.Animation
                 m_MinMax.Dispose();
         }
 
-        void Update()
+        void LateUpdate()
         {
 
             UpdateBoundsIfNeeded();
@@ -104,7 +104,9 @@ namespace UnityEngine.Experimental.U2D.Animation
                     try
                     {
                         var deformedVertices = spriteRenderer.GetDeformableVertices();
-                        JobHandle deformJobHandle = SpriteBoneUtility.Deform(spriteRenderer.sprite, deformedVertices, gameObject.transform.worldToLocalMatrix, boneTransforms);
+                        var bindPoses = spriteRenderer.sprite.GetBindPoses();
+                        var boneWeights = spriteRenderer.sprite.GetBoneWeights();
+                        JobHandle deformJobHandle = SpriteBoneUtility.Deform(spriteRenderer.sprite, bindPoses, boneWeights, deformedVertices, gameObject.transform.worldToLocalMatrix, boneTransforms);
                         m_MinMax = new NativeArray<Vector3>(2, Allocator.Persistent);
                         m_BoundsHandle = SpriteBoneUtility.CalculateBounds(deformedVertices, m_MinMax, deformJobHandle);
                         spriteRenderer.UpdateDeformableBuffer(m_BoundsHandle.Value);

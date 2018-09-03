@@ -177,7 +177,7 @@ namespace UnityEngine.Experimental.U2D.Animation
             return boundsFence;
         }
 
-        internal static JobHandle Deform(Sprite sprite, NativeArray<Vector3> deformableVertices, Matrix4x4 rootInv, Transform[] boneTransforms)
+        internal static JobHandle Deform(Sprite sprite, NativeArray<Matrix4x4> bindPoses, NativeArray<BoneWeight> boneWeights, NativeArray<Vector3> deformableVertices, Matrix4x4 rootInv, Transform[] boneTransforms)
         {
             if (sprite == null)
                 throw new ArgumentNullException("Sprite asset of spriteRenderer is null");
@@ -186,14 +186,15 @@ namespace UnityEngine.Experimental.U2D.Animation
             if (!HasValidBoneTransforms(sprite.GetBones(), boneTransforms))
                 throw new ArgumentException("boneTransforms are invalid");
 
-            var bindPoses = sprite.GetBindPoses();
+            var vertexCount = sprite.GetVertexCount();
             if (bindPoses.Length != boneTransforms.Length)
                 throw new InvalidOperationException("boneTransforms must have same size as bindPoses");
+            if (boneWeights.Length != vertexCount && boneWeights.Length != (vertexCount * 2) && boneWeights.Length != (vertexCount * 4))
+                throw new InvalidOperationException("boneWeights must have same size as inVertices");
 
             var worldBones = PrepareBoneTransformMatrixArray(boneTransforms);
             var preparedBones = new NativeArray<Matrix4x4>(worldBones.Length, Allocator.TempJob);
             var inVertices = sprite.GetVertexAttribute<Vector3>(VertexAttribute.Position);
-            var boneWeights = sprite.GetBoneWeights();
 
             var boneJob = new BoneJob()
             {

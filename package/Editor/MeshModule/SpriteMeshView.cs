@@ -10,12 +10,11 @@ namespace UnityEditor.Experimental.U2D.Animation
 {
     internal class SpriteMeshView : ISpriteMeshView
     {
-        private readonly string k_DeleteCommandName = "Delete";
-        private readonly string k_SoftDeleteCommandName = "SoftDelete";
-
-        static Color kEdgeColor = Color.cyan;
-        static Color kEdgeHoveredColor = Color.yellow;
-        static Color kEdgeSelectedColor = Color.yellow;
+        const string kDeleteCommandName = "Delete";
+        const string kSoftDeleteCommandName = "SoftDelete";
+        static readonly Color kEdgeColor = Color.cyan;
+        static readonly Color kEdgeHoveredColor = Color.yellow;
+        static readonly Color kEdgeSelectedColor = Color.yellow;
         const float kEdgeWidth = 2f;
         const float kVertexRadius = 2.5f;
 
@@ -64,10 +63,11 @@ namespace UnityEditor.Experimental.U2D.Animation
         public ISelection selection { get; set; }
         public int defaultControlID { get; set; }
         public Rect frame { get; set; }
+        private IGUIWrapper guiWrapper { get; set; }
 
-        public Vector2 mousePosition
+        public Vector2 mouseWorldPosition
         {
-            get { return Handles.inverseMatrix.MultiplyPoint(Event.current.mousePosition); }
+            get { return guiWrapper.GUIToWorld(guiWrapper.mousePosition); }
         }
 
         public int hoveredVertex
@@ -85,23 +85,30 @@ namespace UnityEditor.Experimental.U2D.Animation
             get { return m_ClosestEdgeIndex; }
         }
 
+        public SpriteMeshView(IGUIWrapper gw)
+        {
+            guiWrapper = gw;
+        }
+
         public void SetupLayout()
         {
-            m_CreateVertexControlID = GetControlID("CreateVertex".GetHashCode(), FocusType.Passive);
-            m_CreateEdgeControlID = GetControlID("CreateEdge".GetHashCode(), FocusType.Passive);
-            m_SplitEdgeControlID = GetControlID("SplitEdge".GetHashCode(), FocusType.Passive);
+            m_CreateVertexControlID = guiWrapper.GetControlID(m_CreateVertexHashCode, FocusType.Passive);
+            m_CreateEdgeControlID = guiWrapper.GetControlID(m_CreateEdgeHashCode, FocusType.Passive);
+            m_SplitEdgeControlID = guiWrapper.GetControlID(m_SplitEdgeHashCode, FocusType.Passive);
 
-            if (Event.current.type == EventType.Layout)
+            if (guiWrapper.eventType == EventType.Layout)
             {
                 m_HoveredVertex = -1;
+                m_HoveredVertexControlID = -1;
                 m_HoveredEdge = -1;
+                m_HoveredEdgeControlID = -1;
                 m_ClosestEdgeIndex = -1;
                 m_MinDistance = float.MaxValue;
 
-                if (IsActionActive(MeshEditorAction.None))
+                if (guiWrapper.IsControlHot(0))
                 {
-                    m_HoveredVertexControlID = -1;
-                    m_HoveredEdgeControlID = -1;
+                    m_MoveVertexControlID = -1;
+                    m_MoveEdgeControlID = -1;
                 }
             }
         }
@@ -110,48 +117,44 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             if (mode != SpriteMeshViewMode.Selection)
             {
-                if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape ||
-                    Event.current.type == EventType.MouseDown && Event.current.button == 1)
+                if (guiWrapper.IsKeyDown(KeyCode.Escape) || guiWrapper.IsMouseDown(1))
                 {
                     mode = SpriteMeshViewMode.Selection;
-                    Event.current.Use();
+                    guiWrapper.UseCurrentEvent();
                 }
             }
         }
 
         public void LayoutVertex(Vector2 position, int index)
         {
-            int controlID = GetControlID("Vertex".GetHashCode(), FocusType.Passive);
+            int controlID = guiWrapper.GetControlID(m_VertexHashCode, FocusType.Passive);
 
-            LayoutControl(controlID, HandleUtility.DistanceToCircle(position, kVertexRadius));
+            guiWrapper.LayoutControl(controlID, guiWrapper.DistanceToCircle(position, kVertexRadius));
 
-            if (Event.current.type == EventType.Layout)
+            if (guiWrapper.eventType == EventType.Layout && guiWrapper.IsControlNearest(controlID))
             {
-                if (IsControlActive(controlID))
-                {
-                    m_HoveredVertex = index;
-                    m_HoveredVertexControlID = controlID;
-                }
+                m_HoveredVertex = index;
+                m_HoveredVertexControlID = controlID;
             }
         }
 
         public void LayoutEdge(Vector2 startPosition, Vector2 endPosition, int index)
         {
-            int controlID = GetControlID("Edge".GetHashCode(), FocusType.Passive);
+            int controlID = guiWrapper.GetControlID(m_EdgeHashCode, FocusType.Passive);
 
-            float distance = MeshModuleUtility.DistanceToSegment(startPosition, endPosition);
+            float distance = guiWrapper.DistanceToSegment(startPosition, endPosition);
 
-            LayoutControl(controlID, distance);
+            guiWrapper.LayoutControl(controlID, distance);
 
-            if (Event.current.type == EventType.Layout)
+            if (guiWrapper.eventType == EventType.Layout)
             {
-                if (IsControlActive(controlID))
+                if (guiWrapper.IsControlNearest(controlID))
                 {
                     m_HoveredEdge = index;
                     m_HoveredEdgeControlID = controlID;
                 }
 
-                distance = HandleUtility.DistancePointToLineSegment(MeshModuleUtility.ClampPositionToRect(mousePosition, frame), startPosition, endPosition);
+                distance = HandleUtility.DistancePointToLineSegment(MeshModuleUtility.ClampPositionToRect(mouseWorldPosition, frame), startPosition, endPosition);
 
                 if (distance < m_MinDistance)
                 {
@@ -164,15 +167,15 @@ namespace UnityEditor.Experimental.U2D.Animation
         public bool DoCreateVertex()
         {
             if (mode == SpriteMeshViewMode.CreateVertex && hoveredVertex == -1)
-                LayoutControl(m_CreateVertexControlID, 0f);
+                guiWrapper.LayoutControl(m_CreateVertexControlID, 0f);
 
-            if (IsActionActive(MeshEditorAction.CreateVertex))
+            if (mode == SpriteMeshViewMode.CreateVertex && IsActionActive(MeshEditorAction.CreateVertex))
                 ConsumeMouseMoveEvents();
 
             if (IsActionTriggered(MeshEditorAction.CreateVertex))
             {
-                GUI.changed = true;
-                Event.current.Use();
+                guiWrapper.SetGuiChanged(true);
+                guiWrapper.UseCurrentEvent();
 
                 return true;
             }
@@ -186,8 +189,8 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             if (IsActionTriggered(MeshEditorAction.SelectVertex))
             {
-                additive = isActionKeyDown;
-                HandleUtility.Repaint();
+                additive = guiWrapper.isActionKeyDown;
+                guiWrapper.Repaint();
                 return true;
             }
 
@@ -199,10 +202,13 @@ namespace UnityEditor.Experimental.U2D.Animation
             delta = Vector2.zero;
 
             if (IsActionTriggered(MeshEditorAction.MoveVertex))
-                m_SliderPosition = MeshModuleUtility.GUIToWorld(mousePosition);
+            {
+                m_MoveVertexControlID = m_HoveredVertexControlID;
+                m_SliderPosition = mouseWorldPosition;
+            }
 
             Vector2 newPosition;
-            if (DoSlider(m_HoveredVertexControlID, m_SliderPosition, out newPosition))
+            if (guiWrapper.DoSlider(m_MoveVertexControlID, m_SliderPosition, out newPosition))
             {
                 delta = newPosition - m_SliderPosition;
                 m_SliderPosition = newPosition;
@@ -217,10 +223,13 @@ namespace UnityEditor.Experimental.U2D.Animation
             delta = Vector2.zero;
 
             if (IsActionTriggered(MeshEditorAction.MoveEdge))
-                m_SliderPosition = MeshModuleUtility.GUIToWorld(mousePosition);
+            {
+                m_MoveEdgeControlID = m_HoveredEdgeControlID;
+                m_SliderPosition = mouseWorldPosition;
+            }
 
             Vector2 newPosition;
-            if (DoSlider(m_HoveredEdgeControlID, m_SliderPosition, out newPosition))
+            if (guiWrapper.DoSlider(m_MoveEdgeControlID, m_SliderPosition, out newPosition))
             {
                 delta = newPosition - m_SliderPosition;
                 m_SliderPosition = newPosition;
@@ -233,15 +242,15 @@ namespace UnityEditor.Experimental.U2D.Animation
         public bool DoCreateEdge()
         {
             if (CanCreateEdge())
-                LayoutControl(m_CreateEdgeControlID, 0f);
+                guiWrapper.LayoutControl(m_CreateEdgeControlID, 0f);
 
             if (IsActionActive(MeshEditorAction.CreateEdge))
                 ConsumeMouseMoveEvents();
 
             if (IsActionTriggered(MeshEditorAction.CreateEdge))
             {
-                GUI.changed = true;
-                Event.current.Use();
+                guiWrapper.SetGuiChanged(true);
+                guiWrapper.UseCurrentEvent();
                 return true;
             }
 
@@ -251,15 +260,15 @@ namespace UnityEditor.Experimental.U2D.Animation
         public bool DoSplitEdge()
         {
             if (CanSplitEdge())
-                LayoutControl(m_SplitEdgeControlID, 0f);
+                guiWrapper.LayoutControl(m_SplitEdgeControlID, 0f);
 
             if (IsActionActive(MeshEditorAction.SplitEdge))
                 ConsumeMouseMoveEvents();
 
             if (IsActionTriggered(MeshEditorAction.SplitEdge))
             {
-                Event.current.Use();
-                GUI.changed = true;
+                guiWrapper.UseCurrentEvent();
+                guiWrapper.SetGuiChanged(true);
                 return true;
             }
 
@@ -272,8 +281,8 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             if (IsActionTriggered(MeshEditorAction.SelectEdge))
             {
-                additive = isActionKeyDown;
-                HandleUtility.Repaint();
+                additive = guiWrapper.isActionKeyDown;
+                guiWrapper.Repaint();
                 return true;
             }
 
@@ -284,8 +293,8 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             if (IsActionTriggered(MeshEditorAction.Remove))
             {
-                Event.current.Use();
-                GUI.changed = true;
+                guiWrapper.UseCurrentEvent();
+                guiWrapper.SetGuiChanged(true);
                 return true;
             }
 
@@ -294,31 +303,22 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public void DrawVertex(Vector2 position)
         {
-            if (Event.current.type != EventType.Repaint)
-                return;
-
-            PointCapNormal(0, position, Quaternion.identity, 1f, EventType.Repaint);
+            CommonDrawingUtility.DrawGUIStyleCap(0, position, Quaternion.identity, 1f, styles.pointNormalStyle);
         }
 
         public void DrawVertexHovered(Vector2 position)
         {
-            if (Event.current.type != EventType.Repaint)
-                return;
-
-            PointCapHovered(0, position, Quaternion.identity, 1f, EventType.Repaint);
+            CommonDrawingUtility.DrawGUIStyleCap(0, position, Quaternion.identity, 1f, styles.pointHoveredStyle);
         }
 
         public void DrawVertexSelected(Vector2 position)
         {
-            if (Event.current.type != EventType.Repaint)
-                return;
-
-            PointCapSelected(0, position, Quaternion.identity, 1f, EventType.Repaint);
+            CommonDrawingUtility.DrawGUIStyleCap(0, position, Quaternion.identity, 1f, styles.pointSelectedStyle);
         }
 
         public void BeginDrawEdges()
         {
-            if (Event.current.type != EventType.Repaint)
+            if (guiWrapper.eventType != EventType.Repaint)
                 return;
 
             CommonDrawingUtility.BeginSolidLines();
@@ -327,7 +327,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public void EndDrawEdges()
         {
-            if (Event.current.type != EventType.Repaint)
+            if (guiWrapper.eventType != EventType.Repaint)
                 return;
 
             CommonDrawingUtility.EndLines();
@@ -351,38 +351,41 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public bool IsActionActive(MeshEditorAction action)
         {
-            if (isAltDown)
+            if (guiWrapper.isAltDown || !guiWrapper.IsControlHot(0))
                 return false;
 
             if (action == MeshEditorAction.None)
-                return IsControlActive(defaultControlID);
+                return guiWrapper.IsControlNearest(defaultControlID);
 
             if (action == MeshEditorAction.CreateVertex)
             {
                 if (mode == SpriteMeshViewMode.Selection)
-                    return IsControlActive(defaultControlID);
+                    return guiWrapper.IsControlNearest(defaultControlID);
 
                 if (mode == SpriteMeshViewMode.CreateVertex)
-                    return IsControlActive(m_CreateVertexControlID);
+                    return guiWrapper.IsControlNearest(m_CreateVertexControlID);
             }
 
             if (action == MeshEditorAction.MoveVertex)
-                return IsControlActive(m_HoveredVertexControlID);
+                return guiWrapper.IsControlNearest(m_HoveredVertexControlID);
 
             if (action == MeshEditorAction.CreateEdge)
-                return IsControlActive(m_CreateEdgeControlID);
+                return guiWrapper.IsControlNearest(m_CreateEdgeControlID);
 
             if (action == MeshEditorAction.SplitEdge)
-                return IsControlActive(m_SplitEdgeControlID);
+                return guiWrapper.IsControlNearest(m_SplitEdgeControlID);
 
             if (action == MeshEditorAction.MoveEdge)
-                return IsControlActive(m_HoveredEdgeControlID);
+                return guiWrapper.IsControlNearest(m_HoveredEdgeControlID);
 
             if (action == MeshEditorAction.SelectVertex)
-                return CanSelectVertex();
+                return guiWrapper.IsControlNearest(m_HoveredVertexControlID);
 
             if (action == MeshEditorAction.SelectEdge)
-                return CanSelectEdge();
+                return mode == SpriteMeshViewMode.Selection &&
+                    guiWrapper.IsControlNearest(m_HoveredEdgeControlID) &&
+                    !guiWrapper.IsControlNearest(m_CreateEdgeControlID) &&
+                    !guiWrapper.IsControlNearest(m_SplitEdgeControlID);
 
             if (action == MeshEditorAction.Remove)
                 return true;
@@ -393,22 +396,22 @@ namespace UnityEditor.Experimental.U2D.Animation
         public bool IsActionHot(MeshEditorAction action)
         {
             if (action == MeshEditorAction.None)
-                return IsControlHot(0);
+                return guiWrapper.IsControlHot(0);
 
             if (action == MeshEditorAction.CreateVertex)
-                return IsControlHot(m_CreateVertexControlID);
+                return guiWrapper.IsControlHot(m_CreateVertexControlID);
 
             if (action == MeshEditorAction.MoveVertex)
-                return IsControlHot(m_HoveredVertexControlID);
+                return guiWrapper.IsControlHot(m_HoveredVertexControlID);
 
             if (action == MeshEditorAction.CreateEdge)
-                return IsControlHot(m_CreateEdgeControlID);
+                return guiWrapper.IsControlHot(m_CreateEdgeControlID);
 
             if (action == MeshEditorAction.SplitEdge)
-                return IsControlHot(m_SplitEdgeControlID);
+                return guiWrapper.IsControlHot(m_SplitEdgeControlID);
 
             if (action == MeshEditorAction.MoveEdge)
-                return IsControlHot(m_HoveredEdgeControlID);
+                return guiWrapper.IsControlHot(m_HoveredEdgeControlID);
 
             return false;
         }
@@ -421,40 +424,39 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (action == MeshEditorAction.CreateVertex)
             {
                 if (mode == SpriteMeshViewMode.Selection)
-                    return IsMouseDown(0) && clickCount == 2;
+                    return guiWrapper.IsMouseDown(0) && guiWrapper.clickCount == 2;
 
                 if (mode == SpriteMeshViewMode.CreateVertex)
-                    return IsMouseDown(0);
+                    return guiWrapper.IsMouseDown(0);
             }
 
             if (action == MeshEditorAction.MoveVertex)
-                return IsMouseDown(0);
+                return guiWrapper.IsMouseDown(0);
 
             if (action == MeshEditorAction.CreateEdge)
-                return IsMouseDown(0);
+                return guiWrapper.IsMouseDown(0);
 
             if (action == MeshEditorAction.MoveEdge)
-                return IsMouseDown(0);
+                return guiWrapper.IsMouseDown(0);
 
             if (action == MeshEditorAction.SplitEdge)
-                return IsMouseDown(0);
+                return guiWrapper.IsMouseDown(0);
 
             if (action == MeshEditorAction.SelectVertex)
-                return IsMouseDown(0);
+                return guiWrapper.IsMouseDown(0);
 
             if (action == MeshEditorAction.SelectEdge)
-                return IsMouseDown(0);
+                return guiWrapper.IsMouseDown(0);
 
             if (action == MeshEditorAction.Remove)
             {
-                var evt = Event.current;
-                if ((evt.type == EventType.ValidateCommand || evt.type == EventType.ExecuteCommand)
-                    && (evt.commandName == k_SoftDeleteCommandName || evt.commandName == k_DeleteCommandName))
+                if ((guiWrapper.eventType == EventType.ValidateCommand || guiWrapper.eventType == EventType.ExecuteCommand)
+                    && (guiWrapper.commandName == kSoftDeleteCommandName || guiWrapper.commandName == kDeleteCommandName))
                 {
-                    if (evt.type == EventType.ExecuteCommand)
+                    if (guiWrapper.eventType == EventType.ExecuteCommand)
                         return true;
 
-                    evt.Use();
+                    guiWrapper.UseCurrentEvent();
                 }
             }
 
@@ -468,32 +470,17 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         private void ConsumeMouseMoveEvents()
         {
-            if (Event.current.type == EventType.MouseMove || (Event.current.type == EventType.MouseDrag && Event.current.button == 0))
-                Event.current.Use();
-        }
-
-        private bool CanSelectVertex()
-        {
-            return IsControlActive(m_HoveredVertexControlID);
-        }
-
-        private bool CanSelectEdge()
-        {
-            return CanMoveEdge();
-        }
-
-        private bool CanMoveEdge()
-        {
-            return mode == SpriteMeshViewMode.Selection && IsControlActive(m_HoveredEdgeControlID) && !IsActionActive(MeshEditorAction.CreateEdge) && !IsActionActive(MeshEditorAction.SplitEdge);
+            if (guiWrapper.eventType == EventType.MouseMove || (guiWrapper.eventType == EventType.MouseDrag && guiWrapper.mouseButton == 0))
+                guiWrapper.UseCurrentEvent();
         }
 
         private bool CanCreateEdge()
         {
             if (mode == SpriteMeshViewMode.Selection)
-                return isShiftDown && selection.Count == 1 && selection.single != hoveredVertex;
+                return guiWrapper.isShiftDown && selection.Count == 1 && !selection.IsSelected(hoveredVertex);
 
             if (mode == SpriteMeshViewMode.CreateEdge)
-                return selection.Count == 1 && selection.single != hoveredVertex;
+                return selection.Count == 1 && !selection.IsSelected(hoveredVertex);
 
             return false;
         }
@@ -501,7 +488,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         private bool CanSplitEdge()
         {
             if (mode == SpriteMeshViewMode.Selection)
-                return isShiftDown && m_ClosestEdgeIndex != -1 && hoveredVertex == -1 && selection.Count == 0;
+                return guiWrapper.isShiftDown && m_ClosestEdgeIndex != -1 && hoveredVertex == -1 && selection.Count == 0;
 
             if (mode == SpriteMeshViewMode.SplitEdge)
                 return m_ClosestEdgeIndex != -1 && hoveredVertex == -1;
@@ -511,7 +498,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         private void DrawEdge(Vector2 startPosition, Vector2 endPosition, Color color)
         {
-            if (Event.current.type != EventType.Repaint)
+            if (guiWrapper.eventType != EventType.Repaint)
                 return;
 
             Handles.color = color;
@@ -520,109 +507,21 @@ namespace UnityEditor.Experimental.U2D.Animation
             CommonDrawingUtility.DrawSolidLine(width, startPosition, endPosition);
         }
 
-        private void PointCapNormal(int controlID, Vector3 position, Quaternion rotation, float size, EventType eventType)
-        {
-            LayoutControl(controlID, HandleUtility.DistanceToCircle(position, size * 0.5f));
-            if (eventType == EventType.Repaint)
-                DrawGUIStyleCap(controlID, position, rotation, size, styles.pointNormalStyle);
-        }
-
-        private void PointCapHovered(int controlID, Vector3 position, Quaternion rotation, float size, EventType eventType)
-        {
-            LayoutControl(controlID, HandleUtility.DistanceToCircle(position, size * 0.5f));
-            if (eventType == EventType.Repaint)
-                DrawGUIStyleCap(controlID, position, rotation, size, styles.pointHoveredStyle);
-        }
-
-        private void PointCapSelected(int controlID, Vector3 position, Quaternion rotation, float size, EventType eventType)
-        {
-            LayoutControl(controlID, HandleUtility.DistanceToCircle(position, size * 0.5f));
-            if (eventType == EventType.Repaint)
-                DrawGUIStyleCap(controlID, position, rotation, size, styles.pointSelectedStyle);
-        }
-
-        private void DrawGUIStyleCap(int controlID, Vector3 position, Quaternion rotation, float size, GUIStyle guiStyle)
-        {
-            if (Camera.current && Vector3.Dot(position - Camera.current.transform.position, Camera.current.transform.forward) < 0f)
-                return;
-
-            Handles.BeginGUI();
-            guiStyle.Draw(GetGUIStyleRect(guiStyle, position), GUIContent.none, controlID);
-            Handles.EndGUI();
-        }
-
-        private Rect GetGUIStyleRect(GUIStyle style, Vector3 position)
-        {
-            Vector2 vector = HandleUtility.WorldToGUIPoint(position);
-
-            float fixedWidth = style.fixedWidth;
-            float fixedHeight = style.fixedHeight;
-
-            return new Rect(vector.x - fixedWidth / 2f, vector.y - fixedHeight / 2f, fixedWidth, fixedHeight);
-        }
-
-        private int clickCount
-        {
-            get { return Event.current.clickCount; }
-        }
-
-        private bool isShiftDown
-        {
-            get { return Event.current.shift; }
-        }
-
-        private bool isAltDown
-        {
-            get { return Event.current.alt; }
-        }
-
-        private bool isActionKeyDown
-        {
-            get { return EditorGUI.actionKey; }
-        }
-
-        private bool IsMouseDown(int button)
-        {
-            return Event.current.type == EventType.MouseDown && Event.current.button == button;
-        }
-
-        private int GetControlID(int hint, FocusType focusType)
-        {
-            return GUIUtility.GetControlID(hint, focusType);
-        }
-
-        private void LayoutControl(int controlID, float distance)
-        {
-            if (Event.current.type == EventType.Layout)
-                HandleUtility.AddControl(controlID, distance);
-        }
-
-        private bool IsControlActive(int controlID)
-        {
-            return HandleUtility.nearestControl == controlID && GUIUtility.hotControl == 0;
-        }
-
-        private bool IsControlHot(int controlID)
-        {
-            return GUIUtility.hotControl == controlID;
-        }
-
-        private bool DoSlider(int id, Vector2 position, out Vector2 newPosition)
-        {
-            EditorGUI.BeginChangeCheck();
-
-            newPosition = Slider2D.Do(id, position, null);
-
-            return EditorGUI.EndChangeCheck();
-        }
+        readonly int m_CreateVertexHashCode = "CreateVertex".GetHashCode();
+        readonly int m_CreateEdgeHashCode = "CreateEdge".GetHashCode();
+        readonly int m_SplitEdgeHashCode = "SplitEdge".GetHashCode();
+        readonly int m_VertexHashCode = "Vertex".GetHashCode();
+        readonly int m_EdgeHashCode = "Edge".GetHashCode();
 
         int m_CreateVertexControlID = -1;
         int m_CreateEdgeControlID = -1;
         int m_SplitEdgeControlID = -1;
         int m_HoveredEdge = -1;
         int m_HoveredEdgeControlID = -1;
+        int m_MoveEdgeControlID = -1;
         int m_HoveredVertex = -1;
         int m_HoveredVertexControlID = -1;
+        int m_MoveVertexControlID = -1;
         int m_ClosestEdgeIndex = -1;
         Color m_TempColor;
         float m_MinDistance;

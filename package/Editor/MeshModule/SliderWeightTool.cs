@@ -44,7 +44,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             weightEditor.mode = (WeightEditorMode)EditorGUILayout.EnumPopup(Contents.mode, weightEditor.mode);
 
             if (weightEditor.mode != WeightEditorMode.Smooth)
-                weightEditor.boneIndex = EditorGUILayout.Popup(Contents.selectedBone, weightEditor.boneIndex, MeshModuleUtility.GetBoneNameList(weightEditor.spriteMeshData));
+                weightEditor.boneIndex = EditorGUILayout.Popup(Contents.selectedBone, weightEditor.boneIndex, weightEditor.boneNames);
 
             weightEditor.autoNormalize = EditorGUILayout.Toggle(Contents.autoNormalize, weightEditor.autoNormalize);
 

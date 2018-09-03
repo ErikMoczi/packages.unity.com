@@ -19,7 +19,23 @@ namespace UnityEditor.Experimental.U2D.Animation
 
     internal class WeightEditor
     {
-        public SpriteMeshData spriteMeshData { get; set; }
+        public SpriteMeshData spriteMeshData
+        {
+            get { return m_SpriteMeshData; }
+            set
+            {
+                if(m_SpriteMeshData != value)
+                {
+                    m_SpriteMeshData = value;
+                    m_CachedBoneNames = null;
+                    
+                    if(m_SpriteMeshData != null)
+                        m_CachedBoneNames = MeshModuleUtility.GetBoneNameList(m_SpriteMeshData);
+                }
+            }
+        }
+
+        public GUIContent[] boneNames { get { return m_CachedBoneNames; } }
         public IUndoObject undoObject { get; set; }
         public WeightEditorMode mode { get; set; }
         public int boneIndex { get; set; }
@@ -29,6 +45,13 @@ namespace UnityEditor.Experimental.U2D.Animation
         public bool emptySelectionEditsAll { get; set; }
         public bool autoNormalize { get; set; }
 
+        private SpriteMeshData m_SpriteMeshData;
+        private GUIContent[] m_CachedBoneNames;
+        private const int maxSmoothIterations = 8;
+        private float[] m_SmoothValues;
+        private readonly List<BoneWeight[]> m_SmoothedBoneWeights = new List<BoneWeight[]>();
+        private readonly List<BoneWeight> m_StoredBoneWeights = new List<BoneWeight>();
+        
         public WeightEditor()
         {
             autoNormalize = true;
@@ -140,6 +163,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                     BoneWeight boneWeight = EditableBoneWeightUtility.Lerp(smoothedBoneWeightsFloor[i], smoothedBoneWeightsCeil[i], lerpValue);
                     spriteMeshData.vertices[i].editableBoneWeight.SetFromBoneWeight(boneWeight);
+                    spriteMeshData.vertices[i].editableBoneWeight.UnifyChannelsWithSameBoneIndex();
                 }
             }
         }
@@ -216,10 +240,5 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (m_SmoothValues != null)
                 Array.Clear(m_SmoothValues, 0, m_SmoothValues.Length);
         }
-
-        private const int maxSmoothIterations = 8;
-        private float[] m_SmoothValues;
-        private readonly List<BoneWeight[]> m_SmoothedBoneWeights = new List<BoneWeight[]>();
-        private readonly List<BoneWeight> m_StoredBoneWeights = new List<BoneWeight>();
     }
 }

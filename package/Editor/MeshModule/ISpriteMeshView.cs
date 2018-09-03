@@ -35,7 +35,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         ISelection selection { get; set; }
         int defaultControlID { get; set; }
         Rect frame { get; set; }
-        Vector2 mousePosition { get; }
+        Vector2 mouseWorldPosition { get; }
         int hoveredVertex { get; }
         int hoveredEdge { get; }
         int closestEdge { get; }
