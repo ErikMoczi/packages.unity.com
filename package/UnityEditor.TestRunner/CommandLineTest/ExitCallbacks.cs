@@ -8,8 +8,6 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
     internal class ExitCallbacks : ScriptableObject, ICallbacks
     {
         private bool m_AnyTestsExecuted;
-        private bool m_RunFailed;
-
 
         public void RunFinished(ITestResult testResults)
         {
@@ -17,7 +15,7 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             {
                 Debug.LogWarning("No tests were executed");
             }
-            EditorApplication.Exit(m_RunFailed ? (int)Executer.ReturnCodes.Failed : (int)Executer.ReturnCodes.Ok);
+            EditorApplication.Exit(testResults.TestStatus == TestStatus.Failed ? (int)Executer.ReturnCodes.Failed : (int)Executer.ReturnCodes.Ok);
         }
 
         public void TestStarted(ITest test)
@@ -30,10 +28,6 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
 
         public void TestFinished(ITestResult result)
         {
-            if (!result.Test.IsSuite && (result.TestStatus == TestStatus.Failed))
-            {
-                m_RunFailed = true;
-            }
         }
 
         public void RunStarted(ITest testsToRun)

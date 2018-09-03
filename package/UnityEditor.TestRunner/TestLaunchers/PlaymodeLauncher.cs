@@ -38,7 +38,7 @@ namespace UnityEditor.TestTools.TestRunner
                 {
                     runner.AddEventHandlerMonoBehaviour<PlayModeRunnerCallback>();
                     runner.AddEventHandlerScriptableObject<TestRunnerCallback>();
-                    runner.AddEventHandlerScriptableObject<CallbacksDelegator>();
+                    runner.AddEventHandlerScriptableObject<CallbackDelegatorListener>();
 
                     foreach (var eventHandler in m_EventHandlers)
                     {
