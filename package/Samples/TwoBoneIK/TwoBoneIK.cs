@@ -14,19 +14,6 @@ public class TwoBoneIK : MonoBehaviour
     PlayableGraph m_Graph;
     AnimationScriptPlayable m_IKPlayable;
 
-    static GameObject CreateEffector(string name, Transform parent, Vector3 position, Quaternion rotation)
-    {
-        var effector = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        effector.name = name;
-        effector.transform.position = position;
-        effector.transform.rotation = rotation;
-        effector.transform.localScale = Vector3.one * 0.15f;
-        //effector.transform.parent = parent;
-        var meshRenderer = effector.GetComponent<MeshRenderer>();
-        meshRenderer.material.color = Color.magenta;
-        return effector;
-    }
-
     void OnEnable()
     {
         var idleClip = SampleUtility.LoadAnimationClipFromFbx("DefaultMale/Models/DefaultMale_Generic", "Idle");
@@ -44,7 +31,7 @@ public class TwoBoneIK : MonoBehaviour
         if (m_TopJoint == null)
             return;
 
-        m_Effector = CreateEffector("Effector_" + endJoint.name, gameObject.transform, endJoint.position, endJoint.rotation);
+        m_Effector = SampleUtility.CreateEffector("Effector_" + endJoint.name, endJoint.position, endJoint.rotation);
 
         m_Graph = PlayableGraph.Create("TwoBoneIK");
         var output = AnimationPlayableOutput.Create(m_Graph, "ouput", GetComponent<Animator>());

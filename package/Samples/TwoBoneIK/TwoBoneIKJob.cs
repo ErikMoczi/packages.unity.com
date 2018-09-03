@@ -61,14 +61,12 @@ public struct TwoBoneIKJob : IAnimationJob
 
         float abcAngle = TriangleAngle(ac.magnitude, ab, bc);
         float abeAngle = TriangleAngle(ae.magnitude, ab, bc);
-
+        float angle = (abcAngle - abeAngle) * Mathf.Rad2Deg;
         Vector3 axis = Vector3.Cross(ab, bc).normalized;
-        float a = 0.5f * (abcAngle - abeAngle);
-        float sin = Mathf.Sin(a);
-        float cos = Mathf.Cos(a);
-        Quaternion q = new Quaternion(axis.x * sin, axis.y * sin, axis.z * sin, cos);
 
-        Quaternion worldQ = q * bRotation;
+        Quaternion fromToRotation = Quaternion.AngleAxis(angle, axis);
+
+        Quaternion worldQ = fromToRotation * bRotation;
         midHandle.SetRotation(stream, worldQ);
 
         cPosition = lowHandle.GetPosition(stream);

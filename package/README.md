@@ -8,8 +8,9 @@ This package gives examples of how this feature could be used:
 
 * SimpleMixer: Simple mix between two clips
 * WeightedMaskMixer: Mix between two clips with a different weight for different parts of the avatar
-* TwoBoneIK: Two-bone IK
-* FullBodyIK: Full body IK
+* LookAt: LookAt on a quadruped creature
+* TwoBoneIK: Two-bone IK on a generic human
+* FullBodyIK: Full body IK on a humanoid
 
 ## Prerequisites
 
