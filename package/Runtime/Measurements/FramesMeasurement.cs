@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using Unity.PerformanceTesting.Exceptions;
 using Unity.PerformanceTesting.Runtime;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -16,6 +17,9 @@ namespace Unity.PerformanceTesting.Measurements
         private SampleGroupDefinition[] m_ProfilerDefinitions;
         private SampleGroupDefinition m_Definition;
         private int m_DesiredFrameCount;
+        private int m_Executions;
+        private int m_Warmup = -1;
+        private bool m_RecordFrametime = true;
 
         public FramesMeasurement ProfilerMarkers(SampleGroupDefinition[] profilerDefinitions)
         {
@@ -43,28 +47,53 @@ namespace Unity.PerformanceTesting.Measurements
             return Definition(new SampleGroupDefinition(name, sampleUnit, aggregationType, percentile, threshold,
                 increaseIsBetter, failOnBaseline));
         }
-        
-                        
+
+        public FramesMeasurement ExecutionCount(int count)
+        {
+            m_Executions = count;
+            return this;
+        }
+
+        public FramesMeasurement WarmupCount(int count)
+        {
+            m_Warmup = count;
+            return this;
+        }
+
+        public FramesMeasurement DontRecordFrametime()
+        {
+            m_RecordFrametime = false;
+            return this;
+        }
+
         public ScopedFrameTimeMeasurement Scope()
         {
             return Scope(new SampleGroupDefinition("FrameTime"));
         }
-        
+
         public ScopedFrameTimeMeasurement Scope(SampleGroupDefinition sampleGroupDefinition)
         {
             return new ScopedFrameTimeMeasurement(sampleGroupDefinition);
         }
 
-        public IEnumerator Run(bool recordFrametime = true)
+        public IEnumerator Run()
         {
+            if (m_Executions == 0 && m_Warmup >= 0)
+            {
+                Debug.LogError("Provide execution count or remove warmup count from frames measurement.");
+                yield break;
+            }
+
             UpdateSampleGroupDefinition();
-            yield return GetDesiredIterationCount();
+            yield return m_Warmup > -1 ? WaitFor(m_Warmup) : GetDesiredIterationCount();
+            m_DesiredFrameCount = m_Executions > 0 ? m_Executions : m_DesiredFrameCount;
+
 
             using (Measure.ProfilerMarkers(m_ProfilerDefinitions))
             {
                 for (var i = 0; i < m_DesiredFrameCount; i++)
                 {
-                    if (recordFrametime)
+                    if (m_RecordFrametime)
                     {
                         using (Measure.Scope(m_Definition))
                         {
@@ -88,10 +117,7 @@ namespace Unity.PerformanceTesting.Measurements
             {
                 executionTime = Time.realtimeSinceStartup;
 
-                for (var i = 0; i < iterations; i++)
-                {
-                    yield return null;
-                }
+                yield return WaitFor(iterations);
 
                 executionTime = (Time.realtimeSinceStartup - executionTime) * 1000f;
 
@@ -116,6 +142,14 @@ namespace Unity.PerformanceTesting.Measurements
             m_DesiredFrameCount = (int) (k_MinTestTimeMs * iterations / executionTime);
         }
 
+        private IEnumerator WaitFor(int iterations)
+        {
+            for (var i = 0; i < iterations; i++)
+            {
+                yield return null;
+            }
+        }
+
 
         private void UpdateSampleGroupDefinition()
         {
@@ -130,7 +164,7 @@ namespace Unity.PerformanceTesting.Measurements
             }
         }
     }
-    
+
     public struct ScopedFrameTimeMeasurement : IDisposable
     {
         private readonly FrameTimeMeasurement m_Test;
@@ -149,6 +183,5 @@ namespace Unity.PerformanceTesting.Measurements
             PerformanceTest.Disposables.Remove(this);
             Object.DestroyImmediate(m_Test.gameObject);
         }
-       
     }
 }

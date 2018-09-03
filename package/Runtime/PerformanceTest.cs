@@ -116,10 +116,25 @@ namespace Unity.PerformanceTesting
             return null;
         }
 
+        public static void Compare(SampleGroupDefinition group, SampleGroupDefinition group2, float percentage)
+        {
+            Compare(group.Name, group2.Name, percentage);
+        }
+
         public static void Compare(string oldGroup, string newGroup, float percentage)
         {
             var group = Active.SampleGroups.Find(g => g.Definition.Name == oldGroup);
             var group2 = Active.SampleGroups.Find(g => g.Definition.Name == newGroup);
+            if (group == null || group2 == null)
+            {
+                throw new PerformanceTestException("At leat one of the provided sample groups is null.");
+            }
+
+            if (group.Samples.Count == 0 || group2.Samples.Count == 0)
+            {
+                throw new PerformanceTestException("At least on of the provided sample groups has no values.");
+            }
+                
             CalculateStatisticalValue(group);
             CalculateStatisticalValue(group2);
 
@@ -127,6 +142,17 @@ namespace Unity.PerformanceTesting
             var to = GetAggregationValue(group2);
 
             var diff = (to - from) / from;
+
+            if (group.Definition.IncreaseIsBetter && group2.Definition.IncreaseIsBetter)
+            {
+                diff = diff * -1;
+            }
+            else if (group.Definition.IncreaseIsBetter || group2.Definition.IncreaseIsBetter)
+            {
+                throw new PerformanceTestException(
+                    string.Format("Sample groups {0} and {1} have incompatible definitions. When comparing, sample groups should have a matching SampleGroupDefinition.IncreaseIsBetter value.",
+                    group.Definition.Name, group2.Definition.Name));
+            }
 
             if (diff > percentage)
             {
@@ -138,7 +164,7 @@ namespace Unity.PerformanceTesting
             else
             {
                 TestContext.Out.Write(
-                    "Test Passed with increase in time of {0:P2}\nOrigin {1:0.00} New {2:0.00} Allowed increase {3:P2}\n---\n\n",
+                    "Test Passed with difference in time of {0:P2}\nOrigin {1:0.00} New {2:0.00} Allowed increase {3:P2}\n---\n\n",
                     diff, from, to, percentage);
             }
         }
@@ -153,8 +179,8 @@ namespace Unity.PerformanceTesting
 
         private static void CalculateStatisticalValue(SampleGroup sampleGroup)
         {
+            if (sampleGroup.Samples == null) return;
             var samples = sampleGroup.Samples;
-            if (samples == null) return;
             if (samples.Count < 2)
             {
                 sampleGroup.Min = samples[0];

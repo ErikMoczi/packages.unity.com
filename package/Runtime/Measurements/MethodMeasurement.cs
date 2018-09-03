@@ -19,8 +19,8 @@ namespace Unity.PerformanceTesting.Measurements
         private readonly List<SampleGroup> m_SampleGroups = new List<SampleGroup>();
 
         private SampleGroupDefinition m_Definition;
-        private int m_CustomRunIterations;
-        private int m_CustomWarmupIterations;
+        private int m_Executions;
+        private int m_Warmup = -1; // set to -1 to use probing
 
         public MethodMeasurement(Action action)
         {
@@ -66,21 +66,21 @@ namespace Unity.PerformanceTesting.Measurements
                 increaseIsBetter, failOnBaseline));
         }
 
-        public MethodMeasurement Warmup(int count)
-        {
-            return this;
-        }
-        
         public MethodMeasurement ExecutionCount(int count)
         {
+            m_Executions = count;
             return this;
         }
-        
-        
+
+        public MethodMeasurement WarmupCount(int count)
+        {
+            m_Warmup = count;
+            return this;
+        }
         
         public void Run()
         {
-            var iterations = GetDesiredIterationCount();
+            var iterations = m_Warmup > -1 ? Warmup(m_Warmup) : Probing();
 
             RunForIterations(iterations);
         }
@@ -123,7 +123,7 @@ namespace Unity.PerformanceTesting.Measurements
             }
         }
 
-        private int GetDesiredIterationCount()
+        private int Probing()
         {
             var executionTime = 0.0f;
             var iterations = 1;
@@ -131,7 +131,10 @@ namespace Unity.PerformanceTesting.Measurements
             while (executionTime < k_MinWarmupTimeMs)
             {
                 executionTime = Time.realtimeSinceStartup;
-                WarmupFor(iterations);
+                for (var i = 0; i < iterations; i++)
+                {
+                    m_Action.Invoke();
+                }
                 executionTime = (Time.realtimeSinceStartup - executionTime) * 1000f;
 
                 if (executionTime < k_MinWarmupTimeMs)
@@ -140,18 +143,25 @@ namespace Unity.PerformanceTesting.Measurements
                 }
             }
 
+            if (m_Executions > 0)
+                return m_Executions;
+            
             var deisredIterationsCount =
                 Mathf.Clamp((int) (k_MinTestTimeMs * iterations / executionTime), k_MinIterations, k_MaxIterations);
-
+            
             return deisredIterationsCount;
         }
 
-        private void WarmupFor(int iterations)
+        private int Warmup(int iterations)
         {
             for (var i = 0; i < iterations; i++)
             {
                 m_Action.Invoke();
             }
+            if(m_Executions == 0 )
+                throw new PerformanceTestException("Provide execution count or remove warmup count from method measurement.");
+
+            return m_Executions;
         }
 
         private void UpdateSampleGroupDefinition()

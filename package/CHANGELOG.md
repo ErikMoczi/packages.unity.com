@@ -139,3 +139,7 @@ Package has been renamed to `com.unity.test-framework.performance` to match test
 ## [0.1.21] - 2018-5-25
 
 ### Fix issues introduced by .18 fix
+
+## [0.1.22] - 2018-5-29
+
+### Measure.Method Execution and Warmup count
