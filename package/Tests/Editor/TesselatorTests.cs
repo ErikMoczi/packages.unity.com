@@ -180,17 +180,17 @@ public class TessellatorTests
         Assert.AreEqual(new Vector2(0.0f, 1.0f), geom.Vertices[4]);
 
         Assert.AreEqual(0, geom.Indices[0]);
-        Assert.AreEqual(1, geom.Indices[1]);
-        Assert.AreEqual(2, geom.Indices[2]);
+        Assert.AreEqual(2, geom.Indices[1]);
+        Assert.AreEqual(1, geom.Indices[2]);
         Assert.AreEqual(0, geom.Indices[3]);
-        Assert.AreEqual(2, geom.Indices[4]);
-        Assert.AreEqual(3, geom.Indices[5]);
+        Assert.AreEqual(3, geom.Indices[4]);
+        Assert.AreEqual(2, geom.Indices[5]);
         Assert.AreEqual(0, geom.Indices[6]);
-        Assert.AreEqual(3, geom.Indices[7]);
-        Assert.AreEqual(4, geom.Indices[8]);
+        Assert.AreEqual(4, geom.Indices[7]);
+        Assert.AreEqual(3, geom.Indices[8]);
         Assert.AreEqual(0, geom.Indices[9]);
-        Assert.AreEqual(4, geom.Indices[10]);
-        Assert.AreEqual(1, geom.Indices[11]);
+        Assert.AreEqual(1, geom.Indices[10]);
+        Assert.AreEqual(4, geom.Indices[11]);
     }
 
     private Path MakeLine(Vector2 from, Vector2 to, float width)

@@ -55,12 +55,6 @@ namespace Unity.VectorGraphics
             Custom = 10
         }
 
-        private struct ShapeRange
-        {
-            public int Start;
-            public int End;
-        }
-
         /// <summary>Builds a sprite asset from a scene tessellation.</summary>
         /// <param name="geoms">The list of tessellated Geometry instances</param>
         /// <param name="svgPixelsPerUnit">How many SVG "pixels" map into a Unity unit</param>
@@ -158,15 +152,8 @@ namespace Unity.VectorGraphics
             uvs = hasUVs ? new List<Vector2>(totalVerts) : null;
             settingIndices = hasUVs ? new List<Vector2>(totalVerts) : null;
 
-            var shapeRanges = new List<ShapeRange>();
             foreach (var geom in geoms)
             {
-                shapeRanges.Add(new ShapeRange()
-                {
-                    Start = indices.Count,
-                    End = indices.Count + geom.Indices.Length - 1
-                });
-
                 int vertexCount = vertices.Count;
                 indices.AddRange(geom.Indices.Select(x => (UInt16)(x + vertexCount)));
                 vertices.AddRange(geom.Vertices.Select(x => (geom.WorldTransform * x) / pixelsPerUnit));
@@ -179,11 +166,6 @@ namespace Unity.VectorGraphics
                         settingIndices.Add(new Vector2(geom.SettingIndex, 0));
                 }
             }
-
-            // Adjust the winding order of the shapes to be consistent since some shapes can be reversed
-            // for hole-cutting purposes.
-            foreach (var range in shapeRanges)
-                FlipShapeIfNecessary(range, vertices, indices);
         }
 
         /// <summary>Draws a vector sprite using the provided material.</summary>
@@ -271,36 +253,6 @@ namespace Unity.VectorGraphics
             Material.DestroyImmediate(mat);
 
             return copy;
-        }
-
-        private static void FlipShapeIfNecessary(ShapeRange range, IList<Vector2> vertices, IList<UInt16> indices)
-        {
-            // For each range, find the first valid triangle and check its winding order. If that triangle needs flipping, then flip the whole range.
-            bool shouldFlip = false;
-            for (int i = range.Start; i <= range.End; i += 3)
-            {
-                var v0 = (Vector3)vertices[indices[i]];
-                var v1 = (Vector3)vertices[indices[i + 1]];
-                var v2 = (Vector3)vertices[indices[i + 2]];
-                var s = (v1 - v0).normalized;
-                var t = (v2 - v0).normalized;
-                if (s == Vector3.zero || t == Vector3.zero || Mathf.Approximately(Vector3.Dot(s, t), 0.0f))
-                    continue;
-                var n = Vector3.Cross(s, t);
-                if (Mathf.Approximately(n.magnitude, 0.0f))
-                    continue;
-                shouldFlip = n.z > 0.0f;
-                break;
-            }
-            if (shouldFlip)
-            {
-                for (int i = range.Start; i <= range.End; i += 3)
-                {
-                    var tmp = indices[i + 1];
-                    indices[i + 1] = indices[i + 2];
-                    indices[i + 2] = tmp;
-                }
-            }
         }
 
         private static Vector2 GetPivot(Alignment alignment, Vector2 customPivot, Rect bbox)
