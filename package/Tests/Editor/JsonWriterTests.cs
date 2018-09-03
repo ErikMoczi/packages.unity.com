@@ -36,7 +36,7 @@ namespace Unity.Properties.Tests.Serialization
 
         private struct NullStructContainer : IPropertyContainer
         {
-            public IVersionStorage VersionStorage => PassthroughVersionStorage.Instance;
+            public IVersionStorage VersionStorage => null;
             private static readonly PropertyBag s_PropertyBag = new PropertyBag();
             public IPropertyBag PropertyBag => s_PropertyBag;
         }
@@ -51,13 +51,13 @@ namespace Unity.Properties.Tests.Serialization
                 set { FloatValueProperty.SetValue(ref this, value); }
             }
 
-            public static readonly StructProperty<TestStructContainer, float> FloatValueProperty =
-                new StructProperty<TestStructContainer, float>(
+            public static readonly ValueStructProperty<TestStructContainer, float> FloatValueProperty =
+                new ValueStructProperty<TestStructContainer, float>(
                     nameof(FloatValue),
                     (ref TestStructContainer c) => c.m_FloatValue,
                     (ref TestStructContainer c, float v) => c.m_FloatValue = v);
 
-            public IVersionStorage VersionStorage => PassthroughVersionStorage.Instance;
+            public IVersionStorage VersionStorage => null;
 
             private static readonly PropertyBag s_PropertyBag = new PropertyBag(FloatValueProperty);
 

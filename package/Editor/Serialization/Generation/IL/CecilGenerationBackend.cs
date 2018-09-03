@@ -70,29 +70,29 @@ namespace Unity.Properties.Editor.Serialization.Experimental
         private static readonly Dictionary<string, Type> PropertyWrapperTypeFromName =
             new Dictionary<string, Type>()
             {
-                { "StructMutableContainerProperty", typeof(StructMutableContainerProperty<,>) },
-                { "MutableContainerProperty", typeof(MutableContainerProperty<,>) },
+                { "StructMutableContainerProperty", null },
+                { "MutableContainerProperty", null },
 
-                { "ContainerProperty", typeof(ContainerProperty<,>) },
-                { "StructContainerProperty", typeof(StructContainerProperty<,>) },
+                { "ContainerProperty", null },
+                { "StructContainerProperty", null },
 
-                { "EnumProperty", typeof(EnumProperty<,>) },
-                { "StructEnumProperty", typeof(StructEnumProperty<,>) },
+                { "EnumProperty", null },
+                { "StructEnumProperty", null },
 
-                { "ListProperty", typeof(ListProperty<,,>) },
-                { "StructListProperty", typeof(StructListProperty<,,>) },
+                { "ListProperty", null },
+                { "StructListProperty", null },
 
-                { "MutableContainerListProperty", typeof(MutableContainerListProperty<,,>) },
-                { "StructMutableContainerListProperty", typeof(StructMutableContainerListProperty<,,>) },
+                { "MutableContainerListProperty", null },
+                { "StructMutableContainerListProperty", null },
 
-                { "ContainerListProperty", typeof(ContainerListProperty<,,>) },
-                { "StructContainerListProperty", typeof(StructContainerListProperty<,,>) },
+                { "ContainerListProperty", null },
+                { "StructContainerListProperty", null },
 
-                { "EnumListProperty", typeof(EnumListProperty<,,>) },
-                { "StructEnumListProperty", typeof(StructEnumListProperty<,,>) },
+                { "EnumListProperty", null },
+                { "StructEnumListProperty", null },
 
-                { "Property", typeof(Property<,>) },
-                { "StructProperty", typeof(StructProperty<,>) },
+                { "Property", null },
+                { "StructProperty", null },
             };
 
         private static string GetPropertyWrapperTypeString(
@@ -309,7 +309,7 @@ namespace Unity.Properties.Editor.Serialization.Experimental
 
             var propertyName = "Instance";
             var instanceBackingFieldName = "<" + propertyName + ">k__BackingField";
-            var passthroughReference = module.ImportReference(typeof(PassthroughVersionStorage));
+            var passthroughReference = module.ImportReference((Type) null);
 
             try
             {

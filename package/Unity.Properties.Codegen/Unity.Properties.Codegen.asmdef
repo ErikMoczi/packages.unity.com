@@ -1,0 +1,6 @@
+{
+    "name": "Unity.Properties.Codegen",
+    "references": ["Unity.Properties"],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": []
+}

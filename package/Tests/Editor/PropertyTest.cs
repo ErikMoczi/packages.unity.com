@@ -33,7 +33,7 @@ namespace Unity.Properties.Tests
 		{
 			// this test is to make sure properties from base classes can be used in
 			// derived classes to build their property bag.
-			var p = TestContainer.IntValueProperty as IProperty<DerivedContainer, int>;
+			var p = TestContainer.IntValueProperty as IValueClassProperty<DerivedContainer, int>;
 			Assert.NotNull(p);
 		}
 
