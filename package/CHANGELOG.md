@@ -151,3 +151,7 @@ Can now specify custom execution and warmup count
 ### Issues with packman, bumping up version
 
 Issues with packman, bumping up version
+
+## [0.1.24] - 2018-5-31
+
+### Print out json to xml by default for backwards compatability
