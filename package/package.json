@@ -1,6 +1,6 @@
 {
 	"name": "com.unity.2d.common",
-	"version": "1.0.2-experimental",
+	"version": "1.0.3-experimental",
 	"unity": "2018.1",
 	"description": "2D Common",
 	"keywords": ["2d"],
