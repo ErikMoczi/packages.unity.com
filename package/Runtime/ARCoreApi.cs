@@ -127,6 +127,7 @@ namespace UnityEngine.XR.ARCore
             ARPRESTO_APK_INSTALL_ERROR_USER_DECLINED = 203,
         }
 
+#if UNITY_ANDROID && !UNITY_EDITOR
         [DllImport("UnityARCore")]
         static internal extern void ArPresto_checkApkAvailability(
             Action<ArAvailability, IntPtr> on_result, IntPtr context);
@@ -137,6 +138,21 @@ namespace UnityEngine.XR.ARCore
 
         [DllImport("UnityARCore")]
         static internal extern void ArPresto_update();
+#else
+        static internal void ArPresto_checkApkAvailability(
+            Action<ArAvailability, IntPtr> on_result, IntPtr context)
+        {
+            on_result(ArAvailability.AR_AVAILABILITY_UNKNOWN_ERROR, context);
+        }
+
+        static internal void ArPresto_requestApkInstallation(
+            bool userRequested, Action<ArPrestoApkInstallStatus, IntPtr> on_result, IntPtr context)
+        {
+            on_result(ArPrestoApkInstallStatus.ARPRESTO_APK_INSTALL_ERROR, context);
+        }
+
+        static internal void ArPresto_update() { }
+#endif
     }
 
     internal static class ARCoreEnumExtensions

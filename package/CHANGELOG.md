@@ -35,3 +35,6 @@ and project files needed to adapt ARCore to the Unity multi-platform AR API.
 
 ## [1.0.0-preview.12] - 2018-06-01
 - Add ARCoreSettings to Player Settings menu. Allows you to select whether ARCore is 'optional' or 'required'.
+
+## [1.0.0-preview.13] - 2018-06-06
+- Fixed a crash following ARCore apk install. There is a (rare) race condition when installing the ARCore apk, where ARCore will try to initialize before the apk is completely ready. This can still happen, but the app no longer crashes. When it does happen, the SDK will report that AR is supported and ready, but AR will not function properly until the app is restarted.
