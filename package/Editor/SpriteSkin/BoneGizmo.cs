@@ -23,7 +23,6 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         internal BoneGizmoController boneGizmoController { get { return m_BoneGizmoController; } }
 
-        [Callbacks.DidReloadScripts]
         internal void Initialize()
         {
             m_BoneGizmoController = new BoneGizmoController(new BoneGizmoView(new GUIWrapper()), new UndoObject(null), new BoneGizmoToggle());
