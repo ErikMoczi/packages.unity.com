@@ -390,8 +390,7 @@ namespace Unity.Entities
         {
             iterator.IndexInComponentGroup = 0;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            //@TODO: Comment on why this has to be false...
-            output = new EntityArray(iterator, length, m_SafetyManager.GetSafetyHandle(TypeManager.GetTypeIndex<Entity>(), false));
+            output = new EntityArray(iterator, length, m_SafetyManager.GetSafetyHandle(TypeManager.GetTypeIndex<Entity>(), true));
 #else
 			output = new EntityArray(iterator, length);
 #endif

@@ -277,7 +277,7 @@ namespace Unity.Entities.Editor
             var somethingToShow = showingAllEntities || componentGroupHasEntities;
             if (!somethingToShow)
                 return;
-            if (repainted && EditorApplication.isPlaying && !EditorApplication.isPaused)
+            if (repainted && EditorApplication.isPlaying)
                 entityListView.RefreshData();
             entityListView.OnGUI(GUIHelpers.GetExpandingRect());
         }

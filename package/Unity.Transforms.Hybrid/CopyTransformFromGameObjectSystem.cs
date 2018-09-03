@@ -45,7 +45,7 @@ namespace Unity.Transforms
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<LocalRotation> localRotations;
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Position> positions;
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Rotation> rotations;
-            public EntityArray entities;
+            [ReadOnly] public EntityArray entities;
             [DeallocateOnJobCompletion] public NativeArray<TransformStash> transformStashes;
 
             public void Execute(int index)

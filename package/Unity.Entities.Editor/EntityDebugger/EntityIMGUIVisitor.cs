@@ -10,6 +10,12 @@ namespace Unity.Entities.Editor
     public class EntityIMGUIVisitor : IPropertyVisitor
         , IBuiltInPropertyVisitor
         , IPropertyVisitor<Unity.Mathematics.quaternion>
+        , IPropertyVisitor<Unity.Mathematics.float2>
+        , IPropertyVisitor<Unity.Mathematics.float3>
+        , IPropertyVisitor<Unity.Mathematics.float4>
+        , IPropertyVisitor<Unity.Mathematics.float4x4>
+        , IPropertyVisitor<Unity.Mathematics.float3x3>
+        , IPropertyVisitor<Unity.Mathematics.float2x2>
 
     {
 
@@ -42,10 +48,53 @@ namespace Unity.Entities.Editor
         public void EndList<TContainer, TValue>(ref TContainer container, ListContext<TValue> context) where TContainer : IPropertyContainer
         {
         }
+        
         public void Visit<TContainer>(ref TContainer container, VisitContext<Unity.Mathematics.quaternion> context) where TContainer : IPropertyContainer
         {
-            var property = context.Value;
-            GUILayout.Label(property.value.ToString());
+            var value = context.Value.value;
+            EditorGUILayout.Vector4Field(context.Property.Name, new Vector4(value.x, value.y, value.z, value.w) );
+        }
+        
+        public void Visit<TContainer>(ref TContainer container, VisitContext<float2> context) where TContainer : IPropertyContainer
+        {
+            EditorGUILayout.Vector2Field(context.Property.Name, (Vector2) context.Value);
+        }
+        
+        public void Visit<TContainer>(ref TContainer container, VisitContext<float3> context) where TContainer : IPropertyContainer
+        {
+            EditorGUILayout.Vector3Field(context.Property.Name, (Vector3) context.Value);
+        }
+        
+        public void Visit<TContainer>(ref TContainer container, VisitContext<float4> context) where TContainer : IPropertyContainer
+        {
+            EditorGUILayout.Vector4Field(context.Property.Name, (Vector4) context.Value);
+        }
+        
+        public void Visit<TContainer>(ref TContainer container, VisitContext<float2x2> context) where TContainer : IPropertyContainer
+        {
+            var value = context.Value;
+            GUILayout.Label(context.Property.Name);
+            EditorGUILayout.Vector2Field("", (Vector2) value.m0);
+            EditorGUILayout.Vector2Field("", (Vector2) value.m1);
+        }
+        
+        public void Visit<TContainer>(ref TContainer container, VisitContext<float3x3> context) where TContainer : IPropertyContainer
+        {
+            var value = context.Value;
+            GUILayout.Label(context.Property.Name);
+            EditorGUILayout.Vector3Field("", (Vector3) value.m0);
+            EditorGUILayout.Vector3Field("", (Vector3) value.m1);
+            EditorGUILayout.Vector3Field("", (Vector3) value.m2);
+        }
+        
+        public void Visit<TContainer>(ref TContainer container, VisitContext<float4x4> context) where TContainer : IPropertyContainer
+        {
+            var value = context.Value;
+            GUILayout.Label(context.Property.Name);
+            EditorGUILayout.Vector4Field("", (Vector4) value.m0);
+            EditorGUILayout.Vector4Field("", (Vector4) value.m1);
+            EditorGUILayout.Vector4Field("", (Vector4) value.m2);
+            EditorGUILayout.Vector4Field("", (Vector4) value.m3);
         }
 
         #region IBuiltInPropertyVisitor

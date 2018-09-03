@@ -45,6 +45,7 @@ namespace Unity.Transforms
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<LocalRotation> localRotations;
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Position> positions;
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Rotation> rotations;
+            [ReadOnly]
             public EntityArray entities;
             [DeallocateOnJobCompletion] public NativeArray<TransformStash> transformStashes;
 
@@ -73,6 +74,7 @@ namespace Unity.Transforms
 
         struct RemoveCopyInitialTransformFromGameObjectComponent : IJob
         {
+            [ReadOnly]
             public EntityArray entities;
             public EntityCommandBuffer entityCommandBuffer;
             

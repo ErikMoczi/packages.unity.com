@@ -102,7 +102,7 @@ namespace Unity.Entities.Editor
         protected override void RowGUI(RowGUIArgs args)
         {
             if (args.item.displayName == null)
-                args.item.displayName = $"Entity {entitiesById[args.item.id].Index.ToString()}";
+                args.label = args.item.displayName = $"Entity {entitiesById[args.item.id].Index.ToString()}";
             base.RowGUI(args);
         }
 
