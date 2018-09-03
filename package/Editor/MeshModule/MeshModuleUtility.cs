@@ -147,6 +147,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (Event.current.type != EventType.Repaint)
                 return;
 
+            material.SetFloat("_AdjustLinearForGamma", PlayerSettings.colorSpace == ColorSpace.Linear ? 1.0f : 0.0f);
             material.SetPass(0);
             Graphics.DrawMeshNow(mesh, Handles.matrix * GUI.matrix);
         }

@@ -34,6 +34,7 @@ Shader "Hidden/MeshModule-GUITextureClip"
     uniform float4 _MainTex_ST;
     uniform fixed _ColorOpacity;
     uniform float4x4 unity_GUIClipTextureMatrix;
+    uniform bool _AdjustLinearForGamma;
 
     v2f vert (appdata_t v)
     {
@@ -51,6 +52,10 @@ Shader "Hidden/MeshModule-GUITextureClip"
     fixed4 frag (v2f i) : SV_Target
     {
         fixed4 col = tex2D(_MainTex, i.texcoord);
+        
+        if (_AdjustLinearForGamma)
+            col.rgb = LinearToGammaSpace(col.rgb);
+
         col = lerp(col, i.color, _ColorOpacity);
         col.a *= tex2D(_GUIClipTexture, i.clipUV).a;
         return col;
