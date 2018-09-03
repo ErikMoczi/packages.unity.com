@@ -21,6 +21,9 @@ namespace Unity.Entities
 
         public string Name { get; }
 
+        public int Version { get { return m_Version; } }
+        int m_Version = 0;
+
         public static World Active { get; set; }
 
         public static ReadOnlyCollection<World> AllWorlds => new ReadOnlyCollection<World>(allWorlds);
@@ -100,13 +103,13 @@ namespace Unity.Entities
 			m_BehaviourManagerLookup = null;
 		}
 
-	    ScriptBehaviourManager CreateManagerInternal (Type type, int capacity, object[] constructorArgumnents)
+	    ScriptBehaviourManager CreateManagerInternal (Type type, int capacity, object[] constructorArguments)
 		{
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
 			if (!m_AllowGetManager)
 				throw new ArgumentException("During destruction of a system you are not allowed to create more systems.");
 
-			if (constructorArgumnents != null && constructorArgumnents.Length != 0)
+			if (constructorArguments != null && constructorArguments.Length != 0)
 			{
 				var constructors = type.GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 				if (constructors.Length == 1 && constructors[0].IsPrivate)
@@ -118,7 +121,7 @@ namespace Unity.Entities
 		    ScriptBehaviourManager manager;
 		    try
 		    {
-		        manager = Activator.CreateInstance(type, constructorArgumnents) as ScriptBehaviourManager;
+		        manager = Activator.CreateInstance(type, constructorArguments) as ScriptBehaviourManager;
 
 		    }
 		    catch
@@ -141,6 +144,7 @@ namespace Unity.Entities
 		        throw;
 		    }
 
+		    ++m_Version;
 			return manager;
 		}
 
@@ -182,7 +186,7 @@ namespace Unity.Entities
 		{
 			if (!m_BehaviourManagers.Remove(manager))
 				throw new ArgumentException($"manager does not exist in the world");
-
+		    ++m_Version;
 
 			var type = manager.GetType();
 			while (type != typeof(ScriptBehaviourManager))

@@ -138,5 +138,12 @@ namespace Unity.Entities.Editor
         {
             SelectionChanged(GetSelection());
         }
+
+        public void UpdateIfNecessary()
+        {
+            var expectedGroupCount = SelectedSystem?.ComponentGroups.Length ?? 0; 
+            if (expectedGroupCount != componentGroupsById.Count)
+                Reload();
+        }
     }
 }

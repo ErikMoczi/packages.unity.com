@@ -36,6 +36,7 @@ namespace Unity.Entities.Editor
             }
         }
         private ComponentGroup selectedComponentGroup;
+        int                    cachedVersion;
 
         IEntitySelectionWindow window;
 
@@ -45,10 +46,18 @@ namespace Unity.Entities.Editor
             SelectedComponentGroup = componentGroup;
             Reload();
         }
-        
-        public void RefreshData()
+
+        public void UpdateIfNecessary()
         {
-            Reload();
+            if (window.WorldSelection == null)
+                return;
+            if (selectedComponentGroup == null)
+            {
+                if (window.WorldSelection.GetExistingManager<EntityManager>().Version != cachedVersion)
+                    Reload();
+            }
+            else if (selectedComponentGroup.GetCombinedComponentOrderVersion() != cachedVersion)
+                Reload();
         }
 
         private TreeViewItem CreateEntityItem(Entity entity)
@@ -65,15 +74,18 @@ namespace Unity.Entities.Editor
             if (window?.WorldSelection == null)
             {
                 root.AddChild(new TreeViewItem { id = managerId, displayName = "No world selected"});
+                cachedVersion = -1;
             }
             else
             {
                 if (SelectedComponentGroup == null)
                 {
-                    var array = window.WorldSelection.GetExistingManager<EntityManager>().GetAllEntities(Allocator.Temp);
+                    var entityManager = window.WorldSelection.GetExistingManager<EntityManager>();
+                    var array = entityManager.GetAllEntities(Allocator.Temp);
                     for (var i = 0; i < array.Length; ++i)
                         root.AddChild(CreateEntityItem(array[i]));
                     array.Dispose();
+                    cachedVersion = entityManager.Version;
                 }
                 else
                 {
@@ -81,14 +93,16 @@ namespace Unity.Entities.Editor
                     var entityArray = SelectedComponentGroup.GetEntityArray();
                     for (var i = 0; i < entityArray.Length; ++i)
                         root.AddChild(CreateEntityItem(entityArray[i]));
+                    cachedVersion = SelectedComponentGroup.GetCombinedComponentOrderVersion();
                 }
 
                 if (entitiesById.Count == 0)
                 {
-                    root.AddChild(new TreeViewItem { id = managerId, displayName = "ComponentGroup is empty"});
+                    root.AddChild(new TreeViewItem { id = managerId, displayName = "No Entities"});
                 }
                 SetupDepthsFromParentsAndChildren(root);
             }
+            
             return root;
         }
 

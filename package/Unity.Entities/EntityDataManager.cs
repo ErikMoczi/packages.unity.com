@@ -24,8 +24,10 @@ namespace Unity.Entities
         EntityData*   m_Entities;
         int           m_EntitiesCapacity;
         int           m_EntitiesFreeIndex;
-
+        
         int*          m_ComponentTypeOrderVersion;
+
+        public int Version => GetComponentTypeOrderVersion(TypeManager.GetTypeIndex<Entity>());
 
         public void OnCreate(int capacity)
         {

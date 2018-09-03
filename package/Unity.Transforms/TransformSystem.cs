@@ -639,7 +639,7 @@ namespace Unity.Transforms
             var copyRootEntitiesDeps = updateRootsBarrierJobHandle.Value;
             var copyRootEntitiesBarrierJobHandle = new JobHandle();
 
-            NativeArray<Entity>? rotTransTransformRoots;
+            NativeArray<Entity>? rotTransTransformRoots = null;
             if (m_RootRotTransTransformGroup.Length > 0)
             {
                 rotTransTransformRoots = new NativeArray<Entity>(m_RootRotTransTransformGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -652,7 +652,7 @@ namespace Unity.Transforms
                 copyRootEntitiesBarrierJobHandle = JobHandle.CombineDependencies(copyRootEntitiesBarrierJobHandle,copyRotTransTransformRootsJobHandle);
             }
             
-            NativeArray<Entity>? rotTransNoTransformRoots;
+            NativeArray<Entity>? rotTransNoTransformRoots = null;
             if (m_RootRotTransNoTransformGroup.Length > 0)
             {
                 rotTransNoTransformRoots = new NativeArray<Entity>(m_RootRotTransNoTransformGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -665,7 +665,7 @@ namespace Unity.Transforms
                 copyRootEntitiesBarrierJobHandle = JobHandle.CombineDependencies(copyRootEntitiesBarrierJobHandle, copyRotTransNoTransformRootsJobHandle);
             }
             
-            NativeArray<Entity>? rotTransformRoots;
+            NativeArray<Entity>? rotTransformRoots = null;
             if (m_RootRotTransformGroup.Length > 0)
             {
                 rotTransformRoots = new NativeArray<Entity>(m_RootRotTransformGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -678,7 +678,7 @@ namespace Unity.Transforms
                 copyRootEntitiesBarrierJobHandle = JobHandle.CombineDependencies(copyRootEntitiesBarrierJobHandle,copyRotTransformRootsJobHandle);
             }
             
-            NativeArray<Entity>? rotNoTransformRoots;
+            NativeArray<Entity>? rotNoTransformRoots = null;
             if (m_RootRotNoTransformGroup.Length > 0)
             {
                 rotNoTransformRoots = new NativeArray<Entity>(m_RootRotNoTransformGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -691,7 +691,7 @@ namespace Unity.Transforms
                 copyRootEntitiesBarrierJobHandle = JobHandle.CombineDependencies(copyRootEntitiesBarrierJobHandle, copyRotNoTransformRootsJobHandle);
             }
             
-            NativeArray<Entity>? transTransformRoots;
+            NativeArray<Entity>? transTransformRoots = null;
             if (m_RootTransTransformGroup.Length > 0)
             {
                 transTransformRoots = new NativeArray<Entity>(m_RootTransTransformGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -704,7 +704,7 @@ namespace Unity.Transforms
                 copyRootEntitiesBarrierJobHandle = JobHandle.CombineDependencies(copyRootEntitiesBarrierJobHandle,copyTransTransformRootsJobHandle);
             }
             
-            NativeArray<Entity>? transNoTransformRoots;
+            NativeArray<Entity>? transNoTransformRoots = null;
             if (m_RootTransNoTransformGroup.Length > 0)
             {
                 transNoTransformRoots = new NativeArray<Entity>(m_RootTransNoTransformGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -717,7 +717,7 @@ namespace Unity.Transforms
                 copyRootEntitiesBarrierJobHandle = JobHandle.CombineDependencies(copyRootEntitiesBarrierJobHandle, copyTransNoTransformRootsJobHandle);
             }
             
-            NativeArray<Entity>? headingTransTransformRoots;
+            NativeArray<Entity>? headingTransTransformRoots = null;
             if (m_RootHeadingTransTransformGroup.Length > 0)
             {
                 headingTransTransformRoots = new NativeArray<Entity>(m_RootHeadingTransTransformGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -730,7 +730,7 @@ namespace Unity.Transforms
                 copyRootEntitiesBarrierJobHandle = JobHandle.CombineDependencies(copyRootEntitiesBarrierJobHandle,copyHeadingTransTransformRootsJobHandle);
             }
             
-            NativeArray<Entity>? headingTransNoTransformRoots;
+            NativeArray<Entity>? headingTransNoTransformRoots = null;
             if (m_RootHeadingTransNoTransformGroup.Length > 0)
             {
                 headingTransNoTransformRoots = new NativeArray<Entity>(m_RootHeadingTransNoTransformGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);

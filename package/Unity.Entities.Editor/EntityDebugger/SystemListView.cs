@@ -16,15 +16,46 @@ namespace Unity.Entities.Editor
     
     public class SystemListView : TreeView
     {
+        private class AverageRecorder
+        {
+            private readonly Recorder recorder;
+            private int frameCount;
+            private int totalNanoseconds;
+            private float lastReading;
+
+            public AverageRecorder(Recorder recorder)
+            {
+                this.recorder = recorder;
+            }
+            
+            public void Update()
+            {
+                ++frameCount;
+                totalNanoseconds += (int)recorder.elapsedNanoseconds;
+            }
+            
+            public float ReadMilliseconds()
+            {
+                if (frameCount > 0)
+                {
+                    lastReading = (totalNanoseconds/1e6f) / frameCount;
+                    frameCount = totalNanoseconds = 0;
+                }
+
+                return lastReading;
+            }
+        }
         private readonly Dictionary<Type, List<ScriptBehaviourManager>> managersByGroup = new Dictionary<Type, List<ScriptBehaviourManager>>();
         private readonly List<ScriptBehaviourManager> floatingManagers = new List<ScriptBehaviourManager>();
         private readonly Dictionary<int, ScriptBehaviourManager> managersByID = new Dictionary<int, ScriptBehaviourManager>();
-        private readonly Dictionary<ScriptBehaviourManager, Recorder> recordersByManager = new Dictionary<ScriptBehaviourManager, Recorder>();
+        private readonly Dictionary<ScriptBehaviourManager, AverageRecorder> recordersByManager = new Dictionary<ScriptBehaviourManager, AverageRecorder>();
 
         private const float kToggleWidth = 22f;
         private const float kTimingWidth = 70f;
 
         private readonly ISystemSelectionWindow window;
+
+        private int systemVersion;
 
         private static GUIStyle RightAlignedLabel
         {
@@ -136,7 +167,7 @@ namespace Unity.Entities.Editor
         {
             managersByID.Add(id, manager);
             var recorder = Recorder.Get($"{window.WorldSelection.Name} {manager.GetType().FullName}");
-            recordersByManager.Add(manager, recorder);
+            recordersByManager.Add(manager, new AverageRecorder(recorder));
             recorder.enabled = true;
             return new TreeViewItem { id = id, displayName = manager.GetType().Name.ToString() };
         }
@@ -148,8 +179,10 @@ namespace Unity.Entities.Editor
             floatingManagers.Clear();
             recordersByManager.Clear();
 
+            systemVersion = -1;
             if (window.WorldSelection != null)
             {
+                systemVersion = window.WorldSelection.Version;
                 Dictionary<Type, ScriptBehaviourUpdateOrder.ScriptBehaviourGroup> allGroups;
                 Dictionary<Type, ScriptBehaviourUpdateOrder.DependantBehavior> dependencies;
                 ScriptBehaviourUpdateOrder.CollectGroups(window.WorldSelection.BehaviourManagers, out allGroups, out dependencies);
@@ -191,7 +224,6 @@ namespace Unity.Entities.Editor
             }
             else
             {
-
                 foreach (var manager in floatingManagers)
                     root.AddChild(CreateManagerItem(currentID++, manager));
                 
@@ -226,7 +258,7 @@ namespace Unity.Entities.Editor
 
                 var timingRect = args.GetCellRect(2);
                 var recorder = recordersByManager[manager];
-                GUI.Label(timingRect, (recorder.elapsedNanoseconds * 0.000001f).ToString("f2"), RightAlignedLabel);
+                GUI.Label(timingRect, recorder.ReadMilliseconds().ToString("f2"), RightAlignedLabel);
             }
 
             var indent = GetContentIndent(item);
@@ -262,23 +294,23 @@ namespace Unity.Entities.Editor
         {
             if (window.WorldSelection == null)
                 return;
-            var currentManagers = window.WorldSelection.BehaviourManagers;
-            var managerCount = 0;
-            var needUpdate = false;
-            foreach (var manager in currentManagers)
+            if (window.WorldSelection.Version != systemVersion)
+                Reload();
+        }
+
+        private int lastTimedFrame;
+        
+        public void UpdateTimings()
+        {
+            if (Time.frameCount == lastTimedFrame)
+                return;
+            
+            foreach (var recorder in recordersByManager.Values)
             {
-                ++managerCount;
-                if (!managersByID.Values.Contains(manager))
-                {
-                    needUpdate = true;
-                    break;
-                }
+                recorder.Update();
             }
 
-            if (managersByID.Count != managerCount)
-                needUpdate = true;
-            if (needUpdate)
-                Reload();
+            lastTimedFrame = Time.frameCount;
         }
     }
 }

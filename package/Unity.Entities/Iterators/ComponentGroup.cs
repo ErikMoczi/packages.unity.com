@@ -186,6 +186,19 @@ namespace Unity.Entities
                 return types.ToArray();
             }
         }
+        
+        public int GetCombinedComponentOrderVersion()
+        {
+            int version = 0;
+            
+            for (var i = 0; i < m_GroupData->RequiredComponentsCount; ++i)
+            {
+                version += m_EntityDataManager->GetComponentTypeOrderVersion(m_GroupData->RequiredComponents[i].TypeIndex);
+            }
+            
+            return version;
+        }
+
 
         internal void CompleteDependency(ComponentJobSafetyManager safetyManager)
         {
@@ -460,6 +473,11 @@ namespace Unity.Entities
         public void CompleteDependency() => m_ComponentGroupData.CompleteDependency(m_SafetyManager);
         public JobHandle GetDependency() => m_ComponentGroupData.GetDependency(m_SafetyManager);
         public void AddDependency(JobHandle job) => m_ComponentGroupData.AddDependency(m_SafetyManager, job);
+
+        public int GetCombinedComponentOrderVersion()
+        {
+            return m_ComponentGroupData.GetCombinedComponentOrderVersion();
+        }
 
         internal ArchetypeManager GetArchetypeManager()
         {

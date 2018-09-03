@@ -61,5 +61,26 @@ namespace Unity.Entities.Tests
 
             array.Dispose();
         }
+
+        [Test]
+        public void VersionIsConsistent()
+        {
+            Assert.AreEqual(0, m_Manager.Version);
+            
+            var entity = m_Manager.CreateEntity(typeof(EcsTestData));
+            Assert.AreEqual(1, m_Manager.Version);
+            
+            m_Manager.AddComponentData(entity, new EcsTestData2(0));
+            Assert.AreEqual(2, m_Manager.Version);
+            
+            m_Manager.SetComponentData(entity, new EcsTestData2(5));
+            Assert.AreEqual(2, m_Manager.Version); // Shouldn't change when just setting data
+            
+            m_Manager.RemoveComponent<EcsTestData2>(entity);
+            Assert.AreEqual(3, m_Manager.Version);
+            
+            m_Manager.DestroyEntity(entity);
+            Assert.AreEqual(4, m_Manager.Version);
+        }
     }
 }

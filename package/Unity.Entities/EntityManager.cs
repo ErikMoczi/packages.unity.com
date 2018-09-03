@@ -62,6 +62,8 @@ namespace Unity.Entities
 
         internal EntityDataManager* Entities => m_Entities;
         internal ArchetypeManager ArchetypeManager => m_ArchetypeManager;
+        
+        public int Version => IsCreated ? m_Entities->Version : 0;
 
         internal object    m_CachedComponentList;
 

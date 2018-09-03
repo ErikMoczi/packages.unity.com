@@ -57,9 +57,9 @@ namespace Unity.Entities.Editor
         {
             public ComponentState()
             {
-                Folded = false;
+                Showing = true;
             }
-            public bool Folded { get; set; }
+            public bool Showing { get; set; }
         }
         private Dictionary<int, ComponentState> _states = new Dictionary<int, ComponentState>();
 
@@ -94,9 +94,9 @@ namespace Unity.Entities.Editor
                 }
                 state = _states[context.Index];
 
-                state.Folded = EditorGUILayout.Foldout(state.Folded, context.Property.Name);
+                state.Showing = EditorGUILayout.Foldout(state.Showing, context.Property.Name);
 
-                return state.Folded;
+                return state.Showing;
             }
             return true;
         }

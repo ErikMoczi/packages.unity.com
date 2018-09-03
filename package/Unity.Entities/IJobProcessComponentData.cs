@@ -56,12 +56,14 @@ namespace Unity.Entities
     {
     }
 
+    [JobProducerType(typeof(JobProcessComponentDataExtensions.JobStruct_Process1<,>))]
     public interface IJobProcessComponentData<T0> : IBaseJobProcessComponentData_1
         where T0 : struct, IComponentData
     {
         void Execute(ref T0 data);
     }
 
+    [JobProducerType(typeof(JobProcessComponentDataExtensions.JobStruct_Process2<,,>))]
     public interface IJobProcessComponentData<T0, T1> : IBaseJobProcessComponentData_2
         where T0 : struct, IComponentData
         where T1 : struct, IComponentData
@@ -69,6 +71,7 @@ namespace Unity.Entities
         void Execute(ref T0 data0, ref T1 data1);
     }
 
+    [JobProducerType(typeof(JobProcessComponentDataExtensions.JobStruct_Process3<,,,>))]
     public interface IJobProcessComponentData<T0, T1, T2> : IBaseJobProcessComponentData_3
         where T0 : struct, IComponentData
         where T1 : struct, IComponentData
@@ -406,7 +409,7 @@ namespace Unity.Entities
                 }
             }
 
-            static unsafe void Execute(ref JobStruct_Process1<T, U0> jobData, IntPtr additionalPtr, IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex)
+            public static unsafe void Execute(ref JobStruct_Process1<T, U0> jobData, IntPtr additionalPtr, IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex)
             {
                 if (jobData.Iterator.m_IsParallelFor)
                 {
@@ -475,7 +478,7 @@ namespace Unity.Entities
             delegate void ExecuteJobFunction(ref JobStruct_Process2<T, U0, U1> data, IntPtr additionalPtr, IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex);
 
 
-            static unsafe void ExecuteInnerLoop(ref JobStruct_Process2<T, U0, U1> jobData, int begin, int end)
+            public static unsafe void ExecuteInnerLoop(ref JobStruct_Process2<T, U0, U1> jobData, int begin, int end)
             {
                 ComponentChunkCache cache0, cache1;
                 
@@ -513,7 +516,7 @@ namespace Unity.Entities
                 }
             }
 
-            static unsafe void Execute(ref JobStruct_Process2<T, U0, U1> jobData, IntPtr additionalPtr, IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex)
+            public static unsafe void Execute(ref JobStruct_Process2<T, U0, U1> jobData, IntPtr additionalPtr, IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex)
             {
                 if (jobData.Iterator.m_IsParallelFor)
                 {
@@ -627,7 +630,7 @@ namespace Unity.Entities
             }
 
 
-            static unsafe void Execute(ref JobStruct_Process3<T, U0, U1, U2> jobData, IntPtr additionalPtr, IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex)
+            public static unsafe void Execute(ref JobStruct_Process3<T, U0, U1, U2> jobData, IntPtr additionalPtr, IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex)
             {
                 if (jobData.Iterator.m_IsParallelFor)
                 {

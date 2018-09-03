@@ -191,15 +191,21 @@ namespace Unity.Entities
                 count);
         }
 
-        public void AddDependency(int* readerTypes, int readerTypesCount, int* writerTypes, int writerTypesCount,
+        public JobHandle AddDependency(int* readerTypes, int readerTypesCount, int* writerTypes, int writerTypesCount,
             JobHandle dependency)
         {
+            #if ENABLE_UNITY_COLLECTIONS_CHECKS
+            JobHandle* combinedDependencies = null;
+            int combinedDependenciesCount = 0;
+            #endif
+            
             for (var i = 0; i != writerTypesCount; i++)
             {
                 var writer = writerTypes[i];
                 m_ComponentSafetyHandles[writer].WriteFence = dependency;
             }
 
+            
             for (var i = 0; i != readerTypesCount; i++)
             {
                 var reader = readerTypes[i];
@@ -208,11 +214,33 @@ namespace Unity.Entities
                 m_ComponentSafetyHandles[reader].NumReadFences++;
 
                 if (m_ComponentSafetyHandles[reader].NumReadFences == kMaxReadJobHandles)
+                {
+                    #if ENABLE_UNITY_COLLECTIONS_CHECKS
+                    var combined = CombineReadDependencies(reader);
+                    if (combinedDependencies == null)
+                    {
+                        JobHandle* temp = stackalloc JobHandle[readerTypesCount];
+                        combinedDependencies = temp;
+                    }
+                        
+                    combinedDependencies[combinedDependenciesCount++] = combined;
+                    #else
                     CombineReadDependencies(reader);
+                    #endif
+                }
             }
 
             if (readerTypesCount != 0 || writerTypesCount != 0)
                 m_HasCleanHandles = false;
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (combinedDependencies != null)
+                return Unity.Jobs.LowLevel.Unsafe.JobHandleUnsafeUtility.CombineDependencies(combinedDependencies, combinedDependenciesCount);
+            else
+                return dependency;
+#else           
+            return dependency;
+#endif
         }
 
         public void CompleteWriteDependency(int type)
@@ -247,13 +275,15 @@ namespace Unity.Entities
         }
 #endif
 
-        void CombineReadDependencies(int type)
+        JobHandle CombineReadDependencies(int type)
         {
             var combined = Jobs.LowLevel.Unsafe.JobHandleUnsafeUtility.CombineDependencies(
                 m_ReadJobFences + type * kMaxReadJobHandles, m_ComponentSafetyHandles[type].NumReadFences);
 
             m_ReadJobFences[type * kMaxReadJobHandles] = combined;
             m_ComponentSafetyHandles[type].NumReadFences = 1;
+
+            return combined;
         }
 
         public bool IsInTransaction => m_IsInTransaction;
