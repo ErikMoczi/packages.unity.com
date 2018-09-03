@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4-preview.18
+
+- Add support for subtracting pointers
+
 ## 0.2.4-preview.17
 
 - Bump only to force a new version pushed
