@@ -4,7 +4,7 @@ This is the Unity Package of [burst](https://github.com/Unity-Technologies/burst
 
 ## Requirements
 
-This package is working with the Unity branch `scripting/jobsystem/burst`
+This package is working with the Unity branch `2018.1/scripting/jobsystem/playground`
 
 ## Installation
 
