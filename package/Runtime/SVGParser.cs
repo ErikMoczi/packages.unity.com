@@ -1859,7 +1859,11 @@ namespace Unity.VectorGraphics
             {
                 string attrib = null;
                 if (LookupStyleOrAttribute(nodes[i], attribName, styleSheets[i], attributeSheets[i], limit, out attrib))
+                {
+                    if (attrib.ToLower() == "none")
+                        attrib = null;
                     return attrib;
+                }
                 
                 if (limit == SVGResolveLimit.Single)
                     break;
