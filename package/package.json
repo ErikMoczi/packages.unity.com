@@ -2,11 +2,6 @@
     "name": "com.unity.incrementalcompiler",
     "displayName": "IncrementalCompiler",
     "description": "Roslyn based incremental compiler.",
-    "version": "0.0.1-hackweek2018.1",
-    "unity": "2018.1",
-    "keywords": [
-      "unity",
-      "incremental",
-      "compiler"
-    ]
+    "version": "0.0.2",
+    "dependencies": {}
 }
