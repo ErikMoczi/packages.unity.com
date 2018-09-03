@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
+using UnityEngine.Experimental.U2D;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -67,6 +68,62 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
 
             return names.ToArray();
+        }
+
+        // This method do not presume the input bone list in certain order.
+        // It will return the converted bone in the original order source passed in.
+        public static List<SpriteBone> ConvertBoneFromLocalSpaceToTextureSpace(List<SpriteBone> source, Vector3 offset)
+        {
+            List<SpriteBone> result = new List<SpriteBone>(source);
+            Matrix4x4[] matrices = new Matrix4x4[source.Count];
+            bool[] calculatedMatrix = new bool[source.Count];
+
+            var processedBoneCount = 0;
+            while (processedBoneCount < source.Count)
+            {
+                for (var i = 0; i < source.Count; ++i)
+                {
+                    if (calculatedMatrix[i])
+                        continue;
+
+                    var sourceBone = source[i];
+                    if (sourceBone.parentId != -1 && !calculatedMatrix[sourceBone.parentId])
+                        continue;
+
+                    var m = Matrix4x4.identity;
+                    var position = new Vector3();
+                    var rotation = new Quaternion();
+                    if (sourceBone.parentId == -1)
+                    {
+                        m.SetTRS(sourceBone.position + offset, sourceBone.rotation, Vector3.one);
+                        
+                        position = sourceBone.position + offset;
+                        rotation = sourceBone.rotation;
+                    }
+                    else if (calculatedMatrix[sourceBone.parentId])
+                    {
+                        var parentM = matrices[sourceBone.parentId];
+                        m = parentM * Matrix4x4.Translate(sourceBone.position) * Matrix4x4.Rotate(sourceBone.rotation);
+                        
+                        position = parentM.MultiplyPoint(sourceBone.position);
+                        rotation = parentM.rotation * sourceBone.rotation;
+                    }
+
+                    var sb = new SpriteBone();
+                    sb.name = sourceBone.name;
+                    sb.parentId = sourceBone.parentId;
+                    sb.length = sourceBone.length;
+                    sb.position = position;
+                    sb.rotation = rotation;
+                    result[i] = sb;
+
+                    matrices[i] = m;
+                    calculatedMatrix[i] = true;
+                    processedBoneCount++;
+                }
+            }
+
+            return result;
         }
 
         public static Vector2 ClampPositionToRect(Vector2 position, Rect rect)

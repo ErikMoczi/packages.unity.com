@@ -263,7 +263,8 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             position = MeshModuleUtility.ClampPositionToRect(position, spriteMeshData.frame);
             undoObject.RegisterCompleteObjectUndo("Create Vertex");
-            spriteMeshData.CreateVertex(position, edgeIndex);
+
+            BoneWeight boneWeight = new BoneWeight();
 
             Vector3Int indices;
             Vector3 barycentricCoords;
@@ -273,33 +274,67 @@ namespace UnityEditor.Experimental.U2D.Animation
                 EditableBoneWeight bw2 = spriteMeshData.vertices[indices.y].editableBoneWeight;
                 EditableBoneWeight bw3 = spriteMeshData.vertices[indices.z].editableBoneWeight;
 
-                EditableBoneWeight result = spriteMeshData.vertices[spriteMeshData.vertices.Count - 1].editableBoneWeight;
+                EditableBoneWeight result = new EditableBoneWeight();
 
                 foreach (BoneWeightChannel channel in bw1)
                 {
+                    if (!channel.enabled)
+                        continue;
+
                     BoneWeightData data = channel.boneWeightData;
                     data.weight *= barycentricCoords.x;
-                    result.AddChannel(data, true);
+
+                    if (data.weight > 0f)
+                        result.AddChannel(data, true);
                 }
 
                 foreach (BoneWeightChannel channel in bw2)
                 {
+                    if (!channel.enabled)
+                        continue;
+
                     BoneWeightData data = channel.boneWeightData;
                     data.weight *= barycentricCoords.y;
-                    result.AddChannel(data, true);
+
+                    if (data.weight > 0f)
+                        result.AddChannel(data, true);
                 }
 
                 foreach (BoneWeightChannel channel in bw3)
                 {
+                    if (!channel.enabled)
+                        continue;
+
                     BoneWeightData data = channel.boneWeightData;
                     data.weight *= barycentricCoords.z;
-                    result.AddChannel(data, true);
+
+                    if (data.weight > 0f)
+                        result.AddChannel(data, true);
                 }
 
                 result.UnifyChannelsWithSameBoneIndex();
+                result.FilterChannels(0f);
                 result.ClampChannels(4, true);
+
+                boneWeight = result.ToBoneWeight(true);
+            }
+            else if (edgeIndex != -1)
+            {
+                Edge edge = spriteMeshData.edges[edgeIndex];
+                Vector2 pos1 = spriteMeshData.vertices[edge.index1].position;
+                Vector2 pos2 = spriteMeshData.vertices[edge.index2].position;
+                Vector2 dir1 = (position - pos1);
+                Vector2 dir2 = (pos2 - pos1);
+                float t = Vector2.Dot(dir1, dir2.normalized) / dir2.magnitude;
+                t = Mathf.Clamp01(t);
+                BoneWeight bw1 = spriteMeshData.vertices[edge.index1].editableBoneWeight.ToBoneWeight(true);
+                BoneWeight bw2 = spriteMeshData.vertices[edge.index2].editableBoneWeight.ToBoneWeight(true);
+
+                boneWeight = EditableBoneWeightUtility.Lerp(bw1, bw2, t);
             }
 
+            spriteMeshData.CreateVertex(position, edgeIndex);
+            spriteMeshData.vertices[spriteMeshData.vertices.Count - 1].editableBoneWeight.SetFromBoneWeight(boneWeight);
             spriteMeshData.Triangulate(triangulator);
         }
 

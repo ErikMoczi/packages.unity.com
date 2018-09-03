@@ -48,7 +48,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
                 length = 1f,
                 parentId = -1,
                 position = Vector2.zero,
-                rotation = Quaternion.identity//Quaternion.AngleAxis(-90, Vector3.forward)
+                rotation = Quaternion.identity
             });
 
             bones.Add(new SpriteBone() {
@@ -56,7 +56,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
                 length = 1f,
                 parentId = 0,
                 position = Vector2.right,
-                rotation = Quaternion.identity//Quaternion.AngleAxis(-90, Vector3.forward)
+                rotation = Quaternion.identity
             });
 
             return bones;
@@ -164,7 +164,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
         public void SetBone1To025f_SetsBone0To075f_EmptySelectionEditsAll()
         {
             SetMaxWeightToFirstBone();
-            m_WeightEditor.mode = WeightEditorMode.Set;
+            m_WeightEditor.mode = WeightEditorMode.AddAndSubtract;
             m_WeightEditor.boneIndex = 1;
             m_WeightEditor.emptySelectionEditsAll = true;
             m_WeightEditor.OnEditStart(false);
@@ -185,7 +185,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
         public void SetBone1To05f_SetsBone0To05f_EmptySelectionEditsAllTrue()
         {
             SetMaxWeightToFirstBone();
-            m_WeightEditor.mode = WeightEditorMode.Set;
+            m_WeightEditor.mode = WeightEditorMode.AddAndSubtract;
             m_WeightEditor.boneIndex = 1;
             m_WeightEditor.emptySelectionEditsAll = true;
             m_WeightEditor.OnEditStart(false);
@@ -206,7 +206,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
         public void SetBone1To075f_SetsBone0To025f_EmptySelectionEditsAllTrue()
         {
             SetMaxWeightToFirstBone();
-            m_WeightEditor.mode = WeightEditorMode.Set;
+            m_WeightEditor.mode = WeightEditorMode.AddAndSubtract;
             m_WeightEditor.boneIndex = 1;
             m_WeightEditor.emptySelectionEditsAll = true;
             m_WeightEditor.OnEditStart(false);
@@ -227,7 +227,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
         public void SetBone1To1f_SetsBone0To0f_EmptySelectionEditsAllTrue()
         {
             SetMaxWeightToFirstBone();
-            m_WeightEditor.mode = WeightEditorMode.Set;
+            m_WeightEditor.mode = WeightEditorMode.AddAndSubtract;
             m_WeightEditor.boneIndex = 1;
             m_WeightEditor.emptySelectionEditsAll = true;
             m_WeightEditor.OnEditStart(false);
@@ -246,7 +246,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
         public void SetBone1To1f_SelectionEmpty_EmptySelectionEditsAllFalse_NothingChanges()
         {
             SetMaxWeightToFirstBone();
-            m_WeightEditor.mode = WeightEditorMode.Set;
+            m_WeightEditor.mode = WeightEditorMode.AddAndSubtract;
             m_WeightEditor.boneIndex = 1;
             m_WeightEditor.emptySelectionEditsAll = false;
             m_WeightEditor.OnEditStart(false);
@@ -270,7 +270,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
             m_Selection.IsSelected(1).Returns(true);
             m_Selection.IsSelected(2).Returns(true);
 
-            m_WeightEditor.mode = WeightEditorMode.Set;
+            m_WeightEditor.mode = WeightEditorMode.AddAndSubtract;
             m_WeightEditor.boneIndex = 1;
             m_WeightEditor.emptySelectionEditsAll = false;
             m_WeightEditor.OnEditStart(false);
@@ -304,7 +304,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
             m_Selection.IsSelected(1).Returns(true);
             m_Selection.IsSelected(2).Returns(true);
 
-            m_WeightEditor.mode = WeightEditorMode.Set;
+            m_WeightEditor.mode = WeightEditorMode.AddAndSubtract;
             m_WeightEditor.boneIndex = 1;
             m_WeightEditor.emptySelectionEditsAll = false;
             m_WeightEditor.OnEditStart(false);
@@ -338,7 +338,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
             m_Selection.IsSelected(1).Returns(true);
             m_Selection.IsSelected(2).Returns(true);
 
-            m_WeightEditor.mode = WeightEditorMode.Set;
+            m_WeightEditor.mode = WeightEditorMode.AddAndSubtract;
             m_WeightEditor.boneIndex = 1;
             m_WeightEditor.emptySelectionEditsAll = false;
             m_WeightEditor.OnEditStart(false);
@@ -372,7 +372,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
             m_Selection.IsSelected(1).Returns(true);
             m_Selection.IsSelected(2).Returns(true);
 
-            m_WeightEditor.mode = WeightEditorMode.Set;
+            m_WeightEditor.mode = WeightEditorMode.AddAndSubtract;
             m_WeightEditor.boneIndex = 1;
             m_WeightEditor.emptySelectionEditsAll = false;
             m_WeightEditor.OnEditStart(false);
@@ -403,13 +403,13 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
             m_WeightEditor.emptySelectionEditsAll = false;
 
             //First we set some influence
-            m_WeightEditor.mode = WeightEditorMode.Set;
+            m_WeightEditor.mode = WeightEditorMode.AddAndSubtract;
             m_WeightEditor.OnEditStart(false);
             m_WeightEditor.DoEdit(0.1f);
             m_WeightEditor.OnEditEnd();
 
             //Second we increment it
-            m_WeightEditor.mode = WeightEditorMode.Increment;
+            m_WeightEditor.mode = WeightEditorMode.GrowAndShrink;
             m_WeightEditor.OnEditStart(false);
             m_WeightEditor.DoEdit(0.75f);
             m_WeightEditor.OnEditEnd();
@@ -430,13 +430,13 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
             m_WeightEditor.emptySelectionEditsAll = true;
 
             //First we set some influence
-            m_WeightEditor.mode = WeightEditorMode.Set;
+            m_WeightEditor.mode = WeightEditorMode.AddAndSubtract;
             m_WeightEditor.OnEditStart(false);
             m_WeightEditor.DoEdit(0.1f);
             m_WeightEditor.OnEditEnd();
 
             //Second we increment it
-            m_WeightEditor.mode = WeightEditorMode.Increment;
+            m_WeightEditor.mode = WeightEditorMode.GrowAndShrink;
             m_WeightEditor.OnEditStart(false);
             m_WeightEditor.DoEdit(0.75f);
             m_WeightEditor.OnEditEnd();
@@ -459,7 +459,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
             m_WeightEditor.emptySelectionEditsAll = true;
 
             //First we set some influence
-            m_WeightEditor.mode = WeightEditorMode.Set;
+            m_WeightEditor.mode = WeightEditorMode.AddAndSubtract;
             m_WeightEditor.OnEditStart(false);
             m_WeightEditor.DoEdit(0.1f);
             m_WeightEditor.OnEditEnd();
@@ -470,7 +470,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
             m_Selection.IsSelected(2).Returns(true);
 
             //Second we increment it
-            m_WeightEditor.mode = WeightEditorMode.Increment;
+            m_WeightEditor.mode = WeightEditorMode.GrowAndShrink;
             m_WeightEditor.OnEditStart(false);
             m_WeightEditor.DoEdit(0.75f);
             m_WeightEditor.OnEditEnd();
@@ -503,7 +503,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
             m_Selection.IsSelected(2).Returns(true);
             m_Selection.IsSelected(3).Returns(true);
 
-            m_WeightEditor.mode = WeightEditorMode.Set;
+            m_WeightEditor.mode = WeightEditorMode.AddAndSubtract;
             m_WeightEditor.boneIndex = 1;
             m_WeightEditor.emptySelectionEditsAll = false;
             m_WeightEditor.OnEditStart(false);
@@ -527,36 +527,41 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTes
             expected.boneIndex1 = 1;
             expected.weight1 = 0.25f;
 
-            AssertBoneWeight(expected, m_SpriteMeshData.vertices[0].editableBoneWeight.ToBoneWeight(true));
+            AssertBoneWeight(expected, m_SpriteMeshData.vertices[0].editableBoneWeight.ToBoneWeight(false));
 
+            expected = new BoneWeight();
             expected.boneIndex0 = 0;
             expected.weight0 = 0.625f;
             expected.boneIndex1 = 1;
             expected.weight1 = 0.375f;
 
-            AssertBoneWeight(expected, m_SpriteMeshData.vertices[1].editableBoneWeight.ToBoneWeight(true));
+            AssertBoneWeight(expected, m_SpriteMeshData.vertices[1].editableBoneWeight.ToBoneWeight(false));
 
+            expected = new BoneWeight();
             expected.boneIndex0 = 1;
             expected.weight0 = 0.666666687f;
             expected.boneIndex1 = 0;
-            expected.weight1 = 0.333333343f;
+            expected.weight1 = 0.333333313f;
 
-            AssertBoneWeight(expected, m_SpriteMeshData.vertices[2].editableBoneWeight.ToBoneWeight(true));
+            AssertBoneWeight(expected, m_SpriteMeshData.vertices[2].editableBoneWeight.ToBoneWeight(false));
 
+            expected = new BoneWeight();
             expected.boneIndex0 = 1;
             expected.weight0 = 0.666666687f;
             expected.boneIndex1 = 0;
-            expected.weight1 = 0.333333343f;
+            expected.weight1 = 0.333333313f;
 
-            AssertBoneWeight(expected, m_SpriteMeshData.vertices[3].editableBoneWeight.ToBoneWeight(true));
+            AssertBoneWeight(expected, m_SpriteMeshData.vertices[3].editableBoneWeight.ToBoneWeight(false));
 
+            expected = new BoneWeight();
             expected.boneIndex0 = 0;
             expected.weight0 = 0.625f;
             expected.boneIndex1 = 1;
             expected.weight1 = 0.375f;
 
-            AssertBoneWeight(expected, m_SpriteMeshData.vertices[4].editableBoneWeight.ToBoneWeight(true));
+            AssertBoneWeight(expected, m_SpriteMeshData.vertices[4].editableBoneWeight.ToBoneWeight(false));
 
+            expected = new BoneWeight();
             expected.boneIndex0 = 0;
             expected.weight0 = 0.75f;
             expected.boneIndex1 = 1;

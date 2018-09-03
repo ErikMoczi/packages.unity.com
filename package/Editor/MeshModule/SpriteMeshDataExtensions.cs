@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEditor;
+using System;
 using System.Collections.Generic;
 
 namespace UnityEditor.Experimental.U2D.Animation
@@ -81,6 +82,13 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
+        public static void NormalizeWeights(this SpriteMeshData spriteMeshData, ISelection selection)
+        {
+            for (int i = 0; i < spriteMeshData.vertices.Count; ++i)
+                if (selection == null || (selection.Count == 0 || selection.IsSelected(i)))
+                    spriteMeshData.vertices[i].editableBoneWeight.NormalizeChannels();
+        }
+
         public static void CalculateWeightsSafe(this SpriteMeshData spriteMeshData, IWeightsGenerator weightsGenerator, ISelection selection, float filterTolerance)
         {
             SerializableSelection tempSelection = new SerializableSelection();
@@ -120,7 +128,10 @@ namespace UnityEditor.Experimental.U2D.Animation
                     EditableBoneWeight editableBoneWeight = EditableBoneWeightUtility.CreateFromBoneWeight(boneWeights[i]);
 
                     if (filterTolerance > 0f)
+                    {
                         editableBoneWeight.FilterChannels(filterTolerance);
+                        editableBoneWeight.NormalizeChannels();
+                    }
 
                     spriteMeshData.vertices[i].editableBoneWeight = editableBoneWeight;
                 }
@@ -155,6 +166,88 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
 
             return false;
+        }
+
+        public static void GetMultiEditChannelData(this SpriteMeshData spriteMeshData, ISelection selection, int channelIndex,
+            out bool channelEnabled, out BoneWeightData boneWeightData,
+            out bool isChannelEnabledMixed, out bool isBoneIndexMixed, out bool isWeightMixed)
+        {
+            if (selection == null)
+                throw new ArgumentNullException("selection is null");
+
+            bool first = true;
+            channelEnabled = false;
+            boneWeightData = new BoneWeightData();
+            isChannelEnabledMixed = false;
+            isBoneIndexMixed = false;
+            isWeightMixed = false;
+
+            foreach (int i in selection)
+            {
+                EditableBoneWeight editableBoneWeight = spriteMeshData.vertices[i].editableBoneWeight;
+
+                BoneWeightData otherBoneWeightData = editableBoneWeight.GetBoneWeightData(channelIndex);
+
+                if (first)
+                {
+                    channelEnabled = editableBoneWeight.IsChannelEnabled(channelIndex);
+                    boneWeightData.boneIndex = otherBoneWeightData.boneIndex;
+                    boneWeightData.weight = otherBoneWeightData.weight;
+
+                    first = false;
+                }
+                else
+                {
+                    if (channelEnabled != editableBoneWeight.IsChannelEnabled(channelIndex))
+                    {
+                        isChannelEnabledMixed = true;
+                        channelEnabled = false;
+                    }
+
+                    if (boneWeightData.boneIndex != otherBoneWeightData.boneIndex)
+                    {
+                        isBoneIndexMixed = true;
+                        boneWeightData.boneIndex = -1;
+                    }
+
+                    if (boneWeightData.weight != otherBoneWeightData.weight)
+                    {
+                        isWeightMixed = true;
+                        boneWeightData.weight = 0f;
+                    }
+                }
+            }
+        }
+
+        public static void SetMultiEditChannelData(this SpriteMeshData spriteMeshData, ISelection selection, int channelIndex,
+            bool referenceChannelEnabled, bool newChannelEnabled,  BoneWeightData referenceData, BoneWeightData newData)
+        {
+            if (selection == null)
+                throw new ArgumentNullException("selection is null");
+
+            bool channelEnabledChanged = referenceChannelEnabled != newChannelEnabled;
+            bool boneIndexChanged = referenceData.boneIndex != newData.boneIndex;
+            bool weightChanged = referenceData.weight != newData.weight;
+
+            foreach (int i in selection)
+            {
+                EditableBoneWeight editableBoneWeight = spriteMeshData.vertices[i].editableBoneWeight;
+                BoneWeightData data = editableBoneWeight.GetBoneWeightData(channelIndex);
+
+                if (channelEnabledChanged)
+                    editableBoneWeight.EnableChannel(channelIndex, newChannelEnabled);
+
+                if (boneIndexChanged)
+                    data.boneIndex = newData.boneIndex;
+
+                if (weightChanged)
+                    data.weight = newData.weight;
+
+                editableBoneWeight.SetBoneWeightData(channelIndex, data);
+
+                if (channelEnabledChanged || weightChanged)
+                    editableBoneWeight.CompensateOtherChannels(channelIndex);
+            }
         }
 
         public static void GetControlPoints(this SpriteMeshData spriteMeshData, out Vector2[] points, out Edge[] edges)

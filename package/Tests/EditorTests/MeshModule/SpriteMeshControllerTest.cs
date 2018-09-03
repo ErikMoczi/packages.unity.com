@@ -128,7 +128,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshContr
             m_SpriteMeshData.bones.Add(new SpriteBone());
             m_SpriteMeshData.bones.Add(new SpriteBone());
 
-            m_MousePosition = new Vector2(0.5f, 0.5f);
+            m_MousePosition = new Vector2(0.25f, 0.75f);
 
             m_View.DoCreateVertex().Returns(true);
 
@@ -136,14 +136,14 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshContr
 
             Assert.AreEqual(5, m_SpriteMeshData.vertices.Count, "Incorrect number of vertices");
 
-            Assert.AreEqual(2, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(0).boneIndex, "Index is incorrect");
+            Assert.AreEqual(3, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(0).boneIndex, "Index is incorrect");
             Assert.AreEqual(0, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(1).boneIndex, "Index is incorrect");
-            Assert.AreEqual(1, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(2).boneIndex, "Index is incorrect");
+            Assert.AreEqual(2, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(2).boneIndex, "Index is incorrect");
             Assert.AreEqual(0, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(3).boneIndex, "Index is incorrect");
 
             Assert.AreEqual(0.5f, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(0).weight, "Weight is incorrect");
-            Assert.AreEqual(0.5f, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(1).weight, "Weight is incorrect");
-            Assert.AreEqual(0.0f, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(2).weight, "Weight is incorrect");
+            Assert.AreEqual(0.25f, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(1).weight, "Weight is incorrect");
+            Assert.AreEqual(0.25f, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(2).weight, "Weight is incorrect");
             Assert.AreEqual(0.0f, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(3).weight, "Weight is incorrect");
         }
 
@@ -499,7 +499,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshContr
         }
 
         [Test]
-        public void SplitEdge()
+        public void SplitEdge_CreatesVertexAtMousePosition_CreatesTwoEdges_InterpolatesWeights()
         {
             Vector2 position1 = Vector2.up * 10f;
             Vector2 position2 = Vector2.right * 10f;
@@ -507,6 +507,12 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshContr
             m_SpriteMeshData.CreateVertex(position1);
             m_SpriteMeshData.CreateVertex(position2);
             m_SpriteMeshData.CreateEdge(0, 1);
+
+            m_SpriteMeshData.vertices[0].editableBoneWeight.SetFromBoneWeight(new BoneWeight() { boneIndex0 = 0, weight0 = 1f });
+            m_SpriteMeshData.vertices[1].editableBoneWeight.SetFromBoneWeight(new BoneWeight() { boneIndex0 = 1, weight0 = 1f });
+
+            m_SpriteMeshData.bones.Add(new SpriteBone());
+            m_SpriteMeshData.bones.Add(new SpriteBone());
 
             m_HoveredVertex = -1;
             m_HoveredEdge = -1;
@@ -522,6 +528,17 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshContr
             AssertEdge(new Edge(0, 2), m_SpriteMeshData.edges[0]);
             AssertEdge(new Edge(1, 2), m_SpriteMeshData.edges[1]);
             Assert.AreEqual(createPosition, m_SpriteMeshData.vertices[2].position, "Vertex position is incorrect");
+
+            Assert.AreEqual(0, m_SpriteMeshData.vertices[2].editableBoneWeight.GetBoneWeightData(0).boneIndex, "Index is incorrect");
+            Assert.AreEqual(1, m_SpriteMeshData.vertices[2].editableBoneWeight.GetBoneWeightData(1).boneIndex, "Index is incorrect");
+            Assert.AreEqual(0, m_SpriteMeshData.vertices[2].editableBoneWeight.GetBoneWeightData(2).boneIndex, "Index is incorrect");
+            Assert.AreEqual(0, m_SpriteMeshData.vertices[2].editableBoneWeight.GetBoneWeightData(3).boneIndex, "Index is incorrect");
+
+            Assert.AreEqual(0.5f, m_SpriteMeshData.vertices[2].editableBoneWeight.GetBoneWeightData(0).weight, "Weight is incorrect");
+            Assert.AreEqual(0.5f, m_SpriteMeshData.vertices[2].editableBoneWeight.GetBoneWeightData(1).weight, "Weight is incorrect");
+            Assert.AreEqual(0f, m_SpriteMeshData.vertices[2].editableBoneWeight.GetBoneWeightData(2).weight, "Weight is incorrect");
+            Assert.AreEqual(0f, m_SpriteMeshData.vertices[2].editableBoneWeight.GetBoneWeightData(3).weight, "Weight is incorrect");
+
             m_UndoObject.Received().RegisterCompleteObjectUndo(Arg.Any<string>());
             m_Triangulator.Received().Triangulate(Arg.Any<IList<Vector2>>(), Arg.Any<IList<Edge>>(), Arg.Any<IList<int>>());
         }

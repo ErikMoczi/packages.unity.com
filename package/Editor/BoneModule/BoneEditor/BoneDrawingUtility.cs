@@ -34,7 +34,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             Color c = Handles.color;
             Handles.color = color;
 
-            CommonDrawingUtility.DrawLine(startPos, endPos, Vector3.back, GetBoneRadius(scale), 0f);
+            CommonDrawingUtility.DrawLine(startPos, endPos, Vector3.back, GetBoneRadius(scale), GetBoneRadius(scale) * 0.05f);
 
             Handles.color = c;
         }
@@ -54,6 +54,13 @@ namespace UnityEditor.Experimental.U2D.Animation
         public static void DrawParentLink(Vector3 startPos, Vector3 endPos, Color color, float scale = 1.0f)
         {
             CommonDrawingUtility.DrawLine(startPos, endPos, Vector3.back, GetBoneRadius(scale) * 0.1f, GetBoneRadius(scale) * 0.1f, color);
+            
+            var dir = (startPos - endPos).normalized;
+            var arrowTipPoint = Vector3.Lerp(startPos, endPos, 0.5f);
+            var arrowWingPoint = arrowTipPoint + dir * GetBoneRadius(scale);
+
+            // Arrow
+            CommonDrawingUtility.DrawLine(arrowWingPoint, arrowTipPoint, Vector3.back, GetBoneRadius(0.7f), 0.0f, color);
         }
     }
 }

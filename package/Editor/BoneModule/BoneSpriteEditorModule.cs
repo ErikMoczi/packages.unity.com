@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 
 using UnityEngine;
-using UnityEngine.Experimental.U2D;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -13,49 +11,23 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         GUID m_CurrentSpriteRectGUID;
 
-        Dictionary<GUID, List<SpriteBone>> m_SpriteBoneCache;
+        BoneCacheManager m_BoneCacheManager;
 
-        const float kToolbarHeight = 16f;
-        const float kInspectorWindowMargin = 8f;
-        const float kInspectorWidth = 200f;
-        const float kInspectorHeight = 45f;
-        const float kInfoWindowHeight = 45f;
-
-        private Rect toolbarWindowRect
+        IBoneSpriteEditorModuleView m_SpriteEditorModuleView;
+        public IBoneSpriteEditorModuleView spriteEditorModuleView
         {
-            get
-            {
-                Rect position = spriteEditor.windowDimension;
-                return new Rect(
-                    position.width - kInspectorWidth - kInspectorWindowMargin,
-                    position.height - kInspectorHeight - kInspectorWindowMargin + kToolbarHeight,
-                    kInspectorWidth,
-                    kInspectorHeight);
-            }
+            get { return m_SpriteEditorModuleView; }
+            set { m_SpriteEditorModuleView = value; }
         }
 
-        private Rect infoWindowRect
-        {
-            get
-            {
-                Rect position = spriteEditor.windowDimension;
-                return new Rect(
-                    toolbarWindowRect.xMin,
-                    toolbarWindowRect.yMin - kInspectorWindowMargin - kInfoWindowHeight,
-                    kInspectorWidth,
-                    kInfoWindowHeight);
-            }
-        }
-        
         public override void DoMainGUI()
         {
-            var selected = spriteEditor.selectedSpriteRect;
-            if (selected != null)
+            if (spriteEditor.selectedSpriteRect != null)
             {
                 try
                 {
                     EditorGUI.BeginChangeCheck();
-                    m_BonePresenter.DoBone(selected.rect);
+                    m_BonePresenter.DoBone(spriteEditor.selectedSpriteRect.rect);
                     if (EditorGUI.EndChangeCheck())
                         spriteEditor.RequestRepaint();
                 }
@@ -63,18 +35,11 @@ namespace UnityEditor.Experimental.U2D.Animation
                 {
                     Debug.LogError(e.Message);
                 }
-
-                if (Event.current != null && Event.current.type == EventType.Repaint)
-                {
-                    CommonDrawingUtility.BeginLines(Color.green);
-                    CommonDrawingUtility.DrawBox(selected.rect);
-                    CommonDrawingUtility.EndLines();
-                }
             }
 
-            if (m_BonePresenter.AllowClickAway()
-                && !MouseOnTopOfInspector()
-                && spriteEditor.HandleSpriteSelection())
+            spriteEditorModuleView.DrawSpriteRectBorder();
+
+            if (spriteEditorModuleView.HandleSpriteSelection())
             {
                 PreSelectedSpriteRectChange(m_CurrentSpriteRectGUID);
 
@@ -86,14 +51,15 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public override void DoToolbarGUI(Rect drawArea)
         {
+
         }
 
         public override void DoPostGUI()
         {
             if (spriteEditor.selectedSpriteRect != null)
             {
-                m_BonePresenter.DoTool(toolbarWindowRect);
-                m_BonePresenter.DoInfoPanel(infoWindowRect);
+                m_BonePresenter.DoTool(spriteEditorModuleView.toolbarWindowRect);
+                m_BonePresenter.DoInfoPanel(spriteEditorModuleView.infoWindowRect);
             }
         }
 
@@ -101,7 +67,9 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             Undo.undoRedoPerformed += UndoRedoPerformed;
 
-            m_SpriteBoneCache = new Dictionary<GUID, List<SpriteBone>>();
+            m_BoneCacheManager = new BoneCacheManager(spriteEditor.GetDataProvider<ISpriteBoneDataProvider>(), spriteEditor.GetDataProvider<ISpriteMeshDataProvider>());
+            
+            m_SpriteEditorModuleView = new BoneSpriteEditorModuleView(spriteEditor);
             
             var model = new BoneModel(spriteEditor.SetDataModified);
             var hierarchyView = new BoneHierarchyView();
@@ -118,8 +86,9 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             Undo.undoRedoPerformed -= UndoRedoPerformed;
 
-            m_SpriteBoneCache.Clear();
-            m_SpriteBoneCache = null;
+            m_BoneCacheManager.CleanUp();
+            m_BoneCacheManager = null;
+            m_SpriteEditorModuleView = null;
             m_BonePresenter = null;
         }
 
@@ -144,7 +113,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             get
             {
-                return "Bone";
+                return "Bone Editor";
             }
         }
 
@@ -152,25 +121,19 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             if (spriteEditor.selectedSpriteRect != null && m_CurrentSpriteRectGUID != spriteEditor.selectedSpriteRect.spriteID)
             {
+                PreSelectedSpriteRectChange(m_CurrentSpriteRectGUID);
                 m_CurrentSpriteRectGUID = spriteEditor.selectedSpriteRect.spriteID;
                 PostSelectedSpriteRectChange(m_CurrentSpriteRectGUID);
             }
         }
 
-        private List<SpriteBone> LoadBoneFromDataProvider(GUID spriteID)
-        {
-            var boneProvider = spriteEditor.GetDataProvider<UnityEditor.Experimental.U2D.ISpriteBoneDataProvider>();
-
-            return boneProvider.GetBones(spriteID);
-        }
-
         private void PreSelectedSpriteRectChange(GUID spriteID)
         {
-            if (spriteID.Empty() || m_SpriteBoneCache == null)
+            if (spriteID.Empty() || m_BoneCacheManager == null)
                 return;
 
-            List<SpriteBone> bones = m_BonePresenter.GetRawData();
-            m_SpriteBoneCache[spriteID] = bones;
+            var bones = m_BonePresenter.GetRawData();
+            m_BoneCacheManager.SetSpriteBoneRawData(spriteID, bones);
         }
 
         private void PostSelectedSpriteRectChange(GUID spriteID)
@@ -178,31 +141,14 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (spriteID.Empty())
                 return;
 
-            List<SpriteBone> bones;
-            if (!m_SpriteBoneCache.TryGetValue(spriteID, out bones))
-            {
-                bones = LoadBoneFromDataProvider(spriteID);
-                m_SpriteBoneCache.Add(spriteID, bones);
-            }
-
+            var bones = m_BoneCacheManager.GetSpriteBoneRawData(spriteID);
             m_BonePresenter.SetRawData(bones, spriteEditor.selectedSpriteRect.rect.position);
         }
 
         private void Apply()
         {
-            var dataProvider = spriteEditor.GetDataProvider<ISpriteBoneDataProvider>();
-            foreach (var p in m_SpriteBoneCache)
-                dataProvider.SetBones(p.Key, p.Value);
+            m_BoneCacheManager.Apply();
         }
 
-        private bool MouseOnTopOfInspector()
-        {
-            if (Event.current == null || Event.current.type != EventType.MouseDown)
-                return false;
-
-            // GUIClip.Unclip sets the mouse position to include the windows tab.
-            Vector2 mousePosition = GUIClip.Unclip(Event.current.mousePosition) - (GUIClip.topmostRect.position - GUIClip.GetTopRect().position);
-            return toolbarWindowRect.Contains(mousePosition) || infoWindowRect.Contains(mousePosition);
-        }
     }
 }

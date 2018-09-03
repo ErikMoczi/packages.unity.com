@@ -13,7 +13,6 @@ using UnityEditor.Experimental.U2D.Animation.Test.MeshModule.WeightEditorTest;
 namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.BoundedBiharmonicWeightsTest
 {
     [TestFixture]
-    [Ignore("Can't load biharmonic dll in Mac")]
     internal class BoundedBiharmonicWeightsTest : WeightEditorTestBase
     {
         private void AppendIsolatedRegion()

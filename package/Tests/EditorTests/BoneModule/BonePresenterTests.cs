@@ -36,12 +36,14 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
         {
             var root = Substitute.For<IBone>();
             IBone nullBone = null;
+            root.name.Returns("root");
             root.parent.Returns(nullBone);
             root.isRoot.Returns(true);
             root.position.Returns(Vector3.zero);
             root.tip.Returns(Vector3.one);
 
             var child = Substitute.For<IBone>();
+            child.name.Returns("child");
             child.parent.Returns(root);
             child.isRoot.Returns(false);
             child.position.Returns(Vector3.one);
@@ -90,6 +92,61 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             
             var bones = new List<IBone>();
             bones.Add(root);
+
+            m_ModelMock.bones.Returns(bones.AsEnumerable());
+
+            return bones;
+        }
+
+        //
+        //  R--C1--C2--
+        //      |(C1 tip pointed to C2, C2 & C3 are children of C1)
+        //     C3--C4--
+        //
+        protected List<IBone> GenerateComplexHierachy()
+        {
+            var root = Substitute.For<IBone>();
+            IBone nullBone = null;
+            root.name.Returns("root");
+            root.parent.Returns(nullBone);
+            root.isRoot.Returns(true);
+            root.position.Returns(Vector3.zero);
+            root.tip.Returns(Vector3.right);
+
+            var child1 = Substitute.For<IBone>();
+            child1.name.Returns("child1");
+            child1.parent.Returns(root);
+            child1.isRoot.Returns(false);
+            child1.position.Returns(Vector3.right);
+            child1.tip.Returns(Vector3.right * 2);
+
+            var child2 = Substitute.For<IBone>();
+            child2.name.Returns("child2");
+            child2.parent.Returns(child1);
+            child2.isRoot.Returns(false);
+            child2.position.Returns(Vector3.right * 2);
+            child2.tip.Returns(Vector3.right * 3);
+
+            var child3 = Substitute.For<IBone>();
+            child3.name.Returns("child3");
+            child3.parent.Returns(child1);
+            child3.isRoot.Returns(false);
+            child3.position.Returns(Vector3.one);
+            child3.tip.Returns(Vector3.one * 2);
+
+            var child4 = Substitute.For<IBone>();
+            child4.name.Returns("child4");
+            child4.parent.Returns(child3);
+            child4.isRoot.Returns(false);
+            child4.position.Returns(Vector3.one * 2);
+            child4.tip.Returns(Vector3.one * 3);
+
+            var bones = new List<IBone>();
+            bones.Add(root);
+            bones.Add(child1);
+            bones.Add(child2);
+            bones.Add(child3);
+            bones.Add(child4);
 
             m_ModelMock.bones.Returns(bones.AsEnumerable());
 
@@ -170,14 +227,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             m_HierarchyViewMock.Received(2).DrawBone(Arg.Any<IBone>(), Arg.Any<bool>());
             m_HierarchyViewMock.Received(1).DrawBone(root, unselected);
             m_HierarchyViewMock.Received(1).DrawBone(child, selected);
-
-            // Child's link to parent is drawn regardless of position during selected state.
-            m_HierarchyViewMock.DidNotReceive().DrawLinkToParent(root, Arg.Any<bool>());
-            m_HierarchyViewMock.DidNotReceive().DrawLinkToParent(child, unselected);
-            m_HierarchyViewMock.Received(1).DrawLinkToParent(child, selected);
-
-            // Root's tip is drawn to show the link from child to root.
-            m_HierarchyViewMock.Received(1).DrawTip(root);
+            
+            m_HierarchyViewMock.DidNotReceiveWithAnyArgs().DrawLinkToParent(Arg.Any<IBone>(), Arg.Any<bool>());
+            
+            m_HierarchyViewMock.DidNotReceive().DrawTip(root);
             m_HierarchyViewMock.Received(1).DrawTip(child);
 
             m_HierarchyViewMock.DidNotReceiveWithAnyArgs().DrawPreviewLinkFromBone(null);
@@ -529,19 +582,173 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             Assert.IsFalse(m_BonePresenter.state.normalCreatingRoot);
         }
 
+        public enum ToolToggleMode
+        {
+            NormalCreation,
+            FreeCreation,
+            FreeMove,
+            Parenting
+        }
+
+        private static IEnumerable<TestCaseData> ToggleSwappingTestCase()
+        {
+            // From normal creation to other states
+            var original = new BoneEditorState();
+            original.normalCreating = true;
+
+            var expecting = new BoneEditorState();
+            expecting.freeCreating = true;
+            expecting.freeCreatingBone = true;
+
+            var testCaseData = new TestCaseData(original.Clone(), ToolToggleMode.FreeCreation, expecting.Clone());
+            testCaseData.SetName("Normal Creation entering Free Creation");
+            yield return testCaseData;
+
+            expecting.Reset();
+            expecting.freeMoving = true;
+            testCaseData = new TestCaseData(original.Clone(), ToolToggleMode.FreeMove, expecting.Clone());
+            testCaseData.SetName("Normal Creation entering Free Move");
+            yield return testCaseData;
+
+            expecting.Reset();
+            expecting.parenting = true;
+            testCaseData = new TestCaseData(original.Clone(), ToolToggleMode.Parenting, expecting.Clone());
+            testCaseData.SetName("Normal Creation entering Parenting");
+            yield return testCaseData;
+
+            // From free creation to other states
+            original.Reset();
+            original.freeCreating = true;
+
+            expecting.Reset();
+            expecting.normalCreating = true;
+            expecting.normalCreatingRoot = true;
+
+            testCaseData = new TestCaseData(original.Clone(), ToolToggleMode.NormalCreation, expecting.Clone());
+            testCaseData.SetName("Free Creation entering Normal Creation");
+            yield return testCaseData;
+
+            expecting.Reset();
+            expecting.freeMoving = true;
+            testCaseData = new TestCaseData(original.Clone(), ToolToggleMode.FreeMove, expecting.Clone());
+            testCaseData.SetName("Free Creation entering Free Move");
+            yield return testCaseData;
+
+            expecting.Reset();
+            expecting.parenting = true;
+            testCaseData = new TestCaseData(original.Clone(), ToolToggleMode.Parenting, expecting.Clone());
+            testCaseData.SetName("Free Creation entering Parenting");
+            yield return testCaseData;
+
+            // From free move to other states
+            original.Reset();
+            original.freeMoving = true;
+
+            expecting.Reset();
+            expecting.normalCreating = true;
+            expecting.normalCreatingRoot = true;
+
+            testCaseData = new TestCaseData(original.Clone(), ToolToggleMode.NormalCreation, expecting.Clone());
+            testCaseData.SetName("Free Moving entering Normal Creation");
+            yield return testCaseData;
+
+            expecting.Reset();
+            expecting.freeCreating = true;
+            expecting.freeCreatingBone = true;
+            testCaseData = new TestCaseData(original.Clone(), ToolToggleMode.FreeCreation, expecting.Clone());
+            testCaseData.SetName("Free Moving entering Free Creation");
+            yield return testCaseData;
+
+            expecting.Reset();
+            expecting.parenting = true;
+            testCaseData = new TestCaseData(original.Clone(), ToolToggleMode.Parenting, expecting.Clone());
+            testCaseData.SetName("Free Moving entering Parenting");
+            yield return testCaseData;
+
+            // From parenting to other states
+            original.Reset();
+            original.parenting = true;
+
+            expecting.Reset();
+            expecting.normalCreating = true;
+            expecting.normalCreatingRoot = true;
+
+            testCaseData = new TestCaseData(original.Clone(), ToolToggleMode.NormalCreation, expecting.Clone());
+            testCaseData.SetName("Parenting entering Normal Creation");
+            yield return testCaseData;
+
+            expecting.Reset();
+            expecting.freeCreating = true;
+            expecting.freeCreatingBone = true;
+            testCaseData = new TestCaseData(original.Clone(), ToolToggleMode.FreeCreation, expecting.Clone());
+            testCaseData.SetName("Parenting entering Free Creation");
+            yield return testCaseData;
+
+            expecting.Reset();
+            expecting.freeMoving = true;
+            testCaseData = new TestCaseData(original.Clone(), ToolToggleMode.FreeMove, expecting.Clone());
+            testCaseData.SetName("Parenting entering Free Moving");
+            yield return testCaseData;
+        }
+
+        [Test, TestCaseSource("ToggleSwappingTestCase")]
+        public void EnterAnotherToggleMode_DeactivatePreviousToggledState(BoneEditorState originalState, ToolToggleMode enteringMode, BoneEditorState expectingState)
+        {
+            // These setup to mimic how toggle button works, when a state was "true" the toggle button will return "true"
+            m_ToolViewMock.HandleCreate(originalState.normalCreating, true).Returns(originalState.normalCreating);
+            m_ToolViewMock.HandleFreeCreate(originalState.freeCreating, true).Returns(originalState.freeCreating);
+            m_ToolViewMock.HandleMove(originalState.freeMoving, false).Returns(originalState.freeMoving);
+            m_ToolViewMock.HandleParent(originalState.parenting, false).Returns(originalState.parenting);
+
+            // These setup to mimic a click on a deactivated toggle button.
+            switch (enteringMode)
+            {
+                case ToolToggleMode.NormalCreation:
+                    m_ToolViewMock.HandleCreate(Arg.Any<bool>(), Arg.Any<bool>()).Returns(true);
+                    break;
+                case ToolToggleMode.FreeCreation:
+                    m_ToolViewMock.HandleFreeCreate(Arg.Any<bool>(), Arg.Any<bool>()).Returns(true);
+                    break;
+                case ToolToggleMode.FreeMove:
+                    m_ToolViewMock.HandleMove(Arg.Any<bool>(), Arg.Any<bool>()).Returns(true);
+                    break;
+                case ToolToggleMode.Parenting:
+                    m_ToolViewMock.HandleParent(Arg.Any<bool>(), Arg.Any<bool>()).Returns(true);
+                    break;
+            }
+
+            m_BonePresenter.state = originalState;
+
+            m_BonePresenter.DoTool(new Rect());
+
+            Assert.AreEqual(expectingState, m_BonePresenter.state);
+        }
+
         private static IEnumerable<TestCaseData> ToggleModeTestCase()
         {
             var state = new BoneEditorState();
             state.normalCreating = true;
-            yield return new TestCaseData(state);
+            var testCaseData = new TestCaseData(state);
+            testCaseData.SetName("Normal Creation");
+            yield return testCaseData;
 
             state = new BoneEditorState();
             state.freeCreating = true;
-            yield return new TestCaseData(state);
+            testCaseData = new TestCaseData(state);
+            testCaseData.SetName("Free Creation");
+            yield return testCaseData;
+
+            state = new BoneEditorState();
+            state.freeMoving = true;
+            testCaseData = new TestCaseData(state);
+            testCaseData.SetName("Free Move");
+            yield return testCaseData;
 
             state = new BoneEditorState();
             state.parenting = true;
-            yield return new TestCaseData(state);
+            testCaseData = new TestCaseData(state);
+            testCaseData.SetName("Parenting");
+            yield return testCaseData;
         }
 
         [Test, TestCaseSource("ToggleModeTestCase")]
@@ -560,14 +767,122 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             Assert.IsFalse(m_BonePresenter.state.freeCreatingBone);
             Assert.IsFalse(m_BonePresenter.state.normalCreatingRoot);
         }
-        
-        [Test, TestCaseSource("ToggleModeTestCase")]
-        public void DuringAnyToggleState_DoNotAllowClickAway(BoneEditorState state)
+    }
+
+    [TestFixture]
+    internal class PresenterInfoViewTest : BonePresenterTestBase
+    {
+        [Test]
+        public void WithNoBoneSelected_SkipShowingInfo()
         {
+            var bones = GenerateAttachedRootAndChild();
+
+            m_BonePresenter.DoInfoPanel(Rect.zero);
+
+            string dummyName = "";
+            m_InfoViewMock.DidNotReceiveWithAnyArgs().HandleName(ref dummyName);
+            m_InfoViewMock.DidNotReceiveWithAnyArgs().HandleNextSelection();
+        }
+
+        [Test]
+        public void WithMultipleBoneSelected_SkipShowingInfo()
+        {
+            var bones = GenerateAttachedRootAndChild();
+            var root = bones[0];
+            var child = bones[1];
+
+            var state = new BoneEditorState();
+            state.selectedBones.Add(root);
+            state.selectedBones.Add(child);
             m_BonePresenter.state = state;
 
-            Assert.IsFalse(m_BonePresenter.AllowClickAway());
+            m_BonePresenter.DoInfoPanel(Rect.zero);
+
+            string dummyName = "";
+            m_InfoViewMock.DidNotReceiveWithAnyArgs().HandleName(ref dummyName);
+            m_InfoViewMock.DidNotReceiveWithAnyArgs().HandleNextSelection();
         }
+
+        [Test]
+        public void WithRootBoneSelected_ShowRootInfo()
+        {
+            var bones = GenerateAttachedRootAndChild();
+            var root = bones[0];
+
+            var state = new BoneEditorState();
+            state.selectedBones.Add(root);
+            m_BonePresenter.state = state;
+
+            m_BonePresenter.DoInfoPanel(Rect.zero);
+
+            string dummyName = "root";
+            m_InfoViewMock.ReceivedWithAnyArgs(1).HandleName(ref dummyName);
+            m_InfoViewMock.Received(1).HandleName(ref dummyName);
+        }
+
+        [Test]
+        public void ChangingNameWillUpdateModel()
+        {
+            var bones = GenerateAttachedRootAndChild();
+            var root = bones[0];
+            
+            var state = new BoneEditorState();
+            state.selectedBones.Add(root);
+            m_BonePresenter.state = state;
+
+            string dummyName = "root";
+            m_InfoViewMock.HandleName(ref dummyName).Returns(x => 
+                {
+                    x[0] = "root_changed";
+                    return true;
+                });
+
+            m_BonePresenter.DoInfoPanel(Rect.zero);
+
+            m_ModelMock.Received(1).SetBoneName(root, "root_changed");
+        }
+
+        private static IEnumerable<TestCaseData> TabSelectionsTestCases()
+        {
+            yield return new TestCaseData(1, "child1");
+            yield return new TestCaseData(2, "child2");
+            yield return new TestCaseData(3, "child3");
+            yield return new TestCaseData(4, "child4");
+            yield return new TestCaseData(5, "root");
+        }
+
+        [Test, TestCaseSource("TabSelectionsTestCases")]
+        public void TabOnInfoView_SelectTheCorrectNextBone(int tabCount, string selectedBoneName)
+        {
+            var bones = GenerateComplexHierachy();
+            var root = bones[0];
+
+            var state = new BoneEditorState();
+            state.selectedBones.Add(root);
+            m_BonePresenter.state = state;
+
+            m_InfoViewMock.HandleNextSelection().Returns(true);
+
+            for (var i = 0; i < tabCount; ++i)
+                m_BonePresenter.DoInfoPanel(Rect.zero);
+
+            Assert.AreEqual(selectedBoneName, m_BonePresenter.state.selectedBones[0].name);
+        }
+
+        [Test]
+        public void ClickSelectABone_TriggerSelectionChangedOnInfoView()
+        {
+            var bones = GenerateAttachedRootAndChild();
+            var root = bones[0];
+            var child = bones[1];
+
+            m_HierarchyViewMock.HandleBoneSelect(child).Returns(true);
+
+            m_BonePresenter.DoBone(Rect.zero);
+
+            m_InfoViewMock.Received(1).SelectionChanged();
+        }
+
     }
 
     [TestFixture]
@@ -1136,56 +1451,6 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
     [TestFixture]
     internal class PresenterComplexHierachyTest : BonePresenterTestBase
     {
-        //
-        //  R--C1--C2--
-        //      |(C1 tip pointed to C2, C2 & C3 are children of C1)
-        //     C3--C4--
-        //
-        protected List<IBone> GenerateComplexHierachy()
-        {
-            var root = Substitute.For<IBone>();
-            IBone nullBone = null;
-            root.parent.Returns(nullBone);
-            root.isRoot.Returns(true);
-            root.position.Returns(Vector3.zero);
-            root.tip.Returns(Vector3.right);
-            
-            var child1 = Substitute.For<IBone>();
-            child1.parent.Returns(root);
-            child1.isRoot.Returns(false);
-            child1.position.Returns(Vector3.right);
-            child1.tip.Returns(Vector3.right * 2);
-            
-            var child2 = Substitute.For<IBone>();
-            child2.parent.Returns(child1);
-            child2.isRoot.Returns(false);
-            child2.position.Returns(Vector3.right * 2);
-            child2.tip.Returns(Vector3.right * 3);
-            
-            var child3 = Substitute.For<IBone>();
-            child3.parent.Returns(child1);
-            child3.isRoot.Returns(false);
-            child3.position.Returns(Vector3.one);
-            child3.tip.Returns(Vector3.one * 2);
-            
-            var child4 = Substitute.For<IBone>();
-            child4.parent.Returns(child3);
-            child4.isRoot.Returns(false);
-            child4.position.Returns(Vector3.one * 2);
-            child4.tip.Returns(Vector3.one * 3);
-
-            var bones = new List<IBone>();
-            bones.Add(root);
-            bones.Add(child1);
-            bones.Add(child2);
-            bones.Add(child3);
-            bones.Add(child4);
-            
-            m_ModelMock.bones.Returns(bones.AsEnumerable());
-
-            return bones;
-        }
-
         [Test]
         public void SelectedMultipleBone_DragIndividualNode_OnlyMoveThatNode()
         {

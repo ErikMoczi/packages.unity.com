@@ -17,13 +17,24 @@ namespace UnityEditor.Experimental.U2D.Animation
         private const int kNiceColorCount = 6;
 
         public SpriteMeshData spriteMeshdata { get; set; }
+        public float boneOpacity { get; set; }
         public ISelection selection { get; set; }
         public IUndoObject undoObject { get; set; }
+        public int defaultControlID { get; set; }
+        public int hoveredBone { get { return m_HoveredBone; } }
+
+        public BoneGUI()
+        {
+            boneOpacity = 1f;
+        }
 
         public void DoBoneGUI()
         {
             if (Event.current.type == EventType.Layout)
                 m_HoveredBone = -1;
+
+            if (GUIUtility.hotControl == 0 && HandleUtility.nearestControl == defaultControlID)
+                m_HoveredBoneControlID = -1;
 
             DrawBones();
             LayoutBones();
@@ -51,14 +62,17 @@ namespace UnityEditor.Experimental.U2D.Animation
                     HandleUtility.AddControl(controlID, MeshModuleUtility.DistanceToSegment(v1, v2));
 
                     if (HandleUtility.nearestControl == controlID)
+                    {
                         m_HoveredBone = i;
+                        m_HoveredBoneControlID = controlID;
+                    }
                 }
             }
         }
 
         private void HandleSelectBone()
         {
-            if (m_HoveredBone != -1 && !selection.IsSelected(m_HoveredBone)
+            if (HandleUtility.nearestControl == m_HoveredBoneControlID && !selection.IsSelected(m_HoveredBone)
                 && Event.current.type == EventType.MouseDown && Event.current.button == 0 && !Event.current.alt)
             {
                 undoObject.RegisterCompleteObjectUndo("Select Bone");
@@ -83,17 +97,26 @@ namespace UnityEditor.Experimental.U2D.Animation
                 Vector2 bonetipPos = GetBoneTip(boneNode);
 
                 Color outlineColor = Color.black;
+                outlineColor.a = boneOpacity * boneOpacity;
+
                 if (selection.IsSelected(i) ||
-                    (GUIUtility.hotControl == 0 && !Event.current.alt && m_HoveredBone == i))
+                    (GUIUtility.hotControl == 0 && !Event.current.alt && m_HoveredBone == i && HandleUtility.nearestControl == m_HoveredBoneControlID))
                     outlineColor = Color.yellow;
 
+                Color boneColor = CommonDrawingUtility.CalculateNiceColor(i, kNiceColorCount);
+                boneColor.a = boneOpacity;
+
+                Color nodeColor = Color.black;
+                nodeColor.a = boneOpacity;
+
                 BoneDrawingUtility.DrawBoneOutline(bonePos, bonetipPos, outlineColor);
-                BoneDrawingUtility.DrawBoneBody(bonePos, bonetipPos, CommonDrawingUtility.CalculateNiceColor(i, kNiceColorCount));
-                BoneDrawingUtility.DrawBoneNodeOutline(bonePos, CommonDrawingUtility.CalculateNiceColor(i, kNiceColorCount));
-                BoneDrawingUtility.DrawBoneNode(bonePos, Color.black.AlphaMultiplied(0.5f));
+                BoneDrawingUtility.DrawBoneBody(bonePos, bonetipPos, boneColor);
+                BoneDrawingUtility.DrawBoneNodeOutline(bonePos, boneColor);
+                BoneDrawingUtility.DrawBoneNode(bonePos, nodeColor.AlphaMultiplied(0.5f));
             }
         }
 
         private int m_HoveredBone = -1;
+        private int m_HoveredBoneControlID = -1;
     }
 }

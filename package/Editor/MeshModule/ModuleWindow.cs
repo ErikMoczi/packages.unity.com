@@ -48,7 +48,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         private void DoWindowGUI(int windowId)
         {
-            if (Event.current.type == EventType.Layout && m_Rect.Contains(Event.current.mousePosition + m_Rect.position))
+            if (Event.current.type == EventType.Layout && new Rect(Vector2.zero, m_Rect.size).Contains(Event.current.mousePosition))
                 HandleUtility.nearestControl = 0;
 
             if (windowGUICallback != null)

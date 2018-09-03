@@ -23,9 +23,9 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             public static readonly GUIStyle buttonStyle = "CommandLeft";
 
-            public static readonly GUIContent createButton = new GUIContent(Resources.Load<Texture>("NormalCreate"), "NormalCreate(N)");
-            public static readonly GUIContent freeCreateButton = new GUIContent(Resources.Load<Texture>("FreeCreate"), "FreeCreate (Sibling)(V)");
-            public static readonly GUIContent freeMoveButton = new GUIContent(Resources.Load<Texture>("FreeMove"), "FreeMove(M)");
+            public static readonly GUIContent createButton = new GUIContent(Resources.Load<Texture>("NormalCreate"), "Create Bone(B)");
+            public static readonly GUIContent freeCreateButton = new GUIContent(Resources.Load<Texture>("FreeCreate"), "Create Free Bone(N)");
+            public static readonly GUIContent freeMoveButton = new GUIContent(Resources.Load<Texture>("FreeMove"), "Free Move(M)");
             public static readonly GUIContent parentButton = new GUIContent(Resources.Load<Texture>("Parent"), "Parent(P)");
             public static readonly GUIContent splitButton = new GUIContent(Resources.Load<Texture>("Split"), "Split(S)");
             public static readonly GUIContent deleteButton = new GUIContent(Resources.Load<Texture>("Delete"), "Delete(Delete)");
@@ -90,7 +90,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             using (new EditorGUI.DisabledScope(!enabled))
             {
-                return HandleToggle(activated, Styles.createButton, KeyCode.N);
+                return HandleToggle(activated, Styles.createButton, KeyCode.B);
             }
         }
 
@@ -98,7 +98,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             using (new EditorGUI.DisabledScope(!enabled))
             {
-                return HandleToggle(activated, Styles.freeCreateButton, KeyCode.V);
+                return HandleToggle(activated, Styles.freeCreateButton, KeyCode.N);
             }
         }
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
@@ -12,6 +13,42 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.EditableBoneWei
     [TestFixture]
     public class EditableBoneWeightTest
     {
+        [Test]
+        public void SetBoneWeightData_WithInvalidChannelIndex_TrowsException()
+        {
+            EditableBoneWeight e = new EditableBoneWeight();
+            e.AddChannel(new BoneWeightData(), true);
+            Assert.Throws<IndexOutOfRangeException>(() => e.SetBoneWeightData(-1, new BoneWeightData()));
+            Assert.Throws<IndexOutOfRangeException>(() => e.SetBoneWeightData(1, new BoneWeightData()));
+        }
+
+        [Test]
+        public void GetBoneWeightData_WithInvalidChannelIndex_TrowsException()
+        {
+            EditableBoneWeight e = new EditableBoneWeight();
+            e.AddChannel(new BoneWeightData(), true);
+            Assert.Throws<IndexOutOfRangeException>(() => e.GetBoneWeightData(-1));
+            Assert.Throws<IndexOutOfRangeException>(() => e.GetBoneWeightData(1));
+        }
+
+        [Test]
+        public void EnableChannel_WithInvalidChannelIndex_TrowsException()
+        {
+            EditableBoneWeight e = new EditableBoneWeight();
+            e.AddChannel(new BoneWeightData(), true);
+            Assert.Throws<IndexOutOfRangeException>(() => e.EnableChannel(-1, true));
+            Assert.Throws<IndexOutOfRangeException>(() => e.EnableChannel(1, true));
+        }
+
+        [Test]
+        public void IsChannelEnabled_WithInvalidChannelIndex_TrowsException()
+        {
+            EditableBoneWeight e = new EditableBoneWeight();
+            e.AddChannel(new BoneWeightData(), true);
+            Assert.Throws<IndexOutOfRangeException>(() => e.IsChannelEnabled(-1));
+            Assert.Throws<IndexOutOfRangeException>(() => e.IsChannelEnabled(1));
+        }
+
         [Test]
         public void SortChannels_SortByWeightDescending()
         {
@@ -271,21 +308,21 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.EditableBoneWei
             Assert.AreEqual(2, result.boneIndex1, "Incorrect boneIndex");
             Assert.AreEqual(1, result.boneIndex2, "Incorrect boneIndex");
             Assert.AreEqual(0, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.340000004f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.280000001f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.219999999f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.159999996f, result.weight3, "Incorrect boneWeight");
+            Assert.AreEqual(0.340000033f, result.weight0, "Incorrect boneWeight");
+            Assert.AreEqual(0.279999942f, result.weight1, "Incorrect boneWeight");
+            Assert.AreEqual(0.219999984f, result.weight2, "Incorrect boneWeight");
+            Assert.AreEqual(0.159999982f, result.weight3, "Incorrect boneWeight");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 0.5f);
 
             Assert.AreEqual(0, result.boneIndex0, "Incorrect boneIndex");
-            Assert.AreEqual(1, result.boneIndex1, "Incorrect boneIndex");
-            Assert.AreEqual(2, result.boneIndex2, "Incorrect boneIndex");
-            Assert.AreEqual(3, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.25f, result.weight0, "Incorrect boneWeight");
+            Assert.AreEqual(2, result.boneIndex1, "Incorrect boneIndex");
+            Assert.AreEqual(3, result.boneIndex2, "Incorrect boneIndex");
+            Assert.AreEqual(1, result.boneIndex3, "Incorrect boneIndex");
+            Assert.AreEqual(0.25000003f, result.weight0, "Incorrect boneWeight");
             Assert.AreEqual(0.25f, result.weight1, "Incorrect boneWeight");
             Assert.AreEqual(0.25f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.25f, result.weight3, "Incorrect boneWeight");
+            Assert.AreEqual(0.249999985f, result.weight3, "Incorrect boneWeight");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 0.8f);
 
@@ -293,9 +330,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.EditableBoneWei
             Assert.AreEqual(1, result.boneIndex1, "Incorrect boneIndex");
             Assert.AreEqual(2, result.boneIndex2, "Incorrect boneIndex");
             Assert.AreEqual(3, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.340000004f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.280000001f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.219999999f, result.weight2, "Incorrect boneWeight");
+            Assert.AreEqual(0.340000033f, result.weight0, "Incorrect boneWeight");
+            Assert.AreEqual(0.279999971f, result.weight1, "Incorrect boneWeight");
+            Assert.AreEqual(0.220000014f, result.weight2, "Incorrect boneWeight");
             Assert.AreEqual(0.159999996f, result.weight3, "Incorrect boneWeight");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 1f);
@@ -350,10 +387,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.EditableBoneWei
             Assert.AreEqual(2, result.boneIndex1, "Incorrect boneIndex");
             Assert.AreEqual(1, result.boneIndex2, "Incorrect boneIndex");
             Assert.AreEqual(0, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.347826093f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.304347843f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.173913047f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.173913047f, result.weight3, "Incorrect boneWeight");
+            Assert.AreEqual(0.319999993f, result.weight0, "Incorrect boneWeight");
+            Assert.AreEqual(0.279999971f, result.weight1, "Incorrect boneWeight");
+            Assert.AreEqual(0.159999996f, result.weight2, "Incorrect boneWeight");
+            Assert.AreEqual(0.159999996f, result.weight3, "Incorrect boneWeight");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 0.5f);
 
@@ -361,10 +398,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.EditableBoneWei
             Assert.AreEqual(2, result.boneIndex1, "Incorrect boneIndex");
             Assert.AreEqual(3, result.boneIndex2, "Incorrect boneIndex");
             Assert.AreEqual(4, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.29411763f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.29411763f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.235294119f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.176470593f, result.weight3, "Incorrect boneWeight");
+            Assert.AreEqual(0.25000003f, result.weight0, "Incorrect boneWeight");
+            Assert.AreEqual(0.249999985f, result.weight1, "Incorrect boneWeight");
+            Assert.AreEqual(0.200000003f, result.weight2, "Incorrect boneWeight");
+            Assert.AreEqual(0.150000006f, result.weight3, "Incorrect boneWeight");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 0.8f);
 
@@ -372,10 +409,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.EditableBoneWei
             Assert.AreEqual(4, result.boneIndex1, "Incorrect boneIndex");
             Assert.AreEqual(2, result.boneIndex2, "Incorrect boneIndex");
             Assert.AreEqual(5, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.386363626f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.272727281f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.249999985f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.0909090936f, result.weight3, "Incorrect boneWeight");
+            Assert.AreEqual(0.340000033f, result.weight0, "Incorrect boneWeight");
+            Assert.AreEqual(0.239999995f, result.weight1, "Incorrect boneWeight");
+            Assert.AreEqual(0.219999999f, result.weight2, "Incorrect boneWeight");
+            Assert.AreEqual(0.0799999982f, result.weight3, "Incorrect boneWeight");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 1f);
 
@@ -429,10 +466,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.EditableBoneWei
             Assert.AreEqual(2, result.boneIndex1, "Incorrect boneIndex");
             Assert.AreEqual(1, result.boneIndex2, "Incorrect boneIndex");
             Assert.AreEqual(4, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.399999976f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.300000012f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.199999988f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.100000009f, result.weight3, "Incorrect boneWeight");
+            Assert.AreEqual(0.319999993f, result.weight0, "Incorrect boneWeight");
+            Assert.AreEqual(0.24000001f, result.weight1, "Incorrect boneWeight");
+            Assert.AreEqual(0.159999996f, result.weight2, "Incorrect boneWeight");
+            Assert.AreEqual(0.0800000057f, result.weight3, "Incorrect boneWeight");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 0.5f);
 
@@ -440,10 +477,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.EditableBoneWei
             Assert.AreEqual(3, result.boneIndex1, "Incorrect boneIndex");
             Assert.AreEqual(2, result.boneIndex2, "Incorrect boneIndex");
             Assert.AreEqual(5, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.285714269f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.285714269f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.214285702f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.214285702f, result.weight3, "Incorrect boneWeight");
+            Assert.AreEqual(0.200000003f, result.weight0, "Incorrect boneWeight");
+            Assert.AreEqual(0.200000003f, result.weight1, "Incorrect boneWeight");
+            Assert.AreEqual(0.150000006f, result.weight2, "Incorrect boneWeight");
+            Assert.AreEqual(0.150000006f, result.weight3, "Incorrect boneWeight");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 0.8f);
 
@@ -451,10 +488,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.EditableBoneWei
             Assert.AreEqual(5, result.boneIndex1, "Incorrect boneIndex");
             Assert.AreEqual(6, result.boneIndex2, "Incorrect boneIndex");
             Assert.AreEqual(7, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.400000006f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.299999982f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.200000003f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.100000001f, result.weight3, "Incorrect boneWeight");
+            Assert.AreEqual(0.320000023f, result.weight0, "Incorrect boneWeight");
+            Assert.AreEqual(0.24000001f, result.weight1, "Incorrect boneWeight");
+            Assert.AreEqual(0.160000011f, result.weight2, "Incorrect boneWeight");
+            Assert.AreEqual(0.0800000057f, result.weight3, "Incorrect boneWeight");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 1f);
 
@@ -469,7 +506,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.EditableBoneWei
         }
 
         [Test]
-        public void FilterChannels_DisablesChannelsWithWeightBelowTolerance_NormalizeBoneWeight()
+        public void FilterChannels_DisablesChannelsWithWeightBelowTolerance()
         {
             EditableBoneWeight editableBoneWeight = new EditableBoneWeight();
 
@@ -486,8 +523,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.EditableBoneWei
             Assert.True(editableBoneWeight.IsChannelEnabled(3), "Channel should be enabled");
             Assert.AreEqual(0f, editableBoneWeight.GetBoneWeightData(0).weight, "Incorrect boneWeight");
             Assert.AreEqual(0f, editableBoneWeight.GetBoneWeightData(1).weight, "Incorrect boneWeight");
-            Assert.AreEqual(0.5f, editableBoneWeight.GetBoneWeightData(2).weight, "Incorrect boneWeight");
-            Assert.AreEqual(0.5f, editableBoneWeight.GetBoneWeightData(3).weight, "Incorrect boneWeight");
+            Assert.AreEqual(0.3f, editableBoneWeight.GetBoneWeightData(2).weight, "Incorrect boneWeight");
+            Assert.AreEqual(0.3f, editableBoneWeight.GetBoneWeightData(3).weight, "Incorrect boneWeight");
         }
 
         [Test]

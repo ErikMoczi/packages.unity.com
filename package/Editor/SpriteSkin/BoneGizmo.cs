@@ -1,6 +1,6 @@
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEditor;
 using UnityEngine.Experimental.U2D;
 using UnityEngine.Experimental.U2D.Animation;
 
@@ -27,7 +27,8 @@ namespace UnityEditor.Experimental.U2D.Animation
         }
 
         //TODO : Re-enable when scene gizmo drawing performance regression is fix.
-        //[DrawGizmo(GizmoType.Active | GizmoType.NonSelected)]
+        //TODO : DrawGizmo does not have events and will not be able to support bone picking
+        // [DrawGizmo(GizmoType.Active | GizmoType.NonSelected)]
         static void DrawBoneGizmo(SpriteSkin skin, GizmoType gizmoType)
         {
             if (skin.rootBone != null)
@@ -35,17 +36,32 @@ namespace UnityEditor.Experimental.U2D.Animation
                 var bones = skin.GetComponent<SpriteRenderer>().sprite.GetBones();
                 var l = bones.First().length;
 
-                RecurseBone(skin, skin.rootBone, null, l, Color.white);
+                RecurseBone(skin.rootBone, bones, null, l);
             }
         }
 
-        static void RecurseBone(SpriteSkin skin, Transform boneTransform, Vector3? parentEnd, float length, Color color, int depth = 0)
+        static void RecurseBone(Transform boneTransform, IList<SpriteBone> bones, Vector3? parentEnd, float length)
         {
             var startPos = boneTransform.position;
             var endPos = startPos + boneTransform.rotation * (Vector3.right * boneTransform.lossyScale.y * length);
             if (parentEnd.HasValue)
-                DrawLink(parentEnd.Value, startPos, color);
-            DrawBone(startPos, endPos, color, depth);
+                DrawLink(parentEnd.Value, startPos, Color.white);
+            DrawBone(startPos, endPos, (Selection.activeGameObject != null && Selection.activeGameObject.transform == boneTransform) ? Color.yellow : Color.white);
+
+            // Handle selection of bone transforms on mouse click
+            int controlID = GUIUtility.GetControlID("BoneGizmo".GetHashCode(), FocusType.Passive);
+            var distance = HandleUtility.DistancePointLine(Event.current.mousePosition,
+                HandleUtility.WorldToGUIPoint(startPos), HandleUtility.WorldToGUIPoint(endPos));
+            if (IsLayout())
+                HandleUtility.AddControl(controlID, distance);
+
+            if (IsMousePick() && HandleUtility.nearestControl == controlID)
+            {
+                Selection.activeGameObject = boneTransform.gameObject;
+                // Switch to the Transform tool to manipulate the transform fsor animation purposes
+                Tools.current = Tool.Transform;
+                Event.current.Use();
+            }
 
             if (boneTransform.childCount > 0)
             {
@@ -54,18 +70,17 @@ namespace UnityEditor.Experimental.U2D.Animation
                     var childSpriteSkin = child.GetComponent<SpriteSkin>();
                     if (childSpriteSkin == null)
                     {
-                        var bones = skin.GetComponent<SpriteRenderer>().sprite.GetBones();
                         if (bones.Any(x => x.name.Equals(child.name)))
                         {
                             var l = bones.First(x => x.name == child.name).length;
-                            RecurseBone(skin, child, endPos, l, color, depth + 1);
+                            RecurseBone(child, bones, endPos, l);
                         }
                     }
                 }
             }
         }
 
-        static void DrawBone(Vector3 startPoint, Vector3 endPoint, Color color, int depth)
+        static void DrawBone(Vector3 startPoint, Vector3 endPoint, Color color)
         {
             float scale = (endPoint - startPoint).magnitude * kBoneScale;
             BoneDrawingUtility.DrawBoneOutline(startPoint, endPoint, Color.black, scale);
@@ -77,6 +92,26 @@ namespace UnityEditor.Experimental.U2D.Animation
         static void DrawLink(Vector3 startPoint, Vector3 endPoint, Color color)
         {
             CommonDrawingUtility.DrawLine(startPoint, endPoint, Vector3.back, kBoneScale, kBoneScale, color);
+        }
+
+        static bool IsLayout()
+        {
+            var evt = Event.current;
+            if (evt.type == EventType.Layout)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        static bool IsMousePick()
+        {
+            var evt = Event.current;
+            if (evt.type == EventType.MouseUp && evt.button == 0)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

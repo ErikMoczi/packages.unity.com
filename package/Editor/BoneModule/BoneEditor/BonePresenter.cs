@@ -7,7 +7,7 @@ using UnityEngine.Experimental.U2D;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
-    internal class BoneEditorState
+    internal class BoneEditorState : ICloneable
     {
         public List<IBone> selectedBones { get; set; }
         public bool normalCreating { get; set; }
@@ -23,9 +23,10 @@ namespace UnityEditor.Experimental.U2D.Animation
             Reset();
         }
 
-        public void Reset()
+        public void Reset(bool keepSelectedBone = false)
         {
-            selectedBones = new List<IBone>();
+            if (!keepSelectedBone)
+                selectedBones = new List<IBone>();
 
             normalCreating = false;
             freeCreating = false;
@@ -35,8 +36,41 @@ namespace UnityEditor.Experimental.U2D.Animation
             freeCreatingBone = false;
             normalCreatingRoot = false;
         }
-    }
 
+        public object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
+        public override bool Equals(object other)
+        {
+            var otherState = other as BoneEditorState;
+            var boolStateEqual = normalCreating == otherState.normalCreating
+                && freeCreating == otherState.freeCreating
+                && parenting == otherState.parenting
+                && freeMoving == otherState.freeMoving
+                && multiselecting == otherState.multiselecting
+                && freeCreatingBone == otherState.freeCreatingBone
+                && normalCreatingRoot == otherState.normalCreatingRoot;
+
+            if (boolStateEqual)
+            {
+                if (selectedBones.Count != otherState.selectedBones.Count)
+                    return false;
+
+                for (var i = 0; i < selectedBones.Count; ++i)
+                {
+                    if (selectedBones[i] != otherState.selectedBones[i])
+                        return false;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+    }
+    
     internal class BonePresenter
     {
         private IBoneModel m_Model;
@@ -103,10 +137,13 @@ namespace UnityEditor.Experimental.U2D.Animation
             var splitActivated = m_ToolView.HandleSplit(selectingBone);
             var deleteActivated = m_ToolView.HandleDelete(selectingBone);
             
-            // Just entered creation mode this frame.
-            var creationToggled = (normalCreating && !state.normalCreating) || (freeCreating && !state.freeCreating);
-
-            // Update state
+            // Just entered another toggled mode this frame.
+            var normalCreationToggled = normalCreating && !state.normalCreating;
+            var freeCreationToggled = freeCreating && !state.freeCreating;
+            var freeMoveToggled = freeMoving && !state.freeMoving;
+            var parentingToggled = parenting && !state.parenting;
+            
+            // Forward the states
             state.normalCreating = normalCreating;
             state.freeCreating = freeCreating;
             state.freeMoving = freeMoving;
@@ -117,18 +154,19 @@ namespace UnityEditor.Experimental.U2D.Animation
             {
                 state.normalCreating = false;
                 state.freeCreating = false;
+                state.freeCreatingBone = false;
                 state.parenting = false;
+                state.freeMoving = false;
             }
 
-            // Multiple selectiong is disable during creation mode.
+            // Multiple selection is disable during creation mode.
             if (!state.normalCreating && !state.freeCreating)
                 state.multiselecting = m_ToolView.HandleMultipleSelection();
 
-            if (state.normalCreating && creationToggled)
+            if (state.normalCreating && normalCreationToggled)
             {
-                state.freeCreating = false;
-                state.freeCreatingBone = false;
-                state.normalCreatingRoot = false;
+                state.Reset(true);
+                state.normalCreating = true;
 
                 if (m_Model.bones.Any())
                 {
@@ -141,9 +179,10 @@ namespace UnityEditor.Experimental.U2D.Animation
                     state.normalCreatingRoot = true;
             }
 
-            if (state.freeCreating && creationToggled)
+            if (state.freeCreating && freeCreationToggled)
             {
-                state.normalCreating = false;
+                state.Reset(true);
+                state.freeCreating = true;
                 state.freeCreatingBone = true;
 
                 if (m_Model.bones.Any())
@@ -154,8 +193,22 @@ namespace UnityEditor.Experimental.U2D.Animation
                 }
             }
 
+            if (state.freeMoving && freeMoveToggled)
+            {
+                state.Reset(true);
+                state.freeMoving = true;
+            }
+
+            if (state.parenting && parentingToggled)
+            {
+                state.Reset(true);
+                state.parenting = true;
+            }
+
             if (splitActivated)
             {
+                state.Reset(true);
+
                 foreach (var bone in state.selectedBones)
                 {
                     RecordUndo(bone, "bone split");
@@ -165,6 +218,8 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             if (deleteActivated)
             {
+                state.Reset(true);
+
                 foreach (var bone in state.selectedBones)
                 {
                     RecordUndo(bone, "bone delete");
@@ -178,8 +233,8 @@ namespace UnityEditor.Experimental.U2D.Animation
         //   - rect : Workspace position and size.
         public void DoInfoPanel(Rect rect)
         {
-            // Early out, don't display if no bone is selected.
-            if (!selectingBone)
+            // Early out, don't display if no bone or multiple bones are selected.
+            if (!selectingBone || selectingMultipleBone)
                 return;
 
             // Define the working area.
@@ -218,7 +273,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         }
 
         // Bridging SetRawData for IHierarchy
-        public void SetRawData(List<SpriteBone> rawBoneDatas, Vector3 offset)
+        public void SetRawData(List<UniqueSpriteBone> rawBoneDatas, Vector3 offset)
         {
             m_Model.SetRawData(rawBoneDatas, offset);
 
@@ -227,16 +282,9 @@ namespace UnityEditor.Experimental.U2D.Animation
         }
 
         // Bridging GetRawData for IHierarchy
-        public List<SpriteBone> GetRawData()
+        public List<UniqueSpriteBone> GetRawData()
         {
             return m_Model.GetRawData();
-        }
-        
-        // Do we allow user to click away from the working area?
-        public bool AllowClickAway()
-        {
-            // In these states, we do not want user accidentally unselect the sprite if they clicked outside of the working area
-            return !(state.normalCreating || state.freeCreating || state.parenting);
         }
         
         // Repopulate the relationship hash tables for current selected bones.
@@ -438,6 +486,9 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                     // Always reset relationship after a new selection.
                     ResetRelationship();
+
+                    m_InfoView.SelectionChanged();
+
                     break;
                 }
             }
@@ -480,6 +531,9 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                         // Always reset relationship after a new selection.
                         ResetRelationship();
+
+                        m_InfoView.SelectionChanged();
+
                         if (!state.multiselecting)
                             break;
                     }
@@ -734,11 +788,8 @@ namespace UnityEditor.Experimental.U2D.Animation
                 {
                     m_View.DrawBone(bone, true);
                     m_View.DrawTip(bone);
-                    if (!bone.isRoot)
-                    {
+                    if (!bone.isRoot && !ShouldSnap(bone.position, bone.parent.tip))
                         m_View.DrawLinkToParent(bone, true);
-                        m_View.DrawTip(bone.parent);
-                    }
                 }
                 else
                 {

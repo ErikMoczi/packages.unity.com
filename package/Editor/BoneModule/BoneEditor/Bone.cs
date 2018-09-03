@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 using UnityEngine;
 
@@ -12,6 +10,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         int parentId { get; }
         string name { get; }
         Vector3 position { get; }
+        Quaternion rotation { get; }
         float length { get; }
         bool isRoot { get; }
         Vector3 tip { get; }
@@ -20,6 +19,13 @@ namespace UnityEditor.Experimental.U2D.Animation
     [Serializable]
     internal class Bone : IBone
     {
+        [SerializeField]
+        private string m_UniqueId;
+        public string uniqueId
+        {
+            get { return m_UniqueId; }
+        }
+
         [SerializeField]
         private int m_ParentId;
         public int parentId
@@ -204,23 +210,26 @@ namespace UnityEditor.Experimental.U2D.Animation
             localRotation = Quaternion.identity;
             position = Vector3.zero;
             length = 0.0f;
+            m_UniqueId = "";
         }
 
         public Bone(
             string name,
             Bone parent,
             Vector3 position,
-            Quaternion worldRotation,
+            Quaternion localRotation,
             float length,
-            int index
+            int index,
+            string uniqueId
             )
         {
             this.name = name;
             this.parent = parent;
-            this.position = position;
-            this.rotation = worldRotation;
+            this.localPosition = position;
+            this.localRotation = localRotation;
             this.length = length;
             this.debugIndex = index;
+            m_UniqueId = uniqueId;
 
             RecalculateMatrix();
         }

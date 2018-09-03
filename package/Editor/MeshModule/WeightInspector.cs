@@ -46,36 +46,25 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         private void ChannelsGUI()
         {
-            bool channelEnabled;
-            int boneIndex;
-            float weight;
-            bool isChannelEnabledMixed;
-            bool isBoneIndexMixed;
-            bool isWeightMixed;
-
             for (int channelIndex = 0; channelIndex < 4; ++channelIndex)
             {
-                GetChannelDataInSelection(channelIndex, out channelEnabled, out boneIndex, out weight, out isChannelEnabledMixed, out isBoneIndexMixed, out isWeightMixed);
+                bool channelEnabled;
+                bool isChannelEnabledMixed;
+                bool isBoneIndexMixed;
+                bool isWeightMixed;
+                BoneWeightData boneWeightData;
+                spriteMeshData.GetMultiEditChannelData(selection, channelIndex, out channelEnabled, out boneWeightData, out isChannelEnabledMixed, out isBoneIndexMixed, out isWeightMixed);
 
+                BoneWeightData newBoneWeightData = new BoneWeightData();
+                newBoneWeightData = boneWeightData;
                 bool newChannelEnabled = channelEnabled;
-                int newBoneIndex = boneIndex;
-                float newWeight = weight;
 
                 EditorGUI.BeginChangeCheck();
 
-                WeightChannelDrawer(ref newChannelEnabled, ref newBoneIndex, ref newWeight, isChannelEnabledMixed, isBoneIndexMixed, isWeightMixed);
+                WeightChannelDrawer(ref newChannelEnabled, ref newBoneWeightData, isChannelEnabledMixed, isBoneIndexMixed, isWeightMixed);
 
                 if (EditorGUI.EndChangeCheck())
-                {
-                    BoneWeightData referenceData = new BoneWeightData(boneIndex, weight);
-                    BoneWeightData newData = new BoneWeightData(newBoneIndex, newWeight);
-
-                    foreach (int i in selection)
-                    {
-                        EditableBoneWeight editableBoneWeight = spriteMeshData.vertices[i].editableBoneWeight;
-                        SetChannelData(editableBoneWeight, channelIndex, channelEnabled, newChannelEnabled, referenceData, newData);
-                    }
-                }
+                    spriteMeshData.SetMultiEditChannelData(selection, channelIndex, channelEnabled, newChannelEnabled, boneWeightData, newBoneWeightData);
             }
         }
 
@@ -84,7 +73,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         }
 
         private void WeightChannelDrawer(
-            ref bool isChannelEnabled, ref int boneIndex, ref float weight,
+            ref bool isChannelEnabled, ref BoneWeightData boneWeightData,
             bool isChannelEnabledMixed = false, bool isBoneIndexMixed = false, bool isWeightMixed = false)
         {
             EditorGUILayout.BeginHorizontal();
@@ -97,15 +86,23 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             EditorGUIUtility.fieldWidth = 30f;
             EditorGUIUtility.labelWidth = 30f;
-            EditorGUI.showMixedValue = isBoneIndexMixed;
-            boneIndex = EditorGUILayout.Popup(boneIndex, GetBoneNameList());
 
             using (new EditorGUI.DisabledScope(!isChannelEnabled && !isChannelEnabledMixed))
             {
+                int tempBoneIndex = GUI.enabled ? boneWeightData.boneIndex : -1;
+
+                EditorGUI.BeginChangeCheck();
+
+                EditorGUI.showMixedValue = GUI.enabled && isBoneIndexMixed;
+                tempBoneIndex = EditorGUILayout.Popup(tempBoneIndex, MeshModuleUtility.GetBoneNameList(spriteMeshData));
+
+                if (EditorGUI.EndChangeCheck())
+                    boneWeightData.boneIndex = tempBoneIndex;
+
                 EditorGUIUtility.fieldWidth = 45f;
 
                 EditorGUI.showMixedValue = isWeightMixed;
-                weight = EditorGUILayout.Slider(GUIContent.none, weight, 0f, 1f);
+                boneWeightData.weight = EditorGUILayout.Slider(GUIContent.none, boneWeightData.weight, 0f, 1f);
             }
 
             EditorGUILayout.EndHorizontal();
@@ -113,85 +110,6 @@ namespace UnityEditor.Experimental.U2D.Animation
             EditorGUI.showMixedValue = false;
             EditorGUIUtility.labelWidth = -1;
             EditorGUIUtility.fieldWidth = -1;
-        }
-
-        private void GetChannelDataInSelection(int channelIndex,
-            out bool channelEnabled, out int boneIndex, out float weight,
-            out bool isChannelEnabledMixed, out bool isBoneIndexMixed, out bool isWeightMixed)
-        {
-            bool first = true;
-            channelEnabled = false;
-            boneIndex = 0;
-            weight = 0f;
-            isChannelEnabledMixed = false;
-            isBoneIndexMixed = false;
-            isWeightMixed = false;
-
-            foreach (int i in selection)
-            {
-                EditableBoneWeight editableBoneWeight = spriteMeshData.vertices[i].editableBoneWeight;
-
-                BoneWeightData data = editableBoneWeight.GetBoneWeightData(channelIndex);
-
-                if (first)
-                {
-                    channelEnabled = editableBoneWeight.IsChannelEnabled(channelIndex);
-                    boneIndex = data.boneIndex;
-                    weight = data.weight;
-
-                    first = false;
-                }
-                else
-                {
-                    if (channelEnabled != editableBoneWeight.IsChannelEnabled(channelIndex))
-                    {
-                        isChannelEnabledMixed = true;
-                        channelEnabled = false;
-                    }
-
-                    if (boneIndex != data.boneIndex)
-                        isBoneIndexMixed = true;
-
-                    if (weight != data.weight)
-                        isWeightMixed = true;
-                }
-            }
-        }
-
-        private void SetChannelData(EditableBoneWeight editableBoneWeight, int channelIndex,  bool referenceChannelEnabled, bool newChannelEnabled,  BoneWeightData referenceData, BoneWeightData newData)
-        {
-            bool channelEnabledChanged = referenceChannelEnabled != newChannelEnabled;
-            bool boneIndexChanged = referenceData.boneIndex != newData.boneIndex;
-            bool weightChanged = referenceData.weight != newData.weight;
-
-            BoneWeightData data = editableBoneWeight.GetBoneWeightData(channelIndex);
-
-            if (channelEnabledChanged)
-                editableBoneWeight.EnableChannel(channelIndex, newChannelEnabled);
-
-            if (boneIndexChanged)
-                data.boneIndex = newData.boneIndex;
-
-            if (weightChanged)
-                data.weight = newData.weight;
-
-            editableBoneWeight.SetBoneWeightData(channelIndex, data);
-
-            if (channelEnabledChanged || weightChanged)
-                editableBoneWeight.CompensateOtherChannels(channelIndex);
-        }
-
-        private string[] GetBoneNameList()
-        {
-            List<string> names = new List<string>();
-
-            for (int i = 0; i < spriteMeshData.bones.Count; i++)
-            {
-                var bone = spriteMeshData.bones[i];
-                names.Add(i + " " + bone.name);
-            }
-
-            return names.ToArray();
         }
     }
 }

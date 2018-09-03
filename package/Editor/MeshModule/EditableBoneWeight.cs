@@ -121,28 +121,32 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public void SetBoneWeightData(int channelIndex, BoneWeightData boneWeightData)
         {
-            Debug.Assert(channelIndex < GetChannelCount());
+            if (channelIndex < 0 || channelIndex >= GetChannelCount())
+                throw new IndexOutOfRangeException("channel index out of range");
 
             m_Channels[channelIndex].boneWeightData = boneWeightData;
         }
 
         public BoneWeightData GetBoneWeightData(int channelIndex)
         {
-            Debug.Assert(channelIndex < GetChannelCount());
+            if (channelIndex < 0 || channelIndex >= GetChannelCount())
+                throw new IndexOutOfRangeException("channel index out of range");
 
             return m_Channels[channelIndex].boneWeightData;
         }
 
         public void EnableChannel(int channelIndex, bool enabled)
         {
-            Debug.Assert(channelIndex < GetChannelCount());
+            if (channelIndex < 0 || channelIndex >= GetChannelCount())
+                throw new IndexOutOfRangeException("channel index out of range");
 
             m_Channels[channelIndex].enabled = enabled;
         }
 
         public bool IsChannelEnabled(int channelIndex)
         {
-            Debug.Assert(channelIndex < GetChannelCount());
+            if (channelIndex < 0 || channelIndex >= GetChannelCount())
+                throw new IndexOutOfRangeException("channel index out of range");
 
             return m_Channels[channelIndex].enabled;
         }

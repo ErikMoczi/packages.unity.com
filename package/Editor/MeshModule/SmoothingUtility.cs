@@ -46,6 +46,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 }
 
                 editableBoneWeight.ClampChannels(4);
+                editableBoneWeight.NormalizeChannels();
 
                 boneWeightOut[i] = editableBoneWeight.ToBoneWeight(false);
             }

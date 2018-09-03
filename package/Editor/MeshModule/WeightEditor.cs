@@ -12,8 +12,8 @@ namespace UnityEditor.Experimental.U2D.Animation
 {
     internal enum WeightEditorMode
     {
-        Set,
-        Increment,
+        AddAndSubtract,
+        GrowAndShrink,
         Smooth
     }
 
@@ -27,6 +27,12 @@ namespace UnityEditor.Experimental.U2D.Animation
         public WeightEditorMode currentMode { get; private set; }
         public bool useRelativeValues { get; private set; }
         public bool emptySelectionEditsAll { get; set; }
+        public bool autoNormalize { get; set; }
+
+        public WeightEditor()
+        {
+            autoNormalize = true;
+        }
 
         public void OnEditStart(bool relative)
         {
@@ -43,11 +49,14 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public void OnEditEnd()
         {
-            if (currentMode == WeightEditorMode.Set)
+            if (currentMode == WeightEditorMode.AddAndSubtract)
             {
                 for (int i = 0; i < spriteMeshData.vertices.Count; ++i)
                     spriteMeshData.vertices[i].editableBoneWeight.ClampChannels(4);
             }
+
+            if (autoNormalize)
+                spriteMeshData.NormalizeWeights(null);
         }
 
         public void DoEdit(float value)
@@ -55,9 +64,9 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (!useRelativeValues)
                 RestoreBoneWeights();
 
-            if (currentMode == WeightEditorMode.Set)
+            if (currentMode == WeightEditorMode.AddAndSubtract)
                 SetWeight(value);
-            else if (currentMode == WeightEditorMode.Increment)
+            else if (currentMode == WeightEditorMode.GrowAndShrink)
                 SetWeight(value, false);
             else if (currentMode == WeightEditorMode.Smooth)
                 SmoothWeights(value);
@@ -101,9 +110,13 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                     BoneWeightData data = editableBoneWeight.GetBoneWeightData(channel);
                     data.weight += value;
+
                     editableBoneWeight.SetBoneWeightData(channel, data);
 
-                    editableBoneWeight.CompensateOtherChannels(channel);
+                    if (editableBoneWeight.GetWeightSum() > 1f)
+                        editableBoneWeight.CompensateOtherChannels(channel);
+
+                    editableBoneWeight.FilterChannels(0f);
                 }
             }
         }

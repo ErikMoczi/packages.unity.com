@@ -72,8 +72,11 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
 
             m_Module.OnModuleActivate();
 
+            var moduleViewMock = Substitute.For<IBoneSpriteEditorModuleView>();
+            moduleViewMock.HandleSpriteSelection().Returns(true);
+            m_Module.spriteEditorModuleView = moduleViewMock;
+
             m_SpriteEditor.selectedSpriteRect.Returns(m_SR2);
-            m_SpriteEditor.HandleSpriteSelection().Returns(true);
 
             m_Module.DoMainGUI();
 
@@ -88,8 +91,11 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
 
             m_Module.OnModuleActivate();
 
+            var moduleViewMock = Substitute.For<IBoneSpriteEditorModuleView>();
+            moduleViewMock.HandleSpriteSelection().Returns(true);
+            m_Module.spriteEditorModuleView = moduleViewMock;
+
             m_SpriteEditor.selectedSpriteRect.Returns(m_SR2);
-            m_SpriteEditor.HandleSpriteSelection().Returns(true);
 
             m_Module.DoMainGUI();
 
@@ -116,8 +122,11 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
 
             m_Module.OnModuleActivate();
 
+            var moduleViewMock = Substitute.For<IBoneSpriteEditorModuleView>();
+            moduleViewMock.HandleSpriteSelection().Returns(true);
+            m_Module.spriteEditorModuleView = moduleViewMock;
+
             m_SpriteEditor.selectedSpriteRect.Returns(m_SR2);
-            m_SpriteEditor.HandleSpriteSelection().Returns(true);
 
             m_Module.DoMainGUI();
             m_Module.ApplyRevert(true);

@@ -88,8 +88,6 @@ namespace UnityEditor.Experimental.U2D.Animation
         public void SetupLayout()
         {
             m_CreateVertexControlID = GetControlID("CreateVertex".GetHashCode(), FocusType.Passive);
-            m_MoveVerticesControlID = GetControlID("MoveVertices".GetHashCode(), FocusType.Passive);
-            m_MoveEdgeControlID = GetControlID("MoveEdge".GetHashCode(), FocusType.Passive);
             m_CreateEdgeControlID = GetControlID("CreateEdge".GetHashCode(), FocusType.Passive);
             m_SplitEdgeControlID = GetControlID("SplitEdge".GetHashCode(), FocusType.Passive);
 
@@ -99,6 +97,12 @@ namespace UnityEditor.Experimental.U2D.Animation
                 m_HoveredEdge = -1;
                 m_ClosestEdgeIndex = -1;
                 m_MinDistance = float.MaxValue;
+
+                if (IsActionActive(MeshEditorAction.None))
+                {
+                    m_HoveredVertexControlID = -1;
+                    m_HoveredEdgeControlID = -1;
+                }
             }
         }
 
@@ -124,7 +128,10 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (Event.current.type == EventType.Layout)
             {
                 if (IsControlActive(controlID))
+                {
                     m_HoveredVertex = index;
+                    m_HoveredVertexControlID = controlID;
+                }
             }
         }
 
@@ -139,7 +146,10 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (Event.current.type == EventType.Layout)
             {
                 if (IsControlActive(controlID))
+                {
                     m_HoveredEdge = index;
+                    m_HoveredEdgeControlID = controlID;
+                }
 
                 distance = HandleUtility.DistancePointToLineSegment(MeshModuleUtility.ClampPositionToRect(mousePosition, frame), startPosition, endPosition);
 
@@ -153,10 +163,10 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public bool DoCreateVertex()
         {
-            if (CanCreateVertex())
+            if (mode == SpriteMeshViewMode.CreateVertex && hoveredVertex == -1)
                 LayoutControl(m_CreateVertexControlID, 0f);
 
-            if (mode == SpriteMeshViewMode.CreateVertex && IsActionActive(MeshEditorAction.CreateVertex))
+            if (IsActionActive(MeshEditorAction.CreateVertex))
                 ConsumeMouseMoveEvents();
 
             if (IsActionTriggered(MeshEditorAction.CreateVertex))
@@ -186,16 +196,13 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public bool DoMoveVertex(out Vector2 delta)
         {
-            if (CanMoveVertex())
-                LayoutControl(m_MoveVerticesControlID, 0f);
-
             delta = Vector2.zero;
 
             if (IsActionTriggered(MeshEditorAction.MoveVertex))
                 m_SliderPosition = MeshModuleUtility.GUIToWorld(mousePosition);
 
             Vector2 newPosition;
-            if (DoSlider(m_MoveVerticesControlID, m_SliderPosition, out newPosition))
+            if (DoSlider(m_HoveredVertexControlID, m_SliderPosition, out newPosition))
             {
                 delta = newPosition - m_SliderPosition;
                 m_SliderPosition = newPosition;
@@ -207,16 +214,13 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public bool DoMoveEdge(out Vector2 delta)
         {
-            if (CanMoveEdge())
-                LayoutControl(m_MoveEdgeControlID, 0f);
-
             delta = Vector2.zero;
 
             if (IsActionTriggered(MeshEditorAction.MoveEdge))
                 m_SliderPosition = MeshModuleUtility.GUIToWorld(mousePosition);
 
             Vector2 newPosition;
-            if (DoSlider(m_MoveEdgeControlID, m_SliderPosition, out newPosition))
+            if (DoSlider(m_HoveredEdgeControlID, m_SliderPosition, out newPosition))
             {
                 delta = newPosition - m_SliderPosition;
                 m_SliderPosition = newPosition;
@@ -356,14 +360,14 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (action == MeshEditorAction.CreateVertex)
             {
                 if (mode == SpriteMeshViewMode.Selection)
-                    return CanCreateVertex();
+                    return IsControlActive(defaultControlID);
 
                 if (mode == SpriteMeshViewMode.CreateVertex)
                     return IsControlActive(m_CreateVertexControlID);
             }
 
             if (action == MeshEditorAction.MoveVertex)
-                return IsControlActive(m_MoveVerticesControlID);
+                return IsControlActive(m_HoveredVertexControlID);
 
             if (action == MeshEditorAction.CreateEdge)
                 return IsControlActive(m_CreateEdgeControlID);
@@ -372,7 +376,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 return IsControlActive(m_SplitEdgeControlID);
 
             if (action == MeshEditorAction.MoveEdge)
-                return IsControlActive(m_MoveEdgeControlID);
+                return IsControlActive(m_HoveredEdgeControlID);
 
             if (action == MeshEditorAction.SelectVertex)
                 return CanSelectVertex();
@@ -395,7 +399,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 return IsControlHot(m_CreateVertexControlID);
 
             if (action == MeshEditorAction.MoveVertex)
-                return IsControlHot(m_MoveVerticesControlID);
+                return IsControlHot(m_HoveredVertexControlID);
 
             if (action == MeshEditorAction.CreateEdge)
                 return IsControlHot(m_CreateEdgeControlID);
@@ -404,7 +408,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 return IsControlHot(m_SplitEdgeControlID);
 
             if (action == MeshEditorAction.MoveEdge)
-                return IsControlHot(m_MoveEdgeControlID);
+                return IsControlHot(m_HoveredEdgeControlID);
 
             return false;
         }
@@ -468,25 +472,9 @@ namespace UnityEditor.Experimental.U2D.Animation
                 Event.current.Use();
         }
 
-        private bool CanCreateVertex()
-        {
-            if (mode == SpriteMeshViewMode.Selection)
-                return IsActionActive(MeshEditorAction.None);
-
-            if (mode == SpriteMeshViewMode.CreateVertex)
-                return hoveredVertex == -1;
-
-            return false;
-        }
-
         private bool CanSelectVertex()
         {
-            return hoveredVertex != -1;
-        }
-
-        private bool CanMoveVertex()
-        {
-            return hoveredVertex != -1 && !IsActionActive(MeshEditorAction.CreateEdge);
+            return IsControlActive(m_HoveredVertexControlID);
         }
 
         private bool CanSelectEdge()
@@ -496,7 +484,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         private bool CanMoveEdge()
         {
-            return hoveredEdge != -1 && mode == SpriteMeshViewMode.Selection && !IsActionActive(MeshEditorAction.CreateEdge) && !IsActionActive(MeshEditorAction.SplitEdge);
+            return mode == SpriteMeshViewMode.Selection && IsControlActive(m_HoveredEdgeControlID) && !IsActionActive(MeshEditorAction.CreateEdge) && !IsActionActive(MeshEditorAction.SplitEdge);
         }
 
         private bool CanCreateEdge()
@@ -513,7 +501,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         private bool CanSplitEdge()
         {
             if (mode == SpriteMeshViewMode.Selection)
-                return isShiftDown && m_ClosestEdgeIndex != -1 && hoveredVertex == -1 && selection.single == -1;
+                return isShiftDown && m_ClosestEdgeIndex != -1 && hoveredVertex == -1 && selection.Count == 0;
 
             if (mode == SpriteMeshViewMode.SplitEdge)
                 return m_ClosestEdgeIndex != -1 && hoveredVertex == -1;
@@ -628,13 +616,13 @@ namespace UnityEditor.Experimental.U2D.Animation
             return EditorGUI.EndChangeCheck();
         }
 
-        int m_MoveVerticesControlID = -1;
-        int m_MoveEdgeControlID = -1;
         int m_CreateVertexControlID = -1;
         int m_CreateEdgeControlID = -1;
         int m_SplitEdgeControlID = -1;
         int m_HoveredEdge = -1;
+        int m_HoveredEdgeControlID = -1;
         int m_HoveredVertex = -1;
+        int m_HoveredVertexControlID = -1;
         int m_ClosestEdgeIndex = -1;
         Color m_TempColor;
         float m_MinDistance;

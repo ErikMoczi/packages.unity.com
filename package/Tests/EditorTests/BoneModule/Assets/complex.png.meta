@@ -73,27 +73,27 @@ TextureImporter:
     physicsShape: []
     bones:
     - name: root
-      position: {x: 0, y: 0, z: 0}
-      rotation: {x: 0, y: 0, z: 0, w: 1}
+      position: {x: 1, y: 1, z: 1}
+      rotation: {x: 0, y: 0, z: 0.25881904, w: 0.9659258}
       length: 1
       parentId: -1
     - name: child1
-      position: {x: 1, y: 0, z: 0}
-      rotation: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
-      length: 0.5
+      position: {x: 0, y: 1, z: 0}
+      rotation: {x: 0, y: 0, z: 0.5, w: 0.8660254}
+      length: 1.5
       parentId: 0
     - name: child2
-      position: {x: 1, y: 1, z: 1}
-      rotation: {x: 0, y: 0, z: 0.38268346, w: 0.9238795}
+      position: {x: 1, y: 0, z: 0}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
       length: 1.5
       parentId: 1
     - name: child3
-      position: {x: 0, y: 1, z: 0}
-      rotation: {x: 0, y: 0, z: 0.6755902, w: -0.7372773}
+      position: {x: -1, y: 0, z: 0}
+      rotation: {x: 0, y: 0, z: 0.86602545, w: 0.49999997}
       length: 2.5
-      parentId: 0
+      parentId: 1
     - name: child4
-      position: {x: 2, y: 2, z: 2}
+      position: {x: 0, y: 1, z: 0}
       rotation: {x: 0, y: 0, z: 0, w: 1}
       length: 1
       parentId: 3

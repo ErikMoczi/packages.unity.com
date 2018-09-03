@@ -10,8 +10,8 @@ namespace UnityEditor.Experimental.U2D.Animation
 {
     public interface IBoneModel
     {
-        List<SpriteBone> GetRawData();
-        void SetRawData(List<SpriteBone> spriteBones, Vector3 offset);
+        List<UniqueSpriteBone> GetRawData();
+        void SetRawData(List<UniqueSpriteBone> spriteBones, Vector3 offset);
         
         IBone CreateNewRoot(Vector3 position);
         IBone CreateNewChildBone(IBone parentBone, Vector3 position);
@@ -99,20 +99,22 @@ namespace UnityEditor.Experimental.U2D.Animation
             return "_" + (char)UnityEngine.Random.Range(65, 90) + (char)UnityEngine.Random.Range(65, 90) + (char)UnityEngine.Random.Range(65, 90);
         }
 
-        public void SetRawData(List<SpriteBone> rawBoneDatas, Vector3 offset)
+        public void SetRawData(List<UniqueSpriteBone> rawBoneDatas, Vector3 offset)
         {
             m_Offset = offset;
             m_BoneList.bones = new List<Bone>();
             foreach (var sb in rawBoneDatas)
             {
+                var isRoot = sb.parentId == -1;
                 var Bone = new Bone(
                     sb.name,
-                    sb.parentId != -1 ? m_BoneList.bones[sb.parentId] : null,
-                    // Position was in mesh/rect space, convert to texture space.
-                    sb.position + offset,
+                    isRoot ? null : m_BoneList.bones[sb.parentId],
+                    // Root position was in mesh/rect space, convert to texture space.
+                    isRoot ? sb.position + offset : sb.position,
                     sb.rotation,
                     sb.length,
-                    m_BoneList.bones.Count
+                    m_BoneList.bones.Count,
+                    sb.id.ToString()
                 );
 
                 Bone.RecalculateMatrix();
@@ -121,22 +123,23 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        public List<SpriteBone> GetRawData()
+        public List<UniqueSpriteBone> GetRawData()
         {
             if (m_OrderDirty)
                 SortBones();
 
-            List<SpriteBone> bones = new List<SpriteBone>();
+            var bones = new List<UniqueSpriteBone>();
             foreach (var bone in m_BoneList.bones)
             {
-                var spriteBone = new SpriteBone();
+                var spriteBone = new UniqueSpriteBone();
                 spriteBone.name = bone.name;
                 spriteBone.parentId = bone.parentId;
 
-                // Store position in mesh/rect space.
-                spriteBone.position = bone.position - m_Offset;
-                spriteBone.rotation = bone.rotation;
+                // Store position in mesh/rect space for root.
+                spriteBone.position = bone.isRoot ? bone.localPosition - m_Offset : bone.localPosition;
+                spriteBone.rotation = bone.localRotation;
                 spriteBone.length = bone.length;
+                spriteBone.id = new GUID(bone.uniqueId);
                 bones.Add(spriteBone);
             }
 
@@ -281,7 +284,8 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             ((Bone)bone).position = position;
             SetDirty();
-            if (keepChildPosition) MarkChildRetain(bone);
+            if (keepChildPosition) 
+                MarkChildRetain(bone);
             UpdateHierarchyFromBone(bone, keepChildPosition);
         }
 
@@ -289,7 +293,8 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             ((Bone)bone).tip = tipPosition;
             SetDirty();
-            if (keepChildPosition) MarkChildRetain(bone);
+            if (keepChildPosition) 
+                MarkChildRetain(bone);
             UpdateHierarchyFromBone(bone, keepChildPosition);
         }
 

@@ -5,6 +5,7 @@ namespace UnityEditor.Experimental.U2D.Animation
     public interface IBoneInfoView
     {
         void SetRect(Rect rect);
+        void SelectionChanged();
         bool HandleName(ref string name);
         bool HandleNextSelection();
     }
@@ -38,6 +39,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             GUI.SetNextControlName(Styles.nameControl);
             if (m_RegainFocus && Event.current.type == EventType.Repaint)
             {
+                // Focus and select all text in the text field.
+                EditorGUIUtility.editingTextField = true;
                 GUI.FocusControl(Styles.nameControl);
                 m_RegainFocus = false;
             }
@@ -69,6 +72,13 @@ namespace UnityEditor.Experimental.U2D.Animation
                 currentEvent.Use();
             }
             return wantFocus;
+        }
+
+        public void SelectionChanged()
+        {
+            // Relieve the keyboard control.
+            // This prevent text box not changing selected text, and allow key press (delete) on bone hierarchy
+            GUIUtility.keyboardControl = -1;
         }
     }
 }

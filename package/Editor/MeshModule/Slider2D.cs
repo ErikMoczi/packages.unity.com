@@ -7,6 +7,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         private static Vector2 s_CurrentMousePosition;
         private static Vector2 s_DragStartScreenPosition;
         private static Vector2 s_DragScreenOffset;
+        private static double s_Time;
 
         public static Vector2 Do(int controlID, Vector2 position, Handles.CapFunction drawCapFunction = null)
         {
@@ -17,6 +18,8 @@ namespace UnityEditor.Experimental.U2D.Animation
                 case EventType.MouseDown:
                     if (Event.current.button == 0 && HandleUtility.nearestControl == controlID && !Event.current.alt)
                     {
+                        s_Time = EditorApplication.timeSinceStartup;
+
                         GUIUtility.keyboardControl = controlID;
                         GUIUtility.hotControl = controlID;
                         s_CurrentMousePosition = Event.current.mousePosition;
@@ -39,12 +42,15 @@ namespace UnityEditor.Experimental.U2D.Animation
                     if (GUIUtility.hotControl == controlID)
                     {
                         s_CurrentMousePosition = Event.current.mousePosition;
+                        float screenDisplacement = (s_CurrentMousePosition - s_DragStartScreenPosition).magnitude;
                         Vector2 center = position;
-                        position = Handles.inverseMatrix.MultiplyPoint(s_CurrentMousePosition - s_DragScreenOffset);
-                        if (!Mathf.Approximately((center - position).magnitude, 0f))
-                        {
+                        Vector2 screenPosition = s_CurrentMousePosition - s_DragScreenOffset;
+                        position = Handles.inverseMatrix.MultiplyPoint(screenPosition);
+                        float displacement = (center - position).magnitude;
+
+                        if (!Mathf.Approximately(displacement, 0f) && (EditorApplication.timeSinceStartup - s_Time > 0.15 || screenDisplacement >= 10f))
                             GUI.changed = true;
-                        }
+
                         Event.current.Use();
                     }
                     break;

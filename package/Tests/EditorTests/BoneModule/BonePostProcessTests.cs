@@ -8,12 +8,89 @@ using NUnit.Framework;
 
 namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
 {
+    // These tests verify asset import process triggering the bone post processing correctly.
+    // Both test assets are hand weaved to have rigid angle.
+
     [TestFixture]
     public class BonePostProcessTests
     {
         private static string kTestAssetsFolder = "Packages/com.unity.2d.animation/Tests/EditorTests/BoneModule/Assets/";
         private static string kTestTempFolder = "Assets/Temp/";
-        
+
+        private static int kFixedTestAssetPpu = 100;
+        private static Vector3 kFixedTestAssetPivotPointInPixels = new Vector3(16.0f, 16.0f);
+        private static SpriteBone[] k3BoneExpected = new SpriteBone[3]
+        {
+            new SpriteBone()
+            {
+                name = "root",
+                parentId = -1,
+                position = (Vector3.zero - kFixedTestAssetPivotPointInPixels) / kFixedTestAssetPpu,
+                rotation = Quaternion.Euler(0.0f, 0.0f, 90.0f),
+                length = 1.0f / kFixedTestAssetPpu
+            },
+            new SpriteBone()
+            {
+                name = "child1",
+                parentId = 0,
+                position = Vector3.up / kFixedTestAssetPpu,
+                rotation = Quaternion.identity,
+                length = 0.5f / kFixedTestAssetPpu
+            },
+            new SpriteBone()
+            {
+                name = "child2",
+                parentId = 1,
+                position = Vector3.right / kFixedTestAssetPpu,
+                rotation = Quaternion.Euler(0.0f, 0.0f, 225.0f),
+                length = 1.5f / kFixedTestAssetPpu
+            }
+        };
+
+        private static SpriteBone[] kComplexBoneExpected = new SpriteBone[5]
+        {
+            new SpriteBone()
+            {
+                name = "root",
+                parentId = -1,
+                position = (Vector3.one - kFixedTestAssetPivotPointInPixels) / kFixedTestAssetPpu,
+                rotation = Quaternion.Euler(0.0f, 0.0f, 30.0f),
+                length = 1.0f / kFixedTestAssetPpu
+            },
+            new SpriteBone()
+            {
+                name = "child1",
+                parentId = 0,
+                position = Vector3.up / kFixedTestAssetPpu,
+                rotation = Quaternion.Euler(0.0f, 0.0f, 60.0f),
+                length = 1.5f / kFixedTestAssetPpu
+            },
+            new SpriteBone()
+            {
+                name = "child2",
+                parentId = 1,
+                position = Vector3.right / kFixedTestAssetPpu,
+                rotation = Quaternion.identity,
+                length = 1.5f / kFixedTestAssetPpu
+            },
+            new SpriteBone()
+            {
+                name = "child3",
+                parentId = 1,
+                position = Vector3.left / kFixedTestAssetPpu,
+                rotation = Quaternion.Euler(0.0f, 0.0f, 120.0f),
+                length = 2.5f / kFixedTestAssetPpu
+            },
+            new SpriteBone()
+            {
+                name = "child4",
+                parentId = 3,
+                position = Vector3.up / kFixedTestAssetPpu,
+                rotation = Quaternion.identity,
+                length = 1.0f / kFixedTestAssetPpu
+            }
+        };
+
         [OneTimeTearDown]
         public void FullTeardown()
         {
@@ -39,23 +116,43 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             AssetDatabase.Refresh();
         }
         
-        private static Vector3 GetPositionInWorld(Vector3 positionInMesh, Vector3 pivot, float ppu)
+        private static void CalculateBindPose(SpriteBone[] spriteBones, out Matrix4x4[] expectedBindPoses)
         {
-            return (positionInMesh - pivot) / ppu;
-        }
+            expectedBindPoses = new Matrix4x4[spriteBones.Length];
+            for (int i = 0; i < spriteBones.Length; ++i)
+            {
+                var sp = spriteBones[i];
 
-        private static Matrix4x4 CalculateBindPose(Vector3 position, Quaternion rotation)
-        {
-            var m = Matrix4x4.identity;
-            m = Matrix4x4.Rotate(Quaternion.Inverse(rotation));
-            m = m * Matrix4x4.Translate(-position);
+                // Calculate bind poses
+                var worldPosition = Vector3.zero;
+                var worldRotation = Quaternion.identity;
 
-            return m;
+                if (sp.parentId == -1)
+                {
+                    worldPosition = sp.position;
+                    worldRotation = sp.rotation;
+                }
+                else
+                {
+                    var parentBindPose = expectedBindPoses[sp.parentId];
+                    var invParentBindPose = Matrix4x4.Inverse(parentBindPose);
+
+                    worldPosition = invParentBindPose.MultiplyPoint(sp.position);
+                    worldRotation = sp.rotation * invParentBindPose.rotation;
+                }
+
+                // Practically Matrix4x4.SetTRInverse
+                Matrix4x4 mat = Matrix4x4.identity;
+                mat = Matrix4x4.Rotate(Quaternion.Inverse(worldRotation));
+                mat = mat * Matrix4x4.Translate(-worldPosition);
+
+                expectedBindPoses[i] = mat;
+            }
         }
 
         private static void VerifyApproximatedSpriteBones(SpriteBone[] expected, SpriteBone[] actual)
         {
-            const double kLooseEqual = 0.01;
+            const double kLooseEqual = 0.001;
             Assert.AreEqual(expected.Length, actual.Length);
             for (var i = 0; i < expected.Length; ++i)
             {
@@ -88,94 +185,18 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
         {
             var testname = "nobone_sp";
             var filename = "nobone.png";
-            var expectedRuntimeBones = new SpriteBone[0];
-            yield return new TestCaseData(testname, filename, expectedRuntimeBones);
+
+            yield return new TestCaseData(testname, filename, new SpriteBone[0]);
             
             testname = "3bone_sp";
             filename = "3bone.png";
-            var ppu = 100;
-            var pivotPointInPixels = new Vector3(16.0f, 16.0f);
 
-            expectedRuntimeBones = new SpriteBone[3]
-            {
-                new SpriteBone()
-                {
-                    name = "root",
-                    parentId = -1,
-                    position = (Vector3.zero - pivotPointInPixels) / ppu,
-                    rotation = Quaternion.identity,
-                    length = 1.0f / ppu
-                },
-                new SpriteBone()
-                {
-                    name = "child1",
-                    parentId = 0,
-                    position = (Vector3.right - pivotPointInPixels) / ppu,
-                    rotation = Quaternion.Euler(0.0f, 0.0f, 90.0f),
-                    length = 0.5f / ppu
-                },
-                new SpriteBone()
-                {
-                    name = "child2",
-                    parentId = 1,
-                    position = (Vector3.one - pivotPointInPixels) / ppu,
-                    rotation = Quaternion.Euler(0.0f, 0.0f, 45.0f),
-                    length = 1.5f / ppu
-                }
-            };
-
-            yield return new TestCaseData(testname, filename, expectedRuntimeBones);
+            yield return new TestCaseData(testname, filename, k3BoneExpected);
             
             testname = "complex_sp";
             filename = "complex.png";
-            ppu = 100;
-            pivotPointInPixels = new Vector3(16.0f, 16.0f);
-
-            expectedRuntimeBones = new SpriteBone[5]
-            {
-                new SpriteBone()
-                {
-                    name = "root",
-                    parentId = -1,
-                    position = (Vector3.zero - pivotPointInPixels) / ppu,
-                    rotation = Quaternion.identity,
-                    length = 1.0f / ppu
-                },
-                new SpriteBone()
-                {
-                    name = "child1",
-                    parentId = 0,
-                    position = (Vector3.right - pivotPointInPixels) / ppu,
-                    rotation = Quaternion.Euler(0.0f, 0.0f, 90.0f),
-                    length = 0.5f / ppu
-                },
-                new SpriteBone()
-                {
-                    name = "child2",
-                    parentId = 1,
-                    position = (Vector3.one - pivotPointInPixels) / ppu,
-                    rotation = Quaternion.Euler(0.0f, 0.0f, 45.0f),
-                    length = 1.5f / ppu
-                },
-                new SpriteBone()
-                {
-                    name = "child3",
-                    parentId = 0,
-                    position = (Vector3.up - pivotPointInPixels) / ppu,
-                    rotation = Quaternion.Euler(0.0f, 0.0f, 275.0f),
-                    length = 2.5f / ppu
-                },
-                new SpriteBone()
-                {
-                    name = "child4",
-                    parentId = 3,
-                    position = ((Vector3.one * 2) - pivotPointInPixels) / ppu,
-                    rotation = Quaternion.Euler(0.0f, 0.0f, 0.0f),
-                    length = 1.0f / ppu
-                }
-            };
-
-            yield return new TestCaseData(testname, filename, expectedRuntimeBones);
+            
+            yield return new TestCaseData(testname, filename, kComplexBoneExpected);
         }
 
         private static IEnumerable<TestCaseData> BindPoseCases()
@@ -187,30 +208,14 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             
             testname = "3bone_bp";
             filename = "3bone.png";
-            var ppu = 100;
-            var pivotPointInPixels = new Vector3(16.0f, 16.0f);
-    
-            expectedBindPoses = new Matrix4x4[3]
-            {
-                CalculateBindPose(GetPositionInWorld(Vector3.zero, pivotPointInPixels, ppu), Quaternion.identity),
-                CalculateBindPose(GetPositionInWorld(Vector3.right, pivotPointInPixels, ppu), Quaternion.Euler(0.0f, 0.0f, 90.0f)),
-                CalculateBindPose(GetPositionInWorld(Vector3.one, pivotPointInPixels, ppu), Quaternion.Euler(0.0f, 0.0f, 45.0f))
-            };
+            CalculateBindPose(k3BoneExpected, out expectedBindPoses);
+
             yield return new TestCaseData(testname, filename, expectedBindPoses);
             
             testname = "complex_bp";
             filename = "complex.png";
-            ppu = 100;
-            pivotPointInPixels = new Vector3(16.0f, 16.0f);
-
-            expectedBindPoses = new Matrix4x4[5]
-            {
-                CalculateBindPose(GetPositionInWorld(Vector3.zero, pivotPointInPixels, ppu), Quaternion.identity),
-                CalculateBindPose(GetPositionInWorld(Vector3.right, pivotPointInPixels, ppu), Quaternion.Euler(0.0f, 0.0f, 90.0f)),
-                CalculateBindPose(GetPositionInWorld(Vector3.one, pivotPointInPixels, ppu), Quaternion.Euler(0.0f, 0.0f, 45.0f)),
-                CalculateBindPose(GetPositionInWorld(Vector3.up, pivotPointInPixels, ppu), Quaternion.Euler(0.0f, 0.0f, 275.0f)),
-                CalculateBindPose(GetPositionInWorld(Vector3.one * 2, pivotPointInPixels, ppu), Quaternion.Euler(0.0f, 0.0f, 0.0f))
-            };
+            CalculateBindPose(kComplexBoneExpected, out expectedBindPoses);
+            
             yield return new TestCaseData(testname, filename, expectedBindPoses);
         }
         
@@ -220,6 +225,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             string tempPath = kTestTempFolder + testname + "/";
             string spritePath = tempPath + filename;
 
+            // We create a new folder and clone the test asset into the new folder to simulate a "import a sprite with metadata" process.
             ValidateDirectory(tempPath);
             CloneSpriteForTest(spritePath);
 

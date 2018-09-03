@@ -31,12 +31,34 @@ namespace UnityEditor.Experimental.U2D.Animation
                 serializedObject.ApplyModifiedProperties();
             }
 
+            var spriteRenderer = spriteSkin.gameObject.GetComponent<SpriteRenderer>();
+
             if (GUILayout.Button("Generate Bones GOs"))
             {
-                GameObject go = SpriteBoneUtility.CreateSkeleton(spriteSkin.spriteRenderer.sprite.GetBones(), spriteSkin.gameObject, spriteSkin.rootBone);
-                if (go)
-                    spriteSkin.rootBone = go.transform;
-                EditorUtility.SetDirty(spriteSkin);
+                if (spriteRenderer == null || spriteRenderer.sprite == null)
+                {
+                    Debug.LogError("Unable to Generate Bones GOs. Check spriteRenderer or spriteRenderer.sprite for null");
+                }
+                else
+                {
+                    GameObject go = SpriteBoneUtility.CreateSkeleton(spriteRenderer.sprite.GetBones(), spriteSkin.gameObject, spriteSkin.rootBone);
+                    if (go)
+                        spriteSkin.rootBone = go.transform;
+                    EditorUtility.SetDirty(spriteSkin);
+                }
+            }
+
+            if (GUILayout.Button("Reset to Bind-pose"))
+            {
+                if (spriteRenderer == null || spriteRenderer.sprite == null)
+                {
+                    Debug.LogError("Unable to Reset to Bind-pose. Check spriteRenderer or spriteRenderer.sprite for null");
+                }
+                else
+                {
+                    SpriteBoneUtility.ResetBindPose(spriteRenderer.sprite.GetBones(), spriteSkin.boneTransforms);
+                    EditorUtility.SetDirty(spriteSkin);
+                }
             }
         }
     }

@@ -26,18 +26,18 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
         //  |  (root tip pointing to child)
         //  C
         //
-        protected List<SpriteBone> GenerateNormalTwoBoneRawData()
+        protected List<UniqueSpriteBone> GenerateNormalTwoBoneRawData()
         {
-            List<SpriteBone> rawData = new List<SpriteBone>();
+            var rawData = new List<UniqueSpriteBone>();
 
-            var root = new SpriteBone();
+            var root = new UniqueSpriteBone();
             root.name = "root";
             root.position = Vector2.one;
             root.rotation = Quaternion.Euler(0.0f, 0.0f, 270.0f);
             root.length = 0.5f;
             root.parentId = -1;
 
-            var child = new SpriteBone();
+            var child = new UniqueSpriteBone();
             child.name = "child";
             child.position = Vector2.right;
             child.rotation = Quaternion.Euler(0.0f, 0.0f, 45.0f);
@@ -55,39 +55,39 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
         //      |(C1 tip pointed to C2, C2 & C3 are children of C1)
         //     C3--C4--
         //
-        protected List<SpriteBone> GenerateComplexBoneRawData()
+        protected List<UniqueSpriteBone> GenerateComplexBoneRawData()
         {
-            List<SpriteBone> rawData = new List<SpriteBone>();
+            var rawData = new List<UniqueSpriteBone>();
 
-            var root = new SpriteBone();
+            var root = new UniqueSpriteBone();
             root.name = "root";
             root.position = Vector2.up;
             root.rotation = Quaternion.Euler(0.0f, 0.0f, 0.0f);
             root.length = 1f;
             root.parentId = -1;
 
-            var child1 = new SpriteBone();
+            var child1 = new UniqueSpriteBone();
             child1.name = "child1";
             child1.position = Vector2.one;
             child1.rotation = Quaternion.Euler(0.0f, 0.0f, 0.0f);
             child1.length = 1.0f;
             child1.parentId = 0;
 
-            var child2 = new SpriteBone();
+            var child2 = new UniqueSpriteBone();
             child2.name = "child2";
             child2.position = Vector2.one + Vector2.right;
             child2.rotation = Quaternion.Euler(0.0f, 0.0f, 0.0f);
             child2.length = 1.0f;
             child2.parentId = 1;
 
-            var child3 = new SpriteBone();
+            var child3 = new UniqueSpriteBone();
             child3.name = "child3";
             child3.position = Vector2.right;
             child3.rotation = Quaternion.Euler(0.0f, 0.0f, 0.0f);
             child3.length = 1.0f;
             child3.parentId = 1;
 
-            var child4 = new SpriteBone();
+            var child4 = new UniqueSpriteBone();
             child4.name = "child4";
             child4.position = Vector2.right * 2;
             child4.rotation = Quaternion.Euler(0.0f, 0.0f, 0.0f);
@@ -103,14 +103,14 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             return rawData;
         }
 
-        protected void VerifyApproximatedSpriteBones(List<SpriteBone> expected, List<SpriteBone> actual)
+        protected void VerifyApproximatedSpriteBones(List<UniqueSpriteBone> expected, List<UniqueSpriteBone> actual)
         {
             const double kLooseEqual = 0.01;
             Assert.AreEqual(expected.Count, actual.Count);
             for (var i = 0; i < expected.Count; ++i)
             {
                 var expectedBone = expected[i];
-                var actualBone = actual[i];
+                var actualBone = actual[i].spriteBone;
 
                 Assert.AreEqual(expectedBone.name, actualBone.name, "Name not matched at #{0}", i);
                 Assert.AreEqual(expectedBone.parentId, actualBone.parentId, "ParentId not matched at #{0}", i);
@@ -160,8 +160,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
         {
             m_Model.CreateNewRoot(Vector2.left);
             
-            List<SpriteBone> expectedRawData = new List<SpriteBone>();
-            var root = new SpriteBone();
+            var expectedRawData = new List<UniqueSpriteBone>();
+            var root = new UniqueSpriteBone();
             root.name = "root";
             root.position = Vector2.left;
             root.rotation = Quaternion.identity;
@@ -180,8 +180,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             var root = m_Model.CreateNewRoot(Vector2.zero);
             m_Model.MoveTip(root, Vector2.up);
             
-            List<SpriteBone> expectedRawData = new List<SpriteBone>();
-            var sbRoot = new SpriteBone();
+            var expectedRawData = new List<UniqueSpriteBone>();
+            var sbRoot = new UniqueSpriteBone();
             sbRoot.name = "root";
             sbRoot.position = Vector2.zero;
             sbRoot.rotation = Quaternion.Euler(0.0f, 0.0f, 90.0f);
@@ -203,8 +203,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
                 () => { m_Model.CreateNewRoot(Vector2.one); },
                 "Creating a new root when there are bones in this sprite");
 
-            List<SpriteBone> expectedRawData = new List<SpriteBone>();
-            var sbRoot = new SpriteBone();
+            var expectedRawData = new List<UniqueSpriteBone>();
+            var sbRoot = new UniqueSpriteBone();
             sbRoot.name = "root";
             sbRoot.position = Vector2.zero;
             sbRoot.rotation = Quaternion.identity;
@@ -238,16 +238,16 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             var root = m_Model.CreateNewRoot(Vector2.zero);
             var child = m_Model.CreateNewChildBone(root, Vector2.one);
 
-            List<SpriteBone> expectedRawData = new List<SpriteBone>();
+            var expectedRawData = new List<UniqueSpriteBone>();
 
-            var sbRoot = new SpriteBone();
+            var sbRoot = new UniqueSpriteBone();
             sbRoot.name = "root";
             sbRoot.position = Vector2.zero;
             sbRoot.rotation = Quaternion.identity;
             sbRoot.length = 0.0f;
             sbRoot.parentId = -1;
 
-            var sbChild = new SpriteBone();
+            var sbChild = new UniqueSpriteBone();
             sbChild.name = child.name;
             sbChild.position = Vector2.one;
             sbChild.rotation = Quaternion.identity;
@@ -284,7 +284,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             m_Model.SetBoneName(root, "dad");
             m_Model.SetBoneName(child, "son");
 
-            List<SpriteBone> expectedRawData = new List<SpriteBone>(originalRawData);
+            var expectedRawData = new List<UniqueSpriteBone>(originalRawData);
             var expectedRoot = expectedRawData[0];
             var expectedChild = expectedRawData[1];
             expectedRoot.name = "dad";
@@ -308,7 +308,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             var child = m_Model.bones.ElementAt(1);
             m_Model.DeleteBone(child);
 
-            List<SpriteBone> expectedRawData = new List<SpriteBone>();
+            var expectedRawData = new List<UniqueSpriteBone>();
             expectedRawData.Add(originalRawData[0]);
 
             var actualRawData = m_Model.GetRawData();
@@ -345,9 +345,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             var child = m_Model.bones.ElementAt(1);
             m_Model.MoveBone(child, Vector2.down);
 
-            List<SpriteBone> expectedRawData = new List<SpriteBone>(originalRawData);
+            var expectedRawData = new List<UniqueSpriteBone>(originalRawData);
             var expectedChild = expectedRawData[1];
-            expectedChild.position = Vector2.down;
+            expectedChild.position = new Vector2(2.0f, -1.0f);
             expectedRawData[1] = expectedChild;
 
             var actualRawData = m_Model.GetRawData();
@@ -364,9 +364,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             var child = m_Model.bones.ElementAt(1);
             m_Model.MoveTip(child, Vector2.up);
 
-            List<SpriteBone> expectedRawData = new List<SpriteBone>(originalRawData);
+            var expectedRawData = new List<UniqueSpriteBone>(originalRawData);
             var expectedChild = expectedRawData[1];
-            expectedChild.rotation = Quaternion.Euler(0.0f, 0.0f, 135.0f);
+            expectedChild.rotation = Quaternion.Euler(0.0f, 0.0f, 225.0f);
             expectedChild.length = 1.4142f;
             expectedRawData[1] = expectedChild;
 
@@ -385,16 +385,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             var root = m_Model.bones.ElementAt(0);
             m_Model.MoveBone(root, newPosition, false);
 
-            List<SpriteBone> expectedRawData = new List<SpriteBone>(originalRawData);
+            var expectedRawData = new List<UniqueSpriteBone>(originalRawData);
             var expectedRoot = expectedRawData[0];
-            var expectedChild = expectedRawData[1];
-            var movedDelta = newPosition - expectedRoot.position;
-
             expectedRoot.position = newPosition;
-            expectedChild.position = expectedChild.position + movedDelta;
-
             expectedRawData[0] = expectedRoot;
-            expectedRawData[1] = expectedChild;
             
             var actualRawData = m_Model.GetRawData();
 
@@ -411,15 +405,13 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             var root = m_Model.bones.ElementAt(0);
             m_Model.MoveTip(root, newPosition, false);
 
-            List<SpriteBone> expectedRawData = new List<SpriteBone>(originalRawData);
+            var expectedRawData = new List<UniqueSpriteBone>(originalRawData);
             var expectedRoot = expectedRawData[0];
             var expectedChild = expectedRawData[1];
 
             expectedRoot.rotation = Quaternion.Euler(0.0f, 0.0f, 0.0f);
             expectedRoot.length = 1.0f;
-            expectedChild.position = newPosition;
-            // Parent rotated by 90 degree, since we did not change child's tip, the world rotation of the child will change.
-            expectedChild.rotation = expectedChild.rotation * Quaternion.Euler(0.0f, 0.0f, 90.0f);
+            expectedChild.position = Vector2.right;
 
             expectedRawData[0] = expectedRoot;
             expectedRawData[1] = expectedChild;
@@ -438,8 +430,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             // this rotation must happen on Z axis.
             m_Model.MoveTip(root, Vector2.left);
             
-            List<SpriteBone> expectedRawData = new List<SpriteBone>();
-            var sbRoot = new SpriteBone();
+            var expectedRawData = new List<UniqueSpriteBone>();
+            var sbRoot = new UniqueSpriteBone();
             sbRoot.name = "root";
             sbRoot.position = Vector2.zero;
             sbRoot.rotation = Quaternion.Euler(0.0f, 0.0f, 180.0f);
@@ -454,7 +446,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
 
 
         [Test]
-        public void MoveRootBoneNode_MarkOffspringRetainPosition_OnlyRootBoneChanged()
+        public void MoveRootBoneNode_KeepOffspringWorldPosition_RootAndFirstChildPositionChanged()
         {
             var originalRawData = GenerateComplexBoneRawData();
             m_Model.SetRawData(originalRawData, Vector2.zero);
@@ -462,10 +454,14 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             var root = m_Model.bones.ElementAt(0);
             m_Model.MoveBone(root, Vector2.zero);
 
-            List<SpriteBone> expectedRawData = new List<SpriteBone>(originalRawData);
+            var expectedRawData = new List<UniqueSpriteBone>(originalRawData);
             var expectedRoot = expectedRawData[0];
             expectedRoot.position = Vector2.zero;
             expectedRawData[0] = expectedRoot;
+
+            var expectedChild1 = expectedRawData[1];
+            expectedChild1.position = new Vector2(1.0f, 2.0f);
+            expectedRawData[1] = expectedChild1;
 
             var actualRawData = m_Model.GetRawData();
 
@@ -473,7 +469,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
         }
 
         [Test]
-        public void MoveRootBoneTip_MarkOffspringRetainPosition_OnlyRootBoneRotate()
+        public void MoveRootBoneTip_KeepOffspringWorldPosition_RootRotationChanged_FirstChildPositionChanged()
         {
             var originalRawData = GenerateComplexBoneRawData();
             m_Model.SetRawData(originalRawData, Vector2.zero);
@@ -481,10 +477,15 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             var root = m_Model.bones.ElementAt(0);
             m_Model.MoveTip(root, Vector2.zero);
 
-            List<SpriteBone> expectedRawData = new List<SpriteBone>(originalRawData);
+            var expectedRawData = new List<UniqueSpriteBone>(originalRawData);
             var expectedRoot = expectedRawData[0];
             expectedRoot.rotation = Quaternion.Euler(0.0f, 0.0f, 270.0f);
             expectedRawData[0] = expectedRoot;
+
+            var expectedChild1 = expectedRawData[1];
+            expectedChild1.position = new Vector2(-1.0f, 1.0f);
+            expectedChild1.rotation = Quaternion.Euler(0.0f, 0.0f, 90.0f);
+            expectedRawData[1] = expectedChild1;
 
             var actualRawData = m_Model.GetRawData();
 
@@ -548,7 +549,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
         }
 
         [Test]
-        public void ParentToASameLevelBone_ParentIdChange_OrderAndPositionIntact()
+        public void ParentToASameLevelBone_ParentIdChange_OrderIntact_ChildWithNewParentChangedPosition()
         {
             var originalRawData = GenerateComplexBoneRawData();
             m_Model.SetRawData(originalRawData, Vector2.zero);
@@ -558,9 +559,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
 
             m_Model.Parent(child4, child2);
             
-            List<SpriteBone> expectedRawData = new List<SpriteBone>(originalRawData);
+            var expectedRawData = new List<UniqueSpriteBone>(originalRawData);
             var expectedChild4 = expectedRawData[4];
             expectedChild4.parentId = 2;
+            expectedChild4.position = new Vector2(1.0f, -1.0f);
             expectedRawData[4] = expectedChild4;
 
             var actualRawData = m_Model.GetRawData();

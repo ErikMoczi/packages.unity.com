@@ -101,8 +101,6 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             while (editableBoneWeight.GetChannelCount() > numChannels)
                 editableBoneWeight.RemoveChannel(numChannels);
-
-            NormalizeChannels(editableBoneWeight);
         }
 
         public static void RemoveBone(this EditableBoneWeight editableBoneWeight, int boneIndex)
@@ -266,7 +264,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             {
                 BoneWeightData data = editableBoneWeight.GetBoneWeightData(i);
 
-                if (data.weight < weightTolerance)
+                if (data.weight <= weightTolerance)
                 {
                     data.boneIndex = 0;
                     data.weight = 0f;
@@ -275,8 +273,6 @@ namespace UnityEditor.Experimental.U2D.Animation
                     editableBoneWeight.EnableChannel(i, false);
                 }
             }
-
-            editableBoneWeight.NormalizeChannels();
         }
 
         public static BoneWeight Lerp(BoneWeight first, BoneWeight second, float t)
@@ -287,56 +283,41 @@ namespace UnityEditor.Experimental.U2D.Animation
             return Lerp(firstEditable, secondEditable, t).ToBoneWeight(true);
         }
 
-        public static EditableBoneWeight Lerp(EditableBoneWeight first, EditableBoneWeight second, float t)
+        private static EditableBoneWeight Lerp(EditableBoneWeight first, EditableBoneWeight second, float t)
         {
             EditableBoneWeight result = new EditableBoneWeight();
 
-            for (int i = 0; i < first.GetChannelCount(); ++i)
+            foreach (BoneWeightChannel channel in first)
             {
-                if (first.IsChannelEnabled(i))
-                {
-                    BoneWeightData data = first.GetBoneWeightData(i);
+                if (!channel.enabled)
+                    continue;
 
-                    float otherWeight = 0f;
-                    int otherChannelIndex = second.GetChannelFromBoneIndex(data.boneIndex);
+                BoneWeightData data = channel.boneWeightData;
+                data.weight *= (1f - t);
 
-                    if (otherChannelIndex != -1)
-                    {
-                        otherWeight = second.GetBoneWeightData(otherChannelIndex).weight;
-                    }
-
-                    float resultWeight = Mathf.Lerp(data.weight, otherWeight, t);
-
-                    if (resultWeight > 0f)
-                        result.AddChannel(new BoneWeightData(data.boneIndex, resultWeight), true);
-                }
+                if (data.weight > 0f)
+                    result.AddChannel(data, true);
             }
 
-            for (int i = 0; i < second.GetChannelCount(); ++i)
+            foreach (BoneWeightChannel channel in second)
             {
-                if (second.IsChannelEnabled(i))
-                {
-                    BoneWeightData data = second.GetBoneWeightData(i);
+                if (!channel.enabled)
+                    continue;
 
-                    if (result.GetChannelFromBoneIndex(data.boneIndex) == -1)
-                    {
-                        float firstWeight = 0f;
-                        int firstChannelIndex = first.GetChannelFromBoneIndex(data.boneIndex);
+                BoneWeightData data = channel.boneWeightData;
+                data.weight *= t;
 
-                        if (firstChannelIndex != -1)
-                        {
-                            firstWeight = first.GetBoneWeightData(firstChannelIndex).weight;
-                        }
-
-                        float resultWeight = Mathf.Lerp(firstWeight, data.weight, t);
-
-                        if (resultWeight > 0f)
-                            result.AddChannel(new BoneWeightData(data.boneIndex, resultWeight), true);
-                    }
-                }
+                if (data.weight > 0f)
+                    result.AddChannel(data, true);
             }
 
-            result.ClampChannels(4);
+            result.UnifyChannelsWithSameBoneIndex();
+
+            if (result.GetWeightSum() > 1f)
+                result.NormalizeChannels();
+
+            result.FilterChannels(0f);
+            result.ClampChannels(4, true);
 
             return result;
         }

@@ -20,12 +20,7 @@ namespace UnityEngine.Experimental.U2D.Animation
         Transform[] m_BoneTransforms;
         SpriteRenderer m_SpriteRenderer;
 
-        public Transform[] boneTransforms
-        {
-            get { return m_BoneTransforms; }
-        }
-
-        public SpriteRenderer spriteRenderer
+        SpriteRenderer spriteRenderer
         {
             get
             {
@@ -33,6 +28,11 @@ namespace UnityEngine.Experimental.U2D.Animation
                     m_SpriteRenderer = GetComponent<SpriteRenderer>();
                 return m_SpriteRenderer;
             }
+        }
+
+        public Transform[] boneTransforms
+        {
+            get { return m_BoneTransforms; }
         }
 
         public Transform rootBone
@@ -45,10 +45,12 @@ namespace UnityEngine.Experimental.U2D.Animation
             }
         }
 
-        private void Rebind()
+        void Rebind()
         {
-            if (m_RootBone != null)
-                m_BoneTransforms = SpriteBoneUtility.Rebind(m_RootBone, spriteRenderer.sprite.GetBones());
+            if (spriteRenderer == null || spriteRenderer.sprite == null)
+                Debug.LogWarning("Rebind failure. Check spriteRenderer or spriteRenderer.sprite for null");
+            if (rootBone != null)
+                m_BoneTransforms = SpriteBoneUtility.Rebind(rootBone, spriteRenderer.sprite.GetBones());
         }
 
         void Awake()
@@ -63,10 +65,18 @@ namespace UnityEngine.Experimental.U2D.Animation
 
         void Update()
         {
-            if (rootBone != null && boneTransforms != null && boneTransforms.Length > 0)
+            if (rootBone != null && boneTransforms != null && spriteRenderer.sprite != null)
             {
-                JobHandle jobHandle = SpriteBoneUtility.Deform(spriteRenderer.sprite, spriteRenderer.GetDeformableVertices(), gameObject.transform.worldToLocalMatrix, boneTransforms);
-                spriteRenderer.UpdateDeformableBuffer(jobHandle);
+                try
+                {
+                    JobHandle jobHandle = SpriteBoneUtility.Deform(spriteRenderer.sprite, spriteRenderer.GetDeformableVertices(), gameObject.transform.worldToLocalMatrix, boneTransforms);
+                    spriteRenderer.UpdateDeformableBuffer(jobHandle);
+                }
+                catch
+                {
+                    Debug.LogWarning("Deform failure, please ensure SpriteSkin.Rebind is successful.");
+                    m_BoneTransforms = null;
+                }
             }
         }
     }

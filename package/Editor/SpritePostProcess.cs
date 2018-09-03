@@ -53,12 +53,12 @@ namespace UnityEditor.Experimental.U2D.Animation
             float definitionScaleW = texture.width / (float)actualWidth;
             float definitionScaleH = texture.height / (float)actualHeight;
             float definitionScale = Mathf.Min(definitionScaleW, definitionScaleH);
-            float scaledPTU = spriteDataProvider.pixelsPerUnit * definitionScale;
 
             foreach (var sprite in sprites)
             {
                 var guid = sprite.GetSpriteID();
                 {
+                    SpriteRect spriteRect = spriteDataProvider.GetSpriteRects().First(s => { return s.spriteID == guid; });
                     var spriteBone = boneDataProvider.GetBones(guid);
                     if (spriteBone == null)
                         continue;
@@ -71,14 +71,36 @@ namespace UnityEditor.Experimental.U2D.Animation
                     {
                         // Convert position to world unit.
                         SpriteBone sp = spriteBone[i];
-                        sp.position = (spriteBone[i].position - new Vector3(pivotPointInPixels.x, pivotPointInPixels.y, 0.0f)) / scaledPTU;
-                        sp.length = spriteBone[i].length / scaledPTU;
+                        var isRoot = sp.parentId == -1;
+                        var position = isRoot ? (spriteBone[i].position - Vector3.Scale(spriteRect.rect.size, spriteRect.pivot)) : spriteBone[i].position;
+                        sp.position =  position * definitionScale / sprite.pixelsPerUnit;
+                        sp.length = spriteBone[i].length * definitionScale / sprite.pixelsPerUnit;
                         outputSpriteBones[i] = sp;
 
                         // Calculate bind poses
+                        var worldPosition = Vector3.zero;
+                        var worldRotation = Quaternion.identity;
+
+                        if (sp.parentId == -1)
+                        {
+                            worldPosition = sp.position;
+                            worldRotation = sp.rotation;
+                        }
+                        else
+                        {
+                            var parentBindPose = bindPose[sp.parentId];
+                            var invParentBindPose = Matrix4x4.Inverse(parentBindPose);
+
+                            worldPosition = invParentBindPose.MultiplyPoint(sp.position);
+                            worldRotation = sp.rotation * invParentBindPose.rotation;
+                        }
+
+                        // Practically Matrix4x4.SetTRInverse
+                        var rot = Quaternion.Inverse(worldRotation);
                         Matrix4x4 mat = Matrix4x4.identity;
-                        mat = Matrix4x4.Rotate(Quaternion.Inverse(sp.rotation));
-                        mat = mat * Matrix4x4.Translate(-sp.position);
+                        mat = Matrix4x4.Rotate(rot);
+                        mat = mat * Matrix4x4.Translate(-worldPosition);
+
 
                         bindPose[i] = mat;
                     }
@@ -107,11 +129,12 @@ namespace UnityEditor.Experimental.U2D.Animation
             float definitionScaleW = texture.width / (float)actualWidth;
             float definitionScaleH = texture.height / (float)actualHeight;
             float definitionScale = Mathf.Min(definitionScaleW, definitionScaleH);
-            float scaledPTU = spriteEditorDataProvider.pixelsPerUnit * definitionScale;
 
             foreach (var sprite in sprites)
             {
                 var guid = sprite.GetSpriteID();
+                SpriteRect spriteRect = spriteEditorDataProvider.GetSpriteRects().First(s => { return s.spriteID == guid; });
+
                 Vertex2DMetaData[] vertices = spriteMeshDataProvider.GetVertices(guid);
                 int[] indices = spriteMeshDataProvider.GetIndices(guid);
 
@@ -122,7 +145,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                     for (int i = 0; i < vertices.Length; ++i)
                     {
-                        vertexArray[i] = (Vector3)(vertices[i].position - sprite.pivot) / scaledPTU;
+                        vertexArray[i] = (Vector3)(vertices[i].position - Vector2.Scale(spriteRect.rect.size, spriteRect.pivot)) * definitionScale / sprite.pixelsPerUnit;
                         boneWeightArray[i] = vertices[i].boneWeight;
                     }
 

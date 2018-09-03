@@ -18,6 +18,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             public static readonly GUIContent mode = new GUIContent("Mode");
             public static readonly GUIContent selectedBone = new GUIContent("Bone", "");
+            public static readonly GUIContent autoNormalize = new GUIContent("Normalize");
             public static readonly GUIContent amount = new GUIContent("Amount", "");
             public static readonly GUIContent helpMessage = new GUIContent("Select a bone.");
         }
@@ -27,13 +28,13 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public float GetInspectorHeight()
         {
-            float height = MeshModuleUtility.kEditorLineHeight * 3f + 2f;
+            float height = MeshModuleUtility.kEditorLineHeight * 4f + 2f;
 
             if (weightEditor.boneIndex == -1)
                 height += kHelpBoxHeight;
 
             if (weightEditor.mode == WeightEditorMode.Smooth)
-                height = MeshModuleUtility.kEditorLineHeight * 2f + 2f;
+                height = MeshModuleUtility.kEditorLineHeight * 3f + 2f;
 
             return height;
         }
@@ -45,13 +46,17 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (weightEditor.mode != WeightEditorMode.Smooth)
                 weightEditor.boneIndex = EditorGUILayout.Popup(Contents.selectedBone, weightEditor.boneIndex, MeshModuleUtility.GetBoneNameList(weightEditor.spriteMeshData));
 
-            EditorGUI.BeginChangeCheck();
+            weightEditor.autoNormalize = EditorGUILayout.Toggle(Contents.autoNormalize, weightEditor.autoNormalize);
 
-            if (Event.current.type == EventType.MouseUp && Event.current.button == 0 && GUI.GetNameOfFocusedControl() == "slider" || Event.current.type == EventType.Ignore)
+            if (GUI.GetNameOfFocusedControl() == "slider" &&
+                (Event.current.type == EventType.MouseUp && Event.current.button == 0 ||
+                 Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter) ||
+                 Event.current.type == EventType.Ignore))
             {
                 weightEditor.OnEditEnd();
                 m_SliderValue = 0f;
                 m_EditStarted = false;
+                GUI.changed = true;
             }
 
             GUI.SetNextControlName("slider");
@@ -66,6 +71,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
 
             EditorGUIUtility.labelWidth = 70f;
+
+            EditorGUI.BeginChangeCheck();
 
             using (new EditorGUI.DisabledGroupScope(weightEditor.boneIndex == -1 && weightEditor.mode != WeightEditorMode.Smooth))
             {

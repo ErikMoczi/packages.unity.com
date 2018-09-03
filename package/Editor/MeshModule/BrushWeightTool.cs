@@ -18,6 +18,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             public static readonly GUIContent mode = new GUIContent("Mode");
             public static readonly GUIContent selectedBone = new GUIContent("Bone", "");
+            public static readonly GUIContent autoNormalize = new GUIContent("Normalize");
             public static readonly GUIContent size = new GUIContent("Size", "");
             public static readonly GUIContent hardness = new GUIContent("Hardness");
             public static readonly GUIContent step = new GUIContent("Step");
@@ -39,6 +40,14 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public ISelection selection { get { return m_Selection; } }
 
+        private bool isSecondaryAction
+        {
+            get
+            {
+                return weightEditor.mode != WeightEditorMode.Smooth && EditorGUI.actionKey;
+            }
+        }
+
         private int m_ControlID = -1;
 
         public BrushWeightTool()
@@ -49,13 +58,13 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public float GetInspectorHeight()
         {
-            float height = MeshModuleUtility.kEditorLineHeight * 5f + 2f;
+            float height = MeshModuleUtility.kEditorLineHeight * 6f + 2f;
 
             if (weightEditor.boneIndex == -1)
                 height += kHelpBoxHeight;
 
             if (weightEditor.mode == WeightEditorMode.Smooth)
-                height = MeshModuleUtility.kEditorLineHeight * 4f + 2f;
+                height = MeshModuleUtility.kEditorLineHeight * 5f + 2f;
 
             return height;
         }
@@ -68,6 +77,8 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             if (weightEditor.mode != WeightEditorMode.Smooth)
                 weightEditor.boneIndex = EditorGUILayout.Popup(Contents.selectedBone, weightEditor.boneIndex, MeshModuleUtility.GetBoneNameList(weightEditor.spriteMeshData));
+
+            weightEditor.autoNormalize = EditorGUILayout.Toggle(Contents.autoNormalize, weightEditor.autoNormalize);
 
             radius = EditorGUILayout.FloatField(Contents.size, radius);
             radius = Mathf.Max(1f, radius);
@@ -176,12 +187,19 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             if ((GUIUtility.hotControl == controlID || HandleUtility.nearestControl == controlID) && eventType == EventType.Repaint)
             {
+                Color oldColor =  Handles.color;
+
+                Handles.color = Color.white;
+
+                if (isSecondaryAction)
+                    Handles.color = Color.red;
+
                 if (GUIUtility.hotControl == controlID)
                     Handles.color = Color.yellow;
 
                 Handles.DrawWireDisc(position, Vector3.forward, radius);
 
-                Handles.color = Color.white;
+                Handles.color = oldColor;
             }
         }
 
@@ -202,6 +220,9 @@ namespace UnityEditor.Experimental.U2D.Animation
             UpdateSelection(position);
 
             weightEditor.emptySelectionEditsAll = false;
+
+            if (isSecondaryAction)
+                hardness *= -1f;
 
             weightEditor.DoEdit(hardness);
         }

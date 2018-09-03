@@ -28,6 +28,18 @@ namespace UnityEditor.Experimental.U2D.Animation
 
     internal class BoneHierarchyView : IBoneHierarchyView
     {
+        private class Styles
+        {
+            public static readonly Color previewColor = new Color(0.7f, 1.0f, 0.0f);
+            public static readonly Color boneColor = Color.white;
+            public static readonly Color nodeColor = new Color(0.5f, 0.5f, 0.5f);
+            public static readonly Color tipColor = Color.yellow;
+            public static readonly Color parentLinkColor = Color.white;
+            public static readonly Color selectedBoneColor = Color.cyan;
+            public static readonly Color selectedNodeColor = new Color(1.0f, 0.63f, 0.0f);
+            public static readonly Color selectedParentLinkColor = Color.yellow;
+        }
+
         private Dictionary<IBone, int> m_NodeControlIDMaps = new Dictionary<IBone, int>();
         private Dictionary<IBone, int> m_TipControlIDMaps = new Dictionary<IBone, int>();
         private Dictionary<IBone, int> m_BoneControlIDMaps = new Dictionary<IBone, int>();
@@ -39,7 +51,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             get
             {
                 // TODO : Need a way to customize color property
-                return Color.white;
+                return Styles.boneColor;
             }
         }
 
@@ -237,10 +249,10 @@ namespace UnityEditor.Experimental.U2D.Animation
                 return;
 
             var scale = GetScale(bone.position, bone.tip);
-
-            BoneDrawingUtility.DrawBoneNodeOutline(bone.position, selected ? Color.yellow : color, scale);
-            BoneDrawingUtility.DrawBoneBody(bone.position, bone.tip, selected ? Color.yellow : color, scale);
-            BoneDrawingUtility.DrawBoneNode(bone.position, selected ? Color.green : Color.black, scale);
+            
+            BoneDrawingUtility.DrawBoneNodeOutline(bone.position, selected ? Styles.selectedBoneColor : color, scale);
+            BoneDrawingUtility.DrawBoneBody(bone.position, bone.tip, selected ? Styles.selectedBoneColor : color, scale);
+            BoneDrawingUtility.DrawBoneNode(bone.position, selected ? Styles.selectedNodeColor : Styles.nodeColor, scale);
         }
 
         public void DrawLinkToParent(IBone bone, bool selected)
@@ -248,7 +260,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (Event.current == null || Event.current.type != EventType.Repaint)
                 return;
 
-            BoneDrawingUtility.DrawParentLink(bone.position, bone.parent.tip, selected ? Color.yellow : color, GetScale());
+            var pointingTo = bone.parent.position;
+            BoneDrawingUtility.DrawParentLink(bone.position, pointingTo, selected ? Styles.selectedParentLinkColor : color, GetScale());
         }
 
         public void DrawPreviewLinkFromBone(IBone bone)
@@ -258,7 +271,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             var mousePosition = GetMouseWorldPosition();
 
-            BoneDrawingUtility.DrawParentLink(bone.tip, mousePosition, Color.green, GetScale());
+            BoneDrawingUtility.DrawParentLink(mousePosition, bone.position, Styles.previewColor, GetScale());
         }
 
         public void DrawPreviewTipFromTip(IBone bone)
@@ -269,8 +282,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             var mousePosition = GetMouseWorldPosition();
             var scale = GetScale(bone.tip, mousePosition);
 
-            BoneDrawingUtility.DrawBoneBody(bone.tip, mousePosition, Color.green, scale);
-            BoneDrawingUtility.DrawBoneNodeOutline(bone.tip, Color.green, scale);
+            BoneDrawingUtility.DrawBoneBody(bone.tip, mousePosition, Styles.previewColor, scale);
+            BoneDrawingUtility.DrawBoneNodeOutline(bone.tip, Styles.previewColor, scale);
         }
 
         public void DrawTip(IBone bone)
@@ -278,7 +291,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (Event.current == null || Event.current.type != EventType.Repaint)
                 return;
 
-            BoneDrawingUtility.DrawBoneNodeOutline(bone.tip, Color.cyan, GetScale() * 0.2f);
+            BoneDrawingUtility.DrawBoneNodeOutline(bone.tip, Styles.tipColor, GetScale() * 0.5f);
         }
 
         private void FakeCap(int controlID, Vector3 position, Quaternion rotation, float size, EventType eventType)

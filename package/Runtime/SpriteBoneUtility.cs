@@ -13,89 +13,14 @@ namespace UnityEngine.Experimental.U2D.Animation
     public class SpriteBoneUtility
     {
 
-        struct BoneJob : IJob
-        {
-            // Root's worldToLocalMatrix
-            [ReadOnly]
-            public Matrix4x4 rootInv;
-            // this is loaded from SharedMeshData
-            [ReadOnly]
-            public NativeArray<Matrix4x4> bindPoses;
-            // this is each of the bond's localToWorld
-            [ReadOnly]
-            [DeallocateOnJobCompletionAttribute]
-            public NativeArray<Matrix4x4> bones;
-
-            public NativeArray<Matrix4x4> output;
-
-            public void Execute()
-            {
-                for (var i = 0; i < bones.Length; i++)
-                {
-                    output[i] = rootInv * bones[i] * bindPoses[i];
-                }
-            }
-        }
-
-        struct SkinJob : IJob
-        {
-            public int influenceCount;
-            [ReadOnly]
-            public NativeArray<BoneWeight> influences;
-            [ReadOnly]
-            public NativeSlice<Vector3> vertices;
-            [ReadOnly]
-            [DeallocateOnJobCompletionAttribute]
-            public NativeArray<Matrix4x4> bones;
-
-            public NativeArray<Vector3> output;
-
-            public void Execute()
-            {
-                var deformFunc = (new System.Action<int>[] { Deform1, Deform2, null, Deform4 })[influenceCount - 1];
-                for (var i = 0; i < vertices.Length; i++)
-                {
-                    deformFunc(i);
-                }
-            }
-
-            void Deform1(int i)
-            {
-                int bone0 = influences[i].boneIndex0;
-                output[i] = bones[bone0].MultiplyPoint3x4(vertices[i]) * influences[i].weight0;
-            }
-
-            void Deform2(int i)
-            {
-                int bone0 = influences[i].boneIndex0;
-                int bone1 = influences[i].boneIndex1;
-                output[i] =
-                    bones[bone0].MultiplyPoint3x4(vertices[i]) * influences[i].weight0 +
-                    bones[bone1].MultiplyPoint3x4(vertices[i]) * influences[i].weight1;
-            }
-
-            void Deform4(int i)
-            {
-                int bone0 = influences[i].boneIndex0;
-                int bone1 = influences[i].boneIndex1;
-                int bone2 = influences[i].boneIndex2;
-                int bone3 = influences[i].boneIndex3;
-                output[i] =
-                    bones[bone0].MultiplyPoint3x4(vertices[i]) * influences[i].weight0 +
-                    bones[bone1].MultiplyPoint3x4(vertices[i]) * influences[i].weight1 +
-                    bones[bone2].MultiplyPoint3x4(vertices[i]) * influences[i].weight2 +
-                    bones[bone3].MultiplyPoint3x4(vertices[i]) * influences[i].weight3;
-            }
-        }
-
         static GameObject CreateBoneGO(string name, GameObject parent, Vector3 position, Quaternion rotation)
         {
             var go = new GameObject(name);
             var tr = go.transform;
             if (parent != null)
                 tr.SetParent(parent.transform);
-            tr.position = position;
-            tr.rotation = rotation;
+            tr.localPosition = position;
+            tr.localRotation = rotation;
             tr.localScale = Vector3.one;
             return go;
         }
@@ -162,7 +87,7 @@ namespace UnityEngine.Experimental.U2D.Animation
             return true;
         }
 
-        static GameObject CreateBoneObjects(SpriteBone[] spriteBones)
+        static GameObject CreateBoneObjects(SpriteBone[] spriteBones, GameObject skin)
         {
             List<GameObject> gos = new List<GameObject>();
             GameObject rootObject = null;
@@ -170,7 +95,7 @@ namespace UnityEngine.Experimental.U2D.Animation
             {
                 if (bone.parentId < 0)
                 {
-                    rootObject = CreateBoneGO(bone.name, null, bone.position, bone.rotation);
+                    rootObject = CreateBoneGO(bone.name, skin, bone.position, bone.rotation);
                     gos.Add(rootObject);
                 }
                 else
@@ -182,7 +107,35 @@ namespace UnityEngine.Experimental.U2D.Animation
             return rootObject;
         }
 
-        public static Transform[] Rebind(Transform rootBone, SpriteBone[] spriteBones)
+        public static GameObject CreateSkeleton(SpriteBone[] spriteBones, GameObject go, Transform rootBone)
+        {
+            if (spriteBones == null)
+                throw new ArgumentNullException("spriteBones is null");
+            if (go == null)
+                throw new ArgumentNullException("go is null");
+
+            if (rootBone != null)
+                GameObject.DestroyImmediate(rootBone.gameObject);
+            
+            return CreateBoneObjects(spriteBones, go);
+        }
+
+        public static void ResetBindPose(SpriteBone[] spriteBones, Transform[] boneTransforms)
+        {
+            if (spriteBones.Length != boneTransforms.Length)
+                throw new ArgumentException(String.Format("'spriteBones' with length of {0} must be same as 'boneTransforms' length of {1}", spriteBones.Length, boneTransforms.Length));
+
+            for (int i = 0; i < boneTransforms.Length; ++i)
+            {
+                var tr = boneTransforms[i];
+                var bone = spriteBones[i];
+                tr.localPosition = bone.position;
+                tr.localRotation = bone.rotation;
+                tr.localScale = Vector3.one;
+            }
+        }
+
+        internal static Transform[] Rebind(Transform rootBone, SpriteBone[] spriteBones)
         {
             if (spriteBones == null)
                 throw new ArgumentNullException("spriteBones is null");
@@ -200,25 +153,7 @@ namespace UnityEngine.Experimental.U2D.Animation
             return transforms;
         }
 
-        public static GameObject CreateSkeleton(SpriteBone[] spriteBones, GameObject go, Transform rootBone)
-        {
-            if (spriteBones == null)
-                throw new ArgumentNullException("spriteBones is null");
-            if (go == null)
-                throw new ArgumentNullException("go is null");
-
-            if (rootBone != null)
-                GameObject.DestroyImmediate(rootBone.gameObject);
-
-            var rootObject = CreateBoneObjects(spriteBones);
-            Debug.Assert(rootObject != null);
-            rootObject.transform.SetParent(go.transform);
-            rootObject.transform.localPosition = spriteBones[0].position;
-            rootObject.transform.localRotation = spriteBones[0].rotation;
-            return rootObject;
-        }
-
-        public static JobHandle Deform(Sprite sprite, NativeArray<Vector3> deformableVertices, Matrix4x4 rootInv, Transform[] boneTransforms)
+        internal static JobHandle Deform(Sprite sprite, NativeArray<Vector3> deformableVertices, Matrix4x4 rootInv, Transform[] boneTransforms)
         {
             if (sprite == null)
                 throw new ArgumentNullException("Sprite asset of spriteRenderer is null");

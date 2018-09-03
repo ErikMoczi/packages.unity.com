@@ -30,10 +30,38 @@ namespace UnityEditor.Experimental.U2D.Animation
         private const float kFilterTolerance = 0.01f;
         private const int kNiceColorCount = 6;
 
+        private static class Contents
+        {
+            public static readonly GUIContent geometry = new GUIContent("Geometry");
+            public static readonly GUIContent weights = new GUIContent("Weights");
+            public static readonly GUIContent auto = new GUIContent("Auto");
+            public static readonly GUIContent safe = new GUIContent("Safe");
+            public static readonly GUIContent normalize = new GUIContent("Normalize");
+            public static readonly GUIContent clear = new GUIContent("Clear");
+            public static readonly GUIContent generate = new GUIContent("Generate");
+            public static readonly GUIContent selection = new GUIContent("Selection");
+            public static readonly GUIContent createVertex = new GUIContent("Create Vertex");
+            public static readonly GUIContent createEdge = new GUIContent("Create Edge");
+            public static readonly GUIContent splitEdge = new GUIContent("Split Edge");
+            public static readonly GUIContent slider = new GUIContent("Slider");
+            public static readonly GUIContent brush = new GUIContent("Brush");
+            public static readonly GUIContent weightEditor = new GUIContent("Weight Editor");
+            public static readonly GUIContent inspector = new GUIContent("Inspector");
+        }
+
         private class Styles
         {
+            public readonly GUIStyle preLabel = "preLabel";
             public readonly GUIStyle preSlider = "preSlider";
             public readonly GUIStyle preSliderThumb = "preSliderThumb";
+            public readonly GUIContent RGBIcon;
+            public readonly GUIContent BoneIcon;
+
+            public Styles()
+            {
+                RGBIcon = EditorGUIUtility.IconContent("PreTextureRGB");
+                BoneIcon = new GUIContent(Resources.Load<Texture>("NormalCreate"));
+            }
         }
 
         private void InitStyles()
@@ -98,13 +126,8 @@ namespace UnityEditor.Experimental.U2D.Animation
                 data.frame = spriteRect.rect;
 
                 var importedBones = boneProvider.GetBones(spriteRect.spriteID);
-                foreach (var bone in importedBones)
-                {
-                    var textureSpacedBone = bone;
-                    textureSpacedBone.position += (Vector3)data.frame.position;
-                    data.bones.Add(textureSpacedBone);
-                }
-
+                data.bones = MeshModuleUtility.ConvertBoneFromLocalSpaceToTextureSpace(importedBones, data.frame.position);
+                
                 var metaVertices = spriteMeshProvider.GetVertices(spriteRect.spriteID);
                 foreach (var mv in metaVertices)
                 {
@@ -122,10 +145,10 @@ namespace UnityEditor.Experimental.U2D.Animation
                 m_SpriteMeshCache.AddSpriteMeshData(data);
             }
 
-            m_WeightEditorWindow = new ModuleWindow("Weight Editor", new Rect(0f, 0f, 300f, 195f));
+            m_WeightEditorWindow = new ModuleWindow(Contents.weightEditor.text, new Rect(0f, 0f, 300f, 195f));
             m_WeightEditorWindow.windowGUICallback = WeightEditorInspector;
 
-            m_InspectorWindow = new ModuleWindow("Inspector", new Rect(0f, 0f, 300f, 95f));
+            m_InspectorWindow = new ModuleWindow(Contents.inspector.text, new Rect(0f, 0f, 300f, 95f));
             m_InspectorWindow.windowGUICallback = () => {
                     EditorGUI.BeginChangeCheck();
                     m_WeightInspector.OnInspectorGUI();
@@ -225,7 +248,8 @@ namespace UnityEditor.Experimental.U2D.Animation
                 m_RectSelectionTool.OnGUI();
                 m_UnselectTool.OnGUI();
 
-                if (m_SpriteMeshCache.mode == Mode.Weights && m_SpriteMeshCache.selectedWeightTool == WeightTool.Brush)
+                if (m_SpriteMeshCache.mode == Mode.Weights && m_SpriteMeshCache.selectedWeightTool == WeightTool.Brush &&
+                    (m_BoneGUI.hoveredBone == -1 || m_BoneGUI.selection.IsSelected(m_BoneGUI.hoveredBone)))
                 {
                     EditorGUI.BeginChangeCheck();
 
@@ -264,10 +288,10 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                 Mode mode = m_SpriteMeshCache.mode;
 
-                if (GUILayout.Toggle(mode == Mode.Geometry, new GUIContent("Geomertry"), EditorStyles.toolbarButton, GUILayout.Width(75f)))
+                if (GUILayout.Toggle(mode == Mode.Geometry, Contents.geometry, EditorStyles.toolbarButton, GUILayout.Width(75f)))
                     mode =  Mode.Geometry;
 
-                if (GUILayout.Toggle(mode == Mode.Weights, new GUIContent("Weights"), EditorStyles.toolbarButton, GUILayout.Width(75f)))
+                if (GUILayout.Toggle(mode == Mode.Weights, Contents.weights, EditorStyles.toolbarButton, GUILayout.Width(75f)))
                     mode = Mode.Weights;
 
                 if (EditorGUI.EndChangeCheck())
@@ -292,7 +316,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         private void DoGeometryToolbar()
         {
-            bool pressed = EditorGUILayout.DropdownButton(new GUIContent("Generate"), FocusType.Passive, EditorStyles.toolbarDropDown, GUILayout.Width(70f));
+            bool pressed = EditorGUILayout.DropdownButton(Contents.generate, FocusType.Passive, EditorStyles.toolbarDropDown, GUILayout.Width(70f));
 
             if (Event.current.type == EventType.Repaint)
                 m_GenerateButtonRect = GUILayoutUtility.GetLastRect();
@@ -302,16 +326,16 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             SpriteMeshViewMode mode = m_SpriteMeshView.mode;
 
-            if (GUILayout.Toggle(mode == SpriteMeshViewMode.Selection, new GUIContent("Selection"), EditorStyles.toolbarButton))
+            if (GUILayout.Toggle(mode == SpriteMeshViewMode.Selection, Contents.selection, EditorStyles.toolbarButton))
                 mode = SpriteMeshViewMode.Selection;
 
-            if (GUILayout.Toggle(mode == SpriteMeshViewMode.CreateVertex, new GUIContent("Create Vertex"), EditorStyles.toolbarButton))
+            if (GUILayout.Toggle(mode == SpriteMeshViewMode.CreateVertex, Contents.createVertex, EditorStyles.toolbarButton))
                 mode = SpriteMeshViewMode.CreateVertex;
 
-            if (GUILayout.Toggle(mode == SpriteMeshViewMode.CreateEdge, new GUIContent("Create Edge"), EditorStyles.toolbarButton))
+            if (GUILayout.Toggle(mode == SpriteMeshViewMode.CreateEdge, Contents.createEdge, EditorStyles.toolbarButton))
                 mode = SpriteMeshViewMode.CreateEdge;
 
-            if (GUILayout.Toggle(mode == SpriteMeshViewMode.SplitEdge, new GUIContent("Split Edge"), EditorStyles.toolbarButton))
+            if (GUILayout.Toggle(mode == SpriteMeshViewMode.SplitEdge, Contents.splitEdge, EditorStyles.toolbarButton))
                 mode = SpriteMeshViewMode.SplitEdge;
 
             m_SpriteMeshView.mode = mode;
@@ -319,7 +343,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         private void DoWeightsToolbar()
         {
-            if (GUILayout.Button("Auto", EditorStyles.toolbarButton))
+            if (GUILayout.Button(Contents.auto, EditorStyles.toolbarButton))
             {
                 Undo.RegisterCompleteObjectUndo(m_SpriteMeshCache, "Edit Weights");
 
@@ -329,7 +353,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 spriteEditor.SetDataModified();
             }
 
-            if (GUILayout.Button("Safe", EditorStyles.toolbarButton))
+            if (GUILayout.Button(Contents.safe, EditorStyles.toolbarButton))
             {
                 Undo.RegisterCompleteObjectUndo(m_SpriteMeshCache, "Edit Weights");
 
@@ -339,7 +363,17 @@ namespace UnityEditor.Experimental.U2D.Animation
                 spriteEditor.SetDataModified();
             }
 
-            if (GUILayout.Button("Clear", EditorStyles.toolbarButton))
+            if (GUILayout.Button(Contents.normalize, EditorStyles.toolbarButton))
+            {
+                Undo.RegisterCompleteObjectUndo(m_SpriteMeshCache, "Edit Weights");
+
+                selectedSpriteMeshData.NormalizeWeights(m_SpriteMeshCache.selection);
+
+                m_ColorsDirty = true;
+                spriteEditor.SetDataModified();
+            }
+
+            if (GUILayout.Button(Contents.clear, EditorStyles.toolbarButton))
             {
                 Undo.RegisterCompleteObjectUndo(m_SpriteMeshCache, "Edit Weights");
 
@@ -349,7 +383,10 @@ namespace UnityEditor.Experimental.U2D.Animation
                 spriteEditor.SetDataModified();
             }
 
+            GUILayout.Box(m_Styles.RGBIcon, m_Styles.preLabel);
             m_Opacity = GUILayout.HorizontalSlider(m_Opacity, 0.25f, 1f, m_Styles.preSlider, m_Styles.preSliderThumb, GUILayout.MinWidth(60));
+            GUILayout.Box(m_Styles.BoneIcon, m_Styles.preLabel);
+            m_BoneGUI.boneOpacity = GUILayout.HorizontalSlider(m_BoneGUI.boneOpacity, 0.25f, 1f, m_Styles.preSlider, m_Styles.preSliderThumb, GUILayout.MinWidth(60));
         }
 
         private void DoWindowsGUI()
@@ -402,10 +439,10 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             EditorGUI.BeginChangeCheck();
 
-            if (GUILayout.Toggle(weightTool == WeightTool.Slider, new GUIContent("Slider"), EditorStyles.miniButtonLeft, GUILayout.Width(75f)))
+            if (GUILayout.Toggle(weightTool == WeightTool.Slider, Contents.slider, EditorStyles.miniButtonLeft, GUILayout.Width(75f)))
                 weightTool = WeightTool.Slider;
 
-            if (GUILayout.Toggle(weightTool == WeightTool.Brush, new GUIContent("Brush"), EditorStyles.miniButtonRight, GUILayout.Width(75f)))
+            if (GUILayout.Toggle(weightTool == WeightTool.Brush, Contents.brush, EditorStyles.miniButtonRight, GUILayout.Width(75f)))
                 weightTool = WeightTool.Brush;
 
             if (EditorGUI.EndChangeCheck())
@@ -506,6 +543,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_BoneGUI.spriteMeshdata = selectedSpriteMeshData;
             m_BoneGUI.selection = m_SpriteMeshCache.boneSelection;
             m_BoneGUI.undoObject = m_UndoObject;
+            m_BoneGUI.defaultControlID = defaultControlID;
 
             m_RectSelectionTool.vertices = selectedSpriteMeshData.vertices;
             m_RectSelectionTool.selection = m_SpriteMeshCache.selection;
