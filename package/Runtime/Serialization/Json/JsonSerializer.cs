@@ -6,7 +6,7 @@ namespace Unity.Properties.Serialization
         public static object Deserialize(string json)
         {
             object result;
-            return SimpleJson.TryDeserializeObject(json, out result) ? result : null;
+            return Json.TryDeserializeObject(json, out result) ? result : null;
         }
 
         public static string Serialize<TContainer>(TContainer container, JsonPropertyVisitor visitor = null)

@@ -48,7 +48,7 @@ namespace Unity.Properties.Serialization
             }
             else
             {
-                AppendPrimitive(JsonUtility.EncodeJsonString(value.ToString()));
+                AppendPrimitive(Json.EncodeJsonString(value.ToString()));
             }
         }
 
@@ -104,7 +104,7 @@ namespace Unity.Properties.Serialization
 
         void ICustomVisit<char>.CustomVisit(char value)
         {
-            AppendPrimitive(JsonUtility.EncodeJsonString(string.Empty + value));
+            AppendPrimitive(Json.EncodeJsonString(string.Empty + value));
         }
 
         void ICustomVisit<float>.CustomVisit(float value)
@@ -119,7 +119,7 @@ namespace Unity.Properties.Serialization
 
         void ICustomVisit<string>.CustomVisit(string value)
         {
-            AppendPrimitive(JsonUtility.EncodeJsonString(value));
+            AppendPrimitive(Json.EncodeJsonString(value));
         }
 
         protected override bool BeginContainer()
