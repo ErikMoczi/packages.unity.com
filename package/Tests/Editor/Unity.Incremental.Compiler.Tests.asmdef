@@ -1,0 +1,10 @@
+{
+    "name": "Unity.Incremental.Compiler.Tests",
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
