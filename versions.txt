@@ -52,3 +52,4 @@
 0.0.42-preview.5
 0.0.42-preview.6
 0.0.42-preview.7
+0.0.42-preview.8
