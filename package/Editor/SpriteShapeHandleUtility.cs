@@ -46,9 +46,10 @@ namespace UnityEditor.U2D
             {
                 if (s_FillTextureMaterial == null)
                 {
-                    s_FillTextureMaterial = new Material(Shader.Find("Hidden/BlitCopy"));
+                    s_FillTextureMaterial = new Material(Shader.Find("Hidden/InternalSpritesInspector"));
                     s_FillTextureMaterial.hideFlags = HideFlags.DontSave;
                 }
+                s_FillTextureMaterial.SetFloat("_AdjustLinearForGamma", PlayerSettings.colorSpace == ColorSpace.Linear ? 1.0f : 0.0f);
                 return s_FillTextureMaterial;
             }
         }
