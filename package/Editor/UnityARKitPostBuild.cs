@@ -2,12 +2,14 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Callbacks;
+using UnityEditor.iOS.Xcode;
+using UnityEditor.Build;
+using UnityEditor.Build.Reporting;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System;
-using UnityEditor.iOS.Xcode;
 
 internal class UnityARKitPostBuild
 {
@@ -33,5 +35,20 @@ internal class UnityARKitPostBuild
         // Finally, write out the modified project with the framework added.
         File.WriteAllText(projPath, proj.WriteToString());
     }
+
+    internal class ARKitPreprocessBuild : IPreprocessBuildWithReport
+    {
+        public void OnPreprocessBuild(BuildReport report)
+        {
+            if (report.summary.platform != BuildTarget.iOS)
+                return;
+
+            if (string.IsNullOrEmpty(PlayerSettings.iOS.cameraUsageDescription))
+                throw new BuildFailedException("ARKit requires a Camera Usage Description (Player Settings > iOS > Other Settings > Camera Usage Description)");
+        }
+
+        public int callbackOrder { get { return 0; } }
+    }
+
 }
 #endif

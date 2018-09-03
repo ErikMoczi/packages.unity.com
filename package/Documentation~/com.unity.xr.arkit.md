@@ -43,10 +43,14 @@ This version of *ARKit XR Plugin* is compatible with the following versions of t
 
 ## Known limitations
 
-The following ARKit features are not yet supported in this package:
-
-* Face Tracking
-* 2D Image Recognition
+* The following ARKit features are not yet supported in this package:
+    * Face Tracking
+    * 2D Image Recognition
+    * 2D Image Tracking
+    * 3D Object Recognition
+    * ARWorldMap
+    * Color Correction as an RGB Value
+* If you tick the "Symlink Unity libraries" checkbox in the iOS Build Settings, then the trampoline Xcode project will not be able to find `UnityARKit.m`
 
 ## Package contents
 

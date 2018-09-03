@@ -28,3 +28,7 @@ and project files needed to adapt ARKit to the Unity multi-platform AR API.
 
 ## [1.0.0-preview.10] - 2018-06-08
 - Do not include build postprocessor when not on iOS
+- Add support for reference points attached to planes
+
+## [1.0.0-preview.11] - 2018-06-14
+- Fail the build if Camera Usage Description is blank
