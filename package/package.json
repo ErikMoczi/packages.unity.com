@@ -1,11 +1,11 @@
 {
     "name": "com.unity.2d.ik",
-    "version": "1.0.4-experimental",
+    "version": "1.0.5-preview",
     "unity": "2018.1",
     "description": "2D IK",
     "keywords": ["2d", "ik"],
     "category": "2D",
     "dependencies": {
-        "com.unity.2d.common": "1.0.8-experimental"
+        "com.unity.2d.common": "1.0.9-preview"
     }
 }
