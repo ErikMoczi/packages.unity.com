@@ -2,21 +2,26 @@
 
 #include "InputProvider.h"
 
-class LifecycleProviderInput : public IUnityLifecycleProvider
+class LifecycleProviderInput
 {
 public:
-    LifecycleProviderInput();
-    ~LifecycleProviderInput();
+    LifecycleProviderInput()
+    : m_InputInterface(nullptr)
+    {}
 
-    virtual UnitySubsystemErrorCode UNITY_INTERFACE_API Initialize(IUnitySubsystem* subsystem) override;
-    virtual void UNITY_INTERFACE_API Shutdown(IUnitySubsystem* subsystem) override;
+    static UnitySubsystemErrorCode UNITY_INTERFACE_API Initialize(UnitySubsystemHandle handle, void* lifecycleProviderPtr);
+    static UnitySubsystemErrorCode UNITY_INTERFACE_API Start(UnitySubsystemHandle handle, void* lifecycleProviderPtr);
+    static void UNITY_INTERFACE_API Stop(UnitySubsystemHandle handle, void* lifecycleProviderPtr);
+    static void UNITY_INTERFACE_API Shutdown(UnitySubsystemHandle handle, void* lifecycleProviderPtr);
 
-    virtual UnitySubsystemErrorCode UNITY_INTERFACE_API Start(IUnitySubsystem* subsystem) override;
-    virtual void UNITY_INTERFACE_API Stop(IUnitySubsystem* subsystem) override;
+    void SetInputInterface(IUnityXRInputInterface* inputInterface);
+    
+    UnitySubsystemErrorCode InitializeImpl(UnitySubsystemHandle handle);
+    void ShutdownImpl(UnitySubsystemHandle handle);
+    UnitySubsystemErrorCode StartImpl(UnitySubsystemHandle handle);
+    void StopImpl(UnitySubsystemHandle handle);
 
 private:
-    void ShutdownImpl();
-
+    IUnityXRInputInterface* m_InputInterface;
     InputProvider m_InputProvider;
-    bool m_Initialized;
 };

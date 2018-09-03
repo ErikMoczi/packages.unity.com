@@ -22,10 +22,12 @@ LOCAL_SRC_FILES := \
     source/Providers/DepthProvider.cpp \
     source/Providers/InputProvider.cpp \
     source/Providers/InputProvider_V1.cpp \
+    source/Providers/InputProvider_V2.cpp \
     source/Providers/LifecycleProviderCamera.cpp \
     source/Providers/LifecycleProviderDepth.cpp \
     source/Providers/LifecycleProviderInput.cpp \
     source/Providers/LifecycleProviderInput_V1.cpp \
+    source/Providers/LifecycleProviderInput_V2.cpp \
     source/Providers/LifecycleProviderPlane.cpp \
     source/Providers/LifecycleProviderRaycast.cpp \
     source/Providers/LifecycleProviderReferencePoint.cpp \

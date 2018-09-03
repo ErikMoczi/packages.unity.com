@@ -56,5 +56,8 @@ and project files needed to adapt ARCore to the Unity multi-platform AR API.
 - Do not include Android build pipeline when not on Android
 - Add ArAnchor [attachment](https://developers.google.com/ar/develop/developer-guides/anchors) support.
 
-## [1.0.0-preview.15] - 2018-06-4
+## [1.0.0-preview.16] - 2018-06-20
 - Implemented TryGetColorCorrection, which provides light estimation information for RGB color correction.
+
+## [1.0.0-preview.17] - 2018-07-03
+- Fail the build if x86 or ARM 64 are selected as Target Architectures in the Android Player Settings.

@@ -3,56 +3,60 @@
 
 const UnityXRInternalInputDeviceId kInputDeviceId = 0;
 
-LifecycleProviderInput::LifecycleProviderInput()
-    : m_Initialized(false)
+void LifecycleProviderInput::SetInputInterface(IUnityXRInputInterface* inputInterface)
 {
+    m_InputInterface = inputInterface;
+    m_InputProvider.SetInputInterface(inputInterface);
 }
 
-LifecycleProviderInput::~LifecycleProviderInput()
+UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderInput::Initialize(UnitySubsystemHandle handle, void* lifecycleProviderPtr)
 {
-    if (m_Initialized)
-        ShutdownImpl();
+    LifecycleProviderInput* lifecycleProvider = static_cast<LifecycleProviderInput*>(lifecycleProviderPtr);
+    return lifecycleProvider->InitializeImpl(handle);
 }
 
-UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderInput::Initialize(IUnitySubsystem* subsystem)
+UnitySubsystemErrorCode LifecycleProviderInput::InitializeImpl(UnitySubsystemHandle handle)
 {
-    if (m_Initialized)
-    {
-        DEBUG_LOG_ERROR("Plugin interface is telling the the lifecycle provider for input to initialize when we're already initialized - returning failure for initialization!");
-        return kUnitySubsystemErrorCodeFailure;
-    }
-
-    IUnityXRInputSubsystem* xrInputSubsystem = static_cast<IUnityXRInputSubsystem*>(subsystem);
-    if (nullptr == xrInputSubsystem)
-    {
-        DEBUG_LOG_ERROR("Failed to get a valid input pointer when initializing, can't run ARCore!");
-        return kUnitySubsystemErrorCodeFailure;
-    }
-
-    xrInputSubsystem->RegisterProvider(&m_InputProvider);
-    m_Initialized = true;
+    UnityXRInputProvider inputProvider;
+    inputProvider.userData = &m_InputProvider;
+    inputProvider.OnNewInputFrame = &InputProvider::OnNewInputFrame;
+    inputProvider.FillDeviceDefinition = &InputProvider::FillDeviceDefinition;
+    inputProvider.UpdateDeviceState = &InputProvider::UpdateDeviceState;
+    inputProvider.HandleEvent = &InputProvider::HandleEvent;
+    
+    m_InputInterface->RegisterInputProvider(handle, &inputProvider);
+    
     return kUnitySubsystemErrorCodeSuccess;
 }
 
-void UNITY_INTERFACE_API LifecycleProviderInput::Shutdown(IUnitySubsystem* /*subsystem*/)
+UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderInput::Start(UnitySubsystemHandle handle, void* lifecycleProviderPtr)
 {
-    ShutdownImpl();
+    LifecycleProviderInput* lifecycleProvider = static_cast<LifecycleProviderInput*>(lifecycleProviderPtr);
+    return lifecycleProvider->StartImpl(handle);
 }
 
-UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderInput::Start(IUnitySubsystem* subsystem)
+UnitySubsystemErrorCode LifecycleProviderInput::StartImpl(UnitySubsystemHandle handle)
 {
-    IUnityXRInputSubsystem* xrInputSubsystem = static_cast<IUnityXRInputSubsystem*>(subsystem);
-    xrInputSubsystem->DeviceConnected(kInputDeviceId);
+    m_InputInterface->InputSubsystem_DeviceConnected(handle, 0);    
     return kUnitySubsystemErrorCodeSuccess;
 }
 
-void UNITY_INTERFACE_API LifecycleProviderInput::Stop(IUnitySubsystem* subsystem)
+void UNITY_INTERFACE_API LifecycleProviderInput::Stop(UnitySubsystemHandle handle, void* lifecycleProviderPtr)
 {
-    IUnityXRInputSubsystem* xrInputSubsystem = static_cast<IUnityXRInputSubsystem*>(subsystem);
-    xrInputSubsystem->DeviceDisconnected(kInputDeviceId);
+    LifecycleProviderInput* lifecycleProvider = static_cast<LifecycleProviderInput*>(lifecycleProviderPtr);
+    return lifecycleProvider->StopImpl(handle);
 }
 
-void LifecycleProviderInput::ShutdownImpl()
+void LifecycleProviderInput::StopImpl(UnitySubsystemHandle handle)
 {
-    m_Initialized = false;
+    m_InputInterface->InputSubsystem_DeviceDisconnected(handle, 0);
 }
+
+void UNITY_INTERFACE_API LifecycleProviderInput::Shutdown(UnitySubsystemHandle handle, void* lifecycleProviderPtr)
+{
+    LifecycleProviderInput* lifecycleProvider = static_cast<LifecycleProviderInput*>(lifecycleProviderPtr);
+    return lifecycleProvider->ShutdownImpl(handle);
+}
+
+void LifecycleProviderInput::ShutdownImpl(UnitySubsystemHandle handle)
+{}

@@ -24,6 +24,16 @@ namespace UnityEditor.XR.ARCore
             EnsureARCoreSupportedIsNotChecked();
             EnsureMinSdkVersion();
             EnsureVulkanIsNotUsed();
+            EnsureTargetArchitecturesAreSupported();
+        }
+
+        void EnsureTargetArchitecturesAreSupported()
+        {
+            if ((PlayerSettings.Android.targetArchitectures & AndroidArchitecture.ARM64) != AndroidArchitecture.None)
+                throw new BuildFailedException("ARCore XR Plugin does not currently support 64-bit ARM. See Player Settings > Other Settings > Target Architectures.");
+
+            if ((PlayerSettings.Android.targetArchitectures & AndroidArchitecture.X86) != AndroidArchitecture.None)
+                throw new BuildFailedException("ARCore XR Plugin does not support x86. See Player Settings > Other Settings > Target Architectures.");
         }
 
         void EnsureMinSdkVersion()
