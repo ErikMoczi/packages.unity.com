@@ -49,7 +49,7 @@ namespace Unity.VectorGraphics
             }
             else
             {
-                var contour = BuildRoundedRectangleContour(rect);
+                var contour = BuildRectangleContour(rect);
                 return VectorUtils.TraceShape(contour, stroke, tessellationOptions);    
             }
         }
@@ -87,7 +87,7 @@ namespace Unity.VectorGraphics
 
         private static void TessellateRectangleRoundedCorners(Rectangle rect, List<Geometry> geoms, TessellationOptions tessellationOptions)
         {
-            var contour = BuildRoundedRectangleContour(rect);
+            var contour = BuildRectangleContour(rect);
             var shape = new Shape() {
                 contours = new BezierContour[] { contour },
                 pathProps = rect.pathProps,
@@ -97,7 +97,10 @@ namespace Unity.VectorGraphics
             VectorUtils.TessellateShape(shape, geoms, tessellationOptions);
         }
 
-        private static BezierContour BuildRoundedRectangleContour(Rectangle rect)
+        /// <summary>Builds a BezierContour from a Rectangle.</summary>
+        /// <param name="rect">The rectangle to build the contour from</param>
+        /// <returns>A BezierContour that follows the rectangle contour</returns>
+        public static BezierContour BuildRectangleContour(Rectangle rect)
         {
             var width = rect.size.x;
             var height = rect.size.y;
@@ -124,7 +127,7 @@ namespace Unity.VectorGraphics
 
             if (radiusTL.magnitude > VectorUtils.Epsilon)
             {
-                var circleArc = VectorUtils.ArcSegmentForQuadrant(2);
+                var circleArc = VectorUtils.MakeArc(Vector2.zero, -Mathf.PI, Mathf.PI / 2.0f);
                 circleArc = VectorUtils.TransformSegment(circleArc, radiusTL, 0.0f, radiusTL);
                 seg = new BezierPathSegment() { p0 = circleArc.p0, p1 = circleArc.p1, p2 = circleArc.p2 };
                 segments.Add(seg);
@@ -139,7 +142,7 @@ namespace Unity.VectorGraphics
             if (radiusTR.magnitude > VectorUtils.Epsilon)
             {
                 var topRight = new Vector2(width - radiusTR.x, radiusTR.y);
-                var circleArc = VectorUtils.ArcSegmentForQuadrant(3);
+                var circleArc = VectorUtils.MakeArc(Vector2.zero, -Mathf.PI / 2.0f * 3.0f, Mathf.PI / 2.0f);
                 circleArc = VectorUtils.TransformSegment(circleArc, topRight, 0.0f, radiusTR);
                 seg = new BezierPathSegment() { p0 = circleArc.p0, p1 = circleArc.p1, p2 = circleArc.p2 };
                 segments.Add(seg);
@@ -154,7 +157,7 @@ namespace Unity.VectorGraphics
             if (radiusBR.magnitude > VectorUtils.Epsilon)
             {
                 var bottomRight = new Vector2(width - radiusBR.x, height - radiusBR.y);
-                var circleArc = VectorUtils.ArcSegmentForQuadrant(0);
+                var circleArc = VectorUtils.MakeArc(Vector2.zero, 0.0f, Mathf.PI / 2.0f);
                 circleArc = VectorUtils.TransformSegment(circleArc, bottomRight, 0.0f, radiusBR);
                 seg = new BezierPathSegment() { p0 = circleArc.p0, p1 = circleArc.p1, p2 = circleArc.p2 };
                 segments.Add(seg);
@@ -169,7 +172,7 @@ namespace Unity.VectorGraphics
             if (radiusBL.magnitude > VectorUtils.Epsilon)
             {
                 var bottomLeft = new Vector2(radiusBL.x, height - radiusBL.y);
-                var circleArc = VectorUtils.ArcSegmentForQuadrant(1);
+                var circleArc = VectorUtils.MakeArc(Vector2.zero, -Mathf.PI / 2.0f, Mathf.PI / 2.0f);
                 circleArc = VectorUtils.TransformSegment(circleArc, bottomLeft, 0.0f, radiusBL);
                 seg = new BezierPathSegment() { p0 = circleArc.p0, p1 = circleArc.p1, p2 = circleArc.p2 };
                 segments.Add(seg);
