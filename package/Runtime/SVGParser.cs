@@ -179,7 +179,14 @@ namespace Unity.VectorGraphics
             if (scene == null) throw new ArgumentNullException();
             if (!docReader.GoToRoot("svg"))
                 throw new SVGFormatException("Document doesn't have 'svg' root");
+
+            currentContainerSize.Push(new Vector2(windowWidth, windowHeight));
+
             svg();
+
+            currentContainerSize.Pop();
+            if (currentContainerSize.Count > 0)
+                throw SVGFormatException.StackError;
 
             PostProcess(scene.Root);
         }
@@ -937,7 +944,7 @@ namespace Unity.VectorGraphics
                 bool percentage = offsetString.EndsWith("%");
                 if (percentage)
                     offsetString = offsetString.Substring(0, offsetString.Length - 1);
-                stop.StopPercentage = float.Parse(offsetString);
+                stop.StopPercentage = SVGAttribParser.ParseFloat(offsetString);
                 if (percentage)
                     stop.StopPercentage /= 100.0f;
 
@@ -1091,7 +1098,7 @@ namespace Unity.VectorGraphics
         float AttribFloatVal(string attribName, float defaultVal)
         {
             string val = styleResolver.Evaluate(attribName);
-            return (val != null) ? float.Parse(val) : defaultVal;
+            return (val != null) ? SVGAttribParser.ParseFloat(val) : defaultVal;
         }
 
         float AttribLengthVal(XmlReaderIterator.Node node, string attribName, DimType dimType) { return AttribLengthVal(node, attribName, 0.0f, dimType); }
@@ -1110,7 +1117,7 @@ namespace Unity.VectorGraphics
             char lastChar = val[val.Length - 1];
             if (lastChar == '%')
             {
-                float number = float.Parse(val.Substring(0, val.Length - 1));
+                float number = SVGAttribParser.ParseFloat(val.Substring(0, val.Length - 1));
                 if (number < 0)
                     throw node.GetException("Number in " + attribName + " cannot be negative");
                 number /= 100.0f;
@@ -1128,9 +1135,9 @@ namespace Unity.VectorGraphics
             }
 
             if (char.IsDigit(lastChar) || (lastChar == '.'))
-                return float.Parse(val); // No unit specified.. assume pixels (one px unit is defined to be equal to one user unit)
+                return SVGAttribParser.ParseFloat(val); // No unit specified.. assume pixels (one px unit is defined to be equal to one user unit)
 
-            float length = float.Parse(val.Substring(0, val.Length - 2));
+            float length = SVGAttribParser.ParseFloat(val.Substring(0, val.Length - 2));
             switch (unitType)
             {
                 case "em": throw new NotImplementedException();
@@ -2002,7 +2009,7 @@ namespace Unity.VectorGraphics
         public static IFill ParseFill(XmlReaderIterator.Node node, SVGDictionary dict, SVGStyleResolver styleResolver)
         {
             string opacityAttrib = styleResolver.Evaluate("fill-opacity", SVGResolveLimit.Hierarchy);
-            float opacity = (opacityAttrib != null) ? float.Parse(opacityAttrib) : 1.0f;
+            float opacity = (opacityAttrib != null) ? ParseFloat(opacityAttrib) : 1.0f;
             string fillMode = styleResolver.Evaluate("fill-rule", SVGResolveLimit.Hierarchy);
             FillMode mode = FillMode.NonZero;
             if (fillMode != null)
@@ -2032,7 +2039,7 @@ namespace Unity.VectorGraphics
                 return null; // If stroke is not specified, no other stroke properties matter
 
             string opacityAttrib = styleResolver.Evaluate("stroke-opacity", SVGResolveLimit.Hierarchy);
-            float opacity = (opacityAttrib != null) ? float.Parse(opacityAttrib) : 1.0f;
+            float opacity = (opacityAttrib != null) ? ParseFloat(opacityAttrib) : 1.0f;
 
             IFill strokeFill = null;
             try
@@ -2423,7 +2430,12 @@ namespace Unity.VectorGraphics
                 ((stringPos - startPos == 1) && attribString[startPos] == '-'))
                 throw new Exception("Missing number at " + startPos + " in " + attribName + " specification");
 
-            return float.Parse(attribString.Substring(startPos, stringPos - startPos));
+            return ParseFloat(attribString.Substring(startPos, stringPos - startPos));
+        }
+
+        internal static float ParseFloat(string s)
+        {
+            return float.Parse(s, NumberStyles.Number | NumberStyles.AllowExponent, CultureInfo.InvariantCulture);
         }
 
         bool NextBool()

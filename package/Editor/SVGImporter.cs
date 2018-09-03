@@ -82,7 +82,7 @@ namespace Unity.VectorGraphics.Editor
         {
             SVGParser.SceneInfo sceneInfo;
             using (var stream = new StreamReader(ctx.assetPath))
-                sceneInfo = SVGParser.ImportSVG(stream);
+                sceneInfo = SVGParser.ImportSVG(stream, 0, 1, (int)SvgPixelsPerUnit, (int)SvgPixelsPerUnit);
 
             if (sceneInfo.Scene == null || sceneInfo.Scene.Root == null)
                 throw new Exception("Wowzers!");
