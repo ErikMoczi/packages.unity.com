@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4-preview.25
+
+- Fix warning in unity editor
+
 ## 0.2.4-preview.24
 
 - Improve codegen of math.compress

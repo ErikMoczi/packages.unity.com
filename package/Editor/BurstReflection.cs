@@ -129,7 +129,10 @@ namespace Unity.Burst.Editor
                 return false;
             }
 
+#pragma warning disable CS0618
             var attr = type.GetCustomAttribute<BurstCompileAttribute>() ?? type.GetCustomAttribute<ComputeJobOptimizationAttribute>();
+#pragma warning restore CS0618
+
             if (attr == null)
                 return false;
 
