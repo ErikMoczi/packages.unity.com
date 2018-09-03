@@ -95,6 +95,9 @@ namespace UnityEngine.XR.ARFoundation
 
         void OnCameraFrameReceived(ARCameraFrameEventArgs eventArgs)
         {
+            if (!m_CameraHasBeenNotified && m_CameraHasBeenSetup)
+                NotifyCameraSubsystem();
+
             SetupCameraIfNecessary();
         }
 
@@ -113,6 +116,7 @@ namespace UnityEngine.XR.ARFoundation
             {
                 cameraSubsystem.Camera = m_Camera;
                 cameraSubsystem.Material = material;
+                m_CameraHasBeenNotified = true;
             }
         }
 
@@ -133,6 +137,7 @@ namespace UnityEngine.XR.ARFoundation
             ARSubsystemManager.systemStateChanged -= OnSystemStateChanged;
             m_CameraHasBeenSetup = false;
             m_CameraSetupThrewException = false;
+            m_CameraHasBeenNotified = false;
 
             // Tell the camera subsystem to stop doing work
             var cameraSubsystem = ARSubsystemManager.cameraSubsystem;
@@ -149,12 +154,17 @@ namespace UnityEngine.XR.ARFoundation
         void OnSystemStateChanged(ARSystemStateChangedEventArgs eventArgs)
         {
             if (eventArgs.state < ARSystemState.SessionInitializing && backgroundRenderer != null)
+            {
                 backgroundRenderer.mode = ARRenderMode.StandardBackground;
+                m_CameraHasBeenNotified = false;
+            }
         }
 
         bool m_CameraHasBeenSetup;
 
         bool m_CameraSetupThrewException;
+
+        bool m_CameraHasBeenNotified;
 
         Camera m_Camera;
     }

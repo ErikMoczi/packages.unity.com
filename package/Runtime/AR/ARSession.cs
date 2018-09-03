@@ -51,6 +51,22 @@ namespace UnityEngine.XR.ARFoundation
         }
 
         /// <summary>
+        /// Resets the AR Session. This destroys the current session, including all trackables, and
+        /// then establishes a new session.
+        /// </summary>
+        public void Reset()
+        {
+            if (ARSubsystemManager.systemState < ARSystemState.Ready)
+                return;
+
+            ARSubsystemManager.StopSubsystems();
+            ARSubsystemManager.DestroySubsystems();
+            ARSubsystemManager.CreateSubsystems();
+            ARSubsystemManager.lightEstimationRequested = lightEstimation;
+            ARSubsystemManager.StartSubsystems();
+        }
+
+        /// <summary>
         /// Emits a warning in the console if more than one active <see cref="ARSession"/>
         /// component is active. There is only a single, global AR Session; this
         /// component controls that session. If two or more <see cref="ARSession"/>s are

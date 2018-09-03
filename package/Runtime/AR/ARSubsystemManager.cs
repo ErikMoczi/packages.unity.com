@@ -83,6 +83,11 @@ namespace UnityEngine.XR.ARFoundation
         }
 
         /// <summary>
+        /// This event is invoked whenever the <see cref="sessionSubsystem"/> is destroyed.
+        /// </summary>
+        public static event Action sessionDestroyed;
+
+        /// <summary>
         /// This event is invoked whenever the <see cref="systemState"/> changes.
         /// </summary>
         public static event Action<ARSystemStateChangedEventArgs> systemStateChanged;
@@ -205,7 +210,7 @@ namespace UnityEngine.XR.ARFoundation
                 return s_SystemState;
             }
 
-            set
+            private set
             {
                 if (s_SystemState == value)
                     return;
@@ -381,6 +386,9 @@ namespace UnityEngine.XR.ARFoundation
         public static void DestroySubsystems()
         {
             DestroySubsystem(sessionSubsystem);
+            if (sessionSubsystem != null)
+                RaiseSessionDestroyedEvent();
+
             DestroySubsystem(cameraSubsystem);
             DestroySubsystem(inputSubsystem);
             DestroySubsystem(depthSubsystem);
@@ -396,7 +404,9 @@ namespace UnityEngine.XR.ARFoundation
             referencePointSubsystem = null;
             raycastSubsystem = null;
 
-            systemState = ARSystemState.Ready;
+            // Only set back to ready if we were previously running
+            if (systemState > ARSystemState.Ready)
+                systemState = ARSystemState.Ready;
         }
 
         /// <summary>
@@ -458,6 +468,12 @@ namespace UnityEngine.XR.ARFoundation
         static ARSubsystemManager()
         {
             CreateSubsystems();
+        }
+
+        static void RaiseSessionDestroyedEvent()
+        {
+            if (sessionDestroyed != null)
+                sessionDestroyed();
         }
 
         static void RaiseSystemStateChangedEvent()

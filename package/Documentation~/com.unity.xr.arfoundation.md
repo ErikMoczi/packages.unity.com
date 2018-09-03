@@ -26,7 +26,7 @@ In addition, you need to install at least one platform-specific AR package (*Win
 | Trackable | A real-world feature detected and/or tracked by the AR device, e.g., a planar surface. |
 | Feature Point | A specific point in a point cloud. AR devices use a camera and image analysis to track specific points in the world which are used to build a map of its environment. These are usually high frequency elements, such as a knot in a wood-grain surface.|
 | Session | Refers to an AR instance. |
-| Session Space | The coordinate system relative to the beginning of the AR session. For example, session space (0, 0, 0) refers to the position at which the AR session was created. An AR device typically reports trackables and tracking information relative to its session origin. |
+| Session Space | The coordinate system relative to the beginning of the AR session. For example, session space (0, 0, 0) refers to the position at which the AR session was created. An AR device typically reports trackables and tracking information relative to its session origin.|
 
 # Using AR Foundation
 
@@ -77,6 +77,10 @@ A session can be in one of the following states and can change during runtime:
 ![alt text](images/ar_session_origin.png "AR Session Origin")
 
 The purpose of the `ARSessionOrigin` is to transform trackable features (such as planar surfaces and feature points) into their final position, orientation, and scale in the Unity scene. Because AR devices provide their data in "session space", an unscaled space relative to the beginning of the AR session, the `ARSessionOrigin` performs the appropriate transformation into Unity space.
+
+This concept is similar to the difference between "model" or "local" space and world space when working with other assets in Unity. For instance, if you import a house asset from a DCC tool, then the door will have a position relative to the modeler's origin. This is commonly called "model space" or "local space". When it is instantiated in Unity, it will also have a world space, relative to Unity's origin.
+
+Likewise, trackables produced by an AR device, such as planes, are provided in "session space", relative to the device's coordinate system. When instantiated in Unity as `GameObject`s, they also have a world space. In order to instantiate them in the correct place, Unity needs to know where the session origin should be in the Unity scene.
 
 The `ARSessionOrigin` also allows you to scale virtual content and apply an offset to the camera. If you are scaling or offseting the `ARSessionOrigin`, then its `Camera` should be a child of the `ARSessionOrigin`. Since the `Camera` is driven by the session, the `Camera` and detected trackables will move together in this setup.
 
@@ -211,6 +215,7 @@ AR Foundation includes the following known limitations:
 
 |Date|Reason|
 |---|---|
+|July 16, 2018|Additional explanation for `ARSessionOrigin`|
 |June 14, 2018|Update `ARSessionOrigin` photos|
 |June 12, 2018|Update `ARPlaneMeshVisualizer` and `ARPointCloudMeshVisualizer` with additional debug recommendations and standards.|
 |June 7, 2018|Remove known issue.|

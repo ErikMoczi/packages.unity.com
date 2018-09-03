@@ -94,6 +94,7 @@ namespace UnityEngine.XR.ARFoundation
             ARSubsystemManager.planeAdded += OnPlaneAdded;
             ARSubsystemManager.planeUpdated += OnPlaneUpdated;
             ARSubsystemManager.planeRemoved += OnPlaneRemoved;
+            ARSubsystemManager.sessionDestroyed += OnSessionDestroyed;
         }
 
         void OnDisable()
@@ -101,6 +102,27 @@ namespace UnityEngine.XR.ARFoundation
             ARSubsystemManager.planeAdded -= OnPlaneAdded;
             ARSubsystemManager.planeUpdated -= OnPlaneUpdated;
             ARSubsystemManager.planeRemoved -= OnPlaneRemoved;
+            ARSubsystemManager.sessionDestroyed -= OnSessionDestroyed;
+        }
+
+        void OnSessionDestroyed()
+        {
+            if (planeRemoved != null)
+            {
+                foreach (var kvp in m_Planes)
+                {
+                    var plane = kvp.Value;
+                    planeRemoved(new ARPlaneRemovedEventArgs(plane));
+                    plane.OnRemove();
+                }
+            }
+            else
+            {
+                foreach (var kvp in m_Planes)
+                    kvp.Value.OnRemove();
+            }
+
+            m_Planes.Clear();
         }
 
         void SyncPlanes()

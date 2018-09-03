@@ -62,7 +62,6 @@ namespace UnityEngine.XR.ARFoundation
                 var pose = boundedPlane.Pose;
                 transform.localPosition = pose.position;
                 transform.localRotation = pose.rotation;
-                m_TrackingState = null;
 
                 if (updated != null)
                     updated(this);
@@ -79,17 +78,10 @@ namespace UnityEngine.XR.ARFoundation
         {
             get
             {
-                if (!m_TrackingState.HasValue)
-                {
-                    // Retrieving the tracking state can be expensive,
-                    // so we get it lazily and cache the result until the next update.
-                    if (ARSubsystemManager.planeSubsystem == null)
-                        m_TrackingState = TrackingState.Unknown;
-                    else
-                        m_TrackingState = ARSubsystemManager.planeSubsystem.GetTrackingState(boundedPlane.Id);
-                }
-
-                return m_TrackingState.Value;
+                if (ARSubsystemManager.planeSubsystem == null)
+                    return TrackingState.Unknown;
+                else
+                    return ARSubsystemManager.planeSubsystem.GetTrackingState(boundedPlane.Id);
             }
         }
 
@@ -211,8 +203,6 @@ namespace UnityEngine.XR.ARFoundation
         List<Vector3> m_Boundary;
 
         BoundedPlane m_BoundedPlane;
-
-        TrackingState? m_TrackingState;
 
         static List<Vector3> s_BoundaryPoints = new List<Vector3>();
     }

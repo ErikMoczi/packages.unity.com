@@ -32,10 +32,7 @@ namespace UnityEngine.XR.ARFoundation
         /// <summary>
         /// Getter for the instantiated <seealso cref="ARPointCloud"/>.
         /// </summary>
-        public ARPointCloud pointCloud
-        {
-            get { return m_PointCloud; }
-        }
+        public ARPointCloud pointCloud { get; private set; }
 
         /// <summary>
         /// Raised each time the <see cref="ARPointCloud"/> is updated.
@@ -50,48 +47,51 @@ namespace UnityEngine.XR.ARFoundation
         void OnEnable()
         {
             ARSubsystemManager.pointCloudUpdated += OnPointCloudUpdated;
+            ARSubsystemManager.sessionDestroyed += OnSessionDestroyed;
         }
 
         void OnDisable()
         {
             ARSubsystemManager.pointCloudUpdated -= OnPointCloudUpdated;
+            ARSubsystemManager.sessionDestroyed -= OnSessionDestroyed;
         }
 
-        ARPointCloud GetOrCreatePointCloud()
+        void OnSessionDestroyed()
         {
-            if (m_PointCloud != null)
-                return m_PointCloud;
-
-            GameObject newGameObject;
-            if (pointCloudPrefab != null)
+            if (pointCloud != null)
             {
-                newGameObject = Instantiate(pointCloudPrefab, m_SessionOrigin.trackablesParent);
+                Destroy(pointCloud.gameObject);
+                pointCloud = null;
             }
-            else
-            {
-                newGameObject = new GameObject();
-                newGameObject.transform.SetParent(m_SessionOrigin.trackablesParent, false);
-            }
-
-            newGameObject.layer = gameObject.layer;
-
-            var pointCloud = newGameObject.GetComponent<ARPointCloud>();
-            if (pointCloud == null)
-                pointCloud = newGameObject.AddComponent<ARPointCloud>();
-
-            return pointCloud;
         }
 
         void OnPointCloudUpdated(PointCloudUpdatedEventArgs eventArgs)
         {
-            m_PointCloud = GetOrCreatePointCloud();
-            m_PointCloud.OnUpdated();
+            if (pointCloud == null)
+            {
+                GameObject newGameObject;
+                if (pointCloudPrefab != null)
+                {
+                    newGameObject = Instantiate(pointCloudPrefab, m_SessionOrigin.trackablesParent);
+                }
+                else
+                {
+                    newGameObject = new GameObject();
+                    newGameObject.transform.SetParent(m_SessionOrigin.trackablesParent, false);
+                }
+
+                newGameObject.layer = gameObject.layer;
+
+                pointCloud = newGameObject.GetComponent<ARPointCloud>();
+                if (pointCloud == null)
+                    pointCloud = newGameObject.AddComponent<ARPointCloud>();
+            }
+
+            pointCloud.OnUpdated();
 
             if (pointCloudUpdated != null)
-                pointCloudUpdated(new ARPointCloudUpdatedEventArgs(m_PointCloud));
+                pointCloudUpdated(new ARPointCloudUpdatedEventArgs(pointCloud));
         }
-
-        ARPointCloud m_PointCloud;
 
         ARSessionOrigin m_SessionOrigin;
     }

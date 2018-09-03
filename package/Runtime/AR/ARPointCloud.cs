@@ -11,6 +11,9 @@ namespace UnityEngine.XR.ARFoundation
     [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARPointCloud.html")]
     public class ARPointCloud : MonoBehaviour
     {
+        /// <summary>
+        /// Invoked when the point cloud is updated.
+        /// </summary>
         public event Action<ARPointCloud> updated;
 
         /// <summary>

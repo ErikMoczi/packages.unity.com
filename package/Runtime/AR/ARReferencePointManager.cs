@@ -295,6 +295,17 @@ namespace UnityEngine.XR.ARFoundation
                 eventArgs.PreviousPose));
         }
 
+        void OnSessionDestroyed()
+        {
+            foreach (var kvp in m_ReferencePoints)
+            {
+                var referencePoint = kvp.Value;
+                Destroy(referencePoint.gameObject);
+            }
+
+            m_ReferencePoints.Clear();
+        }
+
         void Awake()
         {
             m_SessionOrigin = GetComponent<ARSessionOrigin>();
@@ -303,11 +314,13 @@ namespace UnityEngine.XR.ARFoundation
         void OnEnable()
         {
             ARSubsystemManager.referencePointUpdated += OnReferencePointUpdated;
+            ARSubsystemManager.sessionDestroyed += OnSessionDestroyed;
         }
 
         void OnDisable()
         {
             ARSubsystemManager.referencePointUpdated -= OnReferencePointUpdated;
+            ARSubsystemManager.sessionDestroyed -= OnSessionDestroyed;
         }
 
         ARSessionOrigin m_SessionOrigin;
