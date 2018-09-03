@@ -50,7 +50,7 @@ A session has the following options, each of which may be changed at runtime:
 | Option | Meaning |
 |-|-|
 | Light Estimation | Whether to enable light estimation information. This can be used to correctly light virtual content in the scene. |
-| Session Timeout | If Unity does not receive data from the platform within this timeframe, it assumes session has failed. |
+| Try to Install Update If Needed | Will try to install AR software if possible. |
 
 **Note:** An AR session is a global construct. An `ARSession` component manages this global session, so multiple `ARSession` components will all try to manage the same global session.
 
@@ -196,3 +196,4 @@ AR Foundation includes the following known limitations:
 |April 25, 2018|Updated docs and screen shots after package rename.|
 |April 19, 2018|Updated screen shots and information after code changes. Added section on `ARBackgroundRenderer` component. |
 |April 10, 2018|Document created.|
+|June 6, 2018|Update ARSession image|

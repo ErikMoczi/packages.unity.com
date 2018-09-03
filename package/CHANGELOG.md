@@ -26,3 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Rename `ARBackgroundRenderer` to `ARCameraBackground`
 - Unify `ARSessionState` & `ARSystemState` enums
+
+## [1.0.0-preview.10] - 2018-06-06
+
+- Update documentation: ARSession image and written description.
