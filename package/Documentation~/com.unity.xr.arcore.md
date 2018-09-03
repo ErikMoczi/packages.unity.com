@@ -63,6 +63,7 @@ This version of *ARCore XR Plugin* is compatible with the following versions of 
 
 * Multi-threaded rendering is not presently supported.
 * The *AR Core Supported* checkbox in the XR Settings section of the Android Player settings must remain unchecked in order for apps built with the *ARCore XR Plugin* to work properly.
+* Color Temperature in degrees Kelvin is not presently supported. 
 
 ## Package contents
 

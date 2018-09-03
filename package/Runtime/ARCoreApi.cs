@@ -152,6 +152,9 @@ namespace UnityEngine.XR.ARCore
 
         [DllImport("UnityARCore")]
         static internal extern TrackableId UnityARCore_attachReferencePoint(TrackableId trackableId, Pose pose);
+
+        [DllImport("UnityARCore")]
+        static internal extern bool UnityARCore_tryGetColorCorrection(out float red, out float green, out float blue, out float alpha);
 #else
         static internal void ArPresto_checkApkAvailability(
             Action<ArAvailability, IntPtr> on_result, IntPtr context)
@@ -177,6 +180,15 @@ namespace UnityEngine.XR.ARCore
         static internal TrackableId UnityARCore_attachReferencePoint(TrackableId trackableId, Pose pose)
         {
             return TrackableId.InvalidId;
+        }
+
+        static internal bool UnityARCore_tryGetColorCorrection(out float red, out float green, out float blue, out float alpha)
+        {
+            red = 0f;
+            green = 0f;
+            blue = 0f;
+            alpha = 0f;
+            return false;
         }
 #endif
     }

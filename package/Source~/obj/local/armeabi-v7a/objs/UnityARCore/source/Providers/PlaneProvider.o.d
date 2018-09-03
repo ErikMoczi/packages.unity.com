@@ -41,7 +41,21 @@ obj/local/armeabi-v7a/objs/UnityARCore/source/Providers/PlaneProvider.o: \
  source/Wrappers/WrappedTrackableList.h \
  /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/set \
  /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/__tree \
- /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/functional
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/functional \
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/unordered_map \
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/__hash_table \
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/cmath \
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/math.h \
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/mutex \
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/__mutex_base \
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/chrono \
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/ctime \
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/../../android/support/include/time.h \
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/ratio \
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/system_error \
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/cerrno \
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/errno.h \
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/__threading_support
 
 jni/../source/Providers/PlaneProvider.h:
 
@@ -136,3 +150,31 @@ source/Wrappers/WrappedTrackableList.h:
 /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/__tree:
 
 /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/functional:
+
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/unordered_map:
+
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/__hash_table:
+
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/cmath:
+
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/math.h:
+
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/mutex:
+
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/__mutex_base:
+
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/chrono:
+
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/ctime:
+
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/../../android/support/include/time.h:
+
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/ratio:
+
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/system_error:
+
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/cerrno:
+
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/errno.h:
+
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/__threading_support:

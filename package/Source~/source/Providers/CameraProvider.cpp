@@ -9,6 +9,18 @@
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 
+static bool g_HasColorCorrection = false;
+static float g_LastColorCorrection[4] = {0, 0, 0, 0};
+
+extern "C" bool UnityARCore_tryGetColorCorrection(float* red, float* green, float* blue, float* alpha)
+{
+    *red = g_LastColorCorrection[0];
+    *green = g_LastColorCorrection[1];
+    *blue = g_LastColorCorrection[2];
+    *alpha = g_LastColorCorrection[3];
+    return g_HasColorCorrection;
+}
+
 CameraProvider::CameraProvider()
     : m_LightEstimationEnabled(true)
     , m_HaveRetrievedMatrices(false)
@@ -114,8 +126,26 @@ bool UNITY_INTERFACE_API CameraProvider::GetFrame(const UnityXRCameraParams& par
             kUnityXRCameraFramePropertiesDisplayMatrix);
     }
 
-    if (TryGetLightEstimatePixelIntensity(frameOut->averageBrightness))
-        frameOut->providedFields = EnumCast<UnityXRCameraFramePropertyFlags>(frameOut->providedFields | kUnityXRCameraFramePropertiesAverageBrightness);
+    {
+        ArLightEstimate* lightEstimate;
+        ArLightEstimate_create(session, &lightEstimate);
+        ArFrame_getLightEstimate(session, frame, lightEstimate);
+        ArLightEstimate_getColorCorrection(session, lightEstimate, g_LastColorCorrection);
+        ArLightEstimateState lightEstimateState;
+        ArLightEstimate_getState(session, lightEstimate, &lightEstimateState);
+        ArLightEstimate_destroy(lightEstimate);
+
+        if (lightEstimateState == AR_LIGHT_ESTIMATE_STATE_VALID)
+        {
+            g_HasColorCorrection = true;
+            frameOut->averageBrightness = g_LastColorCorrection[3];
+            frameOut->providedFields = EnumCast<UnityXRCameraFramePropertyFlags>(frameOut->providedFields | kUnityXRCameraFramePropertiesAverageBrightness);
+        }
+        else
+        {
+            g_HasColorCorrection = false;
+        }
+    }
 
     frameOut->numTextures = 1;
     UnityXRTextureDescriptor& textureDescOut = frameOut->textureDescriptors[0];
@@ -138,7 +168,7 @@ void UNITY_INTERFACE_API CameraProvider::SetLightEstimationRequested(bool reques
     if (requested)
         GetSessionProviderMutable().RequestStartLightEstimation();
     else
-        GetSessionProviderMutable().RequestStartLightEstimation();
+        GetSessionProviderMutable().RequestStopLightEstimation();
 }
 
 bool UNITY_INTERFACE_API CameraProvider::GetShaderName(char(&shaderName)[kUnityXRStringSize])

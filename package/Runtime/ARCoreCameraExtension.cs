@@ -17,11 +17,27 @@ namespace UnityEngine.XR.ARCore
         {
             Api.UnityARCore_setCameraPermissionProvider(CameraPermissionRequestProvider);
             XRCameraExtensions.RegisterIsPermissionGrantedHandler(k_SubsystemId, IsPermissionGranted);
+            XRCameraExtensions.RegisterTryGetColorCorrectionHandler(k_SubsystemId, TryGetColorCorrection);
         }
 
         static bool IsPermissionGranted(XRCameraSubsystem cameraSubsystem)
         {
             return ARCorePermissionManager.IsPermissionGranted(k_CameraPermissionName);
+        }
+
+        static bool TryGetColorCorrection(XRCameraSubsystem cameraSubsystem, out Color color)
+        {
+            float r, g, b, a;
+            if (Api.UnityARCore_tryGetColorCorrection(out r, out g, out b, out a))
+            {
+                color = new Color(r, g, b, a);
+                return true;
+            }
+            else
+            {
+                color = default(Color);
+                return false;
+            }
         }
 
         [MonoPInvokeCallback(typeof(Api.CameraPermissionRequestProvider))]

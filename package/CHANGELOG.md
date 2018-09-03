@@ -55,3 +55,6 @@ and project files needed to adapt ARCore to the Unity multi-platform AR API.
 - Fixed lack of reporting timestamp to the `ARCameraFrameEventArgs`.
 - Do not include Android build pipeline when not on Android
 - Add ArAnchor [attachment](https://developers.google.com/ar/develop/developer-guides/anchors) support.
+
+## [1.0.0-preview.15] - 2018-06-4
+- Implemented TryGetColorCorrection, which provides light estimation information for RGB color correction.
