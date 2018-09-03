@@ -8,7 +8,6 @@ using NUnit.Framework.Internal;
 using Unity.PerformanceTesting.Exceptions;
 using UnityEngine;
 using UnityEngine.TestRunner.NUnitExtensions;
-using UnityEngine.Networking.PlayerConnection;
 
 namespace Unity.PerformanceTesting
 {
@@ -30,7 +29,6 @@ namespace Unity.PerformanceTesting
 
         public static Callback OnTestEnded;
         internal bool Failed;
-        private static bool s_SentPlayerData;
 
         public PerformanceTest()
         {
@@ -41,7 +39,7 @@ namespace Unity.PerformanceTesting
         {
             Active = new PerformanceTest
             {
-                TestName = currentTest.Name,
+                TestName = currentTest.FullName,
                 TestCategories = currentTest.GetAllCategoriesFromTest()
             };
             var va = (VersionAttribute) currentTest.Properties.Get("Version");
@@ -57,44 +55,9 @@ namespace Unity.PerformanceTesting
             Active.EndTime = Utils.DateToInt(DateTime.Now);
             if (OnTestEnded != null) OnTestEnded();
             Active.LogOutput();
-#if UNITY_2018_3_OR_NEWER
-            if (!Application.isEditor)
-            {
-                if (!s_SentPlayerData)
-                {
-                    s_SentPlayerData = true;
-                    SendPlayerDataToEditor();
-                }
-
-                SendTestDataToEditor();
-            }
-#else
+            
             TestContext.Out.Write("##performancetestresult:" + JsonUtility.ToJson(Active));
-#endif
             Active = null;
-        }
-
-        private static void SendTestDataToEditor()
-        {
-            PlayerConnection.instance.Send(Utils.k_sendTestDataToEditor,
-                Encoding.ASCII.GetBytes(JsonUtility.ToJson(Active)));
-        }
-
-        private static void SendPlayerDataToEditor()
-        {
-            var runSettings = new PerformanceTestRun
-            {
-                PlayerSystemInfo = Utils.GetSystemInfo(),
-                QualitySettings = Utils.GetQualitySettings(),
-                ScreenSettings = Utils.GetScreenSettings(),
-                TestSuite = "Playmode",
-                BuildSettings = new BuildSettings
-                {
-                    Platform = Application.platform.ToString()
-                }
-            };
-            PlayerConnection.instance.Send(Utils.k_sendPlayerDataToEditor,
-                Encoding.ASCII.GetBytes(JsonUtility.ToJson(runSettings)));
         }
 
         private static void DisposeMeasurements()

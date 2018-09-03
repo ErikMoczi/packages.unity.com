@@ -1,5 +1,4 @@
-﻿#if !UNITY_2018_3_OR_NEWER
-
+﻿#if UNITY_2018_1_OR_NEWER
 using System;
 using System.IO;
 using NUnit.Framework;
@@ -138,7 +137,8 @@ public class EditmodeMetadataCollector : IPrebuildSetup
                 UnityEditor.PlayerSettings.MTRendering ? "MultiThreaded" : "SingleThreaded",
             AndroidMinimumSdkVersion = UnityEditor.PlayerSettings.Android.minSdkVersion.ToString(),
             AndroidTargetSdkVersion = UnityEditor.PlayerSettings.Android.targetSdkVersion.ToString(),
-            Batchmode = UnityEditorInternal.InternalEditorUtility.inBatchMode.ToString()
+            Batchmode = UnityEditorInternal.InternalEditorUtility.inBatchMode.ToString(),
+            ScriptingRuntimeVersion = UnityEditor.PlayerSettings.scriptingRuntimeVersion.ToString()
             // @TODO playerSettings.EnabledXrTargets need to set this from Prebuild Setup method
             //EnabledXrTargets = TODO
         };

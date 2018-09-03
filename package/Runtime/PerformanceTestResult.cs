@@ -86,5 +86,6 @@ namespace Unity.PerformanceTesting
         public string AndroidMinimumSdkVersion;
         public string AndroidTargetSdkVersion;
         public List<string> EnabledXrTargets;
+        public string ScriptingRuntimeVersion;
     }
 }

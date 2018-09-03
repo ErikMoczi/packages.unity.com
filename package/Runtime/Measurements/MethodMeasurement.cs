@@ -10,17 +10,15 @@ namespace Unity.PerformanceTesting.Measurements
 {
     public class MethodMeasurement
     {
-        private const int k_MinTestTimeMs = 50;
-        private const int k_MinWarmupTimeMs = 5;
+        private const int k_MeasurementCount = 7;
+        private const int k_MinMeasurementTimeMs = 1;
+        private const int k_MinWarmupTimeMs = 7;
         private const int k_ProbingMultiplier = 4;
-        private const int k_MinIterations = 5;
         private const int k_MaxIterations = 10000;
         private readonly Action m_Action;
         private readonly List<SampleGroup> m_SampleGroups = new List<SampleGroup>();
 
         private SampleGroupDefinition m_Definition;
-        private int m_Executions;
-        private int m_Warmup = -1; // set to -1 to use probing
 
         public MethodMeasurement(Action action)
         {
@@ -65,22 +63,10 @@ namespace Unity.PerformanceTesting.Measurements
             return Definition(new SampleGroupDefinition(name, sampleUnit, aggregationType, percentile, threshold,
                 increaseIsBetter, failOnBaseline));
         }
-
-        public MethodMeasurement ExecutionCount(int count)
-        {
-            m_Executions = count;
-            return this;
-        }
-
-        public MethodMeasurement WarmupCount(int count)
-        {
-            m_Warmup = count;
-            return this;
-        }
         
         public void Run()
         {
-            var iterations = m_Warmup > -1 ? Warmup(m_Warmup) : Probing();
+            var iterations = Probing();
 
             RunForIterations(iterations);
         }
@@ -90,13 +76,15 @@ namespace Unity.PerformanceTesting.Measurements
             UpdateSampleGroupDefinition();
 
             EnableProfilerMarkers();
-            for (var i = 0; i < iterations; i++)
+            for (int j = 0; j < k_MeasurementCount; j++)
             {
                 var executionTime = Time.realtimeSinceStartup;
-                m_Action.Invoke();
+                for (var i = 0; i < iterations; i++)
+                {
+                    m_Action.Invoke();
+                }
                 executionTime = (Time.realtimeSinceStartup - executionTime) * 1000f;
-                Measure.Custom(m_Definition,
-                    Utils.ConvertSample(SampleUnit.Millisecond, m_Definition.SampleUnit, executionTime));
+                Measure.Custom(m_Definition, Utils.ConvertSample(SampleUnit.Millisecond, m_Definition.SampleUnit, executionTime));
             }
 
             MeasureProfilerMarkers();
@@ -143,25 +131,18 @@ namespace Unity.PerformanceTesting.Measurements
                 }
             }
 
-            if (m_Executions > 0)
-                return m_Executions;
-            
-            var deisredIterationsCount =
-                Mathf.Clamp((int) (k_MinTestTimeMs * iterations / executionTime), k_MinIterations, k_MaxIterations);
-            
-            return deisredIterationsCount;
-        }
-
-        private int Warmup(int iterations)
-        {
-            for (var i = 0; i < iterations; i++)
+            if (iterations == 1)
             {
                 m_Action.Invoke();
-            }
-            if(m_Executions == 0 )
-                throw new PerformanceTestException("Provide execution count or remove warmup count from method measurement.");
+                m_Action.Invoke();
 
-            return m_Executions;
+                return 1;
+            }
+            
+            var deisredIterationsCount =
+                Mathf.Clamp((int) (k_MinMeasurementTimeMs * iterations / executionTime), 1, k_MaxIterations);
+            
+            return deisredIterationsCount;
         }
 
         private void UpdateSampleGroupDefinition()
