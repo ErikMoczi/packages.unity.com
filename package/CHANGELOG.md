@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+
+## [0.6.0-preview] - 2018-06-01
+
 ### Added
 
 - New installation steps: copy-paste the Unity scene files in your `Assets` folder.
@@ -71,7 +74,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - New samples: CustomMixer, FullBodyIK, and TwoBoneIK.
 - First release of *Unity Package Animation C# Jobs Samples*.
 
-[Unreleased]: https://gitlab.internal.unity3d.com/upm-packages/animation/com.unity.animation.cs-jobs-samples/compare/v0.5.0-preview...HEAD
+[Unreleased]: https://gitlab.internal.unity3d.com/upm-packages/animation/com.unity.animation.cs-jobs-samples/compare/v0.6.0-preview...HEAD
+[0.6.0-preview]: https://gitlab.internal.unity3d.com/upm-packages/animation/com.unity.animation.cs-jobs-samples/compare/v0.5.0-preview...v0.6.0-preview
 [0.5.0-preview]: https://gitlab.internal.unity3d.com/upm-packages/animation/com.unity.animation.cs-jobs-samples/v0.4.0...v0.5.0-preview
 [0.4.0]: https://gitlab.internal.unity3d.com/upm-packages/animation/com.unity.animation.cs-jobs-samples/v0.3.0...v0.4.0
 [0.3.0]: https://gitlab.internal.unity3d.com/upm-packages/animation/com.unity.animation.cs-jobs-samples/v0.2.0...v0.3.0
