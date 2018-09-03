@@ -1,116 +1,98 @@
 #include "SessionProvider.h"
 #include "Utility.h"
 #include "Wrappers/WrappedCamera.h"
+#include "Wrappers/PrestoConfig.h"
+#include "arcore_c_api.h"
+#include "arpresto_api.h"
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 
 static JavaVM* s_JavaVM = nullptr;
 static JNIEnv* s_JNIEnv = nullptr;
+static jobject s_AppActivity = nullptr;
+static jobject s_AppContext = nullptr;
 
-static JNIEnv* GetJNIEnv(JavaVM* javaVM)
+jobject CallJavaMethod(jobject object, const char* name, const char* sig)
 {
-    JNIEnv* jniEnv = nullptr;
-
-    int getEnvStat = javaVM->GetEnv((void**)&jniEnv, JNI_VERSION_1_2);
-
-    if (getEnvStat == JNI_EDETACHED)
-    {
-        if (javaVM->AttachCurrentThread(&jniEnv, NULL) != 0)
-        {
-            DEBUG_LOG_ERROR("Failed to attach current thread to JVM.");
-        }
-    }
-    else if (getEnvStat == JNI_EVERSION)
-    {
-        DEBUG_LOG_ERROR("Version not supported.");
-    }
-
-    return jniEnv;
+    jclass klass = s_JNIEnv->GetObjectClass(object);
+    jmethodID method = s_JNIEnv->GetMethodID(klass, name, sig);
+    return s_JNIEnv->CallObjectMethod(object, method);
 }
 
-static jobject GetApplicationContext(JNIEnv* jniEnv)
+void CameraPermissionRequestProvider(CameraPermissionsResultCallback_FP on_complete, void *context)
 {
-    jclass playerClass = jniEnv->FindClass("com/unity3d/player/UnityPlayer");
-    jclass activityClass = jniEnv->FindClass("android/app/Activity");
-
-    jfieldID activityField = jniEnv->GetStaticFieldID(playerClass, "currentActivity", "Landroid/app/Activity;");
-    jmethodID contextMethod = jniEnv->GetMethodID(activityClass, "getApplicationContext", "()Landroid/content/Context;");
-
-    jobject activity = jniEnv->GetStaticObjectField(playerClass, activityField);
-    jobject context = jniEnv->CallObjectMethod(activity, contextMethod);
-
-    return context;
+    // We set this in the AndroidManifest.xml
+    // TODO: Handle this in the plugin
+    on_complete(true, context);
 }
 
 jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/)
 {
-	s_JavaVM = vm;
-    s_JNIEnv = GetJNIEnv(vm);    
+    auto ret = JNI_VERSION_1_6;
 
-    return JNI_VERSION_1_2;
+    s_JavaVM = vm;
+    if (s_JavaVM == nullptr)
+    {
+        DEBUG_LOG_FATAL("Invalid java virtual machine.");
+        return ret;
+    }
+
+    int getEnvStat = s_JavaVM->GetEnv((void**)&s_JNIEnv, JNI_VERSION_1_6);
+    if (getEnvStat == JNI_EDETACHED)
+    {
+        if (s_JavaVM->AttachCurrentThread(&s_JNIEnv, NULL) != 0)
+        {
+            DEBUG_LOG_FATAL("Failed to attach current thread to JVM.");
+            return ret;
+        }
+    }
+    else if (getEnvStat == JNI_EVERSION)
+    {
+        DEBUG_LOG_FATAL("Version not supported.");
+        return ret;
+    }
+
+    if (s_JNIEnv == nullptr)
+        return ret;
+
+    jclass playerClass = s_JNIEnv->FindClass("com/unity3d/player/UnityPlayer");
+    jclass activityClass = s_JNIEnv->FindClass("android/app/Activity");
+    jfieldID activityField = s_JNIEnv->GetStaticFieldID(playerClass, "currentActivity", "Landroid/app/Activity;");
+    s_AppActivity = s_JNIEnv->GetStaticObjectField(playerClass, activityField);
+    s_AppActivity = s_JNIEnv->NewGlobalRef(s_AppActivity);
+
+    if (s_AppActivity == nullptr)
+    {
+        DEBUG_LOG_FATAL("Could not access the activity.");
+        return ret;
+    }
+
+    ArPresto_initialize(s_JavaVM, s_AppActivity,
+        &CameraPermissionRequestProvider, nullptr);
+
+    return ret;
 }
 
 SessionProvider::SessionProvider()
     : m_CameraTextureName(GL_NONE)
-    , m_SessionPausedWithApplication(false)
-    , m_DirtyConfigFlags(eConfigFlags::none)
-    , m_RequestedConfigFlags(eConfigFlags::none)
+{ }
+
+void SessionProvider::OnLifecycleInitialize()
 {
-}
-
-bool SessionProvider::OnLifecycleInitialize()
-{
-    DEBUG_LOG_FATAL("[SessionProvider::OnLifecycleInitialize] s_JNIEnv: '%p'\n", s_JNIEnv);
-    ArStatus ars = m_WrappedSession.TryCreate(s_JNIEnv, GetApplicationContext(s_JNIEnv));
-    if (ARSTATUS_FAILED(ars))
-    {
-        DEBUG_LOG_FATAL("Failed to create session for ARCore - nothing for ARCore will work! Error: '%s'.", PrintArStatus(ars));
-        return false;
-    }
-
-    m_WrappedConfig.CreateDefault();
-    if (m_WrappedConfig == nullptr)
-    {
-        DEBUG_LOG_FATAL("Unexpected failure to create a config for the ARCore session - nothing for ARCore will work!");
-        m_WrappedSession.Release();
-        return false;
-    }
-
-    if (!m_WrappedConfig.IsSupported())
-    {
-        DEBUG_LOG_FATAL("Default session configuration provided by the platform isn't supported, even though ARCore documentation says the default will be supported on all ARCore-enabled devices - can't run ARCore!");
-        m_WrappedConfig.Release();
-        m_WrappedSession.Release();
-        return false;
-    }
-
+    // Create OpenGL texture
     glGenTextures(1, &m_CameraTextureName);
     glBindTexture(GL_TEXTURE_EXTERNAL_OES, *reinterpret_cast<GLuint*>(&m_CameraTextureName));
-    m_WrappedSession.SetCameraTextureName(m_CameraTextureName);
+    ArPresto_setCameraTextureName(m_CameraTextureName);
 
-    if (!m_WrappedConfig.TrySetUpdateMode(AR_UPDATE_MODE_LATEST_CAMERA_IMAGE))
-        DEBUG_LOG_WARNING("This device doesn't support AR_UPDATE_MODE_LATEST_CAMERA_IMAGE - falling back to default.");
-
-    if (!m_WrappedSession.TryConfigure(m_WrappedConfig))
-    {
-        // already logged a fatal error from TryConfigure, no need to be even more verbose here
-        m_WrappedConfig.Release();
-        m_WrappedSession.Release();
-        return false;
-    }
-
-    m_WrappedFrame.CreateDefault();
-    m_SessionPausedWithApplication = false;
-    return true;
+    SetUpdateMode(AR_UPDATE_MODE_LATEST_CAMERA_IMAGE);
 }
 
 void SessionProvider::OnLifecycleShutdown()
 {
-    m_WrappedFrame.Release();
-    m_WrappedConfig.Release();
-    m_WrappedSession.Release();
+    ArPresto_reset();
 
+    // Cleanup OpenGL texture
     if (m_CameraTextureName != GL_NONE)
     {
         glDeleteTextures(1, &m_CameraTextureName);
@@ -118,63 +100,44 @@ void SessionProvider::OnLifecycleShutdown()
     }
 }
 
-bool SessionProvider::OnLifecycleStart()
+void SessionProvider::OnLifecycleStart()
 {
-    return m_WrappedSession.ConnectOrResume();
+    UpdateConfigIfNeeded();
+    ArPresto_setEnabled(true);
 }
 
 void SessionProvider::OnLifecycleStop()
 {
-    m_WrappedSession.DisconnectOrPause();
+    ArPresto_setEnabled(false);
 }
 
 void SessionProvider::RequestStartPlaneRecognition()
 {
-    m_DirtyConfigFlags |= eConfigFlags::planeRecognition;
     m_RequestedConfigFlags |= eConfigFlags::planeRecognition;
 }
 
 void SessionProvider::RequestStopPlaneRecognition()
 {
-    m_DirtyConfigFlags |= eConfigFlags::planeRecognition;
     m_RequestedConfigFlags &= ~eConfigFlags::planeRecognition;
 }
 
 void SessionProvider::RequestStartLightEstimation()
 {
-    m_DirtyConfigFlags |= eConfigFlags::lightEstimation;
     m_RequestedConfigFlags |= eConfigFlags::lightEstimation;
 }
 
 void SessionProvider::RequestStopLightEstimation()
 {
-    m_DirtyConfigFlags |= eConfigFlags::lightEstimation;
     m_RequestedConfigFlags &= ~eConfigFlags::lightEstimation;
-}
-
-const WrappedSession& SessionProvider::GetWrappedSession() const
-{
-    return m_WrappedSession;
-}
-
-WrappedSession& SessionProvider::GetWrappedSessionMutable()
-{
-    return m_WrappedSession;
-}
-
-const WrappedFrame& SessionProvider::GetWrappedFrame() const
-{
-    return m_WrappedFrame;
-}
-
-WrappedFrame& SessionProvider::GetWrappedFrameMutable()
-{
-    return m_WrappedFrame;
 }
 
 bool SessionProvider::IsCurrentConfigSupported() const
 {
-    return m_WrappedConfig.IsSupported();
+    UpdateConfigIfNeeded();
+    ArPrestoStatus status;
+    ArPresto_getStatus(&status);
+
+    return status != ARPRESTO_STATUS_ERROR_SESSION_CONFIGURATION_NOT_SUPPORTED;
 }
 
 uint32_t SessionProvider::GetCameraTextureName() const
@@ -184,59 +147,46 @@ uint32_t SessionProvider::GetCameraTextureName() const
 
 UnityXRTrackingState UNITY_INTERFACE_API SessionProvider::GetTrackingState()
 {
+    if (GetArSession() == nullptr)
+        return kUnityXRTrackingStateUnknown;
+
     const WrappedCamera& wrappedCamera = GetWrappedCamera();
     ArTrackingState trackingState = wrappedCamera != nullptr ? wrappedCamera.GetTrackingState() : AR_TRACKING_STATE_PAUSED;
     return ConvertGoogleTrackingStateToUnity(trackingState);
 }
 
 void UNITY_INTERFACE_API SessionProvider::BeginFrame()
-{
-}
+{ }
 
 void UNITY_INTERFACE_API SessionProvider::BeforeRender()
 {
-    bool configChanged = false;
-    if ((m_DirtyConfigFlags & eConfigFlags::planeRecognition) != eConfigFlags::none)
-    {
-        ArPlaneFindingMode requestedPlaneFindingMode =
+    const ArPlaneFindingMode requestedPlaneFindingMode =
             (m_RequestedConfigFlags & eConfigFlags::planeRecognition) != eConfigFlags::none
-            ? AR_PLANE_FINDING_MODE_HORIZONTAL : AR_PLANE_FINDING_MODE_DISABLED;
-        if (m_WrappedConfig.GetPlaneFindingMode() != requestedPlaneFindingMode)
-            configChanged = m_WrappedConfig.TrySetPlaneFindingMode(requestedPlaneFindingMode) || configChanged;
-    }
-    if ((m_DirtyConfigFlags & eConfigFlags::lightEstimation) != eConfigFlags::none)
-    {
-        ArLightEstimationMode requestedLightEstimationMode = (m_RequestedConfigFlags & eConfigFlags::lightEstimation) != eConfigFlags::none ? AR_LIGHT_ESTIMATION_MODE_AMBIENT_INTENSITY : AR_LIGHT_ESTIMATION_MODE_DISABLED;
-        if (m_WrappedConfig.GetLightEstimationMode() != requestedLightEstimationMode)
-            configChanged = m_WrappedConfig.TrySetLightEstimationMode(requestedLightEstimationMode) || configChanged;
-    }
-    m_DirtyConfigFlags = eConfigFlags::none;
+            ? AR_PLANE_FINDING_MODE_HORIZONTAL_AND_VERTICAL : AR_PLANE_FINDING_MODE_DISABLED;
 
-    if (configChanged)
-    {
-        m_WrappedSession.DisconnectOrPause();
-        m_WrappedSession.TryConfigure(m_WrappedConfig);
-        m_WrappedSession.ConnectOrResume();
-    }
+    SetPlaneFindingMode(requestedPlaneFindingMode);
 
-    m_WrappedSession.UpdateAndOverwriteFrame();
+    const ArLightEstimationMode requestedLightEstimationMode =
+        (m_RequestedConfigFlags & eConfigFlags::lightEstimation) != eConfigFlags::none
+        ? AR_LIGHT_ESTIMATION_MODE_AMBIENT_INTENSITY : AR_LIGHT_ESTIMATION_MODE_DISABLED;
+
+    SetLightEstimationMode(requestedLightEstimationMode);
+
+    UpdateConfigIfNeeded();
+
+    ArPresto_update();
+
     GetWrappedCameraMutable().AcquireFromFrame();
 }
 
 void UNITY_INTERFACE_API SessionProvider::ApplicationPaused()
 {
-    m_SessionPausedWithApplication = m_WrappedSession.IsConnected();
-    if (m_SessionPausedWithApplication)
-        m_WrappedSession.DisconnectOrPause();
+    ArPresto_handleActivityPause();
 }
 
 void UNITY_INTERFACE_API SessionProvider::ApplicationResumed()
 {
-    if (!m_SessionPausedWithApplication)
-        return;
-
-    m_WrappedSession.ConnectOrResume();
-    m_SessionPausedWithApplication = false;
+    ArPresto_handleActivityResume();
 }
 
 SessionProvider::eConfigFlags& operator|=(SessionProvider::eConfigFlags& lhs, SessionProvider::eConfigFlags rhs)

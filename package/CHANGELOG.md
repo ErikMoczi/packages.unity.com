@@ -20,3 +20,7 @@ and project files needed to adapt ARCore to the Unity multi-platform AR API.
 
 ### Changed
 -Only report display and projection matrices if we actually get them from ARCore.
+
+## [1.0.0-preview.9] - 2018-05-09
+### Fixed
+- Fixed crash when ARCore is not present or otherwise unable to initialize.

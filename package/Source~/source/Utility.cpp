@@ -1,4 +1,19 @@
 #include "Utility.h"
+#include "arpresto_api.h"
+
+ArFrame* GetArFrame()
+{
+    ArFrame* frame;
+    ArPresto_getFrame(&frame);
+    return frame;
+}
+
+ArSession* GetArSession()
+{
+    ArSession* session;
+    ArPresto_getSession(&session);
+    return session;
+}
 
 UnityXRTrackingState ConvertGoogleTrackingStateToUnity(ArTrackingState arTrackingState)
 {

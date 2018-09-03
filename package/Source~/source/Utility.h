@@ -12,19 +12,8 @@ class WrappedCamera;
 const WrappedCamera& GetWrappedCamera();
 WrappedCamera& GetWrappedCameraMutable();
 
-class WrappedFrame;
-const WrappedFrame& GetWrappedFrame();
-WrappedFrame& GetWrappedFrameMutable();
-
-class WrappedSession;
-const WrappedSession& GetWrappedSession();
-WrappedSession& GetWrappedSessionMutable();
-
-const ArFrame* GetArFrame();
-ArFrame* GetArFrameMutable();
-
-const ArSession* GetArSession();
-ArSession* GetArSessionMutable();
+ArFrame* GetArFrame();
+ArSession* GetArSession();
 
 class SessionProvider;
 const SessionProvider& GetSessionProvider();

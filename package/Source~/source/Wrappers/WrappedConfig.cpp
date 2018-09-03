@@ -27,7 +27,7 @@ ArLightEstimationMode WrappedConfig::GetLightEstimationMode() const
 
 ArPlaneFindingMode WrappedConfig::GetPlaneFindingMode() const
 {
-    ArPlaneFindingMode mode = AR_PLANE_FINDING_MODE_HORIZONTAL;
+    ArPlaneFindingMode mode = AR_PLANE_FINDING_MODE_HORIZONTAL_AND_VERTICAL;
     ArConfig_getPlaneFindingMode(GetArSession(), m_Ptr, &mode);
     return mode;
 }

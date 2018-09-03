@@ -4,6 +4,9 @@
 
 bool UNITY_INTERFACE_API ReferencePointProvider::TryAddReferencePoint(const UnityXRPose& xrPose, UnityXRTrackableId& outId, UnityXRTrackingState& outTrackingState)
 {
+    if (GetArSession() == nullptr)
+        return false;
+
     WrappedAnchor anchor;
     ArStatus ars = anchor.CreateFromPose(xrPose);
     if (ARSTATUS_FAILED(ars))
@@ -28,6 +31,9 @@ bool UNITY_INTERFACE_API ReferencePointProvider::TryAddReferencePoint(const Unit
 
 bool UNITY_INTERFACE_API ReferencePointProvider::TryRemoveReferencePoint(const UnityXRTrackableId& id)
 {
+    if (GetArSession() == nullptr)
+        return false;
+
     IdToAnchorMap::iterator iter = m_IdToAnchorMap.find(id);
     if (iter == m_IdToAnchorMap.end())
         return false;
@@ -39,6 +45,9 @@ bool UNITY_INTERFACE_API ReferencePointProvider::TryRemoveReferencePoint(const U
 
 bool UNITY_INTERFACE_API ReferencePointProvider::GetAllReferencePoints(IUnityXRReferencePointAllocator& allocator)
 {
+    if (GetArSession() == nullptr)
+        return false;
+
     WrappedAnchorList anchorList = eWrappedConstruction::Default;
     anchorList.GetAllAnchors();
 

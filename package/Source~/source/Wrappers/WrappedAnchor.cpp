@@ -29,13 +29,13 @@ ArTrackingState WrappedAnchor::GetTrackingState() const
 
 void WrappedAnchor::RemoveFromSessionAndRelease()
 {
-    ArAnchor_detach(GetArSessionMutable(), m_Ptr);
+    ArAnchor_detach(GetArSession(), m_Ptr);
     Release();
 }
 
 ArStatus WrappedAnchor::CreateFromPose(const ArPose* pose)
 {
-    ArStatus ars = ArSession_acquireNewAnchor(GetArSessionMutable(), pose, ReleaseAndGetAddressOf());
+    ArStatus ars = ArSession_acquireNewAnchor(GetArSession(), pose, ReleaseAndGetAddressOf());
     if (ARSTATUS_FAILED(ars))
         m_Ptr = nullptr;
 

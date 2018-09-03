@@ -10,6 +10,8 @@
 #include "Utility.h"
 #include "Wrappers/WrappedCamera.h"
 
+#include "arpresto_api.h"
+
 static LifecycleProviderCamera s_LifecycleProviderCamera;
 static LifecycleProviderDepth s_LifecycleProviderDepth;
 static LifecycleProviderInput s_LifecycleProviderInput;
@@ -27,46 +29,6 @@ const WrappedCamera& GetWrappedCamera()
 WrappedCamera& GetWrappedCameraMutable()
 {
     return s_LifecycleProviderCamera.GetCameraProviderMutable().GetWrappedCameraMutable();
-}
-
-const WrappedFrame& GetWrappedFrame()
-{
-    return s_LifecycleProviderSession.GetSessionProvider().GetWrappedFrame();
-}
-
-WrappedFrame& GetWrappedFrameMutable()
-{
-    return s_LifecycleProviderSession.GetSessionProviderMutable().GetWrappedFrameMutable();
-}
-
-const WrappedSession& GetWrappedSession()
-{
-    return s_LifecycleProviderSession.GetSessionProvider().GetWrappedSession();
-}
-
-WrappedSession& GetWrappedSessionMutable()
-{
-    return s_LifecycleProviderSession.GetSessionProviderMutable().GetWrappedSessionMutable();
-}
-
-const ArFrame* GetArFrame()
-{
-    return GetWrappedFrame().Get();
-}
-
-ArFrame* GetArFrameMutable()
-{
-    return GetWrappedFrameMutable().Get();
-}
-
-const ArSession* GetArSession()
-{
-    return GetWrappedSession().Get();
-}
-
-ArSession* GetArSessionMutable()
-{
-    return GetWrappedSessionMutable().Get();
 }
 
 const SessionProvider& GetSessionProvider()
@@ -97,7 +59,6 @@ float GetScreenHeight()
 extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API
 UnityPluginLoad(IUnityInterfaces* unityInterfaces)
 {
-    DEBUG_LOG_ERROR("Hello, world!");
     IUnityXRCameraInterface* xrCameraInterface = unityInterfaces->Get<IUnityXRCameraInterface>();
     if (nullptr == xrCameraInterface)
     {
@@ -123,7 +84,7 @@ UnityPluginLoad(IUnityInterfaces* unityInterfaces)
             return;
         }
     }
-    
+
     IUnityXRPlaneInterface* xrPlaneInterface = unityInterfaces->Get<IUnityXRPlaneInterface>();
     if (nullptr == xrPlaneInterface)
     {

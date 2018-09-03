@@ -12,7 +12,7 @@ void WrappingBase<ArCamera>::ReleaseImpl()
 
 void WrappedCamera::AcquireFromFrame()
 {
-    ArFrame_acquireCamera(GetArSession(), GetArFrameMutable(), ReleaseAndGetAddressOf());
+    ArFrame_acquireCamera(GetArSession(), GetArFrame(), ReleaseAndGetAddressOf());
     InitRefCount();
 }
 

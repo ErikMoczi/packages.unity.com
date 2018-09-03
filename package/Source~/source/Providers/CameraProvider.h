@@ -24,11 +24,14 @@ private:
     WrappedCamera m_WrappedCamera;
     bool m_LightEstimationEnabled;
 
-    bool RetrieveMatricesIfNeeded(float zNear, float zFar);
+    void RetrieveMatricesIfNeeded(ArSession* session, ArFrame* frame, const UnityXRCameraParams& paramsIn);
     bool m_HaveRetrievedMatrices;
     UnityXRMatrix4x4 m_DisplayMatrix;
     UnityXRMatrix4x4 m_ProjectionMatrix;
 
     float m_ScreenWidth;
     float m_ScreenHeight;
+
+    float m_CachedZNear = 0;
+    float m_CachedZFar = 0;
 };

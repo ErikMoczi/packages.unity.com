@@ -1,7 +1,6 @@
 #include "PlaneProvider.h"
 #include "Utility.h"
 #include "Wrappers/WrappedPlaneList.h"
-#include "Wrappers/WrappedSession.h"
 
 #include <cstring>
 #include <set>
@@ -9,7 +8,16 @@
 // TODO: return false under the right circumstances (I'm guessing at least during tracking loss... anything else?)
 bool UNITY_INTERFACE_API PlaneProvider::GetAllPlanes(IUnityXRPlaneDataAllocator& allocator)
 {
-    const int64_t latestFrameTimestamp = GetWrappedSession().GetTimestamp();
+    auto session = GetArSession();
+    if (session == nullptr)
+        return false;
+
+    auto frame = GetArFrame();
+    if (frame == nullptr)
+        return false;
+
+    int64_t latestFrameTimestamp;
+    ArFrame_getTimestamp(session, frame, &latestFrameTimestamp);
     if (latestFrameTimestamp == m_LastFrameTimestamp)
         return false;
 

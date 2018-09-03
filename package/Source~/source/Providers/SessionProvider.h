@@ -1,8 +1,6 @@
 #include "arcore_c_api.h"
 #include "Unity/IUnityXRSession.h"
 #include "Wrappers/WrappedConfig.h"
-#include "Wrappers/WrappedFrame.h"
-#include "Wrappers/WrappedSession.h"
 #include <jni.h>
 
 class SessionProvider : public IUnityXRSessionProvider
@@ -10,10 +8,10 @@ class SessionProvider : public IUnityXRSessionProvider
 public:
     SessionProvider();
 
-    bool OnLifecycleInitialize();
+    void OnLifecycleInitialize();
     void OnLifecycleShutdown();
 
-    bool OnLifecycleStart();
+    void OnLifecycleStart();
     void OnLifecycleStop();
 
     void RequestStartPlaneRecognition();
@@ -21,12 +19,6 @@ public:
 
     void RequestStartLightEstimation();
     void RequestStopLightEstimation();
-
-    const WrappedFrame& GetWrappedFrame() const;
-    WrappedFrame& GetWrappedFrameMutable();
-
-    const WrappedSession& GetWrappedSession() const;
-    WrappedSession& GetWrappedSessionMutable();
 
     bool IsCurrentConfigSupported() const;
 
@@ -39,12 +31,8 @@ public:
     virtual void UNITY_INTERFACE_API ApplicationResumed() override;
 
 private:
-    WrappedSession m_WrappedSession;
-    WrappedConfig m_WrappedConfig;
-    WrappedFrame m_WrappedFrame;
 
     uint32_t m_CameraTextureName;
-    bool m_SessionPausedWithApplication;
 
     enum class eConfigFlags : int
     {
@@ -53,11 +41,12 @@ private:
         lightEstimation  = 1 << 1,
         all              = (1 << 2) - 1
     };
+
     friend eConfigFlags& operator|=(eConfigFlags& lhs, eConfigFlags rhs);
     friend eConfigFlags& operator&=(eConfigFlags& lhs, eConfigFlags rhs);
     friend eConfigFlags operator|(eConfigFlags lhs, eConfigFlags rhs);
     friend eConfigFlags operator&(eConfigFlags lhs, eConfigFlags rhs);
     friend eConfigFlags operator~(eConfigFlags flags);
-    eConfigFlags m_DirtyConfigFlags;
-    eConfigFlags m_RequestedConfigFlags;
+    eConfigFlags m_DirtyConfigFlags = eConfigFlags::none;
+    eConfigFlags m_RequestedConfigFlags = eConfigFlags::none;
 };
