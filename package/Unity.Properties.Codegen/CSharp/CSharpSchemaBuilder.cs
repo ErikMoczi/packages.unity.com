@@ -16,6 +16,8 @@ namespace Unity.Properties.Codegen.CSharp
         {
             var writer = new CodeWriter(CodeStyle.CSharp);
 
+            writer.Line("#if (NET_4_6 || NET_STANDARD_2_0)");
+
             var usings = new List<string>
             {
                 "System",
@@ -45,6 +47,8 @@ namespace Unity.Properties.Codegen.CSharp
                 
                 namespaceScope?.Dispose();;
             }
+            
+            writer.Line("#endif // (NET_4_6 || NET_STANDARD_2_0)");
 
             System.IO.File.WriteAllText(path, writer.ToString());
         }
@@ -139,55 +143,70 @@ namespace Unity.Properties.Codegen.CSharp
             writer.Line($"public IPropertyBag PropertyBag => {KPropertyBagName};");
         }
 
-        private static void WriteInitializePropertiesMethod(CodeWriter writer, TypeNode type)
+        private static void WriteInitializePropertiesMethod(CodeWriter writer, TypeNode containerType)
         {
             using (writer.Scope("private static void InitializeProperties()"))
             {
-                if (type.Properties.Any(p => p.IncludeInitializer))
+                if (containerType.Properties.Any(p => p.IncludeInitializer))
                 {
-                    foreach (var property in type.Properties)
+                    foreach (var property in containerType.Properties)
                     {
                         if (!property.IncludeInitializer)
                         {
                             continue;
                         }
                         
-                        var propertyTypeName = GetPropertyTypeName(type, property);
+                        var propertyTypeName = GetPropertyTypeName(containerType, property);
                         var propertyName = GetPropertyName(property);
                         var backingFieldName = GetBackingFieldName(property);
 
-                        writer.Line($"{propertyName} = new {propertyTypeName}<{type.Name}, {property.ValueType}>(");
+                        writer.Line($"{propertyName} = new {propertyTypeName}<{containerType.Name}, {property.ValueType}>(");
                         writer.IncrementIndent();
 
                         writer.Line($"\"{property.Name}\"");
 
-                        if (type.IsStruct)
+                        if (containerType.IsStruct)
                         {
                             if (property.IsList)
                             {
-                                writer.Line($",(ref {type.Name} c) => c.{backingFieldName}");
+                                writer.Line($",(ref {containerType.Name} c) => c.{backingFieldName}"); // GetValue
+                                if (property.PropertyType == PropertyType.ClassList)
+                                {
+                                    // CreateInstance: assumes that class-typed containers have default constructors
+                                    writer.Line($",(ref {containerType.Name} c) => new {property.ValueType}()");
+                                }
                             }
                             else
                             {
-                                writer.Line($",(ref {type.Name} c) => c.{backingFieldName}");
-                                writer.Line($",(ref {type.Name} c, {property.ValueType} v) => c.{backingFieldName} = v");
+                                writer.Line($",(ref {containerType.Name} c) => c.{backingFieldName}"); // GetValue
+                                writer.Line($",(ref {containerType.Name} c, {property.ValueType} v) => c.{backingFieldName} = v"); // SetValue
+                                
+                                if (property.PropertyType == PropertyType.StructValue)
+                                {
+                                    writer.Line($",(StructValueStructProperty<{containerType.Name},{property.ValueType}>.ByRef m, StructValueStructProperty<{containerType.Name},{property.ValueType}> p, ref {containerType.Name} c) => m(p, ref c, ref c.{backingFieldName})"); // GetValueRef
+                                }
                             }
                         }
                         else
                         {
                             if (property.IsList)
                             {
-                                writer.Line($",c => c.{backingFieldName}");
+                                writer.Line($",c => c.{backingFieldName}"); // GetValue
+                                if (property.PropertyType == PropertyType.ClassList)
+                                {
+                                    // CreateInstance: assumes that class-typed containers have default constructors
+                                    writer.Line($",c => new {property.ValueType}()");
+                                }
                             }
                             else
                             {
-                                writer.Line($",c => c.{backingFieldName}");
-                                writer.Line($",(c, v) => c.{backingFieldName} = v");
-                            }
-
-                            if (property.PropertyType == PropertyType.StructValue)
-                            {
-                                writer.Line($",(m, p, c) => m(p, c, ref c.{backingFieldName})");
+                                writer.Line($",c => c.{backingFieldName}"); // GetValue
+                                writer.Line($",(c, v) => c.{backingFieldName} = v"); // SetValue
+                                
+                                if (property.PropertyType == PropertyType.StructValue)
+                                {
+                                    writer.Line($",(m, p, c) => m(p, c, ref c.{backingFieldName})"); // GetValueRef
+                                }
                             }
                         }
 

@@ -165,7 +165,8 @@ namespace Unity.Properties.Codegen
             
             public static readonly ClassListClassProperty<TypeNode, TypeNode> NestedTypes = new ClassListClassProperty<TypeNode, TypeNode>(
                 "NestedTypes",
-                c => c.m_NestedTypes
+                c => c.m_NestedTypes,
+                c => new TypeNode()
             );
 
             public static readonly ClassPropertyBag<TypeNode> PropertyBag = new ClassPropertyBag<TypeNode>(
@@ -465,7 +466,7 @@ namespace Unity.Properties.Codegen
             set { Property.DefaultValue.SetValue(this, value); }
         }
 
-        public bool IsList => m_PropertyType == PropertyType.ClassList || m_PropertyType == PropertyType.StructList;
+        public bool IsList => m_PropertyType == PropertyType.ValueList || m_PropertyType == PropertyType.ClassList || m_PropertyType == PropertyType.StructList;
     }
 }
 
