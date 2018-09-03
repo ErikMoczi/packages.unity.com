@@ -1,0 +1,8 @@
+{
+    "name": "Unity.Animation.CsJobsSamples.Samples",
+    "references": [],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}
