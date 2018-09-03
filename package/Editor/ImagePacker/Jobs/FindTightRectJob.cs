@@ -1,15 +1,11 @@
 using System;
 using UnityEngine;
 using Unity.Collections;
-
-#if ENABLED_MANAGED_JOBS
-using UnityEngine.Jobs;
-#endif
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 
 namespace UnityEditor.Experimental.U2D.Common
 {
-#if ENABLED_MANAGED_JOBS
-
     public struct FindTightRectJob : IJobParallelFor
     {
         [ReadOnly]
@@ -49,7 +45,7 @@ namespace UnityEditor.Experimental.U2D.Common
             var job = new FindTightRectJob();
             job.m_Buffers = new NativeArray<IntPtr>(buffers.Length, Allocator.TempJob);
             for (int i = 0; i < buffers.Length; ++i)
-                job.m_Buffers[i] = buffers[i].UnsafeReadOnlyPtr;
+                job.m_Buffers[i] = buffers[i].GetUnsafeReadOnlyPtr();
             job.m_Output = new NativeArray<RectInt>(buffers.Length, Allocator.Temp);
             job.m_Width = width;
             job.m_Height = height;
@@ -60,5 +56,4 @@ namespace UnityEditor.Experimental.U2D.Common
             return rects;
         }
     }
-#endif
 }

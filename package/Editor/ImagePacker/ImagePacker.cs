@@ -26,7 +26,7 @@ namespace UnityEditor.Experimental.U2D.Common
             packNode.AcceptVisitor(visitor);
             outPackedRects = new RectInt[rects.Length];
             for (int i = 0; i < rects.Length; ++i)
-                outPackedRects[i] = new RectInt(visitor.positions[i].x, visitor.positions[i].y, rects[i].width, rects[i].height);
+                outPackedRects[i] = new RectInt(visitor.positions[i].x + padding, visitor.positions[i].y, rects[i].width, rects[i].height);
         }
 
         /// <summary>
@@ -40,9 +40,9 @@ namespace UnityEditor.Experimental.U2D.Common
         /// <param name="outPackedBufferWidth">Packed image buffer's width</param>
         /// <param name="outPackedBufferHeight">Packed iamge buffer's height</param>
         /// <param name="outPackedRect">Location of each image buffers in the packed buffer</param>
-        public static void Pack(NativeArray<byte>[] buffers, int width, int height, int padding, out NativeArray<byte> outPackedBuffer, out int outPackedBufferWidth, out int outPackedBufferHeight, out RectInt[] outPackedRect)
+        /// <param name="outUVTransform">Translation data from image original buffer to packed buffer</param>
+        public static void Pack(NativeArray<byte>[] buffers, int width, int height, int padding, out NativeArray<byte> outPackedBuffer, out int outPackedBufferWidth, out int outPackedBufferHeight, out RectInt[] outPackedRect, out Vector2Int[] outUVTransform)
         {
-#if ENABLED_MANAGED_JOBS
             UnityEngine.Profiling.Profiler.BeginSample("Pack");
             // Determine the area that contains data in the buffer
             outPackedBuffer = default(NativeArray<byte>);
@@ -50,6 +50,11 @@ namespace UnityEditor.Experimental.U2D.Common
             {
                 var tightRects = FindTightRectJob.Execute(buffers, width, height);
                 Pack(tightRects, padding, out outPackedRect, out outPackedBufferWidth, out outPackedBufferHeight);
+                outUVTransform = new Vector2Int[tightRects.Length];
+                for (int i = 0; i < outUVTransform.Length; ++i)
+                {
+                    outUVTransform[i] = new Vector2Int(outPackedRect[i].x - tightRects[i].x, outPackedRect[i].y - tightRects[i].y);
+                }
                 outPackedBuffer = new NativeArray<byte>(outPackedBufferWidth * outPackedBufferHeight * 4, Allocator.Temp);
                 Blit(outPackedBuffer, outPackedRect, outPackedBufferWidth * 4, buffers, tightRects, width * 4, padding);
             }
@@ -63,12 +68,6 @@ namespace UnityEditor.Experimental.U2D.Common
             {
                 UnityEngine.Profiling.Profiler.EndSample();
             }
-#else
-            outPackedBuffer = default(NativeArray<byte>);
-            outPackedBufferWidth = default(int);
-            outPackedBufferHeight = default(int);
-            outPackedRect = default(RectInt[]);
-#endif
         }
 
         static ImagePackNode InternalPack(RectInt[] rects, int padding)
@@ -122,7 +121,7 @@ namespace UnityEditor.Experimental.U2D.Common
                     for (int j = 0; j < rectFrom.width; ++j)
                     {
                         Color32 cc = b[(rectFrom.y + i) * bytesPerRow + rectFrom.x + j];
-                        c[((rectTo.y + i + padding) * bufferbytesPerRow) + rectTo.x + j + padding] = cc;
+                        c[((rectTo.y + i) * bufferbytesPerRow) + rectTo.x + j] = cc;
                     }
                 }
             }
@@ -140,7 +139,7 @@ namespace UnityEditor.Experimental.U2D.Common
             return v + 1;
         }
 
-        public class ImagePackRect : IComparable<ImagePackRect>
+        internal class ImagePackRect : IComparable<ImagePackRect>
         {
             public RectInt rect;
             public int index;

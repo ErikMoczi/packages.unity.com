@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using NUnit.Framework;
 using System.Collections.Generic;
+using Unity.Collections;
 
 namespace UnityEditor.Experimental.U2D.Common.Tests
 {
@@ -29,16 +30,13 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
             yield return new TestCaseData(buffer, 64, 64, new RectInt(16, 16, 16, 16));
         }
 
-#if ENABLED_MANAGED_JOBS
-    [Test, TestCaseSource("TrimAlphaTestCases")]
-    public void TrimAlphaParametricTests(byte[] buffer, int width, int height, RectInt expectedOutput)
-    {
-        var nativeArrayBuffer = new NativeArray<byte>(buffer, Allocator.Temp);
-        var rectOut = FindTightRectJob.Execute(new[] { nativeArrayBuffer }, width, height);
-        nativeArrayBuffer.Dispose();
-        Assert.AreEqual(expectedOutput, rectOut[0]);
+        [Test, TestCaseSource("TrimAlphaTestCases")]
+        public void TrimAlphaParametricTests(byte[] buffer, int width, int height, RectInt expectedOutput)
+        {
+            var nativeArrayBuffer = new NativeArray<byte>(buffer, Allocator.Temp);
+            var rectOut = FindTightRectJob.Execute(new[] { nativeArrayBuffer }, width, height);
+            nativeArrayBuffer.Dispose();
+            Assert.AreEqual(expectedOutput, rectOut[0]);
+        }
     }
-#endif
-    }
-
 }

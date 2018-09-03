@@ -35,5 +35,10 @@ namespace UnityEditor.Experimental.U2D.Common
         {
             SpriteUtility.GenerateOutline(texture, rect, detail, alphaTolerance, holeDetection, out paths);
         }
+
+        public static bool DoesHardwareSupportsFullNPOT()
+        {
+            return ShaderUtil.hardwareSupportsFullNPOT;
+        }
     }
 }

@@ -60,7 +60,7 @@ namespace UnityEditor.Experimental.U2D.Common
                 int adjustXLeft = 0, adjustYLeft = 0;
                 int adjustXRight = 0, adjustYRight = 0;
                 left.AdjustSizeNotRoot(rect.width, rect.height, dw, dh, out adjustXLeft, out adjustYLeft);
-                right.AdjustSizeNotRoot(rect.width, rect.height, dw, dh, out adjustXRight, out adjustYRight);
+                right.AdjustSizeNotRoot(rect.width, rect.height, dw - adjustXLeft , dh - adjustYLeft, out adjustXRight, out adjustYRight);
                 // Assert.AreEqual(dw, Mathf.Max(adjustXLeft, adjustXRight));
                 // Assert.AreEqual(dh, Mathf.Max(adjustYLeft, adjustYRight));
             }
