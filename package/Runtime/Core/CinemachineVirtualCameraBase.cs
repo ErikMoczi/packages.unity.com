@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
@@ -27,11 +28,6 @@ namespace Cinemachine
     [SaveDuringPlay]
     public abstract class CinemachineVirtualCameraBase : MonoBehaviour, ICinemachineCamera
     {
-        /// <summary>This is deprecated.  It is here to support the soon-to-be-removed
-        /// Cinemachine Debugger in the Editor.</summary>
-        [HideInInspector, NoSaveDuringPlay]
-        public Action CinemachineGUIDebuggerCallback = null;
-
         /// <summary>Inspector control - Use for hiding sections of the Inspector UI.</summary>
         [HideInInspector, SerializeField, NoSaveDuringPlay]
         public string[] m_ExcludedPropertiesInInspector = new string[] { "m_Script" };
@@ -250,6 +246,25 @@ namespace Cinemachine
         /// <param name="deltaTime">Delta time for time-based effects (ignore if less than 0)</param>
         public abstract void InternalUpdateCameraState(Vector3 worldUp, float deltaTime);
 
+        /// <summary> Collection of parameters that influence how this virtual camera transitions from 
+        /// other virtual cameras </summary>
+        [Serializable]
+        public struct TransitionParams
+        {
+            /// <summary>Hint for blending positions to and from this virtual camera</summary>
+            [Tooltip("Hint for blending positions to and from this virtual camera")]
+            [FormerlySerializedAs("m_PositionBlending")]
+            public BlendHint m_BlendHint;
+
+            /// <summary>When this virtual camera goes Live, attempt to force the position to be the same as the current position of the Unity Camera</summary>
+            [Tooltip("When this virtual camera goes Live, attempt to force the position to be the same as the current position of the Unity Camera")]
+            public bool m_InheritPosition;
+
+            /// <summary>This event fires when the virtual camera goes Live</summary>
+            [Tooltip("This event fires when the virtual camera goes Live")]
+            public CinemachineBrain.VcamEvent m_OnCameraLive;
+        }
+        
         /// <summary>Notification that this virtual camera is going live.
         /// Base class implementationmust be called by any overridden method.</summary>
         /// <param name="fromCam">The camera being deactivated.  May be null.</param>
@@ -324,14 +339,6 @@ namespace Cinemachine
             UpdateVcamPoolStatus();
         }
 
-#if UNITY_EDITOR
-        /// <summary>Support for the deprecated CinemachineDebugger.</summary>
-        protected virtual void OnGUI()
-        {
-            if (CinemachineGUIDebuggerCallback != null)
-                CinemachineGUIDebuggerCallback();
-        }
-#endif
         private bool mSlaveStatusUpdated = false;
         private CinemachineVirtualCameraBase m_parentVcam = null;
 
@@ -426,7 +433,12 @@ namespace Cinemachine
             if (blendDef.BlendCurve == null || blendDef.m_Time <= 0 || (camA == null && camB == null))
                 return null;
             if (activeBlend != null)
-                camA = new BlendSourceVirtualCamera(activeBlend, deltaTime);
+            {
+                if (activeBlend.Uses(camB))
+                    camA = new StaticPointVirtualCamera(activeBlend.State, "Mid-Blend");
+                else
+                    camA = new BlendSourceVirtualCamera(activeBlend, deltaTime);
+            }
             else if (camA == null)
                 camA = new StaticPointVirtualCamera(State, "(none)");
             return new CinemachineBlend(camA, camB, blendDef.BlendCurve, blendDef.m_Time, 0);

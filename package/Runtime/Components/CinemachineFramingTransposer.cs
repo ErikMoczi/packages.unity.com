@@ -28,16 +28,11 @@ namespace Cinemachine
     /// well with persective cameras and can be used in 3D environments.
     /// </summary>
     [DocumentationSorting(DocumentationSortingAttribute.Level.UserRef)]
-    [ExecuteInEditMode] // for OnGUI
     [AddComponentMenu("")] // Don't display in add component menu
     [RequireComponent(typeof(CinemachinePipeline))]
     [SaveDuringPlay]
     public class CinemachineFramingTransposer : CinemachineComponentBase
     {
-        /// <summary>Used by the Inspector Editor to display on-screen guides.</summary>
-        [NoSaveDuringPlay, HideInInspector]
-        public Action OnGUICallback = null;
-
         /// <summary>This setting will instruct the composer to adjust its target offset based
         /// on the motion of the target.  The composer will look at a point where it estimates
         /// the target will be this many seconds into the future.  Note that this setting is sensitive
@@ -280,10 +275,6 @@ namespace Cinemachine
             m_MaximumOrthoSize = Mathf.Max(m_MinimumOrthoSize, m_MaximumOrthoSize);
         }
 
-#if UNITY_EDITOR
-        private void OnGUI() { if (OnGUICallback != null) OnGUICallback(); }
-#endif
-
         /// <summary>True if component is enabled and has a valid Follow target</summary>
         public override bool IsValid { get { return enabled && FollowTarget != null; } }
 
@@ -329,7 +320,6 @@ namespace Cinemachine
             if (!IsValid)
                 return;
 
-            //UnityEngine.Profiling.Profiler.BeginSample("CinemachineFramingTransposer.MutateCameraState");
             Vector3 camPosWorld = m_PreviousCameraPosition;
             Vector3 followTargetPosition = FollowTargetPosition;
             if (!curState.HasLookAt)
@@ -392,7 +382,6 @@ namespace Cinemachine
                     cameraOffset - hard, new Vector3(m_XDamping, m_YDamping, m_ZDamping), deltaTime);
             }
             curState.RawPosition = m_PreviousCameraPosition = localToWorld * (cameraPos + cameraOffset);
-            //UnityEngine.Profiling.Profiler.EndSample();
         }
 
         // Convert from screen coords to normalized orthographic distance coords

@@ -114,10 +114,17 @@ namespace Cinemachine
             get 
             { 
                 // Show the active camera and blend
+                if (mActiveBlend != null) 
+                    return mActiveBlend.Description;
+
                 ICinemachineCamera vcam = LiveChild;
-                if (mActiveBlend == null) 
-                    return (vcam != null) ? "[" + vcam.Name + "]" : "(none)";
-                return mActiveBlend.Description;
+                if (vcam == null) 
+                    return "(none)";
+                var sb = CinemachineDebug.SBFromPool();
+                sb.Append("["); sb.Append(vcam.Name); sb.Append("]");
+                string text = sb.ToString(); 
+                CinemachineDebug.ReturnToPool(sb); 
+                return text;
             }
         }
         
@@ -177,7 +184,6 @@ namespace Cinemachine
         /// <param name="deltaTime">Delta time for time-based effects (ignore if less than or equal to 0)</param>
         public override void InternalUpdateCameraState(Vector3 worldUp, float deltaTime)
         {
-            //UnityEngine.Profiling.Profiler.BeginSample("CinemachineStateDrivenCamera.InternalUpdateCameraState");
             if (!PreviousStateIsValid)
                 deltaTime = -1;
 
@@ -242,7 +248,6 @@ namespace Cinemachine
 
             InvokePostPipelineStageCallback(this, CinemachineCore.Stage.Finalize, ref m_State, deltaTime);
             PreviousStateIsValid = true;
-            //UnityEngine.Profiling.Profiler.EndSample();
         }
 
         /// <summary>Makes sure the internal child cache is up to date</summary>
@@ -251,6 +256,14 @@ namespace Cinemachine
             base.OnEnable();
             InvalidateListOfChildren();
             mActiveBlend = null;
+            CinemachineDebug.OnGUIHandlers -= OnGuiHandler;
+            CinemachineDebug.OnGUIHandlers += OnGuiHandler;
+        }
+
+        protected override void OnDisable()
+        {
+            base.OnDisable();
+            CinemachineDebug.OnGUIHandlers -= OnGuiHandler;
         }
 
         /// <summary>Makes sure the internal child cache is up to date</summary>
@@ -259,21 +272,22 @@ namespace Cinemachine
             InvalidateListOfChildren();
         }
 
-#if UNITY_EDITOR
-        /// <summary>Displays the current active camera on the game screen, if requested</summary>
-        protected override void OnGUI()
+        ///  Will only be called if Unity Editor - never in build
+        private void OnGuiHandler()
         {
-            base.OnGUI();
             if (!m_ShowDebugText)
-                CinemachineGameWindowDebug.ReleaseScreenPos(this);
+                CinemachineDebug.ReleaseScreenPos(this);
             else
             {
-                string text = Name + ": " + Description;
-                Rect r = CinemachineGameWindowDebug.GetScreenPos(this, text, GUI.skin.box);
+                var sb = CinemachineDebug.SBFromPool();
+                sb.Append(Name); sb.Append(": "); sb.Append(Description);
+                string text = sb.ToString(); 
+                Rect r = CinemachineDebug.GetScreenPos(this, text, GUI.skin.box);
                 GUI.Label(r, text, GUI.skin.box);
+                CinemachineDebug.ReturnToPool(sb);
             }
         }
-#endif
+
         CameraState m_State = CameraState.Default;
 
         /// <summary>The list of child cameras.  These are just the immediate children in the hierarchy.</summary>
@@ -341,11 +355,9 @@ namespace Cinemachine
         List<AnimatorClipInfo>  m_clipInfoList = new List<AnimatorClipInfo>();
         private CinemachineVirtualCameraBase ChooseCurrentCamera(float deltaTime)
         {
-            //UnityEngine.Profiling.Profiler.BeginSample("CinemachineStateDrivenCamera.ChooseCurrentCamera");
             if (m_ChildCameras == null || m_ChildCameras.Length == 0)
             {
                 mActivationTime = 0;
-                //UnityEngine.Profiling.Profiler.EndSample();
                 return null;
             }
             CinemachineVirtualCameraBase defaultCam = m_ChildCameras[0];
@@ -355,7 +367,6 @@ namespace Cinemachine
                 || m_LayerIndex >= m_AnimatedTarget.layerCount)
             {
                 mActivationTime = 0;
-                //UnityEngine.Profiling.Profiler.EndSample();
                 return defaultCam;
             }
 
@@ -395,7 +406,6 @@ namespace Cinemachine
                 {
                     // Yes, cancel any pending
                     mPendingActivationTime = 0;
-                    //UnityEngine.Profiling.Profiler.EndSample();
                     return mActiveInstruction.m_VirtualCamera;
                 }
 
@@ -416,7 +426,6 @@ namespace Cinemachine
                             mActivationTime = now;
                             mPendingActivationTime = 0;
                         }
-                        //UnityEngine.Profiling.Profiler.EndSample();
                         return mActiveInstruction.m_VirtualCamera;
                     }
                 }
@@ -429,7 +438,6 @@ namespace Cinemachine
                 // No defaults set, we just ignore this state
                 if (mActivationTime != 0)
                     return mActiveInstruction.m_VirtualCamera;
-                //UnityEngine.Profiling.Profiler.EndSample();
                 return defaultCam;
             }
 
@@ -449,14 +457,12 @@ namespace Cinemachine
                     mPendingActivationTime = now;
                     if (mActivationTime != 0)
                         return mActiveInstruction.m_VirtualCamera;
-                    //UnityEngine.Profiling.Profiler.EndSample();
                     return defaultCam;
                 }
             }
             // Activate now
             mActiveInstruction = newInstr;
             mActivationTime = now;
-            //UnityEngine.Profiling.Profiler.EndSample();
             return mActiveInstruction.m_VirtualCamera;
         }
 
