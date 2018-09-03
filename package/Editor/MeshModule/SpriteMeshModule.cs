@@ -110,8 +110,9 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_UnselectTool = new UnselectTool(m_SpriteMeshCache);
             m_WeightEditor = new WeightEditor();
             m_BrushWeightTool = new BrushWeightTool();
-            m_SliderBrushTool = new SliderWeightTool();
+            m_SliderWeightTool = new SliderWeightTool();
             m_WeightInspector = new WeightInspector(m_SpriteMeshCache);
+            m_BoneInspector = new BoneInspector(m_SpriteMeshCache);
 
             var dataProvider = spriteEditor.GetDataProvider<ISpriteEditorDataProvider>();
             var boneProvider = spriteEditor.GetDataProvider<ISpriteBoneDataProvider>();
@@ -127,7 +128,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                 var importedBones = boneProvider.GetBones(spriteRect.spriteID);
                 data.bones = MeshModuleUtility.ConvertBoneFromLocalSpaceToTextureSpace(importedBones, data.frame.position);
-                
+
                 var metaVertices = spriteMeshProvider.GetVertices(spriteRect.spriteID);
                 foreach (var mv in metaVertices)
                 {
@@ -149,16 +150,6 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_WeightEditorWindow.windowGUICallback = WeightEditorInspector;
 
             m_InspectorWindow = new ModuleWindow(Contents.inspector.text, new Rect(0f, 0f, 300f, 95f));
-            m_InspectorWindow.windowGUICallback = () => {
-                    EditorGUI.BeginChangeCheck();
-                    m_WeightInspector.OnInspectorGUI();
-
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        m_ColorsDirty = true;
-                        spriteEditor.SetDataModified();
-                    }
-                };
 
             InitializeMesh();
             InitializeMaterials();
@@ -167,6 +158,34 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_GenerateGeometryMenuContents.onGenerateGeometry = OnGenerateGeometry;
 
             m_MeshDirty = true;
+        }
+
+        private void DoBoneSelectionInspector()
+        {
+            if (m_BoneInspector.selection == null || m_BoneInspector.selection.Count != 1)
+                return;
+
+            EditorGUI.BeginChangeCheck();
+
+            m_BoneInspector.OnInspectorGUI();
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                m_IndicesDirty = true;
+                spriteEditor.SetDataModified();
+            }
+        }
+
+        private void DoWeightSelectionInspector()
+        {
+            EditorGUI.BeginChangeCheck();
+            m_WeightInspector.OnInspectorGUI();
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                m_ColorsDirty = true;
+                spriteEditor.SetDataModified();
+            }
         }
 
         public override void OnModuleDeactivate()
@@ -178,7 +197,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_SpriteMeshView = null;
             m_WeightInspector = null;
             m_BrushWeightTool = null;
-            m_SliderBrushTool = null;
+            m_SliderWeightTool = null;
             m_WeightEditorWindow = null;
             InvalidateMesh();
             InvalidateSpriteMeshCache();
@@ -217,13 +236,13 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public override void DoMainGUI()
         {
+            HandleSpriteRectSelectionChange();
             DrawGizmos();
 
-            HandleSpriteRectSelectionChange();
+            SetupElements();
 
             if (selectedSpriteMeshData != null)
             {
-                SetupElements();
                 PrepareMesh();
 
                 if (m_SpriteMeshCache.mode == Mode.Weights)
@@ -402,29 +421,19 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         private void DoGeometryWindows()
         {
-            Debug.Assert(selectedSpriteMeshData != null);
         }
 
         private void DoWeightsWindows()
         {
-            Debug.Assert(selectedSpriteMeshData != null);
-
-            Rect rect = m_InspectorWindow.rect;
-            rect.height = m_WeightInspector.CalculateInspectorHeight(spriteEditor.windowDimension);
-            m_InspectorWindow.rect = rect;
-            m_InspectorWindow.DockBottomLeft(spriteEditor.windowDimension, new Vector2(10f, -10f));
-
-            if (m_SpriteMeshCache.selection.Count > 0)
+            if (m_InspectorWindow.windowGUICallback != null)
                 m_InspectorWindow.OnWindowGUI(spriteEditor.windowDimension);
 
-            m_WeightEditorWindow.rect = CalculateWeightEditorInspectorHeight();
-            m_WeightEditorWindow.DockBottomRight(spriteEditor.windowDimension, new Vector2(-10f, -10f));
             m_WeightEditorWindow.OnWindowGUI(spriteEditor.windowDimension);
         }
 
-        public Rect CalculateWeightEditorInspectorHeight()
+        public Rect CalculateWeightEditorInspectorRect()
         {
-            float height = m_SpriteMeshCache.selectedWeightTool == WeightTool.Slider ? m_SliderBrushTool.GetInspectorHeight() : m_BrushWeightTool.GetInspectorHeight();
+            float height = m_SpriteMeshCache.selectedWeightTool == WeightTool.Slider ? m_SliderWeightTool.GetInspectorHeight() : m_BrushWeightTool.GetInspectorHeight();
 
             return new Rect(0, 0, 300f, height + MeshModuleUtility.kEditorLineHeight * 2f + 10f);
         }
@@ -476,7 +485,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             {
                 EditorGUI.BeginChangeCheck();
 
-                m_SliderBrushTool.OnInspectorGUI();
+                m_SliderWeightTool.OnInspectorGUI();
 
                 if (EditorGUI.EndChangeCheck())
                 {
@@ -503,7 +512,9 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             if (apply)
             {
-                var dataProvider = spriteEditor.GetDataProvider<ISpriteMeshDataProvider>();
+                var meshDataProvider = spriteEditor.GetDataProvider<ISpriteMeshDataProvider>();
+                var boneDataProvider = spriteEditor.GetDataProvider<ISpriteBoneDataProvider>();
+
                 foreach (var spriteMeshData in m_SpriteMeshCache)
                 {
                     List<Vertex2DMetaData> vmd = new List<Vertex2DMetaData>(spriteMeshData.vertices.Count);
@@ -514,9 +525,22 @@ namespace UnityEditor.Experimental.U2D.Animation
                     foreach (var e in spriteMeshData.edges)
                         emd.Add(new Vector2Int(e.index1, e.index2));
 
-                    dataProvider.SetVertices(spriteMeshData.spriteID, vmd.ToArray());
-                    dataProvider.SetIndices(spriteMeshData.spriteID, spriteMeshData.indices.ToArray());
-                    dataProvider.SetEdges(spriteMeshData.spriteID, emd.ToArray());
+                    meshDataProvider.SetVertices(spriteMeshData.spriteID, vmd.ToArray());
+                    meshDataProvider.SetIndices(spriteMeshData.spriteID, spriteMeshData.indices.ToArray());
+                    meshDataProvider.SetEdges(spriteMeshData.spriteID, emd.ToArray());
+
+                    List<SpriteBone> bones = boneDataProvider.GetBones(spriteMeshData.spriteID);
+                    for (int i = 0; i < bones.Count; ++i)
+                    {
+                        SpriteBone original = bones[i];
+                        SpriteBone bone = spriteMeshData.bones[i];
+                        Vector3 position = original.position;
+                        position.z = bone.position.z;
+                        original.position = position;
+                        bones[i] = original;
+                    }
+
+                    boneDataProvider.SetBones(spriteMeshData.spriteID, bones);
                 }
             }
 
@@ -545,15 +569,41 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_BoneGUI.undoObject = m_UndoObject;
             m_BoneGUI.defaultControlID = defaultControlID;
 
-            m_RectSelectionTool.vertices = selectedSpriteMeshData.vertices;
-            m_RectSelectionTool.selection = m_SpriteMeshCache.selection;
-            m_UnselectTool.selection = m_SpriteMeshCache.selection;
+            m_RectSelectionTool.vertices = null;
+            m_RectSelectionTool.selection = null;
+            m_UnselectTool.selection = null;
+
+            if (selectedSpriteMeshData != null)
+            {
+                m_RectSelectionTool.vertices = selectedSpriteMeshData.vertices;
+                m_RectSelectionTool.selection = m_SpriteMeshCache.selection;
+                m_UnselectTool.selection = m_SpriteMeshCache.selection;
+            }
 
             if (m_SpriteMeshCache.selection.Count == 0)
                 m_UnselectTool.selection = m_SpriteMeshCache.boneSelection;
 
             m_WeightInspector.spriteMeshData = selectedSpriteMeshData;
             m_WeightInspector.selection = m_SpriteMeshCache.selection;
+            m_BoneInspector.spriteMeshData = selectedSpriteMeshData;
+            m_BoneInspector.selection = m_SpriteMeshCache.boneSelection;
+
+            Rect inspectorRect = m_InspectorWindow.rect;
+            if (m_SpriteMeshCache.selection.Count > 0)
+            {
+                m_InspectorWindow.windowGUICallback = DoWeightSelectionInspector;
+                inspectorRect.height = m_WeightInspector.CalculateHeight(spriteEditor.windowDimension);
+            }
+            else if (m_SpriteMeshCache.boneSelection.Count == 1)
+            {
+                m_InspectorWindow.windowGUICallback = DoBoneSelectionInspector;
+                inspectorRect.height = m_BoneInspector.CalculateHeight(spriteEditor.windowDimension);
+            }
+            else
+                m_InspectorWindow.windowGUICallback = null;
+
+            m_InspectorWindow.rect = inspectorRect;
+            m_InspectorWindow.DockBottomLeft(spriteEditor.windowDimension, new Vector2(10f, -10f));
 
             m_WeightEditor.spriteMeshData = selectedSpriteMeshData;
             m_WeightEditor.undoObject = m_UndoObject;
@@ -561,7 +611,10 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_WeightEditor.selection = m_SpriteMeshCache.selection;
             m_WeightEditor.emptySelectionEditsAll = true;
             m_BrushWeightTool.weightEditor = m_WeightEditor;
-            m_SliderBrushTool.weightEditor = m_WeightEditor;
+            m_SliderWeightTool.weightEditor = m_WeightEditor;
+
+            m_WeightEditorWindow.rect = CalculateWeightEditorInspectorRect();
+            m_WeightEditorWindow.DockBottomRight(spriteEditor.windowDimension, new Vector2(-10f, -10f));
         }
 
         private void InitializeMesh()
@@ -755,8 +808,9 @@ namespace UnityEditor.Experimental.U2D.Animation
         private UnselectTool m_UnselectTool;
         private WeightEditor m_WeightEditor;
         private WeightInspector m_WeightInspector;
+        private BoneInspector m_BoneInspector;
         private BrushWeightTool m_BrushWeightTool;
-        private SliderWeightTool m_SliderBrushTool;
+        private SliderWeightTool m_SliderWeightTool;
         private ModuleWindow m_WeightEditorWindow;
         private ModuleWindow m_InspectorWindow;
         private List<Vector3> m_Vertices = new List<Vector3>();

@@ -14,6 +14,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         float length { get; }
         bool isRoot { get; }
         Vector3 tip { get; }
+        float depth { get; set; }
     }
 
     [Serializable]
@@ -204,6 +205,14 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
+        [SerializeField]
+        float m_Depth;
+        public float depth
+        {
+            get { return m_Depth; }
+            set { m_Depth = value; }
+        }
+
         public Bone()
         {
             parent = null;
@@ -220,7 +229,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             Quaternion localRotation,
             float length,
             int index,
-            string uniqueId
+            string uniqueId,
+            float depth
             )
         {
             this.name = name;
@@ -230,6 +240,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             this.length = length;
             this.debugIndex = index;
             m_UniqueId = uniqueId;
+            this.depth = depth;
 
             RecalculateMatrix();
         }

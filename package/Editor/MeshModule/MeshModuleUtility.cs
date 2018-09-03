@@ -93,21 +93,28 @@ namespace UnityEditor.Experimental.U2D.Animation
                     var m = Matrix4x4.identity;
                     var position = new Vector3();
                     var rotation = new Quaternion();
+
+                    //avoid processing z as it contains bone depth temporaly
+                    Vector3 bonePosition = (Vector2)sourceBone.position;
+                    
                     if (sourceBone.parentId == -1)
                     {
-                        m.SetTRS(sourceBone.position + offset, sourceBone.rotation, Vector3.one);
+                        m.SetTRS(bonePosition + offset, sourceBone.rotation, Vector3.one);
                         
-                        position = sourceBone.position + offset;
+                        position = bonePosition + offset;
                         rotation = sourceBone.rotation;
                     }
                     else if (calculatedMatrix[sourceBone.parentId])
                     {
                         var parentM = matrices[sourceBone.parentId];
-                        m = parentM * Matrix4x4.Translate(sourceBone.position) * Matrix4x4.Rotate(sourceBone.rotation);
+                        m = parentM * Matrix4x4.Translate(bonePosition) * Matrix4x4.Rotate(sourceBone.rotation);
                         
-                        position = parentM.MultiplyPoint(sourceBone.position);
+                        position = parentM.MultiplyPoint(bonePosition);
                         rotation = parentM.rotation * sourceBone.rotation;
                     }
+
+                    //We are temporaly storing bone depth in z
+                    position.z = sourceBone.position.z;
 
                     var sb = new SpriteBone();
                     sb.name = sourceBone.name;

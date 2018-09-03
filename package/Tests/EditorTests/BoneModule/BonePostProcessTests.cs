@@ -53,7 +53,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             {
                 name = "root",
                 parentId = -1,
-                position = (Vector3.one - kFixedTestAssetPivotPointInPixels) / kFixedTestAssetPpu,
+                position = ((Vector3)Vector2.one - kFixedTestAssetPivotPointInPixels) / kFixedTestAssetPpu,
                 rotation = Quaternion.Euler(0.0f, 0.0f, 30.0f),
                 length = 1.0f / kFixedTestAssetPpu
             },
@@ -127,9 +127,11 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
                 var worldPosition = Vector3.zero;
                 var worldRotation = Quaternion.identity;
 
+                Vector3 position = (Vector2)sp.position;
+
                 if (sp.parentId == -1)
                 {
-                    worldPosition = sp.position;
+                    worldPosition = position;
                     worldRotation = sp.rotation;
                 }
                 else
@@ -137,7 +139,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
                     var parentBindPose = expectedBindPoses[sp.parentId];
                     var invParentBindPose = Matrix4x4.Inverse(parentBindPose);
 
-                    worldPosition = invParentBindPose.MultiplyPoint(sp.position);
+                    worldPosition = invParentBindPose.MultiplyPoint(position);
                     worldRotation = sp.rotation * invParentBindPose.rotation;
                 }
 

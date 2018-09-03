@@ -287,7 +287,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshDataT
             BoneWeightData data;
             bool channelEnabled, mixedChannelEnabled, mixedBoneIndex, mixedWeight;
 
-           Assert.Throws<ArgumentNullException>(() => m_SpriteMeshData.GetMultiEditChannelData(null, 0, out channelEnabled, out data, out mixedChannelEnabled, out mixedBoneIndex, out mixedWeight));
+            Assert.Throws<ArgumentNullException>(() => m_SpriteMeshData.GetMultiEditChannelData(null, 0, out channelEnabled, out data, out mixedChannelEnabled, out mixedBoneIndex, out mixedWeight));
         }
 
         [Test]
@@ -305,14 +305,14 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshDataT
             BoneWeightData data;
             bool channelEnabled, mixedChannelEnabled, mixedBoneIndex, mixedWeight;
 
-           m_SpriteMeshData.GetMultiEditChannelData(m_Selection, 0, out channelEnabled, out data, out mixedChannelEnabled, out mixedBoneIndex, out mixedWeight);
+            m_SpriteMeshData.GetMultiEditChannelData(m_Selection, 0, out channelEnabled, out data, out mixedChannelEnabled, out mixedBoneIndex, out mixedWeight);
 
-           Assert.True(channelEnabled, "Incorrect channel enabled state");
-           Assert.False(mixedChannelEnabled, "Incorrect mixed value state");
-           Assert.False(mixedBoneIndex, "Incorrect mixed value state");
-           Assert.False(mixedWeight, "Incorrect mixed value state");
-           Assert.AreEqual(0, data.boneIndex, "Incorrect mixed boneIndex");
-           Assert.AreEqual(0.1f, data.weight, "Incorrect mixed boneWeight");
+            Assert.True(channelEnabled, "Incorrect channel enabled state");
+            Assert.False(mixedChannelEnabled, "Incorrect mixed value state");
+            Assert.False(mixedBoneIndex, "Incorrect mixed value state");
+            Assert.False(mixedWeight, "Incorrect mixed value state");
+            Assert.AreEqual(0, data.boneIndex, "Incorrect mixed boneIndex");
+            Assert.AreEqual(0.1f, data.weight, "Incorrect mixed boneWeight");
         }
 
         [Test]
@@ -331,10 +331,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshDataT
             BoneWeightData data;
             bool channelEnabled, mixedChannelEnabled, mixedBoneIndex, mixedWeight;
 
-           m_SpriteMeshData.GetMultiEditChannelData(m_Selection, 0, out channelEnabled, out data, out mixedChannelEnabled, out mixedBoneIndex, out mixedWeight);
+            m_SpriteMeshData.GetMultiEditChannelData(m_Selection, 0, out channelEnabled, out data, out mixedChannelEnabled, out mixedBoneIndex, out mixedWeight);
 
-           Assert.False(channelEnabled, "Incorrect channel enabled state");
-           Assert.True(mixedChannelEnabled, "Incorrect mixed value state");
+            Assert.False(channelEnabled, "Incorrect channel enabled state");
+            Assert.True(mixedChannelEnabled, "Incorrect mixed value state");
         }
 
         [Test]
@@ -352,10 +352,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshDataT
             BoneWeightData data;
             bool channelEnabled, mixedChannelEnabled, mixedBoneIndex, mixedWeight;
 
-           m_SpriteMeshData.GetMultiEditChannelData(m_Selection, 0, out channelEnabled, out data, out mixedChannelEnabled, out mixedBoneIndex, out mixedWeight);
+            m_SpriteMeshData.GetMultiEditChannelData(m_Selection, 0, out channelEnabled, out data, out mixedChannelEnabled, out mixedBoneIndex, out mixedWeight);
 
-           Assert.True(mixedWeight, "Incorrect mixed value state");
-           Assert.AreEqual(0f, data.weight, "Incorrect mixed boneWeight");
+            Assert.True(mixedWeight, "Incorrect mixed value state");
+            Assert.AreEqual(0f, data.weight, "Incorrect mixed boneWeight");
         }
 
         [Test]
@@ -373,16 +373,16 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshDataT
             BoneWeightData data;
             bool channelEnabled, mixedChannelEnabled, mixedBoneIndex, mixedWeight;
 
-           m_SpriteMeshData.GetMultiEditChannelData(m_Selection, 0, out channelEnabled, out data, out mixedChannelEnabled, out mixedBoneIndex, out mixedWeight);
+            m_SpriteMeshData.GetMultiEditChannelData(m_Selection, 0, out channelEnabled, out data, out mixedChannelEnabled, out mixedBoneIndex, out mixedWeight);
 
-           Assert.True(mixedBoneIndex, "Incorrect mixed value state");
-           Assert.AreEqual(-1, data.boneIndex, "Incorrect mixed boneIndex");
+            Assert.True(mixedBoneIndex, "Incorrect mixed value state");
+            Assert.AreEqual(-1, data.boneIndex, "Incorrect mixed boneIndex");
         }
 
         [Test]
         public void SetMultiEditChannelData_WithNullSelection_TrowsException()
         {
-           Assert.Throws<ArgumentNullException>(() => m_SpriteMeshData.SetMultiEditChannelData(null, 0, false, false, new BoneWeightData(), new BoneWeightData()));
+            Assert.Throws<ArgumentNullException>(() => m_SpriteMeshData.SetMultiEditChannelData(null, 0, false, false, new BoneWeightData(), new BoneWeightData()));
         }
 
         [Test]
@@ -394,12 +394,28 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshDataT
 
             m_SpriteMeshData.vertices[0].editableBoneWeight.SetFromBoneWeight(new BoneWeight() { boneIndex0 = 0, weight0 = 0f, weight1 = 1f });
 
-           m_SpriteMeshData.SetMultiEditChannelData(m_Selection, 0, false, true, new BoneWeightData(0,0f), new BoneWeightData(1,1f));
+            m_SpriteMeshData.SetMultiEditChannelData(m_Selection, 0, false, true, new BoneWeightData(0, 0f), new BoneWeightData(1, 1f));
 
-           Assert.True(m_SpriteMeshData.vertices[0].editableBoneWeight.IsChannelEnabled(0), "Incorrect channel enabled state");
-           Assert.AreEqual(1, m_SpriteMeshData.vertices[0].editableBoneWeight.GetBoneWeightData(0).boneIndex, "Incorrect bone index");
-           Assert.AreEqual(1f, m_SpriteMeshData.vertices[0].editableBoneWeight.GetBoneWeightData(0).weight, "Incorrect weight");
-           Assert.AreEqual(0f, m_SpriteMeshData.vertices[0].editableBoneWeight.GetBoneWeightData(1).weight, "Incorrect weight");
+            Assert.True(m_SpriteMeshData.vertices[0].editableBoneWeight.IsChannelEnabled(0), "Incorrect channel enabled state");
+            Assert.AreEqual(1, m_SpriteMeshData.vertices[0].editableBoneWeight.GetBoneWeightData(0).boneIndex, "Incorrect bone index");
+            Assert.AreEqual(1f, m_SpriteMeshData.vertices[0].editableBoneWeight.GetBoneWeightData(0).weight, "Incorrect weight");
+            Assert.AreEqual(0f, m_SpriteMeshData.vertices[0].editableBoneWeight.GetBoneWeightData(1).weight, "Incorrect weight");
+        }
+
+        [Test]
+        public void SortTrianglesByDept_TrianglesAreSortedBySpriteBoneDepth()
+        {
+            m_SpriteMeshData.CreateVertex(Vector2.zero);
+            m_SpriteMeshData.CreateVertex(Vector2.zero);
+            m_SpriteMeshData.vertices[0].editableBoneWeight.SetFromBoneWeight(new BoneWeight() { weight0 = 1f });
+            m_SpriteMeshData.vertices[1].editableBoneWeight.SetFromBoneWeight(new BoneWeight() { boneIndex0 = 1, weight0 = 1f });
+            m_SpriteMeshData.indices.AddRange(new int[] { 0, 0, 0, 1, 1, 1 });
+            m_SpriteMeshData.bones.Add(new SpriteBone() { position = Vector3.forward });
+            m_SpriteMeshData.bones.Add(new SpriteBone() { position = -Vector3.forward });
+
+            m_SpriteMeshData.SortTrianglesByDepth();
+
+            Assert.AreEqual(new int[] { 1, 1, 1, 0, 0, 0 }, m_SpriteMeshData.indices.ToArray(), "Incorrect triangles");
         }
 
         private static IEnumerable<TestCaseData> BoneMetadataCases()
@@ -536,7 +552,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshDataT
 
             expectedBone = expected[0];
             reversedExpected.Add(expectedBone);
-            
+
             testcase = new TestCaseData(reservedOriginal, reversedExpected, kOffset);
             testcase.SetName("Reversed Hierarchical order");
             yield return testcase;
@@ -549,7 +565,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMeshDataT
 
             VerifyApproximatedSpriteBones(expected.ToArray(), converted.ToArray());
         }
-        
+
         private static void VerifyApproximatedSpriteBones(SpriteBone[] expected, SpriteBone[] actual)
         {
             const double kLooseEqual = 0.001;

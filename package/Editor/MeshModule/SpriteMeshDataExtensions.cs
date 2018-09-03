@@ -1,10 +1,32 @@
 using UnityEngine;
 using UnityEditor;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
+    public class WeightedTriangle
+    {
+        int m_P1;
+        int m_P2;
+        int m_P3;
+        float m_Weight;
+
+        public int p1 { get { return m_P1; } }
+        public int p2 { get { return m_P2; } }
+        public int p3 { get { return m_P3; } }
+        public float weight { get { return m_Weight; } }
+
+        public WeightedTriangle(int _p1, int _p2, int _p3, float _weight)
+        {
+            m_P1 = _p1;
+            m_P2 = _p2;
+            m_P3 = _p3;
+            m_Weight = _weight;
+        }
+    }
+
     internal static class SpriteMeshDataExtensions
     {
         public static void Triangulate(this SpriteMeshData spriteMeshData, ITriangulator triangulator)
@@ -288,6 +310,53 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             points = pointList.ToArray();
             edges = edgeList.ToArray();
+        }
+
+        public static void SortTrianglesByDepth(this SpriteMeshData spriteMeshData)
+        {
+            List<float> vertexOrderList = new List<float>(spriteMeshData.vertices.Count);
+
+            for (int i = 0; i < spriteMeshData.vertices.Count; i++)
+            {
+                float vertexOrder = 0;
+
+                if (spriteMeshData.bones.Count > 0)
+                {
+                    BoneWeight boneWeight = spriteMeshData.vertices[i].editableBoneWeight.ToBoneWeight(false);
+                    float orderBone0 = spriteMeshData.bones[boneWeight.boneIndex0].position.z;
+                    float orderBone1 = spriteMeshData.bones[boneWeight.boneIndex1].position.z;
+                    float orderBone2 = spriteMeshData.bones[boneWeight.boneIndex2].position.z;
+                    float orderBone3 = spriteMeshData.bones[boneWeight.boneIndex3].position.z;
+
+                    vertexOrder = orderBone0 * boneWeight.weight0 + orderBone1 * boneWeight.weight1 + orderBone2 * boneWeight.weight2 + orderBone3 * boneWeight.weight3;
+                }
+
+                vertexOrderList.Add(vertexOrder);
+            }
+
+            List<WeightedTriangle> weightedTriangles = new List<WeightedTriangle>(spriteMeshData.indices.Count / 3);
+
+            for (int i = 0; i < spriteMeshData.indices.Count; i += 3)
+            {
+                int p1 = spriteMeshData.indices[i];
+                int p2 = spriteMeshData.indices[i + 1];
+                int p3 = spriteMeshData.indices[i + 2];
+                float weight = (vertexOrderList[p1] + vertexOrderList[p2] + vertexOrderList[p3]) / 3f;
+
+                weightedTriangles.Add(new WeightedTriangle(p1, p2, p3, weight));
+            }
+
+            weightedTriangles = weightedTriangles.OrderBy(t => t.weight).ToList();
+
+            spriteMeshData.indices.Clear();
+
+            for (int i = 0; i < weightedTriangles.Count; ++i)
+            {
+                WeightedTriangle triangle = weightedTriangles[i];
+                spriteMeshData.indices.Add(triangle.p1);
+                spriteMeshData.indices.Add(triangle.p2);
+                spriteMeshData.indices.Add(triangle.p3);
+            }
         }
 
         private static int FindPoint(List<Vector2> points, Vector2 point, float distanceTolerance)

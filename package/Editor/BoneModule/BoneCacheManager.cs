@@ -130,22 +130,22 @@ namespace UnityEditor.Experimental.U2D.Animation
                 var workingIndex = 0;
                 var workingWeight = 0.0f;
 
-                if (FixWeight(boneWeight.boneIndex0, boneWeight.weight0, indices[boneWeight.boneIndex0], out workingIndex, out workingWeight))
+                if (FixWeight(boneWeight.boneIndex0, boneWeight.weight0, GetNewIndex(boneWeight.boneIndex0, indices), out workingIndex, out workingWeight))
                 {
                     boneWeight.boneIndex0 = workingIndex;
                     boneWeight.weight0 = workingWeight;
                 }
-                if (FixWeight(boneWeight.boneIndex1, boneWeight.weight1, indices[boneWeight.boneIndex1], out workingIndex, out workingWeight))
+                if (FixWeight(boneWeight.boneIndex1, boneWeight.weight1, GetNewIndex(boneWeight.boneIndex1, indices), out workingIndex, out workingWeight))
                 {
                     boneWeight.boneIndex1 = workingIndex;
                     boneWeight.weight1 = workingWeight;
                 }
-                if (FixWeight(boneWeight.boneIndex2, boneWeight.weight2, indices[boneWeight.boneIndex2], out workingIndex, out workingWeight))
+                if (FixWeight(boneWeight.boneIndex2, boneWeight.weight2, GetNewIndex(boneWeight.boneIndex2, indices), out workingIndex, out workingWeight))
                 {
                     boneWeight.boneIndex2 = workingIndex;
                     boneWeight.weight2 = workingWeight;
                 }
-                if (FixWeight(boneWeight.boneIndex3, boneWeight.weight3, indices[boneWeight.boneIndex3], out workingIndex, out workingWeight))
+                if (FixWeight(boneWeight.boneIndex3, boneWeight.weight3, GetNewIndex(boneWeight.boneIndex3, indices), out workingIndex, out workingWeight))
                 {
                     boneWeight.boneIndex3 = workingIndex;
                     boneWeight.weight3 = workingWeight;
@@ -180,6 +180,16 @@ namespace UnityEditor.Experimental.U2D.Animation
             return false;
         }
         
+        private int GetNewIndex(int currentIndex, int[] indexMap)
+        {
+            int newIndex = -1;
+
+            if(currentIndex >= 0 && currentIndex < indexMap.Length)
+                newIndex = indexMap[currentIndex];
+
+            return newIndex;
+        }
+
         private List<SpriteBone> LoadBoneFromDataProvider(GUID spriteID)
         {
             return m_BoneDP.GetBones(spriteID);

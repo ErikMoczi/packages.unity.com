@@ -11,8 +11,6 @@ namespace UnityEditor.Experimental.U2D.Animation
 {
     internal class WeightInspector : IGUITool
     {
-        const float kSingleLineHeight = 16;
-
         public SpriteMeshData spriteMeshData { get; set; }
         public ScriptableObject undoableObject { get; private set; }
         public ISelection selection { get; set; }
@@ -28,9 +26,9 @@ namespace UnityEditor.Experimental.U2D.Animation
             undoableObject = undoObject;
         }
 
-        public float CalculateInspectorHeight(Rect viewRect)
+        public float CalculateHeight(Rect viewRect)
         {
-            return 5f * (WeightInspector.kSingleLineHeight + 3f) + 4f;
+            return MeshModuleUtility.kEditorLineHeight * 5f + 4f;
         }
 
         public void OnInspectorGUI()

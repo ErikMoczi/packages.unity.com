@@ -105,16 +105,18 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_BoneList.bones = new List<Bone>();
             foreach (var sb in rawBoneDatas)
             {
+                Vector3 position = (Vector2)sb.position;
                 var isRoot = sb.parentId == -1;
                 var Bone = new Bone(
                     sb.name,
                     isRoot ? null : m_BoneList.bones[sb.parentId],
                     // Root position was in mesh/rect space, convert to texture space.
-                    isRoot ? sb.position + offset : sb.position,
+                    isRoot ? position + offset : position,
                     sb.rotation,
                     sb.length,
                     m_BoneList.bones.Count,
-                    sb.id.ToString()
+                    sb.id.ToString(),
+                    sb.position.z
                 );
 
                 Bone.RecalculateMatrix();
@@ -136,7 +138,9 @@ namespace UnityEditor.Experimental.U2D.Animation
                 spriteBone.parentId = bone.parentId;
 
                 // Store position in mesh/rect space for root.
-                spriteBone.position = bone.isRoot ? bone.localPosition - m_Offset : bone.localPosition;
+                Vector3 position = bone.isRoot ? bone.localPosition - m_Offset : bone.localPosition;
+                position.z = bone.depth;
+                spriteBone.position = position;
                 spriteBone.rotation = bone.localRotation;
                 spriteBone.length = bone.length;
                 spriteBone.id = new GUID(bone.uniqueId);

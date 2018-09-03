@@ -352,6 +352,22 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             m_MeshDPMock.Received(1).SetVertices(m_SpriteId, Arg.Is<Vertex2DMetaData[]>(x => CompareVertices(m_ExpectedVertices, x)));
         }        
 
+        [Test]
+        public void NoBones_AllWeightInvalidated() 
+        {
+            for(int i = 0; i < m_ExpectedVertices.Length; ++i)
+                m_ExpectedVertices[i].boneWeight = new BoneWeight();
+
+            m_BoneDPMock.GetBones(m_SpriteId).Returns(new List<SpriteBone>());
+            m_CacheManager = new BoneCacheManager(m_BoneDPMock, m_MeshDPMock);
+
+            var uniqueBoneList = m_CacheManager.GetSpriteBoneRawData(m_SpriteId);
+            m_Model = new BoneModel(() => { });
+            m_CacheManager.Apply();
+
+            m_MeshDPMock.Received(1).SetVertices(m_SpriteId, Arg.Is<Vertex2DMetaData[]>(x => CompareVertices(m_ExpectedVertices, x)));
+        }
+
         private void InvalidateBoneIndex(int boneIndex, Vertex2DMetaData[] weights)
         {
             for (var i = 0; i < weights.Length; ++i)

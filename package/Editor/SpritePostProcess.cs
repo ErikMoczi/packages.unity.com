@@ -73,6 +73,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                         SpriteBone sp = spriteBone[i];
                         var isRoot = sp.parentId == -1;
                         var position = isRoot ? (spriteBone[i].position - Vector3.Scale(spriteRect.rect.size, spriteRect.pivot)) : spriteBone[i].position;
+                        position.z = 0f;
                         sp.position =  position * definitionScale / sprite.pixelsPerUnit;
                         sp.length = spriteBone[i].length * definitionScale / sprite.pixelsPerUnit;
                         outputSpriteBones[i] = sp;

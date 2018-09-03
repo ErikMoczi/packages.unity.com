@@ -1,6 +1,6 @@
 {
     "name": "com.unity.2d.animation",
-    "version": "1.0.3-experimental",
+    "version": "1.0.4-experimental",
     "unity": "2018.1",
     "description": "2D Animation",
     "keywords": ["2d", "animation"],
