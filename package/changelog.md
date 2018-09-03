@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.4-preview.15
+
+- Fix crash for certain access to readonly static variable 
+- Fix StackOverflowException when using a generic parameter type into an interface method
+
 ## 0.2.4-preview.14
 
 - Fix an issue with package structure that was preventing burst to work in Unity
