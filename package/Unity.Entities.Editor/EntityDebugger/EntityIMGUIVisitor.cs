@@ -13,7 +13,7 @@ namespace Unity.Entities.Editor
     public class EntityIMGUIVisitor : PropertyVisitor
         , IPrimitivePropertyVisitor
         , ICustomVisitPrimitives
-        , ICustomVisit<Unity.Mathematics.quaternion>
+        , ICustomVisit<Unity.Mathematics.Quaternion>
         , ICustomVisit<Unity.Mathematics.float2>
         , ICustomVisit<Unity.Mathematics.float3>
         , ICustomVisit<Unity.Mathematics.float4>
@@ -144,7 +144,7 @@ namespace Unity.Entities.Editor
             VisitSetup(ref container, ref context);
         }
 
-        void ICustomVisit<Unity.Mathematics.quaternion>.CustomVisit(Unity.Mathematics.quaternion q)
+        void ICustomVisit<Unity.Mathematics.Quaternion>.CustomVisit(Unity.Mathematics.Quaternion q)
         {
             EditorGUILayout.Vector4Field(Property.Name, new Vector4(q.value.x, q.value.y, q.value.z, q.value.w));
         }

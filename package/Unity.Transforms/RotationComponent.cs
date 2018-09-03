@@ -11,7 +11,7 @@ namespace Unity.Transforms
     [Serializable]
     public struct Rotation : IComponentData
     {
-        public quaternion Value;
+        public Quaternion Value;
     }
 
     public class RotationComponent : ComponentDataWrapper<Rotation>

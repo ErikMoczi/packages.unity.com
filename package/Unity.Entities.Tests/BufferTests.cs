@@ -3,6 +3,7 @@ using Unity.Collections;
 using System;
 using Unity.Entities;
 using Unity.Jobs;
+using UnityEditor.Experimental.UIElements;
 
 namespace Unity.Entities.Tests
 {
@@ -494,6 +495,19 @@ namespace Unity.Entities.Tests
 	        {
 	            Assert.AreEqual(buffer[i].Value, buffer2[i].Value);
 	        }
+	    }
+
+	    internal struct ElementWithoutCapacity : IBufferElementData
+	    {
+	        public float Value;
+	    }
+
+	    [Test]
+	    public void NoCapacitySpecifiedWorks()
+	    {
+	        var original = m_Manager.CreateEntity(typeof(ElementWithoutCapacity));
+	        var buffer = m_Manager.GetBuffer<ElementWithoutCapacity>(original);
+	        Assert.AreEqual(buffer.Capacity, 32);
 	    }
 	}
 }

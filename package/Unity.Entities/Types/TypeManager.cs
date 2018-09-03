@@ -214,6 +214,7 @@ namespace Unity.Entities
 #endif
 
                 category = TypeCategory.BufferData;
+                elementSize = UnsafeUtility.SizeOf(type);
 
                 var capacityAttribute = (InternalBufferCapacityAttribute) type.GetCustomAttribute(typeof(InternalBufferCapacityAttribute));
                 if (capacityAttribute != null)
@@ -221,7 +222,6 @@ namespace Unity.Entities
                 else
                     bufferCapacity = 128 / elementSize; // Rather than 2*cachelinesize, to make it cross platform deterministic
 
-                elementSize = UnsafeUtility.SizeOf(type);
                 componentSize = sizeof(BufferHeader) + bufferCapacity * elementSize;
                 fastEqualityLayout = FastEquality.CreateLayout(type);
                 entityOffsets = EntityRemapUtility.CalculateEntityOffsets(type);

@@ -16,7 +16,7 @@ namespace Unity.Transforms
         struct TransformStash
         {
             public float3 position;
-            public quaternion rotation;
+            public Quaternion rotation;
         }
 
         [BurstCompile]
