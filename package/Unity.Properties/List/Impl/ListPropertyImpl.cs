@@ -261,7 +261,7 @@ namespace Unity.Properties
             return GetList(ref container)[index];
         }
 
-        public override void GetAt(ref TContainer container, int index, TItem item)
+        public override void SetAt(ref TContainer container, int index, TItem item)
         {
             GetList(ref container)[index] = item;
             container.VersionStorage?.IncrementVersion(this, container);
@@ -320,8 +320,6 @@ namespace Unity.Properties
         
         protected DelegateListStructPropertyBase(string name, GetListMethod getList, CreateInstanceMethod createInstance) : base(name)
         {
-            Assert.IsNotNull(m_GetList);
-            
             m_GetList = getList;
             m_CreateInstance = createInstance ?? ((ref TContainer c) => default(TItem));
         }
@@ -456,7 +454,7 @@ namespace Unity.Properties
                     }
                     visitor.EndContainer(ref container, itemVisitContext);
                     
-                    GetAt(ref container, i, item);
+                    SetAt(ref container, i, item);
                 }
             }
             visitor.EndCollection(ref container, listContext);

@@ -67,7 +67,8 @@ namespace Unity.Properties.Codegen
 
             public static readonly ClassListClassProperty<Schema, TypeNode> Types = new ClassListClassProperty<Schema, TypeNode>(
                 "Types",
-                c => c.m_Types
+                c => c.m_Types,
+                c => new TypeNode()
             );
 
             public static readonly ClassPropertyBag<Schema> PropertyBag = new ClassPropertyBag<Schema>(
@@ -158,7 +159,8 @@ namespace Unity.Properties.Codegen
 
             public static readonly ClassListClassProperty<TypeNode, PropertyNode> Properties = new ClassListClassProperty<TypeNode, PropertyNode>(
                 "Properties",
-                c => c.m_Properties
+                c => c.m_Properties,
+                c => new PropertyNode()
             );
             
             public static readonly ClassListClassProperty<TypeNode, TypeNode> NestedTypes = new ClassListClassProperty<TypeNode, TypeNode>(

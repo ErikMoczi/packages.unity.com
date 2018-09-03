@@ -116,7 +116,7 @@ namespace Unity.Properties
 
         public void SetObjectAt(ref IPropertyContainer container, int index, object item)
         {
-            (container as IStructPropertyContainer<TContainer>)?.MakeRef((ref TContainer c, Locals l) => { l.Property.GetAt(ref c, l.Index, l.Item); },
+            (container as IStructPropertyContainer<TContainer>)?.MakeRef((ref TContainer c, Locals l) => { l.Property.SetAt(ref c, l.Index, l.Item); },
                 new Locals {Property = this, Index = index, Item = TypeConversion.Convert<TItem>(item)});
         }
 
@@ -129,7 +129,7 @@ namespace Unity.Properties
 
         public void SetAt(ref IPropertyContainer container, int index, TItem item)
         {
-            (container as IStructPropertyContainer<TContainer>)?.MakeRef((ref TContainer c, Locals l) => { l.Property.GetAt(ref c, l.Index, l.Item); },
+            (container as IStructPropertyContainer<TContainer>)?.MakeRef((ref TContainer c, Locals l) => { l.Property.SetAt(ref c, l.Index, l.Item); },
                 new Locals {Property = this, Index = index, Item = item});
         }
         
@@ -165,7 +165,7 @@ namespace Unity.Properties
         public abstract int Count(ref TContainer container);
         public abstract void Clear(ref TContainer container);
         public abstract TItem GetAt(ref TContainer container, int index);
-        public abstract void GetAt(ref TContainer container, int index, TItem item);
+        public abstract void SetAt(ref TContainer container, int index, TItem item);
         public abstract void Add(ref TContainer container, TItem item);
         public abstract void AddNew(ref TContainer container);
         public abstract bool Contains(ref TContainer container, TItem item);

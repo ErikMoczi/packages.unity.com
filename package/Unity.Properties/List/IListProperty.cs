@@ -90,7 +90,7 @@ namespace Unity.Properties
         where TContainer : struct, IPropertyContainer
     {
         TItem GetAt(ref TContainer container, int index);
-        void GetAt(ref TContainer container, int index, TItem item);
+        void SetAt(ref TContainer container, int index, TItem item);
         void Add(ref TContainer container, TItem item);
         bool Remove(ref TContainer container, TItem item);
         bool Contains(ref TContainer container, TItem item);
