@@ -31,37 +31,25 @@ namespace Unity.Burst.LowLevel
         {
             optimizationFlags = null;
 
-            bool shouldBurstCompile = false;
-            bool syncCompilation = false;
-
             if (!EditorPrefs.GetBool(BurstMenu.kEnableBurstCompilation, true))
                 return false;
 
-            foreach (var attr in type.GetCustomAttributes(true))
-            {
-                var attrType = attr.GetType();
-                // Use resolution by name instead to avoid tighly coupled components
-                if (attrType.FullName == "Unity.Jobs.ComputeJobOptimizationAttribute")
-                {
-                    shouldBurstCompile = true;
-
-                    syncCompilation = (bool)attrType.GetProperty("CompileSynchronously").GetValue(attr, BindingFlags.Default, null, null, null);
-
-                    break;
-                }
-            }
-
-            if (!shouldBurstCompile)
+            var attr = type.GetCustomAttribute<ComputeJobOptimizationAttribute>();
+            if (attr == null)
                 return false;
 
             var builder = new StringBuilder();
 
-
-            if (!EditorPrefs.GetBool(BurstMenu.kEnableSafetyChecks, true))
+            if (EditorPrefs.GetBool(BurstMenu.kEnableSafetyChecks, true))
+                AddOption(builder, "-enable-safety-checks");
+            else
                 AddOption(builder, "-disable-safety-checks");
 
-            if (syncCompilation)
+            if (attr.CompileSynchronously)
                 AddOption(builder, "-enable-synchronous-compilation");
+
+            if (attr.Accuracy != Accuracy.Std)
+                AddOption(builder, "-fast-math");
 
             //Debug.Log($"ExtractBurstCompilerOptions: {type} {optimizationFlags}");
 

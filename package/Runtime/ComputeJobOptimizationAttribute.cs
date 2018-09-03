@@ -23,7 +23,7 @@
         public ComputeJobOptimizationAttribute()
         {
             Support = Support.Strict;
-            Accuracy = Accuracy.Std;
+            Accuracy = Accuracy.High;
         }
 
         public ComputeJobOptimizationAttribute(Accuracy accuracy, Support support)
