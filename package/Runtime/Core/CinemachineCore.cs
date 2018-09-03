@@ -13,7 +13,7 @@ namespace Cinemachine
         public static readonly int kStreamingVersion = 20170927;
 
         /// <summary>Human-readable Cinemachine Version</summary>
-        public static readonly string kVersionString = "2.1.11";
+        public static readonly string kVersionString = "2.2.6";
 
         /// <summary>
         /// Stages in the Cinemachine Component pipeline, used for
@@ -187,6 +187,11 @@ namespace Cinemachine
                     var vcam = sublist[j];
                     if (canUpdateStandby && vcam == mRoundRobinVcamLastFrame)
                         currentRoundRobin = null; // update the next roundrobin candidate
+                    if (vcam == null)
+                    {
+                        sublist.RemoveAt(j);
+                        continue; // deleted
+                    }
                     if (vcam.m_StandbyUpdate == CinemachineVirtualCameraBase.StandbyUpdateMode.Always
                         || IsLive(vcam))
                     {
@@ -223,9 +228,12 @@ namespace Cinemachine
         /// hasn't already been updated this frame.  Always update vcams via this method.
         /// Calling this more than once per frame for the same camera will have no effect.
         /// </summary>
-        internal bool UpdateVirtualCamera(
+        internal void UpdateVirtualCamera(
             CinemachineVirtualCameraBase vcam, Vector3 worldUp, float deltaTime)
         {
+            if (vcam == null)
+                return;
+
             bool isSmartUpdate = (CurrentUpdateFilter & UpdateFilter.Smart) == UpdateFilter.Smart;
             UpdateTracker.UpdateClock updateClock 
                 = (UpdateTracker.UpdateClock)(CurrentUpdateFilter & ~UpdateFilter.Smart);
@@ -233,22 +241,18 @@ namespace Cinemachine
             // If we're in smart update mode and the target moved, then we must examine
             // how the target has been moving recently in order to figure out whether to
             // update now
-            bool updateNow = !isSmartUpdate;
             if (isSmartUpdate)
             {
                 Transform updateTarget = GetUpdateTarget(vcam);
                 if (updateTarget == null)
-                    updateNow = (updateClock == UpdateTracker.UpdateClock.Late); // no target
-                else
-                    updateNow = UpdateTracker.GetPreferredUpdate(updateTarget) == updateClock;
+                    return;   // vcam deleted
+                if (UpdateTracker.GetPreferredUpdate(updateTarget) != updateClock)
+                    return;   // wrong clock
             }
-            if (!updateNow)
-                return false;
 
             // Have we already been updated this frame?
             if (mUpdateStatus == null)
                 mUpdateStatus = new Dictionary<CinemachineVirtualCameraBase, UpdateStatus>();
-
             UpdateStatus status;
             if (!mUpdateStatus.TryGetValue(vcam, out status))
             {
@@ -260,7 +264,7 @@ namespace Cinemachine
                 ? Time.frameCount - status.lastUpdateFrame
                 : FixedFrameCount - status.lastUpdateFixedFrame;
             if (frameDelta == 0 && status.lastUpdateMode == updateClock)
-                return false; // already updated
+                return; // already updated
             if (frameDelta != 1)
                 deltaTime = -1; // multiple frames - kill the damping
 
@@ -269,7 +273,6 @@ namespace Cinemachine
             status.lastUpdateFrame = Time.frameCount;
             status.lastUpdateFixedFrame = FixedFrameCount;
             status.lastUpdateMode = updateClock;
-            return true;
         }
 
         class UpdateStatus
