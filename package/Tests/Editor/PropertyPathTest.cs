@@ -63,9 +63,13 @@ namespace Unity.Properties.Tests
             var path = PropertyPath.Parse(nameof(TestContainer.IntValue));
             var container = new TestContainer
             {
-                IntValue = 123,
-                FloatList = {1, 2, 3}
+                IntValue = 123
             };
+            
+            container.FloatList.Add(1);
+            container.FloatList.Add(2);
+            container.FloatList.Add(3);
+            
             var resolution = path.Resolve(container);
 
             Assert.IsTrue(resolution.success);
@@ -81,9 +85,13 @@ namespace Unity.Properties.Tests
             var path = PropertyPath.Parse("FloatList[1]");
             var container = new TestContainer
             {
-                IntValue = 123,
-                FloatList = {1, 2, 3}
+                IntValue = 123
             };
+            
+            container.FloatList.Add(1);
+            container.FloatList.Add(2);
+            container.FloatList.Add(3);
+            
             var resolution = path.Resolve(container);
             
             Assert.IsTrue(resolution.success);
