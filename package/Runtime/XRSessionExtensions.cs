@@ -10,7 +10,7 @@ namespace UnityEngine.XR.ARExtensions
     public static class XRSessionExtensions
     {
         /// <summary>
-        /// A <c>Delegate</c> used for asynchronous operations that retrieve data of type <c>T</c>.
+        /// A <c>delegate</c> used for asynchronous operations that retrieve data of type <c>T</c>.
         /// </summary>
         /// <typeparam name="T">The type of data to operation retrieves.</typeparam>
         /// <param name="sessionSubsystem">The <c>XRSessionSubsystem</c> being extended.</param>
@@ -27,7 +27,7 @@ namespace UnityEngine.XR.ARExtensions
         /// <param name="handler">An <see cref="AsyncDelegate{T}"/> to handle the request.</param>
         public static void RegisterInstallAsyncHandler(string subsystemId, AsyncDelegate<SessionInstallationStatus> handler)
         {
-            m_InstallAsyncDelegates[subsystemId] = handler;
+            s_InstallAsyncDelegates[subsystemId] = handler;
         }
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace UnityEngine.XR.ARExtensions
         /// <param name="handler">An <see cref="AsyncDelegate{T}"/> to handle the request.</param>
         public static void RegisterGetAvailabilityAsyncHandler(string subsystemId, AsyncDelegate<SessionAvailability> handler)
         {
-            m_GetAvailabilityAsyncDelegates[subsystemId] = handler;
+            s_GetAvailabilityAsyncDelegates[subsystemId] = handler;
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace UnityEngine.XR.ARExtensions
         /// availability has been determined and retrieve the result.</returns>
         public static Promise<SessionAvailability> GetAvailabilityAsync(this XRSessionSubsystem sessionSubsystem)
         {
-            return ExecuteAsync(sessionSubsystem, m_GetAvailabilityAsyncDelegates,
+            return ExecuteAsync(sessionSubsystem, s_GetAvailabilityAsyncDelegates,
                 SessionAvailability.Supported | SessionAvailability.Installed);
         }
 
@@ -70,7 +70,7 @@ namespace UnityEngine.XR.ARExtensions
         /// installation completes and retrieve the result.</returns>
         public static Promise<SessionInstallationStatus> InstallAsync(this XRSessionSubsystem sessionSubsystem)
         {
-            return ExecuteAsync(sessionSubsystem, m_InstallAsyncDelegates,
+            return ExecuteAsync(sessionSubsystem, s_InstallAsyncDelegates,
                 SessionInstallationStatus.ErrorInstallNotSupported);
         }
 
@@ -91,10 +91,10 @@ namespace UnityEngine.XR.ARExtensions
             }
         }
 
-        static Dictionary<string, AsyncDelegate<SessionInstallationStatus>> m_InstallAsyncDelegates =
+        static Dictionary<string, AsyncDelegate<SessionInstallationStatus>> s_InstallAsyncDelegates =
             new Dictionary<string, AsyncDelegate<SessionInstallationStatus>>();
 
-        static Dictionary<string, AsyncDelegate<SessionAvailability>> m_GetAvailabilityAsyncDelegates =
+        static Dictionary<string, AsyncDelegate<SessionAvailability>> s_GetAvailabilityAsyncDelegates =
             new Dictionary<string, AsyncDelegate<SessionAvailability>>();
     }
 }
