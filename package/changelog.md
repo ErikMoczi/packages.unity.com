@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4-preview.14
+
+- Fix an issue with package structure that was preventing burst to work in Unity
+
 ## 0.2.4-preview.13
 
 - Add support for burst timings menu
@@ -14,7 +18,7 @@
 
 ## 0.2.4-preview.11
 
-- Fix exception in codegen when accessing readonly static fields from different control flow paths 
+- Fix exception in codegen when accessing readonly static fields from different control flow paths
 
 ## 0.2.4-preview.10
 
@@ -41,7 +45,7 @@
 - Add support for substracting pointers at IL level
 - Improve codegen with pointers arithmetic to avoid checking for overflows
 
-## 0.2.4-preview.6 
+## 0.2.4-preview.6
 
 - Remove `bool1` from mathematics and add proper support in burst
 - Add support for ARM platforms in the burst inspector UI
@@ -52,7 +56,7 @@
 - Add support for stackalloc
 - Fix potential crash on MacOSX when using memset is used indirectly
 - Fix crash when trying to write to a bool1*
-- Fix bug with EnableBurstCompilation checkbox not working in Unity Editor 
+- Fix bug with EnableBurstCompilation checkbox not working in Unity Editor
 
 ## 0.2.4-preview.4
 
@@ -74,4 +78,3 @@
 - Improve error messages in case using `is` or `as` cast in C#
 - Improve error messages if a static delegate instance is used
 - Fix codegen error when converting a byte/ushort to a float
-
