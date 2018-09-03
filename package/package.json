@@ -1,0 +1,10 @@
+{
+	"name": "com.unity.2d.common",
+	"version": "0.1.0",
+	"unity": "2018.1",
+	"description": "2D Common",
+	"keywords": ["2d"],
+	"category": "2D",
+	"dependencies": {
+	}
+}
