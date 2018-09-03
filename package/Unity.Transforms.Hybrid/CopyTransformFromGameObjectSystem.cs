@@ -45,7 +45,7 @@ namespace Unity.Transforms
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<LocalRotation> localRotations;
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Position> positions;
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Rotation> rotations;
-            [ReadOnly] public EntityArray entities;
+            public EntityArray entities;
             [DeallocateOnJobCompletion] public NativeArray<TransformStash> transformStashes;
 
             public void Execute(int index)
@@ -83,7 +83,7 @@ namespace Unity.Transforms
             var transforms = m_TransformGroup.GetTransformAccessArray();
             var entities = m_TransformGroup.GetEntityArray();
 
-            var transformStashes = new NativeArray<TransformStash>(transforms.length, Allocator.TempJob);
+            var transformStashes = new NativeArray<TransformStash>(transforms.Length, Allocator.TempJob);
             var stashTransformsJob = new StashTransforms
             {
                 transformStashes = transformStashes

@@ -149,17 +149,9 @@ namespace Unity.Entities
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         public override string ToString()
         {
-            string name = GetManagedType().Name;
-            if (IsFixedArray)
-                return $"{name}[{FixedArrayLength}]";
-            else if (AccessModeType == AccessMode.Subtractive)
-                return $"{name} [S]";
-            else if (AccessModeType == AccessMode.ReadOnly)
-                return $"{name} [RO]";
-            else if (TypeIndex == 0 && FixedArrayLength == 0)
-                return "None";
-            else 
-                return name;
+            //@TODO: Empty ComponentType should visualize that it is null or something
+            
+            return IsFixedArray ? $"FixedArray(typeof({GetManagedType()}, {FixedArrayLength}))" : GetManagedType().ToString();
         }
 #endif
 

@@ -10,34 +10,25 @@ namespace Unity.Transforms
         [Inject] [ReadOnly] ComponentDataFromEntity<Position> m_Positions;
         [Inject] [ReadOnly] ComponentDataFromEntity<Rotation> m_Rotations;
 
-        [Inject] [ReadOnly] ComponentDataFromEntity<LocalPosition> m_LocalPositions;
-        [Inject] [ReadOnly] ComponentDataFromEntity<LocalRotation> m_LocalRotations;
-
         [ComputeJobOptimization]
         struct CopyTransforms : IJobParallelForTransform
         {
             [ReadOnly] public ComponentDataFromEntity<Position> positions;
             [ReadOnly] public ComponentDataFromEntity<Rotation> rotations;
-
-            [ReadOnly] public ComponentDataFromEntity<LocalPosition> localPositions;
-            [ReadOnly] public ComponentDataFromEntity<LocalRotation> localRotations;
-            
-            [ReadOnly]
             public EntityArray entities;
 
             public void Execute(int index, TransformAccess transform)
             {
                 var entity = entities[index];
 
-                if (localPositions.Exists(entity))
-                    transform.localPosition= localPositions[entity].Value;
-                else if (positions.Exists(entity))
+                if (positions.Exists(entity))
+                {
                     transform.position = positions[entity].Value;
-                    
-                if (localRotations.Exists(entity))
-                    transform.localRotation = localRotations[entity].Value;
-                else if (rotations.Exists(entity))
+                }
+                if (rotations.Exists(entity))
+                {
                     transform.rotation = rotations[entity].Value;
+                }
             }
         }
 
@@ -57,8 +48,6 @@ namespace Unity.Transforms
             {
                 positions = m_Positions,
                 rotations = m_Rotations,
-                localPositions = m_LocalPositions,
-                localRotations = m_LocalRotations,
                 entities = entities
             };
 

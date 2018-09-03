@@ -32,12 +32,12 @@ namespace Unity.Entities
 
         public ComponentGroup[] 			ComponentGroups => m_ComponentGroups;
 
-        public bool ShouldRunSystem()
+        protected bool ShouldRunSystem()
         {
             if (m_AlwaysUpdateSystem)
                 return true;
 
-            var length = m_ComponentGroups?.Length ?? 0;
+            int length = m_ComponentGroups.Length;
 
             if (length == 0)
                 return true;
@@ -241,15 +241,8 @@ namespace Unity.Entities
             if (ShouldRunSystem())
             {
                 BeforeOnUpdate();
-
-                try
-                {
-                    OnUpdate();
-                }
-                finally
-                {
-                    AfterOnUpdate();
-                }
+                OnUpdate();
+                AfterOnUpdate();
             }
         }
 
@@ -285,11 +278,12 @@ namespace Unity.Entities
             return GetDependency();
         }
 
-        unsafe void AfterOnUpdate(JobHandle outputJob, bool throwException)
+        unsafe void AfterOnUpdate(JobHandle outputJob)
         {
             JobHandle.ScheduleBatchedJobs();
 
             AddDependencyInternal(outputJob);
+            m_PreviousFrameDependency = outputJob;
 
             // Notify all injected barrier systems that they will need to sync on any jobs we spawned.
             // This is conservative currently - the barriers will sync on too much if we use more than one.
@@ -313,26 +307,25 @@ namespace Unity.Entities
             //@TODO: It is not ideal that we call m_SafetyManager.GetDependency,
             //       it can result in JobHandle.CombineDependencies calls.
             //       Which seems like debug code might have side-effects
-
-            string dependencyError = null;
-            for (var index = 0; index < m_JobDependencyForReadingManagersLength && dependencyError == null; index++)
+            
+            try
             {
-                var type = m_JobDependencyForReadingManagersPtr[index];
-                dependencyError = CheckJobDependencies(type); 
-            }
+                for (var index = 0; index < m_JobDependencyForReadingManagersLength; index++)
+                {
+                    var type = m_JobDependencyForReadingManagersPtr[index];
+                    CheckJobDependencies(type);
+                }
 
-            for (var index = 0; index < m_JobDependencyForWritingManagersLength && dependencyError == null; index++)
-            {
-                var type = m_JobDependencyForWritingManagersPtr[index];
-                dependencyError = CheckJobDependencies(type);
+                for (var index = 0; index < m_JobDependencyForWritingManagersLength; index++)
+                {
+                    var type = m_JobDependencyForWritingManagersPtr[index];
+                    CheckJobDependencies(type);
+                }
             }
-
-            if (dependencyError != null)
+            catch (InvalidOperationException)
             {
                 EmergencySyncAllJobs();
-                
-                if (throwException)
-                    throw new System.InvalidOperationException(dependencyError);
+                throw;
             }
 #endif
         }
@@ -342,18 +335,8 @@ namespace Unity.Entities
             if (ShouldRunSystem())
             {
                 var inputJob = BeforeOnUpdate();
-                JobHandle outputJob = new JobHandle();
-                try
-                {
-                    outputJob = OnUpdate(inputJob);
-                }
-                catch
-                {
-                    AfterOnUpdate(outputJob, false);
-                    throw;
-                }
-                
-                AfterOnUpdate(outputJob, true);
+                var outputJob = OnUpdate(inputJob);
+                AfterOnUpdate(outputJob);
             }
         }
 
@@ -388,7 +371,7 @@ namespace Unity.Entities
         }
         
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-        unsafe string CheckJobDependencies(int type)
+        unsafe void CheckJobDependencies(int type)
         {
             var h = m_SafetyManager.GetSafetyHandle(type, true);
 
@@ -399,13 +382,11 @@ namespace Unity.Entities
             for (var i = 0; i < readerCount; ++i)
             {
                 if (!m_SafetyManager.HasReaderOrWriterDependency(type, readers[i]))
-                    return $"The system {GetType()} reads {TypeManager.GetType(type)} via {AtomicSafetyHandle.GetReaderName(h, i)} but that type was not returned as a job dependency. To ensure correct behavior of other systems, the job or a dependency of it must be returned from the OnUpdate method.";
+                    throw new InvalidOperationException($"The system {GetType()} reads {TypeManager.GetType(type)} via {AtomicSafetyHandle.GetReaderName(h, i)} but that type was not returned as a job dependency. To ensure correct behavior of other systems, the job or a dependency of it must be returned from the OnUpdate method.");
             }
 
             if (!m_SafetyManager.HasReaderOrWriterDependency(type, AtomicSafetyHandle.GetWriter(h)))
-                return $"The system {GetType()} writes {TypeManager.GetType(type)} via {AtomicSafetyHandle.GetWriterName(h)} but that was not returned as a job dependency. To ensure correct behavior of other systems, the job or a dependency of it must be returned from the OnUpdate method.";
-
-            return null;
+                throw new InvalidOperationException($"The system {GetType()} writes {TypeManager.GetType(type)} via {AtomicSafetyHandle.GetWriterName(h)} but that was not returned as a job dependency. To ensure correct behavior of other systems, the job or a dependency of it must be returned from the OnUpdate method.");
         }
 
         unsafe void EmergencySyncAllJobs()
@@ -431,7 +412,7 @@ namespace Unity.Entities
 
         unsafe void AddDependencyInternal(JobHandle dependency)
         {
-            m_PreviousFrameDependency = m_SafetyManager.AddDependency(m_JobDependencyForReadingManagersPtr, m_JobDependencyForReadingManagersLength, m_JobDependencyForWritingManagersPtr, m_JobDependencyForWritingManagersLength, dependency);
+            m_SafetyManager.AddDependency(m_JobDependencyForReadingManagersPtr, m_JobDependencyForReadingManagersLength, m_JobDependencyForWritingManagersPtr, m_JobDependencyForWritingManagersLength, dependency);
         }
     }
 

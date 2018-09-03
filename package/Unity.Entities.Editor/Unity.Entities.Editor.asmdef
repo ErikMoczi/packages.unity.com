@@ -3,9 +3,7 @@
     "references": [
         "Unity.Entities",
         "Unity.Entities.Hybrid",
-        "Unity.Entities.Properties",
-        "Unity.Mathematics",
-        "Unity.Properties"
+        "Unity.Mathematics"
     ],
     "includePlatforms": [
         "Editor"

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Unity.Properties;
 
 namespace Unity.Entities.Properties
@@ -12,7 +11,7 @@ namespace Unity.Entities.Properties
         /// <summary>
         /// WARNING This property does NOT implement the List property fully and instead makes the assumption that we are only serializing...
         /// This may cause problems when we start to write UI code and should be looked at.
-        /// This is a quick implementation to get higher performance visits
+        /// TThis is a quick implementation to get higher performance visits
         /// </summary>
         private sealed class ReadOnlyComponentsProperty : StructMutableContainerListProperty<EntityContainer, IList<StructProxy>, StructProxy>
         {
@@ -21,30 +20,14 @@ namespace Unity.Entities.Properties
             public override void Accept(ref EntityContainer container, IPropertyVisitor visitor)
             {
                 var count = container.m_Manager.GetComponentCount(container.m_Entity);
-                var listContext = new VisitContext<IList<StructProxy>> {Property = this, Value = null, Index = -1 };
-
-
-                // @TODO improve, split the deps
-                HashSet<Type> primitiveTypes = new HashSet<Type>();
-                // try to gather the primitive types for that visitor
-                var entityVisitor = visitor as IPrimitivePropertyVisitor;
-                if (entityVisitor != null)
-                {
-                    primitiveTypes = entityVisitor.SupportedPrimitiveTypes();
-                }
-                else
-                {
-                    // @TODO remove that dependency
-                    // Fallback on the optimized visitor for now
-                    primitiveTypes = OptimizedVisitor.SupportedTypes();
-                }
+                var listContext = new ListContext<IList<StructProxy>> {Property = this, Value = null, Index = -1, Count = count};
 
                 if (visitor.BeginList(ref container, listContext))
                 {
                     for (var i = 0; i < count; i++)
                     {
-                        var item = Get(ref container, i, primitiveTypes);
-                        var context = new VisitContext<StructProxy>
+                        var item = Get(ref container, i);
+                        var context = new SubtreeContext<StructProxy>
                         {
                             Property = this,
                             Value = item,
@@ -53,7 +36,7 @@ namespace Unity.Entities.Properties
 
                         if (visitor.BeginContainer(ref container, context))
                         {
-                            item.PropertyBag.Visit(ref item, visitor);
+                            item.PropertyBag.VisitStruct(ref item, visitor);
                         }
 
                         visitor.EndContainer(ref container, context);
@@ -63,11 +46,11 @@ namespace Unity.Entities.Properties
                 visitor.EndList(ref container, listContext);
             }
 
-            private static StructProxy Get(ref EntityContainer container, int index, HashSet<Type> primitiveTypes)
+            private static StructProxy Get(ref EntityContainer container, int index)
             {
                 var typeIndex =  container.m_Manager.GetComponentTypeIndex(container.m_Entity, index);
                 var propertyType = TypeManager.GetType(typeIndex);
-                var propertyBag = TypeInformation.GetOrCreate(propertyType, primitiveTypes);
+                var propertyBag = TypeInformation.GetOrCreate(propertyType);
                 var data = (byte*) container.m_Manager.GetComponentDataRaw(container.m_Entity, typeIndex);
 
                 var p = new StructProxy

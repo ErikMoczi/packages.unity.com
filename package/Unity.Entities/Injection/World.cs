@@ -5,67 +5,47 @@ using System.Collections.ObjectModel;
 
 namespace Unity.Entities
 {
-    public class World : IDisposable
-    {
-        public IEnumerable<ScriptBehaviourManager> BehaviourManagers =>
-            new ReadOnlyCollection<ScriptBehaviourManager>(m_BehaviourManagers);
+	public class World : IDisposable
+	{
+		public IEnumerable<ScriptBehaviourManager> BehaviourManagers => new ReadOnlyCollection<ScriptBehaviourManager>(m_BehaviourManagers);
 
-        List<ScriptBehaviourManager> m_BehaviourManagers = new List<ScriptBehaviourManager>();
+	    readonly List<ScriptBehaviourManager> 				m_BehaviourManagers = new List<ScriptBehaviourManager> ();
+		//@TODO: What about multiple managers of the same type...
+	    readonly Dictionary<Type, ScriptBehaviourManager> 	m_BehaviourManagerLookup = new Dictionary<Type, ScriptBehaviourManager> ();
 
-        //@TODO: What about multiple managers of the same type...
-        Dictionary<Type, ScriptBehaviourManager> m_BehaviourManagerLookup =
-            new Dictionary<Type, ScriptBehaviourManager>();
+	    int 										m_DefaultCapacity = 10;
+	    bool 										m_AllowGetManager = true;
 
-        int m_DefaultCapacity = 10;
-        bool m_AllowGetManager = true;
+	    public string                               Name { get; }
 
-        public string Name { get; }
+	    public static World 				        Active { get; set; }
 
-        public int Version { get { return m_Version; } }
-        int m_Version = 0;
+	    public static ReadOnlyCollection<World> AllWorlds => new ReadOnlyCollection<World>(allWorlds);
+	    static readonly List<World> allWorlds = new List<World>();
 
-        public static World Active { get; set; }
+	    int GetCapacityForType(Type type)
+		{
+			return m_DefaultCapacity;
+		}
 
-        public static ReadOnlyCollection<World> AllWorlds => new ReadOnlyCollection<World>(allWorlds);
-        static readonly List<World> allWorlds = new List<World>();
-
-        int GetCapacityForType(Type type)
-        {
-            return m_DefaultCapacity;
-        }
-
-        public void SetDefaultCapacity(int value)
-        {
-            m_DefaultCapacity = value;
-        }
+		public void SetDefaultCapacity(int value)
+		{
+			m_DefaultCapacity = value;
+		}
 
         public World(string name)
         {
-			// Debug.LogError("Create World "+ name + " - " + GetHashCode());
+//			Debug.Log("Create World");
             Name = name;
             allWorlds.Add(this);
         }
 
-        public bool IsCreated
-        {
-            get { return m_BehaviourManagers != null; }
-        }
-
-        public static void DisposeAllWorlds()
-        {
-            while (allWorlds.Count != 0)
-                allWorlds[0].Dispose();
-        }
-
-        public void Dispose()
+		public void Dispose()
 		{
-		    if (!IsCreated)
-		        throw new System.ArgumentException("World is already disposed");
-		    // Debug.LogError("Dispose World "+ Name + " - " + GetHashCode());
-		    
 		    if (allWorlds.Contains(this))
 		        allWorlds.Remove(this);
-		    
+//			Debug.Log("Dispose World");
+
 			// Destruction should happen in reverse order to construction
 			m_BehaviourManagers.Reverse();
 
@@ -92,24 +72,19 @@ namespace Unity.Entities
 					Debug.LogException(e);
 				}
 			}
+			m_AllowGetManager = true;
 
-		    if (Active == this)
-		        Active = null;
-		    
 			m_BehaviourManagers.Clear();
 			m_BehaviourManagerLookup.Clear();
-			
-			m_BehaviourManagers = null;
-			m_BehaviourManagerLookup = null;
 		}
 
-	    ScriptBehaviourManager CreateManagerInternal (Type type, int capacity, object[] constructorArguments)
+	    ScriptBehaviourManager CreateManagerInternal (Type type, int capacity, object[] constructorArgumnents)
 		{
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
 			if (!m_AllowGetManager)
 				throw new ArgumentException("During destruction of a system you are not allowed to create more systems.");
 
-			if (constructorArguments != null && constructorArguments.Length != 0)
+			if (constructorArgumnents != null && constructorArgumnents.Length != 0)
 			{
 				var constructors = type.GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 				if (constructors.Length == 1 && constructors[0].IsPrivate)
@@ -121,7 +96,7 @@ namespace Unity.Entities
 		    ScriptBehaviourManager manager;
 		    try
 		    {
-		        manager = Activator.CreateInstance(type, constructorArguments) as ScriptBehaviourManager;
+		        manager = Activator.CreateInstance(type, constructorArgumnents) as ScriptBehaviourManager;
 
 		    }
 		    catch
@@ -144,15 +119,12 @@ namespace Unity.Entities
 		        throw;
 		    }
 
-		    ++m_Version;
 			return manager;
 		}
 
 	    ScriptBehaviourManager GetExistingManagerInternal (Type type)
 		{
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-		    if (!IsCreated)
-		        throw new ArgumentException("During destruction ");
 			if (!m_AllowGetManager)
 				throw new ArgumentException("During destruction of a system you are not allowed to get or create more systems.");
 #endif
@@ -186,7 +158,7 @@ namespace Unity.Entities
 		{
 			if (!m_BehaviourManagers.Remove(manager))
 				throw new ArgumentException($"manager does not exist in the world");
-		    ++m_Version;
+
 
 			var type = manager.GetType();
 			while (type != typeof(ScriptBehaviourManager))

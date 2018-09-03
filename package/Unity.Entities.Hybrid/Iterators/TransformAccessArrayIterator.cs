@@ -16,7 +16,7 @@ namespace Unity.Entities
 
         public void Dispose()
         {
-            if (Data.isCreated)
+            if (Data.IsCreated)
                 Data.Dispose();
         }
     }
@@ -28,14 +28,14 @@ namespace Unity.Entities
             var state = (TransformAccessArrayState?)group.m_CachedState ?? new TransformAccessArrayState();
             var orderVersion = group.EntityDataManager->GetComponentTypeOrderVersion(TypeManager.GetTypeIndex<Transform>());
 
-            if (state.Data.isCreated && orderVersion == state.OrderVersion)
+            if (state.Data.IsCreated && orderVersion == state.OrderVersion)
                 return state.Data;
 
             state.OrderVersion = orderVersion;
 
             UnityEngine.Profiling.Profiler.BeginSample("DirtyTransformAccessArrayUpdate");
             var trans = group.GetComponentArray<Transform>();
-            if (!state.Data.isCreated)
+            if (!state.Data.IsCreated)
                 state.Data = new TransformAccessArray(trans.ToArray());
             else
                 state.Data.SetTransforms(trans.ToArray());

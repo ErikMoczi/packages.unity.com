@@ -1,16 +1,27 @@
 ﻿using System;
 using System.Linq;
-using System.Reflection;
-using UnityEngine;
+using System.Collections.Generic;
 
 namespace Unity.Entities
 {
     static class DefaultWorldInitialization
     {
+        const string k_DefaultWorldName = "Default World";
+        static World s_CreatedWorld;
+
         static void DomainUnloadShutdown()
         {
-            World.DisposeAllWorlds();
-            ScriptBehaviourUpdateOrder.UpdatePlayerLoop();
+            if (World.Active == s_CreatedWorld)
+            {
+                World.Active.Dispose ();
+                World.Active = null;
+
+                ScriptBehaviourUpdateOrder.UpdatePlayerLoop();
+            }
+            else
+            {
+                Debug.LogError("World has already been destroyed");
+            }
         }
 
         static void GetBehaviourManagerAndLogException(World world, Type type)
@@ -25,41 +36,28 @@ namespace Unity.Entities
             }
         }
 
-        public static void Initialize(string worldName, bool editorWorld)
+        public static void Initialize()
         {
-            var world = new World(worldName);
+            var world = new World(k_DefaultWorldName);
             World.Active = world;
+            s_CreatedWorld = world;
 
             // Register hybrid injection hooks
             InjectionHookSupport.RegisterHook(new GameObjectArrayInjectionHook());
             InjectionHookSupport.RegisterHook(new TransformAccessArrayInjectionHook());
             InjectionHookSupport.RegisterHook(new ComponentArrayInjectionHook());
 
-            PlayerLoopManager.RegisterDomainUnload(DomainUnloadShutdown, 10000);
+            PlayerLoopManager.RegisterDomainUnload (DomainUnloadShutdown, 10000);
 
             foreach (var ass in AppDomain.CurrentDomain.GetAssemblies())
             {
-                try
-                {
-                    var allTypes = ass.GetTypes();
+                var allTypes = ass.GetTypes();
 
-                    // Create all ComponentSyste
-                    var systemTypes = allTypes.Where(t =>
-                        t.IsSubclassOf(typeof(ComponentSystemBase)) &&
-                        !t.IsAbstract &&
-                        !t.ContainsGenericParameters &&
-                        t.GetCustomAttributes(typeof(DisableAutoCreationAttribute), true).Length == 0);
-                    foreach (var type in systemTypes)
-                    {
-                        if (editorWorld && type.GetCustomAttributes(typeof(ExecuteInEditMode), true).Length == 0)
-                            continue;
-
-                        GetBehaviourManagerAndLogException(world, type);
-                    }
-                }
-                catch (ReflectionTypeLoadException)
+                // Create all ComponentSystem
+                var systemTypes = allTypes.Where(t => t.IsSubclassOf(typeof(ComponentSystemBase)) && !t.IsAbstract && !t.ContainsGenericParameters && t.GetCustomAttributes(typeof(DisableAutoCreationAttribute), true).Length == 0);
+                foreach (var type in systemTypes)
                 {
-                    // Can happen for certain assembly during the GetTypes() step
+                    GetBehaviourManagerAndLogException(world, type);
                 }
             }
 

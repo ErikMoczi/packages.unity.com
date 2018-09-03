@@ -4,8 +4,7 @@
         "Unity.Entities",
         "Unity.Mathematics",
         "Unity.Properties",
-        "Unity.Jobs",
-        "Unity.Transforms"
+        "Unity.Jobs"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

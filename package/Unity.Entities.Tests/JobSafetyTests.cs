@@ -1,7 +1,6 @@
 ﻿using NUnit.Framework;
 using Unity.Jobs;
 using Unity.Entities;
-using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace Unity.Entities.Tests
@@ -27,8 +26,8 @@ namespace Unity.Entities.Tests
             }
         }
 
-
-
+		
+		
         [Test]
         public void ComponentAccessAfterScheduledJobThrows()
         {
@@ -41,7 +40,7 @@ namespace Unity.Entities.Tests
             Assert.AreEqual(42, job.data[0].value);
 
             var fence = job.Schedule();
-
+            
             Assert.Throws<System.InvalidOperationException>(() =>
             {
                 var f = job.data[0].value;
@@ -130,7 +129,7 @@ namespace Unity.Entities.Tests
 
             jobHandle.Complete();
         }
-
+	    
 	    [Test]
 	    [Ignore("Should work, need to write test")]
 	    public void TwoJobsAccessingEntityArrayCanRunInParallel()

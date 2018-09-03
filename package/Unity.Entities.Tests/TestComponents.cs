@@ -9,6 +9,8 @@ namespace Unity.Entities.Tests
 		public EcsTestData(int inValue) { value = inValue; }
 	}
 
+	public class EcsTestComponent : ComponentDataWrapper<EcsTestData> { }
+
 
     public struct EcsTestData2 : IComponentData
     {

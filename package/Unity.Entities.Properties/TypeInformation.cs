@@ -1,268 +1,64 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
-using System.Xml.Serialization;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Properties;
-using Unity.Entities;
-using Unity.Mathematics;
-using UnityEngine;
 
 namespace Unity.Entities.Properties
 {
-    public interface ITypeVisitor
+    public static class TypeInformation
     {
-        IPropertyContainer VisitType(ITypedMemberDescriptor type, out bool recurse);
-    }
+        private static readonly Dictionary<Type, PropertyBag> s_PropertyBagCache = new Dictionary<Type, PropertyBag>();
 
-    public interface ITypedMemberDescriptor
-    {
-        int GetOffset();
-        Type GetMemberType();
-        bool IsPrimitive();
-        string Name { get; }
-    }
-
-    public class FieldMemberDescriptor : ITypedMemberDescriptor
-    {
-        private FieldInfo Info { get; set; }
-
-        public FieldMemberDescriptor(FieldInfo field)
+        public static PropertyBag GetOrCreate(Type componentType)
         {
-            Info = field;
-        }
-
-        public Type GetMemberType()
-        {
-            return Info.FieldType;
-        }
-
-        public bool IsPrimitive()
-        {
-            return Info.FieldType.IsPrimitive;
-        }
-        
-        public int GetOffset()
-        {
-            return UnsafeUtility.GetFieldOffset(Info);
-        }
-
-        public string Name
-        {
-            get { return Info.Name; }
-        }
-    }
-
-    public class PropertyMemberDescriptor : ITypedMemberDescriptor
-    {
-        private PropertyInfo Info { get; set;  }
-
-        public PropertyMemberDescriptor(PropertyInfo p)
-        {
-            Info = p;
-        }
-
-        public Type GetMemberType()
-        {
-            return Info.PropertyType;
-        }
-
-        public bool IsPrimitive()
-        {
-            return Info.PropertyType.IsPrimitive;
-        }
-        public string Name
-        {
-            get { return Info.Name; }
-        }
-
-        public int GetOffset()
-        {
-            // TODO(WIP) This is broken for now obviously ... 
-            return 0;
-        }
-    }
-
-    public class TypeFieldIterator
-    {
-        [Flags]
-        public enum Specifier
-        {
-            Public = 0x01,
-            Private = 0x02,
-            ValueType = 0x04,
-        }
-
-        public TypeFieldIterator(Type t)
-        {
-            _t = t;
-        }
-
-        public IEnumerable<ITypedMemberDescriptor> Get(Specifier d)
-        {
-            if (_t == null)
+            PropertyBag result;
+            if (s_PropertyBagCache.TryGetValue(componentType, out result))
             {
-                yield return null;
-            }
-            foreach (var field in _t.GetFields())
-            {
-                if (field.IsStatic)
-                {
-                    continue;
-                }
-                if (field.FieldType.IsValueType != d.HasFlag(Specifier.ValueType))
-                {
-                    continue;
-                }
-                if (field.IsPublic && d.HasFlag(Specifier.Public))
-                {
-                    yield return new FieldMemberDescriptor(field);
-                }
-                if (!field.IsPublic && d.HasFlag(Specifier.Private))
-                {
-                    yield return new FieldMemberDescriptor(field);
-                }
-            }
-        }
-        private Type _t;
-    }
-
-    public class TypePropertyIterator
-    {
-        [Flags]
-        public enum Specifier
-        {
-            Public = 0x01,
-            Private = 0x02,
-            ValueType = 0x04,
-        }
-
-        public TypePropertyIterator(Type t)
-        {
-            _t = t;
-        }
-
-        public IEnumerable<ITypedMemberDescriptor> Get(Specifier d)
-        {
-            if (_t == null)
-            {
-                yield break;
-            }
-            yield break;
-#if ENABLE_CSHARP_PROPERTY_PARSING
-            foreach (var p in _t.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-            {
-                if (!p.CanRead || !p.GetGetMethod(true).IsPublic)
-                {
-                    continue;
-                }
-
-                // we dont support recursion for now ... 
-                if (_t == p.PropertyType)
-                {
-                    continue;
-                }
-
-                if (p.PropertyType.IsValueType != d.HasFlag(Specifier.ValueType))
-                {
-                    continue;
-                }
-
-                yield return new PropertyMemberDescriptor(p);
-            }
-#endif
-        }
-        private Type _t;
-    }
-    
-    public class PropertyCodeReflectionParser
-    {
-        public HashSet<Type> PrimitiveTypes { get; set; }
-
-        private class TypeTreeParsingContext
-        {
-            public int Offset { get; set; } = 0;
-        }
-
-        public PropertyBag Parse(Type t)
-        {
-            return DoParse(t, new TypeTreeParsingContext());
-        }
-
-        private PropertyBag DoParse(Type t, TypeTreeParsingContext context)
-        {
-            if (_propertyBagCache.ContainsKey(t))
-            {
-                return _propertyBagCache[t];
+                return result;
             }
 
-            Dictionary<string, IProperty> properties = new Dictionary<string, IProperty>()
+            var properties = new List<IProperty> {ComponentIdProperty};
+            foreach (var field in componentType.GetFields())
             {
-                { ComponentIdProperty.Name, ComponentIdProperty }
-            };
-
-            foreach (var member in new TypeFieldIterator(t).Get(
-                TypeFieldIterator.Specifier.Public | TypeFieldIterator.Specifier.ValueType))
-            {
-                IProperty property = VisitType(member, new TypeTreeParsingContext() { Offset = context.Offset + member.GetOffset() });
-                if (!properties.ContainsKey(property.Name))
+                // we only support public struct fields in this model
+                if (field.IsPublic && field.FieldType.IsValueType)
                 {
-                    properties[property.Name] = property;
-                }
-            }
+                    IProperty property;
 
-            foreach (var member in new TypePropertyIterator(t).Get(
-                TypePropertyIterator.Specifier.Public | TypePropertyIterator.Specifier.ValueType))
-            {
-                try
-                {
-                    IProperty property = VisitType(member, new TypeTreeParsingContext() { Offset = context.Offset });
-
-                    // TODO Unknown types: GameObjects, etc
-                    if (property != null)
+                    if (typeof(IComponentData).IsAssignableFrom(field.FieldType))
                     {
-                        if (!properties.ContainsKey(property.Name))
+                        property = new NestedProxyProperty(field);
+                    }
+                    else
+                    {
+                        // assumption: use an IOptimizedVisitor everywhere
+                        if (OptimizedVisitor.Supports(field.FieldType))
                         {
-                            properties[property.Name] = property;
+                            // primitive
+                            // TODO: this is a hack until we have code gen
+                            var propertyType = typeof(PrimitiveProperty<>).MakeGenericType(field.FieldType);
+                            property = (IProperty) Activator.CreateInstance(propertyType, field);
+                        }
+                        else
+                        {
+                            if (field.FieldType.IsPrimitive)
+                            {
+                                throw new NotSupportedException($"Primitive field type {field.FieldType} is not supported");
+                            }
+
+                            // composite
+                            property = new NestedProxyProperty(field);
                         }
                     }
-                }
-                catch (Exception)
-                { }
-            }
 
-            _propertyBagCache[t] = new PropertyBag(properties.Values.ToList());
-
-            return _propertyBagCache[t];
-        }
-
-        private IProperty VisitType(ITypedMemberDescriptor d, TypeTreeParsingContext context)
-        {
-            Type memberType = d.GetMemberType();
-            if (!typeof(IComponentData).IsAssignableFrom(memberType))
-            {
-                if (memberType.IsEnum)
-                {
-                    // Same hack as below
-                    // TODO: this is a hack until we have code gen
-                    var propertyType = typeof(EnumPrimitiveProperty<>).MakeGenericType(memberType);
-                    return (IProperty)Activator.CreateInstance(propertyType, d);
-                }
-                else if (PrimitiveTypes.Contains(d.GetMemberType()))
-                {
-                    var propertyType = typeof(PrimitiveProperty<>).MakeGenericType(memberType);
-                    return (IProperty)Activator.CreateInstance(propertyType, d);
-                }
-
-                if (memberType.IsPrimitive)
-                {
-                    throw new NotSupportedException($"Primitive field type {memberType} is not supported");
+                    properties.Add(property);
                 }
             }
 
-            return new NestedProxyProperty(d) { PropertyBag = Parse(memberType) };
+            result = new PropertyBag(properties);
+            s_PropertyBagCache[componentType] = result;
+            return result;
         }
 
         private class TypeIdProperty : StructProperty<StructProxy, string>
@@ -275,19 +71,18 @@ namespace Unity.Entities.Properties
         private static readonly IProperty ComponentIdProperty = new TypeIdProperty(
             (ref StructProxy c) => c.type.FullName);
 
-        private readonly Dictionary<Type, PropertyBag> _propertyBagCache = new Dictionary<Type, PropertyBag>();
-
         private unsafe class NestedProxyProperty : StructMutableContainerProperty<StructProxy, StructProxy>
         {
             public int FieldOffset { get; }
             public Type ComponentType { get; }
-            public PropertyBag PropertyBag { get; set; }
+            public PropertyBag PropertyBag { get; }
 
-            public NestedProxyProperty(ITypedMemberDescriptor member)
-                : base(member.Name, null, null, null)
+            public NestedProxyProperty(FieldInfo field)
+                : base(field.Name, null, null, null)
             {
-                FieldOffset = member.GetOffset();
-                ComponentType = member.GetMemberType();
+                FieldOffset = UnsafeUtility.GetFieldOffset(field);
+                ComponentType = field.FieldType;
+                PropertyBag = GetOrCreate(ComponentType);
                 RefAccess = GetChildRef;
             }
 
@@ -311,80 +106,19 @@ namespace Unity.Entities.Properties
         private unsafe class PrimitiveProperty<TValue> : StructProperty<StructProxy, TValue>
             where TValue : struct
         {
-            // TODO only temporary for property wrappers
-            private MethodInfo PropertyGetMethod { get; }
-            private MethodInfo PropertySetMethod { get; }
-
             private int FieldOffset { get; }
 
-            public override bool IsReadOnly => false;
-
-            public PrimitiveProperty(ITypedMemberDescriptor member) : base(member.Name, null, null)
+            public PrimitiveProperty(FieldInfo field) : base(field.Name, null, null)
             {
-                FieldOffset = member.GetOffset();
-
-                /*
-                Type myType = typeof(PrimitiveProperty<>.).MakeGenericType(p.PropertyType);
-                PropertyGetMethod = new DynamicMethod(p.PropertyType.Name, p.PropertyType, new Type[] { typeof(void*) });
-                ILGenerator gen = PropertyGetMethod.GetILGenerator();
-                LocalBuilder outputValue = gen.DeclareLocal(p.PropertyType);
-                gen.Emit(OpCodes.Ldarg_0);
-                gen.Emit(OpCodes.Ldloc_0);
-                gen.Emit(OpCodes.Call, UnsafeUtility.CopyPtrToStructure);
-                gen.Emit(OpCodes.Ldarg_0); // ??
-                gen.Emit(OpCodes.Call, p.GetMethod);
-                gen.Emit(OpCodes.Ret);
-                */
+                FieldOffset = UnsafeUtility.GetFieldOffset(field);
             }
 
             public override TValue GetValue(ref StructProxy container)
             {
-                TValue v = default(TValue);
+                TValue v;
                 UnsafeUtility.CopyPtrToStructure(container.data + FieldOffset, out v);
                 return v;
             }
-
-            public override void SetValue(ref StructProxy container, TValue value)
-            {
-                // @TODO ComponentJobSafetyManager.CompleteReadAndWriteDependency
-                UnsafeUtility.CopyStructureToPtr(ref value, container.data + FieldOffset);
-            }
-        }
-
-        private unsafe class EnumPrimitiveProperty<TValue> : StructEnumProperty<StructProxy, TValue>
-            where TValue : struct, IComparable, IFormattable, IConvertible
-        {
-            private int FieldOffset { get; }
-
-            public EnumPrimitiveProperty(ITypedMemberDescriptor member) : base(member.Name, null, null)
-            {
-                FieldOffset = member.GetOffset();
-            }
-
-            public override TValue GetValue(ref StructProxy container)
-            {
-                TValue v = default(TValue);
-//              UnsafeUtility.CopyPtrToStructure(container.data + FieldOffset, out v);
-                UnsafeUtility.MemCpy(container.data + FieldOffset, UnsafeUtility.AddressOf(ref v), UnsafeUtility.SizeOf<TValue>());
-                return v;
-            }
-
-            public override void SetValue(ref StructProxy container, TValue value)
-            {
-                // @TODO ComponentJobSafetyManager.CompleteReadAndWriteDependency
-                UnsafeUtility.CopyStructureToPtr(ref value, container.data + FieldOffset);
-            }
-        }
-    }
-
-    public static class TypeInformation
-    {
-        private static PropertyCodeReflectionParser _propertyTypeParser = new PropertyCodeReflectionParser();
-
-        public static PropertyBag GetOrCreate(Type componentType, HashSet<Type> primitiveTypes)
-        {
-            _propertyTypeParser.PrimitiveTypes = primitiveTypes;
-            return _propertyTypeParser.Parse(componentType);
         }
     }
 }

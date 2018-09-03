@@ -8,6 +8,8 @@ using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 using Unity.Collections.LowLevel.Unsafe;
 
+[assembly:InternalsVisibleTo("Unity.Entities.Editor")]
+
 namespace Unity.Entities
 {
     [AttributeUsage(AttributeTargets.Struct)]
@@ -54,14 +56,12 @@ namespace Unity.Entities
     {
     }
 
-    [JobProducerType(typeof(JobProcessComponentDataExtensions.JobStruct_Process1<,>))]
     public interface IJobProcessComponentData<T0> : IBaseJobProcessComponentData_1
         where T0 : struct, IComponentData
     {
         void Execute(ref T0 data);
     }
 
-    [JobProducerType(typeof(JobProcessComponentDataExtensions.JobStruct_Process2<,,>))]
     public interface IJobProcessComponentData<T0, T1> : IBaseJobProcessComponentData_2
         where T0 : struct, IComponentData
         where T1 : struct, IComponentData
@@ -69,7 +69,6 @@ namespace Unity.Entities
         void Execute(ref T0 data0, ref T1 data1);
     }
 
-    [JobProducerType(typeof(JobProcessComponentDataExtensions.JobStruct_Process3<,,,>))]
     public interface IJobProcessComponentData<T0, T1, T2> : IBaseJobProcessComponentData_3
         where T0 : struct, IComponentData
         where T1 : struct, IComponentData
@@ -329,20 +328,6 @@ namespace Unity.Entities
             else
                 ScheduleInternal_3(ref jobData, system, -1, default(JobHandle), ScheduleMode.Run);
         }
-        
-        static unsafe JobHandle Schedule(void* fullData, int length, int innerloopBatchCount, bool isParallelFor, ref JobProcessComponentDataCache cache, JobHandle dependsOn, ScheduleMode mode)
-        {
-            if (isParallelFor)
-            {
-                var scheduleParams = new JobsUtility.JobScheduleParameters(fullData, cache.JobReflectionDataParallelFor, dependsOn, mode);
-                return JobsUtility.ScheduleParallelFor(ref scheduleParams, length, innerloopBatchCount);
-            }
-            else
-            {
-                var scheduleParams = new JobsUtility.JobScheduleParameters(fullData, cache.JobReflectionData, dependsOn, mode);
-                return JobsUtility.Schedule(ref scheduleParams);
-            }        
-        }
 
         internal unsafe static JobHandle ScheduleInternal_1<T>(ref T jobData, ComponentSystemBase system, int innerloopBatchCount,
             JobHandle dependsOn, ScheduleMode mode)
@@ -353,7 +338,18 @@ namespace Unity.Entities
 
             bool isParallelFor = innerloopBatchCount != -1; 
             IJobProcessComponentDataUtility.Initialize(system, typeof(T), typeof(JobStruct_Process1<,>), isParallelFor, ref JobStruct_ProcessInfer_1<T>.Cache, out fullData.Iterator);
-            return Schedule(UnsafeUtility.AddressOf(ref fullData), fullData.Iterator.m_Length, innerloopBatchCount, isParallelFor, ref JobStruct_ProcessInfer_1<T>.Cache, dependsOn, mode);
+
+            if (isParallelFor)
+            {
+                var length = fullData.Iterator.m_Length;
+                var scheduleParams = new JobsUtility.JobScheduleParameters(UnsafeUtility.AddressOf(ref fullData), JobStruct_ProcessInfer_1<T>.Cache.JobReflectionDataParallelFor, dependsOn, mode);
+                return JobsUtility.ScheduleParallelFor(ref scheduleParams, length, innerloopBatchCount);
+            }
+            else
+            {
+                var scheduleParams = new JobsUtility.JobScheduleParameters(UnsafeUtility.AddressOf(ref fullData), JobStruct_ProcessInfer_1<T>.Cache.JobReflectionData, dependsOn, mode);
+                return JobsUtility.Schedule(ref scheduleParams);                
+            }
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -410,7 +406,7 @@ namespace Unity.Entities
                 }
             }
 
-            public static unsafe void Execute(ref JobStruct_Process1<T, U0> jobData, IntPtr additionalPtr, IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex)
+            static unsafe void Execute(ref JobStruct_Process1<T, U0> jobData, IntPtr additionalPtr, IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex)
             {
                 if (jobData.Iterator.m_IsParallelFor)
                 {
@@ -439,7 +435,18 @@ namespace Unity.Entities
 
             bool isParallelFor = innerloopBatchCount != -1;
             IJobProcessComponentDataUtility.Initialize(system, typeof(T), typeof(JobStruct_Process2<,,>), isParallelFor, ref JobStruct_ProcessInfer_2<T>.Cache, out fullData.Iterator);
-            return Schedule(UnsafeUtility.AddressOf(ref fullData), fullData.Iterator.m_Length, innerloopBatchCount, isParallelFor, ref JobStruct_ProcessInfer_2<T>.Cache, dependsOn, mode);
+
+            if (isParallelFor)
+            {
+                var length = fullData.Iterator.m_Length;
+                var scheduleParams = new JobsUtility.JobScheduleParameters(UnsafeUtility.AddressOf(ref fullData), JobStruct_ProcessInfer_2<T>.Cache.JobReflectionDataParallelFor, dependsOn, mode);
+                return JobsUtility.ScheduleParallelFor(ref scheduleParams, length, innerloopBatchCount);
+            }
+            else
+            {
+                var scheduleParams = new JobsUtility.JobScheduleParameters(UnsafeUtility.AddressOf(ref fullData), JobStruct_ProcessInfer_2<T>.Cache.JobReflectionData, dependsOn, mode);
+                return JobsUtility.Schedule(ref scheduleParams);
+            }
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -468,7 +475,7 @@ namespace Unity.Entities
             delegate void ExecuteJobFunction(ref JobStruct_Process2<T, U0, U1> data, IntPtr additionalPtr, IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex);
 
 
-            public static unsafe void ExecuteInnerLoop(ref JobStruct_Process2<T, U0, U1> jobData, int begin, int end)
+            static unsafe void ExecuteInnerLoop(ref JobStruct_Process2<T, U0, U1> jobData, int begin, int end)
             {
                 ComponentChunkCache cache0, cache1;
                 
@@ -506,7 +513,7 @@ namespace Unity.Entities
                 }
             }
 
-            public static unsafe void Execute(ref JobStruct_Process2<T, U0, U1> jobData, IntPtr additionalPtr, IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex)
+            static unsafe void Execute(ref JobStruct_Process2<T, U0, U1> jobData, IntPtr additionalPtr, IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex)
             {
                 if (jobData.Iterator.m_IsParallelFor)
                 {
@@ -532,10 +539,21 @@ namespace Unity.Entities
         {
             JobStruct_ProcessInfer_3<T> fullData;
             fullData.Data = jobData;
-            
+
             bool isParallelFor = innerloopBatchCount != -1;
             IJobProcessComponentDataUtility.Initialize(system, typeof(T), typeof(JobStruct_Process3<,,,>), isParallelFor, ref JobStruct_ProcessInfer_3<T>.Cache, out fullData.Iterator);
-            return Schedule(UnsafeUtility.AddressOf(ref fullData), fullData.Iterator.m_Length, innerloopBatchCount, isParallelFor, ref JobStruct_ProcessInfer_3<T>.Cache, dependsOn, mode);
+
+            if (isParallelFor)
+            {
+                var length = fullData.Iterator.m_Length;
+                var scheduleParams = new JobsUtility.JobScheduleParameters(UnsafeUtility.AddressOf(ref fullData), JobStruct_ProcessInfer_3<T>.Cache.JobReflectionDataParallelFor, dependsOn, mode);
+                return JobsUtility.ScheduleParallelFor(ref scheduleParams, length, innerloopBatchCount);
+            }
+            else
+            {
+                var scheduleParams = new JobsUtility.JobScheduleParameters(UnsafeUtility.AddressOf(ref fullData), JobStruct_ProcessInfer_3<T>.Cache.JobReflectionData, dependsOn, mode);
+                return JobsUtility.Schedule(ref scheduleParams);
+            }
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -609,7 +627,7 @@ namespace Unity.Entities
             }
 
 
-            public static unsafe void Execute(ref JobStruct_Process3<T, U0, U1, U2> jobData, IntPtr additionalPtr, IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex)
+            static unsafe void Execute(ref JobStruct_Process3<T, U0, U1, U2> jobData, IntPtr additionalPtr, IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex)
             {
                 if (jobData.Iterator.m_IsParallelFor)
                 {

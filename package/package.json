@@ -1,16 +1,12 @@
 {
-    "keywords": [
-        "entities", 
-        "unity"
-    ], 
-    "version": "0.0.2-preview.1", 
-    "name": "com.unity.entities", 
-    "dependencies": {
-        "com.unity.collections": "0.0.5-preview.1", 
-        "com.unity.properties": "0.1.14", 
-        "com.unity.burst": "0.2.4-preview.2", 
-        "com.unity.jobs": "0.0.4-preview.1", 
-        "com.unity.mathematics": "0.0.12-preview.2"
-    }, 
-    "description": "Unity Entity Component System - Core Entity Component System, New Transform components, basic Instance Mesh Renderer"
+  "name": "com.unity.entities",
+  "version": "0.0.3",
+  "dependencies": {
+    "com.unity.properties": "0.1.6"
+  },
+  "description": "Unity Entity Component System - Core Entity Component System, New Transform components, basic Instance Mesh Renderer",
+  "keywords": [
+    "entities",
+    "unity"
+  ]
 }

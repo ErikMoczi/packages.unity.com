@@ -125,7 +125,7 @@ namespace Unity.Entities
         public bool MatchesFilter(MatchingArchetypes* match, ref ComponentGroupFilter filter)
         {
             var sharedComponentsInChunk = SharedComponentValueArray;
-            var filteredCount = filter.SharedComponentFilterCount;
+            var filteredCount = filter.FilterCount;
             Assert.IsTrue(filteredCount > 0);
 
             fixed (int* indexInComponentGroupPtr = filter.IndexInComponentGroup, sharedComponentIndexPtr = filter.SharedComponentIndex)
@@ -142,14 +142,6 @@ namespace Unity.Entities
             }
 
             return true;
-        }
-        public int GetSharedComponentIndex(MatchingArchetypes* match, int indexInComponentGroup)
-        {
-            var sharedComponentsInChunk = SharedComponentValueArray;
-
-            var componentIndexInArcheType = match->TypeIndexInArchetypeArray[indexInComponentGroup];
-            var componentIndexInChunk = match->Archetype->SharedComponentOffset[componentIndexInArcheType];
-            return sharedComponentsInChunk[componentIndexInChunk];
         }
     }
 
@@ -189,10 +181,13 @@ namespace Unity.Entities
 
         struct ManagedArrayStorage
         {
+            // For patching when we start releasing chunks
+            public Chunk*    Chunk;
             public object[]  ManagedArray;
         }
-        ManagedArrayStorage[] m_ManagedArrays = new ManagedArrayStorage[1];
-        
+
+        readonly List<ManagedArrayStorage> m_ManagedArrays = new List<ManagedArrayStorage>();
+
         public ArchetypeManager(SharedComponentDataManager sharedComponentManager)
         {
             m_SharedComponentManager = sharedComponentManager;
@@ -206,31 +201,6 @@ namespace Unity.Entities
             var offset = UnsafeUtility.GetFieldOffset(typeof(Chunk).GetField("Buffer"));
             Assert.IsTrue(offset % 16 == 0, "Chunk buffer must be 16 byte aligned");
 #endif
-        }
-
-        void DeallocateManagedArrayStorage(int index)
-        {
-            Assert.IsTrue(m_ManagedArrays[index].ManagedArray != null);
-            m_ManagedArrays[index].ManagedArray = null;
-        }
-
-        int AllocateManagedArrayStorage(int length)
-        {
-            for (int i = 0; i < m_ManagedArrays.Length; i++)
-            {
-                if (m_ManagedArrays[i].ManagedArray == null)
-                {
-                    m_ManagedArrays[i].ManagedArray = new object[length];
-                    return i;
-                }                    
-            }
-
-            int oldLength = m_ManagedArrays.Length;
-            Array.Resize(ref m_ManagedArrays, m_ManagedArrays.Length * 2);
-            
-            m_ManagedArrays[oldLength].ManagedArray = new object[length];
-
-            return oldLength;
         }
 
         public void Dispose()
@@ -255,7 +225,6 @@ namespace Unity.Entities
                 UnsafeUtility.Free(chunk, Allocator.Persistent);
             }
 
-            m_ManagedArrays = null;
             m_TypeLookup.Dispose();
             m_ArchetypeChunkAllocator.Dispose();
         }
@@ -265,8 +234,6 @@ namespace Unity.Entities
         {
             if (count < 1)
                 throw new ArgumentException($"Invalid component count");
-            if (types[0].TypeIndex == 0)
-                throw new ArgumentException($"Component type may not be null");
             if (types[0].TypeIndex != TypeManager.GetTypeIndex<Entity>())
                 throw new ArgumentException($"The Entity ID must always be the first component");
 
@@ -345,14 +312,7 @@ namespace Unity.Entities
             }
 
             type->ChunkCapacity = chunkDataSize / bytesPerInstance;
-
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (bytesPerInstance > chunkDataSize)
-                throw new System.ArgumentException($"Entity archetype component data is too large. The maximum component data is {chunkDataSize} but the component data is {bytesPerInstance}");
-            
             Assert.IsTrue(Chunk.kMaximumEntitiesPerChunk >= type->ChunkCapacity);
-#endif
-            
             var usedBytes = 0;
             for (var i = 0; i < count; ++i)
             {
@@ -464,7 +424,13 @@ namespace Unity.Entities
             Assert.IsTrue(chunk == GetChunkFromEmptySlotNode(archetype->ChunkListWithEmptySlots.Back));
 
             if (archetype->NumManagedArrays > 0)
-                chunk->ManagedArrayIndex = AllocateManagedArrayStorage(archetype->NumManagedArrays * chunk->Capacity);
+            {
+                chunk->ManagedArrayIndex = m_ManagedArrays.Count;
+                var man = new ManagedArrayStorage();
+                man.Chunk = chunk;
+                man.ManagedArray = new object[archetype->NumManagedArrays * chunk->Capacity];
+                m_ManagedArrays.Add(man);
+            }
             else
                 chunk->ManagedArrayIndex = -1;
 
@@ -572,28 +538,26 @@ namespace Unity.Entities
             // Chunk released to empty chunk pool
             if (newCount == 0)
             {
-                // Remove references to shared components
-                if (chunk->Archetype->NumSharedComponents > 0)
+                //@TODO: Support pooling when there are managed arrays...
+                if (chunk->Archetype->NumManagedArrays == 0)
                 {
-                    var sharedComponentValueArray = chunk->SharedComponentValueArray;
-
-                    for (var i = 0; i < chunk->Archetype->NumSharedComponents; ++i)
+                    //Remove references to shared components
+                    if (chunk->Archetype->NumSharedComponents > 0)
                     {
-                        m_SharedComponentManager.RemoveReference(sharedComponentValueArray[i]);
+                        var sharedComponentValueArray = chunk->SharedComponentValueArray;
+
+                        for (var i = 0; i < chunk->Archetype->NumSharedComponents; ++i)
+                        {
+                            m_SharedComponentManager.RemoveReference(sharedComponentValueArray[i]);
+                        }
                     }
+
+                    chunk->Archetype = null;
+                    chunk->ChunkListNode.Remove();
+                    chunk->ChunkListWithEmptySlotsNode.Remove();
+
+                    m_EmptyChunkPool->Add(&chunk->ChunkListNode);
                 }
-
-                if (chunk->ManagedArrayIndex != -1)
-                {
-                    DeallocateManagedArrayStorage(chunk->ManagedArrayIndex);
-                    chunk->ManagedArrayIndex = -1;
-                }
-
-                chunk->Archetype = null;
-                chunk->ChunkListNode.Remove();
-                chunk->ChunkListWithEmptySlotsNode.Remove();
-
-                m_EmptyChunkPool->Add(&chunk->ChunkListNode);
             }
             // Chunk is now full
             else if (newCount == capacity)

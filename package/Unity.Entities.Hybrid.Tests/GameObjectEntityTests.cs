@@ -41,7 +41,7 @@ namespace UnityEngine.Entities.Tests
 	        {
 	        }
 
-	        public new void UpdateInjectedComponentGroups()
+	        public void UpdateInjectedComponentGroups()
 	        {
 	            base.UpdateInjectedComponentGroups();
 	        }
@@ -73,7 +73,7 @@ namespace UnityEngine.Entities.Tests
 
 	        m_Manager.SetComponentData(entity, new EcsTestData(5));
 
-	        var grp = EmptySystem.GetComponentGroup(typeof(Transform), typeof(EcsTestData));
+	        var grp = m_Manager.CreateComponentGroup(typeof(Transform), typeof(EcsTestData));
 	        var arr = grp.GetComponentArray<Transform>();
 
 	        Assert.AreEqual(1, arr.Length);
@@ -89,7 +89,7 @@ namespace UnityEngine.Entities.Tests
 	        var go = new GameObject("test", typeof(Rigidbody));
 	        /*var entity =*/ GameObjectEntity.AddToEntityManager(m_Manager, go);
 
-	        var grp = EmptySystem.GetComponentGroup(typeof(Rigidbody));
+	        var grp = m_Manager.CreateComponentGroup(typeof(Rigidbody));
 
 	        var arr = grp.GetComponentArray<Rigidbody>();
 	        Assert.AreEqual(1, arr.Length);

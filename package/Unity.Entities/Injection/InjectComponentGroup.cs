@@ -17,6 +17,7 @@ namespace Unity.Entities
         readonly int 		m_GroupFieldOffset;
 
         readonly int 				m_EntityArrayOffset;
+        readonly int                m_IndexFromEntityOffset;
         readonly int 				m_LengthOffset;
 
         readonly InjectionData[]     m_ComponentDataInjections;
@@ -47,6 +48,11 @@ namespace Unity.Entities
                 m_EntityArrayOffset = UnsafeUtility.GetFieldOffset(entityArrayInjection);
             else
                 m_EntityArrayOffset = -1;
+
+            if (indexFromEntityInjection != null)
+                m_IndexFromEntityOffset = UnsafeUtility.GetFieldOffset(indexFromEntityInjection);
+            else
+                m_IndexFromEntityOffset = -1;
 
             if (lengthInjection != null)
                 m_LengthOffset = UnsafeUtility.GetFieldOffset(lengthInjection);
@@ -98,6 +104,13 @@ namespace Unity.Entities
                 UnsafeUtility.CopyStructureToPtr(ref entityArray, groupStructPtr + m_EntityArrayOffset);
             }
 
+            if (m_IndexFromEntityOffset != -1)
+            {
+                IndexFromEntity indexFromEntity;
+                m_EntityGroup.GetIndexFromEntity(out indexFromEntity);
+                UnsafeUtility.CopyStructureToPtr(ref indexFromEntity, groupStructPtr + m_IndexFromEntityOffset);
+            }
+
             if (m_InjectionContext.HasEntries)
             {
                 m_InjectionContext.UpdateEntries(m_EntityGroup, ref iterator, length, groupStructPtr);
@@ -121,14 +134,14 @@ namespace Unity.Entities
             var sharedComponentInjections = new List<InjectionData>();
 
             var componentRequirements = new HashSet<ComponentType>();
-            var error = CollectInjectedGroup(system, groupField, injectedGroupType, out entityArrayField, out indexFromEntityField, injectionContext, out lengthField, componentRequirements, componentDataInjections, fixedArrayInjections, sharedComponentInjections );
+            var error = CollectInjectedGroup(injectedGroupType, out entityArrayField, out indexFromEntityField, injectionContext, out lengthField, componentRequirements, componentDataInjections, fixedArrayInjections, sharedComponentInjections );
             if (error != null)
                 throw new ArgumentException(error);
 
             return new InjectComponentGroupData(system, groupField, componentDataInjections.ToArray(), fixedArrayInjections.ToArray(), sharedComponentInjections.ToArray(), entityArrayField, indexFromEntityField, injectionContext, lengthField, componentRequirements.ToArray());
         }
 
-        static string CollectInjectedGroup(ComponentSystemBase system, FieldInfo groupField, Type injectedGroupType, out FieldInfo entityArrayField, out FieldInfo indexFromEntityField, InjectionContext injectionContext, out FieldInfo lengthField, ISet<ComponentType> componentRequirements,
+        static string CollectInjectedGroup(Type injectedGroupType, out FieldInfo entityArrayField, out FieldInfo indexFromEntityField, InjectionContext injectionContext, out FieldInfo lengthField, ISet<ComponentType> componentRequirements,
             ICollection<InjectionData> componentDataInjections, ICollection<InjectionData> fixedArrayInjections, ICollection<InjectionData> sharedComponentInjections)
         {
             //@TODO: Improve error messages...
@@ -162,7 +175,7 @@ namespace Unity.Entities
                 else if (field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(SharedComponentDataArray<>))
                 {
                     if (!isReadOnly)
-                        return $"{system.GetType().Name}:{groupField.Name} SharedComponentDataArray<> must always be injected as [ReadOnly]";
+                        return "SharedComponentDataArray<> must always be injected as [ReadOnly]";
                     var injection = new InjectionData(field, field.FieldType.GetGenericArguments()[0], true);
 
                     sharedComponentInjections.Add (injection);
@@ -172,15 +185,23 @@ namespace Unity.Entities
                 {
                     // Error on multiple EntityArray
                     if (entityArrayField != null)
-                        return $"{system.GetType().Name}:{groupField.Name} An [Inject] struct, may only contain a single EntityArray";
+                        return "A [Inject] struct, may only contain a single EntityArray";
 
                     entityArrayField = field;
+                }
+                else if (field.FieldType == typeof(IndexFromEntity))
+                {
+                    // Error on multiple IndexFromEntity
+                    if (indexFromEntityField != null)
+                        return "A [Inject] struct, may only contain a single IndexFromEntity";
+
+                    indexFromEntityField = field;
                 }
                 else if (field.FieldType == typeof(int))
                 {
                     // Error on multiple EntityArray
                     if (field.Name != "Length")
-                        return $"{system.GetType().Name}:{groupField.Name} An [Inject] struct, supports only a specialized int storing the length of the group. (\"int Length;\")";
+                        return "A [Inject] struct, supports only a specialized int storing the length of the group. (\"int Length;\")";
                     lengthField = field;
                 }
                 else
@@ -189,7 +210,7 @@ namespace Unity.Entities
                     if (hook == null)
                     {
                         return
-                            $"{system.GetType().Name}:{groupField.Name} [Inject] may only be used on ComponentDataArray<>, ComponentArray<>, TransformAccessArray, EntityArray, {string.Join(",", InjectionHookSupport.Hooks.Select(h => h.FieldTypeOfInterest.Name))} and int Length.";
+                            $"[Inject] may only be used on ComponentDataArray<>, ComponentArray<>, TransformAccessArray, EntityArray, {string.Join(",", InjectionHookSupport.Hooks.Select(h => h.FieldTypeOfInterest.Name))} and int Length.";
                     }
 
                     var error = hook.ValidateField(field, isReadOnly, injectionContext);
@@ -212,5 +233,6 @@ namespace Unity.Entities
 
             return null;
         }
+
     }
 }

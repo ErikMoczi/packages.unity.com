@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -38,7 +37,7 @@ namespace Unity.Entities
             public readonly FastEquality.Layout[] FastEqualityLayout;
             public readonly TypeCategory          Category;
         }
-        
+
         static ComponentType[]    s_Types;
         static volatile int       s_Count;
         static SpinLock           s_CreateTypeLock;
@@ -52,10 +51,8 @@ namespace Unity.Entities
 
         struct ObjectOffsetType
         {
-#pragma warning disable 0169 // "never used" warning
             void* v0;
             void* v1;
-#pragma warning restore 0169
         }
 
         public static void Initialize()
@@ -101,15 +98,6 @@ namespace Unity.Entities
             }
             return -1;
         }
-        
-#if UNITY_EDITOR
-        public static int TypesCount => s_Count;
-
-        public static IEnumerable<ComponentType> AllTypes()
-        {
-            return System.Linq.Enumerable.Take(s_Types, s_Count);
-        }
-#endif //UNITY_EDITOR
 
         static int CreateTypeIndexThreadSafe(Type type)
         {
@@ -179,7 +167,7 @@ namespace Unity.Entities
             {
                 category = TypeCategory.Class;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                if (type.FullName == "Unity.Entities.GameObjectEntity")
+                if (type == typeof(GameObjectEntity))
                     throw new ArgumentException("GameObjectEntity can not be used from EntityManager. The component is ignored when creating entities for a GameObject.");
 #endif
             }

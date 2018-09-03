@@ -8,7 +8,7 @@ namespace Unity.Entities
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Initialize()
         {
-            DefaultWorldInitialization.Initialize("Default World", false);
+            DefaultWorldInitialization.Initialize();
         }
     }
 #endif

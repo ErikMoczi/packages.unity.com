@@ -60,7 +60,7 @@ namespace Unity.Entities
             }
         }
 
-        public class ScriptBehaviourGroup
+        class ScriptBehaviourGroup
         {
             public readonly List<Type> Managers = new List<Type>();
             public readonly HashSet<Type> UpdateBefore = new HashSet<Type>();
@@ -156,7 +156,7 @@ namespace Unity.Entities
             }
         }
 
-        public class DependantBehavior
+        class DependantBehavior
         {
             public readonly ScriptBehaviourManager Manager;
             public readonly HashSet<Type> UpdateBefore = new HashSet<Type>();
@@ -330,10 +330,11 @@ namespace Unity.Entities
             }
         }
 
-        public static void CollectGroups(IEnumerable<ScriptBehaviourManager> activeManagers, out Dictionary<Type, ScriptBehaviourGroup> allGroups, out Dictionary<Type, DependantBehavior> dependencies)
+        static Dictionary<Type, DependantBehavior> BuildSystemGraph(IEnumerable<ScriptBehaviourManager> activeManagers, PlayerLoopSystem defaultPlayerLoop)
         {
-            allGroups = new Dictionary<Type, ScriptBehaviourGroup>();
-            dependencies = new Dictionary<Type, DependantBehavior>();
+            // Collect all groups and create empty dependency data
+            var allGroups = new Dictionary<Type, ScriptBehaviourGroup>();
+            var dependencies = new Dictionary<Type, DependantBehavior>();
             foreach (var manager in activeManagers)
             {
                 var attribs = manager.GetType().GetCustomAttributes(typeof(UpdateInGroupAttribute), true);
@@ -349,14 +350,6 @@ namespace Unity.Entities
                 var dep = new DependantBehavior(manager);
                 dependencies.Add(manager.GetType(), dep);
             }
-        }
-
-        static Dictionary<Type, DependantBehavior> BuildSystemGraph(IEnumerable<ScriptBehaviourManager> activeManagers, PlayerLoopSystem defaultPlayerLoop)
-        {
-            // Collect all groups and create empty dependency data
-            Dictionary<Type, ScriptBehaviourGroup> allGroups;
-            Dictionary<Type, DependantBehavior> dependencies;
-            CollectGroups(activeManagers, out allGroups, out dependencies);
 
             // @TODO: apply additional sideloaded constraints here
 
@@ -516,28 +509,22 @@ namespace Unity.Entities
                 if ((system.Manager as ComponentSystem)?.ComponentGroups == null)
                     continue;
 
-                var waitComponent = new HashSet<int>();
+                var waitComponent = new HashSet<Type>();
                 foreach (var componentGroup in ((ComponentSystem) system.Manager).ComponentGroups)
                 {
                     foreach (var type in componentGroup.Types)
-                    {
-                        if (type.RequiresJobDependency)
-                            waitComponent.Add(type.TypeIndex);    
-                    }
+                        waitComponent.Add(type);
                 }
                 foreach (var scheduler in schedulers)
                 {
                     if (!(scheduler.Manager is ComponentSystem))
                         continue;
                     // Check if the component groups overlaps
-                    var scheduleComponent = new HashSet<int>();
+                    var scheduleComponent = new HashSet<Type>();
                     foreach (var componentGroup in ((ComponentSystem) scheduler.Manager).ComponentGroups)
                     {
                         foreach (var type in componentGroup.Types)
-                        {
-                            if (type.RequiresJobDependency)
-                                scheduleComponent.Add(type.TypeIndex);
-                        }
+                            scheduleComponent.Add(type);
                     }
                     var overlap = false;
                     foreach (var waitComp in waitComponent)

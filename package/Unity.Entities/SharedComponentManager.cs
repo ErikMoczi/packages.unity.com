@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using UnityEngine.Assertions;
 
 namespace Unity.Entities
 {
@@ -98,7 +97,7 @@ namespace Unity.Entities
                     if (res)
                         return itemIndex;
                 }
-            }
+            } 
             while (m_HashLookup.TryGetNextValue(out itemIndex, ref iter));
 
             return -1;
@@ -108,7 +107,7 @@ namespace Unity.Entities
         {
             ulong handle;
             void* newDataPtr = PinGCObjectAndGetAddress(newData, out handle);
-
+            
             int index = FindNonDefaultSharedComponentIndex(typeIndex, hashCode, newDataPtr, layout);
 
             UnsafeUtility.ReleaseGCObject(handle);
@@ -131,7 +130,7 @@ namespace Unity.Entities
             m_SharedComponentType.Add(typeIndex);
             return index;
         }
-
+        
 
         public void IncrementSharedComponentVersion(int index)
         {
@@ -152,14 +151,6 @@ namespace Unity.Entities
             return (T) m_SharedComponentData[index];
         }
 
-        public object GetSharedComponentDataBoxed(int index)
-        {
-            if (index == 0)
-                return Activator.CreateInstance(TypeManager.GetType(m_SharedComponentType[index]));
-
-            return m_SharedComponentData[index];
-        }
-
         public void AddReference(int index)
         {
             if (index != 0)
@@ -175,30 +166,29 @@ namespace Unity.Entities
 
             return hashCode;
         }
-
+    
         unsafe static void* PinGCObjectAndGetAddress(object target, out ulong handle)
         {
             void* ptr = UnsafeUtility.PinGCObjectAndGetAddress(target, out handle);
             return (byte*)ptr + TypeManager.ObjectOffset;
         }
-
-
+        
+        
         public void RemoveReference(int index)
         {
             if (index == 0)
                 return;
 
             var newCount = --m_SharedComponentRefCount[index];
-            Assert.IsTrue(newCount >= 0);
 
             if (newCount != 0)
                 return;
 
             var typeIndex = m_SharedComponentType[index];
-
+            
             var fastLayout = TypeManager.GetComponentType(typeIndex).FastEqualityLayout;
             var hashCode = GetHashCodeFast(m_SharedComponentData[index], fastLayout);
-
+            
             m_SharedComponentData[index] = null;
             m_SharedComponentType[index] = -1;
 
@@ -218,7 +208,7 @@ namespace Unity.Entities
             while (m_HashLookup.TryGetNextValue(out itemIndex, ref iter));
         }
 
-
+        
         unsafe public void MoveSharedComponents(SharedComponentDataManager srcSharedComponents, int* sharedComponentIndices, int sharedComponentIndicesCount)
         {
             for (int i = 0;i != sharedComponentIndicesCount;i++)
@@ -229,10 +219,10 @@ namespace Unity.Entities
 
                 var srcData = srcSharedComponents.m_SharedComponentData[srcIndex];
                 int typeIndex = srcSharedComponents.m_SharedComponentType[srcIndex];
-
+                
                 var fastLayout = TypeManager.GetComponentType(typeIndex).FastEqualityLayout;
                 var hashCode = GetHashCodeFast(srcData, fastLayout);
-
+                
                 int dstIndex = InsertSharedComponentAssumeNonDefault(typeIndex, hashCode, srcData, fastLayout);
                 srcSharedComponents.RemoveReference(srcIndex);
 

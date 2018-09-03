@@ -6,15 +6,14 @@ using UnityEngine.Rendering;
 namespace Unity.Rendering
 {
     /// <summary>
-    /// Render Mesh with Material (must be instanced material) by object to world matrix.
-    /// Specified by TransformMatrix associated with Entity.
+    /// Render Mesh wiih Material (must be instanced material) by object to world matrix
+    /// specified by TransformMatrix associated with entity.
     /// </summary>
     [Serializable]
 	public struct MeshInstanceRenderer : ISharedComponentData
 	{
         public Mesh                 mesh;
         public Material             material;
-	    public int                  subMesh;
 
         public ShadowCastingMode    castShadows;
         public bool                 receiveShadows;

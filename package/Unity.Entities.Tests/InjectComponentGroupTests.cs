@@ -2,7 +2,6 @@
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
-using UnityEngine;
 
 namespace Unity.Entities.Tests
 {
@@ -45,7 +44,24 @@ namespace Unity.Entities.Tests
 			}
 		}
 
+		[DisableAutoCreation]
+		[AlwaysUpdateSystem]
+		public class SubtractiveSystem : ComponentSystem
+		{
+			public struct Datas
+			{
+				public ComponentDataArray<EcsTestData> Data;
+			    public SubtractiveComponent<EcsTestData2> Data2;
+			    public SubtractiveComponent<Rigidbody> Rigidbody;
+			}
 
+			[Inject]
+			public Datas Group;
+
+			protected override void OnUpdate()
+			{
+			}
+		}
 
 	    public struct SharedData : ISharedComponentData
 	    {
@@ -85,7 +101,34 @@ namespace Unity.Entities.Tests
             Assert.Throws<System.InvalidOperationException>(()=> { readOnlySystem.Group.Data[0] = new EcsTestData(); });
         }
 
-	   
+		[Test]
+        public void SubtractiveComponent()
+        {
+            var subtractiveSystem = World.GetOrCreateManager<SubtractiveSystem> ();
+
+            var entity = m_Manager.CreateEntity (typeof(EcsTestData));
+
+            var go = new GameObject("Test", typeof(EcsTestComponent));
+            go.GetComponent<GameObjectEntity>().OnEnable();
+            
+            // Ensure entities without the subtractive components are present
+            subtractiveSystem.Update ();
+            Assert.AreEqual (2, subtractiveSystem.Group.Data.Length);
+            Assert.AreEqual (0, subtractiveSystem.Group.Data[0]);
+            Assert.AreEqual (0, subtractiveSystem.Group.Data[1]);
+            
+            // Ensure adding the subtractive components, removes them from the injection
+            m_Manager.AddComponentData (entity, new EcsTestData2());
+            
+            // TODO: This should be automatic...
+            go.AddComponent<Rigidbody>();
+            go.GetComponent<GameObjectEntity>().OnDisable(); go.GetComponent<GameObjectEntity>().OnEnable();
+            
+            subtractiveSystem.Update ();
+            Assert.AreEqual (0, subtractiveSystem.Group.Data.Length);
+
+            Object.DestroyImmediate(go);
+        }
 
 	    [Test]
 	    public void SharedComponentDataArray()
@@ -252,6 +295,63 @@ namespace Unity.Entities.Tests
 	        var entity = m_Manager.CreateEntity (typeof(EcsTestData));
 	        m_Manager.SetComponentData(entity, new EcsTestData(42));
 	        World.DestroyManager(system);
+	    }
+
+	    [DisableAutoCreation]
+	    public class IndexFromEntityMultipleArchetypesSytem : ComponentSystem
+	    {
+	        public struct Group
+	        {
+	            public ComponentDataArray<EcsTestData> Data;
+	            [ReadOnly] public IndexFromEntity indexFromEntity;
+	            [ReadOnly] public EntityArray entities;
+	            public int Length;
+	        }
+
+	        [Inject]
+	        public Group group;
+
+	        struct CompareEntityIndex : IJobParallelFor
+	        {
+	            [ReadOnly] public IndexFromEntity indexFromEntity;
+	            [ReadOnly] public EntityArray entities;
+
+	            public void Execute(int index)
+	            {
+	                var entity = entities[index];
+	                var entityIndex = indexFromEntity[entity];
+	                Assert.AreEqual(index,entityIndex);
+	            }
+	        }
+
+			protected override void OnUpdate()
+			{
+			    var compareEntityIndexJob = new CompareEntityIndex
+			    {
+			        indexFromEntity = group.indexFromEntity,
+			        entities = group.entities
+			    };
+			    var compareEntityIndexJobHandle = compareEntityIndexJob.Schedule(group.Length, 64);
+			    compareEntityIndexJobHandle.Complete();
+			}
+	    }
+
+	    [Test]
+	    public void IndexFromEntityMultipleArchetypes()
+	    {
+	        for (int i = 0; i < 512; i++)
+	        {
+	          var entity = m_Manager.CreateEntity (typeof(EcsTestData));
+	          m_Manager.SetComponentData(entity, new EcsTestData(i));
+	        }
+	        for (int i = 0; i < 512; i++)
+	        {
+	          var entity = m_Manager.CreateEntity (typeof(EcsTestData),typeof(EcsTestData2));
+	          m_Manager.SetComponentData(entity, new EcsTestData(i));
+	          m_Manager.SetComponentData(entity, new EcsTestData2(i));
+	        }
+	        var system = World.GetOrCreateManager<IndexFromEntityMultipleArchetypesSytem>();
+	        system.Update();
 	    }
 	}
 }

@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Unity.Collections;
+﻿using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
@@ -9,10 +8,7 @@ namespace Unity.Entities
     {
         unsafe public static Entity Instantiate(this EntityManager entityManager, GameObject srcGameObject)
         {
-            if (entityManager.m_CachedComponentList == null)
-                entityManager.m_CachedComponentList = new List<ComponentDataWrapperBase>();
-
-            var components = (List<ComponentDataWrapperBase>)entityManager.m_CachedComponentList;
+            var components = entityManager.m_CachedComponentList;
             srcGameObject.GetComponents(components);
             var count = components.Count;
             ComponentType* componentTypes = stackalloc ComponentType[count];

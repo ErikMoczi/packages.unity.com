@@ -21,6 +21,9 @@ namespace Unity.Entities
         internal readonly ComponentGroup        ComponentGroup;
         internal readonly ComponentJobSafetyManager SafetyManager;
 
+        int                                     m_ReaderCount;
+        int                                     m_WriterCount;
+
         public ComponentGroupArrayStaticCache(Type type, EntityManager entityManager, ComponentSystemBase system)
         {
             var fields = type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);

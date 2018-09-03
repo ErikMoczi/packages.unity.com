@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Unity.Entities.Editor
+namespace UnityEditor.ECS
 {
     public static class GUIHelpers {
 

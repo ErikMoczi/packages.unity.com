@@ -1,14 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
-#if !UNITY_2018_2_OR_NEWER
+using Unity.Entities;
 using UnityEditor.Experimental.Build.Player;
-#else
-using UnityEditor.Build.Player;
-#endif
 
-namespace Unity.Entities.Editor
+namespace UnityEditor.ECS
 {
     [InitializeOnLoad]
     public sealed class ExtraTypesProvider
