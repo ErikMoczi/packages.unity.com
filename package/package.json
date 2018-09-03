@@ -2,7 +2,7 @@
     "name": "com.unity.incrementalcompiler",
     "displayName": "IncrementalCompiler",
     "description": "Roslyn based incremental compiler.",
-    "version": "0.0.37",
+    "version": "0.0.38",
     "unity": "2018.1",
     "keywords": [
       "unity",
