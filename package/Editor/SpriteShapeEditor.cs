@@ -68,6 +68,7 @@ namespace UnityEditor.U2D
             public static readonly GUIContent angleRangesLabel = new GUIContent("Angle Ranges");
             public static readonly GUIContent spritesLabel = new GUIContent("Sprites");
             public static readonly GUIContent angleRangeLabel = new GUIContent("Angle Range ({0})");
+            public static readonly GUIContent wrapModeErrorLabel = new GUIContent("Fill texture must have wrap modes set to Repeat. Please re-import.");
 
             public static readonly Color proBackgroundColor = new Color32(49, 77, 121, 255);
             public static readonly Color proBackgroundRangeColor = new Color32(25, 25, 25, 128);
@@ -174,9 +175,9 @@ namespace UnityEditor.U2D
 
             EditorGUILayout.Space();
             DrawHeader(Contents.controlPointsLabel);
-			EditorGUILayout.PropertyField(m_UseSpriteBordersProp, Contents.useSpriteBorderLabel);
+            EditorGUILayout.PropertyField(m_UseSpriteBordersProp, Contents.useSpriteBorderLabel);
             EditorGUILayout.Slider(m_BevelCutoffProp, 0f, 180f, Contents.bevelCutoffLabel);
-            EditorGUILayout.Slider(m_BevelSizeProp, 0.05f, 0.5f, Contents.bevelSizeLabel);
+            EditorGUILayout.Slider(m_BevelSizeProp, 0.0f, 0.5f, Contents.bevelSizeLabel);
 
 
             EditorGUILayout.Space();
@@ -185,6 +186,14 @@ namespace UnityEditor.U2D
             EditorGUILayout.PropertyField(m_FillPixelPerUnitProp, Contents.fillPixelPerUnitLabel);
             EditorGUILayout.PropertyField(m_WorldSpaceUVProp);
             EditorGUILayout.Slider(m_FillOffsetProp, -0.5f, 0.5f, Contents.fillScaleLabel);
+
+
+            if (m_FillTextureProp.objectReferenceValue != null)
+            {
+                Texture2D fillTex = m_FillTextureProp.objectReferenceValue as Texture2D;
+                if (fillTex.wrapModeU != TextureWrapMode.Repeat || fillTex.wrapModeV != TextureWrapMode.Repeat)
+                    EditorGUILayout.HelpBox(Contents.wrapModeErrorLabel.text, MessageType.Info);
+            }
 
             EditorGUILayout.Space();
             DrawHeader(Contents.angleRangesLabel);

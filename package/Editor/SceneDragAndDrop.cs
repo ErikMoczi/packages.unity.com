@@ -102,19 +102,15 @@ namespace UnityEditor.U2D
                             PositionSceneDragObjects(s_SceneDragObjects, sceneView, evt.mousePosition);
                         }
 
-                        bool createGameObject = true;
-                        if (createGameObject)
+                        foreach (GameObject dragGO in s_SceneDragObjects)
                         {
-                            foreach (GameObject dragGO in s_SceneDragObjects)
-                            {
-                                Undo.RegisterCreatedObjectUndo(dragGO, "Create Shape");
-                                dragGO.hideFlags = HideFlags.None;
-                            }
-
-                            Selection.objects = s_SceneDragObjects.ToArray();
+                            Undo.RegisterCreatedObjectUndo(dragGO, "Create Shape");
+                            dragGO.hideFlags = HideFlags.None;
                         }
 
-                        CleanUp(!createGameObject);
+                        Selection.objects = s_SceneDragObjects.ToArray();
+
+                        CleanUp(false);
                         evt.Use();
                     }
                 }
@@ -204,6 +200,7 @@ namespace UnityEditor.U2D
             SpriteShapeController spriteShapeController = SpriteShapeEditorUtility.CreateSpriteShapeController();
             GameObject gameObject = spriteShapeController.gameObject;
             gameObject.transform.position = position;
+            gameObject.hideFlags = HideFlags.HideAndDontSave;
             spriteShapeController.spriteShape = spriteShape;
 
             SpriteShapeEditorUtility.SetShapeFromAsset(spriteShapeController);
