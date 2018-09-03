@@ -145,6 +145,9 @@ namespace Unity.Burst.Editor
             }
             else if (targetPlatform == TargetPlatform.Android)
             {
+                // Set the ANDROID_NDK_ROOT so IL2CPP knows where to find the Android toolchain
+                Environment.SetEnvironmentVariable("ANDROID_NDK_ROOT", EditorPrefs.GetString("AndroidNdkRoot"));
+
                 var androidTargetArch = UnityEditor.PlayerSettings.Android.targetArchitectures;
                 if ((androidTargetArch & AndroidArchitecture.ARMv7) != 0)
                 {

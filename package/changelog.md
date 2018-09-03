@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4-preview.21
+
+- Correct issue with Android AOT compilation being unable to find the NDK.
+
 ## 0.2.4-preview.20
 
 - Prepare the user documentation for a public release
