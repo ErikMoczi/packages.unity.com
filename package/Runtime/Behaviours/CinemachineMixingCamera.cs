@@ -135,15 +135,17 @@ namespace Cinemachine
         /// <summary>Return the live child.</summary>
         public override ICinemachineCamera LiveChildOrSelf { get { return LiveChild; } }
 
-        /// <summary>Remove a Pipeline stage hook callback.
-        /// Make sure it is removed from all the children.</summary>
-        /// <param name="d">The delegate to remove.</param>
-        public override void RemovePostPipelineStageHook(OnPostPipelineStageDelegate d)
+        /// <summary>This is called to notify the vcam that a target got warped,
+        /// so that the vcam can update its internal state to make the camera 
+        /// also warp seamlessy.</summary>
+        /// <param name="target">The object that was warped</param>
+        /// <param name="positionDelta">The amount the target's position changed</param>
+        public override void OnTargetObjectWarped(Transform target, Vector3 positionDelta)
         {
-            base.RemovePostPipelineStageHook(d);
             ValidateListOfChildren();
             foreach (var vcam in m_ChildCameras)
-                vcam.RemovePostPipelineStageHook(d);
+                vcam.OnTargetObjectWarped(target, positionDelta);
+            base.OnTargetObjectWarped(target, positionDelta);
         }
 
         /// <summary>Makes sure the internal child cache is up to date</summary>

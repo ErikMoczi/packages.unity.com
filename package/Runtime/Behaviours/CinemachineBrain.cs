@@ -116,17 +116,18 @@ namespace Cinemachine
         [Tooltip("This event will fire whenever a virtual camera goes live.  If a blend is involved, then the event will fire on the first frame of the blend.")]
         public VcamEvent m_CameraActivatedEvent = new VcamEvent();
 
-        /// <summary>Support for opaque post-processing module</summary>
-        internal Component PostProcessingComponent { get; set; }
+        /// <summary>Internal support for opaque post-processing module</summary>
+        public Component PostProcessingComponent { get; set; }
 
         /// <summary>
         /// Because the PostProcessing package is not guaranteed to be present,
         /// we must handle PostFX in this opaque way.  This delegate will be called
         /// every frame (during LateUpdate) after the camera has been positioned.
         /// The intention is that the callback will make the right calls to the PostProcessing module.
-        /// Cinemachine provides the CinemachinePostFX behaviour that makes use of this delegate.
+        /// Cinemachine provides the CinemachinePostProcessing behaviour that makes use of 
+        /// this delegate.
         /// </summary>
-        internal static BrainEvent sPostProcessingHandler = new BrainEvent();
+        public static BrainEvent sPostProcessingHandler = new BrainEvent();
 
         /// <summary>
         /// API for the Unity Editor.
@@ -314,6 +315,8 @@ namespace Cinemachine
             }
         }
 
+        private Coroutine mPhysicsCoroutine;
+
         private void OnEnable()
         {
             mActiveBlend = null;
@@ -321,6 +324,9 @@ namespace Cinemachine
             mOutgoingCameraPreviousFrame = null;
             mPreviousFrameWasOverride = false;
             CinemachineCore.Instance.AddActiveBrain(this);
+
+            // We check in after the physics system has had a chance to move things
+            mPhysicsCoroutine = StartCoroutine(AfterPhysics());
         }
 
         private void OnDisable()
@@ -331,14 +337,12 @@ namespace Cinemachine
             mOutgoingCameraPreviousFrame = null;
             mPreviousFrameWasOverride = false;
             mOverrideStack.Clear();
+            StopCoroutine(mPhysicsCoroutine);
         }
 
         private void Start()
         {
             UpdateVirtualCameras(CinemachineCore.UpdateFilter.Late, -1f);
-
-            // We check in after the physics system has had a chance to move things
-            StartCoroutine(AfterPhysics());
         }
 
 #if UNITY_EDITOR
@@ -735,8 +739,10 @@ namespace Cinemachine
         {
             //UnityEngine.Profiling.Profiler.BeginSample("CinemachineBrain.PushStateToUnityCamera");
             CurrentCameraState = state;
-            transform.position = state.FinalPosition;
-            transform.rotation = state.FinalOrientation;
+            if ((state.BlendHint & CameraState.BlendHintValue.NoPosition) == 0)
+                transform.position = state.FinalPosition;
+            if ((state.BlendHint & CameraState.BlendHintValue.NoOrientation) == 0)
+                transform.rotation = state.FinalOrientation;
             Camera cam = OutputCamera;
             if (cam != null)
             {
@@ -797,6 +803,7 @@ namespace Cinemachine
         public void UpdateCameraState(Vector3 worldUp, float deltaTime) {}
         public void InternalUpdateCameraState(Vector3 worldUp, float deltaTime) {}
         public void OnTransitionFromCamera(ICinemachineCamera fromCam, Vector3 worldUp, float deltaTime) {}
+        public void OnTargetObjectWarped(Transform target, Vector3 positionDelta) {}
     }
 
     /// <summary>
@@ -832,5 +839,6 @@ namespace Cinemachine
         }
         public void InternalUpdateCameraState(Vector3 worldUp, float deltaTime) {}
         public void OnTransitionFromCamera(ICinemachineCamera fromCam, Vector3 worldUp, float deltaTime) {}
+        public void OnTargetObjectWarped(Transform target, Vector3 positionDelta) {}
     }
 }
