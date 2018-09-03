@@ -7,7 +7,7 @@ the data flow of the animation tree. This feature is powered by the
 This package gives examples of how this feature could be used:
 
 * SimpleMixer: Simple mix between two clips
-* CustomMixer: Mix between two clips with weighted bone mask
+* BoneWeightMask: Mix between two clips with weighted bone mask
 * TwoBoneIK: Two-bone IK
 * FullBodyIK: Full body IK
 
