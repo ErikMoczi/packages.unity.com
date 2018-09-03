@@ -14,6 +14,14 @@ using Unity.Jobs.LowLevel.Unsafe;
 
 namespace Unity.Burst.Editor
 {
+    internal enum DisassemblyKind
+    {
+        Asm = 0,
+        IL = 1,
+        UnoptimizedIR = 2,
+        OptimizedIR = 3,
+    }
+
     internal class BurstCompileTarget
     {
         /// <summary>
@@ -32,14 +40,19 @@ namespace Unity.Burst.Editor
         public Type jobInterfaceType;
 
         /// <summary>
-        /// Generated disassembly
+        /// Generated disassembly, or null if disassembly failed
         /// </summary>
-        public string disassembly;
+        public string[] disassembly;
 
         /// <summary>
         /// Set to true if burst compilation is possible.
         /// </summary>
         public bool supportsBurst;
+
+        public string GetDisplayName()
+        {
+            return jobType.ToString();
+        }
     }
 
     public class BurstInspectorGUI : EditorWindow
@@ -53,7 +66,7 @@ namespace Unity.Burst.Editor
         static void Init()
         {
             // Get existing open window or if none, make a new one:
-            BurstInspectorGUI window = (BurstInspectorGUI)EditorWindow.GetWindow(typeof(BurstInspectorGUI));
+            BurstInspectorGUI window = EditorWindow.GetWindow<BurstInspectorGUI>("Burst Inspector");
             window.Show();
         }
 
@@ -132,7 +145,7 @@ namespace Unity.Burst.Editor
 
                     if (!target.supportsBurst)
                     {
-                        target.disassembly = "Not flagged for ComputeJobOptimization";
+                        target.disassembly = null;
                     }
 
                     result.Add(target);
@@ -158,11 +171,46 @@ namespace Unity.Burst.Editor
         private bool m_FastMath = true;
 
         [SerializeField]
+        private string m_SelectedItem;
+
+        [SerializeField]
         private int m_CodeGenOption = 2;
+
+        [SerializeField]
+        private DisassemblyKind m_Kind = DisassemblyKind.Asm;
+
+        const string kFontSizeIndexPref = "BurstInspectorFontSizeIndex";
+
+        private static readonly string[] s_DisassemblyKindNames = new string[]
+        {
+            "Assembly",
+            ".NET IL",
+            "LLVM IR (Unoptimized)",
+            "LLVM IR (Optimized)",
+        };
+
+        private static readonly string[] s_DisasmOptions = new string[]
+        {
+            " -disassembly=asm",
+            " -disassembly=il",
+            " -disassembly=ir-unopt",
+            " -disassembly=ir-opt",
+        };
+
 
         GUIStyle m_FixedFontStyle = null;
 
+        private int m_FontSizeIndex = -1;
         private LongTextArea m_TextArea = null;
+
+        private static int[] s_FontSizes = new int[]
+        {
+            8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20,
+        };
+
+        private static string[] s_FontSizesStr = null;
+
+        private int FontSize { get { return s_FontSizes[m_FontSizeIndex]; } }
 
         public void OnGUI()
         {
@@ -171,12 +219,33 @@ namespace Unity.Burst.Editor
                 m_Targets = FindExecuteMethods();
                 m_TreeView.Targets = m_Targets;
                 m_TreeView.Reload();
+
+                if (m_SelectedItem != null)
+                {
+                    m_TreeView.TrySelectByDisplayName(m_SelectedItem);
+                }
+            }
+
+            if (s_FontSizesStr == null)
+            {
+                s_FontSizesStr = new string[s_FontSizes.Length];
+                for (int i = 0; i < s_FontSizes.Length; ++i)
+                {
+                    s_FontSizesStr[i] = s_FontSizes[i].ToString();
+                }
+            }
+
+            if (m_FontSizeIndex == -1)
+            {
+                m_FontSizeIndex = EditorPrefs.GetInt(kFontSizeIndexPref, 5);
+                m_FontSizeIndex = Math.Max(0, m_FontSizeIndex);
+                m_FontSizeIndex = Math.Min(m_FontSizeIndex, s_FontSizes.Length - 1);
             }
 
             if (m_FixedFontStyle == null)
             {
                 m_FixedFontStyle = new GUIStyle(GUI.skin.label);
-                m_FixedFontStyle.font = Font.CreateDynamicFontFromOSFont("Courier", 14);
+                m_FixedFontStyle.font = Font.CreateDynamicFontFromOSFont("Courier", FontSize);
             }
 
             if (m_SearchField == null)
@@ -209,13 +278,13 @@ namespace Unity.Burst.Editor
 
             GUILayout.BeginVertical();
 
-            GUILayout.Label("Disassembly", EditorStyles.boldLabel);
-
             IList<int> selection = m_TreeView.GetSelection();
             if (selection.Count == 1)
             {
                 int id = selection[0];
                 var target = m_Targets[id - 1];
+                // Stash selected item name to handle domain reloads more gracefully
+                m_SelectedItem = target.GetDisplayName();
 
                 GUILayout.BeginHorizontal();
 
@@ -224,42 +293,47 @@ namespace Unity.Burst.Editor
                 m_FastMath = GUILayout.Toggle(m_FastMath, "Fast Math");
                 EditorGUI.BeginDisabledGroup(!target.supportsBurst);
                 m_CodeGenOption = EditorGUILayout.Popup(m_CodeGenOption, s_CodeGenOptions);
+
+                GUILayout.Label("Font Size");
+                int fsi = EditorGUILayout.Popup(m_FontSizeIndex, s_FontSizesStr);
+
                 bool doRefresh = GUILayout.Button("Refresh Disassembly");
                 bool doCopy = GUILayout.Button("Copy to Clipboard");
                 EditorGUI.EndDisabledGroup();
 
                 GUILayout.EndHorizontal();
 
-                string disasm = target.disassembly;
+                m_Kind = (DisassemblyKind) GUILayout.Toolbar((int) m_Kind, s_DisassemblyKindNames);
+
+                string disasm = target.disassembly != null ? target.disassembly[(int) m_Kind] : null;
 
                 if (doRefresh)
                 {
-                    try
+                    StringBuilder options = new StringBuilder();
+                    if (!m_SafetyChecks)
                     {
-                        StringBuilder options = new StringBuilder();
-                        if (!m_SafetyChecks)
-                        {
-                            options.Append(" -disable-safety-checks");
-                        }
-                        if (!m_Optimizations)
-                        {
-                            options.Append(" -disable-optimizations");
-                        }
-                        if (m_FastMath)
-                        {
-                            options.Append(" -fast-math");
-                        }
-                        options.AppendFormat(" -simd={0}", s_CodeGenOptions[m_CodeGenOption]);
-                        string result = BurstCompilerService.GetDisassembly(target.method, options.ToString().Trim(' '));
+                        options.Append(" -disable-safety-checks");
+                    }
+                    if (!m_Optimizations)
+                    {
+                        options.Append(" -disable-optimizations");
+                    }
+                    if (m_FastMath)
+                    {
+                        options.Append(" -fast-math");
+                    }
+                    options.AppendFormat(" -simd={0}", s_CodeGenOptions[m_CodeGenOption]);
 
-                        result = TabsToSpaces(result);
-                        target.disassembly = result;
-                        disasm = result;
-                    }
-                    catch (Exception e)
+                    string baseOptions = options.ToString().Trim(' ');
+
+                    target.disassembly = new string[s_DisasmOptions.Length];
+
+                    for (int i = 0; i < s_DisasmOptions.Length; ++i)
                     {
-                        target.disassembly = "Failed to compile\n" + e.ToString();
+                        target.disassembly[i] = GetDisassembly(target.method, baseOptions + s_DisasmOptions[i]);
                     }
+
+                    disasm = target.disassembly[(int) m_Kind];
                 }
 
                 if (disasm != null)
@@ -274,11 +348,31 @@ namespace Unity.Burst.Editor
                 {
                     EditorGUIUtility.systemCopyBuffer = disasm == null ? "" : disasm;
                 }
+
+                if (fsi != m_FontSizeIndex)
+                {
+                    m_FontSizeIndex = fsi;
+                    EditorPrefs.SetInt(kFontSizeIndexPref, fsi);
+                    m_FixedFontStyle = null;
+                }
             }
 
             GUILayout.EndVertical();
 
             GUILayout.EndHorizontal();
+        }
+
+        private static string GetDisassembly(MethodInfo method, string options)
+        {
+            try
+            {
+                string result = BurstCompilerService.GetDisassembly(method, options);
+                return TabsToSpaces(result);
+            }
+            catch (Exception e)
+            {
+                return "Failed to compile:\n" + e.Message;
+            }
         }
 
         private static readonly string[] s_CodeGenOptions = new string[]
@@ -353,7 +447,7 @@ namespace Unity.Burst.Editor
                 string filter = Filter;
                 foreach (var t in Targets)
                 {
-                    var displayName = t.jobType.ToString();
+                    var displayName = t.GetDisplayName();
                     if (String.IsNullOrEmpty(filter) || displayName.IndexOf(filter, 0, displayName.Length, StringComparison.InvariantCultureIgnoreCase) >= 0)
                     {
                         allItems.Add(new TreeViewItem { id = id, depth = 0, displayName = displayName });
@@ -365,6 +459,24 @@ namespace Unity.Burst.Editor
             SetupParentsAndChildrenFromDepths(root, allItems);
 
             return root;
+        }
+
+        internal void TrySelectByDisplayName(string name)
+        {
+            int id = 1;
+            foreach (var t in Targets)
+            {
+                if (t.GetDisplayName() == name)
+                {
+                    this.SetSelection(new int[] { id });
+                    this.FrameItem(id);
+                    break;
+                }
+                else
+                {
+                    ++id;
+                }
+            }
         }
 
         protected override void RowGUI(RowGUIArgs args)
