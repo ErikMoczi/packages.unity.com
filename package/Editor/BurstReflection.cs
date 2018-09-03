@@ -24,7 +24,9 @@ namespace Unity.Burst.Editor
             {
                 foreach (var t in assembly.GetTypes())
                 {
-                    if (t.IsValueType)
+                    // NOTE: Make sure that we don't use a value type generic definition (e.g `class Outer<T> { struct Inner { } }`)
+                    // We are only working on plain type or generic type instance!
+                    if (t.IsValueType && !t.IsGenericTypeDefinition)
                         valueTypes.Add(t);
 
                     if (!t.IsInterface)
