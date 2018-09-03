@@ -157,6 +157,10 @@ namespace Unity.VectorGraphics
         /// <summary>The filling method (non-zero or even-odd) of the fill.</summary>
         public FillMode mode { get; set; }
 
+        /// <summary>The tint of the filling</summary>
+        public Color tint { get { return m_Tint; } set { m_Tint = value; } }
+        private Color m_Tint = Color.white;
+
         /// <summary>The adressing mode (wrap, clamp or mirror) of this fill.</summary>
         public AddressMode addressing { get; set; }
 
@@ -172,6 +176,10 @@ namespace Unity.VectorGraphics
 
         /// <summary>The filling method (non-zero or even-odd) of the fill.</summary>
         public FillMode mode { get; set; }
+
+        /// <summary>The tint of the filling</summary>
+        public Color tint { get { return m_Tint; } set { m_Tint = value; } }
+        private Color m_Tint = Color.white;
 
         /// <summary>The adressing mode (wrap, clamp or mirror) of this fill.</summary>
         public AddressMode addressing { get; set; }

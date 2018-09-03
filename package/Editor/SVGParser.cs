@@ -180,7 +180,7 @@ namespace Unity.VectorGraphics.Editor
                 throw new SVGFormatException("Document doesn't have 'svg' root");
             svg();
 
-            PostProcess();
+            PostProcess(scene.root);
         }
 
         public Dictionary<SceneNode, float> NodeOpacities { get { return nodeOpacity; } }
@@ -735,23 +735,23 @@ namespace Unity.VectorGraphics.Editor
                 transform = Matrix2D.identity
             };
 
-            bool relativeToWorld;
+            bool relativeToWorld = false;
             switch (node["patternUnits"])
             {
                 case null:
-                case "userSpaceOnUse":
-                    relativeToWorld = true;
-                    break;
-
                 case "objectBoundingBox":
                     relativeToWorld = false;
+                    break;
+
+                case "userSpaceOnUse":
+                    relativeToWorld = true;
                     break;
 
                 default:
                     throw node.GetUnsupportedAttribValException("patternUnits");
             }
 
-            bool contentRelativeToWorld;
+            bool contentRelativeToWorld = true;
             switch (node["patternContentUnits"])
             {
                 case null:
@@ -1402,12 +1402,12 @@ namespace Unity.VectorGraphics.Editor
             public SceneNode replaceNode;
         }
 
-        void PostProcess()
+        void PostProcess(SceneNode root)
         {
             var hierarchyUpdates = new List<HierarchyUpdate>();
 
             // Adjust fills on all objects
-            foreach (var nodeInfo in VectorUtils.WorldTransformedSceneNodes(scene.root, nodeOpacity))
+            foreach (var nodeInfo in VectorUtils.WorldTransformedSceneNodes(root, nodeOpacity))
             {
                 if (nodeInfo.node.drawables == null)
                     continue;
@@ -1588,6 +1588,8 @@ namespace Unity.VectorGraphics.Editor
                 };
             }
 
+            PostProcess(patternNode); // This will take care of adjusting gradients/inner-patterns
+
             // Duplicate the filling pattern
             var grid = new SceneNode() {
                 transform = data.patternTransform,
@@ -1616,6 +1618,17 @@ namespace Unity.VectorGraphics.Editor
                 invPatternTransform * new Vector2(bounds.xMin, bounds.yMax)
             };
             bounds = VectorUtils.Bounds(boundVerts);
+
+            const int kMaxReps = 5000;
+            float xCount = bounds.xMax / patternRect.width;
+            float yCount = bounds.yMax / patternRect.height;
+            if (Mathf.Abs(patternRect.width) < VectorUtils.Epsilon ||
+                Mathf.Abs(patternRect.height) < VectorUtils.Epsilon ||
+                (xCount*yCount) > kMaxReps)
+            {
+                Debug.LogWarning("Ignoring pattern which would result in too many repetitions");
+                return null;
+            }
 
             // Start the pattern filling process
             var offset = patternRect.position;
@@ -2260,6 +2273,16 @@ namespace Unity.VectorGraphics.Editor
                         if (paintParts.Length > 1)
                             fill = (new SVGAttribParser(paintParts[1], attribName, opacity, mode, dict, false)).fill;
                         else Debug.LogWarning("Referencing non-existent paint (" + reference + ")");
+                    }
+                    else
+                    {
+                        var gradientFill = fill as GradientFill;
+                        if (gradientFill != null)
+                            gradientFill.tint = new Color(1.0f, 1.0f, 1.0f, opacity);
+
+                        var textureFill = fill as TextureFill;
+                        if (textureFill != null)
+                            textureFill.tint = new Color(1.0f, 1.0f, 1.0f, opacity);
                     }
                     return;
                 }

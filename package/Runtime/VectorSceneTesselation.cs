@@ -176,6 +176,11 @@ namespace Unity.VectorGraphics
                 if (vectorShape.fill is SolidFill)
                     shapeColor = ((SolidFill)vectorShape.fill).color;
 
+                if (vectorShape.fill is GradientFill)
+                    shapeColor *= (vectorShape.fill as GradientFill).tint;
+                if (vectorShape.fill is TextureFill)
+                    shapeColor *= (vectorShape.fill as TextureFill).tint;
+
                 var tess = new Tess();
 
                 var angle = 45.0f * Mathf.Deg2Rad;
@@ -353,7 +358,10 @@ namespace Unity.VectorGraphics
             atlasSize.y += 1;
 
             // Need enough space on first row for texture settings
-            int minWidth = (texturedGeomCount+1) * 3;
+            int maxSettingIndex = 0;
+            foreach (var item in pack)
+                maxSettingIndex = Math.Max(maxSettingIndex, item.settingIndex);
+            int minWidth = (maxSettingIndex+1) * 3;
             atlasSize.x = Math.Max(minWidth, (int)atlasSize.x);
 
             int atlasWidth = (int)atlasSize.x;
@@ -381,14 +389,23 @@ namespace Unity.VectorGraphics
             WriteRawInt2Packed(rawAtlasTex, (int)whiteTexelsScreenPos.x, (int)whiteTexelsScreenPos.y, 0, 0);
             WriteRawInt2Packed(rawAtlasTex, (int)whiteTexelsScreenPos.x, (int)whiteTexelsScreenPos.y, 1, 0);
 
+            var writtenSettings = new HashSet<int>();
+            writtenSettings.Add(0);
+
             foreach (var g in geoms)
             {
                 AtlasEntry entry;
                 int vertsCount = g.vertices.Length;
                 if ((g.fill != null) && fills.TryGetValue(g.fill, out entry))
                 {
+                    int setting = entry.atlasLocation.settingIndex;
+                    if (writtenSettings.Contains(setting))
+                        continue;
+
+                    writtenSettings.Add(setting);
+
                     // There are 3 consecutive pixels to store the settings
-                    int destX = entry.atlasLocation.settingIndex * 3;
+                    int destX = setting * 3;
 
                     var gradientFill = g.fill as GradientFill;
                     if (gradientFill != null)

@@ -71,6 +71,11 @@ namespace Unity.VectorGraphics
                 var solidFill = rect.fill as SolidFill;
                 var color = solidFill != null ? solidFill.color : Color.white;
 
+                if (rect.fill is GradientFill)
+                    color *= (rect.fill as GradientFill).tint;
+                if (rect.fill is TextureFill)
+                    color *= (rect.fill as TextureFill).tint;
+
                 geoms.Add(new Geometry() { vertices = vertices, indices = indices, color = color, fill = rect.fill, fillTransform = rect.fillTransform });
             }
 

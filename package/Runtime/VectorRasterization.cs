@@ -124,11 +124,13 @@ namespace Unity.VectorGraphics
         static List<PackRectItem> PackRects(IList<KeyValuePair<IFill, Vector2>> fillSizes, out Vector2 atlasDims)
         {
             var pack = new List<PackRectItem>(fillSizes.Count);
+            var fillSetting = new Dictionary<IFill, int>();
             atlasDims = new Vector2(1024, 1024);
             var maxPos = Vector2.zero;
             var curPos = Vector2.zero;
             float curColThickness = 0.0f;
             int currentSetting = 1;
+
             foreach (var fillSize in fillSizes)
             {
                 var fill = fillSize.Key;
@@ -142,8 +144,19 @@ namespace Unity.VectorGraphics
                     curPos.y = 0;
                     curColThickness = size.x;
                 }
+
                 curColThickness = Mathf.Max(curColThickness, size.x);
-                int setting = fill == null ? 0 : currentSetting++;
+
+                int setting = 0;
+                if (fill != null)
+                {
+                    if (!fillSetting.TryGetValue(fill, out setting))
+                    {
+                        setting = currentSetting++;
+                        fillSetting[fill] = setting;
+                    }
+                }
+
                 pack.Add(new PackRectItem() { position = curPos, size = size, fill = fill, settingIndex = setting });
                 maxPos = Vector2.Max(maxPos, curPos + size);
                 curPos.y += size.y;

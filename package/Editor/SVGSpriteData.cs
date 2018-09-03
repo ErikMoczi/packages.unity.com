@@ -27,6 +27,9 @@ namespace Unity.VectorGraphics.Editor
         {
             var importer = so.targetObject as SVGImporter;
             var sprite = SVGImporter.GetImportedSprite(importer.assetPath);
+            if (sprite == null)
+                return;
+
             spriteRect.name = sprite.name;
 
             int targetWidth;
