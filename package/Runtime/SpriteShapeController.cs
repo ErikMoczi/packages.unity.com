@@ -229,36 +229,38 @@ namespace UnityEngine.U2D
             if (needUpdateSpriteArrays)
                 UpdateSpriteArrays();
 
-            if (spriteShape)
-            {                
-                List<ShapeControlPointExperimental> shapePoints = new List<ShapeControlPointExperimental>();
-                List<SpriteShapeMetaData> shapeMetaData = new List<SpriteShapeMetaData>();
+            List<ShapeControlPointExperimental> shapePoints = new List<ShapeControlPointExperimental>();
+            List<SpriteShapeMetaData> shapeMetaData = new List<SpriteShapeMetaData>();
 
-                for (int i = 0; i < m_Spline.GetPointCount(); ++i)
-                {
-                    ShapeControlPointExperimental shapeControlPoint;
-                    shapeControlPoint.position = m_Spline.GetPosition(i);
-                    shapeControlPoint.leftTangent = m_Spline.GetLeftTangent(i);
-                    shapeControlPoint.rightTangent = m_Spline.GetRightTangent(i);
-                    shapeControlPoint.mode = (int)m_Spline.GetTangentMode(i);
-                    shapePoints.Add(shapeControlPoint);
+            for (int i = 0; i < m_Spline.GetPointCount(); ++i)
+            {
+                ShapeControlPointExperimental shapeControlPoint;
+                shapeControlPoint.position = m_Spline.GetPosition(i);
+                shapeControlPoint.leftTangent = m_Spline.GetLeftTangent(i);
+                shapeControlPoint.rightTangent = m_Spline.GetRightTangent(i);
+                shapeControlPoint.mode = (int)m_Spline.GetTangentMode(i);
+                shapePoints.Add(shapeControlPoint);
 
-                    SpriteShapeMetaData metaData;
-                    metaData.bevelCutoff = m_Spline.GetBevelCutoff(i);
-                    metaData.bevelSize = m_Spline.GetBevelSize(i);
-                    metaData.corner = true;
-                    metaData.height = m_Spline.GetHeight(i);
-                    metaData.spriteIndex = (uint)m_Spline.GetSpriteIndex(i);
-                    shapeMetaData.Add(metaData);
-                }
+                SpriteShapeMetaData metaData;
+                metaData.bevelCutoff = m_Spline.GetBevelCutoff(i);
+                metaData.bevelSize = m_Spline.GetBevelSize(i);
+                metaData.corner = true;
+                metaData.height = m_Spline.GetHeight(i);
+                metaData.spriteIndex = (uint)m_Spline.GetSpriteIndex(i);
+                shapeMetaData.Add(metaData);
+            }
 
-                SpriteShapeUtility.GenerateSpriteShape(spriteShapeRenderer, m_CurrentShapeParameters, shapePoints.ToArray(), shapeMetaData.ToArray(), m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray);
+            if (spriteShapeRenderer != null)
+            {
+                SpriteShapeUtility.GenerateSpriteShape(spriteShapeRenderer, m_CurrentShapeParameters,
+                    shapePoints.ToArray(), shapeMetaData.ToArray(), m_AngleRangeInfoArray, m_EdgeSpriteArray,
+                    m_CornerSpriteArray);
+            }
 
-                if (m_DynamicOcclusionOverriden)
-                {
-                    spriteShapeRenderer.allowOcclusionWhenDynamic = m_DynamicOcclusionLocal;
-                    m_DynamicOcclusionOverriden = false;
-                }
+            if (m_DynamicOcclusionOverriden)
+            {
+                spriteShapeRenderer.allowOcclusionWhenDynamic = m_DynamicOcclusionLocal;
+                m_DynamicOcclusionOverriden = false;
             }
         }
 
@@ -367,7 +369,7 @@ namespace UnityEngine.U2D
                     transformMatrix = transform.localToWorldMatrix;
 
                 fillTexture = spriteShape.fillTexture;
-                fillScale = (uint)spriteShape.fillPixelsPerUnit;
+                fillScale = (uint) spriteShape.fillPixelsPerUnit;
                 bevelCutoff = spriteShape.bevelCutoff;
                 bevelSize = spriteShape.bevelSize;
                 borderPivot = spriteShape.fillOffset;
@@ -375,6 +377,14 @@ namespace UnityEngine.U2D
                 // If Corners are enabled, set smart-sprite to false.
                 if (spriteShape.cornerSprites.Count > 0)
                     smartSprite = false;
+            }
+            else
+            {
+#if UNITY_EDITOR
+                if (fillTexture == null)
+                    fillTexture = UnityEditor.EditorGUIUtility.whiteTexture;
+                fillScale = 100;
+#endif
             }
 
             bool changed = m_CurrentShapeParameters.adaptiveUV != adaptiveUV ||

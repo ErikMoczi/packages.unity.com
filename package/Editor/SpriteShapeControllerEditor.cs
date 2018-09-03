@@ -83,8 +83,10 @@ namespace UnityEditor.U2D
 
         private void OnDestroy()
         {
-            m_SplineEditor.OnDisable();
-            m_SplineSceneEditor.OnDisable();
+            if (m_SplineEditor != null)
+                m_SplineEditor.OnDisable();
+            if (m_SplineSceneEditor != null)
+                m_SplineSceneEditor.OnDisable();
 
             OnEditModeEnd(this);
 

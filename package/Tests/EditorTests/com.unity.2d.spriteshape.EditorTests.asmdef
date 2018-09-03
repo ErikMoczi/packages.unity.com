@@ -1,0 +1,17 @@
+{
+    "name": "com.unity.2d.spriteshape.EditorTests",
+    "references": [
+        "Unity.InternalAPIEditorBridge.001",
+        "com.unity.2d.common.Editor",
+        "com.unity.2d.common.Runtime",
+        "com.unity.2d.spriteshape.Editor",
+        "com.unity.2d.spriteshape.Runtime"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

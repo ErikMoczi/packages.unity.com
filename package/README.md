@@ -1,5 +1,3 @@
 # SpriteShape
 
-A feature that allows you to create organic 2D worlds based on splines and Sprites.
-
-This feature is currently in preview mode and is likely to change rapidly.
+The Sprite Shape is a sprite layout or world building tool that provides the ability to tile sprites along the path of a shape based on given angle ranges.
