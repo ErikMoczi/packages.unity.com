@@ -13,6 +13,7 @@ namespace Burst.Compiler.IL
         // -------------------------------------------------------
         // Common options used by the compiler
         // -------------------------------------------------------
+        public const string OptionPlatform = "platform=";
         public const string OptionBackend = "backend=";
         public const string OptionSafetyChecks = "safety-checks";
         public const string OptionDisableSafetyChecks = "disable-safety-checks";
@@ -44,12 +45,13 @@ namespace Burst.Compiler.IL
         // -------------------------------------------------------
         // Options used by the Aot compiler
         // -------------------------------------------------------
-        public const string OptionAotPlatform = "platform=";
         public const string OptionAotAssemblyFolder = "assembly-folder=";
         public const string OptionAotMethod = "method=";
         public const string OptionAotType = "type=";
         public const string OptionAotAssembly = "assembly=";
         public const string OptionAotOutputPath = "output=";
+        public const string OptionAotIL2CPPPluginFolder = "il2cpp-plugin-folder=";
+        public const string OptionAotKeepIntermediateFiles = "keep-intermediate-files";
 
         public static string GetOption(string optionName, object value = null)
         {
@@ -57,6 +59,19 @@ namespace Burst.Compiler.IL
             return "--" + optionName + (value ?? String.Empty);
         }
     }
+#if UNITY_EDITOR
+    // NOTE: This must be synchronized with Backend.TargetPlatform
+    internal enum TargetPlatform
+    {
+        Windows = 0,
+        macOS = 1,
+        Linux = 2,
+        Android = 3,
+        iOS = 4,
+        PS4 = 5,
+        XboxOne = 6,
+    }
+#endif
 
     /// <summary>
     /// Flags used by <see cref="NativeCompiler.CompileMethod"/> to dump intermediate compiler results.

@@ -203,7 +203,14 @@ namespace Unity.Burst.Editor
 
             foreach (var assemblyName in assembly.GetReferencedAssemblies())
             {
-                CollectAssembly(System.Reflection.Assembly.Load(assemblyName), collect);
+                try
+                {
+                    CollectAssembly(System.Reflection.Assembly.Load(assemblyName), collect);
+                }
+                catch (Exception)
+                {
+                    Debug.LogWarning("Could not load assembly " + assemblyName);
+                }
             }
         }
 
@@ -239,9 +246,10 @@ namespace Unity.Burst.Editor
             if (assembly == null) throw new ArgumentNullException(nameof(assembly));
             // Token base id for TypeSpec
             const int mdTypeSpec = 0x1B000000;
+            const int mdTypeSpecCount = 1 << 24;
             foreach (var module in assembly.Modules)
             {
-                for (int i = 1; i < int.MaxValue; i++)
+                for (int i = 1; i < mdTypeSpecCount; i++)
                 {
                     try
                     {

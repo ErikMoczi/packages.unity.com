@@ -1,4 +1,6 @@
 #if BURST_AOT
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -19,7 +21,9 @@ namespace Unity.Burst.Editor
     internal class BurstAotCompiler : IPostprocessScripts
     {
         private const string BurstAotCompilerExecutable = "bcl.exe";
-        private const string TempStagingManaged = @"Temp/StagingArea/Data/Managed/";
+        private const string TempStaging = @"Temp/StagingArea/";
+        private const string TempStagingManaged = TempStaging + @"Data/Managed/";
+        private const string TempStagingPlugins = @"Data/Plugins/";
 
         int IOrderedCallback.callbackOrder => 0;
         public void OnPostprocessScripts(BuildReport report)
@@ -48,7 +52,9 @@ namespace Unity.Burst.Editor
                 var methodFullSignature = methodStr + "--" + Hash128.Compute(methodStr);
                 options.Add(GetOption(OptionAotMethod, methodFullSignature) );
             }
-            options.Add(GetOption(OptionAotPlatform, report.summary.platform));
+
+            var targetPlatform = GetTargetPlatform(report.summary.platform);
+            options.Add(GetOption(OptionPlatform, targetPlatform));
 
             if (!BurstEditorOptions.EnableBurstSafetyChecks)
                 options.Add(GetOption(OptionDisableSafetyChecks));
@@ -89,24 +95,87 @@ namespace Unity.Burst.Editor
 
             options.AddRange(assemblyFolders.Select(folder => GetOption(OptionAotAssemblyFolder, folder)));
 
-            var outputFilePrefix = Path.Combine(stagingFolder, DefaultLibraryName);
+            var tempStagingPlugins = "Data/Plugins/";
+            if (targetPlatform == TargetPlatform.macOS)
+            {
+                // NOTE: OSX has a special folder for the plugin
+                // Declared in GetStagingAreaPluginsFolder
+                // PlatformDependent\OSXPlayer\Extensions\Managed\OSXDesktopStandalonePostProcessor.cs
+                tempStagingPlugins = "UnityPlayer.app/Contents/Plugins";
+            }
+            else if (targetPlatform == TargetPlatform.iOS)
+            {
+                // PlatformDependent\iPhonePlayer\Extensions\Common\BuildPostProcessor.cs
+                // TODO: Add support for CPU (v8, arm64...)
+                tempStagingPlugins = "Frameworks";
+            }
+            else if (targetPlatform == TargetPlatform.Android)
+            {
+                // TODO: Add support for CPU (v8, arm64...)
+                tempStagingPlugins = "libs/armeabi-v7a";
+            }
+
+            // Gets platform specific IL2CPP plugin folder
+            // Only the following platforms are providing a dedicated Tools directory
+            switch (report.summary.platform)
+            {
+                case BuildTarget.XboxOne:
+                case BuildTarget.PS4:
+                case BuildTarget.Android:
+                case BuildTarget.iOS:
+                    var pluginFolder = BuildPipeline.GetBuildToolsDirectory(report.summary.platform);
+                    options.Add(GetOption(OptionAotIL2CPPPluginFolder, pluginFolder));
+                    break;
+            }
+
+            // Gets the output folder
+            var stagingOutputFolder = Path.GetFullPath(Path.Combine(TempStaging, tempStagingPlugins));
+            var outputFilePrefix = Path.Combine(stagingOutputFolder, DefaultLibraryName);
             options.Add(GetOption(OptionAotOutputPath, outputFilePrefix));
 
             var responseFile = Path.GetTempFileName();
             File.WriteAllLines(responseFile, options);
 
-            //var readback = File.ReadAllText(responseFile);
-            //Debug.Log(readback);
-            //Console.WriteLine(readback);
+            //Debug.Log("Burst compile with response file: " + responseFile);
 
             Runner.RunManagedProgram(Path.Combine(BurstLoader.RuntimePath, BurstAotCompilerExecutable), "@" + responseFile);
         }
 
-        public static bool IsSupportedPlatform(BuildTarget target)
+        public static TargetPlatform GetTargetPlatform(BuildTarget target)
         {
             switch (target)
             {
                 case BuildTarget.StandaloneWindows64:
+                    return TargetPlatform.Windows;
+                case BuildTarget.StandaloneOSX:
+                    return TargetPlatform.macOS;
+                case BuildTarget.StandaloneLinux64:
+                    return TargetPlatform.Linux;
+                case BuildTarget.XboxOne:
+                    return TargetPlatform.XboxOne;
+                case BuildTarget.PS4:
+                    return TargetPlatform.PS4;
+                case BuildTarget.Android:
+                    return TargetPlatform.Android;
+                case BuildTarget.iOS:
+                    return TargetPlatform.iOS;
+            }
+
+            throw new NotSupportedException("The target platform " + target + " is not supported by the burst compiler");
+        }
+
+        public static bool IsSupportedPlatform(BuildTarget target)
+        {
+            // NOTE: Update GetTatgetPlatform accordingly
+            switch (target)
+            {
+                case BuildTarget.StandaloneWindows64:
+                case BuildTarget.StandaloneOSX:
+                case BuildTarget.StandaloneLinux64:
+                case BuildTarget.XboxOne:
+                case BuildTarget.PS4:
+                case BuildTarget.Android:
+                case BuildTarget.iOS:
                     return true;
             }
 

@@ -43,7 +43,7 @@ namespace Unity.Burst.Editor
 
         private static readonly string[] CodeGenOptions =
         {
-            "none",
+            "auto",
             "sse2",
             "sse4",
             "avx",
