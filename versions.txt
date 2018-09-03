@@ -25,3 +25,4 @@
 2.2.6
 2.2.7-preview.1
 2.2.7-preview.2
+2.2.7-preview.3
