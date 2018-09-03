@@ -1,0 +1,12 @@
+{
+    "name": "RuntimeTests",
+    "references": [
+        "com.unity.2d.common.Runtime"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}

@@ -1,8 +1,11 @@
 {
     "category": "2D", 
+    "config": {
+        "publishtest": true
+    }, 
     "dependencies": {}, 
     "description": "2D Common", 
-    "gitHead": "7e615505cd167819777086240c893b27dec66dc7", 
+    "gitHead": "b950c233bfde92511d0918ac444b195a6f0d81e2", 
     "keywords": [
         "2d"
     ], 
@@ -12,5 +15,5 @@
         "url": "git@gitlab.internal.unity3d.com:2d/2d-common.git"
     }, 
     "unity": "2018.1", 
-    "version": "1.0.9-preview"
+    "version": "1.0.9-preview.1"
 }
