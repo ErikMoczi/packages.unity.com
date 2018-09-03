@@ -129,7 +129,7 @@ namespace Unity.Burst.Editor
                 return false;
             }
 
-            var attr = type.GetCustomAttribute<ComputeJobOptimizationAttribute>();
+            var attr = type.GetCustomAttribute<BurstCompileAttribute>() ?? type.GetCustomAttribute<ComputeJobOptimizationAttribute>();
             if (attr == null)
                 return false;
 
@@ -152,6 +152,10 @@ namespace Unity.Burst.Editor
             if (attr.Accuracy != Accuracy.Std)
                 AddOption(builder, GetOption(OptionFastMath));
 
+            if (!string.IsNullOrWhiteSpace(attr.Options))
+            {
+                AddOption(builder, attr.Options);
+            }
             //Debug.Log($"ExtractBurstCompilerOptions: {type} {optimizationFlags}");
 
             // AddOption(builder, GetOption(OptionJitEnableModuleCachingDebugger));

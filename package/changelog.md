@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.4-preview.8
+
+- Breaking change: Move Unity.Jobs.Accuracy/Support to Unity.Burst
+- Deprecate ComputeJobOptimizationAttribute in favor of BurstCompileAttribute
+- Fix bug when using enum with a different type than int
+- Fix bug with IL stind that could lead to a memory corruption.
+
 ## 0.2.4-preview.7
 
 - Add support for nested structs in SOA native arrays
