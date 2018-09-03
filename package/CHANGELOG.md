@@ -143,3 +143,11 @@ Package has been renamed to `com.unity.test-framework.performance` to match test
 ## [0.1.22] - 2018-5-29
 
 ### Measure.Method Execution and Warmup count
+
+Can now specify custom execution and warmup count
+
+## [0.1.23] - 2018-5-30
+
+### Issues with packman, bumping up version
+
+Issues with packman, bumping up version
