@@ -15,3 +15,4 @@
 1.0.15-preview
 1.0.15-preview.1
 1.0.15-preview.2
+1.0.15-preview.3
