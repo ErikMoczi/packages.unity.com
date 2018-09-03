@@ -28,8 +28,8 @@ public class NativeQueueTests_InJobs
 	public void Enqueue()
 	{
 		const int queueSize = 100*1024;
-		var queue = new NativeQueue<int>(Allocator.Temp);
-		var writeStatus = new NativeArray<int>(queueSize, Allocator.Temp);
+		var queue = new NativeQueue<int>(Allocator.TempJob);
+		var writeStatus = new NativeArray<int>(queueSize, Allocator.TempJob);
 
 		var enqueueJob = new ConcurrentEnqueue();
 		enqueueJob.queue = queue;

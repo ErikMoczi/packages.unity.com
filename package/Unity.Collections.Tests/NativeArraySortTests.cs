@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 using Unity.Collections;
 
@@ -116,4 +118,76 @@ public class NativeArraySortTests
         }
         array.Dispose();
     }
+
+    struct ComparableType : IComparable<ComparableType>
+    {
+        public int value;
+        public int CompareTo(ComparableType other) => value.CompareTo(other.value);
+    }
+
+    [Test]
+    public void SortNativeArray_RandomComparableType_ReturnSorted([Values(1, 10, 1000, 10000)] int size)
+    {
+        var random = new System.Random();
+        NativeArray<ComparableType> array = new NativeArray<ComparableType>(size, Allocator.Persistent);
+        Assert.IsTrue(array.IsCreated);
+
+        for (int i = 0; i < array.Length; i++)
+        {
+            array[i] = new ComparableType
+            {
+                value = random.Next(int.MinValue, int.MaxValue)
+            };
+        }
+
+        array.Sort();
+
+        int min = array[0].value;
+        foreach (var i in array)
+        {
+            Assert.LessOrEqual(min, i.value);
+            min = i.value;
+        }
+        array.Dispose();
+    }
+
+    struct NonComparableType
+    {
+        public int value;
+    }
+
+    struct NonComparableTypeComparator : IComparer<NonComparableType>
+    {
+        public int Compare(NonComparableType lhs, NonComparableType rhs)
+        {
+            return lhs.value.CompareTo(rhs.value);
+        }
+    }
+
+    [Test]
+    public void SortNativeArray_RandomNonComparableType_ReturnSorted([Values(1, 10, 1000, 10000)] int size)
+    {
+        var random = new System.Random();
+        NativeArray<NonComparableType> array = new NativeArray<NonComparableType>(size, Allocator.Persistent);
+        Assert.IsTrue(array.IsCreated);
+
+        for (int i = 0; i < array.Length; i++)
+        {
+            array[i] = new NonComparableType
+            {
+                value = random.Next(int.MinValue, int.MaxValue)
+            };
+        }
+
+        array.Sort(new NonComparableTypeComparator());
+
+        int min = array[0].value;
+        foreach (var i in array)
+        {
+            Assert.LessOrEqual(min, i.value);
+            min = i.value;
+        }
+        array.Dispose();
+    }
+
 }
