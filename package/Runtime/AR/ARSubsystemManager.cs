@@ -65,6 +65,11 @@ namespace UnityEngine.XR.ARFoundation
         public static XRRaycastSubsystem raycastSubsystem { get; private set; }
 
         /// <summary>
+        /// Allows to filter subsystem ids and initialize first one containing specified string.
+        /// </summary>
+        public static string subsystemFilter { get; set; }
+
+        /// <summary>
         /// This event is invoked whenever a new camera frame is provided by the device.
         /// </summary>
         public static event Action<ARCameraFrameEventArgs> cameraFrameReceived
@@ -332,17 +337,17 @@ namespace UnityEngine.XR.ARFoundation
         public static void CreateSubsystems()
         {
             // Find and initialize each subsystem
-            sessionSubsystem = ARSubsystemUtil.CreateSessionSubsystem();
-            cameraSubsystem = ARSubsystemUtil.CreateCameraSubsystem();
-            inputSubsystem = ARSubsystemUtil.CreateInputSubsystem();
-            depthSubsystem = ARSubsystemUtil.CreateDepthSubsystem();
-            planeSubsystem = ARSubsystemUtil.CreatePlaneSubsystem();
+            sessionSubsystem = ARSubsystemUtil.CreateSessionSubsystem(subsystemFilter);
+            cameraSubsystem = ARSubsystemUtil.CreateCameraSubsystem(subsystemFilter);
+            inputSubsystem = ARSubsystemUtil.CreateInputSubsystem(subsystemFilter);
+            depthSubsystem = ARSubsystemUtil.CreateDepthSubsystem(subsystemFilter);
+            planeSubsystem = ARSubsystemUtil.CreatePlaneSubsystem(subsystemFilter);
 
-            referencePointSubsystem = ARSubsystemUtil.CreateReferencePointSubsystem();
+            referencePointSubsystem = ARSubsystemUtil.CreateReferencePointSubsystem(subsystemFilter);
             if (referencePointSubsystem != null)
                 referencePointSubsystem.ActivateExtensions();
 
-            raycastSubsystem = ARSubsystemUtil.CreateRaycastSubsystem();
+            raycastSubsystem = ARSubsystemUtil.CreateRaycastSubsystem(subsystemFilter);
 
             if (planeSubsystem != null)
             {
@@ -554,13 +559,21 @@ namespace UnityEngine.XR.ARFoundation
                 referencePointUpdated(eventArgs);
         }
 
+#if UNITY_2018_3_OR_NEWER
+        static void DestroySubsystem(IntegratedSubsystem subsystem)
+#else
         static void DestroySubsystem(Subsystem subsystem)
+#endif
         {
             if (subsystem != null)
                 subsystem.Destroy();
         }
 
+#if UNITY_2018_3_OR_NEWER
+        static void SetRunning(IntegratedSubsystem subsystem, bool shouldBeRunning)
+#else
         static void SetRunning(Subsystem subsystem, bool shouldBeRunning)
+#endif
         {
             if (subsystem == null)
                 return;

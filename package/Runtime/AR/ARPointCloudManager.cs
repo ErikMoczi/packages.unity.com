@@ -73,6 +73,9 @@ namespace UnityEngine.XR.ARFoundation
                 if (pointCloudPrefab != null)
                 {
                     newGameObject = Instantiate(pointCloudPrefab, m_SessionOrigin.trackablesParent);
+                    newGameObject.transform.localPosition = Vector3.zero;
+                    newGameObject.transform.localRotation = Quaternion.identity;
+                    newGameObject.transform.localScale = Vector3.one;
                 }
                 else
                 {

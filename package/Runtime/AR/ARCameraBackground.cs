@@ -13,67 +13,69 @@ namespace UnityEngine.XR.ARFoundation
     public sealed class ARCameraBackground : MonoBehaviour
     {
         [SerializeField]
-        bool m_OverrideMaterial;
+        bool m_UseCustomMaterial;
 
         /// <summary>
-        /// When false, a material is generated automatically from the shader included in the platform-specific package.
-        /// You may override this material if you wish. Normally, you don't need to do this.
+        /// When <c>false</c>, a material is generated automatically from the shader included in the platform-specific package.
+        /// When <c>true</c>, <see cref="customMaterial"/> is used instead, overriding the automatically generated one.
+        /// This is not necessary for most AR experiences.
         /// </summary>
-        public bool overrideMaterial
+        public bool useCustomMaterial
         {
-            get { return m_OverrideMaterial; }
-            set { m_OverrideMaterial = value; }
+            get { return m_UseCustomMaterial; }
+            set
+            {
+                m_UseCustomMaterial = value;
+                UpdateMaterial();
+            }
         }
 
         [SerializeField]
-        Material m_Material;
+        Material m_CustomMaterial;
 
         /// <summary>
-        /// The <c>Material</c> to use for background rendering.
+        /// If <see cref="useCustomMaterial"/> is <c>true</c>, this <c>Material</c> will be used
+        /// instead of the one included with the platform-specific AR package.
         /// </summary>
-        /// <remarks>
-        /// If <c>null</c>, the <see cref="ARSession" /> will attempt to create a material using
-        /// the shader provided by the platform plugin.
-        /// </remarks>
-        public Material material
+        public Material customMaterial
         {
-            get { return m_Material; }
+            get { return m_CustomMaterial; }
             set
             {
-                m_Material = value;
-
-                backgroundRenderer.backgroundMaterial = m_Material;
-                if (ARSubsystemManager.cameraSubsystem != null)
-                    ARSubsystemManager.cameraSubsystem.Material = m_Material;
+                m_CustomMaterial = value;
+                UpdateMaterial();
             }
         }
 
         /// <summary>
-        /// Get the <c>ARBackgroundRenderer</c> which does the real work.
+        /// The current <c>Material</c> used for background rendering.
         /// </summary>
-        public ARBackgroundRenderer backgroundRenderer { get; private set; }
-
-        void SetupCameraIfNecessary()
+        public Material material
         {
-            if (m_CameraHasBeenSetup)
-                backgroundRenderer.mode = ARRenderMode.MaterialAsBackground;
-
-            if (m_OverrideMaterial)
+            get
             {
-                if (backgroundRenderer.backgroundMaterial != material)
-                    material = material;
-
-                return;
+                return backgroundRenderer.backgroundMaterial;
             }
+            private set
+            {
+                backgroundRenderer.backgroundMaterial = value;
+                if (ARSubsystemManager.cameraSubsystem != null)
+                    ARSubsystemManager.cameraSubsystem.Material = value;
+            }
+        }
 
+        ARBackgroundRenderer backgroundRenderer { get; set; }
+
+        Material CreateMaterialFromSubsystemShader()
+        {
             var cameraSubsystem = ARSubsystemManager.cameraSubsystem;
-            if (m_CameraSetupThrewException || m_CameraHasBeenSetup || (cameraSubsystem == null))
-                return;
+            if (m_CameraSetupThrewException || (cameraSubsystem == null))
+                return null;
 
             // Try to create a material from the plugin's provided shader.
             string shaderName = "";
             if (!cameraSubsystem.TryGetShaderName(ref shaderName))
-                return;
+                return null;
 
             var shader = Shader.Find(shaderName);
             if (shader == null)
@@ -88,44 +90,27 @@ namespace UnityEngine.XR.ARFoundation
                     cameraSubsystem.SubsystemDescriptor.id));
             }
 
-            material = new Material(shader);
-            m_CameraHasBeenSetup = (material != null);
-            NotifyCameraSubsystem();
+            return new Material(shader);
         }
 
         void OnCameraFrameReceived(ARCameraFrameEventArgs eventArgs)
         {
-            if (!m_CameraHasBeenNotified && m_CameraHasBeenSetup)
-                NotifyCameraSubsystem();
-
-            SetupCameraIfNecessary();
+            ARSubsystemManager.cameraSubsystem.Camera = camera;
+            UpdateMaterial();
+            backgroundRenderer.mode = ARRenderMode.MaterialAsBackground;
         }
 
         void Awake()
         {
-            m_Camera = GetComponent<Camera>();
             backgroundRenderer = new ARBackgroundRenderer();
-            if (!m_OverrideMaterial)
-                m_Material = null;
-        }
-
-        void NotifyCameraSubsystem()
-        {
-            var cameraSubsystem = ARSubsystemManager.cameraSubsystem;
-            if (cameraSubsystem != null)
-            {
-                cameraSubsystem.Camera = m_Camera;
-                cameraSubsystem.Material = material;
-                m_CameraHasBeenNotified = true;
-            }
+            backgroundRenderer.camera = GetComponent<Camera>();
         }
 
         void OnEnable()
         {
-            backgroundRenderer.mode = ARRenderMode.MaterialAsBackground;
-            backgroundRenderer.camera = m_Camera;
-
-            NotifyCameraSubsystem();
+            UpdateMaterial();
+            if (ARSubsystemManager.cameraSubsystem != null)
+                ARSubsystemManager.cameraSubsystem.Camera = camera;
             ARSubsystemManager.cameraFrameReceived += OnCameraFrameReceived;
             ARSubsystemManager.systemStateChanged += OnSystemStateChanged;
         }
@@ -135,37 +120,54 @@ namespace UnityEngine.XR.ARFoundation
             backgroundRenderer.mode = ARRenderMode.StandardBackground;
             ARSubsystemManager.cameraFrameReceived -= OnCameraFrameReceived;
             ARSubsystemManager.systemStateChanged -= OnSystemStateChanged;
-            m_CameraHasBeenSetup = false;
             m_CameraSetupThrewException = false;
-            m_CameraHasBeenNotified = false;
 
-            // Tell the camera subsystem to stop doing work
+            // Tell the camera subsystem to stop doing work if we are still the active camera
             var cameraSubsystem = ARSubsystemManager.cameraSubsystem;
-            if (cameraSubsystem != null)
+            if ((cameraSubsystem != null) && (cameraSubsystem.Camera == camera))
             {
-                if (cameraSubsystem.Camera == m_Camera)
-                    cameraSubsystem.Camera = null;
-
-                if (cameraSubsystem.Material == material)
-                    cameraSubsystem.Material = null;
+                cameraSubsystem.Camera = null;
+                cameraSubsystem.Material = null;
             }
+
+            // We are no longer setting the projection matrix
+            // so tell the camera to resume its normal projection
+            // matrix calculations.
+            camera.ResetProjectionMatrix();
         }
 
         void OnSystemStateChanged(ARSystemStateChangedEventArgs eventArgs)
         {
+            // If the session goes away then return to using standard background mode
             if (eventArgs.state < ARSystemState.SessionInitializing && backgroundRenderer != null)
-            {
                 backgroundRenderer.mode = ARRenderMode.StandardBackground;
-                m_CameraHasBeenNotified = false;
-            }
         }
 
-        bool m_CameraHasBeenSetup;
+        void UpdateMaterial()
+        {
+            material = m_UseCustomMaterial ? m_CustomMaterial : subsystemMaterial;
+        }
 
         bool m_CameraSetupThrewException;
 
-        bool m_CameraHasBeenNotified;
+#if UNITY_EDITOR
+        new Camera camera
+#else
+        Camera camera
+#endif
+        { get { return backgroundRenderer.camera; } }
 
-        Camera m_Camera;
+        Material m_SubsystemMaterial;
+
+        private Material subsystemMaterial
+        {
+            get
+            {
+                if (m_SubsystemMaterial == null)
+                    m_SubsystemMaterial = CreateMaterialFromSubsystemShader();
+
+                return m_SubsystemMaterial;
+            }
+        }
     }
 }

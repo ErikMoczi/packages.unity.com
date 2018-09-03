@@ -102,11 +102,19 @@ If you want to render the device's color camera texture to the background, you n
 
 ![alt text](images/ar_background_renderer.png "ARCameraBackground")
 
-The `Material` property is optional, and typically you do not need to set it. The platform-specific packages provided by Unity (e.g., `ARCore` and `ARKit`) provide their own shaders for background rendering.
+The `Custom Material` property is optional, and typically you do not need to set it. The platform-specific packages provided by Unity (e.g., `ARCore` and `ARKit`) provide their own shaders for background rendering.
 
-If `Override Material` is `true`, then the `ARCameraBackground` will use the `Material` you specify for background rendering.
+If `Use Custom Material` is `true`, then the `ARCameraBackground` will use the `Material` you specify for background rendering.
 
-If you have exactly one `ARSessionOrigin`, then you can simply add the `ARCameraBackground` to that camera. If you have multiple `ARSessionOrigin`s (to selectively render different content at different scales, for instance), you should use separate cameras for each `ARSessionOrigin` and the `ARCameraBackground`.
+If you have exactly one `ARSessionOrigin`, then you can simply add the `ARCameraBackground` to that camera. If you have multiple `ARSessionOrigin`s (to selectively render different content at different scales, for instance), you should use separate cameras for each `ARSessionOrigin` and a separate, single camera for the `ARCameraBackground`.
+
+#### Copying the Camera Texture to a Render Texture
+
+The camera textures are likely [External Textures](https://docs.unity3d.com/ScriptReference/Texture2D.CreateExternalTexture.html) and may not last beyond a frame boundary. It can be useful to copy the camera image to a [Render Texture](https://docs.unity3d.com/Manual/class-RenderTexture.html) for persistence or further processing. This code will blit the camera image to a render texture of your choice:
+
+```csharp
+Graphics.Blit(null, m_MyRenderTexture, m_ARBackgroundCamera.material);
+```
 
 ### AR Managers
 
@@ -215,6 +223,7 @@ AR Foundation includes the following known limitations:
 
 |Date|Reason|
 |---|---|
+|July 25, 2018|Update `ARCameraBackground` image and description following refactor.<br/>Add howto section for blitting the camera image to a render texture.|
 |July 16, 2018|Additional explanation for `ARSessionOrigin`|
 |June 14, 2018|Update `ARSessionOrigin` photos|
 |June 12, 2018|Update `ARPlaneMeshVisualizer` and `ARPointCloudMeshVisualizer` with additional debug recommendations and standards.|

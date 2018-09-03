@@ -93,9 +93,15 @@ namespace UnityEngine.XR.ARFoundation
         /// <param name="id">(Optional) Looks for a <c>SubystemDescriptor</c> with a particular name.
         /// If not specified, the first <c>SubsystemDescriptor</c> is used.</param>
         /// <returns>If a matching <c>SubsystemDescriptor</c> is found, it creates a <c>Subsystem</c> and returns it. Otherwise, null.</returns>
+#if UNITY_2018_3_OR_NEWER
+        static TSubsystem CreateSubsystem<TDescriptor, TSubsystem>(List<TDescriptor> descriptors, string id = null)
+            where TDescriptor : IntegratedSubsystemDescriptor<TSubsystem>
+            where TSubsystem : IntegratedSubsystem<TDescriptor>
+#else
         static TSubsystem CreateSubsystem<TDescriptor, TSubsystem>(List<TDescriptor> descriptors, string id = null)
             where TDescriptor : SubsystemDescriptor<TSubsystem>
             where TSubsystem : Subsystem<TDescriptor>
+#endif
         {
             if (descriptors == null)
                 throw new ArgumentNullException("descriptors");
@@ -104,12 +110,14 @@ namespace UnityEngine.XR.ARFoundation
 
             if (descriptors.Count > 0)
             {
-                if (id != null)
+                if (!String.IsNullOrEmpty(id))
                 {
                     foreach (var descriptor in descriptors)
                     {
-                        if (descriptor.id == id)
+                        if(descriptor.id.IndexOf(id, StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
                             return descriptor.Create();
+                        }
                     }
                 }
                 else

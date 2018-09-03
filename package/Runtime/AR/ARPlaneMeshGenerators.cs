@@ -49,7 +49,7 @@ namespace UnityEngine.XR.ARFoundation
             s_Vertices.Add(center);
 
             // If the polygon is too small or degenerate, no mesh is created.
-            if (!GenerateIndices(s_Indices, convexPolygon, areaTolerance))
+            if (!GenerateIndices(s_Indices, s_Vertices, areaTolerance))
                 return false;
 
             // We can't fail after this point, so it is safe to mutate the mesh

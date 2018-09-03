@@ -44,10 +44,10 @@ namespace UnityEditor.XR.ARFoundation
             ObjectFactory.CreateGameObject("AR Session", typeof(ARSession));
         }
 
-        [MenuItem("GameObject/XR/AR Default Point Cloud ", false, 10)]
+        [MenuItem("GameObject/XR/AR Default Point Cloud", false, 10)]
         static void CreateARPointCloudVisualizer()
         {
-            var go = ObjectFactory.CreateGameObject("AR Default Point Cloud ",
+            var go = ObjectFactory.CreateGameObject("AR Default Point Cloud",
                 typeof(ARPointCloudParticleVisualizer));
             var particleSystem = go.GetComponent<ParticleSystem>();
             UnityEditorInternal.ComponentUtility.MoveComponentDown(particleSystem);
@@ -56,7 +56,7 @@ namespace UnityEditor.XR.ARFoundation
             main.loop = false;
             main.startSize = k_ParticleSize;
             main.startColor = k_ParticleColor;
-            main.scalingMode = ParticleSystemScalingMode.Local;
+            main.scalingMode = ParticleSystemScalingMode.Hierarchy;
             main.playOnAwake = false;
 
             var emission = particleSystem.emission;
@@ -85,7 +85,9 @@ namespace UnityEditor.XR.ARFoundation
             materials[0] = AssetDatabase.GetBuiltinExtraResource<Material>(k_LineMaterial);
             lineRenderer.materials = materials;
             lineRenderer.loop = true;
-            lineRenderer.widthMultiplier = 0.005f;
+            var curve = new AnimationCurve();
+            curve.AddKey(0f, 0.005f);
+            lineRenderer.widthCurve = curve;
             lineRenderer.startColor = Color.black;
             lineRenderer.endColor = Color.black;
             lineRenderer.numCornerVertices = 4;

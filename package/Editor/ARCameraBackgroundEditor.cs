@@ -6,18 +6,18 @@ namespace UnityEditor.XR.ARFoundation
     [CustomEditor(typeof(ARCameraBackground))]
     internal class ARCameraBackgroundEditor : Editor
     {
-        SerializedProperty m_OverrideMaterial;
+        SerializedProperty m_UseCustomMaterial;
 
-        SerializedProperty m_Material;
+        SerializedProperty m_CustomMaterial;
 
         static class Tooltips
         {
-            public static readonly GUIContent overrideMaterial = new GUIContent(
-                "Override Material",
-                "When false, a material is generated automatically from the shader included in the platform-specific package. You may override this material if you wish.");
+            public static readonly GUIContent useCustomMaterial = new GUIContent(
+                "Use Custom Material",
+                "When false, a material is generated automatically from the shader included in the platform-specific package. When true, the Custom Material is used instead, overriding the automatically generated one. This is not necessary for most AR experiences.");
 
-            public static readonly GUIContent material = new GUIContent(
-                "Material",
+            public static readonly GUIContent customMaterial = new GUIContent(
+                "Custom Material",
                 "The material to use for background rendering.");
         }
 
@@ -25,12 +25,12 @@ namespace UnityEditor.XR.ARFoundation
         {
             serializedObject.Update();
 
-            EditorGUILayout.PropertyField(m_OverrideMaterial, Tooltips.overrideMaterial);
+            EditorGUILayout.PropertyField(m_UseCustomMaterial, Tooltips.useCustomMaterial);
 
-            if (m_OverrideMaterial.boolValue)
+            if (m_UseCustomMaterial.boolValue)
             {
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(m_Material, Tooltips.material);
+                EditorGUILayout.PropertyField(m_CustomMaterial, Tooltips.customMaterial);
                 EditorGUI.indentLevel--;
             }
 
@@ -39,8 +39,8 @@ namespace UnityEditor.XR.ARFoundation
 
         void OnEnable()
         {
-            m_OverrideMaterial = serializedObject.FindProperty("m_OverrideMaterial");
-            m_Material = serializedObject.FindProperty("m_Material");
+            m_UseCustomMaterial = serializedObject.FindProperty("m_UseCustomMaterial");
+            m_CustomMaterial = serializedObject.FindProperty("m_CustomMaterial");
         }
     }
 }

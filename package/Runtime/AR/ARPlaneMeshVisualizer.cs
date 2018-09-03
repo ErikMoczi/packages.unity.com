@@ -128,6 +128,29 @@ namespace UnityEngine.XR.ARFoundation
             ARSubsystemManager.systemStateChanged -= OnSystemStateChanged;
         }
 
+        void Update()
+        {
+            if (transform.hasChanged)
+            {
+                var lineRenderer = GetComponent<LineRenderer>();
+                if (lineRenderer != null)
+                {
+                    if (!m_InitialLineWidthMultiplier.HasValue)
+                        m_InitialLineWidthMultiplier = lineRenderer.widthMultiplier;
+
+                    lineRenderer.widthMultiplier = m_InitialLineWidthMultiplier.Value * transform.lossyScale.x;
+                }
+                else
+                {
+                    m_InitialLineWidthMultiplier = null;
+                }
+
+                transform.hasChanged = false;
+            }
+        }
+
+        float? m_InitialLineWidthMultiplier;
+
         ARPlane m_Plane;
     }
 }

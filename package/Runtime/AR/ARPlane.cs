@@ -43,7 +43,7 @@ namespace UnityEngine.XR.ARFoundation
         public float vertexChangedThreshold
         {
             get { return m_VertexChangedThreshold; }
-            set { m_VertexChangedThreshold = value; }
+            set { m_VertexChangedThreshold = Mathf.Max(0f, value); }
         }
 
         /// <summary>
@@ -156,6 +156,11 @@ namespace UnityEngine.XR.ARFoundation
             }
 
             return true;
+        }
+
+        void OnValidate()
+        {
+            vertexChangedThreshold = Mathf.Max(0f, vertexChangedThreshold);
         }
 
         void CheckBoundaryChanged()
