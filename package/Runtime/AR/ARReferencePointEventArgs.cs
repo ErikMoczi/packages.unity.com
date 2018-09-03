@@ -1,0 +1,92 @@
+using System;
+using UnityEngine.Experimental.XR;
+
+namespace UnityEngine.XR.ARFoundation
+{
+    /// <summary>
+    /// Holds data relevant to reference point updated events.
+    /// </summary>
+    /// <remarks>
+    /// The <see cref="ARReferencePointManager"/> uses this struct to pass data to
+    /// subscribers of its <see cref="ARReferencePointManager.referencePointUpdated"/> event.
+    /// </remarks>
+    public struct ARReferencePointUpdatedEventArgs : IEquatable<ARReferencePointUpdatedEventArgs>
+    {
+        /// <summary>
+        /// The reference point component which was updated.
+        /// </summary>
+        public ARReferencePoint referencePoint { get; private set; }
+
+        /// <summary>
+        /// The previous tracking state of the reference point, prior to this update.
+        /// </summary>
+        public TrackingState previousTrackingState { get; private set; }
+
+        /// <summary>
+        /// The pose of the reference point prior to this update, in local (session) space.
+        /// </summary>
+        public Pose previousSessionRelativePose { get; private set; }
+
+        /// <summary>
+        /// The pose of the reference point prior to this update, in Unity world space.
+        /// </summary>
+        public Pose previousPose
+        {
+            get
+            {
+                var rig = referencePoint.GetComponent<ARSessionOrigin>();
+                return rig.trackablesParent.TransformPose(previousSessionRelativePose);
+            }
+        }
+
+        /// <summary>
+        /// Constructor invoked by the <see cref="ARReferencePointManager"/> which triggered this event.
+        /// </summary>
+        /// <param name="referencePoint">The reference point component that was updated.</param>
+        /// <param name="previousTrackingState">The tracking state prior to this update.</param>
+        /// <param name="previousPose">The session-space pose prior to this update.</param>
+        public ARReferencePointUpdatedEventArgs(
+            ARReferencePoint referencePoint,
+            TrackingState previousTrackingState,
+            Pose previousPose)
+        {
+            if (referencePoint == null)
+                throw new ArgumentNullException("referencePoint");
+
+            this.referencePoint = referencePoint;
+            this.previousTrackingState = previousTrackingState;
+            previousSessionRelativePose = previousPose;
+        }
+
+        public override int GetHashCode()
+        {
+            return referencePoint.GetHashCode() ^ previousTrackingState.GetHashCode() ^ previousSessionRelativePose.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is ARReferencePointUpdatedEventArgs))
+                return false;
+
+            return Equals((ARReferencePointUpdatedEventArgs)obj);
+        }
+
+        public bool Equals(ARReferencePointUpdatedEventArgs other)
+        {
+            return
+                (referencePoint.Equals(other.referencePoint)) &&
+                (previousTrackingState == other.previousTrackingState) &&
+                (previousSessionRelativePose.Equals(other.previousSessionRelativePose));
+        }
+
+        public static bool operator ==(ARReferencePointUpdatedEventArgs lhs, ARReferencePointUpdatedEventArgs rhs)
+        {
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(ARReferencePointUpdatedEventArgs lhs, ARReferencePointUpdatedEventArgs rhs)
+        {
+            return !lhs.Equals(rhs);
+        }
+    }
+}
