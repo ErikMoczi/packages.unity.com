@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine.Serialization;
 
 namespace UnityEngine.XR.ARFoundation
 {
@@ -12,7 +13,7 @@ namespace UnityEngine.XR.ARFoundation
     [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARCameraBackground.html")]
     public sealed class ARCameraBackground : MonoBehaviour
     {
-        [SerializeField]
+        [SerializeField, FormerlySerializedAs("m_OverrideMaterial")]
         bool m_UseCustomMaterial;
 
         /// <summary>
@@ -30,7 +31,7 @@ namespace UnityEngine.XR.ARFoundation
             }
         }
 
-        [SerializeField]
+        [SerializeField, FormerlySerializedAs("m_Material")]
         Material m_CustomMaterial;
 
         /// <summary>
