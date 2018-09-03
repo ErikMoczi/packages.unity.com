@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.4-preview.24
+
+- Improve codegen of math.compress
+- Improve codegen of math.asfloat/asint/asuint
+- Improve codegen of math.csum for int4
+- Improve codegen of math.count_bits
+- Support for lzcnt and tzcnt intrinsics
+- Fix AOT compilation errors for PS4 and XboxOne
+- Fix an issue that could cause wrong code generation for some unsafe ptr operations
+
 ## 0.2.4-preview.23
 
 - Fix bug with switch case to support not only int32
