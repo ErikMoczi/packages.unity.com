@@ -24,7 +24,7 @@ private:
     WrappedCamera m_WrappedCamera;
     bool m_LightEstimationEnabled;
 
-    void RetrieveMatricesIfNeeded(float zNear, float zFar);
+    bool RetrieveMatricesIfNeeded(float zNear, float zFar);
     bool m_HaveRetrievedMatrices;
     UnityXRMatrix4x4 m_DisplayMatrix;
     UnityXRMatrix4x4 m_ProjectionMatrix;

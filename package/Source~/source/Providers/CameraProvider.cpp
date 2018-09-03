@@ -96,11 +96,12 @@ bool UNITY_INTERFACE_API CameraProvider::GetFrame(const UnityXRCameraParams& par
         return false;
 
     GetWrappedSessionMutable().SetDisplayGeometry(googleOrientation, paramsIn.screenWidth, paramsIn.screenHeight);
-    RetrieveMatricesIfNeeded(paramsIn.zNear, paramsIn.zFar);
-
-    frameOut->displayMatrix = m_DisplayMatrix;
-    frameOut->projectionMatrix = m_ProjectionMatrix;
-    frameOut->providedFields = EnumCast<UnityXRCameraFramePropertyFlags>(frameOut->providedFields | kUnityXRCameraFramePropertiesProjectionMatrix | kUnityXRCameraFramePropertiesDisplayMatrix);
+    if (RetrieveMatricesIfNeeded(paramsIn.zNear, paramsIn.zFar))
+    {
+        frameOut->displayMatrix = m_DisplayMatrix;
+        frameOut->projectionMatrix = m_ProjectionMatrix;
+        frameOut->providedFields = EnumCast<UnityXRCameraFramePropertyFlags>(frameOut->providedFields | kUnityXRCameraFramePropertiesProjectionMatrix | kUnityXRCameraFramePropertiesDisplayMatrix);
+    }
 
     if (TryGetLightEstimatePixelIntensity(frameOut->averageBrightness))
         frameOut->providedFields = EnumCast<UnityXRCameraFramePropertyFlags>(frameOut->providedFields | kUnityXRCameraFramePropertiesAverageBrightness);
@@ -149,10 +150,10 @@ bool UNITY_INTERFACE_API CameraProvider::GetShaderName(char(&shaderName)[kUnityX
     return true;
 }
 
-void CameraProvider::RetrieveMatricesIfNeeded(float zNear, float zFar)
+bool CameraProvider::RetrieveMatricesIfNeeded(float zNear, float zFar)
 {
     if (!GetWrappedFrame().DidDisplayGeometryChange())
-        return;
+        return false;
 
     enum
     {
@@ -182,4 +183,5 @@ void CameraProvider::RetrieveMatricesIfNeeded(float zNear, float zFar)
     m_DisplayMatrix.columns[2].y = transformedUVs[kOffsetV];
 
     m_WrappedCamera.GetProjectionMatrix(m_ProjectionMatrix, zNear, zFar);
+    return true;
 }

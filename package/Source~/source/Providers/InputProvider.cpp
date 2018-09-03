@@ -3,7 +3,8 @@
 #include "Wrappers/WrappedCamera.h"
 
 InputProvider::InputProvider()
-    : m_PoseFeatureIndex(static_cast<unsigned int>(-1))
+    : m_PositionFeatureIndex(static_cast<unsigned int>(-1))
+    , m_RotationFeatureIndex(static_cast<unsigned int>(-1))
 {
 }
 
@@ -11,7 +12,9 @@ void UNITY_INTERFACE_API InputProvider::FillDeviceDefinition(UnityXRInternalInpu
 {
     deviceDefinition->SetName("ARCore");
     deviceDefinition->SetRole(kUnityXRInputDeviceRoleGeneric);
-    m_PoseFeatureIndex = deviceDefinition->AddFeature("Pose", kUnityXRInputFeatureUsageColorCameraPose, kUnityXRInputFeatureTypePose);
+    
+    m_PositionFeatureIndex = deviceDefinition->AddFeatureWithUsage("Camera - Position", kUnityXRInputFeatureTypeAxis3D, kUnityXRInputFeatureUsageColorCameraPosition);
+    m_RotationFeatureIndex = deviceDefinition->AddFeatureWithUsage("Camera - Rotation", kUnityXRInputFeatureTypeRotation, kUnityXRInputFeatureUsageColorCameraRotation);
 }
 
 bool UNITY_INTERFACE_API InputProvider::UpdateDeviceState(UnityXRInternalInputDeviceId deviceId, IUnityXRInputDeviceState* const deviceState)
@@ -23,6 +26,12 @@ bool UNITY_INTERFACE_API InputProvider::UpdateDeviceState(UnityXRInternalInputDe
     UnityXRPose cameraPose;
     wrappedCamera.GetDisplayOrientedPose(cameraPose);
 
-    deviceState->SetPoseValue(m_PoseFeatureIndex, cameraPose);
+    deviceState->SetAxis3DValue(m_PositionFeatureIndex, cameraPose.position);
+    deviceState->SetRotationValue(m_RotationFeatureIndex, cameraPose.rotation);
     return true;
+}
+
+bool UNITY_INTERFACE_API InputProvider::HandleEvent(UnityXRInputEventType eventType, UnityXRInternalInputDeviceId deviceId, void* buffer, unsigned int size)
+{
+    return false;
 }

@@ -1,6 +1,7 @@
 #include "Providers/LifecycleProviderCamera.h"
 #include "Providers/LifecycleProviderDepth.h"
 #include "Providers/LifecycleProviderInput.h"
+#include "Providers/LifecycleProviderInput_V1.h"
 #include "Providers/LifecycleProviderPlane.h"
 #include "Providers/LifecycleProviderRaycast.h"
 #include "Providers/LifecycleProviderReferencePoint.h"
@@ -12,6 +13,7 @@
 static LifecycleProviderCamera s_LifecycleProviderCamera;
 static LifecycleProviderDepth s_LifecycleProviderDepth;
 static LifecycleProviderInput s_LifecycleProviderInput;
+static LifecycleProviderInput_V1 s_LifecycleProviderInput_V1;
 static LifecycleProviderPlane s_LifecycleProviderPlane;
 static LifecycleProviderRaycast s_LifecycleProviderRaycast;
 static LifecycleProviderReferencePoint s_LifecycleProviderReferencePoint;
@@ -110,13 +112,18 @@ UnityPluginLoad(IUnityInterfaces* unityInterfaces)
         return;
     }
 
+    UnityXRInput_V1::IUnityXRInputInterface* xrInputInterface_V1 = nullptr;
     IUnityXRInputInterface* xrInputInterface = unityInterfaces->Get<IUnityXRInputInterface>();
     if (nullptr == xrInputInterface)
     {
-        DEBUG_LOG_FATAL("Failed to get IUnityXRInputInterface - can't even attempt to run ARCore!");
-        return;
+        xrInputInterface_V1 = unityInterfaces->Get<UnityXRInput_V1::IUnityXRInputInterface>();
+        if(nullptr == xrInputInterface_V1)
+        {
+            DEBUG_LOG_FATAL("Failed to get IUnityXRInputInterface - can't even attempt to run ARCore!");
+            return;
+        }
     }
-
+    
     IUnityXRPlaneInterface* xrPlaneInterface = unityInterfaces->Get<IUnityXRPlaneInterface>();
     if (nullptr == xrPlaneInterface)
     {
@@ -153,7 +160,10 @@ UnityPluginLoad(IUnityInterfaces* unityInterfaces)
     if (!registered)
         DEBUG_LOG_ERROR("Failed to register depth lifecycle provider - point clouds will be inaccessible for this run of ARCore!");
 
-    registered = xrInputInterface->RegisterLifecycleProvider("UnityARCore", "ARCore-Input", &s_LifecycleProviderInput);
+    if(nullptr != xrInputInterface)
+        registered = xrInputInterface->RegisterLifecycleProvider("UnityARCore", "ARCore-Input", &s_LifecycleProviderInput);
+    else 
+        registered = xrInputInterface_V1->RegisterLifecycleProvider("UnityARCore", "ARCore-Input", &s_LifecycleProviderInput_V1);   
     if (!registered)
         DEBUG_LOG_ERROR("Failed to register input lifecycle provider - camera pose can't update for this run of ARCore!");
 
