@@ -72,6 +72,19 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMesh
             Assert.AreEqual(expected.index2, actual.index2, "Incorrect edge index2");
         }
 
+        private bool ContainsChannel(BoneWeight boneWeight, int index, float weight)
+        {
+            if(boneWeight.boneIndex0 == index && boneWeight.weight0 == weight)
+                return true;
+            if(boneWeight.boneIndex1 == index && boneWeight.weight1 == weight)
+                return true;
+            if(boneWeight.boneIndex2 == index && boneWeight.weight2 == weight)
+                return true;
+            if(boneWeight.boneIndex3 == index && boneWeight.weight3 == weight)
+                return true;
+            return false;
+        }
+
         [Test]
         public void CreateVertex_WithMousePositionInsideFrame_CreatesVertexFromMousePosition()
         {
@@ -136,15 +149,12 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMesh
 
             Assert.AreEqual(5, m_SpriteMeshData.vertices.Count, "Incorrect number of vertices");
 
-            Assert.AreEqual(3, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(0).boneIndex, "Index is incorrect");
-            Assert.AreEqual(0, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(1).boneIndex, "Index is incorrect");
-            Assert.AreEqual(2, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(2).boneIndex, "Index is incorrect");
-            Assert.AreEqual(0, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(3).boneIndex, "Index is incorrect");
+            var result = m_SpriteMeshData.vertices[4].editableBoneWeight.ToBoneWeight(false);
 
-            Assert.AreEqual(0.5f, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(0).weight, "Weight is incorrect");
-            Assert.AreEqual(0.25f, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(1).weight, "Weight is incorrect");
-            Assert.AreEqual(0.25f, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(2).weight, "Weight is incorrect");
-            Assert.AreEqual(0.0f, m_SpriteMeshData.vertices[4].editableBoneWeight.GetBoneWeightData(3).weight, "Weight is incorrect");
+            Assert.IsTrue(ContainsChannel(result, 3, 0.5f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 2, 0.25f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 0, 0.25f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 0, 0.0f), "Does not contain expected weights");
         }
 
         [Test]

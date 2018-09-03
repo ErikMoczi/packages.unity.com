@@ -6,6 +6,7 @@ using UnityEngine.Events;
 using UnityEngine.Experimental.U2D;
 using UnityEngine.Experimental.U2D.Common;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
 
 #if ENABLE_MANAGED_JOBS
 using Unity.Collections;

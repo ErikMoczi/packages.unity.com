@@ -75,6 +75,19 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
     [TestFixture]
     public class EditableBoneWeightUtilityTest
     {
+        private bool ContainsChannel(BoneWeight boneWeight, int index, float weight)
+        {
+            if(boneWeight.boneIndex0 == index && boneWeight.weight0 == weight)
+                return true;
+            if(boneWeight.boneIndex1 == index && boneWeight.weight1 == weight)
+                return true;
+            if(boneWeight.boneIndex2 == index && boneWeight.weight2 == weight)
+                return true;
+            if(boneWeight.boneIndex3 == index && boneWeight.weight3 == weight)
+                return true;
+            return false;
+        }
+
         [Test]
         public void CreateFromBoneWeight_WithBoneIndicesDistinct_CreatesFourEnabledChannels()
         {
@@ -308,58 +321,38 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
 
             BoneWeight result = EditableBoneWeightUtility.Lerp(first, second, 0f);
 
-            Assert.AreEqual(3, result.boneIndex0, "Incorrect boneIndex");
-            Assert.AreEqual(2, result.boneIndex1, "Incorrect boneIndex");
-            Assert.AreEqual(1, result.boneIndex2, "Incorrect boneIndex");
-            Assert.AreEqual(0, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.4f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.3f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.2f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.1f, result.weight3, "Incorrect boneWeight");
+            Assert.IsTrue(ContainsChannel(result, 3, 0.4f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 2, 0.3f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 1, 0.2f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 0, 0.1f), "Does not contain expected weights");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 0.2f);
 
-            Assert.AreEqual(3, result.boneIndex0, "Incorrect boneIndex");
-            Assert.AreEqual(2, result.boneIndex1, "Incorrect boneIndex");
-            Assert.AreEqual(1, result.boneIndex2, "Incorrect boneIndex");
-            Assert.AreEqual(0, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.340000033f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.279999942f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.219999984f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.159999982f, result.weight3, "Incorrect boneWeight");
+            Assert.IsTrue(ContainsChannel(result, 3, 0.340000033f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 2, 0.279999942f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 1, 0.219999984f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 0, 0.159999982f), "Does not contain expected weights");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 0.5f);
 
-            Assert.AreEqual(0, result.boneIndex0, "Incorrect boneIndex");
-            Assert.AreEqual(2, result.boneIndex1, "Incorrect boneIndex");
-            Assert.AreEqual(3, result.boneIndex2, "Incorrect boneIndex");
-            Assert.AreEqual(1, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.25000003f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.25f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.25f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.249999985f, result.weight3, "Incorrect boneWeight");
+            Assert.IsTrue(ContainsChannel(result, 0, 0.25000003f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 2, 0.25f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 3, 0.25f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 1, 0.249999985f), "Does not contain expected weights");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 0.8f);
 
-            Assert.AreEqual(0, result.boneIndex0, "Incorrect boneIndex");
-            Assert.AreEqual(1, result.boneIndex1, "Incorrect boneIndex");
-            Assert.AreEqual(2, result.boneIndex2, "Incorrect boneIndex");
-            Assert.AreEqual(3, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.340000033f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.279999971f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.220000014f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.159999996f, result.weight3, "Incorrect boneWeight");
+            Assert.IsTrue(ContainsChannel(result, 0, 0.340000033f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 1, 0.279999971f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 2, 0.220000014f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 3, 0.159999996f), "Does not contain expected weights");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 1f);
 
-            Assert.AreEqual(0, result.boneIndex0, "Incorrect boneIndex");
-            Assert.AreEqual(1, result.boneIndex1, "Incorrect boneIndex");
-            Assert.AreEqual(2, result.boneIndex2, "Incorrect boneIndex");
-            Assert.AreEqual(3, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.4f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.3f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.2f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.1f, result.weight3, "Incorrect boneWeight");
+            Assert.IsTrue(ContainsChannel(result, 0, 0.4f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 1, 0.3f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 2, 0.2f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 3, 0.1f), "Does not contain expected weights");
         }
 
         [Test]
@@ -387,58 +380,38 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
 
             BoneWeight result = EditableBoneWeightUtility.Lerp(first, second, 0f);
 
-            Assert.AreEqual(3, result.boneIndex0, "Incorrect boneIndex");
-            Assert.AreEqual(2, result.boneIndex1, "Incorrect boneIndex");
-            Assert.AreEqual(1, result.boneIndex2, "Incorrect boneIndex");
-            Assert.AreEqual(0, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.4f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.3f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.2f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.1f, result.weight3, "Incorrect boneWeight");
+            Assert.IsTrue(ContainsChannel(result, 3, 0.4f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 2, 0.3f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 1, 0.2f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 0, 0.1f), "Does not contain expected weights");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 0.2f);
 
-            Assert.AreEqual(3, result.boneIndex0, "Incorrect boneIndex");
-            Assert.AreEqual(2, result.boneIndex1, "Incorrect boneIndex");
-            Assert.AreEqual(1, result.boneIndex2, "Incorrect boneIndex");
-            Assert.AreEqual(0, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.319999993f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.279999971f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.159999996f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.159999996f, result.weight3, "Incorrect boneWeight");
+            Assert.IsTrue(ContainsChannel(result, 3, 0.319999993f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 2, 0.279999971f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 1, 0.159999996f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 0, 0.159999996f), "Does not contain expected weights");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 0.5f);
 
-            Assert.AreEqual(0, result.boneIndex0, "Incorrect boneIndex");
-            Assert.AreEqual(2, result.boneIndex1, "Incorrect boneIndex");
-            Assert.AreEqual(3, result.boneIndex2, "Incorrect boneIndex");
-            Assert.AreEqual(4, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.25000003f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.249999985f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.200000003f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.150000006f, result.weight3, "Incorrect boneWeight");
+            Assert.IsTrue(ContainsChannel(result, 0, 0.25000003f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 2, 0.249999985f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 3, 0.200000003f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 4, 0.150000006f), "Does not contain expected weights");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 0.8f);
 
-            Assert.AreEqual(0, result.boneIndex0, "Incorrect boneIndex");
-            Assert.AreEqual(4, result.boneIndex1, "Incorrect boneIndex");
-            Assert.AreEqual(2, result.boneIndex2, "Incorrect boneIndex");
-            Assert.AreEqual(5, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.340000033f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.239999995f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.219999999f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.0799999982f, result.weight3, "Incorrect boneWeight");
+            Assert.IsTrue(ContainsChannel(result, 0, 0.340000033f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 4, 0.239999995f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 2, 0.219999999f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 5, 0.0799999982f), "Does not contain expected weights");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 1f);
 
-            Assert.AreEqual(0, result.boneIndex0, "Incorrect boneIndex");
-            Assert.AreEqual(4, result.boneIndex1, "Incorrect boneIndex");
-            Assert.AreEqual(2, result.boneIndex2, "Incorrect boneIndex");
-            Assert.AreEqual(5, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.4f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.3f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.2f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.1f, result.weight3, "Incorrect boneWeight");
+            Assert.IsTrue(ContainsChannel(result, 0, 0.4f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 4, 0.3f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 2, 0.2f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 5, 0.1f), "Does not contain expected weights");
         }
 
         [Test]
@@ -466,58 +439,38 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
 
             BoneWeight result = EditableBoneWeightUtility.Lerp(first, second, 0f);
 
-            Assert.AreEqual(3, result.boneIndex0, "Incorrect boneIndex");
-            Assert.AreEqual(2, result.boneIndex1, "Incorrect boneIndex");
-            Assert.AreEqual(1, result.boneIndex2, "Incorrect boneIndex");
-            Assert.AreEqual(0, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.4f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.3f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.2f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.1f, result.weight3, "Incorrect boneWeight");
+            Assert.IsTrue(ContainsChannel(result, 3, 0.4f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 2, 0.3f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 1, 0.2f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 0, 0.1f), "Does not contain expected weights");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 0.2f);
 
-            Assert.AreEqual(3, result.boneIndex0, "Incorrect boneIndex");
-            Assert.AreEqual(2, result.boneIndex1, "Incorrect boneIndex");
-            Assert.AreEqual(1, result.boneIndex2, "Incorrect boneIndex");
-            Assert.AreEqual(4, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.319999993f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.24000001f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.159999996f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.0800000057f, result.weight3, "Incorrect boneWeight");
+            Assert.IsTrue(ContainsChannel(result, 3, 0.319999993f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 2, 0.24000001f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 1, 0.159999996f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 4, 0.0800000057f), "Does not contain expected weights");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 0.5f);
 
-            Assert.AreEqual(4, result.boneIndex0, "Incorrect boneIndex");
-            Assert.AreEqual(3, result.boneIndex1, "Incorrect boneIndex");
-            Assert.AreEqual(2, result.boneIndex2, "Incorrect boneIndex");
-            Assert.AreEqual(5, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.200000003f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.200000003f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.150000006f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.150000006f, result.weight3, "Incorrect boneWeight");
+            Assert.IsTrue(ContainsChannel(result, 4, 0.200000003f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 3, 0.200000003f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 2, 0.150000006f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 5, 0.150000006f), "Does not contain expected weights");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 0.8f);
 
-            Assert.AreEqual(4, result.boneIndex0, "Incorrect boneIndex");
-            Assert.AreEqual(5, result.boneIndex1, "Incorrect boneIndex");
-            Assert.AreEqual(6, result.boneIndex2, "Incorrect boneIndex");
-            Assert.AreEqual(7, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.320000023f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.24000001f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.160000011f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.0800000057f, result.weight3, "Incorrect boneWeight");
+            Assert.IsTrue(ContainsChannel(result, 4, 0.320000023f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 5, 0.24000001f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 6, 0.160000011f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 7, 0.0800000057f), "Does not contain expected weights");
 
             result = EditableBoneWeightUtility.Lerp(first, second, 1f);
 
-            Assert.AreEqual(4, result.boneIndex0, "Incorrect boneIndex");
-            Assert.AreEqual(5, result.boneIndex1, "Incorrect boneIndex");
-            Assert.AreEqual(6, result.boneIndex2, "Incorrect boneIndex");
-            Assert.AreEqual(7, result.boneIndex3, "Incorrect boneIndex");
-            Assert.AreEqual(0.4f, result.weight0, "Incorrect boneWeight");
-            Assert.AreEqual(0.3f, result.weight1, "Incorrect boneWeight");
-            Assert.AreEqual(0.2f, result.weight2, "Incorrect boneWeight");
-            Assert.AreEqual(0.1f, result.weight3, "Incorrect boneWeight");
+            Assert.IsTrue(ContainsChannel(result, 4, 0.4f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 5, 0.3f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 6, 0.2f), "Does not contain expected weights");
+            Assert.IsTrue(ContainsChannel(result, 7, 0.1f), "Does not contain expected weights");
         }
 
         [Test]

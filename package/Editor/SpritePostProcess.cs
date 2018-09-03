@@ -5,6 +5,7 @@ using UnityEditor.Experimental.U2D.Common;
 using Unity.Collections;
 using System.Linq;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {

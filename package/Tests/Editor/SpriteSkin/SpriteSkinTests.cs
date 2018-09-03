@@ -13,6 +13,7 @@ using UnityEngine.Experimental.U2D.Animation;
 using UnityEngine.Experimental.U2D.Common;
 using Unity.Jobs;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
 
 namespace UnityEditor.Experimental.U2D.Animation.Test.Skinning
 {

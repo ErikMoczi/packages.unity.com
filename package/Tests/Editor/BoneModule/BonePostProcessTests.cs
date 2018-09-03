@@ -203,13 +203,17 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
 
         private static IEnumerable<TestCaseData> BindPoseCases()
         {
+            /*
+            // Disabled until NativeArray.ToArray() fix
             var testname = "nobone_bp";
             var filename = "nobone.png";
             var expectedBindPoses = new Matrix4x4[0];
             yield return new TestCaseData(testname, filename, expectedBindPoses);
+            */
             
-            testname = "3bone_bp";
-            filename = "3bone.png";
+            var testname = "3bone_bp";
+            var filename = "3bone.png";
+            var expectedBindPoses = new Matrix4x4[0];
             CalculateBindPose(k3BoneExpected, out expectedBindPoses);
 
             yield return new TestCaseData(testname, filename, expectedBindPoses);
