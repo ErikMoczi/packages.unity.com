@@ -1,7 +1,7 @@
 {
     "name": "com.unity.xr.arextensions",
     "displayName":"AR Extensions",
-    "version": "1.0.0-preview.1",
+    "version": "1.0.0-preview.2",
     "unity": "2018.1",
     "description": "Provides extensions to the built-in XR Subsystems related to AR.",
     "keywords": ["xr", "ar", "augmented", "reality", "extension", "extensions"],
