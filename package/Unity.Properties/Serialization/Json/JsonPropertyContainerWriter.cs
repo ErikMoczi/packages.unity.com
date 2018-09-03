@@ -8,39 +8,7 @@ namespace Unity.Properties.Serialization
 {
     public static class JsonPropertyContainerWriter
     {
-        private static readonly Visitor s_DefaultVisitor = new Visitor();
-        
-        /// <summary>
-        /// Override the visitor to append type information for polymorphic serialization
-        /// </summary>
-        private class Visitor : JsonPropertyVisitor
-        {
-            public override bool BeginContainer<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
-            {
-                if (!base.BeginContainer(container, context))
-                {
-                    return false;
-                }
-                WriteTypeName(typeof(TValue));
-                return true;
-            }
-
-            public override bool BeginContainer<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
-            {
-                if (!base.BeginContainer(ref container, context))
-                {
-                    return false;
-                }
-                WriteTypeName(typeof(TValue));
-                return true;
-            }
-
-            private void WriteTypeName(Type type)
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append($"\"$Type\": \"{type.AssemblyQualifiedName}\",\n");
-            }
-        }
+        private static readonly JsonPropertyVisitor s_DefaultVisitor = new JsonPropertyVisitor();
 
         public static string Write<TContainer>(TContainer container, JsonPropertyVisitor visitor = null)
             where TContainer : class, IPropertyContainer

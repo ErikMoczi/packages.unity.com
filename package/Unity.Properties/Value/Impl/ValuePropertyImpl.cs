@@ -181,7 +181,7 @@ namespace Unity.Properties
 
     /// <inheritdoc cref="ValueProperty" />
     /// <summary>
-    /// Base class for properties of a class
+    /// Base class for properties of a struct
     /// </summary>
     /// <typeparam name="TContainer"></typeparam>
     /// <typeparam name="TValue"></typeparam>
@@ -240,7 +240,7 @@ namespace Unity.Properties
 
     /// <inheritdoc />
     /// <summary>
-    /// Property of a class that holds a value
+    /// Property of a struct that holds a value
     /// </summary>
     /// <typeparam name="TContainer"></typeparam>
     /// <typeparam name="TValue"></typeparam>
@@ -258,6 +258,50 @@ namespace Unity.Properties
             {
                 visitor.Visit(ref container, context);
             }
+        }
+    }
+    
+    public class StructValueStructProperty<TContainer, TValue> : DelegateValueStructPropertyBase<TContainer, TValue>
+        where TContainer : struct, IPropertyContainer
+        where TValue : struct, IPropertyContainer
+    {
+        private readonly GetValueRefMethod m_GetValueRef;
+
+        public delegate void ByRef(StructValueStructProperty<TContainer, TValue> property, ref TContainer container, ref TValue value);
+        public delegate void GetValueRefMethod(ByRef byRef, StructValueStructProperty<TContainer, TValue> property, ref TContainer container);
+
+        public StructValueStructProperty(string name, GetValueMethod getValue, SetValueMethod setValue, GetValueRefMethod getValueRef) : base(name, getValue, setValue)
+        {
+            Assert.IsNotNull(getValueRef);
+            m_GetValueRef = getValueRef;
+        }
+        
+        // @HACK
+        private IPropertyVisitor m_Visitor;
+
+        public override void Accept(ref TContainer container, IPropertyVisitor visitor)
+        {
+            // Setup locals to avoid alloctions
+            m_Visitor = visitor;
+
+            m_GetValueRef((StructValueStructProperty<TContainer, TValue> p, ref TContainer c, ref TValue v) =>
+            {
+                var context = new VisitContext<TValue> { Property = p, Value = v, Index = -1 };
+
+                if (p.m_Visitor.ExcludeVisit(ref c, context))
+                {
+                    return;
+                }
+                
+                if (p.m_Visitor.BeginContainer(ref c, context))
+                {
+                    PropertyContainer.Visit(ref v, p.m_Visitor);
+                }
+                p.m_Visitor.EndContainer(ref c, context);
+            }, this, ref container);
+
+            // Cleanup locals
+            m_Visitor = null;
         }
     }
 }

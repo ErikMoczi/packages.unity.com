@@ -205,7 +205,7 @@ namespace Unity.Properties
 
                 public override void SetValue(ObjectContainer container, ObjectContainer value)
                 {
-                    throw new NotImplementedException();
+                    
                 }
 
                 public override void Accept(ObjectContainer container, IPropertyVisitor visitor)

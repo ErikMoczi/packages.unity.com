@@ -1,6 +1,7 @@
 ﻿#if (NET_4_6 || NET_STANDARD_2_0)
 
 using System;
+using System.Globalization;
 
 namespace Unity.Properties.Serialization
 {
@@ -148,7 +149,7 @@ namespace Unity.Properties.Serialization
         void ICustomVisit<double>.CustomVisit(double value)
         {
             AppendPrefix();
-            StringBuffer.Append(value);
+            StringBuffer.Append(value.ToString(CultureInfo.InvariantCulture));
             AppendSuffix();
         }
 

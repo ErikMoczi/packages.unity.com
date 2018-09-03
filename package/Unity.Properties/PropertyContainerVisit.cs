@@ -17,7 +17,7 @@ namespace Unity.Properties
             }
             else
             {
-                (properties as IVisitableClass)?.Visit(container, visitor);
+                (properties as IVisitableClass).Visit(container, visitor);
             }
         }
 
@@ -34,7 +34,7 @@ namespace Unity.Properties
             }
             else
             {
-                (properties as IVisitableStruct)?.Visit(ref container, visitor);
+                (properties as IVisitableStruct).Visit(ref container, visitor);
             }
         }
     }
