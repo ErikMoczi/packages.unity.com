@@ -79,6 +79,7 @@ namespace UnityEditor.TestTools.TestRunner
         {
             var scene = CreateBootstrapScene(sceneName, runner =>
             {
+                    runner.AddEventHandlerMonoBehaviour<TestResultRendererCallback>();
                 runner.AddEventHandlerMonoBehaviour<PlayModeRunnerCallback>();
                 runner.settings = m_Settings;
                 runner.AddEventHandlerMonoBehaviour<RemoteTestResultSender>();

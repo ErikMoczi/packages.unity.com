@@ -90,6 +90,7 @@ namespace UnityEditor.TestTools.TestRunner.GUI
         {
             var settings = PlaymodeTestsControllerSettings.CreateRunnerSettings(filter);
             settings.originalScene = SceneManager.GetActiveScene().path;
+            settings.displayTestResultUi = true;
             var testExecutor = new PlayerLauncher(settings, null, null);
             testExecutor.Run();
             GUIUtility.ExitGUI();

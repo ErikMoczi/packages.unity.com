@@ -46,7 +46,7 @@ namespace UnityEditor.TestTools.TestRunner.GUI
             if (string.IsNullOrEmpty(fileOpenInfo.FilePath))
             {
                 var dirPath = Paths.UnifyDirectorySeparator(Application.dataPath);
-                var allCsFiles = Directory.GetFiles(dirPath, $"*{fileExtension}", SearchOption.AllDirectories)
+                var allCsFiles = Directory.GetFiles(dirPath, string.Format("*{0}", fileExtension), SearchOption.AllDirectories)
                     .Select(Paths.UnifyDirectorySeparator);
 
                 var fileName = allCsFiles.FirstOrDefault(x =>

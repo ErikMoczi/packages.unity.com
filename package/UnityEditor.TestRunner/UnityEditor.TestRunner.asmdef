@@ -12,9 +12,9 @@
     "precompiledReferences": [
         "nunit.framework.dll",
         "Mono.Cecil.dll",
-        "Mono.Cecil.Rocks.dll",
+        "Mono.Cecil.Pdb.dll",
         "Mono.Cecil.Mdb.dll",
-        "Mono.Cecil.Pdb.dll"
+        "Mono.Cecil.Rocks.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": []
