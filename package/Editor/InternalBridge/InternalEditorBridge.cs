@@ -49,5 +49,10 @@ namespace UnityEditor.Experimental.U2D.Common
             var window = EditorWindow.GetWindow<SpriteEditorWindow>();
             window.Show();
         }
+
+        public static void ApplyWireMaterial()
+        {
+            HandleUtility.ApplyWireMaterial();
+        }
     }
 }
