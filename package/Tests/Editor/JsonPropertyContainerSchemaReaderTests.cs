@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.Design;
+using System.Linq;
 using UnityEngine;
 using NUnit.Framework;
 using Unity.Properties;
@@ -66,5 +67,10 @@ class JsonPropertyContainerSchemaReaderTests
             ]
         ");
         Assert.AreEqual(1, result.Count);
+        Assert.AreEqual("HelloWorld", result[0].PropertyTypeNode.TypeName);
+        Assert.AreEqual(4, result[0].PropertyTypeNode.children.Count);
+        Assert.AreEqual(new System.Collections.Generic.List<string> { "Data", "Floats", "Ints", "Struct" },
+            result[0].PropertyTypeNode.children.Select(c => c.Key)
+            );
     }
 }

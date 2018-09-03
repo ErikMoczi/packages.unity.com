@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Unity.Properties.Serialization
 {
-    class CSharpGenerationBackend : IGenerationBackend
+    public class CSharpGenerationBackend : IGenerationBackend
     {
         public StringBuffer Generate(List<PropertyContainerType> root)
         {
@@ -29,7 +29,7 @@ namespace Unity.Properties.Serialization
 
         private static string TypeFromProperty(PropertyType property_type)
         {
-            if (PropertyType.IsCompositeType(property_type.Tag))
+            if (PropertyType.IsEnumerableType(property_type.Tag))
             {
                 // TODO remove that crap
                 if (property_type.Tag == PropertyType.TypeTag.Array)
@@ -51,14 +51,15 @@ namespace Unity.Properties.Serialization
 
         private static string InitializerFromProperty(PropertyType property_type)
         {
-            if (PropertyType.IsCompositeType(property_type.Tag))
+            var type = TypeFromProperty(property_type);
+            if (PropertyType.IsEnumerableType(property_type.Tag) || property_type.Tag == PropertyType.TypeTag.Struct)
             {
                 // TODO value type etc.
-                return string.Format("new {0} {{}}", property_type.Name);
+                return string.Format("new {0} {{}}", type);
             }
             else if (property_type.Tag == PropertyType.TypeTag.Class)
             {
-                return string.Format("new {0} ()", property_type.Name);
+                return string.Format("new {0} ()", type);
             }
             return !string.IsNullOrEmpty(property_type.DefaultValue)
                 ? property_type.DefaultValue
@@ -84,7 +85,7 @@ namespace Unity.Properties.Serialization
             string container_name,
             PropertyType property)
         {
-            if (PropertyType.IsCompositeType(property.Tag))
+            if (PropertyType.IsEnumerableType(property.Tag))
             {
                 // TODO value type etc.
                 return string.Format(
@@ -123,7 +124,7 @@ namespace Unity.Properties.Serialization
         {
             StringBuffer gen = new StringBuffer();
 
-            string prop_type = property_type.Name;
+            string prop_type = TypeFromProperty(property_type);
 
             var property_wrapper = GetPropertyWrapperFromProperty(
                 container_name,
@@ -131,7 +132,7 @@ namespace Unity.Properties.Serialization
 
             bool is_compositye_type = PropertyType.IsCompositeType(property_type.Tag);
 
-            if (!string.IsNullOrEmpty(property_type.PropertyBackingAccessor))
+            if (string.IsNullOrEmpty(property_type.PropertyBackingAccessor))
             {
                 gen.Append(' ', Style.Space * 1);
                 gen.Append(

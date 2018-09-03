@@ -9,7 +9,9 @@ namespace Unity.Properties.Serialization
             public const int Space = 4;
         }
 
-        public StringBuffer StringBuffer;
+        private static readonly StringBuffer s_StringBuffer = new StringBuffer(1024);
+
+        public StringBuffer StringBuffer = s_StringBuffer;
         public int Indent;
 
         public override string ToString()
@@ -267,7 +269,7 @@ namespace Unity.Properties.Serialization
         }
 
         public void Visit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context) where TContainer : IPropertyContainer
-        {   
+        {
             if (context.Index != -1)
             {
                 StringBuffer.Append(' ', Style.Space * Indent);
@@ -285,11 +287,11 @@ namespace Unity.Properties.Serialization
                 StringBuffer.Append("\",\n");
             }
         }
-            
+
         public void VisitEnum<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
             where TContainer : IPropertyContainer
             where TValue : struct
-        {   
+        {
             if (context.Index != -1)
             {
                 StringBuffer.Append(' ', Style.Space * Indent);
@@ -322,7 +324,7 @@ namespace Unity.Properties.Serialization
                 StringBuffer.Append(context.Property.Name);
                 StringBuffer.Append("\": {\n");
             }
-                
+
             Indent++;
 
             return true;
@@ -365,7 +367,7 @@ namespace Unity.Properties.Serialization
         public void EndList<TContainer, TValue>(ref TContainer container, ListContext<TValue> context) where TContainer : IPropertyContainer
         {
             Indent--;
-                
+
             // Remove the trailing comma
             if (StringBuffer[StringBuffer.Length - 2] == ',')
             {
@@ -384,7 +386,7 @@ namespace Unity.Properties.Serialization
                 StringBuffer.Append("\n");
                 StringBuffer.Append(' ', Style.Space * Indent);
             }
-                
+
             StringBuffer.Append("],\n");
         }
     }

@@ -22,7 +22,7 @@ namespace Unity.Properties.Serialization
             public const string PropertiesListKey = "Properties";
             public const string PropertyTypeKey = "TypeId";
             public const string PropertyItemTypeIdKey = "ItemTypeId";
-            public const string PropertyDelegateMemberToKey = "DelegateMemberTo";
+            public const string PropertyDelegateMemberToKey = "BackingField";
             public const string PropertyDelegateTargetKey = "Target";
             public const string PropertyDefaultValueKey = "DefaultValue";
             public const string PropertyNameKey = "Name";
@@ -55,18 +55,34 @@ namespace Unity.Properties.Serialization
 
             return definitions;
         }
-        
+
+        static private Dictionary<string, PropertyType.TypeTag> TypesMap = new Dictionary<string, PropertyType.TypeTag>()
+        {
+            { "List", PropertyType.TypeTag.List },
+            { "Array", PropertyType.TypeTag.Array }
+        };
+
         // TODO Fix me : expand for composite types
         private static PropertyType.TypeTag TypeTagForSymbol(IDictionary<string, object> node)
         {
             if (!node.ContainsKey(SerializedKeys.IsValueTypeKey))
             {
+                if (node.ContainsKey(SerializedKeys.PropertyTypeKey))
+                {
+                    var type_name = node[SerializedKeys.PropertyTypeKey] as string;
+                    if (TypesMap.ContainsKey(type_name))
+                    {
+                        return TypesMap[type_name];
+                    }
+                }
+
                 return PropertyType.TypeTag.Other;
             }
-            var is_value_type = node[SerializedKeys.IsValueTypeKey] as bool?;
-            if (is_value_type.HasValue)
+
+            var is_value_type = false;
+            if (Boolean.TryParse(node[SerializedKeys.IsValueTypeKey] as string, out is_value_type))
             {
-                return is_value_type.Value ? PropertyType.TypeTag.Struct : PropertyType.TypeTag.Class;
+                return is_value_type ? PropertyType.TypeTag.Struct : PropertyType.TypeTag.Class;
             }
             return PropertyType.TypeTag.Unknown;
         }

@@ -51,12 +51,6 @@ namespace Unity.Properties.Serialization
             _of = of;
         }
 
-        // @TODO
-        public string ToString()
-        {
-            return string.Empty;
-        }
-
         public string Name
         {
             get { return _type_name; }
