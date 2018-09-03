@@ -1,0 +1,11 @@
+{
+    "name": "com.unity.2d.spriteshape",
+    "version": "0.1.0",
+    "unity": "2018.1",
+    "description": "SpriteShape Runtime & Editor Package",
+    "keywords": ["2d", "shape", "spriteshape", "smartsprite", "spline", "terrain2d"],
+    "category": "2D",
+    "dependencies": {
+        "com.unity.2d.common": "0.1.0"
+    }
+}

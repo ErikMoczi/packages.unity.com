@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af7181f404f1447c0a7a17b3070b952b, type: 3}
+  m_Name: Shape
+  m_EditorClassIdentifier: 
+  m_Angles:
+  - m_Start: -22.5
+    m_End: 22.5
+    m_Order: 8
+    m_Sprites:
+    - {fileID: 21300004, guid: f016b0ebfbfbad44984805a31ed99889, type: 3}
+  - m_Start: 22.5
+    m_End: 67.5
+    m_Order: 7
+    m_Sprites:
+    - {fileID: 21300002, guid: f016b0ebfbfbad44984805a31ed99889, type: 3}
+  - m_Start: 67.5
+    m_End: 112.5
+    m_Order: 5
+    m_Sprites:
+    - {fileID: 21300006, guid: f016b0ebfbfbad44984805a31ed99889, type: 3}
+    - {fileID: 0}
+  - m_Start: 112.5
+    m_End: 157.5
+    m_Order: 3
+    m_Sprites:
+    - {fileID: 21300014, guid: f016b0ebfbfbad44984805a31ed99889, type: 3}
+  - m_Start: 157.5
+    m_End: 202.5
+    m_Order: 9
+    m_Sprites:
+    - {fileID: 21300010, guid: f016b0ebfbfbad44984805a31ed99889, type: 3}
+  - m_Start: -157.5
+    m_End: -112.5
+    m_Order: 2
+    m_Sprites:
+    - {fileID: 21300012, guid: f016b0ebfbfbad44984805a31ed99889, type: 3}
+  - m_Start: -112.5
+    m_End: -67.5
+    m_Order: 4
+    m_Sprites:
+    - {fileID: 21300008, guid: f016b0ebfbfbad44984805a31ed99889, type: 3}
+    - {fileID: 0}
+  - m_Start: -67.5
+    m_End: -22.5
+    m_Order: 6
+    m_Sprites:
+    - {fileID: 21300000, guid: f016b0ebfbfbad44984805a31ed99889, type: 3}
+  m_FillTexture: {fileID: 2800000, guid: fe33b0ee0f698a24082b5a7d7eadf20c, type: 3}
+  m_CornerSprites: []
+  m_FillPixelPerUnit: 100
+  m_BevelSize: 0.05
+  m_BevelCutoff: 0
+  m_FillOffset: 0
+  m_WorldSpaceUV: 1
