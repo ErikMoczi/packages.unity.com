@@ -24,3 +24,7 @@ and project files needed to adapt ARCore to the Unity multi-platform AR API.
 ## [1.0.0-preview.9] - 2018-05-09
 ### Fixed
 - Fixed crash when ARCore is not present or otherwise unable to initialize.
+- Add support for availability check and apk install
+
+## [1.0.0-preview.10] - 2018-05-23
+- Change dependency to `ARExtensions` preview.2
