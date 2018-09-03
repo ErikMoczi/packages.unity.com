@@ -1,6 +1,7 @@
 using Unity.Burst.LowLevel;
 using UnityEditor;
 using Unity.Jobs.LowLevel.Unsafe;
+using UnityEngine;
 
 namespace Unity.Burst.Editor
 {
@@ -14,11 +15,6 @@ namespace Unity.Burst.Editor
         private const string BurstInspectorText = "Jobs/Burst Inspector";
         private const string EnableBurstCompilationText = "Jobs/Enable Burst Compilation";
 
-        private static bool IsBurstEnabled()
-        {
-            return BurstCompilerService.IsInitialized && EditorPrefs.GetBool(EnableBurstCompilationText, true);
-        }
-
         [MenuItem(UseBurstText, false)]
         private static void UseBurst()
         {
@@ -28,8 +24,8 @@ namespace Unity.Burst.Editor
         [MenuItem(UseBurstText, true)]
         static bool UseBurstValidate()
         {
-            Menu.SetChecked(UseBurstText, JobsUtility.JobCompilerEnabled && BurstCompilerService.IsInitialized);
-            return IsBurstEnabled();
+            Menu.SetChecked(UseBurstText, BurstCompilerService.IsInitialized && JobsUtility.JobCompilerEnabled);
+            return BurstCompilerService.IsInitialized && BurstEditorOptions.EnableBurstCompilation;
         }
 
         // Add menu named "My Window" to the Window menu

@@ -1,6 +1,6 @@
 {
     "name": "com.unity.burst",
-    "version": "0.2.4-preview.4",
+    "version": "0.2.4-preview.5",
     "unity": "2018.1",
     "dependencies": {
     }

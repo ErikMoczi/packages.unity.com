@@ -16,7 +16,7 @@ namespace Unity.Burst.Editor
         public static bool EnableBurstCompilation
         {
             get { return EditorPrefs.GetBool(EnableBurstCompilationText, true); }
-            set { EditorPrefs.GetBool(EnableBurstCompilationText, value); }
+            set { EditorPrefs.SetBool(EnableBurstCompilationText, value); }
         }
     }
 }

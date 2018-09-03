@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.4-preview.5 (TODO)
+
+- Add support for readonly static fields
+- Add support for stackalloc
+- Fix potential crash on MacOSX when using memset is used indirectly
+- Fix crash when trying to write to a bool1*
+- Fix bug with EnableBurstCompilation checkbox not working in Unity Editor 
+
 ## 0.2.4-preview.4
 
 - Fix an issue on Windows with `DllNotFoundException` occurring when trying to load `burst-llvm.dll` from a user profile containing unicode characters in the folder path

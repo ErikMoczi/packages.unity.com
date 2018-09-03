@@ -44,8 +44,10 @@ namespace Unity.Burst.Editor
         private static readonly string[] CodeGenOptions =
         {
             "auto",
-            "sse2",
-            "sse4",
+            "x86_sse2",
+            "x86_sse4",
+            "x64_sse2",
+            "x64_sse4",
             "avx",
             "avx2",
             "avx512"
@@ -58,7 +60,7 @@ namespace Unity.Burst.Editor
 
         private static string[] _fontSizesText;
 
-        [SerializeField] private int _codeGenOptions = 2;
+        [SerializeField] private int _codeGenOptions = 0;
 
         [SerializeField] private DisassemblyKind _disasmKind = DisassemblyKind.Asm;
 
