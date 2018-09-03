@@ -1,9 +1,13 @@
 # Changelog
 
+## 0.2.4-preview.11
+
+- Fix exception in codegen when accessing readonly static fields from different control flow paths 
+
 ## 0.2.4-preview.10
 
 - Fix a potential stack overflow issue when a generic parameter constraint on a type is also referencing another generic parameter through a generic interface constraint
-- Update to latest Unity.Mathematics `0.0.12-preview.6`:
+- Update to latest Unity.Mathematics:
   - Fix order of parameters and codegen for step functions
 
 ## 0.2.4-preview.9
