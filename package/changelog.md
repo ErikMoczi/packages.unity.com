@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4-preview.19
+
+- Fix compilation error with generics when types are coming from different assemblies
+
 ## 0.2.4-preview.18
 
 - Add support for subtracting pointers
