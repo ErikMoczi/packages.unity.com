@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using UnityEngine.XR.ARExtensions;
+﻿using UnityEngine.XR.ARExtensions;
 using UnityEngine.Experimental.XR;
 
 namespace UnityEngine.XR.ARKit

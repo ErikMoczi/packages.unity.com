@@ -32,3 +32,7 @@ and project files needed to adapt ARKit to the Unity multi-platform AR API.
 
 ## [1.0.0-preview.11] - 2018-06-14
 - Fail the build if Camera Usage Description is blank
+
+## [1.0.0-preview.12] - 2018-06-20
+- Add -fembed-bitcode flag to UnityARKit.a to support archiving.
+- Fail the build if "Symlink Unity libraries" is checked.
