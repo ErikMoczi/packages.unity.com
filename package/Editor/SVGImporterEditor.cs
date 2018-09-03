@@ -13,6 +13,7 @@ using UnityEngine.Experimental.Rendering;
 namespace Unity.VectorGraphics.Editor
 {
     [CustomEditor(typeof(SVGImporter))]
+    [CanEditMultipleObjects]
     internal class SVGImporterEditor : ScriptedImporterEditor
     {
         private enum SettingsType
