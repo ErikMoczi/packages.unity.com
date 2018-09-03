@@ -69,6 +69,9 @@ namespace Unity.CacheServer
             }
         }
 
+        /// <summary>
+        /// Synchronize project library with the configured Cache Server.
+        /// </summary>
         public static void UploadAllFilesToCacheServer()
         {
             string host;
@@ -77,6 +80,11 @@ namespace Unity.CacheServer
             UploadAllFilesToCacheServer(host, port);
         }
 
+        /// <summary>
+        /// Synchronize project library folder with a remote Cache Server.
+        /// </summary>
+        /// <param name="host">Host name or IP or remote Cache Server</param>
+        /// <param name="port">Port number for remote Cache Server</param>
         public static void UploadAllFilesToCacheServer(string host, int port)
         {
             var client = new Client(host, port);
