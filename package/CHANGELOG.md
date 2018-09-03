@@ -1,3 +1,16 @@
+## [1.0.0-preview.15] - 2018-07-18
+
+### Updated CHANGELOG.md
+
+## [1.0.0-preview.14] - 2018-07-17
+
+### Taking pixels-per-unit into account to compute tessellation settings
+### Fixed rgb() color attributes not parsed properly
+### Early exit when trying to tessellate paths without enough segments
+### Fixed viewbox computation that were lost during tessellation
+### Fixed namespace issues with 2018.3+
+### Added QuadraticToCubic helper method
+### Skip stroke tessellation if the width is 0
 
 ## [1.0.0-preview.13] - 2018-06-11
 
