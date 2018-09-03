@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.30] - 2018-6-27
+
+### fix Method measurement
+
 ## [0.1.29] - 2018-6-12
 
 ### Moving back to json in xml due to multiple instabilities

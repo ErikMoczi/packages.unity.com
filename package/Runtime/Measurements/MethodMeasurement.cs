@@ -83,7 +83,7 @@ namespace Unity.PerformanceTesting.Measurements
                 {
                     m_Action.Invoke();
                 }
-                executionTime = (Time.realtimeSinceStartup - executionTime) * 1000f;
+                executionTime = (Time.realtimeSinceStartup - executionTime) * 1000f / iterations;
                 Measure.Custom(m_Definition, Utils.ConvertSample(SampleUnit.Millisecond, m_Definition.SampleUnit, executionTime));
             }
 

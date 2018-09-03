@@ -6,6 +6,7 @@ using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using Unity.PerformanceTesting.Exceptions;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestRunner.NUnitExtensions;
 
@@ -50,13 +51,14 @@ namespace Unity.PerformanceTesting
         internal static void EndTest(Test test)
         {
             if (test.IsSuite) return;
+            if(test.FullName != Active.TestName) return;
             DisposeMeasurements();
             Active.CalculateStatisticalValues();
             Active.EndTime = Utils.DateToInt(DateTime.Now);
             if (OnTestEnded != null) OnTestEnded();
             Active.LogOutput();
             
-            TestContext.Out.Write("##performancetestresult:" + JsonUtility.ToJson(Active));
+            TestContext.Out.WriteLine("##performancetestresult:" + JsonUtility.ToJson(Active));
             Active = null;
         }
 
@@ -66,6 +68,7 @@ namespace Unity.PerformanceTesting
             {
                 Disposables[i].Dispose();
             }
+            Disposables.Clear();
         }
 
         public static SampleGroup GetSampleGroup(SampleGroupDefinition definition)
