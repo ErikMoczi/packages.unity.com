@@ -361,7 +361,7 @@ namespace Unity.Properties.Editor.Serialization.Experimental
             var assembly = GetAssembly(container.NativeType.Assembly.Location);
 
             var module = assembly.Modules.FirstOrDefault(
-                m => m.FullyQualifiedName == container.NativeType.Module.FullyQualifiedName);
+                m => m.FileName == container.NativeType.Module.FullyQualifiedName);
             if (module == null)
             {
                 // It doesn't seem to exist
