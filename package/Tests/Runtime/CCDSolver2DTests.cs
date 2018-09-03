@@ -1,0 +1,180 @@
+using NUnit.Framework;
+using UnityEngine.Experimental.U2D.IK;
+
+namespace UnityEngine.Experimental.U2D.IK.Tests.CCDSolver2DTests
+{
+    public class CCDSolver2DTests
+    {
+        private Vector3Compare vec3Compare = new Vector3Compare();
+        private FloatCompare floatCompare = new FloatCompare();
+
+        private GameObject go;
+        private GameObject targetGO;
+        private GameObject ikGO;
+        private GameObject effectorGO;
+
+        private IKManager2D manager;
+        private CCDSolver2D solver;
+        private IKChain2D chain;
+
+        private const int kIterations = 500;
+
+        [SetUp]
+        public void Setup()
+        {
+            go = new GameObject();
+            var child1GO = new GameObject();
+            child1GO.transform.parent = go.transform;
+
+            var child2GO = new GameObject();
+            child2GO.transform.parent = child1GO.transform;
+
+            var child3GO = new GameObject();
+            child3GO.transform.parent = child2GO.transform;
+
+            targetGO = new GameObject();
+            targetGO.transform.parent = child3GO.transform;
+
+            go.transform.position = Vector3.zero;
+            child1GO.transform.position = new Vector3(1.0f, 0.0f, 0.0f);
+            child2GO.transform.position = new Vector3(3.0f, 0.0f, 0.0f);
+            child3GO.transform.position = new Vector3(6.0f, 0.0f, 0.0f);
+            targetGO.transform.position = new Vector3(10.0f, 0.0f, 0.0f);
+
+            ikGO = new GameObject();
+            manager = ikGO.AddComponent<IKManager2D>();
+            var lsGO = new GameObject();
+            solver = lsGO.AddComponent<CCDSolver2D>();
+            lsGO.transform.parent = ikGO.transform;
+
+            effectorGO = new GameObject();
+            effectorGO.transform.parent = solver.transform;
+
+            chain = solver.GetChain(0);
+            chain.target = targetGO.transform;
+            chain.effector = effectorGO.transform;
+            chain.transformCount = 5;
+
+            solver.Initialize();
+
+            manager.AddSolver(solver);
+        }
+
+        [TearDown]
+        public void Teardown()
+        {
+            UnityEngine.Object.Destroy(go);
+            UnityEngine.Object.Destroy(ikGO);
+        }
+
+        [Test]
+        public void NewSolver_DefaultsAreSet()
+        {
+            Assert.AreEqual(10, solver.iterations);
+            Assert.AreEqual(0.01f, solver.tolerance);
+            Assert.AreEqual(0.5f, solver.velocity);
+        }
+
+        [Test]
+        [TestCase(-1f, 0.001f)]
+        [TestCase(0f, 0.001f)]
+        [TestCase(0.01f, 0.01f)]
+        [TestCase(0.04f, 0.04f)]
+        [TestCase(0.1f, 0.1f)]
+        [TestCase(666f, 666f)]
+        public void SetTolerance_ClampsTolerance(float tolerance, float expected)
+        {
+            solver.tolerance = tolerance;
+            Assert.AreEqual(expected, solver.tolerance);
+        }
+
+        [Test]
+        [TestCase(-1, 1)]
+        [TestCase(1, 1)]
+        [TestCase(4, 4)]
+        [TestCase(50, 50)]
+        [TestCase(666, 666)]
+        public void SetIterations_ClampsIterations(int iterations, int expected)
+        {
+            solver.iterations = iterations;
+            Assert.AreEqual(expected, solver.iterations);
+        }
+
+        [Test]
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(3)]
+        [TestCase(4)]
+        [TestCase(5)]
+        public void SetTransformCount_SetsCorrectRootTransform(int transformCount)
+        {
+            chain.transformCount = transformCount;
+            chain.Initialize();
+
+            Assert.AreEqual(transformCount, chain.transformCount);
+            Assert.AreEqual(transformCount, chain.transforms.Length);
+
+            var tr = targetGO.transform;
+            for (int i = 1; i < transformCount; ++i)
+                tr = tr.parent;
+
+            Assert.AreSame(tr, chain.rootTransform);
+        }
+
+        [Test]
+        [TestCase(0)]
+        [TestCase(2)]
+        [TestCase(6)]
+        [TestCase(666)]
+        public void SetInvalidTarget_SetsNoRootTransform(int transformCount)
+        {
+            chain.target = null;
+            chain.transformCount = transformCount;
+            chain.Initialize();
+
+            Assert.AreEqual(transformCount, chain.transformCount);
+            Assert.AreEqual(null, chain.rootTransform);
+        }
+
+        [Test]
+        [TestCase(0)]
+        [TestCase(6)]
+        [TestCase(666)]
+        public void SetInvalidTransformCount_SetsNoRootTransform(int transformCount)
+        {
+            chain.transformCount = transformCount;
+            chain.Initialize();
+
+            Assert.AreEqual(transformCount, chain.transformCount);
+            Assert.AreEqual(null, chain.rootTransform);
+        }
+
+        [Test]
+        public void TargetIsReachableForChain_EndPointReachesTarget()
+        {
+            var targetPosition = new Vector3(9.0f, 1.0f, 0.0f);
+            solver.iterations = kIterations;
+
+            effectorGO.transform.position = targetPosition;
+
+            manager.UpdateManager();
+
+            Assert.That(targetPosition, Is.EqualTo(chain.target.position).Using(vec3Compare));
+            Assert.That(0.0f, Is.EqualTo((targetPosition - chain.target.position).magnitude).Using(floatCompare));
+        }
+
+        [Test]
+        public void TargetIsLongerThanChain_EndPointIsAtClosestPointToTarget()
+        {
+            var targetPosition = new Vector3(0.0f, 12.0f, 0.0f);
+            solver.iterations = kIterations;
+
+            effectorGO.transform.position = targetPosition;
+
+            manager.UpdateManager();
+
+            Assert.That(targetPosition, Is.Not.EqualTo(chain.target.position).Using(vec3Compare));
+            Assert.That(2.0f, Is.EqualTo((targetPosition - chain.target.position).magnitude).Using(floatCompare));
+        }
+    }
+}

@@ -1,0 +1,12 @@
+{
+    "name": "com.unity.2d.ik.RuntimeTests",
+    "references": [
+        "com.unity.2d.ik.Runtime"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}

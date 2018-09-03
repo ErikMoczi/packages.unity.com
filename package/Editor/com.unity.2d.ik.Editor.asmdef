@@ -1,0 +1,16 @@
+{
+    "name": "com.unity.2d.ik.Editor",
+    "references": [
+        "Unity.InternalAPIEditorBridge.001",
+        "Unity.InternalAPIEngineBridge.001",
+        "com.unity.2d.common.Editor",
+        "com.unity.2d.common.Runtime",
+        "com.unity.2d.animation.Runtime",
+        "com.unity.2d.ik.Runtime"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
