@@ -1,4 +1,5 @@
-﻿#if NET_4_6
+﻿#if (NET_4_6 || NET_STANDARD_2_0)
+
 namespace Unity.Properties
 {
     public interface IVersionStorage
@@ -27,4 +28,6 @@ namespace Unity.Properties
         }
     }
 }
-#endif // NET_4_6
+
+#endif // (NET_4_6 || NET_STANDARD_2_0)
+

@@ -1,4 +1,5 @@
-#if NET_4_6
+#if (NET_4_6 || NET_STANDARD_2_0)
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -130,7 +131,7 @@ namespace Unity.Properties.Editor.Serialization.Experimental
                             case PropertyTypeNode.TypeTag.Unknown:
                             case PropertyTypeNode.TypeTag.List:
                             default:
-                                throw new Exception($"Invalid property tag for list property name {propertyType.Name}");
+                                throw new Exception($"Invalid property tag for list property name {propertyType.PropertyName}");
                         }
                     }
 
@@ -382,8 +383,8 @@ namespace Unity.Properties.Editor.Serialization.Experimental
             }
 
             var containerType = new TypeDefinition(
-                container.Namespace,
-                GetPropertyContainerClassNameForType(module, container.NativeType, container.Name),
+                container.TypePath.Namespace,
+                GetPropertyContainerClassNameForType(module, container.NativeType, container.TypeName),
                 attributes,
                 GetPropertyContainerTypeReference()
             );
@@ -419,7 +420,7 @@ namespace Unity.Properties.Editor.Serialization.Experimental
             // Backing field (should be optional)
 
             var backingField = new FieldDefinition(
-                BackingFieldFromPropertyName(property.Name),
+                BackingFieldFromPropertyName(property.PropertyName),
                 FieldAttributes.Private,
                 type.Module.ImportReference(property.NativeType)
             );
@@ -442,7 +443,7 @@ namespace Unity.Properties.Editor.Serialization.Experimental
             var propertyWrapperType = type.Module.ImportReference(GetPropertyWrapperTypeFor(container, property));
 
             var propertyWrapperField = new FieldDefinition(
-                PropertyWrapperFieldName(property.Name),
+                PropertyWrapperFieldName(property.PropertyName),
                 FieldAttributes.Private | FieldAttributes.Static,
                 propertyWrapperType
             );
@@ -462,7 +463,7 @@ namespace Unity.Properties.Editor.Serialization.Experimental
                         ilProcessor.Append(ilProcessor.Create(OpCodes.Ldarg_0));
                         
                         // #arg 0
-                        ilProcessor.Append(ilProcessor.Create(OpCodes.Ldstr, property.Name));
+                        ilProcessor.Append(ilProcessor.Create(OpCodes.Ldstr, property.PropertyName));
                         
                         // #arg 1 (getter)
                         // #arg 2 (setter)
@@ -482,7 +483,7 @@ namespace Unity.Properties.Editor.Serialization.Experimental
 
             var getPropertyMethod =
                 new MethodDefinition(
-                    "get_" + property.Name,
+                    "get_" + property.PropertyName,
                     MethodAttributes.Public |
                     MethodAttributes.HideBySig |
                     MethodAttributes.SpecialName |
@@ -509,7 +510,7 @@ namespace Unity.Properties.Editor.Serialization.Experimental
 
             //      public List<float> FloatList
             var propertyAccessorForProperty = new PropertyDefinition(
-                property.Name,
+                property.PropertyName,
                 PropertyAttributes.None,
                 type.Module.ImportReference(property.NativeType)
             )
@@ -713,4 +714,4 @@ namespace Unity.Properties.Editor.Serialization.Experimental
     }
 }
 
-#endif // NET_4_6
+#endif // (NET_4_6 || NET_STANDARD_2_0)

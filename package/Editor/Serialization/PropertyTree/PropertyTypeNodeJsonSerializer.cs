@@ -1,4 +1,4 @@
-#if NET_4_6
+#if (NET_4_6 || NET_STANDARD_2_0)
 
 using System;
 using System.Collections;
@@ -14,7 +14,14 @@ namespace Unity.Properties.Editor.Serialization
     {
         public string Json { get; set; } = string.Empty;
 
-        public List<Dictionary<string, object>> SerializedNodes { get; set; } = null;
+        public List<Dictionary<string, object>> SerializedNodes { get; set; }
+
+        public PropertyTypeNodeJsonSerializer(TypeResolver typeResolver)
+        {
+            _typeResolver = typeResolver;
+        }
+
+        private readonly TypeResolver _typeResolver;
 
         public void Serialize(List<PropertyTypeNode> nodes)
         {
@@ -22,7 +29,6 @@ namespace Unity.Properties.Editor.Serialization
             {
                 throw new Exception("Invalid nodes list");
             }
-
             SerializedNodes = nodes.Select(SerializeTypeTreeToJson).ToList();
         }
 
@@ -44,46 +50,55 @@ namespace Unity.Properties.Editor.Serialization
             var d = obj as IDictionary<string, object>;
             if (d != null)
             {
-                definitions.Add(ParseContainer(d));
+                definitions.Add(ParseContainer(d, new ContainerTypeTreePath()));
                 return definitions;
             }
 
             var e = obj as IEnumerable;
             if (e != null)
             {
-                definitions = FromJson(e);
+                definitions = e.OfType<IDictionary<string, object>>().Select(
+                    dj => ParseContainer(dj, new ContainerTypeTreePath())
+                    ).ToList();
             }
             return definitions;
         }
 
-        public static List<PropertyTypeNode> FromJson(string json)
+        public static List<PropertyTypeNode> FromJson(string json, TypeResolver resolver)
         {
-            var serializer = new PropertyTypeNodeJsonSerializer {Json = json};
+            var serializer = new PropertyTypeNodeJsonSerializer(resolver) { Json = json};
             return serializer.Deserialize();
         }
 
-        public static PropertyTypeNode FromJson(IDictionary<string, object> d)
+        public static PropertyTypeNode FromJson(IDictionary<string, object> d, TypeResolver resolver)
         {
-            return ParseContainer(d);
+            return new PropertyTypeNodeJsonSerializer(resolver).ParseContainer(
+                d, new ContainerTypeTreePath());
         }
 
-        public static List<PropertyTypeNode> FromJson(IEnumerable propertyNodes)
+        public static List<PropertyTypeNode> FromJson(IEnumerable propertyNodes, TypeResolver resolver)
         {
             if (propertyNodes == null)
             {
                 throw new Exception("Invalid property node list");
             }
-            return propertyNodes.OfType<IDictionary<string, object>>().Select(dictPropertyNode => ParseContainer(dictPropertyNode)).ToList();
+
+            return propertyNodes.OfType<IDictionary<string, object>>().Select(
+                dictPropertyNode =>
+                    new PropertyTypeNodeJsonSerializer(resolver).ParseContainer(
+                        dictPropertyNode, new ContainerTypeTreePath()
+                    )
+                ).ToList();
         }
 
-        public static string ToJson(List<PropertyTypeNode> nodes)
+        public static string ToJson(List<PropertyTypeNode> nodes, TypeResolver resolver)
         {
-            var serializer = new PropertyTypeNodeJsonSerializer();
+            var serializer = new PropertyTypeNodeJsonSerializer(resolver);
             serializer.Serialize(nodes);
             return Properties.Serialization.Json.SerializeObject(serializer.SerializedNodes);
         }
 
-        public static Dictionary<string, object> SerializeTypeTreeToJson(PropertyTypeNode node)
+        private static Dictionary<string, object> SerializeTypeTreeToJson(PropertyTypeNode node)
         {
             var o = new List<Dictionary<string, object>>();
 
@@ -99,50 +114,21 @@ namespace Unity.Properties.Editor.Serialization
             return serializedContainer;
         }
 
-        private static readonly Dictionary<string, PropertyTypeNode.TypeTag> TypeQualiersMap =
-            new Dictionary<string, PropertyTypeNode.TypeTag>()
-            {
-                {"enum", PropertyTypeNode.TypeTag.Enum},
-                {"class", PropertyTypeNode.TypeTag.Class},
-                {"struct", PropertyTypeNode.TypeTag.Struct},
-            };
-
-        private static void FetchTagAndTypeNameFromFullyQualifiedName(
-            string fullyQualifiedPropertyTypeName,
-            out string propertyTypeName,
-            out PropertyTypeNode.TypeTag typeTag,
-            PropertyTypeNode.TypeTag defaultTypeTag)
+        private PropertyTypeNode.TypeTag GetTypeTagFromPropertyName(
+            string propertyTypeName,
+            ContainerTypeTreePath context,
+            PropertyTypeNode.TypeTag defaultTypeTag = PropertyTypeNode.TypeTag.Class)
         {
-            if (fullyQualifiedPropertyTypeName.ToLower() == "list")
+            var propertyTypeTag = defaultTypeTag;
+            if (TypeResolver.IsPrimitiveType(propertyTypeName))
             {
-                typeTag = PropertyTypeNode.TypeTag.List;
-                propertyTypeName = "List";
-                return;
+                propertyTypeTag = PropertyTypeNode.TypeTag.Primitive;
             }
-
-            var propertyTypeTokens = fullyQualifiedPropertyTypeName.Split(' ');
-
-            bool isCompound = propertyTypeTokens.Length > 1;
-
-            propertyTypeName = string.Empty;
-
-            typeTag = defaultTypeTag;
-
-            if (isCompound)
+            else if (_typeResolver != null)
             {
-                var qualifier = propertyTypeTokens[0];
-                if (!TypeQualiersMap.ContainsKey(qualifier))
-                {
-                    throw new Exception($"Invalid type qualifier '{qualifier}'");
-                }
-
-                typeTag = TypeQualiersMap[propertyTypeTokens[0]];
-                propertyTypeName = propertyTypeTokens[1];
+                propertyTypeTag = _typeResolver.Resolve(context, propertyTypeName);
             }
-            else
-            {
-                propertyTypeName = fullyQualifiedPropertyTypeName;
-            }
+            return propertyTypeTag;
         }
 
         private static string SafeGetKeyValue(IDictionary<string, object> d, string k)
@@ -150,26 +136,19 @@ namespace Unity.Properties.Editor.Serialization
             return d.ContainsKey(k) ? d[k].ToString() : string.Empty;
         }
 
-        private static PropertyTypeNode ParseProperty(
+        private PropertyTypeNode ParseProperty(
             string propertyName,
-            IDictionary<string, object> rawProperty)
+            IDictionary<string, object> rawProperty,
+            ContainerTypeTreePath context)
         {
-            if (!rawProperty.ContainsKey(JsonSchema.Keys.PropertyTypeKey))
+            if ( ! rawProperty.ContainsKey(JsonSchema.Keys.PropertyTypeKey))
+            {
                 return null;
+            }
 
-            var propertyQualifiedTypeName = SafeGetKeyValue(rawProperty, JsonSchema.Keys.PropertyTypeKey);
+            var propertyTypeName = SafeGetKeyValue(rawProperty, JsonSchema.Keys.PropertyTypeKey);
 
-            string propertyTypeName;
-            PropertyTypeNode.TypeTag propertyTypeTag;
-
-            FetchTagAndTypeNameFromFullyQualifiedName(
-                propertyQualifiedTypeName,
-                out propertyTypeName,
-                out propertyTypeTag,
-                PropertyTypeNode.TypeTag.Primitive);
-
-            var defaultValue = SafeGetKeyValue(rawProperty, JsonSchema.Keys.PropertyDefaultValueKey);
-            var propertyItemType = SafeGetKeyValue(rawProperty, JsonSchema.Keys.PropertyItemTypeKey);
+            var propertyTypeTag = GetTypeTagFromPropertyName(propertyTypeName, context);
 
             bool isPublicProperty;
             if (!bool.TryParse(
@@ -178,6 +157,9 @@ namespace Unity.Properties.Editor.Serialization
             {
                 isPublicProperty = PropertyTypeNode.Defaults.IsPublicProperty;
             }
+
+            var defaultValue = SafeGetKeyValue(rawProperty, JsonSchema.Keys.PropertyDefaultValueKey);
+            var propertyItemTypeName = SafeGetKeyValue(rawProperty, JsonSchema.Keys.PropertyItemTypeKey);
 
             var propertyBackingAccessor = SafeGetKeyValue(rawProperty, JsonSchema.Keys.PropertyDelegateMemberToKey);
 
@@ -190,29 +172,19 @@ namespace Unity.Properties.Editor.Serialization
             }
 
             if (propertyTypeTag == PropertyTypeNode.TypeTag.List &&
-                string.IsNullOrEmpty(propertyItemType))
+                string.IsNullOrEmpty(propertyItemTypeName))
             {
                 throw new Exception($"Property {propertyName} has 'list' type but not item type specifier");
             }
 
-            // @TODO too simple should support recursive typedefs
-
             PropertyTypeNode subPropertyItem = null;
-            if (!string.IsNullOrEmpty(propertyItemType))
+            if ( !string.IsNullOrEmpty(propertyItemTypeName))
             {
-                PropertyTypeNode.TypeTag listItemTypeTag;
-                string listItemTypeName;
-
-                FetchTagAndTypeNameFromFullyQualifiedName(
-                    propertyItemType,
-                    out listItemTypeName,
-                    out listItemTypeTag,
-                    PropertyTypeNode.TypeTag.Primitive);
-
-                subPropertyItem = new PropertyTypeNode()
+                subPropertyItem = new PropertyTypeNode
                 {
-                    TypeName = listItemTypeName,
-                    Tag = listItemTypeTag
+                    TypeName = propertyItemTypeName,
+                    Tag = GetTypeTagFromPropertyName(propertyItemTypeName, context, PropertyTypeNode.TypeTag.Primitive),
+                    NativeType = TryExtractPropertyNativeType(propertyItemTypeName)
                 };
             }
 
@@ -221,12 +193,20 @@ namespace Unity.Properties.Editor.Serialization
                 SafeGetKeyValue(rawProperty, JsonSchema.Keys.IsCustomPropertyKey),
                 out isCustomProperty))
             {
-                isCustomProperty = false;
+                isCustomProperty = PropertyTypeNode.Defaults.IsCustomProperty;
+            }
+            
+            bool dontInitializeBackingField;
+            if (!bool.TryParse(
+                SafeGetKeyValue(rawProperty, JsonSchema.Keys.DontInitializeBackingFieldKey),
+                out dontInitializeBackingField))
+            {
+                dontInitializeBackingField = PropertyTypeNode.Defaults.DontInitializeBackingField;
             }
 
-            return new PropertyTypeNode()
+            return new PropertyTypeNode
             {
-                Name = propertyName,
+                PropertyName = propertyName,
                 TypeName = propertyTypeName,
                 Tag = propertyTypeTag,
                 DefaultValue = defaultValue,
@@ -234,12 +214,14 @@ namespace Unity.Properties.Editor.Serialization
                 Of = subPropertyItem,
                 IsReadonly = isReadonlyProperty,
                 IsPublicProperty = isPublicProperty,
-                IsCustomProperty = isCustomProperty
+                IsCustomProperty = isCustomProperty,
+                NativeType = TryExtractPropertyNativeType(propertyTypeName),
+                DontInitializeBackingField = dontInitializeBackingField
             };
         }
 
-        private static List<PropertyTypeNode> ParseProperties(
-            string containerTypeName, IDictionary<string, object> d)
+        private List<PropertyTypeNode> ParseProperties(
+            IDictionary<string, object> d, ContainerTypeTreePath context)
         {
             var properties = new List<PropertyTypeNode>();
             if (d != null && d.ContainsKey(JsonSchema.Keys.PropertiesListKey))
@@ -257,7 +239,7 @@ namespace Unity.Properties.Editor.Serialization
                     if (property == null)
                     {
                         throw new Exception(
-                            $"Invalid property description found (expecting a JSON dictionary) for container {containerTypeName}.");
+                            $"Invalid property description found (expecting a JSON dictionary) for container {context.FullPath}.");
                     }
 
                     var propertyName = property[JsonSchema.Keys.PropertyNameKey] as string;
@@ -265,23 +247,42 @@ namespace Unity.Properties.Editor.Serialization
                     if (string.IsNullOrEmpty(propertyName))
                     {
                         throw new Exception(
-                            $"Invalid property name (empty) found in container {containerTypeName}.");
+                            $"Invalid property name (empty) found in container {context.FullPath}.");
                     }
 
-                    properties.Add(ParseProperty(propertyName, property));
+                    properties.Add(ParseProperty(propertyName, property, context));
                 }
             }
 
             return properties;
         }
 
-        private static PropertyTypeNode ParseContainer(
-            IDictionary<string, object> t)
+        private Type TryExtractPropertyNativeType(string typeName)
+        {
+            if (string.IsNullOrEmpty(typeName) || _typeResolver == null)
+            {
+                return null;
+            }
+            return _typeResolver.ResolveType(typeName);
+        }
+
+        private PropertyTypeNode ParseContainer(
+            IDictionary<string, object> t,
+            ContainerTypeTreePath context,
+            bool ignoreNamespace = false)
         {
             var containerTypeName = SafeGetKeyValue(t, JsonSchema.Keys.ContainerNameKey);
 
-            var nameSpace =
-                SafeGetKeyValue(t, JsonSchema.Keys.NamespaceKey);
+            if (string.IsNullOrWhiteSpace(containerTypeName))
+            {
+                throw new Exception(
+                    $"Invalid container type (empty) while parsing json (path: '{context.FullPath}')");
+            }
+
+            if ( ! ignoreNamespace)
+            {
+                context.Namespace = SafeGetKeyValue(t, JsonSchema.Keys.NamespaceKey);
+            }
 
             var generatedUserHooks =
                 SafeGetKeyValue(t, JsonSchema.Keys.GeneratedUserHooksKey);
@@ -289,14 +290,8 @@ namespace Unity.Properties.Editor.Serialization
             var overrideDefaultBaseClass =
                 SafeGetKeyValue(t, JsonSchema.Keys.OverrideDefaultBaseClassKey);
 
-            var containerTypeTag = PropertyTypeNode.TypeTag.Class;
-            if (SafeGetKeyValue(t, JsonSchema.Keys.ContainerIsStructKey).ToLower() == "true")
-            {
-                containerTypeTag = PropertyTypeNode.TypeTag.Struct;
-            }
-
             bool isAbstractClass;
-            if (!Boolean.TryParse(
+            if (!bool.TryParse(
                 SafeGetKeyValue(t, JsonSchema.Keys.IsAbstractClassKey),
                 out isAbstractClass))
             {
@@ -304,29 +299,29 @@ namespace Unity.Properties.Editor.Serialization
             }
 
             bool noDefaultImplementation;
-            if (!Boolean.TryParse(
+            if (!bool.TryParse(
                 SafeGetKeyValue(t, JsonSchema.Keys.NoDefaultImplementationKey),
                 out noDefaultImplementation))
             {
                 noDefaultImplementation = PropertyTypeNode.Defaults.NoDefaultImplementation;
             }
-
+            
             var n = new PropertyTypeNode
             {
-                Namespace = nameSpace,
-                Name = containerTypeName,
+                TypePath = new ContainerTypeTreePath(context),
                 TypeName = containerTypeName,
-                Tag = containerTypeTag,
-                UserHooks = Serialization.UserHooks.From(generatedUserHooks),
+                Tag = GetTypeTagFromPropertyName(containerTypeName, context),
+                UserHooks = UserHooks.From(generatedUserHooks),
                 OverrideDefaultBaseClass = overrideDefaultBaseClass,
                 IsAbstractClass = isAbstractClass,
-                Properties = ParseProperties(containerTypeName, t),
-                NoDefaultImplementation = noDefaultImplementation
+                Properties = ParseProperties(t, context),
+                NativeType = TryExtractPropertyNativeType(containerTypeName),
+                NoDefaultImplementation = noDefaultImplementation,
             };
 
-            if (t.ContainsKey(JsonSchema.Keys.ConstructedFromeKey))
+            if (t.ContainsKey(JsonSchema.Keys.ConstructedFromKey))
             {
-                var constructorParams = t[JsonSchema.Keys.ConstructedFromeKey] as IEnumerable;
+                var constructorParams = t[JsonSchema.Keys.ConstructedFromKey] as IEnumerable;
 
                 var paramTypes = new List<KeyValuePair<string, string>>();
 
@@ -348,36 +343,38 @@ namespace Unity.Properties.Editor.Serialization
                 n.Constructor.ParameterTypes = paramTypes;
             }
 
-            if (t.ContainsKey(JsonSchema.Keys.NestedTypesKey))
+            if ( ! t.ContainsKey(JsonSchema.Keys.NestedTypesKey) ||
+                 ! (t[JsonSchema.Keys.NestedTypesKey] is IEnumerable))
             {
-                var nestedContainers = t[JsonSchema.Keys.NestedTypesKey] as IEnumerable;
-                if (nestedContainers != null)
-                {
-                    foreach (var nestedContainerEnumerable in nestedContainers)
-                    {
-                        var nestedContainer = nestedContainerEnumerable as IDictionary<string, object>;
-                        if (nestedContainer != null)
-                            n.NestedContainers.Add(ParseContainer(nestedContainer));
-                    }
-                }
+                return n;
             }
+
+            var nestedContainers = (IEnumerable) t[JsonSchema.Keys.NestedTypesKey];
+
+            context.TypePath.Push(containerTypeName);
+
+            foreach (var nestedContainerEnumerable in nestedContainers)
+            {
+                var nestedContainer = nestedContainerEnumerable as IDictionary<string, object>;
+                if (nestedContainer == null)
+                {
+                    continue;
+                }
+
+                n.NestedContainers.Add(
+                    ParseContainer(
+                        nestedContainer,
+                        context,
+                        true
+                        )
+                    );
+            }
+
+            context.TypePath.Pop();
 
             return n;
         }
-
-        private static string PropertyTypeNameFrom(PropertyTypeNode.TypeTag tag, string typeName)
-        {
-            switch (tag)
-            {
-                case PropertyTypeNode.TypeTag.Struct:
-                    return $"struct {typeName}";
-                case PropertyTypeNode.TypeTag.Class:
-                    return $"class {typeName}";
-            }
-
-            return typeName;
-        }
-
+        
         private static List<object>
             SerializePropertyFieldsForType(PropertyTypeNode type)
         {
@@ -388,15 +385,13 @@ namespace Unity.Properties.Editor.Serialization
                 var propertyFielsMap =
                     new Dictionary<string, object>
                     {
-                        [JsonSchema.Keys.PropertyNameKey] = property.Name,
-                        [JsonSchema.Keys.PropertyTypeKey] = PropertyTypeNameFrom(property.Tag, property.TypeName)
+                        [JsonSchema.Keys.PropertyNameKey] = property.PropertyName,
+                        [JsonSchema.Keys.PropertyTypeKey] = property.TypeName
                     };
 
                 if (property.Of != null)
                 {
-                    propertyFielsMap[JsonSchema.Keys.PropertyItemTypeKey] =
-                        PropertyTypeNameFrom(
-                            property.Of.Tag, property.Of.TypeName);
+                    propertyFielsMap[JsonSchema.Keys.PropertyItemTypeKey] = property.Of != null ? property.Of.TypeName : string.Empty;
                 }
 
                 if (property.IsReadonly != PropertyTypeNode.Defaults.IsReadonly)
@@ -414,9 +409,13 @@ namespace Unity.Properties.Editor.Serialization
                     propertyFielsMap[JsonSchema.Keys.PropertyIsPublicKey] = property.IsPublicProperty;
                 }
 
+                if (property.DontInitializeBackingField != PropertyTypeNode.Defaults.DontInitializeBackingField)
+                {
+                    propertyFielsMap[JsonSchema.Keys.DontInitializeBackingFieldKey] = property.DontInitializeBackingField;
+                }
+
                 properties.Add(propertyFielsMap);
             }
-
             return properties;
         }
 
@@ -425,14 +424,14 @@ namespace Unity.Properties.Editor.Serialization
         {
             var serializedContainer = new Dictionary<string, object>
             {
-                [JsonSchema.Keys.ContainerNameKey] = type.Name,
+                [JsonSchema.Keys.ContainerNameKey] = type.TypeName,
                 [JsonSchema.Keys.ContainerIsStructKey] = type.Tag == PropertyTypeNode.TypeTag.Struct,
                 [JsonSchema.Keys.PropertiesListKey] = SerializePropertyFieldsForType(type)
             };
 
-            if (!string.IsNullOrEmpty(type.Namespace))
+            if (!string.IsNullOrEmpty(type.TypePath.Namespace))
             {
-                serializedContainer[JsonSchema.Keys.NamespaceKey] = type.Namespace;
+                serializedContainer[JsonSchema.Keys.NamespaceKey] = type.TypePath.Namespace;
             }
 
             if (type.IsAbstractClass != PropertyTypeNode.Defaults.IsAbstractClass)
@@ -461,4 +460,4 @@ namespace Unity.Properties.Editor.Serialization
     }
 }
 
-#endif // NET_4_6
+#endif // (NET_4_6 || NET_STANDARD_2_0)

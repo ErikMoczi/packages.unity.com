@@ -1,10 +1,10 @@
-﻿#if NET_4_6
+﻿#if (NET_4_6 || NET_STANDARD_2_0)
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Collections;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+
 using Unity.Properties.Serialization;
 
 namespace Unity.Properties.Editor.Serialization
@@ -15,10 +15,10 @@ namespace Unity.Properties.Editor.Serialization
         {
             public Dictionary<string, object> Schema { get; set; } = new Dictionary<string, object>();
 
-            public ContainerBuilder(string name, string qualifier = "class")
+            public ContainerBuilder(string name, bool isStruct = false)
             {
-                Schema[JsonSchema.Keys.ContainerNameKey] = name;
-                Schema[JsonSchema.Keys.ContainerIsStructKey] = qualifier == "struct";
+                Schema[JsonSchema.Keys.ContainerNameKey] = $"{name}".Trim();
+                Schema[JsonSchema.Keys.ContainerIsStructKey] = isStruct;
             }
 
             public string ToJson()
@@ -34,7 +34,8 @@ namespace Unity.Properties.Editor.Serialization
                 string backingField = "",
                 bool isReadonly = false,
                 bool isPublic = false,
-                bool isCustom = false)
+                bool isCustom = false,
+                bool dontInitializeBackingField = false)
             {
                 CreatePropertiesFieldIfNecessary();
 
@@ -48,8 +49,9 @@ namespace Unity.Properties.Editor.Serialization
                         [JsonSchema.Keys.PropertyDelegateMemberToKey] = backingField,
                         [JsonSchema.Keys.IsReadonlyPropertyKey] = isReadonly,
                         [JsonSchema.Keys.PropertyIsPublicKey] = isPublic,
-                        [JsonSchema.Keys.IsCustomPropertyKey] = isCustom
-                }
+                        [JsonSchema.Keys.IsCustomPropertyKey] = isCustom,
+                        [JsonSchema.Keys.DontInitializeBackingFieldKey] = dontInitializeBackingField
+                    }
                 );
 
                 return this;
@@ -164,6 +166,12 @@ namespace Unity.Properties.Editor.Serialization
             return this;
         }
 
+        public JsonSchemaBuilder WithRequiredAssemblies(List<string> assemblyReferences)
+        {
+            Schema[JsonSchema.Keys.RequiredAssembliesKey] = assemblyReferences;
+            return this;
+        }
+
         public JsonSchemaBuilder WithContainer(ContainerBuilder containerBuilder)
         {
             if ( ! Schema.ContainsKey(JsonSchema.Keys.TypesKey))
@@ -179,4 +187,4 @@ namespace Unity.Properties.Editor.Serialization
     }
 }
 
-#endif
+#endif // (NET_4_6 || NET_STANDARD_2_0)

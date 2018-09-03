@@ -1,4 +1,4 @@
-﻿#if NET_4_6
+﻿#if USE_ROSLYN_API && (NET_4_6 || NET_STANDARD_2_0)
 
 using System;
 using System.Collections.Generic;
@@ -129,7 +129,8 @@ namespace Unity.Properties.Tests.JSonSchema
         public void WhenEmptyStringForSchema_CSharpCodeGen_ReturnsAnEmptyContainerList()
         {
             var backend = new CSharpGenerationBackend();
-            var result = PropertyTypeNodeJsonSerializer.FromJson(string.Empty);
+            var result = PropertyTypeNodeJsonSerializer.FromJson(
+                string.Empty, new TypeResolver());
             backend.Generate(result);
             var code = backend.Code;
             Assert.Zero(code.Length);
@@ -161,28 +162,51 @@ namespace Unity.Properties.Tests.JSonSchema
         public string TestPropertyFieldTypeGeneration(
             string containerType, string qualifiedPropertyType)
         {
+            var isCompound = qualifiedPropertyType.Split(' ').Length > 1;
+
+            var propertyTypeName = qualifiedPropertyType;
+            var propertyTypeKind = string.Empty;
+
+            if (isCompound)
+            {
+                var names = qualifiedPropertyType.Split(' ');
+                propertyTypeKind = names[0];
+                propertyTypeName = names[1];
+            }
+
             var backend = new CSharpGenerationBackend();
 
             var text = new JsonSchemaBuilder()
-                .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", containerType)
-                        .WithProperty("Data", qualifiedPropertyType)
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", containerType == "struct")
+                        .WithProperty("Data", propertyTypeName)
                 )
                 .ToJson();
 
-            var result = JsonSchema.FromJson(text);
+            Dictionary<string, PropertyTypeNode.TypeTag> injectedBuiltinTypes = null;
+            if (isCompound)
+            {
+                var tag = propertyTypeKind == "class"
+                    ? PropertyTypeNode.TypeTag.Class
+                    : PropertyTypeNode.TypeTag.Struct;
+                injectedBuiltinTypes = new Dictionary<string, PropertyTypeNode.TypeTag> { { propertyTypeName, tag } };
+            }
+
+            var result = JsonSchema.FromJson(
+                text, injectedBuiltinTypes
+            );
+
             backend.Generate(result.PropertyTypeNodes);
+
             var code = backend.Code;
             Assert.NotZero(code.Length);
 
             // Inject value/class types
 
-            bool isCompound = qualifiedPropertyType.Split(' ').Length > 1;
             if (isCompound)
             {
                 code += $@"
-                    public {qualifiedPropertyType.Split(' ')[0]} {qualifiedPropertyType.Split(' ')[1]} : IPropertyContainer
+                    public {propertyTypeKind} {propertyTypeName} : IPropertyContainer
                     {{
                         public IVersionStorage VersionStorage {{ get; }}
                         public IPropertyBag PropertyBag {{ get; }}
@@ -208,33 +232,57 @@ namespace Unity.Properties.Tests.JSonSchema
         [TestCase("class", "int", ExpectedResult = "ListProperty<HelloWorld, List<int>, int>")]
         [TestCase("struct", "int", ExpectedResult = "StructListProperty<HelloWorld, List<int>, int>")]
         [TestCase("class", "class Foo", ExpectedResult = "ContainerListProperty<HelloWorld, List<Foo>, Foo>")]
-        [TestCase("struct", "class Foo", ExpectedResult = "StructContainerListProperty<HelloWorld, List<Foo>, Foo>")]
-        [TestCase("class", "struct Foo", ExpectedResult = "MutableContainerListProperty<HelloWorld, List<Foo>, Foo>")]
+        [TestCase("struct", "struct Foo", ExpectedResult = "StructMutableContainerListProperty<HelloWorld, List<Foo>, Foo>")]
+        [TestCase("class", "class Foo", ExpectedResult = "ContainerListProperty<HelloWorld, List<Foo>, Foo>")]
         [TestCase("struct", "struct Foo", ExpectedResult = "StructMutableContainerListProperty<HelloWorld, List<Foo>, Foo>")]
         public string TestListPropertyFieldTypeGeneration(
             string containerType, string qualifiedPropertyType)
         {
+            var isCompound = qualifiedPropertyType.Split(' ').Length > 1;
+
+            var propertyTypeName = qualifiedPropertyType;
+            var propertyTypeKind = string.Empty;
+
+            if (isCompound)
+            {
+                var names = qualifiedPropertyType.Split(' ');
+                propertyTypeKind = names[0];
+                propertyTypeName = names[1];
+            }
+
             var backend = new CSharpGenerationBackend();
 
             var text = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", containerType)
-                        .WithProperty("Data", "list", "", qualifiedPropertyType)
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", containerType == "struct")
+                        .WithProperty("Data", "list", "", propertyTypeName)
                 )
                 .ToJson();
 
-            var result = JsonSchema.FromJson(text);
+            Dictionary<string, PropertyTypeNode.TypeTag> injectedBuiltinTypes = null;
+            if (isCompound)
+            {
+                var tag = propertyTypeKind == "class"
+                    ? PropertyTypeNode.TypeTag.Class
+                    : PropertyTypeNode.TypeTag.Struct;
+                injectedBuiltinTypes = new Dictionary<string, PropertyTypeNode.TypeTag> {{ propertyTypeName, tag } };
+            }
+
+            var result = JsonSchema.FromJson(
+                text, injectedBuiltinTypes
+                );
+
             backend.Generate(result.PropertyTypeNodes);
+
             var code = backend.Code;
             Assert.NotZero(code.Length);
 
             // Inject value/class types
-            bool isCompound = qualifiedPropertyType.Split(' ').Length > 1;
             if (isCompound)
             {
                 code += $@"
-                    public {qualifiedPropertyType.Split(' ')[0]} {qualifiedPropertyType.Split(' ')[1]} : IPropertyContainer
+                    public {propertyTypeKind} {propertyTypeName} : IPropertyContainer
                     {{
                         public IVersionStorage VersionStorage {{ get; }}
                         public IPropertyBag PropertyBag {{ get; }}
@@ -269,13 +317,21 @@ namespace Unity.Properties.Tests.JSonSchema
             var text = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", containerType)
-                        .WithProperty("Data", isList ? "list" : "enum Foo", "", "enum Foo")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", containerType == "struct")
+                        .WithProperty("Data", isList ? "list" : "Foo", "", "Foo")
                 )
                 .ToJson();
-            
-            var result = JsonSchema.FromJson(text);
+
+            Dictionary<string, PropertyTypeNode.TypeTag> injectedBuiltinTypes =
+                new Dictionary<string, PropertyTypeNode.TypeTag>
+                {
+                    { "Foo", PropertyTypeNode.TypeTag.Enum }
+                };
+
+            var result = JsonSchema.FromJson(text, injectedBuiltinTypes);
+
             backend.Generate(result.PropertyTypeNodes);
+
             var code = backend.Code;
             Assert.NotZero(code.Length);
 
@@ -309,14 +365,20 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
                         .WithProperty("Data", "int", "5")
                         .WithProperty("Floats", "List", "", "float")
-                        .WithProperty("MyStruct", "struct SomeData")
+                        .WithProperty("MyStruct", "SomeData")
                 )
                 .ToJson();
 
-            var result = JsonSchema.FromJson(json);
+            Dictionary<string, PropertyTypeNode.TypeTag> injectedBuiltinTypes =
+                new Dictionary<string, PropertyTypeNode.TypeTag>
+                {
+                    { "SomeData", PropertyTypeNode.TypeTag.Struct }
+                };
+
+            var result = JsonSchema.FromJson(json, injectedBuiltinTypes);
 
             backend.Generate(result.PropertyTypeNodes);
             var code = backend.Code;
@@ -351,13 +413,13 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
                         .WithProperty("Data", "int", "5")
                         .WithProperty("Floats", "List", "", "float")
                         .WithBaseClassOverriden("Foo")
                 )
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("Foo", "class")
+                    new JsonSchemaBuilder.ContainerBuilder("Foo")
                         .WithProperty("FooData", "int", "5")
                         .WithProperty("FooFloats", "List", "", "float")
                 )
@@ -429,15 +491,15 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
                         .WithProperty("Data", "int", "5")
                         .WithProperty("Floats", "List", "", "float")
                         .WithNestedContainer(
-                            new JsonSchemaBuilder.ContainerBuilder("Foo", "class")
+                            new JsonSchemaBuilder.ContainerBuilder("Foo")
                                 .WithProperty("Data", "int", "5")
                                 .WithProperty("Floats", "List", "", "float")
                                 .WithNestedContainer(
-                                    new JsonSchemaBuilder.ContainerBuilder("Bar", "class")
+                                    new JsonSchemaBuilder.ContainerBuilder("Bar")
                                         .WithProperty("Data", "int", "5")
                                         .WithProperty("Floats", "List", "", "float")
                                 )
@@ -481,15 +543,15 @@ namespace Unity.Properties.Tests.JSonSchema
 
             var json = new JsonSchemaBuilder()
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
                         .WithNamespace("Unity.Properties.Samples")
                         .WithProperty("Data", "int", "5")
                         .WithNestedContainer(
-                            new JsonSchemaBuilder.ContainerBuilder("Foo", "class")
+                            new JsonSchemaBuilder.ContainerBuilder("Foo")
                                 .WithNamespace("Unity.Properties.Samples")
                                 .WithProperty("Data", "int", "5")
                                 .WithNestedContainer(
-                                    new JsonSchemaBuilder.ContainerBuilder("Bar", "class")
+                                    new JsonSchemaBuilder.ContainerBuilder("Bar")
                                         .WithNamespace("Unity.Properties.Samples")
                                         .WithProperty("Data", "int", "5")
                                 )
@@ -518,8 +580,8 @@ namespace Unity.Properties.Tests.JSonSchema
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
                     new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
-                        .WithProperty("Data", "int", "5", "", "backing")
-                        .WithProperty("Floats", "List", "", "float", "backing")
+                        .WithProperty("Data", "int", "5", "", "m_BackingData")
+                        .WithProperty("Floats", "List", "", "float", "m_BackingFloats")
                 )
                 .ToJson();
 
@@ -531,8 +593,9 @@ namespace Unity.Properties.Tests.JSonSchema
 
             Assert.IsFalse(code.Contains("m_Data"));
             Assert.IsFalse(code.Contains("m_Floats"));
-            Assert.IsTrue(code.Contains(".backing"));
-            Assert.IsTrue(code.Contains(".backing"));
+
+            Assert.IsTrue(code.Contains(".m_BackingData"));
+            Assert.IsTrue(code.Contains(".m_BackingFloats"));
 
             // Inject value/class types
             code += @"
@@ -540,12 +603,8 @@ namespace Unity.Properties.Tests.JSonSchema
                 {
                 public partial class HelloWorld
                 {
-                    public class Backing
-                    {
-                        public int Data;
-                        public List<float> Floats = new List<float>();
-                    }
-                    public Backing backing { get; } = new Backing();
+                    public int m_BackingData;
+                    public List<float> m_BackingFloats = new List<float>();
                 };
                 }
             ";
@@ -599,7 +658,7 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
                         .WithEmptyPropertiesList()
                 )
                 .ToJson();
@@ -631,13 +690,20 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "")
-                        .WithProperty("Data", "struct Foo")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
+                        .WithProperty("Data", "Foo")
                         .WithProperty("Foo", "int")
                 )
                 .ToJson();
 
-            var result = JsonSchema.FromJson(json);
+            Dictionary<string, PropertyTypeNode.TypeTag> injectedBuiltinTypes =
+                new Dictionary<string, PropertyTypeNode.TypeTag>
+                {
+                    { "Foo", PropertyTypeNode.TypeTag.Struct }
+                };
+
+            var result = JsonSchema.FromJson(json, injectedBuiltinTypes);
+
             backend.Generate(result.PropertyTypeNodes);
 
             var code = backend.Code;
@@ -688,7 +754,7 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", true)
                         .WithEmptyPropertiesList()
                 )
                 .ToJson();
@@ -712,12 +778,18 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
-                        .WithProperty("Data", "struct Foo")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", true)
+                        .WithProperty("Data", "Foo")
                 )
                 .ToJson();
 
-            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+            Dictionary<string, PropertyTypeNode.TypeTag> injectedBuiltinTypes =
+                new Dictionary<string, PropertyTypeNode.TypeTag>
+                {
+                    { "Foo", PropertyTypeNode.TypeTag.Struct }
+                };
+
+            backend.Generate(JsonSchema.FromJson(json, injectedBuiltinTypes).PropertyTypeNodes);
 
             var code = backend.Code;
             Assert.NotZero(code.Length);
@@ -732,12 +804,18 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
-                        .WithProperty("Data", "struct Foo")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
+                        .WithProperty("Data", "Foo")
                 )
                 .ToJson();
-            
-            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+
+            var injectedBuiltinTypes =
+                new Dictionary<string, PropertyTypeNode.TypeTag>
+                {
+                    { "Foo", PropertyTypeNode.TypeTag.Struct }
+                };
+
+            backend.Generate(JsonSchema.FromJson(json, injectedBuiltinTypes).PropertyTypeNodes);
 
             var code = backend.Code;
             Assert.NotZero(code.Length);
@@ -752,12 +830,17 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
-                        .WithProperty("Data", "struct Foo")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", true)
+                        .WithProperty("Data", "Foo")
                 )
                 .ToJson();
 
-            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+            var injectedBuiltinTypes =
+                new Dictionary<string, PropertyTypeNode.TypeTag>
+                {
+                    { "Foo", PropertyTypeNode.TypeTag.Struct }
+                };
+            backend.Generate(JsonSchema.FromJson(json, injectedBuiltinTypes).PropertyTypeNodes);
 
             var code = backend.Code;
             Assert.NotZero(code.Length);
@@ -772,12 +855,17 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
-                        .WithProperty("Data", "struct Foo")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
+                        .WithProperty("Data", "Foo")
                 )
                 .ToJson();
-            
-            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+
+            var injectedBuiltinTypes =
+                new Dictionary<string, PropertyTypeNode.TypeTag>
+                {
+                    { "Foo", PropertyTypeNode.TypeTag.Struct }
+                };
+            backend.Generate(JsonSchema.FromJson(json, injectedBuiltinTypes).PropertyTypeNodes);
 
             var code = backend.Code;
             Assert.NotZero(code.Length);
@@ -792,7 +880,7 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
                         .WithProperty("Data", "int")
                 )
                 .ToJson();
@@ -805,7 +893,6 @@ namespace Unity.Properties.Tests.JSonSchema
             Assert.IsTrue(code.Contains("SetValue(this"));
         }
 
-        [Test]
         public void WhenIsClassProperty_CSharpCodeGen_DelegatesDefaultValueBackingFieldConstruction()
         {
             var backend = new CSharpGenerationBackend();
@@ -813,7 +900,7 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
                         .WithProperty("Data", "int", "5")
                         .WithProperty("Ints", "List", "", "float")
                 )
@@ -823,22 +910,24 @@ namespace Unity.Properties.Tests.JSonSchema
 
             var code = backend.Code;
             Assert.NotZero(code.Length);
-            Assert.IsTrue(code.Contains("int m_Data;"));
-            Assert.IsTrue(code.Contains("m_Data = 5;"));
-            Assert.IsTrue(code.Contains("m_Ints = new List<float> {};"));
+            Debug.Log(code);
+
+            CheckIfCodeIsCompilable(code);
+
+            Assert.IsTrue(code.Contains("private int m_Data = 5;"));
+            Assert.IsTrue(code.Contains("private List<float> m_Ints = new List<float> {};"));
         }
 
-        [Test]
-        public void WhenIsStructProperty_CSharpCodeGen_DefaultValueBackingFieldConstructionIsDoneInPlace()
+        public void WhenIsStructProperty_CSharpCodeGen_DelegatesDefaultValueBackingFieldConstruction()
         {
             var backend = new CSharpGenerationBackend();
 
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", true)
                         .WithProperty("Data", "int", "5")
-                        .WithProperty("Floats", "List", "", "float")
+                        .WithProperty("Ints", "List", "", "float")
                 )
                 .ToJson();
 
@@ -846,38 +935,37 @@ namespace Unity.Properties.Tests.JSonSchema
 
             var code = backend.Code;
             Assert.NotZero(code.Length);
+            Debug.Log(code);
 
             CheckIfCodeIsCompilable(code);
 
-            var root = (CompilationUnitSyntax)CSharpSyntaxTree.ParseText(code).GetRoot();
+            Assert.IsTrue(code.Contains("private int m_Data = 5;"));
+            Assert.IsTrue(code.Contains("private List<float> m_Ints = new List<float> {};"));
+        }
 
-            var modifiers = SyntaxFactory.TokenList(new[]
-            {
-                SyntaxFactory.Token(SyntaxKind.PrivateKeyword)
-            });
+        public void WhenDontInitializeBackingFieldIsSet_CSharpCodeGen_DoesNotInitializeBackingFields()
+        {
+            var backend = new CSharpGenerationBackend();
 
-            var classNode = GetTypeDeclarationNodeFromName(root, "HelloWorld");
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", true)
+                        .WithProperty("Data", "int", "5")
+                        .WithProperty("Ints", "List", "", "float", "", false, false, false, true)
+                )
+                .ToJson();
 
-            var floatsField = GetFieldSyntaxNodeByName(classNode, "m_Floats", modifiers);
-            var dataField = GetFieldSyntaxNodeByName(classNode, "m_Data", modifiers);
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
 
-            Assert.NotNull(dataField);
-            Assert.NotNull(floatsField);
+            var code = backend.Code;
+            Assert.NotZero(code.Length);
+            Debug.Log(code);
 
-            Assert.IsTrue(code.Contains("m_Data = 5;"));
-            Assert.IsTrue(code.Contains("m_Floats = new List<float> {};"));
+            CheckIfCodeIsCompilable(code);
 
-            // @TODO Inspect syntax tree
-/*
-            Assert.IsTrue(dataField.Declaration.Type.ToString() == "int");
-            Assert.IsTrue(floatsField.Declaration.Type.ToString() == "List<float>");
-
-            Assert.IsTrue(dataField.Declaration.Variables.First().Initializer.Value.ToString() == "5");
-            Assert.IsTrue(floatsField.Declaration.Variables.First().Initializer.Value.ToString() == "new List<float>");
-*/
-
-            // @TODO
-            // CheckIfPropertyContainerIsSerializable(assembly, "HelloWorld");
+            Assert.IsTrue(code.Contains("private int m_Data = 5;"));
+            Assert.IsTrue(code.Contains("private List<float> m_Ints;"));
         }
 
         [Test]
@@ -888,7 +976,7 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", true)
                         .WithProperty("Data", "int")
                         .WithProperty("Floats", "List", "", "float")
                 )
@@ -934,7 +1022,7 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", true)
                         .WithProperty("Data", "int")
                         .WithProperty("Floats", "List", "", "float")
                 )
@@ -966,7 +1054,7 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
                         .WithEmptyPropertiesList()
                 )
                 .ToJson();
@@ -994,7 +1082,7 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
                         .WithEmptyPropertiesList()
                 )
                 .ToJson();
@@ -1080,7 +1168,7 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
                         .WithProperty("Data", "int")
                         .WithProperty("Floats", "List", "", "float")
                         .WithUserHooks(new List<string> { "OnPropertyBagConstructed" })
@@ -1113,12 +1201,12 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
                         .WithEmptyPropertiesList()
                         .WithBaseClassOverriden("Foo")
                 )
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("Foo", "class")
+                    new JsonSchemaBuilder.ContainerBuilder("Foo")
                         .WithEmptyPropertiesList()
                 )
                 .ToJson();
@@ -1142,7 +1230,7 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
                         .WithEmptyPropertiesList()
                         .WithIsAbstract(true)
                 )
@@ -1166,7 +1254,7 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", true)
                         .WithEmptyPropertiesList()
                         .WithIsAbstract(true)
                 )
@@ -1189,11 +1277,11 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
                         .WithBaseClassOverriden("BaseClass")
                 )
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("BaseClass", "class")
+                    new JsonSchemaBuilder.ContainerBuilder("BaseClass")
                         .WithProperty("Data", "int")
                 )
                 .ToJson();
@@ -1223,7 +1311,8 @@ namespace Unity.Properties.Tests.JSonSchema
             var json = new JsonSchemaBuilder()
                 .WithNamespace("Unity.Properties.Samples.Tests")
                 .WithContainer(
-                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", true)
+                        .WithUserHooks(new List<string> { "OnPropertyBagConstructed" })
                         .WithProperty("Data", "int", "", "", "", true)
                 )
                 .ToJson();
@@ -1299,4 +1388,4 @@ namespace Unity.Properties.Tests.JSonSchema
     }
 }
 
-#endif // NET_4_6
+#endif // USE_ROSLYN_API && (NET_4_6 || NET_STANDARD_2_0)

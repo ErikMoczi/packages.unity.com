@@ -1,4 +1,4 @@
-﻿#if NET_4_6
+﻿#if (NET_4_6 || NET_STANDARD_2_0)
 
 using System.Collections.Generic;
 using System.Collections;
@@ -53,27 +53,34 @@ namespace Unity.Properties.Editor.Serialization
             public static bool IsPublicProperty { get; } = false;
             public static bool NoDefaultImplementation { get; } = false;
             public static bool IsCustomProperty { get; } = false;
+            public static bool DontInitializeBackingField { get; } = false;
         }
+
+        public Type NativeType { get; set; } = null;
 
 
         // 
         // Property definition related values
         // 
 
-        // Property name (including optional nested class names separated by '/')
-        private string _name = string.Empty;
-        public string Name
-        {
-            get
-            {
-                // @TODO cleanup semantics
-                return _name.Split('/').Last().Split('.').Last();
-            }
-            set
-            {
-                _name = value;
-            }
-        }
+        public ContainerTypeTreePath TypePath { get; set; } = new ContainerTypeTreePath();
+
+        public bool IsCustomProperty { get; set; } = Defaults.IsCustomProperty;
+
+        // @TODO stored as a string for now, should be better handled
+        public string DefaultValue { get; set; } = string.Empty;
+
+        public string PropertyBackingAccessor { get; set; } = string.Empty;
+
+        public bool DontInitializeBackingField { get; set; } = Defaults.DontInitializeBackingField;
+
+        public PropertyTypeNode Of { get; set; }
+
+        public bool IsReadonly { get; set; } = Defaults.IsReadonly;
+
+        public bool IsPublicProperty { get; set; } = false;
+
+        public PropertyConstructor Constructor = new PropertyConstructor();
 
         public string TypeName
         {
@@ -93,13 +100,20 @@ namespace Unity.Properties.Editor.Serialization
         }
         private string m_typename = string.Empty;
 
-        public string FullName => string.IsNullOrEmpty(Namespace) ? _name : Namespace + "." + _name;
+        // @TODO a bit convoluted
+        public string FullTypeName
+        {
+            get
+            {
+                var p = new ContainerTypeTreePath(TypePath);
+                p.TypePath.Push(TypeName);
+                return p.FullPath;
+            }
+        }
 
-        public string Namespace { get; set; } = string.Empty;
+        public string PropertyName { get; set; } = string.Empty;
 
         public TypeTag Tag { get; set; } = TypeTag.Unknown;
-
-        public Type NativeType { get; set; } = null;
 
 
         // 
@@ -119,26 +133,61 @@ namespace Unity.Properties.Editor.Serialization
 
         public List<PropertyTypeNode> NestedContainers = new List<PropertyTypeNode>();
 
+        public void Visit(ContainerTypeTreePath path, IContainerTypeTreeVisitor visitor)
+        {
+            path.TypePath.Push(TypeName);
 
-        // 
-        // Property definition related values
-        // 
+            visitor.VisitNestedContainer(path, this);
 
-        // @TODO stored as a string for now, should be better handled
-        public string DefaultValue { get; set; } = string.Empty;
+            foreach (var t in NestedContainers)
+            {
+                t.Visit(path, visitor);
+            }
 
-        public string PropertyBackingAccessor { get; set; } = string.Empty;
-        
-        public PropertyTypeNode Of { get; set; }
+            path.TypePath.Pop();
+        }
 
-        public bool IsReadonly { get; set; } = Defaults.IsReadonly;
+        public void VisitRoot(IContainerTypeTreeVisitor visitor)
+        {
+            var context = new ContainerTypeTreePath()
+            {
+                Namespace = this.TypePath.Namespace,
+                TypePath = new Stack<string>(new[] {this.TypeName})
+            };
 
-        public bool IsPublicProperty { get; set; } = false;
+            visitor.VisitContainer(context, this);
 
-        public bool IsCustomProperty { get; set; } = Defaults.IsCustomProperty;
+            Visit(context, visitor);
+        }
 
-        public PropertyConstructor Constructor = new PropertyConstructor();
+        public List<string> DependantAssemblyNames()
+        {
+            return DependantAssemblyNamesFor(this);
+        }
+
+        private static List<string> DependantAssemblyNamesFor(PropertyTypeNode typeNode)
+        {
+            var assemblyNames = new List<string>();
+
+            if (typeNode == null)
+            {
+                return assemblyNames;
+            }
+            if (typeNode.NativeType != null)
+            {
+                assemblyNames.Add(typeNode.NativeType.Assembly.GetName().Name);
+            }
+            foreach (var t in typeNode.NestedContainers)
+            {
+                assemblyNames.AddRange(DependantAssemblyNamesFor(t));
+            }
+            foreach (var p in typeNode.Properties)
+            {
+                assemblyNames.AddRange(DependantAssemblyNamesFor(p));
+            }
+            return assemblyNames;
+        }
     }
 }
 
-#endif // NET_4_6
+#endif // (NET_4_6 || NET_STANDARD_2_0)

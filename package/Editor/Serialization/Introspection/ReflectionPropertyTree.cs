@@ -1,4 +1,4 @@
-﻿#if NET_4_6
+﻿#if (NET_4_6 || NET_STANDARD_2_0)
 
 using System;
 using System.Collections.Generic;
@@ -21,7 +21,7 @@ namespace Unity.Properties.Editor.Serialization
         {
             if (assembly == null)
             {
-                return new List<PropertyTypeNode>();
+                throw new Exception("Invalid assembly");
             }
 
             return new ReflectionPropertyTree().Parse(assembly);
@@ -127,7 +127,7 @@ namespace Unity.Properties.Editor.Serialization
 
                     var property = new PropertyTypeNode()
                     {
-                        Name = PropertyNameFromFieldName(f.Name),
+                        PropertyName = PropertyNameFromFieldName(f.Name),
                         Tag = genericProperty.TypeTag,
                         TypeName = genericProperty.TypeID,
                         Of = genericProperty.ListOf,
@@ -137,10 +137,10 @@ namespace Unity.Properties.Editor.Serialization
                     };
 
                     const string propertyBackingFieldPrefix = "m_";
-                    if (candidateBackingFields.ContainsKey(propertyBackingFieldPrefix + property.Name))
+                    if (candidateBackingFields.ContainsKey(propertyBackingFieldPrefix + property.PropertyName))
                     {
                         // Find default value
-                        var a = candidateBackingFields[propertyBackingFieldPrefix + property.Name];
+                        var a = candidateBackingFields[propertyBackingFieldPrefix + property.PropertyName];
                     }
                     else
                     {
@@ -148,7 +148,7 @@ namespace Unity.Properties.Editor.Serialization
                         property.PropertyBackingAccessor = string.Empty;
                     }
 
-                    if (!string.IsNullOrEmpty(property.Name))
+                    if (!string.IsNullOrEmpty(property.PropertyName))
                     {
                         properties.Add(property);
                     }
@@ -388,16 +388,20 @@ namespace Unity.Properties.Editor.Serialization
                 OverrideDefaultBaseClass = HasDirectInterfacesOf(type, typeof(IPropertyContainer).FullName) ?
                     string.Empty : type.BaseType.Resolve().Name,
                 TypeName = type.Name,
-                Name = string.IsNullOrEmpty(type.Namespace) ? type.FullName : type.FullName.Remove(0, type.Namespace.Length).Trim('.'),
-                Namespace = type.Namespace,
                 Properties = SerializePropertyFieldsForType(type),
-                NativeType = TypeFromTypeDefinition(type)
+                NativeType = TypeFromTypeDefinition(type),
+                TypePath = new ContainerTypeTreePath { Namespace = type.Namespace }
             };
 
             // @TODO beware of circular deps
 
             if (type.IsNested)
             {
+                var path = ContainerTypeTreePath.CreateFromString(type.FullName);
+                path.TypePath.Pop();
+
+                n.TypePath = path;
+
                 // if we are a nested class part of a non ipropertycontainer derived struct/class
                 // we stop the traversal here
 
@@ -405,6 +409,7 @@ namespace Unity.Properties.Editor.Serialization
                         && (type.DeclaringType.IsClass || type.DeclaringType.IsValueType))
                 {
                     node = n;
+
                     return true;
                 }
                 else
@@ -415,18 +420,18 @@ namespace Unity.Properties.Editor.Serialization
 
                     GetOrCreate(type.DeclaringType.FullName, out parent);
 
-                    if (!_typesBeingSerialized.ContainsKey(parent.FullName))
+                    if (!_typesBeingSerialized.ContainsKey(parent.FullTypeName))
                     {
                         throw new Exception($"Invalid type definition tree when trying to recurse to {type.FullName}'s type parent");
                     }
 
-                    var parentDefinition = _typesBeingSerialized[parent.FullName];
+                    var parentDefinition = _typesBeingSerialized[parent.FullTypeName];
 
-                    if (parent.NestedContainers.FirstOrDefault(c => c.FullName == type.FullName) != null)
+                    if (parent.NestedContainers.FirstOrDefault(c => c.FullTypeName == type.FullName) != null)
                     {
                         // Should not happen unless there is an issue with the cache
                         throw new Exception(
-                            $"Cannot add duplicate nested child node {type.FullName} to parent {parent.FullName}");
+                            $"Cannot add duplicate nested child node {type.FullName} to parent {parent.FullTypeName}");
                     }
 
                     parent.NestedContainers.Add(n);
@@ -437,9 +442,10 @@ namespace Unity.Properties.Editor.Serialization
             }
 
             node = n;
+
             return true;
         }
     }
 }
 
-#endif // NET_4_6
+#endif // (NET_4_6 || NET_STANDARD_2_0)

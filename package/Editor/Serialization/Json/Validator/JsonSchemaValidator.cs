@@ -1,4 +1,4 @@
-﻿#if NET_4_6
+﻿#if (NET_4_6 || NET_STANDARD_2_0)
 
 using System;
 using System.Collections;
@@ -58,7 +58,9 @@ namespace Unity.Properties.Editor.Serialization
                   ""BackingField"": { ""type"": ""string"" },
                   ""DefaultValue"": { ""type"": ""string"" },
                   ""IsPublic"": { ""type"": ""boolean"" },
+                  ""IsCustom"": { ""type"": ""boolean"" },
                   ""IsReadonlyProperty"": { ""type"": ""boolean"" },
+                  ""DontInitializeBackingField"": { ""type"": ""boolean"" },
                 },
                 ""required"": [""Name"", ""Type""]
               }
@@ -66,6 +68,9 @@ namespace Unity.Properties.Editor.Serialization
             ""GeneratedUserHooks"": { ""type"": ""string"" },
             ""OverrideDefaultBaseClass"": { ""type"": ""string"" },
             ""IsAbstractClass"": { ""type"": ""boolean"" },
+            ""IsStruct"": { ""type"": ""boolean"" },
+            ""NoDefaultImplementation"": { ""type"": ""boolean"" },
+            ""ConstructedFrom"": { ""type"": ""string"" },
             ""NestedTypes"": {
               ""type"": ""array"",
               ""items"":
@@ -90,15 +95,15 @@ namespace Unity.Properties.Editor.Serialization
 
         public Diagnostic ValidatePropertyDefinition(IDictionary<string, object> definition)
         {
-            if (Validator == null)
+            if (RootValidator == null)
             {
                 throw new Exception("Could not find valid validator for schema validation.");
             }
 
             return new Diagnostic()
             {
-                IsValid = Validator.IsValid(definition),
-                Error = Validator.Status.Error
+                IsValid = RootValidator.IsValid(definition),
+                Error = RootValidator.Status.Error
             };
         }
 
@@ -109,18 +114,58 @@ namespace Unity.Properties.Editor.Serialization
             {
                 throw new Exception("Invalid JSON data.");
             }
-            if (Validator == null)
+            if (RootValidator == null)
             {
                 throw new Exception("Could not find valid validator for schema validation.");
             }
             return new Diagnostic()
             {
-                IsValid = Validator.IsValid(obj as IDictionary<string, object>),
-                Error = Validator.Status.Error
+                IsValid = RootValidator.IsValid(obj as IDictionary<string, object>),
+                Error = RootValidator.Status.Error
             };
         }
 
-        private static IValidator Validator { get; set; } = null;
+        public static List<string> CollectAllObjectValidatorKeys()
+        {
+            return DoCollectAllObjectValidatorKeys(RootValidator, new List<IValidator>());
+        }
+
+        private static List<string> DoCollectAllObjectValidatorKeys(
+            IValidator validator, List<IValidator> visitedValidators)
+        {
+            var keys = new List<string>();
+
+            if (visitedValidators.Contains(validator))
+            {
+                return keys.ToList();
+            }
+
+            visitedValidators.Add(validator);
+
+            if (validator is ArrayValidator)
+            {
+                var av = validator as ArrayValidator;
+                keys.AddRange(DoCollectAllObjectValidatorKeys(av.ItemValidator, visitedValidators));
+                return keys.ToList();
+            }
+
+            var ov = validator as ObjectValidator;
+            if (ov == null)
+            {
+                return keys.ToList();
+            }
+
+            foreach (var childValidator in ov.Validators)
+            {
+                keys.Add(childValidator.Key);
+
+                keys.AddRange(DoCollectAllObjectValidatorKeys(childValidator.Value, visitedValidators));
+            }
+
+            return keys.ToList();
+        }
+
+        private static IValidator RootValidator { get; set; } = null;
 
         static JsonSchemaValidator()
         {
@@ -204,7 +249,7 @@ namespace Unity.Properties.Editor.Serialization
             public Diagnostic Status { get; } = new Diagnostic();
 
             public IValidator ItemValidator { get; set; }
-            
+
             public bool IsValid(object node)
             {
                 var typedNodes = node as IEnumerable;
@@ -223,6 +268,7 @@ namespace Unity.Properties.Editor.Serialization
         private class BooleanTypeValidator : IValidator
         {
             public Diagnostic Status { get; } = new Diagnostic();
+
             public bool IsValid(object node)
             {
                 Status.IsValid = node is bool;
@@ -415,9 +461,9 @@ namespace Unity.Properties.Editor.Serialization
                 return;
             }
 
-            Validator = GenerateObjectValidator(root);
+            RootValidator = GenerateObjectValidator(root);
         }
     }
 }
 
-#endif
+#endif // (NET_4_6 || NET_STANDARD_2_0)

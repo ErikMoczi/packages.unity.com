@@ -1,4 +1,5 @@
-#if NET_4_6
+#if USE_ROSLYN_API && (NET_4_6 || NET_STANDARD_2_0)
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,11 +19,10 @@ namespace Unity.Properties.Tests.JSonSchema
     internal class ReflectionJsonSchemaTests
     {
         [Test]
-        public void WhenNullAssembly_ReflectionJsonSchemaGenerator_ReturnsAnEmptyJson()
+        public void WhenNullAssembly_ReflectionJsonSchemaGenerator_Throws()
         {
             AssemblyDefinition assembly = null;
-            var result = PropertyTypeNodeJsonSerializer.ToJson(ReflectionPropertyTree.Read(assembly));
-            Assert.IsTrue(result == "[]");
+            Assert.Throws<Exception>(() => ReflectionPropertyTree.Read(assembly));
         }
 
         [Test]
@@ -48,14 +48,18 @@ namespace Unity.Properties.Tests.JSonSchema
 
             using (new FileDisposer(assemblyFilePath))
             {
-                var result = PropertyTypeNodeJsonSerializer.FromJson(
-                    PropertyTypeNodeJsonSerializer.ToJson(
-                        ReflectionPropertyTree.Read(
-                            assemblyFilePath)));
+                var result = JsonSchema.FromJson(
+                    JsonSchema.ToJson(
+                        new JsonSchema()
+                        {
+                            PropertyTypeNodes = ReflectionPropertyTree.Read(assemblyFilePath)
+                        }
+                    )
+                );
 
                 var containers = new List<PropertyTypeNode>();
 
-                VisitContainer(result, c => { containers.Add(c); });
+                VisitContainer(result.PropertyTypeNodes, c => { containers.Add(c); });
 
                 Assert.Zero(containers.Count);
             }
@@ -87,7 +91,6 @@ namespace Unity.Properties.Tests.JSonSchema
                     }
                     public Foo foo { get; } = new Foo();
                 };
-                
                 }
             ";
 
@@ -95,17 +98,21 @@ namespace Unity.Properties.Tests.JSonSchema
 
             using (new FileDisposer(assemblyFilePath))
             {
-                var result = PropertyTypeNodeJsonSerializer.FromJson(
-                    PropertyTypeNodeJsonSerializer.ToJson(
-                        ReflectionPropertyTree.Read(
-                            assemblyFilePath)));
+                var result = JsonSchema.FromJson(
+                    JsonSchema.ToJson(
+                        new JsonSchema()
+                        {
+                            PropertyTypeNodes = ReflectionPropertyTree.Read(assemblyFilePath)
+                        }
+                    )
+                );
 
                 var containers = new List<PropertyTypeNode>();
 
-                VisitContainer(result, c => { containers.Add(c); });
+                VisitContainer(result.PropertyTypeNodes, c => { containers.Add(c); });
 
                 Assert.True(containers.Count == 1);
-                Assert.True(containers[0].Name == "HelloWorld");
+                Assert.True(containers[0].TypeName == "HelloWorld");
             }
         }
 
@@ -151,18 +158,22 @@ namespace Unity.Properties.Tests.JSonSchema
 
             using (new FileDisposer(assemblyFilePath))
             {
-                var result = PropertyTypeNodeJsonSerializer.FromJson(
-                    PropertyTypeNodeJsonSerializer.ToJson(
-                        ReflectionPropertyTree.Read(
-                            assemblyFilePath)));
+                var result = JsonSchema.FromJson(
+                    JsonSchema.ToJson(
+                        new JsonSchema()
+                        {
+                            PropertyTypeNodes = ReflectionPropertyTree.Read(assemblyFilePath)
+                        }
+                    )
+                );
 
                 var containers = new List<PropertyTypeNode>();
 
-                VisitContainer(result, c => { containers.Add(c); });
+                VisitContainer(result.PropertyTypeNodes, c => { containers.Add(c); });
 
                 Assert.True(containers.Count == 2);
-                Assert.True(containers[0].Name == "HelloWorld");
-                Assert.True(containers[1].Name == "MyContainer");
+                Assert.True(containers[0].TypeName == "HelloWorld");
+                Assert.True(containers[1].TypeName == "MyContainer");
             }
         }
 
@@ -248,16 +259,20 @@ namespace Unity.Properties.Tests.JSonSchema
 
             using (new FileDisposer(assemblyFilePath))
             {
-                var result = PropertyTypeNodeJsonSerializer.FromJson(
-                    PropertyTypeNodeJsonSerializer.ToJson(
-                        ReflectionPropertyTree.Read(
-                            assemblyFilePath)));
+                var result = JsonSchema.FromJson(
+                    JsonSchema.ToJson(
+                        new JsonSchema()
+                        {
+                            PropertyTypeNodes = ReflectionPropertyTree.Read(assemblyFilePath)
+                        }
+                    )
+                );
 
                 var containers = new List<PropertyTypeNode>();
 
-                VisitContainer(result, c => { containers.Add(c); });
+                VisitContainer(result.PropertyTypeNodes, c => { containers.Add(c); });
 
-                var containerNames = containers.Select(c => c.Name).ToList();
+                var containerNames = containers.Select(c => c.TypeName).ToList();
 
                 Assert.AreEqual(
                     new System.Collections.Generic.List<string>
@@ -296,21 +311,25 @@ namespace Unity.Properties.Tests.JSonSchema
 
             using (new FileDisposer(assemblyFilePath))
             {
-                var result = PropertyTypeNodeJsonSerializer.FromJson(
-                    PropertyTypeNodeJsonSerializer.ToJson(
-                        ReflectionPropertyTree.Read(
-                            assemblyFilePath)));
+                var result = JsonSchema.FromJson(
+                    JsonSchema.ToJson(
+                        new JsonSchema()
+                        {
+                            PropertyTypeNodes = ReflectionPropertyTree.Read(assemblyFilePath)
+                        }
+                    )
+                );
 
                 var containers = new List<PropertyTypeNode>();
 
-                VisitContainer(result, c => { containers.Add(c); });
+                VisitContainer(result.PropertyTypeNodes, c => { containers.Add(c); });
 
                 Assert.True(containers.Count == 1);
 
-                return containers[0].Name;
+                return containers[0].TypeName;
             }
         }
-
+        
         private class FileDisposer : IDisposable
         {
             private string _filename = string.Empty;
@@ -371,9 +390,12 @@ namespace Unity.Properties.Tests.JSonSchema
 
             //  -> json
 
-            var generatedJson = PropertyTypeNodeJsonSerializer.ToJson(
-                ReflectionPropertyTree.Read(
-                    assemblyFilePath));
+            var generatedJson = JsonSchema.ToJson(
+                new JsonSchema()
+                {
+                    PropertyTypeNodes = ReflectionPropertyTree.Read(assemblyFilePath)
+                }
+            );
 
             Assert.NotNull(generatedJson.Length);
         }
@@ -391,4 +413,5 @@ namespace Unity.Properties.Tests.JSonSchema
     }
 }
 
-#endif // NET_4_6
+#endif // USE_ROSLYN_API && (NET_4_6 || NET_STANDARD_2_0)
+

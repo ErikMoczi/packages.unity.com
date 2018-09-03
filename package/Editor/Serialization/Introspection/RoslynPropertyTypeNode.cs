@@ -1,3 +1,5 @@
+#if USE_ROSLYN_API && (NET_4_6 || NET_STANDARD_2_0)
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -353,14 +355,22 @@ namespace Unity.Properties.Editor.Serialization.Experimental
 
                 var symbol = model.GetDeclaredSymbol(type);
 
-                var fullTypeName = symbol.ToString();
-                var ns = NamespaceForType(type);
+                var typePath = new ContainerTypeTreePath
+                {
+                    Namespace = NamespaceForType(type)
+                };
+
+                var fullTypeNamePath = symbol.ToString().Replace(typePath.Namespace, "").Trim('.').Split('.');
+                fullTypeNamePath = fullTypeNamePath.Take(fullTypeNamePath.Length - 1).ToArray();
+                foreach (var pathPart in fullTypeNamePath)
+                {
+                    typePath.TypePath.Push(pathPart);
+                }
 
                 var node = new PropertyTypeNode
                 {
 					Tag = tag,
-					Name = fullTypeName.Replace(ns, "").Trim('.'),
-					Namespace = ns,
+                    TypePath = typePath,
 					TypeName = symbol.Name,
                     IsAbstractClass = symbol.IsAbstract,
                     OverrideDefaultBaseClass = symbol.AllInterfaces.Any(i => i.Name == typeof(IPropertyContainer).Name)
@@ -381,7 +391,7 @@ namespace Unity.Properties.Editor.Serialization.Experimental
 
                     var property = new PropertyTypeNode()
                     {
-                        Name = PropertyNameFromFieldName(field.Symbol.Name),
+                        PropertyName = PropertyNameFromFieldName(field.Symbol.Name),
                         Tag = genericProperty.TypeTag,
                         TypeName = genericProperty.TypeID,
                         Of = genericProperty.ListOf,
@@ -406,23 +416,31 @@ namespace Unity.Properties.Editor.Serialization.Experimental
                         property.PropertyBackingAccessor = string.Empty;
                     }
 
-                    if (!string.IsNullOrEmpty(property.Name))
+                    if (!string.IsNullOrEmpty(property.PropertyName))
                     {
                         node.Properties.Add(property);
                     }
                 }
 
-                if (typePerFullTypename.ContainsKey(symbol.ContainingSymbol.Name))
+                var containingSymbolFullName = symbol.ContainingSymbol.ToDisplayString();
+                // symbol.ContainingSymbol.Name
+                if (typePerFullTypename.ContainsKey(containingSymbolFullName))
                 {
                     // This is a nested node
 
-                    typePerFullTypename[symbol.ContainingSymbol.Name].NestedContainers.Add(node);
+                    var parent = typePerFullTypename[containingSymbolFullName];
+
+                    node.TypePath = new ContainerTypeTreePath(parent.TypePath);
+
+                    node.TypePath.TypePath.Push(parent.TypeName);
+
+                    parent.NestedContainers.Add(node);
                 }
                 else
                 {
 					// This is a new node
 
-                    typePerFullTypename[node.FullName] = node;
+                    typePerFullTypename[node.FullTypeName] = node;
                     nodes.Add(node);
                 }
             }
@@ -499,3 +517,4 @@ namespace Unity.Properties.Editor.Serialization.Experimental
     }
 }
 
+#endif

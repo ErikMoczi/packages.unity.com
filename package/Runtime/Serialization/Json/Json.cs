@@ -1,4 +1,5 @@
-﻿#if NET_4_6
+﻿#if (NET_4_6 || NET_STANDARD_2_0)
+
 using System.Collections.Generic;
 using System.Text;
 
@@ -100,4 +101,4 @@ namespace Unity.Properties.Serialization
         }
     }
 }
-#endif // NET_4_6
+#endif // (NET_4_6 || NET_STANDARD_2_0)

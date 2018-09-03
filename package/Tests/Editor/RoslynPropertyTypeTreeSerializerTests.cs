@@ -1,4 +1,4 @@
-﻿#if NET_4_6
+﻿#if USE_ROSLYN_API && (NET_4_6 || NET_STANDARD_2_0)
 
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +13,7 @@ namespace Unity.Properties.Tests.JSonSchema
     internal class RoslynPropertyTypeTreeSerializerTests
     {
         [Test]
-        public void WhenAssemblyDoesNotContainPropertyContainers_RoslynTreeSerializer_ReturnsAnEmptyJson()
+        public void WhenCodeDoesNotContainPropertyContainers_RoslynTreeSerializer_ReturnsAnEmptyJson()
         {
             RoslynPropertyTypeNode serializer = new RoslynPropertyTypeNode()
             {
@@ -36,7 +36,7 @@ namespace Unity.Properties.Tests.JSonSchema
         }
 
         [Test]
-        public void WhenNullAssembly_RoslynTreeSerializer_ReturnsAnEmptyJson()
+        public void WhenCodeWithContainers_RoslynTreeSerializer_ReturnsAValidJson()
         {
             RoslynPropertyTypeNode serializer = new RoslynPropertyTypeNode()
             {
@@ -103,10 +103,10 @@ public partial class HelloWorld : IPropertyContainer
 }"
             };
             var result = serializer.Deserialize();
-            Assert.IsTrue(result.Count == 2);
+            Assert.IsTrue(result.Count == 1);
 
-            Assert.AreEqual(result[0].FullName, "Unity.Properties.TestCases.HelloWorld");
-            Assert.AreEqual(result[1].FullName, "Unity.Properties.TestCases.HelloWorld.NestedContainer");
+            Assert.AreEqual("Unity.Properties.TestCases.HelloWorld", result[0].FullTypeName);
+            Assert.AreEqual("Unity.Properties.TestCases.HelloWorld/NestedContainer", result[0].NestedContainers[0].FullTypeName);
 
             Assert.AreEqual(
                 new List<string>
@@ -116,7 +116,7 @@ public partial class HelloWorld : IPropertyContainer
                     "FloatList",
                     "EnumValue"
                },
-                result[0].Properties.Select(p => p.Name)
+                result[0].Properties.Select(p => p.PropertyName)
             );
             Assert.AreEqual(
                 new List<PropertyTypeNode.TypeTag>
@@ -156,4 +156,4 @@ public partial class HelloWorld : IPropertyContainer
     }
 }
 
-#endif
+#endif // USE_ROSLYN_API && (NET_4_6 || NET_STANDARD_2_0)

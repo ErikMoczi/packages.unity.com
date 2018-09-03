@@ -1,4 +1,5 @@
-﻿#if NET_4_6
+﻿#if (NET_4_6 || NET_STANDARD_2_0)
+
 using UnityEngine;
 using NUnit.Framework;
 using Unity.Properties.Serialization;
@@ -64,4 +65,5 @@ namespace Unity.Properties.Tests.Serialization
         }
     }
 }
-#endif // NET_4_6
+
+#endif // (NET_4_6 || NET_STANDARD_2_0)

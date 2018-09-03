@@ -1,4 +1,5 @@
-﻿#if NET_4_6
+﻿#if (NET_4_6 || NET_STANDARD_2_0)
+
 using System;
 using System.Collections;
 using System.IO;
@@ -7,7 +8,6 @@ using Unity.Properties;
 using Unity.Properties.Serialization;
 using UnityEditor;
 using UnityEngine;
-
 
 namespace Unity.Properties.Editor.Serialization
 {
@@ -49,11 +49,12 @@ namespace Unity.Properties.Editor.Serialization
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    m_AssemblyPath = EditorGUILayout.TextField("Assembly file path:", m_AssemblyPath);
+                    m_AssemblyPath = EditorGUILayout.TextField("Assembly file path: ", m_AssemblyPath);
 
                     if ( ! string.IsNullOrWhiteSpace(m_AssemblyPath) && File.Exists(m_AssemblyPath))
                     {
                         var propertyTypeTree = ReflectionPropertyTree.Read(m_AssemblyPath);
+
                         m_JsonContent = JsonSchema.ToJson(new JsonSchema()
                         {
                             PropertyTypeNodes = propertyTypeTree
@@ -63,6 +64,8 @@ namespace Unity.Properties.Editor.Serialization
                         var validationResult = validator.ValidatePropertyDefinition(m_JsonContent);
                         Debug.Log($"Json Schema validation results: {validationResult.IsValid}, {validationResult.Error}");
 
+                        m_JsonContent = JsonSchema.ToJson(propertyTypeTree);
+                        
                         if (! string.IsNullOrEmpty(m_JsonContent))
                         {
                             var backend = new CSharpGenerationBackend();
@@ -101,4 +104,5 @@ namespace Unity.Properties.Editor.Serialization
 #endif
 
 }
-#endif // NET_4_6
+
+#endif // (NET_4_6 || NET_STANDARD_2_0)

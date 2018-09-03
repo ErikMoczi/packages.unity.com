@@ -1,5 +1,6 @@
-﻿#if NET_4_6
-using System;
+﻿#if (NET_4_6 || NET_STANDARD_2_0)
+
+    using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
@@ -71,8 +72,9 @@ namespace Unity.Properties.Tests.JSonSchema
                     )
                     .ToJson()
             );
+
             Assert.AreEqual(1, result.PropertyTypeNodes.Count);
-            Assert.AreEqual("Unity.Properties.Samples.Schema", result.PropertyTypeNodes[0].Namespace);
+            Assert.AreEqual("Unity.Properties.Samples.Schema", result.PropertyTypeNodes[0].TypePath.Namespace);
         }
 
         [Test]
@@ -112,13 +114,13 @@ namespace Unity.Properties.Tests.JSonSchema
 
         [TestCase("struct", ExpectedResult = PropertyTypeNode.TypeTag.Struct)]
         [TestCase("class", ExpectedResult = PropertyTypeNode.TypeTag.Class)]
-        public PropertyTypeNode.TypeTag WhenClassType_SchemaReader_ReturnsTypeTagAsClass(string containerType)
+        public PropertyTypeNode.TypeTag WhenClassType_SchemaReader_ReturnsTypeTagAsClass(string containerKind)
         {
             var result = JsonSchema.FromJson(
                 new JsonSchemaBuilder()
                     .WithNamespace("Unity.Properties.Samples.Schema")
                     .WithContainer(
-                        new JsonSchemaBuilder.ContainerBuilder("HelloWorld", containerType)
+                        new JsonSchemaBuilder.ContainerBuilder("HelloWorld", containerKind == "struct")
                             .WithEmptyPropertiesList()
                         )
                     .ToJson()
@@ -131,16 +133,22 @@ namespace Unity.Properties.Tests.JSonSchema
         [Test]
         public void WhenBasicTypesInSchema_SchemaReadser_ReturnsAValidContainerList()
         {
+            var injectedBuiltinTypes =
+                new Dictionary<string, PropertyTypeNode.TypeTag>
+                {
+                    { "MyStruct", PropertyTypeNode.TypeTag.Struct }
+                };
             var result = JsonSchema.FromJson(
                 new JsonSchemaBuilder()
                     .WithNamespace("Unity.Properties.Samples.Schema")
                     .WithContainer(
-                        new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
+                        new JsonSchemaBuilder.ContainerBuilder("HelloWorld", true)
                             .WithProperty("Data", "int", "5")
                             .WithProperty("Floats", "list", "", "float")
-                            .WithProperty("MyStruct", "struct SomeData")
+                            .WithProperty("MyStruct", "SomeData")
                     )
-                    .ToJson()
+                    .ToJson(),
+                injectedBuiltinTypes
                 );
 
             Assert.AreEqual(1, result.PropertyTypeNodes.Count);
@@ -148,7 +156,7 @@ namespace Unity.Properties.Tests.JSonSchema
             Assert.IsTrue(result.PropertyTypeNodes[0].Tag == PropertyTypeNode.TypeTag.Struct);
             Assert.AreEqual(3, result.PropertyTypeNodes[0].Properties.Count);
             Assert.AreEqual(new System.Collections.Generic.List<string> {"Data", "Floats", "MyStruct"},
-                result.PropertyTypeNodes[0].Properties.Select(c => c.Name)
+                result.PropertyTypeNodes[0].Properties.Select(c => c.PropertyName)
             );
             Assert.AreEqual(new System.Collections.Generic.List<string> { "int", "List", "SomeData" },
                 result.PropertyTypeNodes[0].Properties.Select(c => c.TypeName)
@@ -170,7 +178,7 @@ namespace Unity.Properties.Tests.JSonSchema
                     JsonSchema.FromJson(
                         new JsonSchemaBuilder()
                             .WithContainer(
-                                new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
+                                new JsonSchemaBuilder.ContainerBuilder("HelloWorld", true)
                                     .WithProperty("Data", "int", "5", "", "", false, true)
                                     .WithProperty("Floats", "list", "", "float")
                             )
@@ -184,6 +192,118 @@ namespace Unity.Properties.Tests.JSonSchema
             );
         }
 
+
+        [Test]
+        public void DontInitializeBackingField_PropertyFlag_Is_ProperlyRead()
+        {
+            // Do a roundtrip
+            var result = JsonSchema.FromJson(
+                JsonSchema.ToJson(
+                    JsonSchema.FromJson(
+                        new JsonSchemaBuilder()
+                            .WithContainer(
+                                new JsonSchemaBuilder.ContainerBuilder("HelloWorld", true)
+                                    .WithProperty("Data", "int", "", "", "", false, false, false, true)
+                                    .WithProperty("Data1", "int", "", "", "", false, false, false, false)
+                            )
+                            .ToJson()
+                    )
+                )
+            );
+
+            Assert.AreEqual(new List<bool> { true, false },
+                result.PropertyTypeNodes[0].Properties.Select(c => c.DontInitializeBackingField)
+            );
+        }
+
+        [Test]
+        public void WhenNamespaceSpecifiedForNestedContainer_SchemaReadser_NamespaceNotBackedUp()
+        {
+            var nodes = JsonSchema.FromJson(
+                new JsonSchemaBuilder()
+                    .WithContainer(
+                        new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
+                            .WithNamespace("Unity.Properties.Samples.Schema")
+                                .WithNestedContainer(
+                                new JsonSchemaBuilder.ContainerBuilder("NestedHelloWorld")
+                                    .WithNamespace("Foo")
+                            )
+                            .WithNestedContainer(
+                                new JsonSchemaBuilder.ContainerBuilder("PlainNestedHelloWorld")
+                            )
+                    )
+                    .ToJson());
+
+            Assert.AreEqual(1, nodes.PropertyTypeNodes.Count);
+            Assert.AreEqual(nodes.PropertyTypeNodes[0].NestedContainers.Count, 2);
+
+            Assert.AreEqual("NestedHelloWorld", nodes.PropertyTypeNodes[0].NestedContainers[0].TypeName);
+            Assert.AreEqual("Unity.Properties.Samples.Schema.HelloWorld/NestedHelloWorld",
+                nodes.PropertyTypeNodes[0].NestedContainers[0].FullTypeName
+                );
+
+            Assert.AreEqual("PlainNestedHelloWorld", nodes.PropertyTypeNodes[0].NestedContainers[1].TypeName);
+            Assert.AreEqual(
+                "Unity.Properties.Samples.Schema.HelloWorld/PlainNestedHelloWorld",
+                nodes.PropertyTypeNodes[0].NestedContainers[1].FullTypeName
+                );
+        }
+
+        [Test]
+        public void WhenMultipleContainers_SchemaReadser_CanResolveContainerTypes()
+        {
+            var nodes = JsonSchema.FromJson(
+                new JsonSchemaBuilder()
+                    .WithContainer(
+                        new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
+                            .WithNamespace("Unity.Properties.Samples.Schema")
+                            .WithNestedContainer(
+                                new JsonSchemaBuilder.ContainerBuilder("NestedHelloWorld")
+                                    .WithNestedContainer(
+                                        new JsonSchemaBuilder.ContainerBuilder("NestedHelloWorld")
+                                            .WithProperty("MyFooBar", "FooBar")
+                                     )
+                            )
+                            .WithNestedContainer(
+                                new JsonSchemaBuilder.ContainerBuilder("NestedHelloWorld")
+                                    .WithNamespace("Unity.Properties.Samples.Schema")
+                                    .WithNestedContainer(
+                                        new JsonSchemaBuilder.ContainerBuilder("NestedHelloWorld")
+                                            .WithProperty("MyFooBar", "FooBar")
+                                    )
+                            )
+                        )
+                    .WithContainer(new JsonSchemaBuilder.ContainerBuilder("Foo", true)
+                        .WithNamespace("Unity.Properties.Samples.Schema")
+                        .WithProperty("MyBar", "Bar")
+                    )
+                    .WithContainer(new JsonSchemaBuilder.ContainerBuilder("Bar")
+                        .WithNamespace("Unity.Properties.Foo.Schema")
+                        .WithProperty("MyFooBar", "FooBar")
+                    )
+                    .WithContainer(new JsonSchemaBuilder.ContainerBuilder("FooBar", true)
+                        .WithProperty("MyNested", "HelloWorld.NestedHelloWorld", "5")
+                    )
+                    .ToJson());
+
+            Assert.AreEqual(4, nodes.PropertyTypeNodes.Count);
+            Assert.AreEqual(nodes.PropertyTypeNodes[0].NestedContainers.Count, 2);
+            Assert.AreEqual(nodes.PropertyTypeNodes[0].NestedContainers[0].TypeName, "NestedHelloWorld");
+            Assert.AreEqual(new List<string> { "HelloWorld", "Foo", "Bar", "FooBar" },
+                nodes.PropertyTypeNodes.Select(c => c.TypeName)
+            );
+
+            Assert.AreEqual(new List<PropertyTypeNode.TypeTag>
+                {
+                    PropertyTypeNode.TypeTag.Class,
+                    PropertyTypeNode.TypeTag.Struct,
+                    PropertyTypeNode.TypeTag.Class,
+                    PropertyTypeNode.TypeTag.Struct,
+                },
+                nodes.PropertyTypeNodes.Select(c => c.Tag)
+            );
+        }
+        
         private static string GetJsonContainerDefinitionWithName(
             string propertyQualifiedTypeName, List<string> nestedContainers)
         {
@@ -238,7 +358,6 @@ namespace Unity.Properties.Tests.JSonSchema
                             GetJsonContainerDefinitionWithName("Root>FooBar", new List<string>()
                             {
                                 GetJsonContainerDefinitionWithName("Root>FooBar>BarFoo", new List<string>()),
-
                             }),
                         })
                     }
@@ -250,7 +369,7 @@ namespace Unity.Properties.Tests.JSonSchema
             Assert.AreEqual(1, result.PropertyTypeNodes.Count);
 
             var classNames = new List<string>();
-            VisitContainer(result.PropertyTypeNodes, (PropertyTypeNode n) => { classNames.Add(n.Name); });
+            VisitContainer(result.PropertyTypeNodes, (PropertyTypeNode n) => { classNames.Add(n.TypeName); });
 
             Assert.AreEqual(
                 new List<string>
@@ -262,4 +381,5 @@ namespace Unity.Properties.Tests.JSonSchema
         }
     }
 }
-#endif // NET_4_6
+
+#endif // (NET_4_6 || NET_STANDARD_2_0)

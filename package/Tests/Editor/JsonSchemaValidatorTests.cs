@@ -1,19 +1,36 @@
-﻿#if NET_4_6
+﻿#if (NET_4_6 || NET_STANDARD_2_0)
 
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+
 using NUnit.Framework;
 
 using Unity.Properties.Editor.Serialization;
+using UnityEngine;
 
 namespace Unity.Properties.Tests.JSonSchema
 {
     [TestFixture]
     internal class JsonSchemaValidatorTests
     {
+        [Test]
+        public void MakeSure_AllSchemaKeys_AreCovered_ByTheValidator()
+        {
+            var allValidatorKeys = JsonSchemaValidator.CollectAllObjectValidatorKeys();
+            allValidatorKeys.Sort();
+
+            var allJsonSchemaKeys = typeof(JsonSchema.Keys).GetFields().Select(f => f.GetValue(null).ToString()).ToList();
+            allJsonSchemaKeys.Sort();
+
+            Assert.AreEqual(
+                allValidatorKeys,
+                allJsonSchemaKeys
+                );
+        }
+
         [Test]
         public void WhenInvalidRootVersion_Validator_FailsValidation()
         {
@@ -114,10 +131,10 @@ namespace Unity.Properties.Tests.JSonSchema
             var schema = new JsonSchemaBuilder()
                     .WithNamespace("Unity.Properties.Samples.Schema")
                     .WithContainer(
-                        new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
+                        new JsonSchemaBuilder.ContainerBuilder("HelloWorld", true)
                             .WithProperty("Data", "int", "5")
                             .WithProperty("Floats", "list", "", "float")
-                            .WithProperty("MyStruct", "struct SomeData")
+                            .WithProperty("MyStruct", "SomeData")
                     )
                     .ToJson();
 
@@ -132,4 +149,4 @@ namespace Unity.Properties.Tests.JSonSchema
     }
 }
 
-#endif
+#endif // (NET_4_6 || NET_STANDARD_2_0)

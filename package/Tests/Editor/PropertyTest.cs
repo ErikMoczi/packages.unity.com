@@ -1,4 +1,5 @@
-﻿#if NET_4_6
+﻿#if (NET_4_6 || NET_STANDARD_2_0)
+
 using UnityEngine;
 using NUnit.Framework;
 
@@ -47,4 +48,6 @@ namespace Unity.Properties.Tests
 		}
 	}
 }
-#endif // NET_4_6
+
+#endif // (NET_4_6 || NET_STANDARD_2_0)
+

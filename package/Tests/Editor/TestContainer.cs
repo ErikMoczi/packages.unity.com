@@ -1,4 +1,5 @@
-﻿#if NET_4_6
+﻿#if (NET_4_6 || NET_STANDARD_2_0)
+
 using System;
 using System.Collections.Generic;
 
@@ -56,10 +57,10 @@ namespace Unity.Properties.Tests
                     null,
                     null);
 
-
         public List<TestChildContainer> ChildList
         {
             get { return ChildListProperty.GetValue(this); }
+            set { ChildListProperty.SetValue(this, value); }
         }
 
         public IVersionStorage VersionStorage => PassthroughVersionStorage.Instance;

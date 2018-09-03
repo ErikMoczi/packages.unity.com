@@ -1,4 +1,5 @@
-﻿#if NET_4_6
+﻿#if (NET_4_6 || NET_STANDARD_2_0)
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +21,8 @@ namespace Unity.Properties.Editor.Serialization
             ResetInternalGenerationStates();
 
             StringBuffer gen = new StringBuffer();
-            using (var d = new NamespaceDecorator(container, DoGenerateNamespace ? gen : null))
+
+            using (new NamespaceDecorator(container, DoGenerateNamespace ? gen : null))
             {
                 GeneratePropertyContainerFor(
                     container,
@@ -83,7 +85,7 @@ namespace Unity.Properties.Editor.Serialization
         private static string GetPropertyWrapperVariableName(PropertyTypeNode propertyType)
         {
             string prefix = propertyType.IsPublicProperty ? string.Empty : "s_";
-            return $"{prefix}{propertyType.Name}Property";
+            return $"{prefix}{propertyType.PropertyName}Property";
         }
 
         private static void GenerateClassPropertiesForPropertyAccessor(
@@ -109,7 +111,7 @@ namespace Unity.Properties.Editor.Serialization
 
             var modifiers = string.Join(" ", ModifiersToStrings(AccessModifiers.Public));
 
-            code.AddLine($"{modifiers} {propertyTypeString} {propertyType.Name}");
+            code.AddLine($"{modifiers} {propertyTypeString} {propertyType.PropertyName}");
 
             {
                 code.AddLine("{");
@@ -166,7 +168,7 @@ namespace Unity.Properties.Editor.Serialization
 
             var propertyAccessorName = string.Empty;
             var backingField = GeneratePropertyBackingField(
-                propertyType.Name,
+                propertyType.PropertyName,
                 propertyType,
                 out propertyAccessorName
             );
@@ -179,22 +181,9 @@ namespace Unity.Properties.Editor.Serialization
 
                 var initializerFragment = backingField;
 
-                if (!string.IsNullOrEmpty(initializer))
+                if (!string.IsNullOrEmpty(initializer) && !propertyType.DontInitializeBackingField)
                 {
-                    if (containerTypeTag == PropertyTypeNode.TypeTag.Struct)
-                    {
-                        initializerFragment += $"= {initializer}";
-                    }
-                    else
-                    {
-                        // Add an initializer for that
-                        ConstructorInitializerFragments.Add(
-                            new CSharpGenerationFragmentContext()
-                            {
-                                Scope = code,
-                                Fragment = $"{propertyAccessorName} = {initializer};"
-                            });
-                    }
+                    initializerFragment += $" = {initializer}";
                 }
 
                 initializerFragment += ";";
@@ -373,7 +362,7 @@ namespace Unity.Properties.Editor.Serialization
                             case PropertyTypeNode.TypeTag.Unknown:
                             case PropertyTypeNode.TypeTag.List:
                             default:
-                                throw new Exception($"Invalid property tag fof list property name {propertyType.Name}");
+                                throw new Exception($"Invalid property tag of list property name {propertyType.PropertyName}");
                         }
                     }
 
@@ -416,7 +405,7 @@ namespace Unity.Properties.Editor.Serialization
 
             // TODO check & get by id instead of by name
             var propertyAccessorDelegate = propertyType.PropertyBackingAccessor;
-            propertyAccessorName = $"{propertyAccessorDelegate}.{propertyName}";
+            propertyAccessorName = $"{propertyAccessorDelegate}";
 
             return string.Empty;
         }
@@ -445,10 +434,10 @@ namespace Unity.Properties.Editor.Serialization
             {
                 return new PropertyWrapperAccessors()
                 {
-                    ValueGetter = $"GetValue_{CleanupNameForMethod(propertyType.Name)}",
-                    ValueSetter = $"SetValue_{CleanupNameForMethod(propertyType.Name)}",
+                    ValueGetter = $"GetValue_{CleanupNameForMethod(propertyType.PropertyName)}",
+                    ValueSetter = $"SetValue_{CleanupNameForMethod(propertyType.PropertyName)}",
                     RefGetter = propertyType.Tag == PropertyTypeNode.TypeTag.Struct
-                        ? $"GetRef_{CleanupNameForMethod(propertyType.Name)}"
+                        ? $"GetRef_{CleanupNameForMethod(propertyType.PropertyName)}"
                         : string.Empty
                 };
             }
@@ -465,7 +454,7 @@ namespace Unity.Properties.Editor.Serialization
             var propertyRefGetter = string.Empty;
             if (propertyType.Tag == PropertyTypeNode.TypeTag.Struct)
             {
-                propertyRefGetter = $"/* REF */ ({containerAsAParemeterType} container, {propertyWrapperTypeString}.RefVisitMethod a, IPropertyVisitor v) => a(ref container.m_{propertyType.Name}, v)";
+                propertyRefGetter = $"/* REF */ ({containerAsAParemeterType} container, {propertyWrapperTypeString}.RefVisitMethod a, IPropertyVisitor v) => a(ref container.m_{propertyType.PropertyName}, v)";
             }
 
             return new PropertyWrapperAccessors()
@@ -521,7 +510,7 @@ namespace Unity.Properties.Editor.Serialization
             }
 #endif
 
-            initializerParams.Add($"nameof({propertyType.Name})");
+            initializerParams.Add($"nameof({propertyType.PropertyName})");
             initializerParams.Add(accessors.ValueGetter);
             initializerParams.Add(accessors.ValueSetter);
 
@@ -967,9 +956,9 @@ namespace Unity.Properties.Editor.Serialization
 
             private void GenerateHeader()
             {
-                if (_sb != null && !string.IsNullOrEmpty(_container.Namespace))
+                if (_sb != null && !string.IsNullOrEmpty(_container.TypePath.Namespace))
                 {
-                    _sb.Append($"namespace {_container.Namespace} {Environment.NewLine} {{");
+                    _sb.Append($"namespace {_container.TypePath.Namespace} {Environment.NewLine} {{");
                     _sb.Append(Environment.NewLine);
                     _sb.Append(Environment.NewLine);
                 }
@@ -980,7 +969,7 @@ namespace Unity.Properties.Editor.Serialization
                 if (_container == null || _sb == null)
                     return;
 
-                if (!string.IsNullOrEmpty(_container.Namespace))
+                if (!string.IsNullOrEmpty(_container.TypePath.Namespace))
                 {
                     _sb.Append("}");
                     _sb.Append(Environment.NewLine);
@@ -1036,4 +1025,5 @@ namespace Unity.Properties.Editor.Serialization
         }
     }
 }
-#endif // NET_4_6
+
+#endif // (NET_4_6 || NET_STANDARD_2_0)
