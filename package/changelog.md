@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.4-preview.13
+
+- Add support for burst timings menu
+- Improve codegen for sin/cos
+- Improve codegen when using swizzles on vector types
+- Add support for sincos intrinsic
+- Fix AOT deployment
+
 ## 0.2.4-preview.12
 
 - Fix a bug in codegen that was collapsing methods overload of System.Threading.Interlocked to the same method

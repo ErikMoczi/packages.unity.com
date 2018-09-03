@@ -6,6 +6,7 @@ namespace Unity.Burst.Editor
     {
         private const string EnableSafetyChecksName = "BurstSafetyChecks";
         private const string EnableBurstCompilationText = "BurstCompilation";
+        private const string EnableBurstShowTimings = "BurstShowTimings";
 
         public static bool EnableBurstSafetyChecks
         {
@@ -17,6 +18,11 @@ namespace Unity.Burst.Editor
         {
             get { return EditorPrefs.GetBool(EnableBurstCompilationText, true); }
             set { EditorPrefs.SetBool(EnableBurstCompilationText, value); }
+        }
+        public static bool EnableShowBurstTimings
+        {
+            get { return EditorPrefs.GetBool(EnableBurstShowTimings, false); }
+            set { EditorPrefs.SetBool(EnableBurstShowTimings, value); }
         }
     }
 }

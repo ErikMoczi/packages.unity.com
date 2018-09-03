@@ -172,6 +172,10 @@ namespace Unity.Burst.Editor
                 AddOption(builder, GetOption(OptionBackend, backendPath));
             }
 
+            if (BurstEditorOptions.EnableShowBurstTimings)
+            {
+                AddOption(builder, GetOption(OptionJitLogTimings));
+            }
             //Debug.Log($"ExtractBurstCompilerOptions: {type} {optimizationFlags}");
 
             // AddOption(builder, GetOption(OptionJitEnableModuleCachingDebugger));
