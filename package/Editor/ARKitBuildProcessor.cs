@@ -1,5 +1,6 @@
 #if UNITY_IOS
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEditor.iOS.Xcode;
@@ -48,8 +49,23 @@ namespace UnityEditor.XR.ARKit
                 if (string.IsNullOrEmpty(PlayerSettings.iOS.cameraUsageDescription))
                     throw new BuildFailedException("ARKit requires a Camera Usage Description (Player Settings > iOS > Other Settings > Camera Usage Description)");
 
+                EnsureOnlyMetalIsUsed();
+
+#if !UNITY_2018_3_OR_NEWER
                 if ((report.summary.options & BuildOptions.SymlinkLibraries) != BuildOptions.None)
                     throw new BuildFailedException("The \"ARKit XR Plugin\" package cannot be symlinked. Go to File > Build Settings... and uncheck \"Symlink Unity libraries\".");
+#endif
+            }
+
+            void EnsureOnlyMetalIsUsed()
+            {
+                var graphicsApis = PlayerSettings.GetGraphicsAPIs(BuildTarget.iOS);
+                if (graphicsApis.Length > 0)
+                {
+                    var graphicsApi = graphicsApis[0];
+                    if (graphicsApi != GraphicsDeviceType.Metal)
+                        throw new BuildFailedException("You have selected the graphics API " + graphicsApi + ". Only the Metal graphics API is supported by the ARKit XR Plugin. (See Player Settings > Other Settings > Graphics APIs)");
+                }
             }
 
             public int callbackOrder { get { return 0; } }

@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-preview.14] - 2018-08-10
+- Add a pre build check to make sure Metal is the first selected Graphics API in Player Settings.
+- Remove restriction on symlinking Unity libraries in Build Settings if using Unity 2018.3 or newer.
+- Change plugin entry point in UnityARKit.a to avoid name collisions with other libraries (was `UnityPluginLoad`).
+
 ## [1.0.0-preview.13] - 2018-07-17
 - Update plugin to be compatible with Unity 2018.3
 - `ARPlane.trackingState` reports the session `TrackingState` for ARKit planes (previously it returned `TrackingState.Unknown`). ARKit planes do not have per-plane tracking states, so if they exist and the session is tracking, then the SDK will now report that the planes are tracked.

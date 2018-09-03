@@ -5,8 +5,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API UnityPluginLoad(IUnityInterfaces* unityInterfaces);
-void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API SetupiOS(CGSize (UNITY_INTERFACE_API * GetUnityRootViewSizeFuncPtr)());
+void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API UnityARKitXRPlugin_PluginLoad(IUnityInterfaces* unityInterfaces);
+void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API UnityARKitXRPlugin_SetupiOS(CGSize (UNITY_INTERFACE_API * GetUnityRootViewSizeFuncPtr)());
 #ifdef __cplusplus
 } // extern "C"
 #endif
@@ -27,8 +27,8 @@ CGSize UNITY_INTERFACE_API GetUnityRootViewSize()
 
 + (void)loadPlugin
 {
-    UnityRegisterRenderingPluginV5(UnityPluginLoad, NULL);
-    SetupiOS(&GetUnityRootViewSize);
+    UnityRegisterRenderingPluginV5(UnityARKitXRPlugin_PluginLoad, NULL);
+    UnityARKitXRPlugin_SetupiOS(&GetUnityRootViewSize);
 }
 
 @end
