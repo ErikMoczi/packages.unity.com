@@ -197,22 +197,22 @@ namespace UnityEditor.Experimental.U2D.IK
             m_IgnoreTransformsOnUndo.Clear();
         }
 
-        public void UpdateManagerImmediate(IKManager2D manager, bool setLocalEulerHints)
+        public void UpdateManagerImmediate(IKManager2D manager, bool recordRootLoops)
         {
             SetManagerDirty(manager);
-            UpdateDirtyManagers(setLocalEulerHints);
+            UpdateDirtyManagers(recordRootLoops);
         }
 
-        public void UpdateSolverImmediate(Solver2D solver, bool setLocalEulerHints)
+        public void UpdateSolverImmediate(Solver2D solver, bool recordRootLoops)
         {
             SetSolverDirty(solver);
-            UpdateDirtyManagers(setLocalEulerHints);
+            UpdateDirtyManagers(recordRootLoops);
         }
 
-        public void UpdateHierarchyImmediate(Transform hierarchyRoot, bool setLocalEulerHints)
+        public void UpdateHierarchyImmediate(Transform hierarchyRoot, bool recordRootLoops)
         {
             SetDirtyUnderHierarchy(hierarchyRoot);
-            UpdateDirtyManagers(setLocalEulerHints);
+            UpdateDirtyManagers(recordRootLoops);
         }
 
         public void SetChainPositionOverride(IKChain2D chain, Vector3 position)
@@ -392,7 +392,7 @@ namespace UnityEditor.Experimental.U2D.IK
                 RegisterUndo(manager, Undo.GetCurrentGroupName());
         }
 
-        private void UpdateDirtyManagers(bool setLocalEulerHints)
+        private void UpdateDirtyManagers(bool recordRootLoops)
         {
             foreach (var manager in m_DirtyManagers)
             {
@@ -415,13 +415,15 @@ namespace UnityEditor.Experimental.U2D.IK
                     else if(PrepareEffectorOverrides(solver))
                         solver.UpdateIK(m_EffectorPositions, manager.weight);
 
-                    if (setLocalEulerHints)
+                    for (int i = 0; i < solver.chainCount; ++i)
                     {
-                        for (int i = 0; i < solver.chainCount; ++i)
-                        {
-                            var chain = solver.GetChain(i);
+                        var chain = solver.GetChain(i);
+
+                        if (recordRootLoops)
                             InternalEngineBridge.SetLocalEulerHint(chain.rootTransform);
-                        }
+
+                        if(solver.constrainRotation && chain.effector != null)
+                            InternalEngineBridge.SetLocalEulerHint(chain.target);
                     }
                 }
             }
