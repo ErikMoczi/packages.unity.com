@@ -27,26 +27,15 @@ namespace Unity.Burst.LowLevel
             BurstCompilerService.Initialize(runtimePath, ExtractBurstCompilerOptions);
         }
 
-        const string kEnableSafetyChecksPref = "BurstSafetyChecks";
-        const string kEnableSafetyChecks = "Jobs/Enable Burst Safety Checks";
-
-        [MenuItem(kEnableSafetyChecks, false)]
-        static void EnableBurstSafetyChecks()
-        {
-            EditorPrefs.SetBool(kEnableSafetyChecksPref, !EditorPrefs.GetBool(kEnableSafetyChecksPref, true));
-        }
-
-        [MenuItem(kEnableSafetyChecks, true)]
-        static bool EnableBurstSafetyChecksValidate()
-        {
-            Menu.SetChecked(kEnableSafetyChecks, EditorPrefs.GetBool(kEnableSafetyChecksPref, true));
-            return BurstCompilerService.IsInitialized;
-        }
-
         public static bool ExtractBurstCompilerOptions(Type type, out string optimizationFlags)
         {
+            optimizationFlags = null;
+
             bool shouldBurstCompile = false;
             bool syncCompilation = false;
+
+            if (!EditorPrefs.GetBool(BurstMenu.kEnableBurstCompilation, true))
+                return false;
 
             foreach (var attr in type.GetCustomAttributes(true))
             {
@@ -62,17 +51,13 @@ namespace Unity.Burst.LowLevel
                 }
             }
 
-            optimizationFlags = null;
-
             if (!shouldBurstCompile)
-            {
                 return false;
-            }
 
             var builder = new StringBuilder();
 
 
-            if (!EditorPrefs.GetBool(kEnableSafetyChecksPref))
+            if (!EditorPrefs.GetBool(BurstMenu.kEnableSafetyChecks, true))
                 AddOption(builder, "-disable-safety-checks");
 
             if (syncCompilation)
