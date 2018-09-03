@@ -16,6 +16,7 @@ namespace UnityEngine.U2D
     public class SpriteShapeController : MonoBehaviour
     {
         const float s_ClipperScale = 100000.0f;
+        const float s_DistanceTolerance = 0.001f;
 
         PolygonCollider2D m_PolygonCollider2D;
         EdgeCollider2D m_EdgeCollider2D;
@@ -237,7 +238,22 @@ namespace UnityEngine.U2D
             BakeMesh(NeedUpdateSpriteArrays());
         }
 
-        void BakeMesh(bool needUpdateSpriteArrays)
+        // Ensure Neighbor points are not too close to each other.
+        private bool ValidatePoints(List<ShapeControlPointExperimental> shapePoints)
+        {
+            for (int i = 0; i < shapePoints.Count - 1; ++i)
+            {
+                var vec = shapePoints[i].position - shapePoints[i + 1].position;
+                if (vec.sqrMagnitude < s_DistanceTolerance)
+                {
+                    Debug.LogWarningFormat("Control points {0} & {1} are too close to each other. SpriteShape will not be generated.", i, i + 1);
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public void BakeMesh(bool needUpdateSpriteArrays)
         {
             if (needUpdateSpriteArrays)
                 UpdateSpriteArrays();
@@ -257,13 +273,13 @@ namespace UnityEngine.U2D
                 SpriteShapeMetaData metaData;
                 metaData.bevelCutoff = m_Spline.GetBevelCutoff(i);
                 metaData.bevelSize = m_Spline.GetBevelSize(i);
-                metaData.corner = true;
+                metaData.corner = m_Spline.GetCorner(i);
                 metaData.height = m_Spline.GetHeight(i);
                 metaData.spriteIndex = (uint)m_Spline.GetSpriteIndex(i);
                 shapeMetaData.Add(metaData);
             }
 
-            if (spriteShapeRenderer != null)
+            if (spriteShapeRenderer != null && ValidatePoints(shapePoints))
             {
                 SpriteShapeUtility.GenerateSpriteShape(spriteShapeRenderer, m_CurrentShapeParameters,
                     shapePoints.ToArray(), shapeMetaData.ToArray(), m_AngleRangeInfoArray, m_EdgeSpriteArray,

@@ -10,3 +10,4 @@
 1.0.9-experimental
 1.0.10-preview
 1.0.10-preview.1
+1.0.10-preview.2

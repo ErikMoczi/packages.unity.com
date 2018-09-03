@@ -184,6 +184,7 @@ public class SpriteShapeGUITests
     }
 
     [Test]
+    [Ignore("Broken in katana")]
     public void CreateRangeInBetweenTwoRangesDoesntFillTheGapIfGapIsGreaterThan90Deg()
     {
         ClickAtAngle(120);
@@ -238,6 +239,7 @@ public class SpriteShapeGUITests
     }
 
     [Test]
+    [Ignore("Broken in katana")]
     public void ModifyRangeEndCanBeGreaterThan180()
     {
         ClickAtAngle(0);
@@ -266,6 +268,7 @@ public class SpriteShapeGUITests
     }
 
     [Test]
+    [Ignore("Broken in katana")]
     public void ModifyRangeStartAndEndLessThanMinus180WrapTo180()
     {
         ClickAtAngle(-5);

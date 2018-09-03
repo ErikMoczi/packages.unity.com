@@ -185,13 +185,15 @@ namespace UnityEditor.U2D
             EditorGUILayout.PropertyField(m_IsOpenEndedProp, Contents.openEndedLabel);
             EditorGUILayout.PropertyField(m_AdaptiveUVProp, Contents.adaptiveUVLabel);
 
-            EditorGUILayout.Space();
-            DrawHeader(Contents.colliderLabel);
-            EditorGUILayout.PropertyField(m_ColliderAutoUpdate, Contents.updateColliderLabel);
-            EditorGUILayout.IntPopup(m_ColliderDetailProp, Contents.splineDetailOptions, m_QualityValues, Contents.colliderDetail);
-            EditorGUILayout.PropertyField(m_ColliderCornerTypeProp, Contents.colliderCornerType);
-            EditorGUILayout.PropertyField(m_ColliderOffsetProp, Contents.colliderOffset);
-
+            if (m_SpriteShapeController.gameObject.GetComponent<PolygonCollider2D>() != null || m_SpriteShapeController.gameObject.GetComponent<EdgeCollider2D>() != null)
+            {
+                EditorGUILayout.Space();
+                DrawHeader(Contents.colliderLabel);
+                EditorGUILayout.PropertyField(m_ColliderAutoUpdate, Contents.updateColliderLabel);
+                EditorGUILayout.IntPopup(m_ColliderDetailProp, Contents.splineDetailOptions, m_QualityValues, Contents.colliderDetail);
+                EditorGUILayout.PropertyField(m_ColliderCornerTypeProp, Contents.colliderCornerType);
+                EditorGUILayout.PropertyField(m_ColliderOffsetProp, Contents.colliderOffset);
+            }
             if (EditorGUI.EndChangeCheck())
                 updateCollider = true;
 
