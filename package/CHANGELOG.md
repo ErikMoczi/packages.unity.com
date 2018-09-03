@@ -38,3 +38,15 @@ and project files needed to adapt ARCore to the Unity multi-platform AR API.
 
 ## [1.0.0-preview.13] - 2018-06-06
 - Fixed a crash following ARCore apk install. There is a (rare) race condition when installing the ARCore apk, where ARCore will try to initialize before the apk is completely ready. This can still happen, but the app no longer crashes. When it does happen, the SDK will report that AR is supported and ready, but AR will not function properly until the app is restarted.
+
+## [1.0.0-preview.14] - 2018-06-07
+- Fixed a crash on startup on some devices.
+- Throw a build error instead of a warning if using Vulkan (ARCore requires an OpenGL context)
+- Camera texture appears as soon as ARCore provides it, rather than waiting for tracking to be established.
+- Fix typo in ARCoreSettings (`requirment` => `requirement`)
+- Improve usability of ARCoreSettings
+    - Remove CreateAssetMenu item -- provide one path to create the asset.
+    - xmldoc referred to ARKit instead of ARCore
+    - Make currentSettings public so users can override this easily.
+- Improve ARCore build error message
+    'Error building Player: BuildFailedException: "ARCore Supported" (Player Settings > XR Settings) refers to the built-in ARCore support in Unity and conflicts with the ARCore package.') that doesn't explain that that the "ARCore package" is in fact the "ARCore XR Plugin" package. The package name should match from the package manager window.

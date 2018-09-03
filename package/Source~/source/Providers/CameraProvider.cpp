@@ -93,9 +93,6 @@ bool UNITY_INTERFACE_API CameraProvider::GetFrame(const UnityXRCameraParams& par
     m_ScreenHeight = paramsIn.screenHeight;
 
     frameOut->providedFields = EnumCast<UnityXRCameraFramePropertyFlags>(0);
-    ArTrackingState trackingState = m_WrappedCamera.GetTrackingState();
-    if (trackingState != AR_TRACKING_STATE_TRACKING)
-        return false;
 
     int googleOrientation = ConvertUnityToGoogleOrientation(paramsIn.orientation);
     if (kInvalidOrientation == googleOrientation)

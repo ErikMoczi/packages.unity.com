@@ -3,9 +3,8 @@ using UnityEngine;
 namespace UnityEditor.XR.ARCore
 {
     /// <summary>
-    /// Holds settings that are used to configure the Unity ARKit Plugin.
+    /// Holds settings that are used to configure the Unity ARCore Plugin.
     /// </summary>
-    [CreateAssetMenu(fileName = "ARCoreSettings", menuName = "ARCore/Settings", order = 1)]
     public class ARCoreSettings : ScriptableObject
     {
         /// <summary>
@@ -30,7 +29,7 @@ namespace UnityEditor.XR.ARCore
         /// <summary>
         /// Determines whether ARCore is required for this app: will make app only downloadable by devices with ARCore support if set to <see cref="Requirement.Required"/>.
         /// </summary>
-        public Requirement requirment
+        public Requirement requirement
         {
             get { return m_Requirement; }
             set { m_Requirement = value; }
@@ -49,17 +48,10 @@ namespace UnityEditor.XR.ARCore
             return CreateInstance<ARCoreSettings>();
         }
 
-        internal static bool TrySelect()
-        {
-            var settings = currentSettings;
-            if (settings == null)
-                return false;
-
-            Selection.activeObject = settings;
-            return true;
-        }
-
-        internal static ARCoreSettings currentSettings
+        /// <summary>
+        /// Get or set the <see cref="ARCoreSettings"/> that will be used for the player build.
+        /// </summary>
+        public static ARCoreSettings currentSettings
         {
             get
             {
@@ -79,6 +71,16 @@ namespace UnityEditor.XR.ARCore
                     EditorBuildSettings.AddConfigObject(k_ConfigObjectName, value, true);
                 }
             }
+        }
+
+        internal static bool TrySelect()
+        {
+            var settings = currentSettings;
+            if (settings == null)
+                return false;
+
+            Selection.activeObject = settings;
+            return true;
         }
 
         static readonly string k_ConfigObjectName = "com.unity.xr.arcore.PlayerSettings";

@@ -29,14 +29,14 @@ namespace UnityEditor.XR.ARCore
         {
             var arcoreSettings = ARCoreSettings.GetOrCreateSettings();
             int minSdkVersion;
-            if (arcoreSettings.requirment == ARCoreSettings.Requirement.Optional)
+            if (arcoreSettings.requirement == ARCoreSettings.Requirement.Optional)
                 minSdkVersion = 14;
             else
                 minSdkVersion = 24;
 
             if ((int)PlayerSettings.Android.minSdkVersion < minSdkVersion)
                 throw new BuildFailedException(string.Format("ARCore {0} apps require a minimum SDK version of {1}. Currently set to {2}",
-                    arcoreSettings.requirment, minSdkVersion, PlayerSettings.Android.minSdkVersion));
+                    arcoreSettings.requirement, minSdkVersion, PlayerSettings.Android.minSdkVersion));
         }
 
         void EnsureARCoreSupportedIsNotChecked()
@@ -50,7 +50,7 @@ namespace UnityEditor.XR.ARCore
                 {
                     var arcoreEnabled = (bool)value;
                     if (arcoreEnabled)
-                        throw new BuildFailedException("\"ARCore Supported\" (Player Settings > XR Settings) refers to the built-in ARCore support in Unity and conflicts with the ARCore package.");
+                        throw new BuildFailedException("\"ARCore Supported\" (Player Settings > XR Settings) refers to the built-in ARCore support in Unity and conflicts with the \"ARCore XR Plugin\" package.");
                 }
             }
         }
@@ -68,7 +68,7 @@ namespace UnityEditor.XR.ARCore
             foreach(var graphicsApi in graphicsApis)
             {
                 if (graphicsApi == GraphicsDeviceType.Vulkan)
-                    Debug.LogWarning("You have enabled the Vulkan graphics API, which is not supported by ARCore.");
+                    throw new BuildFailedException("You have enabled the Vulkan graphics API, which is not supported by ARCore.");
             }
         }
     }
@@ -134,7 +134,6 @@ namespace UnityEditor.XR.ARCore
             containingNode.AppendChild(element);
         }
 
-
         void FindOrCreateTagWithAttributes(XmlDocument doc, XmlNode containingNode, string tagName,
             string firstAttributeName, string firstAttributeValue, string secondAttributeName, string secondAttributeValue)
         {
@@ -194,11 +193,11 @@ namespace UnityEditor.XR.ARCore
             FindOrCreateTagWithAttribute(manifestDoc, manifestNode, "uses-permission", "name", k_AndroidPermissionCamera);
 
             var settings = ARCoreSettings.GetOrCreateSettings();
-            if (settings.requirment == ARCoreSettings.Requirement.Optional)
+            if (settings.requirement == ARCoreSettings.Requirement.Optional)
             {
                 FindOrCreateTagWithAttributes(manifestDoc, applicationNode, "meta-data", "name", k_AndroidNameValue, "value", "optional");
             }
-            else if (settings.requirment == ARCoreSettings.Requirement.Required)
+            else if (settings.requirement == ARCoreSettings.Requirement.Required)
             {
                 FindOrCreateTagWithAttributes(manifestDoc, manifestNode, "uses-feature", "name", k_AndroidHardwareCameraAr, "required", "true");
                 FindOrCreateTagWithAttributes(manifestDoc, applicationNode, "meta-data", "name", k_AndroidNameValue, "value", "required");

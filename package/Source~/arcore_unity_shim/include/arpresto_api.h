@@ -79,6 +79,9 @@ typedef void (*RequestApkInstallationResult_FP)(
 typedef void (*OnBeforeSetConfigurationCallback_FP)(ArSession *session,
     ArConfig *config);
 
+// A callback that fires before a session is resumed.
+typedef void (*OnBeforeResumeSessionCallback_FP)(ArSession *session);
+
 /// Initializes ArPresto, a library for that manages ArCore session
 /// lifecycle and multiple ArCore sessions for presentation layer
 /// applications.
@@ -93,9 +96,14 @@ typedef void (*OnBeforeSetConfigurationCallback_FP)(ArSession *session,
 /// @param[in]    on_before_set_config
 ///                                  A callback fired every time before
 ///                                  a configuration is set.
-extern "C" void ArPresto_initialize(JavaVM *java_vm, jobject activity,
+/// @param[in]    on_before_resume_session
+///                                  A callback fired every time just
+///                                  before a session is resumed.
+extern "C" void ArPresto_initialize(
+    JavaVM *java_vm, jobject activity,
     CameraPermissionRequestProvider_FP request_camera_permission,
-    OnBeforeSetConfigurationCallback_FP on_before_set_config);
+    OnBeforeSetConfigurationCallback_FP on_before_set_config,
+    OnBeforeResumeSessionCallback_FP on_before_resume_session);
 
 /// Handles Android activity resume and its effects on ArPresto/ArCore state.
 extern "C" void ArPresto_handleActivityResume();
@@ -164,7 +172,7 @@ extern "C" void ArPresto_getSession(ArSession **session);
 /// @param[out]    status            The ArPrestoStatus of the session.
 extern "C" void ArPresto_getStatus(ArPrestoStatus *status);
 
-/// Destroys the session manager if one exists
+/// Resets the ARPresto session and all tracking data.
 extern "C" void ArPresto_reset();
 
 #endif // ARPRESTO_API_H

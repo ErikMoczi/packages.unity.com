@@ -69,7 +69,7 @@ jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/)
     }
 
     ArPresto_initialize(s_JavaVM, s_AppActivity,
-        &CameraPermissionRequestProvider, nullptr);
+        &CameraPermissionRequestProvider, nullptr, nullptr);
 
     return ret;
 }

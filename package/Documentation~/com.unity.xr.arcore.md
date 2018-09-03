@@ -28,11 +28,11 @@ This version of *ARCore XR Plugin* supports only the functionality available as 
 
 To install this package, follow the instructions in the [Package Manager documentation](https://docs.unity3d.com/Packages/com.unity.package-manager-ui@latest/index.html).
 
-In addition, you will likely want to also install the *AR Utilities* package which makes use of *ARCore XR Plugin* package and provides many useful scripts and prefabs.
+In addition, you will likely want to also install the *AR Foundation* package which makes use of *ARCore XR Plugin* package and provides many useful scripts and prefabs.
 
 # Using ARCore XR Plugin
 
-The *ARCore XR Plugin* implements the native endpoints required for building Handheld AR apps using Unity's multi-platform XR API. However, this package does not expose any public scripting interface of its own and most developers should use the scripts, prefabs, and assets provided by *AR Utilities* as the basis for their Handheld AR apps.
+The *ARCore XR Plugin* implements the native endpoints required for building Handheld AR apps using Unity's multi-platform XR API. However, this package does not expose any public scripting interface of its own and most developers should use the scripts, prefabs, and assets provided by *AR Foundation* as the basis for their Handheld AR apps.
 
 Inclusion of the *ARCore XR Plugin* will result in the inclusion of source files, static libraries, shader files, and plugin metadata.
 
@@ -46,7 +46,7 @@ ARCore may be either "required" or "optional". If ARCore is optional, the Play S
 
 ![alt text](images/arcore_settings.png "ARCore Settings")
 
-Once you've created an `ARCoreSettings` asset, you can assign it to your current build options from Edit > Player Settings > ARCore
+Once you've created an `ARCoreSettings` asset, you can assign it to your current build options from Edit > Project Settings > ARCore
 
 ![alt text](images/edit_playersettings_arcore.png "ARCore Player Settings")
 
@@ -79,3 +79,4 @@ This version of *ARCore XR Plugin* includes:
 |---|---|
 |April 19, 2018|Documentation update.|
 |June 1, 2018|Add documentation and screenshots for ARCore build settings. Remove incorrect reference to Xcode and iOS.|
+|June 7, 2018|<ul><li>Change reference from *Player Settings* to *Project Settings*</li><li>Change reference from *AR Utilities* to *AR Foundation*</li></ul>|
