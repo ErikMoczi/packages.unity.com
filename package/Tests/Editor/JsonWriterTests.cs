@@ -18,7 +18,6 @@ public class JsonWriterTests
     public void WhenStructPropertyContainer_JsonSerialization_ReturnsAValidResult()
     {
         var result = JsonSerializer.SerializeStruct(new TestStructContainer());
-        Debug.Log(result);
         Assert.IsTrue(result.Contains("FloatValue"));
     }
 
