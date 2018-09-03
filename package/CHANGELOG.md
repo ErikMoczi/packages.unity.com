@@ -17,3 +17,11 @@ and project files needed to adapt ARKit to the Unity multi-platform AR API.
 
 ### Added 
 -Created a Legacy XRInput interface to automate the switch between 2018.1 and 2018.2 XRInput versions.
+
+## [1.0.0-preview.8] - 2018-05-24
+### Added
+- Availability check to determine runtime support for ARKit.
+- Normalize average brightness reading from 0..1
+
+## [1.0.0-preview.9] - 2018-06-06
+- Remove extraneous debug log

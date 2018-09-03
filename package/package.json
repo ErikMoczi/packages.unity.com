@@ -1,7 +1,7 @@
 {
 	"name": "com.unity.xr.arkit",
 	"displayName":"ARKit XR Plugin",
-	"version": "1.0.0-preview.8",
+	"version": "1.0.0-preview.9",
 	"unity": "2018.1",
 	"description": "Provides native Apple ARKit integration for use with Unity's multi-platform XR API.\n=Supported Features=\n-Efficient Background Rendering\n-Horizontal Planes\n-Depth Data\n-Reference Points\n-Hit Testing",
 	"keywords": ["arkit", "ar", "augmented", "xr", "reality"],
