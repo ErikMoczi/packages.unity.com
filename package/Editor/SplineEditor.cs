@@ -303,7 +303,7 @@ namespace UnityEditor.U2D
 
             EditorGUI.BeginChangeCheck();
             EditorGUI.showMixedValue = !bevelSizes.All(v => Mathf.Approximately(v, bevelSizes.First()));
-            float bevelLength = EditorGUILayout.Slider(Contents.bevelSizeLabel, bevelSizes[0], 0.05f, 0.5f);
+            float bevelLength = EditorGUILayout.Slider(Contents.bevelSizeLabel, bevelSizes[0], 0.0f, 0.5f);
             if (EditorGUI.EndChangeCheck())
             {
                 Undo.RecordObject(m_CurrentEditor.target, "Undo Inspector");

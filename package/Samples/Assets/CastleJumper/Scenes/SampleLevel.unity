@@ -13,7 +13,7 @@ OcclusionCullingSettings:
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 8
+  serializedVersion: 9
   m_Fog: 0
   m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   m_FogMode: 3
@@ -39,6 +39,7 @@ RenderSettings:
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
   m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
+  m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -357,69 +358,24 @@ SpriteShapeRenderer:
   m_SortingOrder: -10
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_MaskInteraction: 0
-  m_ShapeTexture: {fileID: 0}
-  m_Sprites: []
+  m_ShapeTexture: {fileID: 2800000, guid: 5c116bf173a431147a87d2c89e0e6907, type: 3}
+  m_Sprites:
+  - {fileID: 21300014, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300006, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300002, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300012, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300010, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300000, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300004, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300012, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300008, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300000, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300004, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300012, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300008, guid: a8321f6fae34f034787010a903e29648, type: 3}
   m_LocalAABB:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 0, y: 0, z: 0}
-  '*m_RenderData':
-    m_SubMeshes: []
-    m_IndexBuffer: 
-    m_VertexData:
-      serializedVersion: 2
-      m_VertexCount: 0
-      m_Channels:
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      m_DataSize: 0
-      _typelessdata: 
-    m_SubmeshSprites: 
+    m_Center: {x: -0.46195698, y: 0.112298965, z: 0}
+    m_Extent: {x: 16.012177, y: 7.3646555, z: 0}
 --- !u!4 &148932351
 Transform:
   m_ObjectHideFlags: 0
@@ -526,68 +482,20 @@ SpriteShapeRenderer:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_MaskInteraction: 0
   m_ShapeTexture: {fileID: 0}
-  m_Sprites: []
+  m_Sprites:
+  - {fileID: 21300018, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   m_LocalAABB:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 0, y: 0, z: 0}
-  '*m_RenderData':
-    m_SubMeshes: []
-    m_IndexBuffer: 
-    m_VertexData:
-      serializedVersion: 2
-      m_VertexCount: 0
-      m_Channels:
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      m_DataSize: 0
-      _typelessdata: 
-    m_SubmeshSprites: 
+    m_Center: {x: -0.8462928, y: 0.0075032115, z: 0}
+    m_Extent: {x: 2.1758142, y: 1.0140872, z: 0}
 --- !u!4 &251244157
 Transform:
   m_ObjectHideFlags: 0
@@ -712,68 +620,20 @@ SpriteShapeRenderer:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_MaskInteraction: 0
   m_ShapeTexture: {fileID: 0}
-  m_Sprites: []
+  m_Sprites:
+  - {fileID: 21300018, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   m_LocalAABB:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 0, y: 0, z: 0}
-  '*m_RenderData':
-    m_SubMeshes: []
-    m_IndexBuffer: 
-    m_VertexData:
-      serializedVersion: 2
-      m_VertexCount: 0
-      m_Channels:
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      m_DataSize: 0
-      _typelessdata: 
-    m_SubmeshSprites: 
+    m_Center: {x: -0.14352441, y: -0.08377564, z: 0}
+    m_Extent: {x: 7.665764, y: 1.7641705, z: 0}
 --- !u!4 &952383172
 Transform:
   m_ObjectHideFlags: 0
@@ -898,68 +758,20 @@ SpriteShapeRenderer:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_MaskInteraction: 0
   m_ShapeTexture: {fileID: 0}
-  m_Sprites: []
+  m_Sprites:
+  - {fileID: 21300018, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   m_LocalAABB:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 0, y: 0, z: 0}
-  '*m_RenderData':
-    m_SubMeshes: []
-    m_IndexBuffer: 
-    m_VertexData:
-      serializedVersion: 2
-      m_VertexCount: 0
-      m_Channels:
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      m_DataSize: 0
-      _typelessdata: 
-    m_SubmeshSprites: 
+    m_Center: {x: 2.0302398, y: 1.3312354, z: 0}
+    m_Extent: {x: 6.8089314, y: 1.733732, z: 0}
 --- !u!4 &1108206412
 Transform:
   m_ObjectHideFlags: 0
@@ -984,7 +796,6 @@ GameObject:
   - component: {fileID: 1242806279}
   - component: {fileID: 1242806278}
   - component: {fileID: 1242806277}
-  - component: {fileID: 1242806281}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1055,17 +866,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1242806281
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1242806276}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1793d3bd4c6391248a73d927f00ea8c8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1335490063
 GameObject:
   m_ObjectHideFlags: 0
@@ -1239,69 +1039,24 @@ SpriteShapeRenderer:
   m_SortingOrder: -9
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_MaskInteraction: 0
-  m_ShapeTexture: {fileID: 0}
-  m_Sprites: []
+  m_ShapeTexture: {fileID: 2800000, guid: 5c116bf173a431147a87d2c89e0e6907, type: 3}
+  m_Sprites:
+  - {fileID: 21300014, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300006, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300002, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300012, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300010, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300000, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300004, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300012, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300008, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300000, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300004, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300012, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 21300008, guid: a8321f6fae34f034787010a903e29648, type: 3}
   m_LocalAABB:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 0, y: 0, z: 0}
-  '*m_RenderData':
-    m_SubMeshes: []
-    m_IndexBuffer: 
-    m_VertexData:
-      serializedVersion: 2
-      m_VertexCount: 0
-      m_Channels:
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      m_DataSize: 0
-      _typelessdata: 
-    m_SubmeshSprites: 
+    m_Center: {x: 2.9491155, y: -1.1626093, z: 0}
+    m_Extent: {x: 8.037891, y: 6.110729, z: 0}
 --- !u!4 &1335490067
 Transform:
   m_ObjectHideFlags: 0
@@ -1408,68 +1163,20 @@ SpriteShapeRenderer:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_MaskInteraction: 0
   m_ShapeTexture: {fileID: 0}
-  m_Sprites: []
+  m_Sprites:
+  - {fileID: 21300018, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   m_LocalAABB:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 0, y: 0, z: 0}
-  '*m_RenderData':
-    m_SubMeshes: []
-    m_IndexBuffer: 
-    m_VertexData:
-      serializedVersion: 2
-      m_VertexCount: 0
-      m_Channels:
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      m_DataSize: 0
-      _typelessdata: 
-    m_SubmeshSprites: 
+    m_Center: {x: 0.8759923, y: 0.030087233, z: 0}
+    m_Extent: {x: 3.7870207, y: 1.0617191, z: 0}
 --- !u!4 &1680581999
 Transform:
   m_ObjectHideFlags: 0
@@ -1630,68 +1337,20 @@ SpriteShapeRenderer:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_MaskInteraction: 0
   m_ShapeTexture: {fileID: 0}
-  m_Sprites: []
+  m_Sprites:
+  - {fileID: 21300016, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   m_LocalAABB:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 0, y: 0, z: 0}
-  '*m_RenderData':
-    m_SubMeshes: []
-    m_IndexBuffer: 
-    m_VertexData:
-      serializedVersion: 2
-      m_VertexCount: 0
-      m_Channels:
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      m_DataSize: 0
-      _typelessdata: 
-    m_SubmeshSprites: 
+    m_Center: {x: -0.66751647, y: 5.349474, z: 0}
+    m_Extent: {x: 5.9790363, y: 1.9402101, z: 0}
 --- !u!4 &1804489814
 Transform:
   m_ObjectHideFlags: 0
@@ -1852,68 +1511,20 @@ SpriteShapeRenderer:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_MaskInteraction: 0
   m_ShapeTexture: {fileID: 0}
-  m_Sprites: []
+  m_Sprites:
+  - {fileID: 21300016, guid: a8321f6fae34f034787010a903e29648, type: 3}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   m_LocalAABB:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 0, y: 0, z: 0}
-  '*m_RenderData':
-    m_SubMeshes: []
-    m_IndexBuffer: 
-    m_VertexData:
-      serializedVersion: 2
-      m_VertexCount: 0
-      m_Channels:
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      - stream: 0
-        offset: 0
-        format: 0
-        dimension: 0
-      m_DataSize: 0
-      _typelessdata: 
-    m_SubmeshSprites: 
+    m_Center: {x: -1.0821545, y: 0.7018883, z: 0}
+    m_Extent: {x: 7.045039, y: 2.1257796, z: 0}
 --- !u!4 &1886421755
 Transform:
   m_ObjectHideFlags: 0

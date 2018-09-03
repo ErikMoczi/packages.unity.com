@@ -24,9 +24,10 @@ namespace UnityEditor.U2D
             {
                 if (s_SpriteMaterial == null)
                 {
-                    s_SpriteMaterial = new Material(Shader.Find("Sprites/Default"));
+                    s_SpriteMaterial = new Material(Shader.Find("Hidden/InternalSpritesInspector"));
                     s_SpriteMaterial.hideFlags = HideFlags.DontSave;
                 }
+                s_SpriteMaterial.SetFloat("_AdjustLinearForGamma", PlayerSettings.colorSpace == ColorSpace.Linear ? 1.0f : 0.0f);
                 return s_SpriteMaterial;
             }
         }
