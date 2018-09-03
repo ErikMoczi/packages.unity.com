@@ -1,4 +1,5 @@
-using System;
+using System.Collections;
+using UnityEngine.SceneManagement;
 
 namespace UnityEngine.XR.ARFoundation
 {
@@ -33,21 +34,60 @@ namespace UnityEngine.XR.ARFoundation
         }
 
         [SerializeField]
-        [Tooltip("The number of seconds to wait after the AR Session begins before considering the session timed out.")]
-        float m_SessionTimeoutInSeconds = 2f;
+        [Tooltip("When enabled, the session is not destroyed on scene change.")]
+        bool m_PersistBetweenScenes;
 
         /// <summary>
-        /// Get or set the session timeout.
+        /// Get or set the persistence of this session across scenes.
         /// </summary>
         /// <remarks>
-        /// If the session does not respond within this time,
-        /// the subsystems are stopped and an error is assumed to have occurred.
-        /// Listen for session state changes by subscribing to <see cref="ARSubsystemManager.sessionStateChanged"/>.
+        /// If the <see cref="ARSession"/> is not persisted between scenes, then it
+        /// will be destroyed during a scene change, and you may lose any detected
+        /// features in the environment, such as planar surfaces. This may be undesirable,
+        /// so you can keep the session alive by setting <see cref="ARSession.persistBetweenScenes"/>
+        /// to <c>true</c>. If you do this, you should not have an active <see cref="ARSession"/>
+        /// in the scene that gets loaded, or they could conflict with each other.
         /// </remarks>
-        public float sessionTimeoutInSeconds
+        public bool persistBetweenScenes
         {
-            get { return m_SessionTimeoutInSeconds; }
-            set { m_SessionTimeoutInSeconds = value; }
+            get
+            {
+                return m_PersistBetweenScenes;
+            }
+
+            set
+            {
+                if (m_PersistBetweenScenes == value)
+                    return;
+
+                m_PersistBetweenScenes = value;
+
+                if (m_PersistBetweenScenes)
+                {
+                    DontDestroyOnLoad(this);
+                }
+                else
+                {
+                    var currentScene = SceneManager.GetActiveScene();
+                    SceneManager.MoveGameObjectToScene(gameObject, currentScene);
+                }
+            }
+        }
+
+        [SerializeField]
+        [Tooltip("If enabled, the session will attempt to update a supported device if its AR software is out of date.")]
+        bool m_TryToInstallUpdateIfNeeded = true;
+
+        /// <summary>
+        /// If the device supports AR but does not have the necessary software, some platforms
+        /// allow prompting the user to install or update the software. If <c>tryToInstallUpdateIfNeeded</c>
+        /// is true, a software update will be attempted. If the appropriate software is not installed
+        /// or out of date, and <c>tryToInstallUpdateIfNeeded</c> is <c>false</c>, then AR will not be available.
+        /// </summary>
+        public bool tryToInstallUpdateIfNeeded
+        {
+            get { return m_TryToInstallUpdateIfNeeded; }
+            set { m_TryToInstallUpdateIfNeeded = value; }
         }
 
         /// <summary>
@@ -84,16 +124,35 @@ namespace UnityEngine.XR.ARFoundation
 #if DEBUG
             WarnIfMultipleARSessions();
 #endif
+            StartCoroutine(Initialize());
+        }
 
-            if (ARSubsystemManager.sessionSubsystem == null)
-                ARSubsystemManager.CreateSubsystems();
+        IEnumerator Initialize()
+        {
+            // Make sure we've checked for availability
+            if (ARSubsystemManager.systemState <= SystemState.CheckingAvailability)
+                yield return ARSubsystemManager.CheckAvailability();
 
-            ARSubsystemManager.lightEstimationRequested = lightEstimation;
+            // Make sure we didn't get disabled while checking for availability
+            if (!enabled)
+                yield break;
 
-            if (ARSubsystemManager.sessionSubsystem != null)
+            // Complete install if necessary
+            if (((ARSubsystemManager.systemState == SystemState.NeedsInstall) && tryToInstallUpdateIfNeeded) ||
+                (ARSubsystemManager.systemState == SystemState.Installing))
             {
-                m_TimeoutCallback = ARSubsystemManager.StartSubsystems();
-                m_SubsystemStartTime = Time.realtimeSinceStartup;
+                yield return ARSubsystemManager.Install();
+            }
+
+            // If we're still enabled and everything is ready, then start.
+            if (ARSubsystemManager.systemState == SystemState.Ready && enabled)
+            {
+                ARSubsystemManager.lightEstimationRequested = lightEstimation;
+                ARSubsystemManager.StartSubsystems();
+            }
+            else
+            {
+                enabled = false;
             }
         }
 
@@ -109,21 +168,13 @@ namespace UnityEngine.XR.ARFoundation
 
         void Awake()
         {
-            DontDestroyOnLoad(this);
+            if (persistBetweenScenes)
+                DontDestroyOnLoad(this);
+
+            ARSubsystemManager.CreateSubsystems();
+
+            // Kick this off immediately so we have the answer as soon as possible
+            StartCoroutine(ARSubsystemManager.CheckAvailability());
         }
-
-        void Update()
-        {
-            if ((m_TimeoutCallback != null) && (ARSubsystemManager.sessionState == ARSessionState.Initializing))
-            {
-                var elapsedTime = Time.realtimeSinceStartup - m_SubsystemStartTime;
-                if (elapsedTime > sessionTimeoutInSeconds)
-                    m_TimeoutCallback();
-            }
-        }
-
-        Action m_TimeoutCallback;
-
-        float m_SubsystemStartTime;
     }
 }

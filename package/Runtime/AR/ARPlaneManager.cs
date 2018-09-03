@@ -213,11 +213,6 @@ namespace UnityEngine.XR.ARFoundation
             m_Planes.Remove(plane.boundedPlane.Id);
         }
 
-        void Reset()
-        {
-            SceneUtils.EnsureARSessionExists();
-        }
-
         Dictionary<TrackableId, ARPlane> m_Planes = new Dictionary<TrackableId, ARPlane>();
 
         ARSessionOrigin m_SessionOrigin;

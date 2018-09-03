@@ -11,11 +11,6 @@
         NotRunning,
 
         /// <summary>
-        /// A session was requested, but no data was received within the timeout period.
-        /// </summary>
-        TimedOut,
-
-        /// <summary>
         /// A session was requested, but the system is still initializing.
         /// </summary>
         /// <remarks>

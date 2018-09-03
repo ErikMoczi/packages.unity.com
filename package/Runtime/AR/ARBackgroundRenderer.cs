@@ -45,8 +45,16 @@ namespace UnityEngine.XR.ARFoundation
 
         void SetupCameraIfNecessary()
         {
+            if (m_OverrideMaterial)
+            {
+                if (backgroundRenderer.backgroundMaterial != material)
+                    material = material;
+
+                return;
+            }
+
             var cameraSubsystem = ARSubsystemManager.cameraSubsystem;
-            if (m_OverrideMaterial || m_CameraSetupThrewException || m_CameraHasBeenSetup || (cameraSubsystem == null))
+            if (m_CameraSetupThrewException || m_CameraHasBeenSetup || (cameraSubsystem == null))
                 return;
 
             // Try to create a material from the plugin's provided shader.
@@ -99,7 +107,6 @@ namespace UnityEngine.XR.ARFoundation
         {
             backgroundRenderer.mode = ARRenderMode.MaterialAsBackground;
             backgroundRenderer.camera = m_Camera;
-            backgroundRenderer.backgroundMaterial = material;
 
             NotifyCameraSubsystem();
             ARSubsystemManager.cameraFrameReceived += OnCameraFrameReceived;
@@ -122,11 +129,6 @@ namespace UnityEngine.XR.ARFoundation
                 if (cameraSubsystem.Material == material)
                     cameraSubsystem.Material = null;
             }
-        }
-
-        void Reset()
-        {
-            SceneUtils.EnsureARSessionExists();
         }
 
         bool m_CameraHasBeenSetup;

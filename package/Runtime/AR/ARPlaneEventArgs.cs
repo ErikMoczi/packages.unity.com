@@ -157,7 +157,7 @@ namespace UnityEngine.XR.ARFoundation
     }
 
     /// <summary>
-    /// Data associated with an <see cref="ARPlane.boundaryChanged" /> event.</c>
+    /// Data associated with an <see cref="ARPlane.boundaryChanged" /> event.
     /// </summary>
     public struct ARPlaneBoundaryChangedEventArgs : IEquatable<ARPlaneBoundaryChangedEventArgs>
     {

@@ -30,7 +30,7 @@ namespace UnityEngine.XR.ARFoundation
     /// detected features.
     /// 
     /// At runtime, a typical scene graph might look like this:
-    /// - AR Rig
+    /// - AR Session Origin
     ///     - Camera
     ///     - Trackables
     ///         - Detected plane 1
@@ -338,9 +338,6 @@ namespace UnityEngine.XR.ARFoundation
 
         void Update()
         {
-#if UNITY_EDITOR
-            scale = scale;
-#endif
             if (camera != null)
             {
                 // Make sure the trackables has the same local transform as the camera's origin

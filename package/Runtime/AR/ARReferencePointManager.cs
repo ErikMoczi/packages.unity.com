@@ -111,7 +111,7 @@ namespace UnityEngine.XR.ARFoundation
                 referencePoint = go.AddComponent<ARReferencePoint>();
 
             m_ReferencePoints.Add(referencePointId, referencePoint);
-            referencePoint.data = referencePointData;
+            referencePoint.sessionRelativeData = referencePointData;
 
             return referencePoint;
         }
@@ -147,7 +147,7 @@ namespace UnityEngine.XR.ARFoundation
             if (referencePoint == null)
                 return false;
 
-            TrackableId referencePointId = referencePoint.data.Id;
+            TrackableId referencePointId = referencePoint.sessionRelativeData.Id;
             if (!m_ReferencePoints.ContainsKey(referencePointId))
                 return false;
 
@@ -204,7 +204,7 @@ namespace UnityEngine.XR.ARFoundation
                 return;
             }
 
-            referencePoint.data = referencePointData;
+            referencePoint.sessionRelativeData = referencePointData;
 
             // Notify event subscribers
             RaiseReferencePointUpdatedEvent(eventArgs, referencePoint);
@@ -234,11 +234,6 @@ namespace UnityEngine.XR.ARFoundation
         void OnDisable()
         {
             ARSubsystemManager.referencePointUpdated -= OnReferencePointUpdated;
-        }
-
-        void Reset()
-        {
-            SceneUtils.EnsureARSessionExists();
         }
 
         ARSessionOrigin m_SessionOrigin;

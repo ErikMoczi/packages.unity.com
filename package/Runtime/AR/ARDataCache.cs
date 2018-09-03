@@ -76,13 +76,8 @@ namespace UnityEngine.XR.ARFoundation
             if (dst == null)
                 throw new ArgumentNullException("dst");
 
-            if (dst.Capacity < src.Capacity)
-                dst.Capacity = src.Capacity;
-
             dst.Clear();
-
-            for (int i = 0; i < src.Count; ++i)
-                dst.Add(src[i]);
+            dst.AddRange(src);
         }
 
         static List<Vector4> s_Vector4s = new List<Vector4>();

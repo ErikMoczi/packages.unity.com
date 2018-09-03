@@ -45,7 +45,7 @@ namespace UnityEngine.XR.ARFoundation
         }
 
         /// <summary>
-        /// The BoundedPlane data struct which defines this ARPlane
+        /// The <c>BoundedPlane</c> data struct which defines this <see cref="ARPlane"/>.
         /// </summary>
         public BoundedPlane boundedPlane
         {
@@ -89,7 +89,7 @@ namespace UnityEngine.XR.ARFoundation
         /// </summary>
         /// <remarks>
         /// The data is provided in plane-relative space. That is, relative to the
-        /// ARPlane's <c>localPosition</c> and <c>localRotation</c>.
+        /// <see cref="ARPlane"/>'s <c>localPosition</c> and <c>localRotation</c>.
         /// 
         /// Units are in session-space meters.
         /// </remarks>

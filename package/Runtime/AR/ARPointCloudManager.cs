@@ -78,11 +78,6 @@ namespace UnityEngine.XR.ARFoundation
                 pointCloudUpdated(new ARPointCloudUpdatedEventArgs(m_PointCloud));
         }
 
-        void Reset()
-        {
-            SceneUtils.EnsureARSessionExists();
-        }
-
         ARPointCloud m_PointCloud;
 
         ARSessionOrigin m_SessionOrigin;

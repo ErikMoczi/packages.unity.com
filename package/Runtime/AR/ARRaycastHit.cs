@@ -9,7 +9,7 @@ namespace UnityEngine.XR.ARFoundation
     public struct ARRaycastHit : IEquatable<ARRaycastHit>
     {
         /// <summary>
-        /// Constructor invoked by the <see cref="ARRaycast"/> interface.
+        /// Constructor invoked by the <see cref="ARSessionOrigin.Raycast"/> methods.
         /// </summary>
         /// <param name="hit">The raw data containing hit information.</param>
         /// <param name="distance">The distance, in Unity world space, of the hit.</param>

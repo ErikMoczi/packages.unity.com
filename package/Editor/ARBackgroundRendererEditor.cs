@@ -1,6 +1,7 @@
-﻿using UnityEditor;
+﻿using UnityEngine;
+using UnityEngine.XR.ARFoundation;
 
-namespace UnityEngine.XR.ARFoundation
+namespace UnityEditor.XR.ARFoundation
 {
     [CustomEditor(typeof(ARBackgroundRenderer))]
     internal class ARBackgroundRendererEditor : Editor
@@ -25,6 +26,7 @@ namespace UnityEngine.XR.ARFoundation
             serializedObject.Update();
 
             EditorGUILayout.PropertyField(m_OverrideMaterial, Tooltips.overrideMaterial);
+
             if (m_OverrideMaterial.boolValue)
             {
                 EditorGUI.indentLevel++;

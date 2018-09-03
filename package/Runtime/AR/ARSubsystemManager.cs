@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using UnityEngine.Experimental;
 using UnityEngine.Experimental.XR;
+using UnityEngine.XR.ARExtensions;
 
 namespace UnityEngine.XR.ARFoundation
 {
@@ -227,12 +229,103 @@ namespace UnityEngine.XR.ARFoundation
         }
 
         /// <summary>
+        /// Get the session availability. Use this to determine whether the device is supported.
+        /// </summary>
+        public static SessionAvailability availability { get; private set; }
+
+        /// <summary>
+        /// The state of the entire system. Use this to determine the status of AR availability and installation.
+        /// </summary>
+        public static SystemState systemState { get; private set; }
+
+        /// <summary>
         /// Static constructor for this static class. Creates the subsystems.
         /// </summary>
         public static void ARSubsystemsManager()
         {
             s_SessionState = ARSessionState.NotRunning;
             CreateSubsystems();
+        }
+
+        /// <summary>
+        /// Start checking the availability of AR on the current device.
+        /// </summary>
+        /// <remarks>
+        /// The availability check may be asynchronous, so this is implemented as a coroutine.
+        /// It is safe to call this multiple times; if called a second time while an availability
+        /// check is being made, it returns a new coroutine which waits on the first.
+        /// </remarks>
+        /// <returns>An <c>IEnumerator</c> used for a coroutine.</returns>
+        public static IEnumerator CheckAvailability()
+        {
+            if (systemState == SystemState.CheckingAvailability)
+                yield return new WaitWhile(() => { return systemState == SystemState.CheckingAvailability; });
+
+            if (systemState != SystemState.Uninitialized)
+                yield break;
+
+            sessionSubsystem = ARSubsystemUtil.CreateSessionSubsystem();
+            if (sessionSubsystem == null)
+            {
+                systemState = SystemState.Unsupported;
+            }
+            else if (systemState == SystemState.Uninitialized)
+            {
+                systemState = SystemState.CheckingAvailability;
+                var availabilityPromise = sessionSubsystem.GetAvailabilityAsync();
+                yield return availabilityPromise;
+                availability = availabilityPromise.result;
+
+                if (availability.IsSupported() && availability.IsInstalled())
+                {
+                    systemState = SystemState.Ready;
+                }
+                else if (availability.IsSupported() && !availability.IsInstalled())
+                {
+                    systemState = SystemState.NeedsInstall;
+                }
+                else
+                {
+                    systemState = SystemState.Unsupported;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Begin installing AR software on the current device (if supported).
+        /// </summary>
+        /// <remarks>
+        /// Installation may be asynchronous, so this is implemented as a coroutine.
+        /// It is safe to call this multiple times; if called a second time while an installation
+        /// is in process, it returns a new coroutine which waits on the first.
+        /// </remarks>
+        /// <returns>An <c>IEnumerator</c> used for a coroutine.</returns>
+        public static IEnumerator Install()
+        {
+            if (systemState == SystemState.Installing)
+                yield return new WaitWhile(() => { return systemState == SystemState.Installing; });
+
+            if ((sessionSubsystem == null) || (systemState != SystemState.NeedsInstall))
+                yield break;
+
+            systemState = SystemState.Installing;
+            var installPromise = sessionSubsystem.InstallAsync();
+            yield return installPromise;
+            var installStatus = installPromise.result;
+
+            if (installStatus == SessionInstallationStatus.Success)
+            {
+                systemState = SystemState.Ready;
+                availability = (availability | SessionAvailability.Installed);
+            }
+            else if (installStatus == SessionInstallationStatus.ErrorUserDeclined)
+            {
+                systemState = SystemState.NeedsInstall;
+            }
+            else
+            {
+                systemState = SystemState.Unsupported;
+            }
         }
 
         /// <summary>
@@ -313,24 +406,17 @@ namespace UnityEngine.XR.ARFoundation
             sessionState = ARSessionState.NotRunning;
         }
 
-        static void OnTimeout()
-        {
-            sessionState = ARSessionState.TimedOut;
-            StopSubsystems();
-        }
-
         /// <summary>
         /// Starts each of the XR Subsystems associated with AR session according to the requested options.
         /// </summary>
         /// <remarks>
         /// Throws <c>InvalidOperationException</c> if there is no <c>XRSessionSubsystem</c>.
         /// </remarks>
-        /// <returns>A timeout callback which can be invoked to indicate too much time has passed since requesting start.</returns>
-        public static Action StartSubsystems()
+        public static void StartSubsystems()
         {
             // Early out if we're already running.
             if ((sessionState == ARSessionState.Initializing) || (sessionState == ARSessionState.Running))
-                return null;
+                return;
 
             if (sessionSubsystem == null)
                 throw new InvalidOperationException("Cannot start AR session because there is no session subsystem.");
@@ -343,15 +429,13 @@ namespace UnityEngine.XR.ARFoundation
             SetRunning(cameraSubsystem, cameraSubsystemRequested);
             sessionSubsystem.Start();
             sessionState = ARSessionState.Initializing;
-
-            return OnTimeout;
         }
 
         /// <summary>
         /// Stops all the XR Subsystems associated with the AR session.
         /// </summary>
         /// <remarks>
-        /// "Stopping" an AR session does not destroy the session. A call to <see cref="StopSubsystems"/> followed by <see cref="StartSubsystems"/c>
+        /// "Stopping" an AR session does not destroy the session. A call to <see cref="StopSubsystems"/> followed by <see cref="StartSubsystems"/>
         /// is similar to "pause" and "resume". To completely destroy the current AR session and begin a new one, you must first
         /// <see cref="DestroySubsystems"/>.
         /// </remarks>

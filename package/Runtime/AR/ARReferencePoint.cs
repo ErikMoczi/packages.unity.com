@@ -17,7 +17,7 @@ namespace UnityEngine.XR.ARFoundation
         /// <summary>
         /// The raw data associated with the reference point.
         /// </summary>
-        public ReferencePoint data
+        public ReferencePoint sessionRelativeData
         {
             get { return m_Data; }
             internal set { SetData(value); }
