@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4-preview.9
+
+- Fix bug when casting an IntPtr to an enum pointer that was causing an invalid codegen exception
+
 ## 0.2.4-preview.8
 
 - Breaking change: Move Unity.Jobs.Accuracy/Support to Unity.Burst
