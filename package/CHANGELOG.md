@@ -12,3 +12,8 @@ In this release we are shipping a working iteration of the ARKit package for
 Unity's native multi-platform AR support.
 Included in the package are static libraries, configuration files, binaries 
 and project files needed to adapt ARKit to the Unity multi-platform AR API.
+
+## [1.0.0-preview.8] - 2018-05-07
+
+### Added 
+-Created a Legacy XRInput interface to automate the switch between 2018.1 and 2018.2 XRInput versions.
