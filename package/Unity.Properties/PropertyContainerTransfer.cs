@@ -9,7 +9,6 @@ namespace Unity.Properties
 {
     public static partial class PropertyContainer
     {
-    
         public static void Transfer<TSource, TDestination>(TSource source, TDestination destination)
             where TSource : class, IPropertyContainer
             where TDestination : class, IPropertyContainer

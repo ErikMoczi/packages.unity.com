@@ -8,6 +8,14 @@ using UnityEngine.Assertions;
 
 namespace Unity.Properties
 {
+    public class MigrationException : Exception
+    {
+        public MigrationException(string message) : base(message)
+        {
+            
+        }
+    }
+    
     /// <summary>
     /// A dynamic container to migrate property API data from one structure to another
     /// </summary>
@@ -58,6 +66,20 @@ namespace Unity.Properties
             return null != m_PropertyBag.FindProperty(name);
         }
 
+        public bool TryRename(string name, string newName)
+        {
+            try
+            {
+                Rename(name, newName);
+            }
+            catch (MigrationException)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         /// <summary>
         /// Renames a property
         /// </summary>
@@ -69,20 +91,33 @@ namespace Unity.Properties
             
             if (null == property)
             {
-                throw new Exception($"{nameof(MigrationContainer)}.{nameof(Rename)} no property found with the name `{name}`");
+                throw new MigrationException($"{nameof(MigrationContainer)}.{nameof(Rename)} no property found with the name `{name}`");
             }
             
             if (null != m_PropertyBag.FindProperty(newName))
             {
-                throw new Exception($"{nameof(MigrationContainer)}.{nameof(Rename)} property already exists with name `{newName}`");
+                throw new MigrationException($"{nameof(MigrationContainer)}.{nameof(Rename)} property already exists with name `{newName}`");
             }
 
-            if (property is IValueProperty)
+            var valueProperty = property as IValueProperty;
+            if (null != valueProperty)
             {
-                // Setup the backing storage for the value
-                m_Data[newName] = (property as IValueProperty).GetObjectValue(this);
-                m_PropertyBag.ReplaceProperty(name, DynamicProperties.CreateValueProperty(newName, (property as IValueProperty).ValueType));
+                var value = (property as IValueProperty).GetObjectValue(this);
+                var valueType = valueProperty.ValueType;
+
+                // If needed we promote this object to a migration container
+                // This is because we don't support strongly typed dynamic containers (only MigrationContainers)
+                if (typeof(IPropertyContainer).IsAssignableFrom(valueProperty.ValueType))
+                {
+                    value = new MigrationContainer(value as IPropertyContainer);
+                    valueType = typeof(MigrationContainer);
+                }
                 
+                // Setup the backing storage for the value
+                m_Data[newName] = value;
+                m_PropertyBag.ReplaceProperty(name, DynamicProperties.CreateValueProperty(newName, valueType));
+                
+                // Clear old dynamic value if any
                 if (m_Data.ContainsKey(name))
                 {
                     m_Data.Remove(name);
@@ -113,6 +148,24 @@ namespace Unity.Properties
             }
             
             return this;
+        }
+        
+        /// <summary>
+        /// Creates or sets the given property
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="value"></param>
+        /// <typeparam name="TValue"></typeparam>
+        public void CreateOrSetValue<TValue>(string name, TValue value)
+        {
+            if (!HasProperty(name))
+            {
+                CreateValue(name, value);
+            }
+            else
+            {
+                SetValue(name, value);
+            }
         }
 
         /// <summary>

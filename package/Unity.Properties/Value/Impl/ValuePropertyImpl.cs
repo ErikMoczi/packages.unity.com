@@ -1,6 +1,5 @@
 ﻿#if (NET_4_6 || NET_STANDARD_2_0)
 
-using System;
 using UnityEngine.Assertions;
 
 namespace Unity.Properties
@@ -116,7 +115,7 @@ namespace Unity.Properties
 
             if (visitor.BeginContainer(container, context))
             {
-                value.Visit(visitor);
+                value?.Visit(visitor);
             }
 
             visitor.EndContainer(container, context);
