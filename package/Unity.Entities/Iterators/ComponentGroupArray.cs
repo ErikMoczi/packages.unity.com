@@ -2,23 +2,22 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-
-using Unity.Burst;
 using Unity.Assertions;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
 namespace Unity.Entities
 {
-    class ComponentGroupArrayStaticCache
+    internal class ComponentGroupArrayStaticCache
     {
-        public readonly Type                    CachedType;
+        public readonly Type CachedType;
+        internal readonly int ComponentCount;
+        internal readonly int ComponentDataCount;
+        internal readonly int[] ComponentFieldOffsets;
+        internal readonly ComponentGroup ComponentGroup;
 
-        internal readonly ComponentType[]       ComponentTypes;
-        internal readonly int[]                 ComponentFieldOffsets;
-        internal readonly int                   ComponentDataCount;
-        internal readonly int                   ComponentCount;
-        internal readonly ComponentGroup        ComponentGroup;
+        internal readonly ComponentType[] ComponentTypes;
         internal readonly ComponentJobSafetyManager SafetyManager;
 
         public ComponentGroupArrayStaticCache(Type type, EntityManager entityManager, ComponentSystemBase system)
@@ -33,7 +32,7 @@ namespace Unity.Entities
 
             var subtractiveComponentTypesBuilder = new List<ComponentType>();
 
-            foreach(var field in fields)
+            foreach (var field in fields)
             {
                 var fieldType = field.FieldType;
                 var offset = UnsafeUtility.GetFieldOffset(field);
@@ -41,13 +40,15 @@ namespace Unity.Entities
                 if (fieldType.IsPointer)
                 {
                     var isReadOnly = field.GetCustomAttributes(typeof(ReadOnlyAttribute), true).Length != 0;
-                    var accessMode = isReadOnly ? ComponentType.AccessMode.ReadOnly : ComponentType.AccessMode.ReadWrite;
+                    var accessMode =
+                        isReadOnly ? ComponentType.AccessMode.ReadOnly : ComponentType.AccessMode.ReadWrite;
 
                     var elementType = fieldType.GetElementType();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                     if (!typeof(IComponentData).IsAssignableFrom(elementType) && elementType != typeof(Entity))
-                        throw new ArgumentException($"{type}.{field.Name} is a pointer type but not a IComponentData. Only IComponentData or Entity may be a pointer type for enumeration.");
+                        throw new ArgumentException(
+                            $"{type}.{field.Name} is a pointer type but not a IComponentData. Only IComponentData or Entity may be a pointer type for enumeration.");
 #endif
                     componentDataFieldOffsetsBuilder.Add(offset);
                     componentDataTypesBuilder.Add(new ComponentType(elementType, accessMode));
@@ -57,14 +58,16 @@ namespace Unity.Entities
                     componentFieldOffsetsBuilder.Add(offset);
                     componentTypesBuilder.Add(fieldType);
                 }
-                else if (fieldType.IsGenericType && fieldType.GetGenericTypeDefinition() == typeof(SubtractiveComponent<>))
+                else if (fieldType.IsGenericType &&
+                         fieldType.GetGenericTypeDefinition() == typeof(SubtractiveComponent<>))
                 {
                     subtractiveComponentTypesBuilder.Add(ComponentType.Subtractive(fieldType.GetGenericArguments()[0]));
                 }
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                 else if (typeof(IComponentData).IsAssignableFrom(fieldType))
                 {
-                    throw new ArgumentException($"{type}.{field.Name} must be an unsafe pointer to the {fieldType}. Like this: {fieldType}* {field.Name};");
+                    throw new ArgumentException(
+                        $"{type}.{field.Name} must be an unsafe pointer to the {fieldType}. Like this: {fieldType}* {field.Name};");
                 }
                 else
                 {
@@ -74,9 +77,8 @@ namespace Unity.Entities
             }
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (componentTypesBuilder.Count + componentDataTypesBuilder.Count > ComponentGroupArrayData.kMaxStream)
-            {
-                throw new ArgumentException($"{type} has too many component references. A ComponentGroup Array can have up to {ComponentGroupArrayData.kMaxStream}.");
-            }
+                throw new ArgumentException(
+                    $"{type} has too many component references. A ComponentGroup Array can have up to {ComponentGroupArrayData.kMaxStream}.");
 #endif
 
             ComponentDataCount = componentDataTypesBuilder.Count;
@@ -98,52 +100,52 @@ namespace Unity.Entities
 
     [NativeContainer]
     [NativeContainerSupportsMinMaxWriteRestriction]
-    unsafe struct ComponentGroupArrayData
+    internal unsafe struct ComponentGroupArrayData
     {
         public const int kMaxStream = 6;
 
-        struct ComponentGroupStream
+        private struct ComponentGroupStream
         {
-            public byte*     CachedPtr;
-            public int       SizeOf;
-            public ushort    FieldOffset;
-            public ushort    TypeIndexInArchetype;
+            public byte* CachedPtr;
+            public int SizeOf;
+            public ushort FieldOffset;
+            public ushort TypeIndexInArchetype;
         }
 
-        fixed byte                  m_Caches[16 * kMaxStream];
+        private fixed byte m_Caches[16 * kMaxStream];
 
-        readonly int                m_ComponentDataCount;
-        readonly int                m_ComponentCount;
+        private readonly int m_ComponentDataCount;
+        private readonly int m_ComponentCount;
 
         // The following 3 fields must not be renamed, unless JobReflectionData.cpp is changed accordingly.
         // TODO: make JobDebugger logic more solid, either by using codegen proxies or attributes.
-        public readonly int         m_Length;
-        public readonly int         m_MinIndex;
-        public readonly int         m_MaxIndex;
+        public readonly int m_Length;
+        public readonly int m_MinIndex;
+        public readonly int m_MaxIndex;
 
-        public int                  CacheBeginIndex;
-        public int                  CacheEndIndex;
+        public int CacheBeginIndex;
+        public int CacheEndIndex;
 
-        ComponentChunkIterator      m_ChunkIterator;
-        fixed int                   m_ComponentTypes[kMaxStream];
+        private ComponentChunkIterator m_ChunkIterator;
+        private fixed int m_ComponentTypes[kMaxStream];
+        private fixed bool m_IsWriting[kMaxStream];
 
         // The following fields must not be renamed, unless JobReflectionData.cpp is changed accordingly.
         // TODO: make JobDebugger logic more solid, either by using codegen proxies or attributes.
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-        readonly int                m_SafetyReadOnlyCount;
-        readonly int                m_SafetyReadWriteCount;
+        private readonly int m_SafetyReadOnlyCount;
+        private readonly int m_SafetyReadWriteCount;
 #pragma warning disable 414
-        AtomicSafetyHandle          m_Safety0;
-        AtomicSafetyHandle          m_Safety1;
-        AtomicSafetyHandle          m_Safety2;
-        AtomicSafetyHandle          m_Safety3;
-        AtomicSafetyHandle          m_Safety4;
-        AtomicSafetyHandle          m_Safety5;
+        private AtomicSafetyHandle m_Safety0;
+        private AtomicSafetyHandle m_Safety1;
+        private AtomicSafetyHandle m_Safety2;
+        private AtomicSafetyHandle m_Safety3;
+        private AtomicSafetyHandle m_Safety4;
+        private AtomicSafetyHandle m_Safety5;
 #pragma warning restore
 #endif
 
-        [NativeSetClassTypeToNullOnSchedule]
-        readonly ArchetypeManager   m_ArchetypeManager;
+        [NativeSetClassTypeToNullOnSchedule] private readonly ArchetypeManager m_ArchetypeManager;
 
         public ComponentGroupArrayData(ComponentGroupArrayStaticCache staticCache)
         {
@@ -153,7 +155,7 @@ namespace Unity.Entities
 
             m_Length = length;
             m_MinIndex = 0;
-            m_MaxIndex = length-1;
+            m_MaxIndex = length - 1;
 
             CacheBeginIndex = 0;
             CacheEndIndex = 0;
@@ -166,12 +168,17 @@ namespace Unity.Entities
             {
                 fixed (byte* cacheBytes = m_Caches)
                 {
-                    var streams = (ComponentGroupStream*)cacheBytes;
-
-                    for (var i = 0; i < staticCache.ComponentDataCount + staticCache.ComponentCount; i++)
+                    fixed (bool* isWriting = m_IsWriting)
                     {
-                        componentTypes[i] = staticCache.ComponentTypes[i].TypeIndex;
-                        streams[i].FieldOffset = (ushort)staticCache.ComponentFieldOffsets[i];
+                        var streams = (ComponentGroupStream*) cacheBytes;
+
+                        for (var i = 0; i < staticCache.ComponentDataCount + staticCache.ComponentCount; i++)
+                        {
+                            componentTypes[i] = staticCache.ComponentTypes[i].TypeIndex;
+                            streams[i].FieldOffset = (ushort) staticCache.ComponentFieldOffsets[i];
+                            isWriting[i] = staticCache.ComponentTypes[i].AccessModeType ==
+                                           ComponentType.AccessMode.ReadWrite;
+                        }
                     }
                 }
             }
@@ -206,7 +213,8 @@ namespace Unity.Entities
                     if (type.AccessModeType != ComponentType.AccessMode.ReadWrite)
                         continue;
 
-                    safety[m_SafetyReadOnlyCount + m_SafetyReadWriteCount] = safetyManager.GetSafetyHandle(type.TypeIndex, false);
+                    safety[m_SafetyReadOnlyCount + m_SafetyReadWriteCount] =
+                        safetyManager.GetSafetyHandle(type.TypeIndex, false);
                     m_SafetyReadWriteCount++;
                 }
             }
@@ -216,7 +224,8 @@ namespace Unity.Entities
         public void UpdateCache(int index)
         {
             ComponentChunkCache cache;
-            m_ChunkIterator.UpdateCache(index, out cache);
+
+            m_ChunkIterator.UpdateCache(index, out cache, false);
 
             CacheBeginIndex = cache.CachedBeginIndex;
             CacheEndIndex = cache.CachedEndIndex;
@@ -225,19 +234,24 @@ namespace Unity.Entities
             {
                 fixed (byte* cacheBytes = m_Caches)
                 {
-                    var streams = (ComponentGroupStream*)cacheBytes;
-                    var totalCount = m_ComponentDataCount + m_ComponentCount;
-                    for (var i = 0; i < totalCount; i++)
+                    fixed (bool* isWriting = m_IsWriting)
                     {
-                        int indexInArcheType;
-                        m_ChunkIterator.GetCacheForType(componentTypes[i], out cache, out indexInArcheType);
-                        streams[i].SizeOf = cache.CachedSizeOf;
-                        streams[i].CachedPtr = (byte*)cache.CachedPtr;
+                        var streams = (ComponentGroupStream*) cacheBytes;
+                        var totalCount = m_ComponentDataCount + m_ComponentCount;
+                        for (var i = 0; i < totalCount; i++)
+                        {
+                            int indexInArcheType;
+                            m_ChunkIterator.GetCacheForType(componentTypes[i], isWriting[i], out cache,
+                                out indexInArcheType);
+                            streams[i].SizeOf = cache.CachedSizeOf;
+                            streams[i].CachedPtr = (byte*) cache.CachedPtr;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                        if (indexInArcheType > ushort.MaxValue)
-                            throw new ArgumentException($"There is a maximum of {ushort.MaxValue} components on one entity.");
+                            if (indexInArcheType > ushort.MaxValue)
+                                throw new ArgumentException(
+                                    $"There is a maximum of {ushort.MaxValue} components on one entity.");
 #endif
-                        streams[i].TypeIndexInArchetype = (ushort)indexInArcheType;
+                            streams[i].TypeIndexInArchetype = (ushort) indexInArcheType;
+                        }
                     }
                 }
             }
@@ -248,10 +262,10 @@ namespace Unity.Entities
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             fixed (AtomicSafetyHandle* safety = &m_Safety0)
             {
-                for (var i = 0;i < m_SafetyReadOnlyCount;i++)
+                for (var i = 0; i < m_SafetyReadOnlyCount; i++)
                     AtomicSafetyHandle.CheckReadAndThrow(safety[i]);
 
-                for (var i = m_SafetyReadOnlyCount;i < m_SafetyReadOnlyCount + m_SafetyReadWriteCount;i++)
+                for (var i = m_SafetyReadOnlyCount; i < m_SafetyReadOnlyCount + m_SafetyReadWriteCount; i++)
                     AtomicSafetyHandle.CheckWriteAndThrow(safety[i]);
             }
 #endif
@@ -261,11 +275,11 @@ namespace Unity.Entities
         {
             fixed (byte* cacheBytes = m_Caches)
             {
-                var streams = (ComponentGroupStream*)cacheBytes;
+                var streams = (ComponentGroupStream*) cacheBytes;
                 for (var i = 0; i != m_ComponentDataCount; i++)
                 {
-                    var componentPtr = (void*)(streams[i].CachedPtr + (streams[i].SizeOf * index));
-                    var valuePtrOffsetted = (void**)(valuePtr + streams[i].FieldOffset);
+                    var componentPtr = (void*) (streams[i].CachedPtr + streams[i].SizeOf * index);
+                    var valuePtrOffsetted = (void**) (valuePtr + streams[i].FieldOffset);
 
                     *valuePtrOffsetted = componentPtr;
                 }
@@ -277,10 +291,11 @@ namespace Unity.Entities
         {
             fixed (byte* cacheBytes = m_Caches)
             {
-                var streams = (ComponentGroupStream*)cacheBytes;
+                var streams = (ComponentGroupStream*) cacheBytes;
                 for (var i = m_ComponentDataCount; i != m_ComponentDataCount + m_ComponentCount; i++)
                 {
-                    var component = m_ChunkIterator.GetManagedObject(m_ArchetypeManager, streams[i].TypeIndexInArchetype, CacheBeginIndex, index);
+                    var component = m_ChunkIterator.GetManagedObject(m_ArchetypeManager,
+                        streams[i].TypeIndexInArchetype, CacheBeginIndex, index);
                     var valuePtrOffsetted = valuePtr + streams[i].FieldOffset;
                     UnsafeUtility.CopyObjectAddressToPtr(component, valuePtrOffsetted);
                 }
@@ -308,7 +323,7 @@ namespace Unity.Entities
 
     public struct ComponentGroupArray<T> : IDisposable where T : struct
     {
-        internal ComponentGroupArrayData     m_Data;
+        internal ComponentGroupArrayData m_Data;
 
         internal ComponentGroupArray(ComponentGroupArrayStaticCache cache)
         {
@@ -317,7 +332,6 @@ namespace Unity.Entities
 
         public void Dispose()
         {
-
         }
 
         public int Length => m_Data.m_Length;
@@ -336,7 +350,7 @@ namespace Unity.Entities
                     m_Data.UpdateCache(index);
 
                 var value = default(T);
-                var valuePtr = (byte*)UnsafeUtility.AddressOf(ref value);
+                var valuePtr = (byte*) UnsafeUtility.AddressOf(ref value);
                 m_Data.PatchPtrs(index, valuePtr);
                 m_Data.PatchManagedPtrs(index, valuePtr);
                 return value;
@@ -350,8 +364,8 @@ namespace Unity.Entities
 
         public unsafe struct ComponentGroupEnumerator<U> : IEnumerator<U> where U : struct
         {
-            ComponentGroupArrayData     m_Data;
-            int                         m_Index;
+            private ComponentGroupArrayData m_Data;
+            private int m_Index;
 
             internal ComponentGroupEnumerator(ComponentGroupArrayData arrayData)
             {
@@ -359,7 +373,9 @@ namespace Unity.Entities
                 m_Index = -1;
             }
 
-            public void Dispose() { }
+            public void Dispose()
+            {
+            }
 
             public bool MoveNext()
             {
@@ -394,7 +410,7 @@ namespace Unity.Entities
 #endif
 
                     var value = default(U);
-                    var valuePtr = (byte*)UnsafeUtility.AddressOf(ref value);
+                    var valuePtr = (byte*) UnsafeUtility.AddressOf(ref value);
                     m_Data.PatchPtrs(m_Index, valuePtr);
                     m_Data.PatchManagedPtrs(m_Index, valuePtr);
                     return value;

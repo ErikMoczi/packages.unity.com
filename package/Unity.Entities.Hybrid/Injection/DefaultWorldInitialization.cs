@@ -48,6 +48,7 @@ namespace Unity.Entities
                         t.IsSubclassOf(typeof(ComponentSystemBase)) &&
                         !t.IsAbstract &&
                         !t.ContainsGenericParameters &&
+                        (t.GetCustomAttributes(typeof(ComponentSystemPatchAttribute), true).Length == 0) &&
                         t.GetCustomAttributes(typeof(DisableAutoCreationAttribute), true).Length == 0);
                     foreach (var type in systemTypes)
                     {
@@ -60,6 +61,26 @@ namespace Unity.Entities
                 catch (ReflectionTypeLoadException)
                 {
                     // Can happen for certain assembly during the GetTypes() step
+                }
+            }
+            
+            foreach (var ass in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var allTypes = ass.GetTypes();
+
+                // Create all ComponentSystem
+                var systemTypes = allTypes.Where(t => 
+                    t.IsSubclassOf(typeof(ComponentSystemBase)) && 
+                    !t.IsAbstract && 
+                    !t.ContainsGenericParameters && 
+                    (t.GetCustomAttributes(typeof(ComponentSystemPatchAttribute), true).Length > 0) &&
+                    t.GetCustomAttributes(typeof(DisableAutoCreationAttribute), true).Length == 0);
+                foreach (var type in systemTypes)
+                {
+                    if (editorWorld && type.GetCustomAttributes(typeof(ExecuteInEditMode), true).Length == 0)
+                        continue;
+
+                    world.AddComponentSystemPatch(type);
                 }
             }
 

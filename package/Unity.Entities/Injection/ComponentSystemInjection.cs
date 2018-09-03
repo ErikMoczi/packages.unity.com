@@ -1,23 +1,25 @@
 ﻿using System;
-using System.Reflection;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Unity.Entities
 {
-    static class ComponentSystemInjection
+    internal static class ComponentSystemInjection
     {
         public static string GetFieldString(FieldInfo info)
         {
             return $"{info.DeclaringType.Name}.{info.Name}";
         }
 
-        public static void Inject(ComponentSystemBase componentSystem, World world, EntityManager entityManager, out InjectComponentGroupData[] outInjectGroups, out InjectFromEntityData outInjectFromEntityData)
+        public static void Inject(ComponentSystemBase componentSystem, World world, EntityManager entityManager,
+            out InjectComponentGroupData[] outInjectGroups, out InjectFromEntityData outInjectFromEntityData)
         {
             var componentSystemType = componentSystem.GetType();
 
             ValidateNoStaticInjectDependencies(componentSystemType);
 
-            var fields = componentSystemType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            var fields =
+                componentSystemType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
             var injectGroups = new List<InjectComponentGroupData>();
 
             var injectFromEntity = new List<InjectionData>();
@@ -36,41 +38,38 @@ namespace Unity.Entities
                 else
                 {
                     if (InjectFromEntityData.SupportsInjections(field))
-                        InjectFromEntityData.CreateInjection(field, entityManager, injectFromEntity, injectFromFixedArray);
+                        InjectFromEntityData.CreateInjection(field, entityManager, injectFromEntity,
+                            injectFromFixedArray);
                     else
-                        injectGroups.Add(InjectComponentGroupData.CreateInjection(field.FieldType, field, componentSystem));
+                        injectGroups.Add(
+                            InjectComponentGroupData.CreateInjection(field.FieldType, field, componentSystem));
                 }
             }
 
             outInjectGroups = injectGroups.ToArray();
 
-            outInjectFromEntityData = new InjectFromEntityData(injectFromEntity.ToArray(), injectFromFixedArray.ToArray());
+            outInjectFromEntityData =
+                new InjectFromEntityData(injectFromEntity.ToArray(), injectFromFixedArray.ToArray());
         }
 
-        static void ValidateNoStaticInjectDependencies(Type type)
+        private static void ValidateNoStaticInjectDependencies(Type type)
         {
 #if UNITY_EDITOR
             var fields = type.GetFields(BindingFlags.Static | BindingFlags.FlattenHierarchy | BindingFlags.NonPublic);
 
             foreach (var field in fields)
-            {
                 if (field.GetCustomAttributes(typeof(InjectAttribute), true).Length != 0)
                     throw new ArgumentException(
                         $"[Inject] may not be used on static variables: {GetFieldString(field)}");
-            }
 #endif
         }
 
-        static void InjectConstructorDependencies(ScriptBehaviourManager manager, World world, FieldInfo field)
+        private static void InjectConstructorDependencies(ScriptBehaviourManager manager, World world, FieldInfo field)
         {
             if (field.FieldType.IsSubclassOf(typeof(ScriptBehaviourManager)))
-            {
                 field.SetValue(manager, world.GetOrCreateManager(field.FieldType));
-            }
             else
-            {
                 ThrowUnsupportedInjectException(field);
-            }
         }
 
         public static void ThrowUnsupportedInjectException(FieldInfo field)
@@ -79,7 +78,8 @@ namespace Unity.Entities
                 $"[Inject] is not supported for type '{field.FieldType}'. At: {GetFieldString(field)}");
         }
 
-        internal static T[] GetAllInjectedManagers<T>(ScriptBehaviourManager host, World world) where T: ScriptBehaviourManager
+        internal static T[] GetAllInjectedManagers<T>(ScriptBehaviourManager host, World world)
+            where T : ScriptBehaviourManager
         {
             var result = new List<T>();
             var fields = host.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);

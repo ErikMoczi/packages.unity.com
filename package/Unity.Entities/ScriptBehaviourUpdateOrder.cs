@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Experimental.LowLevel;
+using UnityEngine.Experimental.PlayerLoop;
 
 namespace Unity.Entities
 {
@@ -10,23 +11,23 @@ namespace Unity.Entities
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class UpdateBeforeAttribute : Attribute
     {
-        public Type SystemType { get; }
-
         public UpdateBeforeAttribute(Type systemType)
         {
             SystemType = systemType;
         }
+
+        public Type SystemType { get; }
     }
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class UpdateAfterAttribute : Attribute
     {
-        public Type  SystemType { get; }
-
         public UpdateAfterAttribute(Type systemType)
         {
             SystemType = systemType;
         }
+
+        public Type SystemType { get; }
     }
 
     // Updating in a group means all dependencies from that group are inherited. A system can be in multiple goups
@@ -34,159 +35,19 @@ namespace Unity.Entities
     [AttributeUsage(AttributeTargets.Class)]
     public class UpdateInGroupAttribute : Attribute
     {
-        public Type  GroupType { get; }
-
         public UpdateInGroupAttribute(Type groupType)
         {
             GroupType = groupType;
         }
+
+        public Type GroupType { get; }
     }
 
     public static class ScriptBehaviourUpdateOrder
     {
-        // FIXME: HACK! - mono 4.6 has problems invoking virtual methods as delegates from native, so wrap the invocation in a non-virtual class
-        class DummyDelagateWrapper
-        {
-            readonly ScriptBehaviourManager m_Manager;
-
-            public DummyDelagateWrapper(ScriptBehaviourManager man)
-            {
-                m_Manager = man;
-            }
-
-            public void TriggerUpdate()
-            {
-                m_Manager.Update();
-            }
-        }
-
-        public class ScriptBehaviourGroup
-        {
-            public readonly List<Type> Managers = new List<Type>();
-            public readonly HashSet<Type> UpdateBefore = new HashSet<Type>();
-            public readonly HashSet<Type> UpdateAfter = new HashSet<Type>();
-
-            Type m_GroupType;
-            List<ScriptBehaviourGroup> m_Parents = new List<ScriptBehaviourGroup>();
-            readonly List<ScriptBehaviourGroup> m_Groups = new List<ScriptBehaviourGroup>();
-
-            public ScriptBehaviourGroup(Type grpType, IDictionary<Type, ScriptBehaviourGroup> allGroups, HashSet<Type> circularCheck = null)
-            {
-                m_GroupType = grpType;
-
-                var attribs = grpType.GetCustomAttributes(typeof(UpdateAfterAttribute), true);
-                foreach (var attr in attribs)
-                {
-                    var attribDep = attr as UpdateAfterAttribute;
-                    UpdateAfter.Add(attribDep.SystemType);
-                }
-                attribs = grpType.GetCustomAttributes(typeof(UpdateBeforeAttribute), true);
-                foreach (var attr in attribs)
-                {
-                    var attribDep = attr as UpdateAfterAttribute;
-                    UpdateBefore.Add(attribDep.SystemType);
-                }
-
-                allGroups.Add(m_GroupType, this);
-
-                attribs = m_GroupType.GetCustomAttributes(typeof(UpdateInGroupAttribute), true);
-                foreach (var attr in attribs)
-                {
-                    if (circularCheck == null)
-                    {
-                        circularCheck = new HashSet<Type> {m_GroupType};
-                    }
-                    var parentGrp = attr as UpdateInGroupAttribute;
-                    if (!circularCheck.Add(parentGrp.GroupType))
-                    {
-                        // Found circular dependency
-                        var msg = "Found circular chain in update groups involving: ";
-                        var firstType = true;
-                        foreach (var circularType in circularCheck)
-                        {
-                            msg += (firstType ? "" : ", ") + circularType;
-                            firstType = false;
-                        }
-                        Debug.LogError(msg);
-                    }
-                    ScriptBehaviourGroup parentGroupData;
-                    if (!allGroups.TryGetValue(parentGrp.GroupType, out parentGroupData))
-                        parentGroupData = new ScriptBehaviourGroup(parentGrp.GroupType, allGroups, circularCheck);
-                    circularCheck.Remove(parentGrp.GroupType);
-                    parentGroupData.m_Groups.Add(this);
-                    m_Parents.Add(parentGroupData);
-
-                    foreach (var dep in parentGroupData.UpdateBefore)
-                        UpdateBefore.Add(dep);
-                    foreach (var dep in parentGroupData.UpdateAfter)
-                        UpdateAfter.Add(dep);
-                }
-            }
-
-            public void AddUpdateBeforeToAllChildBehaviours(DependantBehavior target, IReadOnlyDictionary<Type, DependantBehavior> dependencies)
-            {
-                var dep = target.Manager.GetType();
-                foreach (var manager in Managers)
-                {
-                    DependantBehavior managerDep;
-                    if (!dependencies.TryGetValue(manager, out managerDep))
-                        continue;
-
-                    target.UpdateAfter.Add(manager);
-                    managerDep.UpdateBefore.Add(dep);
-                }
-                foreach (var group in m_Groups)
-                    group.AddUpdateBeforeToAllChildBehaviours(target, dependencies);
-            }
-
-            public void AddUpdateAfterToAllChildBehaviours(DependantBehavior target, IReadOnlyDictionary<Type, DependantBehavior> dependencies)
-            {
-                var dep = target.Manager.GetType();
-                foreach (var manager in Managers)
-                {
-                    DependantBehavior managerDep;
-                    if (!dependencies.TryGetValue(manager, out managerDep))
-                        continue;
-
-                    target.UpdateBefore.Add(manager);
-                    managerDep.UpdateAfter.Add(dep);
-                }
-                foreach (var group in m_Groups)
-                    group.AddUpdateAfterToAllChildBehaviours(target, dependencies);
-            }
-        }
-
-        public class DependantBehavior
-        {
-            public readonly ScriptBehaviourManager Manager;
-            public readonly HashSet<Type> UpdateBefore = new HashSet<Type>();
-            public readonly HashSet<Type> UpdateAfter = new HashSet<Type>();
-
-            public int MinInsertPos;
-            public int MaxInsertPos;
-            public bool spawnsJobs;
-            public bool WaitsForJobs;
-
-            public int UnvalidatedSystemsUpdatingBefore;
-            public int LongestSystemsUpdatingBeforeChain;
-            public int LongestSystemsUpdatingAfterChain;
-
-            public DependantBehavior(ScriptBehaviourManager man)
-            {
-                Manager = man;
-                MinInsertPos = 0;
-                MaxInsertPos = 0;
-                spawnsJobs = false;
-                WaitsForJobs = false;
-
-                UnvalidatedSystemsUpdatingBefore = 0;
-                LongestSystemsUpdatingBeforeChain = 0;
-                LongestSystemsUpdatingAfterChain = 0;
-            }
-        }
-
         // Try to find a system of the specified type in the default playerloop and update the min / max insertion position
-        static void UpdateInsertionPos(DependantBehavior target, Type dep, PlayerLoopSystem defaultPlayerLoop, bool after)
+        private static void UpdateInsertionPos(DependantBehavior target, Type dep, PlayerLoopSystem defaultPlayerLoop,
+            bool after)
         {
             var pos = 0;
             foreach (var sys in defaultPlayerLoop.subSystemList)
@@ -209,6 +70,7 @@ namespace Unity.Entities
                         if (target.MaxInsertPos == 0 || target.MaxInsertPos > pos)
                             target.MaxInsertPos = pos;
                     }
+
                     return;
                 }
 
@@ -233,15 +95,20 @@ namespace Unity.Entities
                             if (target.MaxInsertPos == 0 || target.MaxInsertPos > pos)
                                 target.MaxInsertPos = pos;
                         }
+
                         return;
                     }
+
                     ++pos;
                 }
             }
+
             // System was not found
         }
 
-        static void AddDependencies(DependantBehavior targetSystem, IReadOnlyDictionary<Type, DependantBehavior> dependencies, IReadOnlyDictionary<Type, ScriptBehaviourGroup> allGroups, PlayerLoopSystem defaultPlayerLoop)
+        private static void AddDependencies(DependantBehavior targetSystem,
+            IReadOnlyDictionary<Type, DependantBehavior> dependencies,
+            IReadOnlyDictionary<Type, ScriptBehaviourGroup> allGroups, PlayerLoopSystem defaultPlayerLoop)
         {
             var target = targetSystem.Manager.GetType();
             var attribs = target.GetCustomAttributes(typeof(UpdateAfterAttribute), true);
@@ -264,6 +131,7 @@ namespace Unity.Entities
                     UpdateInsertionPos(targetSystem, attribDep.SystemType, defaultPlayerLoop, true);
                 }
             }
+
             attribs = target.GetCustomAttributes(typeof(UpdateBeforeAttribute), true);
             foreach (var attr in attribs)
             {
@@ -284,6 +152,7 @@ namespace Unity.Entities
                     UpdateInsertionPos(targetSystem, attribDep.SystemType, defaultPlayerLoop, false);
                 }
             }
+
             attribs = target.GetCustomAttributes(typeof(UpdateInGroupAttribute), true);
             foreach (var attr in attribs)
             {
@@ -295,7 +164,6 @@ namespace Unity.Entities
                 DependantBehavior otherSystem;
                 ScriptBehaviourGroup otherGroup;
                 foreach (var dep in group.UpdateAfter)
-                {
                     if (dependencies.TryGetValue(dep, out otherSystem))
                     {
                         targetSystem.UpdateAfter.Add(dep);
@@ -309,10 +177,8 @@ namespace Unity.Entities
                     {
                         UpdateInsertionPos(targetSystem, dep, defaultPlayerLoop, true);
                     }
-                }
 
                 foreach (var dep in group.UpdateBefore)
-                {
                     if (dependencies.TryGetValue(dep, out otherSystem))
                     {
                         targetSystem.UpdateBefore.Add(dep);
@@ -326,11 +192,11 @@ namespace Unity.Entities
                     {
                         UpdateInsertionPos(targetSystem, dep, defaultPlayerLoop, false);
                     }
-                }
             }
         }
 
-        public static void CollectGroups(IEnumerable<ScriptBehaviourManager> activeManagers, out Dictionary<Type, ScriptBehaviourGroup> allGroups, out Dictionary<Type, DependantBehavior> dependencies)
+        public static void CollectGroups(IEnumerable<ScriptBehaviourManager> activeManagers,
+            out Dictionary<Type, ScriptBehaviourGroup> allGroups, out Dictionary<Type, DependantBehavior> dependencies)
         {
             allGroups = new Dictionary<Type, ScriptBehaviourGroup>();
             dependencies = new Dictionary<Type, DependantBehavior>();
@@ -351,7 +217,8 @@ namespace Unity.Entities
             }
         }
 
-        static Dictionary<Type, DependantBehavior> BuildSystemGraph(IEnumerable<ScriptBehaviourManager> activeManagers, PlayerLoopSystem defaultPlayerLoop)
+        private static Dictionary<Type, DependantBehavior> BuildSystemGraph(
+            IEnumerable<ScriptBehaviourManager> activeManagers, PlayerLoopSystem defaultPlayerLoop)
         {
             // Collect all groups and create empty dependency data
             Dictionary<Type, ScriptBehaviourGroup> allGroups;
@@ -362,17 +229,15 @@ namespace Unity.Entities
 
             // Apply the update before / after dependencies
             foreach (var manager in dependencies)
-            {
                 // @TODO: need to deal with extracting dependencies for GenericProcessComponentSystem
                 AddDependencies(manager.Value, dependencies, allGroups, defaultPlayerLoop);
-            }
 
             ValidateAndFixSystemGraph(dependencies);
 
             return dependencies;
         }
 
-        static void ValidateAndFixSystemGraph(Dictionary<Type, DependantBehavior> dependencyGraph)
+        private static void ValidateAndFixSystemGraph(Dictionary<Type, DependantBehavior> dependencyGraph)
         {
             // Check for simple over constraints on engine systems
             foreach (var typeAndSystem in dependencyGraph)
@@ -380,9 +245,11 @@ namespace Unity.Entities
                 var system = typeAndSystem.Value;
                 if (system.MinInsertPos > system.MaxInsertPos)
                 {
-                    Debug.LogError($"{system.Manager.GetType()} is over constrained with engine containts - ignoring dependencies");
+                    Debug.LogError(
+                        $"{system.Manager.GetType()} is over constrained with engine containts - ignoring dependencies");
                     system.MinInsertPos = system.MaxInsertPos = 0;
                 }
+
                 system.UnvalidatedSystemsUpdatingBefore = system.UpdateAfter.Count;
                 system.LongestSystemsUpdatingBeforeChain = 0;
                 system.LongestSystemsUpdatingAfterChain = 0;
@@ -407,6 +274,7 @@ namespace Unity.Entities
                     }
                 }
             }
+
             // If some systems were found to have circular dependencies, drop all of them. This is a bit over aggressive - but it only happens on badly setup dependency chains
             foreach (var typeAndSystem in dependencyGraph)
             {
@@ -414,11 +282,10 @@ namespace Unity.Entities
                 if (system.UnvalidatedSystemsUpdatingBefore <= 0)
                     continue;
 
-                Debug.LogError($"{system.Manager.GetType()} is in a chain of circular dependencies - ignoring dependencies");
+                Debug.LogError(
+                    $"{system.Manager.GetType()} is in a chain of circular dependencies - ignoring dependencies");
                 foreach (var after in system.UpdateAfter)
-                {
                     dependencyGraph[after].UpdateBefore.Remove(system.Manager.GetType());
-                }
                 system.UpdateAfter.Clear();
             }
 
@@ -427,17 +294,14 @@ namespace Unity.Entities
             {
                 var system = typeAndSystem.Value;
                 if (system.UpdateBefore.Count == 0)
-                {
                     ValidateAndFixSingleChainMaxPos(system, dependencyGraph, system.MaxInsertPos);
-                }
                 if (system.UpdateAfter.Count == 0)
-                {
                     ValidateAndFixSingleChainMinPos(system, dependencyGraph, system.MinInsertPos);
-                }
             }
         }
 
-        static void ValidateAndFixSingleChainMinPos(DependantBehavior system, IReadOnlyDictionary<Type, DependantBehavior> dependencyGraph, int minInsertPos)
+        private static void ValidateAndFixSingleChainMinPos(DependantBehavior system,
+            IReadOnlyDictionary<Type, DependantBehavior> dependencyGraph, int minInsertPos)
         {
             foreach (var nextInChain in system.UpdateBefore)
             {
@@ -448,14 +312,17 @@ namespace Unity.Entities
                     nextSys.MinInsertPos = minInsertPos;
                 if (nextSys.MaxInsertPos > 0 && nextSys.MaxInsertPos < nextSys.MinInsertPos)
                 {
-                    Debug.LogError($"{nextInChain} is over constrained with engine and system containts - ignoring dependencies");
+                    Debug.LogError(
+                        $"{nextInChain} is over constrained with engine and system containts - ignoring dependencies");
                     nextSys.MaxInsertPos = nextSys.MinInsertPos;
                 }
+
                 ValidateAndFixSingleChainMinPos(nextSys, dependencyGraph, nextSys.MinInsertPos);
             }
         }
 
-        static void ValidateAndFixSingleChainMaxPos(DependantBehavior system, Dictionary<Type, DependantBehavior> dependencyGraph, int maxInsertPos)
+        private static void ValidateAndFixSingleChainMaxPos(DependantBehavior system,
+            Dictionary<Type, DependantBehavior> dependencyGraph, int maxInsertPos)
         {
             foreach (var prevInChain in system.UpdateAfter)
             {
@@ -466,36 +333,16 @@ namespace Unity.Entities
                     prevSys.MaxInsertPos = maxInsertPos;
                 if (prevSys.MaxInsertPos > 0 && prevSys.MaxInsertPos < prevSys.MinInsertPos)
                 {
-                    Debug.LogError($"{prevInChain} is over constrained with engine and system containts - ignoring dependencies");
+                    Debug.LogError(
+                        $"{prevInChain} is over constrained with engine and system containts - ignoring dependencies");
                     prevSys.MinInsertPos = prevSys.MaxInsertPos;
                 }
+
                 ValidateAndFixSingleChainMaxPos(prevSys, dependencyGraph, prevSys.MaxInsertPos);
             }
         }
 
-        class InsertionBucket : IComparable
-        {
-            public int InsertPos;
-            public int InsertSubPos;
-            public readonly List<DependantBehavior> Systems;
-
-            public InsertionBucket()
-            {
-                InsertPos = 0;
-                InsertSubPos = 0;
-                Systems = new List<DependantBehavior>();
-            }
-
-            public int CompareTo(object other)
-            {
-                var otherBucket = other as InsertionBucket;
-                if (InsertPos == otherBucket.InsertPos)
-                    return InsertSubPos - otherBucket.InsertSubPos;
-                return InsertPos - otherBucket.InsertPos;
-            }
-        }
-
-        static void MarkSchedulingAndWaitingJobs(Dictionary<Type, DependantBehavior> dependencyGraph)
+        private static void MarkSchedulingAndWaitingJobs(Dictionary<Type, DependantBehavior> dependencyGraph)
         {
             // @TODO: sync rules for read-only
             var schedulers = new HashSet<DependantBehavior>();
@@ -509,6 +356,7 @@ namespace Unity.Entities
                 system.spawnsJobs = true;
                 schedulers.Add(system);
             }
+
             foreach (var systemKeyValue in dependencyGraph)
             {
                 var system = systemKeyValue.Value;
@@ -518,13 +366,9 @@ namespace Unity.Entities
 
                 var waitComponent = new HashSet<int>();
                 foreach (var componentGroup in ((ComponentSystem) system.Manager).ComponentGroups)
-                {
-                    foreach (var type in componentGroup.Types)
-                    {
-                        if (type.RequiresJobDependency)
-                            waitComponent.Add(type.TypeIndex);    
-                    }
-                }
+                foreach (var type in componentGroup.Types)
+                    if (type.RequiresJobDependency)
+                        waitComponent.Add(type.TypeIndex);
                 foreach (var scheduler in schedulers)
                 {
                     if (!(scheduler.Manager is ComponentSystem))
@@ -532,13 +376,9 @@ namespace Unity.Entities
                     // Check if the component groups overlaps
                     var scheduleComponent = new HashSet<int>();
                     foreach (var componentGroup in ((ComponentSystem) scheduler.Manager).ComponentGroups)
-                    {
-                        foreach (var type in componentGroup.Types)
-                        {
-                            if (type.RequiresJobDependency)
-                                scheduleComponent.Add(type.TypeIndex);
-                        }
-                    }
+                    foreach (var type in componentGroup.Types)
+                        if (type.RequiresJobDependency)
+                            scheduleComponent.Add(type.TypeIndex);
                     var overlap = false;
                     foreach (var waitComp in waitComponent)
                     {
@@ -558,7 +398,8 @@ namespace Unity.Entities
             }
         }
 
-        public static PlayerLoopSystem InsertWorldManagersInPlayerLoop(PlayerLoopSystem defaultPlayerLoop, params World[] worlds)
+        public static PlayerLoopSystem InsertWorldManagersInPlayerLoop(PlayerLoopSystem defaultPlayerLoop,
+            params World[] worlds)
         {
             var systemList = new List<InsertionBucket>();
             foreach (var world in worlds)
@@ -567,10 +408,44 @@ namespace Unity.Entities
                     continue;
                 systemList.AddRange(CreateSystemDependencyList(world.BehaviourManagers, defaultPlayerLoop));
             }
-            return CreatePlayerLoop(systemList, defaultPlayerLoop);
+
+            var patchSystemList = new List<ScriptBehaviourManager>();
+            foreach (var world in worlds)
+            {
+                if (world.Patches.Count == 0)
+                    continue;
+                patchSystemList.AddRange(world.Patches);
+            }
+
+            var ecsPlayerLoop = CreatePlayerLoop(systemList, defaultPlayerLoop);
+            for (var i = 0; i < ecsPlayerLoop.subSystemList.Length; ++i)
+            {
+                var subSystemList = new List<PlayerLoopSystem>();
+
+                for (var j = 0; j < ecsPlayerLoop.subSystemList[i].subSystemList.Length; j++)
+                {
+                    var next = ecsPlayerLoop.subSystemList[i].subSystemList[j];
+                    if (next.type.IsSubclassOf(typeof(ComponentSystem)))
+                        for (var k = 0; k < patchSystemList.Count; k++)
+                        {
+                            var patch = new PlayerLoopSystem();
+                            patch.type = patchSystemList[k].GetType();
+                            var tmp = new DummyDelagateWrapper(patchSystemList[k]);
+                            patch.updateDelegate = tmp.TriggerUpdate;
+                            subSystemList.Add(patch);
+                        }
+
+                    subSystemList.Add(next);
+                }
+
+                ecsPlayerLoop.subSystemList[i].subSystemList = subSystemList.ToArray();
+            }
+
+            return ecsPlayerLoop;
         }
 
-        public static PlayerLoopSystem InsertManagersInPlayerLoop(IEnumerable<ScriptBehaviourManager> activeManagers, PlayerLoopSystem defaultPlayerLoop)
+        public static PlayerLoopSystem InsertManagersInPlayerLoop(IEnumerable<ScriptBehaviourManager> activeManagers,
+            PlayerLoopSystem defaultPlayerLoop)
         {
             if (activeManagers.Count() == 0)
                 return defaultPlayerLoop;
@@ -579,7 +454,8 @@ namespace Unity.Entities
             return CreatePlayerLoop(list, defaultPlayerLoop);
         }
 
-        static List<InsertionBucket> CreateSystemDependencyList(IEnumerable<ScriptBehaviourManager> activeManagers, PlayerLoopSystem defaultPlayerLoop)
+        private static List<InsertionBucket> CreateSystemDependencyList(
+            IEnumerable<ScriptBehaviourManager> activeManagers, PlayerLoopSystem defaultPlayerLoop)
         {
             var dependencyGraph = BuildSystemGraph(activeManagers, defaultPlayerLoop);
 
@@ -599,35 +475,35 @@ namespace Unity.Entities
                 else
                     normalUpdates.Add(system);
             }
+
             var depsToAdd = new List<DependantBehavior>();
             while (true)
             {
                 foreach (var sys in earlyUpdates)
+                foreach (var depType in sys.UpdateAfter)
                 {
-                    foreach (var depType in sys.UpdateAfter)
-                    {
-                        var depSys = dependencyGraph[depType];
-                        if (normalUpdates.Remove(depSys) || lateUpdates.Remove(depSys))
-                            depsToAdd.Add(depSys);
-                    }
+                    var depSys = dependencyGraph[depType];
+                    if (normalUpdates.Remove(depSys) || lateUpdates.Remove(depSys))
+                        depsToAdd.Add(depSys);
                 }
+
                 if (depsToAdd.Count == 0)
                     break;
                 foreach (var dep in depsToAdd)
                     earlyUpdates.Add(dep);
                 depsToAdd.Clear();
             }
+
             while (true)
             {
                 foreach (var sys in lateUpdates)
+                foreach (var depType in sys.UpdateBefore)
                 {
-                    foreach (var depType in sys.UpdateBefore)
-                    {
-                        var depSys = dependencyGraph[depType];
-                        if (normalUpdates.Remove(depSys))
-                            depsToAdd.Add(depSys);
-                    }
+                    var depSys = dependencyGraph[depType];
+                    if (normalUpdates.Remove(depSys))
+                        depsToAdd.Add(depSys);
                 }
+
                 if (depsToAdd.Count == 0)
                     break;
                 foreach (var dep in depsToAdd)
@@ -639,9 +515,10 @@ namespace Unity.Entities
             foreach (var sys in defaultPlayerLoop.subSystemList)
             {
                 defaultPos += 1 + sys.subSystemList.Length;
-                if (sys.type == typeof(UnityEngine.Experimental.PlayerLoop.Update))
+                if (sys.type == typeof(Update))
                     break;
             }
+
             var insertionBucketDict = new Dictionary<int, InsertionBucket>();
             // increase the number of dependencies allowed by 1, starting from 0 and add all systems with that many at the first or last possible pos
             // bucket idx is insertion point << 2 | 0,1,2
@@ -659,11 +536,10 @@ namespace Unity.Entities
                     sys.MaxInsertPos = sys.MinInsertPos;
                     depsToAdd.Add(sys);
                     foreach (var nextSys in sys.UpdateBefore)
-                    {
                         if (dependencyGraph[nextSys].MinInsertPos < sys.MinInsertPos)
                             dependencyGraph[nextSys].MinInsertPos = sys.MinInsertPos;
-                    }
                 }
+
                 foreach (var sys in lateUpdates)
                 {
                     if (sys.LongestSystemsUpdatingAfterChain != processedChainLength)
@@ -674,10 +550,9 @@ namespace Unity.Entities
                     sys.MinInsertPos = sys.MaxInsertPos;
                     depsToAdd.Add(sys);
                     foreach (var prevSys in sys.UpdateAfter)
-                    {
-                        if (dependencyGraph[prevSys].MaxInsertPos == 0 || dependencyGraph[prevSys].MaxInsertPos > sys.MaxInsertPos)
+                        if (dependencyGraph[prevSys].MaxInsertPos == 0 ||
+                            dependencyGraph[prevSys].MaxInsertPos > sys.MaxInsertPos)
                             dependencyGraph[prevSys].MaxInsertPos = sys.MaxInsertPos;
-                    }
                 }
 
                 foreach (var sys in depsToAdd)
@@ -698,12 +573,14 @@ namespace Unity.Entities
                         };
                         insertionBucketDict.Add(bucketIndex, bucket);
                     }
+
                     bucket.Systems.Add(sys);
                 }
 
                 depsToAdd.Clear();
                 ++processedChainLength;
             }
+
             processedChainLength = 0;
             while (normalUpdates.Count > 0)
             {
@@ -717,10 +594,8 @@ namespace Unity.Entities
                     sys.MaxInsertPos = sys.MinInsertPos;
                     depsToAdd.Add(sys);
                     foreach (var nextSys in sys.UpdateBefore)
-                    {
                         if (dependencyGraph[nextSys].MinInsertPos < sys.MinInsertPos)
                             dependencyGraph[nextSys].MinInsertPos = sys.MinInsertPos;
-                    }
                 }
 
                 foreach (var sys in depsToAdd)
@@ -738,16 +613,19 @@ namespace Unity.Entities
                         bucket.InsertSubPos = subIndex;
                         insertionBucketDict.Add(bucketIndex, bucket);
                     }
+
                     bucket.Systems.Add(sys);
                 }
 
                 depsToAdd.Clear();
                 ++processedChainLength;
             }
+
             return new List<InsertionBucket>(insertionBucketDict.Values);
         }
 
-        static PlayerLoopSystem CreatePlayerLoop(List<InsertionBucket> insertionBuckets, PlayerLoopSystem defaultPlayerLoop)
+        private static PlayerLoopSystem CreatePlayerLoop(List<InsertionBucket> insertionBuckets,
+            PlayerLoopSystem defaultPlayerLoop)
         {
             insertionBuckets.Sort();
 
@@ -765,18 +643,20 @@ namespace Unity.Entities
                 // Find all new things to insert here
                 var systemsToInsert = 0;
                 foreach (var bucket in insertionBuckets)
-                {
                     if (bucket.InsertPos >= firstPos && bucket.InsertPos <= lastPos)
                         systemsToInsert += bucket.Systems.Count;
-                }
                 ecsPlayerLoop.subSystemList[i] = defaultPlayerLoop.subSystemList[i];
                 if (systemsToInsert > 0)
                 {
-                    ecsPlayerLoop.subSystemList[i].subSystemList = new PlayerLoopSystem[defaultPlayerLoop.subSystemList[i].subSystemList.Length + systemsToInsert];
+                    ecsPlayerLoop.subSystemList[i].subSystemList =
+                        new PlayerLoopSystem[defaultPlayerLoop.subSystemList[i].subSystemList.Length + systemsToInsert];
                     var dstPos = 0;
-                    for (var srcPos = 0; srcPos < defaultPlayerLoop.subSystemList[i].subSystemList.Length; ++srcPos, ++dstPos)
+                    for (var srcPos = 0;
+                        srcPos < defaultPlayerLoop.subSystemList[i].subSystemList.Length;
+                        ++srcPos, ++dstPos)
                     {
-                        while (currentBucket < insertionBuckets.Count && insertionBuckets[currentBucket].InsertPos <= firstPos+srcPos)
+                        while (currentBucket < insertionBuckets.Count &&
+                               insertionBuckets[currentBucket].InsertPos <= firstPos + srcPos)
                         {
                             foreach (var insert in insertionBuckets[currentBucket].Systems)
                             {
@@ -785,11 +665,16 @@ namespace Unity.Entities
                                 ecsPlayerLoop.subSystemList[i].subSystemList[dstPos].updateDelegate = tmp.TriggerUpdate;
                                 ++dstPos;
                             }
+
                             ++currentBucket;
                         }
-                        ecsPlayerLoop.subSystemList[i].subSystemList[dstPos] = defaultPlayerLoop.subSystemList[i].subSystemList[srcPos];
+
+                        ecsPlayerLoop.subSystemList[i].subSystemList[dstPos] =
+                            defaultPlayerLoop.subSystemList[i].subSystemList[srcPos];
                     }
-                    while (currentBucket < insertionBuckets.Count && insertionBuckets[currentBucket].InsertPos <= lastPos)
+
+                    while (currentBucket < insertionBuckets.Count &&
+                           insertionBuckets[currentBucket].InsertPos <= lastPos)
                     {
                         foreach (var insert in insertionBuckets[currentBucket].Systems)
                         {
@@ -798,9 +683,11 @@ namespace Unity.Entities
                             ecsPlayerLoop.subSystemList[i].subSystemList[dstPos].updateDelegate = tmp.TriggerUpdate;
                             ++dstPos;
                         }
+
                         ++currentBucket;
                     }
                 }
+
                 currentPos = lastPos;
             }
 
@@ -830,5 +717,172 @@ namespace Unity.Entities
             OnSetPlayerLoop?.Invoke(playerLoop);
         }
 
+        // FIXME: HACK! - mono 4.6 has problems invoking virtual methods as delegates from native, so wrap the invocation in a non-virtual class
+        private class DummyDelagateWrapper
+        {
+            private readonly ScriptBehaviourManager m_Manager;
+
+            public DummyDelagateWrapper(ScriptBehaviourManager man)
+            {
+                m_Manager = man;
+            }
+
+            public void TriggerUpdate()
+            {
+                m_Manager.Update();
+            }
+        }
+
+        public class ScriptBehaviourGroup
+        {
+            private readonly List<ScriptBehaviourGroup> m_Groups = new List<ScriptBehaviourGroup>();
+            public readonly List<Type> Managers = new List<Type>();
+            public readonly HashSet<Type> UpdateAfter = new HashSet<Type>();
+            public readonly HashSet<Type> UpdateBefore = new HashSet<Type>();
+
+            private readonly Type m_GroupType;
+            private readonly List<ScriptBehaviourGroup> m_Parents = new List<ScriptBehaviourGroup>();
+
+            public ScriptBehaviourGroup(Type grpType, IDictionary<Type, ScriptBehaviourGroup> allGroups,
+                HashSet<Type> circularCheck = null)
+            {
+                m_GroupType = grpType;
+
+                var attribs = grpType.GetCustomAttributes(typeof(UpdateAfterAttribute), true);
+                foreach (var attr in attribs)
+                {
+                    var attribDep = attr as UpdateAfterAttribute;
+                    UpdateAfter.Add(attribDep.SystemType);
+                }
+
+                attribs = grpType.GetCustomAttributes(typeof(UpdateBeforeAttribute), true);
+                foreach (var attr in attribs)
+                {
+                    var attribDep = attr as UpdateBeforeAttribute;
+                    UpdateBefore.Add(attribDep.SystemType);
+                }
+
+                allGroups.Add(m_GroupType, this);
+
+                attribs = m_GroupType.GetCustomAttributes(typeof(UpdateInGroupAttribute), true);
+                foreach (var attr in attribs)
+                {
+                    if (circularCheck == null) circularCheck = new HashSet<Type> {m_GroupType};
+                    var parentGrp = attr as UpdateInGroupAttribute;
+                    if (!circularCheck.Add(parentGrp.GroupType))
+                    {
+                        // Found circular dependency
+                        var msg = "Found circular chain in update groups involving: ";
+                        var firstType = true;
+                        foreach (var circularType in circularCheck)
+                        {
+                            msg += (firstType ? "" : ", ") + circularType;
+                            firstType = false;
+                        }
+
+                        Debug.LogError(msg);
+                    }
+
+                    ScriptBehaviourGroup parentGroupData;
+                    if (!allGroups.TryGetValue(parentGrp.GroupType, out parentGroupData))
+                        parentGroupData = new ScriptBehaviourGroup(parentGrp.GroupType, allGroups, circularCheck);
+                    circularCheck.Remove(parentGrp.GroupType);
+                    parentGroupData.m_Groups.Add(this);
+                    m_Parents.Add(parentGroupData);
+
+                    foreach (var dep in parentGroupData.UpdateBefore)
+                        UpdateBefore.Add(dep);
+                    foreach (var dep in parentGroupData.UpdateAfter)
+                        UpdateAfter.Add(dep);
+                }
+            }
+
+            public void AddUpdateBeforeToAllChildBehaviours(DependantBehavior target,
+                IReadOnlyDictionary<Type, DependantBehavior> dependencies)
+            {
+                var dep = target.Manager.GetType();
+                foreach (var manager in Managers)
+                {
+                    DependantBehavior managerDep;
+                    if (!dependencies.TryGetValue(manager, out managerDep))
+                        continue;
+
+                    target.UpdateAfter.Add(manager);
+                    managerDep.UpdateBefore.Add(dep);
+                }
+
+                foreach (var group in m_Groups)
+                    group.AddUpdateBeforeToAllChildBehaviours(target, dependencies);
+            }
+
+            public void AddUpdateAfterToAllChildBehaviours(DependantBehavior target,
+                IReadOnlyDictionary<Type, DependantBehavior> dependencies)
+            {
+                var dep = target.Manager.GetType();
+                foreach (var manager in Managers)
+                {
+                    DependantBehavior managerDep;
+                    if (!dependencies.TryGetValue(manager, out managerDep))
+                        continue;
+
+                    target.UpdateBefore.Add(manager);
+                    managerDep.UpdateAfter.Add(dep);
+                }
+
+                foreach (var group in m_Groups)
+                    group.AddUpdateAfterToAllChildBehaviours(target, dependencies);
+            }
+        }
+
+        public class DependantBehavior
+        {
+            public readonly ScriptBehaviourManager Manager;
+            public readonly HashSet<Type> UpdateAfter = new HashSet<Type>();
+            public readonly HashSet<Type> UpdateBefore = new HashSet<Type>();
+            public int LongestSystemsUpdatingAfterChain;
+            public int LongestSystemsUpdatingBeforeChain;
+            public int MaxInsertPos;
+
+            public int MinInsertPos;
+            public bool spawnsJobs;
+
+            public int UnvalidatedSystemsUpdatingBefore;
+            public bool WaitsForJobs;
+
+            public DependantBehavior(ScriptBehaviourManager man)
+            {
+                Manager = man;
+                MinInsertPos = 0;
+                MaxInsertPos = 0;
+                spawnsJobs = false;
+                WaitsForJobs = false;
+
+                UnvalidatedSystemsUpdatingBefore = 0;
+                LongestSystemsUpdatingBeforeChain = 0;
+                LongestSystemsUpdatingAfterChain = 0;
+            }
+        }
+
+        private class InsertionBucket : IComparable
+        {
+            public readonly List<DependantBehavior> Systems;
+            public int InsertPos;
+            public int InsertSubPos;
+
+            public InsertionBucket()
+            {
+                InsertPos = 0;
+                InsertSubPos = 0;
+                Systems = new List<DependantBehavior>();
+            }
+
+            public int CompareTo(object other)
+            {
+                var otherBucket = other as InsertionBucket;
+                if (InsertPos == otherBucket.InsertPos)
+                    return InsertSubPos - otherBucket.InsertSubPos;
+                return InsertPos - otherBucket.InsertPos;
+            }
+        }
     }
 }

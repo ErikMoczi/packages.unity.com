@@ -409,5 +409,77 @@ namespace Unity.Entities.Tests
 
             Assert.AreEqual(0, count);
         }
+        
+        [Test]
+        public void TestCommandBufferDeleteWithSystemState()
+        {
+            Entity[] entities = new Entity[2];
+            for (int i = 0; i < entities.Length; ++i)
+            {
+                entities[i] = m_Manager.CreateEntity();
+                m_Manager.AddComponentData(entities[i], new EcsTestData { value = i });
+                m_Manager.AddComponentData(entities[i], new EcsState1 { Value = i });
+            }
+
+            var cmds = new EntityCommandBuffer(Allocator.TempJob);
+
+            new TestBurstCommandBufferJob {
+                e0 = entities[0],
+                e1 = entities[1],
+                Buffer = cmds,
+            }.Schedule().Complete();
+
+            cmds.Playback(m_Manager);
+
+            cmds.Dispose();
+
+            var allEntities = m_Manager.GetAllEntities();
+            int count = allEntities.Length;
+            allEntities.Dispose();
+
+            Assert.AreEqual(entities.Length, count);
+        }
+        
+        [Test]
+        public void TestCommandBufferDeleteRemoveSystemState()
+        {
+            Entity[] entities = new Entity[2];
+            for (int i = 0; i < entities.Length; ++i)
+            {
+                entities[i] = m_Manager.CreateEntity();
+                m_Manager.AddComponentData(entities[i], new EcsTestData { value = i });
+                m_Manager.AddComponentData(entities[i], new EcsState1 { Value = i });
+            }
+
+            {
+                var cmds = new EntityCommandBuffer(Allocator.TempJob);
+                new TestBurstCommandBufferJob
+                {
+                    e0 = entities[0],
+                    e1 = entities[1],
+                    Buffer = cmds,
+                }.Schedule().Complete();
+
+                cmds.Playback(m_Manager);
+                cmds.Dispose();
+            }
+
+            {
+                var cmds = new EntityCommandBuffer(Allocator.TempJob);
+                for (var i = 0; i < entities.Length; i++)
+                {
+                    cmds.RemoveSystemStateComponent<EcsState1>(entities[i]);
+                }
+
+                cmds.Playback(m_Manager);
+                cmds.Dispose();
+            }
+
+            var allEntities = m_Manager.GetAllEntities();
+            int count = allEntities.Length;
+            allEntities.Dispose();
+
+            Assert.AreEqual(0, count);
+        }
     }
 }

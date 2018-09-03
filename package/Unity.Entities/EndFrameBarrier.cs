@@ -1,8 +1,10 @@
-using Unity.Collections;
+using UnityEngine.Experimental.PlayerLoop;
+using UnityEngine.Scripting;
 
 namespace Unity.Entities
 {
-    [UpdateBefore(typeof(UnityEngine.Experimental.PlayerLoop.Initialization))]
+    [UpdateBefore(typeof(Initialization))]
+    [Preserve]
     public class EndFrameBarrier : BarrierSystem
     {
     }

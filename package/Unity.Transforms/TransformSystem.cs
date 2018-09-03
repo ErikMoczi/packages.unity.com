@@ -18,7 +18,7 @@ namespace Unity.Transforms
         // +Rotation +Position -Heading -TransformMatrix
         struct RootRotTransNoTransformGroup
         {
-            [ReadOnly] public SubtractiveComponent<TransformExternal> transfromExternal;
+            [ReadOnly] public SubtractiveComponent<VoidSystem<TransformSystem>> transfromExternal;
             [ReadOnly] public ComponentDataArray<Rotation> rotations;
             [ReadOnly] public SubtractiveComponent<TransformParent> parents;
             [ReadOnly] public SubtractiveComponent<Heading> headings;
@@ -32,7 +32,7 @@ namespace Unity.Transforms
         // +Rotation +Position -Heading +TransformMatrix
         struct RootRotTransTransformGroup
         {
-            [ReadOnly] public SubtractiveComponent<TransformExternal> transfromExternal;
+            [ReadOnly] public SubtractiveComponent<VoidSystem<TransformSystem>> transfromExternal;
             [ReadOnly] public ComponentDataArray<Rotation> rotations;
             [ReadOnly] public SubtractiveComponent<TransformParent> parents;
             [ReadOnly] public SubtractiveComponent<Heading> headings;
@@ -47,7 +47,7 @@ namespace Unity.Transforms
         // +Rotation -Position -Heading -TransformMatrix
         struct RootRotNoTransformGroup
         {
-            [ReadOnly] public SubtractiveComponent<TransformExternal> transfromExternal;
+            [ReadOnly] public SubtractiveComponent<VoidSystem<TransformSystem>> transfromExternal;
             [ReadOnly] public ComponentDataArray<Rotation> rotations;
             [ReadOnly] public SubtractiveComponent<TransformParent> parents;
             [ReadOnly] public SubtractiveComponent<Heading> headings;
@@ -61,7 +61,7 @@ namespace Unity.Transforms
         // +Rotation -Position -Heading +TransformMatrix
         struct RootRotTransformGroup
         {
-            [ReadOnly] public SubtractiveComponent<TransformExternal> transfromExternal;
+            [ReadOnly] public SubtractiveComponent<VoidSystem<TransformSystem>> transfromExternal;
             [ReadOnly] public ComponentDataArray<Rotation> rotations;
             [ReadOnly] public SubtractiveComponent<TransformParent> parents;
             [ReadOnly] public SubtractiveComponent<Heading> headings;
@@ -76,7 +76,7 @@ namespace Unity.Transforms
         // -Rotation +Position -Heading -TransformMatrix
         struct RootTransNoTransformGroup
         {
-            [ReadOnly] public SubtractiveComponent<TransformExternal> transfromExternal;
+            [ReadOnly] public SubtractiveComponent<VoidSystem<TransformSystem>> transfromExternal;
             [ReadOnly] public SubtractiveComponent<Rotation> rotations;
             [ReadOnly] public SubtractiveComponent<TransformParent> parents;
             [ReadOnly] public SubtractiveComponent<Heading> headings;
@@ -90,7 +90,7 @@ namespace Unity.Transforms
         // -Rotation +Position -Heading +TransformMatrix
         struct RootTransTransformGroup
         {
-            [ReadOnly] public SubtractiveComponent<TransformExternal> transfromExternal;
+            [ReadOnly] public SubtractiveComponent<VoidSystem<TransformSystem>> transfromExternal;
             [ReadOnly] public SubtractiveComponent<Rotation> rotations;
             [ReadOnly] public SubtractiveComponent<TransformParent> parents;
             [ReadOnly] public SubtractiveComponent<Heading> headings;
@@ -105,7 +105,7 @@ namespace Unity.Transforms
         // -Rotation +Position +Heading +TransformMatrix
         struct RootHeadingTransTransformGroup
         {
-            [ReadOnly] public SubtractiveComponent<TransformExternal> transfromExternal;
+            [ReadOnly] public SubtractiveComponent<VoidSystem<TransformSystem>> transfromExternal;
             [ReadOnly] public SubtractiveComponent<Rotation> rotations;
             [ReadOnly] public SubtractiveComponent<TransformParent> parents;
             [ReadOnly] public ComponentDataArray<Heading> headings;
@@ -122,7 +122,7 @@ namespace Unity.Transforms
         // -Rotation +Position +Heading -TransformMatrix
         struct RootHeadingTransNoTransformGroup
         {
-            [ReadOnly] public SubtractiveComponent<TransformExternal> transfromExternal;
+            [ReadOnly] public SubtractiveComponent<VoidSystem<TransformSystem>> transfromExternal;
             [ReadOnly] public SubtractiveComponent<Rotation> rotations;
             [ReadOnly] public SubtractiveComponent<TransformParent> parents;
             [ReadOnly] public ComponentDataArray<Heading> headings;
@@ -135,7 +135,7 @@ namespace Unity.Transforms
 
         struct ParentGroup
         {
-            [ReadOnly] public SubtractiveComponent<TransformExternal> transfromExternal;
+            [ReadOnly] public SubtractiveComponent<VoidSystem<TransformSystem>> transfromExternal;
             [ReadOnly] public ComponentDataArray<TransformParent> transformParents;
             [ReadOnly] public EntityArray entities;
             public int Length;

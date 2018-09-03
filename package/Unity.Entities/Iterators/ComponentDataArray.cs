@@ -9,15 +9,16 @@ namespace Unity.Entities
     [NativeContainerSupportsMinMaxWriteRestriction]
     public unsafe struct ComponentDataArray<T> where T : struct, IComponentData
     {
-        ComponentChunkIterator m_Iterator;
-        ComponentChunkCache    m_Cache;
+        private ComponentChunkIterator m_Iterator;
+        private ComponentChunkCache m_Cache;
 
-        readonly int m_Length;
+        private readonly int m_Length;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-        readonly int m_MinIndex;
-        readonly int m_MaxIndex;
-        readonly AtomicSafetyHandle m_Safety;
+        private readonly int m_MinIndex;
+        private readonly int m_MaxIndex;
+        private readonly AtomicSafetyHandle m_Safety;
 #endif
+        public int Length => m_Length;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         internal ComponentDataArray(ComponentChunkIterator iterator, int length, AtomicSafetyHandle safety)
@@ -26,7 +27,7 @@ namespace Unity.Entities
 #endif
         {
             m_Iterator = iterator;
-	        m_Cache = default(ComponentChunkCache);
+            m_Cache = default(ComponentChunkCache);
 
             m_Length = length;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -36,15 +37,15 @@ namespace Unity.Entities
 #endif
         }
 
-        internal void* GetUnsafeChunkPtr(int startIndex, int maxCount, out int actualCount)
+        internal void* GetUnsafeChunkPtr(int startIndex, int maxCount, out int actualCount, bool isWriting)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             GetUnsafeChunkPtrCheck(startIndex, maxCount);
 #endif
 
-            m_Iterator.UpdateCache(startIndex, out m_Cache);
+            m_Iterator.UpdateCache(startIndex, out m_Cache, isWriting);
 
-            void* ptr = (byte*)m_Cache.CachedPtr + startIndex * m_Cache.CachedSizeOf;
+            void* ptr = (byte*) m_Cache.CachedPtr + startIndex * m_Cache.CachedSizeOf;
             actualCount = Math.Min(maxCount, m_Cache.CachedEndIndex - startIndex);
 
             return ptr;
@@ -66,7 +67,8 @@ namespace Unity.Entities
         public NativeArray<T> GetChunkArray(int startIndex, int maxCount)
         {
             int count;
-            void* ptr = GetUnsafeChunkPtr(startIndex, maxCount, out count);
+            //@TODO: How should we declare read / write here?
+            var ptr = GetUnsafeChunkPtr(startIndex, maxCount, out count, true);
 
             var arr = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(ptr, count, Allocator.Invalid);
 
@@ -98,23 +100,23 @@ namespace Unity.Entities
 #endif
 
                 if (index < m_Cache.CachedBeginIndex || index >= m_Cache.CachedEndIndex)
-                    m_Iterator.UpdateCache(index, out m_Cache);
+                    m_Iterator.UpdateCache(index, out m_Cache, false);
 
                 return UnsafeUtility.ReadArrayElement<T>(m_Cache.CachedPtr, index);
             }
 
-			set
-			{
+            set
+            {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-				SetValueCheck(index);
+                SetValueCheck(index);
 #endif
 
                 if (index < m_Cache.CachedBeginIndex || index >= m_Cache.CachedEndIndex)
-                    m_Iterator.UpdateCache(index, out m_Cache);
+                    m_Iterator.UpdateCache(index, out m_Cache, true);
 
-				UnsafeUtility.WriteArrayElement(m_Cache.CachedPtr, index, value);
-			}
-		}
+                UnsafeUtility.WriteArrayElement(m_Cache.CachedPtr, index, value);
+            }
+        }
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
@@ -138,20 +140,18 @@ namespace Unity.Entities
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-        void FailOutOfRangeError(int index)
-		{
-			//@TODO: Make error message utility and share with NativeArray...
-			if (index < Length && (m_MinIndex != 0 || m_MaxIndex != Length - 1))
-				throw new IndexOutOfRangeException(
-				        $"Index {index} is out of restricted IJobParallelFor range [{m_MinIndex}...{m_MaxIndex}] in ReadWriteBuffer.\n" +
-				        "ReadWriteBuffers are restricted to only read & write the element at the job index. " +
-				        "You can use double buffering strategies to avoid race conditions due to " +
-				        "reading & writing in parallel to the same elements from a job.");
+        private void FailOutOfRangeError(int index)
+        {
+            //@TODO: Make error message utility and share with NativeArray...
+            if (index < Length && (m_MinIndex != 0 || m_MaxIndex != Length - 1))
+                throw new IndexOutOfRangeException(
+                    $"Index {index} is out of restricted IJobParallelFor range [{m_MinIndex}...{m_MaxIndex}] in ReadWriteBuffer.\n" +
+                    "ReadWriteBuffers are restricted to only read & write the element at the job index. " +
+                    "You can use double buffering strategies to avoid race conditions due to " +
+                    "reading & writing in parallel to the same elements from a job.");
 
-			throw new IndexOutOfRangeException($"Index {index} is out of range of '{Length}' Length.");
-		}
+            throw new IndexOutOfRangeException($"Index {index} is out of range of '{Length}' Length.");
+        }
 #endif
-
-        public int Length => m_Length;
     }
 }

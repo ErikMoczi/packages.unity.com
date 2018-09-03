@@ -6,14 +6,14 @@ using UnityEngine.Assertions;
 
 namespace Unity.Entities
 {
-    class SharedComponentDataManager
+    internal class SharedComponentDataManager
     {
-        NativeMultiHashMap<int, int> m_HashLookup = new NativeMultiHashMap<int, int>(128, Allocator.Persistent);
+        private NativeMultiHashMap<int, int> m_HashLookup = new NativeMultiHashMap<int, int>(128, Allocator.Persistent);
 
-        List<object>    m_SharedComponentData = new List<object>();
-        NativeList<int> m_SharedComponentRefCount = new NativeList<int>(0, Allocator.Persistent);
-        NativeList<int> m_SharedComponentVersion = new NativeList<int>(0, Allocator.Persistent);
-        NativeList<int> m_SharedComponentType = new NativeList<int>(0, Allocator.Persistent);
+        private List<object> m_SharedComponentData = new List<object>();
+        private NativeList<int> m_SharedComponentRefCount = new NativeList<int>(0, Allocator.Persistent);
+        private NativeList<int> m_SharedComponentType = new NativeList<int>(0, Allocator.Persistent);
+        private NativeList<int> m_SharedComponentVersion = new NativeList<int>(0, Allocator.Persistent);
 
         public SharedComponentDataManager()
         {
@@ -33,51 +33,48 @@ namespace Unity.Entities
             m_HashLookup.Dispose();
         }
 
-        public void GetAllUniqueSharedComponents<T>(List<T> sharedComponentValues) where T : struct, ISharedComponentData
+        public void GetAllUniqueSharedComponents<T>(List<T> sharedComponentValues)
+            where T : struct, ISharedComponentData
         {
             sharedComponentValues.Add(default(T));
             for (var i = 1; i != m_SharedComponentData.Count; i++)
             {
                 var data = m_SharedComponentData[i];
                 if (data != null && data.GetType() == typeof(T))
-                    sharedComponentValues.Add((T)m_SharedComponentData[i]);
+                    sharedComponentValues.Add((T) m_SharedComponentData[i]);
             }
         }
 
         public int InsertSharedComponent<T>(T newData) where T : struct
         {
-            int typeIndex = TypeManager.GetTypeIndex<T>();
-            int index = FindSharedComponentIndex(TypeManager.GetTypeIndex<T>(), newData);
+            var typeIndex = TypeManager.GetTypeIndex<T>();
+            var index = FindSharedComponentIndex(TypeManager.GetTypeIndex<T>(), newData);
 
-            if (index == 0)
-            {
-                return 0;
-            }
-            else if (index != -1)
+            if (index == 0) return 0;
+
+            if (index != -1)
             {
                 m_SharedComponentRefCount[index]++;
                 return index;
             }
-            else
-            {
-                var fastLayout = TypeManager.GetComponentType(typeIndex).FastEqualityLayout;
-                var hashcode = FastEquality.GetHashCode(ref newData, fastLayout);
-                return Add(typeIndex, hashcode, newData);
-            }
+
+            var fastLayout = TypeManager.GetComponentType(typeIndex).FastEqualityLayout;
+            var hashcode = FastEquality.GetHashCode(ref newData, fastLayout);
+            return Add(typeIndex, hashcode, newData);
         }
 
-        unsafe int FindSharedComponentIndex<T>(int typeIndex, T newData) where T : struct
+        private unsafe int FindSharedComponentIndex<T>(int typeIndex, T newData) where T : struct
         {
             var defaultVal = default(T);
             var fastLayout = TypeManager.GetComponentType(typeIndex).FastEqualityLayout;
             if (FastEquality.Equals(ref defaultVal, ref newData, fastLayout))
                 return 0;
-            else
-                return FindNonDefaultSharedComponentIndex(typeIndex, FastEquality.GetHashCode(ref newData, fastLayout),
-                    UnsafeUtility.AddressOf(ref newData), fastLayout);
+            return FindNonDefaultSharedComponentIndex(typeIndex, FastEquality.GetHashCode(ref newData, fastLayout),
+                UnsafeUtility.AddressOf(ref newData), fastLayout);
         }
 
-        unsafe int FindNonDefaultSharedComponentIndex(int typeIndex, int hashCode, void* newData, FastEquality.Layout[] layout)
+        private unsafe int FindNonDefaultSharedComponentIndex(int typeIndex, int hashCode, void* newData,
+            FastEquality.Layout[] layout)
         {
             int itemIndex;
             NativeMultiHashMapIterator<int> iter;
@@ -91,25 +88,25 @@ namespace Unity.Entities
                 if (data != null && m_SharedComponentType[itemIndex] == typeIndex)
                 {
                     ulong handle;
-                    void* value = PinGCObjectAndGetAddress(data, out handle);
-                    bool res = FastEquality.Equals(newData, value, layout);
+                    var value = PinGCObjectAndGetAddress(data, out handle);
+                    var res = FastEquality.Equals(newData, value, layout);
                     UnsafeUtility.ReleaseGCObject(handle);
 
                     if (res)
                         return itemIndex;
                 }
-            }
-            while (m_HashLookup.TryGetNextValue(out itemIndex, ref iter));
+            } while (m_HashLookup.TryGetNextValue(out itemIndex, ref iter));
 
             return -1;
         }
 
-        internal unsafe int InsertSharedComponentAssumeNonDefault(int typeIndex, int hashCode, object newData, FastEquality.Layout[] layout)
+        internal unsafe int InsertSharedComponentAssumeNonDefault(int typeIndex, int hashCode, object newData,
+            FastEquality.Layout[] layout)
         {
             ulong handle;
-            void* newDataPtr = PinGCObjectAndGetAddress(newData, out handle);
+            var newDataPtr = PinGCObjectAndGetAddress(newData, out handle);
 
-            int index = FindNonDefaultSharedComponentIndex(typeIndex, hashCode, newDataPtr, layout);
+            var index = FindNonDefaultSharedComponentIndex(typeIndex, hashCode, newDataPtr, layout);
 
             UnsafeUtility.ReleaseGCObject(handle);
 
@@ -121,9 +118,9 @@ namespace Unity.Entities
             return index;
         }
 
-        int Add(int typeIndex, int hashCode, object newData)
+        private int Add(int typeIndex, int hashCode, object newData)
         {
-            int index = m_SharedComponentData.Count;
+            var index = m_SharedComponentData.Count;
             m_HashLookup.Add(hashCode, index);
             m_SharedComponentData.Add(newData);
             m_SharedComponentRefCount.Add(1);
@@ -166,20 +163,20 @@ namespace Unity.Entities
                 ++m_SharedComponentRefCount[index];
         }
 
-        unsafe static int GetHashCodeFast(object target, FastEquality.Layout[] fastLayout)
+        private static unsafe int GetHashCodeFast(object target, FastEquality.Layout[] fastLayout)
         {
             ulong handle;
-            void* ptr = PinGCObjectAndGetAddress(target, out handle);
+            var ptr = PinGCObjectAndGetAddress(target, out handle);
             var hashCode = FastEquality.GetHashCode(ptr, fastLayout);
             UnsafeUtility.ReleaseGCObject(handle);
 
             return hashCode;
         }
 
-        unsafe static void* PinGCObjectAndGetAddress(object target, out ulong handle)
+        private static unsafe void* PinGCObjectAndGetAddress(object target, out ulong handle)
         {
-            void* ptr = UnsafeUtility.PinGCObjectAndGetAddress(target, out handle);
-            return (byte*)ptr + TypeManager.ObjectOffset;
+            var ptr = UnsafeUtility.PinGCObjectAndGetAddress(target, out handle);
+            return (byte*) ptr + TypeManager.ObjectOffset;
         }
 
 
@@ -214,26 +211,26 @@ namespace Unity.Entities
 
                 m_HashLookup.Remove(iter);
                 break;
-            }
-            while (m_HashLookup.TryGetNextValue(out itemIndex, ref iter));
+            } while (m_HashLookup.TryGetNextValue(out itemIndex, ref iter));
         }
 
 
-        unsafe public void MoveSharedComponents(SharedComponentDataManager srcSharedComponents, int* sharedComponentIndices, int sharedComponentIndicesCount)
+        public unsafe void MoveSharedComponents(SharedComponentDataManager srcSharedComponents,
+            int* sharedComponentIndices, int sharedComponentIndicesCount)
         {
-            for (int i = 0;i != sharedComponentIndicesCount;i++)
+            for (var i = 0; i != sharedComponentIndicesCount; i++)
             {
-                int srcIndex = sharedComponentIndices[i];
+                var srcIndex = sharedComponentIndices[i];
                 if (srcIndex == 0)
                     continue;
 
                 var srcData = srcSharedComponents.m_SharedComponentData[srcIndex];
-                int typeIndex = srcSharedComponents.m_SharedComponentType[srcIndex];
+                var typeIndex = srcSharedComponents.m_SharedComponentType[srcIndex];
 
                 var fastLayout = TypeManager.GetComponentType(typeIndex).FastEqualityLayout;
                 var hashCode = GetHashCodeFast(srcData, fastLayout);
 
-                int dstIndex = InsertSharedComponentAssumeNonDefault(typeIndex, hashCode, srcData, fastLayout);
+                var dstIndex = InsertSharedComponentAssumeNonDefault(typeIndex, hashCode, srcData, fastLayout);
                 srcSharedComponents.RemoveReference(srcIndex);
 
                 sharedComponentIndices[i] = dstIndex;

@@ -2,7 +2,7 @@
 
 namespace Unity.Entities
 {
-    static class CalculateReaderWriterDependency
+    internal static class CalculateReaderWriterDependency
     {
         public static bool Add(ComponentType type, NativeList<int> reading, NativeList<int> writing)
         {
@@ -19,17 +19,15 @@ namespace Unity.Entities
                 reading.Add(type.TypeIndex);
                 return true;
             }
-            else
-            {
-                int readingIndex = reading.IndexOf(type.TypeIndex);
-                if (readingIndex != -1)
-                    reading.RemoveAtSwapBack(readingIndex);
-                if (writing.Contains(type.TypeIndex))
-                    return false;
-                
-                writing.Add(type.TypeIndex);
-                return true;
-            }
+
+            var readingIndex = reading.IndexOf(type.TypeIndex);
+            if (readingIndex != -1)
+                reading.RemoveAtSwapBack(readingIndex);
+            if (writing.Contains(type.TypeIndex))
+                return false;
+
+            writing.Add(type.TypeIndex);
+            return true;
         }
     }
 }

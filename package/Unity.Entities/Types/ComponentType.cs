@@ -3,7 +3,8 @@
 namespace Unity.Entities
 {
     public struct SubtractiveComponent<T>
-    {}
+    {
+    }
 
     public struct ComponentType
     {
@@ -14,9 +15,9 @@ namespace Unity.Entities
             Subtractive
         }
 
-        public int            TypeIndex;
-        public AccessMode     AccessModeType;
-        public int            FixedArrayLength;
+        public int TypeIndex;
+        public AccessMode AccessModeType;
+        public int FixedArrayLength;
 
         public static ComponentType Create<T>()
         {
@@ -40,6 +41,7 @@ namespace Unity.Entities
             t.FixedArrayLength = -1;
             return t;
         }
+
         public static ComponentType ReadOnly<T>()
         {
             ComponentType t;
@@ -57,6 +59,7 @@ namespace Unity.Entities
             t.FixedArrayLength = -1;
             return t;
         }
+
         public static ComponentType Subtractive<T>()
         {
             ComponentType t;
@@ -69,7 +72,7 @@ namespace Unity.Entities
         public ComponentType(Type type, AccessMode accessModeType = AccessMode.ReadWrite)
         {
             TypeIndex = TypeManager.GetTypeIndex(type);
-            this.AccessModeType = accessModeType;
+            AccessModeType = accessModeType;
             FixedArrayLength = -1;
         }
 
@@ -112,11 +115,13 @@ namespace Unity.Entities
         public static bool operator <(ComponentType lhs, ComponentType rhs)
         {
             if (lhs.TypeIndex == rhs.TypeIndex)
-                return lhs.FixedArrayLength != rhs.FixedArrayLength ? lhs.FixedArrayLength < rhs.FixedArrayLength : lhs.AccessModeType < rhs.AccessModeType;
+                return lhs.FixedArrayLength != rhs.FixedArrayLength
+                    ? lhs.FixedArrayLength < rhs.FixedArrayLength
+                    : lhs.AccessModeType < rhs.AccessModeType;
 
             return lhs.TypeIndex < rhs.TypeIndex;
-
         }
+
         public static bool operator >(ComponentType lhs, ComponentType rhs)
         {
             return rhs < lhs;
@@ -124,23 +129,24 @@ namespace Unity.Entities
 
         public static bool operator ==(ComponentType lhs, ComponentType rhs)
         {
-            return lhs.TypeIndex == rhs.TypeIndex && lhs.FixedArrayLength == rhs.FixedArrayLength && lhs.AccessModeType == rhs.AccessModeType;
+            return lhs.TypeIndex == rhs.TypeIndex && lhs.FixedArrayLength == rhs.FixedArrayLength &&
+                   lhs.AccessModeType == rhs.AccessModeType;
         }
 
         public static bool operator !=(ComponentType lhs, ComponentType rhs)
         {
-            return lhs.TypeIndex != rhs.TypeIndex || lhs.FixedArrayLength != rhs.FixedArrayLength && lhs.AccessModeType == rhs.AccessModeType;
+            return lhs.TypeIndex != rhs.TypeIndex || lhs.FixedArrayLength != rhs.FixedArrayLength ||
+                   lhs.AccessModeType != rhs.AccessModeType;
         }
 
-        internal static unsafe bool CompareArray(ComponentType* type1, int typeCount1, ComponentType* type2, int typeCount2)
+        internal static unsafe bool CompareArray(ComponentType* type1, int typeCount1, ComponentType* type2,
+            int typeCount2)
         {
             if (typeCount1 != typeCount2)
                 return false;
             for (var i = 0; i < typeCount1; ++i)
-            {
                 if (type1[i] != type2[i])
                     return false;
-            }
             return true;
         }
 
@@ -149,17 +155,16 @@ namespace Unity.Entities
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         public override string ToString()
         {
-            string name = GetManagedType().Name;
+            var name = GetManagedType().Name;
             if (IsFixedArray)
                 return $"{name}[{FixedArrayLength}]";
-            else if (AccessModeType == AccessMode.Subtractive)
+            if (AccessModeType == AccessMode.Subtractive)
                 return $"{name} [S]";
-            else if (AccessModeType == AccessMode.ReadOnly)
+            if (AccessModeType == AccessMode.ReadOnly)
                 return $"{name} [RO]";
-            else if (TypeIndex == 0 && FixedArrayLength == 0)
+            if (TypeIndex == 0 && FixedArrayLength == 0)
                 return "None";
-            else 
-                return name;
+            return name;
         }
 #endif
 

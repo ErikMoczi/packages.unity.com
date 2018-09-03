@@ -6,6 +6,9 @@
 
     public interface ISharedComponentData
     {
+    }
 
+    public interface ISystemStateComponentData : IComponentData
+    {
     }
 }

@@ -1,39 +1,26 @@
-﻿using System.Runtime.InteropServices.ComTypes;
+﻿using System;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
-using Unity.Collections;
+using Unity.Jobs.LowLevel.Unsafe;
+using UnityEngine.Profiling;
 
 namespace Unity.Entities
 {
-    unsafe class ComponentJobSafetyManager
+    internal unsafe class ComponentJobSafetyManager
     {
-        struct ComponentSafetyHandle
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            public AtomicSafetyHandle SafetyHandle;
-#endif
-            public JobHandle WriteFence;
-            public int NumReadFences;
-        }
+        private const int kMaxReadJobHandles = 17;
+        private const int kMaxTypes = TypeManager.MaximumTypesCount;
 
-        const int kMaxReadJobHandles = 17;
-        const int kMaxTypes = TypeManager.MaximumTypesCount;
+        private readonly JobHandle* m_JobDependencyCombineBuffer;
+        private readonly int m_JobDependencyCombineBufferCount;
+        private ComponentSafetyHandle* m_ComponentSafetyHandles;
 
-        bool m_HasCleanHandles;
-        bool m_IsInTransaction;
+        private JobHandle m_ExclusiveTransactionDependency;
 
-        JobHandle* m_ReadJobFences;
-        ComponentSafetyHandle* m_ComponentSafetyHandles;
+        private bool m_HasCleanHandles;
 
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-        readonly AtomicSafetyHandle m_TempSafety;
-        AtomicSafetyHandle m_ExclusiveTransactionSafety;
-#endif
-
-        JobHandle m_ExclusiveTransactionDependency;
-
-        readonly JobHandle* m_JobDependencyCombineBuffer;
-        readonly int m_JobDependencyCombineBufferCount;
+        private JobHandle* m_ReadJobFences;
 
         public ComponentJobSafetyManager()
         {
@@ -66,13 +53,37 @@ namespace Unity.Entities
             m_HasCleanHandles = true;
         }
 
+        public bool IsInTransaction { get; private set; }
+
+        public JobHandle ExclusiveTransactionDependency
+        {
+            get { return m_ExclusiveTransactionDependency; }
+            set
+            {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                if (!IsInTransaction)
+                    throw new InvalidOperationException(
+                        "EntityManager.TransactionDependency can only after EntityManager.BeginExclusiveEntityTransaction has been called.");
+
+                if (!JobHandle.CheckFenceIsDependencyOrDidSyncFence(m_ExclusiveTransactionDependency, value))
+                    throw new InvalidOperationException(
+                        "EntityManager.TransactionDependency must depend on the Entity Transaction job.");
+#endif
+                m_ExclusiveTransactionDependency = value;
+            }
+        }
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+        public AtomicSafetyHandle ExclusiveTransactionSafety { get; private set; }
+#endif
+
         //@TODO: Optimize as one function call to in batch bump version on every single handle...
         public void CompleteAllJobsAndInvalidateArrays()
         {
             if (m_HasCleanHandles)
                 return;
 
-            UnityEngine.Profiling.Profiler.BeginSample("CompleteAllJobsAndInvalidateArrays");
+            Profiler.BeginSample("CompleteAllJobsAndInvalidateArrays");
 
             var count = TypeManager.GetTypeCount();
             for (var t = 0; t != count; t++)
@@ -100,7 +111,7 @@ namespace Unity.Entities
 
             m_HasCleanHandles = true;
 
-            UnityEngine.Profiling.Profiler.EndSample();
+            Profiler.EndSample();
         }
 
         public void Dispose()
@@ -117,11 +128,8 @@ namespace Unity.Entities
                 var res = AtomicSafetyHandle.EnforceAllBufferJobsHaveCompletedAndRelease(m_ComponentSafetyHandles[i]
                     .SafetyHandle);
                 if (res == EnforceJobResult.DidSyncRunningJobs)
-                {
-                    //@TODO: EnforceAllBufferJobsHaveCompletedAndRelease should probably print the error message and locate the exact job...
                     Debug.LogError(
                         "Disposing EntityManager but a job is still running against the ComponentData. It appears the job has not been registered with JobComponentSystem.AddDependency.");
-                }
             }
 
             AtomicSafetyHandle.Release(m_TempSafety);
@@ -152,8 +160,8 @@ namespace Unity.Entities
             if (JobHandle.CheckFenceIsDependencyOrDidSyncFence(dependency, writer))
                 return true;
 
-            int count = m_ComponentSafetyHandles[type].NumReadFences;
-            for (int r = 0; r < count; r++)
+            var count = m_ComponentSafetyHandles[type].NumReadFences;
+            for (var r = 0; r < count; r++)
             {
                 var reader = m_ReadJobFences[type * kMaxReadJobHandles + r];
                 if (JobHandle.CheckFenceIsDependencyOrDidSyncFence(dependency, reader))
@@ -167,14 +175,12 @@ namespace Unity.Entities
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (readerTypesCount * kMaxReadJobHandles + writerTypesCount > m_JobDependencyCombineBufferCount)
-                throw new System.ArgumentException("Too many readers & writers in GetDependency");
+                throw new ArgumentException("Too many readers & writers in GetDependency");
 #endif
 
             var count = 0;
             for (var i = 0; i != readerTypesCount; i++)
-            {
                 m_JobDependencyCombineBuffer[count++] = m_ComponentSafetyHandles[readerTypes[i]].WriteFence;
-            }
 
             for (var i = 0; i != writerTypesCount; i++)
             {
@@ -187,25 +193,25 @@ namespace Unity.Entities
                     m_JobDependencyCombineBuffer[count++] = m_ReadJobFences[writerType * kMaxReadJobHandles + j];
             }
 
-            return Jobs.LowLevel.Unsafe.JobHandleUnsafeUtility.CombineDependencies(m_JobDependencyCombineBuffer,
+            return JobHandleUnsafeUtility.CombineDependencies(m_JobDependencyCombineBuffer,
                 count);
         }
 
         public JobHandle AddDependency(int* readerTypes, int readerTypesCount, int* writerTypes, int writerTypesCount,
             JobHandle dependency)
         {
-            #if ENABLE_UNITY_COLLECTIONS_CHECKS
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             JobHandle* combinedDependencies = null;
-            int combinedDependenciesCount = 0;
-            #endif
-            
+            var combinedDependenciesCount = 0;
+#endif
+
             for (var i = 0; i != writerTypesCount; i++)
             {
                 var writer = writerTypes[i];
                 m_ComponentSafetyHandles[writer].WriteFence = dependency;
             }
 
-            
+
             for (var i = 0; i != readerTypesCount; i++)
             {
                 var reader = readerTypes[i];
@@ -215,16 +221,16 @@ namespace Unity.Entities
 
                 if (m_ComponentSafetyHandles[reader].NumReadFences == kMaxReadJobHandles)
                 {
-                    #if ENABLE_UNITY_COLLECTIONS_CHECKS
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
                     var combined = CombineReadDependencies(reader);
                     if (combinedDependencies == null)
                     {
                         JobHandle* temp = stackalloc JobHandle[readerTypesCount];
                         combinedDependencies = temp;
                     }
-                        
+
                     combinedDependencies[combinedDependenciesCount++] = combined;
-                    #else
+#else
                     CombineReadDependencies(reader);
                     #endif
                 }
@@ -235,10 +241,9 @@ namespace Unity.Entities
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (combinedDependencies != null)
-                return Unity.Jobs.LowLevel.Unsafe.JobHandleUnsafeUtility.CombineDependencies(combinedDependencies, combinedDependenciesCount);
-            else
-                return dependency;
-#else           
+                return JobHandleUnsafeUtility.CombineDependencies(combinedDependencies, combinedDependenciesCount);
+            return dependency;
+#else
             return dependency;
 #endif
         }
@@ -275,9 +280,9 @@ namespace Unity.Entities
         }
 #endif
 
-        JobHandle CombineReadDependencies(int type)
+        private JobHandle CombineReadDependencies(int type)
         {
-            var combined = Jobs.LowLevel.Unsafe.JobHandleUnsafeUtility.CombineDependencies(
+            var combined = JobHandleUnsafeUtility.CombineDependencies(
                 m_ReadJobFences + type * kMaxReadJobHandles, m_ComponentSafetyHandles[type].NumReadFences);
 
             m_ReadJobFences[type * kMaxReadJobHandles] = combined;
@@ -286,34 +291,9 @@ namespace Unity.Entities
             return combined;
         }
 
-        public bool IsInTransaction => m_IsInTransaction;
-
-        public JobHandle ExclusiveTransactionDependency
-        {
-            get
-            {
-                return m_ExclusiveTransactionDependency;
-            }
-            set
-            {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                if (!m_IsInTransaction)
-                    throw new System.InvalidOperationException("EntityManager.TransactionDependency can only after EntityManager.BeginExclusiveEntityTransaction has been called.");
-
-                if (!JobHandle.CheckFenceIsDependencyOrDidSyncFence(m_ExclusiveTransactionDependency, value))
-                    throw new System.InvalidOperationException("EntityManager.TransactionDependency must depend on the Entity Transaction job.");
-#endif
-                m_ExclusiveTransactionDependency = value;
-            }
-        }
-
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-        public AtomicSafetyHandle ExclusiveTransactionSafety => m_ExclusiveTransactionSafety;
-#endif
-
         public void BeginExclusiveTransaction()
         {
-            if (m_IsInTransaction)
+            if (IsInTransaction)
                 return;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -321,9 +301,9 @@ namespace Unity.Entities
                 AtomicSafetyHandle.CheckDeallocateAndThrow(m_ComponentSafetyHandles[i].SafetyHandle);
 #endif
 
-            m_IsInTransaction = true;
+            IsInTransaction = true;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            m_ExclusiveTransactionSafety = AtomicSafetyHandle.Create();
+            ExclusiveTransactionSafety = AtomicSafetyHandle.Create();
 #endif
             m_ExclusiveTransactionDependency = GetAllDependencies();
 
@@ -331,23 +311,22 @@ namespace Unity.Entities
             for (var i = 0; i != TypeManager.GetTypeCount(); i++)
                 AtomicSafetyHandle.Release(m_ComponentSafetyHandles[i].SafetyHandle);
 #endif
-
         }
 
         public void EndExclusiveTransaction()
         {
-            if (!m_IsInTransaction)
+            if (!IsInTransaction)
                 return;
 
             m_ExclusiveTransactionDependency.Complete();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            var res = AtomicSafetyHandle.EnforceAllBufferJobsHaveCompletedAndRelease(m_ExclusiveTransactionSafety);
+            var res = AtomicSafetyHandle.EnforceAllBufferJobsHaveCompletedAndRelease(ExclusiveTransactionSafety);
             if (res != EnforceJobResult.AllJobsAlreadySynced)
                 //@TODO: Better message
                 Debug.LogError("ExclusiveEntityTransaction job has not been registered");
 #endif
-            m_IsInTransaction = false;
+            IsInTransaction = false;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             for (var i = 0; i != TypeManager.GetTypeCount(); i++)
@@ -358,9 +337,10 @@ namespace Unity.Entities
 #endif
         }
 
-        JobHandle GetAllDependencies()
+        private JobHandle GetAllDependencies()
         {
-            var jobHandles = new NativeArray<JobHandle>(TypeManager.GetTypeCount() * (kMaxReadJobHandles + 1), Allocator.Temp);
+            var jobHandles =
+                new NativeArray<JobHandle>(TypeManager.GetTypeCount() * (kMaxReadJobHandles + 1), Allocator.Temp);
 
             var count = 0;
             for (var i = 0; i != TypeManager.GetTypeCount(); i++)
@@ -377,5 +357,18 @@ namespace Unity.Entities
 
             return combined;
         }
+
+        private struct ComponentSafetyHandle
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            public AtomicSafetyHandle SafetyHandle;
+#endif
+            public JobHandle WriteFence;
+            public int NumReadFences;
+        }
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+        private readonly AtomicSafetyHandle m_TempSafety;
+#endif
     }
 }

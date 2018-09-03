@@ -9,7 +9,6 @@ namespace Unity.Entities.Tests
 		public EcsTestData(int inValue) { value = inValue; }
 	}
 
-
     public struct EcsTestData2 : IComponentData
     {
         public int value0;
@@ -50,5 +49,12 @@ namespace Unity.Entities.Tests
         public int value1;
 
         public EcsTestSharedComp2(int inValue) { value0 = value1 = inValue; }
+    }
+    
+    struct EcsState1 : ISystemStateComponentData
+    {
+        public int Value;
+
+        public EcsState1(int value) { Value = value; }
     }
 }

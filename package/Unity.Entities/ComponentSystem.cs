@@ -14,23 +14,29 @@ namespace Unity.Entities
 
         ComponentGroupArrayStaticCache[] 	m_CachedComponentGroupArrays;
         ComponentGroup[] 				    m_ComponentGroups;
-        
+
         NativeList<int>                     m_JobDependencyForReadingManagers;
         NativeList<int>                     m_JobDependencyForWritingManagers;
-        
+
         internal int*                       m_JobDependencyForReadingManagersPtr;
         internal int                        m_JobDependencyForReadingManagersLength;
 
         internal int*                       m_JobDependencyForWritingManagersPtr;
         internal int                        m_JobDependencyForWritingManagersLength;
+
+        uint                                m_LastSystemVersion;
         
         internal ComponentJobSafetyManager  m_SafetyManager;
-        EntityManager                       m_EntityManager;
+        internal EntityManager              m_EntityManager;
         World                               m_World;
-        
-        bool                                m_AlwaysUpdateSystem;
 
+        bool                                m_AlwaysUpdateSystem;
+        internal bool                       m_PreviouslyEnabled;
+
+        public bool Enabled { get; set; } = true;
         public ComponentGroup[] 			ComponentGroups => m_ComponentGroups;
+        
+        public uint GlobalSystemVersion => m_EntityManager.GlobalSystemVersion;
 
         public bool ShouldRunSystem()
         {
@@ -41,7 +47,7 @@ namespace Unity.Entities
 
             if (length == 0)
                 return true;
-            
+
             // If all the groups are empty, skip it.
             // (There’s no way to know what they key value is without other markup)
             for (int i = 0;i != length;i++)
@@ -64,12 +70,12 @@ namespace Unity.Entities
             m_CachedComponentGroupArrays = new ComponentGroupArrayStaticCache[0];
             m_JobDependencyForReadingManagers = new NativeList<int>(10, Allocator.Persistent);
             m_JobDependencyForWritingManagers = new NativeList<int>(10, Allocator.Persistent);
-            
+
             ComponentSystemInjection.Inject(this, world, m_EntityManager, out m_InjectedComponentGroups, out m_InjectFromEntityData);
             m_InjectFromEntityData.ExtractJobDependencyTypes(this);
 
             InjectNestedIJobProcessComponentDataJobs();
-            
+
             UpdateInjectedComponentGroups();
         }
 
@@ -83,10 +89,9 @@ namespace Unity.Entities
                     GetComponentGroup(componentTypes);
             }
         }
-        
+
         protected sealed override void OnAfterDestroyManagerInternal()
         {
-
             foreach (var group in m_ComponentGroups)
             {
                 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -106,10 +111,37 @@ namespace Unity.Entities
 
         protected override void OnBeforeDestroyManagerInternal()
         {
+            if (m_PreviouslyEnabled)
+            {
+                m_PreviouslyEnabled = false;
+                OnStopRunning();
+            }
             CompleteDependencyInternal();
             UpdateInjectedComponentGroups();
         }
+        
+        protected virtual void OnStartRunning()
+        {
 
+        }
+
+        protected virtual void OnStopRunning()
+        {
+
+        }
+
+        protected internal void BeforeUpdateVersioning()
+        {
+            m_EntityManager.Entities->IncrementGlobalSystemVersion();
+            foreach (var group in m_ComponentGroups)
+                group.SetFilterChangedRequiredVersion(m_LastSystemVersion);
+        }
+
+        protected internal void AfterUpdateVersioning()
+        {
+            m_LastSystemVersion = EntityManager.Entities->GlobalSystemVersion;
+        }
+        
         protected EntityManager EntityManager => m_EntityManager;
         protected World World => m_World;
 
@@ -132,7 +164,7 @@ namespace Unity.Entities
                 CompleteDependencyInternal();
             }
         }
-        
+
         internal ComponentGroup GetComponentGroupInternal(ComponentType* componentTypes, int count)
         {
             for (var i = 0; i != m_ComponentGroups.Length; i++)
@@ -142,14 +174,16 @@ namespace Unity.Entities
             }
 
             var group = EntityManager.CreateComponentGroup(componentTypes, count);
+            group.SetFilterChangedRequiredVersion(m_LastSystemVersion);
             #if ENABLE_UNITY_COLLECTIONS_CHECKS
             group.DisallowDisposing = "ComponentGroup.Dispose() may not be called on a ComponentGroup created with ComponentSystem.GetComponentGroup. The ComponentGroup will automatically be disposed by the ComponentSystem.";
             #endif
+            
             ArrayUtilityAdd(ref m_ComponentGroups, group);
 
             for (int i = 0;i != count;i++)
-                AddReaderWriter(componentTypes[i]);        
-            
+                AddReaderWriter(componentTypes[i]);
+
             //@TODO: Shouldn't this sync fence on the newly depent types?
 
             return group;
@@ -171,7 +205,7 @@ namespace Unity.Entities
                 return GetComponentGroupInternal(typesPtr, componentTypes.Length);
             }
         }
-        
+
         protected ComponentGroupArray<T> GetEntities<T>() where T : struct
         {
             for (var i = 0; i != m_CachedComponentGroupArrays.Length; i++)
@@ -220,16 +254,19 @@ namespace Unity.Entities
 
         public EntityCommandBuffer PostUpdateCommands => m_DeferredEntities;
 
-        void BeforeOnUpdate()
+        unsafe void BeforeOnUpdate()
         {
+            BeforeUpdateVersioning();
             CompleteDependencyInternal();
-            UpdateInjectedComponentGroups ();
+            UpdateInjectedComponentGroups();
 
             m_DeferredEntities = new EntityCommandBuffer(Allocator.TempJob);
         }
 
         void AfterOnUpdate()
         {
+            AfterUpdateVersioning();
+
             JobHandle.ScheduleBatchedJobs();
 
             m_DeferredEntities.Playback(EntityManager);
@@ -238,8 +275,14 @@ namespace Unity.Entities
 
         internal sealed override void InternalUpdate()
         {
-            if (ShouldRunSystem())
+            if (Enabled && ShouldRunSystem())
             {
+                if (!m_PreviouslyEnabled)
+                {
+                    m_PreviouslyEnabled = true;
+                    OnStartRunning();
+                }
+
                 BeforeOnUpdate();
 
                 try
@@ -250,6 +293,11 @@ namespace Unity.Entities
                 {
                     AfterOnUpdate();
                 }
+            }
+            else if (m_PreviouslyEnabled)
+            {
+                m_PreviouslyEnabled = false;
+                OnStopRunning();
             }
         }
 
@@ -267,15 +315,17 @@ namespace Unity.Entities
         /// Called once per frame on the main thread.
         /// </summary>
         protected abstract void OnUpdate();
-    }
+}
 
     public abstract class JobComponentSystem : ComponentSystemBase
     {
         JobHandle m_PreviousFrameDependency;
         BarrierSystem[] m_BarrierList;
 
-        JobHandle BeforeOnUpdate()
+        unsafe JobHandle BeforeOnUpdate()
         {
+            BeforeUpdateVersioning();
+
             UpdateInjectedComponentGroups();
 
             // We need to wait on all previous frame dependencies, otherwise it is possible that we create infinitely long dependency chains
@@ -287,6 +337,8 @@ namespace Unity.Entities
 
         unsafe void AfterOnUpdate(JobHandle outputJob, bool throwException)
         {
+            AfterUpdateVersioning();
+            
             JobHandle.ScheduleBatchedJobs();
 
             AddDependencyInternal(outputJob);
@@ -318,7 +370,7 @@ namespace Unity.Entities
             for (var index = 0; index < m_JobDependencyForReadingManagersLength && dependencyError == null; index++)
             {
                 var type = m_JobDependencyForReadingManagersPtr[index];
-                dependencyError = CheckJobDependencies(type); 
+                dependencyError = CheckJobDependencies(type);
             }
 
             for (var index = 0; index < m_JobDependencyForWritingManagersLength && dependencyError == null; index++)
@@ -330,7 +382,7 @@ namespace Unity.Entities
             if (dependencyError != null)
             {
                 EmergencySyncAllJobs();
-                
+
                 if (throwException)
                     throw new System.InvalidOperationException(dependencyError);
             }
@@ -339,8 +391,14 @@ namespace Unity.Entities
 
         internal sealed override void InternalUpdate()
         {
-            if (ShouldRunSystem())
+            if (Enabled && ShouldRunSystem())
             {
+                if (!m_PreviouslyEnabled)
+                {
+                    m_PreviouslyEnabled = true;
+                    OnStartRunning();
+                }
+
                 var inputJob = BeforeOnUpdate();
                 JobHandle outputJob = new JobHandle();
                 try
@@ -352,8 +410,13 @@ namespace Unity.Entities
                     AfterOnUpdate(outputJob, false);
                     throw;
                 }
-                
+
                 AfterOnUpdate(outputJob, true);
+            }
+            else if (m_PreviouslyEnabled)
+            {
+                m_PreviouslyEnabled = false;
+                OnStopRunning();
             }
         }
 
@@ -369,16 +432,16 @@ namespace Unity.Entities
             base.OnBeforeDestroyManagerInternal();
             m_PreviousFrameDependency.Complete();
         }
-        
+
         public ComponentDataFromEntity<T> GetComponentDataFromEntity<T>(bool isReadOnly = false) where T : struct, IComponentData
         {
-            AddReaderWriter(isReadOnly ? ComponentType.ReadOnly<T>() : ComponentType.Create<T>());        
+            AddReaderWriter(isReadOnly ? ComponentType.ReadOnly<T>() : ComponentType.Create<T>());
             return EntityManager.GetComponentDataFromEntity<T>(TypeManager.GetTypeIndex<T>(), isReadOnly);
         }
-        
+
         public FixedArrayFromEntity<T> GetFixedArrayFromEntity<T>(bool isReadOnly = false) where T : struct
         {
-            AddReaderWriter(isReadOnly ? ComponentType.ReadOnly<T>() : ComponentType.Create<T>());        
+            AddReaderWriter(isReadOnly ? ComponentType.ReadOnly<T>() : ComponentType.Create<T>());
             return EntityManager.GetFixedArrayFromEntity<T>(TypeManager.GetTypeIndex<T>(), isReadOnly);
         }
 
@@ -386,7 +449,7 @@ namespace Unity.Entities
         {
             return inputDeps;
         }
-        
+
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         unsafe string CheckJobDependencies(int type)
         {

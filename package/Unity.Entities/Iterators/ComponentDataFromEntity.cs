@@ -11,7 +11,8 @@ namespace Unity.Entities
         [NativeDisableUnsafePtrRestriction]
         readonly EntityDataManager*      m_Entities;
         readonly int                     m_TypeIndex;
-        int                     m_TypeLookupCache;
+        readonly uint                    m_GlobalSystemVersion;
+        int                              m_TypeLookupCache;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         internal ComponentDataFromEntity(int typeIndex, EntityDataManager* entityData, AtomicSafetyHandle safety)
@@ -20,6 +21,7 @@ namespace Unity.Entities
             m_TypeIndex = typeIndex;
             m_Entities = entityData;
             m_TypeLookupCache = 0;
+            m_GlobalSystemVersion = entityData->GlobalSystemVersion;
         }
 #else
         internal ComponentDataFromEntity(int typeIndex, EntityDataManager* entityData)
@@ -27,6 +29,7 @@ namespace Unity.Entities
             m_TypeIndex = typeIndex;
             m_Entities = entityData;
             m_TypeLookupCache = 0;
+            m_GlobalSystemVersion = entityData->GlobalSystemVersion;
         }
 #endif
 
@@ -49,7 +52,7 @@ namespace Unity.Entities
 #endif
                 m_Entities->AssertEntityHasComponent(entity, m_TypeIndex);
 
-                void* ptr = m_Entities->GetComponentDataWithType(entity, m_TypeIndex, ref m_TypeLookupCache);
+                void* ptr = m_Entities->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_TypeLookupCache);
                 T data;
                 UnsafeUtility.CopyPtrToStructure(ptr, out data);
 
@@ -62,7 +65,7 @@ namespace Unity.Entities
 #endif
                 m_Entities->AssertEntityHasComponent(entity, m_TypeIndex);
 
-                void* ptr = m_Entities->GetComponentDataWithType(entity, m_TypeIndex);
+                void* ptr = m_Entities->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_TypeLookupCache);
                 UnsafeUtility.CopyStructureToPtr(ref value, ptr);
 			}
 		}

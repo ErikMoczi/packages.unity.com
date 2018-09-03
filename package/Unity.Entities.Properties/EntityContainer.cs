@@ -68,7 +68,7 @@ namespace Unity.Entities.Properties
                 var typeIndex =  container.m_Manager.GetComponentTypeIndex(container.m_Entity, index);
                 var propertyType = TypeManager.GetType(typeIndex);
                 var propertyBag = TypeInformation.GetOrCreate(propertyType, primitiveTypes);
-                var data = (byte*) container.m_Manager.GetComponentDataRaw(container.m_Entity, typeIndex);
+                var data = (byte*) container.m_Manager.GetComponentDataRawRW(container.m_Entity, typeIndex);
 
                 var p = new StructProxy
                 {

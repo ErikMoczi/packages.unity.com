@@ -1,22 +1,18 @@
-﻿using System.Collections.Generic;
-using System.Runtime.InteropServices.WindowsRuntime;
+﻿using System;
 using Unity.Assertions;
 using Unity.Collections.LowLevel.Unsafe;
-using UnityEngine;
 
 namespace Unity.Entities
 {
-    static unsafe class ChunkDataUtility
+    internal static unsafe class ChunkDataUtility
     {
         public static int GetIndexInTypeArray(Archetype* archetype, int typeIndex)
         {
             var types = archetype->Types;
             var typeCount = archetype->TypesCount;
             for (var i = 0; i != typeCount; i++)
-            {
                 if (typeIndex == types[i].TypeIndex)
                     return i;
-            }
 
             return -1;
         }
@@ -38,12 +34,13 @@ namespace Unity.Entities
                 return;
             }
 
-            #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            throw new System.InvalidOperationException("Shouldn't happen");
-            #endif
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            throw new InvalidOperationException("Shouldn't happen");
+#endif
         }
 
-        public static void GetComponentDataWithTypeAndFixedArrayLength(Chunk* chunk, int index, int typeIndex, out byte* outPtr, out int outArrayLength)
+        public static void GetComponentDataWithTypeAndFixedArrayLength(Chunk* chunk, int index, int typeIndex,
+            out byte* outPtr, out int outArrayLength)
         {
             var archetype = chunk->Archetype;
             var indexInTypeArray = GetIndexInTypeArray(archetype, typeIndex);
@@ -55,7 +52,7 @@ namespace Unity.Entities
             outArrayLength = archetype->Types[indexInTypeArray].FixedArrayLength;
         }
 
-        public static byte* GetComponentDataWithType(Chunk* chunk, int index, int typeIndex, ref int typeLookupCache)
+        public static byte* GetComponentDataWithTypeRO(Chunk* chunk, int index, int typeIndex, ref int typeLookupCache)
         {
             var archetype = chunk->Archetype;
             GetIndexInTypeArray(archetype, typeIndex, ref typeLookupCache);
@@ -67,7 +64,22 @@ namespace Unity.Entities
             return chunk->Buffer + (offset + sizeOf * index);
         }
 
-        public static byte* GetComponentDataWithType(Chunk* chunk, int index, int typeIndex)
+        public static byte* GetComponentDataWithTypeRW(Chunk* chunk, int index, int typeIndex, uint globalSystemVersion,
+            ref int typeLookupCache)
+        {
+            var archetype = chunk->Archetype;
+            GetIndexInTypeArray(archetype, typeIndex, ref typeLookupCache);
+            var indexInTypeArray = typeLookupCache;
+
+            var offset = archetype->Offsets[indexInTypeArray];
+            var sizeOf = archetype->SizeOfs[indexInTypeArray];
+
+            chunk->ChangeVersion[indexInTypeArray] = globalSystemVersion;
+
+            return chunk->Buffer + (offset + sizeOf * index);
+        }
+
+        public static byte* GetComponentDataWithTypeRO(Chunk* chunk, int index, int typeIndex)
         {
             var indexInTypeArray = GetIndexInTypeArray(chunk->Archetype, typeIndex);
 
@@ -77,10 +89,32 @@ namespace Unity.Entities
             return chunk->Buffer + (offset + sizeOf * index);
         }
 
-        public static byte* GetComponentData(Chunk* chunk, int index, int indexInTypeArray)
+        public static byte* GetComponentDataWithTypeRW(Chunk* chunk, int index, int typeIndex, uint globalSystemVersion)
+        {
+            var indexInTypeArray = GetIndexInTypeArray(chunk->Archetype, typeIndex);
+
+            var offset = chunk->Archetype->Offsets[indexInTypeArray];
+            var sizeOf = chunk->Archetype->SizeOfs[indexInTypeArray];
+
+            chunk->ChangeVersion[indexInTypeArray] = globalSystemVersion;
+
+            return chunk->Buffer + (offset + sizeOf * index);
+        }
+
+        public static byte* GetComponentDataRO(Chunk* chunk, int index, int indexInTypeArray)
         {
             var offset = chunk->Archetype->Offsets[indexInTypeArray];
             var sizeOf = chunk->Archetype->SizeOfs[indexInTypeArray];
+
+            return chunk->Buffer + (offset + sizeOf * index);
+        }
+
+        public static byte* GetComponentDataRW(Chunk* chunk, int index, int indexInTypeArray, uint globalSystemVersion)
+        {
+            var offset = chunk->Archetype->Offsets[indexInTypeArray];
+            var sizeOf = chunk->Archetype->SizeOfs[indexInTypeArray];
+
+            chunk->ChangeVersion[indexInTypeArray] = globalSystemVersion;
 
             return chunk->Buffer + (offset + sizeOf * index);
         }
@@ -103,6 +137,7 @@ namespace Unity.Entities
                 var src = srcBuffer + (offset + sizeOf * srcIndex);
                 var dst = dstBuffer + (offset + sizeOf * dstIndex);
 
+                dstChunk->ChangeVersion[t] = srcChunk->ChangeVersion[t];
                 UnsafeUtility.MemCpy(dst, src, sizeOf * count);
             }
         }
@@ -126,7 +161,8 @@ namespace Unity.Entities
             }
         }
 
-        public static void ReplicateComponents(Chunk* srcChunk, int srcIndex, Chunk* dstChunk, int dstBaseIndex, int count)
+        public static void ReplicateComponents(Chunk* srcChunk, int srcIndex, Chunk* dstChunk, int dstBaseIndex,
+            int count)
         {
             Assert.IsTrue(srcChunk->Archetype == dstChunk->Archetype);
 
@@ -156,9 +192,10 @@ namespace Unity.Entities
             var srcI = 0;
             var dstI = 0;
             while (srcI < srcArch->TypesCount && dstI < dstArch->TypesCount)
-            {
                 if (srcArch->Types[srcI] < dstArch->Types[dstI])
+                {
                     ++srcI;
+                }
                 else if (srcArch->Types[srcI] > dstArch->Types[dstI])
                 {
                     // Clear components in the destination that aren't copied
@@ -174,10 +211,9 @@ namespace Unity.Entities
                     ++srcI;
                     ++dstI;
                 }
-            }
 
             // Clear remaining components in the destination that aren't copied
-            for(; dstI < dstArch->TypesCount; ++dstI)
+            for (; dstI < dstArch->TypesCount; ++dstI)
             {
                 var dst = dstChunk->Buffer + dstArch->Offsets[dstI] + dstIndex * dstArch->SizeOfs[dstI];
                 UnsafeUtility.MemClear(dst, dstArch->SizeOfs[dstI]);
@@ -187,21 +223,23 @@ namespace Unity.Entities
         public static void PoisonUnusedChunkData(Chunk* chunk, byte value)
         {
             var arch = chunk->Archetype;
-            int bufferSize = Chunk.GetChunkBufferSize(arch->NumSharedComponents);
-            byte* buffer = chunk->Buffer;
-            int count = chunk->Count;
+            var bufferSize = Chunk.GetChunkBufferSize(arch->TypesCount, arch->NumSharedComponents);
+            var buffer = chunk->Buffer;
+            var count = chunk->Count;
 
-            for (int i = 0; i<arch->TypesCount-1; ++i)
+            for (var i = 0; i < arch->TypesCount - 1; ++i)
             {
-                int startOffset = arch->Offsets[i] + count * arch->SizeOfs[i];
-                int endOffset = arch->Offsets[i + 1];
+                var startOffset = arch->Offsets[i] + count * arch->SizeOfs[i];
+                var endOffset = arch->Offsets[i + 1];
                 UnsafeUtilityEx.MemSet(buffer + startOffset, value, endOffset - startOffset);
             }
-            int lastStartOffset = arch->Offsets[arch->TypesCount-1] + count * arch->SizeOfs[arch->TypesCount-1];
+
+            var lastStartOffset = arch->Offsets[arch->TypesCount - 1] + count * arch->SizeOfs[arch->TypesCount - 1];
             UnsafeUtilityEx.MemSet(buffer + lastStartOffset, value, bufferSize - lastStartOffset);
         }
 
-        public static void CopyManagedObjects(ArchetypeManager typeMan, Chunk* srcChunk, int srcStartIndex, Chunk* dstChunk, int dstStartIndex, int count)
+        public static void CopyManagedObjects(ArchetypeManager typeMan, Chunk* srcChunk, int srcStartIndex,
+            Chunk* dstChunk, int dstStartIndex, int count)
         {
             var srcArch = srcChunk->Archetype;
             var dstArch = dstChunk->Archetype;
@@ -209,26 +247,28 @@ namespace Unity.Entities
             var srcI = 0;
             var dstI = 0;
             while (srcI < srcArch->TypesCount && dstI < dstArch->TypesCount)
-            {
                 if (srcArch->Types[srcI] < dstArch->Types[dstI])
+                {
                     ++srcI;
+                }
                 else if (srcArch->Types[srcI] > dstArch->Types[dstI])
+                {
                     ++dstI;
+                }
                 else
                 {
                     if (srcArch->ManagedArrayOffset[srcI] >= 0)
-                    {
                         for (var i = 0; i < count; ++i)
                         {
-                            var obj = typeMan.GetManagedObject(srcChunk, srcI, srcStartIndex+i);
-                            typeMan.SetManagedObject(dstChunk, dstI, dstStartIndex+i, obj);
+                            var obj = typeMan.GetManagedObject(srcChunk, srcI, srcStartIndex + i);
+                            typeMan.SetManagedObject(dstChunk, dstI, dstStartIndex + i, obj);
                         }
-                    }
+
                     ++srcI;
                     ++dstI;
                 }
-            }
         }
+
         public static void ClearManagedObjects(ArchetypeManager typeMan, Chunk* chunk, int index, int count)
         {
             var arch = chunk->Archetype;
@@ -239,7 +279,7 @@ namespace Unity.Entities
                     continue;
 
                 for (var i = 0; i < count; ++i)
-                    typeMan.SetManagedObject(chunk, type, index+i, null);
+                    typeMan.SetManagedObject(chunk, type, index + i, null);
             }
         }
     }

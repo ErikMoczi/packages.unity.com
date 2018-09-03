@@ -3,9 +3,11 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Transforms;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace Unity.Transforms2D
 {
+    [Preserve]
     public class MoveForward2DSystem : JobComponentSystem
     {
         [ComputeJobOptimization]

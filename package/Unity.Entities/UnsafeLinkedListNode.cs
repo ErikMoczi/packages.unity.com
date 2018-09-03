@@ -5,10 +5,10 @@ namespace Unity.Entities
     // IMPORTANT NOTE:
     // UnsafeLinkedListNode may NOT be put into any memory owned by a class.
     // The memory containing it must ALWAYS be allocated with malloc instead, also it can never be on the stack.
-    unsafe struct UnsafeLinkedListNode
+    internal unsafe struct UnsafeLinkedListNode
     {
-        public UnsafeLinkedListNode*     Prev;
-        public UnsafeLinkedListNode*     Next;
+        public UnsafeLinkedListNode* Prev;
+        public UnsafeLinkedListNode* Next;
 
         public static void InitializeList(UnsafeLinkedListNode* list)
         {
@@ -79,7 +79,7 @@ namespace Unity.Entities
 
             // Clear source list
             srcList->Next = srcList;
-            srcList->Prev= srcList;
+            srcList->Prev = srcList;
         }
 
         public void Remove()

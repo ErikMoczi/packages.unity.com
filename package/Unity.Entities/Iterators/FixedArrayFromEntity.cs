@@ -1,6 +1,6 @@
 ﻿using System;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace Unity.Entities
 {
@@ -8,25 +8,31 @@ namespace Unity.Entities
     public unsafe struct FixedArrayFromEntity<T> where T : struct
     {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-        private readonly AtomicSafetyHandle      m_Safety;
+        private readonly AtomicSafetyHandle m_Safety;
 #endif
-        [NativeDisableUnsafePtrRestriction] private readonly EntityDataManager*      m_Entities;
-        private readonly int                     m_TypeIndex;
+        [NativeDisableUnsafePtrRestriction] private readonly EntityDataManager* m_Entities;
+        private readonly int m_TypeIndex;
+        private readonly bool m_IsReadOnly;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-        internal FixedArrayFromEntity(int typeIndex, EntityDataManager* entityData, AtomicSafetyHandle safety)
+        internal FixedArrayFromEntity(int typeIndex, EntityDataManager* entityData, bool isReadOnly,
+            AtomicSafetyHandle safety)
         {
             m_Safety = safety;
             m_TypeIndex = typeIndex;
             m_Entities = entityData;
+            m_IsReadOnly = isReadOnly;
+
             if (TypeManager.GetComponentType(m_TypeIndex).Category != TypeManager.TypeCategory.OtherValueType)
-                throw new ArgumentException($"GetComponentFixedArray<{typeof(T)}> may not be IComponentData or ISharedComponentData");
+                throw new ArgumentException(
+                    $"GetComponentFixedArray<{typeof(T)}> may not be IComponentData or ISharedComponentData");
         }
 #else
-        internal FixedArrayFromEntity(int typeIndex, EntityDataManager* entityData)
+        internal FixedArrayFromEntity(int typeIndex, EntityDataManager* entityData, bool isReadOnly)
         {
             m_TypeIndex = typeIndex;
             m_Entities = entityData;
+            m_IsReadOnly = isReadOnly;
         }
 #endif
 
@@ -54,9 +60,11 @@ namespace Unity.Entities
 
                 byte* ptr;
                 int length;
-                m_Entities->GetComponentDataWithTypeAndFixedArrayLength (entity, m_TypeIndex, out ptr, out length);
+                m_Entities->GetComponentDataWithTypeAndFixedArrayLength(entity, m_TypeIndex, out ptr, out length,
+                    !m_IsReadOnly);
 
-                var array = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(ptr, length, Allocator.Invalid);
+                var array = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(ptr, length,
+                    Allocator.Invalid);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                 NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref array, m_Safety);

@@ -4,21 +4,21 @@ namespace Unity.Assertions
 {
     // TODO: provide an implementation of Unity.Assertions.Assert that does not rely on UnityEngine.
     [DebuggerStepThrough]
-    static class Assert
+    internal static class Assert
     {
         [Conditional("UNITY_ASSERTIONS")]
         public static void IsTrue(bool condition)
         {
-            if(condition)
+            if (condition)
                 return;
 
-           UnityEngine.Assertions.Assert.IsTrue(condition);
+            UnityEngine.Assertions.Assert.IsTrue(condition);
         }
 
         [Conditional("UNITY_ASSERTIONS")]
         public static void IsTrue(bool condition, string message)
         {
-            if(condition)
+            if (condition)
                 return;
 
             UnityEngine.Assertions.Assert.IsTrue(condition, message);
@@ -27,7 +27,7 @@ namespace Unity.Assertions
         [Conditional("UNITY_ASSERTIONS")]
         public static void IsFalse(bool condition)
         {
-            if(!condition)
+            if (!condition)
                 return;
 
             UnityEngine.Assertions.Assert.IsFalse(condition);
@@ -36,7 +36,7 @@ namespace Unity.Assertions
         [Conditional("UNITY_ASSERTIONS")]
         public static void IsFalse(bool condition, string message)
         {
-            if(!condition)
+            if (!condition)
                 return;
 
             UnityEngine.Assertions.Assert.IsFalse(condition, message);
@@ -75,7 +75,7 @@ namespace Unity.Assertions
         [Conditional("UNITY_ASSERTIONS")]
         public static void AreEqual(int expected, int actual)
         {
-            if(expected == actual)
+            if (expected == actual)
                 return;
 
             UnityEngine.Assertions.Assert.AreEqual(expected, actual);
@@ -84,7 +84,7 @@ namespace Unity.Assertions
         [Conditional("UNITY_ASSERTIONS")]
         public static void AreNotEqual(int expected, int actual)
         {
-            if(expected != actual)
+            if (expected != actual)
                 return;
 
             UnityEngine.Assertions.Assert.AreNotEqual(expected, actual);
@@ -93,7 +93,7 @@ namespace Unity.Assertions
         [Conditional("UNITY_ASSERTIONS")]
         public static void AreEqual(bool expected, bool actual)
         {
-            if(expected == actual)
+            if (expected == actual)
                 return;
 
             UnityEngine.Assertions.Assert.AreEqual(expected, actual);
@@ -102,7 +102,7 @@ namespace Unity.Assertions
         [Conditional("UNITY_ASSERTIONS")]
         public static void AreNotEqual(bool expected, bool actual)
         {
-            if(expected != actual)
+            if (expected != actual)
                 return;
 
             UnityEngine.Assertions.Assert.AreNotEqual(expected, actual);

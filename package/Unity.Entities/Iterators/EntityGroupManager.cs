@@ -1,20 +1,29 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using Unity.Collections;
+using UnityEngine.Assertions;
 
 namespace Unity.Entities
 {
-    unsafe class EntityGroupManager : IDisposable
+    internal unsafe class EntityGroupManager : IDisposable
     {
-        NativeMultiHashMap<uint, IntPtr>    m_GroupLookup;
-        ChunkAllocator                      m_GroupDataChunkAllocator;
-        EntityGroupData*                    m_LastGroupData;
-        readonly ComponentJobSafetyManager  m_JobSafetyManager;
+        private readonly ComponentJobSafetyManager m_JobSafetyManager;
+        private ChunkAllocator m_GroupDataChunkAllocator;
+        private NativeMultiHashMap<uint, IntPtr> m_GroupLookup;
+        private EntityGroupData* m_LastGroupData;
 
         public EntityGroupManager(ComponentJobSafetyManager safetyManager)
         {
             m_GroupLookup = new NativeMultiHashMap<uint, IntPtr>(256, Allocator.Persistent);
             m_JobSafetyManager = safetyManager;
+        }
+
+        public void Dispose()
+        {
+            //@TODO: Need to wait for all job handles to be completed..
+
+            m_GroupLookup.Dispose();
+            m_GroupDataChunkAllocator.Dispose();
         }
 
         private EntityGroupData* GetCachedGroupData(uint hash, ComponentType* requiredTypes,
@@ -34,38 +43,44 @@ namespace Unity.Entities
 
             return null;
         }
-        public ComponentGroup CreateEntityGroupIfCached(ArchetypeManager typeMan, EntityDataManager* entityDataManager, ComponentType* requiredTypes,
+
+        public ComponentGroup CreateEntityGroupIfCached(ArchetypeManager typeMan, EntityDataManager* entityDataManager,
+            ComponentType* requiredTypes,
             int requiredCount)
         {
             var hash = HashUtility.Fletcher32((ushort*) requiredTypes,
                 requiredCount * sizeof(ComponentType) / sizeof(short));
-            EntityGroupData* grp = GetCachedGroupData(hash, requiredTypes, requiredCount);
+            var grp = GetCachedGroupData(hash, requiredTypes, requiredCount);
             if (grp != null)
                 return new ComponentGroup(grp, m_JobSafetyManager, typeMan, entityDataManager);
             return null;
         }
 
-        public ComponentGroup CreateEntityGroup(ArchetypeManager typeMan, EntityDataManager* entityDataManager, ComponentType* requiredTypes, int requiredCount)
+        public ComponentGroup CreateEntityGroup(ArchetypeManager typeMan, EntityDataManager* entityDataManager,
+            ComponentType* requiredTypes, int requiredCount)
         {
-            var hash = HashUtility.Fletcher32((ushort*)requiredTypes, requiredCount * sizeof(ComponentType) / sizeof(short));
-            EntityGroupData* grp = GetCachedGroupData(hash, requiredTypes, requiredCount);
+            var hash = HashUtility.Fletcher32((ushort*) requiredTypes,
+                requiredCount * sizeof(ComponentType) / sizeof(short));
+            var grp = GetCachedGroupData(hash, requiredTypes, requiredCount);
             if (grp != null)
                 return new ComponentGroup(grp, m_JobSafetyManager, typeMan, entityDataManager);
 
             m_JobSafetyManager.CompleteAllJobsAndInvalidateArrays();
 
-            grp = (EntityGroupData*)m_GroupDataChunkAllocator.Allocate(sizeof(EntityGroupData), 8);
+            grp = (EntityGroupData*) m_GroupDataChunkAllocator.Allocate(sizeof(EntityGroupData), 8);
             grp->PrevGroup = m_LastGroupData;
             m_LastGroupData = grp;
             grp->RequiredComponentsCount = requiredCount;
-            grp->RequiredComponents = (ComponentType*)m_GroupDataChunkAllocator.Construct(sizeof(ComponentType) * requiredCount, 4, requiredTypes);
+            grp->RequiredComponents =
+                (ComponentType*) m_GroupDataChunkAllocator.Construct(sizeof(ComponentType) * requiredCount, 4,
+                    requiredTypes);
 
             grp->ReaderTypesCount = 0;
             grp->WriterTypesCount = 0;
 
             grp->SubtractiveComponentsCount = 0;
 
-            for (var i = 0; i != requiredCount;i++)
+            for (var i = 0; i != requiredCount; i++)
             {
                 if (requiredTypes[i].AccessModeType == ComponentType.AccessMode.Subtractive)
                     grp->SubtractiveComponentsCount++;
@@ -81,12 +96,13 @@ namespace Unity.Entities
                         break;
                 }
             }
-            grp->ReaderTypes = (int*)m_GroupDataChunkAllocator.Allocate(sizeof(int) * grp->ReaderTypesCount, 4);
-            grp->WriterTypes = (int*)m_GroupDataChunkAllocator.Allocate(sizeof(int) * grp->WriterTypesCount, 4);
+
+            grp->ReaderTypes = (int*) m_GroupDataChunkAllocator.Allocate(sizeof(int) * grp->ReaderTypesCount, 4);
+            grp->WriterTypes = (int*) m_GroupDataChunkAllocator.Allocate(sizeof(int) * grp->WriterTypesCount, 4);
 
             var curReader = 0;
             var curWriter = 0;
-            for (var i = 0; i != requiredCount;i++)
+            for (var i = 0; i != requiredCount; i++)
             {
                 if (!requiredTypes[i].RequiresJobDependency)
                     continue;
@@ -101,22 +117,16 @@ namespace Unity.Entities
                 }
             }
 
-            grp->RequiredComponents = (ComponentType*)m_GroupDataChunkAllocator.Construct(sizeof(ComponentType) * requiredCount, 4, requiredTypes);
+            grp->RequiredComponents =
+                (ComponentType*) m_GroupDataChunkAllocator.Construct(sizeof(ComponentType) * requiredCount, 4,
+                    requiredTypes);
 
             grp->FirstMatchingArchetype = null;
             grp->LastMatchingArchetype = null;
             for (var type = typeMan.m_LastArchetype; type != null; type = type->PrevArchetype)
                 AddArchetypeIfMatching(type, grp);
-            m_GroupLookup.Add(hash, (IntPtr)grp);
+            m_GroupLookup.Add(hash, (IntPtr) grp);
             return new ComponentGroup(grp, m_JobSafetyManager, typeMan, entityDataManager);
-        }
-
-        public void Dispose()
-        {
-            //@TODO: Need to wait for all job handles to be completed..
-
-            m_GroupLookup.Dispose();
-            m_GroupDataChunkAllocator.Dispose();
         }
 
         internal void OnArchetypeAdded(Archetype* type)
@@ -125,7 +135,7 @@ namespace Unity.Entities
                 AddArchetypeIfMatching(type, grp);
         }
 
-        void AddArchetypeIfMatching(Archetype* archetype, EntityGroupData* group)
+        private void AddArchetypeIfMatching(Archetype* archetype, EntityGroupData* group)
         {
             // If the group has more actually required types than the archetype it can never match, so early out as an optimization
             if (group->RequiredComponentsCount - group->SubtractiveComponentsCount > archetype->TypesCount)
@@ -134,7 +144,8 @@ namespace Unity.Entities
             var prevTypeI = 0;
             for (var i = 0; i < group->RequiredComponentsCount; ++i, ++typeI)
             {
-                while (archetype->Types[typeI].TypeIndex < group->RequiredComponents[i].TypeIndex && typeI < archetype->TypesCount)
+                while (archetype->Types[typeI].TypeIndex < group->RequiredComponents[i].TypeIndex &&
+                       typeI < archetype->TypesCount)
                     ++typeI;
 
                 var hasComponent = !(typeI >= archetype->TypesCount);
@@ -145,14 +156,17 @@ namespace Unity.Entities
 
                 if (hasComponent && group->RequiredComponents[i].AccessModeType == ComponentType.AccessMode.Subtractive)
                     return;
-                if (!hasComponent && group->RequiredComponents[i].AccessModeType != ComponentType.AccessMode.Subtractive)
+                if (!hasComponent &&
+                    group->RequiredComponents[i].AccessModeType != ComponentType.AccessMode.Subtractive)
                     return;
                 if (hasComponent)
                     prevTypeI = typeI;
                 else
                     typeI = prevTypeI;
             }
-            var match = (MatchingArchetypes*)m_GroupDataChunkAllocator.Allocate(MatchingArchetypes.GetAllocationSize(group->RequiredComponentsCount), 8);
+
+            var match = (MatchingArchetypes*) m_GroupDataChunkAllocator.Allocate(
+                MatchingArchetypes.GetAllocationSize(group->RequiredComponentsCount), 8);
             match->Archetype = archetype;
             var typeIndexInArchetypeArray = match->TypeIndexInArchetypeArray;
 
@@ -167,8 +181,9 @@ namespace Unity.Entities
                 var typeComponentIndex = -1;
                 if (group->RequiredComponents[component].AccessModeType != ComponentType.AccessMode.Subtractive)
                 {
-                    typeComponentIndex = ChunkDataUtility.GetIndexInTypeArray(archetype, group->RequiredComponents[component].TypeIndex);
-                    UnityEngine.Assertions.Assert.AreNotEqual(-1, typeComponentIndex);
+                    typeComponentIndex =
+                        ChunkDataUtility.GetIndexInTypeArray(archetype, group->RequiredComponents[component].TypeIndex);
+                    Assert.AreNotEqual(-1, typeComponentIndex);
                 }
 
                 typeIndexInArchetypeArray[component] = typeComponentIndex;
@@ -177,11 +192,14 @@ namespace Unity.Entities
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    unsafe struct MatchingArchetypes
+    internal unsafe struct MatchingArchetypes
     {
-        public Archetype*                       Archetype;
-        public MatchingArchetypes*              Next;
-        public fixed int                        TypeIndexInArchetypeArray[1];
+        public Archetype* Archetype;
+
+        public MatchingArchetypes* Next;
+
+        //@TODO: Rename to IndexInArchetype
+        public fixed int TypeIndexInArchetypeArray[1];
 
         public static int GetAllocationSize(int requiredComponentsCount)
         {
@@ -189,19 +207,19 @@ namespace Unity.Entities
         }
     }
 
-    unsafe struct EntityGroupData
+    internal unsafe struct EntityGroupData
     {
-        public int*                 ReaderTypes;
-        public int                  ReaderTypesCount;
+        public int* ReaderTypes;
+        public int ReaderTypesCount;
 
-        public int*                 WriterTypes;
-        public int                  WriterTypesCount;
+        public int* WriterTypes;
+        public int WriterTypesCount;
 
-        public ComponentType*       RequiredComponents;
-        public int                  RequiredComponentsCount;
-        public int                  SubtractiveComponentsCount;
-        public MatchingArchetypes*  FirstMatchingArchetype;
-        public MatchingArchetypes*  LastMatchingArchetype;
-        public EntityGroupData*     PrevGroup;
+        public ComponentType* RequiredComponents;
+        public int RequiredComponentsCount;
+        public int SubtractiveComponentsCount;
+        public MatchingArchetypes* FirstMatchingArchetype;
+        public MatchingArchetypes* LastMatchingArchetype;
+        public EntityGroupData* PrevGroup;
     }
 }

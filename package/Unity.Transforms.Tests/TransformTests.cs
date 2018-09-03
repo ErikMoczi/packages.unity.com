@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEngine;
 
 namespace Unity.Entities.Tests
 {

@@ -1,29 +1,16 @@
 ﻿using System;
-using System.Reflection;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Unity.Entities
 {
-    sealed class CustomInjectionHookAttribute : Attribute
+    internal sealed class CustomInjectionHookAttribute : Attribute
     {
-
     }
 
     public sealed class InjectionContext
     {
-        public struct Entry
-        {
-            public int FieldOffset;
-            public FieldInfo FieldInfo;
-            public Type[] ComponentRequirements;
-            public InjectionHook Hook;
-            public ComponentType.AccessMode AccessMode;
-            public int IndexInComponentGroup;
-            public bool IsReadOnly;
-            public ComponentType ComponentType;
-        }
-
-        readonly List<Entry> m_Entries = new List<Entry>();
+        private readonly List<Entry> m_Entries = new List<Entry>();
 
         public bool HasComponentRequirements { get; private set; }
 
@@ -36,12 +23,8 @@ namespace Unity.Entities
             get
             {
                 foreach (var info in m_Entries)
-                {
-                    foreach (var requirement in info.ComponentRequirements)
-                    {
-                        yield return requirement;
-                    }
-                }
+                foreach (var requirement in info.ComponentRequirements)
+                    yield return requirement;
             }
         }
 
@@ -53,7 +36,7 @@ namespace Unity.Entities
 
         public void PrepareEntries(ComponentGroup entityGroup)
         {
-            if(!HasEntries)
+            if (!HasEntries)
                 return;
 
             for (var index = 0; index < m_Entries.Count; index++)
@@ -64,15 +47,26 @@ namespace Unity.Entities
             }
         }
 
-        internal unsafe void UpdateEntries(ComponentGroup entityGroup, ref ComponentChunkIterator iterator, int length, byte* groupStructPtr)
+        internal unsafe void UpdateEntries(ComponentGroup entityGroup, ref ComponentChunkIterator iterator, int length,
+            byte* groupStructPtr)
         {
-            if(!HasEntries)
+            if (!HasEntries)
                 return;
 
             foreach (var info in m_Entries)
-            {
                 info.Hook.InjectEntry(info, entityGroup, ref iterator, length, groupStructPtr);
-            }
+        }
+
+        public struct Entry
+        {
+            public int FieldOffset;
+            public FieldInfo FieldInfo;
+            public Type[] ComponentRequirements;
+            public InjectionHook Hook;
+            public ComponentType.AccessMode AccessMode;
+            public int IndexInComponentGroup;
+            public bool IsReadOnly;
+            public ComponentType ComponentType;
         }
     }
 
@@ -81,19 +75,21 @@ namespace Unity.Entities
         public abstract Type FieldTypeOfInterest { get; }
         public abstract bool IsInterestedInField(FieldInfo fieldInfo);
         public abstract InjectionContext.Entry CreateInjectionInfoFor(FieldInfo field, bool isReadOnly);
-        internal abstract void InjectEntry(InjectionContext.Entry entry, ComponentGroup entityGroup, ref ComponentChunkIterator iterator, int length, byte* groupStructPtr);
+
+        internal abstract void InjectEntry(InjectionContext.Entry entry, ComponentGroup entityGroup,
+            ref ComponentChunkIterator iterator, int length, byte* groupStructPtr);
+
         public abstract string ValidateField(FieldInfo field, bool isReadOnly, InjectionContext injectionInfo);
 
         public virtual void PrepareEntry(ref InjectionContext.Entry entry, ComponentGroup entityGroup)
         {
-
         }
     }
 
     public static class InjectionHookSupport
     {
-        static bool s_HasHooks;
-        static readonly List<InjectionHook> k_Hooks = new List<InjectionHook>();
+        private static bool s_HasHooks;
+        private static readonly List<InjectionHook> k_Hooks = new List<InjectionHook>();
 
         internal static IReadOnlyCollection<InjectionHook> Hooks => k_Hooks;
 
@@ -116,10 +112,8 @@ namespace Unity.Entities
 
             // TODO: in case of multiple hooks interested in a single field type, we should drop an error (in Editor)
             foreach (var hook in k_Hooks)
-            {
                 if (hook.IsInterestedInField(fieldInfo))
                     return hook;
-            }
 
             return null;
         }

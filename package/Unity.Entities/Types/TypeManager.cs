@@ -1,19 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
-
-using Component = UnityEngine.Component;
+using UnityEngine;
 
 namespace Unity.Entities
 {
-    public unsafe static class TypeManager
+    public static unsafe class TypeManager
     {
-        struct StaticTypeLookup<T>
-        {
-            public static int typeIndex;
-        }
-
         public enum TypeCategory
         {
             ComponentData,
@@ -21,6 +16,18 @@ namespace Unity.Entities
             OtherValueType,
             EntityData,
             Class
+        }
+
+        public const int MaximumTypesCount = 1024 * 10;
+        private static ComponentType[] s_Types;
+        private static volatile int s_Count;
+        private static SpinLock s_CreateTypeLock;
+        public static int ObjectOffset;
+        internal static readonly Type UnityEngineComponentType = typeof(Component);
+
+        private struct StaticTypeLookup<T>
+        {
+            public static int typeIndex;
         }
 
         public struct ComponentType
@@ -33,28 +40,18 @@ namespace Unity.Entities
                 FastEqualityLayout = layout;
             }
 
-            public readonly Type                  Type;
-            public readonly int                   SizeInChunk;
+            public readonly Type Type;
+            public readonly int SizeInChunk;
             public readonly FastEquality.Layout[] FastEqualityLayout;
-            public readonly TypeCategory          Category;
+            public readonly TypeCategory Category;
         }
-        
-        static ComponentType[]    s_Types;
-        static volatile int       s_Count;
-        static SpinLock           s_CreateTypeLock;
-
-        public const int MaximumTypesCount = 1024 * 10;
-
-        public static int ObjectOffset;
 
         // TODO: this creates a dependency on UnityEngine, but makes splitting code in separate assemblies easier. We need to remove it during the biggere refactor.
-        internal static readonly Type UnityEngineComponentType = typeof(Component);
-
-        struct ObjectOffsetType
+        private struct ObjectOffsetType
         {
 #pragma warning disable 0169 // "never used" warning
-            void* v0;
-            void* v1;
+            private void* v0;
+            private void* v1;
 #pragma warning restore 0169
         }
 
@@ -70,7 +67,8 @@ namespace Unity.Entities
 
             s_Types[s_Count++] = new ComponentType(null, 0, TypeCategory.ComponentData, null);
             // This must always be first so that Entity is always index 0 in the archetype
-            s_Types[s_Count++] = new ComponentType(typeof(Entity), sizeof(Entity), TypeCategory.EntityData, FastEquality.CreateLayout(typeof(Entity)));
+            s_Types[s_Count++] = new ComponentType(typeof(Entity), sizeof(Entity), TypeCategory.EntityData,
+                FastEquality.CreateLayout(typeof(Entity)));
         }
 
 
@@ -80,7 +78,7 @@ namespace Unity.Entities
             if (typeIndex != 0)
                 return typeIndex;
 
-            typeIndex = GetTypeIndex (typeof(T));
+            typeIndex = GetTypeIndex(typeof(T));
             StaticTypeLookup<T>.typeIndex = typeIndex;
             return typeIndex;
         }
@@ -91,7 +89,7 @@ namespace Unity.Entities
             return index != -1 ? index : CreateTypeIndexThreadSafe(type);
         }
 
-        static int FindTypeIndex(Type type, int count)
+        private static int FindTypeIndex(Type type, int count)
         {
             for (var i = 0; i != count; i++)
             {
@@ -99,19 +97,20 @@ namespace Unity.Entities
                 if (c.Type == type)
                     return i;
             }
+
             return -1;
         }
-        
+
 #if UNITY_EDITOR
         public static int TypesCount => s_Count;
 
         public static IEnumerable<ComponentType> AllTypes()
         {
-            return System.Linq.Enumerable.Take(s_Types, s_Count);
+            return Enumerable.Take(s_Types, s_Count);
         }
 #endif //UNITY_EDITOR
 
-        static int CreateTypeIndexThreadSafe(Type type)
+        private static int CreateTypeIndexThreadSafe(Type type)
         {
             var lockTaken = false;
             try
@@ -124,10 +123,10 @@ namespace Unity.Entities
                 if (index != -1)
                     return index;
 
-                var compoentType = BuildComponentType(type);
+                var componentType = BuildComponentType(type);
 
                 index = s_Count++;
-                s_Types[index] = compoentType;
+                s_Types[index] = componentType;
 
                 return index;
             }
@@ -138,7 +137,7 @@ namespace Unity.Entities
             }
         }
 
-        static ComponentType BuildComponentType(Type type)
+        private static ComponentType BuildComponentType(Type type)
         {
             var componentSize = 0;
             TypeCategory category;
@@ -149,7 +148,8 @@ namespace Unity.Entities
                 if (type.IsClass)
                     throw new ArgumentException($"{type} is an IComponentData, and thus must be a struct.");
                 if (!UnsafeUtility.IsBlittable(type))
-                    throw new ArgumentException($"{type} is an IComponentData, and thus must be blittable (No managed object is allowed on the struct).");
+                    throw new ArgumentException(
+                        $"{type} is an IComponentData, and thus must be blittable (No managed object is allowed on the struct).");
 #endif
 
                 category = TypeCategory.ComponentData;
@@ -180,7 +180,8 @@ namespace Unity.Entities
                 category = TypeCategory.Class;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                 if (type.FullName == "Unity.Entities.GameObjectEntity")
-                    throw new ArgumentException("GameObjectEntity can not be used from EntityManager. The component is ignored when creating entities for a GameObject.");
+                    throw new ArgumentException(
+                        "GameObjectEntity can not be used from EntityManager. The component is ignored when creating entities for a GameObject.");
 #endif
             }
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -230,4 +231,3 @@ namespace Unity.Entities
         }
     }
 }
-

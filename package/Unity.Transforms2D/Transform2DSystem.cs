@@ -3,9 +3,11 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEngine.Scripting;
 
 namespace Unity.Transforms2D
 {
+    [Preserve]
     public class Transform2DSystem : JobComponentSystem
     {
         struct TransGroup

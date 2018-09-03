@@ -7,9 +7,9 @@ using UnityEngine.Profiling;
 
 namespace Unity.Entities.Editor
 {
-    
+
     public delegate void SystemSelectionCallback(ScriptBehaviourManager manager, bool updateList, bool propagate);
-    
+
     public class SystemListView : TreeView
     {
         private class AverageRecorder
@@ -23,13 +23,13 @@ namespace Unity.Entities.Editor
             {
                 this.recorder = recorder;
             }
-            
+
             public void Update()
             {
                 ++frameCount;
                 totalNanoseconds += (int)recorder.elapsedNanoseconds;
             }
-            
+
             public float ReadMilliseconds()
             {
                 if (frameCount > 0)
@@ -111,7 +111,7 @@ namespace Unity.Entities.Editor
                     allowToggleVisibility = false
                 }
             };
-            
+
             return new MultiColumnHeaderState(columns);
         }
 
@@ -119,13 +119,13 @@ namespace Unity.Entities.Editor
         {
             if (world == null)
                 return new TreeViewState();
-            
+
             var currentWorldName = world.Name;
 
             var stateForCurrentWorld = states.Where((t, i) => stateNames[i] == currentWorldName).FirstOrDefault();
             if (stateForCurrentWorld != null)
                 return stateForCurrentWorld;
-            
+
             stateForCurrentWorld = new TreeViewState();
             states.Add(stateForCurrentWorld);
             stateNames.Add(currentWorldName);
@@ -138,7 +138,7 @@ namespace Unity.Entities.Editor
             var header = new MultiColumnHeader(GetHeaderState());
             return new SystemListView(state, header, systemSelectionCallback, worldSelectionGetter);
         }
-        
+
         private SystemListView(TreeViewState state, MultiColumnHeader header, SystemSelectionCallback systemSelectionCallback, WorldSelectionGetter worldSelectionGetter) : base(state, header)
         {
             this.getWorldSelection = worldSelectionGetter;
@@ -184,7 +184,7 @@ namespace Unity.Entities.Editor
                 Dictionary<Type, ScriptBehaviourUpdateOrder.ScriptBehaviourGroup> allGroups;
                 Dictionary<Type, ScriptBehaviourUpdateOrder.DependantBehavior> dependencies;
                 ScriptBehaviourUpdateOrder.CollectGroups(getWorldSelection().BehaviourManagers, out allGroups, out dependencies);
-            
+
                 foreach (var manager in getWorldSelection().BehaviourManagers)
                 {
                     var hasGroup = false;
@@ -213,7 +213,7 @@ namespace Unity.Entities.Editor
                 }
             }
             floatingManagers.Sort(CompareSystem);
-            
+
             var currentID = 0;
             var root  = new TreeViewItem { id = currentID++, depth = -1, displayName = "Root" };
             if (managersByGroup.Count == 0 && floatingManagers.Count == 0)
@@ -224,7 +224,7 @@ namespace Unity.Entities.Editor
             {
                 foreach (var manager in floatingManagers)
                     root.AddChild(CreateManagerItem(currentID++, manager));
-                
+
                 foreach (var group in (from g in managersByGroup.Keys orderby g.Name select g))
                 {
                     var groupItem = new TreeViewItem { id = currentID++, displayName = group.Name };
@@ -244,15 +244,18 @@ namespace Unity.Entities.Editor
             var item = args.item;
 
             var enabled = GUI.enabled;
-            
+
             if (managersById.ContainsKey(item.id))
             {
                 var manager = managersById[item.id];
-                var toggleRect = args.GetCellRect(0);
-                toggleRect.xMin = toggleRect.xMin + 4f;
-                manager.Enabled = GUI.Toggle(toggleRect, manager.Enabled, GUIContent.none);
-                
-                GUI.enabled = (manager as ComponentSystemBase)?.ShouldRunSystem() ?? true;
+                var componentSystemBase = manager as ComponentSystemBase;
+                if (componentSystemBase != null)
+                {
+                    var toggleRect = args.GetCellRect(0);
+                    toggleRect.xMin = toggleRect.xMin + 4f;
+                    componentSystemBase.Enabled = GUI.Toggle(toggleRect, componentSystemBase.Enabled, GUIContent.none);
+                }
+                GUI.enabled = componentSystemBase?.ShouldRunSystem() ?? true;
 
                 var timingRect = args.GetCellRect(2);
                 var recorder = recordersByManager[manager];
@@ -297,12 +300,12 @@ namespace Unity.Entities.Editor
         }
 
         private int lastTimedFrame;
-        
+
         public void UpdateTimings()
         {
             if (Time.frameCount == lastTimedFrame)
                 return;
-            
+
             foreach (var recorder in recordersByManager.Values)
             {
                 recorder.Update();

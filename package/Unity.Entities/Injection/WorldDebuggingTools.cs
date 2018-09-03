@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
 
@@ -7,9 +7,11 @@ namespace Unity.Entities
 {
     internal class WorldDebuggingTools
     {
-        internal static void MatchEntityInComponentGroups(World world, Entity entity, List<Tuple<ScriptBehaviourManager, List<ComponentGroup>>> matchList)
+        internal static void MatchEntityInComponentGroups(World world, Entity entity,
+            List<Tuple<ScriptBehaviourManager, List<ComponentGroup>>> matchList)
         {
-            using (var entityComponentTypes = world.GetExistingManager<EntityManager>().GetComponentTypes(entity, Allocator.Temp))
+            using (var entityComponentTypes =
+                world.GetExistingManager<EntityManager>().GetComponentTypes(entity, Allocator.Temp))
             {
                 foreach (var manager in World.Active.BehaviourManagers)
                 {
@@ -17,22 +19,18 @@ namespace Unity.Entities
                     var system = manager as ComponentSystemBase;
                     if (system == null) continue;
                     foreach (var componentGroup in system.ComponentGroups)
-                    {
                         if (Match(componentGroup, entityComponentTypes))
                             componentGroupList.Add(componentGroup);
-                    }
 
                     if (componentGroupList.Count > 0)
-                    {
-                        matchList.Add(new Tuple<ScriptBehaviourManager, List<ComponentGroup>>(manager, componentGroupList));
-                    }
+                        matchList.Add(
+                            new Tuple<ScriptBehaviourManager, List<ComponentGroup>>(manager, componentGroupList));
                 }
             }
         }
 
         private static bool Match(ComponentGroup group, NativeArray<ComponentType> entityComponentTypes)
         {
-
             foreach (var groupType in group.Types.Skip(1))
             {
                 var found = false;
@@ -50,5 +48,5 @@ namespace Unity.Entities
 
             return true;
         }
-	}
+    }
 }
