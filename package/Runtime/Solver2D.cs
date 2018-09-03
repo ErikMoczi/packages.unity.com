@@ -102,9 +102,10 @@ namespace UnityEngine.Experimental.U2D.IK
             for (int i = 0; i < GetChainCount(); ++i)
             {
                 var chain = GetChain(i);
+                var constrainTargetRotation = constrainRotation && chain.effector != null;
 
                 if (m_RestoreDefaultPose)
-                    chain.RestoreDefaultPose();
+                    chain.RestoreDefaultPose(constrainTargetRotation);
 
                 chain.Prepare();
             }
@@ -173,10 +174,7 @@ namespace UnityEngine.Experimental.U2D.IK
             for (int i = 0; i < GetChainCount(); ++i)
             {
                 var chain = GetChain(i);
-                if (chain.effector)
-                {
-                    chain.StoreLocalRotations();
-                }
+                chain.StoreLocalRotations();
             }
         }
 
@@ -185,10 +183,8 @@ namespace UnityEngine.Experimental.U2D.IK
             for (int i = 0; i < GetChainCount(); ++i)
             {
                 var chain = GetChain(i);
-                if (chain.effector)
-                {
-                    chain.BlendFkToIk(finalWeight);
-                }
+                var constrainTargetRotation = constrainRotation && chain.effector != null;
+                chain.BlendFkToIk(finalWeight, constrainTargetRotation);
             }
         }
 

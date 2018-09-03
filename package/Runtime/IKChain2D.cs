@@ -137,26 +137,24 @@ namespace UnityEngine.Experimental.U2D.IK
             }
         }
 
-        public void RestoreDefaultPose()
+        public void RestoreDefaultPose(bool targetRotationIsConstrained)
         {
-            for (int i = 0; i < transformCount; ++i)
+            var count = targetRotationIsConstrained ? transformCount : transformCount-1;
+            for (int i = 0; i < count; ++i)
                 m_Transforms[i].localRotation = m_DefaultLocalRotations[i];
         }
 
         public void StoreLocalRotations()
         {
             for (int i = 0; i < m_Transforms.Length; ++i)
-            {
                 m_StoredLocalRotations[i] = m_Transforms[i].localRotation;
-            }
         }
 
-        public void BlendFkToIk(float finalWeight)
+        public void BlendFkToIk(float finalWeight, bool targetRotationIsConstrained)
         {
-            for (int i = 0; i < m_Transforms.Length; ++i)
-            {
+            var count = targetRotationIsConstrained ? transformCount : transformCount-1;
+            for (int i = 0; i < count; ++i)
                 m_Transforms[i].localRotation = Quaternion.Slerp(m_StoredLocalRotations[i], m_Transforms[i].localRotation, finalWeight);
-            }
         }
     }
 }

@@ -1,10 +1,30 @@
 using NUnit.Framework;
 using UnityEngine.Experimental.U2D.IK;
+using System.Collections.Generic;
 
 namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
 {
     public class Solver2DTests
     {
+        public class WeightTestCase
+        {
+            public float weight;
+            public Vector3 effectorPosition;
+            public Vector3 expectedTargetPosition;
+
+            public WeightTestCase(float w, Vector3 ef, Vector3 ex)
+            {
+                weight = w;
+                effectorPosition = ef;
+                expectedTargetPosition = ex;
+            }
+
+            public override string ToString()
+            {
+                return "Weight: " + weight + " effectorPosition: " + effectorPosition + " expectedTargetPosition: " + expectedTargetPosition;
+            }
+        }
+
         private Vector3Compare vec3Compare = new Vector3Compare();
         private FloatCompare floatCompare = new FloatCompare();
 
@@ -277,6 +297,40 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
 
             Assert.That(targetPosition, Is.EqualTo(chain.target.position).Using(vec3Compare));
             Assert.That(0.0f, Is.EqualTo((targetPosition - chain.target.position).magnitude).Using(floatCompare));
+        }
+
+        private static IEnumerable<WeightTestCase> WeightTestCases()
+        {
+            yield return new WeightTestCase(0.0f, new Vector3(9f, 2f, 0f), new Vector3(10f, 0f, 0f));
+            yield return new WeightTestCase(0.25f, new Vector3(9f, 2f, 0f), new Vector3(9.93551f, 0.5509112f, 0f));
+            yield return new WeightTestCase(0.5f, new Vector3(9f, 2f, 0f), new Vector3(9.744007f, 1.080582f, 0f));
+            yield return new WeightTestCase(0.75f, new Vector3(9f, 2f, 0f), new Vector3(9.430839f, 1.570619f, 0f));
+            yield return new WeightTestCase(1.0f, new Vector3(9f, 2f, 0f), new Vector3(9.004435f, 2.003679f, 0f));
+        }
+
+        [Test]
+        public void SetWeight_SolverUpdates([ValueSource("WeightTestCases")] WeightTestCase testCase)
+        {
+            var chain = solver.GetChain(0);
+            chain.effector.position = testCase.effectorPosition;
+            solver.weight = testCase.weight;
+            
+            solver.UpdateIK(1f);
+            Assert.That(chain.target.position, Is.EqualTo(testCase.expectedTargetPosition).Using(vec3Compare)); 
+        }
+
+        [Test]
+        public void SetWeight_NoEffector_PositionListProvided_SolverUpdates([ValueSource("WeightTestCases")] WeightTestCase testCase)
+        {
+            var chain = solver.GetChain(0);
+            chain.effector = null;
+            solver.weight = testCase.weight;
+
+            var positions = new List<Vector3>();
+            positions.Add(testCase.effectorPosition);
+
+            solver.UpdateIK(positions, 1f);
+            Assert.That(chain.target.position, Is.EqualTo(testCase.expectedTargetPosition).Using(vec3Compare)); 
         }
     }
 }

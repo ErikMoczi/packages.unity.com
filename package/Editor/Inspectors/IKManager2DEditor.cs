@@ -154,7 +154,7 @@ namespace UnityEditor.Experimental.U2D.IK
                         for(int i = 0; i < solver.chainCount; ++i)
                         {
                             var chain = solver.GetChain(i);
-                            chain.RestoreDefaultPose();
+                            chain.RestoreDefaultPose(solver.constrainRotation);
                             
                             if(chain.effector)
                             {
