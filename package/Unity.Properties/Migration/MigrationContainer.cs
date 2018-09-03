@@ -417,9 +417,19 @@ namespace Unity.Properties
         /// <summary>
         /// Creates a new list of values property
         /// </summary>
-        public IList CreateValueList<TItem>(string name)
+        public MigrationList<TItem> CreateValueList<TItem>(string name)
         {
-            throw new NotImplementedException();
+            var property = m_PropertyBag.FindProperty(name);
+
+            if (null != property)
+            {
+                throw new Exception($"{nameof(MigrationContainer)}.{nameof(CreateValueList)} property already exists with the name `{name}`");
+            }
+
+            m_Data[name] = new MigrationList<TItem>();
+            m_PropertyBag.AddProperty(DynamicProperties.CreateListProperty<TItem>(name));
+
+            return m_Data[name] as MigrationList<TItem>;
         }
 
         /// <summary>
@@ -849,12 +859,7 @@ namespace Unity.Properties
             }
 
             public static IClassProperty<MigrationContainer> CreateListProperty<TItem>(string name)
-            {
-                if (!typeof(IPropertyContainer).IsAssignableFrom(typeof(TItem)))
-                {
-                    throw new NotSupportedException();
-                }
-                
+            {               
                 return new ValueListProperty<TItem>(name);
             }
 
