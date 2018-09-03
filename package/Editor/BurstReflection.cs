@@ -135,7 +135,16 @@ namespace Unity.Burst.Editor
 
             var builder = new StringBuilder();
 
-            AddOption(builder, BurstEditorOptions.EnableBurstSafetyChecks ? GetOption(OptionSafetyChecks) : GetOption(OptionDisableSafetyChecks));
+            if (BurstEditorOptions.EnableBurstSafetyChecks)
+            {
+                AddOption(builder, GetOption(OptionSafetyChecks));
+            }
+            else
+            {
+                AddOption(builder, GetOption(OptionDisableSafetyChecks));
+                // Enable NoAlias ahen safety checks are disable
+                AddOption(builder, GetOption(OptionNoAlias));
+            }
 
             if (attr.CompileSynchronously)
                 AddOption(builder, GetOption(OptionJitEnableSynchronousCompilation));

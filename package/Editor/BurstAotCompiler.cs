@@ -1,4 +1,4 @@
-#if BURST_AOT
+#if ENABLE_BURST_AOT
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,7 +18,7 @@ namespace Unity.Burst.Editor
 {
     using static BurstCompilerOptions;
 
-    internal class BurstAotCompiler : IPostprocessScripts
+    internal class BurstAotCompiler : IPostBuildPlayerScriptDLLs
     {
         private const string BurstAotCompilerExecutable = "bcl.exe";
         private const string TempStaging = @"Temp/StagingArea/";
@@ -26,7 +26,7 @@ namespace Unity.Burst.Editor
         private const string TempStagingPlugins = @"Data/Plugins/";
 
         int IOrderedCallback.callbackOrder => 0;
-        public void OnPostprocessScripts(BuildReport report)
+        public void OnPostBuildPlayerScriptDLLs(BuildReport report)
         {
             // Early exit if not activated/supported
             if (!JobsUtility.JobCompilerEnabled || !IsSupportedPlatform(report.summary.platform))

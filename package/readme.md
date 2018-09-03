@@ -4,11 +4,11 @@ This is the Unity Package of [burst](https://github.com/Unity-Technologies/burst
 
 ## Requirements
 
-This package is working with the Unity branch `2018.1/scripting/jobsystem/playground`
+This package is working with the Unity 2018.1 and above.
 
 ## Installation
 
-Inside your game folder, go to the folder `UnityPackageManager`
+Inside your game folder, go to the folder `Packages`
 
 You can then either:
 
