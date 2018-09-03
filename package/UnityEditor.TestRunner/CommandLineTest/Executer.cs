@@ -68,7 +68,7 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
 
 
             m_TestRunnerApi.RegisterCallbacks(resultSavingCallback);
-            m_TestRunnerApi.RegisterCallbacks(ScriptableObject.CreateInstance<ExitCallbacks>());
+            m_TestRunnerApi.RegisterCallbacks(ScriptableObject.CreateInstance<ExitCallbacks>(), -10);
             var timeoutCallbacks = ScriptableObject.CreateInstance<TimeoutCallbacks>();
             timeoutCallbacks.Init((action, time) => new DelayedCallback(action, time), m_LogErrorFormat, m_ExitEditorApplication);
             m_TestRunnerApi.RegisterCallbacks(timeoutCallbacks);

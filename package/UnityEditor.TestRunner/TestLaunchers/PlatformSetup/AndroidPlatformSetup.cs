@@ -40,7 +40,7 @@ namespace UnityEditor.TestTools.TestRunner
             {
                 connectionResult = EditorConnectionInternal.ConnectPlayerProxy(IPAddress.Loopback.ToString(), 34999);
                 if (EditorUtility.DisplayCancelableProgressBar("Editor Connection", "Connecting to the player",
-                        1 - ((float)tryCount / maxTryCount)))
+                    1 - ((float)tryCount / maxTryCount)))
                 {
                     EditorUtility.ClearProgressBar();
                     throw new TestLaunchFailedException();

@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace UnityEngine.TestTools
 {
-    internal interface IEditModeTestYieldInstruction
+    public interface IEditModeTestYieldInstruction
     {
         bool ExpectDomainReload { get; }
         bool ExpectedPlaymodeState { get; }

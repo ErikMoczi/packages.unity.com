@@ -24,10 +24,7 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
 
         public void RunFinished(ITestResult result)
         {
-            if (m_TimeoutCallback != null)
-            {
-                m_TimeoutCallback.Clear();
-            }
+            m_TimeoutCallback?.Clear();
         }
 
         public void RunStarted(ITest testsToRun)
@@ -53,11 +50,7 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             }
             else
             {
-                if (m_TimeoutCallback != null)
-                {
-                    m_TimeoutCallback.Clear();
-                }
-                
+                m_TimeoutCallback?.Clear();
                 m_TimeoutCallback = m_DelayedCallbackFactory(TimeoutReached, timeoutValue);
                 m_CurrentTimeout = timeoutValue;
             }

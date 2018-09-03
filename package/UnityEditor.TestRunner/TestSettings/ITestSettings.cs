@@ -12,6 +12,13 @@ namespace UnityEditor.TestTools.TestRunner
 
         ApiCompatibilityLevel? apiProfile { get; set; }
 
+        bool? appleEnableAutomaticSigning { get; set; }
+        string appleDeveloperTeamID { get; set; }
+        ProvisioningProfileType? iOSManualProvisioningProfileType { get; set; }
+        string iOSManualProvisioningProfileID { get; set; }
+        ProvisioningProfileType? tvOSManualProvisioningProfileType { get; set; }
+        string tvOSManualProvisioningProfileID { get; set; }
+
         void SetupProjectParameters();
     }
 }

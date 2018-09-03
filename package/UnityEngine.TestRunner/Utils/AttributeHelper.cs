@@ -9,8 +9,7 @@ namespace UnityEngine.TestTools
         internal static Type GetTargetClassFromName(string targetClassName, Type attributeInterface)
         {
             Type targetClass = null;
-            var allUserAssemblies = ScriptingRuntime.GetAllUserAssemblies();
-            foreach (var assemblyName in allUserAssemblies)
+            foreach (var assemblyName in ScriptingRuntime.GetAllUserAssemblies())
             {
                 // we need to pass the assembly name without the .dll extension, so removing that first
                 var name = Path.GetFileNameWithoutExtension(assemblyName);

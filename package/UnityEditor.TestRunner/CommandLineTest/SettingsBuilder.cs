@@ -29,14 +29,14 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             string testSettingsFilePath = null;
 
             var optionSet = new CommandLineOptionSet(
-                    new CommandLineOption("quit", () => { quit = true; }),
-                    new CommandLineOption("testPlatform", platform => { testPlatform = platform; }),
-                    new CommandLineOption("editorTestsFilter", filters => { testFilters = filters; }),
-                    new CommandLineOption("testFilter", filters => { testFilters = filters; }),
-                    new CommandLineOption("editorTestsCategories", catagories => { testCategories = catagories; }),
-                    new CommandLineOption("testCategory", catagories => { testCategories = catagories; }),
-                    new CommandLineOption("testSettingsFile", settingsFilePath => { testSettingsFilePath = settingsFilePath; })
-                    );
+                new CommandLineOption("quit", () => { quit = true; }),
+                new CommandLineOption("testPlatform", platform => { testPlatform = platform; }),
+                new CommandLineOption("editorTestsFilter", filters => { testFilters = filters; }),
+                new CommandLineOption("testFilter", filters => { testFilters = filters; }),
+                new CommandLineOption("editorTestsCategories", catagories => { testCategories = catagories; }),
+                new CommandLineOption("testCategory", catagories => { testCategories = catagories; }),
+                new CommandLineOption("testSettingsFile", settingsFilePath => { testSettingsFilePath = settingsFilePath; })
+            );
             optionSet.Parse(commandLineArgs);
 
             DisplayQuitWarningIfQuitIsGiven(quit);
@@ -68,9 +68,9 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             string resultFilePath = null;
 
             var optionSet = new CommandLineOptionSet(
-                    new CommandLineOption("editorTestsResultFile", filePath => { resultFilePath = filePath; }),
-                    new CommandLineOption("testResults", filePath => { resultFilePath = filePath; })
-                    );
+                new CommandLineOption("editorTestsResultFile", filePath => { resultFilePath = filePath; }),
+                new CommandLineOption("testResults", filePath => { resultFilePath = filePath; })
+            );
             optionSet.Parse(commandLineArgs);
 
             return new ExecutionSettings()

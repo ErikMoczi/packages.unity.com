@@ -46,10 +46,11 @@ namespace UnityEditor.TestTools.TestRunner.GUI
             if (string.IsNullOrEmpty(fileOpenInfo.FilePath))
             {
                 var dirPath = Paths.UnifyDirectorySeparator(Application.dataPath);
-                var allCsFiles = Directory.GetFiles(dirPath, string.Format("*{0}", fileExtension), SearchOption.AllDirectories).Select(Paths.UnifyDirectorySeparator);
+                var allCsFiles = Directory.GetFiles(dirPath, $"*{fileExtension}", SearchOption.AllDirectories)
+                    .Select(Paths.UnifyDirectorySeparator);
 
-                var fileName = allCsFiles.FirstOrDefault(x => x.Split('\\').Last().Equals(type.Name + fileExtension));
-
+                var fileName = allCsFiles.FirstOrDefault(x =>
+                    x.Split(Path.DirectorySeparatorChar).Last().Equals(string.Concat(type.Name, fileExtension)));
 
                 fileOpenInfo.FilePath = fileName ?? string.Empty;
             }
@@ -85,10 +86,10 @@ namespace UnityEditor.TestTools.TestRunner.GUI
                 .Select(x => regex.Match(x))
                 .Select(x =>
                     new FileOpenInfo
-            {
-                FilePath = x.Groups["path"].Value,
-                LineNumber = int.Parse(x.Groups["line"].Value)
-            })
+                    {
+                        FilePath = x.Groups["path"].Value,
+                        LineNumber = int.Parse(x.Groups["line"].Value)
+                    })
                 .First(openInfo => !string.IsNullOrEmpty(openInfo.FilePath) && File.Exists(openInfo.FilePath));
 
             var filePath = FilePathToAssetsRelativeAndUnified(fileOpenInfo.FilePath);

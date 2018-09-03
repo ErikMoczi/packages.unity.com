@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Mono.Cecil.Mdb;
 using UnityEngine;
 
 namespace UnityEditor.TestTools.TestRunner.GUI
@@ -77,11 +76,11 @@ namespace UnityEditor.TestTools.TestRunner.GUI
             assemblyResolver.AddSearchDirectory(Path.GetDirectoryName(assemblyPath));
             var readerParameters = new ReaderParameters
             {
-                SymbolReaderProvider = new MdbReaderProvider(),
+                ReadSymbols = true,
+                SymbolReaderProvider = new DefaultSymbolReaderProvider(false),
                 AssemblyResolver = assemblyResolver,
                 ReadingMode = ReadingMode.Deferred
             };
-
             return AssemblyDefinition.ReadAssembly(assemblyPath, readerParameters);
         }
 

@@ -38,7 +38,55 @@ namespace UnityEditor.TestTools.TestRunner
                         PlayerSettings.SetApiCompatibilityLevel(EditorUserBuildSettings.activeBuildTargetGroup,
                             implementation.Value);
                     }
-                })
+                }),
+            new TestSetting<bool?>(
+                settings => settings.appleEnableAutomaticSigning,
+                () => PlayerSettings.iOS.appleEnableAutomaticSigning,
+                enableAutomaticSigning =>
+                {
+                    if (enableAutomaticSigning != null)
+                        PlayerSettings.iOS.appleEnableAutomaticSigning = enableAutomaticSigning.Value;
+                }),
+            new TestSetting<string>(
+                settings => settings.appleDeveloperTeamID,
+                () => PlayerSettings.iOS.appleDeveloperTeamID,
+                developerTeam =>
+                {
+                    if (developerTeam != null)
+                        PlayerSettings.iOS.appleDeveloperTeamID = developerTeam;
+                }),
+            new TestSetting<ProvisioningProfileType?>(
+                settings => settings.iOSManualProvisioningProfileType,
+                () => PlayerSettings.iOS.iOSManualProvisioningProfileType,
+                profileType =>
+                {
+                    if (profileType != null)
+                        PlayerSettings.iOS.iOSManualProvisioningProfileType = profileType.Value;
+                }),
+            new TestSetting<string>(
+                settings => settings.iOSManualProvisioningProfileID,
+                () => PlayerSettings.iOS.iOSManualProvisioningProfileID,
+                provisioningUUID =>
+                {
+                    if (provisioningUUID != null)
+                        PlayerSettings.iOS.iOSManualProvisioningProfileID = provisioningUUID;
+                }),
+            new TestSetting<ProvisioningProfileType?>(
+                settings => settings.tvOSManualProvisioningProfileType,
+                () => PlayerSettings.iOS.tvOSManualProvisioningProfileType,
+                profileType =>
+                {
+                    if (profileType != null)
+                        PlayerSettings.iOS.tvOSManualProvisioningProfileType = profileType.Value;
+                }),
+            new TestSetting<string>(
+                settings => settings.tvOSManualProvisioningProfileID,
+                () => PlayerSettings.iOS.tvOSManualProvisioningProfileID,
+                provisioningUUID =>
+                {
+                    if (provisioningUUID != null)
+                        PlayerSettings.iOS.tvOSManualProvisioningProfileID = provisioningUUID;
+                }),
         };
 
         private bool m_Disposed;
@@ -50,6 +98,13 @@ namespace UnityEditor.TestTools.TestRunner
         public bool? useLatestScriptingRuntimeVersion { get; set; }
 
         public ApiCompatibilityLevel? apiProfile { get; set; }
+
+        public bool? appleEnableAutomaticSigning { get; set; }
+        public string appleDeveloperTeamID { get; set; }
+        public ProvisioningProfileType? iOSManualProvisioningProfileType { get; set; }
+        public string iOSManualProvisioningProfileID { get; set; }
+        public ProvisioningProfileType? tvOSManualProvisioningProfileType { get; set; }
+        public string tvOSManualProvisioningProfileID { get; set; }
 
         public void Dispose()
         {

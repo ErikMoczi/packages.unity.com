@@ -92,7 +92,6 @@ namespace UnityEditor.TestTools.TestRunner
 
         private IEnumerable<string> GetAllFilesInAssetsDirectory()
         {
-            AssetDatabase.Refresh();
             return GetAllAssetPathsAction();
         }
     }

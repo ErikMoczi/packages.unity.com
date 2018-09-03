@@ -37,7 +37,6 @@ namespace UnityEditor.TestTools.TestRunner
                 CallbacksDelegator.instance.RunFailed("Run Failed: One or more errors in a prebuild setup. See the editor log for details.");
                 return;
             }
-            ExecutePreBuildSetupMethods(m_EditModeRunner.GetLoadedTests(), m_EditModeRunner.GetFilter());
 
             var undoGroup = Undo.GetCurrentGroup();
             SceneSetup[] previousSceneSetup;
@@ -48,7 +47,7 @@ namespace UnityEditor.TestTools.TestRunner
             callback.previousSceneSetup = previousSceneSetup;
             callback.undoGroup = undoGroup;
             callback.runner = m_EditModeRunner;
-            AddEventHandler<CallbackDelegatorListener>();
+            AddEventHandler<CallbacksDelegator>();
 
             m_EditModeRunner.Run();
             AddEventHandler<BackgroundListener>();

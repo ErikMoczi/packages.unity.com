@@ -52,15 +52,15 @@ namespace UnityEditor.TestTools.TestRunner
         public void RestoreTestResult(TestResult result)
         {
             var resultState = new ResultState((TestStatus)Enum.Parse(typeof(TestStatus), status), label,
-                    (FailureSite)Enum.Parse(typeof(FailureSite), site));
+                (FailureSite)Enum.Parse(typeof(FailureSite), site));
             result.GetType().BaseType.GetField("_resultState", flags).SetValue(result, resultState);
             result.GetType().BaseType.GetField("_output", flags).SetValue(result, new StringBuilder(output));
             result.GetType().BaseType.GetField("_duration", flags).SetValue(result, duration);
             result.GetType().BaseType.GetField("_message", flags).SetValue(result, message);
             result.GetType().BaseType.GetField("_stackTrace", flags).SetValue(result, stacktrace);
             result.GetType()
-            .BaseType.GetProperty("StartTime", flags)
-            .SetValue(result, DateTime.FromOADate(startTimeAO), null);
+                .BaseType.GetProperty("StartTime", flags)
+                .SetValue(result, DateTime.FromOADate(startTimeAO), null);
         }
 
         public bool IsPassed()

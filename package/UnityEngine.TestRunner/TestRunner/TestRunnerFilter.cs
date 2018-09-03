@@ -163,11 +163,11 @@ namespace UnityEngine.TestTools.TestRunner.GUI
             if (groupNames != null && groupNames.Length != 0)
             {
                 var exactNamesFilter = new OrFilter(groupNames.Select(n =>
-                    {
-                        var f = new FullNameFilter(n);
-                        f.IsRegex = true;
-                        return f;
-                    }).ToArray());
+                {
+                    var f = new FullNameFilter(n);
+                    f.IsRegex = true;
+                    return f;
+                }).ToArray());
                 nameAndAssemblyFilters.Add(exactNamesFilter);
             }
 

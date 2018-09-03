@@ -17,6 +17,7 @@ namespace UnityEditor.TestTools.TestRunner.GUI
 
         private const string kTestScriptTemplate = "83-C# Script-NewTestScript.cs.txt";
         private const string kNewTestScriptName = "NewTestScript.cs";
+        private const string kNunit = "nunit.framework.dll";
 
         [MenuItem("Assets/Create/Testing/Tests Assembly Folder", false, 83)]
         public static void MenuItemAddFolderAndAsmDefForTesting()
@@ -41,16 +42,10 @@ namespace UnityEditor.TestTools.TestRunner.GUI
             var theNearestCustomScriptAssembly = GetTheNearestCustomScriptAssembly();
             if (theNearestCustomScriptAssembly != null)
             {
-                return IsTestCustomScriptAssembly(theNearestCustomScriptAssembly);
+                return theNearestCustomScriptAssembly.PrecompiledReferences != null && theNearestCustomScriptAssembly.PrecompiledReferences.Any(x => Path.GetFileName(x) == kNunit);
             }
 
             return false;
-        }
-
-        private static bool IsTestCustomScriptAssembly(CustomScriptAssembly customScriptAssembly)
-        {
-            bool referencesNunit = customScriptAssembly.PrecompiledReferences.Any(x => x.Contains("nunit.framework.dll"));
-            return referencesNunit && customScriptAssembly.AutoReferenced && customScriptAssembly.OverrideReferences;
         }
 
         [MenuItem("Assets/Create/Testing/C# Test Script", false, 83)]
@@ -99,7 +94,7 @@ namespace UnityEditor.TestTools.TestRunner.GUI
                 return false;
             }
 
-            var hasTestAssemblyFlag = IsTestCustomScriptAssembly(theNearestCustomScriptAssembly);
+            var hasTestAssemblyFlag = theNearestCustomScriptAssembly.PrecompiledReferences != null && theNearestCustomScriptAssembly.PrecompiledReferences.Any(x => Path.GetFileName(x) == kNunit); ;
             var editorOnlyAssembly = (theNearestCustomScriptAssembly.AssemblyFlags & AssemblyFlags.EditorOnly) != 0;
 
             return hasTestAssemblyFlag && !editorOnlyAssembly;

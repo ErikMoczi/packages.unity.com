@@ -46,7 +46,7 @@ namespace UnityEditor.TestTools.TestRunner
 
                 var filter = m_Settings.filter.BuildNUnitFilter();
                 var runner = LoadTests(filter);
-                var exceptionThrown = ExecutePreBuildSetupMethods(runner.LoadedTest, filter, m_TargetPlatform);
+                var exceptionThrown = ExecutePreBuildSetupMethods(runner.LoadedTest, filter);
                 if (exceptionThrown)
                 {
                     ReopenOriginalScene(m_Settings.originalScene);
@@ -59,7 +59,7 @@ namespace UnityEditor.TestTools.TestRunner
 
                 var success = BuildAndRunPlayer(playerBuildOptions);
                 editorConnectionTestCollector.PostBuildAction();
-                ExecutePostBuildCleanupMethods(runner.LoadedTest, filter, m_TargetPlatform);
+                ExecutePostBuildCleanupMethods(runner.LoadedTest, filter);
 
                 ReopenOriginalScene(m_Settings.originalScene);
                 AssetDatabase.DeleteAsset(sceneName);
@@ -78,11 +78,11 @@ namespace UnityEditor.TestTools.TestRunner
         public Scene PrepareScene(string sceneName)
         {
             var scene = CreateBootstrapScene(sceneName, runner =>
-                {
-                    runner.AddEventHandlerMonoBehaviour<PlayModeRunnerCallback>();
-                    runner.settings = m_Settings;
-                    runner.AddEventHandlerMonoBehaviour<RemoteTestResultSender>();
-                });
+            {
+                runner.AddEventHandlerMonoBehaviour<PlayModeRunnerCallback>();
+                runner.settings = m_Settings;
+                runner.AddEventHandlerMonoBehaviour<RemoteTestResultSender>();
+            });
             return scene;
         }
 
@@ -91,9 +91,8 @@ namespace UnityEditor.TestTools.TestRunner
             Debug.Log("Building player with following options:\n" + buildOptions);
 
 
-            // iOS, tvOS and Android have to be in listen mode to establish player connection
-            var buildTarget = buildOptions.BuildPlayerOptions.target;
-            if (buildTarget == BuildTarget.iOS || buildTarget == BuildTarget.tvOS || buildTarget == BuildTarget.Android)
+            // Android has to be in listen mode to establish player connection
+            if (buildOptions.BuildPlayerOptions.target == BuildTarget.Android)
             {
                 buildOptions.BuildPlayerOptions.options &= ~BuildOptions.ConnectToHost;
             }
@@ -122,6 +121,15 @@ namespace UnityEditor.TestTools.TestRunner
             if (m_TargetPlatform == BuildTarget.WSAPlayer)
             {
                 uniqueTempPathInProject = uniqueTempPathInProject.Substring(0, 25);
+            }
+
+            //Check if Lz4 is supported for the current buildtargetgroup and enable it if need be
+            if (PostprocessBuildPlayer.SupportsLz4Compression(buildTargetGroup, m_TargetPlatform))
+            {
+                if (EditorUserBuildSettings.GetCompressionType(buildTargetGroup) == Compression.Lz4)
+                    buildOptions.options |= BuildOptions.CompressWithLz4;
+                else if (EditorUserBuildSettings.GetCompressionType(buildTargetGroup) == Compression.Lz4HC)
+                    buildOptions.options |= BuildOptions.CompressWithLz4HC;
             }
 
             m_TempBuildLocation = Path.GetFullPath(uniqueTempPathInProject);

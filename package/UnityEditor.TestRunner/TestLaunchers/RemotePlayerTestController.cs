@@ -2,6 +2,7 @@ using System;
 using UnityEditor.Networking.PlayerConnection;
 using UnityEditor.TestTools.TestRunner;
 using UnityEditor.TestTools.TestRunner.Api;
+using UnityEditor.TestTools.TestRunner.UnityTestProtocol;
 using UnityEngine;
 using UnityEngine.Networking.PlayerConnection;
 using UnityEngine.TestRunner.TestLaunchers;

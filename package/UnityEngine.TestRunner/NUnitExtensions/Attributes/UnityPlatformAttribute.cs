@@ -47,7 +47,7 @@ namespace UnityEngine.TestTools
 
             if (exclude.Any(x => x == Application.platform))
             {
-                m_skippedReason = string.Format("Not supported on  {0}", string.Join(", ", exclude.Select(x => x.ToString()).ToArray()));
+                m_skippedReason = string.Format("Not supported on  {0}", string.Join(", ", include.Select(x => x.ToString()).ToArray()));
                 return false;
             }
             return true;

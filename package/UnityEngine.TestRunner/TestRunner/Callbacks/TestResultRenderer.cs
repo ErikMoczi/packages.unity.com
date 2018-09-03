@@ -81,8 +81,8 @@ namespace UnityEngine.TestTools.TestRunner.Callbacks
 
                 text += "<b><size=18>Code-based tests</size></b>\n";
                 text += string.Join("\n", m_FailedTestCollection
-                        .Select(result => result.Name + " " + result.ResultState + "\n" + result.Message)
-                        .ToArray());
+                    .Select(result => result.Name + " " + result.ResultState + "\n" + result.Message)
+                    .ToArray());
 
                 if (text.Length > k_MaxStringLength)
                     text = text.Substring(0, k_MaxStringLength);

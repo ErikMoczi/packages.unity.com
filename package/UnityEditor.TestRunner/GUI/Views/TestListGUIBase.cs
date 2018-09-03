@@ -113,8 +113,8 @@ namespace UnityEditor.TestTools.TestRunner.GUI
             else
             {
                 m_TestListScroll = EditorGUILayout.BeginScrollView(m_TestListScroll,
-                        GUILayout.ExpandWidth(true),
-                        GUILayout.MaxWidth(2000));
+                    GUILayout.ExpandWidth(true),
+                    GUILayout.MaxWidth(2000));
 
                 var treeRect = EditorGUILayout.GetControlRect(GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true));
                 var treeViewKeyboardControlId = GUIUtility.GetControlID(FocusType.Keyboard);

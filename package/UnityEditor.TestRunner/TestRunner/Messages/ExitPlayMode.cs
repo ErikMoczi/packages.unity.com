@@ -4,7 +4,7 @@ using UnityEditor;
 
 namespace UnityEngine.TestTools
 {
-    internal class ExitPlayMode : IEditModeTestYieldInstruction
+    public class ExitPlayMode : IEditModeTestYieldInstruction
     {
         public bool ExpectDomainReload { get; }
         public bool ExpectedPlaymodeState { get; private set; }

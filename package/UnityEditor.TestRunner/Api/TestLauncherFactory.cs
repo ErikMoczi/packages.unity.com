@@ -41,9 +41,7 @@ namespace UnityEditor.TestTools.TestRunner.Api
 
         static TestLauncherBase GetEditModeLauncherForProvidedAssemblies(Filter filter, TestPlatform testPlatform = TestPlatform.EditMode)
         {
-            var launcher = new EditModeLauncher(filter.ToTestRunnerFilter(), testPlatform);
-            launcher.AddEventHandler<UnityTestProtocol.UnityTestProtocolListener>();
-            return launcher;
+            return new EditModeLauncher(filter.ToTestRunnerFilter(), testPlatform);
         }
 
         static TestLauncherBase GetPlayModeLauncher(PlaymodeTestsControllerSettings settings)

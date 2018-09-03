@@ -16,8 +16,7 @@ namespace UnityEditor.TestTools
             V2
         }
 
-        private static readonly AssetPipelineBackend k_ActiveBackend = Environment.GetCommandLineArgs()
-            .Any(arg => arg == "-assetpipelinev2")
+        private static readonly AssetPipelineBackend k_ActiveBackend = AssetDatabase.IsV2Enabled()
             ? AssetPipelineBackend.V2
             : AssetPipelineBackend.V1;
 

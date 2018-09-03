@@ -17,6 +17,12 @@ namespace UnityEditor.TestTools.TestRunner
             new SettingsMap<string>("architecture", (settings, value) => settings.Architecture = value),
             new SettingsMap<bool>("useLatestScriptingRuntimeVersion", (settings, value) => settings.useLatestScriptingRuntimeVersion = value),
             new SettingsMap<ApiCompatibilityLevel>("apiProfile", (settings, value) => settings.apiProfile = value),
+            new SettingsMap<bool>("appleEnableAutomaticSigning", (settings, value) => settings.appleEnableAutomaticSigning = value),
+            new SettingsMap<string>("appleDeveloperTeamID", (settings, value) => settings.appleDeveloperTeamID = value),
+            new SettingsMap<ProvisioningProfileType>("iOSManualProvisioningProfileType", (settings, value) => settings.iOSManualProvisioningProfileType = value),
+            new SettingsMap<string>("iOSManualProvisioningProfileID", (settings, value) => settings.iOSManualProvisioningProfileID = value),
+            new SettingsMap<ProvisioningProfileType>("tvOSManualProvisioningProfileType", (settings, value) => settings.tvOSManualProvisioningProfileType = value),
+            new SettingsMap<string>("tvOSManualProvisioningProfileID", (settings, value) => settings.tvOSManualProvisioningProfileID = value),
         };
 
         private readonly Func<ITestSettings> m_TestSettingsFactory;

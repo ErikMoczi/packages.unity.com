@@ -13,7 +13,6 @@ namespace UnityEditor.TestTools.TestRunner
         private const string k_TestRunnerAssemblyName = "UnityEngine.TestRunner";
         internal const string k_PerformanceTestingAssemblyName = "Unity.PerformanceTesting";
 
-
         private readonly IEditorCompilationInterfaceProxy m_CompilationInterfaceProxy;
         private readonly IEditorAssembliesProxy m_EditorAssembliesProxy;
 

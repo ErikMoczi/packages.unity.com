@@ -69,7 +69,7 @@ namespace UnityEngine.TestTools.Utils
         private IEnumerator ExMethod(IEnumerator e, int timeout)
         {
             m_TimeOutCoroutine = m_Controller.StartCoroutine(StartTimer(e, timeout,
-                        () =>
+                () =>
                 {
                     m_TestFailed = true;
                     m_Timeout = true;

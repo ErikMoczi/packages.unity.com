@@ -55,7 +55,7 @@ namespace UnityEditor.TestTools.TestRunner
 
         internal TestListGUI m_SelectedTestTypes;
 
-        [MenuItem("Window/Debug/Test Runner", false, 2, false)]
+        [MenuItem("Window/General/Test Runner", false, 201, false)]
         public static void ShowPlaymodeTestsRunnerWindowCodeBased()
         {
             if (s_Instance != null)
@@ -196,16 +196,16 @@ namespace UnityEditor.TestTools.TestRunner
             if (EditorPrefs.GetBool("InternalMode", false))
             {
                 menu.AddItem(m_GUIRunPlayModeTestAsEditModeTests, PlayerSettings.runPlayModeTestAsEditModeTest, () =>
-                    {
-                        PlayerSettings.runPlayModeTestAsEditModeTest = !PlayerSettings.runPlayModeTestAsEditModeTest;
-                    });
+                {
+                    PlayerSettings.runPlayModeTestAsEditModeTest = !PlayerSettings.runPlayModeTestAsEditModeTest;
+                });
             }
 
             menu.AddItem(currentActive, false, () =>
-                {
-                    PlayerSettings.playModeTestRunnerEnabled = !playModeTestRunnerEnabled;
-                    EditorUtility.DisplayDialog(currentActive.text, "You need to restart the editor now", "Ok");
-                });
+            {
+                PlayerSettings.playModeTestRunnerEnabled = !playModeTestRunnerEnabled;
+                EditorUtility.DisplayDialog(currentActive.text, "You need to restart the editor now", "Ok");
+            });
         }
 
         public void RebuildUIFilter()

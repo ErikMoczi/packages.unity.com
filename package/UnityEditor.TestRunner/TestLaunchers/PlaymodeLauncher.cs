@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework.Interfaces;
-using UnityEditor.SceneManagement;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.TestRunner.NUnitExtensions.Runner;
 using UnityEngine.TestTools.TestRunner;
 using UnityEngine.TestTools.TestRunner.Callbacks;
 
@@ -35,19 +33,19 @@ namespace UnityEditor.TestTools.TestRunner
 
             var sceneName = CreateSceneName();
             m_Scene = CreateBootstrapScene(sceneName, runner =>
+            {
+                runner.AddEventHandlerMonoBehaviour<PlayModeRunnerCallback>();
+                runner.AddEventHandlerScriptableObject<TestRunnerCallback>();
+                runner.AddEventHandlerScriptableObject<CallbacksDelegator>();
+
+                foreach (var eventHandler in m_EventHandlers)
                 {
-                    runner.AddEventHandlerMonoBehaviour<PlayModeRunnerCallback>();
-                    runner.AddEventHandlerScriptableObject<TestRunnerCallback>();
-                    runner.AddEventHandlerScriptableObject<CallbackDelegatorListener>();
+                    var obj = ScriptableObject.CreateInstance(eventHandler);
+                    runner.AddEventHandlerScriptableObject(obj as ITestRunnerListener);
+                }
 
-                    foreach (var eventHandler in m_EventHandlers)
-                    {
-                        var obj = ScriptableObject.CreateInstance(eventHandler);
-                        runner.AddEventHandlerScriptableObject(obj as ITestRunnerListener);
-                    }
-
-                    runner.settings = m_Settings;
-                });
+                runner.settings = m_Settings;
+            });
 
             if (m_Settings.sceneBased)
             {
@@ -73,6 +71,7 @@ namespace UnityEditor.TestTools.TestRunner
             {
                 testFilter = m_Settings.filter.BuildNUnitFilter();
                 var runner = LoadTests(testFilter);
+
                 var exceptionThrown = ExecutePreBuildSetupMethods(runner.LoadedTest, testFilter);
                 if (exceptionThrown)
                 {
@@ -84,7 +83,6 @@ namespace UnityEditor.TestTools.TestRunner
                     CallbacksDelegator.instance.RunFailed("Run Failed: One or more errors in a prebuild setup. See the editor log for details.");
                     return;
                 }
-
                 m_IsTestSetupPerformed = true;
             }
         }

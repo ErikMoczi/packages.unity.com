@@ -100,8 +100,8 @@ namespace UnityEditor.TestTools.TestRunner
             m_Runner = (UnityTestAssemblyRunnerFactory ?? new UnityTestAssemblyRunnerFactory()).Create(TestPlatform.EditMode, new EditmodeWorkItemFactory());
             var testAssemblyProvider = new EditorLoadedTestAssemblyProvider(new EditorCompilationInterfaceProxy(), new EditorAssembliesProxy());
             var loadedTests = m_Runner.Load(
-                    testAssemblyProvider.GetAssembliesGroupedByType(m_TestPlatform).Select(x => x.Assembly).ToArray(),
-                    UnityTestAssemblyBuilder.GetNUnitTestBuilderSettings(m_TestPlatform));
+                testAssemblyProvider.GetAssembliesGroupedByType(m_TestPlatform).Select(x => x.Assembly).ToArray(),
+                UnityTestAssemblyBuilder.GetNUnitTestBuilderSettings(m_TestPlatform));
             loadedTests.ParseForNameDuplicates();
             hideFlags |= HideFlags.DontSave;
         }
@@ -249,7 +249,7 @@ namespace UnityEditor.TestTools.TestRunner
         private void CompleteTestRun()
         {
             EditorApplication.update -= TestConsumer;
-            TestLauncherBase.ExecutePostBuildCleanupMethods(GetLoadedTests(), GetFilter());
+            TestLauncherBase.ExecutePostBuildCleanupMethods(this.GetLoadedTests(), this.GetFilter());
             m_CleanupVerifier.VerifyNoNewFilesAdded();
             m_RunFinishedEvent.Invoke(m_Runner.Result);
 

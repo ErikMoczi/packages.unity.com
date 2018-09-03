@@ -52,9 +52,9 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
         {
             var shouldRunTests = false;
             var optionSet = new CommandLineOptionSet(
-                    new CommandLineOption("runTests", () => { shouldRunTests = true; }),
-                    new CommandLineOption("runEditorTests", () => { shouldRunTests = true; })
-                    );
+                new CommandLineOption("runTests", () => { shouldRunTests = true; }),
+                new CommandLineOption("runEditorTests", () => { shouldRunTests = true; })
+            );
             optionSet.Parse(Environment.GetCommandLineArgs());
             return shouldRunTests;
         }

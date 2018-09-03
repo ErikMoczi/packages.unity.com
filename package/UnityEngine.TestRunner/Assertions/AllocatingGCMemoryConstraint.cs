@@ -34,7 +34,7 @@ namespace UnityEngine.TestTools.Constraints
             recorder.enabled = false;
 
 #if !UNITY_WEBGL
-            //recorder.FilterToCurrentThread();
+            recorder.FilterToCurrentThread();
 #endif
 
             recorder.enabled = true;
@@ -47,7 +47,7 @@ namespace UnityEngine.TestTools.Constraints
             {
                 recorder.enabled = false;
 #if !UNITY_WEBGL
-                //recorder.CollectFromAllThreads();
+                recorder.CollectFromAllThreads();
 #endif
             }
 
@@ -62,7 +62,7 @@ namespace UnityEngine.TestTools.Constraints
             TestDelegate d = obj as TestDelegate;
             if (d == null)
                 throw new ArgumentException(string.Format("The actual value must be a TestDelegate but was {0}",
-                        obj.GetType()));
+                    obj.GetType()));
 
             return ApplyTo(() => d.Invoke(), obj);
         }

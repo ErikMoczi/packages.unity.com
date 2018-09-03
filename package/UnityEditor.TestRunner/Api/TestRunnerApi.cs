@@ -22,14 +22,14 @@ namespace UnityEditor.TestTools.TestRunner.Api
             testLauncher.Run();
         }
 
-        public void RegisterCallbacks<T>(T testCallbacks) where T : ICallbacks
+        public void RegisterCallbacks<T>(T testCallbacks, int priority = 0) where T : ICallbacks
         {
             if (testCallbacks == null)
             {
                 throw new ArgumentException("TestCallbacks for execution is undefined.");
             }
 
-            CallbacksHolder.instance.Add(testCallbacks);
+            CallbacksHolder.instance.Add(testCallbacks, priority);
         }
 
         private static string ExecutionSettingsToString(ExecutionSettings executionSettings)

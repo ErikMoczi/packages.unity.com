@@ -9,20 +9,18 @@ namespace UnityEditor.TestTools.TestRunner
     {
         public abstract void Run();
 
-        protected bool ExecutePreBuildSetupMethods(ITest tests, ITestFilter testRunnerFilter, BuildTarget? buildTarget = null)
+        protected static bool ExecutePreBuildSetupMethods(ITest tests, ITestFilter testRunnerFilter)
         {
             var attributeFinder = new PrebuildSetupAttributeFinder();
             var logString = "Executing setup for: {0}";
-            var platformTestFilter = new UnityPlatformTestFilter(testRunnerFilter, buildTarget);
-            return ExecuteMethods<IPrebuildSetup>(tests, platformTestFilter, attributeFinder, logString, targetClass => targetClass.Setup());
+            return ExecuteMethods<IPrebuildSetup>(tests, testRunnerFilter, attributeFinder, logString, targetClass => targetClass.Setup());
         }
 
-        public static void ExecutePostBuildCleanupMethods(ITest tests, ITestFilter testRunnerFilter, BuildTarget? buildTarget = null)
+        public static void ExecutePostBuildCleanupMethods(ITest tests, ITestFilter testRunnerFilter)
         {
             var attributeFinder = new PostbuildCleanupAttributeFinder();
             var logString = "Executing cleanup for: {0}";
-            var platformTestFilter = new UnityPlatformTestFilter(testRunnerFilter, buildTarget);
-            ExecuteMethods<IPostBuildCleanup>(tests, platformTestFilter, attributeFinder, logString, targetClass => targetClass.Cleanup());
+            ExecuteMethods<IPostBuildCleanup>(tests, testRunnerFilter, attributeFinder, logString, targetClass => targetClass.Cleanup());
         }
 
         private static bool ExecuteMethods<T>(ITest tests, ITestFilter testRunnerFilter, AttributeFinderBase attributeFinder, string logString, Action<T> action)

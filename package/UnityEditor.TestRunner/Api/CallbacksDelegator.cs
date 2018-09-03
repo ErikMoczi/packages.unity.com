@@ -5,23 +5,16 @@ using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using UnityEngine;
 using UnityEngine.TestRunner.TestLaunchers;
+using UnityEngine.TestTools.TestRunner;
 
 namespace UnityEditor.TestTools.TestRunner.Api
 {
-    internal class CallbacksDelegator : ScriptableSingleton<CallbacksDelegator>
+    internal class CallbacksDelegator : ScriptableSingleton<CallbacksDelegator>, ITestRunnerListener
     {
         public void RunStarted(NUnit.Framework.Interfaces.ITest testsToRun)
         {
             var testRunnerTestsToRun = new Test(testsToRun);
             TryInvokeAllCallbacks(callbacks => callbacks.RunStarted(testRunnerTestsToRun));
-        }
-
-        public void RunFailed(string failureMessage)
-        {
-            var nunitTestResult = new TestSuiteResult(new TestSuite("test"));
-            nunitTestResult.SetResult(ResultState.Error, failureMessage);
-            var testResult = new TestResult(nunitTestResult);
-            TryInvokeAllCallbacks(callbacks => callbacks.RunFinished(testResult));
         }
 
         public void RunStartedRemotely(byte[] testsToRunData)
@@ -41,6 +34,14 @@ namespace UnityEditor.TestTools.TestRunner.Api
         {
             var remoteTestResult = Deserialize<RemoteTestResultDataWithTestData>(testResultsData);
             var testResult = new TestResult(remoteTestResult.results.First(), remoteTestResult);
+            TryInvokeAllCallbacks(callbacks => callbacks.RunFinished(testResult));
+        }
+
+        public void RunFailed(string failureMessage)
+        {
+            var nunitTestResult = new TestSuiteResult(new TestSuite("test"));
+            nunitTestResult.SetResult(ResultState.Error, failureMessage);
+            var testResult = new TestResult(nunitTestResult);
             TryInvokeAllCallbacks(callbacks => callbacks.RunFinished(testResult));
         }
 
