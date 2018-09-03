@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Unity.Jobs;
 using Unity.Collections;
+using UnityEngine;
 
 public class NativeHashMapTests_InJobs : NativeHashMapTestsFixture
 {
@@ -152,4 +153,58 @@ public class NativeHashMapTests_InJobs : NativeHashMapTestsFixture
         writeStatus.Dispose();
         hashMap.Dispose();
     }
+    
+    struct MergeSharedValues : IJobNativeMultiHashMapMergedSharedKeyIndices
+    {
+        [NativeDisableParallelForRestriction] public NativeArray<int> sharedCount;
+        [NativeDisableParallelForRestriction] public NativeArray<int> sharedIndices;
+
+        public void Execute(int firstIndex, int index)
+        {
+            if (firstIndex == index)
+            {
+               sharedIndices[index] = index;
+               return;
+            }
+
+            sharedIndices[index] = firstIndex;
+            sharedCount[firstIndex]++;
+        }
+    }
+
+    [Test]
+    public void NativeHashMapMergeCountShared()
+    {
+        var count = 1024;
+        var sharedKeyCount = 16;
+        var sharedCount = new NativeArray<int>(count,Allocator.TempJob);
+        var sharedIndices = new NativeArray<int>(count,Allocator.TempJob);
+        var totalSharedCount = new NativeArray<int>(1,Allocator.TempJob);
+        var hashMap = new NativeMultiHashMap<int,int>(count,Allocator.TempJob);
+
+        for (int i = 0; i < count; i++)
+        {
+            hashMap.Add(i&(sharedKeyCount-1),i);
+            sharedCount[i] = 1;
+        }
+
+        var mergeSharedValuesJob = new MergeSharedValues
+        {
+            sharedCount = sharedCount,
+            sharedIndices = sharedIndices,
+        };
+        var mergetedSharedValuesJobHandle = mergeSharedValuesJob.Schedule(hashMap, 64);
+        mergetedSharedValuesJobHandle.Complete();
+        
+        for (int i = 0; i < count; i++)
+        {
+            Assert.AreEqual(count/sharedKeyCount,sharedCount[sharedIndices[i]]);
+        }
+
+        sharedCount.Dispose();
+        sharedIndices.Dispose();
+        totalSharedCount.Dispose();
+        hashMap.Dispose();
+    }
+    
 }
