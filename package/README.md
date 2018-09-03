@@ -11,7 +11,7 @@ YourProject/Packages/manifest.json
 ``` json
 {
 	"dependencies": {
-		"com.unity.test-framework.performance": "0.1.27-preview"
+		"com.unity.test-framework.performance": "0.1.28-preview"
 	  },
 	  "testables": [
 			"com.unity.test-framework.performance"

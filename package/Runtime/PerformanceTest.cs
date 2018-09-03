@@ -68,8 +68,9 @@ namespace Unity.PerformanceTesting
 
                 SendTestDataToEditor();
             }
-#endif
+#else
             TestContext.Out.Write("##performancetestresult:" + JsonUtility.ToJson(Active));
+#endif
             Active = null;
         }
 
