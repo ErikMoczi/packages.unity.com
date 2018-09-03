@@ -34,8 +34,11 @@ namespace UnityEngine.XR.ARFoundation
         {
             get
             {
-                var rig = referencePoint.GetComponent<ARSessionOrigin>();
-                return rig.trackablesParent.TransformPose(previousSessionRelativePose);
+                var parentTransform = referencePoint.transform.parent;
+                if (parentTransform == null)
+                    return previousSessionRelativePose;
+
+                return parentTransform.TransformPose(previousSessionRelativePose);
             }
         }
 
@@ -69,6 +72,16 @@ namespace UnityEngine.XR.ARFoundation
                 return false;
 
             return Equals((ARReferencePointUpdatedEventArgs)obj);
+        }
+
+        public override string ToString()
+        {
+            return string.Format("(ReferencePoint {0}: Transform: {1}, Tracking State Change: {2} => {3})",
+                referencePoint.sessionRelativeData.Id,
+                referencePoint.transform,
+                previousTrackingState,
+                referencePoint.sessionRelativeData.TrackingState
+                );
         }
 
         public bool Equals(ARReferencePointUpdatedEventArgs other)

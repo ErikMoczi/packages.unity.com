@@ -43,6 +43,11 @@ namespace UnityEngine.XR.ARFoundation
             return Equals((ARCameraFrameEventArgs)obj);
         }
 
+        public override string ToString()
+        {
+            return string.Format("(Light Estimation: {0}, Time: {1})", lightEstimation.ToString(), time);
+        }
+
         public bool Equals(ARCameraFrameEventArgs other)
         {
             return

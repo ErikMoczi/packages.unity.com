@@ -14,6 +14,7 @@ namespace UnityEngine.XR.ARFoundation
     /// It will also update a <c>LineRenderer</c> with the boundary points, if present.
     /// </remarks>
     [RequireComponent(typeof(ARPlane))]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARPlaneMeshVisualizer.html")]
     public sealed class ARPlaneMeshVisualizer : MonoBehaviour
     {
         /// <summary>
@@ -127,17 +128,41 @@ namespace UnityEngine.XR.ARFoundation
         {
             enabled = false;
 
-            var meshRenderer = GetComponent<MeshRenderer>();
-            if (meshRenderer != null)
-                meshRenderer.enabled = false;
-
             var meshCollider = GetComponent<MeshCollider>();
             if (meshCollider != null)
                 meshCollider.enabled = false;
 
+            UpdateVisibility();
+        }
+
+        void SetVisible(bool visible)
+        {
+            var meshRenderer = GetComponent<MeshRenderer>();
+            if (meshRenderer != null)
+                meshRenderer.enabled = visible;
+
             var lineRenderer = GetComponent<LineRenderer>();
             if (lineRenderer != null)
-                lineRenderer.enabled = false;
+                lineRenderer.enabled = visible;
+        }
+
+        void UpdateVisibility()
+        {
+            var visible = enabled &&
+                (m_Plane.trackingState != TrackingState.Unavailable) &&
+                (ARSubsystemManager.systemState > ARSystemState.Ready);
+
+            SetVisible(visible);
+        }
+
+        void OnUpdated(ARPlane plane)
+        {
+            UpdateVisibility();
+        }
+
+        void OnSystemStateChanged(ARSystemStateChangedEventArgs eventArgs)
+        {
+            UpdateVisibility();
         }
 
         void Awake()
@@ -149,11 +174,16 @@ namespace UnityEngine.XR.ARFoundation
         void OnEnable()
         {
             m_Plane.boundaryChanged += OnBoundaryChanged;
+            m_Plane.updated += OnUpdated;
+            ARSubsystemManager.systemStateChanged += OnSystemStateChanged;
+            UpdateVisibility();
         }
 
         void OnDisable()
         {
             m_Plane.boundaryChanged -= OnBoundaryChanged;
+            m_Plane.updated -= OnUpdated;
+            ARSubsystemManager.systemStateChanged -= OnSystemStateChanged;
         }
 
         ARPlane m_Plane;

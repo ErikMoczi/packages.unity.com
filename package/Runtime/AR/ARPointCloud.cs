@@ -8,6 +8,7 @@ namespace UnityEngine.XR.ARFoundation
     /// Represents a detected point cloud, aka feature points.
     /// </summary>
     [DisallowMultipleComponent]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARPointCloud.html")]
     public class ARPointCloud : MonoBehaviour
     {
         public event Action<ARPointCloud> updated;

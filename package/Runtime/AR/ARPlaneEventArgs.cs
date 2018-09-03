@@ -38,6 +38,11 @@ namespace UnityEngine.XR.ARFoundation
             return Equals((ARPlaneAddedEventArgs)obj);
         }
 
+        public override string ToString()
+        {
+            return plane.boundedPlane.Id.ToString();
+        }
+
         public bool Equals(ARPlaneAddedEventArgs other)
         {
             return plane.Equals(other.plane);
@@ -87,6 +92,10 @@ namespace UnityEngine.XR.ARFoundation
                 return false;
 
             return Equals((ARPlaneUpdatedEventArgs)obj);
+        }
+        public override string ToString()
+        {
+            return plane.boundedPlane.Id.ToString();
         }
 
         public bool Equals(ARPlaneUpdatedEventArgs other)
@@ -138,6 +147,11 @@ namespace UnityEngine.XR.ARFoundation
                 return false;
 
             return Equals((ARPlaneRemovedEventArgs)obj);
+        }
+
+        public override string ToString()
+        {
+            return plane.boundedPlane.Id.ToString();
         }
 
         public bool Equals(ARPlaneRemovedEventArgs other)
@@ -218,6 +232,11 @@ namespace UnityEngine.XR.ARFoundation
                 return false;
 
             return Equals((ARPlaneBoundaryChangedEventArgs)obj);
+        }
+
+        public override string ToString()
+        {
+            return plane.boundedPlane.Id.ToString();
         }
 
         public bool Equals(ARPlaneBoundaryChangedEventArgs other)

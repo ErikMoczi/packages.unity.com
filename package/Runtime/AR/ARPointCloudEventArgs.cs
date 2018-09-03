@@ -37,6 +37,11 @@ namespace UnityEngine.XR.ARFoundation
             return Equals((ARPointCloudUpdatedEventArgs)obj);
         }
 
+        public override string ToString()
+        {
+            return pointCloud.GetInstanceID().ToString();
+        }
+
         public bool Equals(ARPointCloudUpdatedEventArgs other)
         {
             return pointCloud.Equals(other.pointCloud);

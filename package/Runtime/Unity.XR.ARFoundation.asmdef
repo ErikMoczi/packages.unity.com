@@ -1,8 +1,9 @@
 {
-    "name": "Unity.XR.ARFoundation",
-    "references": [
-        "Unity.XR.ARExtensions"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": []
+  "name": "Unity.XR.ARFoundation",
+  "references": [
+    "Unity.XR.ARExtensions"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true
 }

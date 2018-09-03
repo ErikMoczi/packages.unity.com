@@ -4,7 +4,7 @@ Use the AR Foundation package to add high-level functionality for working with a
 
 AR Foundation is a set of `MonoBehaviour`s for dealing with devices that support following concepts:
 - Planar surface detection
-- Point clouds, aka feature points
+- Point clouds, also known as feature points
 - Reference points: an arbitrary position and orientation that the device tracks
 - Light estimation: estimates for average color temperature and brightness in physical space.
 - World tracking: tracking the device's position and orientation in physical space.
@@ -60,11 +60,11 @@ A session has the following options, each of which may be changed at runtime:
 
 The purpose of the `ARSessionOrigin` is to transform trackable features (such as planar surfaces and feature points) into their final position, orientation, and scale in the Unity scene. Because AR devices provide their data in "session space", an unscaled space relative to the beginning of the AR session, the `ARSessionOrigin` performs the appropriate transformation into Unity space.
 
-The `ARSessionOrigin` also allows you to scale virtual content and apply an offset to the camera. If you are scaling or offseting the `ARSessionOrigin`, then its `Camera` should be a child of the `ARSessionOrigin`. Since the `Camera` is driven by the session, the `Camera` and detected trackables should move together.
+The `ARSessionOrigin` also allows you to scale virtual content and apply an offset to the camera. If you are scaling or offseting the `ARSessionOrigin`, then its `Camera` should be a child of the `ARSessionOrigin`. Since the `Camera` is driven by the session, the `Camera` and detected trackables will move together in this setup.
 
 #### Scale
 
-The `Scale` property on the `ARSessionOrigin` is used to set the `localScale` of the `ARSessionOrigin`'s `Transform`. Larger values will make AR content appear smaller, so, for example, a scale of 10 would make your content appear 10 times smaller, while 0.1 would make your content appear 10 times larger.
+To apply scale to the `ARSessionOrigin`, simply set its `transform`'s scale. This has the effect of scaling all the data coming from the device, including the `AR Camera`'s position and any detected trackables. Larger values will make AR content appear smaller, so, for example, a scale of 10 would make your content appear 10 times smaller, while 0.1 would make your content appear 10 times larger.
 
 ### TrackedPoseDriver
 
@@ -74,17 +74,17 @@ Parented to the `ARSessionOrigin`'s' `GameObject` should be (at least) one camer
 
 The `Camera` must be a child of the `ARSessionOrigin`.
 
-### ARBackgroundRenderer
+### ARCameraBackground
 
-If you want to render the device's color camera texture to the background, you need to add an `ARBackgroundRenderer` component to a camera. This will subscribe to AR camera events and blit the camera texture to the screen. This is not required, but common for AR apps.
+If you want to render the device's color camera texture to the background, you need to add an `ARCameraBackground` component to a camera. This will subscribe to AR camera events and blit the camera texture to the screen. This is not required, but common for AR apps.
 
-![alt text](images/ar_background_renderer.png "ARBackgroundRenderer")
+![alt text](images/ar_background_renderer.png "ARCameraBackground")
 
 The `Material` property is optional, and typically you do not need to set it. The platform-specific packages provided by Unity (e.g., `ARCore` and `ARKit`) provide their own shaders for background rendering.
 
-If `Override Material` is `true`, then the background renderer will use the `Material` you specify for background rendering.
+If `Override Material` is `true`, then the `ARCameraBackground` will use the `Material` you specify for background rendering.
 
-If you have exactly one `ARSessionOrigin`, then you can simply add the `ARBackgroundRenderer` to that camera. If you have multiple `ARSessionOrigin`s (to selectively render different content at different scales, for instance), you should use separate cameras for each `ARSessionOrigin` and the background renderer.
+If you have exactly one `ARSessionOrigin`, then you can simply add the `ARCameraBackground` to that camera. If you have multiple `ARSessionOrigin`s (to selectively render different content at different scales, for instance), you should use separate cameras for each `ARSessionOrigin` and the `ARCameraBackground`.
 
 ### AR Managers
 
@@ -136,13 +136,13 @@ An `ARReferencePoint` has the following event:
 
 To visualize planes, you'll need to create a prefab or `GameObject` which includes a component that subscribes to `ARPlane`'s `updated` or `boundaryChanged` event. `ARFoundation` includes such a component: `ARPlaneMeshVisualizer`. This component will generate a `Mesh` from the boundary vertices and assign it to a `MeshCollider`, `MeshFilter`, and `LineRenderer`, if present.
 
-There is a new menu item `GameObject > XR > AR Plane Debug Visualizer` which will create a new `GameObject` which you can use to create your prefab.
+There is a new menu item `GameObject > XR > AR Default Plane` which will create a new `GameObject` which you can use to create your prefab.
 
-![alt text](images/ar_plane_debug_visualizer.png "AR Plane Debug Visualizer")
+![alt text](images/ar_default_plane.png "AR Default Plane")
 
-Once created, you should assign it to the `ARPlaneManager`'s `Plane Prefab` field. You can use it directly or create a prefab by dragging the `GameObject` into your Assets folder.
+Once created, you should assign it to the `ARPlaneManager`'s `Plane Prefab` field. You can use it directly or create a prefab by dragging the `GameObject` into your Assets folder.  It is recommended to save the `AR Default Plane` as a prefab first, delete the `AR Default Plane` GameObject, and then use that in the prefab field as leaving the plane in your scene will leave a zero scale plane artifact in the scene.
 
-![alt text](images/ar_plane_debug_visualizer_as_prefab.png "AR Plane Debug Visualizer Prefab")
+![alt text](images/ar_default_plane_as_prefab.png "AR Default Plane Prefab")
 
 There is a similar menu item for point cloud visualization.
 
@@ -187,13 +187,15 @@ This version of AR Foundation is compatible with the following versions of the U
 
 AR Foundation includes the following known limitations:
 
-* There is no detectable error if an AR session is unable to start. Instead, if no data is received before the `ARSession`'s timeout, then the session is assumed to have failed.
+* No known issues
 
 ## Document revision history
 
 |Date|Reason|
 |---|---|
+|June 12, 2018|Update `ARPlaneMeshVisualizer` and `ARPointCloudMeshVisualizer` with additional debug recommendations and standards.|
+|June 7, 2018|Remove known issue.|
+|June 6, 2018|Update ARSession image.|
 |April 25, 2018|Updated docs and screen shots after package rename.|
 |April 19, 2018|Updated screen shots and information after code changes. Added section on `ARBackgroundRenderer` component. |
 |April 10, 2018|Document created.|
-|June 6, 2018|Update ARSession image|

@@ -40,6 +40,11 @@ namespace UnityEngine.XR.ARFoundation
             return Equals((LightEstimationData)obj);
         }
 
+        public override string ToString()
+        {
+            return string.Format("(Avg. Brightness: {0}, Avg. Color Temperature {1})", averageBrightness, averageColorTemperature);
+        }
+
         public bool Equals(LightEstimationData other)
         {
             return

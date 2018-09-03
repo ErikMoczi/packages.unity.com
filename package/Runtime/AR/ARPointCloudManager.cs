@@ -6,9 +6,14 @@ namespace UnityEngine.XR.ARFoundation
     /// <summary>
     /// Creates and updates a <c>GameObject</c> under the <see cref="ARSessionOrigin"/>'s TrackablesParent
     /// to represent a point cloud.
+    /// 
+    /// When enabled, this component subscribes to <see cref="ARSubsystemManager.pointCloudUpdated"/> event.
+    /// If this component is disabled, and there are no other subscribers to that event,
+    /// point clouds will be disabled.
     /// </summary>
     [RequireComponent(typeof(ARSessionOrigin))]
     [DisallowMultipleComponent]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARPointCloudManager.html")]
     public sealed class ARPointCloudManager : MonoBehaviour
     {
         [SerializeField]

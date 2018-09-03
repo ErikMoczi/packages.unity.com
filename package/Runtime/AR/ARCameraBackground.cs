@@ -9,10 +9,21 @@ namespace UnityEngine.XR.ARFoundation
     /// This is the component-ized version of <c>UnityEngine.XR.ARBackgroundRenderer</c>.
     /// </remarks>
     [DisallowMultipleComponent, RequireComponent(typeof(Camera))]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARCameraBackground.html")]
     public sealed class ARCameraBackground : MonoBehaviour
     {
         [SerializeField]
         bool m_OverrideMaterial;
+
+        /// <summary>
+        /// When false, a material is generated automatically from the shader included in the platform-specific package.
+        /// You may override this material if you wish. Normally, you don't need to do this.
+        /// </summary>
+        public bool overrideMaterial
+        {
+            get { return m_OverrideMaterial; }
+            set { m_OverrideMaterial = value; }
+        }
 
         [SerializeField]
         Material m_Material;
@@ -44,6 +55,9 @@ namespace UnityEngine.XR.ARFoundation
 
         void SetupCameraIfNecessary()
         {
+            if (m_CameraHasBeenSetup)
+                backgroundRenderer.mode = ARRenderMode.MaterialAsBackground;
+
             if (m_OverrideMaterial)
             {
                 if (backgroundRenderer.backgroundMaterial != material)
@@ -109,12 +123,14 @@ namespace UnityEngine.XR.ARFoundation
 
             NotifyCameraSubsystem();
             ARSubsystemManager.cameraFrameReceived += OnCameraFrameReceived;
+            ARSubsystemManager.systemStateChanged += OnSystemStateChanged;
         }
 
         void OnDisable()
         {
             backgroundRenderer.mode = ARRenderMode.StandardBackground;
             ARSubsystemManager.cameraFrameReceived -= OnCameraFrameReceived;
+            ARSubsystemManager.systemStateChanged -= OnSystemStateChanged;
             m_CameraHasBeenSetup = false;
             m_CameraSetupThrewException = false;
 
@@ -128,6 +144,12 @@ namespace UnityEngine.XR.ARFoundation
                 if (cameraSubsystem.Material == material)
                     cameraSubsystem.Material = null;
             }
+        }
+
+        void OnSystemStateChanged(ARSystemStateChangedEventArgs eventArgs)
+        {
+            if (eventArgs.state < ARSystemState.SessionInitializing && backgroundRenderer != null)
+                backgroundRenderer.mode = ARRenderMode.StandardBackground;
         }
 
         bool m_CameraHasBeenSetup;

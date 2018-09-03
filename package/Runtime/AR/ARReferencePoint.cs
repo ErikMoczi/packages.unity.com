@@ -7,6 +7,7 @@ namespace UnityEngine.XR.ARFoundation
     /// Represents a Reference Point (aka anchor) tracked by an AR device.
     /// </summary>
     [DisallowMultipleComponent]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARReferencePoint.html")]
     public sealed class ARReferencePoint : MonoBehaviour
     {
         /// <summary>

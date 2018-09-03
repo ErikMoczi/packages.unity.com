@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine.Experimental.XR;
+using UnityEngine.XR.ARExtensions;
 
 namespace UnityEngine.XR.ARFoundation
 {
@@ -12,6 +13,7 @@ namespace UnityEngine.XR.ARFoundation
     /// a plane in the environment.
     /// </remarks>
     [DisallowMultipleComponent]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARPlane.html")]
     public sealed class ARPlane : MonoBehaviour
     {
         [SerializeField]
@@ -60,12 +62,34 @@ namespace UnityEngine.XR.ARFoundation
                 var pose = boundedPlane.Pose;
                 transform.localPosition = pose.position;
                 transform.localRotation = pose.rotation;
+                m_TrackingState = null;
 
                 if (updated != null)
                     updated(this);
 
                 if (boundaryChanged != null)
                     CheckBoundaryChanged();
+            }
+        }
+
+        /// <summary>
+        /// Gets the current <c>TrackingState</c> of this <see cref="ARPlane"/>.
+        /// </summary>
+        public TrackingState trackingState
+        {
+            get
+            {
+                if (!m_TrackingState.HasValue)
+                {
+                    // Retrieving the tracking state can be expensive,
+                    // so we get it lazily and cache the result until the next update.
+                    if (ARSubsystemManager.planeSubsystem == null)
+                        m_TrackingState = TrackingState.Unknown;
+                    else
+                        m_TrackingState = ARSubsystemManager.planeSubsystem.GetTrackingState(boundedPlane.Id);
+                }
+
+                return m_TrackingState.Value;
             }
         }
 
@@ -186,5 +210,7 @@ namespace UnityEngine.XR.ARFoundation
         List<Vector3> m_Boundary;
 
         BoundedPlane m_BoundedPlane;
+
+        TrackingState? m_TrackingState;
     }
 }

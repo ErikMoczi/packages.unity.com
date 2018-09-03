@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine.Experimental.XR;
-using UnityEngine.Assertions;
+using UnityEngine.XR.ARExtensions;
 
 namespace UnityEngine.XR.ARFoundation
 {
@@ -15,6 +16,7 @@ namespace UnityEngine.XR.ARFoundation
     /// of the world changes.
     /// </remarks>
     [RequireComponent(typeof(ARSessionOrigin))]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARReferencePointManager.html")]
     public sealed class ARReferencePointManager : MonoBehaviour
     {
         [SerializeField]
@@ -75,45 +77,49 @@ namespace UnityEngine.XR.ARFoundation
             var pose = new Pose(position, rotation);
 
             // Session space pose
-            var localPose = m_SessionOrigin.trackablesParent.InverseTransformPose(pose);
+            var sessionRelativePose = m_SessionOrigin.trackablesParent.InverseTransformPose(pose);
 
             // Add the reference point to the XRReferencePointSubsystem
             TrackableId referencePointId;
-            if (!referencePointSubsystem.TryAddReferencePoint(localPose.position, localPose.rotation, out referencePointId))
+            if (!referencePointSubsystem.TryAddReferencePoint(sessionRelativePose.position, sessionRelativePose.rotation, out referencePointId))
                 return null;
 
-            // Get the data back of the XRReferencePointSubsystem
-            ReferencePoint referencePointData;
-            var gotReferencePoint = referencePointSubsystem.TryGetReferencePoint(referencePointId, out referencePointData);
+            return CreateReferencePointComponent(referencePointId, sessionRelativePose);
+        }
 
-            // We were able to add it, but not retrieve it -- this shouldn't happen.
-            Assert.IsTrue(gotReferencePoint, string.Format(
-                "Added a reference point {0}, but then could not retrieve it.", referencePointId));
+        /// <summary>
+        /// Attempts to create a new reference point that is attached to an existing <see cref="ARPlane"/>.
+        /// </summary>
+        /// <param name="plane">The <see cref="ARPlane"/> to which to attach.</param>
+        /// <param name="pose">The initial <c>Pose</c>, in Unity world space, of the reference point.</param>
+        /// <returns>A new <see cref="ARReferencePoint"/> if successful, or <c>null</c> if not.</returns>
+        public ARReferencePoint TryAttachReferencePoint(ARPlane plane, Pose pose)
+        {
+            var referencePointSubsystem = ARSubsystemManager.referencePointSubsystem;
+            if (referencePointSubsystem == null)
+                return null;
 
-            // Create a new GameObject for this point
-            var parentTransform = m_SessionOrigin.trackablesParent;
-            GameObject go;
-            if (referencePointPrefab != null)
-            {
-                go = Instantiate(referencePointPrefab, parentTransform);
-            }
-            else
-            {
-                go = new GameObject(string.Format("ReferencePoint {0}", referencePointId));
-                go.transform.SetParent(parentTransform, false);
-            }
+            if (plane == null)
+                throw new ArgumentNullException("plane");
 
-            go.layer = gameObject.layer;
+            var sessionRelativePose = m_SessionOrigin.trackablesParent.InverseTransformPose(pose);
+            var newId = referencePointSubsystem.AttachReferencePoint(plane.boundedPlane.Id, sessionRelativePose);
+            if (newId == TrackableId.InvalidId)
+                return null;
 
-            // Make sure it has an ARReferencePoint component.
-            var referencePoint = go.GetComponent<ARReferencePoint>();
-            if (referencePoint == null)
-                referencePoint = go.AddComponent<ARReferencePoint>();
+            return CreateReferencePointComponent(newId, sessionRelativePose);
+        }
 
-            m_ReferencePoints.Add(referencePointId, referencePoint);
-            referencePoint.sessionRelativeData = referencePointData;
-
-            return referencePoint;
+        /// <summary>
+        /// Attempts to create a new reference point that is attached to an existing <see cref="ARPlane"/>.
+        /// </summary>
+        /// <param name="plane">The <see cref="ARPlane"/> to which to attach.</param>
+        /// <param name="position">The initial position, in Unity world space, of the reference point.</param>
+        /// <param name="rotation">The initial rotation, in Unity world space, of the reference point.</param>
+        /// <returns>A new <see cref="ARReferencePoint"/> if successful, or <c>null</c> if not.</returns>
+        public ARReferencePoint TryAttachReferencePoint(ARPlane plane, Vector3 position, Quaternion rotation)
+        {
+            return TryAttachReferencePoint(plane, new Pose(position, rotation));
         }
 
         /// <summary>
@@ -192,6 +198,74 @@ namespace UnityEngine.XR.ARFoundation
             {
                 referencePointsOut.Add(kvp.Value);
             }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct ReferencePointShadow
+        {
+            public TrackableId trackableId;
+            public TrackingState trackingState;
+            public Pose pose;
+        }
+
+        ReferencePoint CreateReferencePoint(TrackableId trackableId, TrackingState trackingState, Pose pose)
+        {
+            var shadowData = new ReferencePointShadow()
+            {
+                trackableId = trackableId,
+                trackingState = trackingState,
+                pose = pose
+            };
+
+            ReferencePoint returnVal;
+            unsafe
+            {
+                returnVal = *(ReferencePoint*)(&shadowData);
+            }
+
+            return returnVal;
+        }
+
+        ARReferencePoint CreateReferencePointComponent(TrackableId referencePointId, Pose pose)
+        {
+            if (referencePointId == TrackableId.InvalidId)
+                return null;
+
+            // Get the data back of the XRReferencePointSubsystem
+            ReferencePoint referencePointData;
+            var referencePointExists = ARSubsystemManager.referencePointSubsystem.TryGetReferencePoint(
+                referencePointId, out referencePointData);
+
+            // It's possible the native code has updated its internal state to include the reference
+            // point we just created, so manufacture some data in that case.
+            if (!referencePointExists)
+                referencePointData = CreateReferencePoint(referencePointId, TrackingState.Unknown, pose);
+
+            // Create a new GameObject for this point
+            var parentTransform = m_SessionOrigin.trackablesParent;
+            GameObject go;
+            if (referencePointPrefab != null)
+            {
+                go = Instantiate(referencePointPrefab, parentTransform);
+            }
+            else
+            {
+                go = new GameObject();
+                go.transform.SetParent(parentTransform, false);
+            }
+
+            go.name = string.Format("ReferencePoint {0}", referencePointId);
+            go.layer = gameObject.layer;
+
+            // Make sure it has an ARReferencePoint component.
+            var referencePoint = go.GetComponent<ARReferencePoint>();
+            if (referencePoint == null)
+                referencePoint = go.AddComponent<ARReferencePoint>();
+
+            m_ReferencePoints.Add(referencePointId, referencePoint);
+            referencePoint.sessionRelativeData = referencePointData;
+
+            return referencePoint;
         }
 
         void OnReferencePointUpdated(ReferencePointUpdatedEventArgs eventArgs)

@@ -34,6 +34,11 @@ namespace UnityEngine.XR.ARFoundation
             return Equals((ARSystemStateChangedEventArgs)obj);
         }
 
+        public override string ToString()
+        {
+            return state.ToString();
+        }
+
         public bool Equals(ARSystemStateChangedEventArgs other)
         {
             return state == other.state;

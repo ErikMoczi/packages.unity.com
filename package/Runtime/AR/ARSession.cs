@@ -12,6 +12,7 @@ namespace UnityEngine.XR.ARFoundation
     /// respectively.
     /// </summary>
     [DisallowMultipleComponent]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARSession.html")]
     public class ARSession : MonoBehaviour
     {
         [SerializeField]
@@ -35,18 +36,18 @@ namespace UnityEngine.XR.ARFoundation
 
         [SerializeField]
         [Tooltip("If enabled, the session will attempt to update a supported device if its AR software is out of date.")]
-        bool m_TryToInstallUpdateIfNeeded = true;
+        bool m_AttemptUpdate = true;
 
         /// <summary>
         /// If the device supports AR but does not have the necessary software, some platforms
-        /// allow prompting the user to install or update the software. If <c>tryToInstallUpdateIfNeeded</c>
-        /// is true, a software update will be attempted. If the appropriate software is not installed
-        /// or out of date, and <c>tryToInstallUpdateIfNeeded</c> is <c>false</c>, then AR will not be available.
+        /// allow prompting the user to install or update the software. If <see cref="attemptUpdate"/>
+        /// is <c>true</c>, a software update will be attempted. If the appropriate software is not installed
+        /// or out of date, and <see cref="attemptUpdate"/> is <c>false</c>, then AR will not be available.
         /// </summary>
-        public bool tryToInstallUpdateIfNeeded
+        public bool attemptUpdate
         {
-            get { return m_TryToInstallUpdateIfNeeded; }
-            set { m_TryToInstallUpdateIfNeeded = value; }
+            get { return m_AttemptUpdate; }
+            set { m_AttemptUpdate = value; }
         }
 
         /// <summary>
@@ -83,6 +84,7 @@ namespace UnityEngine.XR.ARFoundation
 #if DEBUG
             WarnIfMultipleARSessions();
 #endif
+            ARSubsystemManager.CreateSubsystems();
             StartCoroutine(Initialize());
         }
 
@@ -97,7 +99,7 @@ namespace UnityEngine.XR.ARFoundation
                 yield break;
 
             // Complete install if necessary
-            if (((ARSubsystemManager.systemState == ARSystemState.NeedsInstall) && tryToInstallUpdateIfNeeded) ||
+            if (((ARSubsystemManager.systemState == ARSystemState.NeedsInstall) && attemptUpdate) ||
                 (ARSubsystemManager.systemState == ARSystemState.Installing))
             {
                 yield return ARSubsystemManager.Install();

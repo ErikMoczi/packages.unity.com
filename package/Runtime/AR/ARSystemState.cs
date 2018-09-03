@@ -45,8 +45,9 @@ namespace UnityEngine.XR.ARFoundation
         SessionInitializing,
 
         /// <summary>
-        /// An AR session is running and data has been received for at least one frame.
+        /// An AR session is running and is tracking (i.e., the device is able to determine its
+        /// position and orientation in the world).
         /// </summary>
-        SessionDataReceived
+        SessionTracking
     }
 }

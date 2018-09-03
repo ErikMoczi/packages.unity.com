@@ -28,6 +28,8 @@ namespace UnityEditor.XR.ARFoundation
             var camera = cameraGo.GetComponent<Camera>();
             camera.clearFlags = CameraClearFlags.Color;
             camera.backgroundColor = Color.black;
+            camera.nearClipPlane = 0.1f;
+            camera.farClipPlane = 20f;
 
             var origin = originGo.GetComponent<ARSessionOrigin>();
             origin.camera = camera;
@@ -42,12 +44,14 @@ namespace UnityEditor.XR.ARFoundation
             ObjectFactory.CreateGameObject("AR Session", typeof(ARSession));
         }
 
-        [MenuItem("GameObject/XR/AR Point Cloud Debug Visualizer", false, 10)]
+        [MenuItem("GameObject/XR/AR Default Point Cloud ", false, 10)]
         static void CreateARPointCloudVisualizer()
         {
-            var go = ObjectFactory.CreateGameObject("AR Point Cloud Debug Visualizer", typeof(ARPointCloudParticleVisualizer));
+            var go = ObjectFactory.CreateGameObject("AR Default Point Cloud ",
+                typeof(ARPointCloudParticleVisualizer));
             var particleSystem = go.GetComponent<ParticleSystem>();
-
+            UnityEditorInternal.ComponentUtility.MoveComponentDown(particleSystem);
+            UnityEditorInternal.ComponentUtility.MoveComponentDown(particleSystem);
             var main = particleSystem.main;
             main.loop = false;
             main.startSize = k_ParticleSize;
@@ -65,10 +69,10 @@ namespace UnityEditor.XR.ARFoundation
             renderer.material = AssetDatabase.GetBuiltinExtraResource<Material>(k_ParticleMaterial);
         }
 
-        [MenuItem("GameObject/XR/AR Plane Debug Visualizer", false, 10)]
+        [MenuItem("GameObject/XR/AR Default Plane", false, 10)]
         static void CreateARPlaneVisualizer()
         {
-            var go = ObjectFactory.CreateGameObject("AR Plane Debug Visualizer",
+            var go = ObjectFactory.CreateGameObject("AR Default Plane",
                 typeof(ARPlaneMeshVisualizer), typeof(MeshCollider), typeof(MeshFilter),
                 typeof(MeshRenderer), typeof(LineRenderer));
             SetupMeshRenderer(go.GetComponent<MeshRenderer>());

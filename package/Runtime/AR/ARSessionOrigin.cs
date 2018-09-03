@@ -47,10 +47,11 @@ namespace UnityEngine.XR.ARFoundation
     /// 
     /// If you want to scale the content rendered by the <c>ARSessionOrigin</c> you should apply
     /// the scale to the <c>ARSessionOrigin</c>'s transform. This is preferrable to scaling
-    /// the content directly as that can have unintended side-effects. The <c>ARSessionOrigin</c>
-    /// has a convenience property for this: <see cref="scale"/>.
+    /// the content directly as that can have undesirable side-effects. Physics and NavMeshes,
+    /// for example, do not perform well when scaled very small.
     /// </remarks>
     [DisallowMultipleComponent]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARSessionOrigin.html")]
     public class ARSessionOrigin : MonoBehaviour
     {
         [SerializeField]
@@ -73,24 +74,6 @@ namespace UnityEngine.XR.ARFoundation
         {
             get { return m_Camera; }
             set { m_Camera = value; }
-        }
-
-        [SerializeField]
-        [Tooltip("The scale to apply to this ARSessionOrigin. Larger values make the virtual content appear smaller.")]
-        float m_Scale = 1F;
-
-        /// <summary>
-        /// The scale to apply to this <c>ARSessionOrigin</c>. Larger values make the virtual content appear smaller.
-        /// For example, a value of 10 makes the virtual content appear 10 times smaller.
-        /// </summary>
-        public float scale
-        {
-            get { return m_Scale; }
-            set
-            {
-                m_Scale = value;
-                transform.localScale = Vector3.one * value;
-            }
         }
 
         /// <summary>
@@ -306,17 +289,6 @@ namespace UnityEngine.XR.ARFoundation
                     }
                 }
             }
-        }
-
-        void OnEnable()
-        {
-            scale = scale;
-        }
-
-        void OnValidate()
-        {
-            // Force scale update
-            scale = scale;
         }
 
         Pose GetCameraOriginPose()

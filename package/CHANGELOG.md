@@ -30,3 +30,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [1.0.0-preview.10] - 2018-06-06
 
 - Update documentation: ARSession image and written description.
+
+## [1.0.0-preview.11] - 2018-06-08
+
+- Improve lifecycle reporting: remove public members `ARSubsystemManager.availability` and `ARSubsystemManager.trackingState`. Combine with `ARSubsystemManager.systemState` and the public event `ARSubsystemManager.systemStateChanged`.
+- Docs improvements
+- Move `ParticleSystem` to the top of the `ARDebugPointCloudVisualizer`

@@ -83,11 +83,6 @@ namespace UnityEngine.XR.ARFoundation
         }
 
         /// <summary>
-        /// This event is invoked whenever the <c>TrackingState</c> changes.
-        /// </summary>
-        public static event Action<ARTrackingStateChangedEventArgs> trackingStateChanged;
-
-        /// <summary>
         /// This event is invoked whenever the <see cref="systemState"/> changes.
         /// </summary>
         public static event Action<ARSystemStateChangedEventArgs> systemStateChanged;
@@ -98,6 +93,9 @@ namespace UnityEngine.XR.ARFoundation
         /// <remarks>
         /// This is the low-level XR interface, and the data is in session space.
         /// Consider instead subscribing to the more useful <see cref="ARPlaneManager.planeAdded"/>.
+        /// 
+        /// Plane detection is disabled if there are no subscribers to at least one
+        /// of <see cref="planeAdded"/>, <see cref="planeUpdated"/>, or <see cref="planeRemoved"/>.
         /// </remarks>
         public static event Action<PlaneAddedEventArgs> planeAdded
         {
@@ -120,6 +118,9 @@ namespace UnityEngine.XR.ARFoundation
         /// <remarks>
         /// This is the low-level XR interface, and the data is in session space.
         /// Consider instead subscribing to the more useful <see cref="ARPlaneManager.planeUpdated"/>.
+        /// 
+        /// Plane detection is disabled if there are no subscribers to at least one
+        /// of <see cref="planeAdded"/>, <see cref="planeUpdated"/>, or <see cref="planeRemoved"/>.
         /// </remarks>
         public static event Action<PlaneUpdatedEventArgs> planeUpdated
         {
@@ -142,6 +143,9 @@ namespace UnityEngine.XR.ARFoundation
         /// <remarks>
         /// This is the low-level XR interface, and the data is in session space.
         /// Consider instead subscribing to the more useful <see cref="ARPlaneManager.planeRemoved"/>.
+        /// 
+        /// Plane detection is disabled if there are no subscribers to at least one
+        /// of <see cref="planeAdded"/>, <see cref="planeUpdated"/>, or <see cref="planeRemoved"/>.
         /// </remarks>
         public static event Action<PlaneRemovedEventArgs> planeRemoved
         {
@@ -164,6 +168,8 @@ namespace UnityEngine.XR.ARFoundation
         /// <remarks>
         /// This is the low-level XR interface, and the data is in session space.
         /// Consider instead subscribing to the more useful <see cref="ARPointCloudManager.pointCloudUpdated"/>.
+        /// 
+        /// Point clouds are disabled if there are no subscribes to this event.
         /// </remarks>
         public static event Action<PointCloudUpdatedEventArgs> pointCloudUpdated
         {
@@ -315,7 +321,10 @@ namespace UnityEngine.XR.ARFoundation
             }
         }
 
-        static void CreateSubsystems()
+        /// <summary>
+        /// Creates each XR Subsystem associated with an AR session.
+        /// </summary>
+        public static void CreateSubsystems()
         {
             // Find and initialize each subsystem
             sessionSubsystem = ARSubsystemUtil.CreateSessionSubsystem();
@@ -323,7 +332,11 @@ namespace UnityEngine.XR.ARFoundation
             inputSubsystem = ARSubsystemUtil.CreateInputSubsystem();
             depthSubsystem = ARSubsystemUtil.CreateDepthSubsystem();
             planeSubsystem = ARSubsystemUtil.CreatePlaneSubsystem();
+
             referencePointSubsystem = ARSubsystemUtil.CreateReferencePointSubsystem();
+            if (referencePointSubsystem != null)
+                referencePointSubsystem.ActivateExtensions();
+
             raycastSubsystem = ARSubsystemUtil.CreateRaycastSubsystem();
 
             if (planeSubsystem != null)
@@ -395,7 +408,7 @@ namespace UnityEngine.XR.ARFoundation
         public static void StartSubsystems()
         {
             // Early out if we're already running.
-            if ((systemState == ARSystemState.SessionInitializing) || (systemState == ARSystemState.SessionDataReceived))
+            if ((systemState == ARSystemState.SessionInitializing) || (systemState == ARSystemState.SessionTracking))
                 return;
 
             if (sessionSubsystem == null)
@@ -442,20 +455,6 @@ namespace UnityEngine.XR.ARFoundation
             systemState = ARSystemState.Ready;
         }
 
-        /// <summary>
-        /// Gets the current <c>TrackingState</c>.
-        /// </summary>
-        public static TrackingState TrackingState
-        {
-            get
-            {
-                if (sessionSubsystem == null)
-                    return TrackingState.Unknown;
-
-                return sessionSubsystem.TrackingState;
-            }
-        }
-
         static ARSubsystemManager()
         {
             CreateSubsystems();
@@ -469,17 +468,20 @@ namespace UnityEngine.XR.ARFoundation
 
         static void OnTrackingStateChanged(SessionTrackingStateChangedEventArgs eventArgs)
         {
-            if (eventArgs.NewState == TrackingState.Tracking)
-                systemState = ARSystemState.SessionDataReceived;
-
-            if (trackingStateChanged != null)
-                trackingStateChanged(new ARTrackingStateChangedEventArgs(eventArgs.NewState));
+            switch (eventArgs.NewState)
+            {
+                case TrackingState.Unknown:
+                case TrackingState.Unavailable:
+                    systemState = ARSystemState.SessionInitializing;
+                    break;
+                case TrackingState.Tracking:
+                    systemState = ARSystemState.SessionTracking;
+                    break;
+            }
         }
 
         static void OnFrameReceived(FrameReceivedEventArgs eventArgs)
         {
-            systemState = ARSystemState.SessionDataReceived;
-
             if (s_CameraFrameReceived != null)
                 RaiseFrameReceivedEvent();
         }
@@ -504,40 +506,30 @@ namespace UnityEngine.XR.ARFoundation
 
         static void OnPlaneAdded(PlaneAddedEventArgs eventArgs)
         {
-            systemState = ARSystemState.SessionDataReceived;
-
             if (s_PlaneAdded != null)
                 s_PlaneAdded(eventArgs);
         }
 
         static void OnPlaneUpdated(PlaneUpdatedEventArgs eventArgs)
         {
-            systemState = ARSystemState.SessionDataReceived;
-
             if (s_PlaneUpdated != null)
                 s_PlaneUpdated(eventArgs);
         }
 
         static void OnPlaneRemoved(PlaneRemovedEventArgs eventArgs)
         {
-            systemState = ARSystemState.SessionDataReceived;
-
             if (s_PlaneRemoved != null)
                 s_PlaneRemoved(eventArgs);
         }
 
         static void OnPointCloudUpdated(PointCloudUpdatedEventArgs eventArgs)
         {
-            systemState = ARSystemState.SessionDataReceived;
-
             if (s_PointCloudUpdated != null)
                 s_PointCloudUpdated(eventArgs);
         }
 
         static void OnReferencePointUpdated(ReferencePointUpdatedEventArgs eventArgs)
         {
-            systemState = ARSystemState.SessionDataReceived;
-
             if (referencePointUpdated != null)
                 referencePointUpdated(eventArgs);
         }
