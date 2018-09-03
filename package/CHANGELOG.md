@@ -21,3 +21,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Removed setup wizard.
 - Renamed `ARRig` to `ARSessionOrigin`.
 - `ARSessionOrigin` no longer requires its `Camera` to be a child of itself.
+
+## [1.0.0-preview.9] - 2018-06-06
+
+- Rename `ARBackgroundRenderer` to `ARCameraBackground`
+- Unify `ARSessionState` & `ARSystemState` enums

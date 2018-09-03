@@ -34,47 +34,6 @@ namespace UnityEngine.XR.ARFoundation
         }
 
         [SerializeField]
-        [Tooltip("When enabled, the session is not destroyed on scene change.")]
-        bool m_PersistBetweenScenes;
-
-        /// <summary>
-        /// Get or set the persistence of this session across scenes.
-        /// </summary>
-        /// <remarks>
-        /// If the <see cref="ARSession"/> is not persisted between scenes, then it
-        /// will be destroyed during a scene change, and you may lose any detected
-        /// features in the environment, such as planar surfaces. This may be undesirable,
-        /// so you can keep the session alive by setting <see cref="ARSession.persistBetweenScenes"/>
-        /// to <c>true</c>. If you do this, you should not have an active <see cref="ARSession"/>
-        /// in the scene that gets loaded, or they could conflict with each other.
-        /// </remarks>
-        public bool persistBetweenScenes
-        {
-            get
-            {
-                return m_PersistBetweenScenes;
-            }
-
-            set
-            {
-                if (m_PersistBetweenScenes == value)
-                    return;
-
-                m_PersistBetweenScenes = value;
-
-                if (m_PersistBetweenScenes)
-                {
-                    DontDestroyOnLoad(this);
-                }
-                else
-                {
-                    var currentScene = SceneManager.GetActiveScene();
-                    SceneManager.MoveGameObjectToScene(gameObject, currentScene);
-                }
-            }
-        }
-
-        [SerializeField]
         [Tooltip("If enabled, the session will attempt to update a supported device if its AR software is out of date.")]
         bool m_TryToInstallUpdateIfNeeded = true;
 
@@ -130,7 +89,7 @@ namespace UnityEngine.XR.ARFoundation
         IEnumerator Initialize()
         {
             // Make sure we've checked for availability
-            if (ARSubsystemManager.systemState <= SystemState.CheckingAvailability)
+            if (ARSubsystemManager.systemState <= ARSystemState.CheckingAvailability)
                 yield return ARSubsystemManager.CheckAvailability();
 
             // Make sure we didn't get disabled while checking for availability
@@ -138,14 +97,14 @@ namespace UnityEngine.XR.ARFoundation
                 yield break;
 
             // Complete install if necessary
-            if (((ARSubsystemManager.systemState == SystemState.NeedsInstall) && tryToInstallUpdateIfNeeded) ||
-                (ARSubsystemManager.systemState == SystemState.Installing))
+            if (((ARSubsystemManager.systemState == ARSystemState.NeedsInstall) && tryToInstallUpdateIfNeeded) ||
+                (ARSubsystemManager.systemState == ARSystemState.Installing))
             {
                 yield return ARSubsystemManager.Install();
             }
 
             // If we're still enabled and everything is ready, then start.
-            if (ARSubsystemManager.systemState == SystemState.Ready && enabled)
+            if (ARSubsystemManager.systemState == ARSystemState.Ready && enabled)
             {
                 ARSubsystemManager.lightEstimationRequested = lightEstimation;
                 ARSubsystemManager.StartSubsystems();
@@ -168,11 +127,6 @@ namespace UnityEngine.XR.ARFoundation
 
         void Awake()
         {
-            if (persistBetweenScenes)
-                DontDestroyOnLoad(this);
-
-            ARSubsystemManager.CreateSubsystems();
-
             // Kick this off immediately so we have the answer as soon as possible
             StartCoroutine(ARSubsystemManager.CheckAvailability());
         }

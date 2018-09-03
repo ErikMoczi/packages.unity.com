@@ -62,7 +62,7 @@ namespace UnityEditor.XR.ARFoundation
 
         static readonly Type[] k_ARTypes = new Type[]
         {
-            typeof(ARBackgroundRenderer),
+            typeof(ARCameraBackground),
             typeof(ARPlaneManager),
             typeof(ARPointCloudManager),
             typeof(ARReferencePointManager)

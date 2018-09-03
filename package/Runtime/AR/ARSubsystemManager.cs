@@ -88,9 +88,9 @@ namespace UnityEngine.XR.ARFoundation
         public static event Action<ARTrackingStateChangedEventArgs> trackingStateChanged;
 
         /// <summary>
-        /// This event is invoked whenever the <see cref="ARSessionState"/> changes.
+        /// This event is invoked whenever the <see cref="systemState"/> changes.
         /// </summary>
-        public static event Action<ARSessionStateChangedEventArgs> sessionStateChanged;
+        public static event Action<ARSystemStateChangedEventArgs> systemStateChanged;
 
         /// <summary>
         /// This event is invoked whenever a plane is added.
@@ -190,18 +190,22 @@ namespace UnityEngine.XR.ARFoundation
         public static event Action<ReferencePointUpdatedEventArgs> referencePointUpdated;
 
         /// <summary>
-        /// The current state of the session. Use to query whether the session is running.
+        /// The state of the entire system. Use this to determine the status of AR availability and installation.
         /// </summary>
-        public static ARSessionState sessionState
+        public static ARSystemState systemState
         {
-            get { return s_SessionState; }
-            private set
+            get
             {
-                if (s_SessionState == value)
+                return s_SystemState;
+            }
+
+            set
+            {
+                if (s_SystemState == value)
                     return;
 
-                s_SessionState = value;
-                RaiseSessionStateChangedEvent();
+                s_SystemState = value;
+                RaiseSystemStateChangedEvent();
             }
         }
 
@@ -228,24 +232,7 @@ namespace UnityEngine.XR.ARFoundation
             }
         }
 
-        /// <summary>
-        /// Get the session availability. Use this to determine whether the device is supported.
-        /// </summary>
-        public static SessionAvailability availability { get; private set; }
-
-        /// <summary>
-        /// The state of the entire system. Use this to determine the status of AR availability and installation.
-        /// </summary>
-        public static SystemState systemState { get; private set; }
-
-        /// <summary>
-        /// Static constructor for this static class. Creates the subsystems.
-        /// </summary>
-        public static void ARSubsystemsManager()
-        {
-            s_SessionState = ARSessionState.NotRunning;
-            CreateSubsystems();
-        }
+        static SessionAvailability s_Availability;
 
         /// <summary>
         /// Start checking the availability of AR on the current device.
@@ -258,35 +245,35 @@ namespace UnityEngine.XR.ARFoundation
         /// <returns>An <c>IEnumerator</c> used for a coroutine.</returns>
         public static IEnumerator CheckAvailability()
         {
-            if (systemState == SystemState.CheckingAvailability)
-                yield return new WaitWhile(() => { return systemState == SystemState.CheckingAvailability; });
+            if (systemState == ARSystemState.CheckingAvailability)
+                yield return new WaitWhile(() => { return systemState == ARSystemState.CheckingAvailability; });
 
-            if (systemState != SystemState.Uninitialized)
+            // Availability has already been determined if we make it here and the state is not None.
+            if (systemState != ARSystemState.None)
                 yield break;
 
-            sessionSubsystem = ARSubsystemUtil.CreateSessionSubsystem();
             if (sessionSubsystem == null)
             {
-                systemState = SystemState.Unsupported;
+                systemState = ARSystemState.Unsupported;
             }
-            else if (systemState == SystemState.Uninitialized)
+            else if (systemState == ARSystemState.None)
             {
-                systemState = SystemState.CheckingAvailability;
+                systemState = ARSystemState.CheckingAvailability;
                 var availabilityPromise = sessionSubsystem.GetAvailabilityAsync();
                 yield return availabilityPromise;
-                availability = availabilityPromise.result;
+                s_Availability = availabilityPromise.result;
 
-                if (availability.IsSupported() && availability.IsInstalled())
+                if (s_Availability.IsSupported() && s_Availability.IsInstalled())
                 {
-                    systemState = SystemState.Ready;
+                    systemState = ARSystemState.Ready;
                 }
-                else if (availability.IsSupported() && !availability.IsInstalled())
+                else if (s_Availability.IsSupported() && !s_Availability.IsInstalled())
                 {
-                    systemState = SystemState.NeedsInstall;
+                    systemState = ARSystemState.NeedsInstall;
                 }
                 else
                 {
-                    systemState = SystemState.Unsupported;
+                    systemState = ARSystemState.Unsupported;
                 }
             }
         }
@@ -302,40 +289,33 @@ namespace UnityEngine.XR.ARFoundation
         /// <returns>An <c>IEnumerator</c> used for a coroutine.</returns>
         public static IEnumerator Install()
         {
-            if (systemState == SystemState.Installing)
-                yield return new WaitWhile(() => { return systemState == SystemState.Installing; });
+            if (systemState == ARSystemState.Installing)
+                yield return new WaitWhile(() => { return systemState == ARSystemState.Installing; });
 
-            if ((sessionSubsystem == null) || (systemState != SystemState.NeedsInstall))
+            if ((sessionSubsystem == null) || (systemState != ARSystemState.NeedsInstall))
                 yield break;
 
-            systemState = SystemState.Installing;
+            systemState = ARSystemState.Installing;
             var installPromise = sessionSubsystem.InstallAsync();
             yield return installPromise;
             var installStatus = installPromise.result;
 
             if (installStatus == SessionInstallationStatus.Success)
             {
-                systemState = SystemState.Ready;
-                availability = (availability | SessionAvailability.Installed);
+                systemState = ARSystemState.Ready;
+                s_Availability = (s_Availability | SessionAvailability.Installed);
             }
             else if (installStatus == SessionInstallationStatus.ErrorUserDeclined)
             {
-                systemState = SystemState.NeedsInstall;
+                systemState = ARSystemState.NeedsInstall;
             }
             else
             {
-                systemState = SystemState.Unsupported;
+                systemState = ARSystemState.Unsupported;
             }
         }
 
-        /// <summary>
-        /// Creates each XR Subsystem associated with an AR session and registers their callbacks.
-        /// </summary>
-        /// <remarks>
-        /// "Creating" a subsystem means finding and initializing a plugin. It does not begin doing
-        /// work until you call <see cref="StartSubsystems"/>.
-        /// </remarks>
-        public static void CreateSubsystems()
+        static void CreateSubsystems()
         {
             // Find and initialize each subsystem
             sessionSubsystem = ARSubsystemUtil.CreateSessionSubsystem();
@@ -403,7 +383,7 @@ namespace UnityEngine.XR.ARFoundation
             referencePointSubsystem = null;
             raycastSubsystem = null;
 
-            sessionState = ARSessionState.NotRunning;
+            systemState = ARSystemState.Ready;
         }
 
         /// <summary>
@@ -415,11 +395,14 @@ namespace UnityEngine.XR.ARFoundation
         public static void StartSubsystems()
         {
             // Early out if we're already running.
-            if ((sessionState == ARSessionState.Initializing) || (sessionState == ARSessionState.Running))
+            if ((systemState == ARSystemState.SessionInitializing) || (systemState == ARSystemState.SessionDataReceived))
                 return;
 
             if (sessionSubsystem == null)
                 throw new InvalidOperationException("Cannot start AR session because there is no session subsystem.");
+
+            if (systemState < ARSystemState.Ready)
+                throw new InvalidOperationException("StartSubsystems called before being Ready.");
 
             SetRunning(raycastSubsystem, true);
             SetRunning(referencePointSubsystem, true);
@@ -427,8 +410,12 @@ namespace UnityEngine.XR.ARFoundation
             SetRunning(planeSubsystem, planeDetectionRequested);
             SetRunning(depthSubsystem, depthDataRequested);
             SetRunning(cameraSubsystem, cameraSubsystemRequested);
+
             sessionSubsystem.Start();
-            sessionState = ARSessionState.Initializing;
+
+            // Don't set to initializing if Start actually starts immediately
+            if (systemState == ARSystemState.Ready)
+                systemState = ARSystemState.SessionInitializing;
         }
 
         /// <summary>
@@ -441,7 +428,8 @@ namespace UnityEngine.XR.ARFoundation
         /// </remarks>
         public static void StopSubsystems()
         {
-            if (sessionState == ARSessionState.NotRunning)
+            // Nothing to stop if we aren't running
+            if (systemState < ARSystemState.SessionInitializing)
                 return;
 
             SetRunning(raycastSubsystem, false);
@@ -451,7 +439,7 @@ namespace UnityEngine.XR.ARFoundation
             SetRunning(depthSubsystem, false);
             SetRunning(cameraSubsystem, false);
             sessionSubsystem.Stop();
-            sessionState = ARSessionState.NotRunning;
+            systemState = ARSystemState.Ready;
         }
 
         /// <summary>
@@ -468,16 +456,21 @@ namespace UnityEngine.XR.ARFoundation
             }
         }
 
-        static void RaiseSessionStateChangedEvent()
+        static ARSubsystemManager()
         {
-            if (sessionStateChanged != null)
-                sessionStateChanged(new ARSessionStateChangedEventArgs(sessionState));
+            CreateSubsystems();
+        }
+
+        static void RaiseSystemStateChangedEvent()
+        {
+            if (systemStateChanged != null)
+                systemStateChanged(new ARSystemStateChangedEventArgs(systemState));
         }
 
         static void OnTrackingStateChanged(SessionTrackingStateChangedEventArgs eventArgs)
         {
             if (eventArgs.NewState == TrackingState.Tracking)
-                sessionState = ARSessionState.Running;
+                systemState = ARSystemState.SessionDataReceived;
 
             if (trackingStateChanged != null)
                 trackingStateChanged(new ARTrackingStateChangedEventArgs(eventArgs.NewState));
@@ -485,7 +478,7 @@ namespace UnityEngine.XR.ARFoundation
 
         static void OnFrameReceived(FrameReceivedEventArgs eventArgs)
         {
-            sessionState = ARSessionState.Running;
+            systemState = ARSystemState.SessionDataReceived;
 
             if (s_CameraFrameReceived != null)
                 RaiseFrameReceivedEvent();
@@ -511,7 +504,7 @@ namespace UnityEngine.XR.ARFoundation
 
         static void OnPlaneAdded(PlaneAddedEventArgs eventArgs)
         {
-            sessionState = ARSessionState.Running;
+            systemState = ARSystemState.SessionDataReceived;
 
             if (s_PlaneAdded != null)
                 s_PlaneAdded(eventArgs);
@@ -519,7 +512,7 @@ namespace UnityEngine.XR.ARFoundation
 
         static void OnPlaneUpdated(PlaneUpdatedEventArgs eventArgs)
         {
-            sessionState = ARSessionState.Running;
+            systemState = ARSystemState.SessionDataReceived;
 
             if (s_PlaneUpdated != null)
                 s_PlaneUpdated(eventArgs);
@@ -527,7 +520,7 @@ namespace UnityEngine.XR.ARFoundation
 
         static void OnPlaneRemoved(PlaneRemovedEventArgs eventArgs)
         {
-            sessionState = ARSessionState.Running;
+            systemState = ARSystemState.SessionDataReceived;
 
             if (s_PlaneRemoved != null)
                 s_PlaneRemoved(eventArgs);
@@ -535,7 +528,7 @@ namespace UnityEngine.XR.ARFoundation
 
         static void OnPointCloudUpdated(PointCloudUpdatedEventArgs eventArgs)
         {
-            sessionState = ARSessionState.Running;
+            systemState = ARSystemState.SessionDataReceived;
 
             if (s_PointCloudUpdated != null)
                 s_PointCloudUpdated(eventArgs);
@@ -543,7 +536,7 @@ namespace UnityEngine.XR.ARFoundation
 
         static void OnReferencePointUpdated(ReferencePointUpdatedEventArgs eventArgs)
         {
-            sessionState = ARSessionState.Running;
+            systemState = ARSystemState.SessionDataReceived;
 
             if (referencePointUpdated != null)
                 referencePointUpdated(eventArgs);
@@ -565,6 +558,8 @@ namespace UnityEngine.XR.ARFoundation
             else
                 subsystem.Stop();
         }
+
+        static ARSystemState s_SystemState;
 
         // We don't expose this publicly because it is inferred from
         // 1. lighting estimation requested
@@ -599,8 +594,6 @@ namespace UnityEngine.XR.ARFoundation
         static Action<PointCloudUpdatedEventArgs> s_PointCloudUpdated;
 
         static Action<ARCameraFrameEventArgs> s_CameraFrameReceived;
-
-        static ARSessionState s_SessionState;
 
         static bool depthDataRequested
         {

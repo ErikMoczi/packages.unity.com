@@ -21,7 +21,7 @@ namespace UnityEditor.XR.ARFoundation
         {
             var originGo = ObjectFactory.CreateGameObject("AR Session Origin", typeof(ARSessionOrigin));
             var cameraGo = ObjectFactory.CreateGameObject("AR Camera",
-                typeof(Camera), typeof(TrackedPoseDriver), typeof(ARBackgroundRenderer));
+                typeof(Camera), typeof(TrackedPoseDriver), typeof(ARCameraBackground));
 
             Undo.SetTransformParent(cameraGo.transform, originGo.transform, "Parent camera to session origin");
 
