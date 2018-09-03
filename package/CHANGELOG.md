@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.31] - 2018-7-04
+
+### mark metadata tests with performance category
+
 ## [0.1.30] - 2018-6-27
 
 ### fix Method measurement

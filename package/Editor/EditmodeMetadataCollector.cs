@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.XR;
 
+[Category("Performance")]
 public class EditmodeMetadataCollector : IPrebuildSetup
 {
     private PerformanceTestRun m_TestRun;

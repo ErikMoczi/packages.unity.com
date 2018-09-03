@@ -11,12 +11,11 @@ YourProject/Packages/manifest.json
 ``` json
 {
 	"dependencies": {
-		"com.unity.test-framework.performance": "0.1.30-preview"
+		"com.unity.test-framework.performance": "0.1.31-preview"
 	  },
 	  "testables": [
 			"com.unity.test-framework.performance"
-	  ],
-	  "registry": "https://staging-packages.unity.com"
+	  ]
 }
 ```
 

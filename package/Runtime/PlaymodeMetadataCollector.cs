@@ -14,6 +14,7 @@ using UnityEditor;
 
 #endif
 
+[Category("Performance")]
 public class PlaymodeMetadataCollector : IPrebuildSetup
 {
     private PerformanceTestRun m_TestRun;
