@@ -1,4 +1,5 @@
-﻿namespace Unity.Properties.Serialization
+﻿#if NET_4_6
+namespace Unity.Properties.Serialization
 {
     ///<summary>
     /// Based on https://pastebin.com/HqAw2pTG
@@ -233,3 +234,4 @@
         }
     }
 }
+#endif // NET_4_6

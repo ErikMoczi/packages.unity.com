@@ -1,4 +1,5 @@
-﻿namespace Unity.Properties.Serialization
+﻿#if NET_4_6
+namespace Unity.Properties.Serialization
 {
     public static class JsonSerializer
     {
@@ -21,3 +22,4 @@
         }
     }
 }
+#endif // NET_4_6

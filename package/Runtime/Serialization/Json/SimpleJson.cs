@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if NET_4_6
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -55,3 +56,4 @@ namespace Unity.Properties.Serialization
         }
     }
 }
+#endif // NET_4_6

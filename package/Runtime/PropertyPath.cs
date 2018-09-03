@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if NET_4_6
+using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine.Assertions;
@@ -225,3 +226,4 @@ namespace Unity.Properties
         }
     }
 }
+#endif // NET_4_6

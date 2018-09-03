@@ -1,4 +1,5 @@
-﻿namespace Unity.Properties
+﻿#if NET_4_6
+namespace Unity.Properties
 {
     public interface IPropertyContainer
     {
@@ -21,3 +22,4 @@
         }
     }
 }
+#endif // NET_4_6

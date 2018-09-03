@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if NET_4_6
+using System;
 using UnityEngine;
 
 namespace Unity.Properties
@@ -61,3 +62,4 @@ namespace Unity.Properties
             where TContainer : struct, IPropertyContainer;
     }
 }
+#endif // NET_4_6

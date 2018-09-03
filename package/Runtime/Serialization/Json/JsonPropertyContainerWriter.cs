@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#if NET_4_6
+using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Unity.Properties.Serialization
@@ -61,3 +62,4 @@ namespace Unity.Properties.Serialization
         }
     }
 }
+#endif // NET_4_6

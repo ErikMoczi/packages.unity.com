@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if NET_4_6
+using System;
 
 namespace Unity.Properties
 {
@@ -30,3 +31,4 @@ namespace Unity.Properties
         }
     }
 }
+#endif // NET_4_6

@@ -1,3 +1,4 @@
+﻿#if NET_4_6
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -57,3 +58,4 @@ namespace Unity.Properties
         void Insert(ref TContainer container, int index, TItem value);
     }
 }
+#endif // NET_4_6

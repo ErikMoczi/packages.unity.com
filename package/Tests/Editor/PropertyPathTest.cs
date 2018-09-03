@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿#if NET_4_6
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -116,3 +117,4 @@ namespace Unity.Properties.Tests
         
     }
 }
+#endif // NET_4_6

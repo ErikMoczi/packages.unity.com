@@ -1,10 +1,40 @@
 {
-	"name": "com.unity.properties",
-	"displayName":"Property API",
-	"version": "0.1.13",
-	"unity": "2018.1",
-	"description": "Interfaces and utilities to describe and visit data containers.",
-	"keywords": ["properties", "property", "schema", "api"],
-	"dependencies": {
-	}
+  "_from": "com.unity.properties@0.1.14",
+  "_id": "com.unity.properties@0.1.14",
+  "_inBundle": false,
+  "_integrity": "sha1-QTUh+I54OiQRFfoCleo/yLdAWmw=",
+  "_location": "/com.unity.properties",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "version",
+    "registry": true,
+    "raw": "com.unity.properties@0.1.14",
+    "name": "com.unity.properties",
+    "escapedName": "com.unity.properties",
+    "rawSpec": "0.1.14",
+    "saveSpec": null,
+    "fetchSpec": "0.1.14"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://download.staging-packages.unity.com/com.unity.properties/-/com.unity.properties-0.1.14.tgz",
+  "_shasum": "413521f88e783a241115fa0295ea3fc8b7405a6c",
+  "_spec": "com.unity.properties@0.1.14",
+  "_where": "/Users/fabrizioperria",
+  "bundleDependencies": false,
+  "dependencies": {},
+  "deprecated": false,
+  "description": "Interfaces and utilities to describe and visit data containers.",
+  "displayName": "Property API",
+  "keywords": [
+    "properties",
+    "property",
+    "schema",
+    "api"
+  ],
+  "name": "com.unity.properties",
+  "unity": "2018.1",
+  "version": "0.1.14-preview.1"
 }

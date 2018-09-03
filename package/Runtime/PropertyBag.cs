@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿#if NET_4_6
+using System.Collections.Generic;
 using UnityEngine.Assertions;
 
 namespace Unity.Properties
@@ -92,3 +93,4 @@ namespace Unity.Properties
         }
     }
 }
+#endif // NET_4_6

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if NET_4_6
+using System;
 using System.Globalization;
 
 namespace Unity.Properties.Serialization
@@ -203,3 +204,4 @@ namespace Unity.Properties.Serialization
         }
     }
 }
+#endif // NET_4_6
