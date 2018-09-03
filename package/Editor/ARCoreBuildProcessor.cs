@@ -27,7 +27,7 @@ namespace UnityEditor.XR.ARCore
 
         void EnsureMinSdkVersion()
         {
-            var arcoreSettings = ARCoreManifest.LoadOrCreateSettings();
+            var arcoreSettings = ARCoreSettings.GetOrCreateSettings();
             int minSdkVersion;
             if (arcoreSettings.requirment == ARCoreSettings.Requirement.Optional)
                 minSdkVersion = 14;
@@ -174,16 +174,6 @@ namespace UnityEditor.XR.ARCore
             containingNode.AppendChild(element);
         }
 
-        public static ARCoreSettings LoadOrCreateSettings()
-        {
-            var guids = AssetDatabase.FindAssets("t:" + typeof(ARCoreSettings).Name);
-            if (guids.Length == 0)
-                return ScriptableObject.CreateInstance<ARCoreSettings>();
-
-            var path = AssetDatabase.GUIDToAssetPath(guids[0]);
-            return AssetDatabase.LoadAssetAtPath<ARCoreSettings>(path);
-        }
-
         // This ensures the Android Manifest corresponds to
         // https://developers.google.com/ar/develop/java/enable-arcore
         public void OnPostGenerateGradleAndroidProject(string path)
@@ -203,7 +193,7 @@ namespace UnityEditor.XR.ARCore
             // TODO: This could be handled at runtime instead
             FindOrCreateTagWithAttribute(manifestDoc, manifestNode, "uses-permission", "name", k_AndroidPermissionCamera);
 
-            var settings = LoadOrCreateSettings();
+            var settings = ARCoreSettings.GetOrCreateSettings();
             if (settings.requirment == ARCoreSettings.Requirement.Optional)
             {
                 FindOrCreateTagWithAttributes(manifestDoc, applicationNode, "meta-data", "name", k_AndroidNameValue, "value", "optional");

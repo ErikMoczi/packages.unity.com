@@ -8,14 +8,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### This is the first preview release of the ARCore package for multi-platform AR.
 
-In this release we are shipping a working iteration of the ARCore package for 
+In this release we are shipping a working iteration of the ARCore package for
 Unity's native multi-platform AR support.
-Included in the package are dynamic libraries, configuration files, binaries 
+Included in the package are dynamic libraries, configuration files, binaries
 and project files needed to adapt ARCore to the Unity multi-platform AR API.
 
 ## [1.0.0-preview.8] - 2018-05-07
 
-### Added 
+### Added
 -Created a Legacy XRInput interface to automate the switch between 2018.1 and 2018.2 XRInput versions.
 
 ### Changed
@@ -32,3 +32,6 @@ and project files needed to adapt ARCore to the Unity multi-platform AR API.
 ## [1.0.0-preview.11] - 2018-05-24
 - Add Editor as an include platform to ensure ARCore extensions work. This was preventing the availability check from running.
 - Fix a bug which prevented the ARSession from restarting once destroyed.
+
+## [1.0.0-preview.12] - 2018-06-01
+- Add ARCoreSettings to Player Settings menu. Allows you to select whether ARCore is 'optional' or 'required'.
