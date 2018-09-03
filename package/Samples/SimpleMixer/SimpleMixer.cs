@@ -16,7 +16,7 @@ public class SimpleMixer : MonoBehaviour
     PlayableGraph m_Graph;
     AnimationScriptPlayable m_CustomMixerPlayable;
 
-    void Start()
+    void OnEnable()
     {
         // Load animation clips.
         var idleClip = SampleUtility.LoadAnimationClipFromFbx("DefaultMale/Models/DefaultMale_Generic", "Idle");

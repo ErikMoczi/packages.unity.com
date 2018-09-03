@@ -42,7 +42,7 @@ public class WeightedMaskMixer : MonoBehaviour
         }
     }
 
-    void Start()
+    void OnEnable()
     {
         // Load animation clips.
         var idleClip = SampleUtility.LoadAnimationClipFromFbx("DefaultMale/Models/DefaultMale_Generic", "Idle");

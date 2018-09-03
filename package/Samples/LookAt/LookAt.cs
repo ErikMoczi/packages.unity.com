@@ -79,4 +79,10 @@ public class LookAt : MonoBehaviour
         output.SetSourcePlayable(m_LookAtPlayable);
         m_Graph.Play();
     }
+
+    void OnDisable()
+    {
+        m_Graph.Destroy();
+        Object.Destroy(m_Target);
+    }
 }

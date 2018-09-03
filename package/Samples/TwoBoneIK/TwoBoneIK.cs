@@ -49,5 +49,6 @@ public class TwoBoneIK : MonoBehaviour
     void OnDisable()
     {
         m_Graph.Destroy();
+        Object.Destroy(m_Effector);
     }
 }

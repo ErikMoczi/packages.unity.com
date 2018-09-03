@@ -1,7 +1,7 @@
 {
 	"name": "com.unity.animation.cs-jobs-samples",
 	"displayName":"Animation C# Jobs Samples",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"unity": "2018.2",
 	"description": "Code samples using the animation C# jobs feature.\n\nAnimation jobs are part of the Playable feature and they allow to modify the animation stream using just a C# script. Here is the list of the samples in this package:\n\u25AA SimpleMixer\n\u25AA WeightedMaskMixer\n\u25AA Look At\n\u25AA Two-bone IK\n\u25AA Fullbody IK",
 	"keywords": ["animation", "c#", "cs", "jobs", "samples"],
