@@ -9,9 +9,9 @@ public class NativeHashMapTests_InJobs : NativeHashMapTestsFixture
     [Test]
     public void Read_And_Write()
     {
-        var hashMap = new NativeHashMap<int, int>(hashMapSize, Allocator.Temp);
-        var writeStatus = new NativeArray<int>(hashMapSize, Allocator.Temp);
-        var readValues = new NativeArray<int>(hashMapSize, Allocator.Temp);
+        var hashMap = new NativeHashMap<int, int>(hashMapSize, Allocator.TempJob);
+        var writeStatus = new NativeArray<int>(hashMapSize, Allocator.TempJob);
+        var readValues = new NativeArray<int>(hashMapSize, Allocator.TempJob);
 
         var writeData = new HashMapWriteJob();
         writeData.hashMap = hashMap;
@@ -40,9 +40,9 @@ public class NativeHashMapTests_InJobs : NativeHashMapTestsFixture
     [Test]
     public void Read_And_Write_Full()
     {
-        var hashMap = new NativeHashMap<int, int>(hashMapSize/2, Allocator.Temp);
-        var writeStatus = new NativeArray<int>(hashMapSize, Allocator.Temp);
-        var readValues = new NativeArray<int>(hashMapSize, Allocator.Temp);
+        var hashMap = new NativeHashMap<int, int>(hashMapSize/2, Allocator.TempJob);
+        var writeStatus = new NativeArray<int>(hashMapSize, Allocator.TempJob);
+        var readValues = new NativeArray<int>(hashMapSize, Allocator.TempJob);
 
         var writeData = new HashMapWriteJob();
         writeData.hashMap = hashMap;
@@ -80,9 +80,9 @@ public class NativeHashMapTests_InJobs : NativeHashMapTestsFixture
     [Test]
     public void Key_Collisions()
     {
-        var hashMap = new NativeHashMap<int, int>(hashMapSize, Allocator.Temp);
-        var writeStatus = new NativeArray<int>(hashMapSize, Allocator.Temp);
-        var readValues = new NativeArray<int>(hashMapSize, Allocator.Temp);
+        var hashMap = new NativeHashMap<int, int>(hashMapSize, Allocator.TempJob);
+        var writeStatus = new NativeArray<int>(hashMapSize, Allocator.TempJob);
+        var readValues = new NativeArray<int>(hashMapSize, Allocator.TempJob);
 
         var writeData = new HashMapWriteJob();
         writeData.hashMap = hashMap;
@@ -120,18 +120,18 @@ public class NativeHashMapTests_InJobs : NativeHashMapTestsFixture
     struct Clear : IJob
     {
         public NativeHashMap<int, int> hashMap;
-                        
+
         public void Execute()
         {
             hashMap.Clear();
         }
     }
-    
+
     [Test]
     public void Clear_And_Write()
     {
-        var hashMap = new NativeHashMap<int, int>(hashMapSize/2, Allocator.Temp);
-        var writeStatus = new NativeArray<int>(hashMapSize, Allocator.Temp);
+        var hashMap = new NativeHashMap<int, int>(hashMapSize/2, Allocator.TempJob);
+        var writeStatus = new NativeArray<int>(hashMapSize, Allocator.TempJob);
 
         var clearJob = new Clear
         {
@@ -146,14 +146,14 @@ public class NativeHashMapTests_InJobs : NativeHashMapTestsFixture
             status = writeStatus,
             keyMod = hashMapSize,
         };
-        
+
         var writeJobHandle = writeJob.Schedule(clearJobHandle);
         writeJobHandle.Complete();
 
         writeStatus.Dispose();
         hashMap.Dispose();
     }
-    
+
     struct MergeSharedValues : IJobNativeMultiHashMapMergedSharedKeyIndices
     {
         [NativeDisableParallelForRestriction] public NativeArray<int> sharedCount;
@@ -194,7 +194,7 @@ public class NativeHashMapTests_InJobs : NativeHashMapTestsFixture
         };
         var mergetedSharedValuesJobHandle = mergeSharedValuesJob.Schedule(hashMap, 64);
         mergetedSharedValuesJobHandle.Complete();
-        
+
         for (int i = 0; i < count; i++)
         {
             Assert.AreEqual(count/sharedKeyCount,sharedCount[sharedIndices[i]]);
@@ -205,5 +205,5 @@ public class NativeHashMapTests_InJobs : NativeHashMapTestsFixture
         totalSharedCount.Dispose();
         hashMap.Dispose();
     }
-    
+
 }
