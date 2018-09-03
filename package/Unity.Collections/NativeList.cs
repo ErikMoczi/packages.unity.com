@@ -226,6 +226,8 @@ namespace Unity.Collections
 #endif
 
 	        byte* buffer = (byte*)m_ListData;
+	        // We use the first bit of the pointer to infer that the array is in list mode
+	        // Thus the job scheduling code will need to patch it.
 	        buffer += 1;
 	        var array = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T> (buffer, 0, Allocator.Invalid);
 

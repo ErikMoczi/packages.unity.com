@@ -865,10 +865,6 @@ namespace Unity.Collections
                     if (!JobsUtility.GetWorkStealingRange(ref ranges, jobIndex, out begin, out end))
                         return;
 
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                    JobsUtility.PatchBufferMinMaxRanges(bufferRangePatchData, UnsafeUtility.AddressOf(ref fullData), begin, end - begin);
-#endif
-
                     var buckets  = (int*)fullData.HashMap.m_Buffer->buckets;
                     var nextPtrs = (int*)fullData.HashMap.m_Buffer->next;
                     var keys     = fullData.HashMap.m_Buffer->keys;
@@ -876,15 +872,24 @@ namespace Unity.Collections
                     
                     for (int i = begin; i < end; i++)
                     {
-                        int entryIndex = buckets[i];
+                        int   entryIndex = buckets[i];
+                        
                         while (entryIndex != -1)
                         {
                             var key   = UnsafeUtility.ReadArrayElement<TKey>(keys, entryIndex);
                             var value = UnsafeUtility.ReadArrayElement<int>(values, entryIndex);
                             int firstValue;
+
                             NativeMultiHashMapIterator<TKey> it;
-                            
                             fullData.HashMap.TryGetFirstValue(key, out firstValue, out it);
+                            
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                            var startIndex = math.min(firstValue, value);
+                            var lastIndex = math.max(firstValue, value);
+                            var rangeLength = (lastIndex - startIndex) + 1;
+
+                            JobsUtility.PatchBufferMinMaxRanges(bufferRangePatchData, UnsafeUtility.AddressOf(ref fullData), startIndex, rangeLength);
+#endif
                             fullData.JobData.Execute(firstValue, value);
                             
                             entryIndex = nextPtrs[entryIndex];
