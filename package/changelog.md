@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.4-preview.22
+
+- Fix issue with pointers comparison not supported
+- Fix a StackOverflow exception when calling an interface method through a generic constraint on a nested type where the declaring type is a generic
+- Fix an issue with EntityCommandBuffer.CreateEntity/AddComponent that could lead to ArgumentException/IndexOutOfRangeException
+
 ## 0.2.4-preview.21
 
 - Correct issue with Android AOT compilation being unable to find the NDK.

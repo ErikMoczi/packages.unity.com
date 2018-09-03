@@ -3,18 +3,36 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Burst.Compiler.IL;
 using Unity.Burst.LowLevel;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.Compilation;
+using UnityEditor.Scripting.Compilers;
 using UnityEditorInternal;
 using UnityEngine;
 
 namespace Unity.Burst.Editor
 {
     using static BurstCompilerOptions;
+
+    internal class BclParser : CompilerOutputParserBase
+    {
+        private static Regex sNeverMatch = new Regex(@"^\b$", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
+
+        protected override string GetErrorIdentifier()
+        {
+            return "";
+        }
+
+        protected override Regex GetOutputRegex()
+        {
+            return sNeverMatch;
+        }
+    }
+
 
     internal class BurstAotCompiler : IPostBuildPlayerScriptDLLs
     {
@@ -34,6 +52,11 @@ namespace Unity.Burst.Editor
 
             // Collect all method signatures
             var methodsToCompile = BurstReflection.FindExecuteMethods(AssembliesType.Player);
+
+            if (methodsToCompile.Count == 0)
+            {
+                return; // Nothing to do
+            }
 
             // Prepare options
             var commonOptions = new List<string>();
@@ -189,7 +212,7 @@ namespace Unity.Burst.Editor
 
                 //Debug.Log("Burst compile with response file: " + responseFile);
 
-                Runner.RunManagedProgram(Path.Combine(BurstLoader.RuntimePath, BurstAotCompilerExecutable), "@" + responseFile);
+                Runner.RunManagedProgram(Path.Combine(BurstLoader.RuntimePath, BurstAotCompilerExecutable),  "@" + responseFile, Application.dataPath + "/..", new BclParser(), null);
             }
         }
 
