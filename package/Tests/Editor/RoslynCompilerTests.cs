@@ -1,3 +1,4 @@
+#if COMPILER_TESTS
 using System;
 using System.Linq;
 using System.Reflection;
@@ -91,7 +92,7 @@ namespace UnityEditor.Compilation
             }
         }
 
-        static async System.Threading.Tasks.Task<long> CompileIncrementallyAsync(CompilerTestFixture fixture, string[] sourceFiles)
+        static System.Threading.Tasks.Task<long> CompileIncrementallyAsync(CompilerTestFixture fixture, string[] sourceFiles)
         {
             using (var compiler = CompilerConnection.instance.CreateIncrementalCompilerService(1000))
             {
@@ -150,3 +151,4 @@ namespace UnityEditor.Compilation
         }
     }
 }
+#endif
