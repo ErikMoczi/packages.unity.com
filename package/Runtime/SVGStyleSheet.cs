@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using UnityEngine;
 
-namespace Unity.VectorGraphics.Editor
+namespace Unity.VectorGraphics
 {
     internal class SVGPropertySheet : Dictionary<string, string> { }
 

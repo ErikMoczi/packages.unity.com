@@ -6,7 +6,7 @@ using System.Xml;
 using System.Linq;
 using UnityEngine;
 
-namespace Unity.VectorGraphics.Editor
+namespace Unity.VectorGraphics
 {
     /// <summary>Reads an SVG document and builds a vector scene.</summary>
     public class SVGParser

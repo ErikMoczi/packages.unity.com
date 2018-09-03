@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine.TestTools;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VectorGraphics.Editor;
+using Unity.VectorGraphics;
 
 public class StyleSheetTests
 {
