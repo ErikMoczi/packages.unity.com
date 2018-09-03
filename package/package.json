@@ -4,8 +4,9 @@
         "publishtest": true
     }, 
     "dependencies": {}, 
-    "description": "2D Common", 
-    "gitHead": "b950c233bfde92511d0918ac444b195a6f0d81e2", 
+    "description": "2D Common is a package that contains shared functionalities that are used by most of the other 2D packages.", 
+    "displayName": "2D Common", 
+    "gitHead": "af6bc1fb31ba7784791a1d77403ef0a5aed0ebb3", 
     "keywords": [
         "2d"
     ], 
@@ -15,5 +16,5 @@
         "url": "git@gitlab.internal.unity3d.com:2d/2d-common.git"
     }, 
     "unity": "2018.1", 
-    "version": "1.0.9-preview.1"
+    "version": "1.0.9-preview.2"
 }

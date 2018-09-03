@@ -1,5 +1,5 @@
 {
-    "name": "RuntimeTests",
+    "name": "com.unity.2d.common.RuntimeTests",
     "references": [
         "com.unity.2d.common.Runtime"
     ],
