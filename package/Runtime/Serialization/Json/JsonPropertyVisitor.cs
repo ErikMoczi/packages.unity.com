@@ -3,11 +3,7 @@ using System.Globalization;
 
 namespace Unity.Properties.Serialization
 {
-    public class JsonPropertyVisitor : PropertyVisitor,
-        ICustomVisit<bool>,
-        ICustomVisit<float>,
-        ICustomVisit<double>,
-        ICustomVisit<string>
+    public class JsonPropertyVisitor : PropertyVisitor, ICustomVisitPrimitives
     {
         public static class Style
         {
@@ -51,13 +47,63 @@ namespace Unity.Properties.Serialization
             }
             else
             {
-                AppendPrimitive(value.ToString());
+                AppendPrimitive(JsonUtility.EncodeJsonString(value.ToString()));
             }
         }
 
         void ICustomVisit<bool>.CustomVisit(bool value)
         {
             AppendPrimitive(value ? "true" : "false");
+        }
+        
+        private void AppendNumeric<TValue>(TValue value)
+        {
+            AppendPrimitive(value.ToString());
+        }
+
+        void ICustomVisit<byte>.CustomVisit(byte value)
+        {
+            AppendNumeric(value);
+        }
+
+        void ICustomVisit<sbyte>.CustomVisit(sbyte value)
+        {
+            AppendNumeric(value);
+        }
+
+        void ICustomVisit<ushort>.CustomVisit(ushort value)
+        {
+            AppendNumeric(value);
+        }
+
+        void ICustomVisit<short>.CustomVisit(short value)
+        {
+            AppendNumeric(value);
+        }
+
+        void ICustomVisit<uint>.CustomVisit(uint value)
+        {
+            AppendNumeric(value);
+        }
+
+        void ICustomVisit<int>.CustomVisit(int value)
+        {
+            AppendNumeric(value);
+        }
+
+        void ICustomVisit<ulong>.CustomVisit(ulong value)
+        {
+            AppendNumeric(value);
+        }
+
+        void ICustomVisit<long>.CustomVisit(long value)
+        {
+            AppendNumeric(value);
+        }
+
+        void ICustomVisit<char>.CustomVisit(char value)
+        {
+            AppendPrimitive(JsonUtility.EncodeJsonString(string.Empty + value));
         }
 
         void ICustomVisit<float>.CustomVisit(float value)
@@ -75,9 +121,8 @@ namespace Unity.Properties.Serialization
             AppendPrimitive(JsonUtility.EncodeJsonString(value));
         }
 
-        public override bool BeginContainer<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+        protected override bool BeginContainer()
         {
-            base.BeginContainer(ref container, context);
             if (IsListItem)
             {
                 Indent--;
@@ -93,13 +138,11 @@ namespace Unity.Properties.Serialization
             }
 
             Indent++;
-
             return true;
         }
 
-        public override void EndContainer<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+        protected override void EndContainer()
         {
-            base.EndContainer(ref container, context);
             Indent--;
 
             // Remove the trailing comma
@@ -122,9 +165,8 @@ namespace Unity.Properties.Serialization
             StringBuffer.Append("},\n");
         }
 
-        public override bool BeginList<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+        protected override bool BeginList()
         {
-            base.BeginList(ref container, context);
             StringBuffer.Append(' ', Style.Space * Indent);
             StringBuffer.Append('\"');
             StringBuffer.Append(Property.Name);
@@ -133,9 +175,8 @@ namespace Unity.Properties.Serialization
             return true;
         }
 
-        public override void EndList<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+        protected override void EndList()
         {
-            base.EndList(ref container, context);
             Indent--;
 
             // Remove the trailing comma

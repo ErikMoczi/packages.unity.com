@@ -8,10 +8,10 @@ namespace Unity.Properties
         IEnumerable<IProperty> Properties { get; }
         IProperty FindProperty(string name);
 
-        bool Visit<TContainer>(TContainer container, IPropertyVisitor visitor) 
+        void Visit<TContainer>(TContainer container, IPropertyVisitor visitor) 
             where TContainer : class, IPropertyContainer;
         
-        bool Visit<TContainer>(ref TContainer container, IPropertyVisitor visitor) 
+        void Visit<TContainer>(ref TContainer container, IPropertyVisitor visitor) 
             where TContainer : struct, IPropertyContainer;
     }
 }

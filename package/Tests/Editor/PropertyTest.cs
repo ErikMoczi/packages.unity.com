@@ -10,15 +10,29 @@ namespace Unity.Properties.Tests
 		public void Simple_Visitor()
 		{
 			// test PropertyBag
-			var container = new TestContainer { IntValue = 123 };
+			var container = new TestContainer { IntValue = 123, EnumValue = TestEnum.Test};
 
 			// test Set/GetValue
 			Assert.AreEqual(123, TestContainer.IntValueProperty.GetValue(container));
+			Assert.AreEqual(TestEnum.Test, TestContainer.EnumValueProperty.GetValue(container));
 
 			// test visitor
 			var leafVisitor = new LeafCountVisitor();
-			container.PropertyBag.Visit(container, leafVisitor);
+			container.Visit(leafVisitor);
 			Assert.AreEqual(TestContainer.LeafCount, leafVisitor.LeafCount);
+		}
+
+		private class DerivedContainer : TestContainer
+		{
+		}
+
+		[Test]
+		public void Contravariant_Cast()
+		{
+			// this test is to make sure properties from base classes can be used in
+			// derived classes to build their property bag.
+			var p = TestContainer.IntValueProperty as IProperty<DerivedContainer, int>;
+			Assert.NotNull(p);
 		}
 
 		private class LeafCountVisitor : PropertyVisitor

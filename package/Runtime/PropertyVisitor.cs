@@ -88,25 +88,47 @@ namespace Unity.Properties
             Visit(ref container, context);
         }
 
-        public virtual bool BeginContainer<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
-            where TContainer : IPropertyContainer where TValue : IPropertyContainer
+        public virtual bool BeginContainer<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+            where TContainer : class, IPropertyContainer where TValue : IPropertyContainer
         {
             return true;
+        }
+        
+        public virtual bool BeginContainer<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+            where TContainer : struct, IPropertyContainer where TValue : IPropertyContainer
+        {
+            return true;
+        }
+        
+        public virtual void EndContainer<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+            where TContainer : class, IPropertyContainer where TValue : IPropertyContainer
+        {
         }
 
         public virtual void EndContainer<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
-            where TContainer : IPropertyContainer where TValue : IPropertyContainer
+            where TContainer : struct, IPropertyContainer where TValue : IPropertyContainer
         {
         }
 
+        public virtual bool BeginList<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+            where TContainer : class, IPropertyContainer
+        {
+            return true;
+        }
+        
         public virtual bool BeginList<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
-            where TContainer : IPropertyContainer
+            where TContainer : struct, IPropertyContainer
         {
             return true;
         }
 
+        public virtual void EndList<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+            where TContainer : class, IPropertyContainer
+        {
+        }
+        
         public virtual void EndList<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
-            where TContainer : IPropertyContainer
+            where TContainer : struct, IPropertyContainer
         {
         }
     }
@@ -133,13 +155,14 @@ namespace Unity.Properties
         /// </summary>
         protected bool IsListItem => ListIndex >= 0;
 
-        protected void VisitSetup<TValue>(ref VisitContext<TValue> context)
+        protected virtual void VisitSetup<TContainer, TValue>(ref TContainer container, ref VisitContext<TValue> context)
+            where TContainer : IPropertyContainer
         {
             Property = context.Property;
             ListIndex = context.Index;
         }
 
-        protected virtual bool CustomVisit<TValue>(TValue value)
+        private bool CustomVisit<TValue>(TValue value)
         {
             var validationHandler = this as IExcludeVisit<TValue>;
             if ((validationHandler != null && validationHandler.ExcludeVisit(value)) ||
@@ -160,13 +183,13 @@ namespace Unity.Properties
         
         public override bool ExcludeVisit<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
         {
-            VisitSetup(ref context);
+            VisitSetup(ref container, ref context);
             return CustomVisit(context.Value);
         }
         
         public override bool ExcludeVisit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
         {
-            VisitSetup(ref context);
+            VisitSetup(ref container, ref context);
             return CustomVisit(context.Value);
         }
 
@@ -181,51 +204,97 @@ namespace Unity.Properties
         /// <param name="value">The current property value.</param>
         /// <typeparam name="TValue">The current property value type.</typeparam>
         protected abstract void Visit<TValue>(TValue value);
+
+        protected virtual bool BeginContainer()
+        {
+            return true;
+        }
+
+        protected virtual void EndContainer()
+        {
+            
+        }
+
+        protected virtual bool BeginList()
+        {
+            return true;
+        }
+
+        protected virtual void EndList()
+        {
+            
+        }
         
         public override void Visit<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
         {
-            VisitSetup(ref context);
+            VisitSetup(ref container, ref context);
             Visit(context.Value);
         }
 
         public override void Visit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
         {
-            VisitSetup(ref context);
+            VisitSetup(ref container, ref context);
             Visit(context.Value);
         }
         
         public override void VisitEnum<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
         {
-            VisitSetup(ref context);
+            VisitSetup(ref container, ref context);
             Visit(context.Value);
         }
         
         public override void VisitEnum<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
         {
-            VisitSetup(ref context);
+            VisitSetup(ref container, ref context);
             Visit(context.Value);
+        }
+        
+        public override bool BeginContainer<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+        {
+            VisitSetup(ref container, ref context);
+            return BeginContainer();
         }
         
         public override bool BeginContainer<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
         {
-            VisitSetup(ref context);
-            return true;
+            VisitSetup(ref container, ref context);
+            return BeginContainer();
+        }
+        
+        public override void EndContainer<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+        {
+            VisitSetup(ref container, ref context);
+            EndContainer();
         }
         
         public override void EndContainer<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
         {
-            VisitSetup(ref context);
+            VisitSetup(ref container, ref context);
+            EndContainer();
+        }
+        
+        public override bool BeginList<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+        {
+            VisitSetup(ref container, ref context);
+            return BeginList();
         }
         
         public override bool BeginList<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
         {
-            VisitSetup(ref context);
-            return true;
+            VisitSetup(ref container, ref context);
+            return BeginList();
         }
 
+        public override void EndList<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+        {
+            VisitSetup(ref container, ref context);
+            EndList();
+        }
+        
         public override void EndList<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
         {
-            VisitSetup(ref context);
+            VisitSetup(ref container, ref context);
+            EndList();
         }
     }
 }

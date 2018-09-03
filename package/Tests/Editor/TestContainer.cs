@@ -1,12 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Unity.Properties.Tests
 {
     internal class TestContainer : IPropertyContainer
     {
-        public const int LeafCount = 1;
+        public const int LeafCount = 2;
         
         private int _intValue;
+        private TestEnum _enumValue;
 
         public static readonly IProperty<TestContainer, int> IntValueProperty = new Property<TestContainer, int>(
             nameof(IntValue),
@@ -17,6 +19,17 @@ namespace Unity.Properties.Tests
         {
             get { return IntValueProperty.GetValue(this); }
             set { IntValueProperty.SetValue(this, value); }
+        }
+        
+        public static readonly IProperty<TestContainer, TestEnum> EnumValueProperty = new EnumProperty<TestContainer, TestEnum>(
+            nameof(EnumValue),
+            c => c._enumValue,
+            (c, v) => c._enumValue = v);
+
+        public TestEnum EnumValue
+        {
+            get { return EnumValueProperty.GetValue(this); }
+            set { EnumValueProperty.SetValue(this, value); }
         }
 
         private List<float> _floatList = new List<float>();
@@ -50,7 +63,7 @@ namespace Unity.Properties.Tests
 
         public IVersionStorage VersionStorage => PassthroughVersionStorage.Instance;
 
-        private static PropertyBag sBag = new PropertyBag(IntValueProperty, FloatListProperty, ChildListProperty);
+        private static PropertyBag sBag = new PropertyBag(IntValueProperty, EnumValueProperty, FloatListProperty, ChildListProperty);
         public IPropertyBag PropertyBag => sBag;
     }
 
@@ -73,5 +86,13 @@ namespace Unity.Properties.Tests
 
         private static PropertyBag sBag = new PropertyBag(IntValueProperty);
         public IPropertyBag PropertyBag => sBag;
+    }
+
+    public enum TestEnum
+    {
+        This,
+        Is,
+        A,
+        Test
     }
 }

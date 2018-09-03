@@ -36,8 +36,13 @@ namespace Unity.Properties
 
         public virtual void SetObjectValue(IPropertyContainer container, object value)
         {
-            // TODO: value type coercion
-            SetValue((TContainer)container, (TValue)value);
+            SetValue((TContainer) container, TypeConversion.Convert<TValue>(value));
+        }
+
+        public void Accept(IPropertyContainer container, IPropertyVisitor visitor)
+        {
+            Debug.Assert(container is TContainer, $"container of type {container.GetType()} and not type {typeof(TContainer)} on property {Name}");
+            Accept((TContainer)container, visitor);
         }
 
         public virtual TValue GetValue(TContainer container)
@@ -84,6 +89,16 @@ namespace Unity.Properties
                 visitor.Visit(container, context);
             }
         }
+
+        TValue ITypedValueProperty<TValue>.GetValue(IPropertyContainer container)
+        {
+            return GetValue((TContainer) container);
+        }
+
+        void ITypedValueProperty<TValue>.SetValue(IPropertyContainer container, TValue value)
+        {
+            SetValue((TContainer)container, value);
+        }
     }
     
     public class StructProperty<TContainer, TValue> : IStructProperty<TContainer, TValue>
@@ -125,6 +140,15 @@ namespace Unity.Properties
             
             // not throwing here would open the door to hard-to-find bugs
             throw new NotSupportedException("SetObjectValue cannot be called on a StructProperty. Use SetValue instead.");
+        }
+
+        public void Accept(IPropertyContainer container, IPropertyVisitor visitor)
+        {
+            // TODO: in read-write scenarios, we should throw here
+            
+            Debug.Assert(container is TContainer, $"container of type {container.GetType()} and not type {typeof(TContainer)} on property {Name}");
+            var t = (TContainer)container;
+            Accept(ref t, visitor);
         }
 
         public virtual TValue GetValue(ref TContainer container)
@@ -171,6 +195,17 @@ namespace Unity.Properties
                 visitor.Visit(ref container, context);
             }
         }
+
+        TValue ITypedValueProperty<TValue>.GetValue(IPropertyContainer container)
+        {
+            var c = (TContainer) container;
+            return GetValue(ref c);
+        }
+
+        void ITypedValueProperty<TValue>.SetValue(IPropertyContainer container, TValue value)
+        {
+            throw new NotImplementedException("ITypedValueProperty.SetValue cannot be used on struct properties");
+        }
     }
 
     public class ContainerProperty<TContainer, TValue> : Property<TContainer, TValue>
@@ -187,11 +222,11 @@ namespace Unity.Properties
             var context = new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
             if (false == visitor.ExcludeVisit(container, context))
             {
-                if (visitor.BeginContainer(ref container, context))
+                if (visitor.BeginContainer(container, context))
                 {
-                    value.PropertyBag.Visit(value, visitor);
+                    value.Visit(visitor);
                 }
-                visitor.EndContainer(ref container, context);
+                visitor.EndContainer(container, context);
             }
         }
     }
@@ -212,7 +247,7 @@ namespace Unity.Properties
         
         private static void RefVisit(ref TValue value, IPropertyVisitor visitor)
         {
-            value.PropertyBag.Visit(ref value, visitor);
+            PropertyContainer.Visit(ref value, visitor);
         }
         
         public override void Accept(TContainer container, IPropertyVisitor visitor)
@@ -221,11 +256,19 @@ namespace Unity.Properties
             var context = new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
             if (false == visitor.ExcludeVisit(container, context))
             {
-                if (visitor.BeginContainer(ref container, context))
+                if (visitor.BeginContainer(container, context))
                 {
-                    RefAccess(container, RefVisit, visitor);
+                    if (RefAccess == null)
+                    {
+                        // TODO: throw in read-write scenarios
+                        RefVisit(ref value, visitor);
+                    }
+                    else
+                    {
+                        RefAccess(container, RefVisit, visitor);
+                    }
                 }
-                visitor.EndContainer(ref container, context);
+                visitor.EndContainer(container, context);
             }
         }
     }
@@ -246,7 +289,7 @@ namespace Unity.Properties
             {
                 if (visitor.BeginContainer(ref container, context))
                 {
-                    value.PropertyBag.Visit(ref container, visitor);
+                    PropertyContainer.Visit(ref container, visitor);
                 }
                 visitor.EndContainer(ref container, context);
             }
@@ -269,7 +312,7 @@ namespace Unity.Properties
         
         private static void RefVisit(ref TValue value, IPropertyVisitor visitor)
         {
-            value.PropertyBag.Visit(ref value, visitor);
+            PropertyContainer.Visit(ref value, visitor);
         }
         
         public override void Accept(ref TContainer container, IPropertyVisitor visitor)
@@ -280,7 +323,15 @@ namespace Unity.Properties
             {
                 if (visitor.BeginContainer(ref container, context))
                 {
-                    RefAccess(ref container, RefVisit, visitor);
+                    if (RefAccess == null)
+                    {
+                        // TODO: throw in read-write scenarios
+                        RefVisit(ref value, visitor);
+                    }
+                    else
+                    {
+                        RefAccess(ref container, RefVisit, visitor);
+                    }
                 }
                 visitor.EndContainer(ref container, context);
             }

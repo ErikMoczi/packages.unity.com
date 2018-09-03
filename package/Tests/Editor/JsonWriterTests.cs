@@ -8,6 +8,14 @@ namespace Unity.Properties.Tests.Serialization
     internal class JsonWriterTests
     {
         [Test]
+        public void Enum_Serialization()
+        {
+            var obj = new TestContainer() {EnumValue = TestEnum.Test};
+            var result = JsonSerializer.Serialize(obj);
+            Assert.IsTrue(result.Contains($"\"EnumValue\": {(int)TestEnum.Test}"));
+        }
+        
+        [Test]
         public void WhenEmptyPropertyContainer_JsonSerialization_ReturnsAnEmptyResult()
         {
             var obj = new NullStructContainer();

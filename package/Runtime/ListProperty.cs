@@ -37,7 +37,7 @@ namespace Unity.Properties
                 var listContext =
                     new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
 
-                if (visitor.BeginList(ref container, listContext))
+                if (visitor.BeginList(container, listContext))
                 {
                     var itemVisitContext = new VisitContext<TItem>
                     {
@@ -48,7 +48,7 @@ namespace Unity.Properties
                     
                     for (var i = 0; i < count; i++)
                     {
-                        var item = GetValueAtIndex(container, i);
+                        var item = GetItemAt(container, i);
                         itemVisitContext.Value = item;
                         itemVisitContext.Index = i;
 
@@ -58,19 +58,13 @@ namespace Unity.Properties
                         }
                     }
                 }
-                visitor.EndList(ref container, listContext);
+                visitor.EndList(container, listContext);
             }
         }
 
-        public int Count(TContainer container)
+        public int Count(IPropertyContainer container)
         {
-            var list = GetValue(container);
-            return list.Count;
-        }
-        
-        int IListProperty.Count(IPropertyContainer container)
-        {
-            return Count((TContainer) container);
+            return GetValue((TContainer) container).Count;
         }
         
         public IEnumerator<TItem> GetEnumerator(TContainer container)
@@ -78,29 +72,29 @@ namespace Unity.Properties
             return GetValue(container).GetEnumerator();
         }
 
-        public void Add(TContainer container)
+        public TItem CreateNewItem(TContainer container)
         {
-            Add(container, m_CreateInstanceMethod(container));
+            return m_CreateInstanceMethod(container);
         }
 
-        public void AddObject(TContainer container, object item)
+        public void AddNewItem(IPropertyContainer container)
         {
-            Add(container, (TItem)item);
+            Add((TContainer)container, CreateNewItem((TContainer)container));
         }
 
-        public object GetObjectValueAtIndex(TContainer container, int index)
+        public void AddObject(IPropertyContainer container, object item)
         {
-            return GetValueAtIndex(container, index);
+            Add((TContainer)container, TypeConversion.Convert<TItem>(item));
+        }
+
+        object IListProperty.GetObjectAt(IPropertyContainer container, int index)
+        {
+            return GetItemAt((TContainer) container, index);
         }
         
-        object IListProperty.GetObjectValueAtIndex(IPropertyContainer container, int index)
+        void IListProperty.SetObjectAt(IPropertyContainer container, int index, object value)
         {
-            return GetObjectValueAtIndex((TContainer) container, index);
-        }
-
-        public void SetObjectValueAtIndex(TContainer container, int index, object value)
-        {
-            SetValueAtIndex(container, index, (TItem)value);
+            SetItemAt((TContainer) container, index, TypeConversion.Convert<TItem>(value));
         }
 
         public virtual void Add(TContainer container, TItem item)
@@ -127,7 +121,10 @@ namespace Unity.Properties
         {
             var list = GetValue(container);
             var result = list.Remove(item);
-            container.VersionStorage?.IncrementVersion(this, container);
+            if (result)
+            {
+                container.VersionStorage?.IncrementVersion(this, container);
+            }
             return result;
         }
 
@@ -144,24 +141,36 @@ namespace Unity.Properties
             container.VersionStorage?.IncrementVersion(this, container);
         }
 
-        public void RemoveAt(TContainer container, int index)
+        public void RemoveAt(IPropertyContainer container, int index)
         {
-            var list = GetValue(container);
+            var list = GetValue((TContainer)container);
             list.RemoveAt(index);
             container.VersionStorage?.IncrementVersion(this, container);
         }
-        
-        public virtual TItem GetValueAtIndex(TContainer container, int index)
+
+        public void InsertObject(IPropertyContainer container, int index, object item)
+        {
+            var list = GetValue((TContainer)container);
+            list.Insert(index, TypeConversion.Convert<TItem>(item));
+        }
+
+        public void Clear(IPropertyContainer container)
+        {
+            var list = GetValue((TContainer)container);
+            list.Clear();
+        }
+
+        public virtual TItem GetItemAt(TContainer container, int index)
         {
             var list = GetValue(container);
             return list[index];
         }
         
-        public void SetValueAtIndex(TContainer container, int index, TItem value)
+        public void SetItemAt(TContainer container, int index, TItem value)
         {
             var list = GetValue(container);
             
-            if (Equals(list[index], value))
+            if (ItemEquals(list[index], value))
             {
                 return;
             }
@@ -170,7 +179,7 @@ namespace Unity.Properties
             container.VersionStorage?.IncrementVersion(this, container);
         }
         
-        private static bool Equals(TItem a, TItem b)
+        private static bool ItemEquals(TItem a, TItem b)
         {
             if (null == a && null == b)
             {
@@ -203,6 +212,12 @@ namespace Unity.Properties
             return default(TItem);
         }
 
+        private TValue GetListValue(IPropertyContainer container)
+        {
+            var c = (TContainer) container;
+            return GetValue(ref c);
+        }
+
         public override void Accept(ref TContainer container, IPropertyVisitor visitor)
         {
             var value = GetValue(ref container);
@@ -223,7 +238,7 @@ namespace Unity.Properties
                     var count = Count(ref container);
                     for (var i = 0; i < count; i++)
                     {
-                        var item = GetValueAtIndex(ref container, i);
+                        var item = GetItemAt(ref container, i);
                         itemVisitContext.Value = item;
                         itemVisitContext.Index = i;
 
@@ -237,21 +252,26 @@ namespace Unity.Properties
             }
         }
         
-        public int Count(ref TContainer container)
+        public int Count(IPropertyContainer container)
         {
-            var list = GetValue(ref container);
+            var list = GetListValue(container);
             return list.Count;
         }
         
-        int IListProperty.Count(IPropertyContainer container)
+        public int Count(ref TContainer container)
         {
-            var c = (TContainer)container;
-            return Count(ref c);
+            return GetValue(ref container).Count;
         }
 
-        public void Clear(ref TContainer container)
+        public void InsertObject(IPropertyContainer container, int index, object item)
         {
-            var list = GetValue(ref container);
+            var c = (TContainer) container;
+            Insert(ref c, index, TypeConversion.Convert<TItem>(item));
+        }
+
+        public void Clear(IPropertyContainer container)
+        {
+            var list = GetListValue(container);
             list.Clear();
             container.VersionStorage?.IncrementVersion(this, container);
         }
@@ -261,38 +281,45 @@ namespace Unity.Properties
             return GetValue(ref container).GetEnumerator();
         }
 
-        public void Add(ref TContainer container)
+        public TItem CreateNewItem(ref TContainer container)
         {
-            Add(ref container, m_CreateInstanceMethod(ref container));
+            return m_CreateInstanceMethod(ref container);
         }
 
-        public object GetObjectValueAtIndex(ref TContainer container, int index)
-        {
-            return GetValueAtIndex(ref container, index);
-        }
-        
-        object IListProperty.GetObjectValueAtIndex(IPropertyContainer container, int index)
+        public void AddNewItem(IPropertyContainer container)
         {
             var c = (TContainer) container;
-            return GetObjectValueAtIndex(ref c, index);
+            Add(ref c, m_CreateInstanceMethod(ref c));
         }
 
-        public void SetObjectValueAtIndex(ref TContainer container, int index, object value)
+        public void AddObject(IPropertyContainer container, object item)
         {
-            SetValueAtIndex(ref container, index, (TItem)value);
+            var c = (TContainer) container;
+            Add(ref c, TypeConversion.Convert<TItem>(item));
+        }
+
+        public void RemoveAt(IPropertyContainer container, int index)
+        {
+            var c = (TContainer) container;
+            RemoveAt(ref c, index);
+        }
+
+        object IListProperty.GetObjectAt(IPropertyContainer container, int index)
+        {
+            var c = (TContainer) container;
+            return GetItemAt(ref c, index);
+        }
+        
+        void IListProperty.SetObjectAt(IPropertyContainer container, int index, object value)
+        {
+            var c = (TContainer) container;
+            SetItemAt(ref c, index, TypeConversion.Convert<TItem>(value));
         }
 
         public virtual void Add(ref TContainer container, TItem item)
         {
             var list = GetValue(ref container);
             list.Add(item);
-            container.VersionStorage?.IncrementVersion(this, container);
-        }
-
-        public void Clear(TContainer container)
-        {
-            var list = GetValue(ref container);
-            list.Clear();
             container.VersionStorage?.IncrementVersion(this, container);
         }
 
@@ -330,17 +357,17 @@ namespace Unity.Properties
             container.VersionStorage?.IncrementVersion(this, container);
         }
         
-        public TItem GetValueAtIndex(ref TContainer container, int index)
+        public TItem GetItemAt(ref TContainer container, int index)
         {
             var list = GetValue(ref container);
             return list[index];
         }
         
-        public void SetValueAtIndex(ref TContainer container, int index, TItem value)
+        public void SetItemAt(ref TContainer container, int index, TItem value)
         {
             var list = GetValue(ref container);
             
-            if (Equals(list[index], value))
+            if (ItemEquals(list[index], value))
             {
                 return;
             }
@@ -349,7 +376,7 @@ namespace Unity.Properties
             container.VersionStorage?.IncrementVersion(this, container);
         }
         
-        private static bool Equals(TItem a, TItem b)
+        private static bool ItemEquals(TItem a, TItem b)
         {
             if (null == a && null == b)
             {
@@ -380,7 +407,7 @@ namespace Unity.Properties
                 var listContext =
                     new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
 
-                if (visitor.BeginList(ref container, listContext))
+                if (visitor.BeginList(container, listContext))
                 {
                     var itemVisitContext = new VisitContext<TItem>
                     {
@@ -390,21 +417,21 @@ namespace Unity.Properties
                     var count = Count(container);
                     for (var i = 0; i < count; i++)
                     {
-                        var item = GetValueAtIndex(container, i);
+                        var item = GetItemAt(container, i);
                         itemVisitContext.Value = item;
                         itemVisitContext.Index = i;
 
                         if (false == visitor.ExcludeVisit(container, itemVisitContext))
                         {
-                            if (visitor.BeginContainer(ref container, itemVisitContext))
+                            if (visitor.BeginContainer(container, itemVisitContext))
                             {
-                                item.PropertyBag.Visit(item, visitor);
+                                item.Visit(visitor);
                             }
-                            visitor.EndContainer(ref container, itemVisitContext);
+                            visitor.EndContainer(container, itemVisitContext);
                         }
                     }
                 }
-                visitor.EndList(ref container, listContext);
+                visitor.EndList(container, listContext);
             }
         }
     }
@@ -439,7 +466,7 @@ namespace Unity.Properties
                     var count = Count(ref container);
                     for (var i = 0; i < count; i++)
                     {
-                        var item = GetValueAtIndex(ref container, i);
+                        var item = GetItemAt(ref container, i);
                         itemVisitContext.Value = item;
                         itemVisitContext.Index = i;
 
@@ -447,7 +474,7 @@ namespace Unity.Properties
                         {
                             if (visitor.BeginContainer(ref container, itemVisitContext))
                             {
-                                item.PropertyBag.Visit(item, visitor);
+                                item.Visit(visitor);
                             }
                             visitor.EndContainer(ref container, itemVisitContext);
                         }
@@ -478,7 +505,7 @@ namespace Unity.Properties
                 var listContext =
                     new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
 
-                if (visitor.BeginList(ref container, listContext))
+                if (visitor.BeginList(container, listContext))
                 {
                     var itemVisitContext = new VisitContext<TItem>
                     {
@@ -488,21 +515,21 @@ namespace Unity.Properties
                     var count = Count(container);
                     for (var i = 0; i < count; i++)
                     {
-                        var item = GetValueAtIndex(container, i);
+                        var item = GetItemAt(container, i);
                         itemVisitContext.Value = item;
                         itemVisitContext.Index = i;
 
                         if (false == visitor.ExcludeVisit(container, itemVisitContext))
                         {
-                            if (visitor.BeginContainer(ref container, itemVisitContext))
+                            if (visitor.BeginContainer(container, itemVisitContext))
                             {
-                                item.PropertyBag.Visit(ref item, visitor);
+                                PropertyContainer.Visit(ref item, visitor);
                             }
-                            visitor.EndContainer(ref container, itemVisitContext);
+                            visitor.EndContainer(container, itemVisitContext);
                         }
                     }
                 }
-                visitor.EndList(ref container, listContext);
+                visitor.EndList(container, listContext);
             }
         }
     }
@@ -537,7 +564,7 @@ namespace Unity.Properties
                     var count = Count(ref container);
                     for (var i = 0; i < count; i++)
                     {
-                        var item = GetValueAtIndex(ref container, i);
+                        var item = GetItemAt(ref container, i);
                         itemVisitContext.Value = item;
                         itemVisitContext.Index = i;
 
@@ -545,7 +572,7 @@ namespace Unity.Properties
                         {
                             if (visitor.BeginContainer(ref container, itemVisitContext))
                             {
-                                item.PropertyBag.Visit(ref item, visitor);
+                                PropertyContainer.Visit(ref item, visitor);
                             }
                             visitor.EndContainer(ref container, itemVisitContext);
                         }

@@ -60,7 +60,7 @@ namespace Unity.Properties
                 var listContext =
                     new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
 
-                if (visitor.BeginList(ref container, listContext))
+                if (visitor.BeginList(container, listContext))
                 {
                     var itemVisitContext = new VisitContext<TItem>
                     {
@@ -70,7 +70,7 @@ namespace Unity.Properties
                     var count = Count(container);
                     for (var i = 0; i < count; i++)
                     {
-                        var item = GetValueAtIndex(container, i);
+                        var item = GetItemAt(container, i);
                         itemVisitContext.Value = item;
                         itemVisitContext.Index = i;
 
@@ -80,7 +80,7 @@ namespace Unity.Properties
                         }
                     }
                 }
-                visitor.EndList(ref container, listContext);
+                visitor.EndList(container, listContext);
             }
         }
     }
@@ -115,7 +115,7 @@ namespace Unity.Properties
                     var count = Count(ref container);
                     for (var i = 0; i < count; i++)
                     {
-                        var item = GetValueAtIndex(ref container, i);
+                        var item = GetItemAt(ref container, i);
                         itemVisitContext.Value = item;
                         itemVisitContext.Index = i;
 

@@ -16,7 +16,7 @@ namespace Unity.Properties.Serialization
             }
 
             WritePrefix(visitor);
-            container.PropertyBag.Visit(container, visitor);
+            container.Visit(visitor);
             WriteSuffix(visitor);
 
             return visitor.ToString();
@@ -31,7 +31,7 @@ namespace Unity.Properties.Serialization
             }
 
             WritePrefix(visitor);
-            container.PropertyBag.Visit(ref container, visitor);
+            PropertyContainer.Visit(ref container, visitor);
             WriteSuffix(visitor);
 
             return visitor.ToString();

@@ -32,18 +32,32 @@ namespace Unity.Properties
             where TContainer : struct, IPropertyContainer
             where TValue : struct;
 
+        bool BeginContainer<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+            where TContainer : class, IPropertyContainer
+            where TValue : IPropertyContainer;
+        
         bool BeginContainer<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
-            where TContainer : IPropertyContainer
+            where TContainer : struct, IPropertyContainer
             where TValue : IPropertyContainer;
 
+        void EndContainer<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+            where TContainer : class, IPropertyContainer
+            where TValue : IPropertyContainer;
+        
         void EndContainer<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
-            where TContainer : IPropertyContainer
+            where TContainer : struct, IPropertyContainer
             where TValue : IPropertyContainer;
 
+        bool BeginList<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+            where TContainer : class, IPropertyContainer;
+        
         bool BeginList<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
-            where TContainer : IPropertyContainer;
+            where TContainer : struct, IPropertyContainer;
 
+        void EndList<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+            where TContainer : class, IPropertyContainer;
+        
         void EndList<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
-            where TContainer : IPropertyContainer;
+            where TContainer : struct, IPropertyContainer;
     }
 }

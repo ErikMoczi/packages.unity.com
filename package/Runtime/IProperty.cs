@@ -29,6 +29,14 @@ namespace Unity.Properties
         object GetObjectValue(IPropertyContainer container);
 
         void SetObjectValue(IPropertyContainer container, object value);
+        
+        void Accept(IPropertyContainer container, IPropertyVisitor visitor);
+    }
+
+    public interface ITypedValueProperty<TValue> : IProperty
+    {
+        TValue GetValue(IPropertyContainer container);
+        void SetValue(IPropertyContainer container, TValue value);
     }
 
     public interface ITypedContainerProperty<in TContainer> : IProperty
@@ -43,14 +51,14 @@ namespace Unity.Properties
         void Accept(ref TContainer container, IPropertyVisitor visitor);
     }
     
-    public interface IProperty<in TContainer, TValue> : ITypedContainerProperty<TContainer>
+    public interface IProperty<in TContainer, TValue> : ITypedContainerProperty<TContainer>, ITypedValueProperty<TValue>
         where TContainer : class, IPropertyContainer
     {
         TValue GetValue(TContainer container);
         void SetValue(TContainer container, TValue value);
     }
 
-    public interface IStructProperty<TContainer, TValue> : IStructTypedContainerProperty<TContainer>
+    public interface IStructProperty<TContainer, TValue> : IStructTypedContainerProperty<TContainer>, ITypedValueProperty<TValue>
         where TContainer : struct, IPropertyContainer
     {
         TValue GetValue(ref TContainer container);

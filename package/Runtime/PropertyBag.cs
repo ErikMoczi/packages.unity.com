@@ -3,6 +3,7 @@ using UnityEngine.Assertions;
 
 namespace Unity.Properties
 {
+    // TODO: Add generic implementation to store typed container properties
     public class PropertyBag : IPropertyBag
     {
         private readonly List<IProperty> m_Properties;
@@ -62,19 +63,25 @@ namespace Unity.Properties
             return m_Map.TryGetValue(name, out prop) ? prop : null;
         }
         
-        public bool Visit<TContainer>(TContainer container, IPropertyVisitor visitor) 
+        public void Visit<TContainer>(TContainer container, IPropertyVisitor visitor) 
             where TContainer : class, IPropertyContainer
         {
-            for (var i = 0; i < m_Properties.Count; i++)
+            foreach (var t in m_Properties)
             {
-                var typed = (ITypedContainerProperty<TContainer>)m_Properties[i];
-                typed.Accept(container, visitor);
+                var typed = t as ITypedContainerProperty<TContainer>;
+                if (typed == null)
+                {
+                    // valid scenario when IPropertyContainer is used as TContainer
+                    t.Accept(container, visitor);
+                }
+                else
+                {
+                    typed.Accept(container, visitor);
+                }
             }
-
-            return true;
         }
         
-        public bool Visit<TContainer>(ref TContainer container, IPropertyVisitor visitor) 
+        public void Visit<TContainer>(ref TContainer container, IPropertyVisitor visitor) 
             where TContainer : struct, IPropertyContainer
         {
             for (var i = 0; i < m_Properties.Count; i++)
@@ -82,8 +89,6 @@ namespace Unity.Properties
                 var typed = (IStructTypedContainerProperty<TContainer>)m_Properties[i];
                 typed.Accept(ref container, visitor);
             }
-
-            return true;
         }
     }
 }

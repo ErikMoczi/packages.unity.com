@@ -30,6 +30,15 @@ namespace Unity.Properties
         {
             m_Parts = new List<Part>(32);
         }
+        
+        public PropertyPath(string path)
+        {
+            PropertyPath result;
+            if (TryParse(path, out result))
+            {
+                m_Parts = result.m_Parts;
+            }
+        }
 
         public PropertyPath(PropertyPath path)
         {
@@ -94,7 +103,7 @@ namespace Unity.Properties
                         // failure: property is not a list, or index is out of range
                         return result;
                     }
-                    result.value = listProperty.GetObjectValueAtIndex(result.container, part.listIndex);
+                    result.value = listProperty.GetObjectAt(result.container, part.listIndex);
                 }
                 else
                 {
