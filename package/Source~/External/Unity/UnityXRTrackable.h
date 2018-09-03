@@ -5,11 +5,12 @@
 /// point cloud point. Although this id is 128 bits, it may
 /// not necessarily be globally unique; it just needs to be
 /// unique to a particular XREnvironment session.
-struct UnityXRTrackableId
+typedef struct UnityXRTrackableId
 {
     uint64_t idPart[2];
-};
+} UnityXRTrackableId;
 
+#ifdef __cplusplus
 inline bool operator==(const UnityXRTrackableId& a, const UnityXRTrackableId& b)
 {
     return
@@ -38,10 +39,11 @@ struct UnityXRTrackableIdLessThanComparator
         return lhs.idPart[0] < rhs.idPart[0];
     }
 };
+#endif // __cplusplus
 
 /// Flags representing trackable types, e.g. planes or feature points,
 /// as well as more specific attributes of those trackables.
-enum UnityXRTrackableType
+typedef enum UnityXRTrackableType
 {
     /// No trackable
     kUnityXRTrackableTypeNone = 0,
@@ -72,10 +74,10 @@ enum UnityXRTrackableType
     kUnityXRTrackableTypeAll =
         kUnityXRTrackableTypePlanes |
         kUnityXRTrackableTypePoint
-};
+} UnityXRTrackableType;
 
 /// The tracking state of the device.
-enum UnityXRTrackingState
+typedef enum UnityXRTrackingState
 {
     /// Unknown tracking state.
     kUnityXRTrackingStateUnknown,
@@ -86,4 +88,4 @@ enum UnityXRTrackingState
     /// Tracking data is unavailable, e.g., because the
     /// session is not running, or the camera is being covered.
     kUnityXRTrackingStateUnavailable
-};
+} UnityXRTrackingState;

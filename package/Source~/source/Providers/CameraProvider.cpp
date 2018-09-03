@@ -53,7 +53,10 @@ float CameraProvider::GetScreenHeight() const
 
 void CameraProvider::OnLifecycleShutdown()
 {
-    m_WrappedCamera.Release();
+	if (m_WrappedCamera)
+	{
+        m_WrappedCamera.Release();
+	}
 }
 
 // what should we do when the light estimation mode is AR_LIGHT_ESTIMATION_MODE_DISABLED?
@@ -175,6 +178,37 @@ bool UNITY_INTERFACE_API CameraProvider::GetShaderName(char(&shaderName)[kUnityX
 {
     strncpy(shaderName, "Unlit/ARCoreBackground", kUnityXRStringSize);
     return true;
+}
+
+UnitySubsystemErrorCode UNITY_INTERFACE_API Impl_GetFrame(UnitySubsystemHandle handle, void* userData, const UnityXRCameraParams* paramsIn, UnityXRCameraFrame* frameOut)
+{
+    if (userData == nullptr)
+        return kUnitySubsystemErrorCodeInvalidArguments;
+    return static_cast<CameraProvider*>(userData)->GetFrame(*paramsIn, frameOut) ? kUnitySubsystemErrorCodeSuccess : kUnitySubsystemErrorCodeFailure;
+}
+
+void UNITY_INTERFACE_API Impl_SetLightEstimationRequested(UnitySubsystemHandle handle, void* userData, bool requested)
+{
+    if (userData == nullptr)
+        return;
+    static_cast<CameraProvider*>(userData)->SetLightEstimationRequested(requested);
+}
+
+UnitySubsystemErrorCode UNITY_INTERFACE_API Impl_GetShaderName(UnitySubsystemHandle handle, void* userData, char shaderName[kUnityXRStringSize])
+{
+    if (shaderName == nullptr)
+        return kUnitySubsystemErrorCodeInvalidArguments;
+
+    strncpy(shaderName, "Unlit/ARCoreBackground", kUnityXRStringSize);
+    return kUnitySubsystemErrorCodeSuccess;
+}
+
+void CameraProvider::PopulateCStyleProvider(UnityXRCameraProvider& provider)
+{
+    provider.userData = this;
+    provider.GetFrame = &Impl_GetFrame;
+    provider.SetLightEstimationRequested = &Impl_SetLightEstimationRequested;
+    provider.GetShaderName = &Impl_GetShaderName;
 }
 
 void CameraProvider::RetrieveMatricesIfNeeded(ArSession* session, ArFrame* frame, const UnityXRCameraParams& paramsIn)

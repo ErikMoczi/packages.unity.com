@@ -1,6 +1,7 @@
 #include "PlaneProvider.h"
 #include "Utility.h"
 #include "Wrappers/WrappedPlaneList.h"
+#include "SessionProvider.h"
 
 #include <cstring>
 #include <set>
@@ -43,6 +44,9 @@ static UnityXRTrackingState ToUnityTrackingState(ArTrackingState googleTrackingS
 
 extern "C" UnityXRTrackingState UnityARCore_getAnchorTrackingState(UnityXRTrackableId id)
 {
+    if (!IsArSessionEnabled())
+        return kUnityXRTrackingStateUnavailable;
+
     std::lock_guard<std::mutex> lock(g_PlaneMutex);
 
     auto iter = g_Planes.find(id);
@@ -51,6 +55,11 @@ extern "C" UnityXRTrackingState UnityARCore_getAnchorTrackingState(UnityXRTracka
 
     return iter->second.trackingState;
 }
+
+PlaneProvider::PlaneProvider(IUnityXRPlaneInterface*& unityInterface)
+    : m_UnityInterface(unityInterface)
+    , m_LastFrameTimestamp(0)
+{ }
 
 // TODO: return false under the right circumstances (I'm guessing at least during tracking loss... anything else?)
 bool UNITY_INTERFACE_API PlaneProvider::GetAllPlanes(IUnityXRPlaneDataAllocator& allocator)
@@ -67,7 +76,7 @@ bool UNITY_INTERFACE_API PlaneProvider::GetAllPlanes(IUnityXRPlaneDataAllocator&
     ArFrame_getTimestamp(session, frame, &latestFrameTimestamp);
     if (latestFrameTimestamp == m_LastFrameTimestamp)
         return false;
-
+	
     std::set<UnityXRTrackableId> updatedIds;
     {
         WrappedPlaneList updatedPlanes = eWrappedConstruction::Default;
@@ -116,4 +125,46 @@ bool UNITY_INTERFACE_API PlaneProvider::GetAllPlanes(IUnityXRPlaneDataAllocator&
     m_LastFrameTimestamp = latestFrameTimestamp;
 
     return true;
+}
+
+struct PlaneDataAllocatorWrapper : public IUnityXRPlaneDataAllocator
+{
+    PlaneDataAllocatorWrapper(IUnityXRPlaneInterface* unityInterface, UnityXRPlaneDataAllocator* allocator)
+        : m_UnityInterface(unityInterface)
+        , m_Allocator(allocator)
+    {}
+
+    virtual UnityXRPlane* AllocatePlaneData(
+        size_t numPlanes) override
+    {
+        return m_UnityInterface->Allocator_AllocatePlaneData(m_Allocator, numPlanes);
+    }
+
+    virtual UnityXRVector3* AllocateBoundaryPoints(
+        const UnityXRTrackableId& planeId,
+        size_t numPoints) override
+    {
+        return m_UnityInterface->Allocator_AllocateBoundaryPoints(m_Allocator, &planeId, numPoints);
+    }
+
+private:
+    IUnityXRPlaneInterface* m_UnityInterface;
+    UnityXRPlaneDataAllocator* m_Allocator;
+};
+
+UnitySubsystemErrorCode UNITY_INTERFACE_API PlaneProvider::StaticGetAllPlanes(UnitySubsystemHandle handle, void* userData, UnityXRPlaneDataAllocator* allocator)
+{
+    PlaneProvider* thiz = static_cast<PlaneProvider*>(userData);
+    if (thiz == nullptr || allocator == nullptr)
+        return kUnitySubsystemErrorCodeInvalidArguments;
+
+    PlaneDataAllocatorWrapper wrapper(thiz->m_UnityInterface, allocator);
+    return thiz->GetAllPlanes(wrapper) ? kUnitySubsystemErrorCodeSuccess : kUnitySubsystemErrorCodeFailure;
+}
+
+void PlaneProvider::PopulateCStyleProvider(UnityXRPlaneProvider& provider)
+{
+    std::memset(&provider, 0, sizeof(provider));
+    provider.userData = this;
+    provider.GetAllPlanes = &StaticGetAllPlanes;
 }

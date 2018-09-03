@@ -1,41 +1,138 @@
 #pragma once
+#include <stdint.h>
+
+/// @cond undoc
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+/// @endcond
 
 /// The maximum length of a string, used in some structs with the XR headers
-const unsigned int kUnityXRStringSize = 128;
+enum { kUnityXRStringSize = 128 };
 
 /// Simple 2-Element Float Vector
-struct UnityXRVector2
+typedef struct UnityXRVector2
 {
-    float x; ///< The x coordinate
-    float y; ///< The y coordinate
-};
+    /// X component of the vector.
+    float x;
+
+    /// Y component of the vector.
+    float y;
+} UnityXRVector2;
 
 /// Simple 3-Element float vector
-struct UnityXRVector3
+typedef struct UnityXRVector3
 {
-    float x; ///< The x coordinate
-    float y; ///< The y coordinate
-    float z; ///< The z coordinate
-};
+    /// X component of the vector.
+    float x;
+
+    /// Y component of the vector.
+    float y;
+
+    /// Z component of the vector.
+    float z;
+} UnityXRVector3;
 
 /// Simple 4 Element Quaternion with indices ordered x, y, z, and w in order
-struct UnityXRVector4
+typedef struct UnityXRVector4
 {
-    float x; ///< The x coordinate
-    float y; ///< The y coordinate
-    float z; ///< The z coordinate
-    float w; ///< The w coordinate
-};
+    /// X component of the vector.
+    float x;
+
+    /// Y component of the vector.
+    float y;
+
+    /// Z component of the vector.
+    float z;
+
+    /// W component of the vector.
+    float w;
+} UnityXRVector4;
 
 /// A simple struct representing a point in space with position and orientation
-struct UnityXRPose
+typedef struct UnityXRPose
 {
-    UnityXRVector3 position; ///< The position of the pose
-    UnityXRVector4 rotation; ///< The rotation, stored as a quaternion
-};
+    /// Position of the pose.
+    UnityXRVector3 position;
+
+    /// Rotation of the pose, stored as a quaternion.
+    UnityXRVector4 rotation;
+} UnityXRPose;
 
 /// A 4x4 column-major matrix
-struct UnityXRMatrix4x4
+typedef struct UnityXRMatrix4x4
 {
-    UnityXRVector4 columns[4]; ///< The columns of the matrix
+    ///. The columns of the matrix
+    UnityXRVector4 columns[4];
+} UnityXRMatrix4x4;
+
+/// Multiple ways of representing a projection.
+typedef enum UnityXRProjectionType
+{
+    /// Projection represented as tangents of half angles from center.
+    kUnityXRProjectionTypeHalfAngles,
+
+    /// Projection represented as a 4x4 matrix.
+    kUnityXRProjectionTypeMatrix
+} UnityXRProjectionType;
+
+/// Projection as tangent of half angles on near plane.
+typedef struct UnityXRProjectionHalfAngles
+{
+    /// Tangent of the half angle from center to left clipping plane. (should be negative)
+    float left;
+    /// Tangent of the half angle from center to right clipping plane. (should be positive)
+    float right;
+    /// Tangent of the half angle from center to top clipping plane. (should be positive)
+    float top;
+    /// Tangent of the half angle from center to bottom clipping plane. (should be negative)
+    float bottom;
+} UnityXRProjectionHalfAngles;
+
+/// Container for the different methods of representing a projection matrix.
+typedef struct UnityXRProjection
+{
+    /// Choose the way this projection is represented.
+    UnityXRProjectionType type;
+
+    union
+    {
+        /// Valid if type is kUnityXRProjectionTypeHalfAngles.
+        UnityXRProjectionHalfAngles halfAngles;
+
+        /// Valid if type is kUnityXRProjectionTypeMatrix.
+        UnityXRMatrix4x4 matrix;
+    } data; ///< Contains all supported ways of representing a projection matrix.
+} UnityXRProjection;
+
+/// A 2D rectangle defined by X and Y position, width and height.
+typedef struct UnityXRRectf
+{
+    /// X position of the rectangle.
+    float x;
+
+    /// Y position of the rectangle.
+    float y;
+
+    /// Width of the rectangle.
+    float width;
+
+    /// Height of the rectangle.
+    float height;
+} UnityXRRectf;
+
+/// An RGBA color
+struct UnityXRColorRGBA32
+{
+    /// The red channel
+    uint8_t red;
+
+    /// The green channel
+    uint8_t green;
+
+    /// The blue channel
+    uint8_t blue;
+
+    /// The alpha channel
+    uint8_t alpha;
 };

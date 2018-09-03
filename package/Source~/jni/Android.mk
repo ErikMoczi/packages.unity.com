@@ -53,8 +53,7 @@ LOCAL_SRC_FILES := \
 LOCAL_C_INCLUDES := \
     source \
     external \
-    arcore_unity_shim/include \
-    ${ANDROID_NDK_ROOT}/sources/cxx-stl/gnu-libstdc++/4.9/include
+    arcore_unity_shim/include
 
 LOCAL_STATIC_LIBRARIES := arcore-sdk arpresto
 include $(BUILD_SHARED_LIBRARY)

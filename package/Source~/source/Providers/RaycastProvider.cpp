@@ -8,6 +8,11 @@
 #include <cstring>
 #include <vector>
 
+RaycastProvider::RaycastProvider(IUnityXRRaycastInterface*& unityInterface)
+    : m_UnityInterface(unityInterface)
+{
+}
+
 // TODO: need to revisit this - ARCore doesn't seem to have the concept of hit-testing against infinite planes that ARKit must have
 static bool DoTrackableTypesMatch(ArTrackableType googleType, UnityXRTrackableType unityType)
 {
@@ -129,4 +134,47 @@ bool UNITY_INTERFACE_API RaycastProvider::Raycast(
     UnityXRRaycastHit* unityAllocatedResults = allocator.SetNumberOfHits(hitResultsUnity.size());
     std::memcpy(unityAllocatedResults, hitResultsUnity.data(), sizeof(UnityXRRaycastHit) * hitResultsUnity.size());
     return true;
+}
+
+struct RaycastAllocatorWrapper : public IUnityXRRaycastAllocator
+{
+    RaycastAllocatorWrapper(IUnityXRRaycastInterface* unityInterface, UnityXRRaycastDataAllocator* allocator)
+        : m_UnityInterface(unityInterface)
+        , m_Allocator(allocator)
+    {}
+
+    virtual UnityXRRaycastHit* UNITY_INTERFACE_API SetNumberOfHits(size_t numHits) override
+    {
+        return m_UnityInterface->Allocator_SetNumberOfHits(m_Allocator, numHits);
+    }
+
+    virtual UnityXRRaycastHit* UNITY_INTERFACE_API ExpandBy(size_t numHits)
+    {
+        return m_UnityInterface->Allocator_ExpandBy(m_Allocator, numHits);
+    }
+
+private:
+    IUnityXRRaycastInterface* m_UnityInterface;
+    UnityXRRaycastDataAllocator* m_Allocator;
+};
+
+UnitySubsystemErrorCode RaycastProvider::StaticRaycast(
+    UnitySubsystemHandle handle, void* userData,
+    float screenX, float screenY,
+    UnityXRTrackableType hitFlags,
+    UnityXRRaycastDataAllocator* allocator)
+{
+    RaycastProvider* thiz = static_cast<RaycastProvider*>(userData);
+    if (thiz == nullptr || allocator == nullptr)
+        return kUnitySubsystemErrorCodeInvalidArguments;
+
+    RaycastAllocatorWrapper wrapper(thiz->m_UnityInterface, allocator);
+    return thiz->Raycast(screenX, screenY, hitFlags, wrapper) ? kUnitySubsystemErrorCodeSuccess : kUnitySubsystemErrorCodeFailure;
+}
+
+void RaycastProvider::PopulateCStyleProvider(UnityXRRaycastProvider& provider)
+{
+    std::memset(&provider, 0, sizeof(provider));
+    provider.userData = this;
+    provider.Raycast = &StaticRaycast;
 }

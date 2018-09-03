@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Unity/IUnityXRCamera.h"
+#include "Unity/IUnityXRCamera.deprecated.h"
 #include "Wrappers/WrappedCamera.h"
 
 class CameraProvider : public IUnityXRCameraProvider
@@ -19,6 +19,8 @@ public:
     virtual bool UNITY_INTERFACE_API GetFrame(const UnityXRCameraParams& paramsIn, UnityXRCameraFrame* frameOut) override;
     virtual void UNITY_INTERFACE_API SetLightEstimationRequested(bool requested) override;
     virtual bool UNITY_INTERFACE_API GetShaderName(char(&shaderName)[kUnityXRStringSize]) override;
+
+    void PopulateCStyleProvider(UnityXRCameraProvider& provider);
 
 private:
     WrappedCamera m_WrappedCamera;

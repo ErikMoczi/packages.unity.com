@@ -9,11 +9,11 @@
 #   include "IUnityRenderingExtensions.h"
 #endif
 
-#include <cstddef>
+#include <stddef.h>
 #include <stdint.h>
 
 /// Describes the orientation of the screen
-enum UnityXRScreenOrientation
+typedef enum UnityXRScreenOrientation
 {
     kUnityXRScreenOrientationUnknown,               ///< The orientation is not known
     kUnityXRScreenOrientationPortrait,              ///< Portrait orientation, usually the default vertical orientation for mobile devices.
@@ -23,11 +23,11 @@ enum UnityXRScreenOrientation
 
     /// Used to ensure this enum is represented by a 32 bit integral type
     kUnityXRScreenOrientationEnsure32Bits = 0xffffffff
-};
+} UnityXRScreenOrientation;
 
 /// A texture descriptor, used to describe metadata concerning the
 /// camera textures used natively by the device.
-struct UnityXRTextureDescriptor
+typedef struct UnityXRTextureDescriptor
 {
     /// A pointer to the native texture id
     intptr_t nativeId;
@@ -50,13 +50,13 @@ struct UnityXRTextureDescriptor
     /// The name to assign the texture in its associated Material. If you plan
     /// to use this texture in a shader, the name should match that used in the shader.
     char name[kUnityXRStringSize];
-};
+} UnityXRTextureDescriptor;
 
 /// The maximum number of texture descriptors
-static const size_t kUnityXRMaxTextureDescriptors = 8;
+enum { kUnityXRMaxTextureDescriptors = 8 };
 
 /// Flags representing fields in the UnityXRCameraFrame
-enum UnityXRCameraFramePropertyFlags
+typedef enum UnityXRCameraFramePropertyFlags
 {
     /// Refers to the UnityXRCameraFrame::timestampNs
     kUnityXRCameraFramePropertiesTimestamp = 1 << 0,
@@ -72,11 +72,11 @@ enum UnityXRCameraFramePropertyFlags
 
     /// Refers to the UnityXRCameraFrame::displayMatrix
     kUnityXRCameraFramePropertiesDisplayMatrix = 1 << 4
-};
+} UnityXRCameraFramePropertyFlags;
 
 /// Describes a camera "frame", that is all camera data associated with a single
 /// snapshot in time.
-struct UnityXRCameraFrame
+typedef struct UnityXRCameraFrame
 {
     /// The timestamp, in nanoseconds, associated with this frame
     int64_t timestampNs;
@@ -109,10 +109,10 @@ struct UnityXRCameraFrame
     /// Unity will ignore any fields whose bit has not been set, except for textureDescriptors.
     /// numTextures is used to determine the validity of textureDescriptors in this case.
     UnityXRCameraFramePropertyFlags providedFields;
-};
+} UnityXRCameraFrame;
 
 /// Parameters of the Unity Camera that may be necessary or useful to the plugin.
-struct UnityXRCameraParams
+typedef struct UnityXRCameraParams
 {
     /// The distance from the camera to the near plane
     float zNear;
@@ -128,42 +128,97 @@ struct UnityXRCameraParams
 
     /// The orientation of the screen
     UnityXRScreenOrientation orientation;
-};
+} UnityXRCameraParams;
 
-/// Event handler implemented by the plugin for Camera subsystem specific events.
-struct IUnityXRCameraProvider
+/// @brief Event handler implemented by a plugin for camera subsystem main-thread specific events.
+///
+/// All event callbacks will be executed on the main thread.
+typedef struct UnityXRCameraProvider
 {
+    /// Pointer which will be passed to every callback as the userData parameter.
+    void* userData;
+
     /// Get the rendering data associated with the most recent AR frame.
     ///
-    /// @param[in] paramsIn Input parameters about the Unity camera which may be necessary or helpful generating e.g., the projection matrix.
-    /// @param[out] frameOut The output frame, including lighting estimation, projection matrix, and texture information.
-    /// @return True if frameOut was filled out with the current frame data; false otherwise.
-    virtual bool UNITY_INTERFACE_API GetFrame(const UnityXRCameraParams& paramsIn, UnityXRCameraFrame* frameOut) = 0;
+    /// @param[in] handle    Handle that could instead be obtained from lifecycle
+    ///                      events, pass this back as the first parameter to
+    ///                      IUnityXRCameraInterface functions that accept it.
+    /// @param[in] userData  User-specified data, supplied in this struct when
+    ///                      passed to RegisterCameraProvider.
+    /// @param[in] paramsIn  Input parameters about the Unity camera which may
+    ///                      be necessary or helpful generating e.g., the projection
+    ///                      matrix.
+    /// @param[out] frameOut The output frame, including lighting estimation,
+    ///                      projection matrix, and texture information.
+    /// @return              Error code describing the success or failure of the operation.
+    UnitySubsystemErrorCode(UNITY_INTERFACE_API * GetFrame)(UnitySubsystemHandle handle, void* userData, const UnityXRCameraParams * paramsIn, UnityXRCameraFrame * frameOut);
 
-    /// Invoked by Unity to request that light estimation be enabled or disabled whenever the session is active.
-    /// This method allows the Unity developer to specify intent. Whether light estimation is actually available
-    /// may then be queried with GetEnableLightEstimationAvailable below.
+    /// Invoked by Unity to request that light estimation be enabled or disabled
+    /// whenever the session is active. This method allows the Unity developer
+    /// to specify intent. Whether light estimation is actually available may
+    /// then be queried with GetEnableLightEstimationAvailable below.
     ///
+    /// @param[in] handle    Handle that could instead be obtained from lifecycle
+    ///                      events, pass this back as the first parameter to
+    ///                      IUnityXRCameraInterface functions that accept it.
+    /// @param[in] userData  User-specified data, supplied in this struct when
+    ///                      passed to RegisterCameraProvider.
     /// @param[in] requested True if light estimation is requested, otherwise false.
-    virtual void UNITY_INTERFACE_API SetLightEstimationRequested(bool requested) = 0;
+    /// @return              Error code describing the success or failure of the operation.
+    void(UNITY_INTERFACE_API * SetLightEstimationRequested)(UnitySubsystemHandle handle, void* userData, bool requested);
 
-    /// Invoked by Unity to retrieve the name of the shader that should be used during
-    /// background rendering (video overlay)
+    /// Invoked by Unity to retrieve the name of the shader that should be used
+    /// during background rendering (video overlay)
     ///
-    /// @param[in] shaderName The name of the shader
-    /// @return True if the shader name was filled out; false otherwise
-    virtual bool UNITY_INTERFACE_API GetShaderName(char(&shaderName)[kUnityXRStringSize]) = 0;
-};
+    /// @param[in] handle      Handle that could instead be obtained from lifecycle
+    ///                        events, pass this back as the first parameter to
+    ///                        IUnityXRCameraInterface functions that accept it.
+    /// @param[in] userData    User-specified data, supplied in this struct when
+    ///                        passed to RegisterCameraProvider.
+    /// @param[out] shaderName The name of the shader. Max string length is kUnityXRStringSize.
+    /// @return                Error code describing the success or failure of the operation.
+    UnitySubsystemErrorCode(UNITY_INTERFACE_API * GetShaderName)(UnitySubsystemHandle handle, void* userData, char shaderName[kUnityXRStringSize]);
+} UnityXRCameraProvider;
 
-/// When the camera subsystem is initialized, you will get an IUnitySubsystem pointer which can be cast to an IXRCameraSubsystem
-/// in order to further interact with the XR Camera subsystem.
-struct IUnityXRCameraSubsystem : public IUnitySubsystem
+// @brief XR interface for pass-through video cameras
+UNITY_DECLARE_INTERFACE(IUnityXRCameraInterface)
 {
+    /// Entry-point for getting callbacks when the display subsystem is initialized / started / stopped / shutdown.
+    ///
+    /// Example usage:
+    /// @code
+    /// #include "IUnityXRCamera.h"
+    ///
+    /// static IUnityXRCameraInterface* s_XrCamera = NULL;
+    ///
+    /// extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API
+    /// UnityPluginLoad(IUnityInterfaces* unityInterfaces)
+    /// {
+    ///     s_XrCamera = unityInterfaces->Get<IUnityXRCameraInterface>();
+    ///     UnityLifecycleProvider cameraLifecycleHandler =
+    ///     {
+    ///         NULL,  // This can be any object you want to be passed as userData to the following functions
+    ///         &Lifecycle_Initialize,
+    ///         &Lifecycle_Start,
+    ///         &Lifecycle_Stop,
+    ///         &Lifecycle_Shutdown
+    ///     };
+    ///     s_XrCamera->RegisterLifecycleProvider("PluginName", "HandheldCamera", &cameraLifecycleHandler);
+    /// }
+    /// @endcode
+    ///
+    /// @param[in] pluginName Name of the plugin which was listed in your UnitySubsystemsManifest.json.
+    /// @param[in] id         ID of the subsystem that was listed in your UnitySubsystemsManifest.json.
+    /// @param[in] provider   Callbacks to register.
+    /// @return               Error code describing the success or failure of the operation.
+    UnitySubsystemErrorCode(UNITY_INTERFACE_API * RegisterLifecycleProvider)(const char* pluginName, const char* id, const UnityLifecycleProvider * provider);
+
     /// Registers your plugin for events that are specific to the Camera subsystem.
     ///
-    /// @param cameraProvider The event handler which contains definitions for camera subsystem events.
-    virtual void UNITY_INTERFACE_API RegisterCameraProvider(IUnityXRCameraProvider* cameraProvider) = 0;
+    /// @param[in] handle   Handle that was obtained from lifecycle events.
+    /// @param[in] provider The event handler which contains definitions for camera
+    ///                     subsystem events.
+    /// @return             Error code describing the success or failure of the operation.
+    UnitySubsystemErrorCode(UNITY_INTERFACE_API * RegisterCameraProvider)(UnitySubsystemHandle handle, const UnityXRCameraProvider * provider);
 };
-
-UNITY_XR_DECLARE_INTERFACE(IUnityXRCameraInterface);
-UNITY_REGISTER_INTERFACE_GUID(0xB633A7C9398B4A95ULL, 0xB225399ED5A2328FULL, IUnityXRCameraInterface);
+UNITY_REGISTER_INTERFACE_GUID(0x18284232876F4701ULL, 0x9FEFF8589F5F5CF4ULL, IUnityXRCameraInterface);

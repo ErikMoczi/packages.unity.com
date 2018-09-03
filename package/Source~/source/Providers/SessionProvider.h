@@ -1,5 +1,5 @@
 #include "arcore_c_api.h"
-#include "Unity/IUnityXRSession.h"
+#include "Unity/IUnityXRSession.deprecated.h"
 #include "Wrappers/WrappedConfig.h"
 #include <jni.h>
 
@@ -30,8 +30,9 @@ public:
     virtual void UNITY_INTERFACE_API ApplicationPaused() override;
     virtual void UNITY_INTERFACE_API ApplicationResumed() override;
 
-private:
+    void PopulateCStyleProvider(UnityXRSessionProvider& provider);
 
+private:
     uint32_t m_CameraTextureName;
 
     enum class eConfigFlags : int
@@ -50,3 +51,5 @@ private:
     eConfigFlags m_DirtyConfigFlags = eConfigFlags::none;
     eConfigFlags m_RequestedConfigFlags = eConfigFlags::none;
 };
+
+bool IsArSessionEnabled();

@@ -58,22 +58,46 @@ float GetScreenHeight()
     return s_LifecycleProviderCamera.GetCameraProvider().GetScreenHeight();
 }
 
+template<typename T_LifecycleProvider, typename T_DeprecatedInterface>
+UnitySubsystemErrorCode RegisterLifecycleProviderOnDeprecatedInterface(IUnityInterfaces* unityInterfaces, T_LifecycleProvider& lifecycleProvider, const char* subsystemId)
+{
+    T_DeprecatedInterface* deprecatedInterface = unityInterfaces->Get<T_DeprecatedInterface>();
+    if (deprecatedInterface == nullptr)
+        return kUnitySubsystemErrorCodeFailure;
+
+    return deprecatedInterface->RegisterLifecycleProvider("UnityARCore", subsystemId, &lifecycleProvider) ? kUnitySubsystemErrorCodeSuccess :  kUnitySubsystemErrorCodeFailure;
+}
+
+template<typename T_LifecycleProvider, typename T_UpdatedInterface, typename T_DeprecatedInterface>
+UnitySubsystemErrorCode RegisterLifecycleProvider(IUnityInterfaces* unityInterfaces, T_LifecycleProvider& lifecycleProvider, const char* subsystemId)
+{
+    T_UpdatedInterface* updatedInterface = unityInterfaces->Get<T_UpdatedInterface>();
+    if (updatedInterface == nullptr)
+        return RegisterLifecycleProviderOnDeprecatedInterface<T_LifecycleProvider, T_DeprecatedInterface>(unityInterfaces, lifecycleProvider, subsystemId);
+
+    return lifecycleProvider.SetUnityInterfaceAndRegister(updatedInterface, subsystemId);
+}
+
+#define REGISTER_LIFECYCLE_PROVIDER(SubsystemName) \
+do \
+{ \
+    UnitySubsystemErrorCode registerErrorCode = RegisterLifecycleProvider \
+        <LifecycleProvider##SubsystemName, IUnityXR##SubsystemName##Interface, IUnityXR##SubsystemName##Interface_Deprecated> \
+        (unityInterfaces, s_LifecycleProvider##SubsystemName, "ARCore-"#SubsystemName); \
+    if (registerErrorCode != kUnitySubsystemErrorCodeSuccess) \
+        DEBUG_LOG_ERROR("Failed to register lifecycle provider, "#SubsystemName" subsystem will be unavailable!"); \
+} \
+while (false)
+
 extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API
 UnityPluginLoad(IUnityInterfaces* unityInterfaces)
 {
-    IUnityXRCameraInterface* xrCameraInterface = unityInterfaces->Get<IUnityXRCameraInterface>();
-    if (nullptr == xrCameraInterface)
-    {
-        DEBUG_LOG_FATAL("Failed to get IUnityXRCameraInterface - can't even attempt to run ARCore!");
-        return;
-    }
-
-    IUnityXRDepthInterface* xrDepthInterface = unityInterfaces->Get<IUnityXRDepthInterface>();
-    if (nullptr == xrDepthInterface)
-    {
-        DEBUG_LOG_FATAL("Failed to get IUnityXRDepthInterface - can't even attempt to run ARCore!");
-        return;
-    }
+	REGISTER_LIFECYCLE_PROVIDER(Camera);
+	REGISTER_LIFECYCLE_PROVIDER(Depth);
+	REGISTER_LIFECYCLE_PROVIDER(Plane);
+	REGISTER_LIFECYCLE_PROVIDER(Raycast);
+    REGISTER_LIFECYCLE_PROVIDER(ReferencePoint);
+    REGISTER_LIFECYCLE_PROVIDER(Session);
 
     UnityXRInput_V1::IUnityXRInputInterface* xrInputInterface_V1 = nullptr;
     UnityXRInput_V2::IUnityXRInputInterface* xrInputInterface_V2 = nullptr;
@@ -93,42 +117,7 @@ UnityPluginLoad(IUnityInterfaces* unityInterfaces)
         }
     }
 
-    IUnityXRPlaneInterface* xrPlaneInterface = unityInterfaces->Get<IUnityXRPlaneInterface>();
-    if (nullptr == xrPlaneInterface)
-    {
-        DEBUG_LOG_FATAL("Failed to get IUnityXRPlaneInterface - can't even attempt to run ARCore!");
-        return;
-    }
-
-    IUnityXRRaycastInterface* xrRaycastInterface = unityInterfaces->Get<IUnityXRRaycastInterface>();
-    if (nullptr == xrRaycastInterface)
-    {
-        DEBUG_LOG_FATAL("Failed to get IUnityXRRaycastInterface - can't even attempt to run ARCore!");
-        return;
-    }
-
-    IUnityXRReferencePointInterface* xrReferencePointInterface = unityInterfaces->Get<IUnityXRReferencePointInterface>();
-    if (nullptr == xrReferencePointInterface)
-    {
-        DEBUG_LOG_FATAL("Failed to get IUnityXRReferencePointInterface - can't even attempt to run ARCore!");
-        return;
-    }
-
-    IUnityXRSessionInterface* xrSessionInterface = unityInterfaces->Get<IUnityXRSessionInterface>();
-    if (nullptr == xrSessionInterface)
-    {
-        DEBUG_LOG_FATAL("Failed to get IUnityXRSessionInterface - can't even attempt to run ARCore!");
-        return;
-    }
-
-    bool registered = xrCameraInterface->RegisterLifecycleProvider("UnityARCore", "ARCore-Camera", &s_LifecycleProviderCamera);
-    if (!registered)
-        DEBUG_LOG_ERROR("Failed to register camera lifecycle provider - camera pose can't update for this run of ARCore!");
-
-    registered = xrDepthInterface->RegisterLifecycleProvider("UnityARCore", "ARCore-Depth", &s_LifecycleProviderDepth);
-    if (!registered)
-        DEBUG_LOG_ERROR("Failed to register depth lifecycle provider - point clouds will be inaccessible for this run of ARCore!");
-
+	bool registered = false;
     if(nullptr != xrInputInterface)
     {
         s_LifecycleProviderInput.SetInputInterface(xrInputInterface);
@@ -148,20 +137,4 @@ UnityPluginLoad(IUnityInterfaces* unityInterfaces)
         registered = xrInputInterface_V1->RegisterLifecycleProvider("UnityARCore", "ARCore-Input", &s_LifecycleProviderInput_V1);   
     if (!registered)
         DEBUG_LOG_ERROR("Failed to register input lifecycle provider - camera pose can't update for this run of ARCore!");
-
-    registered = xrPlaneInterface->RegisterLifecycleProvider("UnityARCore", "ARCore-Plane", &s_LifecycleProviderPlane);
-    if (!registered)
-        DEBUG_LOG_ERROR("Failed to register planes lifecycle provider - planes will be inaccessible for this run of ARCore!");
-
-    registered = xrRaycastInterface->RegisterLifecycleProvider("UnityARCore", "ARCore-Raycast", &s_LifecycleProviderRaycast);
-    if (!registered)
-        DEBUG_LOG_ERROR("Failed to register raycast lifecycle provider - raycasting will be inaccessible for this run of ARCore!");
-
-    registered = xrReferencePointInterface->RegisterLifecycleProvider("UnityARCore", "ARCore-ReferencePoint", &s_LifecycleProviderReferencePoint);
-    if (!registered)
-        DEBUG_LOG_ERROR("Failed to register reference point lifecycle provider - reference points will be inaccessible for this run of ARCore!");
-
-    registered = xrSessionInterface->RegisterLifecycleProvider("UnityARCore", "ARCore-Session", &s_LifecycleProviderSession);
-    if (!registered)
-        DEBUG_LOG_ERROR("Failed to register session lifecycle provider - nothing has a chance of working for this run of ARCore!");
 }

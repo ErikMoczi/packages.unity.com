@@ -11,8 +11,6 @@ namespace UnityEditor.XR.ARCore
 {
     internal class ARCorePreprocessBuild : IPreprocessBuildWithReport
     {
-        static readonly string k_ARCoreEnabled = "androidTangoEnabled";
-
         public int callbackOrder { get { return 0; } }
 
         public void OnPreprocessBuild(BuildReport report)
@@ -52,18 +50,22 @@ namespace UnityEditor.XR.ARCore
 
         void EnsureARCoreSupportedIsNotChecked()
         {
+            bool arcoreEnabled = false;
+#if UNITY_2018_1
             var t = typeof(PlayerSettings.Android);
-            var property = t.GetProperty(k_ARCoreEnabled, BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            var property = t.GetProperty("androidTangoEnabled", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
             if (property != null)
             {
                 var value = property.GetValue(null, null);
                 if (value != null)
-                {
-                    var arcoreEnabled = (bool)value;
-                    if (arcoreEnabled)
-                        throw new BuildFailedException("\"ARCore Supported\" (Player Settings > XR Settings) refers to the built-in ARCore support in Unity and conflicts with the \"ARCore XR Plugin\" package.");
-                }
+                    arcoreEnabled = (bool)value;
             }
+#elif UNITY_2018_2_OR_NEWER
+            arcoreEnabled = PlayerSettings.Android.ARCoreEnabled;
+#endif
+
+            if (arcoreEnabled)
+                throw new BuildFailedException("\"ARCore Supported\" (Player Settings > XR Settings) refers to the built-in ARCore support in Unity and conflicts with the \"ARCore XR Plugin\" package.");
         }
 
         void EnsureMultithreadedRenderingDisabled(BuildReport report)

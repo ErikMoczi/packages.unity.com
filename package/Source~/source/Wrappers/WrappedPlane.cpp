@@ -1,6 +1,6 @@
 #include "MathConversion.h"
 #include "mathfu/quaternion.h"
-#include "Unity/IUnityXRPlane.h"
+#include "Unity/IUnityXRPlane.deprecated.h"
 #include "Utility.h"
 #include "WrappedPlane.h"
 #include "WrappedPose.h"

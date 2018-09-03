@@ -14,7 +14,8 @@ extern "C" UnityXRTrackableId UnityARCore_attachReferencePoint(UnityXRTrackableI
     return instance->AttachReferencePoint(trackableId, pose);
 }
 
-ReferencePointProvider::ReferencePointProvider()
+ReferencePointProvider::ReferencePointProvider(IUnityXRReferencePointInterface*& unityInterface)
+    : m_UnityInterface(unityInterface)
 {
     s_Instance = this;    
 }
@@ -133,4 +134,59 @@ bool UNITY_INTERFACE_API ReferencePointProvider::GetAllReferencePoints(IUnityXRR
     }
 
     return true;
+}
+
+struct ReferencePointAllocatorWrapper : public IUnityXRReferencePointAllocator
+{
+    ReferencePointAllocatorWrapper(IUnityXRReferencePointInterface* unityInterface, UnityXRReferencePointDataAllocator* allocator)
+        : m_UnityInterface(unityInterface)
+        , m_Allocator(allocator)
+    {}
+
+    virtual UnityXRReferencePoint* AllocateReferencePoints(
+        size_t numReferencePoints) override
+    {
+        return m_UnityInterface->Allocator_AllocateReferencePoints(m_Allocator, numReferencePoints);
+    }
+
+private:
+    IUnityXRReferencePointInterface* m_UnityInterface;
+    UnityXRReferencePointDataAllocator* m_Allocator;
+};
+
+UnitySubsystemErrorCode UNITY_INTERFACE_API ReferencePointProvider::StaticTryAddReferencePoint(UnitySubsystemHandle handle, void* userData, const UnityXRPose* xrPose, UnityXRTrackableId* outId, UnityXRTrackingState* outTrackingState)
+{
+    ReferencePointProvider* thiz = static_cast<ReferencePointProvider*>(userData);
+    if (thiz == nullptr || xrPose == nullptr || outId == nullptr || outTrackingState == nullptr)
+        return kUnitySubsystemErrorCodeInvalidArguments;
+
+    return thiz->TryAddReferencePoint(*xrPose, *outId, *outTrackingState) ? kUnitySubsystemErrorCodeSuccess : kUnitySubsystemErrorCodeFailure;
+}
+
+UnitySubsystemErrorCode UNITY_INTERFACE_API ReferencePointProvider::StaticTryRemoveReferencePoint(UnitySubsystemHandle handle, void* userData, const UnityXRTrackableId* id)
+{
+    ReferencePointProvider* thiz = static_cast<ReferencePointProvider*>(userData);
+    if (thiz == nullptr || id == nullptr)
+        return kUnitySubsystemErrorCodeInvalidArguments;
+
+    return thiz->TryRemoveReferencePoint(*id) ? kUnitySubsystemErrorCodeSuccess : kUnitySubsystemErrorCodeFailure;
+}
+
+UnitySubsystemErrorCode UNITY_INTERFACE_API ReferencePointProvider::StaticGetAllReferencePoints(UnitySubsystemHandle handle, void* userData, UnityXRReferencePointDataAllocator* allocator)
+{
+    ReferencePointProvider* thiz = static_cast<ReferencePointProvider*>(userData);
+    if (thiz == nullptr || thiz == nullptr)
+        return kUnitySubsystemErrorCodeInvalidArguments;
+
+    ReferencePointAllocatorWrapper wrapper(thiz->m_UnityInterface, allocator);
+    return thiz->GetAllReferencePoints(wrapper) ? kUnitySubsystemErrorCodeSuccess : kUnitySubsystemErrorCodeFailure;
+}
+
+void ReferencePointProvider::PopulateCStyleProvider(UnityXRReferencePointProvider& provider)
+{
+    std::memset(&provider, 0, sizeof(provider));
+    provider.userData = this;
+    provider.TryAddReferencePoint = &StaticTryAddReferencePoint;
+    provider.TryRemoveReferencePoint = &StaticTryRemoveReferencePoint;
+    provider.GetAllReferencePoints = &StaticGetAllReferencePoints;
 }

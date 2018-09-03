@@ -4,6 +4,7 @@
 #include "arcore_c_api.h"
 #include "Unity/UnityXRTrackable.h"
 #include "Unity/UnityXRTypes.h"
+#include <cstring>
 #include <stdio.h>
 
 #define EnumCast static_cast
