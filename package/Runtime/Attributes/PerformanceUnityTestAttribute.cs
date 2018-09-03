@@ -4,15 +4,13 @@ using NUnit.Framework.Internal.Commands;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using NUnit.Framework.Internal.Builders;
+using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace Unity.PerformanceTesting
 {
     [AttributeUsage(AttributeTargets.Method)]
-    public class PerformanceUnityTestAttribute : CombiningStrategyAttribute, ISimpleTestBuilder, IImplyFixture 
-#if UNITY_2018_2_OR_NEWER
-        , IWrapSetUpTearDown
-#endif 
+    public class PerformanceUnityTestAttribute : CombiningStrategyAttribute, ISimpleTestBuilder, IWrapTestMethod, IImplyFixture 
     {
         public PerformanceUnityTestAttribute() : base(new UnityCombinatorialStrategy(),
             new ParameterDataSourceProvider())
