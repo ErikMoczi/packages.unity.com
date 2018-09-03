@@ -29,3 +29,4 @@
 0.2.4-preview
 0.2.5-preview
 0.2.6-preview
+0.2.7-preview

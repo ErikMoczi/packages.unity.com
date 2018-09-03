@@ -211,11 +211,6 @@ namespace Unity.Properties
                 throw new Exception("Failed to register conversion method, source type and destination are the same.");
             }
 
-            if (typeof(TDestination).IsAbstract || typeof(TDestination).IsInterface)
-            {
-                throw new Exception("Failed to register conversion method, destination type is abstract.");
-            }
-
             var converter = new TypeConverter<TSource, TDestination>(conversion);
             
             TypeConversion<TSource, TDestination>.Register(converter);

@@ -18,35 +18,47 @@ namespace Unity.Properties
     public struct PropertyList<TContainer, TValue> : IList<TValue>
         where TContainer : class, IPropertyContainer
     {
-        private class Enumerator : IEnumerator<TValue>
+        private struct Enumerator : IEnumerator<TValue>
         {
             private readonly IListClassProperty<TContainer, TValue> m_Property;
             private readonly TContainer m_Container;
 
             private int m_Index;
+            
+            public TValue Current { get; private set; }
+            object IEnumerator.Current => Current;
 
             public Enumerator(IListClassProperty<TContainer, TValue> property, TContainer container)
             {
                 m_Property = property;
                 m_Container = container;
-                m_Index = -1;
+                m_Index = 0;
+                Current = default(TValue);
             }
             
             public bool MoveNext()
             {
-                m_Index++;
-                return m_Index < m_Property.Count(m_Container);
+                var count = m_Property.Count(m_Container);
+                
+                if (m_Index >= 0 && m_Index < count)
+                {
+                    Current = m_Property.GetAt(m_Container, m_Index);
+                    m_Index++;
+                    return true;
+                }
+
+                m_Index = count + 1;
+                Current = default(TValue);
+                
+                return false;
             }
 
             public void Reset()
             {
-                m_Index = -1;
+                m_Index = 0;
+                Current = default(TValue);
             }
-
-            public TValue Current => m_Property.GetAt(m_Container, m_Index);
-
-            object IEnumerator.Current => Current;
-
+            
             public void Dispose()
             {
                 
@@ -98,9 +110,9 @@ namespace Unity.Properties
 
         public void CopyTo(TValue[] array, int arrayIndex)
         {
-            for (int i = arrayIndex, count = m_Property.Count(m_Container); i < count; i++)
+            for (int i = 0, count = m_Property.Count(m_Container); i < count; i++)
             {
-                array[i] = m_Property.GetAt(m_Container, i);
+                array[arrayIndex + i] = m_Property.GetAt(m_Container, i);
             }
         }
 
