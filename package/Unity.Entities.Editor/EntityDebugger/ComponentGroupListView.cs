@@ -63,7 +63,6 @@ namespace Unity.Entities.Editor
             this.window = window;
             selectedSystem = system;
             Reload();
-            SelectionChanged(GetSelection());
         }
 
         public float Height => Mathf.Max(selectedSystem?.ComponentGroups.Length ?? 0, 1)*rowHeight;
@@ -133,6 +132,11 @@ namespace Unity.Entities.Editor
         protected override bool CanMultiSelect(TreeViewItem item)
         {
             return false;
+        }
+
+        public void TouchSelection()
+        {
+            SelectionChanged(GetSelection());
         }
     }
 }

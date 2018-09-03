@@ -13,7 +13,7 @@ namespace Unity.Entities.Editor
         class FakeWindow : IEntitySelectionWindow, IWorldSelectionWindow, IComponentGroupSelectionWindow, ISystemSelectionWindow
         {
             public Entity EntitySelection { get; set; }
-            public World WorldSelection { get; }
+            public World WorldSelection { get; set; }
             public ComponentGroup ComponentGroupSelection { get; set; }
             public ScriptBehaviourManager SystemSelection { get; set; }
         }
@@ -67,20 +67,7 @@ namespace Unity.Entities.Editor
             var stateNames = new List<string>();
             Assert.DoesNotThrow(() =>
             {
-                listView = SystemListView.CreateList(null, states, stateNames, new FakeWindow());
-                listView.Reload();
-            });
-        }
-
-        [Test]
-        public void SystemListView_CanCreateWithNullWindow()
-        {
-            SystemListView listView;
-            var states = new List<TreeViewState>();
-            var stateNames = new List<string>();
-            Assert.DoesNotThrow(() =>
-            {
-                listView = SystemListView.CreateList(World.Active, states, stateNames, null);
+                listView = SystemListView.CreateList(states, stateNames, new FakeWindow());
                 listView.Reload();
             });
         }

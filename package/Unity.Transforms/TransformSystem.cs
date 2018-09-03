@@ -1,4 +1,5 @@
 ﻿using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -37,6 +38,7 @@ namespace Unity.Transforms
             [ReadOnly] public SubtractiveComponent<Heading> headings;
             [ReadOnly] public ComponentDataArray<Position> positions;
             [ReadOnly] public EntityArray entities;
+            [NativeDisableContainerSafetyRestriction]
             public ComponentDataArray<TransformMatrix> transforms;
             public int Length;
         }
@@ -65,6 +67,7 @@ namespace Unity.Transforms
             [ReadOnly] public SubtractiveComponent<Heading> headings;
             [ReadOnly] public SubtractiveComponent<Position> positions;
             [ReadOnly] public EntityArray entities;
+            [NativeDisableContainerSafetyRestriction]
             public ComponentDataArray<TransformMatrix> transforms;
             public int Length;
         }
@@ -93,6 +96,7 @@ namespace Unity.Transforms
             [ReadOnly] public SubtractiveComponent<Heading> headings;
             [ReadOnly] public ComponentDataArray<Position> positions;
             [ReadOnly] public EntityArray entities;
+            [NativeDisableContainerSafetyRestriction]
             public ComponentDataArray<TransformMatrix> transforms;
             public int Length;
         }
@@ -109,6 +113,7 @@ namespace Unity.Transforms
             [ReadOnly] public EntityArray entities;
             // @todo Why doesn't this throw exception?
             // [ReadOnly] public ComponentDataArray<TransformMatrix> transforms;
+            [NativeDisableContainerSafetyRestriction]
             public ComponentDataArray<TransformMatrix> transforms;
             public int Length;
         }
@@ -143,6 +148,7 @@ namespace Unity.Transforms
             [ReadOnly] public ComponentDataArray<Rotation> rotations;
             [ReadOnly] public ComponentDataArray<Position> positions;
             public NativeArray<float4x4> matrices;
+            [NativeDisableContainerSafetyRestriction]
             public ComponentDataArray<TransformMatrix> transforms;
 
             private float deltaTIme;
@@ -159,6 +165,7 @@ namespace Unity.Transforms
         {
             [ReadOnly] public ComponentDataArray<Rotation> rotations;
             [ReadOnly] public ComponentDataArray<Position> positions;
+            [NativeDisableContainerSafetyRestriction]
             public ComponentDataArray<TransformMatrix> transforms;
 
             public void Execute(int index)
@@ -187,6 +194,7 @@ namespace Unity.Transforms
         {
             [ReadOnly] public ComponentDataArray<Rotation> rotations;
             public NativeArray<float4x4> matrices;
+            [NativeDisableContainerSafetyRestriction]
             public ComponentDataArray<TransformMatrix> transforms;
 
             public void Execute(int index)
@@ -201,6 +209,7 @@ namespace Unity.Transforms
         struct UpdateRotTransformNoHierarchyRoots : IJobParallelFor
         {
             [ReadOnly] public ComponentDataArray<Rotation> rotations;
+            [NativeDisableContainerSafetyRestriction]
             public ComponentDataArray<TransformMatrix> transforms;
 
             public void Execute(int index)
@@ -228,6 +237,7 @@ namespace Unity.Transforms
         {
             [ReadOnly] public ComponentDataArray<Position> positions;
             public NativeArray<float4x4> matrices;
+            [NativeDisableContainerSafetyRestriction]
             public ComponentDataArray<TransformMatrix> transforms;
 
             public void Execute(int index)
@@ -242,6 +252,7 @@ namespace Unity.Transforms
         struct UpdateTransTransformNoHierarchyRoots : IJobParallelFor
         {
             [ReadOnly] public ComponentDataArray<Position> positions;
+            [NativeDisableContainerSafetyRestriction]
             public ComponentDataArray<TransformMatrix> transforms;
 
             public void Execute(int index)
@@ -270,6 +281,7 @@ namespace Unity.Transforms
             [ReadOnly] public ComponentDataArray<Position> positions;
             [ReadOnly] public ComponentDataArray<Heading> headings;
             public NativeArray<float4x4> matrices;
+            [NativeDisableContainerSafetyRestriction]
             public ComponentDataArray<TransformMatrix> transforms;
 
             public void Execute(int index)
@@ -285,6 +297,7 @@ namespace Unity.Transforms
         {
             [ReadOnly] public ComponentDataArray<Position> positions;
             [ReadOnly] public ComponentDataArray<Heading> headings;
+            [NativeDisableContainerSafetyRestriction]
             public ComponentDataArray<TransformMatrix> transforms;
 
             public void Execute(int index)

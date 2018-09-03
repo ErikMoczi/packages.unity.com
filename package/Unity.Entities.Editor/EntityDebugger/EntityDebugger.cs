@@ -39,6 +39,7 @@ namespace Unity.Entities.Editor
             {
                 systemSelection = value;
                 CreateComponentGroupListView();
+                componentGroupListView.TouchSelection();
             }
         }
 
@@ -51,6 +52,7 @@ namespace Unity.Entities.Editor
             {
                 componentGroupSelection = value;
                 entityListView.SelectedComponentGroup = value;
+                entityListView.TouchSelection();
             }
         }
 
@@ -61,9 +63,10 @@ namespace Unity.Entities.Editor
             get { return selectionProxy.Entity; }
             set
             {
-                if (value != Entity.Null)
+                var entityManager = WorldSelection?.GetExistingManager<EntityManager>();
+                if (value != Entity.Null && entityManager != null)
                 {
-                    selectionProxy.SetEntity(WorldSelection.GetExistingManager<EntityManager>(), value);
+                    selectionProxy.SetEntity(entityManager, value);
                     Selection.activeObject = selectionProxy;
                 }
                 else if (Selection.activeObject == selectionProxy)
@@ -106,7 +109,9 @@ namespace Unity.Entities.Editor
         {
             get
             {
-                return worldSelection;
+                if (worldSelection != null && worldSelection.IsCreated)
+                    return worldSelection;
+                return null;
             }
             set
             {
@@ -118,6 +123,7 @@ namespace Unity.Entities.Editor
                     
                     CreateSystemListView();
                     systemListView.multiColumnHeader.ResizeToFit();
+                    systemListView.TouchSelection();
                 }
             }
         }
@@ -129,7 +135,7 @@ namespace Unity.Entities.Editor
 
         private void CreateSystemListView()
         {
-            systemListView = SystemListView.CreateList(WorldSelection, systemListStates, systemListStateNames, this);
+            systemListView = SystemListView.CreateList(systemListStates, systemListStateNames, this);
         }
 
         private void CreateComponentGroupListView()
@@ -156,9 +162,10 @@ namespace Unity.Entities.Editor
         {
             selectionProxy = ScriptableObject.CreateInstance<EntitySelectionProxy>();
             selectionProxy.hideFlags = HideFlags.HideAndDontSave;
-            CreateEntityListView();
             CreateSystemListView();
             CreateComponentGroupListView();
+            CreateEntityListView();
+            systemListView.TouchSelection();
             EditorApplication.playModeStateChanged += OnPlayModeStateChange;
         }
 
@@ -214,6 +221,8 @@ namespace Unity.Entities.Editor
             var rect = GUIHelpers.GetExpandingRect();
             if (World.AllWorlds.Count != 0)
             {
+                if (repainted)
+                    systemListView.UpdateIfNecessary();
                 systemListView.OnGUI(rect);
             }
             else
@@ -243,13 +252,12 @@ namespace Unity.Entities.Editor
                 var type = SystemSelection.GetType();
                 AlignHeader(() => GUILayout.Label(type.Namespace, EditorStyles.label));
                 GUILayout.Label(type.Name, EditorStyles.boldLabel);
-                if (SystemSelection is ComponentSystemBase)
+                GUILayout.FlexibleSpace();
+                var system = SystemSelection as ComponentSystemBase;
+                if (system != null)
                 {
-                    GUILayout.FlexibleSpace();
-
-                    var system = (ComponentSystemBase) SystemSelection;
                     var running = system.Enabled && system.ShouldRunSystem();
-                    AlignHeader(() => GUILayout.Label($"running: {running}"));
+                    AlignHeader(() => GUILayout.Label($"running: {(running ? "yes" : "no")}"));
                 }
             }
             GUILayout.EndHorizontal();
@@ -283,6 +291,14 @@ namespace Unity.Entities.Editor
             GUILayout.Space(6f);
             header();
             GUILayout.EndVertical();
+        }
+
+        private void OnSelectionChange()
+        {
+            if (Selection.activeObject != selectionProxy)
+            {
+                entityListView.SelectNothing();
+            }
         }
 
         private bool repainted = false;

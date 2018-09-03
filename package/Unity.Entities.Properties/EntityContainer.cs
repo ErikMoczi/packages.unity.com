@@ -23,6 +23,8 @@ namespace Unity.Entities.Properties
                 var count = container.m_Manager.GetComponentCount(container.m_Entity);
                 var listContext = new ListContext<IList<StructProxy>> {Property = this, Value = null, Index = -1, Count = count};
 
+
+                // @TODO improve, split the deps
                 HashSet<Type> primitiveTypes = new HashSet<Type>();
                 // try to gather the primitive types for that visitor
                 var entityVisitor = visitor as IPrimitivePropertyVisitor;
@@ -33,7 +35,7 @@ namespace Unity.Entities.Properties
                 else
                 {
                     // @TODO remove that dependency
-                    // Fallback on the optimizaed visitor for now
+                    // Fallback on the optimized visitor for now
                     primitiveTypes = OptimizedVisitor.SupportedTypes();
                 }
 

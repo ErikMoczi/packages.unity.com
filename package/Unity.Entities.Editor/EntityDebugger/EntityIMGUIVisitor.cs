@@ -65,7 +65,6 @@ namespace Unity.Entities.Editor
 
         public void Visit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context) where TContainer : IPropertyContainer
         {
-            var property = context.Value;
             GUILayout.Label(context.Property.Name);
         }
 
@@ -98,7 +97,6 @@ namespace Unity.Entities.Editor
                 state.Folded = EditorGUILayout.Foldout(state.Folded, context.Property.Name);
 
                 return state.Folded;
-
             }
             return true;
         }
@@ -261,7 +259,16 @@ namespace Unity.Entities.Editor
             }
 
             var previous = context.Value;
-            onGUI(new GUIContent(property.Name), previous);
+            TValue v = onGUI(new GUIContent(property.Name), previous);
+
+            var T = context.Property.GetType();
+            var typedProperty = Convert.ChangeType(property, T);
+
+            if (!context.Property.IsReadOnly && typedProperty != null)
+            {
+                // TODO doesn not work, ref container
+                T.GetMethod("SetValue").Invoke(property, new object[] { container, v });
+            }
         }
     }
 }
