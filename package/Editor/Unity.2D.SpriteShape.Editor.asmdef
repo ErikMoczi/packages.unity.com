@@ -1,0 +1,13 @@
+{
+    "name": "Unity.2D.SpriteShape.Editor",
+    "references": [
+        "Unity.InternalAPIEditorBridge.001",
+        "Unity.2D.Common.Editor",
+        "Unity.2D.Common.Runtime",
+        "Unity.2D.SpriteShape.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

@@ -1,0 +1,8 @@
+{
+    "name": "Unity.2D.SpriteShape.Runtime",
+    "references": [
+        "Unity.2D.Common.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": []
+}
