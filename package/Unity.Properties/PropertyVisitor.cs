@@ -4,8 +4,7 @@ namespace Unity.Properties
 {
     /// <summary>
     /// Adapter for the <see cref="IPropertyVisitor"/> interface.
-    /// Only primitive Visit methods are required to override. VisitEnum default implementation forward the call to
-    /// their Visit counterparts.
+    /// Only primitive Visit methods are required to override.
     /// </summary>
     public abstract class PropertyVisitorAdapter : IPropertyVisitor
     {
@@ -26,18 +25,6 @@ namespace Unity.Properties
 
         public abstract void Visit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
             where TContainer : struct, IPropertyContainer;
-
-        public virtual void VisitEnum<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
-            where TContainer : class, IPropertyContainer where TValue : struct
-        {
-            Visit(container, context);
-        }
-
-        public virtual void VisitEnum<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
-            where TContainer : struct, IPropertyContainer where TValue : struct
-        {
-            Visit(ref container, context);
-        }
 
         public virtual bool BeginContainer<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
             where TContainer : class, IPropertyContainer where TValue : IPropertyContainer
@@ -131,6 +118,12 @@ namespace Unity.Properties
         /// </summary>
         protected bool IsListItem => ListIndex >= 0;
 
+        /// <summary>
+        /// Whether or not the current property is a list property (and not an element of the list).
+        /// TODO: fix this if nested lists are introduced.
+        /// </summary>
+        protected bool IsListProperty => (Property is IListProperty) && (false == IsListItem);
+
         protected virtual void VisitSetup<TContainer, TValue>(ref TContainer container, ref VisitContext<TValue> context)
             where TContainer : IPropertyContainer
         {
@@ -154,18 +147,27 @@ namespace Unity.Properties
             
             handler.CustomVisit(value);
             return true;
-
         }
         
         public override bool ExcludeVisit<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
         {
             VisitSetup(ref container, ref context);
+            if (IsListProperty)
+            {
+                // lists are always visited - if required, override ExcludeVisit to return true
+                return false;
+            }
             return CustomVisit(context.Value);
         }
         
         public override bool ExcludeVisit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
         {
             VisitSetup(ref container, ref context);
+            if (IsListProperty)
+            {
+                // lists are always visited - if required, override ExcludeVisit to return true
+                return false;
+            }
             return CustomVisit(context.Value);
         }
 
@@ -208,18 +210,6 @@ namespace Unity.Properties
         }
 
         public override void Visit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
-        {
-            VisitSetup(ref container, ref context);
-            Visit(context.Value);
-        }
-        
-        public override void VisitEnum<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
-        {
-            VisitSetup(ref container, ref context);
-            Visit(context.Value);
-        }
-        
-        public override void VisitEnum<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
         {
             VisitSetup(ref container, ref context);
             Visit(context.Value);

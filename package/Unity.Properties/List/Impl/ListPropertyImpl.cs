@@ -129,6 +129,11 @@ namespace Unity.Properties
         public override void Accept(TContainer container, IPropertyVisitor visitor)
         {
             var listContext = new VisitContext<TItem> {Property = this, Index = -1};
+
+            if (visitor.ExcludeVisit(container, listContext))
+            {
+                return;
+            }
             
             if (visitor.BeginCollection(container, listContext))
             {
@@ -165,6 +170,11 @@ namespace Unity.Properties
         public override void Accept(TContainer container, IPropertyVisitor visitor)
         {
             var listContext = new VisitContext<TItem> {Property = this, Index = -1};
+            
+            if (visitor.ExcludeVisit(container, listContext))
+            {
+                return;
+            }
             
             if (visitor.BeginCollection(container, listContext))
             {
@@ -208,6 +218,11 @@ namespace Unity.Properties
         public override void Accept(TContainer container, IPropertyVisitor visitor)
         {
             var listContext = new VisitContext<TItem> {Property = this, Index = -1};
+            
+            if (visitor.ExcludeVisit(container, listContext))
+            {
+                return;
+            }
             
             if (visitor.BeginCollection(container, listContext))
             {
@@ -361,6 +376,11 @@ namespace Unity.Properties
         public override void Accept(ref TContainer container, IPropertyVisitor visitor)
         {
             var listContext = new VisitContext<TItem> {Property = this, Index = -1};
+            
+            if (visitor.ExcludeVisit(ref container, listContext))
+            {
+                return;
+            }
            
             if (visitor.BeginCollection(ref container, listContext))
             {
@@ -397,6 +417,11 @@ namespace Unity.Properties
         public override void Accept(ref TContainer container, IPropertyVisitor visitor)
         {
             var listContext = new VisitContext<IList<TItem>> {Property = this, Index = -1};
+            
+            if (visitor.ExcludeVisit(ref container, listContext))
+            {
+                return;
+            }
             
             if (visitor.ExcludeVisit(ref container, listContext))
             {
@@ -444,6 +469,11 @@ namespace Unity.Properties
         public override void Accept(ref TContainer container, IPropertyVisitor visitor)
         {
             var listContext = new VisitContext<TItem> {Property = this, Index = -1};
+            
+            if (visitor.ExcludeVisit(ref container, listContext))
+            {
+                return;
+            }
             
             if (visitor.BeginCollection(ref container, listContext))
             {
