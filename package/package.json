@@ -1,8 +1,11 @@
 {
     "category": "2D", 
+    "config": {
+        "publishtest": true
+    }, 
     "dependencies": {}, 
     "description": "2D Triangle", 
-    "gitHead": "f948b6eafc78d8455fee02242ab012b127e96236", 
+    "gitHead": "d2678e5fc965b4e4b615a0488a406ae608ce3880", 
     "keywords": [
         "2d"
     ], 
@@ -12,5 +15,5 @@
         "url": "git@gitlab.internal.unity3d.com:2d/triangle.git"
     }, 
     "unity": "2018.1", 
-    "version": "1.0.1-preview"
+    "version": "1.0.1-preview.1"
 }
