@@ -23,7 +23,7 @@ namespace Unity.Jobs
         public ComputeJobOptimizationAttribute()
         {
             Support = Support.Strict;
-            Accuracy = Accuracy.High;
+            Accuracy = Accuracy.Std;
         }
 
         public ComputeJobOptimizationAttribute(Accuracy accuracy, Support support)

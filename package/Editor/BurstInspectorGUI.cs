@@ -2,13 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using Burst.Compiler.IL;
 using Unity.Burst.LowLevel;
 using UnityEditor;
+using UnityEditor.Compilation;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
 namespace Unity.Burst.Editor
 {
+    using static BurstCompilerOptions;
+
     internal enum DisassemblyKind
     {
         Asm = 0,
@@ -31,10 +35,10 @@ namespace Unity.Burst.Editor
 
         private static readonly string[] DisasmOptions =
         {
-            " -disassembly=asm",
-            " -disassembly=il",
-            " -disassembly=ir-unopt",
-            " -disassembly=ir-opt"
+            " " + GetOption(OptionDump, NativeDumpFlags.Asm),
+            " " + GetOption(OptionDump, NativeDumpFlags.IL),
+            " " + GetOption(OptionDump, NativeDumpFlags.IR),
+            " " + GetOption(OptionDump, NativeDumpFlags.IROptimized),
         };
 
         private static readonly string[] CodeGenOptions =
@@ -86,7 +90,7 @@ namespace Unity.Burst.Editor
         {
             if (_targets == null)
             {
-                _targets = BurstReflection.FindExecuteMethods();
+                _targets = BurstReflection.FindExecuteMethods(AssembliesType.Editor);
                 _treeView.Targets = _targets;
                 _treeView.Reload();
 
@@ -109,7 +113,12 @@ namespace Unity.Burst.Editor
             if (_fixedFontStyle == null)
             {
                 _fixedFontStyle = new GUIStyle(GUI.skin.label);
-                _fixedFontStyle.font = Font.CreateDynamicFontFromOSFont("Courier", FontSize);
+                string fontName;
+                if (Application.platform == RuntimePlatform.WindowsEditor)
+                  fontName = "Consolas";
+                else
+                  fontName = "Courier";
+                _fixedFontStyle.font = Font.CreateDynamicFontFromOSFont(fontName, FontSize);
             }
 
             if (_searchField == null) _searchField = new SearchField();
@@ -169,13 +178,13 @@ namespace Unity.Burst.Editor
                 if (doRefresh)
                 {
                     var options = new StringBuilder();
-                    if (!_safetyChecks) options.Append(" -disable-safety-checks");
+                    if (!_safetyChecks) options.Append(" " + GetOption(OptionDisableSafetyChecks));
 
-                    if (!_optimizations) options.Append(" -disable-optimizations");
+                    if (!_optimizations) options.Append(" " + GetOption(OptionDisableOpt));
 
-                    if (_fastMath) options.Append(" -fast-math");
+                    if (_fastMath) options.Append(" " + GetOption(OptionFastMath));
 
-                    options.AppendFormat(" -simd={0}", CodeGenOptions[_codeGenOptions]);
+                    options.AppendFormat(" " + GetOption(OptionTarget, CodeGenOptions[_codeGenOptions]));
 
                     var baseOptions = options.ToString().Trim(' ');
 

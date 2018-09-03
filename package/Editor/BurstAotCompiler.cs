@@ -1,24 +1,28 @@
 #if BURST_AOT
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Linq;
+using Burst.Compiler.IL;
 using Unity.Burst.LowLevel;
 using Unity.Jobs.LowLevel.Unsafe;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.Compilation;
+using UnityEditorInternal;
 using UnityEngine;
 
 namespace Unity.Burst.Editor
 {
-    internal class BurstAotCompiler : IPostBuildPlayerScriptDLLs
+    using static BurstCompilerOptions;
+
+    internal class BurstAotCompiler : IPostprocessScripts
     {
+        private const string BurstAotCompilerExecutable = "bcl.exe";
         private const string TempStagingManaged = @"Temp/StagingArea/Data/Managed/";
 
         int IOrderedCallback.callbackOrder => 0;
-
-        void IPostBuildPlayerScriptDLLs.OnPostBuildPlayerScriptDLLs(BuildReport report)
+        public void OnPostprocessScripts(BuildReport report)
         {
             // Early exit if not activated/supported
             if (!JobsUtility.JobCompilerEnabled || !IsSupportedPlatform(report.summary.platform))
@@ -27,10 +31,11 @@ namespace Unity.Burst.Editor
             }
 
             // Collect all method signatures
-            var methodsToCompile = BurstReflection.FindExecuteMethods();
+            var methodsToCompile = BurstReflection.FindExecuteMethods(AssembliesType.Player);
 
+            // Prepare options
+            var options = new List<string>();
 
-            var methodsignatures = new List<string>();
             for (var i = 0; i < methodsToCompile.Count; i++)
             {
                 var burstCompileTarget = methodsToCompile[i];
@@ -40,38 +45,32 @@ namespace Unity.Burst.Editor
                 }
 
                 var methodStr = BurstCompilerService.GetMethodSignature(burstCompileTarget.Method);
-                if (methodStr.Contains("Culling"))
-                {
-                    var methodAndHash = methodStr + "--" + Hash128.Compute(methodStr);
-                    methodsignatures.Add(methodAndHash);
-                }
+                var methodFullSignature = methodStr + "--" + Hash128.Compute(methodStr);
+                options.Add(GetOption(OptionAotMethod, methodFullSignature) );
             }
-
-            var methodsignaturesAsText = string.Join(",", methodsignatures);
-
-            // Prepare options
-            var options = new StringBuilder();
-            options.Append("--platform=" + report.summary.platform);
+            options.Add(GetOption(OptionAotPlatform, report.summary.platform));
 
             if (!BurstEditorOptions.EnableBurstSafetyChecks)
-                options.Append(" -disable-safety-checks");
+                options.Add(GetOption(OptionDisableSafetyChecks));
 
             // TODO: Add support for configuring the optimizations/CPU
             // TODO: Add support for per method options
 
-            var folder = Path.GetFullPath(TempStagingManaged);
-            Debug.Log($"Burst CompileAot - To Folder {folder}");
+            var stagingFolder = Path.GetFullPath(TempStagingManaged);
+            //Debug.Log($"Burst CompileAot - To Folder {stagingFolder}");
 
             // Prepare assembly folder list
             var assemblyFolders = new List<string>();
-            assemblyFolders.Add(folder);
-            foreach (var assembly in CompilationPipeline.GetAssemblies())
+            assemblyFolders.Add(stagingFolder);
+
+            var playerAssemblies = CompilationPipeline.GetAssemblies(AssembliesType.Player);
+            foreach (var assembly in playerAssemblies)
             {
                 foreach (var assemblyRef in assembly.compiledAssemblyReferences)
                 {
                     // Exclude folders with assemblies already compiled in the `folder`
                     var assemblyName = Path.GetFileName(assemblyRef);
-                    if (assemblyName != null && File.Exists(Path.Combine(folder, assemblyName)))
+                    if (assemblyName != null && File.Exists(Path.Combine(stagingFolder, assemblyName)))
                     {
                         continue;
                     }
@@ -88,9 +87,19 @@ namespace Unity.Burst.Editor
                 }
             }
 
-            var assemblyFoldersTxt = string.Join(";", assemblyFolders);
+            options.AddRange(assemblyFolders.Select(folder => GetOption(OptionAotAssemblyFolder, folder)));
 
-            BurstCompilerService.CompileAot(methodsignaturesAsText, options.ToString(), assemblyFoldersTxt, folder);
+            var outputFilePrefix = Path.Combine(stagingFolder, DefaultLibraryName);
+            options.Add(GetOption(OptionAotOutputPath, outputFilePrefix));
+
+            var responseFile = Path.GetTempFileName();
+            File.WriteAllLines(responseFile, options);
+
+            //var readback = File.ReadAllText(responseFile);
+            //Debug.Log(readback);
+            //Console.WriteLine(readback);
+
+            Runner.RunManagedProgram(Path.Combine(BurstLoader.RuntimePath, BurstAotCompilerExecutable), "@" + responseFile);
         }
 
         public static bool IsSupportedPlatform(BuildTarget target)

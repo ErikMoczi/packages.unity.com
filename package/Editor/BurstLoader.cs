@@ -11,20 +11,25 @@ namespace Unity.Burst.Editor
     [InitializeOnLoad]
     internal class BurstLoader
     {
+        /// <summary>
+        /// Gets the location to the runtime path of burst.
+        /// </summary>
+        public static string RuntimePath { get; private set; }
+
         static BurstLoader()
         {
             // Un-comment the following to log compilation steps to log.txt in the .Runtime folder
             // Environment.SetEnvironmentVariable("UNITY_BURST_DEBUG", "1");
 
             // Try to load the runtime through an environment variable
-            var runtimePath = Environment.GetEnvironmentVariable("UNITY_BURST_RUNTIME_PATH");
+            RuntimePath = Environment.GetEnvironmentVariable("UNITY_BURST_RUNTIME_PATH");
 
             // Otherwise try to load it from the package itself
-            if (!Directory.Exists(runtimePath))
+            if (!Directory.Exists(RuntimePath))
             {
-                runtimePath = Path.GetFullPath("Packages/com.unity.burst/.Runtime");
+                RuntimePath = Path.GetFullPath("Packages/com.unity.burst/.Runtime");
             }
-            BurstCompilerService.Initialize(runtimePath, BurstReflection.ExtractBurstCompilerOptions);
+            BurstCompilerService.Initialize(RuntimePath, BurstReflection.ExtractBurstCompilerOptions);
         }
     }
 }
