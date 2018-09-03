@@ -18,6 +18,18 @@ namespace Unity.Burst.Editor
 {
     using static BurstCompilerOptions;
 
+    struct BurstOutputCombination
+    {
+        public readonly TargetCpu TargetCpu;
+        public readonly string OutputPath;
+
+        public BurstOutputCombination(string outputPath, TargetCpu targetCpu = TargetCpu.Auto)
+        {
+            TargetCpu = targetCpu;
+            OutputPath = outputPath;
+        }
+    }
+
     internal class BurstAotCompiler : IPostBuildPlayerScriptDLLs
     {
         private const string BurstAotCompilerExecutable = "bcl.exe";
@@ -38,7 +50,7 @@ namespace Unity.Burst.Editor
             var methodsToCompile = BurstReflection.FindExecuteMethods(AssembliesType.Player);
 
             // Prepare options
-            var options = new List<string>();
+            var commonOptions = new List<string>();
 
             for (var i = 0; i < methodsToCompile.Count; i++)
             {
@@ -50,14 +62,14 @@ namespace Unity.Burst.Editor
 
                 var methodStr = BurstCompilerService.GetMethodSignature(burstCompileTarget.Method);
                 var methodFullSignature = methodStr + "--" + Hash128.Compute(methodStr);
-                options.Add(GetOption(OptionAotMethod, methodFullSignature) );
+                commonOptions.Add(GetOption(OptionAotMethod, methodFullSignature));
             }
 
             var targetPlatform = GetTargetPlatform(report.summary.platform);
-            options.Add(GetOption(OptionPlatform, targetPlatform));
+            commonOptions.Add(GetOption(OptionPlatform, targetPlatform));
 
             if (!BurstEditorOptions.EnableBurstSafetyChecks)
-                options.Add(GetOption(OptionDisableSafetyChecks));
+                commonOptions.Add(GetOption(OptionDisableSafetyChecks));
 
             // TODO: Add support for configuring the optimizations/CPU
             // TODO: Add support for per method options
@@ -93,27 +105,7 @@ namespace Unity.Burst.Editor
                 }
             }
 
-            options.AddRange(assemblyFolders.Select(folder => GetOption(OptionAotAssemblyFolder, folder)));
-
-            var tempStagingPlugins = "Data/Plugins/";
-            if (targetPlatform == TargetPlatform.macOS)
-            {
-                // NOTE: OSX has a special folder for the plugin
-                // Declared in GetStagingAreaPluginsFolder
-                // PlatformDependent\OSXPlayer\Extensions\Managed\OSXDesktopStandalonePostProcessor.cs
-                tempStagingPlugins = "UnityPlayer.app/Contents/Plugins";
-            }
-            else if (targetPlatform == TargetPlatform.iOS)
-            {
-                // PlatformDependent\iPhonePlayer\Extensions\Common\BuildPostProcessor.cs
-                // TODO: Add support for CPU (v8, arm64...)
-                tempStagingPlugins = "Frameworks";
-            }
-            else if (targetPlatform == TargetPlatform.Android)
-            {
-                // TODO: Add support for CPU (v8, arm64...)
-                tempStagingPlugins = "libs/armeabi-v7a";
-            }
+            commonOptions.AddRange(assemblyFolders.Select(folder => GetOption(OptionAotAssemblyFolder, folder)));
 
             // Gets platform specific IL2CPP plugin folder
             // Only the following platforms are providing a dedicated Tools directory
@@ -124,21 +116,61 @@ namespace Unity.Burst.Editor
                 case BuildTarget.Android:
                 case BuildTarget.iOS:
                     var pluginFolder = BuildPipeline.GetBuildToolsDirectory(report.summary.platform);
-                    options.Add(GetOption(OptionAotIL2CPPPluginFolder, pluginFolder));
+                    commonOptions.Add(GetOption(OptionAotIL2CPPPluginFolder, pluginFolder));
                     break;
             }
 
-            // Gets the output folder
-            var stagingOutputFolder = Path.GetFullPath(Path.Combine(TempStaging, tempStagingPlugins));
-            var outputFilePrefix = Path.Combine(stagingOutputFolder, DefaultLibraryName);
-            options.Add(GetOption(OptionAotOutputPath, outputFilePrefix));
+            BurstOutputCombination[] combinations;
 
-            var responseFile = Path.GetTempFileName();
-            File.WriteAllLines(responseFile, options);
+            if (targetPlatform == TargetPlatform.macOS)
+            {
+                // NOTE: OSX has a special folder for the plugin
+                // Declared in GetStagingAreaPluginsFolder
+                // PlatformDependent\OSXPlayer\Extensions\Managed\OSXDesktopStandalonePostProcessor.cs
+                combinations = new[] { new BurstOutputCombination("UnityPlayer.app/Contents/Plugins") };
+            }
+            else if (targetPlatform == TargetPlatform.iOS)
+            {
+                // PlatformDependent\iPhonePlayer\Extensions\Common\BuildPostProcessor.cs
+                // TODO: Add support for CPU (v8, arm64...)
+                combinations = new[] { new BurstOutputCombination("Frameworks") };
+            }
+            else if (targetPlatform == TargetPlatform.Android)
+            {
+                // TODO: Add support for CPU (v8, arm64...)
+                combinations = new[] { new BurstOutputCombination("libs/armeabi-v7a") };
+            }
+            else if (targetPlatform == TargetPlatform.UWP)
+            {
+                combinations = new[]
+                {
+                    new BurstOutputCombination("Plugins/x64", TargetCpu.Auto),
+                    new BurstOutputCombination("Plugins/x86", TargetCpu.X86_SSE2),
+                    new BurstOutputCombination("Plugins/ARM", TargetCpu.THUMB2_NEON32),
+                };
+            }
+            else
+            {
+                combinations = new[] { new BurstOutputCombination("Data/Plugins/") };
+            }
 
-            //Debug.Log("Burst compile with response file: " + responseFile);
+            foreach (var combination in combinations)
+            {
+                // Gets the output folder
+                var stagingOutputFolder = Path.GetFullPath(Path.Combine(TempStaging, combination.OutputPath));
+                var outputFilePrefix = Path.Combine(stagingOutputFolder, DefaultLibraryName);
 
-            Runner.RunManagedProgram(Path.Combine(BurstLoader.RuntimePath, BurstAotCompilerExecutable), "@" + responseFile);
+                var options = new List<string>(commonOptions);
+                options.Add(GetOption(OptionAotOutputPath, outputFilePrefix));
+                options.Add(GetOption(OptionTarget, combination.TargetCpu));
+
+                var responseFile = Path.GetTempFileName();
+                File.WriteAllLines(responseFile, options);
+
+                //Debug.Log("Burst compile with response file: " + responseFile);
+
+                Runner.RunManagedProgram(Path.Combine(BurstLoader.RuntimePath, BurstAotCompilerExecutable), "@" + responseFile);
+            }
         }
 
         public static TargetPlatform GetTargetPlatform(BuildTarget target)
@@ -151,6 +183,8 @@ namespace Unity.Burst.Editor
                     return TargetPlatform.macOS;
                 case BuildTarget.StandaloneLinux64:
                     return TargetPlatform.Linux;
+                case BuildTarget.WSAPlayer:
+                    return TargetPlatform.UWP;
                 case BuildTarget.XboxOne:
                     return TargetPlatform.XboxOne;
                 case BuildTarget.PS4:
@@ -172,6 +206,7 @@ namespace Unity.Burst.Editor
                 case BuildTarget.StandaloneWindows64:
                 case BuildTarget.StandaloneOSX:
                 case BuildTarget.StandaloneLinux64:
+                case BuildTarget.WSAPlayer:
                 case BuildTarget.XboxOne:
                 case BuildTarget.PS4:
                 case BuildTarget.Android:

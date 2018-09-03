@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.4-preview.10
+
+- Fix a potential stack overflow issue when a generic parameter constraint on a type is also referencing another generic parameter through a generic interface constraint
+- Update to latest Unity.Mathematics `0.0.12-preview.6`:
+  - Fix order of parameters and codegen for step functions
+
 ## 0.2.4-preview.9
 
 - Fix bug when casting an IntPtr to an enum pointer that was causing an invalid codegen exception

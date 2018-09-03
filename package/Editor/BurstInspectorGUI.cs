@@ -56,6 +56,7 @@ namespace Unity.Burst.Editor
             "avx512",
             "armv7a_neon32",
             "armv8a_aarch64",
+            "thumb2_neon32",
         };
 
         private static readonly int[] FontSizes =

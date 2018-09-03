@@ -72,6 +72,25 @@ namespace Burst.Compiler.IL
         iOS = 4,
         PS4 = 5,
         XboxOne = 6,
+        WASM = 7,
+        UWP = 8,
+    }
+
+    // NOTE: This must be synchronized with Backend.TargetCpu
+    internal enum TargetCpu
+    {
+        Auto = 0,
+        X86_SSE2 = 1,
+        X86_SSE4 = 2,
+        X64_SSE2 = 3,
+        X64_SSE4 = 4,
+        AVX = 5,
+        AVX2 = 6,
+        AVX512 = 7,
+        WASM32 = 8,
+        ARMV7A_NEON32 = 9,
+        ARMV8A_AARCH64 = 10,
+        THUMB2_NEON32 = 11,
     }
 #endif
 
