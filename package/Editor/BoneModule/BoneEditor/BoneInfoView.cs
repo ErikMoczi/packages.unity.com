@@ -8,6 +8,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         void SelectionChanged();
         bool HandleName(ref string name);
         bool HandleNextSelection();
+        void DisplayDuplicateBoneNameWarning();
     }
 
     internal class BoneInfoView : IBoneInfoView
@@ -16,6 +17,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             public static readonly GUIContent windowsTitle = new GUIContent("Information");
             public static readonly GUIContent nameLabel = new GUIContent("Name");
+            public static readonly GUIContent duplicateNameWarning = new GUIContent((Texture)EditorGUIUtility.Load("console.erroricon"), "Name duplicates with other bones.");
 
             public static readonly string nameControl = "BoneName";
         }
@@ -30,7 +32,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             m_NextDrawArea = rect;
             m_NextDrawArea.xMin += 5.0f; // margin
-            m_NextDrawArea.width -= 5.0f;
+            m_NextDrawArea.width -= 21.0f; // Text field minus space for conflict icon
             m_NextDrawArea.yMin += 20.0f; // title height
         }
 
@@ -79,6 +81,13 @@ namespace UnityEditor.Experimental.U2D.Animation
             // Relieve the keyboard control.
             // This prevent text box not changing selected text, and allow key press (delete) on bone hierarchy
             GUIUtility.keyboardControl = -1;
+        }
+
+        public void DisplayDuplicateBoneNameWarning()
+        {
+            m_NextDrawArea.x += m_NextDrawArea.width;
+            m_NextDrawArea.width = 16;
+            GUI.Label(m_NextDrawArea, Styles.duplicateNameWarning, EditorStyles.boldLabel);
         }
     }
 }

@@ -1,36 +1,12 @@
 using UnityEngine;
-using System;
-using System.Reflection;
 using System.Collections.Generic;
+using UnityEditor.Experimental.U2D.Common;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
-    [InitializeOnLoad]
     internal class CommonDrawingUtility
     {
         public static readonly Color kSpriteBorderColor = new Color(0.25f, 0.5f, 1f, 0.75f);
-
-        static MethodInfo ApplyWireMaterial;
-        static CommonDrawingUtility()
-        {
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                if (assembly.ManifestModule.Name == "UnityEditor.dll")
-                {
-                    foreach (var type in assembly.GetTypes())
-                    {
-                        if (type.Namespace == "UnityEditor" && type.Name == "HandleUtility")
-                        {
-                            ApplyWireMaterial = type.GetMethod("ApplyWireMaterial", BindingFlags.Static | BindingFlags.NonPublic, null, new Type[0], null);
-                            break;
-                        }
-                    }
-                    break;
-                }
-            }
-            if (ApplyWireMaterial == null)
-                Debug.LogError("HandleUtility.ApplyWireFrame method not found");
-        }
 
         public static void DrawLine(Vector3 p1, Vector3 p2, Vector3 normal, float width)
         {
@@ -51,7 +27,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             Shader.SetGlobalFloat("_HandleSize", 1);
 
-            ApplyWireMaterial.Invoke(null, null);
+            InternalEditorBridge.ApplyWireMaterial();
             GL.PushMatrix();
             GL.MultMatrix(Handles.matrix);
             GL.Begin(4);
@@ -68,7 +44,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public static void BeginLines(Color color)
         {
-            ApplyWireMaterial.Invoke(null, null);
+            InternalEditorBridge.ApplyWireMaterial();
             GL.PushMatrix();
             GL.MultMatrix(Handles.matrix);
             GL.Begin(GL.LINES);
@@ -77,7 +53,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public static void BeginSolidLines()
         {
-            ApplyWireMaterial.Invoke(null, null);
+            InternalEditorBridge.ApplyWireMaterial();
             GL.PushMatrix();
             GL.MultMatrix(Handles.matrix);
             GL.Begin(GL.TRIANGLES);
@@ -236,6 +212,46 @@ namespace UnityEditor.Experimental.U2D.Animation
                 case (3): return new Vector2(rect.xMin, rect.yMin);
             }
             return Vector3.zero;
+        }
+
+        private static void SetDiscSectionPoints(Vector3[] dest, int count, Vector3 normal, Vector3 from, float angle)
+        {
+            from.Normalize();
+            Quaternion rotation = Quaternion.AngleAxis(angle / (float)(count - 1), normal);
+            Vector3 vector = from;
+            for (int i = 0; i < count; i++)
+            {
+                dest[i] = vector;
+                vector = rotation * vector;
+            }
+        }
+
+        static Vector3[] s_array;
+        public static void DrawSolidArc(Vector3 center, Vector3 normal, Vector3 from, float angle, float radius, int numSamples = 60)
+        {
+            if (Event.current.type != EventType.Repaint)
+                return;
+
+            numSamples = Mathf.Clamp(numSamples, 3, 60);
+
+            if (s_array == null)
+                s_array = new Vector3[60];
+
+            Color color = Handles.color;
+            SetDiscSectionPoints(s_array, numSamples, normal, from, angle);
+            InternalEditorBridge.ApplyWireMaterial();
+            GL.PushMatrix();
+            GL.MultMatrix(Handles.matrix);
+            GL.Begin(GL.TRIANGLES);
+            for (int i = 1; i < numSamples; i++)
+            {
+                GL.Color(color);
+                GL.Vertex(center);
+                GL.Vertex(center + s_array[i - 1] * radius);
+                GL.Vertex(center + s_array[i] * radius);
+            }
+            GL.End();
+            GL.PopMatrix();
         }
     }
 }

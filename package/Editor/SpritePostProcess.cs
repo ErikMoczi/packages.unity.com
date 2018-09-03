@@ -19,11 +19,10 @@ namespace UnityEditor.Experimental.U2D.Animation
                 if (ai != null)
                 {
                     ai.InitSpriteEditorDataProvider();
-                    var texture = AssetDatabase.LoadAssetAtPath<UnityEngine.Texture2D>(importedAsset);
                     var sprites = AssetDatabase.LoadAllAssetsAtPath(importedAsset).OfType<Sprite>().ToArray<Sprite>();
                     bool dataChanged = false;
-                    dataChanged = PostProcessBoneData(ai, texture, sprites);
-                    dataChanged |= PostProcessSpriteMeshData(ai, texture, sprites);
+                    dataChanged = PostProcessBoneData(ai,  sprites);
+                    dataChanged |= PostProcessSpriteMeshData(ai, sprites);
                     if (dataChanged)
                         assetPathModified.Add(importedAsset);
                 }
@@ -38,22 +37,18 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        static bool PostProcessBoneData(ISpriteEditorDataProvider spriteDataProvider, UnityEngine.Texture2D texture, Sprite[] sprites)
+        static bool PostProcessBoneData(ISpriteEditorDataProvider spriteDataProvider, Sprite[] sprites)
         {
             var boneDataProvider = spriteDataProvider.GetDataProvider<ISpriteBoneDataProvider>();
             var textureDataProvider = spriteDataProvider.GetDataProvider<ITextureDataProvider>();
 
-            if (texture == null || sprites == null || sprites.Length == 0 || boneDataProvider == null || textureDataProvider == null)
+            if (sprites == null || sprites.Length == 0 || boneDataProvider == null || textureDataProvider == null)
                 return false;
 
             bool dataChanged = false;
 
-            int actualWidth = 0, actualHeight = 0;
-            textureDataProvider.GetTextureActualWidthAndHeight(out actualWidth, out actualHeight);
-            float definitionScaleW = texture.width / (float)actualWidth;
-            float definitionScaleH = texture.height / (float)actualHeight;
-            float definitionScale = Mathf.Min(definitionScaleW, definitionScaleH);
-
+            float definitionScale = CalculateDefinitionScale(textureDataProvider);
+            
             foreach (var sprite in sprites)
             {
                 var guid = sprite.GetSpriteID();
@@ -116,20 +111,15 @@ namespace UnityEditor.Experimental.U2D.Animation
             return dataChanged;
         }
 
-        static bool PostProcessSpriteMeshData(ISpriteEditorDataProvider spriteEditorDataProvider, UnityEngine.Texture2D texture, Sprite[] sprites)
+        static bool PostProcessSpriteMeshData(ISpriteEditorDataProvider spriteEditorDataProvider, Sprite[] sprites)
         {
             var spriteMeshDataProvider = spriteEditorDataProvider.GetDataProvider<ISpriteMeshDataProvider>();
             var textureDataProvider = spriteEditorDataProvider.GetDataProvider<ITextureDataProvider>();
-            if (texture == null || sprites == null || sprites.Length == 0 || spriteMeshDataProvider == null || textureDataProvider == null)
+            if (sprites == null || sprites.Length == 0 || spriteMeshDataProvider == null || textureDataProvider == null)
                 return false;
 
             bool dataChanged = false;
-
-            int actualWidth = 0, actualHeight = 0;
-            textureDataProvider.GetTextureActualWidthAndHeight(out actualWidth, out actualHeight);
-            float definitionScaleW = texture.width / (float)actualWidth;
-            float definitionScaleH = texture.height / (float)actualHeight;
-            float definitionScale = Mathf.Min(definitionScaleW, definitionScaleH);
+            float definitionScale = CalculateDefinitionScale(textureDataProvider);
 
             foreach (var sprite in sprites)
             {
@@ -168,6 +158,21 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
 
             return dataChanged;
+        }
+
+        static float CalculateDefinitionScale(ITextureDataProvider dataProvider)
+        {
+            float definitionScale = 1;
+            var texture = dataProvider.texture;
+            if (texture != null)
+            {
+                int actualWidth = 0, actualHeight = 0;
+                dataProvider.GetTextureActualWidthAndHeight(out actualWidth, out actualHeight);
+                float definitionScaleW = texture.width / (float)actualWidth;
+                float definitionScaleH = texture.height / (float)actualHeight;
+                definitionScale = Mathf.Min(definitionScaleW, definitionScaleH);
+            }
+            return definitionScale;
         }
     }
 }

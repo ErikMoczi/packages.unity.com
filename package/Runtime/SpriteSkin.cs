@@ -1,8 +1,10 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.U2D;
 using UnityEngine.Experimental.U2D.Common;
+using UnityEngine.Experimental.Rendering;
 
 #if ENABLE_MANAGED_JOBS
 using Unity.Collections;
@@ -16,15 +18,33 @@ namespace UnityEngine.Experimental.U2D.Animation
     public class SpriteSkin : MonoBehaviour
     {
         [SerializeField]
-        Transform m_RootBone;
+        private Transform m_RootBone;
+        [SerializeField]
+        private Transform[] m_BoneTransforms;
+        private SpriteRenderer m_SpriteRenderer;
+        private Sprite m_CurrentSprite;
+        private int m_TransformHash = 0;
+        private JobHandle m_BoundsHandle;
+        private NativeArray<Vector3> m_MinMax;
+        private bool m_NeedsUpdateBounds;
 
-        Transform[] m_BoneTransforms;
-        SpriteRenderer m_SpriteRenderer;
-        NativeArray<Vector3> m_MinMax;
-        JobHandle? m_BoundsHandle = null;
-        int m_TransformHash = 0;
+#if UNITY_EDITOR
+        private SpriteBone[] m_SpriteBones;
+        internal SpriteBone[] spriteBones
+        {
+            get
+            {
+                if (m_SpriteBones == null)
+                    m_SpriteBones = spriteRenderer.sprite.GetBones();
 
-        SpriteRenderer spriteRenderer
+                return m_SpriteBones;
+            }
+        }
+
+        private ulong m_AssetTimeStamp = 0;
+#endif
+
+        internal SpriteRenderer spriteRenderer
         {
             get
             {
@@ -34,91 +54,159 @@ namespace UnityEngine.Experimental.U2D.Animation
             }
         }
 
-        public Transform[] boneTransforms
+        internal Transform[] boneTransforms
         {
             get { return m_BoneTransforms; }
+            set { m_BoneTransforms = value; }
         }
 
-        public Transform rootBone
+        internal Transform rootBone
         {
             get { return m_RootBone; }
-            set
+            set { m_RootBone = value; }
+        }
+
+        internal bool isValid
+        {
+            get { return this.Validate() == SpriteSkinValidationResult.Ready; }
+        }
+
+#if UNITY_EDITOR
+        private void Reset()
+        {
+            ValidateTransformArray();
+        }
+
+        private void OnValidate()
+        {
+            ValidateTransformArray();
+        }
+
+        private void ValidateTransformArray()
+        {
+            if (spriteRenderer.sprite)
             {
-                m_RootBone = value;
-                Rebind();
+                var bindPose = spriteRenderer.sprite.GetBindPoses();
+
+                if (m_BoneTransforms == null || m_BoneTransforms.Length != bindPose.Length)
+                    m_BoneTransforms = new Transform[bindPose.Length];
             }
         }
 
-        void Rebind()
+#endif
+        private void OnEnable()
         {
-            if (spriteRenderer == null || spriteRenderer.sprite == null)
-                Debug.LogWarning("Rebind failure. Check spriteRenderer or spriteRenderer.sprite for null");
-            if (rootBone != null)
-                m_BoneTransforms = SpriteBoneUtility.Rebind(rootBone, spriteRenderer.sprite.GetBones());
+            CreatePersistentNativeArrays();
+
+            var min = transform.InverseTransformPoint(spriteRenderer.bounds.min);
+            var max = transform.InverseTransformPoint(spriteRenderer.bounds.max);
+
+            UpdateBounds(min, max);
         }
 
-        void Awake()
+        private void OnDisable()
         {
-            Rebind();
+            DisposePersistentNativeArrays();
+            DeactivateSkinning();
         }
 
-        void Reset()
+        private void OnApplicationQuit()
         {
-            Rebind();
+            DisposePersistentNativeArrays();
         }
 
-        void UpdateBoundsIfNeeded()
+        private void CreatePersistentNativeArrays()
         {
-            if (m_BoundsHandle.HasValue)
-            {
-                m_BoundsHandle.Value.Complete();
-                if (boneTransforms != null)
-                {
-                    Bounds bounds = new Bounds();
-                    bounds.SetMinMax(m_MinMax[0], m_MinMax[1]);
-                    InternalEngineBridge.SetLocalAABB(spriteRenderer, bounds);
-                }
-                m_MinMax.Dispose();
-                m_BoundsHandle = null;
-            }
+            m_MinMax = new NativeArray<Vector3>(2, Allocator.Persistent);
         }
 
-        void OnDisable()
+        private void DisposePersistentNativeArrays()
         {
-            if (m_BoundsHandle.HasValue)
-                m_BoundsHandle.Value.Complete();
+            m_BoundsHandle.Complete();
+            m_BoundsHandle = default(JobHandle);
             if (m_MinMax.IsCreated)
                 m_MinMax.Dispose();
         }
 
-        void LateUpdate()
+        private void UpdateBounds(Vector3 min, Vector3 max)
         {
+            var bounds = new Bounds();
+            bounds.SetMinMax(min, max);
+            InternalEngineBridge.SetLocalAABB(spriteRenderer, bounds);
+        }
+
+        private void UpdateBoundsIfNeeded()
+        {
+            if(m_NeedsUpdateBounds)
+            {
+                m_BoundsHandle.Complete();
+                m_BoundsHandle = default(JobHandle);
+                UpdateBounds(m_MinMax[0], m_MinMax[1]);
+                m_NeedsUpdateBounds = false;
+            }
+        }
+
+        private void DeactivateSkinning()
+        {
+            m_TransformHash = 0;
+            SpriteRendererDataAccessExtensions.DeactivateDeformableBuffer(spriteRenderer);
+
+            if (spriteRenderer.sprite != null)
+                InternalEngineBridge.SetLocalAABB(spriteRenderer, spriteRenderer.sprite.bounds);
+        }
+
+        private void LateUpdate()
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying && spriteRenderer.sprite != null)
+            {
+                var assetTimeStamp = UnityEditor.AssetImporter.GetAtPath(UnityEditor.AssetDatabase.GetAssetPath(spriteRenderer.sprite)).assetTimeStamp;
+                if (m_AssetTimeStamp != assetTimeStamp)
+                {
+                    m_AssetTimeStamp = assetTimeStamp;
+                    DeactivateSkinning();
+                }
+            }
+#endif
+
+            if (m_CurrentSprite != spriteRenderer.sprite)
+            {
+                m_CurrentSprite = spriteRenderer.sprite;
+                DeactivateSkinning();
+            }
+
+            if (!isValid)
+            {
+                DeactivateSkinning();
+                return;
+            }
 
             UpdateBoundsIfNeeded();
 
-            if (rootBone != null && boneTransforms != null && spriteRenderer.sprite != null)
-            {
-                int hashCode = SpriteBoneUtility.BoneTransformsHash(m_BoneTransforms);
-                if (hashCode != m_TransformHash)
-                {
-                    try
-                    {
-                        var deformedVertices = spriteRenderer.GetDeformableVertices();
-                        var bindPoses = spriteRenderer.sprite.GetBindPoses();
-                        var boneWeights = spriteRenderer.sprite.GetBoneWeights();
-                        JobHandle deformJobHandle = SpriteBoneUtility.Deform(spriteRenderer.sprite, bindPoses, boneWeights, deformedVertices, gameObject.transform.worldToLocalMatrix, boneTransforms);
-                        m_MinMax = new NativeArray<Vector3>(2, Allocator.Persistent);
-                        m_BoundsHandle = SpriteBoneUtility.CalculateBounds(deformedVertices, m_MinMax, deformJobHandle);
-                        spriteRenderer.UpdateDeformableBuffer(m_BoundsHandle.Value);
-                        m_TransformHash = hashCode;
-                    }
-                    catch
-                    {
-                        Debug.LogWarning("Deform failure, please ensure SpriteSkin.Rebind is successful.");
-                        m_BoneTransforms = null;
-                    }
-                }
-            }
+            int hashCode = this.CalculateTransformHash();
+            if (hashCode == m_TransformHash)
+                return;
+
+            var bindPoses = m_CurrentSprite.GetBindPoses();
+            var boneWeights = m_CurrentSprite.GetBoneWeights();
+            var outputVertices = spriteRenderer.GetDeformableVertices();
+            var transformMatrices = new NativeArray<Matrix4x4>(m_BoneTransforms.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+
+            for (int i = 0; i < m_BoneTransforms.Length; ++i)
+                transformMatrices[i] = m_BoneTransforms[i].localToWorldMatrix;
+
+            var deformJobHandle = SpriteSkinUtility.Deform(m_CurrentSprite.GetVertexAttribute<Vector3>(VertexAttribute.Position), boneWeights, transform.worldToLocalMatrix, bindPoses, transformMatrices, outputVertices);
+
+            m_BoundsHandle = SpriteSkinUtility.CalculateBounds(outputVertices, m_MinMax, deformJobHandle);
+            spriteRenderer.UpdateDeformableBuffer(m_BoundsHandle);
+
+            m_TransformHash = hashCode;
+            m_NeedsUpdateBounds = true;
+
+#if UNITY_EDITOR
+            if (m_SpriteBones != null && m_SpriteBones.Length != bindPoses.Length)
+                m_SpriteBones = null;
+#endif
         }
     }
 }

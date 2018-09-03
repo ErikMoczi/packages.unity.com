@@ -94,13 +94,13 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmoTests
             s_SceneView.orthographic = true;
             s_SceneView.Focus();
 
-            go = new GameObject("TestObject", typeof(SpriteRenderer), typeof(UnityEngine.Experimental.U2D.Animation.SpriteSkin));
+            go = new GameObject("TestObject", typeof(UnityEngine.Experimental.U2D.Animation.SpriteSkin));
             riggedSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Temp/bird.png");
             go.GetComponent<SpriteRenderer>().sprite = riggedSprite;
+            var spriteSkin = go.GetComponent<UnityEngine.Experimental.U2D.Animation.SpriteSkin>();
+            spriteSkin.CreateBoneHierarchy();
 
-            var bones = riggedSprite.GetBones();
-            var rootBoneGO = SpriteBoneUtility.CreateSkeleton(bones, go, null);
-            go.GetComponent<UnityEngine.Experimental.U2D.Animation.SpriteSkin>().rootBone = rootBoneGO.transform;
+            BoneGizmo.instance.Initialize();
         }
 
         [TearDown]
@@ -160,18 +160,18 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmoTests
             bool testDone = false;
             Vector2 sceneViewMousePosition = Vector2.zero;
             SceneView.OnSceneFunc sceneViewDelegate = (sceneView) =>
-            {
-                if (sceneView != s_SceneView)
-                    return;
-
-                if (!doingTest)
                 {
-                    doingTest = true;
-                    ResetSceneViewCamera();
-                    sceneViewMousePosition = WorldToSceneViewPosition(testCase.position);
-                    testDone = true;
-                }
-            };
+                    if (sceneView != s_SceneView)
+                        return;
+
+                    if (!doingTest)
+                    {
+                        doingTest = true;
+                        ResetSceneViewCamera();
+                        sceneViewMousePosition = WorldToSceneViewPosition(testCase.position);
+                        testDone = true;
+                    }
+                };
 
             SceneView.onSceneGUIDelegate += sceneViewDelegate;
             while (!testDone)

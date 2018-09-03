@@ -840,6 +840,41 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
             m_ModelMock.Received(1).SetBoneName(root, "root_changed");
         }
 
+        [Test]
+        public void DuplicateBoneName_DisplayWarningWhenHandlingRename()
+        {
+            var root = Substitute.For<IBone>();
+            IBone nullBone = null;
+            root.name.Returns("root");
+            root.parent.Returns(nullBone);
+            root.isRoot.Returns(true);
+
+            var child1 = Substitute.For<IBone>();
+            child1.name.Returns("child");
+            child1.parent.Returns(root);
+            child1.isRoot.Returns(false);
+
+            var child2 = Substitute.For<IBone>();
+            child2.name.Returns("child");
+            child2.parent.Returns(root);
+            child2.isRoot.Returns(false);
+
+            var bones = new List<IBone>();
+            bones.Add(root);
+            bones.Add(child1);
+            bones.Add(child2);
+
+            m_ModelMock.bones.Returns(bones.AsEnumerable());
+
+            var state = new BoneEditorState();
+            state.selectedBones.Add(child1);
+            m_BonePresenter.state = state;
+
+            m_BonePresenter.DoInfoPanel(Rect.zero);
+
+            m_InfoViewMock.Received(1).DisplayDuplicateBoneNameWarning();
+        }
+
         private static IEnumerable<TestCaseData> TabSelectionsTestCases()
         {
             yield return new TestCaseData(1, "child1");

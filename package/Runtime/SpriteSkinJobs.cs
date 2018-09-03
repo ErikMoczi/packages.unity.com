@@ -9,7 +9,6 @@ using UnityEngine.Experimental.Rendering;
 
 namespace UnityEngine.Experimental.U2D.Animation
 {
-
     public struct BoneJob : IJob
     {
         // Root's worldToLocalMatrix
@@ -20,7 +19,7 @@ namespace UnityEngine.Experimental.U2D.Animation
         public NativeArray<Matrix4x4> bindPoses;
         // this is each of the bond's localToWorld
         [ReadOnly]
-        [DeallocateOnJobCompletionAttribute]
+        [DeallocateOnJobCompletion]
         public NativeArray<Matrix4x4> bones;
 
         public NativeArray<Matrix4x4> output;
@@ -42,7 +41,7 @@ namespace UnityEngine.Experimental.U2D.Animation
         [ReadOnly]
         public NativeSlice<Vector3> vertices;
         [ReadOnly]
-        [DeallocateOnJobCompletionAttribute]
+        [DeallocateOnJobCompletion]
         public NativeArray<Matrix4x4> bones;
 
         public NativeArray<Vector3> output;
@@ -105,5 +104,4 @@ namespace UnityEngine.Experimental.U2D.Animation
             }
         }
     }
-
 }

@@ -1,10 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Text.RegularExpressions;
 using UnityEngine;
-using UnityEngine.Experimental.U2D;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -59,6 +57,34 @@ namespace UnityEditor.Experimental.U2D.Animation
         private BoneList m_BoneList;
         private Vector3 m_Offset;
         private bool m_OrderDirty;
+        private int m_AutoNameCounter;
+
+        readonly private string k_DefaultRootName = "root";
+        readonly private string k_DefaultBoneName = "bone";
+        static private Regex s_Regex = new Regex(@"\w+_\d+$", RegexOptions.IgnoreCase);
+        static private bool IsBoneNameMatchAutoFormat(string boneName)
+        {
+            return s_Regex.IsMatch(boneName);
+        }
+
+        static private void DissectBoneName(string boneName, out string inheritedName, out int counter)
+        {
+            if (IsBoneNameMatchAutoFormat(boneName))
+            {
+                var tokens = boneName.Split('_');
+                var lastTokenIndex = tokens.Length - 1;
+
+                var tokensWithoutLast = new string[lastTokenIndex];
+                Array.Copy(tokens, tokensWithoutLast, lastTokenIndex);
+                inheritedName = string.Join("_", tokensWithoutLast);
+                counter = int.Parse(tokens[lastTokenIndex]);
+            }
+            else
+            {
+                inheritedName = boneName;
+                counter = -1;
+            }
+        }
 
         public BoneModel(Action dataModified)
         {
@@ -93,10 +119,29 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_DataModifiedCallback();
         }
 
-        // TODO : We will live with this for now.
-        private string RandomName()
+        private string AutoBoneName(IBone parent)
         {
-            return "_" + (char)UnityEngine.Random.Range(65, 90) + (char)UnityEngine.Random.Range(65, 90) + (char)UnityEngine.Random.Range(65, 90);
+            string inheritedName;
+            int counter;
+            DissectBoneName(parent.name, out inheritedName, out counter);
+
+            if (inheritedName == k_DefaultRootName)
+                inheritedName = k_DefaultBoneName;
+
+            return inheritedName + "_" + ++m_AutoNameCounter;
+        }
+
+        private void FindBiggestAutoNameCounter()
+        {
+            m_AutoNameCounter = 0;
+            string inheritedName;
+            int counter;
+            foreach (var bone in m_BoneList.bones)
+            {
+                DissectBoneName(bone.name, out inheritedName, out counter);
+                if (counter > m_AutoNameCounter)
+                    m_AutoNameCounter = counter;
+            }
         }
 
         public void SetRawData(List<UniqueSpriteBone> rawBoneDatas, Vector3 offset)
@@ -123,6 +168,8 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                 m_BoneList.bones.Add(Bone);
             }
+
+            FindBiggestAutoNameCounter();
         }
 
         public List<UniqueSpriteBone> GetRawData()
@@ -221,11 +268,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             childBone.parent = parentBone;
             childBone.position = position;
             childBone.debugIndex = m_BoneList.bones.Count;
-
-            if (parentBone.isRoot)
-                childBone.name = "bone" + RandomName();
-            else
-                childBone.name = parentBone.name + RandomName();
+            childBone.name = AutoBoneName(parentBone);
 
             m_BoneList.bones.Add(childBone);
 
@@ -238,7 +281,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         public IBone CreateNewRoot(Vector3 position)
         {
             var root = new Bone();
-            root.name = "root";
+            root.name = k_DefaultRootName;
             root.position = position;
             root.debugIndex = m_BoneList.bones.Count;
             root.parentId = -1;
@@ -306,6 +349,9 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             ((Bone)bone).name = newName;
             SetDirty();
+            
+            if (IsBoneNameMatchAutoFormat(newName))
+                FindBiggestAutoNameCounter();
         }
 
         public void RecordUndo(IBone bone, string operationName)

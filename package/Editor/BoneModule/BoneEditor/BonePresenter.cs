@@ -251,6 +251,9 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (m_InfoView.HandleName(ref newName))
                 m_Model.SetBoneName(selectedBone, newName);
 
+            if (IsConflictWithOtherBoneNames(selectedBone))
+                m_InfoView.DisplayDuplicateBoneNameWarning();
+
             // Detect if user asked for a "select next bone for renaming"
             if (m_InfoView.HandleNextSelection())
             {
@@ -836,6 +839,16 @@ namespace UnityEditor.Experimental.U2D.Animation
         private bool ShouldSnap(Vector3 a, Vector3 b)
         {
             return Vector3.Distance(a, b) <= m_View.GetBoneRadius();
+        }
+
+        private bool IsConflictWithOtherBoneNames(IBone bone)
+        {
+            foreach (var otherBone in m_Model.bones)
+            {
+                if (bone != otherBone && bone.name == otherBone.name)
+                    return true;
+            }
+            return false;
         }
     }
 }
