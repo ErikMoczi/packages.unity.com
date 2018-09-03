@@ -1,7 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using UnityEditor;
+﻿
+using Unity.Mathematics;
+using Unity.Properties;
+using Unity.Entities.Properties;
 using UnityEngine;
+using UnityEditor;
 
 namespace Unity.Entities.Editor
 {
@@ -9,13 +11,10 @@ namespace Unity.Entities.Editor
     public class EntitySelectionProxyEditor : UnityEditor.Editor
     {
         private EntityIMGUIVisitor visitor;
-
-        [SerializeField] private SystemInclusionList inclusionList;
         
         void OnEnable()
         {
             visitor = new EntityIMGUIVisitor();
-            inclusionList = new SystemInclusionList();
         }
 
         public override void OnInspectorGUI()
@@ -23,12 +22,7 @@ namespace Unity.Entities.Editor
             var targetProxy = (EntitySelectionProxy) target;
             if (!targetProxy.Exists)
                 return;
-            var container = targetProxy.Container;
-            targetProxy.Container.PropertyBag.Visit(ref container, visitor);
-
-            GUI.enabled = true;
-            
-            inclusionList.OnGUI(targetProxy.World, targetProxy.Entity);
+            targetProxy.Container.PropertyBag.VisitStruct(ref targetProxy.Container, visitor);
         }
 
         public override bool RequiresConstantRepaint()

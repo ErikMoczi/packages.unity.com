@@ -1,13 +1,24 @@
-﻿using UnityEditor.IMGUI.Controls;
+﻿using System;
+using UnityEditor.IMGUI.Controls;
 using System.Collections.Generic;
+using System.Linq;
+using JetBrains.Annotations;
 using Unity.Collections;
+using Unity.Entities;
 using UnityEngine;
+using UnityEngine.Analytics;
 
 namespace Unity.Entities.Editor
 {
-    
-    public delegate void EntitySelectionCallback(Entity selection, bool updateList);
-    public delegate World WorldSelectionGetter();
+    public interface IEntitySelectionWindow : IWorldSelectionWindow
+    {
+        Entity EntitySelection { set; }
+    }
+
+    public interface IWorldSelectionWindow
+    {
+        World WorldSelection { get; }
+    }
     
     public class EntityListView : TreeView {
         private readonly Dictionary<int, Entity> entitiesById = new Dictionary<int, Entity>();
@@ -25,30 +36,20 @@ namespace Unity.Entities.Editor
             }
         }
         private ComponentGroup selectedComponentGroup;
-        int                    cachedVersion;
 
-        private EntitySelectionCallback setEntitySelection;
-        private WorldSelectionGetter getWorldSelection;
+        IEntitySelectionWindow window;
 
-        public EntityListView(TreeViewState state, ComponentGroup componentGroup, EntitySelectionCallback entitySelectionCallback, WorldSelectionGetter getWorldSelection) : base(state)
+        public EntityListView(TreeViewState state, ComponentGroup componentGroup, IEntitySelectionWindow window) : base(state)
         {
-            this.setEntitySelection = entitySelectionCallback;
-            this.getWorldSelection = getWorldSelection;
+            this.window = window;
             SelectedComponentGroup = componentGroup;
             Reload();
+            SelectionChanged(GetSelection());
         }
-
-        public void UpdateIfNecessary()
+        
+        public void RefreshData()
         {
-            if (getWorldSelection() == null)
-                return;
-            if (selectedComponentGroup == null)
-            {
-                if (getWorldSelection().GetExistingManager<EntityManager>().Version != cachedVersion)
-                    Reload();
-            }
-            else if (selectedComponentGroup.GetCombinedComponentOrderVersion() != cachedVersion)
-                Reload();
+            Reload();
         }
 
         private TreeViewItem CreateEntityItem(Entity entity)
@@ -62,64 +63,60 @@ namespace Unity.Entities.Editor
             entitiesById.Clear();
             var managerId = -1;
             var root  = new TreeViewItem { id = managerId--, depth = -1, displayName = "Root" };
-            if (getWorldSelection() == null)
+            if (window?.WorldSelection == null)
             {
                 root.AddChild(new TreeViewItem { id = managerId, displayName = "No world selected"});
-                cachedVersion = -1;
             }
             else
             {
                 if (SelectedComponentGroup == null)
                 {
-                    var entityManager = getWorldSelection().GetExistingManager<EntityManager>();
-                    var array = entityManager.GetAllEntities(Allocator.Temp);
+                    var array = window.WorldSelection.GetExistingManager<EntityManager>().GetAllEntities(Allocator.Temp);
                     for (var i = 0; i < array.Length; ++i)
                         root.AddChild(CreateEntityItem(array[i]));
                     array.Dispose();
-                    cachedVersion = entityManager.Version;
                 }
                 else
                 {
-                    getWorldSelection().GetExistingManager<EntityManager>().CompleteAllJobs();
+                    window.WorldSelection.GetExistingManager<EntityManager>().CompleteAllJobs();
                     var entityArray = SelectedComponentGroup.GetEntityArray();
                     for (var i = 0; i < entityArray.Length; ++i)
                         root.AddChild(CreateEntityItem(entityArray[i]));
-                    cachedVersion = SelectedComponentGroup.GetCombinedComponentOrderVersion();
                 }
 
                 if (entitiesById.Count == 0)
                 {
-                    root.AddChild(new TreeViewItem { id = managerId, displayName = "No Entities"});
+                    root.AddChild(new TreeViewItem { id = managerId, displayName = "ComponentGroup is empty"});
                 }
                 SetupDepthsFromParentsAndChildren(root);
             }
-            
             return root;
         }
 
         public override void OnGUI(Rect rect)
         {
-            if (getWorldSelection()?.GetExistingManager<EntityManager>()?.IsCreated == true)
+            if (window?.WorldSelection?.GetExistingManager<EntityManager>()?.IsCreated == true)
                 base.OnGUI(rect);
         }
 
         protected override void RowGUI(RowGUIArgs args)
         {
             if (args.item.displayName == null)
-                args.label = args.item.displayName = $"Entity {entitiesById[args.item.id].Index.ToString()}";
+                args.item.displayName = $"Entity {entitiesById[args.item.id].Index.ToString()}";
             base.RowGUI(args);
         }
 
         protected override void SelectionChanged(IList<int> selectedIds)
         {
-            if (selectedIds.Count > 0)
+            if (window == null)
+                return;
+            if (selectedIds.Count > 0 && entitiesById.ContainsKey(selectedIds[0]))
             {
-                if (entitiesById.ContainsKey(selectedIds[0]))
-                    setEntitySelection(entitiesById[selectedIds[0]], false);
+                window.EntitySelection = entitiesById[selectedIds[0]];
             }
             else
             {
-                setEntitySelection(Entity.Null, false);
+                window.EntitySelection = Entity.Null;
             }
         }
 
@@ -135,22 +132,8 @@ namespace Unity.Entities.Editor
 
         public void SetEntitySelection(Entity entitySelection)
         {
-            if (entitySelection != Entity.Null && getWorldSelection().GetExistingManager<EntityManager>().Exists(entitySelection))
+            if (entitySelection != Entity.Null && window.WorldSelection.GetExistingManager<EntityManager>().Exists(entitySelection))
                 SetSelection(new List<int>{entitySelection.Index});
-        }
-
-        public void TouchSelection()
-        {
-            SetSelection(GetSelection(), TreeViewSelectionOptions.FireSelectionChanged);
-        }
-
-        public void FrameSelection()
-        {
-            var selection = GetSelection();
-            if (selection.Count > 0)
-            {
-                FrameItem(selection[0]);
-            }
         }
     }
 }

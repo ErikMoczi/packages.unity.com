@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Entities;
+using UnityEditor;
 using UnityEditor.Experimental.Build.Player;
 
-namespace UnityEditor.ECS
+namespace Unity.Entities.Editor
 {
     [InitializeOnLoad]
     public sealed class ExtraTypesProvider

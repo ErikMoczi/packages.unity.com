@@ -1,23 +1,27 @@
-﻿using Unity.Entities.Properties;
+﻿
+using Unity.Entities;
+using Unity.Entities.Properties;
 using UnityEngine;
 
 namespace Unity.Entities.Editor
 {
     public class EntitySelectionProxy : ScriptableObject
     {
-        public EntityContainer Container { get; private set; }
-        public Entity Entity { get; private set; }
-        public EntityManager EntityManager { get; private set; }
-        public World World { get; private set; }
+        public EntityContainer Container;
 
-        public bool Exists => EntityManager != null && EntityManager.IsCreated && EntityManager.Exists(Entity);
+        public Entity Entity => entity;
+        private Entity entity;
 
-        public void SetEntity(World world, Entity entity)
+        public EntityManager Manager => manager;
+        private EntityManager manager;
+
+        public bool Exists => manager.Exists(entity);
+
+        public void SetEntity(EntityManager manager, Entity entity)
         {
-            this.World = world;
-            this.Entity = entity;
-            this.EntityManager = world.GetExistingManager<EntityManager>();
-            this.Container = new EntityContainer(EntityManager, Entity);
+            this.entity = entity;
+            this.manager = manager;
+            this.Container = new EntityContainer(manager, entity);
         }
     }
 }

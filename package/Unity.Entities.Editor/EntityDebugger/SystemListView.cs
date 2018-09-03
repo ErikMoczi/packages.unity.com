@@ -1,58 +1,33 @@
 ﻿using System;
 using UnityEditor.IMGUI.Controls;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using Unity.Entities;
 using UnityEngine;
 using UnityEngine.Profiling;
 
 namespace Unity.Entities.Editor
 {
-    
-    public delegate void SystemSelectionCallback(ScriptBehaviourManager manager, bool updateList, bool propagate);
-    
-    public class SystemListView : TreeView
+    public interface ISystemSelectionWindow
     {
-        private class AverageRecorder
-        {
-            private readonly Recorder recorder;
-            private int frameCount;
-            private int totalNanoseconds;
-            private float lastReading;
 
-            public AverageRecorder(Recorder recorder)
-            {
-                this.recorder = recorder;
-            }
-            
-            public void Update()
-            {
-                ++frameCount;
-                totalNanoseconds += (int)recorder.elapsedNanoseconds;
-            }
-            
-            public float ReadMilliseconds()
-            {
-                if (frameCount > 0)
-                {
-                    lastReading = (totalNanoseconds/1e6f) / frameCount;
-                    frameCount = totalNanoseconds = 0;
-                }
+        ScriptBehaviourManager SystemSelection { set; }
 
-                return lastReading;
-            }
-        }
+    }
+    
+    public class SystemListView : TreeView {
         private readonly Dictionary<Type, List<ScriptBehaviourManager>> managersByGroup = new Dictionary<Type, List<ScriptBehaviourManager>>();
         private readonly List<ScriptBehaviourManager> floatingManagers = new List<ScriptBehaviourManager>();
-        private readonly Dictionary<int, ScriptBehaviourManager> managersById = new Dictionary<int, ScriptBehaviourManager>();
-        private readonly Dictionary<ScriptBehaviourManager, AverageRecorder> recordersByManager = new Dictionary<ScriptBehaviourManager, AverageRecorder>();
+        private readonly Dictionary<int, ScriptBehaviourManager> managersByID = new Dictionary<int, ScriptBehaviourManager>();
+        private readonly Dictionary<ScriptBehaviourManager, Recorder> recordersByManager = new Dictionary<ScriptBehaviourManager, Recorder>();
+
+        private readonly World world;
 
         private const float kToggleWidth = 22f;
         private const float kTimingWidth = 70f;
 
-        private readonly SystemSelectionCallback systemSelectionCallback;
-        private readonly WorldSelectionGetter getWorldSelection;
-
-        private int systemVersion;
+        private readonly ISystemSelectionWindow window;
 
         private static GUIStyle RightAlignedLabel
         {
@@ -132,19 +107,20 @@ namespace Unity.Entities.Editor
             return stateForCurrentWorld;
         }
 
-        public static SystemListView CreateList(List<TreeViewState> states, List<string> stateNames, SystemSelectionCallback systemSelectionCallback, WorldSelectionGetter worldSelectionGetter)
+        public static SystemListView CreateList(World world, List<TreeViewState> states, List<string> stateNames, ISystemSelectionWindow window)
         {
-            var state = GetStateForWorld(worldSelectionGetter(), states, stateNames);
+            var state = GetStateForWorld(world, states, stateNames);
             var header = new MultiColumnHeader(GetHeaderState());
-            return new SystemListView(state, header, systemSelectionCallback, worldSelectionGetter);
+            return new SystemListView(state, header, world, window);
         }
         
-        private SystemListView(TreeViewState state, MultiColumnHeader header, SystemSelectionCallback systemSelectionCallback, WorldSelectionGetter worldSelectionGetter) : base(state, header)
+        private SystemListView(TreeViewState state, MultiColumnHeader header, World world, ISystemSelectionWindow window) : base(state, header)
         {
-            this.getWorldSelection = worldSelectionGetter;
-            this.systemSelectionCallback = systemSelectionCallback;
+            this.window = window;
+            this.world = world;
             columnIndexForTreeFoldouts = 1;
             Reload();
+            SelectionChanged(GetSelection());
         }
 
         static int CompareSystem(ScriptBehaviourManager x, ScriptBehaviourManager y)
@@ -161,31 +137,20 @@ namespace Unity.Entities.Editor
             }
         }
 
-        private TreeViewItem CreateManagerItem(int id, ScriptBehaviourManager manager)
-        {
-            managersById.Add(id, manager);
-            var recorder = Recorder.Get($"{getWorldSelection().Name} {manager.GetType().FullName}");
-            recordersByManager.Add(manager, new AverageRecorder(recorder));
-            recorder.enabled = true;
-            return new TreeViewItem { id = id, displayName = manager.GetType().Name.ToString() };
-        }
-
         protected override TreeViewItem BuildRoot()
         {
             managersByGroup.Clear();
-            managersById.Clear();
+            managersByID.Clear();
             floatingManagers.Clear();
             recordersByManager.Clear();
 
-            systemVersion = -1;
-            if (getWorldSelection() != null)
+            if (world != null)
             {
-                systemVersion = getWorldSelection().Version;
                 Dictionary<Type, ScriptBehaviourUpdateOrder.ScriptBehaviourGroup> allGroups;
                 Dictionary<Type, ScriptBehaviourUpdateOrder.DependantBehavior> dependencies;
-                ScriptBehaviourUpdateOrder.CollectGroups(getWorldSelection().BehaviourManagers, out allGroups, out dependencies);
+                ScriptBehaviourUpdateOrder.CollectGroups(world.BehaviourManagers, out allGroups, out dependencies);
             
-                foreach (var manager in getWorldSelection().BehaviourManagers)
+                foreach (var manager in world.BehaviourManagers)
                 {
                     var hasGroup = false;
                     foreach (var attributeData in manager.GetType().GetCustomAttributesData())
@@ -222,15 +187,30 @@ namespace Unity.Entities.Editor
             }
             else
             {
+
                 foreach (var manager in floatingManagers)
-                    root.AddChild(CreateManagerItem(currentID++, manager));
-                
+                {
+                    managersByID.Add(currentID, manager);
+                    var recorder = Recorder.Get($"{world.Name} {manager.GetType().FullName}");
+                    recordersByManager.Add(manager, recorder);
+                    recorder.enabled = true;
+                    var managerItem = new TreeViewItem { id = currentID++, displayName = manager.GetType().Name.ToString() };
+                    root.AddChild(managerItem);
+                }
                 foreach (var group in (from g in managersByGroup.Keys orderby g.Name select g))
                 {
                     var groupItem = new TreeViewItem { id = currentID++, displayName = group.Name };
                     root.AddChild(groupItem);
                     foreach (var manager in managersByGroup[group])
-                        groupItem.AddChild(CreateManagerItem(currentID++, manager));
+                    {
+                        managersByID.Add(currentID, manager);
+                        var recorder = Recorder.Get($"{world.Name} {manager.GetType().FullName}");
+                        recordersByManager.Add(manager, recorder);
+                        recorder.enabled = true;
+                        
+                        var managerItem = new TreeViewItem { id = currentID++, displayName = manager.GetType().Name.ToString() };
+                        groupItem.AddChild(managerItem);
+                    }
                 }
                 SetupDepthsFromParentsAndChildren(root);
             }
@@ -245,9 +225,9 @@ namespace Unity.Entities.Editor
 
             var enabled = GUI.enabled;
             
-            if (managersById.ContainsKey(item.id))
+            if (managersByID.ContainsKey(item.id))
             {
-                var manager = managersById[item.id];
+                var manager = managersByID[item.id];
                 var toggleRect = args.GetCellRect(0);
                 toggleRect.xMin = toggleRect.xMin + 4f;
                 manager.Enabled = GUI.Toggle(toggleRect, manager.Enabled, GUIContent.none);
@@ -256,7 +236,7 @@ namespace Unity.Entities.Editor
 
                 var timingRect = args.GetCellRect(2);
                 var recorder = recordersByManager[manager];
-                GUI.Label(timingRect, recorder.ReadMilliseconds().ToString("f2"), RightAlignedLabel);
+                GUI.Label(timingRect, (recorder.elapsedNanoseconds * 0.000001f).ToString("f2"), RightAlignedLabel);
             }
 
             var indent = GetContentIndent(item);
@@ -268,13 +248,15 @@ namespace Unity.Entities.Editor
 
         protected override void SelectionChanged(IList<int> selectedIds)
         {
-            if (selectedIds.Count > 0 && managersById.ContainsKey(selectedIds[0]))
+            if (window == null)
+                return;
+            if (selectedIds.Count > 0 && managersByID.ContainsKey(selectedIds[0]))
             {
-                systemSelectionCallback(managersById[selectedIds[0]], false, true);
+                window.SystemSelection = managersByID[selectedIds[0]];
             }
             else
             {
-                systemSelectionCallback(null, false, true);
+                window.SystemSelection = null;
             }
         }
 
@@ -283,45 +265,5 @@ namespace Unity.Entities.Editor
             return false;
         }
 
-        public void TouchSelection()
-        {
-            SetSelection(GetSelection(), TreeViewSelectionOptions.FireSelectionChanged);
-        }
-
-        public void UpdateIfNecessary()
-        {
-            if (getWorldSelection() == null)
-                return;
-            if (getWorldSelection().Version != systemVersion)
-                Reload();
-        }
-
-        private int lastTimedFrame;
-        
-        public void UpdateTimings()
-        {
-            if (Time.frameCount == lastTimedFrame)
-                return;
-            
-            foreach (var recorder in recordersByManager.Values)
-            {
-                recorder.Update();
-            }
-
-            lastTimedFrame = Time.frameCount;
-        }
-
-        public void SetSystemSelection(ScriptBehaviourManager manager)
-        {
-            foreach (var pair in managersById)
-            {
-                if (pair.Value == manager)
-                {
-                    SetSelection(new List<int> {pair.Key});
-                    return;
-                }
-            }
-            SetSelection(new List<int>());
-        }
     }
 }

@@ -32,7 +32,7 @@ namespace Unity.Entities
 
         public ComponentGroup[] 			ComponentGroups => m_ComponentGroups;
 
-        protected bool ShouldRunSystem()
+        public bool ShouldRunSystem()
         {
             if (m_AlwaysUpdateSystem)
                 return true;

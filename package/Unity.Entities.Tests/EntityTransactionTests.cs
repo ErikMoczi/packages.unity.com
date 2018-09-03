@@ -5,6 +5,7 @@ using Unity.Jobs;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Unity.Entities.Tests
 {
@@ -87,7 +88,7 @@ namespace Unity.Entities.Tests
             /*var jobHandle =*/ job.Schedule(m_Manager.ExclusiveEntityTransactionDependency);
 
             // Commit transaction expects an error not exception otherwise errors might occurr after a system has completed...
-            UnityEngine.TestTools.LogAssert.Expect(LogType.Error, new Regex("ExclusiveEntityTransaction job has not been registered"));
+            LogAssert.Expect(LogType.Error, new Regex("ExclusiveEntityTransaction job has not been registered"));
             m_Manager.EndExclusiveEntityTransaction();
         }
 
@@ -98,7 +99,7 @@ namespace Unity.Entities.Tests
             job.entities = m_Manager.BeginExclusiveEntityTransaction();
 
             Assert.Throws<InvalidOperationException>(() => { m_Manager.CreateEntity(typeof(EcsTestData)); });
-
+            
             //@TODO:
             //Assert.Throws<InvalidOperationException>(() => { m_Manager.Exists(new Entity()); });
         }
@@ -117,7 +118,7 @@ namespace Unity.Entities.Tests
         {
             var entity = m_Manager.CreateEntity(typeof(EcsTestData));
             m_Manager.SetComponentData(entity, new EcsTestData(42));
-
+            
             var transaction = m_Manager.BeginExclusiveEntityTransaction();
             Assert.AreEqual(42, transaction.GetComponentData<EcsTestData>(entity).value);
         }

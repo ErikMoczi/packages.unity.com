@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using Unity.Entities.Properties;
 using UnityEngine;
 using Unity.Properties;
 using Unity.Mathematics;
@@ -10,207 +7,86 @@ using UnityEditor;
 namespace Unity.Entities.Editor
 {
 
-    public class EntityIMGUIVisitor : PropertyVisitor
-        , IPrimitivePropertyVisitor
-        , ICustomVisitPrimitives
-        , ICustomVisit<Unity.Mathematics.quaternion>
-        , ICustomVisit<Unity.Mathematics.float2>
-        , ICustomVisit<Unity.Mathematics.float3>
-        , ICustomVisit<Unity.Mathematics.float4>
-        , ICustomVisit<Unity.Mathematics.float4x4>
-        , ICustomVisit<Unity.Mathematics.float3x3>
-        , ICustomVisit<Unity.Mathematics.float2x2>
+    public class EntityIMGUIVisitor : IPropertyVisitor
+        , IBuiltInPropertyVisitor
+        , IPropertyVisitor<Unity.Mathematics.quaternion>
+
     {
-        private static HashSet<Type> _primitiveTypes = new HashSet<Type>();
 
-        static EntityIMGUIVisitor()
+        public void Visit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context) where TContainer : IPropertyContainer
         {
-            foreach (var it in typeof(EntityIMGUIVisitor).GetInterfaces())
-            {
-                if (it.IsGenericType && typeof(ICustomVisit<>) == it.GetGenericTypeDefinition())
-                {
-                    var genArgs = it.GetGenericArguments();
-                    if (genArgs.Length == 1)
-                    {
-                        _primitiveTypes.Add(genArgs[0]);
-                    }
-                }
-            }
-            foreach (var it in typeof(PropertyVisitor).GetInterfaces())
-            {
-                if (it.IsGenericType && typeof(ICustomVisit<>) == it.GetGenericTypeDefinition())
-                {
-                    var genArgs = it.GetGenericArguments();
-                    if (genArgs.Length == 1)
-                    {
-                        _primitiveTypes.Add(genArgs[0]);
-                    }
-                }
-            }
+            var property = context.Value;
+            GUILayout.Label(property.ToString());
         }
 
-        public HashSet<Type> SupportedPrimitiveTypes()
+        public void VisitEnum<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context) where TContainer : IPropertyContainer where TValue : struct
         {
-            return _primitiveTypes;
         }
 
-        private class ComponentState
+        public bool BeginContainer<TContainer, TValue>(ref TContainer container, SubtreeContext<TValue> context) where TContainer : IPropertyContainer
         {
-            public ComponentState()
-            {
-                Showing = true;
-            }
-            public bool Showing { get; set; }
-        }
-        private Dictionary<string, ComponentState> _states = new Dictionary<string, ComponentState>();
-        private PropertyPath _currentPath = new PropertyPath();
-
-        protected override void Visit<TValue>(TValue value)
-        {
-            GUILayout.Label(Property.Name);
-        }
-
-        public override void VisitEnum<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
-        {
-            VisitSetup(ref container, ref context);
-
-            var t = typeof(TValue);
-            if (t.IsEnum)
-            {
-                var options = Enum.GetNames(t).ToArray();
-                EditorGUILayout.Popup(
-                    t.Name,
-                    Array.FindIndex(options, name => name == context.Value.ToString()),
-                    options);
-            }
-        }
-
-        public override bool BeginContainer<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
-        {
-            VisitSetup(ref container, ref context);
             EditorGUI.indentLevel++;
-
-            _currentPath.Push(Property.Name, context.Index);
-
-            if (typeof(TValue) == typeof(StructProxy))
-            {
-                ComponentState state;
-                if (!_states.ContainsKey(_currentPath.ToString()))
-                {
-                    _states[_currentPath.ToString()] = new ComponentState();
-                }
-                state = _states[_currentPath.ToString()];
-
-                state.Showing = EditorGUILayout.Foldout(state.Showing, context.Property.Name);
-
-                return state.Showing;
-            }
             return true;
         }
 
-        public override void EndContainer<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+        public void EndContainer<TContainer, TValue>(ref TContainer container, SubtreeContext<TValue> context) where TContainer : IPropertyContainer
         {
-            VisitSetup(ref container, ref context);
-            _currentPath.Pop();
-
             EditorGUI.indentLevel--;
         }
 
-        public override bool BeginList<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+        public bool BeginList<TContainer, TValue>(ref TContainer container, ListContext<TValue> context) where TContainer : IPropertyContainer
         {
-            VisitSetup(ref container, ref context);
             return true;
         }
 
-        public override void EndList<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+        public void EndList<TContainer, TValue>(ref TContainer container, ListContext<TValue> context) where TContainer : IPropertyContainer
         {
-            VisitSetup(ref container, ref context);
+        }
+        public void Visit<TContainer>(ref TContainer container, VisitContext<Unity.Mathematics.quaternion> context) where TContainer : IPropertyContainer
+        {
+            var property = context.Value;
+            GUILayout.Label(property.value.ToString());
         }
 
-        void ICustomVisit<Unity.Mathematics.quaternion>.CustomVisit(Unity.Mathematics.quaternion q)
+        #region IBuiltInPropertyVisitor
+        public void Visit<TContainer>(ref TContainer container, VisitContext<sbyte> context) where TContainer : IPropertyContainer
         {
-            EditorGUILayout.Vector4Field(Property.Name, new Vector4(q.value.x, q.value.y, q.value.z, q.value.w));
+            DoField(ref container, context, (label, val) => (sbyte)Mathf.Clamp(EditorGUILayout.IntField(label, val), sbyte.MinValue, sbyte.MaxValue));
         }
 
-        void ICustomVisit<float2>.CustomVisit(float2 f)
+        public void Visit<TContainer>(ref TContainer container, VisitContext<short> context) where TContainer : IPropertyContainer
         {
-            EditorGUILayout.Vector2Field(Property.Name, (Vector2) f);
+            DoField(ref container, context, (label, val) => (short)Mathf.Clamp(EditorGUILayout.IntField(label, val), short.MinValue, short.MaxValue));
         }
 
-        void ICustomVisit<float3>.CustomVisit(float3 f)
+        public void Visit<TContainer>(ref TContainer container, VisitContext<int> context) where TContainer : IPropertyContainer
         {
-            EditorGUILayout.Vector3Field(Property.Name, (float3)f);
+            DoField(ref container, context, (label, val) => EditorGUILayout.IntField(label, val));
         }
 
-        void ICustomVisit<float4>.CustomVisit(float4 f)
+        public void Visit<TContainer>(ref TContainer container, VisitContext<long> context) where TContainer : IPropertyContainer
         {
-            EditorGUILayout.Vector4Field(Property.Name, (float4)f);
+            DoField(ref container, context, (label, val) => EditorGUILayout.LongField(label, val));
         }
 
-        void ICustomVisit<float2x2>.CustomVisit(float2x2 f)
+        public void Visit<TContainer>(ref TContainer container, VisitContext<byte> context) where TContainer : IPropertyContainer
         {
-            GUILayout.Label(Property.Name);
-            EditorGUILayout.Vector2Field("", (Vector2)f.m0);
-            EditorGUILayout.Vector2Field("", (Vector2)f.m1);
+            DoField(ref container, context, (label, val) => (byte)Mathf.Clamp(EditorGUILayout.IntField(label, val), byte.MinValue, byte.MaxValue));
         }
 
-        void ICustomVisit<float3x3>.CustomVisit(float3x3 f)
+        public void Visit<TContainer>(ref TContainer container, VisitContext<ushort> context) where TContainer : IPropertyContainer
         {
-            GUILayout.Label(Property.Name);
-            EditorGUILayout.Vector3Field("", (Vector3)f.m0);
-            EditorGUILayout.Vector3Field("", (Vector3)f.m1);
-            EditorGUILayout.Vector3Field("", (Vector3)f.m2);
+            DoField(ref container, context, (label, val) => (ushort)Mathf.Clamp(EditorGUILayout.IntField(label, val), ushort.MinValue, ushort.MaxValue));
         }
 
-        void ICustomVisit<float4x4>.CustomVisit(float4x4 f)
+        public void Visit<TContainer>(ref TContainer container, VisitContext<uint> context) where TContainer : IPropertyContainer
         {
-            GUILayout.Label(Property.Name);
-            EditorGUILayout.Vector4Field("", (Vector4)f.m0);
-            EditorGUILayout.Vector4Field("", (Vector4)f.m1);
-            EditorGUILayout.Vector4Field("", (Vector4)f.m2);
-            EditorGUILayout.Vector4Field("", (Vector4)f.m3);
+            DoField(ref container, context, (label, val) => (uint)Mathf.Clamp(EditorGUILayout.LongField(label, val), uint.MinValue, uint.MaxValue));
         }
 
-        #region ICustomVisitPrimitives
-
-        void ICustomVisit<sbyte>.CustomVisit(sbyte f)
+        public void Visit<TContainer>(ref TContainer container, VisitContext<ulong> context) where TContainer : IPropertyContainer
         {
-            DoField(Property, f, (label, val) => (sbyte)Mathf.Clamp(EditorGUILayout.IntField(label, val), sbyte.MinValue, sbyte.MaxValue));
-        }
-
-        void ICustomVisit<short>.CustomVisit(short f)
-        {
-            DoField(Property, f, (label, val) => (short)Mathf.Clamp(EditorGUILayout.IntField(label, val), short.MinValue, short.MaxValue));
-        }
-
-        void ICustomVisit<int>.CustomVisit(int f)
-        {
-            DoField(Property, f, (label, val) => EditorGUILayout.IntField(label, val));
-        }
-
-        void ICustomVisit<long>.CustomVisit(long f)
-        {
-            DoField(Property, f, (label, val) => EditorGUILayout.LongField(label, val));
-        }
-
-        void ICustomVisit<byte>.CustomVisit(byte f)
-        {
-            DoField(Property, f, (label, val) => (byte)Mathf.Clamp(EditorGUILayout.IntField(label, val), byte.MinValue, byte.MaxValue));
-        }
-
-        void ICustomVisit<ushort>.CustomVisit(ushort f)
-        {
-            DoField(Property, f, (label, val) => (ushort)Mathf.Clamp(EditorGUILayout.IntField(label, val), ushort.MinValue, ushort.MaxValue));
-        }
-
-        void ICustomVisit<uint>.CustomVisit(uint f)
-        {
-            DoField(Property, f, (label, val) => (uint)Mathf.Clamp(EditorGUILayout.LongField(label, val), uint.MinValue, uint.MaxValue));
-        }
-
-        void ICustomVisit<ulong>.CustomVisit(ulong f)
-        {
-            DoField(Property, f, (label, val) =>
+            DoField(ref container, context, (label, val) =>
             {
                 var text = EditorGUILayout.TextField(label, val.ToString());
                 ulong num;
@@ -219,24 +95,24 @@ namespace Unity.Entities.Editor
             });
         }
 
-        void ICustomVisit<float>.CustomVisit(float f)
+        public void Visit<TContainer>(ref TContainer container, VisitContext<float> context) where TContainer : IPropertyContainer
         {
-            DoField(Property, f, (label, val) => EditorGUILayout.FloatField(label, val));
+            DoField(ref container, context, (label, val) => EditorGUILayout.FloatField(label, val));
         }
 
-        void ICustomVisit<double>.CustomVisit(double f)
+        public void Visit<TContainer>(ref TContainer container, VisitContext<double> context) where TContainer : IPropertyContainer
         {
-            DoField(Property, f, (label, val) => EditorGUILayout.DoubleField(label, val));
+            DoField(ref container, context, (label, val) => EditorGUILayout.DoubleField(label, val));
         }
 
-        void ICustomVisit<bool>.CustomVisit(bool f)
+        public void Visit<TContainer>(ref TContainer container, VisitContext<bool> context) where TContainer : IPropertyContainer
         {
-            DoField(Property, f, (label, val) => EditorGUILayout.Toggle(label, val));
+            DoField(ref container, context, (label, val) => EditorGUILayout.Toggle(label, val));
         }
 
-        void ICustomVisit<char>.CustomVisit(char f)
+        public void Visit<TContainer>(ref TContainer container, VisitContext<char> context) where TContainer : IPropertyContainer
         {
-            DoField(Property, f, (label, val) =>
+            DoField(ref container, context, (label, val) =>
             {
                 var text = EditorGUILayout.TextField(label, val.ToString());
                 var c = (string.IsNullOrEmpty(text) ? '\0' : text[0]);
@@ -244,36 +120,31 @@ namespace Unity.Entities.Editor
             });
         }
 
-        void ICustomVisit<string>.CustomVisit(string f)
+        public void Visit<TContainer>(ref TContainer container, VisitContext<string> context) where TContainer : IPropertyContainer
         {
-            if (Property == null)
-            {
-                return;
-            }
-            GUILayout.Label(f, EditorStyles.boldLabel);
-        }
-        #endregion
+            var property = context.Property;
 
-        private void DoField<TValue>(IProperty property, TValue value, Func<GUIContent, TValue, TValue> onGUI)
-        {
             if (property == null)
             {
                 return;
             }
 
-            var previous = value;
-            onGUI(new GUIContent(property.Name), previous);
+            GUILayout.Label(context.Value, EditorStyles.boldLabel);
+        }
+        #endregion
 
-#if ENABLE_PROPERTY_SET
-            var T = property.GetType();
-            var typedProperty = Convert.ChangeType(property, T);
+        private void DoField<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context, Func<GUIContent, TValue, TValue> onGUI)
+            where TContainer : IPropertyContainer
+        {
+            var property = context.Property;
 
-            if (!property.IsReadOnly && typedProperty != null)
+            if (property == null)
             {
-                // TODO doesn not work, ref container & container access
-                T.GetMethod("SetValue").Invoke(property, new object[] { container, v });
+                return;
             }
-#endif
+
+            var previous = context.Value;
+            onGUI(new GUIContent(property.Name), previous);
         }
     }
 }

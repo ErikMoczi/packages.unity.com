@@ -60,7 +60,7 @@ namespace Unity.Entities
             }
         }
 
-        class ScriptBehaviourGroup
+        public class ScriptBehaviourGroup
         {
             public readonly List<Type> Managers = new List<Type>();
             public readonly HashSet<Type> UpdateBefore = new HashSet<Type>();
@@ -156,7 +156,7 @@ namespace Unity.Entities
             }
         }
 
-        class DependantBehavior
+        public class DependantBehavior
         {
             public readonly ScriptBehaviourManager Manager;
             public readonly HashSet<Type> UpdateBefore = new HashSet<Type>();
@@ -330,11 +330,10 @@ namespace Unity.Entities
             }
         }
 
-        static Dictionary<Type, DependantBehavior> BuildSystemGraph(IEnumerable<ScriptBehaviourManager> activeManagers, PlayerLoopSystem defaultPlayerLoop)
+        public static void CollectGroups(IEnumerable<ScriptBehaviourManager> activeManagers, out Dictionary<Type, ScriptBehaviourGroup> allGroups, out Dictionary<Type, DependantBehavior> dependencies)
         {
-            // Collect all groups and create empty dependency data
-            var allGroups = new Dictionary<Type, ScriptBehaviourGroup>();
-            var dependencies = new Dictionary<Type, DependantBehavior>();
+            allGroups = new Dictionary<Type, ScriptBehaviourGroup>();
+            dependencies = new Dictionary<Type, DependantBehavior>();
             foreach (var manager in activeManagers)
             {
                 var attribs = manager.GetType().GetCustomAttributes(typeof(UpdateInGroupAttribute), true);
@@ -350,6 +349,14 @@ namespace Unity.Entities
                 var dep = new DependantBehavior(manager);
                 dependencies.Add(manager.GetType(), dep);
             }
+        }
+
+        static Dictionary<Type, DependantBehavior> BuildSystemGraph(IEnumerable<ScriptBehaviourManager> activeManagers, PlayerLoopSystem defaultPlayerLoop)
+        {
+            // Collect all groups and create empty dependency data
+            Dictionary<Type, ScriptBehaviourGroup> allGroups;
+            Dictionary<Type, DependantBehavior> dependencies;
+            CollectGroups(activeManagers, out allGroups, out dependencies);
 
             // @TODO: apply additional sideloaded constraints here
 

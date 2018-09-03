@@ -41,7 +41,7 @@ namespace UnityEngine.Entities.Tests
 	        {
 	        }
 
-	        public void UpdateInjectedComponentGroups()
+	        public new void UpdateInjectedComponentGroups()
 	        {
 	            base.UpdateInjectedComponentGroups();
 	        }

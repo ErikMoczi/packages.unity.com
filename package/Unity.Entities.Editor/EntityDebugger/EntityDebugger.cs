@@ -1,20 +1,19 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Runtime.InteropServices;
+using Unity.Entities;
+using Unity.Entities.Properties;
 using UnityEditor;
 using UnityEngine;
 using UnityEditor.IMGUI.Controls;
 
 namespace Unity.Entities.Editor
 {
-    public class EntityDebugger : EditorWindow
-    {
+    public class EntityDebugger : EditorWindow, ISystemSelectionWindow, IEntitySelectionWindow, IComponentGroupSelectionWindow {
         private const float kSystemListWidth = 350f;
 
-#if UNITY_2018_2_OR_NEWER
-        [MenuItem("Window/Debug/Entity Debugger", false)]
-#else
         [MenuItem("Window/Entity Debugger", false, 2017)]
-#endif
         static void OpenWindow()
         {
             GetWindow<EntityDebugger>("Entity Debugger");
@@ -26,12 +25,9 @@ namespace Unity.Entities.Editor
             {
                 if (box == null)
                 {
-                    box = new GUIStyle(GUI.skin.box)
-                    {
-                        margin = new RectOffset(),
-                        padding = new RectOffset(1, 0, 1, 0),
-                        overflow = new RectOffset(0, 1, 0, 1)
-                    };
+                    box = new GUIStyle(GUI.skin.box);
+                    box.margin = new RectOffset();
+                    box.padding = new RectOffset(1, 1, 1, 1);
                 }
 
                 return box;
@@ -43,20 +39,10 @@ namespace Unity.Entities.Editor
         public ScriptBehaviourManager SystemSelection
         {
             get { return systemSelection; }
-        }
-
-        public void SetSystemSelection(ScriptBehaviourManager manager, bool updateList, bool propagate)
-        {
-            systemSelection = manager;
-            if (updateList)
-                systemListView.SetSystemSelection(manager);
-            CreateComponentGroupListView();
-            if (propagate)
+            set
             {
-                if (systemSelection is ComponentSystemBase)
-                    componentGroupListView.TouchSelection();
-                else
-                    ApplyAllEntitiesFilter();
+                systemSelection = value;
+                CreateComponentGroupListView();
             }
         }
 
@@ -65,16 +51,11 @@ namespace Unity.Entities.Editor
         public ComponentGroup ComponentGroupSelection
         {
             get { return componentGroupSelection; }
-        }
-
-        public void SetComponentGroupSelection(ComponentGroup newSelection, bool updateList, bool propagate)
-        {
-            componentGroupSelection = newSelection;
-            if (updateList)
-                componentGroupListView.SetComponentGroupSelection(newSelection);
-            entityListView.SelectedComponentGroup = newSelection;
-            if (propagate)
-                entityListView.TouchSelection();
+            set
+            {
+                componentGroupSelection = value;
+                entityListView.SelectedComponentGroup = value;
+            }
         }
 
         private ComponentGroup componentGroupSelection;
@@ -82,35 +63,19 @@ namespace Unity.Entities.Editor
         public Entity EntitySelection
         {
             get { return selectionProxy.Entity; }
-        }
-
-        public void SetEntitySelection(Entity newSelection, bool updateList)
-        {
-            if (updateList)
-                entityListView.SetEntitySelection(newSelection);
-            if (WorldSelection != null && newSelection != Entity.Null)
+            set
             {
-                selectionProxy.SetEntity(WorldSelection, newSelection);
-                Selection.activeObject = selectionProxy;
-            }
-            else if (Selection.activeObject == selectionProxy)
-            {
-                Selection.activeObject = null;
+                if (value != Entity.Null)
+                {
+                    selectionProxy.SetEntity(WorldSelection.GetExistingManager<EntityManager>(), value);
+                    Selection.activeObject = selectionProxy;
+                }
+                else if (Selection.activeObject == selectionProxy)
+                {
+                    Selection.activeObject = null;
+                }
             }
         }
-
-        public static void SetAllSelections(World world, ComponentSystemBase system, ComponentGroup componentGroup, Entity entity)
-        {
-            if (Instance == null)
-                return;
-            Instance.SetWorldSelection(world, false);
-            Instance.SetSystemSelection(system, true, false);
-            Instance.SetComponentGroupSelection(componentGroup, true, false);
-            Instance.SetEntitySelection(entity, true);
-            Instance.entityListView.FrameSelection();
-        }
-
-        public static EntityDebugger Instance { get; set; }
 
         private EntitySelectionProxy selectionProxy;
         
@@ -124,65 +89,51 @@ namespace Unity.Entities.Editor
 
         [SerializeField] private TreeViewState entityListState = new TreeViewState();
         private EntityListView entityListView;
-
-        private ComponentTypeFilterUI filterUI;
         
         private string[] worldNames => (from x in World.AllWorlds select x.Name).ToArray();
 
-        private void SelectWorldByName(string name, bool propagate)
+        private void SelectWorldByName(string name)
         {
             foreach (var world in World.AllWorlds)
             {
                 if (world.Name == name)
                 {
-                    SetWorldSelection(world, propagate);
+                    WorldSelection = world;
                     return;
                 }
             }
 
-            SetWorldSelection(null, propagate);
+            WorldSelection = null;
         }
         
         public World WorldSelection
         {
-            get
+            get { return worldSelection; }
+            set
             {
-                if (worldSelection != null && worldSelection.IsCreated)
-                    return worldSelection;
-                return null;
-            }
-        }
-
-        public void SetWorldSelection(World selection, bool propagate)
-        {
-            if (worldSelection != selection)
-            {
-                worldSelection = selection;
-                if (worldSelection != null)
+                if (worldSelection != value)
                 {
-                    lastSelectedWorldName = worldSelection.Name;
+                    worldSelection = value;
+                    if (worldSelection != null)
+                        lastSelectedWorldName = worldSelection.Name;
+                    CreateSystemListView();
                 }
-                    
-                CreateSystemListView();
-                systemListView.multiColumnHeader.ResizeToFit();
-                if (propagate)
-                    systemListView.TouchSelection();
             }
         }
 
         private void CreateEntityListView()
         {
-            entityListView = new EntityListView(entityListState, ComponentGroupSelection, SetEntitySelection, () => WorldSelection);
+            entityListView = new EntityListView(entityListState, ComponentGroupSelection, this);
         }
 
         private void CreateSystemListView()
         {
-            systemListView = SystemListView.CreateList(systemListStates, systemListStateNames, SetSystemSelection, () => WorldSelection);
+            systemListView = SystemListView.CreateList(WorldSelection, systemListStates, systemListStateNames, this);
         }
 
         private void CreateComponentGroupListView()
         {
-            componentGroupListView = ComponentGroupListView.CreateList(SystemSelection as ComponentSystemBase, componentGroupListStates, componentGroupListStateNames, SetComponentGroupSelection, () => WorldSelection);
+            componentGroupListView = ComponentGroupListView.CreateList(SystemSelection as ComponentSystemBase, componentGroupListStates, componentGroupListStateNames, this);
         }
 
         private World worldSelection;
@@ -194,29 +145,27 @@ namespace Unity.Entities.Editor
             set
             {
                 if (value >= 0 && value < World.AllWorlds.Count)
-                    SetWorldSelection(World.AllWorlds[value], true);
+                    WorldSelection = World.AllWorlds[value];
             }
         }
 
+        private bool worldsExist;
+
         private readonly string[] noWorldsName = new[] {"No worlds"};
+        private bool worldsAppeared;
 
         void OnEnable()
         {
-            Instance = this;
             selectionProxy = ScriptableObject.CreateInstance<EntitySelectionProxy>();
             selectionProxy.hideFlags = HideFlags.HideAndDontSave;
-            filterUI = new ComponentTypeFilterUI(SetAllEntitiesFilter, () => WorldSelection);
+            CreateEntityListView();
             CreateSystemListView();
             CreateComponentGroupListView();
-            CreateEntityListView();
-            systemListView.TouchSelection();
             EditorApplication.playModeStateChanged += OnPlayModeStateChange;
         }
 
         private void OnDisable()
         {
-            if (Instance == this)
-                Instance = null;
             if (selectionProxy)
                 DestroyImmediate(selectionProxy);
             
@@ -225,32 +174,23 @@ namespace Unity.Entities.Editor
 
         void OnPlayModeStateChange(PlayModeStateChange change)
         {
-            if (change == PlayModeStateChange.ExitingPlayMode)
-                SetAllEntitiesFilter(null);
             if (change == PlayModeStateChange.ExitingPlayMode && Selection.activeObject == selectionProxy)
                 Selection.activeObject = null;
         }
         
         private float lastUpdate;
         
-        void Update()
-        {
-            systemListView.UpdateTimings();
-            
-            systemListView.UpdateIfNecessary();
-            componentGroupListView.UpdateIfNecessary();
-            entityListView.UpdateIfNecessary();
-            filterUI.GetTypes();
-            
-            if (Time.realtimeSinceStartup > lastUpdate + 0.5f) 
+        void Update() 
+        { 
+            if (EditorApplication.isPlaying && Time.time > lastUpdate + 0.5f) 
             { 
                 Repaint(); 
-            }
+            } 
         } 
 
         void WorldPopup()
         {
-            if (World.AllWorlds.Count == 0)
+            if (!worldsExist)
             {
                 var guiEnabled = GUI.enabled;
                 GUI.enabled = false;
@@ -259,12 +199,12 @@ namespace Unity.Entities.Editor
             }
             else
             {
-                if (WorldSelection == null || !WorldSelection.IsCreated)
+                if (worldsAppeared && WorldSelection == null)
                 {
-                    SelectWorldByName(lastSelectedWorldName, true);
+                    SelectWorldByName(lastSelectedWorldName);
                     if (WorldSelection == null)
                     {
-                        SetWorldSelection(World.AllWorlds[0], true);
+                        WorldSelection = World.AllWorlds[0];
                     }
                 }
                 selectedWorldIndex = EditorGUILayout.Popup(selectedWorldIndex, worldNames);
@@ -274,8 +214,10 @@ namespace Unity.Entities.Editor
         void SystemList()
         {
             var rect = GUIHelpers.GetExpandingRect();
-            if (World.AllWorlds.Count != 0)
+            if (worldsExist)
             {
+                if (worldsAppeared)
+                    systemListView.multiColumnHeader.ResizeToFit();
                 systemListView.OnGUI(rect);
             }
             else
@@ -286,6 +228,7 @@ namespace Unity.Entities.Editor
 
         void SystemHeader()
         {
+
             GUILayout.BeginHorizontal();
             GUILayout.Label("Systems", EditorStyles.boldLabel);
             GUILayout.FlexibleSpace();
@@ -295,8 +238,6 @@ namespace Unity.Entities.Editor
 
         void EntityHeader()
         {
-            if (WorldSelection == null)
-                return;
             GUILayout.BeginHorizontal();
             if (SystemSelection == null)
             {
@@ -307,12 +248,13 @@ namespace Unity.Entities.Editor
                 var type = SystemSelection.GetType();
                 AlignHeader(() => GUILayout.Label(type.Namespace, EditorStyles.label));
                 GUILayout.Label(type.Name, EditorStyles.boldLabel);
-                GUILayout.FlexibleSpace();
-                var system = SystemSelection as ComponentSystemBase;
-                if (system != null)
+                if (SystemSelection is ComponentSystemBase)
                 {
+                    GUILayout.FlexibleSpace();
+
+                    var system = (ComponentSystemBase) SystemSelection;
                     var running = system.Enabled && system.ShouldRunSystem();
-                    AlignHeader(() => GUILayout.Label($"running: {(running ? "yes" : "no")}"));
+                    AlignHeader(() => GUILayout.Label($"running: {running}"));
                 }
             }
             GUILayout.EndHorizontal();
@@ -322,30 +264,10 @@ namespace Unity.Entities.Editor
         {
             if (SystemSelection is ComponentSystemBase)
             {
-                GUILayout.BeginVertical(Box, GUILayout.Height(componentGroupListView.Height + Box.padding.bottom + Box.padding.top));
-
+                GUILayout.BeginVertical(Box, GUILayout.Height(componentGroupListView.Height + 4f));
                 componentGroupListView.OnGUI(GUIHelpers.GetExpandingRect());
                 GUILayout.EndVertical();
             }
-            else if (WorldSelection != null)
-            {
-                filterUI.OnGUI();
-            }
-        }
-
-        private ComponentGroup filterGroup;
-
-        public void SetAllEntitiesFilter(ComponentGroup componentGroup)
-        {
-            filterGroup = componentGroup;
-            if (WorldSelection == null || SystemSelection is ComponentSystemBase)
-                return;
-            ApplyAllEntitiesFilter();
-        }
-        
-        private void ApplyAllEntitiesFilter()
-        {
-            SetComponentGroupSelection(filterGroup, false, true);
         }
 
         void EntityList()
@@ -353,11 +275,11 @@ namespace Unity.Entities.Editor
             var showingAllEntities = !(SystemSelection is ComponentSystemBase);
             var componentGroupHasEntities = ComponentGroupSelection != null && !ComponentGroupSelection.IsEmptyIgnoreFilter;
             var somethingToShow = showingAllEntities || componentGroupHasEntities;
-            if (WorldSelection == null || !somethingToShow)
+            if (!somethingToShow)
                 return;
-            GUILayout.BeginVertical(Box);
+            if (repainted && EditorApplication.isPlaying && !EditorApplication.isPaused)
+                entityListView.RefreshData();
             entityListView.OnGUI(GUIHelpers.GetExpandingRect());
-            GUILayout.EndVertical();
         }
 
         void AlignHeader(System.Action header)
@@ -368,47 +290,50 @@ namespace Unity.Entities.Editor
             GUILayout.EndVertical();
         }
 
-        private void OnSelectionChange()
-        {
-            if (Selection.activeObject != selectionProxy)
-            {
-                entityListView.SelectNothing();
-            }
-        }
+        private bool repainted = false;
 
         void OnGUI()
         {
             if (Selection.activeObject == selectionProxy)
             {
-                if (!selectionProxy.Exists)
+                if (!WorldSelection?.GetExistingManager<EntityManager>()?.Exists(selectionProxy.Entity) ?? true)
                 {
                     Selection.activeObject = null;
                     entityListView.SelectNothing();
                 }
             }
 
+            var worldsExisted = worldsExist;
+            worldsExist = World.AllWorlds.Count > 0;
+            worldsAppeared = !worldsExisted && worldsExist;
+            
             GUILayout.BeginHorizontal();
             
-            GUILayout.BeginVertical(GUILayout.Width(kSystemListWidth)); // begin System side
+            GUILayout.BeginVertical(GUILayout.Width(kSystemListWidth)); // begin System List
             SystemHeader();
             
-            GUILayout.BeginVertical(Box);
+            GUILayout.BeginVertical();
             SystemList();
             GUILayout.EndVertical();
             
-            GUILayout.EndVertical(); // end System side
+            GUILayout.EndVertical(); // end System List
             
-            GUILayout.BeginVertical(GUILayout.Width(position.width - kSystemListWidth)); // begin Entity side
+            GUILayout.BeginVertical(GUILayout.Width(position.width - kSystemListWidth)); // begin Entity List
 
-            EntityHeader();
-            ComponentGroupList();
-            EntityList();
+            if (EditorApplication.isPlaying)
+            {
+                EntityHeader();
+                ComponentGroupList();
+                EntityList();
+            }
             
-            GUILayout.EndVertical(); // end Entity side
+            GUILayout.EndVertical(); // end Component List
             
             GUILayout.EndHorizontal();
 
-            lastUpdate = Time.realtimeSinceStartup;
+            lastUpdate = EditorApplication.isPlaying ? 0f : Time.time;
+
+            repainted = Event.current.type == EventType.Repaint;
         }
     }
 }
