@@ -110,6 +110,14 @@ namespace Unity.Properties
         }
 
         /// <summary>
+        /// Unregisters the converter from TSource to TDestination.
+        /// </summary>
+        internal static void Unregister<TSource>()
+        {
+            s_Converters.Remove(typeof(TSource));
+        }
+
+        /// <summary>
         /// Unregister all type converters
         /// </summary>
         internal static void UnregisterAll()
@@ -221,16 +229,14 @@ namespace Unity.Properties
         }
 
         /// <summary>
-        /// Unregisters all type converters
+        /// Unregisters the converter for the given (TSource, TDestination) pair.
         /// </summary>
-        public static void UnregisterAll()
+        public static void Unregister<TSource, TDestination>()
         {
-            foreach (var m in s_UnregisterMethods)
-            {
-                m();
-            }
-            
-            s_UnregisterMethods.Clear();
+            // unhook specific converter if any
+            TypeConversion<TSource, TDestination>.Unregister();
+            // remove generic converter if any
+            TypeConversion<TDestination>.Unregister<TSource>();
         }
 
         private static bool IsNull<TValue>(TValue value)
@@ -285,34 +291,34 @@ namespace Unity.Properties
         /// <summary>
         /// Converts given the value to the destination type
         /// </summary>
-        /// <param name="value"></param>
-        /// <typeparam name="TValue"></typeparam>
+        /// <param name="source"></param>
+        /// <typeparam name="TDestination"></typeparam>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static TValue Convert<TValue>(object value)
+        public static TDestination Convert<TDestination>(object source)
         {
             // Try a straightforward cast, this is always the best case scenario
-            if (value is TValue)
+            if (source is TDestination)
             {
-                return (TValue) value;
+                return (TDestination) source;
             }
 
-            if (typeof(TValue).IsValueType)
+            if (typeof(TDestination).IsValueType)
             {
                 // There is no elegant default behaviour we can do here, we must throw in this case
-                if (value == null)
+                if (source == null)
                 {
-                    throw new Exception($"Failed to convert from 'null' to '{typeof(TValue)}' value is null.");
+                    throw new Exception($"Failed to convert from 'null' to '{typeof(TDestination)}' value is null.");
                 }
             }
-            else if (IsNull(value))
+            else if (IsNull(source))
             {
-                return default(TValue);
+                return default(TDestination);
             }
 
             // Try to forward to a user defined implementation for conversion
-            TValue result;
-            if (TypeConversion<TValue>.TryConvert(value, out result))
+            TDestination result;
+            if (TypeConversion<TDestination>.TryConvert(source, out result))
             {
                 return result;
             }
@@ -320,49 +326,49 @@ namespace Unity.Properties
             // At this point we can try our best to convert the value
             
             // Special handling of enum types
-            if (typeof(TValue).IsEnum)
+            if (typeof(TDestination).IsEnum)
             {
-                var s = value as string;
+                var s = source as string;
                 if (s != null)
                 {
-                    return (TValue) Enum.Parse(typeof(TValue), s, true);
+                    return (TDestination) Enum.Parse(typeof(TDestination), s, true);
                 }
 
                 // Try to convert to the underlying type
-                var v = System.Convert.ChangeType(value, Enum.GetUnderlyingType(typeof(TValue)));
-                return (TValue) v;
+                var v = System.Convert.ChangeType(source, Enum.GetUnderlyingType(typeof(TDestination)));
+                return (TDestination) v;
             }
 
-            if (value is IConvertible)
+            if (source is IConvertible)
             {
-                return (TValue) System.Convert.ChangeType(value, typeof(TValue));
+                return (TDestination) System.Convert.ChangeType(source, typeof(TDestination));
             }
 
-            throw new Exception($"Failed to convert from '{value?.GetType()}' to '{typeof(TValue)}'.");
+            throw new Exception($"Failed to convert from '{source?.GetType()}' to '{typeof(TDestination)}'.");
         }
 
         /// <summary>
         /// Converts given the value to the destination type
         /// </summary>
-        /// <param name="value"></param>
+        /// <param name="source"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static object Convert(object value, Type type)
+        public static object Convert(object source, Type type)
         {
-            if (type == value?.GetType())
+            if (type == source?.GetType())
             {
-                return value;
+                return source;
             }
             
             if (type.IsValueType)
             {
                 // There is no elegant default behaviour we can do here, we must throw in this case
-                if (value == null)
+                if (source == null)
                 {
                     throw new Exception($"Failed to convert from 'null' to '{type}' value is null.");
                 }
             }
-            else if (IsNull(value))
+            else if (IsNull(source))
             {
                 return null;
             }
@@ -376,7 +382,7 @@ namespace Unity.Properties
 
             if (null != method)
             {
-                var parameters = new [] {value, null};
+                var parameters = new [] {source, null};
                 var result = method.Invoke(null, parameters);
                 if ((bool) result)
                 {
@@ -389,16 +395,16 @@ namespace Unity.Properties
             // Special handling of enum types
             if (type.IsEnum)
             {
-                var s = value as string;
-                return s != null ? Enum.Parse(type, s) : System.Convert.ChangeType(value, Enum.GetUnderlyingType(type));
+                var s = source as string;
+                return s != null ? Enum.Parse(type, s) : System.Convert.ChangeType(source, Enum.GetUnderlyingType(type));
             }
 
-            if (value is IConvertible)
+            if (source is IConvertible)
             {
-                return System.Convert.ChangeType(value, type);
+                return System.Convert.ChangeType(source, type);
             }
 
-            throw new Exception($"Failed to convert from '{value?.GetType()}' to '{type}'.");
+            throw new Exception($"Failed to convert from '{source?.GetType()}' to '{type}'.");
         }
     }
     

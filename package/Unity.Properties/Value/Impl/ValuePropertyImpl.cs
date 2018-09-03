@@ -135,9 +135,17 @@ namespace Unity.Properties
     {
         private readonly GetValueRefMethod m_GetValueRef;
 
-        public delegate void ByRef(StructValueClassProperty<TContainer, TValue> property, TContainer container, ref TValue value);
+        public delegate void ByRef(
+            StructValueClassProperty<TContainer, TValue> property,
+            TContainer container,
+            ref TValue value,
+            IPropertyVisitor visitor);
 
-        public delegate void GetValueRefMethod(ByRef byRef, StructValueClassProperty<TContainer, TValue> property, TContainer container);
+        public delegate void GetValueRefMethod(
+            ByRef byRef,
+            StructValueClassProperty<TContainer, TValue> property,
+            TContainer container,
+            IPropertyVisitor visitor);
 
         public StructValueClassProperty(string name, GetValueMethod getValue, SetValueMethod setValue, GetValueRefMethod getValueRef) : base(name, getValue, setValue)
         {
@@ -145,32 +153,24 @@ namespace Unity.Properties
             m_GetValueRef = getValueRef;
         }
 
-        // @HACK
-        private IPropertyVisitor m_Visitor;
-
         public override void Accept(TContainer container, IPropertyVisitor visitor)
         {
-            // Setup locals to avoid alloctions
-            m_Visitor = visitor;
-
-            m_GetValueRef((StructValueClassProperty<TContainer, TValue> p, TContainer c, ref TValue v) =>
+            m_GetValueRef((StructValueClassProperty<TContainer, TValue> p, TContainer c, ref TValue value, IPropertyVisitor v) =>
             {
-                var context = new VisitContext<TValue> { Property = p, Value = v, Index = -1 };
+                var context = new VisitContext<TValue> { Property = p, Value = value, Index = -1 };
 
-                if (p.m_Visitor.ExcludeVisit(c, context))
+                if (v.ExcludeVisit(c, context))
                 {
                     return;
                 }
-                
-                if (p.m_Visitor.BeginContainer(c, context))
-                {
-                    PropertyContainer.Visit(ref v, p.m_Visitor);
-                }
-                p.m_Visitor.EndContainer(c, context);
-            }, this, container);
 
-            // Cleanup locals
-            m_Visitor = null;
+                if (v.BeginContainer(c, context))
+                {
+                    PropertyContainer.Visit(ref value, v);
+                }
+
+                v.EndContainer(c, context);
+            }, this, container, visitor);
         }
     }
 
@@ -260,14 +260,29 @@ namespace Unity.Properties
         }
     }
     
+    /// <inheritdoc />
+    /// <summary>
+    /// Property of a struct that holds a struct (IPropertyContainer) value
+    /// </summary>
+    /// <typeparam name="TContainer"></typeparam>
+    /// <typeparam name="TValue"></typeparam>
     public class StructValueStructProperty<TContainer, TValue> : DelegateValueStructPropertyBase<TContainer, TValue>
         where TContainer : struct, IPropertyContainer
         where TValue : struct, IPropertyContainer
     {
         private readonly GetValueRefMethod m_GetValueRef;
 
-        public delegate void ByRef(StructValueStructProperty<TContainer, TValue> property, ref TContainer container, ref TValue value);
-        public delegate void GetValueRefMethod(ByRef byRef, StructValueStructProperty<TContainer, TValue> property, ref TContainer container);
+        public delegate void ByRef(
+            StructValueStructProperty<TContainer, TValue> property,
+            ref TContainer container,
+            ref TValue value,
+            IPropertyVisitor visitor);
+
+        public delegate void GetValueRefMethod(
+            ByRef byRef,
+            StructValueStructProperty<TContainer, TValue> property,
+            ref TContainer container,
+            IPropertyVisitor visitor);
 
         public StructValueStructProperty(string name, GetValueMethod getValue, SetValueMethod setValue, GetValueRefMethod getValueRef) : base(name, getValue, setValue)
         {
@@ -275,32 +290,56 @@ namespace Unity.Properties
             m_GetValueRef = getValueRef;
         }
         
-        // @HACK
-        private IPropertyVisitor m_Visitor;
-
         public override void Accept(ref TContainer container, IPropertyVisitor visitor)
         {
-            // Setup locals to avoid alloctions
-            m_Visitor = visitor;
-
-            m_GetValueRef((StructValueStructProperty<TContainer, TValue> p, ref TContainer c, ref TValue v) =>
+            m_GetValueRef((StructValueStructProperty<TContainer, TValue> p, ref TContainer c, ref TValue value, IPropertyVisitor v) =>
             {
-                var context = new VisitContext<TValue> { Property = p, Value = v, Index = -1 };
+                var context = new VisitContext<TValue> { Property = p, Value = value, Index = -1 };
 
-                if (p.m_Visitor.ExcludeVisit(ref c, context))
+                if (v.ExcludeVisit(ref c, context))
                 {
                     return;
                 }
-                
-                if (p.m_Visitor.BeginContainer(ref c, context))
-                {
-                    PropertyContainer.Visit(ref v, p.m_Visitor);
-                }
-                p.m_Visitor.EndContainer(ref c, context);
-            }, this, ref container);
 
-            // Cleanup locals
-            m_Visitor = null;
+                if (v.BeginContainer(ref c, context))
+                {
+                    PropertyContainer.Visit(ref value, v);
+                }
+                v.EndContainer(ref c, context);
+            }, this, ref container, visitor);
+        }
+    }
+
+    /// <inheritdoc />
+    /// <summary>
+    /// Property of a struct that holds a class (IPropertyContainer) value
+    /// </summary>
+    /// <typeparam name="TContainer"></typeparam>
+    /// <typeparam name="TValue"></typeparam>
+    public class ClassValueStructProperty<TContainer, TValue> : DelegateValueStructPropertyBase<TContainer, TValue>
+        where TContainer : struct, IPropertyContainer
+        where TValue : class, IPropertyContainer
+    {
+        public ClassValueStructProperty(string name, GetValueMethod getValue, SetValueMethod setValue)
+            : base(name, getValue, setValue)
+        {}
+
+        public override void Accept(ref TContainer container, IPropertyVisitor visitor)
+        {
+            var value = GetValue(container);
+            var context = new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
+
+            if (visitor.ExcludeVisit(ref container, context))
+            {
+               return;
+            }
+
+            if (visitor.BeginContainer(ref container, context))
+            {
+                value?.Visit(visitor);
+            }
+
+            visitor.EndContainer(ref container, context);
         }
     }
 }

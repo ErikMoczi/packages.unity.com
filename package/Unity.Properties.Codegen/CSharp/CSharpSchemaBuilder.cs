@@ -183,7 +183,7 @@ namespace Unity.Properties.Codegen.CSharp
                                 
                                 if (property.PropertyType == PropertyType.StructValue)
                                 {
-                                    writer.Line($",(StructValueStructProperty<{containerType.Name},{property.ValueType}>.ByRef m, StructValueStructProperty<{containerType.Name},{property.ValueType}> p, ref {containerType.Name} c) => m(p, ref c, ref c.{backingFieldName})"); // GetValueRef
+                                    writer.Line($",(StructValueStructProperty<{containerType.Name},{property.ValueType}>.ByRef m, StructValueStructProperty<{containerType.Name},{property.ValueType}> p, ref {containerType.Name} c, IPropertyVisitor v) => m(p, ref c, ref c.{backingFieldName}, v)"); // GetValueRef
                                 }
                             }
                         }
@@ -205,7 +205,7 @@ namespace Unity.Properties.Codegen.CSharp
                                 
                                 if (property.PropertyType == PropertyType.StructValue)
                                 {
-                                    writer.Line($",(m, p, c) => m(p, c, ref c.{backingFieldName})"); // GetValueRef
+                                    writer.Line($",(m, p, c, v) => m(p, c, ref c.{backingFieldName}, v)"); // GetValueRef
                                 }
                             }
                         }

@@ -15,7 +15,6 @@ namespace Unity.Properties.Tests
         
         private class TestClass : ITestInterface
         {
-            
         }
         
         private enum TestEnum
@@ -24,12 +23,6 @@ namespace Unity.Properties.Tests
             Second,
             Third,
             Fourth
-        }
-
-        [TearDown]
-        public static void TearDown()
-        {
-            TypeConversion.UnregisterAll();
         }
         
         [Test]
@@ -71,22 +64,43 @@ namespace Unity.Properties.Tests
         [Test]
         public static void Custom_Convert_Class_To_String()
         {
-            TypeConversion.Register<TestClass, string>(v => "Test");
-            Assert.AreEqual("Test", TypeConversion.Convert<string>(new TestClass()));
+            TypeConversion.Register<TestClass, string>(t => "Test");
+            try
+            {
+                Assert.AreEqual("Test", TypeConversion.Convert<string>(new TestClass()));
+            }
+            finally
+            {
+                TypeConversion.Unregister<TestClass, string>();
+            }
         }
         
         [Test]
         public static void Custom_Convert_String_To_Class()
         {
             TypeConversion.Register<string, TestClass>(v => new TestClass(/* v */));
-            Assert.IsNotNull(TypeConversion.Convert<TestClass>("Test"));
+            try
+            {
+                Assert.IsNotNull(TypeConversion.Convert<TestClass>("Test"));
+            }
+            finally
+            {
+                TypeConversion.Unregister<string, TestClass>();
+            }
         }
         
         [Test]
         public static void Custom_Convert_Interface_To_String()
         {
             TypeConversion.Register<ITestInterface, string>(v => "Test");
-            Assert.AreEqual("Test", TypeConversion.Convert<string>(new TestClass()));
+            try
+            {
+                Assert.AreEqual("Test", TypeConversion.Convert<string>(new TestClass()));
+            }
+            finally
+            {
+                TypeConversion.Unregister<ITestInterface, string>();
+            }
         }
         
         [Test]
