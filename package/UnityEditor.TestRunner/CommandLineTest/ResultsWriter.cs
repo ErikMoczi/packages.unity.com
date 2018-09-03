@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Xml;
 using NUnit.Framework.Interfaces;
-using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 using ITestResult = UnityEditor.TestTools.TestRunner.Api.ITestResult;
 
@@ -36,9 +35,10 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
 
             try
             {
-                if (!Directory.Exists(filePath))
+                var file = new FileInfo(filePath);
+                if (file.Directory != null && !file.Directory.Exists)
                 {
-                    CreateDirectory(filePath);
+                    file.Directory.Create();
                 }
 
                 using (var fileStream = File.CreateText(filePath))
@@ -51,11 +51,6 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
                 Debug.LogError("Saving result file failed.");
                 Debug.LogException(ex);
             }
-        }
-
-        void CreateDirectory(string filePath)
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(filePath));
         }
 
         public void WriteResultToStream(ITestResult result, StreamWriter streamWriter, XmlWriterSettings settings = null)
