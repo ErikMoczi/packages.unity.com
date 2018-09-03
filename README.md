@@ -1,1 +1,1 @@
-The vector graphics package provides an SVG importer and runtime vector graphics APIs.
+Vector graphics importers and related utilities.

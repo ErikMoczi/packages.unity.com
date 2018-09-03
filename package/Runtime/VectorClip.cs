@@ -9,7 +9,7 @@ namespace Unity.VectorGraphics
 {
     internal static class VectorClip
     {
-        const int k_ClipperScale = 100000;
+        const int kClipperScale = 100000;
 
         private static Stack<List<List<IntPoint>>> m_ClipStack = new Stack<List<List<IntPoint>>>();
 
@@ -27,7 +27,7 @@ namespace Unity.VectorGraphics
                 foreach (var v in shape)
                 {
                     var tv = transform * v;
-                    verts.Add(new IntPoint(tv.x * k_ClipperScale, tv.y * k_ClipperScale));
+                    verts.Add(new IntPoint(tv.x * kClipperScale, tv.y * kClipperScale));
                 }
                 clipperPaths.Add(verts);
             }
@@ -42,13 +42,11 @@ namespace Unity.VectorGraphics
 
         internal static void ClipGeometry(VectorUtils.Geometry geom)
         {
-            UnityEngine.Profiling.Profiler.BeginSample("ClipGeometry");
-
             var clipper = new Clipper();
             foreach (var clipperPaths in m_ClipStack)
             {
-                var vertices = new List<Vector2>(geom.Vertices.Length);
-                var indices = new List<UInt16>(geom.Indices.Length);
+                var vertices = new List<Vector2>(geom.vertices.Length);
+                var indices = new List<UInt16>(geom.indices.Length);
                 var paths = BuildTriangleClipPaths(geom);
                 var result = new List<List<IntPoint>>();
 
@@ -67,29 +65,27 @@ namespace Unity.VectorGraphics
                     result.Clear();
                 }
 
-                geom.Vertices = vertices.ToArray();
-                geom.Indices = indices.ToArray();
+                geom.vertices = vertices.ToArray();
+                geom.indices = indices.ToArray();
             }
-
-            UnityEngine.Profiling.Profiler.EndSample();
         }
 
         private static List<List<IntPoint>> BuildTriangleClipPaths(VectorUtils.Geometry geom)
         {
-            var paths = new List<List<IntPoint>>(geom.Indices.Length/3);
-            var verts = geom.Vertices;
-            var inds = geom.Indices;
-            var indexCount = geom.Indices.Length;
-            var matrix = geom.WorldTransform;
+            var paths = new List<List<IntPoint>>(geom.indices.Length/3);
+            var verts = geom.vertices;
+            var inds = geom.indices;
+            var indexCount = geom.indices.Length;
+            var matrix = geom.worldTransform;
             for (int i = 0; i < indexCount; i += 3)
             {
                 var v0 = matrix * verts[inds[i]];
                 var v1 = matrix * verts[inds[i+1]];
                 var v2 = matrix * verts[inds[i+2]];
                 var tri = new List<IntPoint>(3);
-                tri.Add(new IntPoint(v0.x * k_ClipperScale, v0.y * k_ClipperScale));
-                tri.Add(new IntPoint(v1.x * k_ClipperScale, v1.y * k_ClipperScale));
-                tri.Add(new IntPoint(v2.x * k_ClipperScale, v2.y * k_ClipperScale));
+                tri.Add(new IntPoint(v0.x * kClipperScale, v0.y * kClipperScale));
+                tri.Add(new IntPoint(v1.x * kClipperScale, v1.y * kClipperScale));
+                tri.Add(new IntPoint(v2.x * kClipperScale, v2.y * kClipperScale));
                 paths.Add(tri);
             }
             return paths;
@@ -130,7 +126,7 @@ namespace Unity.VectorGraphics
                 }                
             }
 
-            var invMatrix = geom.WorldTransform.Inverse();
+            var invMatrix = geom.worldTransform.Inverse();
 
             outVerts.AddRange(vertices.Select(v => invMatrix * v));
             outInds.AddRange(indices);
@@ -145,7 +141,7 @@ namespace Unity.VectorGraphics
             }
             else
             {
-                vertices.Add(new Vector2(((float)pt.X) / k_ClipperScale, ((float)pt.Y) / k_ClipperScale));
+                vertices.Add(new Vector2(((float)pt.X) / kClipperScale, ((float)pt.Y) / kClipperScale));
                 indices.Add(index);
                 vertexIndex[pt] = index;
                 ++index;

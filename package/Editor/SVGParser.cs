@@ -7,8 +7,7 @@ using UnityEngine;
 
 namespace Unity.VectorGraphics.Editor
 {
-    /// <summary>Reads an SVG document and builds a vector scene.</summary>
-    public class SVGParser
+    class SVGParser
     {
         /// <summary>A structure containing the SVG scene data.</summary>
         public struct SceneInfo
@@ -62,9 +61,9 @@ namespace Unity.VectorGraphics.Editor
         }
     }
 
-    internal class XmlReaderIterator
+    class XmlReaderIterator
     {
-        internal class Node
+        public class Node
         {
             public Node(XmlReader reader) { this.reader = reader; name = reader.Name; depth = reader.Depth; }
             public string Name { get { return name; } }
@@ -134,7 +133,7 @@ namespace Unity.VectorGraphics.Editor
         bool currentElementVisited;
     }
 
-    internal class SVGFormatException : Exception
+    class SVGFormatException : Exception
     {
         public SVGFormatException() {}
         public SVGFormatException(string message) : base(ComposeMessage(null, message)) {}
@@ -151,9 +150,9 @@ namespace Unity.VectorGraphics.Editor
         }
     }
 
-    internal class SVGDictionary : Dictionary<string, object> {}
+    class SVGDictionary : Dictionary<string, object> {}
 
-    internal class SVGDocument
+    class SVGDocument
     {
         public SVGDocument(XmlReader docReader, float dpi, Scene scene, int windowWidth, int windowHeight)
         {
@@ -180,7 +179,7 @@ namespace Unity.VectorGraphics.Editor
                 throw new SVGFormatException("Document doesn't have 'svg' root");
             svg();
 
-            PostProcess(scene.root);
+            PostProcess();
         }
 
         public Dictionary<SceneNode, float> NodeOpacities { get { return nodeOpacity; } }
@@ -247,12 +246,11 @@ namespace Unity.VectorGraphics.Editor
             float cy = AttribLengthVal(node, "cy", 0.0f, DimType.Height);
             float r = AttribLengthVal(node, "r", 0.0f, DimType.Length);
 
-            var circle = VectorUtils.MakeCircle(new Vector2(cx, cy), r);
-            circle.pathProps = new PathProperties() { stroke = stroke, head = strokeEnding, tail = strokeEnding, corners = strokeCorner };
-            circle.fill = fill;
-
+            var pathProps = new PathProperties() { stroke = stroke, head = strokeEnding, tail = strokeEnding, corners = strokeCorner };
+            var rect = new Rectangle() { pathProps = pathProps, fill = fill };
+            VectorUtils.MakeCircle(rect, new Vector2(cx, cy), r);
             sceneNode.drawables = new List<IDrawable>(1);
-            sceneNode.drawables.Add(circle);
+            sceneNode.drawables.Add(rect);
 
             ParseClipAndMask(node, sceneNode);
 
@@ -295,12 +293,11 @@ namespace Unity.VectorGraphics.Editor
             float rx = AttribLengthVal(node, "rx", 0.0f, DimType.Length);
             float ry = AttribLengthVal(node, "ry", 0.0f, DimType.Length);
 
-            var ellipse = VectorUtils.MakeEllipse(new Vector2(cx, cy), rx, ry);
-            ellipse.pathProps = new PathProperties() { stroke = stroke, corners = strokeCorner, head = strokeEnding, tail = strokeEnding };
-            ellipse.fill = fill;
-
+            var pathProps = new PathProperties() { stroke = stroke, corners = strokeCorner, head = strokeEnding, tail = strokeEnding };
+            var rect = new Rectangle() { pathProps = pathProps, fill = fill };
+            VectorUtils.MakeEllipse(rect, new Vector2(cx, cy), rx, ry);
             sceneNode.drawables = new List<IDrawable>(1);
-            sceneNode.drawables.Add(ellipse);
+            sceneNode.drawables.Add(rect);
 
             ParseClipAndMask(node, sceneNode);
 
@@ -735,23 +732,23 @@ namespace Unity.VectorGraphics.Editor
                 transform = Matrix2D.identity
             };
 
-            bool relativeToWorld = false;
+            bool relativeToWorld;
             switch (node["patternUnits"])
             {
                 case null:
-                case "objectBoundingBox":
-                    relativeToWorld = false;
-                    break;
-
                 case "userSpaceOnUse":
                     relativeToWorld = true;
+                    break;
+
+                case "objectBoundingBox":
+                    relativeToWorld = false;
                     break;
 
                 default:
                     throw node.GetUnsupportedAttribValException("patternUnits");
             }
 
-            bool contentRelativeToWorld = true;
+            bool contentRelativeToWorld;
             switch (node["patternContentUnits"])
             {
                 case null:
@@ -1402,12 +1399,12 @@ namespace Unity.VectorGraphics.Editor
             public SceneNode replaceNode;
         }
 
-        void PostProcess(SceneNode root)
+        void PostProcess()
         {
             var hierarchyUpdates = new List<HierarchyUpdate>();
 
             // Adjust fills on all objects
-            foreach (var nodeInfo in VectorUtils.WorldTransformedSceneNodes(root, nodeOpacity))
+            foreach (var nodeInfo in VectorUtils.WorldTransformedSceneNodes(scene.root, nodeOpacity))
             {
                 if (nodeInfo.node.drawables == null)
                     continue;
@@ -1588,8 +1585,6 @@ namespace Unity.VectorGraphics.Editor
                 };
             }
 
-            PostProcess(patternNode); // This will take care of adjusting gradients/inner-patterns
-
             // Duplicate the filling pattern
             var grid = new SceneNode() {
                 transform = data.patternTransform,
@@ -1618,17 +1613,6 @@ namespace Unity.VectorGraphics.Editor
                 invPatternTransform * new Vector2(bounds.xMin, bounds.yMax)
             };
             bounds = VectorUtils.Bounds(boundVerts);
-
-            const int kMaxReps = 5000;
-            float xCount = bounds.xMax / patternRect.width;
-            float yCount = bounds.yMax / patternRect.height;
-            if (Mathf.Abs(patternRect.width) < VectorUtils.Epsilon ||
-                Mathf.Abs(patternRect.height) < VectorUtils.Epsilon ||
-                (xCount*yCount) > kMaxReps)
-            {
-                Debug.LogWarning("Ignoring pattern which would result in too many repetitions");
-                return null;
-            }
 
             // Start the pattern filling process
             var offset = patternRect.position;
@@ -1917,7 +1901,7 @@ namespace Unity.VectorGraphics.Editor
         SVGStyleSheet globalStyleSheet;
     }
 
-    internal class SVGAttribParser
+    class SVGAttribParser
     {
         public static List<BezierContour> ParsePath(XmlReaderIterator.Node node)
         {
@@ -2274,10 +2258,6 @@ namespace Unity.VectorGraphics.Editor
                             fill = (new SVGAttribParser(paintParts[1], attribName, opacity, mode, dict, false)).fill;
                         else Debug.LogWarning("Referencing non-existent paint (" + reference + ")");
                     }
-
-                    if (fill != null)
-                        fill.opacity = opacity;
-    
                     return;
                 }
             }

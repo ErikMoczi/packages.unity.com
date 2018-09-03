@@ -6,9 +6,11 @@ using UnityEngine;
 
 namespace Unity.VectorGraphics.Editor
 {
-    internal class SVGPropertySheet : Dictionary<string, string> { }
+    /// <summary>A property sheet (string -> string dictionary)</summary>
+    public class SVGPropertySheet : Dictionary<string, string> { }
 
-    internal class SVGStyleSheet
+    /// <summary>A stylesheet (string -> property sheet dictionary)</summary>
+    public class SVGStyleSheet
     {
         private List<KeyValuePair<string, SVGPropertySheet>> m_Selectors = new List<KeyValuePair<string, SVGPropertySheet>>();
 
@@ -47,8 +49,12 @@ namespace Unity.VectorGraphics.Editor
         }
     };
 
-    internal static class SVGStyleSheetUtils
+    /// <summary>Various utilities to work with SVG stylesheets</summary>
+    public static class SVGStyleSheetUtils
     {
+        /// <summary>Parses a CSS text input</summary>
+        /// <param name="cssText">The CSS text</param>
+        /// <returns>A stylesheet representing the CSS input</returns>
         public static SVGStyleSheet Parse(string cssText)
         {
             var result = new SVGStyleSheet();
@@ -70,6 +76,9 @@ namespace Unity.VectorGraphics.Editor
             return result;
         }
 
+        /// <summary>Parses an inline CSS text input</summary>
+        /// <param name="cssText">The CSS text</param>
+        /// <returns>A property sheet representing the CSS input</returns>
         public static SVGPropertySheet ParseInline(string cssText)
         {
             var tokens = Tokenize(cssText);

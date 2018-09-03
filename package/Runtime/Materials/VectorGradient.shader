@@ -109,7 +109,7 @@
                 //    xy = size.x
                 //    zw = size.y
 
-                int settingBase = ((int)(i.settingIndex.x + 0.5f)) * 3;
+                int settingBase = (int)i.settingIndex.x * 3;
                 float2 texelSize = _MainTex_TexelSize.xy;
                 float2 settingUV = float2(settingBase + 0.5f, 0.5f) * texelSize;
 

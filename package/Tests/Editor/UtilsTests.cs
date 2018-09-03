@@ -11,110 +11,46 @@ using Unity.VectorGraphics;
 public class UtilsTests
 {
     [Test]
-    public void BezierSegmentToPath_ReturnsBezierPathSegments()
+    public void PathSegments_WithBezierSegment_ReturnsBezierPathSegment()
     {
         var points = new Vector2[4];
         for (int i = 0; i < points.Length; ++i)
             points[i] = Vector2.one * i;
 
-        var seg = new BezierSegment() { P0 = points[0], P1 = points[1], P2 = points[2], P3 = points[3] };
-        var pathSeg = VectorUtils.BezierSegmentToPath(seg);
+        var seg = new BezierSegment() { p0 = points[0], p1 = points[1], p2 = points[2], p3 = points[3] };
+        var pathSeg = VectorUtils.PathSegments(seg);
 
         Assert.AreEqual(2, pathSeg.Length);
-        Assert.AreEqual(points[0], pathSeg[0].P0);
-        Assert.AreEqual(points[1], pathSeg[0].P1);
-        Assert.AreEqual(points[2], pathSeg[0].P2);
-        Assert.AreEqual(points[3], pathSeg[1].P0);
+        Assert.AreEqual(points[0], pathSeg[0].p0);
+        Assert.AreEqual(points[1], pathSeg[0].p1);
+        Assert.AreEqual(points[2], pathSeg[0].p2);
+        Assert.AreEqual(points[3], pathSeg[1].p0);
     }
 
     [Test]
-    public void BezierSegmentsToPath_WithConnectedSegments_ReturnsConnectedPath()
-    {
-        var segments = new BezierSegment[] {
-            new BezierSegment() {
-                P0 = new Vector2(0,0), P1 = new Vector2(1,1), P2 = new Vector2(2,2), P3 = new Vector2(3,3)
-            },
-            new BezierSegment() {
-                P0 = new Vector2(3,3), P1 = new Vector2(4,4), P2 = new Vector2(5,5), P3 = new Vector2(6,6)
-            }
-        };
-
-        var path = VectorUtils.BezierSegmentsToPath(segments);
-        Assert.AreEqual(3, path.Length);
-        
-        var pathSeg = path[0];
-        Assert.AreEqual(new Vector2(0, 0), pathSeg.P0);
-        Assert.AreEqual(new Vector2(1, 1), pathSeg.P1);
-        Assert.AreEqual(new Vector2(2, 2), pathSeg.P2);
-
-        pathSeg = path[1];
-        Assert.AreEqual(new Vector2(3, 3), pathSeg.P0);
-        Assert.AreEqual(new Vector2(4, 4), pathSeg.P1);
-        Assert.AreEqual(new Vector2(5, 5), pathSeg.P2);
-
-        pathSeg = path[2];
-        Assert.AreEqual(new Vector2(6, 6), pathSeg.P0);
-    }
-
-    [Test]
-    public void BezierSegmentsToPath_WithDisconnectedSegments_ReturnsConnectedPathWithStraightLine()
-    {
-        var segments = new BezierSegment[] {
-            new BezierSegment() {
-                P0 = new Vector2(0,0), P1 = new Vector2(1,1), P2 = new Vector2(2,2), P3 = new Vector2(3,3)
-            },
-            new BezierSegment() {
-                P0 = new Vector2(6,6), P1 = new Vector2(7,7), P2 = new Vector2(8,8), P3 = new Vector2(9,9)
-            }
-        };
-
-        var path = VectorUtils.BezierSegmentsToPath(segments);
-        Assert.AreEqual(4, path.Length);
-
-        var pathSeg = path[0];
-        Assert.AreEqual(new Vector2(0, 0), pathSeg.P0);
-        Assert.AreEqual(new Vector2(1, 1), pathSeg.P1);
-        Assert.AreEqual(new Vector2(2, 2), pathSeg.P2);
-
-        // The second segment should be a straight line between (3,3) and (6,6)
-        pathSeg = path[1];
-        Assert.AreEqual(new Vector2(3, 3), pathSeg.P0);
-        Assert.AreEqual(new Vector2(4, 4), pathSeg.P1);
-        Assert.AreEqual(new Vector2(5, 5), pathSeg.P2);
-
-        pathSeg = path[2];
-        Assert.AreEqual(new Vector2(6, 6), pathSeg.P0);
-        Assert.AreEqual(new Vector2(7, 7), pathSeg.P1);
-        Assert.AreEqual(new Vector2(8, 8), pathSeg.P2);
-
-        pathSeg = path[3];
-        Assert.AreEqual(new Vector2(9, 9), pathSeg.P0);
-    }
-
-    [Test]
-    public void PathSegmentAtIndex_ReturnsBezierSegment()
+    public void PathSegment_WithBezierPathSegmentList_ReturnsBezierSegment()
     {
         var points = new Vector2[7];
         for (int i = 0; i < points.Length; ++i)
             points[i] = Vector2.one * i;
 
         var path = new BezierPathSegment[] {
-            new BezierPathSegment() { P0 = points[0], P1 = points[1], P2 = points[2] },
-            new BezierPathSegment() { P0 = points[3], P1 = points[4], P2 = points[5] },
-            new BezierPathSegment() { P0 = points[6] }
+            new BezierPathSegment() { p0 = points[0], p1 = points[1], p2 = points[2] },
+            new BezierPathSegment() { p0 = points[3], p1 = points[4], p2 = points[5] },
+            new BezierPathSegment() { p0 = points[6] }
         };
 
-        var seg0 = VectorUtils.PathSegmentAtIndex(path, 0);
-        Assert.AreEqual(points[0], seg0.P0);
-        Assert.AreEqual(points[1], seg0.P1);
-        Assert.AreEqual(points[2], seg0.P2);
-        Assert.AreEqual(points[3], seg0.P3);
+        var seg0 = VectorUtils.PathSegment(path, 0);
+        Assert.AreEqual(points[0], seg0.p0);
+        Assert.AreEqual(points[1], seg0.p1);
+        Assert.AreEqual(points[2], seg0.p2);
+        Assert.AreEqual(points[3], seg0.p3);
 
-        var seg1 = VectorUtils.PathSegmentAtIndex(path, 1);
-        Assert.AreEqual(points[3], seg1.P0);
-        Assert.AreEqual(points[4], seg1.P1);
-        Assert.AreEqual(points[5], seg1.P2);
-        Assert.AreEqual(points[6], seg1.P3);
+        var seg1 = VectorUtils.PathSegment(path, 1);
+        Assert.AreEqual(points[3], seg1.p0);
+        Assert.AreEqual(points[4], seg1.p1);
+        Assert.AreEqual(points[5], seg1.p2);
+        Assert.AreEqual(points[6], seg1.p3);
     }
 
     [Test]
@@ -125,23 +61,23 @@ public class UtilsTests
             points[i] = Vector2.one * i;
 
         var path = new BezierPathSegment[] {
-            new BezierPathSegment() { P0 = points[0], P1 = points[1], P2 = points[2] },
-            new BezierPathSegment() { P0 = points[3], P1 = points[4], P2 = points[5] },
-            new BezierPathSegment() { P0 = points[6] }
+            new BezierPathSegment() { p0 = points[0], p1 = points[1], p2 = points[2] },
+            new BezierPathSegment() { p0 = points[3], p1 = points[4], p2 = points[5] },
+            new BezierPathSegment() { p0 = points[6] }
         };
 
         var segs = VectorUtils.SegmentsInPath(path).ToList();
         Assert.AreEqual(2, segs.Count);
 
-        Assert.AreEqual(points[0], segs[0].P0);
-        Assert.AreEqual(points[1], segs[0].P1);
-        Assert.AreEqual(points[2], segs[0].P2);
-        Assert.AreEqual(points[3], segs[0].P3);
+        Assert.AreEqual(points[0], segs[0].p0);
+        Assert.AreEqual(points[1], segs[0].p1);
+        Assert.AreEqual(points[2], segs[0].p2);
+        Assert.AreEqual(points[3], segs[0].p3);
 
-        Assert.AreEqual(points[3], segs[1].P0);
-        Assert.AreEqual(points[4], segs[1].P1);
-        Assert.AreEqual(points[5], segs[1].P2);
-        Assert.AreEqual(points[6], segs[1].P3);
+        Assert.AreEqual(points[3], segs[1].p0);
+        Assert.AreEqual(points[4], segs[1].p1);
+        Assert.AreEqual(points[5], segs[1].p2);
+        Assert.AreEqual(points[6], segs[1].p3);
     }
 
     [Test]
@@ -151,13 +87,13 @@ public class UtilsTests
         Assert.IsFalse(VectorUtils.PathEndsPerfectlyMatch(new BezierPathSegment[0]));
 
         var path = new BezierPathSegment[] {
-            new BezierPathSegment() { P0 = Vector2.zero, P1 = new Vector2(-10, 10), P2 = new Vector2(10, 10) },
-            new BezierPathSegment() { P0 = Vector2.zero }
+            new BezierPathSegment() { p0 = Vector2.zero, p1 = new Vector2(-10, 10), p2 = new Vector2(10, 10) },
+            new BezierPathSegment() { p0 = Vector2.zero }
         };
 
         Assert.IsTrue(VectorUtils.PathEndsPerfectlyMatch(path));
 
-        path[1].P0 = Vector2.one;
+        path[1].p0 = Vector2.one;
 
         Assert.IsFalse(VectorUtils.PathEndsPerfectlyMatch(path));
     }
@@ -166,38 +102,45 @@ public class UtilsTests
     public void MakeEllipse_MakesRoundedRectWithEllipseShape()
     {
         var radiuses = new Vector2(10.0f, 20.0f);
-        var ellipse = VectorUtils.MakeEllipse(Vector2.zero, radiuses.x, radiuses.y);
+        var rect = new Rectangle();
+        VectorUtils.MakeEllipse(rect, Vector2.zero, radiuses.x, radiuses.y);
 
-        Assert.AreEqual(20.0f, ellipse.Size.x);
-        Assert.AreEqual(40.0f, ellipse.Size.y);
+        Assert.AreEqual(20.0f, rect.size.x);
+        Assert.AreEqual(40.0f, rect.size.y);
 
-        Assert.AreEqual(radiuses, ellipse.RadiusTL);
-        Assert.AreEqual(radiuses, ellipse.RadiusTR);
-        Assert.AreEqual(radiuses, ellipse.RadiusBR);
-        Assert.AreEqual(radiuses, ellipse.RadiusBL);
+        Assert.AreEqual(radiuses, rect.radiusTL);
+        Assert.AreEqual(radiuses, rect.radiusTR);
+        Assert.AreEqual(radiuses, rect.radiusBR);
+        Assert.AreEqual(radiuses, rect.radiusBL);
     }
 
     [Test]
     public void MakeCircle_MakesRoundedRectWithCircleShape()
     {
         var radius = 10.0f;
-        var circle = VectorUtils.MakeCircle(Vector2.zero, radius);
+        var rect = new Rectangle();
+        VectorUtils.MakeCircle(rect, Vector2.zero, radius);
 
-        Assert.AreEqual(20.0f, circle.Size.x);
-        Assert.AreEqual(20.0f, circle.Size.y);
+        Assert.AreEqual(20.0f, rect.size.x);
+        Assert.AreEqual(20.0f, rect.size.y);
 
         var v = Vector2.one * 10.0f;
-        Assert.AreEqual(v, circle.RadiusTL);
-        Assert.AreEqual(v, circle.RadiusTR);
-        Assert.AreEqual(v, circle.RadiusBR);
-        Assert.AreEqual(v, circle.RadiusBL);
+        Assert.AreEqual(v, rect.radiusTL);
+        Assert.AreEqual(v, rect.radiusTR);
+        Assert.AreEqual(v, rect.radiusBR);
+        Assert.AreEqual(v, rect.radiusBL);
     }
 
     [Test]
-    public void Bounds_ComputesBezierPathBounds()
+    public void Bounds_ComputesBezierContoursBounds()
     {
-        var path = VectorUtils.MakeArc(Vector2.zero, 0.0f, Mathf.PI / 2, 1.0f);
-        var bbox = VectorUtils.Bounds(path);
+        var seg = VectorUtils.MakeArc(Vector2.zero, 0.0f, Mathf.PI / 2);
+        var contour = new BezierContour() {
+            segments = VectorUtils.PathSegments(seg),
+            closed = true
+        };
+
+        var bbox = VectorUtils.Bounds(contour);
 
         Assert.AreEqual(0.0f, bbox.min.x, VectorUtils.Epsilon);
         Assert.AreEqual(0.0f, bbox.min.y, VectorUtils.Epsilon);
@@ -222,24 +165,8 @@ public class UtilsTests
 
         // All segment points should lie on the same line
         var v = (to - from).normalized;
-        Assert.AreEqual(1.0f, Vector2.Dot((seg.P1 - from).normalized, v), VectorUtils.Epsilon);
-        Assert.AreEqual(1.0f, Vector2.Dot((seg.P2 - from).normalized, v), VectorUtils.Epsilon);
-    }
-
-    [Test]
-    public void QuadraticToCubic_ReturnsCubicSegment()
-    {
-        var seg = VectorUtils.QuadraticToCubic(
-            new Vector2(0.0f, 0.0f),
-            new Vector2(0.5f, 0.5f),
-            new Vector2(1.0f, 0.0f)
-        );
-
-        Assert.AreEqual(new Vector2(0.0f, 0.0f), VectorUtils.Eval(seg, 0.0f));
-        Assert.AreEqual(new Vector2(0.25f, 0.1875f), VectorUtils.Eval(seg, 0.25f));
-        Assert.AreEqual(new Vector2(0.5f, 0.25f), VectorUtils.Eval(seg, 0.5f));
-        Assert.AreEqual(new Vector2(0.75f, 0.1875f), VectorUtils.Eval(seg, 0.75f));
-        Assert.AreEqual(new Vector2(1.0f, 0.0f), VectorUtils.Eval(seg, 1.0f));
+        Assert.AreEqual(1.0f, Vector2.Dot((seg.p1 - from).normalized, v), VectorUtils.Epsilon);
+        Assert.AreEqual(1.0f, Vector2.Dot((seg.p2 - from).normalized, v), VectorUtils.Epsilon);
     }
 
     [Test]
@@ -251,17 +178,14 @@ public class UtilsTests
 
         // All segment points should lie on the same line
         var v = (to - from).normalized;
-        Assert.AreEqual(1.0f, Vector2.Dot((pathSeg[0].P1 - from).normalized, v), VectorUtils.Epsilon);
-        Assert.AreEqual(1.0f, Vector2.Dot((pathSeg[0].P2 - from).normalized, v), VectorUtils.Epsilon);
+        Assert.AreEqual(1.0f, Vector2.Dot((pathSeg[0].p1 - from).normalized, v), VectorUtils.Epsilon);
+        Assert.AreEqual(1.0f, Vector2.Dot((pathSeg[0].p2 - from).normalized, v), VectorUtils.Epsilon);
     }
 
     [Test]
     public void MakeArc_ReturnsArcSegment()
     {
-        var path = VectorUtils.MakeArc(Vector2.zero, 0.0f, Mathf.PI / 2, 1.0f);
-        Assert.AreEqual(2, path.Length);
-
-        var seg = VectorUtils.PathSegmentAtIndex(path, 0);
+        var seg = VectorUtils.MakeArc(Vector2.zero, 0.0f, Mathf.PI / 2);
         for (var t = 0.0f; t <= 1.0f; t += 0.1f)
         {
             Assert.AreEqual(1.0f, VectorUtils.Eval(seg, t).magnitude, 0.001f);
@@ -269,21 +193,12 @@ public class UtilsTests
     }
 
     [Test]
-    public void MakeArc_MakesArcInClockwiseDirection()
+    public void MakeArcSegments_ReturnsMultipleSegmentsWhenArcSpansMoreThanOneQuadrant()
     {
-        var path = VectorUtils.MakeArc(Vector2.zero, 0.0f, Mathf.PI / 2, 1.0f);
-        Assert.AreEqual(2, path.Length);
-        Assert.AreEqual(0.0f, path[1].P0.x, VectorUtils.Epsilon);
-        Assert.AreEqual(1.0f, path[1].P0.y, VectorUtils.Epsilon);
-    }
+        var segs = VectorUtils.MakeArcSegments(Vector2.zero, 0.0f, Mathf.PI);
+        Assert.AreEqual(2, segs.Length);
 
-    [Test]
-    public void MakeArc_ReturnsMultipleSegmentsWhenArcSpansMoreThanOneQuadrant()
-    {
-        var path = VectorUtils.MakeArc(Vector2.zero, 0.0f, Mathf.PI, 1.0f);
-        Assert.AreEqual(3, path.Length);
-
-        foreach (var seg in VectorUtils.SegmentsInPath(path))
+        foreach (var seg in segs)
         {
             for (var t = 0.0f; t <= 1.0f; t += 0.1f)
             {
@@ -299,13 +214,13 @@ public class UtilsTests
         for (int i = 0; i < points.Length; ++i)
             points[i] = Vector2.one * i;
 
-        var seg = new BezierSegment() { P0 = points[0], P1 = points[1], P2 = points[2], P3 = points[3] };
+        var seg = new BezierSegment() { p0 = points[0], p1 = points[1], p2 = points[2], p3 = points[3] };
         var flipped = VectorUtils.FlipSegment(seg);
 
-        Assert.AreEqual(points[3], flipped.P0);
-        Assert.AreEqual(points[2], flipped.P1);
-        Assert.AreEqual(points[1], flipped.P2);
-        Assert.AreEqual(points[0], flipped.P3);
+        Assert.AreEqual(points[3], flipped.p0);
+        Assert.AreEqual(points[2], flipped.p1);
+        Assert.AreEqual(points[1], flipped.p2);
+        Assert.AreEqual(points[0], flipped.p3);
     }
 
     [Test]
@@ -342,11 +257,11 @@ public class UtilsTests
         BezierSegment second;
         VectorUtils.SplitSegment(seg, 0.5f, out first, out second);
 
-        Assert.AreEqual(Vector2.zero, first.P0);
-        Assert.AreEqual(Vector2.right * 0.5f, first.P3);
+        Assert.AreEqual(Vector2.zero, first.p0);
+        Assert.AreEqual(Vector2.right * 0.5f, first.p3);
 
-        Assert.AreEqual(Vector2.right * 0.5f, second.P0);
-        Assert.AreEqual(Vector2.right, second.P3);
+        Assert.AreEqual(Vector2.right * 0.5f, second.p0);
+        Assert.AreEqual(Vector2.right, second.p3);
     }
 
     [Test]
@@ -355,9 +270,9 @@ public class UtilsTests
         var child1 = new SceneNode();
         var child2 = new SceneNode();
         var root = new SceneNode();
-        root.Children = new System.Collections.Generic.List<SceneNode>(2);
-        root.Children.Add(child1);
-        root.Children.Add(child2);
+        root.children = new System.Collections.Generic.List<SceneNode>(2);
+        root.children.Add(child1);
+        root.children.Add(child2);
 
         var nodes = VectorUtils.SceneNodes(root).ToList();
         Assert.IsTrue(nodes.Contains(child1));
@@ -369,20 +284,20 @@ public class UtilsTests
     public void WorldTransformedSceneNodes_ReturnsTransformedSceneNodes()
     {
         var child = new SceneNode();
-        child.Transform = Matrix2D.identity;
+        child.transform = Matrix2D.identity;
 
         var root = new SceneNode();
-        root.Children = new System.Collections.Generic.List<SceneNode>(2);
-        root.Children.Add(child);
+        root.children = new System.Collections.Generic.List<SceneNode>(2);
+        root.children.Add(child);
 
         var transform = Matrix2D.Translate(new Vector2(1, 2));
-        root.Transform = transform;
+        root.transform = transform;
 
         var nodes = VectorUtils.WorldTransformedSceneNodes(root, null);
         foreach (var nodeWithTransform in nodes)
         {
-            Assert.AreEqual(1.0f, nodeWithTransform.WorldTransform.m02);
-            Assert.AreEqual(2.0f, nodeWithTransform.WorldTransform.m12);
+            Assert.AreEqual(1.0f, nodeWithTransform.worldTransform.m02);
+            Assert.AreEqual(2.0f, nodeWithTransform.worldTransform.m12);
         }
     }
 
@@ -390,17 +305,17 @@ public class UtilsTests
     public void WorldTransformedSceneNodes_ComputesParent()
     {
         var child = new SceneNode();
-        var parent = new SceneNode() { Children = new List<SceneNode> { child } };
+        var parent = new SceneNode() { children = new List<SceneNode> { child } };
 
         bool childFound = false;
 
         var nodes = VectorUtils.WorldTransformedSceneNodes(parent, null);
         foreach (var nodeWithTransform in nodes)
         {
-            if (nodeWithTransform.Node == child)
+            if (nodeWithTransform.node == child)
             {
                 childFound = true;
-                Assert.AreEqual(parent, nodeWithTransform.Parent);
+                Assert.AreEqual(parent, nodeWithTransform.parent);
                 break;
             }
         }
@@ -433,8 +348,7 @@ public class UtilsTests
     [Test]
     public void FindBezierLineIntersections_ReturnsBezierLineIntersections()
     {
-        var path = VectorUtils.MakeArc(Vector2.zero, 0.0f, Mathf.PI / 2, 1.0f);
-        var seg = VectorUtils.PathSegmentAtIndex(path, 0);
+        var seg = VectorUtils.MakeArc(Vector2.zero, 0.0f, Mathf.PI / 2);
         var ts = VectorUtils.FindBezierLineIntersections(seg, new Vector2(0.0f , 1.1f), new Vector2(1.1f, 0.0f));
 
         Assert.AreEqual(2, ts.Length);

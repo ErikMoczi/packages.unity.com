@@ -1,7 +1,6 @@
 using System;
 using NUnit.Framework;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.TestTools;
@@ -12,10 +11,10 @@ public class TessellatorTests
     static VectorUtils.TessellationOptions MakeTessOptions(float stepDistance)
     {
         var tessOptions = new VectorUtils.TessellationOptions();
-        tessOptions.MaxCordDeviation = float.MaxValue;
-        tessOptions.MaxTanAngleDeviation = Mathf.PI * 0.5f;
-        tessOptions.SamplingStepSize = 1.0f / 100.0f;
-        tessOptions.StepDistance = stepDistance;
+        tessOptions.maxCordDeviation = float.MaxValue;
+        tessOptions.maxTanAngleDeviation = Mathf.PI * 0.5f;
+        tessOptions.samplingStepSize = 1.0f / 100.0f;
+        tessOptions.stepDistance = stepDistance;
         return tessOptions;
     }
 
@@ -28,7 +27,7 @@ public class TessellatorTests
 
             Vector2[] vertices;
             UInt16[] indices;
-            VectorUtils.TessellatePath(path.Contour, path.PathProps, MakeTessOptions(10.0f), out vertices, out indices);
+            VectorUtils.TessellatePath(path.contour, path.pathProps, MakeTessOptions(10.0f), out vertices, out indices);
 
             float targetWidth = (float)width;
 
@@ -57,7 +56,7 @@ public class TessellatorTests
 
         Vector2[] vertices;
         UInt16[] indices;
-        VectorUtils.TessellatePath(path.Contour, path.PathProps, MakeTessOptions(100.0f), out vertices, out indices);
+        VectorUtils.TessellatePath(path.contour, path.pathProps, MakeTessOptions(100.0f), out vertices, out indices);
 
         // There should be 2 triangles to generate a quad
         Assert.AreEqual(2, indices.Length / 3);
@@ -67,13 +66,13 @@ public class TessellatorTests
     public void TessellatePathUniform_GeneratesTwoTrianglesForTippedCorner()
     {
         var path = MakeCorner(Vector2.zero, Vector2.right * 20.0f, Vector2.one * 20.0f, 2.0f);
-        var pathProps = path.PathProps;
-        pathProps.Corners = PathCorner.Tipped;
-        path.PathProps = pathProps;
+        var pathProps = path.pathProps;
+        pathProps.corners = PathCorner.Tipped;
+        path.pathProps = pathProps;
 
         Vector2[] vertices;
         UInt16[] indices;
-        VectorUtils.TessellatePath(path.Contour, path.PathProps, MakeTessOptions(100.0f), out vertices, out indices);
+        VectorUtils.TessellatePath(path.contour, path.pathProps, MakeTessOptions(100.0f), out vertices, out indices);
 
         // Tipped joins generates 2 triangles, plus 4 for the straight line quads
         Assert.AreEqual(6, indices.Length / 3);
@@ -83,13 +82,13 @@ public class TessellatorTests
     public void TessellatePathUniform_GeneratesFourTrianglesForRoundCorner()
     {
         var path = MakeCorner(Vector2.zero, Vector2.right * 20.0f, Vector2.one * 20.0f, 2.0f);
-        var pathProps = path.PathProps;
-        pathProps.Corners = PathCorner.Round;
-        path.PathProps = pathProps;
+        var pathProps = path.pathProps;
+        pathProps.corners = PathCorner.Round;
+        path.pathProps = pathProps;
 
         Vector2[] vertices;
         UInt16[] indices;
-        VectorUtils.TessellatePath(path.Contour, path.PathProps, MakeTessOptions(100.0f), out vertices, out indices);
+        VectorUtils.TessellatePath(path.contour, path.pathProps, MakeTessOptions(100.0f), out vertices, out indices);
 
         // At coarse step distance, round joins generates 4 triangles, plus 4 for the straight line quads
         Assert.AreEqual(8, indices.Length / 3);
@@ -99,13 +98,13 @@ public class TessellatorTests
     public void TessellatePathUniform_GeneratesOneTriangleForBeveledCorner()
     {
         var path = MakeCorner(Vector2.zero, Vector2.right * 20.0f, Vector2.one * 20.0f, 2.0f);
-        var pathProps = path.PathProps;
-        pathProps.Corners = PathCorner.Beveled;
-        path.PathProps = pathProps;
+        var pathProps = path.pathProps;
+        pathProps.corners = PathCorner.Beveled;
+        path.pathProps = pathProps;
 
         Vector2[] vertices;
         UInt16[] indices;
-        VectorUtils.TessellatePath(path.Contour, path.PathProps, MakeTessOptions(100.0f), out vertices, out indices);
+        VectorUtils.TessellatePath(path.contour, path.pathProps, MakeTessOptions(100.0f), out vertices, out indices);
 
         // Beveled joins generates 1 triangle, plus 4 for the straight line quads
         Assert.AreEqual(5, indices.Length / 3);
@@ -115,11 +114,11 @@ public class TessellatorTests
     public void TessellatePathUniform_GeneratesDashesAtLargeStepDistance()
     {
         var path = MakeLine(Vector2.zero, Vector2.right * 10.0f, 10.0f);
-        path.PathProps.Stroke.Pattern = new float[] { 5.0f, 2.0f };
+        path.pathProps.stroke.pattern = new float[] { 5.0f, 2.0f };
 
         Vector2[] vertices;
         UInt16[] indices;
-        VectorUtils.TessellatePath(path.Contour, path.PathProps, MakeTessOptions(100.0f), out vertices, out indices);
+        VectorUtils.TessellatePath(path.contour, path.pathProps, MakeTessOptions(100.0f), out vertices, out indices);
 
         // There should be 2 quads for 2 dashes
         Assert.AreEqual(4, indices.Length / 3);
@@ -145,63 +144,15 @@ public class TessellatorTests
         Assert.AreEqual(8, indices.Length / 3);
     }
 
-    [Test]
-    public void TessellateConvexContour_GeneratesTriangleFan()
-    {
-        // Build a square shape, flag it as convex
-        var shape = new Shape() {
-            Contours = new BezierContour[] {
-                new BezierContour() {
-                    Segments = new BezierPathSegment[] {
-                        new BezierPathSegment() { P0 = new Vector2(0,0),  P1 = new Vector2(0.25f, 0), P2 = new Vector2(0.75f, 0) },
-                        new BezierPathSegment() { P0 = new Vector2(1,0),  P1 = new Vector2(1, 0.25f), P2 = new Vector2(1, 0.75f) },
-                        new BezierPathSegment() { P0 = new Vector2(1,1),  P1 = new Vector2(0.75f, 1), P2 = new Vector2(0.25f, 1) },
-                        new BezierPathSegment() { P0 = new Vector2(0,1),  P1 = new Vector2(0, 0.75f), P2 = new Vector2(0, 0.25f) },
-                        new BezierPathSegment() { P0 = new Vector2(0,0) }
-                    },
-                    Closed = true
-                }
-            },
-            Fill = new SolidFill() { Color = Color.red },
-            IsConvex = true
-        };
-
-        var scene = new Scene() { Root = new SceneNode() { Drawables = new List<IDrawable> { shape } } };
-        var geoms = VectorUtils.TessellateScene(scene, MakeTessOptions(1000));
-        Assert.AreEqual(1, geoms.Count);
-
-        var geom = geoms[0];
-        Assert.AreEqual(5, geom.Vertices.Length);
-        Assert.AreEqual(12, geom.Indices.Length);
-        Assert.AreEqual(new Vector2(0.5f, 0.5f), geom.Vertices[0]);
-        Assert.AreEqual(new Vector2(0.0f, 0.0f), geom.Vertices[1]);
-        Assert.AreEqual(new Vector2(1.0f, 0.0f), geom.Vertices[2]);
-        Assert.AreEqual(new Vector2(1.0f, 1.0f), geom.Vertices[3]);
-        Assert.AreEqual(new Vector2(0.0f, 1.0f), geom.Vertices[4]);
-
-        Assert.AreEqual(0, geom.Indices[0]);
-        Assert.AreEqual(2, geom.Indices[1]);
-        Assert.AreEqual(1, geom.Indices[2]);
-        Assert.AreEqual(0, geom.Indices[3]);
-        Assert.AreEqual(3, geom.Indices[4]);
-        Assert.AreEqual(2, geom.Indices[5]);
-        Assert.AreEqual(0, geom.Indices[6]);
-        Assert.AreEqual(4, geom.Indices[7]);
-        Assert.AreEqual(3, geom.Indices[8]);
-        Assert.AreEqual(0, geom.Indices[9]);
-        Assert.AreEqual(1, geom.Indices[10]);
-        Assert.AreEqual(4, geom.Indices[11]);
-    }
-
     private Path MakeLine(Vector2 from, Vector2 to, float width)
     {
         return new Path() {
-            Contour = new BezierContour() { Segments = VectorUtils.MakePathLine(from, to) },
-            PathProps = new PathProperties() {
-                Stroke = new Stroke() { HalfThickness = width / 2.0f },
-                Head = PathEnding.Chop,
-                Tail = PathEnding.Chop,
-                Corners = PathCorner.Tipped
+            contour = new BezierContour() { segments = VectorUtils.MakePathLine(from, to) },
+            pathProps = new PathProperties() {
+                stroke = new Stroke() { halfThickness = width / 2.0f },
+                head = PathEnding.Chop,
+                tail = PathEnding.Chop,
+                corners = PathCorner.Tipped
             }
         };
     }
@@ -209,18 +160,18 @@ public class TessellatorTests
     private Path MakeCorner(Vector2 p0, Vector2 p1, Vector2 p2, float width)
     {
         return new Path() {
-            Contour = new BezierContour() {
-                Segments = new BezierPathSegment[] {
-                    new BezierPathSegment() { P0 = p0, P1 = p0 + (p1 - p0) / 3.0f, P2 = p0 + (p1 - p0) / 3.0f * 2.0f },
-                    new BezierPathSegment() { P0 = p1, P1 = p1 + (p2 - p1) / 3.0f, P2 = p1 + (p2 - p1) / 3.0f * 2.0f },
-                    new BezierPathSegment() { P0 = p2 }
+            contour = new BezierContour() {
+                segments = new BezierPathSegment[] {
+                    new BezierPathSegment() { p0 = p0, p1 = p0 + (p1 - p0) / 3.0f, p2 = p0 + (p1 - p0) / 3.0f * 2.0f },
+                    new BezierPathSegment() { p0 = p1, p1 = p1 + (p2 - p1) / 3.0f, p2 = p1 + (p2 - p1) / 3.0f * 2.0f },
+                    new BezierPathSegment() { p0 = p2 }
                 }
             },
-            PathProps = new PathProperties() {
-                Stroke = new Stroke() { HalfThickness = width / 2.0f },
-                Head = PathEnding.Chop,
-                Tail = PathEnding.Chop,
-                Corners = PathCorner.Tipped
+            pathProps = new PathProperties() {
+                stroke = new Stroke() { halfThickness = width / 2.0f },
+                head = PathEnding.Chop,
+                tail = PathEnding.Chop,
+                corners = PathCorner.Tipped
             }
         };
     }

@@ -5,86 +5,100 @@ using System.Reflection;
 using System.Linq;
 using Unity.Collections;
 using UnityEngine;
-using UnityEngine.Rendering;
+using UnityEditor;
+using UnityEditor.Experimental.U2D;
 using UnityEngine.Experimental.U2D;
+using UnityEditor.Experimental.AssetImporters;
 using UnityEngine.Experimental.Rendering;
 
 namespace Unity.VectorGraphics
 {
     public static partial class VectorUtils
     {
-        /// <summary>The alignement of the sprite, to determine the location of the pivot.</summary>
+        /// <summary>Sprite alignment.</summary>
         public enum Alignment
         {
-            /// <summary>Center alignment.</summary>
             Center = 0,
-
-            /// <summary>Top-left alignment.</summary>
             TopLeft = 1,
-
-            /// <summary>Top-center alignment.</summary>
             TopCenter = 2,
-
-            /// <summary>Top-right alignment.</summary>
             TopRight = 3,
-
-            /// <summary>Left-center alignment.</summary>
             LeftCenter = 4,
-
-            /// <summary>Right-center alignment.</summary>
             RightCenter = 5,
-
-            /// <summary>Bottom-left alignment.</summary>
             BottomLeft = 6,
-
-            /// <summary>Bottom-center alignment.</summary>
             BottomCenter = 7,
-
-            /// <summary>Bottom-right alignment.</summary>
             BottomRight = 8,
-
-            /// <summary>SVG origin alignment.</summary>
-            /// <remarks>
-            /// This will use the origin of the SVG document as the origin of the sprite.
-            /// </remarks>
             SVGOrigin = 9,
-
-            /// <summary>Custom alignment.</summary>
-            /// <remarks>
-            /// Uses a custom alignment that will be used when building the sprite using the <see cref="BuildSprite"/> method.
-            /// </remarks>
             Custom = 10
+        }
+
+        private struct ShapeRange
+        {
+            public int start;
+            public int end;
         }
 
         /// <summary>Builds a sprite asset from a scene tessellation.</summary>
         /// <param name="geoms">The list of tessellated Geometry instances</param>
         /// <param name="svgPixelsPerUnit">How many SVG "pixels" map into a Unity unit</param>
         /// <param name="alignment">The position of the sprite origin</param>
-        /// <param name="customPivot">If alignment is <see cref="Alignment.Custom"/>, customPivot is used to compute the sprite origin</param>
+        /// <param name="customPivot">If alignment is Custom, customPivot is used to compute the sprite origin</param>
         /// <param name="gradientResolution">The maximum size of the texture holding gradient data</param>
-        /// <param name="flipYAxis">True to have the positive Y axis to go downward.</param>
         /// <returns>A new Sprite containing the provided geometry. The Sprite may have a texture if the geometry has any texture and/or gradients</returns>
-        public static Sprite BuildSprite(List<Geometry> geoms, float svgPixelsPerUnit, Alignment alignment, Vector2 customPivot, UInt16 gradientResolution, bool flipYAxis = false)
+        public static Sprite BuildSprite(List<Geometry> geoms, float svgPixelsPerUnit, Alignment alignment, Vector2 customPivot, UInt16 gradientResolution)
         {
             // Generate atlas
-            var texAtlas = GenerateAtlasAndFillUVs(geoms, gradientResolution);
+            var texAtlas = GenerateAtlasAndFillItsUVs(geoms, gradientResolution);
 
-            List<Vector2> vertices;
-            List<UInt16> indices;
-            List<Color> colors;
-            List<Vector2> uvs;
-            List<Vector2> settingIndices;
-            FillVertexChannels(geoms, 1.0f, texAtlas != null, out vertices, out indices, out colors, out uvs, out settingIndices);
+            int totalVerts = 0, totalIndices = 0;
+            foreach (var geom in geoms)
+            {
+                if (geom.indices.Length != 0)
+                {
+                    totalIndices += geom.indices.Length;
+                    totalVerts += geom.vertices.Length;
+                }
+            }
 
-            Texture2D texture = texAtlas != null ? texAtlas.Texture : null;
-            var bbox = VectorUtils.RealignVerticesInBounds(vertices, flipYAxis);
+            var vertices = new List<Vector2>(totalVerts);
+            var indices = new List<UInt16>(totalIndices);
+            var colors = new List<Color>(totalVerts);
+            var uvs = (texAtlas != null) ? new List<Vector2>(totalVerts) : null;
+            var settingIndices = (texAtlas != null) ? new List<Vector2>(totalVerts) : null;
+
+            var shapeRanges = new List<ShapeRange>();
+            foreach (var geom in geoms)
+            {
+                shapeRanges.Add(new ShapeRange()
+                {
+                    start = indices.Count,
+                    end = indices.Count + geom.indices.Length - 1
+                });
+
+                indices.AddRange(geom.indices.Select(x => (UInt16)(x + vertices.Count)));
+                vertices.AddRange(geom.vertices.Select(x => geom.worldTransform * x));
+                colors.AddRange(Enumerable.Repeat(geom.color, geom.vertices.Length));
+                System.Diagnostics.Debug.Assert(uvs == null || geom.uvs != null);
+                if (uvs != null)
+                {
+                    uvs.AddRange(geom.uvs);
+                    for (int i = 0; i < geom.uvs.Length; i++)
+                        settingIndices.Add(new Vector2(geom.settingIndex, 0));
+                }
+            }
+
+            var bbox = VectorUtils.RealignVerticesInBounds(vertices, true);
             var rect = new Rect(0, 0, bbox.width, bbox.height);
             var pivot = GetPivot(alignment, customPivot, bbox);
+
+            // Adjust the winding order of the shapes to be consistent since some shapes can be reversed
+            // for hole-cutting purposes.
+            foreach (var range in shapeRanges)
+                FlipShapeIfNecessary(range, vertices, indices);
 
             // The Sprite.Create(Rect, Vector2, float, Texture2D) method is internal. Using reflection
             // until it becomes public.
             var spriteCreateMethod = typeof(Sprite).GetMethod("Create", BindingFlags.Static | BindingFlags.NonPublic, Type.DefaultBinder, new Type[] { typeof(Rect), typeof(Vector2), typeof(float), typeof(Texture2D) }, null);
-            var sprite = spriteCreateMethod.Invoke(null, new object[] { rect, pivot, svgPixelsPerUnit, texture }) as Sprite;
+            var sprite = spriteCreateMethod.Invoke(null, new object[] { rect, pivot, svgPixelsPerUnit, texAtlas }) as Sprite;
 
             sprite.OverrideGeometry(vertices.ToArray(), indices.ToArray());
 
@@ -103,70 +117,6 @@ namespace Unity.VectorGraphics
             }
 
             return sprite;
-        }
-
-        /// <summary>Fills a mesh geometry from a scene tessellation.</summary>
-        /// <param name="mesh">The mesh object to fill</param>
-        /// <param name="geoms">The list of tessellated Geometry instances, generated by TessellateNodeHierarchy</param>
-        /// <param name="svgPixelsPerUnit">How many SVG "pixels" map into a Unity unit</param>
-        /// <param name="flipYAxis">Set to "true" to have the positive Y axis to go downward.</param>
-        public static void FillMesh(Mesh mesh, List<Geometry> geoms, float svgPixelsPerUnit, bool flipYAxis = false)
-        {
-            bool hasUVs = (geoms.FirstOrDefault(g => g.UVs != null)) != null;
-
-            // Generate atlas
-            List<Vector2> vertices;
-            List<UInt16> indices;
-            List<Color> colors;
-            List<Vector2> uvs;
-            List<Vector2> settingIndices;
-            FillVertexChannels(geoms, svgPixelsPerUnit, hasUVs, out vertices, out indices, out colors, out uvs, out  settingIndices);
-
-            mesh.Clear();
-            mesh.SetVertices(vertices.Select(v => (Vector3)v).ToList());
-            mesh.SetTriangles(indices.Select(i => (int)i).ToArray(), 0);
-
-            if (colors != null)
-                mesh.SetColors(colors);
-
-            if (uvs != null)
-                mesh.SetUVs(0, uvs);
-            if (settingIndices  != null)
-                mesh.SetUVs(2, settingIndices);
-        }
-
-        private static void FillVertexChannels(List<Geometry> geoms, float pixelsPerUnit, bool hasUVs, out List<Vector2> vertices, out List<UInt16> indices, out List<Color> colors, out List<Vector2> uvs, out List<Vector2> settingIndices)
-        {
-            int totalVerts = 0, totalIndices = 0;
-            foreach (var geom in geoms)
-            {
-                if (geom.Indices.Length != 0)
-                {
-                    totalIndices += geom.Indices.Length;
-                    totalVerts += geom.Vertices.Length;
-                }
-            }
-
-            vertices = new List<Vector2>(totalVerts);
-            indices = new List<UInt16>(totalIndices);
-            colors = new List<Color>(totalVerts);
-            uvs = hasUVs ? new List<Vector2>(totalVerts) : null;
-            settingIndices = hasUVs ? new List<Vector2>(totalVerts) : null;
-
-            foreach (var geom in geoms)
-            {
-                int vertexCount = vertices.Count;
-                indices.AddRange(geom.Indices.Select(x => (UInt16)(x + vertexCount)));
-                vertices.AddRange(geom.Vertices.Select(x => (geom.WorldTransform * x) / pixelsPerUnit));
-                colors.AddRange(Enumerable.Repeat(geom.Color, geom.Vertices.Length));
-                System.Diagnostics.Debug.Assert(uvs == null || geom.UVs != null);
-                if (uvs != null)
-                {
-                    uvs.AddRange(geom.UVs);
-                    for (int i = 0; i < geom.UVs.Length; i++)
-                        settingIndices.Add(new Vector2(geom.SettingIndex, 0));
-                }
-            }
         }
 
         /// <summary>Draws a vector sprite using the provided material.</summary>
@@ -222,17 +172,36 @@ namespace Unity.VectorGraphics
             mat.SetTexture("_MainTex", null);
         }
 
+        private static Material s_VectorMat = null;
+        private static Material s_GradientMat = null;
+
         /// <summary>Renders a vector sprite to Texture2D.</summary>
         /// <param name="sprite">The sprite to render</param>
         /// <param name="width">The desired width of the resulting texture</param>
         /// <param name="height">The desired height of the resulting texture</param>
-        /// <param name="mat">The material used to render the sprite</param>
         /// <param name="antiAliasing">The number of samples per pixel for anti-aliasing</param>
         /// <returns>A Texture2D object containing the rendered vector sprite</returns>
-        public static Texture2D RenderSpriteToTexture2D(Sprite sprite, int width, int height, Material mat, int antiAliasing = 1)
+        public static Texture2D RenderSpriteToTexture2D(Sprite sprite, int width, int height, int antiAliasing = 1)
         {
-            if (width <= 0 || height <= 0)
-                return null;
+            Material mat = null;
+            if (sprite.texture != null)
+            {
+                if (s_GradientMat == null)
+                {
+                    string gradientMatPath = "Packages/com.unity.vectorgraphics/Runtime/Materials/Unlit_VectorGradient.mat";
+                    s_GradientMat = AssetDatabase.LoadMainAssetAtPath(gradientMatPath) as Material;
+                }
+                mat = s_GradientMat;
+            }
+            else
+            {
+                if (s_VectorMat == null)
+                {
+                    string vectorMatPath = "Packages/com.unity.vectorgraphics/Runtime/Materials/Unlit_Vector.mat";
+                    s_VectorMat = AssetDatabase.LoadMainAssetAtPath(vectorMatPath) as Material;
+                }
+                mat = s_VectorMat;
+            }
 
             var tex = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
             tex.antiAliasing = antiAliasing;
@@ -250,10 +219,37 @@ namespace Unity.VectorGraphics
             RenderTexture.active = oldActive;
             tex.Release();
 
-            RenderTexture.DestroyImmediate(tex);
-            Material.DestroyImmediate(mat);
-
             return copy;
+        }
+
+        private static void FlipShapeIfNecessary(ShapeRange range, IList<Vector2> vertices, IList<UInt16> indices)
+        {
+            // For each range, find the first valid triangle and check its winding order. If that triangle needs flipping, then flip the whole range.
+            bool shouldFlip = false;
+            for (int i = range.start; i <= range.end; i += 3)
+            {
+                var v0 = (Vector3)vertices[indices[i]];
+                var v1 = (Vector3)vertices[indices[i + 1]];
+                var v2 = (Vector3)vertices[indices[i + 2]];
+                var s = (v1 - v0).normalized;
+                var t = (v2 - v0).normalized;
+                if (s == Vector3.zero || t == Vector3.zero || Mathf.Approximately(Vector3.Dot(s, t), 0.0f))
+                    continue;
+                var n = Vector3.Cross(s, t);
+                if (Mathf.Approximately(n.magnitude, 0.0f))
+                    continue;
+                shouldFlip = n.z > 0.0f;
+                break;
+            }
+            if (shouldFlip)
+            {
+                for (int i = range.start; i <= range.end; i += 3)
+                {
+                    var tmp = indices[i + 1];
+                    indices[i + 1] = indices[i + 2];
+                    indices[i + 2] = tmp;
+                }
+            }
         }
 
         private static Vector2 GetPivot(Alignment alignment, Vector2 customPivot, Rect bbox)

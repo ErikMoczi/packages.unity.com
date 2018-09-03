@@ -9,13 +9,11 @@ using UnityEditor;
 using UnityEditor.Experimental.AssetImporters;
 using UnityEngine.Experimental.U2D;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Rendering;
 
 namespace Unity.VectorGraphics.Editor
 {
     [CustomEditor(typeof(SVGImporter))]
-    [CanEditMultipleObjects]
-    internal class SVGImporterEditor : ScriptedImporterEditor
+    public class SVGImporterEditor : ScriptedImporterEditor
     {
         private enum SettingsType
         {
@@ -37,6 +35,7 @@ namespace Unity.VectorGraphics.Editor
         private SerializedProperty m_MaxCordDeviation;
         private SerializedProperty m_MaxTangentAngleEnabled;
         private SerializedProperty m_MaxTangentAngle;
+        private SerializedProperty m_EnableAnimationTools;
 
         private readonly GUIContent m_PixelsPerUnitText = new GUIContent("Pixels Per Unit", "How many pixels in the SVG correspond to one unit in the world.");
         private readonly GUIContent m_GradientResolutionText = new GUIContent("Gradient Resolution", "Size of each rasterized gradient in pixels. Higher values consume memory but result in more accurate gradients.");
@@ -47,11 +46,12 @@ namespace Unity.VectorGraphics.Editor
         private readonly GUIContent m_CustomTargetResolutionText = new GUIContent("Custom Target Resolution");
         private readonly GUIContent m_ResolutionMultiplierText = new GUIContent("Zoom Factor", "Target zoom factor for which the SVG asset should not look tessellated.");
         private readonly GUIContent m_StepDistanceText = new GUIContent("Step Distance", "Distance at which vertices will be generated along the paths. Lower values will result in a more dense tessellation.");
-        private readonly GUIContent m_SamplingStepDistanceText = new GUIContent("Sampling Steps", "Number of samples evaluated on paths. Higher values give more accurate results (but takes longer).");
+        private readonly GUIContent m_SamplingStepDistanceText = new GUIContent("Sampling Steps", "Number of samples evaluated on paths.");
         private readonly GUIContent m_MaxCordDeviationEnabledText = new GUIContent("Max Cord Enabled", "Enables the \"max cord deviation\" tessellation test.");
         private readonly GUIContent m_MaxCordDeviationText = new GUIContent("Max Cord Deviation", "Distance on the cord to a straight line between two points after which more tessellation will be generated.");
         private readonly GUIContent m_MaxTangentAngleEnabledText = new GUIContent("Max Tangent Enabled", "Enables the \"max tangent angle\" tessellation test.");
         private readonly GUIContent m_MaxTangentAngleText = new GUIContent("Max Tangent Angle", "Max tangent angle (in degrees) after which more tessellation will be generated.");
+        private readonly GUIContent m_EnableAnimationToolsText = new GUIContent("Enable Animation Tools", "Enables animation tools in the Sprite Editor window.");
 
         private readonly GUIContent[] m_AlignmentOptions = new GUIContent[]
         {
@@ -83,31 +83,31 @@ namespace Unity.VectorGraphics.Editor
             new GUIContent("Custom")
         };
 
+        /// <summary>Enables the editor</summary>
         public override void OnEnable()
         {
-            m_PixelsPerUnit = serializedObject.FindProperty("SvgPixelsPerUnit");
-            m_GradientResolution = serializedObject.FindProperty("GradientResolution");
-            m_Alignment = serializedObject.FindProperty("Alignment");
-            m_CustomPivot = serializedObject.FindProperty("CustomPivot");
-            m_AdvancedMode = serializedObject.FindProperty("AdvancedMode");
-            m_PredefinedResolutionIndex = serializedObject.FindProperty("PredefinedResolutionIndex");
-            m_TargetResolution = serializedObject.FindProperty("TargetResolution");
-            m_ResolutionMultiplier = serializedObject.FindProperty("ResolutionMultiplier");
-            m_StepDistance = serializedObject.FindProperty("StepDistance");
-            m_SamplingStepDistance = serializedObject.FindProperty("SamplingStepDistance");
-            m_MaxCordDeviationEnabled = serializedObject.FindProperty("MaxCordDeviationEnabled");
-            m_MaxCordDeviation = serializedObject.FindProperty("MaxCordDeviation");
-            m_MaxTangentAngleEnabled = serializedObject.FindProperty("MaxTangentAngleEnabled");
-            m_MaxTangentAngle = serializedObject.FindProperty("MaxTangentAngle");
+            m_PixelsPerUnit = serializedObject.FindProperty("svgPixelsPerUnit");
+            m_GradientResolution = serializedObject.FindProperty("gradientResolution");
+            m_Alignment = serializedObject.FindProperty("alignment");
+            m_CustomPivot = serializedObject.FindProperty("customPivot");
+            m_AdvancedMode = serializedObject.FindProperty("advancedMode");
+            m_PredefinedResolutionIndex = serializedObject.FindProperty("predefinedResolutionIndex");
+            m_TargetResolution = serializedObject.FindProperty("targetResolution");
+            m_ResolutionMultiplier = serializedObject.FindProperty("resolutionMultiplier");
+            m_StepDistance = serializedObject.FindProperty("stepDistance");
+            m_SamplingStepDistance = serializedObject.FindProperty("samplingStepDistance");
+            m_MaxCordDeviationEnabled = serializedObject.FindProperty("maxCordDeviationEnabled");
+            m_MaxCordDeviation = serializedObject.FindProperty("maxCordDeviation");
+            m_MaxTangentAngleEnabled = serializedObject.FindProperty("maxTangentAngleEnabled");
+            m_MaxTangentAngle = serializedObject.FindProperty("maxTangentAngle");
+            m_EnableAnimationTools = serializedObject.FindProperty("enableAnimationTools");
         }
 
+        /// <summary>Draws the inspector editor</summary>
         public override void OnInspectorGUI()
         {
             EditorGUILayout.PropertyField(m_PixelsPerUnit, m_PixelsPerUnitText);
-            m_PixelsPerUnit.floatValue = Mathf.Max(0.001f, m_PixelsPerUnit.floatValue);
-
             EditorGUILayout.PropertyField(m_GradientResolution, m_GradientResolutionText);
-            m_GradientResolution.intValue = Math.Min(4096, Math.Max(16, m_GradientResolution.intValue));
 
             m_Alignment.intValue = EditorGUILayout.Popup(m_AlignmentText, m_Alignment.intValue, m_AlignmentOptions);
 
@@ -116,6 +116,11 @@ namespace Unity.VectorGraphics.Editor
                 GUILayout.BeginHorizontal();
                 EditorGUILayout.PropertyField(m_CustomPivot, m_CustomPivotText);
                 GUILayout.EndHorizontal();
+            }
+
+            if (AreAnimationToolsAvailable())
+            {
+                m_EnableAnimationTools.boolValue = EditorGUILayout.Toggle(m_EnableAnimationToolsText, m_EnableAnimationTools.boolValue);
             }
 
             EditorGUILayout.Space();
@@ -167,17 +172,6 @@ namespace Unity.VectorGraphics.Editor
 
             EditorGUILayout.Space();
 
-            GUILayout.BeginVertical();
-            {
-                var labelStyle = EditorStyles.wordWrappedLabel;
-                labelStyle.fontStyle = FontStyle.Bold;
-                labelStyle.alignment = TextAnchor.UpperCenter;
-                GUILayout.Label(GetStatsString(), labelStyle);
-            }
-            GUILayout.EndVertical();
-
-            EditorGUILayout.Space();
-
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("Sprite Editor"))
@@ -203,11 +197,24 @@ namespace Unity.VectorGraphics.Editor
             }
         }
 
+        private static bool AreAnimationToolsAvailable()
+        {
+            return AssetDatabase.IsValidFolder("Packages/com.unity.2d.animation");
+        }
+
+        /// <summary>Checks if this editor has a preview GUI</summary>
+        /// <returns>True if the editor has a preview GUI, or false othersize</returns>
         public override bool HasPreviewGUI()
         {
             return true;
         }
 
+        /// <summary>Renders a static preview of the SVG asset</summary>
+        /// <params name="assetPath">The path of the SVG asset</param>
+        /// <params name="subAssets">The sub-assets of the main SVG asset</param>
+        /// <params name="width">The requested preview width</param>
+        /// <params name="height">The requested preview height</param>
+        /// <returns>A rendered texture of the SVG asset</returns>
         public override Texture2D RenderStaticPreview(string assetPath, UnityEngine.Object[] subAssets, int width, int height)
         {
             var sprite = SVGImporter.GetImportedSprite(assetTarget);
@@ -217,6 +224,9 @@ namespace Unity.VectorGraphics.Editor
             return BuildPreviewTexture(sprite, width, height);
         }
 
+        /// <summary>Renders the preview GUI</summary>
+        /// <param name="r">The rectangle in which to render the preview GUI</param>
+        /// <param name="background">The GUI background</param>
         public override void OnPreviewGUI(Rect r, GUIStyle background)
         {
             if (Event.current.type != EventType.Repaint)
@@ -233,70 +243,13 @@ namespace Unity.VectorGraphics.Editor
             wantedRect.center = r.center;
 
             var previewTex = BuildPreviewTexture(sprite, (int)wantedRect.width, (int)wantedRect.height);
-            if (previewTex != null)
-            {
-                EditorGUI.DrawTextureTransparent(r, previewTex, ScaleMode.ScaleToFit);
-                UnityEngine.Object.DestroyImmediate(previewTex);
-            }
+            EditorGUI.DrawTextureTransparent(r, previewTex, ScaleMode.ScaleToFit);
+            UnityEngine.Object.DestroyImmediate(previewTex);
         }
 
         internal static Texture2D BuildPreviewTexture(Sprite sprite, int width, int height)
         {
-            return VectorUtils.RenderSpriteToTexture2D(sprite, width, height, SVGImporter.GetSVGSpriteMaterial(sprite), 4);
-        }
-
-        private string GetStatsString()
-        {
-            var sprite = SVGImporter.GetImportedSprite(assetTarget);
-            if (sprite == null)
-                return "";
-            
-            int vertexCount = sprite.vertices.Length;
-            int indexCount = sprite.triangles.Length;
-
-            var stats = "" + vertexCount + " Vertices (Pos";
-
-            int vertexSize = sizeof(float) * 2;
-            if (sprite.HasVertexAttribute(VertexAttribute.Color))
-            {
-                stats += ", Col";
-                vertexSize += 4;
-            }
-            if (sprite.HasVertexAttribute(VertexAttribute.TexCoord0))
-            {
-                stats += ", TexCoord0";
-                vertexSize += sizeof(float) * 2;
-            }
-            if (sprite.HasVertexAttribute(VertexAttribute.TexCoord1))
-            {
-                stats += ", TexCoord1";
-                vertexSize += sizeof(float) * 2;
-            }
-            if (sprite.HasVertexAttribute(VertexAttribute.TexCoord2))
-            {
-                stats += ", TexCoord2";
-                vertexSize += sizeof(float) * 2;
-            }
-
-            stats += ") " + HumanReadableSize(vertexSize * vertexCount + indexCount * 2);
-
-            return stats;
-        }
-
-        private static string HumanReadableSize(int bytes)
-        {
-            var units = new string[] { "B", "KB", "MB", "GB", "TB" };
-
-            int order = 0;
-            while (bytes >= 2014 && order < units.Length-1) {
-                ++order;
-                bytes /= 1024;
-            }
-
-            if (order >=  units.Length)
-                return "" + bytes;
-
-            return String.Format("{0:0.#} {1}", bytes, units[order]);
+            return VectorUtils.RenderSpriteToTexture2D(sprite, width, height, 4);
         }
     }
 }

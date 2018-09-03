@@ -1,9 +1,8 @@
 {
 	"name": "com.unity.vectorgraphics",
-	"version": "1.0.0-preview.15",
+	"version": "1.0.1-experimental",
 	"unity": "2018.1",
-	"displayName": "Vector Graphics",
-	"description": "The vector graphics package provides an SVG importer and runtime vector graphics APIs.",
+	"description": "Vector graphics importers and related utilities.",
 	"keywords": ["vector", "graphics", "svg", "importer"],
 	"category": "",
 	"dependencies": {

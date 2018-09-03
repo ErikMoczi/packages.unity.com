@@ -4,9 +4,9 @@ using UnityEditor;
 using UnityEngine.TestTools;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VectorGraphics;
+using Unity.VectorGraphics.Editor;
 
-public class StyleSheetTests
+public class StyleSheetTests : MonoBehaviour
 {
     [Test]
     public void Tokenize_TokenizesTokens()
