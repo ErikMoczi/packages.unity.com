@@ -4,3 +4,4 @@
 1.0.3-experimental
 1.0.4-experimental
 1.0.5-preview
+1.0.5-preview.1
