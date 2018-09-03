@@ -1,10 +1,16 @@
 {
-	"name": "com.unity.2d.common",
-	"version": "1.0.8-experimental",
-	"unity": "2018.1",
-	"description": "2D Common",
-	"keywords": ["2d"],
-	"category": "2D",
-	"dependencies": {
-	}
+    "category": "2D", 
+    "dependencies": {}, 
+    "description": "2D Common", 
+    "gitHead": "7e615505cd167819777086240c893b27dec66dc7", 
+    "keywords": [
+        "2d"
+    ], 
+    "name": "com.unity.2d.common", 
+    "repository": {
+        "type": "git", 
+        "url": "git@gitlab.internal.unity3d.com:2d/2d-common.git"
+    }, 
+    "unity": "2018.1", 
+    "version": "1.0.9-preview"
 }
