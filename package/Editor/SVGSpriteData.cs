@@ -14,14 +14,14 @@ namespace Unity.VectorGraphics.Editor
     [Serializable]
     internal class SVGSpriteData
     {
-        public float tessellationDetail = 0.0f;
-        public SpriteRect spriteRect = new SpriteRect();
-        public List<Vector2> physicsOutlineVectors = new List<Vector2>();
-        public List<int> physicsOutlineLengths = new List<int>();
-        public List<SpriteBone> bones = new List<SpriteBone>();
-        public Vertex2DMetaData[] skinVertices = new Vertex2DMetaData[] { };
-        public int[] skinIndices = new int[] { };
-        public Vector2Int[] skinEdges = new Vector2Int[] { };
+        public float TessellationDetail = 0.0f;
+        public SpriteRect SpriteRect = new SpriteRect();
+        public List<Vector2> PhysicsOutlineVectors = new List<Vector2>();
+        public List<int> PhysicsOutlineLengths = new List<int>();
+        public List<SpriteBone> Bones = new List<SpriteBone>();
+        public Vertex2DMetaData[] SkinVertices = new Vertex2DMetaData[] { };
+        public int[] SkinIndices = new int[] { };
+        public Vector2Int[] SkinEdges = new Vector2Int[] { };
 
         public void Load(SerializedObject so)
         {
@@ -30,20 +30,20 @@ namespace Unity.VectorGraphics.Editor
             if (sprite == null)
                 return;
 
-            spriteRect.name = sprite.name;
+            SpriteRect.name = sprite.name;
 
             int targetWidth;
             int targetHeight;
             importer.TextureSizeForSpriteEditor(out targetWidth, out targetHeight);
-            spriteRect.rect = new Rect(0, 0, targetWidth, targetHeight);
+            SpriteRect.rect = new Rect(0, 0, targetWidth, targetHeight);
             var textureSize = new Vector2(targetWidth, targetHeight);
 
             var baseSP = so.FindProperty("m_SpriteData");
-            var spriteRectSP = baseSP.FindPropertyRelative("spriteRect");
-            spriteRect.border = Vector4.zero;
-            spriteRect.pivot = sprite.pivot / textureSize;
+            var spriteRectSP = baseSP.FindPropertyRelative("SpriteRect");
+            SpriteRect.border = Vector4.zero;
+            SpriteRect.pivot = sprite.pivot / textureSize;
             var guidSP = spriteRectSP.FindPropertyRelative("m_SpriteID");
-            spriteRect.spriteID = new GUID(guidSP.stringValue);
+            SpriteRect.spriteID = new GUID(guidSP.stringValue);
         }
     }
 
@@ -128,22 +128,22 @@ namespace Unity.VectorGraphics.Editor
 
         List<Vector2[]> ISpritePhysicsOutlineDataProvider.GetOutlines(GUID guid)
         {
-            return DecodeOutlines(GetSVGSpriteData().physicsOutlineVectors, GetSVGSpriteData().physicsOutlineLengths);
+            return DecodeOutlines(GetSVGSpriteData().PhysicsOutlineVectors, GetSVGSpriteData().PhysicsOutlineLengths);
         }
 
         void ISpritePhysicsOutlineDataProvider.SetOutlines(GUID guid, List<Vector2[]> data)
         {
-            EncodeOutlines(data, ref GetSVGSpriteData().physicsOutlineVectors, ref GetSVGSpriteData().physicsOutlineLengths);
+            EncodeOutlines(data, ref GetSVGSpriteData().PhysicsOutlineVectors, ref GetSVGSpriteData().PhysicsOutlineLengths);
         }
 
         float ISpritePhysicsOutlineDataProvider.GetTessellationDetail(GUID guid)
         {
-            return GetSVGSpriteData().tessellationDetail;
+            return GetSVGSpriteData().TessellationDetail;
         }
 
         void ISpritePhysicsOutlineDataProvider.SetTessellationDetail(GUID guid, float value)
         {
-            GetSVGSpriteData().tessellationDetail = value;
+            GetSVGSpriteData().TessellationDetail = value;
         }
 
         internal static List<Vector2[]> DecodeOutlines(List<Vector2> vectors, List<int> lengths)
@@ -182,12 +182,12 @@ namespace Unity.VectorGraphics.Editor
 
         public List<SpriteBone> GetBones(GUID guid)
         {
-            return GetSVGSpriteData().bones;
+            return GetSVGSpriteData().Bones;
         }
 
         public void SetBones(GUID guid, List<SpriteBone> bones)
         {
-            GetSVGSpriteData().bones = bones;
+            GetSVGSpriteData().Bones = bones;
         }
     }
 
@@ -195,17 +195,17 @@ namespace Unity.VectorGraphics.Editor
     {
         private struct Triangle
         {
-            public int a;
-            public int b;
-            public int c;
+            public int A;
+            public int B;
+            public int C;
         }
 
         public SVGMeshDataProvider(SVGImporter importer) : base(importer)
         {
             var data = GetSVGSpriteData();
-            if (data.skinVertices.Length == 0)
+            if (data.SkinVertices.Length == 0)
             {
-                BuildEmptySkinnedMesh(out data.skinVertices, out data.skinIndices, out data.skinEdges);
+                BuildEmptySkinnedMesh(out data.SkinVertices, out data.SkinIndices, out data.SkinEdges);
             }
             else
             {
@@ -215,32 +215,32 @@ namespace Unity.VectorGraphics.Editor
 
         public Vertex2DMetaData[] GetVertices(GUID guid)
         {
-            return GetSVGSpriteData().skinVertices;
+            return GetSVGSpriteData().SkinVertices;
         }
 
         public void SetVertices(GUID guid, Vertex2DMetaData[] vertices)
         {
-            GetSVGSpriteData().skinVertices = vertices;
+            GetSVGSpriteData().SkinVertices = vertices;
         }
 
         public int[] GetIndices(GUID guid)
         {
-            return GetSVGSpriteData().skinIndices;
+            return GetSVGSpriteData().SkinIndices;
         }
 
         public void SetIndices(GUID guid, int[] indices)
         {
-            GetSVGSpriteData().skinIndices = indices;
+            GetSVGSpriteData().SkinIndices = indices;
         }
 
         public Vector2Int[] GetEdges(GUID guid)
         {
-            return GetSVGSpriteData().skinEdges;
+            return GetSVGSpriteData().SkinEdges;
         }
 
         public void SetEdges(GUID guid, Vector2Int[] edges)
         {
-            GetSVGSpriteData().skinEdges = edges;
+            GetSVGSpriteData().SkinEdges = edges;
         }
 
         private Vector2 MapToTextureSpace(Sprite sprite, SpriteRect spriteRect, Vector2 v)
@@ -254,7 +254,7 @@ namespace Unity.VectorGraphics.Editor
         {
             var data = GetSVGSpriteData();
             var sprite = GetImportedSprite();
-            if (data.skinVertices.Length != sprite.vertices.Length)
+            if (data.SkinVertices.Length != sprite.vertices.Length)
             {
                 // Vertices changed, transfer the bone weights
                 var spriteRect = ((ISpriteEditorDataProvider)GetImporter()).GetSpriteRects()[0];
@@ -265,12 +265,12 @@ namespace Unity.VectorGraphics.Editor
                     newVertices[i].position = MapToTextureSpace(sprite, spriteRect, spriteVertices[i]);
                 
                 var weightTransfer = new SVGBoneWeightTransfer(this);
-                weightTransfer.TransferBoneWeights(data.skinVertices, data.skinIndices, newVertices);
+                weightTransfer.TransferBoneWeights(data.SkinVertices, data.SkinIndices, newVertices);
 
-                data.skinVertices = newVertices;
-                data.skinIndices = sprite.triangles.Select(i => (int)i).ToArray();
+                data.SkinVertices = newVertices;
+                data.SkinIndices = sprite.triangles.Select(i => (int)i).ToArray();
 
-                DetectEdges(sprite, out data.skinEdges);
+                DetectEdges(sprite, out data.SkinEdges);
             }
         }
 
@@ -301,7 +301,7 @@ namespace Unity.VectorGraphics.Editor
                 var a = triangles[t];
                 var b = triangles[t + 1];
                 var c = triangles[t + 2];
-                var triangle = new Triangle() { a = a, b = b, c = c };
+                var triangle = new Triangle() { A = a, B = b, C = c };
 
                 var edge0 = new Vector2Int(Math.Min(a, b), Math.Max(a, b));
                 var edge1 = new Vector2Int(Math.Min(b, c), Math.Max(b, c));

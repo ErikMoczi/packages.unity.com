@@ -57,8 +57,8 @@ namespace Unity.VectorGraphics
 
         private struct ShapeRange
         {
-            public int start;
-            public int end;
+            public int Start;
+            public int End;
         }
 
         /// <summary>Builds a sprite asset from a scene tessellation.</summary>
@@ -81,7 +81,7 @@ namespace Unity.VectorGraphics
             List<Vector2> settingIndices;
             FillVertexChannels(geoms, 1.0f, texAtlas != null, out vertices, out indices, out colors, out uvs, out settingIndices);
 
-            Texture2D texture = texAtlas != null ? texAtlas.texture : null;
+            Texture2D texture = texAtlas != null ? texAtlas.Texture : null;
             var bbox = VectorUtils.RealignVerticesInBounds(vertices, flipYAxis);
             var rect = new Rect(0, 0, bbox.width, bbox.height);
             var pivot = GetPivot(alignment, customPivot, bbox);
@@ -117,7 +117,7 @@ namespace Unity.VectorGraphics
         /// <param name="flipYAxis">Set to "true" to have the positive Y axis to go downward.</param>
         public static void FillMesh(Mesh mesh, List<Geometry> geoms, float svgPixelsPerUnit, bool flipYAxis = false)
         {
-            bool hasUVs = (geoms.FirstOrDefault(g => g.uvs != null)) != null;
+            bool hasUVs = (geoms.FirstOrDefault(g => g.UVs != null)) != null;
 
             // Generate atlas
             List<Vector2> vertices;
@@ -145,10 +145,10 @@ namespace Unity.VectorGraphics
             int totalVerts = 0, totalIndices = 0;
             foreach (var geom in geoms)
             {
-                if (geom.indices.Length != 0)
+                if (geom.Indices.Length != 0)
                 {
-                    totalIndices += geom.indices.Length;
-                    totalVerts += geom.vertices.Length;
+                    totalIndices += geom.Indices.Length;
+                    totalVerts += geom.Vertices.Length;
                 }
             }
 
@@ -163,20 +163,20 @@ namespace Unity.VectorGraphics
             {
                 shapeRanges.Add(new ShapeRange()
                 {
-                    start = indices.Count,
-                    end = indices.Count + geom.indices.Length - 1
+                    Start = indices.Count,
+                    End = indices.Count + geom.Indices.Length - 1
                 });
 
                 int vertexCount = vertices.Count;
-                indices.AddRange(geom.indices.Select(x => (UInt16)(x + vertexCount)));
-                vertices.AddRange(geom.vertices.Select(x => (geom.worldTransform * x) / pixelsPerUnit));
-                colors.AddRange(Enumerable.Repeat(geom.color, geom.vertices.Length));
-                System.Diagnostics.Debug.Assert(uvs == null || geom.uvs != null);
+                indices.AddRange(geom.Indices.Select(x => (UInt16)(x + vertexCount)));
+                vertices.AddRange(geom.Vertices.Select(x => (geom.WorldTransform * x) / pixelsPerUnit));
+                colors.AddRange(Enumerable.Repeat(geom.Color, geom.Vertices.Length));
+                System.Diagnostics.Debug.Assert(uvs == null || geom.UVs != null);
                 if (uvs != null)
                 {
-                    uvs.AddRange(geom.uvs);
-                    for (int i = 0; i < geom.uvs.Length; i++)
-                        settingIndices.Add(new Vector2(geom.settingIndex, 0));
+                    uvs.AddRange(geom.UVs);
+                    for (int i = 0; i < geom.UVs.Length; i++)
+                        settingIndices.Add(new Vector2(geom.SettingIndex, 0));
                 }
             }
 
@@ -277,7 +277,7 @@ namespace Unity.VectorGraphics
         {
             // For each range, find the first valid triangle and check its winding order. If that triangle needs flipping, then flip the whole range.
             bool shouldFlip = false;
-            for (int i = range.start; i <= range.end; i += 3)
+            for (int i = range.Start; i <= range.End; i += 3)
             {
                 var v0 = (Vector3)vertices[indices[i]];
                 var v1 = (Vector3)vertices[indices[i + 1]];
@@ -294,7 +294,7 @@ namespace Unity.VectorGraphics
             }
             if (shouldFlip)
             {
-                for (int i = range.start; i <= range.end; i += 3)
+                for (int i = range.Start; i <= range.End; i += 3)
                 {
                     var tmp = indices[i + 1];
                     indices[i + 1] = indices[i + 2];

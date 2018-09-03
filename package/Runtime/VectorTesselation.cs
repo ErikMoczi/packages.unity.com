@@ -11,51 +11,51 @@ namespace Unity.VectorGraphics
         /// </summary>
         public struct TessellationOptions
         {
-            float maxCordDev, maxCordDevSq, maxTanAngleDev, maxTanAngleDevCosine, stepSize;
+            private float m_MaxCordDev, m_MaxCordDevSq, m_MaxTanAngleDev, m_MaxTanAngleDevCosine, m_StepSize;
 
             /// <summary>
             /// The uniform tessellation step distance.
             /// </summary>
-            public float stepDistance { get; set; } // A split to happen uniformly at fixed distances
+            public float StepDistance { get; set; } // A split to happen uniformly at fixed distances
 
             /// <summary>
             /// The maximum distance on the cord to a straight line between to points after which more tessellation will be generated.
             /// To disable, specify float.MaxValue.
             /// </summary>
-            public float maxCordDeviation  // Maximum distance allowed between a cord and its line projection
+            public float MaxCordDeviation  // Maximum distance allowed between a cord and its line projection
             {
-                get { return maxCordDev; }
+                get { return m_MaxCordDev; }
                 set
                 {
-                    maxCordDev = Mathf.Max(value, 0.0f);
-                    maxCordDevSq = (maxCordDev == float.MaxValue) ? float.MaxValue : maxCordDev * maxCordDev;
+                    m_MaxCordDev = Mathf.Max(value, 0.0f);
+                    m_MaxCordDevSq = (m_MaxCordDev == float.MaxValue) ? float.MaxValue : m_MaxCordDev * m_MaxCordDev;
                 }
             }
-            internal float maxCordDeviationSquared { get { return maxCordDevSq; } }
+            internal float MaxCordDeviationSquared { get { return m_MaxCordDevSq; } }
 
             /// <summary>
             /// The maximum angle (in degrees) between the curve tangent and the next point after which more tessellation will be generated.
             /// To disable, specify float.MaxValue.
             /// </summary>
-            public float maxTanAngleDeviation // The maximum angle allowed (in radians) between tangents before a split happens
+            public float MaxTanAngleDeviation // The maximum angle allowed (in radians) between tangents before a split happens
             {
-                get { return maxTanAngleDev; }
+                get { return m_MaxTanAngleDev; }
                 set
                 {
-                    maxTanAngleDev = Mathf.Clamp(value, VectorUtils.Epsilon, Mathf.PI * 0.5f);
-                    maxTanAngleDevCosine = Mathf.Cos(maxTanAngleDev);
+                    m_MaxTanAngleDev = Mathf.Clamp(value, VectorUtils.Epsilon, Mathf.PI * 0.5f);
+                    m_MaxTanAngleDevCosine = Mathf.Cos(m_MaxTanAngleDev);
                 }
             }
-            internal  float maxTanAngleDeviationCosine { get { return maxTanAngleDevCosine; } } // Cosine of the maximum angle allowed between tangents before a split happens
+            internal float MaxTanAngleDeviationCosine { get { return m_MaxTanAngleDevCosine; } } // Cosine of the maximum angle allowed between tangents before a split happens
 
             /// <summary>
             /// The number of samples used internally to evaluate the curves. More samples = higher quality.
             /// Should be between 0 and 1 (inclusive).
             /// </summary>
-            public float samplingStepSize
+            public float SamplingStepSize
             {
-                get { return stepSize; }
-                set { stepSize = Mathf.Clamp(value, Epsilon, 1.0f); }
+                get { return m_StepSize; }
+                set { m_StepSize = Mathf.Clamp(value, Epsilon, 1.0f); }
             }
         }
 
@@ -77,30 +77,30 @@ namespace Unity.VectorGraphics
         /// </remarks>
         public static void TessellatePath(BezierContour contour, PathProperties pathProps, TessellationOptions tessellateOptions, out Vector2[] vertices, out UInt16[] indices)
         {
-            if (tessellateOptions.stepDistance < Epsilon)
+            if (tessellateOptions.StepDistance < Epsilon)
                 throw new Exception("stepDistance too small");
 
             UnityEngine.Profiling.Profiler.BeginSample("TessellatePath");
 
-            float[] segmentLengths = VectorUtils.SegmentsLengths(contour.segments, contour.closed);
+            float[] segmentLengths = VectorUtils.SegmentsLengths(contour.Segments, contour.Closed);
 
             // Approximate the number of vertices/indices we need to store the results so we reduce memory reallocations during work
             float approxTotalLength = 0.0f;
             foreach (var s in segmentLengths)
                 approxTotalLength += s;
 
-            int approxStepCount = Math.Max((int)(approxTotalLength / tessellateOptions.stepDistance + 0.5f), 2);
-            if (pathProps.stroke.pattern != null)
-                approxStepCount += pathProps.stroke.pattern.Length * 2;
+            int approxStepCount = Math.Max((int)(approxTotalLength / tessellateOptions.StepDistance + 0.5f), 2);
+            if (pathProps.Stroke.Pattern != null)
+                approxStepCount += pathProps.Stroke.Pattern.Length * 2;
 
             List<Vector2> verts = new List<Vector2>(approxStepCount * 2 + 32); // A little bit possibly for the endings
             List<UInt16> inds = new List<UInt16>((int)(verts.Capacity * 1.5f)); // Usually every 4 verts represent a quad that uses 6 indices
 
-            var patternIt = new PathPatternIterator(pathProps.stroke.pattern, pathProps.stroke.patternOffset);
-            var pathIt = new PathDistanceForwardIterator(contour.segments, contour.closed, tessellateOptions.maxCordDeviationSquared, tessellateOptions.maxTanAngleDeviationCosine, tessellateOptions.samplingStepSize);
+            var patternIt = new PathPatternIterator(pathProps.Stroke.Pattern, pathProps.Stroke.PatternOffset);
+            var pathIt = new PathDistanceForwardIterator(contour.Segments, contour.Closed, tessellateOptions.MaxCordDeviationSquared, tessellateOptions.MaxTanAngleDeviationCosine, tessellateOptions.SamplingStepSize);
 
             JoiningInfo[] joiningInfo = new JoiningInfo[2];
-            HandleNewSegmentJoining(pathIt, patternIt, joiningInfo, pathProps.stroke.halfThickness, segmentLengths);
+            HandleNewSegmentJoining(pathIt, patternIt, joiningInfo, pathProps.Stroke.HalfThickness, segmentLengths);
 
             int rangeIndex = 0;
             while (!pathIt.Ended)
@@ -120,33 +120,33 @@ namespace Unity.VectorGraphics
 
         static Vector2[] TraceShape(BezierContour contour, Stroke stroke, TessellationOptions tessellateOptions)
         {
-            if (tessellateOptions.stepDistance < Epsilon)
+            if (tessellateOptions.StepDistance < Epsilon)
                 throw new Exception("stepDistance too small");
 
-            float[] segmentLengths = VectorUtils.SegmentsLengths(contour.segments, contour.closed);
+            float[] segmentLengths = VectorUtils.SegmentsLengths(contour.Segments, contour.Closed);
 
             // Approximate the number of vertices/indices we need to store the results so we reduce memory reallocations during work
             float approxTotalLength = 0.0f;
             foreach (var s in segmentLengths)
                 approxTotalLength += s;
 
-            int approxStepCount = Math.Max((int)(approxTotalLength / tessellateOptions.stepDistance + 0.5f), 2);
-            var strokePattern = stroke != null ? stroke.pattern : null;
-            var strokePatternOffset = stroke != null ? stroke.patternOffset : 0.0f;
+            int approxStepCount = Math.Max((int)(approxTotalLength / tessellateOptions.StepDistance + 0.5f), 2);
+            var strokePattern = stroke != null ? stroke.Pattern : null;
+            var strokePatternOffset = stroke != null ? stroke.PatternOffset : 0.0f;
             if (strokePattern != null)
                 approxStepCount += strokePattern.Length * 2;
 
             List<Vector2> verts = new List<Vector2>(approxStepCount); // A little bit possibly for the endings
 
             var patternIt = new PathPatternIterator(strokePattern, strokePatternOffset);
-            var pathIt = new PathDistanceForwardIterator(contour.segments, true, tessellateOptions.maxCordDeviationSquared, tessellateOptions.maxTanAngleDeviationCosine, tessellateOptions.samplingStepSize);
+            var pathIt = new PathDistanceForwardIterator(contour.Segments, true, tessellateOptions.MaxCordDeviationSquared, tessellateOptions.MaxTanAngleDeviationCosine, tessellateOptions.SamplingStepSize);
             verts.Add(pathIt.EvalCurrent());
 
             while (!pathIt.Ended)
             {
                 float distance = patternIt.SegmentLength;
                 float startingLength = pathIt.LengthSoFar;
-                float unitsRemaining = Mathf.Min(tessellateOptions.stepDistance, distance);
+                float unitsRemaining = Mathf.Min(tessellateOptions.StepDistance, distance);
                 bool endedEntirePath = false;
                 for (;;)
                 {
@@ -160,7 +160,7 @@ namespace Unity.VectorGraphics
                         verts.Add(pathIt.EvalCurrent());
 
                     if ((unitsRemaining <= Epsilon) &&
-                        !TryGetMoreRemainingUnits(ref unitsRemaining, pathIt, startingLength, distance, tessellateOptions.stepDistance))
+                        !TryGetMoreRemainingUnits(ref unitsRemaining, pathIt, startingLength, distance, tessellateOptions.StepDistance))
                     {
                         break;
                     }
@@ -206,8 +206,8 @@ namespace Unity.VectorGraphics
                 if ((pathIt.CurrentSegment == 0) || (pathIt.CurrentSegment == pathIt.Segments.Count - 2))
                 {
                     closing = ForeseeJoining(
-                            VectorUtils.PathSegment(pathIt.Segments, pathIt.Segments.Count - 2),
-                            VectorUtils.PathSegment(pathIt.Segments, 0),
+                            VectorUtils.PathSegmentAtIndex(pathIt.Segments, pathIt.Segments.Count - 2),
+                            VectorUtils.PathSegmentAtIndex(pathIt.Segments, 0),
                             halfThickness, segmentLengths[pathIt.Segments.Count - 2]);
 
                     if (pathIt.CurrentSegment == 0)
@@ -225,8 +225,8 @@ namespace Unity.VectorGraphics
                 return;
 
             joiningInfo[1] = ForeseeJoining(
-                    VectorUtils.PathSegment(pathIt.Segments, pathIt.CurrentSegment),
-                    VectorUtils.PathSegment(pathIt.Segments, pathIt.CurrentSegment + 1),
+                    VectorUtils.PathSegmentAtIndex(pathIt.Segments, pathIt.CurrentSegment),
+                    VectorUtils.PathSegmentAtIndex(pathIt.Segments, pathIt.CurrentSegment + 1),
                     halfThickness, segmentLengths[pathIt.CurrentSegment]);
         }
 
@@ -247,7 +247,7 @@ namespace Unity.VectorGraphics
                             return;
                         break;
                     case PathDistanceForwardIterator.Result.NewSegment:
-                        HandleNewSegmentJoining(pathIt, patternIt, joiningInfo, pathProps.stroke.halfThickness, segmentLengths);
+                        HandleNewSegmentJoining(pathIt, patternIt, joiningInfo, pathProps.Stroke.HalfThickness, segmentLengths);
                         break;
                 }
             }
@@ -260,21 +260,21 @@ namespace Unity.VectorGraphics
             bool startOfLoop = pathIt.Closed && (pathIt.CurrentSegment == 0) && (pathIt.CurrentT == 0.0f);
             if (startOfLoop && (joiningInfo[0] != null))
             {
-                GenerateJoining(joiningInfo[0], pathProps.corners, pathProps.stroke.halfThickness, pathProps.stroke.tippedCornerLimit, tessellateOptions, verts, inds);
+                GenerateJoining(joiningInfo[0], pathProps.Corners, pathProps.Stroke.HalfThickness, pathProps.Stroke.TippedCornerLimit, tessellateOptions, verts, inds);
             }
             else
             {
-                var pathEnding = pathProps.head;
+                var pathEnding = pathProps.Head;
 
                 // If pattern at the end will overlap with beginning, use a chopped ending to allow merging
                 if (pathIt.Closed && rangeIndex == 0 && patternIt.IsSolidAt(pathIt.CurrentT) && patternIt.IsSolidAt(totalLength))
                     pathEnding = PathEnding.Chop;
 
-                GenerateTip(VectorUtils.PathSegment(pathIt.Segments, pathIt.CurrentSegment), true, pathIt.CurrentT, pathEnding, pathProps.stroke.halfThickness, tessellateOptions, verts, inds);
+                GenerateTip(VectorUtils.PathSegmentAtIndex(pathIt.Segments, pathIt.CurrentSegment), true, pathIt.CurrentT, pathEnding, pathProps.Stroke.HalfThickness, tessellateOptions, verts, inds);
             }
 
             float startingLength = pathIt.LengthSoFar;
-            float unitsRemaining = Mathf.Min(tessellateOptions.stepDistance, distance);
+            float unitsRemaining = Mathf.Min(tessellateOptions.StepDistance, distance);
             bool endedEntirePath = false;
             for (;;)
             {
@@ -287,19 +287,19 @@ namespace Unity.VectorGraphics
                 else if (result == PathDistanceForwardIterator.Result.NewSegment)
                 {
                     if (joiningInfo[1] != null)
-                        GenerateJoining(joiningInfo[1], pathProps.corners, pathProps.stroke.halfThickness, pathProps.stroke.tippedCornerLimit, tessellateOptions, verts, inds);
-                    else AddSegment(VectorUtils.PathSegment(pathIt.Segments, pathIt.CurrentSegment), pathIt.CurrentT, pathProps.stroke.halfThickness, null, pathIt.SegmentLengthSoFar, verts, inds);
-                    HandleNewSegmentJoining(pathIt, patternIt, joiningInfo, pathProps.stroke.halfThickness, segmentLengths);
+                        GenerateJoining(joiningInfo[1], pathProps.Corners, pathProps.Stroke.HalfThickness, pathProps.Stroke.TippedCornerLimit, tessellateOptions, verts, inds);
+                    else AddSegment(VectorUtils.PathSegmentAtIndex(pathIt.Segments, pathIt.CurrentSegment), pathIt.CurrentT, pathProps.Stroke.HalfThickness, null, pathIt.SegmentLengthSoFar, verts, inds);
+                    HandleNewSegmentJoining(pathIt, patternIt, joiningInfo, pathProps.Stroke.HalfThickness, segmentLengths);
                 }
 
                 if ((unitsRemaining <= Epsilon) &&
-                    !TryGetMoreRemainingUnits(ref unitsRemaining, pathIt, startingLength, distance, tessellateOptions.stepDistance))
+                    !TryGetMoreRemainingUnits(ref unitsRemaining, pathIt, startingLength, distance, tessellateOptions.StepDistance))
                 {
                     break;
                 }
 
                 if (result == PathDistanceForwardIterator.Result.Stepped)
-                    AddSegment(VectorUtils.PathSegment(pathIt.Segments, pathIt.CurrentSegment), pathIt.CurrentT, pathProps.stroke.halfThickness, joiningInfo, pathIt.SegmentLengthSoFar, verts, inds);
+                    AddSegment(VectorUtils.PathSegmentAtIndex(pathIt.Segments, pathIt.CurrentSegment), pathIt.CurrentT, pathProps.Stroke.HalfThickness, joiningInfo, pathIt.SegmentLengthSoFar, verts, inds);
             }
 
             // Ending
@@ -315,8 +315,8 @@ namespace Unity.VectorGraphics
             }
             else
             {
-                AddSegment(VectorUtils.PathSegment(pathIt.Segments, pathIt.CurrentSegment), pathIt.CurrentT, pathProps.stroke.halfThickness, joiningInfo, pathIt.SegmentLengthSoFar, verts, inds);
-                GenerateTip(VectorUtils.PathSegment(pathIt.Segments, pathIt.CurrentSegment), false, pathIt.CurrentT, pathProps.tail, pathProps.stroke.halfThickness, tessellateOptions, verts, inds);
+                AddSegment(VectorUtils.PathSegmentAtIndex(pathIt.Segments, pathIt.CurrentSegment), pathIt.CurrentT, pathProps.Stroke.HalfThickness, joiningInfo, pathIt.SegmentLengthSoFar, verts, inds);
+                GenerateTip(VectorUtils.PathSegmentAtIndex(pathIt.Segments, pathIt.CurrentSegment), false, pathIt.CurrentT, pathProps.Tail, pathProps.Stroke.HalfThickness, tessellateOptions, verts, inds);
             }
         }
 
@@ -330,18 +330,18 @@ namespace Unity.VectorGraphics
 
             if (joinInfo != null)
             {
-                if ((joinInfo[0] != null) && (segmentLengthSoFar < joinInfo[0].innerCornerDistFromStart))
+                if ((joinInfo[0] != null) && (segmentLengthSoFar < joinInfo[0].InnerCornerDistFromStart))
                 {
-                    if (joinInfo[0].roundPosThickness)
-                        negThickness = joinInfo[0].innerCornerVertex;
-                    else posThickness = joinInfo[0].innerCornerVertex;
+                    if (joinInfo[0].RoundPosThickness)
+                        negThickness = joinInfo[0].InnerCornerVertex;
+                    else posThickness = joinInfo[0].InnerCornerVertex;
                 }
 
-                if ((joinInfo[1] != null) && (segmentLengthSoFar > joinInfo[1].innerCornerDistToEnd))
+                if ((joinInfo[1] != null) && (segmentLengthSoFar > joinInfo[1].InnerCornerDistToEnd))
                 {
-                    if (joinInfo[1].roundPosThickness)
-                        negThickness = joinInfo[1].innerCornerVertex;
-                    else posThickness = joinInfo[1].innerCornerVertex;
+                    if (joinInfo[1].RoundPosThickness)
+                        negThickness = joinInfo[1].InnerCornerVertex;
+                    else posThickness = joinInfo[1].InnerCornerVertex;
                 }
             }
 
@@ -359,16 +359,16 @@ namespace Unity.VectorGraphics
 
         class JoiningInfo
         {
-            public Vector2 joinPos;
-            public Vector2 tanAtEnd, tanAtStart;
-            public Vector2 normAtEnd, normAtStart;
-            public Vector2 posThicknessStart, negThicknessStart;
-            public Vector2 posThicknessEnd, negThicknessEnd;
-            public Vector2 posThicknessClosingPoint, negThicknessClosingPoint;
-            public bool roundPosThickness;
-            public bool simpleJoin;
-            public Vector2 innerCornerVertex;
-            public float innerCornerDistToEnd, innerCornerDistFromStart;
+            public Vector2 JoinPos;
+            public Vector2 TanAtEnd, TanAtStart;
+            public Vector2 NormAtEnd, NormAtStart;
+            public Vector2 PosThicknessStart, NegThicknessStart;
+            public Vector2 PosThicknessEnd, NegThicknessEnd;
+            public Vector2 PosThicknessClosingPoint, NegThicknessClosingPoint;
+            public bool RoundPosThickness;
+            public bool SimpleJoin;
+            public Vector2 InnerCornerVertex;
+            public float InnerCornerDistToEnd, InnerCornerDistFromStart;
         }
 
         static JoiningInfo ForeseeJoining(BezierSegment end, BezierSegment start, float halfThickness, float endSegmentLength)
@@ -376,59 +376,59 @@ namespace Unity.VectorGraphics
             JoiningInfo joinInfo = new JoiningInfo();
 
             // The joining generates the vertices at both ends as well as the joining itself
-            joinInfo.joinPos = end.p3;
-            joinInfo.tanAtEnd = VectorUtils.EvalTangent(end, 1.0f);
-            joinInfo.normAtEnd = Vector2.Perpendicular(joinInfo.tanAtEnd);
-            joinInfo.tanAtStart = VectorUtils.EvalTangent(start, 0.0f);
-            joinInfo.normAtStart = Vector2.Perpendicular(joinInfo.tanAtStart);
+            joinInfo.JoinPos = end.P3;
+            joinInfo.TanAtEnd = VectorUtils.EvalTangent(end, 1.0f);
+            joinInfo.NormAtEnd = Vector2.Perpendicular(joinInfo.TanAtEnd);
+            joinInfo.TanAtStart = VectorUtils.EvalTangent(start, 0.0f);
+            joinInfo.NormAtStart = Vector2.Perpendicular(joinInfo.TanAtStart);
 
             // If the tangents are continuous at the join location, we don't have
             // to generate a corner, we do a "simple" join by just connecting the vertices
             // from the two segments directly
-            float cosAngleBetweenTans = Vector2.Dot(joinInfo.tanAtEnd, joinInfo.tanAtStart);
-            joinInfo.simpleJoin = Mathf.Approximately(Mathf.Abs(cosAngleBetweenTans), 1.0f);
-            if (joinInfo.simpleJoin)
+            float cosAngleBetweenTans = Vector2.Dot(joinInfo.TanAtEnd, joinInfo.TanAtStart);
+            joinInfo.SimpleJoin = Mathf.Approximately(Mathf.Abs(cosAngleBetweenTans), 1.0f);
+            if (joinInfo.SimpleJoin)
                 return null;
 
-            joinInfo.posThicknessEnd = joinInfo.joinPos + joinInfo.normAtEnd * halfThickness;
-            joinInfo.negThicknessEnd = joinInfo.joinPos - joinInfo.normAtEnd * halfThickness;
-            joinInfo.posThicknessStart = joinInfo.joinPos + joinInfo.normAtStart * halfThickness;
-            joinInfo.negThicknessStart = joinInfo.joinPos - joinInfo.normAtStart * halfThickness;
+            joinInfo.PosThicknessEnd = joinInfo.JoinPos + joinInfo.NormAtEnd * halfThickness;
+            joinInfo.NegThicknessEnd = joinInfo.JoinPos - joinInfo.NormAtEnd * halfThickness;
+            joinInfo.PosThicknessStart = joinInfo.JoinPos + joinInfo.NormAtStart * halfThickness;
+            joinInfo.NegThicknessStart = joinInfo.JoinPos - joinInfo.NormAtStart * halfThickness;
 
-            if (joinInfo.simpleJoin)
+            if (joinInfo.SimpleJoin)
             {
-                joinInfo.posThicknessClosingPoint = Vector2.LerpUnclamped(joinInfo.posThicknessEnd, joinInfo.posThicknessStart, 0.5f);
-                joinInfo.negThicknessClosingPoint = Vector2.LerpUnclamped(joinInfo.negThicknessEnd, joinInfo.negThicknessStart, 0.5f);
+                joinInfo.PosThicknessClosingPoint = Vector2.LerpUnclamped(joinInfo.PosThicknessEnd, joinInfo.PosThicknessStart, 0.5f);
+                joinInfo.NegThicknessClosingPoint = Vector2.LerpUnclamped(joinInfo.NegThicknessEnd, joinInfo.NegThicknessStart, 0.5f);
             }
             else
             {
-                joinInfo.posThicknessClosingPoint = VectorUtils.IntersectLines(joinInfo.posThicknessEnd, joinInfo.posThicknessEnd + joinInfo.tanAtEnd, joinInfo.posThicknessStart, joinInfo.posThicknessStart + joinInfo.tanAtStart);
-                joinInfo.negThicknessClosingPoint = VectorUtils.IntersectLines(joinInfo.negThicknessEnd, joinInfo.negThicknessEnd + joinInfo.tanAtEnd, joinInfo.negThicknessStart, joinInfo.negThicknessStart + joinInfo.tanAtStart);
+                joinInfo.PosThicknessClosingPoint = VectorUtils.IntersectLines(joinInfo.PosThicknessEnd, joinInfo.PosThicknessEnd + joinInfo.TanAtEnd, joinInfo.PosThicknessStart, joinInfo.PosThicknessStart + joinInfo.TanAtStart);
+                joinInfo.NegThicknessClosingPoint = VectorUtils.IntersectLines(joinInfo.NegThicknessEnd, joinInfo.NegThicknessEnd + joinInfo.TanAtEnd, joinInfo.NegThicknessStart, joinInfo.NegThicknessStart + joinInfo.TanAtStart);
 
-                if (float.IsInfinity(joinInfo.posThicknessClosingPoint.x) || float.IsInfinity(joinInfo.posThicknessClosingPoint.y))
-                    joinInfo.posThicknessClosingPoint = joinInfo.joinPos;
-                if (float.IsInfinity(joinInfo.negThicknessClosingPoint.x) || float.IsInfinity(joinInfo.negThicknessClosingPoint.y))
-                    joinInfo.negThicknessClosingPoint = joinInfo.joinPos;
+                if (float.IsInfinity(joinInfo.PosThicknessClosingPoint.x) || float.IsInfinity(joinInfo.PosThicknessClosingPoint.y))
+                    joinInfo.PosThicknessClosingPoint = joinInfo.JoinPos;
+                if (float.IsInfinity(joinInfo.NegThicknessClosingPoint.x) || float.IsInfinity(joinInfo.NegThicknessClosingPoint.y))
+                    joinInfo.NegThicknessClosingPoint = joinInfo.JoinPos;
             }
 
             // Should we round the positive thickness side or the negative thickness side?
-            joinInfo.roundPosThickness = PointOnTheLeftOfLine(Vector2.zero, joinInfo.tanAtEnd, joinInfo.tanAtStart);
+            joinInfo.RoundPosThickness = PointOnTheLeftOfLine(Vector2.zero, joinInfo.TanAtEnd, joinInfo.TanAtStart);
 
             // Inner corner vertex should be calculated by intersection of the inner segments
             Vector2[] startTrail = null, endTrail = null;
             Vector2 intersectionOnStart = Vector2.zero, intersectionOnEnd = Vector2.zero;
-            if (!joinInfo.simpleJoin)
+            if (!joinInfo.SimpleJoin)
             {
                 BezierSegment endFlipped = VectorUtils.FlipSegment(end);
-                Vector2 thicknessClosingPoint = joinInfo.roundPosThickness ? joinInfo.posThicknessClosingPoint : joinInfo.negThicknessClosingPoint;
-                Vector2 meetingPoint = end.p3;
+                Vector2 thicknessClosingPoint = joinInfo.RoundPosThickness ? joinInfo.PosThicknessClosingPoint : joinInfo.NegThicknessClosingPoint;
+                Vector2 meetingPoint = end.P3;
                 Vector2 thicknessDiagonalEnd = meetingPoint + (thicknessClosingPoint - meetingPoint) * 10.0f;
                 startTrail = LineBezierThicknessIntersect(
-                        start, joinInfo.roundPosThickness ? -halfThickness : halfThickness, meetingPoint, thicknessDiagonalEnd,
-                        out joinInfo.innerCornerDistFromStart, out intersectionOnStart);
+                        start, joinInfo.RoundPosThickness ? -halfThickness : halfThickness, meetingPoint, thicknessDiagonalEnd,
+                        out joinInfo.InnerCornerDistFromStart, out intersectionOnStart);
                 endTrail = LineBezierThicknessIntersect(
-                        endFlipped, joinInfo.roundPosThickness ? halfThickness : -halfThickness, meetingPoint, thicknessDiagonalEnd,
-                        out joinInfo.innerCornerDistToEnd, out intersectionOnEnd);
+                        endFlipped, joinInfo.RoundPosThickness ? halfThickness : -halfThickness, meetingPoint, thicknessDiagonalEnd,
+                        out joinInfo.InnerCornerDistToEnd, out intersectionOnEnd);
             }
 
             bool intersectionFound = false;
@@ -441,19 +441,19 @@ namespace Unity.VectorGraphics
                 {
                     var vStart = intersectionOnStart - intersect;
                     var vEnd = intersectionOnEnd - intersect;
-                    joinInfo.innerCornerDistFromStart += (vStart == Vector2.zero) ? 0.0f : vStart.magnitude;
-                    joinInfo.innerCornerDistToEnd += (vEnd == Vector2.zero) ? 0.0f : vEnd.magnitude;
-                    joinInfo.innerCornerDistToEnd = endSegmentLength - joinInfo.innerCornerDistToEnd;
-                    joinInfo.innerCornerVertex = intersect; // Found it!
+                    joinInfo.InnerCornerDistFromStart += (vStart == Vector2.zero) ? 0.0f : vStart.magnitude;
+                    joinInfo.InnerCornerDistToEnd += (vEnd == Vector2.zero) ? 0.0f : vEnd.magnitude;
+                    joinInfo.InnerCornerDistToEnd = endSegmentLength - joinInfo.InnerCornerDistToEnd;
+                    joinInfo.InnerCornerVertex = intersect; // Found it!
                     intersectionFound = true;
                 }
             }
 
             if (!intersectionFound)
             {
-                joinInfo.innerCornerVertex = joinInfo.joinPos + ((joinInfo.tanAtStart - joinInfo.tanAtEnd) / 2.0f).normalized * halfThickness;
-                joinInfo.innerCornerDistFromStart = 0;
-                joinInfo.innerCornerDistToEnd = endSegmentLength;
+                joinInfo.InnerCornerVertex = joinInfo.JoinPos + ((joinInfo.TanAtStart - joinInfo.TanAtEnd) / 2.0f).normalized * halfThickness;
+                joinInfo.InnerCornerDistFromStart = 0;
+                joinInfo.InnerCornerDistToEnd = endSegmentLength;
             }
             return joinInfo;
         }
@@ -462,7 +462,7 @@ namespace Unity.VectorGraphics
         {
             Vector2 tan = VectorUtils.EvalTangent(seg, 0.0f);
             Vector2 nrm = Vector2.Perpendicular(tan);
-            Vector2 lastPoint = seg.p0 + nrm * thickness;
+            Vector2 lastPoint = seg.P0 + nrm * thickness;
             distanceToIntersection = 0.0f;
             intersection = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
             float stepT = 0.01f;
@@ -500,8 +500,8 @@ namespace Unity.VectorGraphics
             if (verts.Count == 0)
             {
                 // Starting a path with a joining (meaning a loop)
-                verts.Add(joinInfo.roundPosThickness ? joinInfo.posThicknessEnd : joinInfo.innerCornerVertex);
-                verts.Add(joinInfo.roundPosThickness ? joinInfo.innerCornerVertex : joinInfo.negThicknessEnd);
+                verts.Add(joinInfo.RoundPosThickness ? joinInfo.PosThicknessEnd : joinInfo.InnerCornerVertex);
+                verts.Add(joinInfo.RoundPosThickness ? joinInfo.InnerCornerVertex : joinInfo.NegThicknessEnd);
             }
 
             System.Diagnostics.Debug.Assert(verts.Count >= 2);
@@ -510,22 +510,22 @@ namespace Unity.VectorGraphics
             // Convert a tipped corner to a beveled one if tippedCornerLimit ratio is reached
             if (corner == PathCorner.Tipped && tippedCornerLimit >= 1.0f)
             {
-                var theta = Vector2.Angle(-joinInfo.tanAtEnd, joinInfo.tanAtStart) * Mathf.Deg2Rad;
+                var theta = Vector2.Angle(-joinInfo.TanAtEnd, joinInfo.TanAtStart) * Mathf.Deg2Rad;
                 var ratio = 1.0f / Mathf.Sin(theta / 2.0f);
                 if (ratio > tippedCornerLimit)
                     corner = PathCorner.Beveled;
             }
 
-            if (joinInfo.simpleJoin)
+            if (joinInfo.SimpleJoin)
             {
                 // TODO
             }
             else if (corner == PathCorner.Tipped)
             {
-                verts.Add(joinInfo.posThicknessClosingPoint);
-                verts.Add(joinInfo.negThicknessClosingPoint);
-                verts.Add(joinInfo.roundPosThickness ? joinInfo.posThicknessStart : joinInfo.innerCornerVertex);
-                verts.Add(joinInfo.roundPosThickness ? joinInfo.innerCornerVertex : joinInfo.negThicknessStart);
+                verts.Add(joinInfo.PosThicknessClosingPoint);
+                verts.Add(joinInfo.NegThicknessClosingPoint);
+                verts.Add(joinInfo.RoundPosThickness ? joinInfo.PosThicknessStart : joinInfo.InnerCornerVertex);
+                verts.Add(joinInfo.RoundPosThickness ? joinInfo.InnerCornerVertex : joinInfo.NegThicknessStart);
 
                 // Ending to tip
                 inds.Add((UInt16)(indexStart + 0));
@@ -547,10 +547,10 @@ namespace Unity.VectorGraphics
             }
             else if (corner == PathCorner.Beveled)
             {
-                verts.Add(joinInfo.roundPosThickness ? joinInfo.posThicknessEnd : joinInfo.innerCornerVertex); // 2
-                verts.Add(joinInfo.roundPosThickness ? joinInfo.innerCornerVertex : joinInfo.negThicknessEnd); // 3
-                verts.Add(joinInfo.roundPosThickness ? joinInfo.posThicknessStart : joinInfo.innerCornerVertex); // 4
-                verts.Add(joinInfo.roundPosThickness ? joinInfo.innerCornerVertex : joinInfo.negThicknessStart); // 5
+                verts.Add(joinInfo.RoundPosThickness ? joinInfo.PosThicknessEnd : joinInfo.InnerCornerVertex); // 2
+                verts.Add(joinInfo.RoundPosThickness ? joinInfo.InnerCornerVertex : joinInfo.NegThicknessEnd); // 3
+                verts.Add(joinInfo.RoundPosThickness ? joinInfo.PosThicknessStart : joinInfo.InnerCornerVertex); // 4
+                verts.Add(joinInfo.RoundPosThickness ? joinInfo.InnerCornerVertex : joinInfo.NegThicknessStart); // 5
 
                 // Ending to tip
                 inds.Add((UInt16)(indexStart + 0));
@@ -561,7 +561,7 @@ namespace Unity.VectorGraphics
                 inds.Add((UInt16)(indexStart + 3));
 
                 // Bevel
-                if (joinInfo.roundPosThickness)
+                if (joinInfo.RoundPosThickness)
                 {
                     inds.Add((UInt16)(indexStart + 2));
                     inds.Add((UInt16)(indexStart + 4));
@@ -579,38 +579,38 @@ namespace Unity.VectorGraphics
 
             if (corner == PathCorner.Round)
             {
-                float sweepAngle = Mathf.Acos(Vector2.Dot(joinInfo.normAtEnd, joinInfo.normAtStart));
+                float sweepAngle = Mathf.Acos(Vector2.Dot(joinInfo.NormAtEnd, joinInfo.NormAtStart));
                 bool flipArc = false;
-                if (!PointOnTheLeftOfLine(Vector2.zero, joinInfo.normAtEnd, joinInfo.normAtStart))
+                if (!PointOnTheLeftOfLine(Vector2.zero, joinInfo.NormAtEnd, joinInfo.NormAtStart))
                 {
                     sweepAngle = -sweepAngle;
                     flipArc = true;
                 }
 
                 UInt16 innerCornerVertexIndex = (UInt16)verts.Count;
-                verts.Add(joinInfo.innerCornerVertex);
+                verts.Add(joinInfo.InnerCornerVertex);
 
                 int arcSegments = CalculateArcSteps(halfThickness, 0, sweepAngle, tessellateOptions);
                 for (int i = 0; i <= arcSegments; i++)
                 {
                     float angle = sweepAngle * (i / (float)arcSegments);
-                    Vector2 nrm = Matrix2D.Rotate(angle) * joinInfo.normAtEnd;
+                    Vector2 nrm = Matrix2D.Rotate(angle) * joinInfo.NormAtEnd;
                     if (flipArc) nrm = -nrm;
-                    verts.Add(nrm * halfThickness + joinInfo.joinPos);
+                    verts.Add(nrm * halfThickness + joinInfo.JoinPos);
 
                     if (i == 0)
                     {
                         inds.Add((UInt16)(indexStart + 0));
                         inds.Add((UInt16)(indexStart + 3));
-                        inds.Add((UInt16)(indexStart + (joinInfo.roundPosThickness ? 2 : 1)));
+                        inds.Add((UInt16)(indexStart + (joinInfo.RoundPosThickness ? 2 : 1)));
 
                         inds.Add((UInt16)(indexStart + 0));
                         inds.Add((UInt16)(indexStart + 2));
-                        inds.Add((UInt16)(indexStart + (joinInfo.roundPosThickness ? 1 : 3)));
+                        inds.Add((UInt16)(indexStart + (joinInfo.RoundPosThickness ? 1 : 3)));
                     }
                     else
                     {
-                        if (joinInfo.roundPosThickness)
+                        if (joinInfo.RoundPosThickness)
                         {
                             inds.Add((UInt16)(indexStart + i + (flipArc ? 3 : 2)));
                             inds.Add((UInt16)(indexStart + i + (flipArc ? 2 : 3)));
@@ -627,15 +627,15 @@ namespace Unity.VectorGraphics
 
                 // Manually add the last segment, maintain the expected vertex positioning
                 int endingVerticesIndex = verts.Count;
-                if (joinInfo.roundPosThickness)
+                if (joinInfo.RoundPosThickness)
                 {
-                    verts.Add(joinInfo.posThicknessStart);
-                    verts.Add(joinInfo.innerCornerVertex);
+                    verts.Add(joinInfo.PosThicknessStart);
+                    verts.Add(joinInfo.InnerCornerVertex);
                 }
                 else
                 {
-                    verts.Add(joinInfo.innerCornerVertex);
-                    verts.Add(joinInfo.negThicknessStart);
+                    verts.Add(joinInfo.InnerCornerVertex);
+                    verts.Add(joinInfo.NegThicknessStart);
                 }
                 inds.Add((UInt16)(endingVerticesIndex - 1));
                 inds.Add((UInt16)(endingVerticesIndex + 0));
@@ -742,20 +742,20 @@ namespace Unity.VectorGraphics
         {
             float stepDivisor = float.MaxValue;
 
-            if (tessellateOptions.stepDistance != float.MaxValue)
-                stepDivisor = tessellateOptions.stepDistance / radius;
+            if (tessellateOptions.StepDistance != float.MaxValue)
+                stepDivisor = tessellateOptions.StepDistance / radius;
 
-            if (tessellateOptions.maxCordDeviation != float.MaxValue)
+            if (tessellateOptions.MaxCordDeviation != float.MaxValue)
             {
-                float y = radius - tessellateOptions.maxCordDeviation;
+                float y = radius - tessellateOptions.MaxCordDeviation;
                 float cordHalfLength = Mathf.Sqrt(radius * radius - y * y);
                 float div = Mathf.Min(stepDivisor, Mathf.Asin(cordHalfLength / radius));
                 if (div > VectorUtils.Epsilon)
                     stepDivisor = div;
             }
 
-            if (tessellateOptions.maxTanAngleDeviation < Mathf.PI * 0.5f)
-                stepDivisor = Mathf.Min(stepDivisor, tessellateOptions.maxTanAngleDeviation * 2.0f);
+            if (tessellateOptions.MaxTanAngleDeviation < Mathf.PI * 0.5f)
+                stepDivisor = Mathf.Min(stepDivisor, tessellateOptions.MaxTanAngleDeviation * 2.0f);
 
             float stepsInFullCircle = (Mathf.PI * 2.0f) / stepDivisor;
             float arcPercentage = Mathf.Abs(fromAngle - toAngle) / (Mathf.PI * 2.0f);

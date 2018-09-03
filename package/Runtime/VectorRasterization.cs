@@ -14,21 +14,21 @@ namespace Unity.VectorGraphics
             int stop;
             for (stop = 0; stop < stops.Length; stop++)
             {
-                if (u < stops[stop].stopPercentage)
+                if (u < stops[stop].StopPercentage)
                     break;
             }
             if (stop >= stops.Length)
-                return stops[stops.Length - 1].color;
+                return stops[stops.Length - 1].Color;
             if (stop == 0)
-                return stops[0].color;
+                return stops[0].Color;
 
-            float percentageRange = stops[stop].stopPercentage - stops[stop - 1].stopPercentage;
+            float percentageRange = stops[stop].StopPercentage - stops[stop - 1].StopPercentage;
             if (percentageRange > Epsilon)
             {
-                float blend = (u - stops[stop - 1].stopPercentage) / percentageRange;
-                return Color.LerpUnclamped(stops[stop - 1].color, stops[stop].color, blend);
+                float blend = (u - stops[stop - 1].StopPercentage) / percentageRange;
+                return Color.LerpUnclamped(stops[stop - 1].Color, stops[stop].Color, blend);
             }
-            else return stops[stop - 1].color;
+            else return stops[stop - 1].Color;
         }
 
         static Vector2 RayUnitCircleFirstHit(Vector2 rayStart, Vector2 rayDir)
@@ -67,18 +67,18 @@ namespace Unity.VectorGraphics
         {
             Color32[] pixels = new Color32[width * height];
 
-            if (gradient.type == GradientFillType.Linear)
+            if (gradient.Type == GradientFillType.Linear)
             {
                 int pixIndex = 0;
                 for (int x = 0; x < width; x++)
-                    pixels[pixIndex++] = SampleGradient(gradient.stops, x / (float)(width - 1));
+                    pixels[pixIndex++] = SampleGradient(gradient.Stops, x / (float)(width - 1));
                 for (int y = 1; y < height; y++)
                 {
                     Array.Copy(pixels, 0, pixels, pixIndex, width);
                     pixIndex += width;
                 }
             }
-            else if (gradient.type == GradientFillType.Radial)
+            else if (gradient.Type == GradientFillType.Radial)
             {
                 int pixIndex = 0;
                 for (int y = 0; y < height; y++)
@@ -87,7 +87,7 @@ namespace Unity.VectorGraphics
                     for (int x = 0; x < width; x++)
                     {
                         float u = x / ((float)width - 1);
-                        pixels[pixIndex++] = SampleGradient(gradient.stops, RadialAddress(new Vector2(u, 1.0f - v), gradient.radialFocus));
+                        pixels[pixIndex++] = SampleGradient(gradient.Stops, RadialAddress(new Vector2(u, 1.0f - v), gradient.RadialFocus));
                     }
                 }
             }
@@ -101,7 +101,7 @@ namespace Unity.VectorGraphics
             for (int x = 0; x < width; ++x)
             {
                 float u = x / ((float)width - 1);
-                pixels[x] = SampleGradient(gradient.stops, u);
+                pixels[x] = SampleGradient(gradient.Stops, u);
             }
             return pixels;
         }
@@ -110,18 +110,18 @@ namespace Unity.VectorGraphics
         public struct PackRectItem
         {
             /// <summary>The position of the entry inside the atlas.</summary>
-            public Vector2 position;
+            public Vector2 Position;
 
             /// <summary>The size of the entry inside the atlas.</summary>
-            public Vector2 size;
+            public Vector2 Size;
 
             /// <summary>True if the entry is rotated by 90 degrees.</summary>
-            public bool rotated;
+            public bool Rotated;
 
             /// <summary>The fill associated with this entry, may be null.</summary>
-            public IFill fill;
+            public IFill Fill;
 
-            internal int settingIndex;
+            internal int SettingIndex;
         }
 
         static List<PackRectItem> PackRects(IList<KeyValuePair<IFill, Vector2>> fillSizes, out Vector2 atlasDims)
@@ -160,7 +160,7 @@ namespace Unity.VectorGraphics
                     }
                 }
 
-                pack.Add(new PackRectItem() { position = curPos, size = size, fill = fill, settingIndex = setting });
+                pack.Add(new PackRectItem() { Position = curPos, Size = size, Fill = fill, SettingIndex = setting });
                 maxPos = Vector2.Max(maxPos, curPos + size);
                 curPos.y += size.y;
             }
@@ -172,22 +172,22 @@ namespace Unity.VectorGraphics
         {
             if (rotate)
             {
-                for (int y = 0; y < src.height; y++)
+                for (int y = 0; y < src.Height; y++)
                 {
-                    int srcRowIndex = y * src.width;
-                    int destColumnIndex = destY * dest.width + destX + y;
-                    for (int x = 0; x < src.width; x++)
+                    int srcRowIndex = y * src.Width;
+                    int destColumnIndex = destY * dest.Width + destX + y;
+                    for (int x = 0; x < src.Width; x++)
                     {
                         int srcIndex = srcRowIndex + x;
-                        int destIndex = destColumnIndex + x * dest.width;
-                        dest.rgba[destIndex] = src.rgba[srcIndex];
+                        int destIndex = destColumnIndex + x * dest.Width;
+                        dest.Rgba[destIndex] = src.Rgba[srcIndex];
                     }
                 }
             }
             else
             {
-                for (int y = 0; y < src.height; y++)
-                    Array.Copy(src.rgba, y * src.width, dest.rgba, (destY + y) * dest.width + destX, src.width);
+                for (int y = 0; y < src.Height; y++)
+                    Array.Copy(src.Rgba, y * src.Width, dest.Rgba, (destY + y) * dest.Width + destX, src.Width);
             }
         }
 
@@ -197,8 +197,8 @@ namespace Unity.VectorGraphics
             byte g = (byte)(v0-r*255);
             byte b = (byte)(v1/255);
             byte a = (byte)(v1-b*255);
-            int offset = destY * dest.width + destX;
-            dest.rgba[offset] = new Color32(r, g, b, a);
+            int offset = destY * dest.Width + destX;
+            dest.Rgba[offset] = new Color32(r, g, b, a);
         }
 
         static void WriteRawFloat4Packed(RawTexture dest, float f0, float f1, float f2, float f3, int destX, int destY)
@@ -207,8 +207,8 @@ namespace Unity.VectorGraphics
             byte g = (byte)(f1*255.0f+0.5f);
             byte b = (byte)(f2*255.0f+0.5f);
             byte a = (byte)(f3*255.0f+0.5f);
-            int offset = destY * dest.width + destX;
-            dest.rgba[offset] = new Color32(r, g, b, a);
+            int offset = destY * dest.Width + destX;
+            dest.Rgba[offset] = new Color32(r, g, b, a);
         }
     }
 }

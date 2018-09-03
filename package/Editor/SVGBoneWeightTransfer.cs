@@ -18,7 +18,7 @@ namespace Unity.VectorGraphics.Editor
         {
             m_DataProvider = dataProvider;
 
-            var bones = m_DataProvider.GetSVGSpriteData().bones;
+            var bones = m_DataProvider.GetSVGSpriteData().Bones;
             m_BoneColors = new Color[bones.Count];
             for (int i = 0; i < bones.Count; ++i)
                 m_BoneColors[i] = ComputeUniqueColor(i, bones.Count);
@@ -36,7 +36,7 @@ namespace Unity.VectorGraphics.Editor
             float spriteWidth = sprite.rect.width;
             float spriteHeight = sprite.rect.height;
 
-            var bones = m_DataProvider.GetSVGSpriteData().bones;
+            var bones = m_DataProvider.GetSVGSpriteData().Bones;
             var boneDistances = new KeyValuePair<int, float>[bones.Count];
 
             for (int i = 0; i < dstData.Length; ++i)
@@ -158,7 +158,7 @@ namespace Unity.VectorGraphics.Editor
             var sprite = m_DataProvider.GetImportedSprite();
             float spriteWidth = sprite.rect.width;
             float spriteHeight = sprite.rect.height;
-            int boneCount = m_DataProvider.GetSVGSpriteData().bones.Count;
+            int boneCount = m_DataProvider.GetSVGSpriteData().Bones.Count;
 
             if (clear)
                 GL.Clear(true, true, new Color(0f, 0f, 0f, 0f));

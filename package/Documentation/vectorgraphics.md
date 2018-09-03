@@ -69,10 +69,10 @@ At the core of the Vector Graphics package lives the `Scene` class, which stores
 ```
 public class SceneNode
 {
-    public List<SceneNode> children { get; set; }
-    public List<IDrawable> drawables { get; set; }
-    public Matrix2D transform { get; set; }
-    public SceneNode clipper { get; set; }
+    public List<SceneNode> Children { get; set; }
+    public List<IDrawable> Drawables { get; set; }
+    public Matrix2D Transform { get; set; }
+    public SceneNode Clipper { get; set; }
 }
 ```
 
@@ -85,21 +85,21 @@ Paths are drawables that are defined by a `BezierContour`, which contains an arr
 ```
 public class Path : IDrawable
 {
-    public BezierContour contour { get; set; }
-    public PathProperties pathProps { get; set; }
+    public BezierContour Contour { get; set; }
+    public PathProperties PathProps { get; set; }
 }
     
 public struct BezierContour
 {
-    public BezierPathSegment[] segments { get; set; }
-    public bool closed { get; set; }
+    public BezierPathSegment[] Segments { get; set; }
+    public bool Closed { get; set; }
 }
 
 public struct BezierPathSegment
 {
-    public Vector2 p0;
-    public Vector2 p1;
-    public Vector2 p2;
+    public Vector2 P0;
+    public Vector2 P1;
+    public Vector2 P2;
 }
 ```
 
@@ -111,18 +111,18 @@ This path could be constructed like so:
 
 ```
 var s = new BezierPathSegment[] {
-	new BezierPathSegment() { p0 = a, p1 = b, p2 = c },
-	new BezierPathSegment() { p0 = d, p1 = e, p2 = f },
-	new BezierPathSegment() { p0 = g }
+	new BezierPathSegment() { P0 = a, P1 = b, P2 = c },
+	new BezierPathSegment() { P0 = d, P1 = e, P2 = f },
+	new BezierPathSegment() { P0 = g }
 };
 
 var path = new Path() {
 	contour = new BezierContour() {
-		segments = s,
-		closed = false
+		Segments = s,
+		Closed = false
 	},
 	pathProps = new PathProperties() {
-		stroke = new Stroke() { color = Color.red, halfThickness = 1.0f }
+		Stroke = new Stroke() { Color = Color.red, HalfThickness = 1.0f }
 	}
 };
 ```
@@ -134,14 +134,14 @@ Just like paths, shapes are defined by a `BezierContour`, but they also provide 
 ```
 public class Shape : Filled
 {
-    public BezierContour[] contours { get; set; }
+    public BezierContour[] Contours { get; set; }
 }
 
 public abstract class Filled : IDrawable
 {
-    public IFill fill { get; set; }
-    public Matrix2D fillTransform { get; set; }
-    public PathProperties pathProps { get; set; }
+    public IFill Fill { get; set; }
+    public Matrix2D FillTransform { get; set; }
+    public PathProperties PathProps { get; set; }
 }
 ```
 
@@ -159,17 +159,17 @@ Gradient fills are defined by a type (`Linear` or `Radial`) and a series of colo
 ```
 public class GradientFill : IFill
 {
-    public GradientFillType type { get; set; }
-    public GradientStop[] stops { get; set; }
-    public FillMode mode { get; set; }
-    public AddressMode addressing { get; set; }
-    public Vector2 radialFocus { get; set; }
+    public GradientFillType Type { get; set; }
+    public GradientStop[] Stops { get; set; }
+    public FillMode Mode { get; set; }
+    public AddressMode Addressing { get; set; }
+    public Vector2 RadialFocus { get; set; }
 }
 
 public struct GradientStop
 {
-    public Color color { get; set; }
-    public float stopPercentage { get; set; }
+    public Color Color { get; set; }
+    public float StopPercentage { get; set; }
 }
 ```
 
@@ -179,11 +179,11 @@ Consider the following linear fill, as well as the `GradientFill` instance to ge
 
 ```
 var fill = new GradientFill() {
-	type = GradientFillType.Linear,
-	stops = new GradientFillStop[] {
-		new GradientFillStop() { color = Color.blue, stopPercentage = 0.0f },
-		new GradientFillStop() { color = Color.red, stopPercentage = 0.5f },
-		new GradientFillStop() { color = Color.yellow, stopPercentage = 1.0f }
+	Type = GradientFillType.Linear,
+	Stops = new GradientFillStop[] {
+		new GradientFillStop() { Color = Color.blue, StopPercentage = 0.0f },
+		new GradientFillStop() { Color = Color.red, StopPercentage = 0.5f },
+		new GradientFillStop() { Color = Color.yellow, StopPercentage = 1.0f }
 	}
 };
 ```
@@ -214,14 +214,14 @@ In the above example, the repeating square shapes are clipped by an ellipse. In 
 
 ```
 var ellipse = new SceneNode() {
-	drawables = new List<IDrawable> { VectorUtils.MakeEllipse(ellipse, Vector2.zero, 50, 100) }
+	Drawables = new List<IDrawable> { VectorUtils.MakeEllipse(ellipse, Vector2.zero, 50, 100) }
 };
 
 var squaresPattern = ...;
 
 var squaresClipped = new SceneNode() {
-	children = new List<SceneNode> { squaresPattern },
-	clipper = ellipse
+	Children = new List<SceneNode> { squaresPattern },
+	Clipper = ellipse
 };
 ```
 
@@ -243,10 +243,10 @@ The `TesselationOptions` are reminiscent of the [advanced importer settings](#ad
 ```
 public struct TesselationOptions
 {
-    public float stepDistance { get; set; }
-    public float maxCordDeviation { get; set; }
-    public float maxTanAngleDeviation { get; set; }
-    public float samplingStepSize { get; set; }
+    public float StepDistance { get; set; }
+    public float MaxCordDeviation { get; set; }
+    public float MaxTanAngleDeviation { get; set; }
+    public float SamplingStepSize { get; set; }
 }
 ```
 

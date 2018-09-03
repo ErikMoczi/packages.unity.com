@@ -85,21 +85,21 @@ namespace Unity.VectorGraphics.Editor
 
         public override void OnEnable()
         {
-            m_PixelsPerUnit = serializedObject.FindProperty("svgPixelsPerUnit");
-            m_GradientResolution = serializedObject.FindProperty("gradientResolution");
-            m_Alignment = serializedObject.FindProperty("alignment");
-            m_CustomPivot = serializedObject.FindProperty("customPivot");
-            m_AdvancedMode = serializedObject.FindProperty("advancedMode");
-            m_PredefinedResolutionIndex = serializedObject.FindProperty("predefinedResolutionIndex");
-            m_TargetResolution = serializedObject.FindProperty("targetResolution");
-            m_ResolutionMultiplier = serializedObject.FindProperty("resolutionMultiplier");
-            m_StepDistance = serializedObject.FindProperty("stepDistance");
-            m_SamplingStepDistance = serializedObject.FindProperty("samplingStepDistance");
-            m_MaxCordDeviationEnabled = serializedObject.FindProperty("maxCordDeviationEnabled");
-            m_MaxCordDeviation = serializedObject.FindProperty("maxCordDeviation");
-            m_MaxTangentAngleEnabled = serializedObject.FindProperty("maxTangentAngleEnabled");
-            m_MaxTangentAngle = serializedObject.FindProperty("maxTangentAngle");
-            m_EnableAnimationTools = serializedObject.FindProperty("enableAnimationTools");
+            m_PixelsPerUnit = serializedObject.FindProperty("SvgPixelsPerUnit");
+            m_GradientResolution = serializedObject.FindProperty("GradientResolution");
+            m_Alignment = serializedObject.FindProperty("Alignment");
+            m_CustomPivot = serializedObject.FindProperty("CustomPivot");
+            m_AdvancedMode = serializedObject.FindProperty("AdvancedMode");
+            m_PredefinedResolutionIndex = serializedObject.FindProperty("PredefinedResolutionIndex");
+            m_TargetResolution = serializedObject.FindProperty("TargetResolution");
+            m_ResolutionMultiplier = serializedObject.FindProperty("ResolutionMultiplier");
+            m_StepDistance = serializedObject.FindProperty("StepDistance");
+            m_SamplingStepDistance = serializedObject.FindProperty("SamplingStepDistance");
+            m_MaxCordDeviationEnabled = serializedObject.FindProperty("MaxCordDeviationEnabled");
+            m_MaxCordDeviation = serializedObject.FindProperty("MaxCordDeviation");
+            m_MaxTangentAngleEnabled = serializedObject.FindProperty("MaxTangentAngleEnabled");
+            m_MaxTangentAngle = serializedObject.FindProperty("MaxTangentAngle");
+            m_EnableAnimationTools = serializedObject.FindProperty("EnableAnimationTools");
         }
 
         public override void OnInspectorGUI()

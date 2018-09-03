@@ -14,13 +14,13 @@ namespace Unity.VectorGraphics
         /// <summary>A structure containing the SVG scene data.</summary>
         public struct SceneInfo
         {
-            internal SceneInfo(Scene scene, Dictionary<SceneNode, float> nodeOpacities) { this.scene = scene; this.nodeOpacity = nodeOpacities; }
+            internal SceneInfo(Scene scene, Dictionary<SceneNode, float> nodeOpacities) { this.Scene = scene; this.NodeOpacity = nodeOpacities; }
         
             /// <summary>The vector scene.</summary>
-            public Scene scene { get; }
+            public Scene Scene { get; }
     
             /// <summary>A dictionary containing the opacity of the scene nodes.</summary>
-            public Dictionary<SceneNode, float> nodeOpacity { get; }
+            public Dictionary<SceneNode, float> NodeOpacity { get; }
         }
 
         /// <summary>Kicks off an SVG file import.</summary>
@@ -57,8 +57,8 @@ namespace Unity.VectorGraphics
             }
 
             float scale = 1.0f / pixelsPerUnit;
-            if ((scale != 1.0f) && (scene != null) && (scene.root != null))
-                scene.root.transform = scene.root.transform * Matrix2D.Scale(new Vector2(scale, scale));
+            if ((scale != 1.0f) && (scene != null) && (scene.Root != null))
+                scene.Root.Transform = scene.Root.Transform * Matrix2D.Scale(new Vector2(scale, scale));
             return new SceneInfo(scene, nodeOpacities);
         }
     }
@@ -170,8 +170,8 @@ namespace Unity.VectorGraphics
             this.dpiScale = dpi / 90.0f; // SVG specs assume 90DPI but this machine might use something else
             this.windowWidth = windowWidth;
             this.windowHeight = windowHeight;
-            this.svgObjects[StockBlackNonZeroFillName] = new SolidFill() { color = new Color(0, 0, 0), mode = FillMode.NonZero };
-            this.svgObjects[StockBlackOddEvenFillName] = new SolidFill() { color = new Color(0, 0, 0), mode = FillMode.OddEven };
+            this.svgObjects[StockBlackNonZeroFillName] = new SolidFill() { Color = new Color(0, 0, 0), Mode = FillMode.NonZero };
+            this.svgObjects[StockBlackOddEvenFillName] = new SolidFill() { Color = new Color(0, 0, 0), Mode = FillMode.OddEven };
         }
 
         public void Import()
@@ -181,7 +181,7 @@ namespace Unity.VectorGraphics
                 throw new SVGFormatException("Document doesn't have 'svg' root");
             svg();
 
-            PostProcess(scene.root);
+            PostProcess(scene.Root);
         }
 
         public Dictionary<SceneNode, float> NodeOpacities { get { return nodeOpacity; } }
@@ -211,11 +211,11 @@ namespace Unity.VectorGraphics
                 SceneNode childVectorNode = null;
                 if (addToSceneHierarchy)
                 {
-                    if (sceneNode.children == null)
-                        sceneNode.children = new List<SceneNode>();
+                    if (sceneNode.Children == null)
+                        sceneNode.Children = new List<SceneNode>();
                     childVectorNode = new SceneNode();
-                    nodeGlobalSceneState[childVectorNode] = new NodeGlobalSceneState() { containerSize = currentContainerSize.Peek() };
-                    sceneNode.children.Add(childVectorNode);
+                    nodeGlobalSceneState[childVectorNode] = new NodeGlobalSceneState() { ContainerSize = currentContainerSize.Peek() };
+                    sceneNode.Children.Add(childVectorNode);
                     currentSceneNode.Push(childVectorNode);
                 }
 
@@ -238,7 +238,7 @@ namespace Unity.VectorGraphics
             var sceneNode = currentSceneNode.Peek();
 
             ParseOpacity(sceneNode);
-            sceneNode.transform = SVGAttribParser.ParseTransform(node);
+            sceneNode.Transform = SVGAttribParser.ParseTransform(node);
             var fill = SVGAttribParser.ParseFill(node, svgObjects, styleResolver);
             PathCorner strokeCorner;
             PathEnding strokeEnding;
@@ -249,11 +249,11 @@ namespace Unity.VectorGraphics
             float r = AttribLengthVal(node, "r", 0.0f, DimType.Length);
 
             var circle = VectorUtils.MakeCircle(new Vector2(cx, cy), r);
-            circle.pathProps = new PathProperties() { stroke = stroke, head = strokeEnding, tail = strokeEnding, corners = strokeCorner };
-            circle.fill = fill;
+            circle.PathProps = new PathProperties() { Stroke = stroke, Head = strokeEnding, Tail = strokeEnding, Corners = strokeCorner };
+            circle.Fill = fill;
 
-            sceneNode.drawables = new List<IDrawable>(1);
-            sceneNode.drawables.Add(circle);
+            sceneNode.Drawables = new List<IDrawable>(1);
+            sceneNode.Drawables.Add(circle);
 
             ParseClipAndMask(node, sceneNode);
 
@@ -267,7 +267,7 @@ namespace Unity.VectorGraphics
             var node = docReader.VisitCurrent();
             var sceneNode = new SceneNode(); // A new scene node instead of one precreated for us
             ParseOpacity(sceneNode);
-            sceneNode.transform = SVGAttribParser.ParseTransform(node);
+            sceneNode.Transform = SVGAttribParser.ParseTransform(node);
 
             AddToSVGDictionaryIfPossible(node, sceneNode);
             if (ShouldDeclareSupportedChildren(node))
@@ -285,7 +285,7 @@ namespace Unity.VectorGraphics
             var sceneNode = currentSceneNode.Peek();
 
             ParseOpacity(sceneNode);
-            sceneNode.transform = SVGAttribParser.ParseTransform(node);
+            sceneNode.Transform = SVGAttribParser.ParseTransform(node);
             var fill = SVGAttribParser.ParseFill(node, svgObjects, styleResolver);
             PathCorner strokeCorner;
             PathEnding strokeEnding;
@@ -297,11 +297,11 @@ namespace Unity.VectorGraphics
             float ry = AttribLengthVal(node, "ry", 0.0f, DimType.Length);
 
             var ellipse = VectorUtils.MakeEllipse(new Vector2(cx, cy), rx, ry);
-            ellipse.pathProps = new PathProperties() { stroke = stroke, corners = strokeCorner, head = strokeEnding, tail = strokeEnding };
-            ellipse.fill = fill;
+            ellipse.PathProps = new PathProperties() { Stroke = stroke, Corners = strokeCorner, Head = strokeEnding, Tail = strokeEnding };
+            ellipse.Fill = fill;
 
-            sceneNode.drawables = new List<IDrawable>(1);
-            sceneNode.drawables.Add(ellipse);
+            sceneNode.Drawables = new List<IDrawable>(1);
+            sceneNode.Drawables.Add(ellipse);
 
             ParseClipAndMask(node, sceneNode);
 
@@ -316,7 +316,7 @@ namespace Unity.VectorGraphics
             var sceneNode = currentSceneNode.Peek();
 
             ParseOpacity(sceneNode);
-            sceneNode.transform = SVGAttribParser.ParseTransform(node);
+            sceneNode.Transform = SVGAttribParser.ParseTransform(node);
 
             ParseClipAndMask(node, sceneNode);
 
@@ -335,12 +335,12 @@ namespace Unity.VectorGraphics
             if (url != null)
             {
                 var textureFill = new TextureFill();
-                textureFill.mode = FillMode.NonZero;
-                textureFill.addressing = AddressMode.Clamp;
+                textureFill.Mode = FillMode.NonZero;
+                textureFill.Addressing = AddressMode.Clamp;
 
                 if (url.StartsWith("data:"))
                 {
-                    textureFill.texture = DecodeTextureData(url);
+                    textureFill.Texture = DecodeTextureData(url);
                 }
                 else
                 {
@@ -350,30 +350,30 @@ namespace Unity.VectorGraphics
                     {
                         while (www.keepWaiting)
                             System.Threading.Thread.Sleep(10); // Progress bar please...
-                        textureFill.texture = www.texture;
+                        textureFill.Texture = www.texture;
                     }
                 }
 
-                if (textureFill.texture == null)
+                if (textureFill.Texture == null)
                     return; // Unsupported texture...
 
                 // Fills and strokes don't seem to apply to image despite what the specs say
                 // All browsers and editing tools seem to ignore them, so we'll just do as well
                 ParseOpacity(sceneNode);
-                sceneNode.transform = SVGAttribParser.ParseTransform(node);
+                sceneNode.Transform = SVGAttribParser.ParseTransform(node);
 
                 var viewPort = ParseViewport(node, sceneNode, currentContainerSize.Peek());
-                sceneNode.transform = sceneNode.transform * Matrix2D.Translate(viewPort.position);
+                sceneNode.Transform = sceneNode.Transform * Matrix2D.Translate(viewPort.position);
                 var viewBoxInfo = new ViewBoxInfo();
-                viewBoxInfo.viewBox = new Rect(0, 0, textureFill.texture.width, textureFill.texture.height);
+                viewBoxInfo.ViewBox = new Rect(0, 0, textureFill.Texture.width, textureFill.Texture.height);
                 ParseViewBoxAspectRatio(node, ref viewBoxInfo);
                 ApplyViewBox(sceneNode, viewBoxInfo, viewPort);
 
-                var rect = new Rectangle() { fill = textureFill, fillTransform = Matrix2D.identity };
-                rect.position = Vector2.zero;
-                rect.size = new Vector2(textureFill.texture.width, textureFill.texture.height);
-                sceneNode.drawables = new List<IDrawable>(1);
-                sceneNode.drawables.Add(rect);
+                var rect = new Rectangle() { Fill = textureFill, FillTransform = Matrix2D.identity };
+                rect.Position = Vector2.zero;
+                rect.Size = new Vector2(textureFill.Texture.width, textureFill.Texture.height);
+                sceneNode.Drawables = new List<IDrawable>(1);
+                sceneNode.Drawables.Add(rect);
 
                 ParseClipAndMask(node, sceneNode);
             }
@@ -389,7 +389,7 @@ namespace Unity.VectorGraphics
             var sceneNode = currentSceneNode.Peek();
 
             ParseOpacity(sceneNode);
-            sceneNode.transform = SVGAttribParser.ParseTransform(node);
+            sceneNode.Transform = SVGAttribParser.ParseTransform(node);
             PathCorner strokeCorner;
             PathEnding strokeEnding;
             var stroke = ParseStrokeAttributeSet(node, out strokeCorner, out strokeEnding);
@@ -400,10 +400,10 @@ namespace Unity.VectorGraphics
             float y2 = AttribLengthVal(node, "y2", 0.0f, DimType.Height);
 
             var path = new Path();
-            path.pathProps = new PathProperties() { stroke = stroke, head = strokeEnding, tail = strokeEnding };
-            path.contour = new BezierContour() { segments = VectorUtils.PathSegments(VectorUtils.MakeLine(new Vector2(x1, y1), new Vector2(x2, y2))) };
-            sceneNode.drawables = new List<IDrawable>(1);
-            sceneNode.drawables.Add(path);
+            path.PathProps = new PathProperties() { Stroke = stroke, Head = strokeEnding, Tail = strokeEnding };
+            path.Contour = new BezierContour() { Segments = VectorUtils.BezierSegmentToPath(VectorUtils.MakeLine(new Vector2(x1, y1), new Vector2(x2, y2))) };
+            sceneNode.Drawables = new List<IDrawable>(1);
+            sceneNode.Drawables.Add(path);
 
             ParseClipAndMask(node, sceneNode);
 
@@ -419,7 +419,7 @@ namespace Unity.VectorGraphics
             var refFill = SVGAttribParser.ParseRelativeRef(node["xlink:href"], svgObjects) as GradientFill;
             var refFillData = refFill != null ? gradientExInfo[refFill] as LinearGradientExData : null;
 
-            bool relativeToWorld = refFillData != null ? refFillData.worldRelative : false;
+            bool relativeToWorld = refFillData != null ? refFillData.WorldRelative : false;
             switch (node["gradientUnits"])
             {
                 case null:
@@ -437,7 +437,7 @@ namespace Unity.VectorGraphics
                     throw node.GetUnsupportedAttribValException("gradientUnits");
             }
 
-            AddressMode addressing = refFill != null ? refFill.addressing : AddressMode.Clamp;
+            AddressMode addressing = refFill != null ? refFill.Addressing : AddressMode.Clamp;
             switch (node["spreadMethod"])
             {
                 case null:
@@ -463,9 +463,9 @@ namespace Unity.VectorGraphics
 
             GradientFill fill = CloneGradientFill(refFill);
             if (fill == null)
-                fill = new GradientFill() { addressing = addressing, type = GradientFillType.Linear };
+                fill = new GradientFill() { Addressing = addressing, Type = GradientFillType.Linear };
 
-            LinearGradientExData fillExData = new LinearGradientExData() { worldRelative = relativeToWorld, fillTransform = gradientTransform };
+            LinearGradientExData fillExData = new LinearGradientExData() { WorldRelative = relativeToWorld, FillTransform = gradientTransform };
             gradientExInfo[fill] = fillExData;
 
             // Fills are defined outside of a shape scope, so we can't resolve relative coordinates here.
@@ -473,16 +473,16 @@ namespace Unity.VectorGraphics
             // nonetheless to give meaningful error messages to the user if any.
             currentContainerSize.Push(Vector2.one);
 
-            fillExData.x1 = node["x1"];
-            fillExData.y1 = node["y1"];
-            fillExData.x2 = node["x2"];
-            fillExData.y2 = node["y2"];
+            fillExData.X1 = node["x1"];
+            fillExData.Y1 = node["y1"];
+            fillExData.X2 = node["x2"];
+            fillExData.Y2 = node["y2"];
 
             // The calls below are ineffective but they validate the inputs and throw an error if wrong values are specified, so don't remove them
-            AttribLengthVal(fillExData.x1, node, "x1", 0.0f, DimType.Width);
-            AttribLengthVal(fillExData.y1, node, "y1", 0.0f, DimType.Height);
-            AttribLengthVal(fillExData.x2, node, "x2", 1.0f, DimType.Width);
-            AttribLengthVal(fillExData.y2, node, "y2", 0.0f, DimType.Height);
+            AttribLengthVal(fillExData.X1, node, "x1", 0.0f, DimType.Width);
+            AttribLengthVal(fillExData.Y1, node, "y1", 0.0f, DimType.Height);
+            AttribLengthVal(fillExData.X2, node, "x2", 1.0f, DimType.Width);
+            AttribLengthVal(fillExData.Y2, node, "y2", 0.0f, DimType.Height);
 
             currentContainerSize.Pop();
             currentGradientFill = fill; // Children stops will register to this fill now
@@ -498,12 +498,12 @@ namespace Unity.VectorGraphics
             var sceneNode = currentSceneNode.Peek();
 
             ParseOpacity(sceneNode);
-            sceneNode.transform = SVGAttribParser.ParseTransform(node);
+            sceneNode.Transform = SVGAttribParser.ParseTransform(node);
             var fill = SVGAttribParser.ParseFill(node, svgObjects, styleResolver);
             PathCorner strokeCorner;
             PathEnding strokeEnding;
             var stroke = ParseStrokeAttributeSet(node, out strokeCorner, out strokeEnding);
-            var pathProps = new PathProperties() { stroke = stroke, corners = strokeCorner, head = strokeEnding, tail = strokeEnding };
+            var pathProps = new PathProperties() { Stroke = stroke, Corners = strokeCorner, Head = strokeEnding, Tail = strokeEnding };
 
             // A path may have 1 or more sub paths. Each for us is an individual vector path.
             var contours = SVGAttribParser.ParsePath(node);
@@ -513,14 +513,14 @@ namespace Unity.VectorGraphics
 
                 if (fill == null)
                 {
-                    sceneNode.drawables = new List<IDrawable>(contours.Count);
+                    sceneNode.Drawables = new List<IDrawable>(contours.Count);
                     foreach (var contour in contours)
-                        sceneNode.drawables.Add(new Path() { contour = contour, pathProps = pathProps });
+                        sceneNode.Drawables.Add(new Path() { Contour = contour, PathProps = pathProps });
                 }
                 else
                 {
-                    sceneNode.drawables = new List<IDrawable>(1);
-                    sceneNode.drawables.Add(new Shape() { contours = contours.ToArray(), fill = fill, pathProps = pathProps });
+                    sceneNode.Drawables = new List<IDrawable>(1);
+                    sceneNode.Drawables.Add(new Shape() { Contours = contours.ToArray(), Fill = fill, PathProps = pathProps });
                 }
 
                 AddToSVGDictionaryIfPossible(node, sceneNode);
@@ -538,7 +538,7 @@ namespace Unity.VectorGraphics
             var sceneNode = currentSceneNode.Peek();
 
             ParseOpacity(sceneNode);
-            sceneNode.transform = SVGAttribParser.ParseTransform(node);
+            sceneNode.Transform = SVGAttribParser.ParseTransform(node);
             var fill = SVGAttribParser.ParseFill(node, svgObjects, styleResolver);
             PathCorner strokeCorner;
             PathEnding strokeEnding;
@@ -553,25 +553,25 @@ namespace Unity.VectorGraphics
                 if (pointsString.Length < 4)
                     throw node.GetException("polygon 'points' do not even specify one triangle");
 
-                var pathProps = new PathProperties() { stroke = stroke, head = strokeEnding, tail = strokeEnding };
-                var contour = new BezierContour() { segments = new BezierPathSegment[pointsString.Length / 2], closed = true };
+                var pathProps = new PathProperties() { Stroke = stroke, Head = strokeEnding, Tail = strokeEnding };
+                var contour = new BezierContour() { Segments = new BezierPathSegment[pointsString.Length / 2], Closed = true };
                 var lastPoint = new Vector2(
                         AttribLengthVal(pointsString[0], node, "points", 0.0f, DimType.Width),
                         AttribLengthVal(pointsString[1], node, "points", 0.0f, DimType.Height));
-                for (int i = 1; i < contour.segments.Length; i++)
+                for (int i = 1; i < contour.Segments.Length; i++)
                 {
                     var newPoint = new Vector2(
                             AttribLengthVal(pointsString[i * 2 + 0], node, "points", 0.0f, DimType.Width),
                             AttribLengthVal(pointsString[i * 2 + 1], node, "points", 0.0f, DimType.Height));
                     var seg = VectorUtils.MakeLine(lastPoint, newPoint);
-                    contour.segments[i - 1] = new BezierPathSegment() { p0 = seg.p0, p1 = seg.p1, p2 = seg.p2 };
+                    contour.Segments[i - 1] = new BezierPathSegment() { P0 = seg.P0, P1 = seg.P1, P2 = seg.P2 };
                     lastPoint = newPoint;
                 }
-                contour.segments[contour.segments.Length - 1] = new BezierPathSegment() { p0 = lastPoint };
+                contour.Segments[contour.Segments.Length - 1] = new BezierPathSegment() { P0 = lastPoint };
 
-                var shape = new Shape() { contours = new BezierContour[] { contour }, pathProps = pathProps, fill = fill };
-                sceneNode.drawables = new List<IDrawable>(1);
-                sceneNode.drawables.Add(shape);
+                var shape = new Shape() { Contours = new BezierContour[] { contour }, PathProps = pathProps, Fill = fill };
+                sceneNode.Drawables = new List<IDrawable>(1);
+                sceneNode.Drawables.Add(shape);
             }
 
             ParseClipAndMask(node, sceneNode);
@@ -587,7 +587,7 @@ namespace Unity.VectorGraphics
             var sceneNode = currentSceneNode.Peek();
 
             ParseOpacity(sceneNode);
-            sceneNode.transform = SVGAttribParser.ParseTransform(node);
+            sceneNode.Transform = SVGAttribParser.ParseTransform(node);
             var fill = SVGAttribParser.ParseFill(node, svgObjects, styleResolver);
             PathCorner strokeCorner;
             PathEnding strokeEnding;
@@ -602,26 +602,26 @@ namespace Unity.VectorGraphics
                 if (pointsString.Length < 4)
                     throw node.GetException("polyline 'points' do not even specify one line");
 
-                var shape = new Shape() { fill = fill };
-                shape.pathProps = new PathProperties() { stroke = stroke, head = strokeEnding, tail = strokeEnding };
-                shape.contours = new BezierContour[] {
-                     new BezierContour() { segments = new BezierPathSegment[pointsString.Length / 2] }
+                var shape = new Shape() { Fill = fill };
+                shape.PathProps = new PathProperties() { Stroke = stroke, Head = strokeEnding, Tail = strokeEnding };
+                shape.Contours = new BezierContour[] {
+                     new BezierContour() { Segments = new BezierPathSegment[pointsString.Length / 2] }
                 };
                 var lastPoint = new Vector2(
                         AttribLengthVal(pointsString[0], node, "points", 0.0f, DimType.Width),
                         AttribLengthVal(pointsString[1], node, "points", 0.0f, DimType.Height));
-                for (int i = 1; i < shape.contours[0].segments.Length; i++)
+                for (int i = 1; i < shape.Contours[0].Segments.Length; i++)
                 {
                     var newPoint = new Vector2(
                             AttribLengthVal(pointsString[i * 2 + 0], node, "points", 0.0f, DimType.Width),
                             AttribLengthVal(pointsString[i * 2 + 1], node, "points", 0.0f, DimType.Height));
                     var seg = VectorUtils.MakeLine(lastPoint, newPoint);
-                    shape.contours[0].segments[i - 1] = new BezierPathSegment() { p0 = seg.p0, p1 = seg.p1, p2 = seg.p2 };
+                    shape.Contours[0].Segments[i - 1] = new BezierPathSegment() { P0 = seg.P0, P1 = seg.P1, P2 = seg.P2 };
                     lastPoint = newPoint;
                 }
-                shape.contours[0].segments[shape.contours[0].segments.Length - 1] = new BezierPathSegment() { p0 = lastPoint };
-                sceneNode.drawables = new List<IDrawable>(1);
-                sceneNode.drawables.Add(shape);
+                shape.Contours[0].Segments[shape.Contours[0].Segments.Length - 1] = new BezierPathSegment() { P0 = lastPoint };
+                sceneNode.Drawables = new List<IDrawable>(1);
+                sceneNode.Drawables.Add(shape);
             }
 
             ParseClipAndMask(node, sceneNode);
@@ -638,7 +638,7 @@ namespace Unity.VectorGraphics
             var refFill = SVGAttribParser.ParseRelativeRef(node["xlink:href"], svgObjects) as GradientFill;
             var refFillData = refFill != null ? gradientExInfo[refFill] as RadialGradientExData : null;
 
-            bool relativeToWorld = refFillData != null ? refFillData.worldRelative : false;
+            bool relativeToWorld = refFillData != null ? refFillData.WorldRelative : false;
             switch (node["gradientUnits"])
             {
                 case null:
@@ -656,7 +656,7 @@ namespace Unity.VectorGraphics
                     throw node.GetUnsupportedAttribValException("gradientUnits");
             }
 
-            AddressMode addressing = refFill != null ? refFill.addressing : AddressMode.Clamp;
+            AddressMode addressing = refFill != null ? refFill.Addressing : AddressMode.Clamp;
             switch (node["spreadMethod"])
             {
                 case null:
@@ -682,9 +682,9 @@ namespace Unity.VectorGraphics
 
             GradientFill fill = CloneGradientFill(refFill);
             if (fill == null)
-                fill = new GradientFill() { addressing = addressing, type = GradientFillType.Radial };
+                fill = new GradientFill() { Addressing = addressing, Type = GradientFillType.Radial };
 
-            RadialGradientExData fillExData = new RadialGradientExData() { worldRelative = relativeToWorld, fillTransform = gradientTransform };
+            RadialGradientExData fillExData = new RadialGradientExData() { WorldRelative = relativeToWorld, FillTransform = gradientTransform };
             gradientExInfo[fill] = fillExData;
 
             // Fills are defined outside of a shape scope, so we can't resolve relative coordinates here.
@@ -692,18 +692,18 @@ namespace Unity.VectorGraphics
             // nonetheless to give meaningful error messages to the user if any.
             currentContainerSize.Push(Vector2.one);
 
-            fillExData.cx = node["cx"];
-            fillExData.cy = node["cy"];
-            fillExData.fx = node["fx"];
-            fillExData.fy = node["fy"];
-            fillExData.r = node["r"];
+            fillExData.Cx = node["cx"];
+            fillExData.Cy = node["cy"];
+            fillExData.Fx = node["fx"];
+            fillExData.Fy = node["fy"];
+            fillExData.R = node["r"];
 
             // The calls below are ineffective but they validate the inputs and throw an error if wrong values are specified, so don't remove them
-            AttribLengthVal(fillExData.cx, node, "cx", 0.5f, DimType.Width);
-            AttribLengthVal(fillExData.cy, node, "cy", 0.5f, DimType.Height);
-            AttribLengthVal(fillExData.fx, node, "fx", 0.5f, DimType.Width);
-            AttribLengthVal(fillExData.fy, node, "fy", 0.5f, DimType.Height);
-            AttribLengthVal(fillExData.r, node, "r", 0.5f, DimType.Length);
+            AttribLengthVal(fillExData.Cx, node, "cx", 0.5f, DimType.Width);
+            AttribLengthVal(fillExData.Cy, node, "cy", 0.5f, DimType.Height);
+            AttribLengthVal(fillExData.Fx, node, "fx", 0.5f, DimType.Width);
+            AttribLengthVal(fillExData.Fy, node, "fy", 0.5f, DimType.Height);
+            AttribLengthVal(fillExData.R, node, "r", 0.5f, DimType.Length);
 
             currentContainerSize.Pop();
             currentGradientFill = fill; // Children stops will register to this fill now
@@ -719,7 +719,7 @@ namespace Unity.VectorGraphics
 
              // A new scene node instead of one precreated for us
             var clipRoot = new SceneNode() {
-                transform = SVGAttribParser.ParseTransform(node)
+                Transform = SVGAttribParser.ParseTransform(node)
             };
 
             bool relativeToWorld;
@@ -738,7 +738,7 @@ namespace Unity.VectorGraphics
                     throw node.GetUnsupportedAttribValException("clipPathUnits");
             }
 
-            clipData[clipRoot] = new ClipData() { worldRelative = relativeToWorld };
+            clipData[clipRoot] = new ClipData() { WorldRelative = relativeToWorld };
 
             AddToSVGDictionaryIfPossible(node, clipRoot);
             if (ShouldDeclareSupportedChildren(node))
@@ -756,7 +756,7 @@ namespace Unity.VectorGraphics
 
             // A new scene node instead of one precreated for us
             var patternRoot = new SceneNode() {
-                transform = Matrix2D.identity
+                Transform = Matrix2D.identity
             };
 
             bool relativeToWorld = false;
@@ -799,14 +799,14 @@ namespace Unity.VectorGraphics
             var patternTransform = SVGAttribParser.ParseTransform(node, "patternTransform");
 
             patternData[patternRoot] = new PatternData() {
-                worldRelative = relativeToWorld,
-                contentWorldRelative = contentRelativeToWorld,
-                patternTransform = patternTransform
+                WorldRelative = relativeToWorld,
+                ContentWorldRelative = contentRelativeToWorld,
+                PatternTransform = patternTransform
             };
 
             var fill = new PatternFill() { 
-                pattern = patternRoot,
-                rect = new Rect(x, y, w, h)
+                Pattern = patternRoot,
+                Rect = new Rect(x, y, w, h)
             };
 
             AddToSVGDictionaryIfPossible(node, fill);
@@ -825,7 +825,7 @@ namespace Unity.VectorGraphics
 
             // A new scene node instead of one precreated for us
             var maskRoot = new SceneNode() {
-                transform = Matrix2D.identity
+                Transform = Matrix2D.identity
             };
 
             bool relativeToWorld;
@@ -861,8 +861,8 @@ namespace Unity.VectorGraphics
             }
 
             maskData[maskRoot] = new MaskData() {
-                worldRelative = relativeToWorld,
-                contentWorldRelative = contentRelativeToWorld,
+                WorldRelative = relativeToWorld,
+                ContentWorldRelative = contentRelativeToWorld,
             };
 
             AddToSVGDictionaryIfPossible(node, maskRoot);
@@ -881,7 +881,7 @@ namespace Unity.VectorGraphics
             var sceneNode = currentSceneNode.Peek();
 
             ParseOpacity(sceneNode);
-            sceneNode.transform = SVGAttribParser.ParseTransform(node);
+            sceneNode.Transform = SVGAttribParser.ParseTransform(node);
             var fill = SVGAttribParser.ParseFill(node, svgObjects, styleResolver);
             PathCorner strokeCorner;
             PathEnding strokeEnding;
@@ -903,13 +903,13 @@ namespace Unity.VectorGraphics
             rx = Mathf.Min(rx, width * 0.5f);
             ry = Mathf.Min(ry, height * 0.5f);
 
-            var rect = new Rectangle() { fill = fill };
-            rect.pathProps = new PathProperties() { stroke = stroke, head = strokeEnding, tail = strokeEnding, corners = strokeCorner };
-            rect.position = new Vector2(x, y);
-            rect.size = new Vector2(width, height);
-            rect.radiusTL = rect.radiusTR = rect.radiusBL = rect.radiusBR = new Vector2(rx, ry);
-            sceneNode.drawables = new List<IDrawable>(1);
-            sceneNode.drawables.Add(rect);
+            var rect = new Rectangle() { Fill = fill };
+            rect.PathProps = new PathProperties() { Stroke = stroke, Head = strokeEnding, Tail = strokeEnding, Corners = strokeCorner };
+            rect.Position = new Vector2(x, y);
+            rect.Size = new Vector2(width, height);
+            rect.RadiusTL = rect.RadiusTR = rect.RadiusBL = rect.RadiusBR = new Vector2(rx, ry);
+            sceneNode.Drawables = new List<IDrawable>(1);
+            sceneNode.Drawables.Add(rect);
 
             ParseClipAndMask(node, sceneNode);
 
@@ -929,7 +929,7 @@ namespace Unity.VectorGraphics
             Color color = stopColor != null ? SVGAttribParser.ParseColor(stopColor) : Color.black;
 
             color.a = AttribFloatVal("stop-opacity", 1.0f);
-            stop.color = color;
+            stop.Color = color;
 
             string offsetString = styleResolver.Evaluate("offset");
             if (!string.IsNullOrEmpty(offsetString))
@@ -937,25 +937,25 @@ namespace Unity.VectorGraphics
                 bool percentage = offsetString.EndsWith("%");
                 if (percentage)
                     offsetString = offsetString.Substring(0, offsetString.Length - 1);
-                stop.stopPercentage = float.Parse(offsetString);
+                stop.StopPercentage = float.Parse(offsetString);
                 if (percentage)
-                    stop.stopPercentage /= 100.0f;
+                    stop.StopPercentage /= 100.0f;
 
-                stop.stopPercentage = Mathf.Max(0.0f, stop.stopPercentage);
-                stop.stopPercentage = Mathf.Min(1.0f, stop.stopPercentage);
+                stop.StopPercentage = Mathf.Max(0.0f, stop.StopPercentage);
+                stop.StopPercentage = Mathf.Min(1.0f, stop.StopPercentage);
             }
 
             // I don't like this, but hopefully there aren't many stops in a gradient
             GradientStop[] newStops;
-            if (currentGradientFill.stops == null || currentGradientFill.stops.Length == 0)
+            if (currentGradientFill.Stops == null || currentGradientFill.Stops.Length == 0)
                 newStops = new GradientStop[1];
             else
             {
-                newStops = new GradientStop[currentGradientFill.stops.Length + 1];
-                currentGradientFill.stops.CopyTo(newStops, 0);
+                newStops = new GradientStop[currentGradientFill.Stops.Length + 1];
+                currentGradientFill.Stops.CopyTo(newStops, 0);
             }
             newStops[newStops.Length - 1] = stop;
-            currentGradientFill.stops = newStops;
+            currentGradientFill.Stops = newStops;
 
             if (ShouldDeclareSupportedChildren(node))
                 SupportElems(node);  // No children supported
@@ -965,23 +965,23 @@ namespace Unity.VectorGraphics
         {
             var node = docReader.VisitCurrent();
             var sceneNode = new SceneNode();
-            if (scene.root == null) // If this is the root SVG element, then we set the vector scene root as well
+            if (scene.Root == null) // If this is the root SVG element, then we set the vector scene root as well
             {
                 System.Diagnostics.Debug.Assert(currentSceneNode.Count == 0);
-                scene.root = sceneNode;
+                scene.Root = sceneNode;
             }
 
             styleResolver.PushNode(node);
 
             ParseOpacity(sceneNode);
-            sceneNode.transform = SVGAttribParser.ParseTransform(node);
+            sceneNode.Transform = SVGAttribParser.ParseTransform(node);
 
             var sceneViewport = ParseViewport(node, sceneNode, new Vector2(windowWidth, windowHeight));
             ApplyViewBox(sceneNode, ParseViewBox(node, sceneNode, sceneViewport), sceneViewport);
 
             currentContainerSize.Push(sceneViewport.size);
             currentSceneNode.Push(sceneNode);
-            nodeGlobalSceneState[sceneNode] = new NodeGlobalSceneState() { containerSize = currentContainerSize.Peek() };
+            nodeGlobalSceneState[sceneNode] = new NodeGlobalSceneState() { ContainerSize = currentContainerSize.Peek() };
 
             if (ShouldDeclareSupportedChildren(node))
                 SupportElems(node, allElems);
@@ -999,7 +999,7 @@ namespace Unity.VectorGraphics
             var node = docReader.VisitCurrent();
             var sceneNode = new SceneNode(); // A new scene node instead of one precreated for us
             ParseOpacity(sceneNode);
-            sceneNode.transform = Matrix2D.identity;
+            sceneNode.Transform = Matrix2D.identity;
 
             Rect viewportRect = new Rect(Vector2.zero, currentContainerSize.Peek());
             var viewBoxInfo = ParseViewBox(node, sceneNode, viewportRect);
@@ -1027,18 +1027,18 @@ namespace Unity.VectorGraphics
             if (referencedNode == null)
                 throw node.GetException("Referencing non-existent element (" + node["xlink:href"] + ")");
 
-            sceneNode.transform = SVGAttribParser.ParseTransform(node);
+            sceneNode.Transform = SVGAttribParser.ParseTransform(node);
             var sceneViewport = ParseViewport(node, sceneNode, Vector2.zero);
-            sceneNode.transform = sceneNode.transform * Matrix2D.Translate(sceneViewport.position);
+            sceneNode.Transform = sceneNode.Transform * Matrix2D.Translate(sceneViewport.position);
 
             // Note we don't use the viewport size because the <use> element doesn't establish a viewport for its referenced elements
             ViewBoxInfo viewBoxInfo;
             if (symbolViewBoxes.TryGetValue(referencedNode, out viewBoxInfo))
                 ApplyViewBox(sceneNode, viewBoxInfo, sceneViewport); // When using a symbol we need to apply the symbol's view box
 
-            if (sceneNode.children == null)
-                sceneNode.children = new List<SceneNode>();
-            sceneNode.children.Add(referencedNode);
+            if (sceneNode.Children == null)
+                sceneNode.Children = new List<SceneNode>();
+            sceneNode.Children.Add(referencedNode);
 
             ParseClipAndMask(node, sceneNode);
 
@@ -1069,12 +1069,12 @@ namespace Unity.VectorGraphics
             // This is a very fragile gradient fill cloning used since Illustrator
             // will sometimes refer to another fill using a "xlink:href" attribute.
             return new GradientFill() {
-                type = other.type,
-                stops = other.stops,
-                mode = other.mode,
-                opacity = other.opacity,
-                addressing = other.addressing,
-                radialFocus = other.radialFocus
+                Type = other.Type,
+                Stops = other.Stops,
+                Mode = other.Mode,
+                Opacity = other.Opacity,
+                Addressing = other.Addressing,
+                RadialFocus = other.RadialFocus
             };
         }
         #endregion
@@ -1169,7 +1169,7 @@ namespace Unity.VectorGraphics
 
         enum ViewBoxAlign { Min, Mid, Max }
         enum ViewBoxAspectRatio { DontPreserve, FitLargestDim, FitSmallestDim }
-        struct ViewBoxInfo { public Rect viewBox; public ViewBoxAspectRatio aspectRatio; public ViewBoxAlign alignX, alignY; }
+        struct ViewBoxInfo { public Rect ViewBox; public ViewBoxAspectRatio AspectRatio; public ViewBoxAlign AlignX, AlignY; }
         ViewBoxInfo ParseViewBox(XmlReaderIterator.Node node, SceneNode sceneNode, Rect sceneViewport)
         {
             var viewBoxInfo = new ViewBoxInfo();
@@ -1188,7 +1188,7 @@ namespace Unity.VectorGraphics
                     AttribLengthVal(viewBoxValues[2], node, "viewBox", sceneViewport.width, DimType.Width),
                     AttribLengthVal(viewBoxValues[3], node, "viewBox", sceneViewport.height, DimType.Height));
 
-            viewBoxInfo.viewBox = new Rect(viewBoxMin, viewBoxSize);
+            viewBoxInfo.ViewBox = new Rect(viewBoxMin, viewBoxSize);
             ParseViewBoxAspectRatio(node, ref viewBoxInfo);
 
             return viewBoxInfo;
@@ -1196,9 +1196,9 @@ namespace Unity.VectorGraphics
 
         void ParseViewBoxAspectRatio(XmlReaderIterator.Node node, ref ViewBoxInfo viewBoxInfo)
         {
-            viewBoxInfo.aspectRatio = ViewBoxAspectRatio.FitLargestDim;
-            viewBoxInfo.alignX = ViewBoxAlign.Mid;
-            viewBoxInfo.alignY = ViewBoxAlign.Mid;
+            viewBoxInfo.AspectRatio = ViewBoxAspectRatio.FitLargestDim;
+            viewBoxInfo.AlignX = ViewBoxAlign.Mid;
+            viewBoxInfo.AlignY = ViewBoxAlign.Mid;
 
             string preserveAspectRatioString = node["preserveAspectRatio"];
             preserveAspectRatioString = preserveAspectRatioString != null ? preserveAspectRatioString.Trim() : null;
@@ -1212,69 +1212,69 @@ namespace Unity.VectorGraphics
                     {
                         case "defer": break; // This is only meaningful on <image> that references another SVG, we don't support that
                         case "none": wantNone = true; break;
-                        case "xMinYMin": viewBoxInfo.alignX = ViewBoxAlign.Min; viewBoxInfo.alignY = ViewBoxAlign.Min; break;
-                        case "xMidYMin": viewBoxInfo.alignX = ViewBoxAlign.Mid; viewBoxInfo.alignY = ViewBoxAlign.Min; break;
-                        case "xMaxYMin": viewBoxInfo.alignX = ViewBoxAlign.Max; viewBoxInfo.alignY = ViewBoxAlign.Min; break;
-                        case "xMinYMid": viewBoxInfo.alignX = ViewBoxAlign.Min; viewBoxInfo.alignY = ViewBoxAlign.Mid; break;
-                        case "xMidYMid": viewBoxInfo.alignX = ViewBoxAlign.Mid; viewBoxInfo.alignY = ViewBoxAlign.Mid; break;
-                        case "xMaxYMid": viewBoxInfo.alignX = ViewBoxAlign.Max; viewBoxInfo.alignY = ViewBoxAlign.Mid; break;
-                        case "xMinYMax": viewBoxInfo.alignX = ViewBoxAlign.Min; viewBoxInfo.alignY = ViewBoxAlign.Max; break;
-                        case "xMidYMax": viewBoxInfo.alignX = ViewBoxAlign.Mid; viewBoxInfo.alignY = ViewBoxAlign.Max; break;
-                        case "xMaxYMax": viewBoxInfo.alignX = ViewBoxAlign.Max; viewBoxInfo.alignY = ViewBoxAlign.Max; break;
-                        case "meet": viewBoxInfo.aspectRatio = ViewBoxAspectRatio.FitLargestDim; break;
-                        case "slice": viewBoxInfo.aspectRatio = ViewBoxAspectRatio.FitSmallestDim; break;
+                        case "xMinYMin": viewBoxInfo.AlignX = ViewBoxAlign.Min; viewBoxInfo.AlignY = ViewBoxAlign.Min; break;
+                        case "xMidYMin": viewBoxInfo.AlignX = ViewBoxAlign.Mid; viewBoxInfo.AlignY = ViewBoxAlign.Min; break;
+                        case "xMaxYMin": viewBoxInfo.AlignX = ViewBoxAlign.Max; viewBoxInfo.AlignY = ViewBoxAlign.Min; break;
+                        case "xMinYMid": viewBoxInfo.AlignX = ViewBoxAlign.Min; viewBoxInfo.AlignY = ViewBoxAlign.Mid; break;
+                        case "xMidYMid": viewBoxInfo.AlignX = ViewBoxAlign.Mid; viewBoxInfo.AlignY = ViewBoxAlign.Mid; break;
+                        case "xMaxYMid": viewBoxInfo.AlignX = ViewBoxAlign.Max; viewBoxInfo.AlignY = ViewBoxAlign.Mid; break;
+                        case "xMinYMax": viewBoxInfo.AlignX = ViewBoxAlign.Min; viewBoxInfo.AlignY = ViewBoxAlign.Max; break;
+                        case "xMidYMax": viewBoxInfo.AlignX = ViewBoxAlign.Mid; viewBoxInfo.AlignY = ViewBoxAlign.Max; break;
+                        case "xMaxYMax": viewBoxInfo.AlignX = ViewBoxAlign.Max; viewBoxInfo.AlignY = ViewBoxAlign.Max; break;
+                        case "meet": viewBoxInfo.AspectRatio = ViewBoxAspectRatio.FitLargestDim; break;
+                        case "slice": viewBoxInfo.AspectRatio = ViewBoxAspectRatio.FitSmallestDim; break;
                     }
                 }
             }
 
             if (wantNone) // Override aspect ratio no matter what other modes are chosen (meet/slice)
-                viewBoxInfo.aspectRatio = ViewBoxAspectRatio.DontPreserve;
+                viewBoxInfo.AspectRatio = ViewBoxAspectRatio.DontPreserve;
         }
 
         void ApplyViewBox(SceneNode sceneNode, ViewBoxInfo viewBoxInfo, Rect sceneViewport)
         {
-            if ((viewBoxInfo.viewBox.size == Vector2.zero) || (sceneViewport.size == Vector2.zero))
+            if ((viewBoxInfo.ViewBox.size == Vector2.zero) || (sceneViewport.size == Vector2.zero))
                 return;
 
-            Vector2 scale = Vector2.one, offset = -viewBoxInfo.viewBox.position;
-            if (viewBoxInfo.aspectRatio == ViewBoxAspectRatio.DontPreserve)
+            Vector2 scale = Vector2.one, offset = -viewBoxInfo.ViewBox.position;
+            if (viewBoxInfo.AspectRatio == ViewBoxAspectRatio.DontPreserve)
             {
-                scale = sceneViewport.size / viewBoxInfo.viewBox.size;
+                scale = sceneViewport.size / viewBoxInfo.ViewBox.size;
             }
             else
             {
-                scale.x = scale.y = sceneViewport.width / viewBoxInfo.viewBox.width;
+                scale.x = scale.y = sceneViewport.width / viewBoxInfo.ViewBox.width;
                 bool fitsOnWidth;
-                if (viewBoxInfo.aspectRatio == ViewBoxAspectRatio.FitLargestDim)
-                    fitsOnWidth = viewBoxInfo.viewBox.height * scale.y <= sceneViewport.height;
-                else fitsOnWidth = viewBoxInfo.viewBox.height * scale.y > sceneViewport.height;
+                if (viewBoxInfo.AspectRatio == ViewBoxAspectRatio.FitLargestDim)
+                    fitsOnWidth = viewBoxInfo.ViewBox.height * scale.y <= sceneViewport.height;
+                else fitsOnWidth = viewBoxInfo.ViewBox.height * scale.y > sceneViewport.height;
 
                 Vector2 alignOffset = Vector2.zero;
                 if (fitsOnWidth)
                 {
                     // We fit on the width, so apply the vertical alignment rules
-                    if (viewBoxInfo.alignY == ViewBoxAlign.Mid)
-                        alignOffset.y = (sceneViewport.height - viewBoxInfo.viewBox.height * scale.y) * 0.5f;
-                    else if (viewBoxInfo.alignY == ViewBoxAlign.Max)
-                        alignOffset.y = sceneViewport.height - viewBoxInfo.viewBox.height * scale.y;
+                    if (viewBoxInfo.AlignY == ViewBoxAlign.Mid)
+                        alignOffset.y = (sceneViewport.height - viewBoxInfo.ViewBox.height * scale.y) * 0.5f;
+                    else if (viewBoxInfo.AlignY == ViewBoxAlign.Max)
+                        alignOffset.y = sceneViewport.height - viewBoxInfo.ViewBox.height * scale.y;
                 }
                 else
                 {
                     // We didn't fit on width, meaning we should fit on height and use the wiggle room on width
-                    scale.x = scale.y = sceneViewport.height / viewBoxInfo.viewBox.height;
+                    scale.x = scale.y = sceneViewport.height / viewBoxInfo.ViewBox.height;
 
                     // Apply the horizontal alignment rules
-                    if (viewBoxInfo.alignX == ViewBoxAlign.Mid)
-                        alignOffset.x = (sceneViewport.width - viewBoxInfo.viewBox.width * scale.x) * 0.5f;
-                    else if (viewBoxInfo.alignX == ViewBoxAlign.Max)
-                        alignOffset.x = sceneViewport.width - viewBoxInfo.viewBox.width * scale.x;
+                    if (viewBoxInfo.AlignX == ViewBoxAlign.Mid)
+                        alignOffset.x = (sceneViewport.width - viewBoxInfo.ViewBox.width * scale.x) * 0.5f;
+                    else if (viewBoxInfo.AlignX == ViewBoxAlign.Max)
+                        alignOffset.x = sceneViewport.width - viewBoxInfo.ViewBox.width * scale.x;
                 }
 
                 offset += alignOffset / scale;
             }
 
             // Aaaaand finally, the transform
-            sceneNode.transform = sceneNode.transform * Matrix2D.Scale(scale) * Matrix2D.Translate(offset);
+            sceneNode.Transform = sceneNode.Transform * Matrix2D.Scale(scale) * Matrix2D.Translate(offset);
         }
 
         Stroke ParseStrokeAttributeSet(XmlReaderIterator.Node node, out PathCorner strokeCorner, out PathEnding strokeEnding)
@@ -1285,7 +1285,7 @@ namespace Unity.VectorGraphics
             if (stroke != null)
             {
                 string strokeWidth = styleResolver.Evaluate("stroke-width", SVGResolveLimit.Hierarchy);
-                stroke.halfThickness = AttribLengthVal(strokeWidth, node, "stroke-width", 1.0f, DimType.Length) * 0.5f;
+                stroke.HalfThickness = AttribLengthVal(strokeWidth, node, "stroke-width", 1.0f, DimType.Length) * 0.5f;
                 switch (styleResolver.Evaluate("stroke-linecap", SVGResolveLimit.Hierarchy))
                 {
                     case "butt": strokeEnding = PathEnding.Chop; break;
@@ -1305,24 +1305,24 @@ namespace Unity.VectorGraphics
                     string[] entries = pattern.Split(whiteSpaceNumberChars, StringSplitOptions.RemoveEmptyEntries);
                     // If the pattern is odd, then we duplicate it to make it even as per the spec
                     int totalCount = (entries.Length & 1) == 1 ? entries.Length * 2 : entries.Length;
-                    stroke.pattern = new float[totalCount];
+                    stroke.Pattern = new float[totalCount];
                     for (int i = 0; i < entries.Length; i++)
-                        stroke.pattern[i] = AttribLengthVal(entries[i], node, "stroke-dasharray", 0.0f, DimType.Length);
+                        stroke.Pattern[i] = AttribLengthVal(entries[i], node, "stroke-dasharray", 0.0f, DimType.Length);
 
                     // Duplicate the pattern
                     if (totalCount > entries.Length)
                     {
                         for (int i = 0; i < entries.Length; i++)
-                            stroke.pattern[i + entries.Length] = stroke.pattern[i];
+                            stroke.Pattern[i + entries.Length] = stroke.Pattern[i];
                     }
 
                     var dashOffset = styleResolver.Evaluate("stroke-dashoffset", SVGResolveLimit.Hierarchy);
-                    stroke.patternOffset = AttribLengthVal(dashOffset, node, "stroke-dashoffset", 0.0f, DimType.Length);
+                    stroke.PatternOffset = AttribLengthVal(dashOffset, node, "stroke-dashoffset", 0.0f, DimType.Length);
                 }
 
                 var strokeMiterLimit = styleResolver.Evaluate("stroke-miterlimit", SVGResolveLimit.Hierarchy);
-                stroke.tippedCornerLimit = AttribLengthVal(strokeMiterLimit, node, "stroke-miterlimit", 4.0f, DimType.Length);
-                if (stroke.tippedCornerLimit < 1.0f)
+                stroke.TippedCornerLimit = AttribLengthVal(strokeMiterLimit, node, "stroke-miterlimit", 4.0f, DimType.Length);
+                if (stroke.TippedCornerLimit < 1.0f)
                     throw node.GetException("'stroke-miterlimit' should be greater or equal to 1");
             } // If stroke is specified
             return stroke;
@@ -1356,7 +1356,7 @@ namespace Unity.VectorGraphics
             var clipperRoot = clipper;
 
             ClipData data;
-            if (clipData.TryGetValue(clipper, out data) && !data.worldRelative)
+            if (clipData.TryGetValue(clipper, out data) && !data.WorldRelative)
             {
                 // If the referenced clip path units is in bounding-box space, we add an intermediate
                 // node to scale the content to the correct size.
@@ -1364,12 +1364,12 @@ namespace Unity.VectorGraphics
                 var transform = Matrix2D.Translate(rect.position) * Matrix2D.Scale(rect.size);
 
                 clipperRoot = new SceneNode() {
-                    children = new List<SceneNode> { clipper },
-                    transform = transform
+                    Children = new List<SceneNode> { clipper },
+                    Transform = transform
                 };
             }
 
-            sceneNode.clipper = clipperRoot;
+            sceneNode.Clipper = clipperRoot;
         }
 
         void ParseMask(XmlReaderIterator.Node node, SceneNode sceneNode)
@@ -1386,7 +1386,7 @@ namespace Unity.VectorGraphics
             var maskRoot = maskPath;
 
             MaskData data;
-            if (maskData.TryGetValue(maskPath, out data) && !data.contentWorldRelative)
+            if (maskData.TryGetValue(maskPath, out data) && !data.ContentWorldRelative)
             {
                 // If the referenced mask units is in bounding-box space, we add an intermediate
                 // node to scale the content to the correct size.
@@ -1394,12 +1394,12 @@ namespace Unity.VectorGraphics
                 var transform = Matrix2D.Translate(rect.position) * Matrix2D.Scale(rect.size);
 
                 maskRoot = new SceneNode() {
-                    children = new List<SceneNode> { maskPath },
-                    transform = transform
+                    Children = new List<SceneNode> { maskPath },
+                    Transform = transform
                 };
             }
 
-            sceneNode.clipper = maskRoot;
+            sceneNode.Clipper = maskRoot;
         }
 
         #endregion
@@ -1440,9 +1440,9 @@ namespace Unity.VectorGraphics
 
         struct HierarchyUpdate
         {
-            public SceneNode parent;
-            public SceneNode newNode;
-            public SceneNode replaceNode;
+            public SceneNode Parent;
+            public SceneNode NewNode;
+            public SceneNode ReplaceNode;
         }
 
         void PostProcess(SceneNode root)
@@ -1452,26 +1452,26 @@ namespace Unity.VectorGraphics
             // Adjust fills on all objects
             foreach (var nodeInfo in VectorUtils.WorldTransformedSceneNodes(root, nodeOpacity))
             {
-                if (nodeInfo.node.drawables == null)
+                if (nodeInfo.Node.Drawables == null)
                     continue;
-                foreach (var drawable in nodeInfo.node.drawables)
+                foreach (var drawable in nodeInfo.Node.Drawables)
                 {
                     Filled filled = drawable as Filled;
                     if (filled != null)
                     {
-                        if (filled.fill is GradientFill)
+                        if (filled.Fill is GradientFill)
                         {
-                            AdjustGradientFill(nodeInfo.node, nodeInfo.worldTransform, filled);
+                            AdjustGradientFill(nodeInfo.Node, nodeInfo.WorldTransform, filled);
                         }
-                        else if (filled.fill is PatternFill)
+                        else if (filled.Fill is PatternFill)
                         {
-                            var fillNode = AdjustPatternFill(nodeInfo.node, nodeInfo.worldTransform, filled);
+                            var fillNode = AdjustPatternFill(nodeInfo.Node, nodeInfo.WorldTransform, filled);
                             if (fillNode != null)
                             {
                                 hierarchyUpdates.Add(new HierarchyUpdate() {
-                                    parent = nodeInfo.parent,
-                                    newNode = fillNode,
-                                    replaceNode = nodeInfo.node
+                                    Parent = nodeInfo.Parent,
+                                    NewNode = fillNode,
+                                    ReplaceNode = nodeInfo.Node
                                 });
                             }
                         }
@@ -1481,15 +1481,15 @@ namespace Unity.VectorGraphics
 
             foreach (var update in hierarchyUpdates)
             {
-                var index = update.parent.children.IndexOf(update.replaceNode);
-                update.parent.children.RemoveAt(index);
-                update.parent.children.Insert(index, update.newNode);
+                var index = update.Parent.Children.IndexOf(update.ReplaceNode);
+                update.Parent.Children.RemoveAt(index);
+                update.Parent.Children.Insert(index, update.NewNode);
             }
         }
 
         void AdjustGradientFill(SceneNode node, Matrix2D worldTransform, Filled filledObj)
         {
-            GradientFill fill = filledObj.fill as GradientFill;
+            GradientFill fill = filledObj.Fill as GradientFill;
             if (fill == null)
                 return;
 
@@ -1497,16 +1497,16 @@ namespace Unity.VectorGraphics
             if (filledObj is Rectangle)
             {
                 var r = (Rectangle)filledObj;
-                min = r.position;
-                max = r.position + r.size;
+                min = r.Position;
+                max = r.Position + r.Size;
             }
             else if (filledObj is Shape)
             {
                 min = new Vector2(float.MaxValue, float.MaxValue);
                 max = new Vector2(-float.MaxValue, -float.MaxValue);
-                foreach (var contour in ((Shape)filledObj).contours)
+                foreach (var contour in ((Shape)filledObj).Contours)
                 {
-                    var bbox = VectorUtils.Bounds(contour);
+                    var bbox = VectorUtils.Bounds(contour.Segments);
                     min = Vector2.Min(min, bbox.min);
                     max = Vector2.Max(max, bbox.max);
                 }
@@ -1516,10 +1516,10 @@ namespace Unity.VectorGraphics
             Rect bounds = new Rect(min, max - min);
 
             GradientExData extInfo = (GradientExData)gradientExInfo[fill];
-            var containerSize = nodeGlobalSceneState[node].containerSize;
+            var containerSize = nodeGlobalSceneState[node].ContainerSize;
             Matrix2D gradTransform = Matrix2D.identity;
 
-            currentContainerSize.Push(extInfo.worldRelative ? containerSize : Vector2.one);
+            currentContainerSize.Push(extInfo.WorldRelative ? containerSize : Vector2.one);
 
             // If the fill is object relative, then the dimensions will come to us in
             // a normalized space, we must adjust those to the object's dimensions
@@ -1534,11 +1534,11 @@ namespace Unity.VectorGraphics
                 // the linear gradient with its slant and all the fun involved.
                 var linGradEx = (LinearGradientExData)extInfo;
                 Vector2 lineStart = new Vector2(
-                        AttribLengthVal(linGradEx.x1, null, null, 0.0f, DimType.Width),
-                        AttribLengthVal(linGradEx.y1, null, null, 0.0f, DimType.Height));
+                        AttribLengthVal(linGradEx.X1, null, null, 0.0f, DimType.Width),
+                        AttribLengthVal(linGradEx.Y1, null, null, 0.0f, DimType.Height));
                 Vector2 lineEnd = new Vector2(
-                        AttribLengthVal(linGradEx.x2, null, null, currentContainerSize.Peek().x, DimType.Width),
-                        AttribLengthVal(linGradEx.y2, null, null, 0.0f, DimType.Height));
+                        AttribLengthVal(linGradEx.X2, null, null, currentContainerSize.Peek().x, DimType.Width),
+                        AttribLengthVal(linGradEx.Y2, null, null, 0.0f, DimType.Height));
 
                 var gradientVector = lineEnd - lineStart;
                 float gradientVectorInvLength = 1.0f / gradientVector.magnitude;
@@ -1556,25 +1556,25 @@ namespace Unity.VectorGraphics
                 var radGradEx = (RadialGradientExData)extInfo;
                 Vector2 halfCurrentContainerSize = currentContainerSize.Peek() * 0.5f;
                 Vector2 center = new Vector2(
-                        AttribLengthVal(radGradEx.cx, null, null, halfCurrentContainerSize.x, DimType.Width),
-                        AttribLengthVal(radGradEx.cy, null, null, halfCurrentContainerSize.y, DimType.Height));
+                        AttribLengthVal(radGradEx.Cx, null, null, halfCurrentContainerSize.x, DimType.Width),
+                        AttribLengthVal(radGradEx.Cy, null, null, halfCurrentContainerSize.y, DimType.Height));
                 Vector2 focus = new Vector2(
-                        AttribLengthVal(radGradEx.fx, null, null, center.x, DimType.Width),
-                        AttribLengthVal(radGradEx.fy, null, null, center.y, DimType.Height));
-                float radius = AttribLengthVal(radGradEx.r, null, null, halfCurrentContainerSize.magnitude / SVGLengthFactor, DimType.Length);
+                        AttribLengthVal(radGradEx.Fx, null, null, center.x, DimType.Width),
+                        AttribLengthVal(radGradEx.Fy, null, null, center.y, DimType.Height));
+                float radius = AttribLengthVal(radGradEx.R, null, null, halfCurrentContainerSize.magnitude / SVGLengthFactor, DimType.Length);
 
                 // This block below tells that radial focus cannot change per object, but is realized correctly for the first object
                 // that requests this gradient. If the gradient is using object-relative coordinates to specify the focus location,
                 // then only the first object will look correct, and the rest will potentially not look right. The alternative is
                 // to detect if it is necessary and generate a new atlas entry for it
-                if (!radGradEx.parsed)
+                if (!radGradEx.Parsed)
                 {
                     // VectorGradientFill radialFocus is (-1,1) relative to the outer circle
-                    fill.radialFocus = (focus - center) / radius;
-                    if (fill.radialFocus.sqrMagnitude > 1.0f - VectorUtils.Epsilon)
-                        fill.radialFocus = fill.radialFocus.normalized * (1.0f - VectorUtils.Epsilon); // Stick within the unit circle
+                    fill.RadialFocus = (focus - center) / radius;
+                    if (fill.RadialFocus.sqrMagnitude > 1.0f - VectorUtils.Epsilon)
+                        fill.RadialFocus = fill.RadialFocus.normalized * (1.0f - VectorUtils.Epsilon); // Stick within the unit circle
 
-                    radGradEx.parsed = true;
+                    radGradEx.Parsed = true;
                 }
 
                 gradTransform =
@@ -1588,26 +1588,26 @@ namespace Unity.VectorGraphics
 
             currentContainerSize.Pop();
 
-            var uvToWorld = extInfo.worldRelative ? Matrix2D.Translate(bounds.min) * Matrix2D.Scale(bounds.size) : Matrix2D.identity;
+            var uvToWorld = extInfo.WorldRelative ? Matrix2D.Translate(bounds.min) * Matrix2D.Scale(bounds.size) : Matrix2D.identity;
             var boundsInv = new Vector2(1.0f / bounds.width, 1.0f / bounds.height);
-            filledObj.fillTransform = Matrix2D.Scale(boundsInv) * gradTransform * extInfo.fillTransform.Inverse() * uvToWorld;
+            filledObj.FillTransform = Matrix2D.Scale(boundsInv) * gradTransform * extInfo.FillTransform.Inverse() * uvToWorld;
         }
 
         SceneNode AdjustPatternFill(SceneNode node, Matrix2D worldTransform, Filled filledObj)
         {
-            PatternFill patternFill = filledObj.fill as PatternFill;
+            PatternFill patternFill = filledObj.Fill as PatternFill;
             if (patternFill == null ||
-                Mathf.Abs(patternFill.rect.width) < VectorUtils.Epsilon ||
-                Mathf.Abs(patternFill.rect.height) < VectorUtils.Epsilon)
+                Mathf.Abs(patternFill.Rect.width) < VectorUtils.Epsilon ||
+                Mathf.Abs(patternFill.Rect.height) < VectorUtils.Epsilon)
             {
                 return null;
             }
             
-            var data = patternData[patternFill.pattern];
+            var data = patternData[patternFill.Pattern];
 
             var nodeBounds = VectorUtils.SceneNodeBounds(node);
-            var patternRect = patternFill.rect;
-            if (!data.worldRelative)
+            var patternRect = patternFill.Rect;
+            if (!data.WorldRelative)
             {
                 patternRect.position *= nodeBounds.size;
                 patternRect.size *= nodeBounds.size;
@@ -1616,18 +1616,18 @@ namespace Unity.VectorGraphics
             // The pattern fill will create a new clipped node containing the repeating pattern
             // as well as a sibling containing the original node. This will replace the original node.
             var replacementNode = new SceneNode() {
-                transform = node.transform,
-                children = new List<SceneNode>(2)
+                Transform = node.Transform,
+                Children = new List<SceneNode>(2)
             };
-            node.transform = Matrix2D.identity;
+            node.Transform = Matrix2D.identity;
 
             // The pattern node will be wrapped in a scaling node if content isn't world relative
-            var patternNode = patternFill.pattern;
-            if (!data.contentWorldRelative)
+            var patternNode = patternFill.Pattern;
+            if (!data.ContentWorldRelative)
             {
                 patternNode = new SceneNode() {
-                    transform = Matrix2D.Scale(nodeBounds.size),
-                    children = new List<SceneNode> { patternFill.pattern }
+                    Transform = Matrix2D.Scale(nodeBounds.size),
+                    Children = new List<SceneNode> { patternFill.Pattern }
                 };
             }
 
@@ -1635,25 +1635,25 @@ namespace Unity.VectorGraphics
 
             // Duplicate the filling pattern
             var grid = new SceneNode() {
-                transform = data.patternTransform,
-                children = new List<SceneNode>(20)
+                Transform = data.PatternTransform,
+                Children = new List<SceneNode>(20)
             };
 
             var fill = new SceneNode() {
-                transform = Matrix2D.identity,
-                children = new List<SceneNode> { grid },
-                clipper = node
+                Transform = Matrix2D.identity,
+                Children = new List<SceneNode> { grid },
+                Clipper = node
             };
 
             // SVG patterns are clipped in their respective "boxes"
             var box = new SceneNode() {
-                transform = Matrix2D.identity,
-                drawables = new List<IDrawable> { new Rectangle() { size = patternRect.size } }
+                Transform = Matrix2D.identity,
+                Drawables = new List<IDrawable> { new Rectangle() { Size = patternRect.size } }
             };
 
             // Compute the bounds of the shape to be filled, taking into account the pattern transform
             var bounds = VectorUtils.SceneNodeBounds(node);
-            var invPatternTransform = data.patternTransform.Inverse();
+            var invPatternTransform = data.PatternTransform.Inverse();
             var boundVerts = new Vector2[] {
                 invPatternTransform * new Vector2(bounds.xMin, bounds.yMin),
                 invPatternTransform * new Vector2(bounds.xMax, bounds.yMin),
@@ -1683,16 +1683,16 @@ namespace Unity.VectorGraphics
                 for (float x = xStart; x < bounds.xMax; x += patternRect.width)
                 {
                     var pattern = new SceneNode() {
-                        transform = Matrix2D.Translate(new Vector2(x, y) + offset),
-                        children = new List<SceneNode> { patternNode },
-                        clipper = box
+                        Transform = Matrix2D.Translate(new Vector2(x, y) + offset),
+                        Children = new List<SceneNode> { patternNode },
+                        Clipper = box
                     };
-                    grid.children.Add(pattern);
+                    grid.Children.Add(pattern);
                 }
             }
 
-            replacementNode.children.Add(fill);
-            replacementNode.children.Add(node);
+            replacementNode.Children.Add(fill);
+            replacementNode.Children.Add(node);
 
             return replacementNode;
         }
@@ -1738,42 +1738,42 @@ namespace Unity.VectorGraphics
 
         struct NodeGlobalSceneState
         {
-            public Vector2 containerSize;
+            public Vector2 ContainerSize;
         }
 
         class GradientExData
         {
-            public bool worldRelative;
-            public Matrix2D fillTransform;
+            public bool WorldRelative;
+            public Matrix2D FillTransform;
         }
 
         class LinearGradientExData : GradientExData
         {
-            public string x1, y1, x2, y2;
+            public string X1, Y1, X2, Y2;
         }
 
         class RadialGradientExData : GradientExData
         {
-            public bool parsed;
-            public string cx, cy, fx, fy, r;
+            public bool Parsed;
+            public string Cx, Cy, Fx, Fy, R;
         }
 
         struct ClipData
         {
-            public bool worldRelative;
+            public bool WorldRelative;
         }
 
         struct PatternData
         {
-            public bool worldRelative;
-            public bool contentWorldRelative;
-            public Matrix2D patternTransform;
+            public bool WorldRelative;
+            public bool ContentWorldRelative;
+            public Matrix2D PatternTransform;
         }
 
         struct MaskData
         {
-            public bool worldRelative;
-            public bool contentWorldRelative;
+            public bool WorldRelative;
+            public bool ContentWorldRelative;
         }
     }
 
@@ -2050,7 +2050,7 @@ namespace Unity.VectorGraphics
                 throw node.GetException("stroke fills other that a solid color are not supported yet");
 
             Stroke stroke = new Stroke();
-            stroke.color = ((SolidFill)strokeFill).color;
+            stroke.Color = ((SolidFill)strokeFill).Color;
             return stroke;
         }
 
@@ -2134,7 +2134,7 @@ namespace Unity.VectorGraphics
                 }
                 else if (cmdNoCase == 'z') // ClosePath
                 {
-                    penPos = currentContour.First != null ? currentContour.First.Value.p0 : Vector2.zero;
+                    penPos = currentContour.First != null ? currentContour.First.Value.P0 : Vector2.zero;
                     ConcludePath(true);
                 }
                 else if (cmdNoCase == 'l') // Line-to
@@ -2164,21 +2164,21 @@ namespace Unity.VectorGraphics
                 {
                     // If relative, the pen position is on P0 and is only moved to P3
                     BezierSegment bs = new BezierSegment();
-                    bs.p0 = penPos;
-                    bs.p1 = NextVector2(relative);
+                    bs.P0 = penPos;
+                    bs.P1 = NextVector2(relative);
                     if (cmdNoCase == 'c')
-                        bs.p2 = NextVector2(relative);
-                    bs.p3 = NextVector2(relative);
+                        bs.P2 = NextVector2(relative);
+                    bs.P3 = NextVector2(relative);
 
                     if (cmdNoCase == 'q')
                     {
-                        var p1 = bs.p1;
+                        var p1 = bs.P1;
                         var t = 2.0f/3.0f;
-                        bs.p1 = bs.p0 + t * (p1 - bs.p0);
-                        bs.p2 = bs.p3 + t * (p1 - bs.p3);
+                        bs.P1 = bs.P0 + t * (p1 - bs.P0);
+                        bs.P2 = bs.P3 + t * (p1 - bs.P3);
                     }
 
-                    penPos = bs.p3;
+                    penPos = bs.P3;
 
                     if (!VectorUtils.IsEmptySegment(bs))
                         currentContour.AddLast(bs);
@@ -2187,25 +2187,25 @@ namespace Unity.VectorGraphics
                 {
                     Vector2 reflectedP1 = penPos;
                     if (currentContour.Count > 0 && (lastCmdNoCase == 'c' || lastCmdNoCase == 'q' || lastCmdNoCase == 's' || lastCmdNoCase == 't'))
-                        reflectedP1 += currentContour.Last.Value.p3 - currentContour.Last.Value.p2;
+                        reflectedP1 += currentContour.Last.Value.P3 - currentContour.Last.Value.P2;
 
                     // If relative, the pen position is on P0 and is only moved to P3
                     BezierSegment bs = new BezierSegment();
-                    bs.p0 = penPos;
-                    bs.p1 = reflectedP1;
+                    bs.P0 = penPos;
+                    bs.P1 = reflectedP1;
                     if (cmdNoCase == 's')
-                        bs.p2 = NextVector2(relative);
-                    bs.p3 = NextVector2(relative);
+                        bs.P2 = NextVector2(relative);
+                    bs.P3 = NextVector2(relative);
 
                     if (cmdNoCase == 't')
                     {
-                        var p1 = bs.p1;
+                        var p1 = bs.P1;
                         var t = 2.0f / 3.0f;
-                        bs.p1 = bs.p0 + t * (p1 - bs.p0);
-                        bs.p2 = bs.p3 + t * (p1 - bs.p3);
+                        bs.P1 = bs.P0 + t * (p1 - bs.P0);
+                        bs.P2 = bs.P3 + t * (p1 - bs.P3);
                     }
 
-                    penPos = bs.p3;
+                    penPos = bs.P3;
 
                     if (!VectorUtils.IsEmptySegment(bs))
                         currentContour.AddLast(bs);
@@ -2225,7 +2225,8 @@ namespace Unity.VectorGraphics
                     }
                     else
                     {
-                        foreach (var seg in VectorUtils.BuildEllipsePath(penPos, to, -xAxisRotation * Mathf.Deg2Rad, radii.x, radii.y, largeArcFlag, sweepFlag))
+                        var ellipsePath = VectorUtils.BuildEllipsePath(penPos, to, -xAxisRotation * Mathf.Deg2Rad, radii.x, radii.y, largeArcFlag, sweepFlag);
+                        foreach (var seg in VectorUtils.SegmentsInPath(ellipsePath))
                             currentContour.AddLast(seg);
                     }
 
@@ -2311,7 +2312,7 @@ namespace Unity.VectorGraphics
             if (string.IsNullOrEmpty(attrib))
             {
                 if (opacity < 1.0f)
-                    fill = new SolidFill() { color = new Color(0, 0, 0, opacity) };
+                    fill = new SolidFill() { Color = new Color(0, 0, 0, opacity) };
                 else
                     fill = dict[mode == FillMode.NonZero ?
                                 SVGDocument.StockBlackNonZeroFillName :
@@ -2340,7 +2341,7 @@ namespace Unity.VectorGraphics
                     }
 
                     if (fill != null)
-                        fill.opacity = opacity;
+                        fill.Opacity = opacity;
     
                     return;
                 }
@@ -2352,7 +2353,7 @@ namespace Unity.VectorGraphics
             {
                 // TODO: Support ICC-Color
             }
-            fill = new SolidFill() { color = clr, mode = mode };
+            fill = new SolidFill() { Color = clr, Mode = mode };
         }
 
         void ConcludePath(bool joinEnds)
@@ -2367,12 +2368,12 @@ namespace Unity.VectorGraphics
             if (currentContour.Count > 0)
             {
                 BezierContour contour = new BezierContour();
-                contour.closed = joinEnds && (currentContour.Count >= 1);
-                contour.segments = new BezierPathSegment[currentContour.Count + 1];
+                contour.Closed = joinEnds && (currentContour.Count >= 1);
+                contour.Segments = new BezierPathSegment[currentContour.Count + 1];
                 int index = 0;
                 foreach (var bs in currentContour)
-                    contour.segments[index++] = new BezierPathSegment() { p0 = bs.p0, p1 = bs.p1, p2 = bs.p2  };
-                contour.segments[index] = new BezierPathSegment() { p0 = currentContour.Last.Value.p3 };
+                    contour.Segments[index++] = new BezierPathSegment() { P0 = bs.P0, P1 = bs.P1, P2 = bs.P2  };
+                contour.Segments[index] = new BezierPathSegment() { P0 = currentContour.Last.Value.P3 };
                 contours.Add(contour);
             }
             currentContour.Clear(); // Restart a new path

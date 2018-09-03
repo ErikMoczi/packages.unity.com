@@ -19,52 +19,52 @@ namespace Unity.VectorGraphics.Editor
     [ScriptedImporter(1, "svg")]
     public class SVGImporter : ScriptedImporter, ISpriteEditorDataProvider
     {
-        internal static readonly string kPackagePath = "Packages/com.unity.vectorgraphics";
+        internal static readonly string k_PackagePath = "Packages/com.unity.vectorgraphics";
 
         /// <summary>The number of pixels per Unity units.</summary>
-        public float svgPixelsPerUnit = 100.0f;
+        public float SvgPixelsPerUnit = 100.0f;
 
         /// <summary>Maximum resolution for gradient texture.</summary>
-        public UInt16 gradientResolution = 128;
+        public UInt16 GradientResolution = 128;
 
         /// <summary>The SVG sprite alignement.</summary>
-        public VectorUtils.Alignment alignment;
+        public VectorUtils.Alignment Alignment;
 
         /// <summary>The custom pivot, when alignement is "Custom".</summary>
-        public Vector2 customPivot;
+        public Vector2 CustomPivot;
 
         /// <summary>Use advanced settings.</summary>
-        public bool advancedMode = false;
+        public bool AdvancedMode = false;
 
         /// <summary>The predefined resolution used, when not in advanced mode.</summary>
-        public int predefinedResolutionIndex = 1;
+        public int PredefinedResolutionIndex = 1;
 
         /// <summary>The target resolution on which this SVG is displayed.</summary>
-        public int targetResolution = 1080;
+        public int TargetResolution = 1080;
 
         /// <summary>An additional scale factor on the target resolution.</summary>
-        public float resolutionMultiplier = 1.0f;
+        public float ResolutionMultiplier = 1.0f;
 
         /// <summary>The uniform step distance used for tessellation.</summary>
-        public float stepDistance = 10.0f;
+        public float StepDistance = 10.0f;
 
         /// <summary>Number of samples evaluated on paths.</summary>
-        public float samplingStepDistance = 100.0f;
+        public float SamplingStepDistance = 100.0f;
 
         /// <summary>Enables the "max coord deviation" constraint.</summary>
-        public bool maxCordDeviationEnabled = false;
+        public bool MaxCordDeviationEnabled = false;
 
         /// <summary>Distance on the cord to a straight line between two points after which more tessellation will be generated.</summary>
-        public float maxCordDeviation = 1.0f;
+        public float MaxCordDeviation = 1.0f;
 
         /// <summary>Enables the "max tangent angle" constraint.</summary>
-        public bool maxTangentAngleEnabled = false;
+        public bool MaxTangentAngleEnabled = false;
 
         /// <summary>Max tangent angle (in degrees) after which more tessellation will be generated.</summary>
-        public float maxTangentAngle = 5.0f;
+        public float MaxTangentAngle = 5.0f;
 
         /// <summary>Enables the animation tools for bones and skin weights in the Sprite Editor.</summary>
-        public bool enableAnimationTools = false;
+        public bool EnableAnimationTools = false;
 
         [SerializeField]
         private SVGSpriteData m_SpriteData = new SVGSpriteData();
@@ -84,30 +84,30 @@ namespace Unity.VectorGraphics.Editor
         public override void OnImportAsset(AssetImportContext ctx)
         {
             var sceneInfo = SVGParser.ImportSVG(new StreamReader(ctx.assetPath));
-            if (sceneInfo.scene == null || sceneInfo.scene.root == null)
+            if (sceneInfo.Scene == null || sceneInfo.Scene.Root == null)
                 throw new Exception("Wowzers!");
 
-            float stepDist = stepDistance;
-            float samplingStepDist = samplingStepDistance;
-            float maxCord = maxCordDeviationEnabled ? maxCordDeviation : float.MaxValue;
-            float maxTangent = maxTangentAngleEnabled ? maxTangentAngle : Mathf.PI * 0.5f;
+            float stepDist = StepDistance;
+            float samplingStepDist = SamplingStepDistance;
+            float maxCord = MaxCordDeviationEnabled ? MaxCordDeviation : float.MaxValue;
+            float maxTangent = MaxTangentAngleEnabled ? MaxTangentAngle : Mathf.PI * 0.5f;
 
-            if (!advancedMode)
+            if (!AdvancedMode)
             {
                 // Automatically compute sensible tessellation options from the
                 // vector scene's bouding box and target resolution
-                ComputeTessellationOptions(sceneInfo, targetResolution, resolutionMultiplier, out stepDist, out maxCord, out maxTangent);
+                ComputeTessellationOptions(sceneInfo, TargetResolution, ResolutionMultiplier, out stepDist, out maxCord, out maxTangent);
             }
 
             var tessOptions = new VectorUtils.TessellationOptions();
-            tessOptions.maxCordDeviation = maxCord;
-            tessOptions.maxTanAngleDeviation = maxTangent;
-            tessOptions.samplingStepSize = 1.0f / (float)samplingStepDist;
-            tessOptions.stepDistance = stepDist;
+            tessOptions.MaxCordDeviation = maxCord;
+            tessOptions.MaxTanAngleDeviation = maxTangent;
+            tessOptions.SamplingStepSize = 1.0f / (float)samplingStepDist;
+            tessOptions.StepDistance = stepDist;
 
-            var geometry = VectorUtils.TessellateScene(sceneInfo.scene, tessOptions, sceneInfo.nodeOpacity);
+            var geometry = VectorUtils.TessellateScene(sceneInfo.Scene, tessOptions, sceneInfo.NodeOpacity);
 
-            var sprite = VectorUtils.BuildSprite(geometry, svgPixelsPerUnit, alignment, customPivot, gradientResolution, true);
+            var sprite = VectorUtils.BuildSprite(geometry, SvgPixelsPerUnit, Alignment, CustomPivot, GradientResolution, true);
 
             GenerateAsset(ctx, sprite);
         }
@@ -119,7 +119,7 @@ namespace Unity.VectorGraphics.Editor
 
             // Apply GUID from SpriteRect
             var so = new SerializedObject(sprite);
-            so.FindProperty("m_SpriteID").stringValue = m_SpriteData.spriteRect.spriteID.ToString();
+            so.FindProperty("m_SpriteID").stringValue = m_SpriteData.SpriteRect.spriteID.ToString();
             so.ApplyModifiedPropertiesWithoutUndo();
 
             ctx.AddObjectToAsset("sprite", sprite);
@@ -129,12 +129,12 @@ namespace Unity.VectorGraphics.Editor
             if (sprite.texture != null)
             {
                 // When texture is present, use the VectorGradient shader
-                mat = AssetDatabase.LoadMainAssetAtPath(kPackagePath + "/Runtime/Materials/Unlit_VectorGradient.mat") as Material;
+                mat = AssetDatabase.LoadMainAssetAtPath(k_PackagePath + "/Runtime/Materials/Unlit_VectorGradient.mat") as Material;
                 sprite.texture.name = name + "Atlas";
             }
             else
             {
-                mat = AssetDatabase.LoadMainAssetAtPath(kPackagePath + "/Runtime/Materials/Unlit_Vector.mat") as Material;                
+                mat = AssetDatabase.LoadMainAssetAtPath(k_PackagePath + "/Runtime/Materials/Unlit_Vector.mat") as Material;                
             }
 
             var gameObject = new GameObject(name);
@@ -151,7 +151,7 @@ namespace Unity.VectorGraphics.Editor
 
         private void ComputeTessellationOptions(SVGParser.SceneInfo sceneInfo, int targetResolution, float multiplier, out float stepDist, out float maxCord, out float maxTangent)
         {
-            var bbox = VectorUtils.ApproximateSceneNodeBounds(sceneInfo.scene.root);
+            var bbox = VectorUtils.ApproximateSceneNodeBounds(sceneInfo.Scene.Root);
             float maxDim = Mathf.Max(bbox.width, bbox.height);
 
             // The scene ratio gives a rough estimate of coverage % of the vector scene on the screen.
@@ -184,7 +184,7 @@ namespace Unity.VectorGraphics.Editor
         internal void TextureSizeForSpriteEditor(out int width, out int height)
         {
             var sprite = GetImportedSprite(assetPath);
-            var size = ((Vector2)sprite.bounds.size) * svgPixelsPerUnit;
+            var size = ((Vector2)sprite.bounds.size) * SvgPixelsPerUnit;
             width = (int)(size.x + 0.5f);
             height = (int)(size.y + 0.5f);
         }
@@ -231,7 +231,7 @@ namespace Unity.VectorGraphics.Editor
         /// <summary>Returns pixels per unit of the imported SVG</summary>
         public float pixelsPerUnit
         {
-            get { return svgPixelsPerUnit; }
+            get { return SvgPixelsPerUnit; }
         }
         
         /// <summary>Returns imported sprite</summary>
@@ -243,7 +243,7 @@ namespace Unity.VectorGraphics.Editor
         /// <summary>Returns the sprite rectangles</summary>
         SpriteRect[] ISpriteEditorDataProvider.GetSpriteRects()
         {
-            return new SpriteRect[] { m_SpriteData.spriteRect };
+            return new SpriteRect[] { m_SpriteData.SpriteRect };
         }
 
         /// <summary>Sets the sprite rectangles</summary>
@@ -251,7 +251,7 @@ namespace Unity.VectorGraphics.Editor
         void ISpriteEditorDataProvider.SetSpriteRects(SpriteRect[] rects)
         {
             if (rects.Length > 0)
-                m_SpriteData.spriteRect = rects[0];
+                m_SpriteData.SpriteRect = rects[0];
         }
 
         /// <summary>Applies the modified SVG data</summary>
@@ -271,11 +271,11 @@ namespace Unity.VectorGraphics.Editor
         /// <summary>Gets the data provider for a given type</summary>
         T ISpriteEditorDataProvider.GetDataProvider<T>()
         {
-            if (enableAnimationTools && typeof(T) == typeof(ISpriteBoneDataProvider))
+            if (EnableAnimationTools && typeof(T) == typeof(ISpriteBoneDataProvider))
             {
                 return new SVGBoneDataProvider(this) as T;                
             }
-            if (enableAnimationTools && typeof(T) == typeof(ISpriteMeshDataProvider))
+            if (EnableAnimationTools && typeof(T) == typeof(ISpriteMeshDataProvider))
             {
                 return new SVGMeshDataProvider(this) as T;
             }
@@ -299,7 +299,7 @@ namespace Unity.VectorGraphics.Editor
         /// <returns>True if a data provider is available for the type, or false otherwise</returns>
         bool ISpriteEditorDataProvider.HasDataProvider(Type type)
         {
-            if (enableAnimationTools)
+            if (EnableAnimationTools)
             {
                 if (type == typeof(ISpriteBoneDataProvider) ||
                     type == typeof(ISpriteMeshDataProvider))

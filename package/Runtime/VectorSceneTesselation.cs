@@ -12,35 +12,35 @@ namespace Unity.VectorGraphics
         public class Geometry
         {
             /// <summary>The vertices of the geometry.</summary>
-            public Vector2[] vertices;
+            public Vector2[] Vertices;
 
             /// <summary>The UV coordinates of the geometry.</summary>
-            public Vector2[] uvs;
+            public Vector2[] UVs;
 
             /// <summary>The triangle indices of the geometry.</summary>
-            public UInt16[] indices;
+            public UInt16[] Indices;
 
             /// <summary>The color of the geometry.</summary>
-            public Color color;
+            public Color Color;
 
             /// <summary>The world transform of the geometry.</summary>
-            public Matrix2D worldTransform;
+            public Matrix2D WorldTransform;
 
             /// <summary>The fill of the geometry. May be null.</summary>
-            public IFill fill;
+            public IFill Fill;
 
             /// <summary>The filling transform of the geometry.</summary>
-            public Matrix2D fillTransform;
+            public Matrix2D FillTransform;
 
             /// <summary>The unclipped bounds of the geometry.</summary>
-            public Rect unclippedBounds;
+            public Rect UnclippedBounds;
 
             /// <summary>The setting index of the geometry.</summary>
             /// <remarks>
             /// This is used to refer to the proper texture/gradient settings inside the texture atlas.
             /// This should be set to 0 for geometries without texture or gradients.
             /// </remarks>
-            public int settingIndex;
+            public int SettingIndex;
         }
 
         /// <summary>Tessellates a Scene object into triangles.</summary>
@@ -53,7 +53,7 @@ namespace Unity.VectorGraphics
             UnityEngine.Profiling.Profiler.BeginSample("TessellateVectorScene");
 
             VectorClip.ResetClip();
-            var geoms = TessellateNodeHierarchyRecursive(scene.root, tessellationOptions, Matrix2D.identity, 1.0f, nodeOpacities);
+            var geoms = TessellateNodeHierarchyRecursive(scene.Root, tessellationOptions, Matrix2D.identity, 1.0f, nodeOpacities);
 
             UnityEngine.Profiling.Profiler.EndSample();
 
@@ -62,14 +62,14 @@ namespace Unity.VectorGraphics
 
         private static List<Geometry> TessellateNodeHierarchyRecursive(SceneNode node, TessellationOptions tessellationOptions, Matrix2D worldTransform, float worldOpacity, Dictionary<SceneNode, float> nodeOpacities)
         {
-            if (node.clipper != null)
-                VectorClip.PushClip(TraceNodeHierarchyShapes(node.clipper, tessellationOptions), worldTransform);
+            if (node.Clipper != null)
+                VectorClip.PushClip(TraceNodeHierarchyShapes(node.Clipper, tessellationOptions), worldTransform);
 
             var geoms = new List<Geometry>();
 
-            if (node.drawables != null)
+            if (node.Drawables != null)
             {
-                foreach (var drawable in node.drawables)
+                foreach (var drawable in node.Drawables)
                 {
                     var vectorShape = drawable as Shape;
                     if (vectorShape != null)
@@ -81,7 +81,7 @@ namespace Unity.VectorGraphics
                     var vectorPath = drawable as Path;
                     if (vectorPath != null)
                     {
-                        TessellatePath(vectorPath.contour, vectorPath.pathProps, geoms, tessellationOptions);
+                        TessellatePath(vectorPath.Contour, vectorPath.PathProps, geoms, tessellationOptions);
                         continue;
                     }
 
@@ -95,23 +95,23 @@ namespace Unity.VectorGraphics
 
                 foreach (var g in geoms)
                 {
-                    g.color.a *= worldOpacity;
-                    g.worldTransform = worldTransform;
-                    g.unclippedBounds = Bounds(g.vertices);
+                    g.Color.a *= worldOpacity;
+                    g.WorldTransform = worldTransform;
+                    g.UnclippedBounds = Bounds(g.Vertices);
 
                     VectorClip.ClipGeometry(g);
                 }
             }
 
-            if (node.children != null)
+            if (node.Children != null)
             {
-                foreach (var child in node.children)
+                foreach (var child in node.Children)
                 {
                     var childOpacity = 1.0f;
                     if (nodeOpacities == null || !nodeOpacities.TryGetValue(child, out childOpacity))
                         childOpacity = 1.0f;
 
-                    var transform = worldTransform * child.transform;
+                    var transform = worldTransform * child.Transform;
                     var opacity = worldOpacity * childOpacity;
                     var childGeoms = TessellateNodeHierarchyRecursive(child, tessellationOptions, transform, opacity, nodeOpacities);
 
@@ -119,7 +119,7 @@ namespace Unity.VectorGraphics
                 }
             }
 
-            if (node.clipper != null)
+            if (node.Clipper != null)
                 VectorClip.PopClip();
 
             return geoms;
@@ -131,20 +131,20 @@ namespace Unity.VectorGraphics
 
             foreach (var nodeInfo in WorldTransformedSceneNodes(root, null))
             {
-                var node = nodeInfo.node;
-                if (node.drawables == null || node.drawables.Count == 0)
+                var node = nodeInfo.Node;
+                if (node.Drawables == null || node.Drawables.Count == 0)
                     continue;
 
-                foreach (var drawable in node.drawables)
+                foreach (var drawable in node.Drawables)
                 {
                     var vectorShape = drawable as Shape;
                     if (vectorShape != null)
                     {
-                        foreach (var c in vectorShape.contours)
+                        foreach (var c in vectorShape.Contours)
                         {
-                            var shape = VectorUtils.TraceShape(c, vectorShape.pathProps.stroke, tessellationOptions);
+                            var shape = VectorUtils.TraceShape(c, vectorShape.PathProps.Stroke, tessellationOptions);
                             if (shape.Length > 0)
-                                shapes.Add(shape.Select(v => nodeInfo.worldTransform * v).ToArray());
+                                shapes.Add(shape.Select(v => nodeInfo.WorldTransform * v).ToArray());
                         }
                         continue;
                     }
@@ -152,18 +152,18 @@ namespace Unity.VectorGraphics
                     var vectorPath = drawable as Path;
                     if (vectorPath != null)
                     {
-                        var shape = VectorUtils.TraceShape(vectorPath.contour, vectorPath.pathProps.stroke, tessellationOptions);
+                        var shape = VectorUtils.TraceShape(vectorPath.Contour, vectorPath.PathProps.Stroke, tessellationOptions);
                         if (shape.Length > 0)
-                            shapes.Add(shape.Select(v => nodeInfo.worldTransform * v).ToArray());
+                            shapes.Add(shape.Select(v => nodeInfo.WorldTransform * v).ToArray());
                         continue;
                     }
 
                     var vectorRect = drawable as Rectangle;
                     if (vectorRect != null)
                     {
-                        var shape = VectorUtils.TraceRectangle(vectorRect, vectorRect.pathProps.stroke, tessellationOptions);
+                        var shape = VectorUtils.TraceRectangle(vectorRect, vectorRect.PathProps.Stroke, tessellationOptions);
                         if (shape.Length > 0)
-                            shapes.Add(shape.Select(v => nodeInfo.worldTransform * v).ToArray());
+                            shapes.Add(shape.Select(v => nodeInfo.WorldTransform * v).ToArray());
                         continue;
                     }
                 }
@@ -177,15 +177,15 @@ namespace Unity.VectorGraphics
             UnityEngine.Profiling.Profiler.BeginSample("TessellateShape");
 
             // Don't generate any geometry for pattern fills since these are generated from another SceneNode
-            if (vectorShape.fill != null && !(vectorShape.fill is PatternFill))
+            if (vectorShape.Fill != null && !(vectorShape.Fill is PatternFill))
             {
                 UnityEngine.Profiling.Profiler.BeginSample("LibTess");
 
                 Color shapeColor = Color.white;
-                if (vectorShape.fill is SolidFill)
-                    shapeColor = ((SolidFill)vectorShape.fill).color;
+                if (vectorShape.Fill is SolidFill)
+                    shapeColor = ((SolidFill)vectorShape.Fill).Color;
 
-                shapeColor.a *= vectorShape.fill.opacity;
+                shapeColor.a *= vectorShape.Fill.Opacity;
 
                 var tess = new Tess();
 
@@ -193,16 +193,16 @@ namespace Unity.VectorGraphics
                 var mat = Matrix2D.Rotate(angle);
                 var invMat = Matrix2D.Rotate(-angle);
 
-                foreach (var c in vectorShape.contours)
+                foreach (var c in vectorShape.Contours)
                 {
                     var contour = new List<Vector2>(100);
-                    foreach (var v in VectorUtils.TraceShape(c, vectorShape.pathProps.stroke, tessellationOptions))
+                    foreach (var v in VectorUtils.TraceShape(c, vectorShape.PathProps.Stroke, tessellationOptions))
                         contour.Add(mat.MultiplyPoint(v));
 
                     tess.AddContour(contour.Select(v => new ContourVertex() { Position = new Vec3() { X = v.x, Y = v.y }}).ToArray(), ContourOrientation.Original);
                 }
 
-                var windingRule = (vectorShape.fill.mode == FillMode.OddEven) ? WindingRule.EvenOdd : WindingRule.NonZero; 
+                var windingRule = (vectorShape.Fill.Mode == FillMode.OddEven) ? WindingRule.EvenOdd : WindingRule.NonZero; 
                 try
                 {
                     tess.Tessellate(windingRule, ElementType.Polygons, 3);
@@ -219,22 +219,22 @@ namespace Unity.VectorGraphics
 
                 if (indices.Count() > 0)
                 {
-                    geoms.Add(new Geometry() { vertices = vertices.ToArray(), indices = indices.ToArray(), color = shapeColor, fill = vectorShape.fill, fillTransform = vectorShape.fillTransform });
+                    geoms.Add(new Geometry() { Vertices = vertices.ToArray(), Indices = indices.ToArray(), Color = shapeColor, Fill = vectorShape.Fill, FillTransform = vectorShape.FillTransform });
                 }
                 UnityEngine.Profiling.Profiler.EndSample();
             }
 
-            var stroke = vectorShape.pathProps.stroke;
-            if (stroke != null && stroke.halfThickness > VectorUtils.Epsilon)
+            var stroke = vectorShape.PathProps.Stroke;
+            if (stroke != null && stroke.HalfThickness > VectorUtils.Epsilon)
             {
-                foreach (var c in vectorShape.contours)
+                foreach (var c in vectorShape.Contours)
                 {
                     Vector2[] strokeVerts;
                     UInt16[] strokeIndices;
-                    VectorUtils.TessellatePath(c, vectorShape.pathProps, tessellationOptions, out strokeVerts, out strokeIndices);
+                    VectorUtils.TessellatePath(c, vectorShape.PathProps, tessellationOptions, out strokeVerts, out strokeIndices);
                     if (strokeIndices.Length > 0)
                     {
-                        geoms.Add(new Geometry() { vertices = strokeVerts, indices = strokeIndices, color = vectorShape.pathProps.stroke.color });
+                        geoms.Add(new Geometry() { Vertices = strokeVerts, Indices = strokeIndices, Color = vectorShape.PathProps.Stroke.Color });
                     }
                 }
             }
@@ -246,16 +246,16 @@ namespace Unity.VectorGraphics
         {
             UnityEngine.Profiling.Profiler.BeginSample("TessellatePath");
 
-            if (pathProps.stroke != null)
+            if (pathProps.Stroke != null)
             {
                 Vector2[] vertices;
                 UInt16[] indices;
                 VectorUtils.TessellatePath(contour, pathProps, tessellationOptions, out vertices, out indices);
 
-                var color = pathProps.stroke.color;
+                var color = pathProps.Stroke.Color;
                 if (indices.Length > 0)
                 {
-                    geoms.Add(new Geometry() { vertices = vertices, indices = indices, color = color });
+                    geoms.Add(new Geometry() { Vertices = vertices, Indices = indices, Color = color });
                 }
             }
 
@@ -289,25 +289,25 @@ namespace Unity.VectorGraphics
 
         struct RawTexture
         {
-            public Color32[] rgba;
-            public int width;
-            public int height;
+            public Color32[] Rgba;
+            public int Width;
+            public int Height;
         }
 
         class AtlasEntry
         {
-            public RawTexture texture;
-            public PackRectItem atlasLocation;
+            public RawTexture Texture;
+            public PackRectItem AtlasLocation;
         }
 
         /// <summary>A struct to hold packed atlas entries.</summary>
         public class TextureAtlas
         {
             /// <summary>The texture atlas.</summary>
-            public Texture2D texture { get; set; }
+            public Texture2D Texture { get; set; }
 
             /// <summary>The atlas entries.</summary>
-            public List<PackRectItem> entries { get; set; }
+            public List<PackRectItem> Entries { get; set; }
         };
 
         /// <summary>Generates a Texture2D atlas containing the textures and gradients for the vector geometry, and fill the UVs of the geometry.</summary>
@@ -335,29 +335,29 @@ namespace Unity.VectorGraphics
             foreach (var g in geoms)
             {
                 RawTexture tex;
-                if (g.fill is GradientFill)
+                if (g.Fill is GradientFill)
                 {
-                    tex = new RawTexture() { width = (int)rasterSize, height = 1, rgba = RasterizeGradientStripe((GradientFill)g.fill, (int)rasterSize) };
+                    tex = new RawTexture() { Width = (int)rasterSize, Height = 1, Rgba = RasterizeGradientStripe((GradientFill)g.Fill, (int)rasterSize) };
                     ++texturedGeomCount;
                 }
-                else if (g.fill is TextureFill)
+                else if (g.Fill is TextureFill)
                 {
-                    var fillTex = ((TextureFill)g.fill).texture;
-                    tex = new RawTexture() { rgba = fillTex.GetPixels32(), width = fillTex.width, height = fillTex.height };                    
+                    var fillTex = ((TextureFill)g.Fill).Texture;
+                    tex = new RawTexture() { Rgba = fillTex.GetPixels32(), Width = fillTex.width, Height = fillTex.height };                    
                     ++texturedGeomCount;
                 }
                 else
                 {
                     continue;
                 }
-                fills[g.fill] = new AtlasEntry() { texture = tex };
+                fills[g.Fill] = new AtlasEntry() { Texture = tex };
             }
 
             if (fills.Count == 0)
                 return null;
 
             Vector2 atlasSize;
-            var rectsToPack = fills.Select(x => new KeyValuePair<IFill, Vector2>(x.Key, new Vector2(x.Value.texture.width, x.Value.texture.height))).ToList();
+            var rectsToPack = fills.Select(x => new KeyValuePair<IFill, Vector2>(x.Key, new Vector2(x.Value.Texture.Width, x.Value.Texture.Height))).ToList();
             rectsToPack.Add(new KeyValuePair<IFill, Vector2>(null, new Vector2(2, 2))); // White fill
             var pack = PackRects(rectsToPack, out atlasSize);
 
@@ -365,7 +365,7 @@ namespace Unity.VectorGraphics
             for (int packIndex = 0; packIndex < pack.Count; ++packIndex)
             {
                 var item = pack[packIndex];
-                item.position.y += 1;
+                item.Position.y += 1;
                 pack[packIndex] = item;
             }
             atlasSize.y += 1;
@@ -373,7 +373,7 @@ namespace Unity.VectorGraphics
             // Need enough space on first row for texture settings
             int maxSettingIndex = 0;
             foreach (var item in pack)
-                maxSettingIndex = Math.Max(maxSettingIndex, item.settingIndex);
+                maxSettingIndex = Math.Max(maxSettingIndex, item.SettingIndex);
             int minWidth = (maxSettingIndex+1) * 3;
             atlasSize.x = Math.Max(minWidth, (int)atlasSize.x);
 
@@ -381,21 +381,21 @@ namespace Unity.VectorGraphics
             int atlasHeight = (int)atlasSize.y;
             var atlasColors = new Color32[atlasWidth * atlasHeight]; // Comes out all black transparent
             Vector2 atlasInvSize = new Vector2(1.0f / (float)atlasWidth, 1.0f / (float)atlasHeight);
-            Vector2 whiteTexelsScreenPos = pack[pack.Count - 1].position;
+            Vector2 whiteTexelsScreenPos = pack[pack.Count - 1].Position;
             Vector2 whiteTexelsPos = (whiteTexelsScreenPos + Vector2.one) * atlasInvSize;
 
             int i = 0;
-            RawTexture rawAtlasTex = new RawTexture() { rgba = atlasColors, width = atlasWidth, height = atlasHeight };
+            RawTexture rawAtlasTex = new RawTexture() { Rgba = atlasColors, Width = atlasWidth, Height = atlasHeight };
             foreach (var entry in fills.Values)
             {
                 var packItem = pack[i++];
-                entry.atlasLocation = packItem;
-                BlitRawTexture(entry.texture, rawAtlasTex, (int)packItem.position.x, (int)packItem.position.y, packItem.rotated);
+                entry.AtlasLocation = packItem;
+                BlitRawTexture(entry.Texture, rawAtlasTex, (int)packItem.Position.x, (int)packItem.Position.y, packItem.Rotated);
             }
 
-            RawTexture whiteTex = new RawTexture() { width = 2, height = 2, rgba = new Color32[4] };
-            for (i = 0; i < whiteTex.rgba.Length; i++)
-                whiteTex.rgba[i] = new Color32(0xFF, 0xFF, 0xFF, 0xFF);
+            RawTexture whiteTex = new RawTexture() { Width = 2, Height = 2, Rgba = new Color32[4] };
+            for (i = 0; i < whiteTex.Rgba.Length; i++)
+                whiteTex.Rgba[i] = new Color32(0xFF, 0xFF, 0xFF, 0xFF);
             BlitRawTexture(whiteTex, rawAtlasTex, (int)whiteTexelsScreenPos.x, (int)whiteTexelsScreenPos.y, false);
 
             // Setting 0 is reserved for the white texel
@@ -408,10 +408,10 @@ namespace Unity.VectorGraphics
             foreach (var g in geoms)
             {
                 AtlasEntry entry;
-                int vertsCount = g.vertices.Length;
-                if ((g.fill != null) && fills.TryGetValue(g.fill, out entry))
+                int vertsCount = g.Vertices.Length;
+                if ((g.Fill != null) && fills.TryGetValue(g.Fill, out entry))
                 {
-                    int setting = entry.atlasLocation.settingIndex;
+                    int setting = entry.AtlasLocation.SettingIndex;
                     if (writtenSettings.Contains(setting))
                         continue;
 
@@ -420,32 +420,32 @@ namespace Unity.VectorGraphics
                     // There are 3 consecutive pixels to store the settings
                     int destX = setting * 3;
 
-                    var gradientFill = g.fill as GradientFill;
+                    var gradientFill = g.Fill as GradientFill;
                     if (gradientFill != null)
                     {
-                        var focus = gradientFill.radialFocus;
+                        var focus = gradientFill.RadialFocus;
                         focus += Vector2.one;
                         focus /= 2.0f;
                         focus.y = 1.0f - focus.y;
-                        WriteRawFloat4Packed(rawAtlasTex, ((float)gradientFill.type)/255, ((float)gradientFill.addressing)/255, focus.x, focus.y, destX++, 0);
+                        WriteRawFloat4Packed(rawAtlasTex, ((float)gradientFill.Type)/255, ((float)gradientFill.Addressing)/255, focus.x, focus.y, destX++, 0);
                     }
 
-                    var textureFill = g.fill as TextureFill;
+                    var textureFill = g.Fill as TextureFill;
                     if (textureFill != null)
                     {
-                        WriteRawFloat4Packed(rawAtlasTex, 0.0f, ((float)textureFill.addressing)/255, 0.0f, 0.0f, destX++, 0);
+                        WriteRawFloat4Packed(rawAtlasTex, 0.0f, ((float)textureFill.Addressing)/255, 0.0f, 0.0f, destX++, 0);
                     }
 
-                    var pos = entry.atlasLocation.position;
-                    var size = new Vector2(entry.texture.width-1, entry.texture.height-1);
+                    var pos = entry.AtlasLocation.Position;
+                    var size = new Vector2(entry.Texture.Width-1, entry.Texture.Height-1);
                     WriteRawInt2Packed(rawAtlasTex, (int)pos.x, (int)pos.y, destX++, 0);
                     WriteRawInt2Packed(rawAtlasTex, (int)size.x, (int)size.y, destX++, 0);
                 }
                 else
                 {
-                    g.uvs = new Vector2[vertsCount];
+                    g.UVs = new Vector2[vertsCount];
                     for (i = 0; i < vertsCount; i++)
-                        g.uvs[i] = whiteTexelsPos;
+                        g.UVs[i] = whiteTexelsPos;
                 }
             }
 
@@ -457,7 +457,7 @@ namespace Unity.VectorGraphics
 
             UnityEngine.Profiling.Profiler.EndSample();
 
-            return new TextureAtlas() { texture = atlasTex, entries = pack };
+            return new TextureAtlas() { Texture = atlasTex, Entries = pack };
         }
 
         /// <summary>Fill the UVs of the geometry using the provided texture atlas.</summary>
@@ -468,21 +468,21 @@ namespace Unity.VectorGraphics
             UnityEngine.Profiling.Profiler.BeginSample("FillUVs");
 
             var fills = new Dictionary<IFill, PackRectItem>();
-            foreach (var entry in texAtlas.entries)
+            foreach (var entry in texAtlas.Entries)
             {
-                if (entry.fill != null)
-                    fills[entry.fill] = entry;
+                if (entry.Fill != null)
+                    fills[entry.Fill] = entry;
             }
 
             var item = new PackRectItem();
             foreach (var g in geoms)
             {
                 int settingIndex = 0;
-                if ((g.fill != null) && fills.TryGetValue(g.fill, out item))
-                    settingIndex = item.settingIndex;
+                if ((g.Fill != null) && fills.TryGetValue(g.Fill, out item))
+                    settingIndex = item.SettingIndex;
 
-                g.uvs = GenerateShapeUVs(g.vertices, g.unclippedBounds, g.fillTransform);
-                g.settingIndex = settingIndex;
+                g.UVs = GenerateShapeUVs(g.Vertices, g.UnclippedBounds, g.FillTransform);
+                g.SettingIndex = settingIndex;
             }
 
             UnityEngine.Profiling.Profiler.EndSample();
