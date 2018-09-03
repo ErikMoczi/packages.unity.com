@@ -131,7 +131,7 @@ namespace Unity.Properties
             container.VersionStorage?.IncrementVersion(this, ref container);
         }
         
-        public TItem GetValueAtIndex(TContainer container, int index)
+        public virtual TItem GetValueAtIndex(TContainer container, int index)
         {
             var list = GetValue(container);
             return list[index];

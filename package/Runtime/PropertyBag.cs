@@ -68,8 +68,6 @@ namespace Unity.Properties
             for (var i = 0; i < m_Properties.Count; i++)
             {
                 var typed = m_Properties[i] as ITypedContainerProperty<TContainer>;
-                Assert.IsNotNull(typed);
-                
                 typed.Accept(container, visitor);
             }
 
@@ -82,8 +80,6 @@ namespace Unity.Properties
             for (var i = 0; i < m_Properties.Count; i++)
             {
                 var typed = m_Properties[i] as IStructTypedContainerProperty<TContainer>;
-                Assert.IsNotNull(typed);
-                
                 typed.Accept(ref container, visitor);
             }
 

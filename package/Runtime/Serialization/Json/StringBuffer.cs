@@ -219,7 +219,7 @@
         /// Ensures the capacity of the underlying buffer
         /// </summary>
         /// <param name="count">Number of characters being added</param>
-        private void EnsureCapacity(int count)
+        public void EnsureCapacity(int count)
         {
             if (m_Position + count <= m_Capacity)
             {
