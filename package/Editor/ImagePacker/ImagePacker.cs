@@ -108,10 +108,10 @@ namespace UnityEditor.Experimental.U2D.Common
         static unsafe void Blit(NativeArray<Color32> buffer, RectInt[] blitToArea, int bufferbytesPerRow, NativeArray<Color32>[] originalBuffer, RectInt[] blitFromArea, int bytesPerRow, int padding)
         {
             UnityEngine.Profiling.Profiler.BeginSample("Blit");
-            var c = (Color32*)buffer.GetUnsafePtr().ToPointer();
+            var c = (Color32*)buffer.GetUnsafePtr();
             for (int bufferIndex = 0; bufferIndex < blitToArea.Length && bufferIndex < originalBuffer.Length && bufferIndex < blitFromArea.Length; ++bufferIndex)
             {
-                var b = (Color32*)originalBuffer[bufferIndex].GetUnsafeReadOnlyPtr().ToPointer();
+                var b = (Color32*)originalBuffer[bufferIndex].GetUnsafeReadOnlyPtr();
                 var rectFrom = blitFromArea[bufferIndex];
                 var rectTo = blitToArea[bufferIndex];
                 for (int i = 0; i < rectFrom.height; ++i)

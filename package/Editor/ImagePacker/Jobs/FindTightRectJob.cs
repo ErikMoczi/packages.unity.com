@@ -40,12 +40,12 @@ namespace UnityEditor.Experimental.U2D.Common
             m_Output[index] = rect;
         }
 
-        public static RectInt[] Execute(NativeArray<Color32>[] buffers, int width, int height)
+        public static unsafe RectInt[] Execute(NativeArray<Color32>[] buffers, int width, int height)
         {
             var job = new FindTightRectJob();
             job.m_Buffers = new NativeArray<IntPtr>(buffers.Length, Allocator.TempJob);
             for (int i = 0; i < buffers.Length; ++i)
-                job.m_Buffers[i] = buffers[i].GetUnsafeReadOnlyPtr();
+                job.m_Buffers[i] = new IntPtr(buffers[i].GetUnsafeReadOnlyPtr());
             job.m_Output = new NativeArray<RectInt>(buffers.Length, Allocator.Temp);
             job.m_Width = width;
             job.m_Height = height;
