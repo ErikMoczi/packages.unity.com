@@ -168,7 +168,7 @@ namespace UnityEngine.XR.ARFoundation
 
         void CheckBoundaryChanged()
         {
-            var newVertices = ARDataCache.vector3List;
+            var newVertices = s_BoundaryPoints;
             if (!boundedPlane.TryGetBoundary(newVertices))
                 return;
 
@@ -183,7 +183,8 @@ namespace UnityEngine.XR.ARFoundation
                     return;
 
                 // Save the new vertices so we can compare during the next update
-                ARDataCache.CopyList(newVertices, m_Boundary);
+                m_Boundary.Clear();
+                m_Boundary.AddRange(newVertices);
             }
 
             var pose = boundedPlane.Pose;
@@ -212,5 +213,7 @@ namespace UnityEngine.XR.ARFoundation
         BoundedPlane m_BoundedPlane;
 
         TrackingState? m_TrackingState;
+
+        static List<Vector3> s_BoundaryPoints = new List<Vector3>();
     }
 }

@@ -51,6 +51,7 @@ namespace UnityEngine.XR.ARFoundation
         {
             m_PointCloud.updated -= OnPointCloudChanged;
             ARSubsystemManager.systemStateChanged -= OnSystemStateChanged;
+            UpdateVisibility();
         }
 
         void OnSystemStateChanged(ARSystemStateChangedEventArgs eventArgs)

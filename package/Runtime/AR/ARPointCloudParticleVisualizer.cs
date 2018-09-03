@@ -59,6 +59,7 @@ namespace UnityEngine.XR.ARFoundation
         {
             m_PointCloud.updated -= OnPointCloudChanged;
             ARSubsystemManager.systemStateChanged -= OnSystemStateChanged;
+            UpdateVisibility();
         }
 
         void OnSystemStateChanged(ARSystemStateChangedEventArgs eventArgs)
@@ -76,7 +77,7 @@ namespace UnityEngine.XR.ARFoundation
 
         void SetVisible(bool visible)
         {
-            if (m_Particles == null)
+            if (m_ParticleSystem == null)
                 return;
 
             var renderer = m_ParticleSystem.GetComponent<Renderer>();

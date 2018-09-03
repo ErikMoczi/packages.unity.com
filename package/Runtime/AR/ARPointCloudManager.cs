@@ -30,6 +30,14 @@ namespace UnityEngine.XR.ARFoundation
         }
 
         /// <summary>
+        /// Getter for the instantiated <seealso cref="ARPointCloud"/>.
+        /// </summary>
+        public ARPointCloud pointCloud
+        {
+            get { return m_PointCloud; }
+        }
+
+        /// <summary>
         /// Raised each time the <see cref="ARPointCloud"/> is updated.
         /// </summary>
         public event Action<ARPointCloudUpdatedEventArgs> pointCloudUpdated;
