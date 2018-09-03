@@ -19,3 +19,4 @@
 0.1.18-preview
 0.1.18-preview.1
 0.1.18-preview.2
+0.1.18-preview.3

@@ -9,6 +9,7 @@ namespace Unity.Properties.Editor.Serialization
         public class CodeInfo
         {
             public string Code { get; set; } = string.Empty;
+
             public PropertyTypeNode TypeNode { get; set; }
 
             public List<string> GeneratedPropertyFieldNames { get; set; } = new List<string>();

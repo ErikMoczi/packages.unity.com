@@ -97,7 +97,10 @@ namespace Unity.Properties
                         // failure: list property not in a container
                         return result;
                     }
+
+                    result.container = container;
                     result.property = container.PropertyBag.FindProperty(part.propertyName);
+
                     var listProperty = result.property as IListProperty;
                     if (listProperty == null || listProperty.Count(result.container) <= part.listIndex)
                     {

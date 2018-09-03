@@ -2,15 +2,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Unity.Properties.Serialization;
 
 namespace Unity.Properties.Editor.Serialization
 {
-    public class CSharpContainerGenerator
+    public class CSharpContainerGenerator : GenerationBackend
     {
         public StringBuffer Code { get; internal set; } = new StringBuffer();
 
-        public List<string> PropertyBagItemNames { get; set; } = new List<string>();
+        public bool DoGenerateNamespace { get; set; } = true;
 
         public void GeneratePropertyContainer(
             PropertyTypeNode container,
@@ -19,15 +20,18 @@ namespace Unity.Properties.Editor.Serialization
             ResetInternalGenerationStates();
 
             StringBuffer gen = new StringBuffer();
-            using (var d = new NamespaceDecorator(container, gen))
+            using (var d = new NamespaceDecorator(container, DoGenerateNamespace ? gen : null))
             {
                 GeneratePropertyContainerFor(
                     container,
                     dependancyLookupFunc,
                     gen);
             }
+
             Code = gen;
         }
+
+        public List<string> PropertyBagItemNames { get; set; } = new List<string>();
 
         private static class Style
         {
@@ -47,7 +51,6 @@ namespace Unity.Properties.Editor.Serialization
                     IndentLevel = parentScope.IndentLevel + 1;
                     Code = parentScope.Code;
                 }
-                Code.Append(' ', Style.Space * IndentLevel);
             }
 
             public virtual void AddLine(string line)
@@ -62,14 +65,31 @@ namespace Unity.Properties.Editor.Serialization
             }
         }
 
-        static private string GetPropertyWrapperVariableName(PropertyTypeNode propertyType)
+        private class CSharpGenerationFragmentContext : FragmentContext
         {
-            return $"s_{propertyType.Name}Property";
+            public Scope Scope { private get; set; }
+
+            public string Fragment { get; set; }
+
+            public override void AddStringFragment()
+            {
+                if (!string.IsNullOrEmpty(Fragment))
+                {
+                    Scope.AddLine(Fragment);
+                }
+            }
         }
 
-        private string GenerateClassPropertiesForPropertyAccessor(
+        private static string GetPropertyWrapperVariableName(PropertyTypeNode propertyType)
+        {
+            string prefix = propertyType.IsPublicProperty ? string.Empty : "s_";
+            return $"{prefix}{propertyType.Name}Property";
+        }
+
+        private static void GenerateClassPropertiesForPropertyAccessor(
             PropertyTypeNode.TypeTag containerTypeTag,
-            PropertyTypeNode propertyType
+            PropertyTypeNode propertyType,
+            Scope code
             )
         {
             var containerAsAParamTokens = new List<string> { };
@@ -89,13 +109,18 @@ namespace Unity.Properties.Editor.Serialization
 
             var modifiers = string.Join(" ", ModifiersToStrings(AccessModifiers.Public));
 
-            return $@"{modifiers} {propertyTypeString} {propertyType.Name}
-        {{
-            get {{ return {propertyWrapperVariableName}.GetValue({getSetValueCallContainerParam}); }}
-            set {{ {
-                    (isCompositeType ? string.Empty : $"{propertyWrapperVariableName}.SetValue({getSetValueCallContainerParam}, value);")
-                } }}
-        }}";
+            code.AddLine($"{modifiers} {propertyTypeString} {propertyType.Name}");
+
+            {
+                code.AddLine("{");
+                var accessorScope = new Scope(code);
+                accessorScope.AddLine($"get {{ return {propertyWrapperVariableName}.GetValue({getSetValueCallContainerParam}); }}");
+                if ( ! isCompositeType)
+                {
+                    accessorScope.AddLine($"set {{ {propertyWrapperVariableName}.SetValue({getSetValueCallContainerParam}, value); }}");
+                }
+                code.AddLine("}");
+            }
         }
 
         private static string GeneratePropertyWrapperBackingVariable(
@@ -106,7 +131,7 @@ namespace Unity.Properties.Editor.Serialization
             var accessModifiers = AccessModifiers.Static | AccessModifiers.Readonly;
             if (containerTypeTag == PropertyTypeNode.TypeTag.Class)
             {
-                accessModifiers |= AccessModifiers.Protected;
+                accessModifiers |= (propertyType.IsPublicProperty ? AccessModifiers.Public : AccessModifiers.Protected);
             }
             else
             {
@@ -125,6 +150,18 @@ namespace Unity.Properties.Editor.Serialization
             PropertyTypeNode propertyType,
             Scope code)
         {
+            // Public C# Property & backing field
+
+            GenerateClassPropertiesForPropertyAccessor(containerTypeTag, propertyType, code);
+
+            var propertyWrapperTypeName = GetPropertyWrapperTypeFor(
+                containerName,
+                containerTypeTag,
+                propertyType);
+
+            code.AddLine(GeneratePropertyWrapperBackingVariable(
+                propertyWrapperTypeName, containerTypeTag, propertyType));
+
             // Backing field if any
 
             var propertyAccessorName = string.Empty;
@@ -132,7 +169,7 @@ namespace Unity.Properties.Editor.Serialization
                 propertyType.Name,
                 propertyType,
                 out propertyAccessorName
-                );
+            );
 
             if (!string.IsNullOrEmpty(backingField))
             {
@@ -140,7 +177,7 @@ namespace Unity.Properties.Editor.Serialization
 
                 var initializer = GenerateInitializerFromProperty(containerTypeTag, propertyType);
 
-                string initializerFragment = backingField;
+                var initializerFragment = backingField;
 
                 if (!string.IsNullOrEmpty(initializer))
                 {
@@ -151,7 +188,12 @@ namespace Unity.Properties.Editor.Serialization
                     else
                     {
                         // Add an initializer for that
-                        ConstructorInitializerFragments.Add(() => $"{propertyAccessorName} = {initializer};");
+                        ConstructorInitializerFragments.Add(
+                            new CSharpGenerationFragmentContext()
+                            {
+                                Scope = code,
+                                Fragment = $"{propertyAccessorName} = {initializer};"
+                            });
                     }
                 }
 
@@ -160,41 +202,29 @@ namespace Unity.Properties.Editor.Serialization
                 code.AddLine(initializerFragment);
             }
 
-            // Public C# Property & backing field
-
-            code.AddLine(GenerateClassPropertiesForPropertyAccessor(containerTypeTag, propertyType));
-
-            code.AddLine(Environment.NewLine);
-
-            var propertyWrapperTypeName = GetPropertyWrapperTypeFor(
-                containerName,
-                containerTypeTag,
-                propertyType);
-
-            code.AddLine(GeneratePropertyWrapperBackingVariable(
-                propertyWrapperTypeName, containerTypeTag, propertyType));
-
             //      -> Add constructor initializer fragments for later stage for that property
 
             var propertyTypeString = TypeDeclarationStringForProperty(propertyType);
             var propertyWrapperVariableName = GetPropertyWrapperVariableName(propertyType);
 
-            AddStaticConstructorInStageFragment(
-                ConstructorStage.PropertyInitializationStage,
-                () =>
-                {
-                    var initializer = GeneratePropertyWrapperInitializer(
-                        propertyType.Name,
-                        containerName,
-                        containerTypeTag,
-                        propertyWrapperTypeName,
-                        propertyType.IsReadonly,
-                        propertyAccessorName,
-                        propertyTypeString,
-                        propertyType.Tag);
+            {
+                var initializer = GeneratePropertyWrapperInitializers(
+                    propertyType,
+                    containerName,
+                    containerTypeTag,
+                    propertyWrapperTypeName,
+                    propertyAccessorName,
+                    propertyTypeString,
+                    code);
 
-                    return $"{propertyWrapperVariableName} = {initializer};";
-                });
+                AddStaticConstructorInStageFragment(
+                    ConstructorStage.PropertyInitializationStage,
+                    new CSharpGenerationFragmentContext()
+                    {
+                        Scope = code,
+                        Fragment = $"{propertyWrapperVariableName} = {initializer};"
+                    });
+            }
 
             PropertyBagItemNames.Add(propertyWrapperVariableName);
         }
@@ -203,7 +233,7 @@ namespace Unity.Properties.Editor.Serialization
         {
             StaticConstructorInitializerFragments = new Dictionary<ConstructorStage, StaticConstructorStagePrePostFragments>();
             PropertyBagItemNames = new List<string>();
-            ConstructorInitializerFragments = new List<Func<string>>();
+            ConstructorInitializerFragments = new List<FragmentContext>();
         }
 
         private static string TypeStringFromEnumerableProperty(PropertyTypeNode propertyType)
@@ -362,6 +392,12 @@ namespace Unity.Properties.Editor.Serialization
             PropertyTypeNode propertyType,
             out string propertyAccessorName)
         {
+            if (propertyType.IsCustomProperty)
+            {
+                propertyAccessorName = string.Empty;
+                return string.Empty;
+            }
+
             propertyAccessorName = $"m_{propertyName}";
 
             if (string.IsNullOrEmpty(propertyType.PropertyBackingAccessor))
@@ -385,91 +421,118 @@ namespace Unity.Properties.Editor.Serialization
             return string.Empty;
         }
 
-        private static string GeneratePropertyWrapperInitializer(
-            string propertyName,
+        private class PropertyWrapperAccessors
+        {
+            public string ValueGetter { get; set; } = string.Empty;
+            public string ValueSetter { get; set; } = string.Empty;
+            public string RefGetter { get; set; } = string.Empty;
+        }
+
+        private static string CleanupNameForMethod(string name)
+        {
+            return new string(name.Select(c => char.IsLetter(c) ? c : '_').ToArray());
+        }
+
+        private static PropertyWrapperAccessors GetPropertyWrapperAccessors(
+            PropertyTypeNode propertyType,
             string containerName,
             PropertyTypeNode.TypeTag containerTypeTag,
             string propertyWrapperTypeString,
-            bool isReadonlyProperty,
-            string propertyAccessorName,
             string propertyTypeString,
-            PropertyTypeNode.TypeTag propertyTypeTag
-            )
+            string propertyAccessorName)
         {
-            var initializerParams = new List<string>();
+            if (propertyType.IsCustomProperty)
+            {
+                return new PropertyWrapperAccessors()
+                {
+                    ValueGetter = $"GetValue_{CleanupNameForMethod(propertyType.Name)}",
+                    ValueSetter = $"SetValue_{CleanupNameForMethod(propertyType.Name)}",
+                    RefGetter = propertyType.Tag == PropertyTypeNode.TypeTag.Struct
+                        ? $"GetRef_{CleanupNameForMethod(propertyType.Name)}"
+                        : string.Empty
+                };
+            }
 
             var containerAsAParemeterType =
                 containerTypeTag.HasFlag(PropertyTypeNode.TypeTag.Struct) ? $"ref {containerName}" : $"{containerName}";
 
-            initializerParams.Add($"nameof({propertyName})");
-
-            initializerParams.Add($"/* GET */ ({containerAsAParemeterType} container) => container.{propertyAccessorName}");
-
             var propertySetter = "/* SET */ null";
-            if (!PropertyTypeNode.IsCompositeType(propertyTypeTag) && !isReadonlyProperty)
+            if (!PropertyTypeNode.IsCompositeType(propertyType.Tag) && !propertyType.IsReadonly)
             {
                 propertySetter = $"/* SET */ ({containerAsAParemeterType} container, {propertyTypeString} value) => container.{propertyAccessorName} = value";
             }
-            initializerParams.Add(propertySetter);
 
-            if (propertyTypeTag == PropertyTypeNode.TypeTag.Struct)
+            var propertyRefGetter = string.Empty;
+            if (propertyType.Tag == PropertyTypeNode.TypeTag.Struct)
             {
-                initializerParams.Add(
-                    $"/* REF */ ({containerAsAParemeterType} container, {propertyWrapperTypeString}.RefVisitMethod a, IPropertyVisitor v) => a(ref container.m_{propertyName}, v)"
-                    );
+                propertyRefGetter = $"/* REF */ ({containerAsAParemeterType} container, {propertyWrapperTypeString}.RefVisitMethod a, IPropertyVisitor v) => a(ref container.m_{propertyType.Name}, v)";
             }
 
+            return new PropertyWrapperAccessors()
+            {
+                ValueGetter = $"/* GET */ ({containerAsAParemeterType} container) => container.{propertyAccessorName}",
+                ValueSetter = propertySetter,
+                RefGetter = propertyRefGetter
+            };
+        }
+
+        private static string GeneratePropertyWrapperInitializers(
+            PropertyTypeNode propertyType,
+            string containerName,
+            PropertyTypeNode.TypeTag containerTypeTag,
+            string propertyWrapperTypeString,
+            string propertyAccessorName,
+            string propertyTypeString,
+            Scope code
+            )
+        {
+            var initializerParams = new List<string>();
+
+            var accessors = GetPropertyWrapperAccessors(
+                propertyType,
+                containerName,
+                containerTypeTag,
+                propertyWrapperTypeString,
+                propertyTypeString,
+                propertyAccessorName);
+
+            // @TODO shouldn't be done here, and be located in a cleaner place
+
+#if ENABLE_CUSTOM_PROPERTY_PARTIALS
+            if (propertyType.IsCustomProperty)
+            {
+                var containerAsAParemeterType =
+                    containerTypeTag.HasFlag(PropertyTypeNode.TypeTag.Struct) ? $"ref {containerName}" : $"{containerName}";
+                
+                code.AddLine("");
+                
+                if (!string.IsNullOrEmpty(accessors.RefGetter))
+                {
+                    code.AddLine(
+                        $"partial void {accessors.RefGetter}({containerAsAParemeterType} value, IPropertyVisitor visitor);");
+                }
+                
+                code.AddLine($"partial void {accessors.ValueSetter}({containerAsAParemeterType} container, {propertyTypeString} value);");
+                
+                code.AddLine(
+                    $"partial {propertyTypeString} {accessors.ValueGetter}({containerAsAParemeterType} container);");
+                
+                code.AddLine("");
+            }
+#endif
+
+            initializerParams.Add($"nameof({propertyType.Name})");
+            initializerParams.Add(accessors.ValueGetter);
+            initializerParams.Add(accessors.ValueSetter);
+
+            if (!string.IsNullOrEmpty(accessors.RefGetter))
+            {
+                initializerParams.Add(accessors.RefGetter);
+            }
+            
             return $@"new { propertyWrapperTypeString }( {string.Join(", ", initializerParams)} )";
         }
-
-        private List<Func<string>> ConstructorInitializerFragments { get; set; }
-
-        private enum ConstructorStage
-        {
-            PropertyInitializationStage,
-            PropertyFreezeStage,
-        };
-
-        private class StaticConstructorStagePrePostFragments
-        {
-            public StaticConstructorStagePrePostFragments(ConstructorStage stage)
-            {
-                Stage = stage;
-            }
-
-            public ConstructorStage Stage { get; internal set; }
-
-            private static string NopFragment() { return string.Empty; }
-
-            public List<Func<string>> InStageFragments { get; set; } = new List<Func<string>>();
-
-            public List<Func<string>> PostStageFragments { get; set; } = new List<Func<string>>();
-        };
-
-        private Dictionary<ConstructorStage, StaticConstructorStagePrePostFragments>
-            StaticConstructorInitializerFragments
-        { get; set; }
-
-        private void AddStaticConstructorInStageFragment(ConstructorStage s, Func<string> f)
-        {
-            if (!StaticConstructorInitializerFragments.ContainsKey(s))
-            {
-                StaticConstructorInitializerFragments[s] = new StaticConstructorStagePrePostFragments(s);
-            }
-
-            StaticConstructorInitializerFragments[s].InStageFragments.Add(f);
-        }
-
-        private void AddStaticConstructorPostStageFragment(ConstructorStage s, Func<string> f)
-        {
-            if (!StaticConstructorInitializerFragments.ContainsKey(s))
-            {
-                StaticConstructorInitializerFragments[s] = new StaticConstructorStagePrePostFragments(s);
-            }
-
-            StaticConstructorInitializerFragments[s].PostStageFragments.Add(f);
-        }
-
+        
         private string OnPropertyBagConstructedMethodName { get; } = "OnPropertyBagConstructed";
 
         private static void GenerateUserHook(StringBuffer gen, string name, List<string> parameters = null)
@@ -492,12 +555,12 @@ namespace Unity.Properties.Editor.Serialization
             gen.Append(Environment.NewLine);
         }
 
-        private void GenerateUserHooksFor(PropertyTypeNode c, StringBuffer gen)
+        private void GenerateUserHooksFor(PropertyTypeNode c, Scope scope)
         {
             if (c.UserHooks.HasFlag(UserHookFlags.OnPropertyBagConstructed))
             {
                 GenerateUserHook(
-                    gen,
+                    scope.Code,
                     OnPropertyBagConstructedMethodName,
                     new List<string>() { "IPropertyBag bag" });
 
@@ -505,9 +568,10 @@ namespace Unity.Properties.Editor.Serialization
 
                 AddStaticConstructorPostStageFragment(
                     ConstructorStage.PropertyInitializationStage,
-                    () =>
+                    new CSharpGenerationFragmentContext()
                     {
-                        return $"{OnPropertyBagConstructedMethodName}({PropertyBagStaticVarName});";
+                        Scope = scope,
+                        Fragment = $"{OnPropertyBagConstructedMethodName}({PropertyBagStaticVarName});"
                     });
             }
         }
@@ -528,7 +592,7 @@ namespace Unity.Properties.Editor.Serialization
                 return;
             }
 
-            if (c.Tag == PropertyTypeNode.TypeTag.Class && c.Children.Count == 0)
+            if (c.Tag == PropertyTypeNode.TypeTag.Class && c.Properties.Count == 0)
             {
                 // baild out for class + no properties
                 return;
@@ -566,9 +630,13 @@ namespace Unity.Properties.Editor.Serialization
 
                 foreach (var fragment in ConstructorInitializerFragments)
                 {
-                    gen.Append(' ', Style.Space * 2);
-                    gen.Append(fragment());
-                    gen.Append(Environment.NewLine);
+                    var codeFragment = fragment as CSharpGenerationFragmentContext;
+                    if (codeFragment != null)
+                    {
+                        gen.Append(' ', Style.Space * 2);
+                        gen.Append(codeFragment.Fragment);
+                        gen.Append(Environment.NewLine);
+                    }
                 }
             }
 
@@ -578,13 +646,17 @@ namespace Unity.Properties.Editor.Serialization
 
         private string PropertyBagStaticVarName { get; set; } = "sProperties";
 
-        private static void GenerateFragments(List<Func<string>> fragments, StringBuffer gen)
+        private static void GenerateFragments(List<FragmentContext> fragments, StringBuffer gen)
         {
             foreach (var fragment in fragments)
             {
-                gen.Append(' ', Style.Space * 2);
-                gen.Append(fragment());
-                gen.Append(Environment.NewLine);
+                var codeFragment = fragment as CSharpGenerationFragmentContext;
+                if (codeFragment != null)
+                {
+                    gen.Append(' ', Style.Space * 2);
+                    gen.Append(codeFragment.Fragment);
+                    gen.Append(Environment.NewLine);
+                }
             }
         }
 
@@ -603,9 +675,7 @@ namespace Unity.Properties.Editor.Serialization
             // Handle property initializers generation stage
 
             StaticConstructorStagePrePostFragments stageFragments;
-            if (StaticConstructorInitializerFragments.TryGetValue(
-                ConstructorStage.PropertyInitializationStage,
-                out stageFragments))
+            if (StaticConstructorInitializerFragments.TryGetValue(ConstructorStage.PropertyInitializationStage, out stageFragments))
             {
                 var fragments = stageFragments.InStageFragments;
 
@@ -718,32 +788,37 @@ namespace Unity.Properties.Editor.Serialization
             }
         }
 
-        private void GeneratePropertyBag(PropertyTypeNode c, List<string> propertyNames, StringBuffer gen)
+        private void GeneratePropertyBag(PropertyTypeNode c, List<string> propertyNames, Scope scope)
         {
+            var gen = scope.Code;
+
             gen.Append(' ', Style.Space * 1);
             gen.Append($"public IPropertyBag PropertyBag => {PropertyBagStaticVarName};");
             gen.Append(Environment.NewLine); gen.Append(Environment.NewLine);
 
-            var propertyBagInitializers = propertyNames != null
-                ? string.Join(", ", propertyNames)
-                : string.Empty;
-            ;
             gen.Append(' ', Style.Space * 1);
 
-            var modifiers = AccessModifiers.Private | AccessModifiers.Static | AccessModifiers.Readonly;
+            const AccessModifiers modifiers = AccessModifiers.Private | AccessModifiers.Static | AccessModifiers.Readonly;
             gen.Append($"{string.Join(" ", ModifiersToStrings(modifiers))} PropertyBag {PropertyBagStaticVarName};");
 
             // TODO should be ordered (after property wrappers creation)
 
-            AddStaticConstructorInStageFragment(
-                ConstructorStage.PropertyInitializationStage,
-                () =>
-                {
-                    var initializer = $@"new PropertyBag(new List<IProperty>{{
+            var propertyBagInitializers = propertyNames != null
+                ? string.Join(", ", propertyNames)
+                : string.Empty;
+
+            var initializer = $@"new PropertyBag(new List<IProperty>{{
                         {propertyBagInitializers}
                     }}.ToArray())";
-                    return $"{PropertyBagStaticVarName} = {initializer};";
-                });
+
+            AddStaticConstructorInStageFragment(
+                ConstructorStage.PropertyInitializationStage,
+                new CSharpGenerationFragmentContext()
+                {
+                    Scope = scope,
+                    Fragment = $"{PropertyBagStaticVarName} = {initializer};"
+                })
+                ;
 
             gen.Append(Environment.NewLine); gen.Append(Environment.NewLine);
         }
@@ -762,72 +837,83 @@ namespace Unity.Properties.Editor.Serialization
 
             var rootScope = new Scope();
 
+            var shouldGeneratePRopertyContainerImplementation = ! c.NoDefaultImplementation;
+
             using (var d = new PropertyContainerDataTypeDecorator(c, rootScope.Code, new List<string> { baseClass }))
             using (var scope = new Scope(rootScope))
             {
-                if (c.Children.Count != 0)
+                if (shouldGeneratePRopertyContainerImplementation)
                 {
-                    foreach (var propertyType in c.Children)
+                    if (c.Properties.Count != 0)
                     {
-                        GenerateProperty(
-                            containerName,
-                            containerTypeTag,
-                            propertyType,
-                            scope
+                        foreach (var propertyType in c.Properties)
+                        {
+                            GenerateProperty(
+                                containerName,
+                                containerTypeTag,
+                                propertyType,
+                                scope
                             );
+                            scope.AddLine("");
+                        }
+
+                        scope.AddLine("");
                     }
-                }
 
-                GenerateUserHooksFor(c, scope.Code);
+                    GenerateUserHooksFor(c, scope);
 
-                // Add inherited properties if it applies
+                    // Add inherited properties if it applies
 
-                var propertyBagElementNames = PropertyBagItemNames;
-                if (!string.IsNullOrEmpty(c.OverrideDefaultBaseClass) && dependancyLookupFunc != null)
-                {
-                    var cachedContainer = dependancyLookupFunc(c.OverrideDefaultBaseClass);
-                    if (cachedContainer != null)
+                    var propertyBagElementNames = PropertyBagItemNames;
+                    if (!string.IsNullOrEmpty(c.OverrideDefaultBaseClass) && dependancyLookupFunc != null)
                     {
-                        propertyBagElementNames = PropertyBagItemNames.Select(n => n).ToList();
+                        var cachedContainer = dependancyLookupFunc(c.OverrideDefaultBaseClass);
+                        if (cachedContainer != null)
+                        {
+                            propertyBagElementNames = PropertyBagItemNames.Select(n => n).ToList();
 
-                        propertyBagElementNames.AddRange(cachedContainer.GeneratedPropertyFieldNames);
+                            propertyBagElementNames.AddRange(cachedContainer.GeneratedPropertyFieldNames);
+                        }
                     }
-                }
 
-                GeneratePropertyBag(
-                    c,
-                    propertyBagElementNames,
-                    scope.Code);
+                    GeneratePropertyBag(
+                        c,
+                        propertyBagElementNames,
+                        scope);
 
-                GenerateConstructorFor(c, scope.Code);
+                    GenerateConstructorFor(c, scope.Code);
 
-                GenerateStaticConstructorFor(c, scope.Code);
+                    GenerateStaticConstructorFor(c, scope.Code);
 
-                // @TODO Cleanup
-                // Recurse to collect nested container definitions
+                    // @TODO Cleanup
+                    // Recurse to collect nested container definitions
 
-                foreach (var nestedContainer in c.ChildContainers)
-                {
-                    if (nestedContainer == null)
-                        continue;
-
-                    var g = new CSharpContainerGenerator();
-                    g.GeneratePropertyContainer(nestedContainer, dependancyLookupFunc);
-
-                    if (!string.IsNullOrEmpty(g.Code.ToString()))
+                    foreach (var nestedContainer in c.NestedContainers)
                     {
-                        scope.AddLine(string.Empty);
-                        scope.AddLine(string.Empty);
+                        if (nestedContainer == null)
+                            continue;
 
-                        scope.AddLine(g.Code.ToString());
+                        var g = new CSharpContainerGenerator()
+                        {
+                            DoGenerateNamespace = false
+                        };
+                        g.GeneratePropertyContainer(nestedContainer, dependancyLookupFunc);
 
-                        scope.AddLine(string.Empty);
-                        scope.AddLine(string.Empty);
+                        if (!string.IsNullOrEmpty(g.Code.ToString()))
+                        {
+                            scope.AddLine(string.Empty);
+                            scope.AddLine(string.Empty);
+
+                            scope.AddLine(g.Code.ToString());
+
+                            scope.AddLine(string.Empty);
+                            scope.AddLine(string.Empty);
+                        }
                     }
-                }
 
-                scope.AddLine("public IVersionStorage VersionStorage => DefaultVersionStorage.Instance;");
-                scope.AddLine(Environment.NewLine);
+                    scope.AddLine("public IVersionStorage VersionStorage => DefaultVersionStorage.Instance;");
+                    scope.AddLine(Environment.NewLine);
+                }
             }
 
             gen.Append(rootScope.Code);
@@ -881,7 +967,7 @@ namespace Unity.Properties.Editor.Serialization
 
             private void GenerateHeader()
             {
-                if (!string.IsNullOrEmpty(_container.Namespace))
+                if (_sb != null && !string.IsNullOrEmpty(_container.Namespace))
                 {
                     _sb.Append($"namespace {_container.Namespace} {Environment.NewLine} {{");
                     _sb.Append(Environment.NewLine);
@@ -906,6 +992,47 @@ namespace Unity.Properties.Editor.Serialization
             {
                 GenerateFooter();
             }
+        }
+
+        public override void OnPropertyContainerGenerationStarted(PropertyTypeNode c)
+        {
+            ResetInternalGenerationStates();
+
+        }
+
+        public override void OnPropertyGenerationStarted(PropertyTypeNode container, PropertyTypeNode property)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void OnGenerateUserHooksForContainer(PropertyTypeNode container)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void OnGeneratePropertyBagForContainer(PropertyTypeNode container)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void OnGenerateConstructorForContainer(PropertyTypeNode container)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void OnGenerateStaticConstructorForContainer(PropertyTypeNode container)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void OnGenerateNestedContainer(PropertyTypeNode container, PropertyTypeNode nestedContainer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void OnPropertyContainerGenerationCompleted(PropertyTypeNode c)
+        {
+            throw new NotImplementedException();
         }
     }
 }

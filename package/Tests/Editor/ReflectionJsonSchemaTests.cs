@@ -21,7 +21,7 @@ namespace Unity.Properties.Tests.JSonSchema
         public void WhenNullAssembly_ReflectionJsonSchemaGenerator_ReturnsAnEmptyJson()
         {
             AssemblyDefinition assembly = null;
-            var result = PropertyTypeNode.ToJson(ReflectionJsonSchemaGenerator.Read(assembly));
+            var result = PropertyTypeNodeJsonSerializer.ToJson(ReflectionPropertyTree.Read(assembly));
             Assert.IsTrue(result == "[]");
         }
 
@@ -44,13 +44,13 @@ namespace Unity.Properties.Tests.JSonSchema
                 };
             ";
 
-            Assert.IsTrue(TryCompile(code, out assemblyFilePath, out errors), errors);
+            Assert.IsTrue(CompileTestUtils.TryCompileToFile(code, out assemblyFilePath, out errors), errors);
 
             using (new FileDisposer(assemblyFilePath))
             {
-                var result = PropertyTypeNode.FromJson(
-                    PropertyTypeNode.ToJson(
-                        ReflectionJsonSchemaGenerator.Read(
+                var result = PropertyTypeNodeJsonSerializer.FromJson(
+                    PropertyTypeNodeJsonSerializer.ToJson(
+                        ReflectionPropertyTree.Read(
                             assemblyFilePath)));
 
                 var containers = new List<PropertyTypeNode>();
@@ -70,6 +70,9 @@ namespace Unity.Properties.Tests.JSonSchema
             string code = @"
                 using System.Collections.Generic;
                 using Unity.Properties;
+                
+                namespace Unity.Properties.TestCases {
+
                 public partial class HelloWorld : IPropertyContainer
                 {
                     public static IPropertyBag bag { get; } = new PropertyBag(new List<IProperty> {}.ToArray());
@@ -84,15 +87,17 @@ namespace Unity.Properties.Tests.JSonSchema
                     }
                     public Foo foo { get; } = new Foo();
                 };
+                
+                }
             ";
 
-            Assert.IsTrue(TryCompile(code, out assemblyFilePath, out errors), errors);
+            Assert.IsTrue(CompileTestUtils.TryCompileToFile(code, out assemblyFilePath, out errors), errors);
 
             using (new FileDisposer(assemblyFilePath))
             {
-                var result = PropertyTypeNode.FromJson(
-                    PropertyTypeNode.ToJson(
-                        ReflectionJsonSchemaGenerator.Read(
+                var result = PropertyTypeNodeJsonSerializer.FromJson(
+                    PropertyTypeNodeJsonSerializer.ToJson(
+                        ReflectionPropertyTree.Read(
                             assemblyFilePath)));
 
                 var containers = new List<PropertyTypeNode>();
@@ -105,6 +110,102 @@ namespace Unity.Properties.Tests.JSonSchema
         }
 
         [Test]
+        public void WhenAssemblyPropertyContainer_ReflectionJsonSchemaGenerator_ReturnsAValidJson()
+        {
+            string assemblyFilePath = string.Empty;
+            string errors = string.Empty;
+
+            string code = @"
+                using System.Collections.Generic;
+                using Unity.Properties;
+                
+                namespace Unity.Properties.TestCases {
+
+                public partial class HelloWorld : IPropertyContainer
+                {
+                    public static IPropertyBag bag { get; } = new PropertyBag(new List<IProperty> {}.ToArray());
+
+                    public IVersionStorage VersionStorage { get; }
+                    public IPropertyBag PropertyBag => bag;
+
+                    private MyContainer m_MyContainer;
+                    private static readonly ContainerProperty<HelloWorld, MyContainer> s_MyContainer =
+                        new ContainerProperty<HelloWorld, MyContainer>(
+                            ""MyContainer"",
+                        c => c.m_MyContainer,
+                        (c, v) => c.m_MyContainer = v);
+
+                    public class MyContainer : IPropertyContainer
+                    {
+                        public static IPropertyBag bag { get; } = new PropertyBag(new List<IProperty> {}.ToArray());
+
+                        public IVersionStorage VersionStorage { get; }
+                        public IPropertyBag PropertyBag => bag;
+                    }
+                };
+                
+                }
+            ";
+
+            Assert.IsTrue(CompileTestUtils.TryCompileToFile(code, out assemblyFilePath, out errors), errors);
+
+            using (new FileDisposer(assemblyFilePath))
+            {
+                var result = PropertyTypeNodeJsonSerializer.FromJson(
+                    PropertyTypeNodeJsonSerializer.ToJson(
+                        ReflectionPropertyTree.Read(
+                            assemblyFilePath)));
+
+                var containers = new List<PropertyTypeNode>();
+
+                VisitContainer(result, c => { containers.Add(c); });
+
+                Assert.True(containers.Count == 2);
+                Assert.True(containers[0].Name == "HelloWorld");
+                Assert.True(containers[1].Name == "MyContainer");
+            }
+        }
+
+
+        [Test]
+        public void WhenPropertyIsPublic_ReflectionJsonSchemaGenerator_SetsThePropertyAsPublicInTypeTree()
+        {
+            string assemblyFilePath = string.Empty;
+            string errors = string.Empty;
+
+            string code = @"
+                using System.Collections.Generic;
+                using Unity.Properties;
+                
+                namespace Unity.Properties.TestCases {
+
+                public partial class HelloWorld : IPropertyContainer
+                {
+                    public static IPropertyBag bag { get; } = new PropertyBag(new List<IProperty> {}.ToArray());
+
+                    public IVersionStorage VersionStorage { get; }
+                    public IPropertyBag PropertyBag => bag;
+
+                    private int m_MyContainer;
+                    public static readonly Property<HelloWorld, int> s_MyField =
+                        new Property<HelloWorld, int>(
+                            ""MyField"",
+                            c => c.m_MyContainer,
+                            (c, v) => c.m_MyContainer = v);
+                    };
+                }
+            ";
+
+            Assert.IsTrue(CompileTestUtils.TryCompileToFile(code, out assemblyFilePath, out errors), errors);
+
+            using (new FileDisposer(assemblyFilePath))
+            {
+                var result = ReflectionPropertyTree.Read(assemblyFilePath);
+                Assert.True(result[0].Properties[0].IsPublicProperty);
+            }
+        }
+
+        [Test]
         public void WhenAssemblyContainsNestedPropertyContainers_ReflectionJsonSchemaGenerator_ReturnsAValidJson()
         {
             string assemblyFilePath = string.Empty;
@@ -113,6 +214,9 @@ namespace Unity.Properties.Tests.JSonSchema
             string code = @"
                 using System.Collections.Generic;
                 using Unity.Properties;
+
+                namespace Unity.Properties.TestCases {
+
                 public partial class HelloWorld : IPropertyContainer
                 {
                     public static IPropertyBag bag { get; } = new PropertyBag(new List<IProperty> {}.ToArray());
@@ -136,15 +240,17 @@ namespace Unity.Properties.Tests.JSonSchema
                         }
                     }
                 };
+
+                }
             ";
 
-            Assert.IsTrue(TryCompile(code, out assemblyFilePath, out errors), errors);
+            Assert.IsTrue(CompileTestUtils.TryCompileToFile(code, out assemblyFilePath, out errors), errors);
 
             using (new FileDisposer(assemblyFilePath))
             {
-                var result = PropertyTypeNode.FromJson(
-                    PropertyTypeNode.ToJson(
-                        ReflectionJsonSchemaGenerator.Read(
+                var result = PropertyTypeNodeJsonSerializer.FromJson(
+                    PropertyTypeNodeJsonSerializer.ToJson(
+                        ReflectionPropertyTree.Read(
                             assemblyFilePath)));
 
                 var containers = new List<PropertyTypeNode>();
@@ -186,13 +292,13 @@ namespace Unity.Properties.Tests.JSonSchema
                 }};
             ";
 
-            Assert.IsTrue(TryCompile(code, out assemblyFilePath, out errors), errors);
+            Assert.IsTrue(CompileTestUtils.TryCompileToFile(code, out assemblyFilePath, out errors), errors);
 
             using (new FileDisposer(assemblyFilePath))
             {
-                var result = PropertyTypeNode.FromJson(
-                    PropertyTypeNode.ToJson(
-                        ReflectionJsonSchemaGenerator.Read(
+                var result = PropertyTypeNodeJsonSerializer.FromJson(
+                    PropertyTypeNodeJsonSerializer.ToJson(
+                        ReflectionPropertyTree.Read(
                             assemblyFilePath)));
 
                 var containers = new List<PropertyTypeNode>();
@@ -238,7 +344,7 @@ namespace Unity.Properties.Tests.JSonSchema
             // json -> csharp
 
             var g = new CSharpGenerationBackend();
-            g.Generate(JsonSchema.FromJson(json));
+            g.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
 
             // csharp -> assembly
 
@@ -246,7 +352,7 @@ namespace Unity.Properties.Tests.JSonSchema
             var errors = string.Empty;
 
             Assert.IsTrue(
-                TryCompile(
+                CompileTestUtils.TryCompileToFile(
                     g.Code.ToString(),
                     out assemblyFilePath,
                     out errors));
@@ -265,7 +371,10 @@ namespace Unity.Properties.Tests.JSonSchema
 
             //  -> json
 
-            var generatedJson = PropertyTypeNode.ToJson(ReflectionJsonSchemaGenerator.Read(assemblyFilePath));
+            var generatedJson = PropertyTypeNodeJsonSerializer.ToJson(
+                ReflectionPropertyTree.Read(
+                    assemblyFilePath));
+
             Assert.NotNull(generatedJson.Length);
         }
 
@@ -276,59 +385,8 @@ namespace Unity.Properties.Tests.JSonSchema
             foreach (var node in containerNodes)
             {
                 nodeFunc(node);
-                VisitContainer(node.ChildContainers, nodeFunc);
+                VisitContainer(node.NestedContainers, nodeFunc);
             }
-        }
-
-        private static bool TryCompile(string code, out string assemblyFilePath, out string errorMessage)
-        {
-            try
-            {
-                var syntaxTree = CSharpSyntaxTree.ParseText(code);
-
-                assemblyFilePath = Path.ChangeExtension(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()), "dll");
-
-                var references = new MetadataReference[]
-                {
-                    MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(List<>).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(IPropertyContainer).Assembly.Location),
-                };
-
-                var compilation = CSharpCompilation.Create(
-                    Path.GetRandomFileName(),
-                    syntaxTrees: new[] { syntaxTree },
-                    references: references,
-                    options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-
-                var result = compilation.Emit(assemblyFilePath);
-
-                if (!result.Success)
-                {
-                    var messages = result.Diagnostics.Where(diagnostic =>
-                        diagnostic.IsWarningAsError ||
-                        diagnostic.Severity == DiagnosticSeverity.Error)
-                        .Select(
-                            diagnostic => $"{diagnostic.Id} {diagnostic.GetMessage()} {diagnostic.Location.GetLineSpan().Span.ToString()}"
-                            );
-
-                    errorMessage = string.Join("\n", messages);
-
-                    return false;
-                }
-            }
-            catch (Exception e)
-            {
-                assemblyFilePath = string.Empty;
-                errorMessage = e.ToString();
-
-                return false;
-            }
-
-            errorMessage = string.Empty;
-
-            return true;
         }
     }
 }

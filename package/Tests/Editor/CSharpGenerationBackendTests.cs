@@ -25,66 +25,6 @@ namespace Unity.Properties.Tests.JSonSchema
     internal class CSharpGenerationBackendTests
     {
 #region CSharpGenerationBackendTests Tools
-        private static bool TryCompile(string code, out Assembly assembly, out string errorMessage)
-        {
-            try
-            {
-                var syntaxTree = CSharpSyntaxTree.ParseText(code);
-
-                var assemblyName = Path.GetRandomFileName();
-
-                var references = new MetadataReference[]
-                {
-                    MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(IPropertyContainer).Assembly.Location),
-                };
-
-                var compilation = CSharpCompilation.Create(
-                    assemblyName,
-                    syntaxTrees: new[] { syntaxTree },
-                    references: references,
-                    options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-
-                // Make sure that we build all
-                using (var ms = new MemoryStream())
-                {
-                    var result = compilation.Emit(ms);
-
-                    if ( ! result.Success)
-                    {
-                        var messages = result.Diagnostics.Where(diagnostic =>
-                            diagnostic.IsWarningAsError ||
-                            diagnostic.Severity == DiagnosticSeverity.Error)
-                            .Select(
-                                diagnostic => $"{diagnostic.Id} {diagnostic.GetMessage()} {diagnostic.Location.GetLineSpan().Span.ToString()}"
-                                );
-
-                        errorMessage = string.Join("\n", messages);
-
-                        assembly = null;
-
-                        return false;
-                    }
-                    else
-                    {
-                        ms.Seek(0, SeekOrigin.Begin);
-                        assembly = Assembly.Load(ms.ToArray());
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                assembly = null;
-                errorMessage = e.ToString();
-
-                return false;
-            }
-
-            errorMessage = string.Empty;
-
-            return true;
-        }
 
         private static string WithLineNumbers(string code)
         {
@@ -116,9 +56,9 @@ namespace Unity.Properties.Tests.JSonSchema
 
         private static Assembly CheckIfCodeIsCompilable(string code)
         {
-            string compilationErrors = string.Empty;
+            string compilationErrors;
             Assembly assembly = null;
-            var compiled = TryCompile(code, out assembly, out compilationErrors);
+            var compiled = CompileTestUtils.TryCompile(code, out assembly, out compilationErrors);
             Assert.IsTrue(compiled, compilationErrors + "\n\n" + WithLineNumbers(code));
             return assembly;
         }
@@ -154,9 +94,10 @@ namespace Unity.Properties.Tests.JSonSchema
                 where variableDeclarationSyntax.Identifier.ValueText == fieldName
                 select fieldDeclaration;
 
-            Assert.NotZero(field.Count());
+            var fieldDeclarationSyntaxs = field.ToList();
+            Assert.NotZero(fieldDeclarationSyntaxs.Count());
 
-            return field.First();
+            return fieldDeclarationSyntaxs.First();
         }
 
         private static void CheckIfPropertyContainerIsSerializable(Assembly assembly, string typename)
@@ -188,7 +129,7 @@ namespace Unity.Properties.Tests.JSonSchema
         public void WhenEmptyStringForSchema_CSharpCodeGen_ReturnsAnEmptyContainerList()
         {
             var backend = new CSharpGenerationBackend();
-            var result = PropertyTypeNode.FromJson(string.Empty);
+            var result = PropertyTypeNodeJsonSerializer.FromJson(string.Empty);
             backend.Generate(result);
             var code = backend.Code;
             Assert.Zero(code.Length);
@@ -198,16 +139,15 @@ namespace Unity.Properties.Tests.JSonSchema
         public void WhenNoTypesInSchema_CSharpCodeGen_ReturnsAnEmptyContainerList()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""SchemaVersion"": 1,
-                    ""Namespace"": ""Unity.Properties.Samples.Schema"",
-                    ""Types"": []
-                 }
-            ]
-        ");
-            backend.Generate(result);
+
+            var text = new JsonSchemaBuilder()
+                .WithVersion(JsonSchema.CurrentVersion)
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .ToJson();
+
+            var result = JsonSchema.FromJson(text);
+
+            backend.Generate(result.PropertyTypeNodes);
             var code = backend.Code;
             Assert.Zero(code.Length);
         }
@@ -223,26 +163,17 @@ namespace Unity.Properties.Tests.JSonSchema
         {
             var backend = new CSharpGenerationBackend();
 
-            var text = $@"
-            [
-                {{
-                    ""Types"": [
-                        {{
-                        ""Name"": ""{containerType} HelloWorld"",
-                        ""Properties"": {{
-                            ""Data"": {{
-                                ""TypeId"": ""{qualifiedPropertyType}"",
-                            }},
-                        }}
-                        }}
-                    ]
-                }}
-            ]
-            ";
+            var text = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", containerType)
+                        .WithProperty("Data", qualifiedPropertyType)
+                )
+                .ToJson();
 
             var result = JsonSchema.FromJson(text);
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+            backend.Generate(result.PropertyTypeNodes);
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             // Inject value/class types
@@ -285,27 +216,17 @@ namespace Unity.Properties.Tests.JSonSchema
         {
             var backend = new CSharpGenerationBackend();
 
-            var text = $@"
-            [
-                {{
-                    ""Types"": [
-                        {{
-                        ""Name"": ""{containerType} HelloWorld"",
-                        ""Properties"": {{
-                            ""Data"": {{
-                                ""TypeId"": ""list"",
-                                ""ItemTypeId"": ""{qualifiedPropertyType}""
-                            }},
-                        }}
-                        }}
-                    ]
-                }}
-            ]
-            ";
+            var text = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", containerType)
+                        .WithProperty("Data", "list", "", qualifiedPropertyType)
+                )
+                .ToJson();
 
             var result = JsonSchema.FromJson(text);
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+            backend.Generate(result.PropertyTypeNodes);
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             // Inject value/class types
@@ -340,46 +261,22 @@ namespace Unity.Properties.Tests.JSonSchema
         [TestCase("struct", false, ExpectedResult = "StructEnumProperty<HelloWorld, Foo>")]
         [TestCase("class", true, ExpectedResult = "EnumListProperty<HelloWorld, List<Foo>, Foo>")]
         [TestCase("struct", true, ExpectedResult = "StructEnumListProperty<HelloWorld, List<Foo>, Foo>")]
-        public string TestListPropertyFieldTypeGeneration(
+        public string TestEnumPropertyFieldTypeGeneration(
             string containerType, bool isList)
         {
             var backend = new CSharpGenerationBackend();
 
-            var dataDefinitionFragment = string.Empty;
-            if (isList)
-            {
-                dataDefinitionFragment = @"
-                    ""TypeId"": ""list"",
-                    ""ItemTypeId"": ""enum Foo"",
-                ";
-            }
-            else
-            {
-                dataDefinitionFragment = @"
-                    ""TypeId"": ""enum Foo"",
-                ";
-            }
-
-            var text = $@"
-            [
-                {{
-                    ""Types"": [
-                        {{
-                        ""Name"": ""{containerType} HelloWorld"",
-                        ""Properties"": {{
-                            ""Data"": {{
-                                {dataDefinitionFragment}
-                            }},
-                        }}
-                        }}
-                    ]
-                }}
-            ]
-            ";
-
+            var text = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", containerType)
+                        .WithProperty("Data", isList ? "list" : "enum Foo", "", "enum Foo")
+                )
+                .ToJson();
+            
             var result = JsonSchema.FromJson(text);
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+            backend.Generate(result.PropertyTypeNodes);
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             // Inject value/class types
@@ -408,34 +305,21 @@ namespace Unity.Properties.Tests.JSonSchema
         public void WhenClassContainerWithBaseTypes_CSharpCodeGen_ReturnsAValidContainerList()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""SchemaVersion"": 1,
-                    ""Types"": [
-                      {
-                        ""TypeId"": ""1"",
-                        ""Name"": ""class HelloWorld"",
-                        ""Properties"": {
-                            ""Data"": {
-                                ""TypeId"": ""int"",
-                                ""DefaultValue"": ""5""
-                            },
-                            ""Floats"": {
-                                ""TypeId"": ""List"",
-                                ""ItemTypeId"": ""float""
-                            },
-                            ""MyStruct"": {
-                                ""TypeId"": ""struct SomeData"",
-                            }
-                        }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                        .WithProperty("Data", "int", "5")
+                        .WithProperty("Floats", "List", "", "float")
+                        .WithProperty("MyStruct", "struct SomeData")
+                )
+                .ToJson();
+
+            var result = JsonSchema.FromJson(json);
+
+            backend.Generate(result.PropertyTypeNodes);
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             Assert.IsTrue(code.Contains("Property<HelloWorld, int>"));
@@ -456,54 +340,34 @@ namespace Unity.Properties.Tests.JSonSchema
             Assembly assembly = CheckIfCodeIsCompilable(code);
 
             // @TODO
-            CheckIfPropertyContainerIsSerializable(assembly, "HelloWorld");
+            CheckIfPropertyContainerIsSerializable(assembly, "Unity.Properties.Samples.Tests.HelloWorld");
         }
         
         [Test]
         public void WhenClassHasInheritedPropertiesFromBaseClass_CSharpCodeGen_InheritedPropertiesAreAddedToPropertyBag()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""SchemaVersion"": 1,
-                    ""Types"":
-                    [
-                      {
-                        ""TypeId"": ""1"",
-                        ""Name"": ""class HelloWorld"",
-                        ""OverrideDefaultBaseClass"": ""Foo"",
-                        ""Properties"": {
-                          ""Data"": {
-                            ""TypeId"": ""int"",
-                            ""DefaultValue"": ""5""
-                          },
-                          ""Floats"": {
-                            ""TypeId"": ""List"",
-                            ""ItemTypeId"": ""float""
-                          },
-                        }
-                      },
-                      {
-                        ""TypeId"": ""2"",
-                        ""Name"": ""class Foo"",
-                        ""Properties"": {
-                          ""FooData"": {
-                            ""TypeId"": ""int"",
-                            ""DefaultValue"": ""5""
-                          },
-                          ""FooFloats"": {
-                            ""TypeId"": ""List"",
-                            ""ItemTypeId"": ""float""
-                          },
-                        }
-                      },
-                    ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                        .WithProperty("Data", "int", "5")
+                        .WithProperty("Floats", "List", "", "float")
+                        .WithBaseClassOverriden("Foo")
+                )
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("Foo", "class")
+                        .WithProperty("FooData", "int", "5")
+                        .WithProperty("FooFloats", "List", "", "float")
+                )
+                .ToJson();
+
+            var schema = JsonSchema.FromJson(json);
+
+            backend.Generate(schema.PropertyTypeNodes);
+
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             var assembly = CheckIfCodeIsCompilable(code);
@@ -552,75 +416,40 @@ namespace Unity.Properties.Tests.JSonSchema
             }
             
             // @TODO
-            CheckIfPropertyContainerIsSerializable(assembly, "HelloWorld");
+            CheckIfPropertyContainerIsSerializable(assembly, "Unity.Properties.Samples.Tests.HelloWorld");
         }
+
 
 
         [Test]
         public void WhenClassContainsNestedClass_CSharpCodeGen_NestedClassesAreProperlyGenerated()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""SchemaVersion"": 1,
-                    ""Types"":
-                    [
-                      {
-                        ""TypeId"": ""1"",
-                        ""Name"": ""class HelloWorld"",
-                        ""NestedPropertyContainers"":
-                        [
-                          {
-                            ""TypeId"": ""2"",
-                            ""Name"": ""class Foo"",
-                            ""NestedPropertyContainers"":
-                            [
-                              {
-                                ""TypeId"": ""2"",
-                                ""Name"": ""class Bar"",
-                                ""NestedPropertyContainers"": [],
-                                ""Properties"": {
-                                  ""FooData"": {
-                                    ""TypeId"": ""int"",
-                                    ""DefaultValue"": ""5""
-                                  },
-                                  ""FooFloats"": {
-                                    ""TypeId"": ""List"",
-                                    ""ItemTypeId"": ""float""
-                                  },
-                                }
-                              },
-                            ],
-                            ""Properties"": {
-                              ""FooData"": {
-                                ""TypeId"": ""int"",
-                                ""DefaultValue"": ""5""
-                              },
-                              ""FooFloats"": {
-                                ""TypeId"": ""List"",
-                                ""ItemTypeId"": ""float""
-                              },
-                            }
-                          },
-                        ],
-                        ""Properties"": {
-                          ""Data"": {
-                            ""TypeId"": ""int"",
-                            ""DefaultValue"": ""5""
-                          },
-                          ""Floats"": {
-                            ""TypeId"": ""List"",
-                            ""ItemTypeId"": ""float""
-                          },
-                        }
-                      },
-                    ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                        .WithProperty("Data", "int", "5")
+                        .WithProperty("Floats", "List", "", "float")
+                        .WithNestedContainer(
+                            new JsonSchemaBuilder.ContainerBuilder("Foo", "class")
+                                .WithProperty("Data", "int", "5")
+                                .WithProperty("Floats", "List", "", "float")
+                                .WithNestedContainer(
+                                    new JsonSchemaBuilder.ContainerBuilder("Bar", "class")
+                                        .WithProperty("Data", "int", "5")
+                                        .WithProperty("Floats", "List", "", "float")
+                                )
+                        )
+                )
+                .ToJson();
+
+            var schema = JsonSchema.FromJson(json);
+
+            backend.Generate(schema.PropertyTypeNodes);
+
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             var assembly = CheckIfCodeIsCompilable(code);
@@ -632,49 +461,72 @@ namespace Unity.Properties.Tests.JSonSchema
             Assert.IsNotNull(classNode);
 
             var fooClass = from classDeclaration in classNode.DescendantNodes().OfType<ClassDeclarationSyntax>()
-                where classDeclaration.Identifier.ValueText == "Foo"
-                select classDeclaration;
+                           where classDeclaration.Identifier.ValueText == "Foo"
+                           select classDeclaration;
             Assert.NotZero(fooClass.Count());
 
             var barClass = from classDeclaration in fooClass.First().ChildNodes().OfType<ClassDeclarationSyntax>()
-                where classDeclaration.Identifier.ValueText == "Bar"
-                select classDeclaration;
+                           where classDeclaration.Identifier.ValueText == "Bar"
+                           select classDeclaration;
             Assert.NotZero(barClass.Count());
 
-            CheckIfPropertyContainerIsSerializable(assembly, "HelloWorld");
+            CheckIfPropertyContainerIsSerializable(assembly, "Unity.Properties.Samples.Tests.HelloWorld");
+        }
+
+
+        [Test]
+        public void WhencontainerNestedClassHaveNamespace_CSharpCodeGen_NestedClassesAreProperlyGeneratedWithoutNamespace()
+        {
+            var backend = new CSharpGenerationBackend();
+
+            var json = new JsonSchemaBuilder()
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                        .WithNamespace("Unity.Properties.Samples")
+                        .WithProperty("Data", "int", "5")
+                        .WithNestedContainer(
+                            new JsonSchemaBuilder.ContainerBuilder("Foo", "class")
+                                .WithNamespace("Unity.Properties.Samples")
+                                .WithProperty("Data", "int", "5")
+                                .WithNestedContainer(
+                                    new JsonSchemaBuilder.ContainerBuilder("Bar", "class")
+                                        .WithNamespace("Unity.Properties.Samples")
+                                        .WithProperty("Data", "int", "5")
+                                )
+                        )
+                )
+                .ToJson();
+
+            var schema = JsonSchema.FromJson(json);
+
+            backend.Generate(schema.PropertyTypeNodes);
+
+            var code = backend.Code;
+            var assembly = CheckIfCodeIsCompilable(code);
+            
+            CheckIfPropertyContainerIsSerializable(assembly, "Unity.Properties.Samples.HelloWorld");
+            CheckIfPropertyContainerIsSerializable(assembly, "Unity.Properties.Samples.HelloWorld/Foo");
+            CheckIfPropertyContainerIsSerializable(assembly, "Unity.Properties.Samples.HelloWorld/Foo/Bar");
         }
 
         [Test]
         public void WhenTypeWithBackingFieldInSchema_CSharpCodeGen_DoesNotGeneratePrivateDataMembers()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""SchemaVersion"": 1,
-                    ""Types"": [
-                      {
-                        ""TypeId"": ""1"",
-                        ""Name"": ""class HelloWorld"",
-                        ""Properties"": {
-                            ""Data"": {
-                                ""TypeId"": ""int"",
-                                ""DefaultValue"": ""5"",
-                                ""BackingField"": ""backing""
-                            },
-                            ""Floats"": {
-                                ""TypeId"": ""List"",
-                                ""ItemTypeId"": ""float"",
-                                ""BackingField"": ""backing""
-                            },
-                          }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
+                        .WithProperty("Data", "int", "5", "", "backing")
+                        .WithProperty("Floats", "List", "", "float", "backing")
+                )
+                .ToJson();
+
+            var result = JsonSchema.FromJson(json);
+
+            backend.Generate(result.PropertyTypeNodes);
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             Assert.IsFalse(code.Contains("m_Data"));
@@ -684,6 +536,8 @@ namespace Unity.Properties.Tests.JSonSchema
 
             // Inject value/class types
             code += @"
+                namespace Unity.Properties.Samples.Tests
+                {
                 public partial class HelloWorld
                 {
                     public class Backing
@@ -693,32 +547,67 @@ namespace Unity.Properties.Tests.JSonSchema
                     }
                     public Backing backing { get; } = new Backing();
                 };
+                }
             ";
 
             Assembly assembly = CheckIfCodeIsCompilable(code);
 
             // @TODO
-            CheckIfPropertyContainerIsSerializable(assembly, "HelloWorld");
+            CheckIfPropertyContainerIsSerializable(assembly, "Unity.Properties.Samples.Tests.HelloWorld");
+        }
+
+
+        [Test]
+        public void WhenGlobalDefaultNamespaceIsSpecified_CSharpCodeGen_ShouldFixUpContainersThatHaveEmptyNamespaces()
+        {
+            var backend = new CSharpGenerationBackend();
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("A")
+                        .WithNamespace("MyNamespace")
+                )
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("B")
+                        .WithNamespace("MyNamespace")
+                )
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("C")
+                )
+                .ToJson();
+
+            var result = JsonSchema.FromJson(json);
+
+            backend.Generate(result.PropertyTypeNodes);
+            var code = backend.Code;
+            Assert.NotZero(code.Length);
+
+            Assembly assembly = CheckIfCodeIsCompilable(code);
+
+            // @TODO
+            CheckIfPropertyContainerIsSerializable(assembly, "MyNamespace.A");
+            CheckIfPropertyContainerIsSerializable(assembly, "MyNamespace.B");
+            CheckIfPropertyContainerIsSerializable(assembly, "Unity.Properties.Samples.Tests.C");
         }
 
         [Test]
         public void WhenValueTypeNotSpecified_CSharpCodeGen_GeneratesAClassContainerByDefault()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Types"": [
-                      {
-                        ""Name"": ""HelloWorld"",
-                        ""Properties"": { }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "")
+                        .WithEmptyPropertiesList()
+                )
+                .ToJson();
+
+            var result = JsonSchema.FromJson(json);
+
+            backend.Generate(result.PropertyTypeNodes);
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             Assembly assembly = CheckIfCodeIsCompilable(code);
@@ -731,38 +620,32 @@ namespace Unity.Properties.Tests.JSonSchema
             Assert.IsTrue(helloWorldClass.Modifiers.Any(SyntaxKind.PublicKeyword));
 
             // @TODO
-            CheckIfPropertyContainerIsSerializable(assembly, "HelloWorld");
+            CheckIfPropertyContainerIsSerializable(assembly, "Unity.Properties.Samples.Tests.HelloWorld");
         }
 
         [Test]
         public void WhenBackingFieldGenerated_CSharpCodeGen_TheyAreGeneratedAsPrivate()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Types"": [
-                      {
-                        ""Name"": ""HelloWorld"",
-                        ""Properties"": {
-                            ""Data"": {
-                                ""TypeId"": ""struct Foo"",
-                            },
-                            ""Foo"": {
-                                ""TypeId"": ""int""
-                            },
-                        }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "")
+                        .WithProperty("Data", "struct Foo")
+                        .WithProperty("Foo", "int")
+                )
+                .ToJson();
+
+            var result = JsonSchema.FromJson(json);
+            backend.Generate(result.PropertyTypeNodes);
+
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             // Inject value/class types
             code += @"
+                namespace Unity.Properties.Samples.Tests {
                 public struct Foo : IPropertyContainer
                 {
                     public static IPropertyBag bag { get; } = new PropertyBag(new List<IProperty> {}.ToArray());
@@ -770,6 +653,7 @@ namespace Unity.Properties.Tests.JSonSchema
                     public IVersionStorage VersionStorage { get; }
                     public IPropertyBag PropertyBag => bag;
                 };
+                }
             ";
 
             var assembly = CheckIfCodeIsCompilable(code);
@@ -793,233 +677,174 @@ namespace Unity.Properties.Tests.JSonSchema
             Assert.IsTrue(dataField.Declaration.Type.ToString() == "Foo");
 
             // @TODO
-            CheckIfPropertyContainerIsSerializable(assembly, "HelloWorld");
+            CheckIfPropertyContainerIsSerializable(assembly, "Unity.Properties.Samples.Tests.HelloWorld");
         }
 
         [Test]
         public void WhenValueTypeNotSpecified_CSharpCodeGen_GeneratesAStructContainer()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Namespace"": ""Unity.Properties.Samples.Schema"",
-                    ""Types"": [
-                      {
-                        ""Name"": ""struct HelloWorld"",
-                        ""Properties"": { }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
+                        .WithEmptyPropertiesList()
+                )
+                .ToJson();
+
+            var result = JsonSchema.FromJson(json);
+            backend.Generate(result.PropertyTypeNodes);
+
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             CheckIfCodeIsCompilable(code);
 
-            Assert.IsTrue(code.ToString().Contains("public partial struct HelloWorld"));
+            Assert.IsTrue(code.Contains("public partial struct HelloWorld"));
         }
 
         [Test]
         public void WhenIsStructContainerContainsStructProperty_CSharpCodeGen_GeneratesProperyContainerWrapper()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Namespace"": ""Unity.Properties.Samples.Schema"",
-                    ""Types"": [
-                      {
-                        ""Name"": ""struct HelloWorld"",
-                        ""Properties"": {
-                            ""Data"": {
-                                ""TypeId"": ""struct Foo"",
-                            },
-                          }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
+                        .WithProperty("Data", "struct Foo")
+                )
+                .ToJson();
+
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+
             var code = backend.Code;
             Assert.NotZero(code.Length);
-            Assert.IsTrue(code.ToString().Contains("StructMutableContainerProperty<HelloWorld, Foo>"));
+            Assert.IsTrue(code.Contains("StructMutableContainerProperty<HelloWorld, Foo>"));
         }
 
         [Test]
         public void WhenIsClassContainerContainsStructProperty_CSharpCodeGen_GeneratesProperyContainerWrapper()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Namespace"": ""Unity.Properties.Samples.Schema"",
-                    ""Types"": [
-                      {
-                        ""Name"": ""class HelloWorld"",
-                        ""Properties"": {
-                            ""Data"": {
-                                ""TypeId"": ""struct Foo"",
-                            },
-                          }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                        .WithProperty("Data", "struct Foo")
+                )
+                .ToJson();
+            
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+
             var code = backend.Code;
             Assert.NotZero(code.Length);
-            Assert.IsTrue(code.ToString().Contains("ContainerProperty<HelloWorld, Foo>"));
+            Assert.IsTrue(code.Contains("ContainerProperty<HelloWorld, Foo>"));
         }
 
         [Test]
         public void WhenContainsStructProperty_CSharpCodeGen_GeneratesGetSetValueWithRef()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Namespace"": ""Unity.Properties.Samples.Schema"",
-                    ""Types"": [
-                      {
-                        ""Name"": ""struct HelloWorld"",
-                        ""Properties"": {
-                            ""Data"": {
-                                ""TypeId"": ""struct Foo"",
-                            },
-                          }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
+                        .WithProperty("Data", "struct Foo")
+                )
+                .ToJson();
+
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+
             var code = backend.Code;
             Assert.NotZero(code.Length);
-            Assert.IsTrue(code.ToString().Contains("GetValue(ref this"));
+            Assert.IsTrue(code.Contains("GetValue(ref this"));
         }
 
         [Test]
         public void WhenIsClassPropertyContainer_CSharpCodeGen_GeneratesGetSetValueWithNoRef()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Namespace"": ""Unity.Properties.Samples.Schema"",
-                    ""Types"": [
-                      {
-                        ""Name"": ""class HelloWorld"",
-                        ""Properties"": {
-                            ""Data"": {
-                                ""TypeId"": ""struct Foo"",
-                            },
-                          }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                        .WithProperty("Data", "struct Foo")
+                )
+                .ToJson();
+            
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+
             var code = backend.Code;
             Assert.NotZero(code.Length);
-            Assert.IsTrue(code.ToString().Contains("GetValue(this"));
+            Assert.IsTrue(code.Contains("GetValue(this"));
         }
 
         [Test]
         public void WhenIsClassProperty_CSharpCodeGen_GeneratesGetSetValueWithNoRef()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Namespace"": ""Unity.Properties.Samples.Schema"",
-                    ""Types"": [
-                      {
-                        ""Name"": ""class HelloWorld"",
-                        ""Properties"": {
-                            ""Data"": {
-                                ""TypeId"": ""int"",
-                            },
-                          }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                        .WithProperty("Data", "int")
+                )
+                .ToJson();
+
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+
             var code = backend.Code;
             Assert.NotZero(code.Length);
-            Assert.IsTrue(code.ToString().Contains("GetValue(this"));
-            Assert.IsTrue(code.ToString().Contains("SetValue(this"));
+            Assert.IsTrue(code.Contains("GetValue(this"));
+            Assert.IsTrue(code.Contains("SetValue(this"));
         }
 
         [Test]
         public void WhenIsClassProperty_CSharpCodeGen_DelegatesDefaultValueBackingFieldConstruction()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Namespace"": ""Unity.Properties.Samples.Schema"",
-                    ""Types"": [
-                      {
-                        ""Name"": ""class HelloWorld"",
-                        ""Properties"": {
-                            ""Data"": {
-                                ""TypeId"": ""int"",
-                                ""DefaultValue"": ""5"",
-                            },
-                            ""Ints"": {
-                                ""TypeId"": ""List"",
-                                ""ItemTypeId"": ""float"",
-                            },
-                          }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                        .WithProperty("Data", "int", "5")
+                        .WithProperty("Ints", "List", "", "float")
+                )
+                .ToJson();
+
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+
             var code = backend.Code;
             Assert.NotZero(code.Length);
-            Assert.IsTrue(code.ToString().Contains("int m_Data;"));
-            Assert.IsTrue(code.ToString().Contains("m_Data = 5;"));
-            Assert.IsTrue(code.ToString().Contains("m_Ints = new List<float> {};"));
+            Assert.IsTrue(code.Contains("int m_Data;"));
+            Assert.IsTrue(code.Contains("m_Data = 5;"));
+            Assert.IsTrue(code.Contains("m_Ints = new List<float> {};"));
         }
 
         [Test]
         public void WhenIsStructProperty_CSharpCodeGen_DefaultValueBackingFieldConstructionIsDoneInPlace()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Namespace"": ""Unity.Properties.Samples.Schema"",
-                    ""Types"": [
-                      {
-                        ""Name"": ""class HelloWorld"",
-                        ""Properties"": {
-                            ""Data"": {
-                                ""TypeId"": ""int"",
-                                ""DefaultValue"": ""5"",
-                            },
-                            ""Floats"": {
-                                ""TypeId"": ""List"",
-                                ""ItemTypeId"": ""float"",
-                            },
-                          }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                        .WithProperty("Data", "int", "5")
+                        .WithProperty("Floats", "List", "", "float")
+                )
+                .ToJson();
+
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             CheckIfCodeIsCompilable(code);
@@ -1059,29 +884,19 @@ namespace Unity.Properties.Tests.JSonSchema
         public void WhenIsStructProperty_CSharpCodeGen_NoDefaultValue()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Namespace"": ""Unity.Properties.Samples.Schema"",
-                    ""Types"": [
-                      {
-                        ""Name"": ""struct HelloWorld"",
-                        ""Properties"": {
-                            ""Data"": {
-                                ""TypeId"": ""int"",
-                            },
-                            ""Floats"": {
-                                ""TypeId"": ""List"",
-                                ""ItemTypeId"": ""float"",
-                            },
-                          }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
+                        .WithProperty("Data", "int")
+                        .WithProperty("Floats", "List", "", "float")
+                )
+                .ToJson();
+
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+            
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             CheckIfCodeIsCompilable(code);
@@ -1115,42 +930,27 @@ namespace Unity.Properties.Tests.JSonSchema
         public void WhenIsStructContainer_CSharpCodeGen_DoesNotGenerateConstructor()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Namespace"": ""Unity.Properties.Samples.Schema"",
-                    ""Types"": [
-                      {
-                        ""Name"": ""struct HelloWorld"",
-                        ""Properties"": {
-                            ""Data"": {
-                                ""TypeId"": ""int"",
-                            },
-                            ""Ints"": {
-                                ""TypeId"": ""List"",
-                                ""ItemTypeId"": ""float"",
-                            },
-                          }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
+                        .WithProperty("Data", "int")
+                        .WithProperty("Floats", "List", "", "float")
+                )
+                .ToJson();
+
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+            
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             CheckIfCodeIsCompilable(code);
 
-            var modifiers = SyntaxFactory.TokenList(new[]
-            {
-                SyntaxFactory.Token(SyntaxKind.StaticKeyword)
-            });
-
             var constructors = ((CompilationUnitSyntax)CSharpSyntaxTree.ParseText(code).GetRoot())
                 .DescendantNodes()
                 .OfType<ConstructorDeclarationSyntax>()
-                .Where(c => c.WithModifiers(modifiers) == null);
+                .Where(c => !c.Modifiers.Any(SyntaxKind.StaticKeyword));
 
             Assert.Zero(constructors.Count());
 
@@ -1162,35 +962,26 @@ namespace Unity.Properties.Tests.JSonSchema
         public void WhenIsClassContainer_CSharpCodeGen_DoesNotGenerateConstructor()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Namespace"": ""Unity.Properties.Samples.Schema"",
-                    ""Types"": [
-                      {
-                        ""Name"": ""class HelloWorld"",
-                        ""Properties"": {
-                          }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                        .WithEmptyPropertiesList()
+                )
+                .ToJson();
+
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+            
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             CheckIfCodeIsCompilable(code);
 
-            var modifiers = SyntaxFactory.TokenList(new[]
-            {
-                SyntaxFactory.Token(SyntaxKind.StaticKeyword)
-            });
-
             var constructors = ((CompilationUnitSyntax)CSharpSyntaxTree.ParseText(code).GetRoot())
                 .DescendantNodes()
                 .OfType<ConstructorDeclarationSyntax>()
-                .Where(c => c.WithModifiers(modifiers) == null);
+                .Where(c => !c.Modifiers.Any(SyntaxKind.StaticKeyword));
 
             Assert.Zero(constructors.Count());
         }
@@ -1199,67 +990,106 @@ namespace Unity.Properties.Tests.JSonSchema
         public void WhenIsClassContainerAndNoProperties_CSharpCodeGen_DoesNotGenerateConstructor()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Namespace"": ""Unity.Properties.Samples.Schema"",
-                    ""Types"": [
-                      {
-                        ""Name"": ""class HelloWorld"",
-                        ""Properties"": {
-                          }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                        .WithEmptyPropertiesList()
+                )
+                .ToJson();
+
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+            
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             CheckIfCodeIsCompilable(code);
 
-            var modifiers = SyntaxFactory.TokenList(new[]
-            {
-                SyntaxFactory.Token(SyntaxKind.StaticKeyword)
-            });
-
             var constructors = ((CompilationUnitSyntax)CSharpSyntaxTree.ParseText(code).GetRoot())
                 .DescendantNodes()
                 .OfType<ConstructorDeclarationSyntax>()
-                .Where(c => c.WithModifiers(modifiers) == null);
+                .Where(c => !c.Modifiers.Any(SyntaxKind.StaticKeyword));
 
             Assert.Zero(constructors.Count());
+        }
+
+        [Test]
+        public void WhenContainerDoesHaveDefaultImplementation_CSharpCodeGen_DoesNotGenerateImplementation()
+        {
+            var backend = new CSharpGenerationBackend();
+
+            var json = new JsonSchemaBuilder()
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
+                        .WithNoDefaultImplementation()
+                        .WithEmptyPropertiesList()
+                )
+                .ToJson();
+
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+
+            var code = backend.Code;
+            Assert.NotZero(code.Length);
+
+            var properties = ((CompilationUnitSyntax)CSharpSyntaxTree.ParseText(code).GetRoot())
+                .DescendantNodes()
+                .OfType<PropertyDeclarationSyntax>()
+                .Where(c => c.Modifiers.Any(SyntaxKind.StaticKeyword))
+                .Select(node => node.Identifier.ValueText)
+                .ToList();
+            
+            Assert.Zero(properties.Count());
+        }
+
+        public void WhenPropertyIsCustom_CSharpCodeGen_DoesGenerateCustomBits()
+        {
+            var backend = new CSharpGenerationBackend();
+
+            var json = new JsonSchemaBuilder()
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
+                        .WithNoDefaultImplementation()
+                        .WithProperty("Data", "int", "5", "", "", false, false, true)
+                )
+                .ToJson();
+
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+            var code = backend.Code;
+
+            CheckIfCodeIsCompilable(code);
+
+            var properties = ((CompilationUnitSyntax)CSharpSyntaxTree.ParseText(code).GetRoot())
+                .DescendantNodes()
+                .OfType<PropertyDeclarationSyntax>()
+                .Where(c => c.Modifiers.Any(SyntaxKind.StaticKeyword))
+                .Select(node => node.Identifier.ValueText)
+                .ToList();
+
+            foreach (var p in properties)
+            {
+                Assert.IsFalse(p.Contains("Data"));
+            }
         }
 
         [Test]
         public void WhenUserHookSpecified_CSharpCodeGen_GeneratesIt()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Namespace"": ""Unity.Properties.Samples.Schema"",
-                    ""Types"": [
-                      {
-                        ""Name"": ""struct HelloWorld"",
-                        ""GeneratedUserHooks"": ""OnPropertyBagConstructed"",
-                        ""Properties"": {
-                            ""Data"": {
-                                ""TypeId"": ""int"",
-                            },
-                            ""Ints"": {
-                                ""TypeId"": ""List"",
-                                ""ItemTypeId"": ""float"",
-                            },
-                          }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                        .WithProperty("Data", "int")
+                        .WithProperty("Floats", "List", "", "float")
+                        .WithUserHooks(new List<string> { "OnPropertyBagConstructed" })
+                )
+                .ToJson();
+
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+            
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             CheckIfCodeIsCompilable(code);
@@ -1272,34 +1102,30 @@ namespace Unity.Properties.Tests.JSonSchema
             Assert.NotZero(userHookMethod.Count());
 
             // TODO tokenize
-            Assert.IsTrue(code.ToString().Contains("static partial void OnPropertyBagConstructed(IPropertyBag bag);"));
-            Assert.IsTrue(code.ToString().Contains("OnPropertyBagConstructed(sProperties);"));
+            Assert.IsTrue(code.Contains("static partial void OnPropertyBagConstructed(IPropertyBag bag);"));
+            Assert.IsTrue(code.Contains("OnPropertyBagConstructed(sProperties);"));
         }
 
         [Test]
         public void WhenOverrideDefaultBaseClasseClass_CSharpCodeGen_GeneratesContainerWithOverridenBaseClass()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Namespace"": ""Unity.Properties.Samples.Schema"",
-                    ""Types"": [
-                      {
-                        ""Name"": ""class HelloWorld"",
-                        ""OverrideDefaultBaseClass"": ""Foo"",
-                        ""Properties"": { }
-                      },
-                      {
-                        ""Name"": ""class Foo"",
-                        ""Properties"": { }
-                      }
-                    ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                        .WithEmptyPropertiesList()
+                        .WithBaseClassOverriden("Foo")
+                )
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("Foo", "class")
+                        .WithEmptyPropertiesList()
+                )
+                .ToJson();
+
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+            
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             CheckIfCodeIsCompilable(code);
@@ -1310,24 +1136,20 @@ namespace Unity.Properties.Tests.JSonSchema
 
         [Test]
         public void WhenPropertyContainerSetAsAbstract_CSharpCodeGen_GeneratesAbstractClass()
-
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Types"": [
-                      {
-                        ""Name"": ""class HelloWorld"",
-                        ""IsAbstractClass"": ""true"",
-                        ""Properties"": { }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                        .WithEmptyPropertiesList()
+                        .WithIsAbstract(true)
+                )
+                .ToJson();
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+
+            var code = backend.Code;
             Assert.NotZero(code.Length);
             
             CheckIfCodeIsCompilable(code);
@@ -1338,25 +1160,20 @@ namespace Unity.Properties.Tests.JSonSchema
 
         [Test]
         public void WhenPropertyContainerSetAsAbstractForStructContainer_CSharpCodeGen_DoestNotGeneratesAbstractStruct()
-
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Types"": [
-                      {
-                        ""Name"": ""struct HelloWorld"",
-                        ""IsAbstractClass"": ""true"",
-                        ""Properties"": {
-                          }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
+                        .WithEmptyPropertiesList()
+                        .WithIsAbstract(true)
+                )
+                .ToJson();
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             CheckIfCodeIsCompilable(code);
@@ -1367,32 +1184,23 @@ namespace Unity.Properties.Tests.JSonSchema
 
         [Test]
         public void WhenPropertyIsInherited_CSharpCodeGen_DoesNotGeneratesBackingField()
-
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                  ""Types"":
-                  [
-                    {
-                      ""Name"": ""class HelloWorld"",
-                      ""OverrideDefaultBaseClass"": ""BaseClass"",
-                    },
-                    {
-                      ""Name"": ""class BaseClass"",
-                      ""Properties"": {
-                        ""Data"": {
-                          ""TypeId"": ""int""
-                        },
-                      }
-                    }
-                 ]
-               }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "class")
+                        .WithBaseClassOverriden("BaseClass")
+                )
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("BaseClass", "class")
+                        .WithProperty("Data", "int")
+                )
+                .ToJson();
+
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             CheckIfCodeIsCompilable(code);
@@ -1412,27 +1220,16 @@ namespace Unity.Properties.Tests.JSonSchema
         public void WhenPropertyDeclaredAsReadonly_CSharpCodeGen_GeneratesReadonlyPropertyAccessor()
         {
             var backend = new CSharpGenerationBackend();
-            var result = JsonSchema.FromJson(@"
-            [
-                {
-                    ""Namespace"": ""Unity.Properties.Samples.Schema"",
-                    ""Types"": [
-                      {
-                        ""Name"": ""struct HelloWorld"",
-                        ""GeneratedUserHooks"": ""OnPropertyBagConstructed"",
-                        ""Properties"": {
-                            ""Data"": {
-                                ""TypeId"": ""int"",
-                                ""IsReadonlyProperty"": ""true"",
-                            },
-                          }
-                        }
-                     ]
-                 }
-            ]
-        ");
-            backend.Generate(result);
-            var code = backend.Code.ToString();
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld", "struct")
+                        .WithProperty("Data", "int", "", "", "", true)
+                )
+                .ToJson();
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+
+            var code = backend.Code;
             Assert.NotZero(code.Length);
 
             CheckIfCodeIsCompilable(code);
@@ -1440,6 +1237,64 @@ namespace Unity.Properties.Tests.JSonSchema
             // TODO tokenize, very BAD
             Assert.IsTrue(code.Contains("/* GET */"));
             Assert.IsTrue(code.Contains("/* SET */ null"));
+        }
+
+        [Test]
+        public void WhenDefaultUsingsAreOverriden_CSharpCodeGen_GeneratesUsingsWithProperOverridenAssemblies()
+        {
+            var backend = new CSharpGenerationBackend();
+            var json = new JsonSchemaBuilder()
+                .WithNamespace("Unity.Properties.Samples.Tests")
+                .WithUsing(new List<string>() { "System", "Unity.Properties", "Unity.Properties.Editor" })
+                .WithContainer(new JsonSchemaBuilder.ContainerBuilder("HelloWorld"))
+                .ToJson();
+
+            var schema = JsonSchema.FromJson(json);
+
+            backend.Generate(schema.PropertyTypeNodes, schema.UsingAssemblies);
+
+            var code = backend.Code;
+            Assert.NotZero(code.Length);
+
+            var root = (CompilationUnitSyntax)CSharpSyntaxTree.ParseText(code).GetRoot();
+            var usings = (from usingDirective in root.DescendantNodes().OfType<UsingDirectiveSyntax>() select usingDirective.Name.ToString()).ToList() ;
+
+            Assert.IsTrue(usings.Count == 3);
+            Assert.IsTrue(usings[0] == "System");
+            Assert.IsTrue(usings[1] == "Unity.Properties");
+            Assert.IsTrue(usings[2] == "Unity.Properties.Editor");
+        }
+
+        [Test]
+        public void WhenPropertyIsPublic_CSharpCodeGen_GeneratedPublicProperty()
+        {
+            var backend = new CSharpGenerationBackend();
+            var json = new JsonSchemaBuilder()
+                .WithContainer(
+                    new JsonSchemaBuilder.ContainerBuilder("HelloWorld")
+                        .WithProperty("Data", "int", "", "", "", false, true)
+                )
+                .ToJson();
+
+            backend.Generate(JsonSchema.FromJson(json).PropertyTypeNodes);
+
+            var code = backend.Code;
+            Assert.NotZero(code.Length);
+
+            CheckIfCodeIsCompilable(code);
+
+            var root = (CompilationUnitSyntax)CSharpSyntaxTree.ParseText(code).GetRoot();
+
+            var classNode = GetTypeDeclarationNodeFromName(root, "HelloWorld");
+
+            var fields = from fieldDeclaration in classNode.ChildNodes().OfType<FieldDeclarationSyntax>()
+                where fieldDeclaration.Declaration.Variables.First().Identifier.ValueText == "DataProperty"
+                         select fieldDeclaration;
+
+            Assert.NotZero(fields.Count());
+            var p = fields.First();
+            var modifiers = string.Join(",", p.Modifiers.Select(m => m.ValueText));
+            Assert.IsTrue(modifiers == "public,static,readonly");
         }
     }
 }

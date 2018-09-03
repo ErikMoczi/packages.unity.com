@@ -1,16 +1,18 @@
 ﻿#if NET_4_6
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using Unity.Properties.Serialization;
 
 namespace Unity.Properties.Editor.Serialization
 {
-    public class CSharpGenerationBackend : IPropertyContainerGenerationBackend
+    public class CSharpGenerationBackend
     {
-        public StringBuffer Code { get; internal set;  } = new StringBuffer();
+        public string Code { get; internal set;  } = string.Empty;
 
-        public void Generate(List<PropertyTypeNode> root)
+        public void Generate(List<PropertyTypeNode> root, List<string> usings = null)
         {
             if (root.Count == 0)
             {
@@ -22,8 +24,8 @@ namespace Unity.Properties.Editor.Serialization
             // @TODO Cleanup
 
             var propertyNodesByName = root.Select(
-                p => new KeyValuePair<string, PropertyTypeNode>(p.TypeName, p))
-                .ToDictionary(e => e.Key, e => e.Value);
+                    p => new KeyValuePair<string, PropertyTypeNode>(p.TypeName, p)
+                ).ToDictionary(e => e.Key, e => e.Value);
 
             Func<string, CSharpGenerationCache.CodeInfo> dependancyLookupFunc = null;
 
@@ -56,81 +58,41 @@ namespace Unity.Properties.Editor.Serialization
 
             var code = new StringBuffer();
 
-            using (new CSharpSourceFileDecorator(code))
-            {
-                foreach (var container in root)
-                {
-                    var g = new CSharpContainerGenerator();
-                    g.GeneratePropertyContainer(container, dependancyLookupFunc);
+            WithUsing(code, usings);
 
-                    code.Append(g.Code);
-                }
+            foreach (var container in root)
+            {
+                var g = new CSharpContainerGenerator();
+                g.GeneratePropertyContainer(container, dependancyLookupFunc);
+
+                code.Append(g.Code);
             }
 
-            Code = code;
+            Code = code.ToString();
         }
-
-        public void GenerateProperty(PropertyTypeNode property,
-            string containerName,
-            PropertyTypeNode.TypeTag containerTypeTag)
-        {
-            _cache.Clear();
-
-            var code = new CSharpContainerGenerator.Scope();
-
-            var g = new CSharpContainerGenerator();
-            g.GenerateProperty(containerName, containerTypeTag, property, code);
-
-            Code = code.Code;
-        }
-
-        public void GeneratePropertyContainer(PropertyTypeNode property)
-        {
-            _cache.Clear();
-
-            var code = new StringBuffer();
-
-            var g = new CSharpContainerGenerator();
-            g.GeneratePropertyContainer(property);
-            code.Append(g.Code);
-
-            Code = code;
-        }
-
+        
         private readonly CSharpGenerationCache _cache = new CSharpGenerationCache();
         
-        private class CSharpSourceFileDecorator : IDisposable
+        private static void WithUsing(StringBuffer sb, List<string> usings = null)
         {
-            private readonly List<string> _usings = new List<string>()
+            var defaultUsingAssemblies = new List<string>()
             {
                 "System",
                 "System.Collections.Generic",
                 "Unity.Properties"
             };
 
-            private StringBuffer _sb;
+            var usingDirectives = usings ?? defaultUsingAssemblies;
 
-            public CSharpSourceFileDecorator(StringBuffer sb)
+            usingDirectives.ForEach((currentUsing) =>
             {
-                _sb = sb;
+                sb.Append($"using {currentUsing};");
+                sb.Append(Environment.NewLine);
+            });
 
-                GenerateHeader();
-            }
-
-            private void GenerateHeader()
-            {
-                _usings.ForEach((currentUsing) =>
-                {
-                    _sb.Append($"using {currentUsing};");
-                    _sb.Append(Environment.NewLine);
-                });
-                _sb.Append(Environment.NewLine);
-            }
-
-            public void Dispose()
-            {
-            }
+            sb.Append(Environment.NewLine);
         }
     }
 }
+
 #endif // NET_4_6

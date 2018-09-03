@@ -91,30 +91,32 @@ namespace Unity.Properties.Tests
             Assert.AreEqual(1, resolution.listIndex);
             Assert.AreEqual(2f, resolution.value);
         }
-        
+
         [Test]
         public void Resolve_Container_List_Item()
         {
-            var path = PropertyPath.Parse("ChildList[1].IntValue");
-            var container = new TestContainer
+            var path = PropertyPath.Parse("ChildContainer.ChildList[1].IntValue");
+            var container = new TestNestedContainer
             {
-                IntValue = 123,
-                ChildList =
+                ChildContainer = new TestContainer
                 {
-                    new TestChildContainer() {IntValue = 123 }, 
-                    new TestChildContainer() {IntValue = 456 }
+                    IntValue = 123,
+                    ChildList =
+                    {
+                        new TestChildContainer {IntValue = 123},
+                        new TestChildContainer {IntValue = 456}
+                    }
                 }
             };
+
             var resolution = path.Resolve(container);
-            
+
             Assert.IsTrue(resolution.success);
-            Assert.AreEqual(container.ChildList[1], resolution.container);
+            Assert.AreEqual(container.ChildContainer.ChildList[1], resolution.container);
             Assert.AreEqual(TestChildContainer.IntValueProperty, resolution.property);
             Assert.AreEqual(PropertyPath.InvalidListIndex, resolution.listIndex);
             Assert.AreEqual(456, resolution.value);
         }
-
-        
     }
 }
 #endif // NET_4_6

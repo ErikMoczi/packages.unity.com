@@ -7,7 +7,7 @@ namespace Unity.Properties.Tests
     internal class TestContainer : IPropertyContainer
     {
         public const int LeafCount = 2;
-        
+
         private int _intValue;
         private TestEnum _enumValue;
 
@@ -21,7 +21,7 @@ namespace Unity.Properties.Tests
             get { return IntValueProperty.GetValue(this); }
             set { IntValueProperty.SetValue(this, value); }
         }
-        
+
         public static readonly IProperty<TestContainer, TestEnum> EnumValueProperty = new EnumProperty<TestContainer, TestEnum>(
             nameof(EnumValue),
             c => c._enumValue,
@@ -87,6 +87,28 @@ namespace Unity.Properties.Tests
 
         private static PropertyBag sBag = new PropertyBag(IntValueProperty);
         public IPropertyBag PropertyBag => sBag;
+    }
+
+    internal class TestNestedContainer : IPropertyContainer
+    {
+        private TestContainer m_TestContainer;
+
+        public static readonly IProperty<TestNestedContainer, TestContainer> ChildContainerProperty =
+            new ContainerProperty<TestNestedContainer, TestContainer>(
+                nameof(ChildContainer),
+                c => c.m_TestContainer,
+                (c, v) => c.m_TestContainer = v);
+
+        public TestContainer ChildContainer
+        {
+            get { return ChildContainerProperty.GetValue(this); }
+            set { ChildContainerProperty.SetValue(this, value); }
+        }
+
+        public IVersionStorage VersionStorage => PassthroughVersionStorage.Instance;
+
+        public IPropertyBag PropertyBag => sBag;
+        private static PropertyBag sBag = new PropertyBag(ChildContainerProperty);
     }
 
     public enum TestEnum
