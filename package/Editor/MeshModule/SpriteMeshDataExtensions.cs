@@ -84,7 +84,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             spriteMeshData.edges.Clear();
 
             Vector2[][] paths;
-            outlineGenerator.GenerateOutline(textureDataProvider.texture, spriteMeshData.frame, outlineDetail, alphaTolerance, false, out paths);
+            outlineGenerator.GenerateOutline(textureDataProvider.texture, scaledRect, outlineDetail, alphaTolerance, false, out paths);
 
             int vertexIndexBase = 0;
             for (int i = 0; i < paths.Length; ++i)

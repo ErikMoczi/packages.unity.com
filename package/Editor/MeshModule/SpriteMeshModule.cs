@@ -122,7 +122,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             var spriteRects = dataProvider.GetSpriteRects();
             var textureProvider = spriteEditor.GetDataProvider<ITextureDataProvider>();
 
-            m_MeshPreview.texture = textureProvider.texture;
+            m_MeshPreview.textureDataProvider = textureProvider;
 
             for (var i = 0; i < spriteRects.Length; i++)
             {

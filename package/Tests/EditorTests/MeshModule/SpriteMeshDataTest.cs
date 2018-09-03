@@ -571,5 +571,31 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMesh
                 Assert.AreEqual(endPosition.y, boneData.endPosition.y, kLooseEqual, "EndPosition Y not matched at #{0}", i);
             }
         }
+
+        [Test]
+        public void GenerateOutline_WithScaledDownTexture_ProducesVerticesAndEdges()
+        {
+            var path = "OutlineTests/scaled-down-square";
+
+            var textureAsset = Resources.Load<Texture2D>(path);
+
+            Assert.IsNotNull(textureAsset, "texture asset not found");
+
+            var spriteEditorDataProvider = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(textureAsset)) as ISpriteEditorDataProvider;
+            spriteEditorDataProvider.InitSpriteEditorDataProvider();
+
+            var textureDataProvider = spriteEditorDataProvider.GetDataProvider<ITextureDataProvider>();
+            var rects = spriteEditorDataProvider.GetSpriteRects();
+            
+            Assert.AreEqual(1, rects.Length, "Sprite rect not found");
+
+            var spriteRect = rects[0];
+
+            m_SpriteMeshData.frame = spriteRect.rect;
+            m_SpriteMeshData.OutlineFromAlpha(new OutlineGenerator(), textureDataProvider, 0f, 0);
+
+            Assert.AreEqual(8, m_SpriteMeshData.vertices.Count, "Incorrect number of vertices generated");
+            Assert.AreEqual(8, m_SpriteMeshData.edges.Count, "Incorrect number of edges generated");
+        }
     }
 }

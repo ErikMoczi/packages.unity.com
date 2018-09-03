@@ -16,7 +16,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         private const int kNiceColorCount = 6;
 
         public SpriteMeshData spriteMeshData { get; set; }
-        public Texture2D texture { get; set; }
+        public ITextureDataProvider textureDataProvider { get; set; }
         public Matrix4x4[] localToWorldMatrices { get; set; }
         public float opacity { get; set; }
         public Mesh mesh { get { return m_Mesh; } }
@@ -106,7 +106,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         public void Prepare()
         {
             Debug.Assert(spriteMeshData != null);
-            Debug.Assert(texture != null);
+            Debug.Assert(textureDataProvider != null);
             Debug.Assert(m_Material != null);
 
             m_IndicesDirty |= m_WeightsDirty;
@@ -133,7 +133,10 @@ namespace UnityEditor.Experimental.U2D.Animation
                 m_Vertices.Clear();
                 m_TexCoords.Clear();
 
-                Vector2 uvScale = new Vector2(1f / texture.width, 1f / texture.height);
+                int width, height;
+                textureDataProvider.GetTextureActualWidthAndHeight(out width, out height);
+
+                var uvScale = new Vector2(1f / width, 1f / height);
 
                 for (int i = 0; i < spriteMeshData.vertices.Count; ++i)
                 {
@@ -190,7 +193,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 m_IndicesDirty = false;
             }
 
-            m_Material.mainTexture = texture;
+            m_Material.mainTexture = textureDataProvider.texture;
             m_Material.SetFloat("_ColorOpacity", opacity);
         }
 
