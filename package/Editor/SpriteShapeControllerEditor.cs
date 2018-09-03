@@ -8,6 +8,7 @@ using UnityEditor.Experimental.U2D.Common;
 
 namespace UnityEditor.U2D
 {
+    [System.Serializable]
     [CustomEditor(typeof(SpriteShapeController))]
     [CanEditMultipleObjects]
     internal class SpriteShapeControllerEditor : Editor
@@ -22,6 +23,7 @@ namespace UnityEditor.U2D
         private SerializedProperty m_SortingLayerProp;
         private SerializedProperty m_SortingOrderProp;
 
+        private SerializedProperty m_ColliderAutoUpdate;
         private SerializedProperty m_ColliderDetailProp;
         private SerializedProperty m_ColliderOffsetProp;
         private SerializedProperty m_ColliderCornerTypeProp;
@@ -52,6 +54,7 @@ namespace UnityEditor.U2D
             public static readonly GUIContent colliderCornerType = new GUIContent("Corner Type", "How the collider should adapt in corners");
             public static readonly GUIContent splineLabel = new GUIContent("Spline");
             public static readonly GUIContent colliderLabel = new GUIContent("Collider");
+            public static readonly GUIContent updateColliderLabel = new GUIContent("Update Collider");
         }
 
         private SpriteShapeController m_SpriteShapeController { get { return target as SpriteShapeController; } }
@@ -63,6 +66,7 @@ namespace UnityEditor.U2D
             m_IsOpenEndedProp = serializedObject.FindProperty("m_Spline").FindPropertyRelative("m_IsOpenEnded");
             m_AdaptiveUVProp = serializedObject.FindProperty("m_AdaptiveUV");
 
+            m_ColliderAutoUpdate = serializedObject.FindProperty("m_UpdateCollider");
             m_ColliderDetailProp = serializedObject.FindProperty("m_ColliderDetail");
             m_ColliderOffsetProp = serializedObject.FindProperty("m_ColliderOffset");
             m_ColliderCornerTypeProp = serializedObject.FindProperty("m_ColliderCornerType");
@@ -183,6 +187,7 @@ namespace UnityEditor.U2D
 
             EditorGUILayout.Space();
             DrawHeader(Contents.colliderLabel);
+            EditorGUILayout.PropertyField(m_ColliderAutoUpdate, Contents.updateColliderLabel);
             EditorGUILayout.IntPopup(m_ColliderDetailProp, Contents.splineDetailOptions, m_QualityValues, Contents.colliderDetail);
             EditorGUILayout.PropertyField(m_ColliderCornerTypeProp, Contents.colliderCornerType);
             EditorGUILayout.PropertyField(m_ColliderOffsetProp, Contents.colliderOffset);
@@ -217,6 +222,9 @@ namespace UnityEditor.U2D
 
         void BakeCollider()
         {
+            if (m_SpriteShapeController.autoUpdateCollider == false)
+                return;
+
             PolygonCollider2D polygonCollider = m_SpriteShapeController.polygonCollider;
             EdgeCollider2D edgeCollider = m_SpriteShapeController.edgeCollider;
 

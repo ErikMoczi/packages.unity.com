@@ -48,6 +48,8 @@ namespace UnityEngine.U2D
         bool m_AdaptiveUV;
 
         [SerializeField]
+        bool m_UpdateCollider;
+        [SerializeField]
         int m_ColliderDetail;
         [SerializeField, Range(-1, 1)]
         float m_ColliderOffset;
@@ -57,6 +59,11 @@ namespace UnityEngine.U2D
         public Spline spline
         {
             get { return m_Spline; }
+        }
+
+        public bool autoUpdateCollider
+        {
+            get { return m_UpdateCollider; }
         }
 
         public SpriteShape spriteShape
@@ -96,6 +103,12 @@ namespace UnityEngine.U2D
 
                 return m_EdgeCollider2D;
             }
+        }
+
+        public int splineDetail
+        {
+            get { return m_SplineDetail; }
+            set { m_SplineDetail = Mathf.Max(0, value); }
         }
 
         public int colliderDetail
