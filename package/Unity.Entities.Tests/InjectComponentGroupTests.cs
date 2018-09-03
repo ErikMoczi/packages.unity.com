@@ -2,6 +2,7 @@
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
+using UnityEngine;
 
 namespace Unity.Entities.Tests
 {
@@ -110,20 +111,20 @@ namespace Unity.Entities.Tests
 
             var go = new GameObject("Test", typeof(EcsTestComponent));
             go.GetComponent<GameObjectEntity>().OnEnable();
-            
+
             // Ensure entities without the subtractive components are present
             subtractiveSystem.Update ();
             Assert.AreEqual (2, subtractiveSystem.Group.Data.Length);
-            Assert.AreEqual (0, subtractiveSystem.Group.Data[0]);
-            Assert.AreEqual (0, subtractiveSystem.Group.Data[1]);
-            
+            Assert.AreEqual (0, subtractiveSystem.Group.Data[0].value);
+            Assert.AreEqual (0, subtractiveSystem.Group.Data[1].value);
+
             // Ensure adding the subtractive components, removes them from the injection
             m_Manager.AddComponentData (entity, new EcsTestData2());
-            
+
             // TODO: This should be automatic...
             go.AddComponent<Rigidbody>();
             go.GetComponent<GameObjectEntity>().OnDisable(); go.GetComponent<GameObjectEntity>().OnEnable();
-            
+
             subtractiveSystem.Update ();
             Assert.AreEqual (0, subtractiveSystem.Group.Data.Length);
 

@@ -1,6 +1,6 @@
 {
   "name": "com.unity.entities",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "dependencies": {
     "com.unity.properties": "0.1.6"
   },

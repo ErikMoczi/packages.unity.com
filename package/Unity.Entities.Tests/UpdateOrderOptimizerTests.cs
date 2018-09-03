@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine.TestTools;
 using UnityEngine.Experimental.LowLevel;
+using UnityEngine;
 
 namespace Unity.Entities.Tests
 {
