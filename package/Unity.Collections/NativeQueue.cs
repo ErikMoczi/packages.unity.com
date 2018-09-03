@@ -309,6 +309,7 @@ namespace Unity.Collections
 		}
 		[NativeContainer]
 		[NativeContainerIsAtomicWriteOnly]
+		[NativeContainerNeedsThreadIndex]
 		unsafe public struct Concurrent
 		{
 			[NativeDisableUnsafePtrRestriction]
@@ -320,7 +321,6 @@ namespace Unity.Collections
 			AtomicSafetyHandle m_Safety;
 #endif
 
-		    [NativeSetThreadIndex]
 			int m_ThreadIndex;
 
 			unsafe public static implicit operator NativeQueue<T>.Concurrent (NativeQueue<T> queue)

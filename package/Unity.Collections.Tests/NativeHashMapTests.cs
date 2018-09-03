@@ -45,7 +45,7 @@ public class NativeHashMapTests
 	[Test]
 	public void Double_Deallocate_Throws()
 	{
-		var hashMap = new NativeHashMap<int, int> (16, Allocator.TempJob);
+		var hashMap = new NativeHashMap<int, int> (16, Allocator.Temp);
 		hashMap.Dispose ();
 		Assert.Throws<System.InvalidOperationException> (() => { hashMap.Dispose (); });
 	}

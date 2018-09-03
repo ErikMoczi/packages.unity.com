@@ -75,7 +75,7 @@ public class NativeQueueTests
 	[Test]
 	public void Double_Deallocate_Throws()
 	{
-		var queue = new NativeQueue<int> (Allocator.TempJob);
+		var queue = new NativeQueue<int> (Allocator.Temp);
 		queue.Dispose ();
 		Assert.Throws<System.InvalidOperationException> (() => { queue.Dispose (); });
 	}

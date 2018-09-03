@@ -9,9 +9,9 @@ public class NativeMultiHashMapTests_JobDebugger : NativeMultiHashMapTestsFixtur
 	[Test]
 	public void Read_And_Write_Without_Fences()
 	{
-		var hashMap = new NativeMultiHashMap<int, int>(hashMapSize, Allocator.TempJob);
-		var writeStatus = new NativeArray<int>(hashMapSize, Allocator.TempJob);
-		var readValues = new NativeArray<int>(hashMapSize, Allocator.TempJob);
+		var hashMap = new NativeMultiHashMap<int, int>(hashMapSize, Allocator.Temp);
+		var writeStatus = new NativeArray<int>(hashMapSize, Allocator.Temp);
+		var readValues = new NativeArray<int>(hashMapSize, Allocator.Temp);
 
 		var writeData = new MultiHashMapWriteParallelForJob();
 		writeData.hashMap = hashMap;

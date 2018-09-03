@@ -1,28 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
+
 using Unity.Collections.LowLevel.Unsafe;
 
 namespace Unity.Collections
 {
     public static class NativeSortExtension
     {
-        struct DefaultComparer<T> : IComparer<T> where T : IComparable<T>
-        {
-            public int Compare(T x, T y) => x.CompareTo(y);
-        }
-
         unsafe public static void Sort<T>(this NativeArray<T> array) where T : struct, IComparable<T>
         {
-            array.Sort(new DefaultComparer<T>());
-        }
-
-        unsafe public static void Sort<T, U>(this NativeArray<T> array, U comp) where T : struct where U : IComparer<T>
-        {
-            IntroSort<T, U>(array.GetUnsafePtr(), 0, array.Length - 1, (int)(2 * Math.Floor(Math.Log(array.Length, 2))), comp);
+            IntroSort<T>(array.GetUnsafePtr(), 0, array.Length - 1, (int)(2 * Math.Floor(Math.Log(array.Length, 2))));
         }
 
         const int k_IntrosortSizeThreshold = 16;
-        unsafe static void IntroSort<T, U>(void* array, int lo, int hi, int depth, U comp) where T : struct where U : IComparer<T>
+        unsafe static void IntroSort<T>(void* array, int lo, int hi, int depth) where T : struct, IComparable<T>
         {
             while (hi > lo)
             {
@@ -35,35 +25,35 @@ namespace Unity.Collections
                     }
                     if (partitionSize == 2)
                     {
-                        SwapIfGreaterWithItems<T, U>(array, lo, hi, comp);
+                        SwapIfGreaterWithItems<T>(array, lo, hi);
                         return;
                     }
                     if (partitionSize == 3)
                     {
-                        SwapIfGreaterWithItems<T, U>(array, lo, hi - 1, comp);
-                        SwapIfGreaterWithItems<T, U>(array, lo, hi, comp);
-                        SwapIfGreaterWithItems<T, U>(array, hi - 1, hi, comp);
+                        SwapIfGreaterWithItems<T>(array, lo, hi - 1);
+                        SwapIfGreaterWithItems<T>(array, lo, hi);
+                        SwapIfGreaterWithItems<T>(array, hi - 1, hi);
                         return;
                     }
 
-                    InsertionSort<T, U>(array, lo, hi, comp);
+                    InsertionSort<T>(array, lo, hi);
                     return;
                 }
 
                 if (depth == 0)
                 {
-                    HeapSort<T, U>(array, lo, hi, comp);
+                    HeapSort<T>(array, lo, hi);
                     return;
                 }
                 depth--;
 
-                int p = Partition<T, U>(array, lo, hi, comp);
-                IntroSort<T, U>(array, p + 1, hi, depth, comp);
+                int p = Partition<T>(array, lo, hi);
+                IntroSort<T>(array, p + 1, hi, depth);
                 hi = p - 1;
             }
         }
 
-        unsafe static void InsertionSort<T, U>(void* array, int lo, int hi, U comp) where T : struct where U : IComparer<T>
+        unsafe static void InsertionSort<T>(void* array, int lo, int hi) where T : struct, IComparable<T>
         {
             int i, j;
             T t;
@@ -71,7 +61,7 @@ namespace Unity.Collections
             {
                 j = i;
                 t = UnsafeUtility.ReadArrayElement<T>(array, i + 1);
-                while (j >= lo && comp.Compare(t, UnsafeUtility.ReadArrayElement<T>(array, j)) < 0)
+                while (j >= lo && t.CompareTo(UnsafeUtility.ReadArrayElement<T>(array, j)) < 0)
                 {
                     UnsafeUtility.WriteArrayElement<T>(array, j + 1, UnsafeUtility.ReadArrayElement<T>(array, j));
                     j--;
@@ -80,12 +70,12 @@ namespace Unity.Collections
             }
         }
 
-        unsafe static int Partition<T, U>(void* array, int lo, int hi, U comp) where T : struct where U : IComparer<T>
+        unsafe static int Partition<T>(void* array, int lo, int hi) where T : struct, IComparable<T>
         {
             int mid = lo + ((hi - lo) / 2);
-            SwapIfGreaterWithItems<T, U>(array, lo, mid, comp);
-            SwapIfGreaterWithItems<T, U>(array, lo, hi, comp);
-            SwapIfGreaterWithItems<T, U>(array, mid, hi, comp);
+            SwapIfGreaterWithItems<T>(array, lo, mid);
+            SwapIfGreaterWithItems<T>(array, lo, hi);
+            SwapIfGreaterWithItems<T>(array, mid, hi);
 
             T pivot = UnsafeUtility.ReadArrayElement<T>(array, mid);
             Swap<T>(array, mid, hi - 1);
@@ -93,8 +83,8 @@ namespace Unity.Collections
 
             while (left < right)
             {
-                while (comp.Compare(pivot, UnsafeUtility.ReadArrayElement<T>(array, ++left)) > 0) ;
-                while (comp.Compare(pivot, UnsafeUtility.ReadArrayElement<T>(array, --right)) < 0) ;
+                while (pivot.CompareTo(UnsafeUtility.ReadArrayElement<T>(array, ++left)) > 0) ;
+                while (pivot.CompareTo(UnsafeUtility.ReadArrayElement<T>(array, --right)) < 0) ;
 
                 if (left >= right)
                     break;
@@ -106,34 +96,34 @@ namespace Unity.Collections
             return left;
         }
 
-        unsafe static void HeapSort<T, U>(void* array, int lo, int hi, U comp) where T : struct where U : IComparer<T>
+        unsafe static void HeapSort<T>(void* array, int lo, int hi) where T : struct, IComparable<T>
         {
             int n = hi - lo + 1;
 
             for (int i = n / 2; i >= 1; i--)
             {
-                Heapify<T, U>(array, i, n, lo, comp);
+                Heapify<T>(array, i, n, lo);
             }
 
             for (int i = n; i > 1; i--)
             {
                 Swap<T>(array, lo, lo + i - 1);
-                Heapify<T, U>(array, 1, i - 1, lo, comp);
+                Heapify<T>(array, 1, i - 1, lo);
             }
         }
 
-        unsafe static void Heapify<T, U>(void* array, int i, int n, int lo, U comp) where T : struct where U : IComparer<T>
+        unsafe static void Heapify<T>(void* array, int i, int n, int lo) where T : struct, IComparable<T>
         {
             T val = UnsafeUtility.ReadArrayElement<T>(array, lo + i - 1);
             int child;
             while (i <= n / 2)
             {
                 child = 2 * i;
-                if (child < n && (comp.Compare(UnsafeUtility.ReadArrayElement<T>(array, lo + child - 1), UnsafeUtility.ReadArrayElement<T>(array, (lo + child))) < 0))
+                if (child < n && (UnsafeUtility.ReadArrayElement<T>(array, lo + child - 1)).CompareTo(UnsafeUtility.ReadArrayElement<T>(array, (lo + child))) < 0)
                 {
                     child++;
                 }
-                if (comp.Compare(UnsafeUtility.ReadArrayElement<T>(array, (lo + child - 1)), val) < 0)
+                if ((UnsafeUtility.ReadArrayElement<T>(array, (lo + child - 1))).CompareTo(val) < 0)
                     break;
 
                 UnsafeUtility.WriteArrayElement<T>(array, lo + i - 1, UnsafeUtility.ReadArrayElement<T>(array, lo + child - 1));
@@ -142,18 +132,18 @@ namespace Unity.Collections
             UnsafeUtility.WriteArrayElement(array, lo + i - 1, val);
         }
 
-        unsafe static void Swap<T>(void* array, int lhs, int rhs) where T : struct
+        unsafe static void Swap<T>(void* array, int lhs, int rhs) where T : struct, IComparable<T>
         {
             T val = UnsafeUtility.ReadArrayElement<T>(array, lhs);
             UnsafeUtility.WriteArrayElement<T>(array, lhs, UnsafeUtility.ReadArrayElement<T>(array, rhs));
             UnsafeUtility.WriteArrayElement<T>(array, rhs, val);
         }
 
-        unsafe static void SwapIfGreaterWithItems<T, U>(void* array, int lhs, int rhs, U comp) where T : struct where U : IComparer<T>
+        unsafe static void SwapIfGreaterWithItems<T>(void* array, int lhs, int rhs) where T : struct, IComparable<T>
         {
             if (lhs != rhs)
             {
-                if (comp.Compare(UnsafeUtility.ReadArrayElement<T>(array, lhs), UnsafeUtility.ReadArrayElement<T>(array, rhs)) > 0)
+                if (UnsafeUtility.ReadArrayElement<T>(array, lhs).CompareTo(UnsafeUtility.ReadArrayElement<T>(array, rhs)) > 0)
                 {
                     Swap<T>(array, lhs, rhs);
                 }

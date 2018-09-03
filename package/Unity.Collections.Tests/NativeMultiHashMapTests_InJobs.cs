@@ -8,9 +8,9 @@ public class NativeMultiHashMapTests_InJobs : NativeMultiHashMapTestsFixture
 	[Test]
 	public void Read_And_Write()
 	{
-		var hashMap = new NativeMultiHashMap<int, int>(hashMapSize, Allocator.TempJob);
-		var writeStatus = new NativeArray<int>(hashMapSize, Allocator.TempJob);
-		var readValues = new NativeArray<int>(hashMapSize, Allocator.TempJob);
+		var hashMap = new NativeMultiHashMap<int, int>(hashMapSize, Allocator.Temp);
+		var writeStatus = new NativeArray<int>(hashMapSize, Allocator.Temp);
+		var readValues = new NativeArray<int>(hashMapSize, Allocator.Temp);
 
 		var writeData = new MultiHashMapWriteParallelForJob();
 		writeData.hashMap = hashMap;
@@ -38,9 +38,9 @@ public class NativeMultiHashMapTests_InJobs : NativeMultiHashMapTestsFixture
 	[Test]
 	public void Read_And_Write_Full()
 	{
-		var hashMap = new NativeMultiHashMap<int, int>(hashMapSize/2, Allocator.TempJob);
-		var writeStatus = new NativeArray<int>(hashMapSize, Allocator.TempJob);
-		var readValues = new NativeArray<int>(hashMapSize, Allocator.TempJob);
+		var hashMap = new NativeMultiHashMap<int, int>(hashMapSize/2, Allocator.Temp);
+		var writeStatus = new NativeArray<int>(hashMapSize, Allocator.Temp);
+		var readValues = new NativeArray<int>(hashMapSize, Allocator.Temp);
 
 		var writeData = new MultiHashMapWriteParallelForJob();
 		writeData.hashMap = hashMap;
@@ -78,9 +78,9 @@ public class NativeMultiHashMapTests_InJobs : NativeMultiHashMapTestsFixture
 	[Test]
 	public void Key_Collisions()
 	{
-		var hashMap = new NativeMultiHashMap<int, int>(hashMapSize, Allocator.TempJob);
-		var writeStatus = new NativeArray<int>(hashMapSize, Allocator.TempJob);
-		var readValues = new NativeArray<int>(hashMapSize, Allocator.TempJob);
+		var hashMap = new NativeMultiHashMap<int, int>(hashMapSize, Allocator.Temp);
+		var writeStatus = new NativeArray<int>(hashMapSize, Allocator.Temp);
+		var readValues = new NativeArray<int>(hashMapSize, Allocator.Temp);
 
 		var writeData = new MultiHashMapWriteParallelForJob();
 		writeData.hashMap = hashMap;
@@ -104,30 +104,4 @@ public class NativeMultiHashMapTests_InJobs : NativeMultiHashMapTestsFixture
 		writeStatus.Dispose();
 		readValues.Dispose();
 	}
-    
-    struct AddMultiIndex : IJobParallelFor
-    {
-        public NativeMultiHashMap<int, int>.Concurrent hashMap;
-
-        public void Execute(int index)
-        {
-            hashMap.Add(index, index);
-        }
-    }
-
-    [Test]
-    public void TryMultiAddScalabilityConcurrent()
-    {
-        for (int count = 0; count < 1024; count++)
-        {
-            var hashMap = new NativeMultiHashMap<int, int>(count, Allocator.TempJob);
-            var addIndexJob = new AddMultiIndex
-            {
-                hashMap = hashMap
-            };
-            var addIndexJobHandle = addIndexJob.Schedule(count, 64);
-            addIndexJobHandle.Complete();
-            hashMap.Dispose();
-        }
-    }
 }
