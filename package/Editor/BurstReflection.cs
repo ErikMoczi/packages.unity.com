@@ -29,30 +29,45 @@ namespace Unity.Burst.Editor
             // Find all ways to execute job types (via producer attributes)
             foreach (var assembly in assemblyList)
             {
-                foreach (var t in assembly.GetTypes())
+                var types = new List<Type>();
+                types.AddRange(assembly.GetTypes());
+                // Collect all generic type instances (excluding indirect instances)
+                CollectGenericTypeInstances(assembly, types);
+
+                foreach (var t in types)
                 {
-                    // NOTE: Make sure that we don't use a value type generic definition (e.g `class Outer<T> { struct Inner { } }`)
-                    // We are only working on plain type or generic type instance!
-                    if (t.IsValueType)
+                    try
                     {
-                        if (!t.IsGenericTypeDefinition)
-                            valueTypes.Add(t);
+                        if (t.IsInterface)
+                        {
+                            object[] attrs = t.GetCustomAttributes(typeof(JobProducerTypeAttribute), false);
+                            if (attrs.Length == 0)
+                                continue;
+
+                            JobProducerTypeAttribute attr = (JobProducerTypeAttribute)attrs[0];
+
+                            interfaceToProducer.Add(t, attr.ProducerType);
+
+                            //Debug.Log($"{t} has producer {attr.ProducerType}");
+                        }
+                        else if (t.IsValueType)
+                        {
+                            // NOTE: Make sure that we don't use a value type generic definition (e.g `class Outer<T> { struct Inner { } }`)
+                            // We are only working on plain type or generic type instance!
+                            if (!t.IsGenericTypeDefinition)
+                                valueTypes.Add(t);
+                        }
                     }
-                    else if (t.IsInterface)
+                    catch (Exception ex)
                     {
-                        object[] attrs = t.GetCustomAttributes(typeof(JobProducerTypeAttribute), false);
-                        if (attrs.Length == 0)
-                            continue;
-
-                        JobProducerTypeAttribute attr = (JobProducerTypeAttribute)attrs[0];
-
-                        interfaceToProducer.Add(t, attr.ProducerType);
-
-                        //Debug.Log($"{t} has producer {attr.ProducerType}");
+                        Debug.Log("Unexpected exception while inspecting type `" + t +
+                                  "` IsConstructedGenericType: " + t.IsConstructedGenericType +
+                                  " IsGenericTypeDef: " + t.IsGenericTypeDefinition +
+                                  " IsGenericParam: " + t.IsGenericParameter +
+                                  " Exception: " + ex);
                     }
                 }
             }
-
 
             //Debug.Log($"Mapped {interfaceToProducer.Count} producers; {valueTypes.Count} value types");
 
@@ -204,6 +219,47 @@ namespace Unity.Burst.Editor
             foreach (var assemblyRef in assembly.assemblyReferences)
             {
                 CollectAssemblyNames(assemblyRef, collect);
+            }
+        }
+
+        /// <summary>
+        /// Gets the list of concrete generic type instances used in an assembly.
+        /// See remarks
+        /// </summary>
+        /// <param name="assembly">The assembly</param>
+        /// <param name="types"></param>
+        /// <returns>The list of generic type instances</returns>
+        /// <remarks>
+        /// Note that this method fetchs only direct type instanecs but
+        /// cannot fetch transitive generic type instances.
+        /// </remarks>
+        private static void CollectGenericTypeInstances(System.Reflection.Assembly assembly, List<Type> types)
+        {
+            // From: https://gist.github.com/xoofx/710aaf86e0e8c81649d1261b1ef9590e
+            if (assembly == null) throw new ArgumentNullException(nameof(assembly));
+            // Token base id for TypeSpec
+            const int mdTypeSpec = 0x1B000000;
+            foreach (var module in assembly.Modules)
+            {
+                for (int i = 1; i < int.MaxValue; i++)
+                {
+                    try
+                    {
+                        var type = module.ResolveType(mdTypeSpec | i);
+                        if (type.IsConstructedGenericType && !type.ContainsGenericParameters)
+                        {
+                            types.Add(type);
+                        }
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        break;
+                    }
+                    catch (ArgumentException)
+                    {
+                        // Can happen on ResolveType on certain generic types, so we continue
+                    }
+                }
             }
         }
     }
