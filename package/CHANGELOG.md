@@ -50,3 +50,8 @@ and project files needed to adapt ARCore to the Unity multi-platform AR API.
     - Make currentSettings public so users can override this easily.
 - Improve ARCore build error message
     'Error building Player: BuildFailedException: "ARCore Supported" (Player Settings > XR Settings) refers to the built-in ARCore support in Unity and conflicts with the ARCore package.') that doesn't explain that that the "ARCore package" is in fact the "ARCore XR Plugin" package. The package name should match from the package manager window.
+
+## [1.0.0-preview.15] - 2018-06-08
+- Fixed lack of reporting timestamp to the `ARCameraFrameEventArgs`.
+- Do not include Android build pipeline when not on Android
+- Add ArAnchor [attachment](https://developers.google.com/ar/develop/developer-guides/anchors) support.

@@ -22,7 +22,6 @@ mkdir -p AndroidLibrary/jni/armeabi-v7a
 cp -v libs/armeabi-v7a/lib$PROJECT.so AndroidLibrary/jni/armeabi-v7a
 cat >> AndroidLibrary/AndroidManifest.xml << AXML
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.unity3d.arcore">
-    <uses-permission android:name="android.permission.CAMERA" />
     <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="19" />
 </manifest>
 AXML

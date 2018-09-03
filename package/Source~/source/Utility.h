@@ -57,18 +57,6 @@ inline bool operator<(const UnityXRTrackableId& lhs, const UnityXRTrackableId& r
     return lhs.idPart[0] < rhs.idPart[0];
 }
 
-#define kIdPartIndexPointerInscription 0
-#define kIdPartIndexOkayForMidUpdateScribble 1
-
-template<typename T>
-void ConvertToTrackableId(UnityXRTrackableId& outId, T* ptr)
-{
-    outId.idPart[kIdPartIndexPointerInscription] = reinterpret_cast<uintptr_t>(ptr);
-    outId.idPart[kIdPartIndexOkayForMidUpdateScribble] = 0;
-}
-
-UnityXRTrackingState ConvertGoogleTrackingStateToUnity(ArTrackingState arTrackingState);
-
 #define ARSTATUS_SUCCEEDED(ars) (ars >= AR_SUCCESS)
 #define ARSTATUS_FAILED(ars) (ars < AR_SUCCESS)
 
@@ -85,6 +73,24 @@ UnityXRTrackingState ConvertGoogleTrackingStateToUnity(ArTrackingState arTrackin
 
 #define DEBUG_LOG_VERBOSE(...) \
     __android_log_print(ANDROID_LOG_VERBOSE, kLogTag, __VA_ARGS__)
+
+#define kIdPartIndexPointerInscription 0
+#define kIdPartIndexOkayForMidUpdateScribble 1
+
+template<typename T>
+void ConvertToTrackableId(UnityXRTrackableId& outId, T* ptr)
+{
+    outId.idPart[kIdPartIndexPointerInscription] = reinterpret_cast<uintptr_t>(ptr);
+    outId.idPart[kIdPartIndexOkayForMidUpdateScribble] = 0x600613A12A17C812;
+}
+
+template<typename T>
+T* ConvertTrackableIdToPtr(const UnityXRTrackableId& id)
+{
+    return reinterpret_cast<T*>(id.idPart[kIdPartIndexPointerInscription]);
+}
+
+UnityXRTrackingState ConvertGoogleTrackingStateToUnity(ArTrackingState arTrackingState);
 
 const char* PrintArLightEstimateState(ArLightEstimateState state);
 const char* PrintArLightEstimationMode(ArLightEstimationMode mode);

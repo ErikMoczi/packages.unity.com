@@ -24,15 +24,15 @@ namespace UnityEditor.XR.ARCore
         }
 
         [SerializeField, Tooltip("Toggles whether ARCore is required for this app. Will make app only downloadable by devices with ARCore support if set to 'Required'.")]
-        Requirement m_Requirement;
+        Requirement m_ARCoreRequirement;
 
         /// <summary>
         /// Determines whether ARCore is required for this app: will make app only downloadable by devices with ARCore support if set to <see cref="Requirement.Required"/>.
         /// </summary>
-        public Requirement requirement
+        public Requirement ARCoreRequirement
         {
-            get { return m_Requirement; }
-            set { m_Requirement = value; }
+            get { return m_ARCoreRequirement; }
+            set { m_ARCoreRequirement = value; }
         }
 
         /// <summary>

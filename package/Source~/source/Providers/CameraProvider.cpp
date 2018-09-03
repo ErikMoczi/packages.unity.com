@@ -92,7 +92,8 @@ bool UNITY_INTERFACE_API CameraProvider::GetFrame(const UnityXRCameraParams& par
     m_ScreenWidth = paramsIn.screenWidth;
     m_ScreenHeight = paramsIn.screenHeight;
 
-    frameOut->providedFields = EnumCast<UnityXRCameraFramePropertyFlags>(0);
+    ArFrame_getTimestamp(session, frame, &frameOut->timestampNs);
+    frameOut->providedFields = kUnityXRCameraFramePropertiesTimestamp;
 
     int googleOrientation = ConvertUnityToGoogleOrientation(paramsIn.orientation);
     if (kInvalidOrientation == googleOrientation)

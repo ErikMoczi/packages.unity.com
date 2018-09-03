@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using UnityEngine.Experimental.XR;
 using UnityEngine.XR.ARExtensions;
 
 namespace UnityEngine.XR.ARCore
@@ -127,6 +128,10 @@ namespace UnityEngine.XR.ARCore
             ARPRESTO_APK_INSTALL_ERROR_USER_DECLINED = 203,
         }
 
+        internal delegate void CameraPermissionRequestProvider(CameraPermissionsResultCallback resultCallback, IntPtr context);
+
+        internal delegate void CameraPermissionsResultCallback(bool granted, IntPtr context);
+
 #if UNITY_ANDROID && !UNITY_EDITOR
         [DllImport("UnityARCore")]
         static internal extern void ArPresto_checkApkAvailability(
@@ -138,6 +143,15 @@ namespace UnityEngine.XR.ARCore
 
         [DllImport("UnityARCore")]
         static internal extern void ArPresto_update();
+
+        [DllImport("UnityARCore")]
+        static internal extern TrackingState UnityARCore_getAnchorTrackingState(TrackableId id);
+
+        [DllImport("UnityARCore")]
+        static internal extern void UnityARCore_setCameraPermissionProvider(CameraPermissionRequestProvider provider);
+
+        [DllImport("UnityARCore")]
+        static internal extern TrackableId UnityARCore_attachReferencePoint(TrackableId trackableId, Pose pose);
 #else
         static internal void ArPresto_checkApkAvailability(
             Action<ArAvailability, IntPtr> on_result, IntPtr context)
@@ -152,6 +166,18 @@ namespace UnityEngine.XR.ARCore
         }
 
         static internal void ArPresto_update() { }
+
+        static internal TrackingState UnityARCore_getAnchorTrackingState(TrackableId id)
+        {
+            return TrackingState.Unknown;
+        }
+
+        static internal void UnityARCore_setCameraPermissionProvider(CameraPermissionRequestProvider provider) { }
+
+        static internal TrackableId UnityARCore_attachReferencePoint(TrackableId trackableId, Pose pose)
+        {
+            return TrackableId.InvalidId;
+        }
 #endif
     }
 

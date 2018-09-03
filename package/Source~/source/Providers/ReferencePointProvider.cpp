@@ -2,6 +2,70 @@
 #include "Wrappers/WrappedAnchorList.h"
 #include "Wrappers/WrappedPose.h"
 
+static const UnityXRTrackableId s_InvalidId = {};
+ReferencePointProvider* ReferencePointProvider::s_Instance = nullptr;
+
+extern "C" UnityXRTrackableId UnityARCore_attachReferencePoint(UnityXRTrackableId trackableId, UnityXRPose pose)
+{
+    auto instance = ReferencePointProvider::Get();
+    if (instance == nullptr)
+        return s_InvalidId;
+
+    return instance->AttachReferencePoint(trackableId, pose);
+}
+
+ReferencePointProvider::ReferencePointProvider()
+{
+    s_Instance = this;    
+}
+
+ReferencePointProvider::~ReferencePointProvider()
+{
+    s_Instance = nullptr;
+}
+
+UnityXRTrackableId ReferencePointProvider::AttachReferencePoint(UnityXRTrackableId trackableId, UnityXRPose pose)
+{
+    auto session = GetArSession();
+    if (session == nullptr)
+        return s_InvalidId;
+
+    auto trackable = ConvertTrackableIdToPtr<ArTrackable>(trackableId);
+    if (trackable == nullptr)
+        return s_InvalidId;
+
+    const float poseRaw[7] =
+    {
+        pose.rotation.x,
+        pose.rotation.y,
+        -pose.rotation.z,
+        -pose.rotation.w,
+        pose.position.x,
+        pose.position.y,
+        -pose.position.z
+    };
+
+    ArPose* arPose = nullptr;
+    ArPose_create(session, poseRaw, &arPose);
+
+    ArAnchor* anchor = nullptr;
+    auto status = ArTrackable_acquireNewAnchor(session, trackable, arPose, &anchor);
+    ArPose_destroy(arPose);
+
+    if (ARSTATUS_FAILED(status))
+        return s_InvalidId;
+
+    UnityXRTrackableId newReferencePointId;
+    ConvertToTrackableId(newReferencePointId, anchor);
+
+    WrappedAnchor wrappedAnchor;
+    wrappedAnchor.AssumeOwnership(anchor);
+
+    m_IdToAnchorMap[newReferencePointId] = wrappedAnchor;
+
+    return newReferencePointId;
+}
+
 bool UNITY_INTERFACE_API ReferencePointProvider::TryAddReferencePoint(const UnityXRPose& xrPose, UnityXRTrackableId& outId, UnityXRTrackingState& outTrackingState)
 {
     if (GetArSession() == nullptr)

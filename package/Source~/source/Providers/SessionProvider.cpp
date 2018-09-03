@@ -20,11 +20,19 @@ jobject CallJavaMethod(jobject object, const char* name, const char* sig)
     return s_JNIEnv->CallObjectMethod(object, method);
 }
 
+static CameraPermissionRequestProvider_FP g_CameraPermissionRequestProvider = nullptr;
+
+extern "C" void UnityARCore_setCameraPermissionProvider(CameraPermissionRequestProvider_FP provider)
+{
+    g_CameraPermissionRequestProvider = provider;
+}
+
 void CameraPermissionRequestProvider(CameraPermissionsResultCallback_FP on_complete, void *context)
 {
-    // We set this in the AndroidManifest.xml
-    // TODO: Handle this in the plugin
-    on_complete(true, context);
+    if (g_CameraPermissionRequestProvider)
+        g_CameraPermissionRequestProvider(on_complete, context);
+    else
+        on_complete(false, context);
 }
 
 jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/)
