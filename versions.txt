@@ -24,3 +24,4 @@
 0.1.19-preview
 0.2.0-preview
 0.2.1-preview
+0.2.2-preview

@@ -94,7 +94,6 @@ namespace Unity.Properties
         private struct Locals
         {
             public HashSetStructPropertyBase<TContainer, TItem> Property;
-            public int Index;
             public TItem Item;
             public IPropertyVisitor Visitor;
         }
