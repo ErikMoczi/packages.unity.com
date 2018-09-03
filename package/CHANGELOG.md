@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.33] - 2018-8-3
+
+### Small fixes
+
+Obsolete warnings, doc update with modules and internals, ValueSource fix
+
 ## [0.1.32] - 2018-7-9
 
 ### Add custom measurement/warmup counts

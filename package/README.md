@@ -10,15 +10,20 @@ YourProject/Packages/manifest.json
 
 ``` json
 {
-	"dependencies": {
-		"com.unity.test-framework.performance": "0.1.32-preview"
-	  },
-	  "testables": [
-			"com.unity.test-framework.performance"
-	  ],
+    "dependencies": {
+        "com.unity.test-framework.performance": "0.1.33-preview",
+        "com.unity.modules.jsonserialize": "1.0.0",
+        "com.unity.modules.unitywebrequestwww": "1.0.0",
+        "com.unity.modules.vr": "1.0.0"
+      },
+      "testables": [
+            "com.unity.test-framework.performance"
+      ],
       "registry": "https://staging-packages.unity.com"
 }
 ```
+
+If you are using 2018.1 or 2018.2 the module dependencies are unnecessary.
 
 Assembly definitions should reference `Unity.PerformanceTesting` in order to use it. Create a new folder for storing tests in and then create a new asset from context menu called `right click/Create/Assembly definition`. In inspector for the assembly file check "Test Assemblies and apply. Then open the file in text editor and add `Unity.PerformanceTesting`.
 
@@ -38,6 +43,9 @@ Assembly definitions should reference `Unity.PerformanceTesting` in order to use
     "allowUnsafeCode": false
 }
 ```
+
+How to test internals can be found in the following link:
+https://q.unity3d.com/questions/992/how-to-test-internal-variables-in-the-editor-tests.html
 
 More information on how to create and run tests please refer to [Unity Test Runner docs](https://docs.unity3d.com/Manual/testing-editortestsrunner.html).
 
@@ -143,6 +151,7 @@ public IEnumerator Test()
         .MeasurementCount(10)
         .Run();
 }
+```
 
 When method or frame measurements are not enough you can use the following to measure. It will measure Scope, Frames, Markers or Cusom.
 

@@ -1,10 +1,13 @@
 ﻿#if UNITY_2018_1_OR_NEWER
 using System;
+using System.Collections;
 using System.IO;
+using System.Threading;
 using NUnit.Framework;
 using Unity.PerformanceTesting;
 using Unity.PerformanceTesting.Runtime;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.TestTools;
 #if ENABLE_VR
 using UnityEngine.XR;
@@ -24,10 +27,10 @@ public class PlaymodeMetadataCollector : IPrebuildSetup
         get { return Path.Combine(Application.streamingAssetsPath, "PerformanceTestRunInfo.json"); }
     }
 
-    [Test, Order(0), PrebuildSetup(typeof(PlaymodeMetadataCollector))]
-    public void GetPlayerSettingsTest()
+    [UnityTest, Order(0), PrebuildSetup(typeof(PlaymodeMetadataCollector))]
+    public IEnumerator GetPlayerSettingsTest()
     {
-        m_TestRun = ReadPerformanceTestRunJson();
+        yield return ReadPerformanceTestRunJsonAsync();
         m_TestRun.PlayerSystemInfo = GetSystemInfo();
         m_TestRun.QualitySettings = GetQualitySettings();
         m_TestRun.ScreenSettings = GetScreenSettings();
@@ -44,12 +47,15 @@ public class PlaymodeMetadataCollector : IPrebuildSetup
             string json;
             if (Application.platform == RuntimePlatform.Android)
             {
-                WWW reader = new WWW(m_TestRunPath);
+                UnityWebRequest reader = new UnityWebRequest("jar:file://" +m_TestRunPath);
+                Debug.Log("jar:file://" +m_TestRunPath);
+                Debug.Log(reader.error);
                 while (!reader.isDone)
                 {
+                    Thread.Sleep(1);
                 }
 
-                json = reader.text;
+                json = reader.downloadHandler.text;
             }
             else
             {
@@ -64,6 +70,36 @@ public class PlaymodeMetadataCollector : IPrebuildSetup
         }
     }
 
+    
+    private IEnumerator ReadPerformanceTestRunJsonAsync()
+    {
+        string json;
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            var path = m_TestRunPath;
+            UnityWebRequest reader = UnityWebRequest.Get(path);
+            yield return reader.Send();
+
+            while (!reader.isDone)
+            {
+                yield return null;
+            }
+
+            json = reader.downloadHandler.text;
+        }
+        else
+        {
+            if (!File.Exists(m_TestRunPath))
+            {
+                m_TestRun = new PerformanceTestRun {PlayerSettings = new Unity.PerformanceTesting.PlayerSettings()};
+                yield break;                
+            }
+            json = File.ReadAllText(m_TestRunPath);
+        }
+        
+        m_TestRun = JsonUtility.FromJson<PerformanceTestRun>(json);
+    }
+    
     private static PlayerSystemInfo GetSystemInfo()
     {
         return new PlayerSystemInfo

@@ -9,12 +9,8 @@ using UnityEngine.TestTools;
 namespace Unity.PerformanceTesting
 {
     [AttributeUsage(AttributeTargets.Method)]
-    public class PerformanceTestAttribute : CombiningStrategyAttribute, IImplyFixture, IWrapTestMethod
+    public class PerformanceTestAttribute : TestAttribute, IWrapTestMethod
     {
-        public PerformanceTestAttribute() : base(new UnityCombinatorialStrategy(), new ParameterDataSourceProvider())
-        {
-        }
-
         public TestCommand Wrap(TestCommand command)
         {
         #if UNITY_2018_2_OR_NEWER
