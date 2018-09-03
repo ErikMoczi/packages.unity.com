@@ -1,1 +1,1 @@
-# tracking unity packages
+Vector graphics importers and related utilities.
