@@ -1,0 +1,10 @@
+{
+    "name": "Unity.XR.ARKit.Editor",
+    "references": [
+    	"Unity.XR.ARKit"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

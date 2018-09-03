@@ -1,0 +1,39 @@
+{
+    "name": "UnityARKit",
+    "version": "1.0.0",
+    "libraryName": "UnityARKit",
+    "cameras": [
+    {
+        "id": "ARKit-Camera",
+        "providesAverageBrightness": true,
+        "providesAverageColorTemp": true,
+        "providesProjectionMatrix": true,
+        "providesDisplayMatrix": true,
+        "providesTimestamp": true
+    }],
+    "inputs": [
+    {
+        "id": "ARKit-Input"
+    }],
+    "planes": [
+    {
+        "id": "ARKit-Plane",
+        "supportsPlaneFinding": true
+    }],
+    "sessions": [
+    {
+        "id": "ARKit-Session"
+    }],
+    "referencePoints": [
+    {
+        "id": "ARKit-ReferencePoint"
+    }],
+    "depths": [
+    {
+        "id": "ARKit-Depth"
+    }],
+    "raycasts": [
+    {
+        "id": "ARKit-Raycast"
+    }]
+}
