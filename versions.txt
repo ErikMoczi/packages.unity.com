@@ -6,3 +6,4 @@
 1.0.5-preview
 1.0.5-preview.1
 1.0.5-preview.2
+1.0.5-preview.3
