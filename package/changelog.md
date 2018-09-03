@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4-preview.23
+
+- Fix bug with switch case to support not only int32
+
 ## 0.2.4-preview.22
 
 - Fix issue with pointers comparison not supported
