@@ -10,13 +10,13 @@ namespace Unity.Burst
             int delegateMethodID = Unity.Burst.LowLevel.BurstCompilerService.CompileAsyncDelegateMethod(delegateMethod, "-enable-synchronous-compilation");
             void* function = Unity.Burst.LowLevel.BurstCompilerService.GetAsyncCompiledAsyncDelegateMethod(delegateMethodID);
             if (function == null)
-                return null;
+                return delegateMethod;
 
-            object res = System.Runtime.InteropServices.Marshal.GetDelegateForFunctionPointer((IntPtr)function, typeof(T));
+            object res = System.Runtime.InteropServices.Marshal.GetDelegateForFunctionPointer((IntPtr)function, delegateMethod.GetType());
             return (T)res;
 #else
             //@TODO: Runtime implementation
-            return null;
+            return delegateMethod;
 #endif
         }
     }

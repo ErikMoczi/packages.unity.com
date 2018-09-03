@@ -18,7 +18,8 @@ namespace Unity.Burst.Editor
         Asm = 0,
         IL = 1,
         UnoptimizedIR = 2,
-        OptimizedIR = 3
+        OptimizedIR = 3,
+        IRPassAnalysis = 4
     }
 
     internal class BurstInspectorGUI : EditorWindow
@@ -30,7 +31,8 @@ namespace Unity.Burst.Editor
             "Assembly",
             ".NET IL",
             "LLVM IR (Unoptimized)",
-            "LLVM IR (Optimized)"
+            "LLVM IR (Optimized)",
+            "LLVM IR Optimisation Diagnostics"
         };
 
         private static readonly string[] DisasmOptions =
@@ -39,6 +41,7 @@ namespace Unity.Burst.Editor
             " " + GetOption(OptionDump, NativeDumpFlags.IL),
             " " + GetOption(OptionDump, NativeDumpFlags.IR),
             " " + GetOption(OptionDump, NativeDumpFlags.IROptimized),
+            " " + GetOption(OptionDump, NativeDumpFlags.IRPassAnalysis)
         };
 
         private static readonly string[] CodeGenOptions =
@@ -50,7 +53,9 @@ namespace Unity.Burst.Editor
             "x64_sse4",
             "avx",
             "avx2",
-            "avx512"
+            "avx512",
+            "armv7a_neon32",
+            "armv8a_aarch64",
         };
 
         private static readonly int[] FontSizes =
@@ -180,7 +185,8 @@ namespace Unity.Burst.Editor
                 if (doRefresh)
                 {
                     var options = new StringBuilder();
-                    if (!_safetyChecks) options.Append(" " + GetOption(OptionDisableSafetyChecks));
+                    if (!_safetyChecks)
+                        options.Append(" " + GetOption(OptionDisableSafetyChecks) + " " + GetOption(OptionNoAlias));
 
                     if (!_optimizations) options.Append(" " + GetOption(OptionDisableOpt));
 

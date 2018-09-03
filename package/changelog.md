@@ -1,6 +1,19 @@
 # Changelog
 
-## 0.2.4-preview.5 (TODO)
+## 0.2.4-preview.7
+
+- Add support for nested structs in SOA native arrays
+- Add support for arbitrary sized elements in full SOA native arrays
+- Fix bug with conversion from signed/unsigned integers to signed numbers (integers & floats)
+- Add support for substracting pointers at IL level
+- Improve codegen with pointers arithmetic to avoid checking for overflows
+
+## 0.2.4-preview.6 
+
+- Remove `bool1` from mathematics and add proper support in burst
+- Add support for ARM platforms in the burst inspector UI
+
+## 0.2.4-preview.5
 
 - Add support for readonly static fields
 - Add support for stackalloc

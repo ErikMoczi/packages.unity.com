@@ -28,6 +28,8 @@ namespace Burst.Compiler.IL
         public const string OptionMath = "math=";
         public const string OptionDump = "dump=";
         public const string OptionFormat = "format=";
+        public const string OptionDebugTrap = "debugtrap";
+        public const string OptionDisableVectors = "disable-vectors";
 
         // -------------------------------------------------------
         // Options used by the Jit compiler
@@ -123,6 +125,11 @@ namespace Burst.Compiler.IL
         /// </summary>
         Analysis = 1 << 6,
 
-        All = IL | Backend | IR | IROptimized | Asm | Function | Analysis
+        /// <summary>
+        /// Dumps the diagnostics from optimisation
+        /// </summary>
+        IRPassAnalysis = 1 << 7,
+
+        All = IL | Backend | IR | IROptimized | Asm | Function | Analysis | IRPassAnalysis
     }
 }
