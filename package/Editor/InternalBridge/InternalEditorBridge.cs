@@ -1,10 +1,8 @@
 using UnityEngine;
-using UnityEditor;
-using UnityEditor.Experimental.U2D;
 
 namespace UnityEditor.Experimental.U2D.Common
 {
-    public static class InternalEditorBridge
+    internal static class InternalEditorBridge
     {
         public static EditorWindow GetCurrentInspectorWindow()
         {
@@ -39,6 +37,17 @@ namespace UnityEditor.Experimental.U2D.Common
         public static bool DoesHardwareSupportsFullNPOT()
         {
             return ShaderUtil.hardwareSupportsFullNPOT;
+        }
+
+        public static Texture2D CreateTemporaryDuplicate(Texture2D tex, int width, int height)
+        {
+            return UnityEditor.SpriteUtility.CreateTemporaryDuplicate(tex, width, height);
+        }
+
+        public static void ShowSpriteEditorWindow()
+        {
+            var window = EditorWindow.GetWindow<SpriteEditorWindow>();
+            window.Show();
         }
     }
 }
