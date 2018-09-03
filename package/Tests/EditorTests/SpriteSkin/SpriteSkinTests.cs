@@ -77,7 +77,7 @@ public class SpriteSkinTests
 
     private Vector3Compare vec3Compare = new Vector3Compare();
 
-    private static string kTestAssetsFolder = "UnityPackageManager/com.unity.2d.animation@1.0.1-experimental/Tests/EditorTests/SpriteSkin/Assets/";
+    private static string kTestAssetsFolder = "Packages/com.unity.2d.animation/Tests/EditorTests/SpriteSkin/Assets/";
     private static string kTestTempFolder = "Assets/Temp/";
 
     [OneTimeTearDown]

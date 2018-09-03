@@ -11,7 +11,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Bone
     [TestFixture]
     public class BonePostProcessTests
     {
-        private static string kTestAssetsFolder = "UnityPackageManager/com.unity.2d.animation@1.0.1-experimental/Tests/EditorTests/BoneModule/Assets/";
+        private static string kTestAssetsFolder = "Packages/com.unity.2d.animation/Tests/EditorTests/BoneModule/Assets/";
         private static string kTestTempFolder = "Assets/Temp/";
         
         [OneTimeTearDown]
