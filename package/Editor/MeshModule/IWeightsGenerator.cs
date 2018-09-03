@@ -9,6 +9,6 @@ namespace UnityEditor.Experimental.U2D.Animation
 {
     public interface IWeightsGenerator
     {
-        BoneWeight[] Calculate(Vector2[] vertices, Edge[] edges, Vector2[] controlPoints, Edge[] controlPointEdges);
+        BoneWeight[] Calculate(Vector2[] vertices, Edge[] edges, Vector2[] controlPoints, Edge[] bones, int[] pins);
     }
 }

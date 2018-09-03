@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Experimental.U2D;
 using UnityEngine.Experimental.U2D.Common;
 using UnityEngine.Experimental.Rendering;
@@ -42,6 +43,8 @@ namespace UnityEngine.Experimental.U2D.Animation
         }
 
         private ulong m_AssetTimeStamp = 0;
+
+        internal static UnityEvent onDrawGizmos = new UnityEvent();
 #endif
 
         internal SpriteRenderer spriteRenderer
@@ -93,6 +96,11 @@ namespace UnityEngine.Experimental.U2D.Animation
             }
         }
 
+        private void OnDrawGizmos()
+        {
+            onDrawGizmos.Invoke();
+        }
+
 #endif
         private void OnEnable()
         {
@@ -137,7 +145,7 @@ namespace UnityEngine.Experimental.U2D.Animation
 
         private void UpdateBoundsIfNeeded()
         {
-            if(m_NeedsUpdateBounds)
+            if (m_NeedsUpdateBounds)
             {
                 m_BoundsHandle.Complete();
                 m_BoundsHandle = default(JobHandle);
@@ -175,7 +183,7 @@ namespace UnityEngine.Experimental.U2D.Animation
                 DeactivateSkinning();
             }
 
-            if (!isValid)
+            if (!spriteRenderer.enabled || !isValid)
             {
                 DeactivateSkinning();
                 return;

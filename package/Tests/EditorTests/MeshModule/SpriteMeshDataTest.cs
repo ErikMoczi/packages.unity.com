@@ -207,7 +207,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMesh
                 }
             };
 
-            generator.Calculate(Arg.Any<Vector2[]>(), Arg.Any<Edge[]>(), Arg.Any<Vector2[]>(), Arg.Any<Edge[]>()).Returns(weigts);
+            generator.Calculate(Arg.Any<Vector2[]>(), Arg.Any<Edge[]>(), Arg.Any<Vector2[]>(), Arg.Any<Edge[]>(), Arg.Any<int[]>()).Returns(weigts);
 
             m_SpriteMeshData.CalculateWeights(generator, null, tolerance);
 
@@ -236,7 +236,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.SpriteMesh
                 new BoneWeight() { weight0 = 1f }
             };
 
-            generator.Calculate(Arg.Any<Vector2[]>(), Arg.Any<Edge[]>(), Arg.Any<Vector2[]>(), Arg.Any<Edge[]>()).Returns(weigts);
+            generator.Calculate(Arg.Any<Vector2[]>(), Arg.Any<Edge[]>(), Arg.Any<Vector2[]>(), Arg.Any<Edge[]>(), Arg.Any<int[]>()).Returns(weigts);
 
             m_SpriteMeshData.CalculateWeightsSafe(generator, null, 0f);
 

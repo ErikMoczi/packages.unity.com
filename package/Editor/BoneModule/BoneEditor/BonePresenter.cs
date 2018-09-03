@@ -104,8 +104,26 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_InfoView = infoView;
 
             state = new BoneEditorState();
+
+            Undo.undoRedoPerformed += UndoRedoPerformed;
         }
-        
+
+        ~BonePresenter()
+        {
+            Undo.undoRedoPerformed -= UndoRedoPerformed;
+        }
+
+        private void UndoRedoPerformed()
+        {
+            // Cancel all creating state if undo was performed
+            if (creatingBone)
+            {
+                state.normalCreating = false;
+                state.freeCreating = false;
+                state.freeCreatingBone = false;
+            }
+        }
+
         // Manipulation and display of bones.
         //   - rect : Workspace position and size.
         public void DoBone(Rect rect)

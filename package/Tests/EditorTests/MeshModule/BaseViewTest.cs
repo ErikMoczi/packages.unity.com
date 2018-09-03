@@ -21,6 +21,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Base
         public bool isActionKeyDown = false;
         public KeyCode keyDown = KeyCode.None;
         public int hotControl = 0;
+        public bool viewToolActive = false;
     }
 
     public class BaseViewTest
@@ -53,6 +54,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Base
             m_GUIWrapper.mousePosition.Returns(x => m_MousePosition);
             m_GUIWrapper.eventType.Returns(x => m_EventType);
             m_GUIWrapper.GUIToWorld(Arg.Any<Vector2>()).Returns(x => (Vector2)x[0]);
+            m_GUIWrapper.GUIToWorld(Arg.Any<Vector2>(), Arg.Any<Vector3>(), Arg.Any<Vector3>()).Returns(x => (Vector3)((Vector2)x[0]));
             m_GUIWrapper.IsControlNearest(Arg.Any<int>()).Returns(x => (int)x[0] == nearestControl);
             m_GUIWrapper.When(x => m_GUIWrapper.LayoutControl(Arg.Any<int>(), Arg.Any<float>())).Do(x =>
                 {
@@ -68,9 +70,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Base
                         m_NearestControl = controlId;
                     }
                 });
-            m_GUIWrapper.DistanceToCircle(Arg.Any<Vector2>(), Arg.Any<float>()).Returns(x =>
+            m_GUIWrapper.DistanceToCircle(Arg.Any<Vector3>(), Arg.Any<float>()).Returns(x =>
                 {
-                    Vector2 center = (Vector2)x[0];
+                    Vector2 center = (Vector3)x[0];
                     float radius = (float)x[1];
 
                     float dist = (center - m_MousePosition).magnitude;
@@ -78,10 +80,13 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Base
                         return 0f;
                     return dist - radius;
                 });
-            m_GUIWrapper.DistanceToSegment(Arg.Any<Vector2>(), Arg.Any<Vector2>()).Returns(x => HandleUtility.DistancePointToLineSegment(m_MousePosition, (Vector2)x[0], (Vector2)x[1]));
+            m_GUIWrapper.DistanceToSegment(Arg.Any<Vector3>(), Arg.Any<Vector3>()).Returns(x => HandleUtility.DistancePointToLineSegment(m_MousePosition, (Vector3)x[0], (Vector3)x[1]));
 
             Vector2 sliderPos;
             m_GUIWrapper.DoSlider(Arg.Any<int>(), Arg.Any<Vector2>(), out sliderPos).Returns(x => (int)x[0] == nearestControl);
+            Vector3 sliderPos3;
+            m_GUIWrapper.DoSlider(Arg.Any<int>(), Arg.Any<Vector3>(), Arg.Any<Vector3>(), Arg.Any<Vector3>(), Arg.Any<Vector3>(), out sliderPos3).Returns(x => (int)x[0] == nearestControl);
+            m_GUIWrapper.GetHandleSize(Arg.Any<Vector3>()).Returns(x => 1f);
         }
 
         protected void SetGUIWrapperState(GUIWrapperState state)
@@ -103,6 +108,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Base
                 m_GUIWrapper.IsKeyDown(state.keyDown).Returns(true);
 
             m_GUIWrapper.IsControlHot(state.hotControl).Returns(true);
+            m_GUIWrapper.IsViewToolActive().Returns(x => state.viewToolActive);
         }
 
         protected virtual int GetControlID(int hashCode, FocusType focusType)

@@ -130,16 +130,17 @@ namespace UnityEditor.Experimental.U2D.Animation
         public static void CalculateWeights(this SpriteMeshData spriteMeshData, IWeightsGenerator weightsGenerator, ISelection selection, float filterTolerance)
         {
             Vector2[] controlPoints;
-            Edge[] controlPointEdges;
+            Edge[] bones;
+            int[] pins;
 
-            spriteMeshData.GetControlPoints(out controlPoints, out controlPointEdges);
+            spriteMeshData.GetControlPoints(out controlPoints, out bones, out pins);
 
             Vector2[] vertices = new Vector2[spriteMeshData.vertices.Count];
 
             for (int i = 0; i < spriteMeshData.vertices.Count; ++i)
                 vertices[i] = spriteMeshData.vertices[i].position;
 
-            BoneWeight[] boneWeights = weightsGenerator.Calculate(vertices, spriteMeshData.edges.ToArray(), controlPoints, controlPointEdges);
+            BoneWeight[] boneWeights = weightsGenerator.Calculate(vertices, spriteMeshData.edges.ToArray(), controlPoints, bones, pins);
 
             Debug.Assert(boneWeights.Length == spriteMeshData.vertices.Count);
 
@@ -291,13 +292,14 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        public static void GetControlPoints(this SpriteMeshData spriteMeshData, out Vector2[] points, out Edge[] edges)
+        public static void GetControlPoints(this SpriteMeshData spriteMeshData, out Vector2[] points, out Edge[] edges, out int[] pins)
         {
             points = null;
             edges = null;
 
             List<Vector2> pointList = new List<Vector2>();
             List<Edge> edgeList = new List<Edge>();
+            List<int> pinList = new List<int>();
 
             foreach (var bone in spriteMeshData.bones)
             {
@@ -322,14 +324,16 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                     edgeList.Add(new Edge(index1, index2));
                 }
-                else
+                else if (bone.length == 0f)
                 {
                     pointList.Add(bone.position);
+                    pinList.Add(pointList.Count - 1);
                 }
             }
 
             points = pointList.ToArray();
             edges = edgeList.ToArray();
+            pins = pinList.ToArray();
         }
 
         public static void SortTrianglesByDepth(this SpriteMeshData spriteMeshData)

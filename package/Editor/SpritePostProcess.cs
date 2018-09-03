@@ -111,10 +111,11 @@ namespace UnityEditor.Experimental.U2D.Animation
             return dataChanged;
         }
 
-        static bool PostProcessSpriteMeshData(ISpriteEditorDataProvider spriteEditorDataProvider, Sprite[] sprites)
+        static bool PostProcessSpriteMeshData(ISpriteEditorDataProvider spriteDataProvider, Sprite[] sprites)
         {
-            var spriteMeshDataProvider = spriteEditorDataProvider.GetDataProvider<ISpriteMeshDataProvider>();
-            var textureDataProvider = spriteEditorDataProvider.GetDataProvider<ITextureDataProvider>();
+            var spriteMeshDataProvider = spriteDataProvider.GetDataProvider<ISpriteMeshDataProvider>();
+            var boneDataProvider = spriteDataProvider.GetDataProvider<ISpriteBoneDataProvider>();
+            var textureDataProvider = spriteDataProvider.GetDataProvider<ITextureDataProvider>();
             if (sprites == null || sprites.Length == 0 || spriteMeshDataProvider == null || textureDataProvider == null)
                 return false;
 
@@ -124,23 +125,35 @@ namespace UnityEditor.Experimental.U2D.Animation
             foreach (var sprite in sprites)
             {
                 var guid = sprite.GetSpriteID();
-                SpriteRect spriteRect = spriteEditorDataProvider.GetSpriteRects().First(s => { return s.spriteID == guid; });
+                var spriteRect = spriteDataProvider.GetSpriteRects().First(s => { return s.spriteID == guid; });
+                var spriteBone = boneDataProvider.GetBones(guid);
+                
+                var hasBones = spriteBone != null && spriteBone.Count > 0;
+                var hasInvalidWeights = false;
 
-                Vertex2DMetaData[] vertices = spriteMeshDataProvider.GetVertices(guid);
-                int[] indices = spriteMeshDataProvider.GetIndices(guid);
+                var vertices = spriteMeshDataProvider.GetVertices(guid);
+                var indices = spriteMeshDataProvider.GetIndices(guid);
 
                 if (vertices.Length > 2 && indices.Length > 2)
                 {
-                    NativeArray<Vector3> vertexArray = new NativeArray<Vector3>(vertices.Length, Allocator.Temp);
-                    NativeArray<BoneWeight> boneWeightArray = new NativeArray<BoneWeight>(vertices.Length, Allocator.Temp);
+                    var vertexArray = new NativeArray<Vector3>(vertices.Length, Allocator.Temp);
+                    var boneWeightArray = new NativeArray<BoneWeight>(vertices.Length, Allocator.Temp);
 
                     for (int i = 0; i < vertices.Length; ++i)
                     {
+                        var boneWeight = vertices[i].boneWeight;
+
                         vertexArray[i] = (Vector3)(vertices[i].position - Vector2.Scale(spriteRect.rect.size, spriteRect.pivot)) * definitionScale / sprite.pixelsPerUnit;
-                        boneWeightArray[i] = vertices[i].boneWeight;
+                        boneWeightArray[i] = boneWeight;
+
+                        if(hasBones && !hasInvalidWeights)
+                        {
+                            var sum = boneWeight.weight0 + boneWeight.weight1 + boneWeight.weight2 + boneWeight.weight3;
+                            hasInvalidWeights = sum < 0.999f;
+                        }
                     }
 
-                    NativeArray<ushort> indicesArray = new NativeArray<ushort>(indices.Length, Allocator.Temp);
+                    var indicesArray = new NativeArray<ushort>(indices.Length, Allocator.Temp);
 
                     for (int i = 0; i < indices.Length; ++i)
                         indicesArray[i] = (ushort)indices[i];
@@ -154,6 +167,9 @@ namespace UnityEditor.Experimental.U2D.Animation
                     indicesArray.Dispose();
 
                     dataChanged = true;
+
+                    if(hasBones && hasInvalidWeights)
+                        Debug.LogWarning("Sprite \"" + spriteRect.name + "\" contains bone weights which sum zero or are not normalized. To avoid visual artifacts please consider fixing them.");
                 }
             }
 

@@ -10,18 +10,6 @@ namespace UnityEditor.Experimental.U2D.Animation
     {
         public const float kEditorLineHeight = 18f;
 
-        public static float DistanceToSegment(Vector3 p1, Vector3 p2)
-        {
-            p1 = HandleUtility.WorldToGUIPoint(p1);
-            p2 = HandleUtility.WorldToGUIPoint(p2);
-
-            Vector2 point = Event.current.mousePosition;
-
-            float retval = HandleUtility.DistancePointToLineSegment(point, p1, p2);
-            if (retval < 0) retval = 0.0f;
-            return retval;
-        }
-
         static internal Vector3 GUIToWorld(Vector3 guiPosition)
         {
             return GUIToWorld(guiPosition, Vector3.forward, Vector3.zero);

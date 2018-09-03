@@ -44,9 +44,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
         private BoneWeight[] CalculateWeights()
         {
             Vector2[] controlPoints;
-            Edge[] controlPointEdges;
+            Edge[] bones;
+            int[] pins;
 
-            m_SpriteMeshData.GetControlPoints(out controlPoints, out controlPointEdges);
+            m_SpriteMeshData.GetControlPoints(out controlPoints, out bones, out pins);
 
             Vector2[] vertices = new Vector2[m_SpriteMeshData.vertices.Count];
 
@@ -54,7 +55,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                 vertices[i] = m_SpriteMeshData.vertices[i].position;
 
             BoundedBiharmonicWeightsGenerator generator = new BoundedBiharmonicWeightsGenerator();
-            return generator.Calculate(vertices, m_SpriteMeshData.edges.ToArray(), controlPoints, controlPointEdges);
+            return generator.Calculate(vertices, m_SpriteMeshData.edges.ToArray(), controlPoints, bones, pins);
         }
 
         [Test]
@@ -233,8 +234,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                     boneIndex1 = 1,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0.9069023f,
-                    weight1 = 0.0930977f,
+                    weight0 = 0.969298065f,
+                    weight1 = 0.0307019185f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
@@ -244,8 +245,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                     boneIndex1 = 1,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0.910151362f,
-                    weight1 = 0.08984863f,
+                    weight0 = 1f,
+                    weight1 = 0f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
@@ -255,8 +256,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                     boneIndex1 = 0,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0.506713152f,
-                    weight1 = 0.493286848f,
+                    weight0 = 0.5343099f,
+                    weight1 = 0.465690076f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
@@ -266,8 +267,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                     boneIndex1 = 0,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0.5069977f,
-                    weight1 = 0.4930023f,
+                    weight0 = 0.5561863f,
+                    weight1 = 0.443813682f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
@@ -277,8 +278,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                     boneIndex1 = 0,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0.918600857f,
-                    weight1 = 0.08139912f,
+                    weight0 = 1f,
+                    weight1 = 0f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
@@ -288,8 +289,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                     boneIndex1 = 0,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0.917430043f,
-                    weight1 = 0.08256998f,
+                    weight0 = 1f,
+                    weight1 = 0f,
                     weight2 = 0f,
                     weight3 = 0f
                 }
@@ -302,7 +303,184 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
         }
 
         [Test]
-        public void OneBoneOutsideMesh_ReturnZeroInfluences()
+        public void TwoPinsInsideMesh_CreatesInfluencesForBothBones()
+        {
+            m_SpriteMeshData.bones[0].length = 0f;
+            m_SpriteMeshData.bones[1].length = 0f;
+
+            BoneWeight[] boneWeights = CalculateWeights();
+
+            BoneWeight[] expected = new BoneWeight[] {
+                new BoneWeight()
+                {
+                    boneIndex0 = 0,
+                    boneIndex1 = 1,
+                    boneIndex2 = 0,
+                    boneIndex3 = 0,
+                    weight0 = 0.6f,
+                    weight1 = 0.4f,
+                    weight2 = 0f,
+                    weight3 = 0f
+                },
+                new BoneWeight()
+                {
+                    boneIndex0 = 0,
+                    boneIndex1 = 1,
+                    boneIndex2 = 0,
+                    boneIndex3 = 0,
+                    weight0 = 0.6f,
+                    weight1 = 0.4f,
+                    weight2 = 0f,
+                    weight3 = 0f
+                },
+                new BoneWeight()
+                {
+                    boneIndex0 = 1,
+                    boneIndex1 = 0,
+                    boneIndex2 = 0,
+                    boneIndex3 = 0,
+                    weight0 = 0.733333349f,
+                    weight1 = 0.266666681f,
+                    weight2 = 0f,
+                    weight3 = 0f
+                },
+                new BoneWeight()
+                {
+                    boneIndex0 = 1,
+                    boneIndex1 = 0,
+                    boneIndex2 = 0,
+                    boneIndex3 = 0,
+                    weight0 = 0.733333349f,
+                    weight1 = 0.266666681f,
+                    weight2 = 0f,
+                    weight3 = 0f
+                },
+                new BoneWeight()
+                {
+                    boneIndex0 = 1,
+                    boneIndex1 = 0,
+                    boneIndex2 = 0,
+                    boneIndex3 = 0,
+                    weight0 = 1f,
+                    weight1 = 0f,
+                    weight2 = 0f,
+                    weight3 = 0f
+                },
+                new BoneWeight()
+                {
+                    boneIndex0 = 1,
+                    boneIndex1 = 0,
+                    boneIndex2 = 0,
+                    boneIndex3 = 0,
+                    weight0 = 1f,
+                    weight1 = 0f,
+                    weight2 = 0f,
+                    weight3 = 0f
+                }
+            };
+
+            Assert.AreEqual(m_SpriteMeshData.vertices.Count, boneWeights.Length, "Weights count don't match vertex count");
+
+            for (int i = 0; i < boneWeights.Length; ++i)
+                AssertBoneWeight(expected[i], boneWeights[i]);
+        }
+
+        [Test]
+        public void VertexCloseToBone_ProducesWeights()
+        {
+            var bonePos = m_SpriteMeshData.bones[0].position;
+            m_SpriteMeshData.CreateVertex(bonePos + Vector2.one * 0.001f);
+
+            BoneWeight[] boneWeights = CalculateWeights();
+
+            BoneWeight[] expected = new BoneWeight[] {
+                new BoneWeight()
+                {
+                    boneIndex0 = 0,
+                    boneIndex1 = 1,
+                    boneIndex2 = 0,
+                    boneIndex3 = 0,
+                    weight0 = 0.988497853f,
+                    weight1 = 0.0115021653f,
+                    weight2 = 0f,
+                    weight3 = 0f
+                },
+                new BoneWeight()
+                {
+                    boneIndex0 = 0,
+                    boneIndex1 = 1,
+                    boneIndex2 = 0,
+                    boneIndex3 = 0,
+                    weight0 = 1f,
+                    weight1 = 0f,
+                    weight2 = 0f,
+                    weight3 = 0f
+                },
+                new BoneWeight()
+                {
+                    boneIndex0 = 1,
+                    boneIndex1 = 0,
+                    boneIndex2 = 0,
+                    boneIndex3 = 0,
+                    weight0 = 0.527753f,
+                    weight1 = 0.472246975f,
+                    weight2 = 0f,
+                    weight3 = 0f
+                },
+                new BoneWeight()
+                {
+                    boneIndex0 = 0,
+                    boneIndex1 = 1,
+                    boneIndex2 = 0,
+                    boneIndex3 = 0,
+                    weight0 = 0.517832756f,
+                    weight1 = 0.482167244f,
+                    weight2 = 0f,
+                    weight3 = 0f
+                },
+                new BoneWeight()
+                {
+                    boneIndex0 = 1,
+                    boneIndex1 = 0,
+                    boneIndex2 = 0,
+                    boneIndex3 = 0,
+                    weight0 = 1f,
+                    weight1 = 0f,
+                    weight2 = 0f,
+                    weight3 = 0f
+                },
+                new BoneWeight()
+                {
+                    boneIndex0 = 1,
+                    boneIndex1 = 0,
+                    boneIndex2 = 0,
+                    boneIndex3 = 0,
+                    weight0 = 1f,
+                    weight1 = 0f,
+                    weight2 = 0f,
+                    weight3 = 0f
+                },
+                new BoneWeight()
+                {
+                    boneIndex0 = 0,
+                    boneIndex1 = 1,
+                    boneIndex2 = 0,
+                    boneIndex3 = 0,
+                    weight0 = 0.9999997f,
+                    weight1 = 2.8157632E-07f,
+                    weight2 = 0f,
+                    weight3 = 0f
+                }
+            };
+
+            Assert.AreEqual(m_SpriteMeshData.vertices.Count, boneWeights.Length, "Weights count don't match vertex count");
+
+            for (int i = 0; i < boneWeights.Length; ++i)
+                AssertBoneWeight(expected[i], boneWeights[i]);
+        }
+
+        [Test]
+        public void OneBoneOutsideMesh_CreatesInfluencesOfTheOtherBones()
         {
             SpriteBoneData spriteBone = m_SpriteMeshData.bones[0];
             spriteBone.position += Vector2.right * 10f;
@@ -313,66 +491,66 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
             BoneWeight[] expected = new BoneWeight[] {
                 new BoneWeight()
                 {
-                    boneIndex0 = 0,
+                    boneIndex0 = 1,
                     boneIndex1 = 0,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0f,
+                    weight0 = 1f,
                     weight1 = 0f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
                 new BoneWeight()
                 {
-                    boneIndex0 = 0,
+                    boneIndex0 = 1,
                     boneIndex1 = 0,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0f,
+                    weight0 = 1f,
                     weight1 = 0f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
                 new BoneWeight()
                 {
-                    boneIndex0 = 0,
+                    boneIndex0 = 1,
                     boneIndex1 = 0,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0f,
+                    weight0 = 1f,
                     weight1 = 0f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
                 new BoneWeight()
                 {
-                    boneIndex0 = 0,
+                    boneIndex0 = 1,
                     boneIndex1 = 0,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0f,
+                    weight0 = 1f,
                     weight1 = 0f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
                 new BoneWeight()
                 {
-                    boneIndex0 = 0,
+                    boneIndex0 = 1,
                     boneIndex1 = 0,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0f,
+                    weight0 = 1f,
                     weight1 = 0f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
                 new BoneWeight()
                 {
-                    boneIndex0 = 0,
+                    boneIndex0 = 1,
                     boneIndex1 = 0,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0f,
+                    weight0 = 1f,
                     weight1 = 0f,
                     weight2 = 0f,
                     weight3 = 0f
@@ -401,8 +579,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                     boneIndex1 = 1,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0.91450727f,
-                    weight1 = 0.0854927152f,
+                    weight0 = 0.9719688f,
+                    weight1 = 0.0280311815f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
@@ -412,8 +590,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                     boneIndex1 = 1,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0.9148939f,
-                    weight1 = 0.08510605f,
+                    weight0 = 0.908445239f,
+                    weight1 = 0.09155474f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
@@ -423,8 +601,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                     boneIndex1 = 0,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0.6955761f,
-                    weight1 = 0.3044239f,
+                    weight0 = 0.684992f,
+                    weight1 = 0.315007955f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
@@ -434,8 +612,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                     boneIndex1 = 0,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0.6959888f,
-                    weight1 = 0.304011256f,
+                    weight0 = 0.739078164f,
+                    weight1 = 0.260921866f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
@@ -486,7 +664,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                 new BoneWeight()
                 {
                     boneIndex0 = 0,
-                    boneIndex1 = 0,
+                    boneIndex1 = 1,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
                     weight0 = 0f,
@@ -497,7 +675,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                 new BoneWeight()
                 {
                     boneIndex0 = 0,
-                    boneIndex1 = 0,
+                    boneIndex1 = 1,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
                     weight0 = 0f,
@@ -508,7 +686,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                 new BoneWeight()
                 {
                     boneIndex0 = 0,
-                    boneIndex1 = 0,
+                    boneIndex1 = 1,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
                     weight0 = 0f,
@@ -519,7 +697,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                 new BoneWeight()
                 {
                     boneIndex0 = 0,
-                    boneIndex1 = 0,
+                    boneIndex1 = 1,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
                     weight0 = 0f,
@@ -530,7 +708,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                 new BoneWeight()
                 {
                     boneIndex0 = 0,
-                    boneIndex1 = 0,
+                    boneIndex1 = 1,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
                     weight0 = 0f,
@@ -541,7 +719,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                 new BoneWeight()
                 {
                     boneIndex0 = 0,
-                    boneIndex1 = 0,
+                    boneIndex1 = 1,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
                     weight0 = 0f,
@@ -571,8 +749,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                     boneIndex1 = 1,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0.901687145f,
-                    weight1 = 0.09831287f,
+                    weight0 = 0.9643655f,
+                    weight1 = 0.03563449f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
@@ -582,8 +760,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                     boneIndex1 = 1,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0.9040701f,
-                    weight1 = 0.09592994f,
+                    weight0 = 1f,
+                    weight1 = 0f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
@@ -593,8 +771,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                     boneIndex1 = 0,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0.509135067f,
-                    weight1 = 0.4908649f,
+                    weight0 = 0.624806464f,
+                    weight1 = 0.375193536f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
@@ -604,8 +782,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                     boneIndex1 = 0,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0.5067605f,
-                    weight1 = 0.493239522f,
+                    weight0 = 0.5487788f,
+                    weight1 = 0.4512212f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
@@ -615,8 +793,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                     boneIndex1 = 0,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0.9211994f,
-                    weight1 = 0.07880062f,
+                    weight0 = 1f,
+                    weight1 = 0f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
@@ -626,8 +804,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.MeshModule.Weights
                     boneIndex1 = 0,
                     boneIndex2 = 0,
                     boneIndex3 = 0,
-                    weight0 = 0.9180592f,
-                    weight1 = 0.08194084f,
+                    weight0 = 1f,
+                    weight1 = 0f,
                     weight2 = 0f,
                     weight3 = 0f
                 },
