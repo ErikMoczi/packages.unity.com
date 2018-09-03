@@ -496,6 +496,10 @@ namespace UnityEngine.XR.ARFoundation
             if (cameraSubsystem.TryGetAverageColorTemperature(ref data))
                 lightEstimation.averageColorTemperature = data;
 
+            Color colorCorrection;
+            if (cameraSubsystem.TryGetColorCorrection(out colorCorrection))
+                lightEstimation.colorCorrection = colorCorrection;
+
             float? timestampSeconds = null;
             Int64 timestampNs = 0;
             if (cameraSubsystem.TryGetTimestamp(ref timestampNs))

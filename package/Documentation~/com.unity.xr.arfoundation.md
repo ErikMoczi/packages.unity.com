@@ -54,6 +54,24 @@ A session has the following options, each of which may be changed at runtime:
 
 **Note:** An AR session is a global construct. An `ARSession` component manages this global session, so multiple `ARSession` components will all try to manage the same global session.
 
+### AR Subsystem Manager
+Included in any AR Session is a static class called `ARSubsystemManager`.  This manager governs the lifecycles of multiple AR-related subsystems and provides higher level abstractions and utilities for managing and using the AR-related subsystems.
+
+The AR Subsystem Manager also maintains the current state of the session.  The state of the current session can be queried through the `ARSubsystemManager.systemState` variable and compared against the values of the `ARSystemState` enumeration.  There is also a callback that can be subscribed to within the `ARSubsystemManager` named `systemStateChanged`.
+
+A session can be in one of the following states and can change during runtime:
+
+|State|Meaning|
+|-|-|
+|None|The AR System has not been initialized and availability is unknown.|
+|Unsupported|AR is not supported on the current device.|
+|CheckingAvailability|The system is checking the availability of AR on the current device.|
+|NeedsInstall|AR is supported on the current device, but requires an additional install.|
+|Installing|AR software is being installed|
+|Ready|AR is supported and ready|
+|SessionInitialized|An AR session is initializing (i.e., starting up).  This usually means AR is working but has not gathered enough information about the environment|
+|SessionTracking|An AR session is running and is tracking (i.e., the device is able to determine its position and orientation in the world).|
+
 ### ARSessionOrigin
 
 ![alt text](images/ar_session_origin.png "AR Session Origin")
@@ -193,6 +211,7 @@ AR Foundation includes the following known limitations:
 
 |Date|Reason|
 |---|---|
+|June 14, 2018|Update `ARSessionOrigin` photos|
 |June 12, 2018|Update `ARPlaneMeshVisualizer` and `ARPointCloudMeshVisualizer` with additional debug recommendations and standards.|
 |June 7, 2018|Remove known issue.|
 |June 6, 2018|Update ARSession image.|

@@ -12,7 +12,7 @@ namespace UnityEngine.XR.ARFoundation
         /// Use <c>averageBrightness.HasValue</c> to determine if this information is available.
         /// </summary>
         /// <remarks>
-        /// <c>averageBrightness</c> may be null when light estimation is not enabled in the <see cref="ARSession"/>,
+        /// <see cref="averageBrightness"/> may be null when light estimation is not enabled in the <see cref="ARSession"/>,
         /// if the platform does not support it, or if a platform-specific error has occurred.
         /// </remarks>
         public float? averageBrightness { get; set; }
@@ -22,14 +22,28 @@ namespace UnityEngine.XR.ARFoundation
         /// Use <c>averageColorTemperature.HasValue</c> to determine if this information is available.
         /// </summary>
         /// <remarks>
-        /// <c>averageColorTemperature</c> may be null when light estimation is not enabled in the <see cref="ARSession"/>,
+        /// <see cref="averageColorTemperature"/> may be null when light estimation is not enabled in the <see cref="ARSession"/>,
         /// if the platform does not support it, or if a platform-specific error has occurred.
         /// </remarks>
         public float? averageColorTemperature { get; set; }
 
+        /// <summary>
+        /// The scaling factors used for color correction.
+        /// The RGB scale factors are used to match the color of the light
+        /// in the scene. The alpha channel value is platform-specific.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="colorCorrection"/> may be null when light estimation is not enabled in the <see cref="ARSession"/>,
+        /// if the platform does not support it, or if a platform-specific error has occurred.
+        /// </remarks>
+        public Color? colorCorrection { get; set; }
+
         public override int GetHashCode()
         {
-            return averageBrightness.GetHashCode() ^ averageColorTemperature.GetHashCode();
+            return
+                averageBrightness.GetHashCode() ^
+                averageColorTemperature.GetHashCode() ^
+                colorCorrection.GetHashCode();
         }
 
         public override bool Equals(object obj)
@@ -42,14 +56,16 @@ namespace UnityEngine.XR.ARFoundation
 
         public override string ToString()
         {
-            return string.Format("(Avg. Brightness: {0}, Avg. Color Temperature {1})", averageBrightness, averageColorTemperature);
+            return string.Format("(Avg. Brightness: {0}, Avg. Color Temperature: {1}, Color Correction: {2})",
+                averageBrightness, averageColorTemperature, colorCorrection);
         }
 
         public bool Equals(LightEstimationData other)
         {
             return
                 (averageBrightness.Equals(other.averageBrightness)) &&
-                (averageColorTemperature.Equals(other.averageColorTemperature));
+                (averageColorTemperature.Equals(other.averageColorTemperature)) &&
+                (colorCorrection.Equals(other.colorCorrection));
         }
 
         public static bool operator ==(LightEstimationData lhs, LightEstimationData rhs)
