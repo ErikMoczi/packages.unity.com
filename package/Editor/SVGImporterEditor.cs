@@ -35,7 +35,6 @@ namespace Unity.VectorGraphics.Editor
         private SerializedProperty m_MaxCordDeviation;
         private SerializedProperty m_MaxTangentAngleEnabled;
         private SerializedProperty m_MaxTangentAngle;
-        private SerializedProperty m_EnableAnimationTools;
 
         private readonly GUIContent m_PixelsPerUnitText = new GUIContent("Pixels Per Unit", "How many pixels in the SVG correspond to one unit in the world.");
         private readonly GUIContent m_GradientResolutionText = new GUIContent("Gradient Resolution", "Size of each rasterized gradient in pixels. Higher values consume memory but result in more accurate gradients.");
@@ -46,12 +45,11 @@ namespace Unity.VectorGraphics.Editor
         private readonly GUIContent m_CustomTargetResolutionText = new GUIContent("Custom Target Resolution");
         private readonly GUIContent m_ResolutionMultiplierText = new GUIContent("Zoom Factor", "Target zoom factor for which the SVG asset should not look tessellated.");
         private readonly GUIContent m_StepDistanceText = new GUIContent("Step Distance", "Distance at which vertices will be generated along the paths. Lower values will result in a more dense tessellation.");
-        private readonly GUIContent m_SamplingStepDistanceText = new GUIContent("Sampling Steps", "Number of samples evaluated on paths.");
+        private readonly GUIContent m_SamplingStepDistanceText = new GUIContent("Sampling Steps", "Number of samples evaluated on paths. Higher values give more accurate results (but takes longer).");
         private readonly GUIContent m_MaxCordDeviationEnabledText = new GUIContent("Max Cord Enabled", "Enables the \"max cord deviation\" tessellation test.");
         private readonly GUIContent m_MaxCordDeviationText = new GUIContent("Max Cord Deviation", "Distance on the cord to a straight line between two points after which more tessellation will be generated.");
         private readonly GUIContent m_MaxTangentAngleEnabledText = new GUIContent("Max Tangent Enabled", "Enables the \"max tangent angle\" tessellation test.");
         private readonly GUIContent m_MaxTangentAngleText = new GUIContent("Max Tangent Angle", "Max tangent angle (in degrees) after which more tessellation will be generated.");
-        private readonly GUIContent m_EnableAnimationToolsText = new GUIContent("Enable Animation Tools", "Enables animation tools in the Sprite Editor window.");
 
         private readonly GUIContent[] m_AlignmentOptions = new GUIContent[]
         {
@@ -99,7 +97,6 @@ namespace Unity.VectorGraphics.Editor
             m_MaxCordDeviation = serializedObject.FindProperty("MaxCordDeviation");
             m_MaxTangentAngleEnabled = serializedObject.FindProperty("MaxTangentAngleEnabled");
             m_MaxTangentAngle = serializedObject.FindProperty("MaxTangentAngle");
-            m_EnableAnimationTools = serializedObject.FindProperty("EnableAnimationTools");
         }
 
         public override void OnInspectorGUI()
@@ -114,11 +111,6 @@ namespace Unity.VectorGraphics.Editor
                 GUILayout.BeginHorizontal();
                 EditorGUILayout.PropertyField(m_CustomPivot, m_CustomPivotText);
                 GUILayout.EndHorizontal();
-            }
-
-            if (AreAnimationToolsAvailable())
-            {
-                m_EnableAnimationTools.boolValue = EditorGUILayout.Toggle(m_EnableAnimationToolsText, m_EnableAnimationTools.boolValue);
             }
 
             EditorGUILayout.Space();
@@ -193,11 +185,6 @@ namespace Unity.VectorGraphics.Editor
             case SVGImporter.PredefinedResolution.Res_480p:  return 480;
             default: return 1080;
             }
-        }
-
-        private static bool AreAnimationToolsAvailable()
-        {
-            return AssetDatabase.IsValidFolder("Packages/com.unity.2d.animation");
         }
 
         public override bool HasPreviewGUI()

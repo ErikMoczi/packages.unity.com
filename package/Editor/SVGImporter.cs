@@ -63,9 +63,6 @@ namespace Unity.VectorGraphics.Editor
         /// <summary>Max tangent angle (in degrees) after which more tessellation will be generated.</summary>
         public float MaxTangentAngle = 5.0f;
 
-        /// <summary>Enables the animation tools for bones and skin weights in the Sprite Editor.</summary>
-        public bool EnableAnimationTools = false;
-
         [SerializeField]
         private SVGSpriteData m_SpriteData = new SVGSpriteData();
         internal SVGSpriteData GetSVGSpriteData() { return m_SpriteData; }
@@ -106,10 +103,34 @@ namespace Unity.VectorGraphics.Editor
             tessOptions.StepDistance = stepDist;
 
             var geometry = VectorUtils.TessellateScene(sceneInfo.Scene, tessOptions, sceneInfo.NodeOpacity);
-
             var sprite = VectorUtils.BuildSprite(geometry, SvgPixelsPerUnit, Alignment, CustomPivot, GradientResolution, true);
 
+            OverridePhysicsShape(sprite);
             GenerateAsset(ctx, sprite);
+        }
+
+        private void OverridePhysicsShape(Sprite sprite)
+        {
+            var physicsDataProvider = (this as ISpriteEditorDataProvider).GetDataProvider<ISpritePhysicsOutlineDataProvider>();
+            var outlines = physicsDataProvider.GetOutlines(m_SpriteData.SpriteRect.spriteID);
+
+            int width;
+            int height;
+            TextureSizeForSpriteEditor(sprite, out width, out height);
+
+            // Offset the outline inside the sprite
+            foreach (var outline in outlines)
+            {
+                for (int i = 0; i < outline.Length; ++i)
+                {
+                    var v = outline[i];
+                    v.x += width / 2.0f;
+                    v.y += height / 2.0f;
+                    outline[i] = v;
+                }
+            }
+
+            sprite.OverridePhysicsShape(outlines);
         }
 
         private void GenerateAsset(AssetImportContext ctx, Sprite sprite)
@@ -181,9 +202,8 @@ namespace Unity.VectorGraphics.Editor
             return sprite;
         }
 
-        internal void TextureSizeForSpriteEditor(out int width, out int height)
+        internal void TextureSizeForSpriteEditor(Sprite sprite, out int width, out int height)
         {
-            var sprite = GetImportedSprite(assetPath);
             var size = ((Vector2)sprite.bounds.size) * SvgPixelsPerUnit;
             width = (int)(size.x + 0.5f);
             height = (int)(size.y + 0.5f);
@@ -271,14 +291,6 @@ namespace Unity.VectorGraphics.Editor
         /// <summary>Gets the data provider for a given type</summary>
         T ISpriteEditorDataProvider.GetDataProvider<T>()
         {
-            if (EnableAnimationTools && typeof(T) == typeof(ISpriteBoneDataProvider))
-            {
-                return new SVGBoneDataProvider(this) as T;                
-            }
-            if (EnableAnimationTools && typeof(T) == typeof(ISpriteMeshDataProvider))
-            {
-                return new SVGMeshDataProvider(this) as T;
-            }
             if (typeof(T) == typeof(ISpritePhysicsOutlineDataProvider))
             {
                 return new SVGPhysicsOutlineDataProvider(this) as T;
@@ -299,14 +311,6 @@ namespace Unity.VectorGraphics.Editor
         /// <returns>True if a data provider is available for the type, or false otherwise</returns>
         bool ISpriteEditorDataProvider.HasDataProvider(Type type)
         {
-            if (EnableAnimationTools)
-            {
-                if (type == typeof(ISpriteBoneDataProvider) ||
-                    type == typeof(ISpriteMeshDataProvider))
-                {
-                    return true;
-                }
-            }
             if (type == typeof(ISpritePhysicsOutlineDataProvider) ||
                 type == typeof(ITextureDataProvider))
             {
