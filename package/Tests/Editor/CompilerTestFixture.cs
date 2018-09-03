@@ -52,12 +52,12 @@ namespace UnityEditor.Compilation
         public string CompilerCommandLine(string[] sourceFiles, string[] references, string[] defines, string[] additional)
         {
             var args = new List<string>();
-            args.AddRange(sourceFiles.Select(x => "-i:"+x ));
-            args.AddRange(references.Select(x => "-r:"+ x));
-            args.AddRange(defines.Select(x => "-d:"+ x));
+            args.AddRange(sourceFiles.SelectMany(x => new string[] { "-i", x }));
+            args.AddRange(references.SelectMany(x => new string[] { "-r", x }));
+            args.AddRange(defines.SelectMany(x => new string[] { "-d", x }));
             args.AddRange(additional);
-            if (!args.Any(x => x.IndexOf("-out:") == 0))
-                args.Add( "-out:" + tempFileProvider.NewTempFile());
+            if (!args.Any(x => x.IndexOf("-o") == 0))
+                args.AddRange(new[] { "-o", tempFileProvider.NewTempFile() });
 
             return string.Join(" ", args);
         }

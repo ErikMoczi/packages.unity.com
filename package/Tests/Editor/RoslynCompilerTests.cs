@@ -74,7 +74,6 @@ namespace UnityEditor.Compilation
                 var compilerCommandLine = CompilerCommandLine(sourceFiles);
 
                 var result = compiler.InvokeIncrementalCompilerAsync(compilationId, compilerCommandLine).Result;
-                
                 Assert.AreEqual(0, result.compilationMessages.Length, "compiler should not have returned errors or warnings");
                 Assert.IsNull(result.sourceFilesChanges, "compiler should not have reported any source files that have changed on initial compilation");
 
