@@ -58,20 +58,24 @@ namespace Unity.VectorGraphics
         /// <param name="pos">The position of the ellipse, relative to its center.</param>
         /// <param name="radiusX">The X axis of the ellipse.</param>
         /// <param name="radiusY">The Y axis of the ellipse.</param>
-        public static void MakeEllipse(Rectangle rect, Vector2 pos, float radiusX, float radiusY)
+        /// <returns>A rectangle object with rounded corners to form an ellipse</returns>
+        public static Rectangle MakeEllipse(Vector2 pos, float radiusX, float radiusY)
         {
+            var rect = new Rectangle();
             rect.position = new Vector2(pos.x - radiusX, pos.y - radiusY);
             rect.size = new Vector2(radiusX + radiusX, radiusY + radiusY);
             rect.radiusTL = rect.radiusTR = rect.radiusBL = rect.radiusBR = new Vector2(radiusX, radiusY);
+            return rect;
         }
 
         /// <summary>Builds an circle.</summary>
         /// <param name="rect">The Rectangle that will be rounded to hold the circle.</param>
         /// <param name="pos">The position of the circle, relative to its center.</param>
         /// <param name="radius">The radius of the circle.</param>
-        public static void MakeCircle(Rectangle rect, Vector2 pos, float radius)
+        /// <returns>A rectangle object with rounded corners to form a circle</returns>
+        public static Rectangle MakeCircle(Vector2 pos, float radius)
         {
-            MakeEllipse(rect, pos, radius, radius);
+            return MakeEllipse(pos, radius, radius);
         }
 
         /// <summary>Computes the bounds of a BezierContour.</summary>
@@ -643,7 +647,6 @@ namespace Unity.VectorGraphics
         /// <summary>Iterates through every nodes under a root with computed transform and opacities.</summary>
         /// <param name="root">The starting node of the hierarchy</param>
         /// <param name="nodeOpacities">Storage for the resulting node opacities, may be null</param>
-        /// <param name="postOrder">Post-order node listing if true, in-order if false</param>
         /// <returns>An enumeration of every node with their pre-computed world transforms, opacities and paths.</returns>
         public static IEnumerable<SceneNodeWorldTransform> WorldTransformedSceneNodes(SceneNode root, Dictionary<SceneNode, float> nodeOpacities)
         {

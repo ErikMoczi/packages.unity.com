@@ -7,7 +7,8 @@ using UnityEngine;
 
 namespace Unity.VectorGraphics.Editor
 {
-    class SVGParser
+    /// <summary>Reads an SVG document and builds a vector scene.</summary>
+    public class SVGParser
     {
         /// <summary>A structure containing the SVG scene data.</summary>
         public struct SceneInfo
@@ -61,9 +62,9 @@ namespace Unity.VectorGraphics.Editor
         }
     }
 
-    class XmlReaderIterator
+    internal class XmlReaderIterator
     {
-        public class Node
+        internal class Node
         {
             public Node(XmlReader reader) { this.reader = reader; name = reader.Name; depth = reader.Depth; }
             public string Name { get { return name; } }
@@ -133,7 +134,7 @@ namespace Unity.VectorGraphics.Editor
         bool currentElementVisited;
     }
 
-    class SVGFormatException : Exception
+    internal class SVGFormatException : Exception
     {
         public SVGFormatException() {}
         public SVGFormatException(string message) : base(ComposeMessage(null, message)) {}
@@ -150,9 +151,9 @@ namespace Unity.VectorGraphics.Editor
         }
     }
 
-    class SVGDictionary : Dictionary<string, object> {}
+    internal class SVGDictionary : Dictionary<string, object> {}
 
-    class SVGDocument
+    internal class SVGDocument
     {
         public SVGDocument(XmlReader docReader, float dpi, Scene scene, int windowWidth, int windowHeight)
         {
@@ -246,11 +247,12 @@ namespace Unity.VectorGraphics.Editor
             float cy = AttribLengthVal(node, "cy", 0.0f, DimType.Height);
             float r = AttribLengthVal(node, "r", 0.0f, DimType.Length);
 
-            var pathProps = new PathProperties() { stroke = stroke, head = strokeEnding, tail = strokeEnding, corners = strokeCorner };
-            var rect = new Rectangle() { pathProps = pathProps, fill = fill };
-            VectorUtils.MakeCircle(rect, new Vector2(cx, cy), r);
+            var circle = VectorUtils.MakeCircle(new Vector2(cx, cy), r);
+            circle.pathProps = new PathProperties() { stroke = stroke, head = strokeEnding, tail = strokeEnding, corners = strokeCorner };
+            circle.fill = fill;
+
             sceneNode.drawables = new List<IDrawable>(1);
-            sceneNode.drawables.Add(rect);
+            sceneNode.drawables.Add(circle);
 
             ParseClipAndMask(node, sceneNode);
 
@@ -293,11 +295,12 @@ namespace Unity.VectorGraphics.Editor
             float rx = AttribLengthVal(node, "rx", 0.0f, DimType.Length);
             float ry = AttribLengthVal(node, "ry", 0.0f, DimType.Length);
 
-            var pathProps = new PathProperties() { stroke = stroke, corners = strokeCorner, head = strokeEnding, tail = strokeEnding };
-            var rect = new Rectangle() { pathProps = pathProps, fill = fill };
-            VectorUtils.MakeEllipse(rect, new Vector2(cx, cy), rx, ry);
+            var ellipse = VectorUtils.MakeEllipse(new Vector2(cx, cy), rx, ry);
+            ellipse.pathProps = new PathProperties() { stroke = stroke, corners = strokeCorner, head = strokeEnding, tail = strokeEnding };
+            ellipse.fill = fill;
+
             sceneNode.drawables = new List<IDrawable>(1);
-            sceneNode.drawables.Add(rect);
+            sceneNode.drawables.Add(ellipse);
 
             ParseClipAndMask(node, sceneNode);
 
@@ -1901,7 +1904,7 @@ namespace Unity.VectorGraphics.Editor
         SVGStyleSheet globalStyleSheet;
     }
 
-    class SVGAttribParser
+    internal class SVGAttribParser
     {
         public static List<BezierContour> ParsePath(XmlReaderIterator.Node node)
         {

@@ -103,33 +103,50 @@ namespace Unity.VectorGraphics
             return pixels;
         }
 
-        struct PackRectItem
+        /// <summary>Struct to hold a texture atlas location.</summary>
+        public struct PackRectItem
         {
+            /// <summary>The position of the entry inside the atlas.</summary>
             public Vector2 position;
+
+            /// <summary>The size of the entry inside the atlas.</summary>
+            public Vector2 size;
+
+            /// <summary>True if the entry is rotated by 90 degrees.</summary>
             public bool rotated;
+
+            /// <summary>The fill associated with this entry, may be null.</summary>
+            public IFill fill;
+
+            internal int settingIndex;
         }
-        static List<PackRectItem> PackRects(IList<Vector2> sizes, out Vector2 atlasDims)
+
+        static List<PackRectItem> PackRects(IList<KeyValuePair<IFill, Vector2>> fillSizes, out Vector2 atlasDims)
         {
-            var pack = new List<PackRectItem>(sizes.Count);
+            var pack = new List<PackRectItem>(fillSizes.Count);
             atlasDims = new Vector2(1024, 1024);
             var maxPos = Vector2.zero;
             var curPos = Vector2.zero;
             float curColThickness = 0.0f;
-            foreach (var s in sizes)
+            int currentSetting = 1;
+            foreach (var fillSize in fillSizes)
             {
-                if (atlasDims.y < curPos.y + s.y)
+                var fill = fillSize.Key;
+                var size = fillSize.Value;
+                if (atlasDims.y < curPos.y + size.y)
                 {
-                    if (atlasDims.y < s.y)
-                        atlasDims.y = s.y;
+                    if (atlasDims.y < size.y)
+                        atlasDims.y = size.y;
                     if (curPos.y != 0)
                         curPos.x += curColThickness;
                     curPos.y = 0;
-                    curColThickness = s.x;
+                    curColThickness = size.x;
                 }
-                curColThickness = Mathf.Max(curColThickness, s.x);
-                pack.Add(new PackRectItem() { position = curPos });
-                maxPos = Vector2.Max(maxPos, curPos + s);
-                curPos.y += s.y;
+                curColThickness = Mathf.Max(curColThickness, size.x);
+                int setting = fill == null ? 0 : currentSetting++;
+                pack.Add(new PackRectItem() { position = curPos, size = size, fill = fill, settingIndex = setting });
+                maxPos = Vector2.Max(maxPos, curPos + size);
+                curPos.y += size.y;
             }
             atlasDims = maxPos;
             return pack;

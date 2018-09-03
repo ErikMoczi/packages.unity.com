@@ -80,6 +80,8 @@ namespace Unity.VectorGraphics
             if (tessellateOptions.stepDistance < Epsilon)
                 throw new Exception("stepDistance too small");
 
+            UnityEngine.Profiling.Profiler.BeginSample("TessellatePath");
+
             float[] segmentLengths = VectorUtils.SegmentsLengths(contour.segments, contour.closed);
 
             // Approximate the number of vertices/indices we need to store the results so we reduce memory reallocations during work
@@ -112,6 +114,8 @@ namespace Unity.VectorGraphics
 
             vertices = verts.ToArray();
             indices = inds.ToArray();
+
+            UnityEngine.Profiling.Profiler.EndSample();
         }
 
         static Vector2[] TraceShape(BezierContour contour, Stroke stroke, TessellationOptions tessellateOptions)

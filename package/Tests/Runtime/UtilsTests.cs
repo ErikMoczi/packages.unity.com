@@ -10,21 +10,21 @@ public class UtilsTests
     private static List<VectorUtils.Geometry> BuildGeoms()
     {
         var node = new SceneNode() {
-            Drawables = new List<IDrawable> {
+            drawables = new List<IDrawable> {
                 new Rectangle() {
-                    Size = new Vector2(100, 50),
-                    Fill = new SolidFill() { Color = Color.red }
+                    size = new Vector2(100, 50),
+                    fill = new SolidFill() { color = Color.red }
                 }
             }
         };
-        var scene = new Scene() { Root = node };
+        var scene = new Scene() { root = node };
 
         var options = new VectorUtils.TessellationOptions()
         {
-            StepDistance = 10.0f,
-            MaxCordDeviation = float.MaxValue,
-            MaxTanAngleDeviation = Mathf.PI/2.0f,
-            SamplingStepSize = 0.01f
+            stepDistance = 10.0f,
+            maxCordDeviation = float.MaxValue,
+            maxTanAngleDeviation = Mathf.PI/2.0f,
+            samplingStepSize = 0.01f
         };
 
         return VectorUtils.TessellateScene(scene, options);
