@@ -102,14 +102,12 @@ namespace Unity.Properties
             
             public bool BeginCollection<TContainer, TValue>(TContainer container, VisitContext<TValue> context) where TContainer : class, IPropertyContainer
             {
-                BeginCollection(context.Property.Name);
-                return true;
+                return BeginCollection(context.Property.Name);
             }
 
             public bool BeginCollection<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context) where TContainer : struct, IPropertyContainer
             {
-                BeginCollection(context.Property.Name);
-                return true;
+                return BeginCollection(context.Property.Name);
             }
 
             public void EndCollection<TContainer, TValue>(TContainer container, VisitContext<TValue> context) where TContainer : class, IPropertyContainer
@@ -121,9 +119,13 @@ namespace Unity.Properties
             {
             }
 
-            private void BeginCollection(string name)
+            private bool BeginCollection(string name)
             {
                 var container = m_PropertyContainers.Peek();
+                if (container == null)
+                {
+                    return false;
+                }
                 var property = container.PropertyBag.FindProperty(name);
                 
                 // When copying a list from a source to a dest we ALWAYS clear the destination list
@@ -134,6 +136,7 @@ namespace Unity.Properties
                 
                 // struct properties
                 (property as IListStructProperty)?.Clear(ref container);
+                return true;
             }
             
             private bool PushContainer(string name, int index)
