@@ -1,0 +1,8 @@
+{
+    "name": "com.unity.2d.animation.Runtime",
+    "references": [
+        "com.unity.2d.common.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": []
+}

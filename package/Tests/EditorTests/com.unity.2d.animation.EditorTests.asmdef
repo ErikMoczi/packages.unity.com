@@ -1,0 +1,16 @@
+{
+    "name": "com.unity.2d.animation.EditorTests",
+    "references": [
+        "com.unity.2d.common.Editor",
+        "com.unity.2d.common.Runtime",
+        "com.unity.2d.animation.Editor",
+        "com.unity.2d.animation.Runtime"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
