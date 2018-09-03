@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4-preview.16
+
+- Fix AOT compilation errors
+
 ## 0.2.4-preview.15
 
 - Fix crash for certain access to readonly static variable 

@@ -70,7 +70,7 @@ namespace Unity.Burst
         public static unsafe T CompileDelegate<T>(T delegateMethod) where T : class
         {
             // We have added support for runtime CompileDelegate in 2018.2+
-#if UNITY_EDITOR || UNITY_2018_2_OR_NEWER
+#if UNITY_EDITOR //|| UNITY_2018_2_OR_NEWER
             string defaultOptions = "--enable-synchronous-compilation";
             var backendPath = ResolveBackendPath(BackendName);
             if (backendPath != null)
