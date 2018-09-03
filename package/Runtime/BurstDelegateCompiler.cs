@@ -1,9 +1,4 @@
 using System;
-using System.Text;
-using System.IO;
-using UnityEditor;
-using Unity.Jobs;
-using Unity.Burst.LowLevel;
 
 namespace Unity.Burst
 {
@@ -12,8 +7,8 @@ namespace Unity.Burst
         unsafe public static T CompileDelegate<T>(T delegateMethod) where T : class
         {
 #if UNITY_EDITOR
-            int delegateMethodID = BurstCompilerService.CompileAsyncDelegateMethod(delegateMethod, "-enable-synchronous-compilation");
-            void* function = BurstCompilerService.GetAsyncCompiledAsyncDelegateMethod(delegateMethodID);
+            int delegateMethodID = Unity.Burst.LowLevel.BurstCompilerService.CompileAsyncDelegateMethod(delegateMethod, "-enable-synchronous-compilation");
+            void* function = Unity.Burst.LowLevel.BurstCompilerService.GetAsyncCompiledAsyncDelegateMethod(delegateMethodID);
             if (function == null)
                 return null;
             
