@@ -1,6 +1,12 @@
 ﻿#if NET_4_6
-
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Unity.Properties.Serialization;
 
 namespace Unity.Properties.Editor.Serialization
 {
@@ -8,7 +14,7 @@ namespace Unity.Properties.Editor.Serialization
     public enum UserHookFlags
     {
         None = 1,
-        OnPropertyBagConstructed = 2
+        OnPropertyConstructed = 2
     }
 
     public static class UserHooks
@@ -23,5 +29,4 @@ namespace Unity.Properties.Editor.Serialization
         }
     }
 }
-
 #endif // NET_4_6

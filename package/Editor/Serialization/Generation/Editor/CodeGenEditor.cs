@@ -24,6 +24,7 @@ namespace Unity.Properties.Editor.Serialization
         {
             ""TypeId"": ""1"",
             ""Name"": ""HelloWorld"",
+            ""IsValueType"": ""false"",
             ""Properties"": {
                 ""Data"": {
                     ""TypeId"": ""int"",
@@ -37,7 +38,7 @@ namespace Unity.Properties.Editor.Serialization
         private string m_CodeContent;
 
         [MenuItem("Properties/CodeGen/CSharp")]
-        public static void ShowCodeGen()
+        public static void ShowExample()
         {
             var window = GetWindow<CodeGenEditorWindow>();
 
@@ -46,7 +47,7 @@ namespace Unity.Properties.Editor.Serialization
             window.minSize = new Vector2(450, 200);
             window.titleContent = new GUIContent("JSON -> CSharp Generation");
         }
-        
+
         private void OnEnable()
         {
             m_CodeContent = string.Empty;
@@ -63,7 +64,7 @@ namespace Unity.Properties.Editor.Serialization
                 if (GUILayout.Button(">> TO CODE", GUILayout.Width(120)))
                 {
                     var backend = new CSharpGenerationBackend();
-                    var result = JsonSchema.FromJson(m_SchemaJson);
+                    var result = JsonPropertyContainerSchemaReader.Read(m_SchemaJson);
                     backend.Generate(result);
 
                     m_CodeContent = backend.Code.ToString();

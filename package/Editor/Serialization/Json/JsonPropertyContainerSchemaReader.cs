@@ -39,7 +39,7 @@ namespace Unity.Properties.Editor.Serialization
             List<PropertyTypeNode> definitions = new List<PropertyTypeNode>();
 
             object obj;
-            if (!Unity.Properties.Serialization.SimpleJson.TryDeserializeObject(json, out obj))
+            if (!Unity.Properties.Serialization.Json.TryDeserializeObject(json, out obj))
             {
                 return definitions;
             }

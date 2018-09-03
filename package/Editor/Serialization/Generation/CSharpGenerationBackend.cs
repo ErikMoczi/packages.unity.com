@@ -293,9 +293,7 @@ namespace Unity.Properties.Editor.Serialization
             if (!string.IsNullOrWhiteSpace(propertyType.IsInheritedFrom))
             {
                 // Just add a propertybag member
-                PropertyBagItemNames.Add(
-                    $"new InheritedProperty<{propertyType.IsInheritedFrom}, {containerName}, {propertyTypeString}>({propertyWrapperVariableName})"
-                    );
+                PropertyBagItemNames.Add(propertyWrapperVariableName);
                 return;
             }
 
