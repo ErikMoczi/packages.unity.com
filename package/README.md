@@ -1,9 +1,9 @@
-# Performance testing extension for Unity Test Runner 
+# Performance testing extension for Unity Test Runner
 
 Extension provides a set of calls to make it easier to take measurements and record profiler markers. It also collects data about build and player settings which is useful when comparing data for separating different hardware and configurations.
 
 ## Installing
-To install this package, follow the instructions in the [Package Manager documentation](https://docs.unity3d.com/Packages/com.unity.package-manager-ui@latest/index.html). 
+To install this package, follow the instructions in the [Package Manager documentation](https://docs.unity3d.com/Packages/com.unity.package-manager-ui@latest/index.html).
 
 And add `com.unity.test-framework.performance` your packages manifest.
 YourProject/Packages/manifest.json
@@ -11,11 +11,12 @@ YourProject/Packages/manifest.json
 ``` json
 {
 	"dependencies": {
-		"com.unity.test-framework.performance": "0.1.31-preview"
+		"com.unity.test-framework.performance": "0.1.32-preview"
 	  },
 	  "testables": [
 			"com.unity.test-framework.performance"
-	  ]
+	  ],
+      "registry": "https://staging-packages.unity.com"
 }
 ```
 
@@ -40,10 +41,6 @@ Assembly definitions should reference `Unity.PerformanceTesting` in order to use
 
 More information on how to create and run tests please refer to [Unity Test Runner docs](https://docs.unity3d.com/Manual/testing-editortestsrunner.html).
 
-## Saving results
-
-If you are on 2018.3+ version of unity you can launch the editor with command line argument `-performanceTestResults "path"` it will save test results as json to path.
-
 
 ## Test Attributes
 **[PerformanceTest]** - Non yeilding performance test.
@@ -64,7 +61,7 @@ Required parameters
 Optional parameters
 - **sampleUnit** : Unit of the measurement.
     - Nanosecond, Microsecond, Millisecond, Second, Byte, Kilobyte, Megabyte, Gigabyte
-- **aggregationType** : Preferred aggregation (default is median) 
+- **aggregationType** : Preferred aggregation (default is median)
 - **percentile** : If aggregationType is Percentile, the percentile value used for the aggregation. i.e 0.95.
 - **threshold** : Threshold used for regression detection. If current sample value is over the threshold different from the baseline results, the result is concidered as a regression or a progression. Default value is 0.15f.
 - **increaseIsBetter** : Defines if an increase in the measurement value is concidered as a progression (better) or a regression. Default is false.
@@ -73,11 +70,11 @@ If unspecified a default SampleGroupDefinition will be used with the name of "Me
 
 ## Taking measurements
 
-Preferred way is to use `Measure.Method` or `Measure.Frames`. They both do a couple of warmup iterations which are then used to decide how many iterations should be measured. It is advised to keep measurements above 100 microseconds. 
+Preferred way is to use `Measure.Method` or `Measure.Frames`. They both do a couple of warmup iterations which are then used to decide how many iterations per measurement should be used.
 
-**void Method(int executions, Action action, SampleGroupDefinition sampleGroupDefinition)**
+**MethodMeasurement Method()**
 
-It will execute provided method multiple times.
+It will execute provided method at least 3 times for warmup and 7 for measurements.
 
 ``` csharp
 [PerformanceTest]
@@ -87,9 +84,27 @@ public void Test()
 }
 ```
 
-**IEnumerator Measure.Frames(int frameCount, SampleGroupdDefinition sampleGroupDefinition)**
+In cases where you feel the default values are not ideal you can specify custom iterations.
 
-Used to yield for a specified amount of frames. Records frame times.
+WarmupCount - how many iterations to run without measuring for warmup
+MeasurementCount - how many measurements to take
+IterationsPerMeasurement - how many iterations per measurement to take
+
+```
+[PerformanceTest]
+public void Test()
+{
+    Measure.Method(() => { ... })
+        .WarmupCount(10)
+        .MeasurementCount(10)
+        .IterationsPerMeasurement(5)
+        .Run();
+}
+```
+
+**FramesMeasurement Measure.Frames()**
+
+Used to yield for frames. It will automatically select the number of warmup and runtime frames.
 
 ``` csharp
 [PerformanceUnityTest]
@@ -101,20 +116,33 @@ public IEnumerator Test()
 }
 ```
 
-In cases where you are measuring a system over frametime it is advised to disable frametime measurements and instead measure profiler systems markers.
+In cases where you are measuring a system over frametime it is advised to disable frametime measurements and instead measure profiler markers for your system.
 ``` csharp
 [PerformanceUnityTest]
 public IEnumerator Test()
 {
     ...
 
-    // passing in false will run the frames but will not take frametime mesaurements
     yield return Measure.Frames()
         .ProfilerMarkers(...)
-        .Run(false);
+        .DontRecordFrametime()
+        .Run();
 }
 ```
 
+If you want more control, you can specify how many frames you want to measure.
+
+``` csharp
+[PerformanceUnityTest]
+public IEnumerator Test()
+{
+    ...
+
+    yield return Measure.Frames()
+        .WarmupCount(5)
+        .MeasurementCount(10)
+        .Run();
+}
 
 When method or frame measurements are not enough you can use the following to measure. It will measure Scope, Frames, Markers or Cusom.
 
@@ -157,9 +185,9 @@ Records profiler samples for a scope. The name of sample group definition has to
 [PerformanceTest]
 public void Test()
 {
-    SampleGroupDefinition[] m_definitions = 
+    SampleGroupDefinition[] m_definitions =
     {
-        new SampleGroupDefinition("Instantiate"), 
+        new SampleGroupDefinition("Instantiate"),
         new SampleGroupDefinition("Instantiate.Copy"),
         new SampleGroupDefinition("Instantiate.Produce"),
         new SampleGroupDefinition("Instantiate.Awake")
@@ -240,7 +268,7 @@ Each performance test will have a performance test summary. Every sample group w
 
 ``` csharp
     // Records total and frame times for loading a scene async
-    
+
     [PerformanceUnityTest]
     public IEnumerator LoadAsync_SampleScene()
     {
@@ -255,9 +283,9 @@ Each performance test will have a performance test summary. Every sample group w
 ```
 
 ``` csharp
-    SampleGroupDefinition[] m_definitions = 
+    SampleGroupDefinition[] m_definitions =
     {
-        new SampleGroupDefinition("Instantiate"), 
+        new SampleGroupDefinition("Instantiate"),
         new SampleGroupDefinition("Instantiate.Copy"),
         new SampleGroupDefinition("Instantiate.Produce"),
         new SampleGroupDefinition("Instantiate.Awake")

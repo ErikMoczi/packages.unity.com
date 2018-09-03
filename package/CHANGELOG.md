@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.32] - 2018-7-9
+
+### Add custom measurement/warmup counts
+
+Method and Frames measurements can now specify custom warmup, measurement and iteration counts
+
 ## [0.1.31] - 2018-7-04
 
 ### mark metadata tests with performance category

@@ -48,7 +48,7 @@ namespace Unity.PerformanceTesting.Measurements
                 increaseIsBetter, failOnBaseline));
         }
 
-        public FramesMeasurement ExecutionCount(int count)
+        public FramesMeasurement MeasurementCount(int count)
         {
             m_Executions = count;
             return this;
