@@ -2,3 +2,4 @@
 0.0.1-bugfix-2
 0.0.1-bugfix-3
 0.0.1-bugfix-4
+0.0.1-bugfix-5
