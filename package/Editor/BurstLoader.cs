@@ -1,13 +1,13 @@
 using System;
-using System.Text;
-using System.Reflection;
 using System.IO;
+using Unity.Burst.LowLevel;
 using UnityEditor;
-using Unity.Jobs;
 
-#if UNITY_EDITOR
-namespace Unity.Burst.LowLevel
+namespace Unity.Burst.Editor
 {
+    /// <summary>
+    /// Main entry point for initializing the burst compiler service for both JIT and AOT
+    /// </summary>
     [InitializeOnLoad]
     internal class BurstLoader
     {
@@ -24,51 +24,7 @@ namespace Unity.Burst.LowLevel
             {
                 runtimePath = Path.GetFullPath("Packages/com.unity.burst/.Runtime");
             }
-            BurstCompilerService.Initialize(runtimePath, ExtractBurstCompilerOptions);
-        }
-
-        public static bool ExtractBurstCompilerOptions(Type type, out string optimizationFlags)
-        {
-            optimizationFlags = null;
-
-            if (!EditorPrefs.GetBool(BurstMenu.kEnableBurstCompilation, true))
-                return false;
-
-            var attr = type.GetCustomAttribute<ComputeJobOptimizationAttribute>();
-            if (attr == null)
-                return false;
-
-            var builder = new StringBuilder();
-
-            if (EditorPrefs.GetBool(BurstMenu.kEnableSafetyChecks, true))
-                AddOption(builder, "-enable-safety-checks");
-            else
-                AddOption(builder, "-disable-safety-checks");
-
-            if (attr.CompileSynchronously)
-                AddOption(builder, "-enable-synchronous-compilation");
-
-            if (attr.Accuracy != Accuracy.Std)
-                AddOption(builder, "-fast-math");
-
-            //Debug.Log($"ExtractBurstCompilerOptions: {type} {optimizationFlags}");
-
-            // AddOption(builder, "-enable-module-caching-debugger");
-            // AddOption(builder, "-cache-directory=Library/BurstCache");
-
-            optimizationFlags = builder.ToString();
-
-            return true;
-        }
-
-        static void AddOption(StringBuilder builder, string option)
-        {
-            if (builder.Length != 0)
-                builder.Append(' ');
-
-            builder.Append(option);
+            BurstCompilerService.Initialize(runtimePath, BurstReflection.ExtractBurstCompilerOptions);
         }
     }
 }
-
-#endif

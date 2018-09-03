@@ -1,4 +1,4 @@
-﻿namespace Unity.Jobs
+namespace Unity.Jobs
 {
     public enum Support
     {

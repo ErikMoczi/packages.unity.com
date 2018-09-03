@@ -1,55 +1,70 @@
 using Unity.Burst.LowLevel;
 using UnityEditor;
-using Unity.Collections;
 using Unity.Jobs.LowLevel.Unsafe;
 
-class BurstMenu
+namespace Unity.Burst.Editor
 {
-    public const string kEnableBurstCompilation = "Jobs/Enable Burst Compilation";
+    /// <summary>
+    /// Register all menu entries for burst to the Editor
+    /// </summary>
+    internal static class BurstMenu
+    {
+        private const string UseBurstText = "Jobs/Use Burst Jobs";
+        private const string EnableSafetyChecksText = "Jobs/Enable Burst Safety Checks";
+        private const string BurstInspectorText = "Jobs/Burst Inspector";
+        private const string EnableBurstCompilationText = "Jobs/Enable Burst Compilation";
 
-    [MenuItem(kEnableBurstCompilation, false)]
-    static void EnableBurstCompilation()
-    {
-        EditorPrefs.SetBool(kEnableBurstCompilation, !EditorPrefs.GetBool(kEnableBurstCompilation, true));
-    }
+        private static bool IsBurstEnabled()
+        {
+            return BurstCompilerService.IsInitialized && EditorPrefs.GetBool(EnableBurstCompilationText, true);
+        }
 
-    [MenuItem(kEnableBurstCompilation, true)]
-    static bool EnableBurstCompilationValidate()
-    {
-        Menu.SetChecked(kEnableBurstCompilation, EditorPrefs.GetBool(kEnableBurstCompilation, true));
-        return BurstCompilerService.IsInitialized;
-    }
-    
-    static bool IsBurstEnabled()
-    {
-        return BurstCompilerService.IsInitialized && EditorPrefs.GetBool(kEnableBurstCompilation, true);
-    }
+        [MenuItem(UseBurstText, false)]
+        private static void UseBurst()
+        {
+            JobsUtility.JobCompilerEnabled = !JobsUtility.JobCompilerEnabled;
+        }
 
-    public const string kEnableSafetyChecks = "Jobs/Enable Burst Safety Checks";
-    [MenuItem(kEnableSafetyChecks, false)]
-    static void EnableBurstSafetyChecks()
-    {
-        EditorPrefs.SetBool(kEnableSafetyChecks, !EditorPrefs.GetBool(kEnableSafetyChecks, true));
-    }
+        [MenuItem(UseBurstText, true)]
+        static bool UseBurstValidate()
+        {
+            Menu.SetChecked(UseBurstText, JobsUtility.JobCompilerEnabled && BurstCompilerService.IsInitialized);
+            return IsBurstEnabled();
+        }
 
-    [MenuItem(kEnableSafetyChecks, true)]
-    static bool EnableBurstSafetyChecksValidate()
-    {
-        Menu.SetChecked(kEnableSafetyChecks, EditorPrefs.GetBool(kEnableSafetyChecks, true));
-        return IsBurstEnabled();
-    }
+        // Add menu named "My Window" to the Window menu
+        [MenuItem(BurstInspectorText)]
+        private static void BurstInspector()
+        {
+            // Get existing open window or if none, make a new one:
+            BurstInspectorGUI window = EditorWindow.GetWindow<BurstInspectorGUI>("Burst Inspector");
+            window.Show();
+        }
 
-    public const string kEnableBurst = "Jobs/Use Burst Jobs";
-    [MenuItem(kEnableBurst, false)]
-    static void UseBurstJobs()
-    {
-        JobsUtility.JobCompilerEnabled = !JobsUtility.JobCompilerEnabled;
-    }
+        [MenuItem(EnableSafetyChecksText, false)]
+        private static void EnableBurstSafetyChecks()
+        {
+            BurstEditorOptions.EnableBurstSafetyChecks = !BurstEditorOptions.EnableBurstSafetyChecks;
+        }
 
-    [MenuItem(kEnableBurst, true)]
-    static bool UseBurstJobsValidate()
-    {
-        Menu.SetChecked(kEnableBurst, JobsUtility.JobCompilerEnabled && BurstCompilerService.IsInitialized);
-        return IsBurstEnabled();
+        [MenuItem(EnableSafetyChecksText, true)]
+        private static bool EnableBurstSafetyChecksValidate()
+        {
+            Menu.SetChecked(EnableSafetyChecksText, BurstEditorOptions.EnableBurstSafetyChecks);
+            return BurstCompilerService.IsInitialized;
+        }
+
+        [MenuItem(EnableBurstCompilationText, false)]
+        private static void EnableBurstCompilation()
+        {
+            BurstEditorOptions.EnableBurstCompilation = !BurstEditorOptions.EnableBurstCompilation;
+        }
+
+        [MenuItem(EnableBurstCompilationText, true)]
+        private static bool EnableBurstCompilationValidate()
+        {
+            Menu.SetChecked(EnableBurstCompilationText, BurstEditorOptions.EnableBurstCompilation);
+            return BurstCompilerService.IsInitialized;
+        }
     }
 }
