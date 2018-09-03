@@ -48,3 +48,4 @@
 0.0.42-preview.1
 0.0.42-preview.2
 0.0.42-preview.3
+0.0.42-preview.4
