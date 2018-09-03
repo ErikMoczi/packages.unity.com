@@ -31,4 +31,8 @@ namespace Unity.Entities
     public interface ISystemStateSharedComponentData : ISharedComponentData
     {
     }
+
+    public struct Disabled : IComponentData
+    {
+    }
 }

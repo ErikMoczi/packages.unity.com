@@ -49,149 +49,6 @@ namespace Unity.Entities.Tests
             }
         }
 
-        struct CollectValues : IJobParallelFor
-        {
-            [ReadOnly] public NativeArray<ArchetypeChunk> chunks;
-            [ReadOnly] public ArchetypeChunkComponentType<EcsTestData> ecsTestData;
-
-            [NativeDisableParallelForRestriction] public NativeArray<int> values;
-
-            public void Execute(int chunkIndex)
-            {
-                var chunk = chunks[chunkIndex];
-                var chunkStartIndex = chunk.StartIndex;
-                var chunkCount = chunk.Count;
-                var chunkEcsTestData = chunk.GetNativeSlice(ecsTestData);
-
-                for (int i = 0; i < chunkCount; i++)
-                {
-                    values[chunkStartIndex + i] = chunkEcsTestData[i].value;
-                }
-            }
-        }
-
-        [Test]
-        public void ACS_BasicIteration()
-        {
-            CreateEntities(64);
-
-            var query = new EntityArchetypeQuery
-            {
-                Any = Array.Empty<ComponentType>(),
-                None = Array.Empty<ComponentType>(),
-                All = new ComponentType[] {typeof(EcsTestData)}
-            };
-            var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
-            var ecsTestData = m_Manager.GetArchetypeChunkComponentType<EcsTestData>(true);
-            var entityCount = ArchetypeChunkArray.CalculateEntityCount(chunks);
-            var values = new NativeArray<int>(entityCount, Allocator.TempJob);
-            var collectValuesJob = new CollectValues
-            {
-                chunks = chunks,
-                ecsTestData = ecsTestData,
-                values = values
-            };
-            Assert.AreEqual(7,chunks.Length);
-
-            var collectValuesJobHandle = collectValuesJob.Schedule(chunks.Length, 64);
-            collectValuesJobHandle.Complete();
-            chunks.Dispose();
-
-            ulong foundValues = 0;
-            for (int i = 0; i < entityCount; i++)
-            {
-                foundValues |= ((ulong)1 << values[i]);
-            }
-
-            foundValues++;
-            Assert.AreEqual(0,foundValues);
-
-            values.Dispose();
-        }
-
-        struct CollectMixedValues : IJobParallelFor
-        {
-            [ReadOnly] public NativeArray<ArchetypeChunk> chunks;
-            [ReadOnly] public ArchetypeChunkComponentType<EcsTestData> ecsTestData;
-            [ReadOnly] public ArchetypeChunkComponentType<EcsTestData2> ecsTestData2;
-
-            [NativeDisableParallelForRestriction] public NativeArray<int> values;
-
-            public void Execute(int chunkIndex)
-            {
-                var chunk = chunks[chunkIndex];
-                var chunkStartIndex = chunk.StartIndex;
-                var chunkCount = chunk.Count;
-                var chunkEcsTestData = chunk.GetNativeSlice(ecsTestData);
-                var chunkEcsTestData2 = chunk.GetNativeSlice(ecsTestData2);
-
-                if (chunkEcsTestData.Length > 0)
-                {
-                    for (int i = 0; i < chunkCount; i++)
-                    {
-                        values[chunkStartIndex + i] = chunkEcsTestData[i].value;
-                    }
-                }
-                else if (chunkEcsTestData2.Length > 0)
-                {
-                    for (int i = 0; i < chunkCount; i++)
-                    {
-                        values[chunkStartIndex + i] = chunkEcsTestData2[i].value0;
-                    }
-                }
-            }
-        }
-
-        [Test]
-        public void ACS_FindMixed()
-        {
-            CreateMixedEntities(64);
-
-            var query = new EntityArchetypeQuery
-            {
-                Any = new ComponentType[] {typeof(EcsTestData2), typeof(EcsTestData)}, // any
-                None = Array.Empty<ComponentType>(), // none
-                All = Array.Empty<ComponentType>() // all
-            };
-            var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
-            Assert.AreEqual(14,chunks.Length);
-
-            var ecsTestData = m_Manager.GetArchetypeChunkComponentType<EcsTestData>(true);
-            var ecsTestData2 = m_Manager.GetArchetypeChunkComponentType<EcsTestData2>(true);
-            var entityCount = ArchetypeChunkArray.CalculateEntityCount(chunks);
-            var values = new NativeArray<int>(entityCount, Allocator.TempJob);
-            var collectValuesJob = new CollectMixedValues
-            {
-                chunks = chunks,
-                ecsTestData = ecsTestData,
-                ecsTestData2 = ecsTestData2,
-                values = values
-            };
-
-            var collectValuesJobHandle = collectValuesJob.Schedule(chunks.Length, 64);
-            collectValuesJobHandle.Complete();
-
-            for (int chunkIndex = 0; chunkIndex < chunks.Length; chunkIndex++)
-            {
-                var chunk = chunks[chunkIndex];
-                var chunkCount = chunk.Count;
-
-                Assert.AreEqual(4,math.ceil_pow2(chunkCount-1));
-            }
-            chunks.Dispose();
-
-            ulong foundValues = 0;
-            for (int i = 0; i < entityCount; i++)
-            {
-                foundValues |= ((ulong) 1 << math.abs(values[i]));
-            }
-
-            foundValues++;
-            Assert.AreEqual(0,foundValues);
-
-            values.Dispose();
-        }
-
         struct ChangeMixedValues : IJobParallelFor
         {
             [ReadOnly] public NativeArray<ArchetypeChunk> chunks;
@@ -202,8 +59,8 @@ namespace Unity.Entities.Tests
             {
                 var chunk = chunks[chunkIndex];
                 var chunkCount = chunk.Count;
-                var chunkEcsTestData = chunk.GetNativeSlice(ecsTestData);
-                var chunkEcsTestData2 = chunk.GetNativeSlice(ecsTestData2);
+                var chunkEcsTestData = chunk.GetNativeArray(ecsTestData);
+                var chunkEcsTestData2 = chunk.GetNativeArray(ecsTestData2);
 
                 if (chunkEcsTestData.Length > 0)
                 {
@@ -233,7 +90,7 @@ namespace Unity.Entities.Tests
                 None = Array.Empty<ComponentType>(), // none
                 All = Array.Empty<ComponentType>(), // all
             };
-            var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+            var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
 
             Assert.AreEqual(14,chunks.Length);
 
@@ -257,8 +114,8 @@ namespace Unity.Entities.Tests
 
                 Assert.AreEqual(4,math.ceil_pow2(chunkCount-1));
 
-                var chunkEcsTestData = chunk.GetNativeSlice(ecsTestData);
-                var chunkEcsTestData2 = chunk.GetNativeSlice(ecsTestData2);
+                var chunkEcsTestData = chunk.GetNativeArray(ecsTestData);
+                var chunkEcsTestData2 = chunk.GetNativeArray(ecsTestData2);
                 if (chunkEcsTestData.Length > 0)
                 {
                     for (int i = 0; i < chunkCount; i++)
@@ -293,8 +150,8 @@ namespace Unity.Entities.Tests
             {
                 var chunk = chunks[chunkIndex];
                 var chunkCount = chunk.Count;
-                var chunkEcsTestData = chunk.GetNativeSlice(ecsTestData);
-                var chunkEcsTestData2 = chunk.GetNativeSlice(ecsTestData2);
+                var chunkEcsTestData = chunk.GetNativeArray(ecsTestData);
+                var chunkEcsTestData2 = chunk.GetNativeArray(ecsTestData2);
                 var chunkEcsSharedDataIndex = chunk.GetSharedComponentIndex(ecsTestSharedData);
 
                 if (chunkEcsSharedDataIndex != sharedFilterIndex)
@@ -344,7 +201,7 @@ namespace Unity.Entities.Tests
                 None = Array.Empty<ComponentType>(), // none
                 All = new ComponentType[] {typeof(EcsTestSharedComp)}, // all
             };
-            var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+            var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
 
             Assert.AreEqual(14,chunks.Length);
 
@@ -373,8 +230,8 @@ namespace Unity.Entities.Tests
                 
                 var chunkEcsSharedDataIndex = chunk.GetSharedComponentIndex(ecsTestSharedData);
 
-                var chunkEcsTestData = chunk.GetNativeSlice(ecsTestData);
-                var chunkEcsTestData2 = chunk.GetNativeSlice(ecsTestData2);
+                var chunkEcsTestData = chunk.GetNativeArray(ecsTestData);
+                var chunkEcsTestData2 = chunk.GetNativeArray(ecsTestData2);
                 if (chunkEcsTestData.Length > 0)
                 {
                     var chunkEcsTestDataVersion = chunk.GetComponentVersion(ecsTestData);
@@ -430,7 +287,7 @@ namespace Unity.Entities.Tests
                 None = Array.Empty<ComponentType>(), // none
                 All = new ComponentType[] {typeof(EcsIntElement)}, // all
             };
-            var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+            var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
 
             var entities = m_Manager.GetArchetypeChunkEntityType();
             var intElements = m_Manager.GetArchetypeChunkBufferType<EcsIntElement>(false);
@@ -469,7 +326,7 @@ namespace Unity.Entities.Tests
                 None = Array.Empty<ComponentType>(), // none
                 All = new ComponentType[] {typeof(EcsIntElement)}, // all
             };
-            var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+            var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
             var entities = m_Manager.GetArchetypeChunkEntityType();
             var intElements = m_Manager.GetArchetypeChunkBufferType<EcsIntElement>(true);
 

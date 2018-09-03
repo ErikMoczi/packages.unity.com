@@ -194,6 +194,7 @@ namespace Unity.Entities
     {
         public UnsafeLinkedListNode ChunkList;
         public UnsafeLinkedListNode ChunkListWithEmptySlots;
+        public ChunkListMap FreeChunksBySharedComponents;
 
         public int EntityCount;
         public int ChunkCapacity;
@@ -226,6 +227,7 @@ namespace Unity.Entities
 
         public bool SystemStateCleanupComplete;
         public bool SystemStateCleanupNeeded;
+        public bool Disabled;
     }
 
     internal unsafe class ArchetypeManager : IDisposable
@@ -270,6 +272,7 @@ namespace Unity.Entities
                     SetChunkCount(chunk, 0);
                 }
 
+                m_LastArchetype->FreeChunksBySharedComponents.Dispose();
                 m_LastArchetype = m_LastArchetype->PrevArchetype;
             }
 
@@ -373,10 +376,15 @@ namespace Unity.Entities
             type->NumSharedComponents = 0;
             type->SharedComponentOffset = null;
 
+            var disabledTypeIndex = TypeManager.GetTypeIndex<Disabled>();
+            type->Disabled = false;
             for (var i = 0; i < count; ++i)
-                if (TypeManager.GetComponentType(types[i].TypeIndex).Category ==
-                    TypeManager.TypeCategory.ISharedComponentData)
+            {
+                if (TypeManager.GetComponentType(types[i].TypeIndex).Category == TypeManager.TypeCategory.ISharedComponentData)
                     ++type->NumSharedComponents;
+                if (types[i].TypeIndex == disabledTypeIndex)
+                    type->Disabled = true;
+            }
 
             // Compute how many IComponentData types store Entities and need to be patched.
             // Types can have more than one entity, which means that this count is not necessarily
@@ -524,6 +532,7 @@ namespace Unity.Entities
 
             UnsafeLinkedListNode.InitializeList(&type->ChunkList);
             UnsafeLinkedListNode.InitializeList(&type->ChunkListWithEmptySlots);
+            type->FreeChunksBySharedComponents.Init(8);
 
             m_TypeLookup.Add(GetHash(types, count), (IntPtr) type);
 
@@ -565,16 +574,6 @@ namespace Unity.Entities
             return (Chunk*) (node - 1);
         }
 
-        public static void CopySharedComponentDataIndexArray(int* dest, int* src, int count)
-        {
-            if (src == null)
-                for (var i = 0; i < count; ++i)
-                    dest[i] = 0;
-            else
-                for (var i = 0; i < count; ++i)
-                    dest[i] = src[i];
-        }
-
         public void AddExistingChunk(Chunk* chunk)
         {
             var archetype = chunk->Archetype;
@@ -583,6 +582,18 @@ namespace Unity.Entities
             archetype->EntityCount += chunk->Count;
             for (var i = 0; i < archetype->NumSharedComponents; ++i)
                 m_SharedComponentManager.AddReference(chunk->SharedComponentValueArray[i]);
+
+            if (chunk->Count < chunk->Capacity)
+            {
+                if (archetype->NumSharedComponents == 0)
+                {
+                    archetype->ChunkListWithEmptySlots.Add(&chunk->ChunkListWithEmptySlotsNode);
+                }
+                else
+                {
+                    archetype->FreeChunksBySharedComponents.Add(chunk);
+                }
+            }
         }
 
         public void ConstructChunk(Archetype* archetype, Chunk* chunk, int* sharedComponentDataIndices)
@@ -604,13 +615,30 @@ namespace Unity.Entities
 
             archetype->ChunkList.Add(&chunk->ChunkListNode);
             archetype->ChunkCount += 1;
-            archetype->ChunkListWithEmptySlots.Add(&chunk->ChunkListWithEmptySlotsNode);
 
             Assert.IsTrue(!archetype->ChunkList.IsEmpty);
-            Assert.IsTrue(!archetype->ChunkListWithEmptySlots.IsEmpty);
-
             Assert.IsTrue(chunk == (Chunk*) archetype->ChunkList.Back);
-            Assert.IsTrue(chunk == GetChunkFromEmptySlotNode(archetype->ChunkListWithEmptySlots.Back));
+
+            if (numSharedComponents == 0)
+            {
+                archetype->ChunkListWithEmptySlots.Add(&chunk->ChunkListWithEmptySlotsNode);
+                Assert.IsTrue(chunk == GetChunkFromEmptySlotNode(archetype->ChunkListWithEmptySlots.Back));
+                Assert.IsTrue(!archetype->ChunkListWithEmptySlots.IsEmpty);
+            }
+            else
+            {
+                var sharedComponentValueArray = chunk->SharedComponentValueArray;
+                UnsafeUtility.MemCpy(sharedComponentValueArray, sharedComponentDataIndices, archetype->NumSharedComponents*sizeof(int));
+
+                for (var i = 0; i < archetype->NumSharedComponents; ++i)
+                {
+                    var sharedComponentIndex = sharedComponentValueArray[i];
+                    m_SharedComponentManager.AddReference(sharedComponentIndex);
+                }
+
+                archetype->FreeChunksBySharedComponents.Add(chunk);
+                Assert.IsTrue(archetype->FreeChunksBySharedComponents.GetChunkWithEmptySlots(sharedComponentDataIndices, archetype->NumSharedComponents) != null);
+            }
 
             if (archetype->NumManagedArrays > 0)
                 chunk->ManagedArrayIndex = AllocateManagedArrayStorage(archetype->NumManagedArrays * chunk->Capacity);
@@ -619,55 +647,39 @@ namespace Unity.Entities
 
             for (var i = 0; i < archetype->TypesCount; i++)
                 chunk->ChangeVersion[i] = 0;
-
-            if (archetype->NumSharedComponents <= 0)
-                return;
-
-            var sharedComponentValueArray = chunk->SharedComponentValueArray;
-            CopySharedComponentDataIndexArray(sharedComponentValueArray, sharedComponentDataIndices,
-                archetype->NumSharedComponents);
-
-            if (sharedComponentDataIndices == null)
-                return;
-
-            for (var i = 0; i < archetype->NumSharedComponents; ++i)
-            {
-                var sharedComponentIndex = sharedComponentValueArray[i];
-                m_SharedComponentManager.AddReference(sharedComponentIndex);
-            }
         }
 
         private static bool ChunkHasSharedComponents(Chunk* chunk, int* sharedComponentDataIndices)
         {
             var sharedComponentValueArray = chunk->SharedComponentValueArray;
             var numSharedComponents = chunk->Archetype->NumSharedComponents;
-            if (sharedComponentDataIndices == null)
-            {
-                for (var i = 0; i < numSharedComponents; ++i)
-                    if (sharedComponentValueArray[i] != 0)
-                        return false;
-            }
-            else
-            {
-                for (var i = 0; i < numSharedComponents; ++i)
-                    if (sharedComponentValueArray[i] != sharedComponentDataIndices[i])
-                        return false;
-            }
-            return true;
+            return UnsafeUtility.MemCmp(sharedComponentDataIndices, sharedComponentValueArray, numSharedComponents * sizeof(int)) == 0;
         }
 
         public Chunk* GetChunkWithEmptySlots(Archetype* archetype, int* sharedComponentDataIndices)
         {
-            // Try existing archetype chunks
-            if (!archetype->ChunkListWithEmptySlots.IsEmpty)
+            if (archetype->NumSharedComponents == 0)
             {
-                if (archetype->NumSharedComponents == 0)
+                if (!archetype->ChunkListWithEmptySlots.IsEmpty)
                 {
                     var chunk = GetChunkFromEmptySlotNode(archetype->ChunkListWithEmptySlots.Begin);
                     Assert.AreNotEqual(chunk->Count, chunk->Capacity);
                     return chunk;
                 }
+            }
+            else
+            {
+                var chunk = archetype->FreeChunksBySharedComponents.GetChunkWithEmptySlots(sharedComponentDataIndices,
+                    archetype->NumSharedComponents);
+                if (chunk != null)
+                {
+                    return chunk;
+                }
+            }
 
+            // Try existing archetype chunks
+            if (!archetype->ChunkListWithEmptySlots.IsEmpty)
+            {
                 if (lastChunkWithSharedComponentsAllocatedInto != null &&
                     lastChunkWithSharedComponentsAllocatedInto->Archetype == archetype &&
                     lastChunkWithSharedComponentsAllocatedInto->Count < lastChunkWithSharedComponentsAllocatedInto->Capacity)
@@ -678,16 +690,11 @@ namespace Unity.Entities
                     }
                 }
 
-                var end = archetype->ChunkListWithEmptySlots.End;
-                for (var it = archetype->ChunkListWithEmptySlots.Begin; it != end; it = it->Next)
+                if (archetype->NumSharedComponents == 0)
                 {
-                    var chunk = GetChunkFromEmptySlotNode(it);
+                    var chunk = GetChunkFromEmptySlotNode(archetype->ChunkListWithEmptySlots.Begin);
                     Assert.AreNotEqual(chunk->Count, chunk->Capacity);
-                    if (ChunkHasSharedComponents(chunk, sharedComponentDataIndices))
-                    {
-                        lastChunkWithSharedComponentsAllocatedInto = chunk;
-                        return chunk;
-                    }
+                    return chunk;
                 }
             }
 
@@ -770,8 +777,11 @@ namespace Unity.Entities
             else if (chunk->Count == capacity)
             {
                 Assert.IsTrue(newCount < chunk->Count);
+                if (chunk->Archetype->NumSharedComponents == 0)
+                    chunk->Archetype->ChunkListWithEmptySlots.Add(&chunk->ChunkListWithEmptySlotsNode);
+                else
+                    chunk->Archetype->FreeChunksBySharedComponents.Add(chunk);
 
-                chunk->Archetype->ChunkListWithEmptySlots.Add(&chunk->ChunkListWithEmptySlotsNode);
             }
 
             chunk->Count = newCount;
@@ -862,6 +872,43 @@ namespace Unity.Entities
             }
         }
 
+        struct RemapArchetype
+        {
+            public Archetype* srcArchetype;
+            public Archetype* dstArchetype;
+        }
+
+        [BurstCompile]
+        struct RemapArchetypesJob : IJobParallelFor
+        {
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<RemapArchetype> remapArchetypes;
+
+            // This must be run after chunks have been remapped since FreeChunksBySharedComponents needs the shared component
+            // indices in the chunks to be remapped
+            public void Execute(int index)
+            {
+                var srcArchetype = remapArchetypes[index].srcArchetype;
+                var dstArchetype = remapArchetypes[index].dstArchetype;
+
+                UnsafeLinkedListNode.InsertListBefore(dstArchetype->ChunkList.End, &srcArchetype->ChunkList);
+
+                if (srcArchetype->NumSharedComponents == 0)
+                {
+                    if (!srcArchetype->ChunkListWithEmptySlots.IsEmpty)
+                        UnsafeLinkedListNode.InsertListBefore(dstArchetype->ChunkListWithEmptySlots.End,
+                            &srcArchetype->ChunkListWithEmptySlots);
+                }
+                else
+                {
+                    remapArchetypes[index].dstArchetype->FreeChunksBySharedComponents.AppendFrom(&remapArchetypes[index].srcArchetype->FreeChunksBySharedComponents);
+                }
+
+                dstArchetype->EntityCount += srcArchetype->EntityCount;
+                dstArchetype->ChunkCount += srcArchetype->ChunkCount;
+                srcArchetype->EntityCount = 0;
+                srcArchetype->ChunkCount = 0;
+            }
+        }
 
         public static void MoveChunks(EntityManager srcEntities, ArchetypeManager dstArchetypeManager,
             EntityGroupManager dstGroupManager, EntityDataManager* dstEntityDataManager, SharedComponentDataManager dstSharedComponents)
@@ -888,16 +935,20 @@ namespace Unity.Entities
             Archetype* srcArchetype;
 
             int chunkCount = 0;
+            int archetypeCount = 0;
             srcArchetype = srcArchetypeManager.m_LastArchetype;
             while (srcArchetype != null)
             {
+                archetypeCount++;
                 chunkCount += srcArchetype->ChunkCount;
                 srcArchetype = srcArchetype->PrevArchetype;
             }
 
             var remapChunks = new NativeArray<RemapChunk>(chunkCount, Allocator.TempJob);
+            var remapArchetypes = new NativeArray<RemapArchetype>(archetypeCount, Allocator.TempJob);
 
             int chunkIndex = 0;
+            int archetypeIndex = 0;
             srcArchetype = srcArchetypeManager.m_LastArchetype;
             while (srcArchetype != null)
             {
@@ -908,21 +959,17 @@ namespace Unity.Entities
 
                     var dstArchetype = dstArchetypeManager.GetOrCreateArchetype(srcArchetype->Types, srcArchetype->TypesCount, dstGroupManager);
 
+                    remapArchetypes[archetypeIndex] = new RemapArchetype {srcArchetype = srcArchetype, dstArchetype = dstArchetype};
+
                     for (var c = srcArchetype->ChunkList.Begin; c != srcArchetype->ChunkList.End; c = c->Next)
                     {
                         remapChunks[chunkIndex] = new RemapChunk { chunk = (Chunk*)c, dstArchetype = dstArchetype };
                         chunkIndex++;
                     }
 
-                    UnsafeLinkedListNode.InsertListBefore(dstArchetype->ChunkList.End, &srcArchetype->ChunkList);
-                    if (!srcArchetype->ChunkListWithEmptySlots.IsEmpty)
-                        UnsafeLinkedListNode.InsertListBefore(dstArchetype->ChunkListWithEmptySlots.End,
-						    &srcArchetype->ChunkListWithEmptySlots);
+                    archetypeIndex++;
 
-                    dstArchetype->EntityCount += srcArchetype->EntityCount;
-                    dstArchetype->ChunkCount += srcArchetype->ChunkCount;
-                    srcArchetype->EntityCount = 0;
-                    srcArchetype->ChunkCount = 0;
+                    dstEntityDataManager->IncrementComponentTypeOrderVersion(dstArchetype);
                 }
 
                 srcArchetype  = srcArchetype->PrevArchetype;
@@ -936,7 +983,23 @@ namespace Unity.Entities
                 entityRemapping = entityRemapping
             }.Schedule(remapChunks.Length, 1, moveChunksJob);
 
-            remapChunksJob.Complete();
+            var remapArchetypesJob = new RemapArchetypesJob
+            {
+                remapArchetypes = remapArchetypes
+            }.Schedule(archetypeIndex, 1, remapChunksJob);
+
+            remapArchetypesJob.Complete();
+
+            srcArchetype = srcArchetypeManager.m_LastArchetype;
+            while (srcArchetype != null)
+            {
+                if (srcArchetype->NumSharedComponents != 0)
+                {
+                    var dstArchetype = dstArchetypeManager.GetOrCreateArchetype(srcArchetype->Types, srcArchetype->TypesCount, dstGroupManager);
+                    dstArchetype->FreeChunksBySharedComponents.AppendFrom(&srcArchetype->FreeChunksBySharedComponents);
+                }
+                srcArchetype = srcArchetype->PrevArchetype;
+            }
 
             entityRemapping.Dispose();
             remapShared.Dispose();

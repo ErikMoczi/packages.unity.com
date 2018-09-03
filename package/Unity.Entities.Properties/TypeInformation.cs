@@ -241,6 +241,7 @@ namespace Unity.Entities.Properties
         private IStructProperty<StructProxy> VisitType(ITypedMemberDescriptor d, TypeTreeParsingContext context)
         {
             Type memberType = d.GetMemberType();
+
             if (!typeof(IComponentData).IsAssignableFrom(memberType))
             {
                 if (memberType.IsEnum)
@@ -250,9 +251,10 @@ namespace Unity.Entities.Properties
                     var propertyType = typeof(EnumPrimitiveProperty<>).MakeGenericType(memberType);
                     return (IStructProperty<StructProxy>)Activator.CreateInstance(propertyType, d);
                 }
-                else if (PrimitiveTypes.Contains(d.GetMemberType()))
+
+                if (PrimitiveTypes.Contains(d.GetMemberType()))
                 {
-                    var propertyType = typeof(PrimitiveProperty<>).MakeGenericType(memberType);
+                    var propertyType = typeof(PrimitiveStructProperty<>).MakeGenericType(memberType);
                     return (IStructProperty<StructProxy>)Activator.CreateInstance(propertyType, d);
                 }
 
@@ -262,100 +264,13 @@ namespace Unity.Entities.Properties
                 }
             }
 
-            return new NestedProxyProperty(d) { PropertyBag = Parse(memberType) };
+            return new NestedStructProxyProperty(d) { PropertyBag = Parse(memberType) };
         }
 
-        private class TypeIdProperty : ValueStructProperty<StructProxy, string>
-        {
-            public TypeIdProperty(GetValueMethod getValue) : base("$TypeId", getValue, null)
-            {
-            }
-        }
-
-        private static readonly IStructProperty<StructProxy> ComponentIdProperty = new TypeIdProperty(
+        private static readonly IStructProperty<StructProxy> ComponentIdProperty = new TypeIdStructProperty(
             (ref StructProxy c) => c.type.FullName);
 
         private readonly Dictionary<Type, IPropertyBag> _propertyBagCache = new Dictionary<Type, IPropertyBag>();
-
-        private unsafe class NestedProxyProperty : StructValueStructProperty<StructProxy, StructProxy>
-        {
-            public int FieldOffset { get; }
-            public Type ComponentType { get; }
-            public IPropertyBag PropertyBag { get; set; }
-
-            public NestedProxyProperty(ITypedMemberDescriptor member)
-                : base(member.Name, null, null, (ByRef m, StructValueStructProperty<StructProxy, StructProxy> property, ref StructProxy c) =>
-                {
-                    var val = property.GetValue(ref c);
-                    m(property, ref c, ref val);
-                })
-            {
-                FieldOffset = member.GetOffset();
-                ComponentType = member.GetMemberType();
-            }
-
-            public override StructProxy GetValue(ref StructProxy container)
-            {
-                return new StructProxy()
-                {
-                    data = container.data + FieldOffset,
-                    bag = PropertyBag,
-                    type = ComponentType
-                };
-            }
-        }
-
-        private unsafe class PrimitiveProperty<TValue> : ValueStructProperty<StructProxy, TValue>
-            where TValue : struct
-        {
-            private int FieldOffset { get; }
-
-            public override bool IsReadOnly => false;
-
-            public PrimitiveProperty(ITypedMemberDescriptor member) : base(member.Name, null, null)
-            {
-                FieldOffset = member.GetOffset();
-            }
-
-            public override TValue GetValue(ref StructProxy container)
-            {
-                TValue v = default(TValue);
-                UnsafeUtility.CopyPtrToStructure(container.data + FieldOffset, out v);
-                return v;
-            }
-
-            public override void SetValue(ref StructProxy container, TValue value)
-            {
-                // @TODO ComponentJobSafetyManager.CompleteReadAndWriteDependency ?
-                UnsafeUtility.CopyStructureToPtr(ref value, container.data + FieldOffset);
-            }
-        }
-
-        private unsafe class EnumPrimitiveProperty<TValue> : ValueStructProperty<StructProxy, TValue>
-            where TValue : struct, IComparable, IFormattable, IConvertible
-        {
-            private int FieldOffset { get; }
-
-            public override bool IsReadOnly => false;
-
-            public EnumPrimitiveProperty(ITypedMemberDescriptor member) : base(member.Name, null, null)
-            {
-                FieldOffset = member.GetOffset();
-            }
-
-            public override TValue GetValue(ref StructProxy container)
-            {
-                TValue v = default(TValue);
-                UnsafeUtility.CopyPtrToStructure(container.data + FieldOffset, out v);
-                return v;
-            }
-
-            public override void SetValue(ref StructProxy container, TValue value)
-            {
-                // @TODO ComponentJobSafetyManager.CompleteReadAndWriteDependency ?
-                UnsafeUtility.CopyStructureToPtr(ref value, container.data + FieldOffset);
-            }
-        }
     }
 
     public static class TypeInformation

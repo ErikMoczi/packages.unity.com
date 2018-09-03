@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Unity.Properties;
 
 namespace Unity.Entities.Properties
@@ -25,6 +26,7 @@ namespace Unity.Entities.Properties
 
                 // @TODO improve, split the deps
                 HashSet<Type> primitiveTypes = new HashSet<Type>();
+
                 // try to gather the primitive types for that visitor
                 var entityVisitor = visitor as IPrimitivePropertyVisitor;
                 if (entityVisitor != null)
@@ -66,17 +68,35 @@ namespace Unity.Entities.Properties
             {
                 var typeIndex = container.m_Manager.GetComponentTypeIndex(container.m_Entity, index);
                 var propertyType = TypeManager.GetType(typeIndex);
-                var propertyBag = TypeInformation.GetOrCreate(propertyType, primitiveTypes);
-                var data = (byte*)container.m_Manager.GetComponentDataRawRW(container.m_Entity, typeIndex);
 
-                var p = new StructProxy
+                if (typeof(ISharedComponentData).IsAssignableFrom(propertyType))
                 {
-                    bag = propertyBag,
-                    data = data,
-                    type = propertyType
-                };
+                    var o = container.m_Manager.GetSharedComponentData(container.m_Entity, typeIndex);
 
-                return p;
+                    // TODO: skip the StructObjectProxyProperty adapter and have the Accept()
+                    // TODO:    handle Struct & Object proxies
+                    var p = new StructProxy
+                    {
+                        bag = new StructPropertyBag<StructProxy>(
+                            new StructObjectProxyProperty(propertyType, o, primitiveTypes)
+                            ),
+                        data = default(byte*),
+                        type = propertyType
+                    };
+
+                    return p;
+                }
+
+                {
+                    var p = new StructProxy
+                    {
+                        bag = TypeInformation.GetOrCreate(propertyType, primitiveTypes),
+                        data = (byte*)container.m_Manager.GetComponentDataRawRW(container.m_Entity, typeIndex),
+                        type = propertyType
+                    };
+
+                    return p;
+                }
             }
         }
 

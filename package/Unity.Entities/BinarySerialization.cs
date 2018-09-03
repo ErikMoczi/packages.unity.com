@@ -69,15 +69,15 @@ namespace Unity.Entities.Serialization
             return value;
         }
 
-        public static void ReadBytes(this BinaryReader writer, NativeArray<byte> bytes, int count, int offset = 0)
+        public static void ReadBytes(this BinaryReader writer, NativeArray<byte> elements, int count, int offset = 0)
         {
-            byte* destination = (byte*)bytes.GetUnsafePtr() + offset;
+            byte* destination = (byte*)elements.GetUnsafePtr() + offset;
             writer.ReadBytes(destination, count);
         }
 
-        public static void ReadArray<T>(this BinaryReader writer, NativeArray<T> bytes, int count) where T: struct
+        public static void ReadArray<T>(this BinaryReader reader, NativeArray<T> elements, int count) where T: struct
         {
-            writer.ReadBytes((byte*)bytes.GetUnsafePtr(), count * UnsafeUtility.SizeOf<T>());
+            reader.ReadBytes((byte*)elements.GetUnsafePtr(), count * UnsafeUtility.SizeOf<T>());
         }
     }
 

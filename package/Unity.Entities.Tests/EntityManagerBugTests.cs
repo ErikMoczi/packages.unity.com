@@ -104,14 +104,14 @@ namespace Unity.Entities.Tests
                 None = Array.Empty<ComponentType>(),
                 All = s_OurTypes,
             };
-            var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+            var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
 
             ArchetypeChunkEntityType entityType = m_Manager.GetArchetypeChunkEntityType();
 
             for (int i = 0; i < chunks.Length; ++i)
             {
                 ArchetypeChunk chunk = chunks[i];
-                var entitiesInChunk = chunk.GetNativeSlice(entityType);
+                var entitiesInChunk = chunk.GetNativeArray(entityType);
 
                 for (int k = 0; k < chunk.Count; ++k)
                 {

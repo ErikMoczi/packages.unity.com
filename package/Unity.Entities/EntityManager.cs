@@ -25,7 +25,7 @@ namespace Unity.Entities
     }
 
     //@TODO: safety?
-    public unsafe struct EntityArchetype
+    public unsafe struct EntityArchetype : IEquatable<EntityArchetype>
     {
         [NativeDisableUnsafePtrRestriction] internal Archetype* Archetype;
 
@@ -44,6 +44,11 @@ namespace Unity.Entities
         public override bool Equals(object compare)
         {
             return this == (EntityArchetype) compare;
+        }
+
+        public bool Equals(EntityArchetype entityArchetype)
+        {
+            return Archetype == entityArchetype.Archetype;
         }
 
         public override int GetHashCode()
@@ -442,13 +447,13 @@ namespace Unity.Entities
 #endif
         }
 
-        internal BufferDataFromEntity<T> GetBufferDataFromEntity<T>(bool isReadOnly = false)
+        public BufferDataFromEntity<T> GetBufferDataFromEntity<T>(bool isReadOnly = false)
             where T : struct, IBufferElementData
         {
             return GetBufferDataFromEntity<T>(TypeManager.GetTypeIndex<T>(), isReadOnly);
         }
 
-        internal BufferDataFromEntity<T> GetBufferDataFromEntity<T>(int typeIndex, bool isReadOnly = false)
+        public BufferDataFromEntity<T> GetBufferDataFromEntity<T>(int typeIndex, bool isReadOnly = false)
             where T : struct, IBufferElementData
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -520,6 +525,11 @@ namespace Unity.Entities
             return m_SharedComponentManager.GetSharedComponentData<T>(sharedComponentIndex);
         }
 
+        public T GetSharedComponentData<T>(int sharedComponentIndex) where T : struct, ISharedComponentData
+        {
+            return m_SharedComponentManager.GetSharedComponentData<T>(sharedComponentIndex);
+        }
+
         public void AddSharedComponentData<T>(Entity entity, T componentData) where T : struct, ISharedComponentData
         {
             //TODO: optimize this (no need to move the entity to a new chunk twice)
@@ -556,7 +566,7 @@ namespace Unity.Entities
             var newSharedComponentDataIndex = 0;
             if (componentData != null) // null means default
                 newSharedComponentDataIndex = m_SharedComponentManager.InsertSharedComponentAssumeNonDefault(typeIndex,
-                    hashCode, componentData, TypeManager.GetComponentType(typeIndex).FastEqualityLayout);
+                    hashCode, componentData, TypeManager.GetComponentType(typeIndex).FastEqualityTypeInfo);
 
             Entities->SetSharedComponentDataIndex(ArchetypeManager, m_SharedComponentManager, entity, typeIndex,
                 newSharedComponentDataIndex);
@@ -589,11 +599,35 @@ namespace Unity.Entities
         {
             BeforeStructuralChange();
 
-            var entityGroup = CreateComponentGroup();
-            var groupArray = entityGroup.GetEntityArray();
+            var enabledEntityGroup = CreateComponentGroup();
+            var disabledEntityGroup = CreateComponentGroup(typeof(Disabled));
+            var enabledGroupArray = enabledEntityGroup.GetEntityArray();
+            var disabledGroupArray = disabledEntityGroup.GetEntityArray();
 
-            var array = new NativeArray<Entity>(groupArray.Length, allocator);
-            groupArray.CopyTo(array);
+            var enabledCount = enabledGroupArray.Length;
+            var disabledCount = disabledGroupArray.Length;
+            var count = enabledCount + disabledCount;
+            
+            var array = new NativeArray<Entity>(count, allocator);
+            
+            int copiedCount;
+            
+            copiedCount = 0;
+            while (copiedCount < enabledCount)
+            {
+                var chunkArray = enabledGroupArray.GetChunkArray(copiedCount, enabledCount - copiedCount);
+                array.Slice(copiedCount, chunkArray.Length).CopyFrom(chunkArray);
+                copiedCount += chunkArray.Length;
+            }
+            
+            copiedCount = 0;
+            while (copiedCount < disabledCount)
+            {
+                var chunkArray = disabledGroupArray.GetChunkArray(copiedCount, disabledCount - copiedCount);
+                array.Slice(enabledCount+copiedCount, chunkArray.Length).CopyFrom(chunkArray);
+                copiedCount += chunkArray.Length;
+            }
+            
             return array;
         }
 
@@ -795,15 +829,22 @@ namespace Unity.Entities
             var componentTypes = archetype->Types;
             var componentTypesCount = archetype->TypesCount;
             var foundCount = 0;
+            var disabledTypeIndex = TypeManager.GetTypeIndex<Disabled>();
+            var requestedDisabled = false;
             for (var i = 0; i < componentTypesCount; i++)
             {
                 var componentTypeIndex = componentTypes[i].TypeIndex;
                 for (var j = 0; j < allCount; j++)
                 {
                     var allTypeIndex = allTypes[j].TypeIndex;
+                    if (allTypeIndex == disabledTypeIndex)
+                        requestedDisabled = true;
                     if (componentTypeIndex == allTypeIndex) foundCount++;
                 }
             }
+
+            if (archetype->Disabled && (!requestedDisabled))
+                return false;
 
             return foundCount == allCount;
         }
@@ -833,7 +874,18 @@ namespace Unity.Entities
                             if (!TestMatchingArchetypeAll(archetype, all, allCount))
                                 continue;
 
-                            foundArchetypes.Add(new EntityArchetype {Archetype = archetype});
+                            var entityArchetype = new EntityArchetype {Archetype = archetype};
+                            var found = false;
+                            for (int i = 0; i < foundArchetypes.Length; ++i)
+                            {
+                                if (foundArchetypes[i] == entityArchetype)
+                                {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found)
+                                foundArchetypes.Add(entityArchetype);
                         }
                     }
                 }
@@ -869,7 +921,7 @@ namespace Unity.Entities
                 ComponentJobSafetyManager.GetSafetyHandle(typeIndex, isReadOnly), isReadOnly,
                 GlobalSystemVersion);
 #else
-            return new ArchetypeChunkComponentType<T>(isReadOnly,GlobalSystemVersion);
+            return new ArchetypeChunkComponentType<T>(isReadOnly, GlobalSystemVersion);
 #endif
         }
 
@@ -893,7 +945,7 @@ namespace Unity.Entities
             return new ArchetypeChunkSharedComponentType<T>(
                 ComponentJobSafetyManager.GetSafetyHandle(TypeManager.GetTypeIndex<T>(), true));
 #else
-            return new ArchetypeChunkSharedComponentType<T>();
+            return new ArchetypeChunkSharedComponentType<T>(false);
 #endif
         }
 
@@ -903,7 +955,7 @@ namespace Unity.Entities
             return new ArchetypeChunkEntityType(
                 ComponentJobSafetyManager.GetSafetyHandle(TypeManager.GetTypeIndex<Entity>(), true));
 #else
-            return new ArchetypeChunkEntityType();
+            return new ArchetypeChunkEntityType(false);
 #endif
         }
 

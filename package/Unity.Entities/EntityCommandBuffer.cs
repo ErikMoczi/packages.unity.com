@@ -519,10 +519,10 @@ namespace Unity.Entities
         private static bool IsDefaultObject<T>(ref T component, out int hashCode) where T : struct, ISharedComponentData
         {
             var typeIndex = TypeManager.GetTypeIndex<T>();
-            var layout = TypeManager.GetComponentType(typeIndex).FastEqualityLayout;
+            var typeInfo = TypeManager.GetComponentType(typeIndex).FastEqualityTypeInfo;
             var defaultValue = default(T);
-            hashCode = FastEquality.GetHashCode(ref component, layout);
-            return FastEquality.Equals(ref defaultValue, ref component, layout);
+            hashCode = FastEquality.GetHashCode(ref component, typeInfo);
+            return FastEquality.Equals(ref defaultValue, ref component, typeInfo);
         }
 
         public void AddSharedComponent<T>(T component) where T : struct, ISharedComponentData

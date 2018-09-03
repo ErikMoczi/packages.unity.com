@@ -20,7 +20,7 @@ namespace Unity.Entities.Serialization
             public int AllocSizeBytes;
         }
 
-        public static int CurrentFileFormatVersion = 3;
+        public static int CurrentFileFormatVersion = 5;
 
         public static unsafe void DeserializeWorld(ExclusiveEntityTransaction manager, BinaryReader reader)
         {
@@ -110,6 +110,10 @@ namespace Unity.Entities.Serialization
         private static NativeArray<int> ReadTypeArray(BinaryReader reader)
         {
             int typeCount = reader.ReadInt();
+            var typeHashBuffer = new NativeArray<int>(typeCount, Allocator.Temp);
+
+            reader.ReadArray(typeHashBuffer, typeCount);
+
             int nameBufferSize = reader.ReadInt();
             var nameBuffer = new NativeArray<byte>(nameBufferSize, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
             reader.ReadBytes(nameBuffer, nameBufferSize);
@@ -118,7 +122,13 @@ namespace Unity.Entities.Serialization
             for (int i = 0; i < typeCount; ++i)
             {
                 string typeName = StringFromNativeBytes(nameBuffer, offset);
-                types[i] = TypeManager.GetTypeIndex(Type.GetType(typeName));
+                var type = Type.GetType(typeName);
+                types[i] = TypeManager.GetTypeIndex(type);
+
+                if (typeHashBuffer[i] != TypeManager.GetComponentType(types[i]).FastEqualityTypeInfo.Hash)
+                {
+                    throw new ArgumentException($"Type layout has changed: '{type.Name}'");
+                }
 
                 if (types[i] == 0)
                 {
@@ -129,6 +139,7 @@ namespace Unity.Entities.Serialization
             }
 
             nameBuffer.Dispose();
+            typeHashBuffer.Dispose();
             return types;
         }
 
@@ -194,17 +205,24 @@ namespace Unity.Entities.Serialization
             {
                 var type = TypeManager.GetType(index);
                 var name = TypeManager.GetType(index).AssemblyQualifiedName;
+                var hash = TypeManager.GetComponentType(index).FastEqualityTypeInfo.Hash;
                 return new
                 {
                     index,
                     type,
                     name,
+                    hash,
                     asciiName = Encoding.ASCII.GetBytes(name)
                 };
             }).OrderBy(t => t.name).ToArray();
 
             int typeNameBufferSize = typeArray.Sum(t => t.asciiName.Length + 1);
             writer.Write(typeArray.Length);
+            foreach (var n in typeArray)
+            {
+                writer.Write(n.hash);
+            }
+
             writer.Write(typeNameBufferSize);
             foreach(var n in typeArray)
             {

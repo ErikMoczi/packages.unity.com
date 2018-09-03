@@ -130,19 +130,19 @@ namespace Unity.Entities.Tests
                     None = Array.Empty<ComponentType>()
                 };
 
-                var archetypes = new NativeList<EntityArchetype>(Allocator.Temp);
+                var archetypes = new NativeList<EntityArchetype>(Allocator.TempJob);
                 entityManager.AddMatchingArchetypes(query, archetypes);
                 Assert.AreEqual(4, archetypes.Length);
 
-                var chunks = entityManager.CreateArchetypeChunkArray(archetypes, Allocator.Temp);
+                var chunks = entityManager.CreateArchetypeChunkArray(archetypes, Allocator.TempJob);
                 Assert.AreEqual(4, chunks.Length);
                 archetypes.Dispose();
 
                 var entityType = entityManager.GetArchetypeChunkEntityType();
-                Assert.AreEqual(1, chunks[0].GetNativeSlice(entityType).Length);
-                Assert.AreEqual(1, chunks[1].GetNativeSlice(entityType).Length);
-                Assert.AreEqual(1, chunks[2].GetNativeSlice(entityType).Length);
-                Assert.AreEqual(1, chunks[3].GetNativeSlice(entityType).Length);
+                Assert.AreEqual(1, chunks[0].GetNativeArray(entityType).Length);
+                Assert.AreEqual(1, chunks[1].GetNativeArray(entityType).Length);
+                Assert.AreEqual(1, chunks[2].GetNativeArray(entityType).Length);
+                Assert.AreEqual(1, chunks[3].GetNativeArray(entityType).Length);
                 chunks.Dispose();
 
                 var new_e1 = group1.GetEntityArray()[0];

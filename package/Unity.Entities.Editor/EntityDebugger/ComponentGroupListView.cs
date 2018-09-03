@@ -229,7 +229,7 @@ namespace Unity.Entities.Editor
             else if (queriesById.TryGetValue(args.item.id, out var query))
             {
                 var entityManager = getWorldSelection().GetExistingManager<EntityManager>();
-                var chunkArray = entityManager.CreateArchetypeChunkArray(query, Allocator.Temp);
+                var chunkArray = entityManager.CreateArchetypeChunkArray(query, Allocator.TempJob);
                 var count = chunkArray.Sum(x => x.Count);
                 chunkArray.Dispose();
                 DefaultGUI.LabelRightAligned(args.rowRect, count.ToString(), args.selected, args.focused);

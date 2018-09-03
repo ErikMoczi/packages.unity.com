@@ -28,7 +28,7 @@ namespace Unity.Entities.Tests
                     None = Array.Empty<ComponentType>(),
                     All = new ComponentType[] {typeof(EcsTestData)}
                 };
-                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
                 Assert.AreEqual(1, ArchetypeChunkArray.CalculateEntityCount(chunks));
                 chunks.Dispose();
             }
@@ -42,7 +42,7 @@ namespace Unity.Entities.Tests
                     None = Array.Empty<ComponentType>(), // none
                     All = new ComponentType[] {typeof(EcsTestData)}, // all
                 };
-                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
                 Assert.AreEqual(0, ArchetypeChunkArray.CalculateEntityCount(chunks));
                 chunks.Dispose();
             }
@@ -54,7 +54,7 @@ namespace Unity.Entities.Tests
                     None = Array.Empty<ComponentType>(), // none
                     All = new ComponentType[] {typeof(EcsState1)}, // all
                 };
-                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
                 Assert.AreEqual(1, ArchetypeChunkArray.CalculateEntityCount(chunks));
                 chunks.Dispose();
             }
@@ -68,7 +68,7 @@ namespace Unity.Entities.Tests
                     None = Array.Empty<ComponentType>(), // none
                     All = new ComponentType[] {typeof(EcsState1)}, // all
                 };
-                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
                 Assert.AreEqual(0, ArchetypeChunkArray.CalculateEntityCount(chunks));
                 chunks.Dispose();
             }
@@ -102,7 +102,7 @@ namespace Unity.Entities.Tests
                     None = Array.Empty<ComponentType>(), // none
                     All = new ComponentType[] {typeof(EcsTestData)}, // all
                 };
-                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
                 Assert.AreEqual(512, ArchetypeChunkArray.CalculateEntityCount(chunks));
                 chunks.Dispose();
             }
@@ -120,7 +120,7 @@ namespace Unity.Entities.Tests
                     None = Array.Empty<ComponentType>(), // none
                     All = new ComponentType[] {typeof(EcsTestData)}, // all
                 };
-                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
                 Assert.AreEqual(256, ArchetypeChunkArray.CalculateEntityCount(chunks));
                 chunks.Dispose();
             }
@@ -132,7 +132,7 @@ namespace Unity.Entities.Tests
                     None = new ComponentType[] {typeof(EcsTestData)}, // none
                     All = new ComponentType[] {typeof(EcsState1)}, // all
                 };
-                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
                 Assert.AreEqual(256, ArchetypeChunkArray.CalculateEntityCount(chunks));
                 chunks.Dispose();
             }
@@ -150,7 +150,7 @@ namespace Unity.Entities.Tests
                     None = Array.Empty<ComponentType>(),
                     All = new ComponentType[] {typeof(EcsState1)}
                 };
-                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
                 Assert.AreEqual(256, ArchetypeChunkArray.CalculateEntityCount(chunks));
                 chunks.Dispose();
             }
@@ -194,7 +194,7 @@ namespace Unity.Entities.Tests
                     None = Array.Empty<ComponentType>(), // none
                     All = new ComponentType[] {typeof(EcsTestData)}, // all
                 };
-                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
                 Assert.AreEqual(512, ArchetypeChunkArray.CalculateEntityCount(chunks));
                 chunks.Dispose();
             }
@@ -212,7 +212,7 @@ namespace Unity.Entities.Tests
                     None = Array.Empty<ComponentType>(), // none
                     All = new ComponentType[] {typeof(EcsTestData)}, // all
                 };
-                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
                 Assert.AreEqual(256, ArchetypeChunkArray.CalculateEntityCount(chunks));
                 chunks.Dispose();
             }
@@ -224,7 +224,7 @@ namespace Unity.Entities.Tests
                     None = new ComponentType[] {typeof(EcsTestData)}, // none
                     All = new ComponentType[] {typeof(EcsState1)}, // all
                 };
-                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
                 Assert.AreEqual(256, ArchetypeChunkArray.CalculateEntityCount(chunks));
                 chunks.Dispose();
             }
@@ -242,7 +242,7 @@ namespace Unity.Entities.Tests
                     None = Array.Empty<ComponentType>(), // none
                     All = new ComponentType[] {typeof(EcsState1)}, // all
                 };
-                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.Temp);
+                var chunks = m_Manager.CreateArchetypeChunkArray(query, Allocator.TempJob);
                 Assert.AreEqual(256, ArchetypeChunkArray.CalculateEntityCount(chunks));
                 chunks.Dispose();
             }

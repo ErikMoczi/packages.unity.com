@@ -5,7 +5,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
-using UnityEngine.Profiling;
+using Unity.Profiling;
 
 namespace Unity.Transforms
 {
@@ -186,7 +186,7 @@ namespace Unity.Transforms
                 var chunk = NewRootChunks[chunkIndex];
                 var parentCount = chunk.Count;
 
-                var chunkEntities = chunk.GetNativeSlice(EntityTypeRO);
+                var chunkEntities = chunk.GetNativeArray(EntityTypeRO);
 
                 for (int i = 0; i < parentCount; i++)
                 {
@@ -211,8 +211,8 @@ namespace Unity.Transforms
             {
                 var chunk = AttachChunks[chunkIndex];
                 var parentCount = chunk.Count;
-                var entities = chunk.GetNativeSlice(EntityTypeRO);
-                var attaches = chunk.GetNativeSlice(AttachTypeRO);
+                var entities = chunk.GetNativeArray(EntityTypeRO);
+                var attaches = chunk.GetNativeArray(AttachTypeRO);
 
                 for (int i = 0; i < parentCount; i++)
                 {
@@ -272,8 +272,8 @@ namespace Unity.Transforms
                 var chunk = DetachChunks[chunkIndex];
 
                 var parentCount = chunk.Count;
-                var chunkEntities = chunk.GetNativeSlice(EntityTypeRO);
-                var parents = chunk.GetNativeSlice(ParentTypeRO);
+                var chunkEntities = chunk.GetNativeArray(EntityTypeRO);
+                var parents = chunk.GetNativeArray(ParentTypeRO);
 
                 for (int i = 0; i < parentCount; i++)
                 {
@@ -312,7 +312,7 @@ namespace Unity.Transforms
                 var chunk = RemovedChunks[chunkIndex];
                 var parentCount = chunk.Count;
 
-                var chunkEntities = chunk.GetNativeSlice(EntityTypeRO);
+                var chunkEntities = chunk.GetNativeArray(EntityTypeRO);
 
                 for (int i = 0; i < parentCount; i++)
                 {
@@ -340,7 +340,7 @@ namespace Unity.Transforms
                 var chunk = PendingFrozenChunks[chunkIndex];
                 var parentCount = chunk.Count;
 
-                var chunkEntities = chunk.GetNativeSlice(EntityTypeRO);
+                var chunkEntities = chunk.GetNativeArray(EntityTypeRO);
 
                 for (int i = 0; i < parentCount; i++)
                 {
@@ -373,7 +373,7 @@ namespace Unity.Transforms
                 var chunk = FrozenChunks[chunkIndex];
                 var parentCount = chunk.Count;
 
-                var chunkEntities = chunk.GetNativeSlice(EntityTypeRO);
+                var chunkEntities = chunk.GetNativeArray(EntityTypeRO);
 
                 for (int i = 0; i < parentCount; i++)
                 {
@@ -404,9 +404,9 @@ namespace Unity.Transforms
                 var chunk = ThawChunks[chunkIndex];
                 var parentCount = chunk.Count;
 
-                var chunkEntities = chunk.GetNativeSlice(EntityTypeRO);
-                var chunkFrozens = chunk.GetNativeSlice(FrozenTypeRO);
-                var chunkPendingFrozens = chunk.GetNativeSlice(PendingFrozenTypeRO);
+                var chunkEntities = chunk.GetNativeArray(EntityTypeRO);
+                var chunkFrozens = chunk.GetNativeArray(FrozenTypeRO);
+                var chunkPendingFrozens = chunk.GetNativeArray(PendingFrozenTypeRO);
                 var hasFrozen = chunkFrozens.Length > 0;
                 var hasPendingFrozen = chunkPendingFrozens.Length > 0;
 
@@ -443,27 +443,31 @@ namespace Unity.Transforms
             entityCommandBuffer.Dispose();
         }
 
+        private static readonly ProfilerMarker k_ProfileUpdateNewRootTransforms = new ProfilerMarker("UpdateNewRootTransforms");
+        private static readonly ProfilerMarker k_ProfileUpdateDAGAttachDetach = new ProfilerMarker("UpdateDAG.AttachDetach");
+        private static readonly ProfilerMarker k_ProfileUpdateUpdateRemoved = new ProfilerMarker("UpdateRemoved");
+        private static readonly ProfilerMarker k_ProfileUpdateDAGPlayback = new ProfilerMarker("UpdateDAG.Playback");
         bool UpdateDAG()
         {
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
 
-            Profiler.BeginSample("UpdateNewRootTransforms");
+            k_ProfileUpdateNewRootTransforms.Begin();
             UpdateNewRootTransforms(entityCommandBuffer);
-            Profiler.EndSample();
+            k_ProfileUpdateNewRootTransforms.End();
             
-            Profiler.BeginSample("UpdateDAG");
+            k_ProfileUpdateDAGAttachDetach.Begin();
             bool changedAttached = UpdateAttach(entityCommandBuffer);
             bool changedDetached = UpdateDetach(entityCommandBuffer);
-            Profiler.EndSample();
+            k_ProfileUpdateDAGAttachDetach.End();
             
-            Profiler.BeginSample("UpdateRemoved");
+            k_ProfileUpdateUpdateRemoved.Begin();
             UpdateRemoved(entityCommandBuffer);
-            Profiler.EndSample();
+            k_ProfileUpdateUpdateRemoved.End();
 
-            Profiler.BeginSample("UpdateDAG.Playback");
+            k_ProfileUpdateDAGPlayback.Begin();
             entityCommandBuffer.Playback(EntityManager);
             entityCommandBuffer.Dispose();
-            Profiler.EndSample();
+            k_ProfileUpdateDAGPlayback.End();
 
             return changedAttached || changedDetached;
         }
@@ -483,10 +487,10 @@ namespace Unity.Transforms
                 var chunk = chunks[chunkIndex];
                 var parentCount = chunk.Count;
 
-                var chunkRotations = chunk.GetNativeSlice(rotationType);
-                var chunkPositions = chunk.GetNativeSlice(positionType);
-                var chunkScales = chunk.GetNativeSlice(scaleType);
-                var chunkLocalToWorlds = chunk.GetNativeSlice(localToWorldType);
+                var chunkRotations = chunk.GetNativeArray(rotationType);
+                var chunkPositions = chunk.GetNativeArray(positionType);
+                var chunkScales = chunk.GetNativeArray(scaleType);
+                var chunkLocalToWorlds = chunk.GetNativeArray(localToWorldType);
 
                 var chunkRotationsChanged = ChangeVersionUtility.DidAddOrChange(chunk.GetComponentVersion(rotationType), lastSystemVersion);
                 var chunkPositionsChanged = ChangeVersionUtility.DidAddOrChange(chunk.GetComponentVersion(positionType), lastSystemVersion);
@@ -620,10 +624,10 @@ namespace Unity.Transforms
                 var chunk = chunks[chunkIndex];
                 var parentCount = chunk.Count;
 
-                var chunkRotations = chunk.GetNativeSlice(rotationType);
-                var chunkPositions = chunk.GetNativeSlice(positionType);
-                var chunkScales = chunk.GetNativeSlice(scaleType);
-                var chunkLocalToParents = chunk.GetNativeSlice(localToParentType);
+                var chunkRotations = chunk.GetNativeArray(rotationType);
+                var chunkPositions = chunk.GetNativeArray(positionType);
+                var chunkScales = chunk.GetNativeArray(scaleType);
+                var chunkLocalToParents = chunk.GetNativeArray(localToParentType);
 
                 var chunkRotationsChanged = ChangeVersionUtility.DidAddOrChange(chunk.GetComponentVersion(rotationType), lastSystemVersion);
                 var chunkPositionsChanged = ChangeVersionUtility.DidAddOrChange(chunk.GetComponentVersion(positionType), lastSystemVersion);
@@ -757,10 +761,10 @@ namespace Unity.Transforms
                 var chunk = chunks[chunkIndex];
                 var parentCount = chunk.Count;
 
-                var chunkRotations = chunk.GetNativeSlice(rotationType);
-                var chunkPositions = chunk.GetNativeSlice(positionType);
-                var chunkScales = chunk.GetNativeSlice(scaleType);
-                var chunkLocalToParents = chunk.GetNativeSlice(localToParentType);
+                var chunkRotations = chunk.GetNativeArray(rotationType);
+                var chunkPositions = chunk.GetNativeArray(positionType);
+                var chunkScales = chunk.GetNativeArray(scaleType);
+                var chunkLocalToParents = chunk.GetNativeArray(localToParentType);
 
                 var chunkRotationsChanged = ChangeVersionUtility.DidAddOrChange(chunk.GetComponentVersion(rotationType), lastSystemVersion);
                 var chunkPositionsChanged = ChangeVersionUtility.DidAddOrChange(chunk.GetComponentVersion(positionType), lastSystemVersion);
@@ -897,10 +901,10 @@ namespace Unity.Transforms
             {
                 var chunkIndex = chunkIndices[i];
                 var chunk = chunks[chunkIndex];
-                var chunkLocalToParents = chunk.GetNativeSlice(localToParentType);
+                var chunkLocalToParents = chunk.GetNativeArray(localToParentType);
 
-                var chunkParents = chunk.GetNativeSlice(parentType);
-                var chunkEntities = chunk.GetNativeSlice(entityType);
+                var chunkParents = chunk.GetNativeArray(parentType);
+                var chunkEntities = chunk.GetNativeArray(entityType);
                 var previousParentEntity = Entity.Null;
                 var parentLocalToWorldMatrix = new float4x4();
 
@@ -1033,9 +1037,9 @@ namespace Unity.Transforms
             public void Execute(int i)
             {
                 var chunk = chunks[i];
-                var chunkLocalToParents = chunk.GetNativeSlice(localToParentType);
-                var chunkEntities = chunk.GetNativeSlice(entityType);
-                var chunkParents = chunk.GetNativeSlice(parentType);
+                var chunkLocalToParents = chunk.GetNativeArray(localToParentType);
+                var chunkEntities = chunk.GetNativeArray(entityType);
+                var chunkParents = chunk.GetNativeArray(parentType);
                 var previousParentEntity = Entity.Null;
                 var parentLocalToWorldMatrix = new float4x4();
 
@@ -1088,6 +1092,9 @@ namespace Unity.Transforms
             return 1 + ParentCount(ParentFromEntityRO[entity].Value);
         }
 
+        private static readonly ProfilerMarker k_ProfileUpdateDepthChunks = new ProfilerMarker("UpdateDepth.Chunks");
+        private static readonly ProfilerMarker k_ProfileUpdateDepthPlayback = new ProfilerMarker("UpdateDepth.Playback");
+        
         void UpdateDepth()
         {
             if (DepthChunks.Length == 0)
@@ -1098,13 +1105,13 @@ namespace Unity.Transforms
             
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
 
-            Profiler.BeginSample("UpdateDepth.Count");
+            k_ProfileUpdateDepthChunks.Begin();
             for (int i = 0; i < DepthChunks.Length; i++)
             {
                 var chunk = DepthChunks[i];
                 var entityCount = chunk.Count;
-                var parents = chunk.GetNativeSlice(ParentTypeRO);
-                var entities = chunk.GetNativeSlice(EntityTypeRO);
+                var parents = chunk.GetNativeArray(ParentTypeRO);
+                var entities = chunk.GetNativeArray(EntityTypeRO);
                 for (int j = 0; j < entityCount; j++)
                 {
                     var entity = entities[j];
@@ -1113,12 +1120,14 @@ namespace Unity.Transforms
                     entityCommandBuffer.SetSharedComponent(entity, new Depth { Value = parentCount });
                 }
             }
-            Profiler.EndSample();
+            k_ProfileUpdateDepthChunks.End();
             
-            Profiler.BeginSample("UpdateDepth.Playback");
+            k_ProfileUpdateDepthPlayback.Begin();
             entityCommandBuffer.Playback(EntityManager);
             entityCommandBuffer.Dispose();
-            Profiler.EndSample();
+            k_ProfileUpdateDepthPlayback.End();
+            
+            DepthChunks.Dispose();
         }
         
         void GatherQueries()
@@ -1205,17 +1214,17 @@ namespace Unity.Transforms
         
         void GatherFrozenChunks()
         {
-            PendingFrozenChunks = EntityManager.CreateArchetypeChunkArray(PendingFrozenQuery, Allocator.Temp);
-            FrozenChunks = EntityManager.CreateArchetypeChunkArray(FrozenQuery, Allocator.Temp);
-            ThawChunks = EntityManager.CreateArchetypeChunkArray(ThawQuery, Allocator.Temp);
+            PendingFrozenChunks = EntityManager.CreateArchetypeChunkArray(PendingFrozenQuery, Allocator.TempJob);
+            FrozenChunks = EntityManager.CreateArchetypeChunkArray(FrozenQuery, Allocator.TempJob);
+            ThawChunks = EntityManager.CreateArchetypeChunkArray(ThawQuery, Allocator.TempJob);
         }
         
         void GatherDAGChunks()
         {
-            NewRootChunks = EntityManager.CreateArchetypeChunkArray(NewRootQuery, Allocator.Temp);
-            AttachChunks = EntityManager.CreateArchetypeChunkArray(AttachQuery, Allocator.Temp);
-            DetachChunks = EntityManager.CreateArchetypeChunkArray(DetachQuery, Allocator.Temp);
-            RemovedChunks = EntityManager.CreateArchetypeChunkArray(RemovedQuery, Allocator.Temp);
+            NewRootChunks = EntityManager.CreateArchetypeChunkArray(NewRootQuery, Allocator.TempJob);
+            AttachChunks = EntityManager.CreateArchetypeChunkArray(AttachQuery, Allocator.TempJob);
+            DetachChunks = EntityManager.CreateArchetypeChunkArray(DetachQuery, Allocator.TempJob);
+            RemovedChunks = EntityManager.CreateArchetypeChunkArray(RemovedQuery, Allocator.TempJob);
         }
 
         void GatherDepthChunks()
@@ -1253,69 +1262,85 @@ namespace Unity.Transforms
             PendingFrozenTypeRO = GetArchetypeChunkComponentType<PendingFrozen>(true);
         }
 
+        private static readonly ProfilerMarker k_ProfileGatherDAGChunks = new ProfilerMarker("GatherDAGChunks");
+        private static readonly ProfilerMarker k_ProfileUpdateDAG = new ProfilerMarker("UpdateDAG");
+        private static readonly ProfilerMarker k_ProfileGatherDepthChunks = new ProfilerMarker("GatherDepthChunks");
+        private static readonly ProfilerMarker k_ProfileUpdateDepth = new ProfilerMarker("UpdateDepth");
+        private static readonly ProfilerMarker k_ProfileGatherFrozenChunks = new ProfilerMarker("GatherFrozenChunks");
+        private static readonly ProfilerMarker k_ProfileUpdateFrozen = new ProfilerMarker("UpdateFrozen");
+        private static readonly ProfilerMarker k_ProfileGatherUpdateChunks = new ProfilerMarker("GatherUpdateChunks");
+        private static readonly ProfilerMarker k_ProfileUpdateRootLocalToWorld = new ProfilerMarker("UpdateRootLocalToWorld");
+        private static readonly ProfilerMarker k_ProfileUpdateInnerTreeLocalToParent = new ProfilerMarker("UpdateInnerTreeLocalToParent");
+        private static readonly ProfilerMarker k_ProfileUpdateLeafLocalToParent = new ProfilerMarker("UpdateLeafLocalToParent");
+        private static readonly ProfilerMarker k_ProfileUpdateInnerTreeLocalToWorld = new ProfilerMarker("UpdateInnerTreeLocalToWorld");
+        private static readonly ProfilerMarker k_ProfileUpdateLeafLocalToWorld = new ProfilerMarker("UpdateLeafLocalToWorld");
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             // #todo When add new Parent, recalc local space
 
             // Update DAG
-            Profiler.BeginSample("GatherDAGChunks");
-            GatherTypes();
-            GatherDAGChunks();
-            Profiler.EndSample();
+            using (k_ProfileGatherDAGChunks.Auto())
+            {
+                GatherTypes();
+                GatherDAGChunks();
+            }
 
-            Profiler.BeginSample("UpdateDAG");
+            k_ProfileUpdateDAG.Begin();
             var changedDepthStructure = UpdateDAG();
-            Profiler.EndSample();
+            k_ProfileUpdateDAG.End();
 
             // Update Transforms
 
             if (changedDepthStructure)
             {
-                Profiler.BeginSample("GatherDepthChunks");
-                GatherTypes();
-                GatherDepthChunks();
-                Profiler.EndSample();
+                using (k_ProfileGatherDepthChunks.Auto())
+                {
+                    GatherTypes();
+                    GatherDepthChunks();
+                }
 
-                Profiler.BeginSample("UpdateDepth");
-                UpdateDepth();
-                Profiler.EndSample();
+                using (k_ProfileUpdateDepth.Auto())
+                {
+                    UpdateDepth();
+                }
             }
 
-            Profiler.BeginSample("GatherFrozenChunks");
-            GatherTypes();
-            GatherFrozenChunks();
-            Profiler.EndSample();
+            using (k_ProfileGatherFrozenChunks.Auto())
+            {
+                GatherTypes();
+                GatherFrozenChunks();
+            }
 
-            Profiler.BeginSample("UpdateFrozen");
+            k_ProfileUpdateFrozen.Begin();
             UpdatePendingFrozen();
             UpdateFrozen();
             UpdateThaw();
-            Profiler.EndSample();
+            k_ProfileUpdateFrozen.End();
 
-            Profiler.BeginSample("GatherUpdateChunks");
+            k_ProfileGatherUpdateChunks.Begin();
             GatherTypes();
             GatherUpdateChunks();
-            Profiler.EndSample();
+            k_ProfileGatherUpdateChunks.End();
 
-            Profiler.BeginSample("UpdateRootLocalToWorld");
+            k_ProfileUpdateRootLocalToWorld.Begin();
             var updateRootLocalToWorldJobHandle = UpdateRootLocalToWorld(inputDeps);
-            Profiler.EndSample();
+            k_ProfileUpdateRootLocalToWorld.End();
             
-            Profiler.BeginSample("UpdateInnerTreeLocalToParent");
+            k_ProfileUpdateInnerTreeLocalToParent.Begin();
             var updateInnerTreeLocalToParentJobHandle = UpdateInnerTreeLocalToParent(updateRootLocalToWorldJobHandle);
-            Profiler.EndSample();
+            k_ProfileUpdateInnerTreeLocalToParent.End();
             
-            Profiler.BeginSample("UpdateLeafLocalToParent");
+            k_ProfileUpdateLeafLocalToParent.Begin();
             var updateLeafLocaltoParentJobHandle = UpdateLeafLocalToParent(updateInnerTreeLocalToParentJobHandle);
-            Profiler.EndSample();
+            k_ProfileUpdateLeafLocalToParent.End();
 
-            Profiler.BeginSample("UpdateInnerTreeLocalToWorld");
+            k_ProfileUpdateInnerTreeLocalToWorld.Begin();
             var updateInnerTreeLocalToWorldJobHandle = UpdateInnerTreeLocalToWorld(updateLeafLocaltoParentJobHandle);
-            Profiler.EndSample();
+            k_ProfileUpdateInnerTreeLocalToWorld.End();
             
-            Profiler.BeginSample("UpdateLeafLocalToWorld");
+            k_ProfileUpdateLeafLocalToWorld.Begin();
             var updateLeafLocalToWorldJobHandle = UpdateLeafLocalToWorld(updateInnerTreeLocalToWorldJobHandle);
-            Profiler.EndSample();
+            k_ProfileUpdateLeafLocalToWorld.End();
             
             LastSystemVersion = GlobalSystemVersion;
             return updateLeafLocalToWorldJobHandle;
