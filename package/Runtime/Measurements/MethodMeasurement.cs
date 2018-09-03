@@ -66,6 +66,18 @@ namespace Unity.PerformanceTesting.Measurements
                 increaseIsBetter, failOnBaseline));
         }
 
+        public MethodMeasurement Warmup(int count)
+        {
+            return this;
+        }
+        
+        public MethodMeasurement ExecutionCount(int count)
+        {
+            return this;
+        }
+        
+        
+        
         public void Run()
         {
             var iterations = GetDesiredIterationCount();

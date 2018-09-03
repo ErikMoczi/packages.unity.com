@@ -10,7 +10,12 @@ using UnityEngine.TestTools;
 namespace Unity.PerformanceTesting
 {
     [AttributeUsage(AttributeTargets.Method)]
-    public class PerformanceUnityTestAttribute : CombiningStrategyAttribute, ISimpleTestBuilder, IWrapTestMethod, IImplyFixture 
+    public class PerformanceUnityTestAttribute : 
+#if UNITY_2018_2_OR_NEWER
+        CombiningStrategyAttribute, ISimpleTestBuilder, IWrapSetUpTearDown, IImplyFixture 
+    #else
+        CombiningStrategyAttribute, ISimpleTestBuilder, IWrapTestMethod, IImplyFixture 
+#endif
     {
         public PerformanceUnityTestAttribute() : base(new UnityCombinatorialStrategy(),
             new ParameterDataSourceProvider())

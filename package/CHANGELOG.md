@@ -136,6 +136,6 @@ Refactor Method and Frames measurements
 
 Package has been renamed to `com.unity.test-framework.performance` to match test framework
 
-## [0.1.20] - 2018-5-25
+## [0.1.21] - 2018-5-25
 
 ### Fix issues introduced by .18 fix
