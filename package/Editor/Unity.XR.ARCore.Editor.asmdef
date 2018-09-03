@@ -1,0 +1,10 @@
+{
+    "name": "Unity.XR.ARCore.Editor",
+    "references": [
+    	"Unity.XR.ARCore"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
