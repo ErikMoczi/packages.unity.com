@@ -14,7 +14,6 @@ using UnityEngine.XR;
 #endif
 #if UNITY_EDITOR
 using UnityEditor;
-
 #endif
 
 [Category("Performance")]
@@ -48,8 +47,6 @@ public class PlaymodeMetadataCollector : IPrebuildSetup
             if (Application.platform == RuntimePlatform.Android)
             {
                 UnityWebRequest reader = new UnityWebRequest("jar:file://" +m_TestRunPath);
-                Debug.Log("jar:file://" +m_TestRunPath);
-                Debug.Log(reader.error);
                 while (!reader.isDone)
                 {
                     Thread.Sleep(1);
@@ -78,7 +75,7 @@ public class PlaymodeMetadataCollector : IPrebuildSetup
         {
             var path = m_TestRunPath;
             UnityWebRequest reader = UnityWebRequest.Get(path);
-            yield return reader.Send();
+            yield return reader.SendWebRequest();
 
             while (!reader.isDone)
             {

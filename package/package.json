@@ -1,8 +1,8 @@
 {
 	"name": "com.unity.test-framework.performance",
 	"displayName":"Performance testing API",
-	"version": "0.1.33-preview",
-	"unity": "2018.1",
+	"version": "0.1.34-preview",
+	"unity": "2018.2",
 	"description": "Performance testing API.",
 	"keywords": ["performance", "test"],
 	"dependencies": {

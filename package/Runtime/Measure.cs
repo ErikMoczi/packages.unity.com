@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using Unity.PerformanceTesting.Runtime;
 using Unity.PerformanceTesting.Measurements;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 
 namespace Unity.PerformanceTesting

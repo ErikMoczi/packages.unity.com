@@ -1,9 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using Unity.PerformanceTesting.Runtime;
-using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.Profiling;
+﻿using UnityEngine;
 
 namespace Unity.PerformanceTesting.Measurements
 {

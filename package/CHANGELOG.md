@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.34] - 2018-8-16
+
+### Obsolete warnings
+
 ## [0.1.33] - 2018-8-3
 
 ### Small fixes
