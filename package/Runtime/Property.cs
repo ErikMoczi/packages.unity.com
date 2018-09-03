@@ -246,14 +246,14 @@ namespace Unity.Properties
         where TContainer : class, IPropertyContainer
         where TValue : struct, IPropertyContainer
     {
-        private RefAccessMethod m_RefAccessMethod;
+        protected RefAccessMethod RefAccess { get; set; }
         
         public delegate void RefVisitMethod(ref TValue value, IPropertyVisitor visitor);
         public delegate void RefAccessMethod(TContainer container, RefVisitMethod a, IPropertyVisitor visitor);
 
         public MutableContainerProperty(string name, GetValueMethod getValue, SetValueMethod setValue, RefAccessMethod refAccess) : base(name, getValue, setValue)
         {
-            m_RefAccessMethod = refAccess;
+            RefAccess = refAccess;
         }
         
         private static void RefVisit(ref TValue value, IPropertyVisitor visitor)
@@ -276,7 +276,7 @@ namespace Unity.Properties
                 {
                     // the compiler generates a static RefVisitMethod delegate from on RefVisit
                     // no allocation here
-                    m_RefAccessMethod(container, RefVisit, visitor);
+                    RefAccess(container, RefVisit, visitor);
                 }
                 visitor.EndContainer(ref container, subtreeContext);
             }
@@ -317,14 +317,14 @@ namespace Unity.Properties
         where TContainer : struct, IPropertyContainer
         where TValue : struct, IPropertyContainer
     {
-        private RefAccessMethod m_RefAccessMethod;
+        protected RefAccessMethod RefAccess { get; set; }
         
         public delegate void RefVisitMethod(ref TValue value, IPropertyVisitor visitor);
         public delegate void RefAccessMethod(ref TContainer container, RefVisitMethod a, IPropertyVisitor visitor);
 
         public StructMutableContainerProperty(string name, GetValueMethod getValue, SetValueMethod setValue, RefAccessMethod refAccess) : base(name, getValue, setValue)
         {
-            m_RefAccessMethod = refAccess;
+            RefAccess = refAccess;
         }
         
         private static void RefVisit(ref TValue value, IPropertyVisitor visitor)
@@ -347,7 +347,7 @@ namespace Unity.Properties
                 {
                     // the compiler generates a static RefVisitMethod delegate from on RefVisit
                     // no allocation here
-                    m_RefAccessMethod(ref container, RefVisit, visitor);
+                    RefAccess(ref container, RefVisit, visitor);
                 }
                 visitor.EndContainer(ref container, subtreeContext);
             }

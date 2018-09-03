@@ -22,7 +22,7 @@
         public int Count;
     }
     
-    public interface IBuiltInPropertyVisitor : IPropertyVisitor,
+    public interface IBuiltInPropertyVisitor : 
         IPropertyVisitor<bool>,
         IPropertyVisitor<char>,
         IPropertyVisitor<sbyte>,
@@ -39,7 +39,7 @@
     {
     }
 
-    public interface IPropertyVisitor<TValue>
+    public interface IPropertyVisitor<TValue> : IPropertyVisitor
     {
         void Visit<TContainer>(ref TContainer container, VisitContext<TValue> context) where TContainer : IPropertyContainer;
     }
