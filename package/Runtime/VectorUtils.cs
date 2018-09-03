@@ -522,7 +522,7 @@ namespace Unity.VectorGraphics
                 double sumCBA = c + b + a;
 
                 var l0 = (0.25f / c) * (twoCpB * Math.Sqrt(sumCBA) - b * Math.Sqrt(a));
-                if (q == 0.0f)
+                if (Math.Abs(q) <= VectorUtils.Epsilon)
                     return (float)l0;
 
                 var l1 = (q / (8.0f * Math.Pow(c, 1.5f))) * (Math.Log(2.0f * Math.Sqrt(c * sumCBA) + twoCpB) - Math.Log(2.0f * Math.Sqrt(c * a) + b));
@@ -1024,7 +1024,7 @@ namespace Unity.VectorGraphics
 
         internal static bool IsEmptySegment(BezierSegment bs)
         {
-            return bs.P0 == bs.P1 && bs.P0 == bs.P2 && bs.P0 == bs.P3;
+            return (bs.P0 - bs.P1).sqrMagnitude <= Epsilon && (bs.P0 - bs.P2).sqrMagnitude <= Epsilon && (bs.P0 - bs.P3).sqrMagnitude <= Epsilon;
         }
     } // VectorUtils class
 

@@ -1300,7 +1300,7 @@ namespace Unity.VectorGraphics
                 }
 
                 string pattern = styleResolver.Evaluate("stroke-dasharray", SVGResolveLimit.Hierarchy);
-                if (pattern != null)
+                if (pattern != null && pattern != "none")
                 {
                     string[] entries = pattern.Split(whiteSpaceNumberChars, StringSplitOptions.RemoveEmptyEntries);
                     // If the pattern is odd, then we duplicate it to make it even as per the spec
@@ -1859,11 +1859,7 @@ namespace Unity.VectorGraphics
             {
                 string attrib = null;
                 if (LookupStyleOrAttribute(nodes[i], attribName, styleSheets[i], attributeSheets[i], limit, out attrib))
-                {
-                    if (attrib.ToLower() == "none")
-                        attrib = null;
                     return attrib;
-                }
                 
                 if (limit == SVGResolveLimit.Single)
                     break;
