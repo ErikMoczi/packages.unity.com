@@ -1,20 +1,14 @@
 {
-    "category": "2D", 
-    "config": {
-        "publishtest": true
-    }, 
-    "dependencies": {}, 
-    "description": "2D Triangle is an open source library that tessellates shapes into meshes.", 
-    "displayName": "2D Triangle", 
-    "gitHead": "329955802923e773e4a327c46dfc8459b36a4a87", 
-    "keywords": [
-        "2d"
-    ], 
-    "name": "com.unity.2d.triangle", 
-    "repository": {
-        "type": "git", 
-        "url": "git@gitlab.internal.unity3d.com:2d/triangle.git"
-    }, 
-    "unity": "2018.1", 
-    "version": "1.0.1-preview.2"
+	"name": "com.unity.2d.triangle",
+	"displayName": "2D Triangle",
+	"version": "1.0.2-preview",
+	"unity": "2018.1",
+	"description": "2D Triangle is an open source library that tessellates shapes into meshes.",
+	"keywords": ["2d"],
+	"category": "2D",
+	"dependencies": {
+	},
+	"config": { 
+		"publishtest": true 
+	}
 }
