@@ -221,7 +221,9 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         private bool HasParentBone(Transform transform)
         {
-            return m_CachedBones.ContainsKey(transform.parent);
+            Debug.Assert(transform != null);
+            
+            return transform.parent != null && m_CachedBones.ContainsKey(transform.parent);;
         }
 
         private void DrawBone(Vector3 position, Vector3 endPosition, Color color)
