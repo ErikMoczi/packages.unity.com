@@ -33,54 +33,66 @@ namespace Unity.Burst.Editor
                 {
                     // NOTE: Make sure that we don't use a value type generic definition (e.g `class Outer<T> { struct Inner { } }`)
                     // We are only working on plain type or generic type instance!
-                    if (t.IsValueType && !t.IsGenericTypeDefinition)
-                        valueTypes.Add(t);
+                    if (t.IsValueType)
+                    {
+                        if (!t.IsGenericTypeDefinition)
+                            valueTypes.Add(t);
+                    }
+                    else if (t.IsInterface)
+                    {
+                        object[] attrs = t.GetCustomAttributes(typeof(JobProducerTypeAttribute), false);
+                        if (attrs.Length == 0)
+                            continue;
 
-                    if (!t.IsInterface)
-                        continue;
+                        JobProducerTypeAttribute attr = (JobProducerTypeAttribute)attrs[0];
 
-                    object[] attrs = t.GetCustomAttributes(typeof(JobProducerTypeAttribute), false);
-                    if (attrs.Length == 0)
-                        continue;
+                        interfaceToProducer.Add(t, attr.ProducerType);
 
-                    JobProducerTypeAttribute attr = (JobProducerTypeAttribute)attrs[0];
-
-                    interfaceToProducer.Add(t, attr.ProducerType);
-
-                    //Debug.Log($"{t} has producer {attr.ProducerType}");
+                        //Debug.Log($"{t} has producer {attr.ProducerType}");
+                    }
                 }
             }
+
 
             //Debug.Log($"Mapped {interfaceToProducer.Count} producers; {valueTypes.Count} value types");
 
             // Revisit all types to find things that are compilable using the above producers.
             foreach (var type in valueTypes)
             {
-                Type foundProducer = null;
-                Type foundInterface = null;
+                Type executeType = null;
 
                 foreach (var interfaceType in type.GetInterfaces())
                 {
-                    if (interfaceToProducer.TryGetValue(interfaceType, out foundProducer))
+                    var genericLessInterface = interfaceType;
+                    if (interfaceType.IsGenericType)
+                        genericLessInterface = interfaceType.GetGenericTypeDefinition();
+
+                    Type foundProducer;
+                    if (interfaceToProducer.TryGetValue(genericLessInterface, out foundProducer))
                     {
-                        foundInterface = interfaceType;
+                        var genericParams = new List<Type>();
+                        genericParams.Add(type);
+                        if (interfaceType.IsGenericType)
+                            genericParams.AddRange(interfaceType.GenericTypeArguments);
+
+                        executeType = foundProducer.MakeGenericType(genericParams.ToArray());
+
                         break;
                     }
                 }
 
-                if (null == foundProducer)
+                if (null == executeType)
                     continue;
 
                 try
                 {
-                    var executeType = foundProducer.MakeGenericType(type);
                     var executeMethod = executeType.GetMethod("Execute");
                     if (executeMethod == null)
                     {
                         throw new InvalidOperationException($"Burst reflection error. The type `{executeType}` does not contain an `Execute` method");
                     }
 
-                    var target = new BurstCompileTarget(executeMethod, type, foundInterface);
+                    var target = new BurstCompileTarget(executeMethod, type);
                     result.Add(target);
                 }
                 catch (Exception ex)

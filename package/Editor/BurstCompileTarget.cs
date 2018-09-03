@@ -5,11 +5,10 @@ namespace Unity.Burst.Editor
 {
     internal class BurstCompileTarget
     {
-        public BurstCompileTarget(MethodInfo method, Type jobType, Type jobInterfaceType)
+        public BurstCompileTarget(MethodInfo method, Type jobType)
         {
             Method = method;
             JobType = jobType;
-            JobInterfaceType = jobInterfaceType;
             SupportsBurst = BurstReflection.ExtractBurstCompilerOptions(JobType, out DefaultOptions);
         }
 
@@ -22,11 +21,6 @@ namespace Unity.Burst.Editor
         /// The type of the actual job (i.e. BoidsSimulationJob).
         /// </summary>
         public readonly Type JobType;
-
-        /// <summary>
-        /// The type of job (i.e. IJobParallelFor)
-        /// </summary>
-        public readonly Type JobInterfaceType;
 
         /// <summary>
         /// The default compiler options
