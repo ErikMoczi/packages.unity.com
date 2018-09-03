@@ -135,6 +135,18 @@ namespace UnityEngine.Experimental.U2D.Animation
             }
         }
 
+        internal static int BoneTransformsHash(Transform[] boneTransforms)
+        {
+            int boneTransformHash = 0;
+            int bits = 0;
+            foreach (var transform in boneTransforms)
+            {
+                boneTransformHash ^= (transform.localToWorldMatrix.GetHashCode() >> bits);
+                bits = (bits + 1) % 8;
+            }
+            return boneTransformHash;
+        }
+
         internal static Transform[] Rebind(Transform rootBone, SpriteBone[] spriteBones)
         {
             if (spriteBones == null)
@@ -151,6 +163,18 @@ namespace UnityEngine.Experimental.U2D.Animation
                 SpriteBoneUtility.GatherBones(spriteBones, rootBone, ref transforms);
             }
             return transforms;
+        }
+
+        internal static JobHandle CalculateBounds(NativeArray<Vector3> vertices, NativeArray<Vector3> minMax, JobHandle parentJob)
+        {
+            var boundsJob = new AABBJob()
+            {
+                vertices = vertices,
+                minMax = minMax
+            };
+
+            JobHandle boundsFence = boundsJob.Schedule(parentJob);
+            return boundsFence;
         }
 
         internal static JobHandle Deform(Sprite sprite, NativeArray<Vector3> deformableVertices, Matrix4x4 rootInv, Transform[] boneTransforms)

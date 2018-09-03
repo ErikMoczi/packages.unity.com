@@ -10,6 +10,7 @@ using Unity.Collections;
 using UnityEngine.U2D;
 using UnityEngine.Experimental.U2D;
 using UnityEngine.Experimental.U2D.Animation;
+using UnityEngine.Experimental.U2D.Common;
 using Unity.Jobs;
 
 namespace UnityEditor.Experimental.U2D.Animation.Test.SpriteSkin
@@ -175,6 +176,22 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SpriteSkin
             return deformedVertices;
         }
 
+        private Bounds DeformWithAABB(GameObject go, Transform rootBone, Sprite sprite)
+        {
+            var minMax = new NativeArray<Vector3>(2, Allocator.Temp);
+            var deformedVertices = new NativeArray<Vector3>(sprite.GetVertexCount(), Allocator.Persistent);
+            Transform[] transforms = SpriteBoneUtility.Rebind(rootBone.transform, sprite.GetBones());
+            var deformJobHandle = SpriteBoneUtility.Deform(sprite, deformedVertices, go.transform.worldToLocalMatrix, transforms);
+            var boundsHandle = SpriteBoneUtility.CalculateBounds(deformedVertices, minMax, deformJobHandle);
+            boundsHandle.Complete();
+
+            Bounds bounds = new Bounds();
+            bounds.SetMinMax(minMax[0], minMax[1]);
+            deformedVertices.Dispose();
+            minMax.Dispose();
+            return bounds;
+        }
+
         private void TestRootRotateDeform(GameObject go, Sprite sprite)
         {
             GameObject rootBone = SpriteBoneUtility.CreateSkeleton(sprite.GetBones(), go, null);
@@ -193,6 +210,28 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SpriteSkin
             for (var i = 0; i < deformedVertices.Length; ++i)
                 Assert.That(deformedVertices[i], Is.EqualTo(kChildRotateDeformedVertices[i]).Using(vec3Compare));
             deformedVertices.Dispose();
+        }
+
+        private void TestAABBOnDeformAndReset(GameObject go, Sprite sprite)
+        {
+            GameObject rootBone = SpriteBoneUtility.CreateSkeleton(sprite.GetBones(), go, null);
+            Transform[] transforms = SpriteBoneUtility.Rebind(rootBone.transform, sprite.GetBones());
+            int bindPoseHash = SpriteBoneUtility.BoneTransformsHash(transforms);
+            var staticBounds = DeformWithAABB(go, rootBone.transform, sprite);
+
+            go.transform.GetChild(0).GetChild(0).transform.Rotate(new Vector3(0, 0, 90.0f));
+            var dynamicBounds = DeformWithAABB(go, rootBone.transform, sprite);
+            int animatedHash = SpriteBoneUtility.BoneTransformsHash(transforms);
+            Assert.That(dynamicBounds.center, !Is.EqualTo(staticBounds.center).Using(vec3Compare));
+            Assert.That(dynamicBounds.center, !Is.EqualTo(staticBounds.extents).Using(vec3Compare));
+            Assert.That(bindPoseHash, !Is.EqualTo(animatedHash));
+
+            SpriteBoneUtility.ResetBindPose(sprite.GetBones(), transforms);
+            var staticBoundsAfterReset = DeformWithAABB(go, rootBone.transform, sprite);
+            int bindPoseHashAfterReset = SpriteBoneUtility.BoneTransformsHash(transforms);
+            Assert.That(staticBoundsAfterReset.center, Is.EqualTo(staticBounds.center).Using(vec3Compare));
+            Assert.That(staticBoundsAfterReset.extents, Is.EqualTo(staticBounds.extents).Using(vec3Compare));
+            Assert.That(bindPoseHash, Is.EqualTo(bindPoseHashAfterReset));
         }
 
         [Test]
@@ -232,6 +271,13 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SpriteSkin
         {
             TestChildRotateDeform(go1, riggedSprite);
             TestChildRotateDeform(go2, riggedSprite);
+        }
+
+        [Test]
+        public void SkinnedSprite_VerifyAABB()
+        {
+            TestAABBOnDeformAndReset(go1, riggedSprite);
+            TestAABBOnDeformAndReset(go2, riggedSprite);
         }
 
         [Test]

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.U2D;
+using UnityEngine.Experimental.U2D.Common;
 
 #if ENABLE_MANAGED_JOBS
 using Unity.Collections;
@@ -19,6 +20,9 @@ namespace UnityEngine.Experimental.U2D.Animation
 
         Transform[] m_BoneTransforms;
         SpriteRenderer m_SpriteRenderer;
+        NativeArray<Vector3> m_MinMax;
+        JobHandle? m_BoundsHandle = null;
+        int m_TransformHash = 0;
 
         SpriteRenderer spriteRenderer
         {
@@ -63,19 +67,54 @@ namespace UnityEngine.Experimental.U2D.Animation
             Rebind();
         }
 
+        void UpdateBoundsIfNeeded()
+        {
+            if (m_BoundsHandle.HasValue)
+            {
+                m_BoundsHandle.Value.Complete();
+                if (boneTransforms != null)
+                {
+                    Bounds bounds = new Bounds();
+                    bounds.SetMinMax(m_MinMax[0], m_MinMax[1]);
+                    InternalEngineBridge.SetLocalAABB(spriteRenderer, bounds);
+                }
+                m_MinMax.Dispose();
+                m_BoundsHandle = null;
+            }
+        }
+
+        void OnDisable()
+        {
+            if (m_BoundsHandle.HasValue)
+                m_BoundsHandle.Value.Complete();
+            if (m_MinMax.IsCreated)
+                m_MinMax.Dispose();
+        }
+
         void Update()
         {
+
+            UpdateBoundsIfNeeded();
+
             if (rootBone != null && boneTransforms != null && spriteRenderer.sprite != null)
             {
-                try
+                int hashCode = SpriteBoneUtility.BoneTransformsHash(m_BoneTransforms);
+                if (hashCode != m_TransformHash)
                 {
-                    JobHandle jobHandle = SpriteBoneUtility.Deform(spriteRenderer.sprite, spriteRenderer.GetDeformableVertices(), gameObject.transform.worldToLocalMatrix, boneTransforms);
-                    spriteRenderer.UpdateDeformableBuffer(jobHandle);
-                }
-                catch
-                {
-                    Debug.LogWarning("Deform failure, please ensure SpriteSkin.Rebind is successful.");
-                    m_BoneTransforms = null;
+                    try
+                    {
+                        var deformedVertices = spriteRenderer.GetDeformableVertices();
+                        JobHandle deformJobHandle = SpriteBoneUtility.Deform(spriteRenderer.sprite, deformedVertices, gameObject.transform.worldToLocalMatrix, boneTransforms);
+                        m_MinMax = new NativeArray<Vector3>(2, Allocator.Persistent);
+                        m_BoundsHandle = SpriteBoneUtility.CalculateBounds(deformedVertices, m_MinMax, deformJobHandle);
+                        spriteRenderer.UpdateDeformableBuffer(m_BoundsHandle.Value);
+                        m_TransformHash = hashCode;
+                    }
+                    catch
+                    {
+                        Debug.LogWarning("Deform failure, please ensure SpriteSkin.Rebind is successful.");
+                        m_BoneTransforms = null;
+                    }
                 }
             }
         }

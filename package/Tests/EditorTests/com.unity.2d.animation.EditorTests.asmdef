@@ -4,7 +4,8 @@
         "com.unity.2d.common.Editor",
         "com.unity.2d.common.Runtime",
         "com.unity.2d.animation.Editor",
-        "com.unity.2d.animation.Runtime"
+        "com.unity.2d.animation.Runtime",
+        "Unity.InternalAPIEngineBridge.001"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"
