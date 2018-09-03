@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4-preview.26
+
+- Added support for cosh, sinh and tanh
+
 ## 0.2.4-preview.25
 
 - Fix warning in unity editor
