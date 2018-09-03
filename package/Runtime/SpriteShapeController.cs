@@ -207,6 +207,14 @@ namespace UnityEngine.U2D
 
             return SpriteShapeChanged();
         }
+
+#if UNITY_EDITOR
+        public void ResetHash()
+        {
+            m_CurrentSplineHashCode = 0;
+        }
+#endif
+
         bool SplineChangedInEditor()
         {
 #if UNITY_EDITOR
@@ -253,7 +261,7 @@ namespace UnityEngine.U2D
             return true;
         }
 
-        public void BakeMesh(bool needUpdateSpriteArrays)
+        void BakeMesh(bool needUpdateSpriteArrays)
         {
             if (needUpdateSpriteArrays)
                 UpdateSpriteArrays();
@@ -467,13 +475,19 @@ namespace UnityEngine.U2D
                     angleRangeInfo.end = angleRange.end;
                     angleRangeInfo.order = (uint)angleRange.order;
                     List<int> spriteIndices = new List<int>();
+                    bool validSpritesFound = false;
                     foreach (Sprite edgeSprite in angleRange.sprites)
                     {
                         edgeSpriteList.Add(edgeSprite);
                         spriteIndices.Add(edgeSpriteList.Count - 1);
+                        if (edgeSprite != null)
+                            validSpritesFound = true;
                     }
-                    angleRangeInfo.sprites = spriteIndices.ToArray();
-                    angleRangeInfoList.Add(angleRangeInfo);
+                    if (validSpritesFound)
+                    {
+                        angleRangeInfo.sprites = spriteIndices.ToArray();
+                        angleRangeInfoList.Add(angleRangeInfo);
+                    }
                 }
 
                 for (int i = 0; i < spriteShape.cornerSprites.Count; i++)
