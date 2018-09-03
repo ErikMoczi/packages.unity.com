@@ -109,33 +109,22 @@ namespace UnityEditor.U2D
 
         public static int GetRangeIndexFromAngle(SpriteShape spriteShape, float angle)
         {
-            for (int i = 0; i < spriteShape.angleRanges.Count; ++i)
-            {
-                AngleRange angleRange = spriteShape.angleRanges[i];
+            return GetRangeIndexFromAngle(spriteShape.angleRanges, angle);
+        }
 
-                float range = angleRange.end - angleRange.start;
-                float angle2 = Mathf.Repeat(angle - angleRange.start, 360f);
+        public static int GetRangeIndexFromAngle(List<AngleRange> angleRanges, float angle)
+        {
+            for (int i = 0; i < angleRanges.Count; ++i)
+            {
+                var angleRange = angleRanges[i];
+                var range = angleRange.end - angleRange.start;
+                var angle2 = Mathf.Repeat(angle - angleRange.start, 360f);
 
                 if (angle2 >= 0f && angle2 <= range)
                     return i;
             }
 
             return -1;
-        }
-
-        public static Sprite GetSpriteFromAngle(SpriteShape spriteShape, float angle, int variation)
-        {
-            int index = GetRangeIndexFromAngle(spriteShape, angle);
-
-            if (index >= 0)
-            {
-                AngleRange angleRange = spriteShape.angleRanges[index];
-
-                if (angleRange.sprites.Count > 0 && variation < angleRange.sprites.Count)
-                    return angleRange.sprites[variation];
-            }
-
-            return null;
         }
     }
 }

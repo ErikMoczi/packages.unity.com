@@ -33,10 +33,7 @@ namespace UnityEngine.U2D
         SpriteShapeParameters m_CurrentShapeParameters;
         List<AngleRange> m_CurrentAngleRanges = new List<AngleRange>();
         List<CornerSprite> m_CurrentCornerSprites = new List<CornerSprite>();
-
-#if UNITY_EDITOR
         int m_CurrentSplineHashCode = 0;
-#endif
 
         [SerializeField]
         Spline m_Spline = new Spline();
@@ -215,9 +212,8 @@ namespace UnityEngine.U2D
         }
 #endif
 
-        bool SplineChangedInEditor()
+        bool HasSplineChanged()
         {
-#if UNITY_EDITOR
             int hashCode = m_Spline.GetHashCode();
 
             if (m_CurrentSplineHashCode != hashCode)
@@ -225,7 +221,6 @@ namespace UnityEngine.U2D
                 m_CurrentSplineHashCode = hashCode;
                 return true;
             }
-#endif
             return false;
         }
 
@@ -233,9 +228,9 @@ namespace UnityEngine.U2D
         {
             bool needUpdateSpriteArrays = NeedUpdateSpriteArrays();
             bool spriteShapeParametersChanged = UpdateSpriteShapeParameters();
-            bool splineChangedInEditor = SplineChangedInEditor();
+            bool splineChanged = HasSplineChanged();
 
-            if (needUpdateSpriteArrays || spriteShapeParametersChanged || splineChangedInEditor)
+            if (needUpdateSpriteArrays || spriteShapeParametersChanged || splineChanged)
                 BakeMesh(needUpdateSpriteArrays);
 
             m_CurrentSpriteShape = spriteShape;
