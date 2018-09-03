@@ -1,0 +1,10 @@
+{
+	"name": "com.unity.2d.triangle",
+	"version": "1.0.0-experimental",
+	"unity": "2018.1",
+	"description": "2D Triangle",
+	"keywords": ["2d"],
+	"category": "2D",
+	"dependencies": {
+	}
+}

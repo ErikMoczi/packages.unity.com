@@ -1,0 +1,8 @@
+{
+    "name": "com.unity.2d.triangle.Runtime",
+    "references": [],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}
