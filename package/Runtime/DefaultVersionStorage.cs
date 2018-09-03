@@ -13,8 +13,7 @@ namespace Unity.Properties
             m_Versions = new Dictionary<IProperty, Dictionary<int, int>>();
         }
 
-        public int GetVersion<TContainer>(IProperty property, ref TContainer container)
-            where TContainer : IPropertyContainer
+        public int GetVersion(IProperty property, IPropertyContainer container)
         {
             Dictionary<int, int> containerVersions;
             if (!m_Versions.TryGetValue(property, out containerVersions))
@@ -31,8 +30,7 @@ namespace Unity.Properties
             return -1;
         }
 
-        public void IncrementVersion<TContainer>(IProperty property, ref TContainer container)
-            where TContainer : IPropertyContainer
+        public void IncrementVersion(IProperty property, IPropertyContainer container)
         {
             var key = container.GetHashCode();
             

@@ -12,6 +12,10 @@ namespace Unity.Properties.Serialization
         public StringBuffer Generate(List<PropertyContainerType> root)
         {
             StringBuffer gen = new StringBuffer();
+            if (root == null)
+            {
+                return gen;
+            }
 
             // expect only one for now
             foreach (var container in root)
@@ -19,6 +23,7 @@ namespace Unity.Properties.Serialization
                 var c = GeneratePropertyContainer(container);
                 gen.Append(c.ToString());
             }
+
             return gen;
         }
         
@@ -130,7 +135,7 @@ namespace Unity.Properties.Serialization
                 container_name,
                 property_type);
 
-            bool is_compositye_type = PropertyType.IsCompositeType(property_type.Tag);
+            bool is_composite_type = PropertyType.IsCompositeType(property_type.Tag);
 
             if (string.IsNullOrEmpty(property_type.PropertyBackingAccessor))
             {
@@ -139,7 +144,7 @@ namespace Unity.Properties.Serialization
                     GenerateDataBackend(
                         prop_type,
                         property_name,
-                        is_compositye_type,
+                        is_composite_type,
                         // TOO factor out
                         InitializerFromProperty(property_type)
                         ));
@@ -153,11 +158,7 @@ namespace Unity.Properties.Serialization
         }}", prop_type,
              property_name,
              property_name,
-
-             // TODO bundle the 2 (composite & struct)
-             (is_compositye_type || property_type.Tag == PropertyType.TypeTag.Struct || property_type.Tag == PropertyType.TypeTag.Class)
-                ? string.Empty
-                : string.Format("{0}Property.SetValue(this, value);", property_name)
+             is_composite_type ? string.Empty : string.Format("{0}Property.SetValue(this, value);", property_name)
              ));
 
             var property_accessor_name = string.Format("m_{0}", property_name);
@@ -172,8 +173,7 @@ namespace Unity.Properties.Serialization
             }
 
             var property_setter = "null";
-            // TODO Fix this MESS !!
-            if (!is_compositye_type && property_type.Tag != PropertyType.TypeTag.Struct && property_type.Tag != PropertyType.TypeTag.Class)
+            if ( ! is_composite_type)
             {
                 property_setter = string.Format(
                     "(ref {0} container, {1} value) => container.{2} = value",
@@ -198,7 +198,7 @@ namespace Unity.Properties.Serialization
                 property_type.Tag == PropertyType.TypeTag.Struct ?
                     string.Format(@", (ref {0} container,
                         {1}.RefVisitMethod a,
-                        IPropertyVisitor v) => a(ref container.m_{2}, v) //<-- this is awesome",
+                        IPropertyVisitor v) => a(ref container.m_{2}, v)",
                             container_name, property_wrapper, property_name)
                         : string.Empty
                 ));
@@ -216,7 +216,7 @@ namespace Unity.Properties.Serialization
             gen.Append(
                 string.Format(
                     "public partial {0} {1} : IPropertyContainer{2}{{{3}"
-                    , c.tag == PropertyType.TypeTag.Struct ? "struct" : "class" // We default to class, probably something to tweak
+                    , c.Tag == PropertyType.TypeTag.Struct ? "struct" : "class" // We default to class, probably something to tweak
                     , container_name
                     , Environment.NewLine, Environment.NewLine));
 

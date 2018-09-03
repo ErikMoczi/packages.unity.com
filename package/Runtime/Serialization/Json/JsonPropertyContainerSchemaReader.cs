@@ -100,12 +100,6 @@ namespace Unity.Properties.Serialization
         // TODO BAD check for ref type & constructors etc.
         static private string[] EnumerableTypes = (new List<string> { "List", "Array" }).ToArray();
 
-        // TODO BAD
-        private static bool IsEnumerableType(string property_type)
-        {
-            return EnumerableTypes.Contains(property_type as string);
-        }
-        
         private static PropertyType ParseProperty(
             IDictionary<string, object> raw_property,
             Dictionary<string, PropertyTypeNode> symbols)
@@ -119,7 +113,7 @@ namespace Unity.Properties.Serialization
 
             var property_type = raw_property[SerializedKeys.PropertyTypeKey] as string;
 
-            if (IsEnumerableType(property_type) && string.IsNullOrEmpty(property_item_type))
+            if (EnumerableTypes.Contains(property_type) && string.IsNullOrEmpty(property_item_type))
                 return null;
 
             // @TODO too simple should support recursive typedefs
@@ -128,7 +122,7 @@ namespace Unity.Properties.Serialization
             if (!string.IsNullOrEmpty(property_item_type))
             {
                 var property_item_type_tag = symbols.ContainsKey(property_item_type) ?
-                    symbols[property_item_type].tag
+                    symbols[property_item_type].Tag
                     : PropertyType.TypeTag.Unknown;
 
                 sub_property_item = new PropertyType(
@@ -221,14 +215,14 @@ namespace Unity.Properties.Serialization
                     {
                         var n = new PropertyTypeNode();
 
-                        n.type_name = t.ContainsKey(SerializedKeys.ContainerNameKey)
+                        n.TypeName = t.ContainsKey(SerializedKeys.ContainerNameKey)
                             ? (t[SerializedKeys.ContainerNameKey] as string) : "";
 
                         n.raw_node = t as IDictionary<string, object>;
 
-                        n.tag = TypeTagForSymbol(t);
+                        n.Tag = TypeTagForSymbol(t);
 
-                        symbols_table[n.type_name] = n;
+                        symbols_table[n.TypeName] = n;
                     }
                 }
 

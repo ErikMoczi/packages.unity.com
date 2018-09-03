@@ -19,10 +19,16 @@ namespace Unity.Properties
         /// </summary>
         Type ValueType { get; }
         
+        Type ContainerType { get; }
+        
         /// <summary>
         /// When true, calling <c>SetObjectValue</c> will throw. 
         /// </summary>
         bool IsReadOnly { get; }
+
+        object GetObjectValue(IPropertyContainer container);
+
+        void SetObjectValue(IPropertyContainer container, object value);
     }
 
     public interface ITypedContainerProperty<in TContainer> : IProperty

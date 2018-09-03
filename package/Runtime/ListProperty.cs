@@ -6,7 +6,7 @@ namespace Unity.Properties
 {
     public class ListProperty<TContainer, TValue, TItem> : Property<TContainer, TValue>, IListProperty<TContainer, TItem>
         where TContainer : class, IPropertyContainer
-        where TValue : IList<TItem>
+        where TValue : class, IList<TItem>
     {
         public delegate TItem CreateInstanceMethod(TContainer c);
 
@@ -22,7 +22,8 @@ namespace Unity.Properties
 
         private static TItem DefaultCreateInstance(TContainer unused)
         {
-            Debug.Assert(typeof(TItem).IsValueType, $"List on container {typeof(TContainer)} of reference type {typeof(TItem)} should have their createInstanceMethod specified");
+            Debug.Assert(typeof(TItem).IsValueType,
+                $"List on container {typeof(TContainer)} of reference type {typeof(TItem)} should have their createInstanceMethod specified");
             return default(TItem);
         }
 
@@ -30,47 +31,46 @@ namespace Unity.Properties
         {
             var value = GetValue(container);
             
-            // Delegate the Visit implementation to the user
-            if (TryUserAccept(ref container, visitor, value))
+            if (false == visitor.ExcludeVisit(container,
+                new VisitContext<TValue> {Property = this, Value = value, Index = -1}))
             {
-                // User has handled the visit; early exit
-                return;
-            }
+                var listContext =
+                    new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
 
-            var itemTypeVisitor = visitor as IPropertyVisitor<TItem>;
-            var listContext = new ListContext<TValue> {Property = this, Value = value, Index = -1, Count = value.Count};
-
-            if (visitor.BeginList(ref container, listContext))
-            {
-                var itemVisitContext = new VisitContext<TItem>
+                if (visitor.BeginList(ref container, listContext))
                 {
-                    // TODO: we have no properties for list items
-                    Property = null
-                };
-
-                for (var i = 0; i < Count(container); i++)
-                {
-                    var item = GetValueAtIndex(container, i);
-                    itemVisitContext.Value = item;
-                    itemVisitContext.Index = i;
-
-                    if (null != itemTypeVisitor)
+                    var itemVisitContext = new VisitContext<TItem>
                     {
-                        itemTypeVisitor.Visit(ref container, itemVisitContext);
-                    }
-                    else
+                        Property = this
+                    };
+
+                    var count = Count(container);
+                    
+                    for (var i = 0; i < count; i++)
                     {
-                        visitor.Visit(ref container, itemVisitContext);
+                        var item = GetValueAtIndex(container, i);
+                        itemVisitContext.Value = item;
+                        itemVisitContext.Index = i;
+
+                        if (false == visitor.ExcludeVisit(container, itemVisitContext))
+                        {
+                            visitor.Visit(container, itemVisitContext);
+                        }
                     }
                 }
+                visitor.EndList(ref container, listContext);
             }
-            visitor.EndList(ref container, listContext);
         }
 
         public int Count(TContainer container)
         {
             var list = GetValue(container);
             return list.Count;
+        }
+        
+        int IListProperty.Count(IPropertyContainer container)
+        {
+            return Count((TContainer) container);
         }
         
         public IEnumerator<TItem> GetEnumerator(TContainer container)
@@ -82,19 +82,39 @@ namespace Unity.Properties
         {
             Add(container, m_CreateInstanceMethod(container));
         }
+
+        public void AddObject(TContainer container, object item)
+        {
+            Add(container, (TItem)item);
+        }
+
+        public object GetObjectValueAtIndex(TContainer container, int index)
+        {
+            return GetValueAtIndex(container, index);
+        }
         
+        object IListProperty.GetObjectValueAtIndex(IPropertyContainer container, int index)
+        {
+            return GetObjectValueAtIndex((TContainer) container, index);
+        }
+
+        public void SetObjectValueAtIndex(TContainer container, int index, object value)
+        {
+            SetValueAtIndex(container, index, (TItem)value);
+        }
+
         public virtual void Add(TContainer container, TItem item)
         {
             var list = GetValue(container);
             list.Add(item);
-            container.VersionStorage?.IncrementVersion(this, ref container);
+            container.VersionStorage?.IncrementVersion(this, container);
         }
 
         public void Clear(TContainer container)
         {
             var list = GetValue(container);
             list.Clear();
-            container.VersionStorage?.IncrementVersion(this, ref container);
+            container.VersionStorage?.IncrementVersion(this, container);
         }
 
         public bool Contains(TContainer container, TItem item)
@@ -107,7 +127,7 @@ namespace Unity.Properties
         {
             var list = GetValue(container);
             var result = list.Remove(item);
-            container.VersionStorage?.IncrementVersion(this, ref container);
+            container.VersionStorage?.IncrementVersion(this, container);
             return result;
         }
 
@@ -121,14 +141,14 @@ namespace Unity.Properties
         {
             var list = GetValue(container);
             list.Insert(index, item);
-            container.VersionStorage?.IncrementVersion(this, ref container);
+            container.VersionStorage?.IncrementVersion(this, container);
         }
 
         public void RemoveAt(TContainer container, int index)
         {
             var list = GetValue(container);
             list.RemoveAt(index);
-            container.VersionStorage?.IncrementVersion(this, ref container);
+            container.VersionStorage?.IncrementVersion(this, container);
         }
         
         public virtual TItem GetValueAtIndex(TContainer container, int index)
@@ -147,7 +167,7 @@ namespace Unity.Properties
             }
             
             list[index] = value;
-            container.VersionStorage?.IncrementVersion(this, ref container);
+            container.VersionStorage?.IncrementVersion(this, container);
         }
         
         private static bool Equals(TItem a, TItem b)
@@ -163,7 +183,7 @@ namespace Unity.Properties
     
     public class StructListProperty<TContainer, TValue, TItem> : StructProperty<TContainer, TValue>, IStructListProperty<TContainer, TItem>
         where TContainer : struct, IPropertyContainer
-        where TValue : IList<TItem>
+        where TValue : class, IList<TItem>
     {
         public delegate TItem CreateInstanceMethod(ref TContainer c);
 
@@ -187,41 +207,34 @@ namespace Unity.Properties
         {
             var value = GetValue(ref container);
             
-            // Delegate the Visit implementation to the user
-            if (TryUserAccept(ref container, visitor, value))
+            if (false == visitor.ExcludeVisit(ref container,
+                new VisitContext<TValue> {Property = this, Value = value, Index = -1}))
             {
-                // User has handled the visit; early exit
-                return;
-            }
+                var listContext =
+                    new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
 
-            var itemTypeVisitor = visitor as IPropertyVisitor<TItem>;
-            var listContext = new ListContext<TValue> {Property = this, Value = value, Index = -1, Count = value.Count};
-
-            if (visitor.BeginList(ref container, listContext))
-            {
-                var itemVisitContext = new VisitContext<TItem>
+                if (visitor.BeginList(ref container, listContext))
                 {
-                    // TODO: we have no properties for list items
-                    Property = null
-                };
-
-                for (var i = 0; i < Count(ref container); i++)
-                {
-                    var item = GetValueAtIndex(ref container, i);
-                    itemVisitContext.Value = item;
-                    itemVisitContext.Index = i;
-
-                    if (null != itemTypeVisitor)
+                    var itemVisitContext = new VisitContext<TItem>
                     {
-                        itemTypeVisitor.Visit(ref container, itemVisitContext);
-                    }
-                    else
+                        Property = this
+                    };
+
+                    var count = Count(ref container);
+                    for (var i = 0; i < count; i++)
                     {
-                        visitor.Visit(ref container, itemVisitContext);
+                        var item = GetValueAtIndex(ref container, i);
+                        itemVisitContext.Value = item;
+                        itemVisitContext.Index = i;
+
+                        if (false == visitor.ExcludeVisit(ref container, itemVisitContext))
+                        {
+                            visitor.Visit(ref container, itemVisitContext);
+                        }
                     }
                 }
+                visitor.EndList(ref container, listContext);
             }
-            visitor.EndList(ref container, listContext);
         }
         
         public int Count(ref TContainer container)
@@ -229,12 +242,18 @@ namespace Unity.Properties
             var list = GetValue(ref container);
             return list.Count;
         }
+        
+        int IListProperty.Count(IPropertyContainer container)
+        {
+            var c = (TContainer)container;
+            return Count(ref c);
+        }
 
         public void Clear(ref TContainer container)
         {
             var list = GetValue(ref container);
             list.Clear();
-            container.VersionStorage?.IncrementVersion(this, ref container);
+            container.VersionStorage?.IncrementVersion(this, container);
         }
         
         public IEnumerator<TItem> GetEnumerator(ref TContainer container)
@@ -246,19 +265,35 @@ namespace Unity.Properties
         {
             Add(ref container, m_CreateInstanceMethod(ref container));
         }
+
+        public object GetObjectValueAtIndex(ref TContainer container, int index)
+        {
+            return GetValueAtIndex(ref container, index);
+        }
         
+        object IListProperty.GetObjectValueAtIndex(IPropertyContainer container, int index)
+        {
+            var c = (TContainer) container;
+            return GetObjectValueAtIndex(ref c, index);
+        }
+
+        public void SetObjectValueAtIndex(ref TContainer container, int index, object value)
+        {
+            SetValueAtIndex(ref container, index, (TItem)value);
+        }
+
         public virtual void Add(ref TContainer container, TItem item)
         {
             var list = GetValue(ref container);
             list.Add(item);
-            container.VersionStorage?.IncrementVersion(this, ref container);
+            container.VersionStorage?.IncrementVersion(this, container);
         }
 
         public void Clear(TContainer container)
         {
             var list = GetValue(ref container);
             list.Clear();
-            container.VersionStorage?.IncrementVersion(this, ref container);
+            container.VersionStorage?.IncrementVersion(this, container);
         }
 
         public bool Contains(ref TContainer container, TItem item)
@@ -271,7 +306,7 @@ namespace Unity.Properties
         {
             var list = GetValue(ref  container);
             var result = list.Remove(item);
-            container.VersionStorage?.IncrementVersion(this, ref container);
+            container.VersionStorage?.IncrementVersion(this, container);
             return result;
         }
 
@@ -285,14 +320,14 @@ namespace Unity.Properties
         {
             var list = GetValue(ref container);
             list.Insert(index, item);
-            container.VersionStorage?.IncrementVersion(this, ref container);
+            container.VersionStorage?.IncrementVersion(this, container);
         }
 
         public void RemoveAt(ref TContainer container, int index)
         {
             var list = GetValue(ref container);
             list.RemoveAt(index);
-            container.VersionStorage?.IncrementVersion(this, ref container);
+            container.VersionStorage?.IncrementVersion(this, container);
         }
         
         public TItem GetValueAtIndex(ref TContainer container, int index)
@@ -311,7 +346,7 @@ namespace Unity.Properties
             }
             
             list[index] = value;
-            container.VersionStorage?.IncrementVersion(this, ref container);
+            container.VersionStorage?.IncrementVersion(this, container);
         }
         
         private static bool Equals(TItem a, TItem b)
@@ -327,7 +362,7 @@ namespace Unity.Properties
     
     public class ContainerListProperty<TContainer, TValue, TItem> : ListProperty<TContainer, TValue, TItem>
         where TContainer : class, IPropertyContainer
-        where TValue : IList<TItem>
+        where TValue : class, IList<TItem>
         where TItem : class, IPropertyContainer
     {
         public ContainerListProperty(string name, GetValueMethod getValue, SetValueMethod setValue, CreateInstanceMethod createInstanceMethod = null) 
@@ -339,64 +374,44 @@ namespace Unity.Properties
         {
             var value = GetValue(container);
             
-            // Delegate the Visit implementation to the user
-            if (TryUserAccept(ref container, visitor, value))
+            if (false == visitor.ExcludeVisit(container,
+                new VisitContext<TValue> {Property = this, Value = value, Index = -1}))
             {
-                // User has handled the visit; early exit
-                return;
-            }
-           
-            var listContext = new ListContext<TValue> {Property = this, Value = value, Index = -1, Count = value.Count};
+                var listContext =
+                    new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
 
-            if (visitor.BeginList(ref container, listContext))
-            {
-                var typedItemVisitor = visitor as IPropertyVisitor<TItem>;
-
-                if (null != typedItemVisitor)
+                if (visitor.BeginList(ref container, listContext))
                 {
-                    for (var i=0; i<Count(container); i++)
+                    var itemVisitContext = new VisitContext<TItem>
                     {
-                        var item = GetValueAtIndex(container, i);
-                        
-                        var context = new VisitContext<TItem>
-                        {
-                            // TODO: we have no property for items
-                            Property = null,
-                            Value = item,
-                            Index = i
-                        };
+                        Property = this
+                    };
 
-                        typedItemVisitor.Visit(ref container, context);
-                    }
-                }
-                else
-                {
                     var count = Count(container);
-                    for (var i=0; i<count; i++)
+                    for (var i = 0; i < count; i++)
                     {
                         var item = GetValueAtIndex(container, i);
-                        var context = new SubtreeContext<TItem>
+                        itemVisitContext.Value = item;
+                        itemVisitContext.Index = i;
+
+                        if (false == visitor.ExcludeVisit(container, itemVisitContext))
                         {
-                            Property = this,
-                            Value = item,
-                            Index = i
-                        };
-                    
-                        if (visitor.BeginContainer(ref container, context))
-                        {
-                            item.PropertyBag.Visit(item, visitor);
+                            if (visitor.BeginContainer(ref container, itemVisitContext))
+                            {
+                                item.PropertyBag.Visit(item, visitor);
+                            }
+                            visitor.EndContainer(ref container, itemVisitContext);
                         }
-                        visitor.EndContainer(ref container, context);
                     }
                 }
+                visitor.EndList(ref container, listContext);
             }
-            visitor.EndList(ref container, listContext);
         }
     }
     
     public class StructContainerListProperty<TContainer, TValue, TItem> : StructListProperty<TContainer, TValue, TItem>
         where TContainer : struct, IPropertyContainer
-        where TValue : IList<TItem>
+        where TValue : class, IList<TItem>
         where TItem : class, IPropertyContainer
     {
         public StructContainerListProperty(string name, GetValueMethod getValue, SetValueMethod setValue, CreateInstanceMethod createInstanceMethod = null) 
@@ -408,64 +423,44 @@ namespace Unity.Properties
         {
             var value = GetValue(ref container);
             
-            // Delegate the Visit implementation to the user
-            if (TryUserAccept(ref container, visitor, value))
+            if (false == visitor.ExcludeVisit(ref container,
+                new VisitContext<TValue> {Property = this, Value = value, Index = -1}))
             {
-                // User has handled the visit; early exit
-                return;
-            }
-           
-            var listContext = new ListContext<TValue> { Property = this, Value = value, Index = -1, Count = value.Count };
+                var listContext =
+                    new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
 
-            if (visitor.BeginList(ref container, listContext))
-            {
-                var typedItemVisitor = visitor as IPropertyVisitor<TItem>;
-
-                if (null != typedItemVisitor)
+                if (visitor.BeginList(ref container, listContext))
                 {
-                    for (var i = 0; i < Count(ref container); i++)
+                    var itemVisitContext = new VisitContext<TItem>
                     {
-                        var item = GetValueAtIndex(ref container, i);
-                        
-                        var context = new VisitContext<TItem>
-                        {
-                            // TODO: we have no property for items
-                            Property = null,
-                            Value = item,
-                            Index = i
-                        };
+                        Property = this
+                    };
 
-                        typedItemVisitor.Visit(ref container, context);
-                    }
-                }
-                else
-                {
                     var count = Count(ref container);
-                    for (var i=0; i<count; i++)
+                    for (var i = 0; i < count; i++)
                     {
                         var item = GetValueAtIndex(ref container, i);
-                        var context = new SubtreeContext<TItem>
+                        itemVisitContext.Value = item;
+                        itemVisitContext.Index = i;
+
+                        if (false == visitor.ExcludeVisit(ref container, itemVisitContext))
                         {
-                            Property = this,
-                            Value = item,
-                            Index = i
-                        };
-                    
-                        if (visitor.BeginContainer(ref container, context))
-                        {
-                            item.PropertyBag.Visit(item, visitor);
+                            if (visitor.BeginContainer(ref container, itemVisitContext))
+                            {
+                                item.PropertyBag.Visit(item, visitor);
+                            }
+                            visitor.EndContainer(ref container, itemVisitContext);
                         }
-                        visitor.EndContainer(ref container, context);
                     }
                 }
+                visitor.EndList(ref container, listContext);
             }
-            visitor.EndList(ref container, listContext);
         }
     }
     
     public class MutableContainerListProperty<TContainer, TValue, TItem> : ListProperty<TContainer, TValue, TItem>
         where TContainer : class, IPropertyContainer
-        where TValue : IList<TItem>
+        where TValue : class, IList<TItem>
         where TItem : struct, IPropertyContainer
     {
         public MutableContainerListProperty(string name, GetValueMethod getValue, SetValueMethod setValue, CreateInstanceMethod createInstanceMethod = null) 
@@ -477,70 +472,44 @@ namespace Unity.Properties
         {
             var value = GetValue(container);
             
-            // Delegate the Visit implementation to the user
-            if (TryUserAccept(ref container, visitor, value))
+            if (false == visitor.ExcludeVisit(container,
+                new VisitContext<TValue> {Property = this, Value = value, Index = -1}))
             {
-                // User has handled the visit; early exit
-                return;
-            }
-           
-            var listContext = new ListContext<TValue> {Property = this, Value = value, Index = -1, Count = value.Count};
+                var listContext =
+                    new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
 
-            if (visitor.BeginList(ref container, listContext))
-            {
-                var typedItemVisitor = visitor as IPropertyVisitor<TItem>;
-
-                if (null != typedItemVisitor)
+                if (visitor.BeginList(ref container, listContext))
                 {
-                    for (var i=0; i<Count(container); i++)
+                    var itemVisitContext = new VisitContext<TItem>
                     {
-                        var item = GetValueAtIndex(container, i);
-                        
-                        var context = new VisitContext<TItem>
-                        {
-                            // TODO: we have no property for items
-                            Property = null,
-                            Value = item,
-                            Index = i
-                        };
+                        Property = this
+                    };
 
-                        typedItemVisitor.Visit(ref container, context);
-                        
-                        // can't have a ref to a list item, so always assign it back
-                        SetValueAtIndex(container, i, context.Value);
-                    }
-                }
-                else
-                {
                     var count = Count(container);
-                    for (var i=0; i<count; i++)
+                    for (var i = 0; i < count; i++)
                     {
                         var item = GetValueAtIndex(container, i);
-                        var context = new SubtreeContext<TItem>
+                        itemVisitContext.Value = item;
+                        itemVisitContext.Index = i;
+
+                        if (false == visitor.ExcludeVisit(container, itemVisitContext))
                         {
-                            Property = this,
-                            Value = item,
-                            Index = i
-                        };
-                    
-                        if (visitor.BeginContainer(ref container, context))
-                        {
-                            item.PropertyBag.VisitStruct(ref item, visitor);
+                            if (visitor.BeginContainer(ref container, itemVisitContext))
+                            {
+                                item.PropertyBag.Visit(ref item, visitor);
+                            }
+                            visitor.EndContainer(ref container, itemVisitContext);
                         }
-                        visitor.EndContainer(ref container, context);
-                        
-                        // can't have a ref to a list item, so always assign it back
-                        SetValueAtIndex(container, i, context.Value);
                     }
                 }
+                visitor.EndList(ref container, listContext);
             }
-            visitor.EndList(ref container, listContext);
         }
     }
     
     public class StructMutableContainerListProperty<TContainer, TValue, TItem> : StructListProperty<TContainer, TValue, TItem>
         where TContainer : struct, IPropertyContainer
-        where TValue : IList<TItem>
+        where TValue : class, IList<TItem>
         where TItem : struct, IPropertyContainer
     {
         public StructMutableContainerListProperty(string name, GetValueMethod getValue, SetValueMethod setValue, CreateInstanceMethod createInstanceMethod = null) 
@@ -552,64 +521,38 @@ namespace Unity.Properties
         {
             var value = GetValue(ref container);
             
-            // Delegate the Visit implementation to the user
-            if (TryUserAccept(ref container, visitor, value))
+            if (false == visitor.ExcludeVisit(ref container,
+                new VisitContext<TValue> {Property = this, Value = value, Index = -1}))
             {
-                // User has handled the visit; early exit
-                return;
-            }
-           
-            var listContext = new ListContext<TValue> {Property = this, Value = value, Index = -1, Count = value.Count};
+                var listContext =
+                    new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
 
-            if (visitor.BeginList(ref container, listContext))
-            {
-                var typedItemVisitor = visitor as IPropertyVisitor<TItem>;
-
-                if (null != typedItemVisitor)
+                if (visitor.BeginList(ref container, listContext))
                 {
-                    for (var i=0; i<Count(ref container); i++)
+                    var itemVisitContext = new VisitContext<TItem>
                     {
-                        var item = GetValueAtIndex(ref container, i);
-                        
-                        var context = new VisitContext<TItem>
-                        {
-                            // TODO: we have no property for items
-                            Property = null,
-                            Value = item,
-                            Index = i
-                        };
+                        Property = this
+                    };
 
-                        typedItemVisitor.Visit(ref container, context);
-                        
-                        // can't have a ref to a list item, so always assign it back
-                        SetValueAtIndex(ref container, i, context.Value);
-                    }
-                }
-                else
-                {
                     var count = Count(ref container);
-                    for (var i=0; i<count; i++)
+                    for (var i = 0; i < count; i++)
                     {
                         var item = GetValueAtIndex(ref container, i);
-                        var context = new SubtreeContext<TItem>
+                        itemVisitContext.Value = item;
+                        itemVisitContext.Index = i;
+
+                        if (false == visitor.ExcludeVisit(ref container, itemVisitContext))
                         {
-                            Property = this,
-                            Value = item,
-                            Index = i
-                        };
-                    
-                        if (visitor.BeginContainer(ref container, context))
-                        {
-                            item.PropertyBag.VisitStruct(ref item, visitor);
+                            if (visitor.BeginContainer(ref container, itemVisitContext))
+                            {
+                                item.PropertyBag.Visit(ref item, visitor);
+                            }
+                            visitor.EndContainer(ref container, itemVisitContext);
                         }
-                        visitor.EndContainer(ref container, context);
-                        
-                        // can't have a ref to a list item, so always assign it back
-                        SetValueAtIndex(ref container, i, context.Value);
                     }
                 }
+                visitor.EndList(ref container, listContext);
             }
-            visitor.EndList(ref container, listContext);
         }
     }
 }

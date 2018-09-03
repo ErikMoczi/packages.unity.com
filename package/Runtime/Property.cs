@@ -14,8 +14,9 @@ namespace Unity.Properties
 
         public string Name { get; }
         public Type ValueType => typeof(TValue);
+        public Type ContainerType => typeof(TContainer);
         public virtual bool IsReadOnly => m_SetValue == null;
-
+        
         private Property(string name)
         {
             Name = name;
@@ -27,9 +28,24 @@ namespace Unity.Properties
             m_GetValue = getValue;
             m_SetValue = setValue;
         }
+        
+        public virtual object GetObjectValue(IPropertyContainer container)
+        {
+            return GetValue((TContainer) container);
+        }
+
+        public virtual void SetObjectValue(IPropertyContainer container, object value)
+        {
+            // TODO: value type coercion
+            SetValue((TContainer)container, (TValue)value);
+        }
 
         public virtual TValue GetValue(TContainer container)
         {
+            if (m_GetValue == null)
+            {
+                return default(TValue);
+            }
             return m_GetValue(container);
         }
 
@@ -41,11 +57,15 @@ namespace Unity.Properties
             }
             
             m_SetValue(container, value);
-            container.VersionStorage?.IncrementVersion(this, ref container);
+            container.VersionStorage?.IncrementVersion(this, container);
         }
 
         private bool Equals(TContainer container, TValue value)
         {
+            if (m_GetValue == null)
+            {
+                return false;
+            }
             var v = m_GetValue(container);
 
             if (null == v && null == value)
@@ -58,53 +78,11 @@ namespace Unity.Properties
 
         public virtual void Accept(TContainer container, IPropertyVisitor visitor)
         {
-            // Have a single GetValue call per property visit
-            // Get value is a user driven operation. 
-            // We don't know performance impact or side effects
-            var value = GetValue(container);
-
-            // Delegate the Visit implementaton to the user
-            if (TryUserAccept(ref container, visitor, value))
+            var context = new VisitContext<TValue> { Property = this, Value = GetValue(container), Index = -1 };
+            if (false == visitor.ExcludeVisit(container, context))
             {
-                // User has handled the visit; early exit
-                return;
+                visitor.Visit(container, context);
             }
-
-            // Default visit implementation
-            visitor.Visit(ref container, new VisitContext<TValue> {Property = this, Value = value, Index = -1});
-        }
-
-        /// <summary>
-        /// Checks for user implemntations of IPropertyVisitor and IPropertyVisitorValidaton and returns true if the visit was handled
-        /// </summary>
-        /// <param name="container"></param>
-        /// <param name="visitor"></param>
-        /// <returns>True if the default Accept method should be skipped</returns>
-        protected bool TryUserAccept(ref TContainer container, IPropertyVisitor visitor, TValue value)
-        {
-            var typedValidation = visitor as IPropertyVisitorValidation<TValue>;
-
-            if (null != typedValidation && !typedValidation.ShouldVisit(ref container, new VisitContext<TValue> {Property = this, Value = value, Index = -1}))
-            {
-                return true;
-            }
-
-            var validation = visitor as IPropertyVisitorValidation;
-            
-            if (null != validation && !validation.ShouldVisit(ref container, new VisitContext<TValue> {Property = this, Value = value, Index = -1}))
-            {
-                return true;
-            }
-
-            var typedVisitor = visitor as IPropertyVisitor<TValue>;
-
-            if (null == typedVisitor)
-            {
-                return false;
-            }
-            
-            typedVisitor.Visit(ref container, new VisitContext<TValue> {Property = this, Value = value, Index = -1});
-            return true;
         }
     }
     
@@ -119,6 +97,7 @@ namespace Unity.Properties
 
         public string Name { get; }
         public Type ValueType => typeof(TValue);
+        public Type ContainerType => typeof(TContainer);
         public virtual bool IsReadOnly => m_SetValue == null;
 
         private StructProperty(string name)
@@ -132,9 +111,28 @@ namespace Unity.Properties
             m_GetValue = getValue;
             m_SetValue = setValue;
         }
+        
+        public virtual object GetObjectValue(IPropertyContainer container)
+        {
+            var temp = (TContainer)container;
+            return GetValue(ref temp);
+        }
+
+        public void SetObjectValue(IPropertyContainer container, object value)
+        {
+            // here we have to copy the given container to a temp variable, and then assign the property value...
+            // which makes no sense for a struct container
+            
+            // not throwing here would open the door to hard-to-find bugs
+            throw new NotSupportedException("SetObjectValue cannot be called on a StructProperty. Use SetValue instead.");
+        }
 
         public virtual TValue GetValue(ref TContainer container)
         {
+            if (m_GetValue == null)
+            {
+                return default(TValue);
+            }
             return m_GetValue(ref container);
         }
 
@@ -146,11 +144,15 @@ namespace Unity.Properties
             }
             
             m_SetValue(ref container, value);
-            container.VersionStorage?.IncrementVersion(this, ref container);
+            container.VersionStorage?.IncrementVersion(this, container);
         }
 
         private bool Equals(TContainer container, TValue value)
         {
+            if (m_GetValue == null)
+            {
+                return false;
+            }
             var v = m_GetValue(ref container);
 
             if (null == v && null == value)
@@ -163,52 +165,11 @@ namespace Unity.Properties
 
         public virtual void Accept(ref TContainer container, IPropertyVisitor visitor)
         {
-            // Have a single GetValue call per property visit
-            // Get value is a user driven operation. 
-            // We don't know performance impact or side effects
-            var value = GetValue(ref container);
-            
-            // Delegate the Visit implementaton to the user
-            if (TryUserAccept(ref container, visitor, value))
+            var context = new VisitContext<TValue> { Property = this, Value = GetValue(ref container), Index = -1 };
+            if (false == visitor.ExcludeVisit(ref container, context))
             {
-                // User has handled the visit; early exit
-                return;
+                visitor.Visit(ref container, context);
             }
-            
-            // Default visit implementation
-            visitor.Visit(ref container, new VisitContext<TValue> {Property = this, Value = value, Index = -1});
-        }
-
-        /// <summary>
-        /// Checks for user implemntations of IPropertyVisitor and IPropertyVisitorValidaton and returns true if the visit was handled
-        /// </summary>
-        /// <param name="container"></param>
-        /// <param name="visitor"></param>
-        /// <returns>True if the default Accept method should be skipped</returns>
-        protected bool TryUserAccept(ref TContainer container, IPropertyVisitor visitor, TValue value)
-        {
-            var typedValidation = visitor as IPropertyVisitorValidation<TValue>;
-
-            if (null != typedValidation && !typedValidation.ShouldVisit(ref container, new VisitContext<TValue> {Property = this, Value = value, Index = -1}))
-            {
-                return true;
-            }
-
-            var validation = visitor as IPropertyVisitorValidation;
-            
-            if (null != validation && !validation.ShouldVisit(ref container, new VisitContext<TValue> {Property = this, Value = value, Index = -1}))
-            {
-                return true;
-            }
-
-            var typedVisitor = visitor as IPropertyVisitor<TValue>;
-            if (null == typedVisitor)
-            {
-                return false;
-            }
-
-            typedVisitor.Visit(ref container, new VisitContext<TValue> {Property = this, Value = value, Index = -1});
-            return true;
         }
     }
 
@@ -223,21 +184,14 @@ namespace Unity.Properties
         public override void Accept(TContainer container, IPropertyVisitor visitor)
         {
             var value = GetValue(container);
-
-            var typedVisitor = visitor as IPropertyVisitor<TValue>;
-
-            if (null != typedVisitor)
+            var context = new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
+            if (false == visitor.ExcludeVisit(container, context))
             {
-                typedVisitor.Visit(ref container, new VisitContext<TValue> { Property = this, Value = value, Index = -1 });
-            }
-            else
-            {
-                var subtreeContext = new SubtreeContext<TValue> {Property = this, Index = -1};
-                if (visitor.BeginContainer(ref container, subtreeContext))
+                if (visitor.BeginContainer(ref container, context))
                 {
                     value.PropertyBag.Visit(value, visitor);
                 }
-                visitor.EndContainer(ref container, subtreeContext);
+                visitor.EndContainer(ref container, context);
             }
         }
     }
@@ -258,27 +212,20 @@ namespace Unity.Properties
         
         private static void RefVisit(ref TValue value, IPropertyVisitor visitor)
         {
-            value.PropertyBag.VisitStruct(ref value, visitor);
+            value.PropertyBag.Visit(ref value, visitor);
         }
         
         public override void Accept(TContainer container, IPropertyVisitor visitor)
         {
-            var typedVisitor = visitor as IPropertyVisitor<TValue>;
-
-            if (null != typedVisitor)
+            var value = GetValue(container);
+            var context = new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
+            if (false == visitor.ExcludeVisit(container, context))
             {
-                typedVisitor.Visit(ref container, new VisitContext<TValue> { Property = this, Value = GetValue(container), Index = -1 });
-            }
-            else
-            {
-                var subtreeContext = new SubtreeContext<TValue> { Property = this, Index = -1 };
-                if (visitor.BeginContainer(ref container, subtreeContext))
+                if (visitor.BeginContainer(ref container, context))
                 {
-                    // the compiler generates a static RefVisitMethod delegate from on RefVisit
-                    // no allocation here
                     RefAccess(container, RefVisit, visitor);
                 }
-                visitor.EndContainer(ref container, subtreeContext);
+                visitor.EndContainer(ref container, context);
             }
         }
     }
@@ -294,21 +241,14 @@ namespace Unity.Properties
         public override void Accept(ref TContainer container, IPropertyVisitor visitor)
         {
             var value = GetValue(ref container);
-
-            var typedVisitor = visitor as IPropertyVisitor<TValue>;
-
-            if (null != typedVisitor)
+            var context = new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
+            if (false == visitor.ExcludeVisit(ref container, context))
             {
-                typedVisitor.Visit(ref container, new VisitContext<TValue> {Property = this, Value = value, Index = -1});
-            }
-            else
-            {
-                var subtreeContext = new SubtreeContext<TValue> {Property = this, Index = -1};
-                if (visitor.BeginContainer(ref container, subtreeContext))
+                if (visitor.BeginContainer(ref container, context))
                 {
-                    value.PropertyBag.Visit(value, visitor);
+                    value.PropertyBag.Visit(ref container, visitor);
                 }
-                visitor.EndContainer(ref container, subtreeContext);
+                visitor.EndContainer(ref container, context);
             }
         }
     }
@@ -329,27 +269,20 @@ namespace Unity.Properties
         
         private static void RefVisit(ref TValue value, IPropertyVisitor visitor)
         {
-            value.PropertyBag.VisitStruct(ref value, visitor);
+            value.PropertyBag.Visit(ref value, visitor);
         }
         
         public override void Accept(ref TContainer container, IPropertyVisitor visitor)
         {
-            var typedVisitor = visitor as IPropertyVisitor<TValue>;
-
-            if (null != typedVisitor)
+            var value = GetValue(ref container);
+            var context = new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
+            if (false == visitor.ExcludeVisit(ref container, context))
             {
-                typedVisitor.Visit(ref container, new VisitContext<TValue> { Property = this, Value = GetValue(ref container), Index = -1 });
-            }
-            else
-            {
-                var subtreeContext = new SubtreeContext<TValue> { Property = this, Index = -1 };
-                if (visitor.BeginContainer(ref container, subtreeContext))
+                if (visitor.BeginContainer(ref container, context))
                 {
-                    // the compiler generates a static RefVisitMethod delegate from on RefVisit
-                    // no allocation here
                     RefAccess(ref container, RefVisit, visitor);
                 }
-                visitor.EndContainer(ref container, subtreeContext);
+                visitor.EndContainer(ref container, context);
             }
         }
     }

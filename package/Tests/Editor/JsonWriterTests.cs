@@ -1,52 +1,57 @@
-﻿using System.ComponentModel.Design;
-using UnityEngine;
+﻿using UnityEngine;
 using NUnit.Framework;
-using Unity.Properties;
 using Unity.Properties.Serialization;
 
-[TestFixture]
-public class JsonWriterTests
+namespace Unity.Properties.Tests.Serialization
 {
-    [Test]
-    public void WhenEmptyPropertyContainer_JsonSerialization_ReturnsAnEmptyResult()
+    [TestFixture]
+    internal class JsonWriterTests
     {
-        var result = JsonSerializer.SerializeStruct(new NullStructContainer());
-        Assert.NotZero(result.Length);
-    }
-
-    [Test]
-    public void WhenStructPropertyContainer_JsonSerialization_ReturnsAValidResult()
-    {
-        var result = JsonSerializer.SerializeStruct(new TestStructContainer());
-        Assert.IsTrue(result.Contains("FloatValue"));
-    }
-
-    private struct NullStructContainer : IPropertyContainer
-    {
-        public IVersionStorage VersionStorage => PassthroughVersionStorage.Instance;
-        private static readonly PropertyBag s_PropertyBag = new PropertyBag();
-        public IPropertyBag PropertyBag => s_PropertyBag;
-    }
-
-    private struct TestStructContainer : IPropertyContainer
-    {
-        private float m_FloatValue;
-
-        public float FloatValue
+        [Test]
+        public void WhenEmptyPropertyContainer_JsonSerialization_ReturnsAnEmptyResult()
         {
-            get { return FloatValueProperty.GetValue(ref this); }
-            set { FloatValueProperty.SetValue(ref this, value); }
+            var obj = new NullStructContainer();
+            var result = JsonSerializer.Serialize(ref obj);
+            Assert.NotZero(result.Length);
         }
 
-        public static readonly StructProperty<TestStructContainer, float> FloatValueProperty = new StructProperty<TestStructContainer, float>(
-            nameof(FloatValue),
-            (ref TestStructContainer c) =>  c.m_FloatValue,
-            (ref TestStructContainer c, float v) => c.m_FloatValue = v);
+        [Test]
+        public void WhenStructPropertyContainer_JsonSerialization_ReturnsAValidResult()
+        {
+            var obj = new TestStructContainer();
+            var result = JsonSerializer.Serialize(ref obj);
+            Debug.Log(result);
+            Assert.IsTrue(result.Contains("FloatValue"));
+        }
 
-        public IVersionStorage VersionStorage => PassthroughVersionStorage.Instance;
+        private struct NullStructContainer : IPropertyContainer
+        {
+            public IVersionStorage VersionStorage => PassthroughVersionStorage.Instance;
+            private static readonly PropertyBag s_PropertyBag = new PropertyBag();
+            public IPropertyBag PropertyBag => s_PropertyBag;
+        }
 
-        private static readonly PropertyBag s_PropertyBag = new PropertyBag(FloatValueProperty);
+        private struct TestStructContainer : IPropertyContainer
+        {
+            private float m_FloatValue;
 
-        public IPropertyBag PropertyBag => s_PropertyBag;
+            public float FloatValue
+            {
+                get { return FloatValueProperty.GetValue(ref this); }
+                set { FloatValueProperty.SetValue(ref this, value); }
+            }
+
+            public static readonly StructProperty<TestStructContainer, float> FloatValueProperty =
+                new StructProperty<TestStructContainer, float>(
+                    nameof(FloatValue),
+                    (ref TestStructContainer c) => c.m_FloatValue,
+                    (ref TestStructContainer c, float v) => c.m_FloatValue = v);
+
+            public IVersionStorage VersionStorage => PassthroughVersionStorage.Instance;
+
+            private static readonly PropertyBag s_PropertyBag = new PropertyBag(FloatValueProperty);
+
+            public IPropertyBag PropertyBag => s_PropertyBag;
+        }
     }
 }

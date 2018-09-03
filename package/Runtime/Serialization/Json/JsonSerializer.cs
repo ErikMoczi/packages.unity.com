@@ -14,10 +14,10 @@
             return JsonPropertyContainerWriter.Write(container, visitor);
         }
         
-        public static string SerializeStruct<TContainer>(TContainer container, JsonPropertyVisitor visitor = null)
+        public static string Serialize<TContainer>(ref TContainer container, JsonPropertyVisitor visitor = null)
             where TContainer : struct, IPropertyContainer
         {
-            return JsonPropertyContainerWriter.WriteStruct(ref container, visitor);
+            return JsonPropertyContainerWriter.Write(ref container, visitor);
         }
     }
 }

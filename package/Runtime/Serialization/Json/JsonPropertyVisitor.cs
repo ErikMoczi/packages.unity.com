@@ -1,14 +1,19 @@
 ﻿using System;
+using System.Globalization;
 
 namespace Unity.Properties.Serialization
 {
-    public class JsonPropertyVisitor : IBuiltInPropertyVisitor
+    public class JsonPropertyVisitor : PropertyVisitor,
+        ICustomVisit<bool>,
+        ICustomVisit<float>,
+        ICustomVisit<double>,
+        ICustomVisit<string>
     {
         public static class Style
         {
             public const int Space = 4;
         }
-
+        
         private static readonly StringBuffer s_StringBuffer = new StringBuffer(1024);
 
         public StringBuffer StringBuffer = s_StringBuffer;
@@ -19,299 +24,61 @@ namespace Unity.Properties.Serialization
             return StringBuffer?.ToString() ?? string.Empty;
         }
 
-        public void Visit<TContainer>(ref TContainer container, VisitContext<bool> context) where TContainer : IPropertyContainer
+        protected void AppendPrimitive(string value)
         {
-            if (context.Index != -1)
+            if (IsListItem)
             {
                 StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append(context.Value ? "true" : "false");
+                StringBuffer.Append(value);
                 StringBuffer.Append(",\n");
             }
             else
             {
                 StringBuffer.Append(' ', Style.Space * Indent);
                 StringBuffer.Append("\"");
-                StringBuffer.Append(context.Property.Name);
+                StringBuffer.Append(Property.Name);
                 StringBuffer.Append("\": ");
-                StringBuffer.Append(context.Value ? "true" : "false");
+                StringBuffer.Append(value);
                 StringBuffer.Append(",\n");
             }
         }
 
-        public void Visit<TContainer>(ref TContainer container, VisitContext<char> context) where TContainer : IPropertyContainer
+        protected override void Visit<TValue>(TValue value)
         {
-            if (context.Index != -1)
+            if (typeof(TValue).IsEnum)
             {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append("\",\n");
+                AppendPrimitive(Convert.ToInt32(value).ToString());
             }
             else
             {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Property.Name);
-                StringBuffer.Append("\": \"");
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append("\",\n");
+                AppendPrimitive(value.ToString());
             }
         }
 
-        public void Visit<TContainer>(ref TContainer container, VisitContext<sbyte> context) where TContainer : IPropertyContainer
+        void ICustomVisit<bool>.CustomVisit(bool value)
         {
-            if (context.Index != -1)
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
-            else
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Property.Name);
-                StringBuffer.Append("\": ");
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
+            AppendPrimitive(value ? "true" : "false");
         }
 
-        public void Visit<TContainer>(ref TContainer container, VisitContext<byte> context) where TContainer : IPropertyContainer
+        void ICustomVisit<float>.CustomVisit(float value)
         {
-            if (context.Index != -1)
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
-            else
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Property.Name);
-                StringBuffer.Append("\": ");
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
+            AppendPrimitive(value.ToString(CultureInfo.InvariantCulture));
         }
 
-        public void Visit<TContainer>(ref TContainer container, VisitContext<short> context) where TContainer : IPropertyContainer
+        void ICustomVisit<double>.CustomVisit(double value)
         {
-            if (context.Index != -1)
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
-            else
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Property.Name);
-                StringBuffer.Append("\": ");
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
+            AppendPrimitive(value.ToString(CultureInfo.InvariantCulture));
         }
 
-        public void Visit<TContainer>(ref TContainer container, VisitContext<int> context) where TContainer : IPropertyContainer
+        void ICustomVisit<string>.CustomVisit(string value)
         {
-            if (context.Index != -1)
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
-            else
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Property.Name);
-                StringBuffer.Append("\": ");
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
+            AppendPrimitive(JsonUtility.EncodeJsonString(value));
         }
 
-        public void Visit<TContainer>(ref TContainer container, VisitContext<long> context) where TContainer : IPropertyContainer
+        public override bool BeginContainer<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
         {
-            if (context.Index != -1)
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
-            else
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Property.Name);
-                StringBuffer.Append("\": ");
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
-        }
-
-        public void Visit<TContainer>(ref TContainer container, VisitContext<ushort> context) where TContainer : IPropertyContainer
-        {
-            if (context.Index != -1)
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
-            else
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Property.Name);
-                StringBuffer.Append("\": ");
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
-        }
-
-        public void Visit<TContainer>(ref TContainer container, VisitContext<uint> context) where TContainer : IPropertyContainer
-        {
-            if (context.Index != -1)
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
-            else
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Property.Name);
-                StringBuffer.Append("\": ");
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
-        }
-
-        public void Visit<TContainer>(ref TContainer container, VisitContext<ulong> context) where TContainer : IPropertyContainer
-        {
-            if (context.Index != -1)
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
-            else
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Property.Name);
-                StringBuffer.Append("\": ");
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
-        }
-
-        public void Visit<TContainer>(ref TContainer container, VisitContext<float> context) where TContainer : IPropertyContainer
-        {
-            if (context.Index != -1)
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
-            else
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Property.Name);
-                StringBuffer.Append("\": ");
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
-        }
-
-        public void Visit<TContainer>(ref TContainer container, VisitContext<double> context) where TContainer : IPropertyContainer
-        {
-            if (context.Index != -1)
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
-            else
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Property.Name);
-                StringBuffer.Append("\": ");
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append(",\n");
-            }
-        }
-
-        public void Visit<TContainer>(ref TContainer container, VisitContext<string> context) where TContainer : IPropertyContainer
-        {
-            if (context.Index != -1)
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append("\",\n");
-            }
-            else
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Property.Name);
-                StringBuffer.Append("\": \"");
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append("\",\n");
-            }
-        }
-
-        public void Visit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context) where TContainer : IPropertyContainer
-        {
-            if (context.Index != -1)
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append("\",\n");
-            }
-            else
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Property.Name);
-                StringBuffer.Append("\": \"");
-                StringBuffer.Append(context.Value);
-                StringBuffer.Append("\",\n");
-            }
-        }
-
-        public void VisitEnum<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
-            where TContainer : IPropertyContainer
-            where TValue : struct
-        {
-            if (context.Index != -1)
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append(Convert.ToInt32(context.Value));
-                StringBuffer.Append(",\n");
-            }
-            else
-            {
-                StringBuffer.Append(' ', Style.Space * Indent);
-                StringBuffer.Append("\"");
-                StringBuffer.Append(context.Property.Name);
-                StringBuffer.Append("\": ");
-                StringBuffer.Append(Convert.ToInt32(context.Value));
-                StringBuffer.Append(",\n");
-            }
-        }
-
-        public bool BeginContainer<TContainer, TValue>(ref TContainer container, SubtreeContext<TValue> context) where TContainer : IPropertyContainer
-        {
-            if (context.Index != -1)
+            base.BeginContainer(ref container, context);
+            if (IsListItem)
             {
                 Indent--;
                 StringBuffer.Length -= 1;
@@ -321,7 +88,7 @@ namespace Unity.Properties.Serialization
             {
                 StringBuffer.Append(' ', Style.Space * Indent);
                 StringBuffer.Append("\"");
-                StringBuffer.Append(context.Property.Name);
+                StringBuffer.Append(Property.Name);
                 StringBuffer.Append("\": {\n");
             }
 
@@ -330,8 +97,9 @@ namespace Unity.Properties.Serialization
             return true;
         }
 
-        public void EndContainer<TContainer, TValue>(ref TContainer container, SubtreeContext<TValue> context) where TContainer : IPropertyContainer
+        public override void EndContainer<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
         {
+            base.EndContainer(ref container, context);
             Indent--;
 
             // Remove the trailing comma
@@ -346,7 +114,7 @@ namespace Unity.Properties.Serialization
                 StringBuffer.Length -= 1;
             }
 
-            if (context.Index != -1)
+            if (IsListItem)
             {
                 Indent++;
             }
@@ -354,18 +122,20 @@ namespace Unity.Properties.Serialization
             StringBuffer.Append("},\n");
         }
 
-        public bool BeginList<TContainer, TValue>(ref TContainer container, ListContext<TValue> context) where TContainer : IPropertyContainer
+        public override bool BeginList<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
         {
+            base.BeginList(ref container, context);
             StringBuffer.Append(' ', Style.Space * Indent);
             StringBuffer.Append('\"');
-            StringBuffer.Append(context.Property.Name);
+            StringBuffer.Append(Property.Name);
             StringBuffer.Append("\": [\n");
             Indent++;
             return true;
         }
 
-        public void EndList<TContainer, TValue>(ref TContainer container, ListContext<TValue> context) where TContainer : IPropertyContainer
+        public override void EndList<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
         {
+            base.EndList(ref container, context);
             Indent--;
 
             // Remove the trailing comma
@@ -378,7 +148,8 @@ namespace Unity.Properties.Serialization
                 StringBuffer.Length -= 1;
             }
 
-            var skipNewline = StringBuffer[StringBuffer.Length - 1] == '}' && StringBuffer[StringBuffer.Length - 3] == ' ';
+            var skipNewline = StringBuffer[StringBuffer.Length - 1] == '}' &&
+                StringBuffer[StringBuffer.Length - 3] == ' ';
             skipNewline = skipNewline | StringBuffer[StringBuffer.Length - 1] == '[';
 
             if (!skipNewline)

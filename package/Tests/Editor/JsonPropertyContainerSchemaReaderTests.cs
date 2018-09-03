@@ -1,25 +1,24 @@
-﻿using System.ComponentModel.Design;
-using System.Linq;
+﻿using System.Linq;
 using UnityEngine;
 using NUnit.Framework;
-using Unity.Properties;
 using Unity.Properties.Serialization;
 
-
-[TestFixture]
-class JsonPropertyContainerSchemaReaderTests
+namespace Unity.Properties.Tests.Schema
 {
-    [Test]
-    public void WhenEmptyStringForSchema_SchemaReader_ReturnsAnEmptyContainerList()
+    [TestFixture]
+    internal class JsonPropertyContainerSchemaReaderTests
     {
-        var result = JsonPropertyContainerSchemaReader.Read(string.Empty);
-        Assert.Zero(result.Count);
-    }
+        [Test]
+        public void WhenEmptyStringForSchema_SchemaReader_ReturnsAnEmptyContainerList()
+        {
+            var result = JsonPropertyContainerSchemaReader.Read(string.Empty);
+            Assert.Zero(result.Count);
+        }
 
-    [Test]
-    public void WhenNoTypesInSchema_SchemaReadser_ReturnsAnEmptyContainerList()
-    {
-        var result = JsonPropertyContainerSchemaReader.Read(@"
+        [Test]
+        public void WhenNoTypesInSchema_SchemaReadser_ReturnsAnEmptyContainerList()
+        {
+            var result = JsonPropertyContainerSchemaReader.Read(@"
             [
                 {
                     ""SchemaVersion"": 1,
@@ -28,13 +27,13 @@ class JsonPropertyContainerSchemaReaderTests
                  }
             ]
         ");
-        Assert.Zero(result.Count);
-    }
-    
-    [Test]
-    public void WhenBasicTypesInSchema_SchemaReadser_ReturnsAValidContainerList()
-    {
-        var result = JsonPropertyContainerSchemaReader.Read(@"
+            Assert.Zero(result.Count);
+        }
+
+        [Test]
+        public void WhenBasicTypesInSchema_SchemaReadser_ReturnsAValidContainerList()
+        {
+            var result = JsonPropertyContainerSchemaReader.Read(@"
             [
                 {
                     ""SchemaVersion"": 1,
@@ -66,11 +65,12 @@ class JsonPropertyContainerSchemaReaderTests
                  }
             ]
         ");
-        Assert.AreEqual(1, result.Count);
-        Assert.AreEqual("HelloWorld", result[0].PropertyTypeNode.TypeName);
-        Assert.AreEqual(4, result[0].PropertyTypeNode.children.Count);
-        Assert.AreEqual(new System.Collections.Generic.List<string> { "Data", "Floats", "Ints", "Struct" },
-            result[0].PropertyTypeNode.children.Select(c => c.Key)
+            Assert.AreEqual(1, result.Count);
+            Assert.AreEqual("HelloWorld", result[0].PropertyTypeNode.TypeName);
+            Assert.AreEqual(4, result[0].PropertyTypeNode.children.Count);
+            Assert.AreEqual(new System.Collections.Generic.List<string> {"Data", "Floats", "Ints", "Struct"},
+                result[0].PropertyTypeNode.children.Select(c => c.Key)
             );
+        }
     }
 }

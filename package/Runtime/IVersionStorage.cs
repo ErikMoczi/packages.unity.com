@@ -2,14 +2,11 @@
 {
     public interface IVersionStorage
     {
-        int GetVersion<TContainer>(IProperty property, ref TContainer container)
-            where TContainer : IPropertyContainer;
-        
-        void IncrementVersion<TContainer>(IProperty property, ref TContainer container) 
-            where TContainer : IPropertyContainer;
+        int GetVersion(IProperty property, IPropertyContainer container);
+        void IncrementVersion(IProperty property, IPropertyContainer container);
     }
     
-    public class PassthroughVersionStorage : IVersionStorage
+    public sealed class PassthroughVersionStorage : IVersionStorage
     {
         public static PassthroughVersionStorage Instance { get; } = new PassthroughVersionStorage();
 
@@ -18,14 +15,12 @@
             
         }
         
-        public int GetVersion<TContainer>(IProperty property, ref TContainer container)
-            where TContainer : IPropertyContainer
+        public int GetVersion(IProperty property, IPropertyContainer container)
         {
             return 0;
         }
 
-        public void IncrementVersion<TContainer>(IProperty property, ref TContainer container) 
-            where TContainer : IPropertyContainer
+        public void IncrementVersion(IProperty property, IPropertyContainer container)
         {
             
         }

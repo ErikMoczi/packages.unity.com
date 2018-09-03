@@ -22,7 +22,7 @@ namespace Unity.Properties.Serialization
             return visitor.ToString();
         }
 
-        public static string WriteStruct<TContainer>(ref TContainer container, JsonPropertyVisitor visitor = null)
+        public static string Write<TContainer>(ref TContainer container, JsonPropertyVisitor visitor = null)
             where TContainer : struct, IPropertyContainer
         {
             if (null == visitor)
@@ -31,7 +31,7 @@ namespace Unity.Properties.Serialization
             }
 
             WritePrefix(visitor);
-            container.PropertyBag.VisitStruct(ref container, visitor);
+            container.PropertyBag.Visit(ref container, visitor);
             WriteSuffix(visitor);
 
             return visitor.ToString();

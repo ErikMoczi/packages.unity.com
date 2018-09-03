@@ -14,17 +14,10 @@ namespace Unity.Properties
 
         public override void Accept(TContainer container, IPropertyVisitor visitor)
         {
-            var value = GetValue(container);
-            
-            var typedVisitor = visitor as IPropertyVisitor<TValue>;
-
-            if (null != typedVisitor)
+            var context = new VisitContext<TValue> { Property = this, Value = GetValue(container), Index = -1 };
+            if (false == visitor.ExcludeVisit(container, context))
             {
-                typedVisitor.Visit(ref container, new VisitContext<TValue> {Property = this, Value = value, Index = -1});
-            }
-            else
-            {
-                visitor.VisitEnum(ref container, new VisitContext<TValue> {Property = this, Value = value, Index = -1});
+                visitor.VisitEnum(container, context);
             }
         }
     }
@@ -39,17 +32,100 @@ namespace Unity.Properties
 
         public override void Accept(ref TContainer container, IPropertyVisitor visitor)
         {
+            var context = new VisitContext<TValue> { Property = this, Value = GetValue(ref container), Index = -1 };
+            if (false == visitor.ExcludeVisit(ref container, context))
+            {
+                visitor.VisitEnum(ref container, context);
+            }
+        }
+    }
+    
+    public class EnumListProperty<TContainer, TValue, TItem> : ListProperty<TContainer, TValue, TItem>
+        where TContainer : class, IPropertyContainer
+        where TValue : class, IList<TItem>
+        where TItem : struct, IComparable, IFormattable, IConvertible
+    {
+        public EnumListProperty(string name, GetValueMethod getValue, SetValueMethod setValue, CreateInstanceMethod createInstance = null) : base(name, getValue, setValue, createInstance)
+        {
+            Assert.IsTrue(typeof(TItem).IsEnum);
+        }
+        
+        public override void Accept(TContainer container, IPropertyVisitor visitor)
+        {
+            var value = GetValue(container);
+            
+            if (false == visitor.ExcludeVisit(container,
+                new VisitContext<TValue> {Property = this, Value = value, Index = -1}))
+            {
+                var listContext =
+                    new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
+
+                if (visitor.BeginList(ref container, listContext))
+                {
+                    var itemVisitContext = new VisitContext<TItem>
+                    {
+                        Property = this
+                    };
+
+                    var count = Count(container);
+                    for (var i = 0; i < count; i++)
+                    {
+                        var item = GetValueAtIndex(container, i);
+                        itemVisitContext.Value = item;
+                        itemVisitContext.Index = i;
+
+                        if (false == visitor.ExcludeVisit(container, itemVisitContext))
+                        {
+                            visitor.VisitEnum(container, itemVisitContext);
+                        }
+                    }
+                }
+                visitor.EndList(ref container, listContext);
+            }
+        }
+    }
+    
+    public class StructEnumListProperty<TContainer, TValue, TItem> : StructListProperty<TContainer, TValue, TItem>
+        where TContainer : struct, IPropertyContainer
+        where TValue : class, IList<TItem>
+        where TItem : struct, IComparable, IFormattable, IConvertible
+    {
+        public StructEnumListProperty(string name, GetValueMethod getValue, SetValueMethod setValue, CreateInstanceMethod createInstance = null) : base(name, getValue, setValue, createInstance)
+        {
+            Assert.IsTrue(typeof(TItem).IsEnum);
+        }
+        
+        public override void Accept(ref TContainer container, IPropertyVisitor visitor)
+        {
             var value = GetValue(ref container);
             
-            var typedVisitor = visitor as IPropertyVisitor<TValue>;
+            if (false == visitor.ExcludeVisit(ref container,
+                new VisitContext<TValue> {Property = this, Value = value, Index = -1}))
+            {
+                var listContext =
+                    new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
 
-            if (null != typedVisitor)
-            {
-                typedVisitor.Visit(ref container, new VisitContext<TValue> {Property = this, Value = value, Index = -1});
-            }
-            else
-            {
-                visitor.VisitEnum(ref container, new VisitContext<TValue> {Property = this, Value = value, Index = -1});
+                if (visitor.BeginList(ref container, listContext))
+                {
+                    var itemVisitContext = new VisitContext<TItem>
+                    {
+                        Property = this
+                    };
+
+                    var count = Count(ref container);
+                    for (var i = 0; i < count; i++)
+                    {
+                        var item = GetValueAtIndex(ref container, i);
+                        itemVisitContext.Value = item;
+                        itemVisitContext.Index = i;
+
+                        if (false == visitor.ExcludeVisit(ref container, itemVisitContext))
+                        {
+                            visitor.VisitEnum(ref container, itemVisitContext);
+                        }
+                    }
+                }
+                visitor.EndList(ref container, listContext);
             }
         }
     }

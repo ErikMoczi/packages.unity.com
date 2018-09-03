@@ -11,7 +11,7 @@ namespace Unity.Properties
         bool Visit<TContainer>(TContainer container, IPropertyVisitor visitor) 
             where TContainer : class, IPropertyContainer;
         
-        bool VisitStruct<TContainer>(ref TContainer container, IPropertyVisitor visitor) 
+        bool Visit<TContainer>(ref TContainer container, IPropertyVisitor visitor) 
             where TContainer : struct, IPropertyContainer;
     }
 }

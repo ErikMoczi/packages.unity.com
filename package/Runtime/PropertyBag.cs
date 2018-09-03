@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Unity.Properties
@@ -28,7 +27,7 @@ namespace Unity.Properties
         {
             m_Properties = new List<IProperty>(properties);
             m_Map = new Dictionary<string, IProperty>(m_Properties.Count);
-            foreach (var n in properties)
+            foreach (var n in m_Properties)
             {
                 Assert.IsFalse(m_Map.ContainsKey(n.Name), $"PropertyBag already contains a property named {n.Name}");
                 m_Map[n.Name] = n;
@@ -68,19 +67,19 @@ namespace Unity.Properties
         {
             for (var i = 0; i < m_Properties.Count; i++)
             {
-                var typed = m_Properties[i] as ITypedContainerProperty<TContainer>;
+                var typed = (ITypedContainerProperty<TContainer>)m_Properties[i];
                 typed.Accept(container, visitor);
             }
 
             return true;
         }
         
-        public bool VisitStruct<TContainer>(ref TContainer container, IPropertyVisitor visitor) 
+        public bool Visit<TContainer>(ref TContainer container, IPropertyVisitor visitor) 
             where TContainer : struct, IPropertyContainer
         {
             for (var i = 0; i < m_Properties.Count; i++)
             {
-                var typed = m_Properties[i] as IStructTypedContainerProperty<TContainer>;
+                var typed = (IStructTypedContainerProperty<TContainer>)m_Properties[i];
                 typed.Accept(ref container, visitor);
             }
 
