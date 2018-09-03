@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿#if (NET_4_6 || NET_STANDARD_2_0)
+
+using System.Collections;
 using NUnit.Framework;
 using Unity.Properties.Tests;
 using System.Collections.Generic;
@@ -64,3 +66,5 @@ namespace Packages.com.unity.properties.Tests.Editor
         }
     }
 }
+
+#endif // (NET_4_6 || NET_STANDARD_2_0)

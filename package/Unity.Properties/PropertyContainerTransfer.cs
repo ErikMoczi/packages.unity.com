@@ -131,11 +131,9 @@ namespace Unity.Properties
                 
                 // class properties
                 (property as IListClassProperty)?.Clear(container);
-                (property as IHashSetClassProperty)?.Clear(container);
                 
                 // struct properties
                 (property as IListStructProperty)?.Clear(ref container);
-                (property as IHashSetStructProperty)?.Clear(ref container);
             }
             
             private bool PushContainer(string name, int index)
@@ -273,17 +271,9 @@ namespace Unity.Properties
                         return;
                     }
                 
-                    var hashSetTypedItemProperty = property as IHashSetTypedItemClassProperty<TValue>;
-                    if (hashSetTypedItemProperty != null)
-                    {
-                        hashSetTypedItemProperty.Add(target, value);
-                        return;
-                    }
-                
                     // fallback to object interface methods
                     (property as IValueClassProperty)?.SetObjectValue(target, value);
                     (property as IListClassProperty)?.AddObject(target, value);
-                    (property as IHashSetClassProperty)?.AddObject(target, value);
                 }
                 // Handle struct properties
                 else if (property is IStructProperty)
@@ -308,19 +298,10 @@ namespace Unity.Properties
                         m_PropertyContainers.Push(target);
                         return;
                     }
-                
-                    var hashSetTypedItemProperty = property as IHashSetTypedItemStructProperty<TValue>;
-                    if (hashSetTypedItemProperty != null)
-                    {
-                        hashSetTypedItemProperty.Add(ref target, value);
-                        m_PropertyContainers.Push(target);
-                        return;
-                    }
                     
                     // fallback to object interface methods
                     (property as IValueStructProperty)?.SetObjectValue(ref target, value);
                     (property as IListStructProperty)?.AddObject(ref target, value);
-                    (property as IHashSetStructProperty)?.AddObject(ref target, value);
                     m_PropertyContainers.Push(target);
                 }
             }

@@ -53,8 +53,11 @@ namespace Unity.Properties
         public override bool Remove(TContainer container, TItem item)
         {
             var result = GetList(container).Remove(item);
-            container.VersionStorage?.IncrementVersion(this, container);
-            return result;    
+            if (result)
+            {
+                container.VersionStorage?.IncrementVersion(this, container);
+            }
+            return result;
         }
 
         public override int IndexOf(TContainer container, TItem value)
@@ -76,7 +79,12 @@ namespace Unity.Properties
 
         public override void Clear(TContainer container)
         {
-            GetList(container).Clear();
+            var list = GetList(container);
+            if (list.Count == 0)
+            {
+                return;
+            }
+            list.Clear();
             container.VersionStorage?.IncrementVersion(this, container);
         }
     }
@@ -281,8 +289,11 @@ namespace Unity.Properties
         public override bool Remove(ref TContainer container, TItem item)
         {
             var result = GetList(ref container).Remove(item);
-            container.VersionStorage?.IncrementVersion(this, container);
-            return result;    
+            if (result)
+            {
+                container.VersionStorage?.IncrementVersion(this, container);
+            }
+            return result;
         }
 
         public override int IndexOf(ref TContainer container, TItem value)
@@ -304,7 +315,12 @@ namespace Unity.Properties
 
         public override void Clear(ref TContainer container)
         {
-            GetList(ref container).Clear();
+            var list = GetList(ref container);
+            if (list.Count == 0)
+            {
+                return;
+            }
+            list.Clear();
             container.VersionStorage?.IncrementVersion(this, container);
         }
     }

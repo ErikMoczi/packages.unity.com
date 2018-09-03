@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Unity.Properties.Codegen.CSharp;
 using Unity.Properties.Serialization;
 using UnityEditor;
@@ -11,10 +12,19 @@ namespace Unity.Properties.Codegen
     {
         public override void OnInspectorGUI()
         {
-            if (GUILayout.Button("Generate"))
+            var wasEnabled = GUI.enabled;
+            GUI.enabled = true;
+            try
             {
-                var schemaObject = (SchemaObject) target;
-                Generate(schemaObject.JsonSchema);
+                if (GUILayout.Button("Generate"))
+                {
+                    var schemaObject = (SchemaObject) target;
+                    Generate(schemaObject.JsonSchema);
+                }
+            }
+            finally
+            {
+                GUI.enabled = wasEnabled;
             }
         }
         

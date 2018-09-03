@@ -1,8 +1,7 @@
 {
     "name": "Unity.Properties.EditorTests",
     "references": [
-        "Unity.Properties",
-        "Unity.Properties.Editor"
+        "Unity.Properties"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"
