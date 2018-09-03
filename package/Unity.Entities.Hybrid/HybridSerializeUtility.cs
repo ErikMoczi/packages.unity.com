@@ -37,6 +37,7 @@ namespace Unity.Entities.Serialization
                 return null;
 
             var go = new GameObject("SharedComponents");
+            go.SetActive(false);
 
             for (int i = 0; i != sharedComponentIndices.Length; i++)
             {

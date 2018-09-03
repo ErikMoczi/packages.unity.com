@@ -4,8 +4,10 @@ using Unity.Jobs;
 using Unity.Burst;
 using Unity.Mathematics;
 using Unity.Transforms;
-using UnityEditor;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Unity.Rendering
 {
@@ -21,7 +23,7 @@ namespace Unity.Rendering
         struct BoundingSphere
         {
             public ComponentDataArray<MeshCullingComponent> sphere;
-            public ComponentDataArray<TransformMatrix> transform;
+            public ComponentDataArray<LocalToWorld> transform;
             public EntityArray entities;
             public readonly int Length;
         }
@@ -37,7 +39,7 @@ namespace Unity.Rendering
             [ReadOnly]
             public ComponentDataArray<MeshCullingComponent> sphere;
             [ReadOnly]
-            public ComponentDataArray<TransformMatrix> transform;
+            public ComponentDataArray<LocalToWorld> transform;
             public void Execute(int start, int count)
             {
                 float4 x = (float4)0.0f;

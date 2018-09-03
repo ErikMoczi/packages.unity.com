@@ -43,7 +43,7 @@ namespace Unity.Entities.Properties
         {
             return Info.FieldType.IsPrimitive;
         }
-        
+
         public int GetOffset()
         {
             return UnsafeUtility.GetFieldOffset(Info);
@@ -57,7 +57,7 @@ namespace Unity.Entities.Properties
 
     public class PropertyMemberDescriptor : ITypedMemberDescriptor
     {
-        private PropertyInfo Info { get; set;  }
+        private PropertyInfo Info { get; set; }
 
         public PropertyMemberDescriptor(PropertyInfo p)
         {
@@ -176,7 +176,7 @@ namespace Unity.Entities.Properties
         }
         private Type _t;
     }
-    
+
     public class PropertyCodeReflectionParser
     {
         public HashSet<Type> PrimitiveTypes { get; set; }
@@ -186,19 +186,19 @@ namespace Unity.Entities.Properties
             public int Offset { get; set; } = 0;
         }
 
-        public PropertyBag Parse(Type t)
+        public IPropertyBag Parse(Type t)
         {
             return DoParse(t, new TypeTreeParsingContext());
         }
 
-        private PropertyBag DoParse(Type t, TypeTreeParsingContext context)
+        private IPropertyBag DoParse(Type t, TypeTreeParsingContext context)
         {
             if (_propertyBagCache.ContainsKey(t))
             {
                 return _propertyBagCache[t];
             }
 
-            Dictionary<string, IProperty> properties = new Dictionary<string, IProperty>()
+            Dictionary<string, IStructProperty<StructProxy>> properties = new Dictionary<string, IStructProperty<StructProxy>>()
             {
                 { ComponentIdProperty.Name, ComponentIdProperty }
             };
@@ -206,7 +206,7 @@ namespace Unity.Entities.Properties
             foreach (var member in new TypeFieldIterator(t).Get(
                 TypeFieldIterator.Specifier.Public | TypeFieldIterator.Specifier.ValueType))
             {
-                IProperty property = VisitType(member, new TypeTreeParsingContext() { Offset = context.Offset + member.GetOffset() });
+                IStructProperty<StructProxy> property = VisitType(member, new TypeTreeParsingContext() { Offset = context.Offset + member.GetOffset() });
                 if (!properties.ContainsKey(property.Name))
                 {
                     properties[property.Name] = property;
@@ -218,7 +218,7 @@ namespace Unity.Entities.Properties
             {
                 try
                 {
-                    IProperty property = VisitType(member, new TypeTreeParsingContext() { Offset = context.Offset });
+                    IStructProperty<StructProxy> property = VisitType(member, new TypeTreeParsingContext() { Offset = context.Offset });
 
                     // TODO Unknown types: GameObjects, etc
                     if (property != null)
@@ -233,12 +233,12 @@ namespace Unity.Entities.Properties
                 { }
             }
 
-            _propertyBagCache[t] = new PropertyBag(properties.Values.ToList());
+            _propertyBagCache[t] = new StructPropertyBag<StructProxy>(properties.Values.ToList());
 
             return _propertyBagCache[t];
         }
 
-        private IProperty VisitType(ITypedMemberDescriptor d, TypeTreeParsingContext context)
+        private IStructProperty<StructProxy> VisitType(ITypedMemberDescriptor d, TypeTreeParsingContext context)
         {
             Type memberType = d.GetMemberType();
             if (!typeof(IComponentData).IsAssignableFrom(memberType))
@@ -248,12 +248,12 @@ namespace Unity.Entities.Properties
                     // Same hack as below
                     // TODO: this is a hack until we have code gen
                     var propertyType = typeof(EnumPrimitiveProperty<>).MakeGenericType(memberType);
-                    return (IProperty)Activator.CreateInstance(propertyType, d);
+                    return (IStructProperty<StructProxy>)Activator.CreateInstance(propertyType, d);
                 }
                 else if (PrimitiveTypes.Contains(d.GetMemberType()))
                 {
                     var propertyType = typeof(PrimitiveProperty<>).MakeGenericType(memberType);
-                    return (IProperty)Activator.CreateInstance(propertyType, d);
+                    return (IStructProperty<StructProxy>)Activator.CreateInstance(propertyType, d);
                 }
 
                 if (memberType.IsPrimitive)
@@ -265,36 +265,33 @@ namespace Unity.Entities.Properties
             return new NestedProxyProperty(d) { PropertyBag = Parse(memberType) };
         }
 
-        private class TypeIdProperty : StructProperty<StructProxy, string>
+        private class TypeIdProperty : ValueStructProperty<StructProxy, string>
         {
             public TypeIdProperty(GetValueMethod getValue) : base("$TypeId", getValue, null)
             {
             }
         }
 
-        private static readonly IProperty ComponentIdProperty = new TypeIdProperty(
+        private static readonly IStructProperty<StructProxy> ComponentIdProperty = new TypeIdProperty(
             (ref StructProxy c) => c.type.FullName);
 
-        private readonly Dictionary<Type, PropertyBag> _propertyBagCache = new Dictionary<Type, PropertyBag>();
+        private readonly Dictionary<Type, IPropertyBag> _propertyBagCache = new Dictionary<Type, IPropertyBag>();
 
-        private unsafe class NestedProxyProperty : StructMutableContainerProperty<StructProxy, StructProxy>
+        private unsafe class NestedProxyProperty : StructValueStructProperty<StructProxy, StructProxy>
         {
             public int FieldOffset { get; }
             public Type ComponentType { get; }
-            public PropertyBag PropertyBag { get; set; }
+            public IPropertyBag PropertyBag { get; set; }
 
             public NestedProxyProperty(ITypedMemberDescriptor member)
-                : base(member.Name, null, null, null)
+                : base(member.Name, null, null, (ByRef m, StructValueStructProperty<StructProxy, StructProxy> property, ref StructProxy c) =>
+                {
+                    var val = property.GetValue(ref c);
+                    m(property, ref c, ref val);
+                })
             {
                 FieldOffset = member.GetOffset();
                 ComponentType = member.GetMemberType();
-                RefAccess = GetChildRef;
-            }
-
-            private void GetChildRef(ref StructProxy container, RefVisitMethod refVisitMethod, IPropertyVisitor visitor)
-            {
-                var val = GetValue(ref container);
-                refVisitMethod(ref val, visitor);
             }
 
             public override StructProxy GetValue(ref StructProxy container)
@@ -308,7 +305,7 @@ namespace Unity.Entities.Properties
             }
         }
 
-        private unsafe class PrimitiveProperty<TValue> : StructProperty<StructProxy, TValue>
+        private unsafe class PrimitiveProperty<TValue> : ValueStructProperty<StructProxy, TValue>
             where TValue : struct
         {
             private int FieldOffset { get; }
@@ -334,7 +331,7 @@ namespace Unity.Entities.Properties
             }
         }
 
-        private unsafe class EnumPrimitiveProperty<TValue> : StructEnumProperty<StructProxy, TValue>
+        private unsafe class EnumPrimitiveProperty<TValue> : ValueStructProperty<StructProxy, TValue>
             where TValue : struct, IComparable, IFormattable, IConvertible
         {
             private int FieldOffset { get; }
@@ -365,7 +362,7 @@ namespace Unity.Entities.Properties
     {
         private static PropertyCodeReflectionParser _propertyTypeParser = new PropertyCodeReflectionParser();
 
-        public static PropertyBag GetOrCreate(Type componentType, HashSet<Type> primitiveTypes)
+        public static IPropertyBag GetOrCreate(Type componentType, HashSet<Type> primitiveTypes)
         {
             _propertyTypeParser.PrimitiveTypes = primitiveTypes;
             return _propertyTypeParser.Parse(componentType);

@@ -116,7 +116,7 @@ namespace Unity.Entities.Tests
         public void GetAllUniqueSharedComponents()
         {
             var unique = new List<SharedData1>(0);
-            m_Manager.GetAllUniqueSharedComponentDatas(unique);
+            m_Manager.GetAllUniqueSharedComponentData(unique);
 
             Assert.AreEqual(1, unique.Count);
             Assert.AreEqual(default(SharedData1).value, unique[0].value);
@@ -126,7 +126,7 @@ namespace Unity.Entities.Tests
             m_Manager.SetSharedComponentData(e, new SharedData1(17));
 
             unique.Clear();
-            m_Manager.GetAllUniqueSharedComponentDatas(unique);
+            m_Manager.GetAllUniqueSharedComponentData(unique);
 
             Assert.AreEqual(2, unique.Count);
             Assert.AreEqual(default(SharedData1).value, unique[0].value);
@@ -135,7 +135,7 @@ namespace Unity.Entities.Tests
             m_Manager.SetSharedComponentData(e, new SharedData1(34));
 
             unique.Clear();
-            m_Manager.GetAllUniqueSharedComponentDatas(unique);
+            m_Manager.GetAllUniqueSharedComponentData(unique);
 
             Assert.AreEqual(2, unique.Count);
             Assert.AreEqual(default(SharedData1).value, unique[0].value);
@@ -144,7 +144,7 @@ namespace Unity.Entities.Tests
             m_Manager.DestroyEntity(e);
 
             unique.Clear();
-            m_Manager.GetAllUniqueSharedComponentDatas(unique);
+            m_Manager.GetAllUniqueSharedComponentData(unique);
 
             Assert.AreEqual(1, unique.Count);
             Assert.AreEqual(default(SharedData1).value, unique[0].value);
@@ -170,7 +170,7 @@ namespace Unity.Entities.Tests
             var group = m_Manager.CreateComponentGroup(typeof(EcsTestData), typeof(SharedData1));
 
             var unique = new List<SharedData1>(0);
-            m_Manager.GetAllUniqueSharedComponentDatas(unique);
+            m_Manager.GetAllUniqueSharedComponentData(unique);
             Assert.AreEqual(unqueValues, unique.Count);
             var forEachFilter = group.CreateForEachFilter(unique);
 
@@ -201,6 +201,20 @@ namespace Unity.Entities.Tests
             Assert.AreEqual(0, m_Manager.GetSharedComponentData<SharedData1>(e).value);
 
             m_Manager.SetSharedComponentData(e, new SharedData1(17));
+
+            Assert.AreEqual(17, m_Manager.GetSharedComponentData<SharedData1>(e).value);
+        }
+        
+        [Test]
+        public void GetSharedComponentDataAfterArchetypeChange()
+        {
+            var archetype = m_Manager.CreateArchetype(typeof(SharedData1), typeof(EcsTestData));
+            Entity e = m_Manager.CreateEntity(archetype);
+
+            Assert.AreEqual(0, m_Manager.GetSharedComponentData<SharedData1>(e).value);
+
+            m_Manager.SetSharedComponentData(e, new SharedData1(17));
+            m_Manager.AddComponentData(e, new EcsTestData2 {value0 = 1, value1 = 2});
 
             Assert.AreEqual(17, m_Manager.GetSharedComponentData<SharedData1>(e).value);
         }

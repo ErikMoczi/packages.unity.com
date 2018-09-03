@@ -14,7 +14,7 @@ namespace Unity.Rendering
         struct LODGroup
         {
             public ComponentDataArray<MeshLODGroupComponent> lod;
-            [ReadOnly] public ComponentDataArray<TransformMatrix> transform;
+            [ReadOnly] public ComponentDataArray<LocalToWorld> transform;
             public readonly int Length;
         }
         [Inject] private LODGroup lodGroups;
@@ -31,7 +31,7 @@ namespace Unity.Rendering
         struct LodGroupJob : IJobParallelFor
         {
             public ComponentDataArray<MeshLODGroupComponent> lod;
-            [ReadOnly]public ComponentDataArray<TransformMatrix> transform;
+            [ReadOnly]public ComponentDataArray<LocalToWorld> transform;
             [DeallocateOnJobCompletion][ReadOnly]public NativeArray<float4> cameras;
             public unsafe void Execute(int i)
             {

@@ -5,11 +5,11 @@ namespace Unity.Entities.Properties
 {
     public unsafe struct StructProxy : IPropertyContainer
     {
-        public IVersionStorage VersionStorage => PassthroughVersionStorage.Instance;
+        public IVersionStorage VersionStorage => null;
         public IPropertyBag PropertyBag => bag;
 
         public byte* data;
-        public PropertyBag bag;
+        public IPropertyBag bag;
         public Type type;
     }
 }

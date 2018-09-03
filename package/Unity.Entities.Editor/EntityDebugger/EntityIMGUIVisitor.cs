@@ -54,6 +54,11 @@ namespace Unity.Entities.Editor
             return _primitiveTypes;
         }
 
+        private static bool IsTypeIdMarker(string s)
+        {
+            return s == "$TypeId";
+        }
+
         private class ComponentState
         {
             public ComponentState()
@@ -101,7 +106,19 @@ namespace Unity.Entities.Editor
                 }
                 state = _states[_currentPath.ToString()];
 
-                state.Showing = EditorGUILayout.Foldout(state.Showing, context.Property.Name);
+                var name = string.Empty;
+
+                var f = context.Value?.PropertyBag?.Properties?.First();
+                if (f != null && IsTypeIdMarker(f.Name))
+                {
+                    name = (f as ValueStructProperty<StructProxy, string>)?.GetValue(context.Value);
+                }
+
+                state.Showing = EditorGUILayout.Foldout(
+                    state.Showing,
+                    string.IsNullOrEmpty(name) ? context.Property.Name : name,
+                    new GUIStyle(EditorStyles.foldout) { fontStyle = FontStyle.Bold }
+                    );
 
                 return state.Showing;
             }
@@ -116,13 +133,13 @@ namespace Unity.Entities.Editor
             EditorGUI.indentLevel--;
         }
 
-        public override bool BeginList<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+        public override bool BeginCollection<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
         {
             VisitSetup(ref container, ref context);
             return true;
         }
 
-        public override void EndList<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+        public override void EndCollection<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
         {
             VisitSetup(ref container, ref context);
         }
@@ -246,10 +263,11 @@ namespace Unity.Entities.Editor
 
         void ICustomVisit<string>.CustomVisit(string f)
         {
-            if (Property == null)
+            if (Property == null || IsTypeIdMarker(Property.Name))
             {
                 return;
             }
+
             GUILayout.Label(f, EditorStyles.boldLabel);
         }
         #endregion

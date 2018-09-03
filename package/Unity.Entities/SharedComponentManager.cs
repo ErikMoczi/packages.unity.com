@@ -49,7 +49,7 @@ namespace Unity.Entities
                     sharedComponentValues.Add((T) m_SharedComponentData[i]);
             }
         }
-        
+
         public void GetAllUniqueSharedComponents<T>(List<T> sharedComponentValues, List<int> sharedComponentIndices)
             where T : struct, ISharedComponentData
         {
@@ -65,7 +65,7 @@ namespace Unity.Entities
                 }
             }
         }
-        
+
         public int GetSharedComponentCount()
         {
             return m_SharedComponentData.Count;
@@ -325,6 +325,67 @@ namespace Unity.Entities
             }
         }
 
+        public unsafe bool AllSharedComponentReferencesAreFromChunks(ArchetypeManager archetypeManager)
+        {
+            var chunkCount = new NativeArray<int>(m_SharedComponentRefCount.Length, Allocator.Temp);
+
+            var archetype = archetypeManager.m_LastArchetype;
+            while (archetype != null)
+            {
+                for (var c = archetype->ChunkList.Begin; c != archetype->ChunkList.End; c = c->Next)
+                {
+                    var chunk = (Chunk*)c;
+
+                    for (int i = 0; i < archetype->NumSharedComponents; ++i)
+                    {
+                        chunkCount[chunk->SharedComponentValueArray[i]] += 1;
+                    }
+                }
+
+                archetype = archetype->PrevArchetype;
+            }
+
+            chunkCount[0] = 1;
+            int cmp = UnsafeUtility.MemCmp(m_SharedComponentRefCount.GetUnsafePtr(), chunkCount.GetUnsafeReadOnlyPtr(), sizeof(int) * chunkCount.Length);
+            chunkCount.Dispose();
+
+            return cmp == 0;
+        }
+
+        public unsafe NativeArray<int> MoveAllSharedComponents(SharedComponentDataManager srcSharedComponents,
+            Allocator allocator)
+        {
+            var remap = new NativeArray<int>(srcSharedComponents.GetSharedComponentCount(), allocator);
+            remap[0] = 0;
+
+            for (int srcIndex = 1; srcIndex < remap.Length; ++srcIndex)
+            {
+                var srcData = srcSharedComponents.m_SharedComponentData[srcIndex];
+                if (srcData == null) continue;
+
+                var typeIndex = srcSharedComponents.m_SharedComponentType[srcIndex];
+
+                var fastLayout = TypeManager.GetComponentType(typeIndex).FastEqualityLayout;
+                var hashCode = GetHashCodeFast(srcData, fastLayout);
+
+                var dstIndex = InsertSharedComponentAssumeNonDefault(typeIndex, hashCode, srcData, fastLayout);
+
+                m_SharedComponentRefCount[dstIndex] += srcSharedComponents.m_SharedComponentRefCount[srcIndex] - 1;
+
+                remap[srcIndex] = dstIndex;
+            }
+
+            srcSharedComponents.m_HashLookup.Clear();
+            srcSharedComponents.m_SharedComponentVersion.ResizeUninitialized(1);
+            srcSharedComponents.m_SharedComponentRefCount.ResizeUninitialized(1);
+            srcSharedComponents.m_SharedComponentType.ResizeUninitialized(1);
+            srcSharedComponents.m_SharedComponentData.Clear();
+            srcSharedComponents.m_SharedComponentData.Add(null);
+            srcSharedComponents.m_FreeListIndex = -1;
+
+            return remap;
+        }
+
         public void PrepareForDeserialize()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -341,6 +402,5 @@ namespace Unity.Entities
 
             m_FreeListIndex = -1;
         }
-
     }
 }
