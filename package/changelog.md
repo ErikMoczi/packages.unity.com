@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.4-preview.4
+
+- Fix an issue on Windows with `DllNotFoundException` occurring when trying to load `burst-llvm.dll` from a user profile containing unicode characters in the folder path
+- Fix an internal compiler error occurring with IL dup instruction
+
+## 0.2.4-preview.3
+
+- Add support for struct with an explicit layout
+- Fix noalias regression (that was preventing the auto-vectorizer to work correctly on basic loops)
+
 ## 0.2.3 (21 March 2018)
 
 - Improve error messages for static field access
