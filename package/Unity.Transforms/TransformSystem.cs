@@ -645,8 +645,8 @@ namespace Unity.Transforms
                 rotTransTransformRoots = new NativeArray<Entity>(m_RootRotTransTransformGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
                 var copyRotTransTransformRootsJob = new CopyEntities
                 {
-                    source = m_RootRotTransTransformGroup.entities,
-                    results = rotTransTransformRoots.Value
+                    Source = m_RootRotTransTransformGroup.entities,
+                    Results = rotTransTransformRoots.Value
                 };
                 var copyRotTransTransformRootsJobHandle = copyRotTransTransformRootsJob.Schedule(m_RootRotTransTransformGroup.Length, 64, copyRootEntitiesDeps);
                 copyRootEntitiesBarrierJobHandle = JobHandle.CombineDependencies(copyRootEntitiesBarrierJobHandle,copyRotTransTransformRootsJobHandle);
@@ -658,8 +658,8 @@ namespace Unity.Transforms
                 rotTransNoTransformRoots = new NativeArray<Entity>(m_RootRotTransNoTransformGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
                 var copyRotTransNoTransformRootsJob = new CopyEntities
                 {
-                    source = m_RootRotTransNoTransformGroup.entities,
-                    results = rotTransNoTransformRoots.Value
+                    Source = m_RootRotTransNoTransformGroup.entities,
+                    Results = rotTransNoTransformRoots.Value
                 };
                 var copyRotTransNoTransformRootsJobHandle = copyRotTransNoTransformRootsJob.Schedule(m_RootRotTransNoTransformGroup.Length, 64, copyRootEntitiesDeps);
                 copyRootEntitiesBarrierJobHandle = JobHandle.CombineDependencies(copyRootEntitiesBarrierJobHandle, copyRotTransNoTransformRootsJobHandle);
@@ -671,8 +671,8 @@ namespace Unity.Transforms
                 rotTransformRoots = new NativeArray<Entity>(m_RootRotTransformGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
                 var copyRotTransformRootsJob = new CopyEntities
                 {
-                    source = m_RootRotTransformGroup.entities,
-                    results = rotTransformRoots.Value
+                    Source = m_RootRotTransformGroup.entities,
+                    Results = rotTransformRoots.Value
                 };
                 var copyRotTransformRootsJobHandle = copyRotTransformRootsJob.Schedule(m_RootRotTransformGroup.Length, 64, copyRootEntitiesDeps);
                 copyRootEntitiesBarrierJobHandle = JobHandle.CombineDependencies(copyRootEntitiesBarrierJobHandle,copyRotTransformRootsJobHandle);
@@ -684,8 +684,8 @@ namespace Unity.Transforms
                 rotNoTransformRoots = new NativeArray<Entity>(m_RootRotNoTransformGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
                 var copyRotNoTransformRootsJob = new CopyEntities
                 {
-                    source = m_RootRotNoTransformGroup.entities,
-                    results = rotNoTransformRoots.Value
+                    Source = m_RootRotNoTransformGroup.entities,
+                    Results = rotNoTransformRoots.Value
                 };
                 var copyRotNoTransformRootsJobHandle = copyRotNoTransformRootsJob.Schedule(m_RootRotNoTransformGroup.Length, 64, copyRootEntitiesDeps);
                 copyRootEntitiesBarrierJobHandle = JobHandle.CombineDependencies(copyRootEntitiesBarrierJobHandle, copyRotNoTransformRootsJobHandle);
@@ -697,8 +697,8 @@ namespace Unity.Transforms
                 transTransformRoots = new NativeArray<Entity>(m_RootTransTransformGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
                 var copyTransTransformRootsJob = new CopyEntities
                 {
-                    source = m_RootTransTransformGroup.entities,
-                    results = transTransformRoots.Value
+                    Source = m_RootTransTransformGroup.entities,
+                    Results = transTransformRoots.Value
                 };
                 var copyTransTransformRootsJobHandle = copyTransTransformRootsJob.Schedule(m_RootTransTransformGroup.Length, 64, copyRootEntitiesDeps);
                 copyRootEntitiesBarrierJobHandle = JobHandle.CombineDependencies(copyRootEntitiesBarrierJobHandle,copyTransTransformRootsJobHandle);
@@ -710,8 +710,8 @@ namespace Unity.Transforms
                 transNoTransformRoots = new NativeArray<Entity>(m_RootTransNoTransformGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
                 var copyTransNoTransformRootsJob = new CopyEntities
                 {
-                    source = m_RootTransNoTransformGroup.entities,
-                    results = transNoTransformRoots.Value
+                    Source = m_RootTransNoTransformGroup.entities,
+                    Results = transNoTransformRoots.Value
                 };
                 var copyTransNoTransformRootsJobHandle = copyTransNoTransformRootsJob.Schedule(m_RootTransNoTransformGroup.Length, 64, copyRootEntitiesDeps);
                 copyRootEntitiesBarrierJobHandle = JobHandle.CombineDependencies(copyRootEntitiesBarrierJobHandle, copyTransNoTransformRootsJobHandle);
@@ -723,8 +723,8 @@ namespace Unity.Transforms
                 headingTransTransformRoots = new NativeArray<Entity>(m_RootHeadingTransTransformGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
                 var copyHeadingTransTransformRootsJob = new CopyEntities
                 {
-                    source = m_RootHeadingTransTransformGroup.entities,
-                    results = headingTransTransformRoots.Value
+                    Source = m_RootHeadingTransTransformGroup.entities,
+                    Results = headingTransTransformRoots.Value
                 };
                 var copyHeadingTransTransformRootsJobHandle = copyHeadingTransTransformRootsJob.Schedule(m_RootHeadingTransTransformGroup.Length, 64, copyRootEntitiesDeps);
                 copyRootEntitiesBarrierJobHandle = JobHandle.CombineDependencies(copyRootEntitiesBarrierJobHandle,copyHeadingTransTransformRootsJobHandle);
@@ -736,8 +736,8 @@ namespace Unity.Transforms
                 headingTransNoTransformRoots = new NativeArray<Entity>(m_RootHeadingTransNoTransformGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
                 var copyHeadingTransNoTransformRootsJob = new CopyEntities
                 {
-                    source = m_RootHeadingTransNoTransformGroup.entities,
-                    results = headingTransNoTransformRoots.Value
+                    Source = m_RootHeadingTransNoTransformGroup.entities,
+                    Results = headingTransNoTransformRoots.Value
                 };
                 var copyHeadingTransNoTransformRootsJobHandle = copyHeadingTransNoTransformRootsJob.Schedule(m_RootHeadingTransNoTransformGroup.Length, 64, copyRootEntitiesDeps);
                 copyRootEntitiesBarrierJobHandle = JobHandle.CombineDependencies(copyRootEntitiesBarrierJobHandle, copyHeadingTransNoTransformRootsJobHandle);

@@ -44,7 +44,7 @@ namespace Unity.Entities.Editor
                 return stateForCurrentSystem;
             
             stateForCurrentSystem = new TreeViewState();
-            if (system.ComponentGroups.Length > 0)
+            if (system.ComponentGroups != null && system.ComponentGroups.Length > 0)
                 stateForCurrentSystem.expandedIDs = new List<int> {1};
             states.Add(stateForCurrentSystem);
             stateNames.Add(currentSystemName);
@@ -65,7 +65,7 @@ namespace Unity.Entities.Editor
             Reload();
         }
 
-        public float Height => Mathf.Max(selectedSystem?.ComponentGroups.Length ?? 0, 1)*rowHeight;
+        public float Height => Mathf.Max(selectedSystem?.ComponentGroups?.Length ?? 0, 1)*rowHeight;
 
         protected override TreeViewItem BuildRoot()
         {
@@ -80,7 +80,7 @@ namespace Unity.Entities.Editor
             {
                 root.AddChild(new TreeViewItem { id = currentId, displayName = "Null System"});
             }
-            else if (SelectedSystem.ComponentGroups.Length == 0)
+            else if (SelectedSystem.ComponentGroups == null || SelectedSystem.ComponentGroups.Length == 0)
             {
                 root.AddChild(new TreeViewItem { id = currentId, displayName = "No Component Groups in Manager"});
             }
@@ -141,7 +141,7 @@ namespace Unity.Entities.Editor
 
         public void UpdateIfNecessary()
         {
-            var expectedGroupCount = SelectedSystem?.ComponentGroups.Length ?? 0; 
+            var expectedGroupCount = SelectedSystem?.ComponentGroups?.Length ?? 0; 
             if (expectedGroupCount != componentGroupsById.Count)
                 Reload();
         }

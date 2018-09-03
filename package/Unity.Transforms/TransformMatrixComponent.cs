@@ -4,7 +4,7 @@ using Unity.Mathematics;
 namespace Unity.Transforms
 {
     /// <summary>
-    /// Store (calculated) object to world matrix.
+    /// Store a (calculated) float4x4 matrix representing the Object to World position/rotation/scale transformation.
     /// Required by other systems. e.g. MeshInstanceRenderer
     /// </summary>
     public struct TransformMatrix : IComponentData

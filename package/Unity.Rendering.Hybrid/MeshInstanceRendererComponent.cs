@@ -6,8 +6,8 @@ using UnityEngine.Rendering;
 namespace Unity.Rendering
 {
     /// <summary>
-    /// Render Mesh wiih Material (must be instanced material) by object to world matrix
-    /// specified by TransformMatrix associated with entity.
+    /// Render Mesh with Material (must be instanced material) by object to world matrix.
+    /// Specified by TransformMatrix associated with Entity.
     /// </summary>
     [Serializable]
 	public struct MeshInstanceRenderer : ISharedComponentData

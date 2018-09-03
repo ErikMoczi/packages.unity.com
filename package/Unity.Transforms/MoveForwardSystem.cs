@@ -54,7 +54,6 @@ namespace Unity.Transforms
             m_MoveForwardRotationGroup = GetComponentGroup(
                 ComponentType.ReadOnly(typeof(MoveForward)),
                 ComponentType.ReadOnly(typeof(Rotation)),
-                ComponentType.Subtractive(typeof(LocalRotation)),
                 ComponentType.ReadOnly(typeof(MoveSpeed)),
                 typeof(Position));
             
@@ -62,7 +61,6 @@ namespace Unity.Transforms
                 ComponentType.ReadOnly(typeof(MoveForward)),
                 ComponentType.Subtractive(typeof(Rotation)),
                 ComponentType.ReadOnly(typeof(Heading)),
-                ComponentType.Subtractive(typeof(LocalRotation)),
                 ComponentType.ReadOnly(typeof(MoveSpeed)),
                 typeof(Position));
         }
