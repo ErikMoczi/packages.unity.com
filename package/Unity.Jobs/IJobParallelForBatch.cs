@@ -5,6 +5,7 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace Unity.Jobs
 {
+    [JobProducerType(typeof(JobParallelForBatchExtensions.ParallelForBatchJobStruct<>))]
     public interface IJobParallelForBatch
     {
         void Execute(int startIndex, int count);
@@ -12,7 +13,7 @@ namespace Unity.Jobs
 
     public static class JobParallelForBatchExtensions
     {
-        struct ParallelForBatchJobStruct<T> where T : struct, IJobParallelForBatch
+        internal struct ParallelForBatchJobStruct<T> where T : struct, IJobParallelForBatch
         {
             static public IntPtr                            jobReflectionData;
 
