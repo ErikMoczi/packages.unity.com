@@ -13,7 +13,7 @@ This Vector Graphics package version 1.0.0 is compatible with the following vers
 The SVG importer from this package implements a subset of the SVG 1.1 specification, with some limitations:
 
 * Text elements are not yet supported [(SVG 1.1 section 10)](https://www.w3.org/TR/SVG11/text.html)
-* Masking is not yet supported [(SVG 1.1 section 14.4)](https://www.w3.org/TR/SVG11/masking.html#Masking)
+* Per-pixel masking is not supported [(SVG 1.1 section 14.4)](https://www.w3.org/TR/SVG11/masking.html#Masking)
 * Filter effects are not supported [(SVG 1.1 section 15)](https://www.w3.org/TR/SVG11/filters.html)
 * Any interactivity feature are not supported [(SVG 1.1 section 16)](https://www.w3.org/TR/SVG11/interact.html)
 * Animations are not supported [(SVG 1.1 section 19)](https://www.w3.org/TR/SVG11/animate.html)
@@ -273,5 +273,5 @@ public static void RenderSprite(Sprite sprite, Material mat);
 
 |Date|Reason|
 |---|---|
-|Feb 01, 2018|Document created. Matches Vector Graphics version 0.0.1.|
+|Feb 01, 2018|Document created. Matches Vector Graphics version 1.0.2-experimental.|
 

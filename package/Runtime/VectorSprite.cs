@@ -191,7 +191,7 @@ namespace Unity.VectorGraphics
                     string gradientMatPath = "Packages/com.unity.vectorgraphics/Runtime/Materials/Unlit_VectorGradient.mat";
                     s_GradientMat = AssetDatabase.LoadMainAssetAtPath(gradientMatPath) as Material;
                 }
-                mat = s_GradientMat;
+                mat = new Material(s_GradientMat);
             }
             else
             {
@@ -200,7 +200,7 @@ namespace Unity.VectorGraphics
                     string vectorMatPath = "Packages/com.unity.vectorgraphics/Runtime/Materials/Unlit_Vector.mat";
                     s_VectorMat = AssetDatabase.LoadMainAssetAtPath(vectorMatPath) as Material;
                 }
-                mat = s_VectorMat;
+                mat = new Material(s_VectorMat);
             }
 
             var tex = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
@@ -218,6 +218,9 @@ namespace Unity.VectorGraphics
 
             RenderTexture.active = oldActive;
             tex.Release();
+
+            RenderTexture.DestroyImmediate(tex);
+            Material.DestroyImmediate(mat);
 
             return copy;
         }
