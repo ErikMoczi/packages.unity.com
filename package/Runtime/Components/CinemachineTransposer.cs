@@ -99,13 +99,14 @@ namespace Cinemachine
         [Tooltip("How aggressively the camera tries to track the target rotation's Z angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
         public float m_RollDamping = 0f;
 
+        /// <summary>Derived classes should call this from their OnValidate() implementation</summary>
         protected virtual void OnValidate()
         {
             m_FollowOffset = EffectiveOffset;
         }
         
         /// <summary>Get the target offset, with sanitization</summary>
-        protected Vector3 EffectiveOffset 
+        public Vector3 EffectiveOffset 
         { 
             get 
             { 
@@ -143,17 +144,6 @@ namespace Cinemachine
                 curState.ReferenceUp = orient * Vector3.up;
             }
             //UnityEngine.Profiling.Profiler.EndSample();
-        }
-
-        /// <summary>API for the editor, to process a position drag from the user.
-        /// This implementation adds the delta to the follow offset.</summary>
-        /// <param name="delta">The amount dragged this frame</param>
-        public override void OnPositionDragged(Vector3 delta)
-        {
-            Quaternion targetOrientation = GetReferenceOrientation(VcamState.ReferenceUp);
-            Vector3 localOffset = Quaternion.Inverse(targetOrientation) * delta;
-            m_FollowOffset += localOffset;
-            m_FollowOffset = EffectiveOffset;
         }
 
         /// <summary>This is called to notify the us that a target got warped,
@@ -288,7 +278,7 @@ namespace Cinemachine
         {
             if (FollowTarget != null)
             {
-                Quaternion targetOrientation = FollowTargetRotation;
+                Quaternion targetOrientation = FollowTarget.rotation;
                 switch (m_BindingMode)
                 {
                     case BindingMode.LockToTargetOnAssign:
@@ -301,10 +291,11 @@ namespace Cinemachine
                         return targetOrientation;
                     case BindingMode.SimpleFollowWithWorldUp:
                     {
-                        Vector3 dir = FollowTargetPosition - VcamState.RawPosition;
+                        Vector3 dir = FollowTarget.position - VcamState.RawPosition;
+                        dir = dir.ProjectOntoPlane(worldUp);
                         if (dir.AlmostZero())
                             break;
-                        return Uppify(Quaternion.LookRotation(dir, worldUp), worldUp);
+                        return Quaternion.LookRotation(dir.normalized, worldUp);
                     }
                     default:
                         break;
