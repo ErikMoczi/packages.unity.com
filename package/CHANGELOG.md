@@ -25,3 +25,6 @@ and project files needed to adapt ARKit to the Unity multi-platform AR API.
 
 ## [1.0.0-preview.9] - 2018-06-06
 - Remove extraneous debug log
+
+## [1.0.0-preview.10] - 2018-06-08
+- Do not include build postprocessor when not on iOS

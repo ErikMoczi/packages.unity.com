@@ -32,21 +32,4 @@ namespace UnityEngine.XR.ARKit
             XRSessionExtensions.RegisterGetAvailabilityAsyncHandler(k_SubsystemId, GetAvailabilityAsync);
         }
     }
-
-    internal static class Api
-    {
-        // Should match ARKitAvailability in ARKitXRSessionProvider.mm
-        public enum Availability
-        {
-            None,
-            Supported
-        }
-
-#if UNITY_IOS
-        [DllImport("__Internal")]
-        public static extern Availability UnityARKit_CheckAvailability();
-#else
-        public static Availability UnityARKit_CheckAvailability() { return Availability.None; }
-#endif
-    }
 }

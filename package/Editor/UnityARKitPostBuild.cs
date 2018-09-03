@@ -1,3 +1,4 @@
+#if UNITY_IOS
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Callbacks;
@@ -6,12 +7,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System;
-
-#if UNITY_IOS
 using UnityEditor.iOS.Xcode;
-#endif
 
-public class UnityARKitPostBuild
+internal class UnityARKitPostBuild
 {
     [PostProcessBuildAttribute(1)]
     public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject)
@@ -19,7 +17,6 @@ public class UnityARKitPostBuild
         if (target != BuildTarget.iOS)
             return;
 
-#if UNITY_IOS
         string unityTargetName = PBXProject.GetUnityTargetName();
         string projPath = PBXProject.GetPBXProjectPath(pathToBuiltProject);
 
@@ -35,6 +32,6 @@ public class UnityARKitPostBuild
 
         // Finally, write out the modified project with the framework added.
         File.WriteAllText(projPath, proj.WriteToString());
-#endif
     }
 }
+#endif
