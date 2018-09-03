@@ -163,6 +163,17 @@ namespace Unity.VectorGraphics.Editor
 
             EditorGUILayout.Space();
 
+            GUILayout.BeginVertical();
+            {
+                var labelStyle = EditorStyles.wordWrappedLabel;
+                labelStyle.fontStyle = FontStyle.Bold;
+                labelStyle.alignment = TextAnchor.UpperCenter;
+                GUILayout.Label(GetStatsString(), labelStyle);
+            }
+            GUILayout.EndVertical();
+
+            EditorGUILayout.Space();
+
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("Sprite Editor"))
@@ -228,6 +239,57 @@ namespace Unity.VectorGraphics.Editor
         internal static Texture2D BuildPreviewTexture(Sprite sprite, int width, int height)
         {
             return VectorUtils.RenderSpriteToTexture2D(sprite, width, height, SVGImporter.GetSVGSpriteMaterial(sprite), 4);
+        }
+
+        private string GetStatsString()
+        {
+            var sprite = SVGImporter.GetImportedSprite(assetTarget);
+            int vertexCount = sprite.vertices.Length;
+            int indexCount = sprite.triangles.Length;
+
+            var stats = "" + vertexCount + " Vertices (Pos";
+
+            int vertexSize = sizeof(float) * 2;
+            if (sprite.HasVertexAttribute(VertexAttribute.Color))
+            {
+                stats += ", Col";
+                vertexSize += 4;
+            }
+            if (sprite.HasVertexAttribute(VertexAttribute.TexCoord0))
+            {
+                stats += ", TexCoord0";
+                vertexSize += sizeof(float) * 2;
+            }
+            if (sprite.HasVertexAttribute(VertexAttribute.TexCoord1))
+            {
+                stats += ", TexCoord1";
+                vertexSize += sizeof(float) * 2;
+            }
+            if (sprite.HasVertexAttribute(VertexAttribute.TexCoord2))
+            {
+                stats += ", TexCoord2";
+                vertexSize += sizeof(float) * 2;
+            }
+
+            stats += ") " + HumanReadableSize(vertexSize * vertexCount + indexCount * 2);
+
+            return stats;
+        }
+
+        private static string HumanReadableSize(int bytes)
+        {
+            var units = new string[] { "B", "KB", "MB", "GB", "TB" };
+
+            int order = 0;
+            while (bytes >= 2014 && order < units.Length-1) {
+                ++order;
+                bytes /= 1024;
+            }
+
+            if (order >=  units.Length)
+                return "" + bytes;
+
+            return String.Format("{0:0.#} {1}", bytes, units[order]);
         }
     }
 }

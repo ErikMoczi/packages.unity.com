@@ -257,4 +257,16 @@ public class SVGParserTests
         var group = sceneInfo.Scene.Root.Children[0];
         Assert.AreEqual(2, group.Children.Count);
     }
+
+    [Test]
+    public void ImportSVG_RemovesElementsWithDisplayNone()
+    {
+        string svg = 
+            @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""100"" height=""20"">
+                <rect width=""100"" height=""20"" display=""none"" />
+            </svg>";
+
+        var sceneInfo = SVGParser.ImportSVG(new StringReader(svg));
+        Assert.AreEqual(0, sceneInfo.Scene.Root.Children.Count);
+    }
 }

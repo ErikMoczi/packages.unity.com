@@ -228,6 +228,9 @@ namespace Unity.VectorGraphics
 
                 styleResolver.PushNode(child);
 
+                if (childVectorNode != null && styleResolver.Evaluate("display") == "none")
+                    invisibleNodes.Add(new NodeWithParent() { node = childVectorNode, parent = sceneNode } );
+
                 handler();
                 ParseChildren(child, child.Name); // Recurse
 
@@ -361,28 +364,28 @@ namespace Unity.VectorGraphics
                     }
                 }
 
-                if (textureFill.Texture == null)
-                    return; // Unsupported texture...
+                if (textureFill.Texture != null)
+                {
+                    // Fills and strokes don't seem to apply to image despite what the specs say
+                    // All browsers and editing tools seem to ignore them, so we'll just do as well
+                    ParseOpacity(sceneNode);
+                    sceneNode.Transform = SVGAttribParser.ParseTransform(node);
 
-                // Fills and strokes don't seem to apply to image despite what the specs say
-                // All browsers and editing tools seem to ignore them, so we'll just do as well
-                ParseOpacity(sceneNode);
-                sceneNode.Transform = SVGAttribParser.ParseTransform(node);
+                    var viewPort = ParseViewport(node, sceneNode, currentContainerSize.Peek());
+                    sceneNode.Transform = sceneNode.Transform * Matrix2D.Translate(viewPort.position);
+                    var viewBoxInfo = new ViewBoxInfo();
+                    viewBoxInfo.ViewBox = new Rect(0, 0, textureFill.Texture.width, textureFill.Texture.height);
+                    ParseViewBoxAspectRatio(node, ref viewBoxInfo);
+                    ApplyViewBox(sceneNode, viewBoxInfo, viewPort);
 
-                var viewPort = ParseViewport(node, sceneNode, currentContainerSize.Peek());
-                sceneNode.Transform = sceneNode.Transform * Matrix2D.Translate(viewPort.position);
-                var viewBoxInfo = new ViewBoxInfo();
-                viewBoxInfo.ViewBox = new Rect(0, 0, textureFill.Texture.width, textureFill.Texture.height);
-                ParseViewBoxAspectRatio(node, ref viewBoxInfo);
-                ApplyViewBox(sceneNode, viewBoxInfo, viewPort);
+                    var rect = new Rectangle() { Fill = textureFill, FillTransform = Matrix2D.identity };
+                    rect.Position = Vector2.zero;
+                    rect.Size = new Vector2(textureFill.Texture.width, textureFill.Texture.height);
+                    sceneNode.Drawables = new List<IDrawable>(1);
+                    sceneNode.Drawables.Add(rect);
 
-                var rect = new Rectangle() { Fill = textureFill, FillTransform = Matrix2D.identity };
-                rect.Position = Vector2.zero;
-                rect.Size = new Vector2(textureFill.Texture.width, textureFill.Texture.height);
-                sceneNode.Drawables = new List<IDrawable>(1);
-                sceneNode.Drawables.Add(rect);
-
-                ParseClipAndMask(node, sceneNode);
+                    ParseClipAndMask(node, sceneNode);
+                }
             }
 
             AddToSVGDictionaryIfPossible(node, sceneNode);
@@ -1445,6 +1448,12 @@ namespace Unity.VectorGraphics
 
         #region Post-processing
 
+        void PostProcess(SceneNode root)
+        {
+            AdjustFills(root);
+            RemoveInvisibleNodes();
+        }
+
         struct HierarchyUpdate
         {
             public SceneNode Parent;
@@ -1452,7 +1461,7 @@ namespace Unity.VectorGraphics
             public SceneNode ReplaceNode;
         }
 
-        void PostProcess(SceneNode root)
+        void AdjustFills(SceneNode root)
         {
             var hierarchyUpdates = new List<HierarchyUpdate>();
 
@@ -1475,7 +1484,8 @@ namespace Unity.VectorGraphics
                             var fillNode = AdjustPatternFill(nodeInfo.Node, nodeInfo.WorldTransform, filled);
                             if (fillNode != null)
                             {
-                                hierarchyUpdates.Add(new HierarchyUpdate() {
+                                hierarchyUpdates.Add(new HierarchyUpdate()
+                                {
                                     Parent = nodeInfo.Parent,
                                     NewNode = fillNode,
                                     ReplaceNode = nodeInfo.Node
@@ -1704,6 +1714,15 @@ namespace Unity.VectorGraphics
             return replacementNode;
         }
 
+        void RemoveInvisibleNodes()
+        {
+            foreach (var n in invisibleNodes)
+            {
+                if (n.parent.Children != null)
+                    n.parent.Children.Remove(n.node);
+            }
+        }
+
         #endregion
 
         delegate void ElemHandler();
@@ -1736,6 +1755,7 @@ namespace Unity.VectorGraphics
         Dictionary<SceneNode, ClipData> clipData = new Dictionary<SceneNode, ClipData>();
         Dictionary<SceneNode, PatternData> patternData = new Dictionary<SceneNode, PatternData>();
         Dictionary<SceneNode, MaskData> maskData = new Dictionary<SceneNode, MaskData>();
+        List<NodeWithParent> invisibleNodes = new List<NodeWithParent>();
         Stack<Vector2> currentContainerSize = new Stack<Vector2>();
         Stack<SceneNode> currentSceneNode = new Stack<SceneNode>();
         GradientFill currentGradientFill;
@@ -1781,6 +1801,12 @@ namespace Unity.VectorGraphics
         {
             public bool WorldRelative;
             public bool ContentWorldRelative;
+        }
+
+        struct NodeWithParent
+        {
+            public SceneNode node;
+            public SceneNode parent;
         }
     }
 
