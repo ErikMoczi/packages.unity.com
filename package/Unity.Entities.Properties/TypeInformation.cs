@@ -146,11 +146,12 @@ namespace Unity.Entities.Properties
 
         public IEnumerable<ITypedMemberDescriptor> Get(Specifier d)
         {
-            yield break;
             if (_t == null)
             {
                 yield break;
             }
+            yield break;
+#if ENABLE_CSHARP_PROPERTY_PARSING
             foreach (var p in _t.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
                 if (!p.CanRead || !p.GetGetMethod(true).IsPublic)
@@ -171,6 +172,7 @@ namespace Unity.Entities.Properties
 
                 yield return new PropertyMemberDescriptor(p);
             }
+#endif
         }
         private Type _t;
     }

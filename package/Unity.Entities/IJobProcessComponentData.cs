@@ -8,8 +8,6 @@ using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 using Unity.Collections.LowLevel.Unsafe;
 
-[assembly:InternalsVisibleTo("Unity.Entities.Editor")]
-
 namespace Unity.Entities
 {
     [AttributeUsage(AttributeTargets.Struct)]
@@ -331,6 +329,20 @@ namespace Unity.Entities
             else
                 ScheduleInternal_3(ref jobData, system, -1, default(JobHandle), ScheduleMode.Run);
         }
+        
+        static unsafe JobHandle Schedule(void* fullData, int length, int innerloopBatchCount, bool isParallelFor, ref JobProcessComponentDataCache cache, JobHandle dependsOn, ScheduleMode mode)
+        {
+            if (isParallelFor)
+            {
+                var scheduleParams = new JobsUtility.JobScheduleParameters(fullData, cache.JobReflectionDataParallelFor, dependsOn, mode);
+                return JobsUtility.ScheduleParallelFor(ref scheduleParams, length, innerloopBatchCount);
+            }
+            else
+            {
+                var scheduleParams = new JobsUtility.JobScheduleParameters(fullData, cache.JobReflectionData, dependsOn, mode);
+                return JobsUtility.Schedule(ref scheduleParams);
+            }        
+        }
 
         internal unsafe static JobHandle ScheduleInternal_1<T>(ref T jobData, ComponentSystemBase system, int innerloopBatchCount,
             JobHandle dependsOn, ScheduleMode mode)
@@ -341,18 +353,7 @@ namespace Unity.Entities
 
             bool isParallelFor = innerloopBatchCount != -1; 
             IJobProcessComponentDataUtility.Initialize(system, typeof(T), typeof(JobStruct_Process1<,>), isParallelFor, ref JobStruct_ProcessInfer_1<T>.Cache, out fullData.Iterator);
-
-            if (isParallelFor)
-            {
-                var length = fullData.Iterator.m_Length;
-                var scheduleParams = new JobsUtility.JobScheduleParameters(UnsafeUtility.AddressOf(ref fullData), JobStruct_ProcessInfer_1<T>.Cache.JobReflectionDataParallelFor, dependsOn, mode);
-                return JobsUtility.ScheduleParallelFor(ref scheduleParams, length, innerloopBatchCount);
-            }
-            else
-            {
-                var scheduleParams = new JobsUtility.JobScheduleParameters(UnsafeUtility.AddressOf(ref fullData), JobStruct_ProcessInfer_1<T>.Cache.JobReflectionData, dependsOn, mode);
-                return JobsUtility.Schedule(ref scheduleParams);                
-            }
+            return Schedule(UnsafeUtility.AddressOf(ref fullData), fullData.Iterator.m_Length, innerloopBatchCount, isParallelFor, ref JobStruct_ProcessInfer_1<T>.Cache, dependsOn, mode);
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -438,18 +439,7 @@ namespace Unity.Entities
 
             bool isParallelFor = innerloopBatchCount != -1;
             IJobProcessComponentDataUtility.Initialize(system, typeof(T), typeof(JobStruct_Process2<,,>), isParallelFor, ref JobStruct_ProcessInfer_2<T>.Cache, out fullData.Iterator);
-
-            if (isParallelFor)
-            {
-                var length = fullData.Iterator.m_Length;
-                var scheduleParams = new JobsUtility.JobScheduleParameters(UnsafeUtility.AddressOf(ref fullData), JobStruct_ProcessInfer_2<T>.Cache.JobReflectionDataParallelFor, dependsOn, mode);
-                return JobsUtility.ScheduleParallelFor(ref scheduleParams, length, innerloopBatchCount);
-            }
-            else
-            {
-                var scheduleParams = new JobsUtility.JobScheduleParameters(UnsafeUtility.AddressOf(ref fullData), JobStruct_ProcessInfer_2<T>.Cache.JobReflectionData, dependsOn, mode);
-                return JobsUtility.Schedule(ref scheduleParams);
-            }
+            return Schedule(UnsafeUtility.AddressOf(ref fullData), fullData.Iterator.m_Length, innerloopBatchCount, isParallelFor, ref JobStruct_ProcessInfer_2<T>.Cache, dependsOn, mode);
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -542,21 +532,10 @@ namespace Unity.Entities
         {
             JobStruct_ProcessInfer_3<T> fullData;
             fullData.Data = jobData;
-
+            
             bool isParallelFor = innerloopBatchCount != -1;
             IJobProcessComponentDataUtility.Initialize(system, typeof(T), typeof(JobStruct_Process3<,,,>), isParallelFor, ref JobStruct_ProcessInfer_3<T>.Cache, out fullData.Iterator);
-
-            if (isParallelFor)
-            {
-                var length = fullData.Iterator.m_Length;
-                var scheduleParams = new JobsUtility.JobScheduleParameters(UnsafeUtility.AddressOf(ref fullData), JobStruct_ProcessInfer_3<T>.Cache.JobReflectionDataParallelFor, dependsOn, mode);
-                return JobsUtility.ScheduleParallelFor(ref scheduleParams, length, innerloopBatchCount);
-            }
-            else
-            {
-                var scheduleParams = new JobsUtility.JobScheduleParameters(UnsafeUtility.AddressOf(ref fullData), JobStruct_ProcessInfer_3<T>.Cache.JobReflectionData, dependsOn, mode);
-                return JobsUtility.Schedule(ref scheduleParams);
-            }
+            return Schedule(UnsafeUtility.AddressOf(ref fullData), fullData.Iterator.m_Length, innerloopBatchCount, isParallelFor, ref JobStruct_ProcessInfer_3<T>.Cache, dependsOn, mode);
         }
 
         [StructLayout(LayoutKind.Sequential)]

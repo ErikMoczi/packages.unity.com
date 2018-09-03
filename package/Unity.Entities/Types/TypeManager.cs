@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -51,8 +52,10 @@ namespace Unity.Entities
 
         struct ObjectOffsetType
         {
+#pragma warning disable 0169 // "never used" warning
             void* v0;
             void* v1;
+#pragma warning restore 0169
         }
 
         public static void Initialize()
@@ -98,6 +101,15 @@ namespace Unity.Entities
             }
             return -1;
         }
+        
+#if UNITY_EDITOR
+        public static int TypesCount => s_Count;
+
+        public static IEnumerable<ComponentType> AllTypes()
+        {
+            return System.Linq.Enumerable.Take(s_Types, s_Count);
+        }
+#endif //UNITY_EDITOR
 
         static int CreateTypeIndexThreadSafe(Type type)
         {

@@ -42,7 +42,7 @@ namespace Unity.Entities.Properties.Tests
                 m_Manager = null;
             }
         }
-        
+
         /// <summary>
         /// Serializes 100,000 entities as json
         /// </summary>
@@ -75,15 +75,20 @@ namespace Unity.Entities.Properties.Tests
                 // This builds a property tree for each type
                 // This is done on demand for newly discovered types
                 // @NOTE This json string will also be used to debug the size for a single entity
-                var json = JsonSerializer.SerializeStruct(new EntityContainer(m_Manager, entities[0]));
+                var container = new EntityContainer(m_Manager, entities[0]);
+
+                var json = JsonSerializer.Serialize(ref container);
 
                 var totalTimer = new Stopwatch();
                 totalTimer.Start();
 
                 foreach (var entity in entities)
                 {
+                    container = new EntityContainer(m_Manager, entity);
+
                     // Visit and write to the underlying StringBuffer, this is the raw json serialization
-                    JsonSerializer.SerializeStruct(new EntityContainer(m_Manager, entity), visitor);
+                    JsonSerializer.Serialize(ref container, visitor);
+
                     // @NOTE at this point we can call Write(buffer.Buffer, 0, buffer.Length)
                     buffer.Clear();
                 }
@@ -110,7 +115,9 @@ namespace Unity.Entities.Properties.Tests
                 var end = startIndex + count;
                 for (var i = startIndex; i < end; i++)
                 {
-                    JsonSerializer.SerializeStruct(new EntityContainer(manager, Entities[i]), visitor);
+                    var container = new EntityContainer(manager, Entities[i]);
+                    JsonSerializer.Serialize(ref container, visitor);
+
                     // @NOTE at this point we can call Write(buffer.Buffer, 0, buffer.Length)
                     buffer.Clear();
                 }
@@ -156,7 +163,9 @@ namespace Unity.Entities.Properties.Tests
                 // This builds a property tree for each type
                 // This is done on demand for newly discovered types
                 // @NOTE This json string will also be used to debug the size for a single entity
-                var json = JsonSerializer.SerializeStruct(new EntityContainer(m_Manager, entities[0]));
+                var container = new EntityContainer(m_Manager, entities[0]);
+
+                var json = JsonSerializer.Serialize(ref container);
 
                 var totalTimer = new Stopwatch();
 
@@ -186,7 +195,11 @@ namespace Unity.Entities.Properties.Tests
                         for (int p = c.StartIndex, end = c.EndIndex; p < end; p++)
                         {
                             var entity = c.Entities[p];
-                            JsonSerializer.SerializeStruct(new EntityContainer(m_Manager, entity), visitor);
+
+                            container = new EntityContainer(m_Manager, entity);
+
+                            JsonSerializer.Serialize(ref container, visitor);
+
                             // @NOTE at this point we can call Write(buffer.Buffer, 0, buffer.Length)
                             buffer.Clear();
                         }
@@ -228,13 +241,16 @@ namespace Unity.Entities.Properties.Tests
                 m_Manager.SetComponentData(entity, comp);
             }
 
-            using (var entities = m_Manager.GetAllEntities())
+            using (var entities = m_Manager.GetAllEntities(Allocator.TempJob))
             {
-                // Since we are testing raw serialization performance we rre warm the property type bag
+                // Since we are testing raw serialization performance we pre warm the property type bag
                 // This builds a property tree for each type
                 // This is done on demand for newly discovered types
                 // @NOTE This json string will also be used to debug the size for a single entity
-                var json = JsonSerializer.SerializeStruct(new EntityContainer(m_Manager, entities[0]));
+
+                var container = new EntityContainer(m_Manager, entities[0]);
+
+                var json = JsonSerializer.Serialize(ref container);
 
                 var job = new SerializationJob
                 {

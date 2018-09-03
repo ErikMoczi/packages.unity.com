@@ -18,6 +18,11 @@ namespace Unity.Transforms
     public struct Position : IComponentData
     {
         public float3 Value;
+
+        public Position(float3 position)
+        {
+            Value = position;
+        }
     }
 }
 

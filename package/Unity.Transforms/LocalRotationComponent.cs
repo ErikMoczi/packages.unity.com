@@ -21,6 +21,11 @@ namespace Unity.Transforms
     public struct LocalRotation : IComponentData
     {
         public quaternion Value;
+
+        public LocalRotation(quaternion rotation)
+        {
+            Value = rotation;
+        }
     }
 
     public class LocalRotationComponent : ComponentDataWrapper<LocalRotation> { }

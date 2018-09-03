@@ -11,9 +11,9 @@ namespace Unity.Transforms
     {
         [Inject] [ReadOnly] ComponentDataFromEntity<LocalPosition> m_LocalPositions;
         [Inject] [ReadOnly] ComponentDataFromEntity<LocalRotation> m_LocalRotations;
-        [Inject] ComponentDataFromEntity<Position> m_Positions;
-        [Inject] ComponentDataFromEntity<Rotation> m_Rotations;
-        [Inject] ComponentDataFromEntity<TransformMatrix> m_TransformMatrices;
+        [Inject] ComponentDataFromEntity<Position>                 m_Positions;
+        [Inject] ComponentDataFromEntity<Rotation>                 m_Rotations;
+        [Inject] ComponentDataFromEntity<TransformMatrix>          m_TransformMatrices;
 
         // +Rotation +Position -Heading -TransformMatrix
         struct RootRotTransNoTransformGroup
@@ -151,7 +151,6 @@ namespace Unity.Transforms
             [NativeDisableContainerSafetyRestriction]
             public ComponentDataArray<TransformMatrix> transforms;
 
-            private float deltaTIme;
             public void Execute(int index)
             {
                 float4x4 matrix = math.rottrans(rotations[index].Value, positions[index].Value);
@@ -337,14 +336,14 @@ namespace Unity.Transforms
         [ComputeJobOptimization]
         struct UpdateSubHierarchy : IJobParallelFor
         {
-            [ReadOnly] public NativeMultiHashMap<Entity, Entity> hierarchy;
-            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<Entity> roots;
-            [ReadOnly] public ComponentDataFromEntity<LocalPosition> localPositions;
-            [ReadOnly] public ComponentDataFromEntity<LocalRotation> localRotations;
-            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<float4x4> rootMatrices;
-
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Position> positions;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Rotation> rotations;
+            [ReadOnly] public NativeMultiHashMap<Entity, Entity>                                  hierarchy;
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<Entity>                     roots;
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<float4x4>                   rootMatrices;
+            
+            [ReadOnly] public ComponentDataFromEntity<LocalPosition>                              localPositions;
+            [ReadOnly] public ComponentDataFromEntity<LocalRotation>                              localRotations;
+            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Position>        positions;
+            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Rotation>        rotations;
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<TransformMatrix> transformMatrices;
 
             void TransformTree(Entity entity,float4x4 parentMatrix)
@@ -764,6 +763,7 @@ namespace Unity.Transforms
                     transformMatrices = m_TransformMatrices
                 };
                 var updateRotTransTransformHierarchyJobHandle = updateRotTransTransformHierarchyJob.Schedule(rotTransTransformRoots.Value.Length,64,updateSubHierarchyDeps);
+                updateSubHierarchyDeps = updateRotTransTransformHierarchyJobHandle;
                 updateSubHierarchyBarrierJobHandle = JobHandle.CombineDependencies(updateSubHierarchyBarrierJobHandle,updateRotTransTransformHierarchyJobHandle);
             }
             
@@ -781,6 +781,7 @@ namespace Unity.Transforms
                     transformMatrices = m_TransformMatrices
                 };
                 var updateRotTransNoTransformHierarchyJobHandle = updateRotTransNoTransformHierarchyJob.Schedule(rotTransNoTransformRoots.Value.Length,64,updateSubHierarchyDeps);
+                updateSubHierarchyDeps = updateRotTransNoTransformHierarchyJobHandle;
                 updateSubHierarchyBarrierJobHandle = JobHandle.CombineDependencies(updateSubHierarchyBarrierJobHandle,updateRotTransNoTransformHierarchyJobHandle);
             }
             
@@ -798,6 +799,7 @@ namespace Unity.Transforms
                     transformMatrices = m_TransformMatrices
                 };
                 var updateRotTransformHierarchyJobHandle = updateRotTransformHierarchyJob.Schedule(rotTransformRoots.Value.Length,1,updateSubHierarchyDeps);
+                updateSubHierarchyDeps = updateRotTransformHierarchyJobHandle;
                 updateSubHierarchyBarrierJobHandle = JobHandle.CombineDependencies(updateSubHierarchyBarrierJobHandle,updateRotTransformHierarchyJobHandle);
             }
             
@@ -815,6 +817,7 @@ namespace Unity.Transforms
                     transformMatrices = m_TransformMatrices
                 };
                 var updateRotNoTransformHierarchyJobHandle = updateRotNoTransformHierarchyJob.Schedule(rotNoTransformRoots.Value.Length,1,updateSubHierarchyDeps);
+                updateSubHierarchyDeps = updateRotNoTransformHierarchyJobHandle;
                 updateSubHierarchyBarrierJobHandle = JobHandle.CombineDependencies(updateSubHierarchyBarrierJobHandle,updateRotNoTransformHierarchyJobHandle);
             }
             
@@ -832,6 +835,7 @@ namespace Unity.Transforms
                     transformMatrices = m_TransformMatrices
                 };
                 var updateTransTransformHierarchyJobHandle = updateTransTransformHierarchyJob.Schedule(transTransformRoots.Value.Length,1,updateSubHierarchyDeps);
+                updateSubHierarchyDeps = updateTransTransformHierarchyJobHandle;
                 updateSubHierarchyBarrierJobHandle = JobHandle.CombineDependencies(updateSubHierarchyBarrierJobHandle,updateTransTransformHierarchyJobHandle);
             }
             
@@ -849,6 +853,7 @@ namespace Unity.Transforms
                     transformMatrices = m_TransformMatrices
                 };
                 var updateTransNoTransformHierarchyJobHandle = updateTransNoTransformHierarchyJob.Schedule(transNoTransformRoots.Value.Length,1,updateSubHierarchyDeps);
+                updateSubHierarchyDeps = updateTransNoTransformHierarchyJobHandle;
                 updateSubHierarchyBarrierJobHandle = JobHandle.CombineDependencies(updateSubHierarchyBarrierJobHandle,updateTransNoTransformHierarchyJobHandle);
             }
             
@@ -866,6 +871,7 @@ namespace Unity.Transforms
                     transformMatrices = m_TransformMatrices
                 };
                 var updateHeadingTransTransformHierarchyJobHandle = updateHeadingTransTransformHierarchyJob.Schedule(headingTransTransformRoots.Value.Length,1,updateSubHierarchyDeps);
+                updateSubHierarchyDeps = updateHeadingTransTransformHierarchyJobHandle;
                 updateSubHierarchyBarrierJobHandle = JobHandle.CombineDependencies(updateSubHierarchyBarrierJobHandle,updateHeadingTransTransformHierarchyJobHandle);
             }
             
@@ -883,6 +889,7 @@ namespace Unity.Transforms
                     transformMatrices = m_TransformMatrices
                 };
                 var updateHeadingTransNoTransformHierarchyJobHandle = updateHeadingTransNoTransformHierarchyJob.Schedule(headingTransNoTransformRoots.Value.Length,1,updateSubHierarchyDeps);
+                updateSubHierarchyDeps = updateHeadingTransNoTransformHierarchyJobHandle;
                 updateSubHierarchyBarrierJobHandle = JobHandle.CombineDependencies(updateSubHierarchyBarrierJobHandle,updateHeadingTransNoTransformHierarchyJobHandle);
             }
 

@@ -146,7 +146,7 @@ namespace Unity.Entities
             return count + 1;
         }
 
-        public ComponentGroup CreateComponentGroup(ComponentType* requiredComponents, int count)
+        internal ComponentGroup CreateComponentGroup(ComponentType* requiredComponents, int count)
         {
             var typeArrayCount = PopulatedCachedTypeArray(requiredComponents, count);
             var grp = m_GroupManager.CreateEntityGroupIfCached(m_ArchetypeManager, m_Entities, m_CachedComponentTypeArray, typeArrayCount);
@@ -158,7 +158,7 @@ namespace Unity.Entities
             return m_GroupManager.CreateEntityGroup(m_ArchetypeManager, m_Entities, m_CachedComponentTypeArray, typeArrayCount);
         }
 
-        public ComponentGroup CreateComponentGroup(params ComponentType[] requiredComponents)
+        internal ComponentGroup CreateComponentGroup(params ComponentType[] requiredComponents)
         {
             fixed (ComponentType* requiredComponentsPtr = requiredComponents)
             {
@@ -213,6 +213,24 @@ namespace Unity.Entities
         {
             BeforeStructuralChange();
             m_Entities->CreateEntities(m_ArchetypeManager, archetype.Archetype, entities, count);
+        }
+
+        public void DestroyEntity(ComponentGroup componentGroupFilter)
+        {
+            BeforeStructuralChange();
+            
+            // @TODO: Don't copy entity array,
+            // take advantage of inherent chunk structure to do faster destruction
+            var entityGroupArray = componentGroupFilter.GetEntityArray();
+            if (entityGroupArray.Length == 0)
+                return;
+            
+            var entityArray = new NativeArray<Entity>(entityGroupArray.Length, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            entityGroupArray.CopyTo(entityArray);
+            if (entityArray.Length != 0)
+                m_Entities->DeallocateEnties(m_ArchetypeManager, m_SharedComponentManager, (Entity*)entityArray.GetUnsafeReadOnlyPtr(), entityArray.Length);
+            
+            entityArray.Dispose();
         }
 
         public void DestroyEntity(NativeArray<Entity> entities)
@@ -497,35 +515,14 @@ namespace Unity.Entities
             return ptr;
         }
 
-        internal object GetComponentBoxed(Entity entity, ComponentType componentType)
+        internal object GetSharedComponentData(Entity entity, int typeIndex)
         {
-            var ptr = GetComponentDataRaw(entity, componentType.TypeIndex);
+            m_Entities->AssertEntityHasComponent(entity, typeIndex);
 
-            var type = TypeManager.GetType(componentType.TypeIndex);
-            var boxed = Activator.CreateInstance(type);
-
-            ulong gcHandle;
-            byte* boxedPtr = (byte*)UnsafeUtility.PinGCObjectAndGetAddress(boxed, out gcHandle);
-            //@TODO: harcoded object class sizeof hack
-            UnsafeUtility.MemCpy(boxedPtr + 16, ptr, UnsafeUtility.SizeOf(type));
-
-            UnsafeUtility.ReleaseGCObject(gcHandle);
-
-            return boxed;
+            var sharedComponentIndex = m_Entities->GetSharedComponentDataIndex(entity, typeIndex);
+            return m_SharedComponentManager.GetSharedComponentDataBoxed(sharedComponentIndex);
         }
-
-        internal void SetComponentBoxed(Entity entity, ComponentType componentType, object boxedObject)
-        {
-            var type = TypeManager.GetType(componentType.TypeIndex);
-
-            ulong gcHandle;
-            byte* boxedPtr = (byte*)UnsafeUtility.PinGCObjectAndGetAddress(boxedObject, out gcHandle);
-            //@TODO: harcoded object class sizeof hack
-            SetComponentDataRaw(entity, componentType.TypeIndex, boxedPtr + 16, UnsafeUtility.SizeOf(type));
-
-            UnsafeUtility.ReleaseGCObject(gcHandle);
-        }
-
+        
         public int GetComponentOrderVersion<T>()
         {
             return m_Entities->GetComponentTypeOrderVersion(TypeManager.GetTypeIndex<T>());

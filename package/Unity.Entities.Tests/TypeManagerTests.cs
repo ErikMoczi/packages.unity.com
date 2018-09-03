@@ -7,11 +7,15 @@ namespace Unity.Entities.Tests
 	{
         struct TestType1 : IComponentData
 		{
+#pragma warning disable 0169 // "never used" warning
 			int empty;
+#pragma warning restore 0169
 		}
 		struct TestType2 : IComponentData
 		{
+#pragma warning disable 0169 // "never used" warning
 			int empty;
+#pragma warning restore 0169
 		}
 		[Test]
 		public void CreateArchetypes()
@@ -45,7 +49,9 @@ namespace Unity.Entities.Tests
 
 		struct NonBlittableComponentData : IComponentData
 		{
+#pragma warning disable 0169 // "never used" warning
 			string empty;
+#pragma warning restore 0169
 		}
 
         [Test]

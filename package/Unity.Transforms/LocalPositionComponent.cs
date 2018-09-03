@@ -21,6 +21,11 @@ namespace Unity.Transforms
     public struct LocalPosition : IComponentData
     {
         public float3 Value;
+        
+        public LocalPosition(float3 position)
+        {
+            Value = position;
+        }
     }
 
     public class LocalPositionComponent : ComponentDataWrapper<LocalPosition> { } 

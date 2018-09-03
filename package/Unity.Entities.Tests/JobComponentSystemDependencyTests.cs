@@ -87,7 +87,9 @@ namespace Unity.Entities.Tests
                 public ComponentDataArray<EcsTestData> data;
             }
 
+#pragma warning disable 0169 // "never used" warning
             [Inject] private Inputs m_Inputs;
+#pragma warning restore 0169
 
             protected override JobHandle OnUpdate(JobHandle input)
             {

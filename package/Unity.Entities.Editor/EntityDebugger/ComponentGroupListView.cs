@@ -2,19 +2,17 @@
 using UnityEditor.IMGUI.Controls;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Collections;
-using Unity.Entities;
 using UnityEngine;
 
 namespace Unity.Entities.Editor
 {
-    public interface IComponentGroupSelectionWindow : IWorldSelectionWindow
-    {
-        ComponentGroup ComponentGroupSelection { set; }
-    }
+    
+    public delegate void SetComponentGroupSelection(ComponentGroup group, bool updateList, bool propagate);
     
     public class ComponentGroupListView : TreeView {
         private readonly Dictionary<int, ComponentGroup> componentGroupsById = new Dictionary<int, ComponentGroup>();
+        private readonly Dictionary<int, string[]> componentGroupTypeNamesById = new Dictionary<int, string[]>();
+        private readonly Dictionary<int, ComponentType.AccessMode[]> componentGroupTypeModesById = new Dictionary<int, ComponentType.AccessMode[]>();
 
         public ComponentSystemBase SelectedSystem
         {
@@ -30,7 +28,8 @@ namespace Unity.Entities.Editor
         }
         private ComponentSystemBase selectedSystem;
 
-        IComponentGroupSelectionWindow window;
+        private readonly WorldSelectionGetter getWorldSelection;
+        private readonly SetComponentGroupSelection componentGroupSelectionCallback;
 
         private static TreeViewState GetStateForSystem(ComponentSystemBase system, List<TreeViewState> states, List<string> stateNames)
         {
@@ -52,27 +51,52 @@ namespace Unity.Entities.Editor
         }
 
         public static ComponentGroupListView CreateList(ComponentSystemBase system, List<TreeViewState> states, List<string> stateNames,
-            IComponentGroupSelectionWindow window)
+            SetComponentGroupSelection componentGroupSelectionCallback, WorldSelectionGetter worldSelectionGetter)
         {
             var state = GetStateForSystem(system, states, stateNames);
-            return new ComponentGroupListView(state, system, window);
+            return new ComponentGroupListView(state, system, componentGroupSelectionCallback, worldSelectionGetter);
         }
 
-        public ComponentGroupListView(TreeViewState state, ComponentSystemBase system, IComponentGroupSelectionWindow window) : base(state)
+        public ComponentGroupListView(TreeViewState state, ComponentSystemBase system, SetComponentGroupSelection componentGroupSelectionCallback, WorldSelectionGetter worldSelectionGetter) : base(state)
         {
-            this.window = window;
+            this.getWorldSelection = worldSelectionGetter;
+            this.componentGroupSelectionCallback = componentGroupSelectionCallback;
             selectedSystem = system;
+            rowHeight += 1;
             Reload();
         }
 
         public float Height => Mathf.Max(selectedSystem?.ComponentGroups?.Length ?? 0, 1)*rowHeight;
 
+        internal static int CompareTypes(ComponentType x, ComponentType y)
+        {
+            var accessModeOrder = SortOrderFromAccessMode(x.AccessModeType).CompareTo(SortOrderFromAccessMode(y.AccessModeType));
+            return accessModeOrder != 0 ? accessModeOrder : string.Compare(x.GetType().Name, y.GetType().Name, StringComparison.InvariantCulture);
+        }
+
+        private static int SortOrderFromAccessMode(ComponentType.AccessMode mode)
+        {
+            switch (mode)
+            {
+                    case ComponentType.AccessMode.ReadOnly:
+                        return 0;
+                    case ComponentType.AccessMode.ReadWrite:
+                        return 1;
+                    case ComponentType.AccessMode.Subtractive:
+                        return 2;
+                    default:
+                        throw new ArgumentException("Unrecognized AccessMode");
+            }
+        }
+
         protected override TreeViewItem BuildRoot()
         {
             componentGroupsById.Clear();
+            componentGroupTypeModesById.Clear();
+            componentGroupTypeNamesById.Clear();
             var currentId = 0;
             var root  = new TreeViewItem { id = currentId++, depth = -1, displayName = "Root" };
-            if (window?.WorldSelection == null)
+            if (getWorldSelection() == null)
             {
                 root.AddChild(new TreeViewItem { id = currentId, displayName = "No world selected"});
             }
@@ -89,10 +113,12 @@ namespace Unity.Entities.Editor
                 foreach (var group in SelectedSystem.ComponentGroups)
                 {
                     componentGroupsById.Add(currentId, group);
-                    var types = group.Types;
-                    var groupName = string.Join(", ", (from x in types.Skip(types.Length > 1 ? 1 : 0) select x.Name).ToArray());
+                    var types = new List<ComponentType>(group.Types.Skip(1)); // Skip Entity
+                    types.Sort(CompareTypes);
+                    componentGroupTypeNamesById.Add(currentId, (from t in types select t.GetManagedType().Name).ToArray());
+                    componentGroupTypeModesById.Add(currentId, (from t in types select t.AccessModeType).ToArray());
 
-                    var groupItem = new TreeViewItem { id = currentId++, displayName = groupName };
+                    var groupItem = new TreeViewItem { id = currentId++ };
                     root.AddChild(groupItem);
                 }
                 SetupDepthsFromParentsAndChildren(root);
@@ -102,8 +128,32 @@ namespace Unity.Entities.Editor
 
         public override void OnGUI(Rect rect)
         {
-            if (window?.WorldSelection?.GetExistingManager<EntityManager>()?.IsCreated == true)
+            if (getWorldSelection()?.GetExistingManager<EntityManager>()?.IsCreated == true)
                 base.OnGUI(rect);
+        }
+
+        private void DrawTypeAndMovePosition(ref Vector2 position, string name, ComponentType.AccessMode mode)
+        {
+            var style = StyleForAccessMode(mode);
+            var content = new GUIContent(name);
+            var labelRect = new Rect(position, style.CalcSize(content));
+            GUI.Label(labelRect, content, style);
+            position.x += labelRect.width + 2f;
+        }
+
+        internal static GUIStyle StyleForAccessMode(ComponentType.AccessMode mode)
+        {
+            switch (mode)
+            {
+                case ComponentType.AccessMode.ReadOnly:
+                    return EntityDebuggerStyles.ComponentReadOnly;
+                case ComponentType.AccessMode.ReadWrite:
+                    return EntityDebuggerStyles.ComponentReadWrite;
+                case ComponentType.AccessMode.Subtractive:
+                    return EntityDebuggerStyles.ComponentSubtractive;
+                default:
+                    throw new ArgumentException("Unrecognized access mode");
+            }
         }
 
         protected override void RowGUI(RowGUIArgs args)
@@ -111,21 +161,33 @@ namespace Unity.Entities.Editor
             base.RowGUI(args);
             if (!componentGroupsById.ContainsKey(args.item.id))
                 return;
-            var countString = componentGroupsById[args.item.id].CalculateLength().ToString();
+
+            var componentGroup = componentGroupsById[args.item.id];
+            var names = componentGroupTypeNamesById[args.item.id];
+            var modes = componentGroupTypeModesById[args.item.id];
+
+            var position = args.rowRect.position;
+            position.x = GetContentIndent(args.item);
+            position.y += 1;
+            
+            for (var i = 0; i < names.Length; ++i)
+            {
+                DrawTypeAndMovePosition(ref position, names[i], modes[i]);
+            }
+            
+            var countString = componentGroup.CalculateLength().ToString();
             DefaultGUI.LabelRightAligned(args.rowRect, countString, args.selected, args.focused);
         }
 
         protected override void SelectionChanged(IList<int> selectedIds)
         {
-            if (window == null)
-                return;
             if (selectedIds.Count > 0 && componentGroupsById.ContainsKey(selectedIds[0]))
             {
-                window.ComponentGroupSelection = componentGroupsById[selectedIds[0]];
+                componentGroupSelectionCallback(componentGroupsById[selectedIds[0]], false, true);
             }
             else
             {
-                window.ComponentGroupSelection = null;
+                componentGroupSelectionCallback(null, false, true);
             }
         }
 
@@ -134,9 +196,22 @@ namespace Unity.Entities.Editor
             return false;
         }
 
+        public void SetComponentGroupSelection(ComponentGroup group)
+        {
+            foreach (var pair in componentGroupsById)
+            {
+                if (pair.Value == group)
+                {
+                    SetSelection(new List<int> {pair.Key});
+                    return;
+                }
+            }
+            SetSelection(new List<int>());
+        }
+
         public void TouchSelection()
         {
-            SelectionChanged(GetSelection());
+            SetSelection(GetSelection(), TreeViewSelectionOptions.FireSelectionChanged);
         }
 
         public void UpdateIfNecessary()

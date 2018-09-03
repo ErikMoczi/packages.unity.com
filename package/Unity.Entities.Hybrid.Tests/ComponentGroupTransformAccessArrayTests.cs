@@ -38,10 +38,9 @@ namespace Unity.Entities.Tests
 	    [Test]
 		public void EmptyTransformAccessArrayWorks()
 	    {
-	        var group = m_Manager.CreateComponentGroup(typeof(Transform), typeof(TransformAccessArrayTestTag));
+	        var group = EmptySystem.GetComponentGroup(typeof(Transform), typeof(TransformAccessArrayTestTag));
 	        var ta = group.GetTransformAccessArray();
 			Assert.AreEqual(0, ta.length);
-	        group.Dispose();
 	    }
 	    [Test]
 	    public void SingleItemTransformAccessArrayWorks()
@@ -50,10 +49,10 @@ namespace Unity.Entities.Tests
 	        go.AddComponent<TransformAccessArrayTestTagComponent>();
 	        // Execute in edit mode is not enabled so this has to be called manually right now
 	        go.GetComponent<GameObjectEntity>().OnEnable();
-	        var group = m_Manager.CreateComponentGroup(typeof(Transform), typeof(TransformAccessArrayTestTag));
+	        var group = EmptySystem.GetComponentGroup(typeof(Transform), typeof(TransformAccessArrayTestTag));
 	        var ta = group.GetTransformAccessArray();
 	        Assert.AreEqual(1, ta.length);
-	        group.Dispose();
+
 	        // Execute in edit mode is not enabled so this has to be called manually right now
 	        go.GetComponent<GameObjectEntity>().OnDisable();
 	        Object.DestroyImmediate(go);
@@ -65,7 +64,7 @@ namespace Unity.Entities.Tests
 	        go.AddComponent<TransformAccessArrayTestTagComponent>();
 	        // Execute in edit mode is not enabled so this has to be called manually right now
 	        go.GetComponent<GameObjectEntity>().OnEnable();
-	        var group = m_Manager.CreateComponentGroup(typeof(Transform), typeof(TransformAccessArrayTestTag));
+	        var group = EmptySystem.GetComponentGroup(typeof(Transform), typeof(TransformAccessArrayTestTag));
 	        var ta = group.GetTransformAccessArray();
 	        Assert.AreEqual(1, ta.length);
 
@@ -76,7 +75,6 @@ namespace Unity.Entities.Tests
 	        ta = group.GetTransformAccessArray();
 	        Assert.AreEqual(2, ta.length);
 
-	        group.Dispose();
 	        // Execute in edit mode is not enabled so this has to be called manually right now
 	        go.GetComponent<GameObjectEntity>().OnDisable();
 	        go2.GetComponent<GameObjectEntity>().OnDisable();
@@ -91,7 +89,7 @@ namespace Unity.Entities.Tests
 	        go.AddComponent<TransformAccessArrayTestTagComponent>();
 	        // Execute in edit mode is not enabled so this has to be called manually right now
 	        go.GetComponent<GameObjectEntity>().OnEnable();
-	        var group = m_Manager.CreateComponentGroup(typeof(Transform), typeof(TransformAccessArrayTestTag));
+	        var group = EmptySystem.GetComponentGroup(typeof(Transform), typeof(TransformAccessArrayTestTag));
 	        var ta = group.GetTransformAccessArray();
 	        Assert.AreEqual(1, ta.length);
 
@@ -101,7 +99,6 @@ namespace Unity.Entities.Tests
 	        go2.GetComponent<GameObjectEntity>().OnEnable();
 	        Assert.AreEqual(1, ta.length);
 
-	        group.Dispose();
 	        // Execute in edit mode is not enabled so this has to be called manually right now
 	        go.GetComponent<GameObjectEntity>().OnDisable();
 	        go2.GetComponent<GameObjectEntity>().OnDisable();
@@ -120,7 +117,7 @@ namespace Unity.Entities.Tests
 	        // Execute in edit mode is not enabled so this has to be called manually right now
 	        go2.GetComponent<GameObjectEntity>().OnEnable();
 
-	        var group = m_Manager.CreateComponentGroup(typeof(Transform), typeof(TransformAccessArrayTestTag));
+	        var group = EmptySystem.GetComponentGroup(typeof(Transform), typeof(TransformAccessArrayTestTag));
 	        var ta = group.GetTransformAccessArray();
 	        Assert.AreEqual(2, ta.length);
 
@@ -131,7 +128,6 @@ namespace Unity.Entities.Tests
 	        ta = group.GetTransformAccessArray();
 	        Assert.AreEqual(1, ta.length);
 
-	        group.Dispose();
 	        // Execute in edit mode is not enabled so this has to be called manually right now
 	        go2.GetComponent<GameObjectEntity>().OnDisable();
 	        Object.DestroyImmediate(go2);
@@ -149,7 +145,7 @@ namespace Unity.Entities.Tests
 	        // Execute in edit mode is not enabled so this has to be called manually right now
 	        go2.GetComponent<GameObjectEntity>().OnEnable();
 
-	        var group = m_Manager.CreateComponentGroup(typeof(Transform), typeof(TransformAccessArrayTestTag));
+	        var group = EmptySystem.GetComponentGroup(typeof(Transform), typeof(TransformAccessArrayTestTag));
 	        var ta = group.GetTransformAccessArray();
 	        Assert.AreEqual(2, ta.length);
 
@@ -159,7 +155,6 @@ namespace Unity.Entities.Tests
 
 	        Assert.AreEqual(2, ta.length);
 
-	        group.Dispose();
 	        // Execute in edit mode is not enabled so this has to be called manually right now
 	        go2.GetComponent<GameObjectEntity>().OnDisable();
 	        Object.DestroyImmediate(go2);

@@ -50,7 +50,9 @@ namespace Unity.Entities
 
         unsafe struct PointerSize
         {
+#pragma warning disable 0169 // "never used" warning
             void* pter;
+#pragma warning restore 0169
         }
 
         static void CreateLayoutRecurse(Type type, int baseOffset, List<Layout> layouts, ref int begin, ref int end)

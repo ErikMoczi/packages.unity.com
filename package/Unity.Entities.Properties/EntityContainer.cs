@@ -21,7 +21,7 @@ namespace Unity.Entities.Properties
             public override void Accept(ref EntityContainer container, IPropertyVisitor visitor)
             {
                 var count = container.m_Manager.GetComponentCount(container.m_Entity);
-                var listContext = new ListContext<IList<StructProxy>> {Property = this, Value = null, Index = -1, Count = count};
+                var listContext = new VisitContext<IList<StructProxy>> {Property = this, Value = null, Index = -1 };
 
 
                 // @TODO improve, split the deps
@@ -44,7 +44,7 @@ namespace Unity.Entities.Properties
                     for (var i = 0; i < count; i++)
                     {
                         var item = Get(ref container, i, primitiveTypes);
-                        var context = new SubtreeContext<StructProxy>
+                        var context = new VisitContext<StructProxy>
                         {
                             Property = this,
                             Value = item,
@@ -53,7 +53,7 @@ namespace Unity.Entities.Properties
 
                         if (visitor.BeginContainer(ref container, context))
                         {
-                            item.PropertyBag.VisitStruct(ref item, visitor);
+                            item.PropertyBag.Visit(ref item, visitor);
                         }
 
                         visitor.EndContainer(ref container, context);

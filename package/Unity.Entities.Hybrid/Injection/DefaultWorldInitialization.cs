@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 
 namespace Unity.Entities
@@ -34,24 +35,31 @@ namespace Unity.Entities
             InjectionHookSupport.RegisterHook(new TransformAccessArrayInjectionHook());
             InjectionHookSupport.RegisterHook(new ComponentArrayInjectionHook());
 
-            PlayerLoopManager.RegisterDomainUnload (DomainUnloadShutdown, 10000);
+            PlayerLoopManager.RegisterDomainUnload(DomainUnloadShutdown, 10000);
 
             foreach (var ass in AppDomain.CurrentDomain.GetAssemblies())
             {
-                var allTypes = ass.GetTypes();
-
-                // Create all ComponentSystem
-                var systemTypes = allTypes.Where(t => 
-                    t.IsSubclassOf(typeof(ComponentSystemBase)) && 
-                    !t.IsAbstract && 
-                    !t.ContainsGenericParameters && 
-                    t.GetCustomAttributes(typeof(DisableAutoCreationAttribute), true).Length == 0);
-                foreach (var type in systemTypes)
+                try
                 {
-                    if (editorWorld && type.GetCustomAttributes(typeof(ExecuteInEditMode), true).Length == 0)
-                        continue;
-                        
-                    GetBehaviourManagerAndLogException(world, type);
+                    var allTypes = ass.GetTypes();
+
+                    // Create all ComponentSyste
+                    var systemTypes = allTypes.Where(t =>
+                        t.IsSubclassOf(typeof(ComponentSystemBase)) &&
+                        !t.IsAbstract &&
+                        !t.ContainsGenericParameters &&
+                        t.GetCustomAttributes(typeof(DisableAutoCreationAttribute), true).Length == 0);
+                    foreach (var type in systemTypes)
+                    {
+                        if (editorWorld && type.GetCustomAttributes(typeof(ExecuteInEditMode), true).Length == 0)
+                            continue;
+
+                        GetBehaviourManagerAndLogException(world, type);
+                    }
+                }
+                catch (ReflectionTypeLoadException)
+                {
+                    // Can happen for certain assembly during the GetTypes() step
                 }
             }
 

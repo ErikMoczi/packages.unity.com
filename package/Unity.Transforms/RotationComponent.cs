@@ -17,6 +17,11 @@ namespace Unity.Transforms
     public struct Rotation : IComponentData
     {
         public quaternion Value;
+        
+        public Rotation(quaternion rotation)
+        {
+            Value = rotation;
+        }
     }
 
     public class RotationComponent : ComponentDataWrapper<Rotation> { }

@@ -14,6 +14,7 @@ namespace Unity.Rendering
 	{
         public Mesh                 mesh;
         public Material             material;
+	    public int                  subMesh;
 
         public ShadowCastingMode    castShadows;
         public bool                 receiveShadows;

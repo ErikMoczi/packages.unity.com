@@ -50,6 +50,7 @@ namespace Unity.Rendering
 		    // We want to iterate over all unique MeshInstanceRenderer shared component data,
 		    // that are attached to any entities in the world
             EntityManager.GetAllUniqueSharedComponentDatas(m_CacheduniqueRendererTypes);
+		    var forEachFilter = m_InstanceRendererGroup.CreateForEachFilter(m_CacheduniqueRendererTypes);
 
             for (int i = 0;i != m_CacheduniqueRendererTypes.Count;i++)
             {
@@ -57,8 +58,7 @@ namespace Unity.Rendering
                 // SharedComponentData gurantees that all those entities are packed togehter in a chunk with linear memory layout.
                 // As a result the copy of the matrices out is internally done via memcpy.
                 var renderer = m_CacheduniqueRendererTypes[i];
-                m_InstanceRendererGroup.SetFilter(renderer);
-                var transforms = m_InstanceRendererGroup.GetComponentDataArray<TransformMatrix>();
+                var transforms = m_InstanceRendererGroup.GetComponentDataArray<TransformMatrix>(forEachFilter, i);
 
                 // Graphics.DrawMeshInstanced has a set of limitations that are not optimal for working with ECS.
                 // Specifically:
@@ -74,13 +74,14 @@ namespace Unity.Rendering
                 {
                     int length = math.min(m_MatricesArray.Length, transforms.Length - beginIndex);
                     CopyMatrices(transforms, beginIndex, length, m_MatricesArray);
-                    Graphics.DrawMeshInstanced(renderer.mesh, 0, renderer.material, m_MatricesArray, length, null, renderer.castShadows, renderer.receiveShadows);
+                    Graphics.DrawMeshInstanced(renderer.mesh, renderer.subMesh, renderer.material, m_MatricesArray, length, null, renderer.castShadows, renderer.receiveShadows);
 
                     beginIndex += length;
                 }
             }
-		    
+
 		    m_CacheduniqueRendererTypes.Clear();
+		    forEachFilter.Dispose();
 		}
 	}
 }

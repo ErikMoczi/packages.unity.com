@@ -55,7 +55,8 @@ namespace Unity.Entities.Properties.Tests
             testComponent.x = 123f;
             m_Manager.SetComponentData(entity, testComponent);
 
-            var json = JsonSerializer.SerializeStruct(new EntityContainer(m_Manager, entity));
+            var container = new EntityContainer(m_Manager, entity);
+            var json = JsonSerializer.Serialize(ref container);
             Debug.Log(json);
         }
 
@@ -68,7 +69,8 @@ namespace Unity.Entities.Properties.Tests
             nestedComponent.test.x = 123f;
             m_Manager.SetComponentData(entity, nestedComponent);
 
-            var json = JsonSerializer.SerializeStruct(new EntityContainer(m_Manager, entity));
+            var container = new EntityContainer(m_Manager, entity);
+            var json = JsonSerializer.Serialize(ref container);
             Debug.Log(json);
         }
         
@@ -83,7 +85,8 @@ namespace Unity.Entities.Properties.Tests
             math.v4 = new float4(1f, 2f, 3f, 4f);
             m_Manager.SetComponentData(entity, math);
 
-            var json = JsonSerializer.SerializeStruct(new EntityContainer(m_Manager, entity));
+            var container = new EntityContainer(m_Manager, entity);
+            var json = JsonSerializer.Serialize(ref container);
             Debug.Log(json);
         }
         
@@ -98,7 +101,8 @@ namespace Unity.Entities.Properties.Tests
             comp.blit.z = -12;
             comp.flt = 0.01f;
 
-            var json = JsonSerializer.SerializeStruct(new EntityContainer(m_Manager, entity));
+            var container = new EntityContainer(m_Manager, entity);
+            var json = JsonSerializer.Serialize(ref container);
             Debug.Log(json);
         }
     }

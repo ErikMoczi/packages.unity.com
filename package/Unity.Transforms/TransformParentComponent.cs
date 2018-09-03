@@ -11,7 +11,12 @@ namespace Unity.Transforms
     /// </summary>
     public struct TransformParent : IComponentData
     {
-        public Entity Value { get; set; }
+        public Entity Value;
+
+        public TransformParent(Entity parent)
+        {
+            Value = parent;
+        }
     }
 
     public class TransformParentComponent : ComponentDataWrapper<TransformParent> { }

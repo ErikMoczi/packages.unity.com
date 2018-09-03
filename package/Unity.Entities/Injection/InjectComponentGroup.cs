@@ -17,7 +17,6 @@ namespace Unity.Entities
         readonly int 		m_GroupFieldOffset;
 
         readonly int 				m_EntityArrayOffset;
-        readonly int                m_IndexFromEntityOffset;
         readonly int 				m_LengthOffset;
 
         readonly InjectionData[]     m_ComponentDataInjections;
@@ -48,11 +47,6 @@ namespace Unity.Entities
                 m_EntityArrayOffset = UnsafeUtility.GetFieldOffset(entityArrayInjection);
             else
                 m_EntityArrayOffset = -1;
-
-            if (indexFromEntityInjection != null)
-                m_IndexFromEntityOffset = UnsafeUtility.GetFieldOffset(indexFromEntityInjection);
-            else
-                m_IndexFromEntityOffset = -1;
 
             if (lengthInjection != null)
                 m_LengthOffset = UnsafeUtility.GetFieldOffset(lengthInjection);
@@ -102,13 +96,6 @@ namespace Unity.Entities
                 EntityArray entityArray;
                 m_EntityGroup.GetEntityArray(ref iterator, length, out entityArray);
                 UnsafeUtility.CopyStructureToPtr(ref entityArray, groupStructPtr + m_EntityArrayOffset);
-            }
-
-            if (m_IndexFromEntityOffset != -1)
-            {
-                IndexFromEntity indexFromEntity;
-                m_EntityGroup.GetIndexFromEntity(out indexFromEntity);
-                UnsafeUtility.CopyStructureToPtr(ref indexFromEntity, groupStructPtr + m_IndexFromEntityOffset);
             }
 
             if (m_InjectionContext.HasEntries)
@@ -188,14 +175,6 @@ namespace Unity.Entities
                         return $"{system.GetType().Name}:{groupField.Name} An [Inject] struct, may only contain a single EntityArray";
 
                     entityArrayField = field;
-                }
-                else if (field.FieldType == typeof(IndexFromEntity))
-                {
-                    // Error on multiple IndexFromEntity
-                    if (indexFromEntityField != null)
-                        return $"{system.GetType().Name}:{groupField.Name} An [Inject] struct, may only contain a single IndexFromEntity";
-
-                    indexFromEntityField = field;
                 }
                 else if (field.FieldType == typeof(int))
                 {
