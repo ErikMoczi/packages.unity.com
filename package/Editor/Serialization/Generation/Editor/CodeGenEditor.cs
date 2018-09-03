@@ -10,7 +10,12 @@ namespace Unity.Properties.Editor.Serialization
 {
     public class CodeGenEditorWindow : EditorWindow
     {
+        private Vector2 m_SchemaEditorScroll;
         private Vector2 m_SchemaJsonScroll;
+        private Vector2 m_CodeJsonScroll;
+
+        private Vector2 m_DataEditorScroll;
+        private Vector2 m_DataJsonnScroll;
 
         private string m_SchemaJson = @"
 [{
