@@ -21,6 +21,9 @@ namespace UnityEngine.XR.ARKit
 
         [DllImport("__Internal")]
         internal static extern bool UnityARKit_IsCameraPermissionGranted();
+
+        [DllImport("__Internal")]
+        internal static extern TrackingState UnityARKit_getAnchorTrackingState(TrackableId id);
 #else
         internal static Availability UnityARKit_CheckAvailability() { return Availability.None; }
 
@@ -30,6 +33,8 @@ namespace UnityEngine.XR.ARKit
         }
 
         internal static bool UnityARKit_IsCameraPermissionGranted() { return false; }
+
+        internal static TrackingState UnityARKit_getAnchorTrackingState(TrackableId id) { return TrackingState.Unavailable; }
 #endif
     }
 }

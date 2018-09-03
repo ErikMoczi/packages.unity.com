@@ -4,14 +4,23 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.0.0-preview.5] - 2018-03-26
+## [1.0.0-preview.13] - 2018-07-17
+- Update plugin to be compatible with Unity 2018.3
+- `ARPlane.trackingState` reports the session `TrackingState` for ARKit planes (previously it returned `TrackingState.Unknown`). ARKit planes do not have per-plane tracking states, so if they exist and the session is tracking, then the SDK will now report that the planes are tracked.
 
-### This is the first release of the ARKit package for multi-platform AR.
+## [1.0.0-preview.12] - 2018-06-20
+- Add -fembed-bitcode flag to UnityARKit.a to support archiving.
+- Fail the build if "Symlink Unity libraries" is checked.
 
-In this release we are shipping a working iteration of the ARKit package for 
-Unity's native multi-platform AR support.
-Included in the package are static libraries, configuration files, binaries 
-and project files needed to adapt ARKit to the Unity multi-platform AR API.
+## [1.0.0-preview.11] - 2018-06-14
+- Fail the build if Camera Usage Description is blank
+
+## [1.0.0-preview.10] - 2018-06-08
+- Do not include build postprocessor when not on iOS
+- Add support for reference points attached to planes
+
+## [1.0.0-preview.9] - 2018-06-06
+- Remove extraneous debug log
 
 ## [1.0.0-preview.8] - 2018-05-07
 
@@ -23,16 +32,11 @@ and project files needed to adapt ARKit to the Unity multi-platform AR API.
 - Availability check to determine runtime support for ARKit.
 - Normalize average brightness reading from 0..1
 
-## [1.0.0-preview.9] - 2018-06-06
-- Remove extraneous debug log
+## [1.0.0-preview.5] - 2018-03-26
 
-## [1.0.0-preview.10] - 2018-06-08
-- Do not include build postprocessor when not on iOS
-- Add support for reference points attached to planes
+### This is the first release of the ARKit package for multi-platform AR.
 
-## [1.0.0-preview.11] - 2018-06-14
-- Fail the build if Camera Usage Description is blank
-
-## [1.0.0-preview.12] - 2018-06-20
-- Add -fembed-bitcode flag to UnityARKit.a to support archiving.
-- Fail the build if "Symlink Unity libraries" is checked.
+In this release we are shipping a working iteration of the ARKit package for 
+Unity's native multi-platform AR support.
+Included in the package are static libraries, configuration files, binaries 
+and project files needed to adapt ARKit to the Unity multi-platform AR API.
