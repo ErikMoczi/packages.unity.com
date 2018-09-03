@@ -2,6 +2,7 @@
     "name": "Unity.Rendering.Hybrid",
     "references": [
         "Unity.Entities",
+        "Unity.Entities.Hybrid",
         "Unity.Transforms",
         "Unity.Collections",
         "Unity.Burst",

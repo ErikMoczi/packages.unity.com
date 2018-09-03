@@ -43,32 +43,5 @@ namespace Unity.Entities.Tests
             
             Assert.AreEqual(count, World.AllWorlds.Count);
         }
-
-        private class TestManager : ComponentSystem
-        {
-            protected override void OnUpdate() {}
-        }
-
-        [Test]
-        public void WorldVersionIsConsistent()
-        {
-            var world = new World("WorldX");
-
-            Assert.AreEqual(0, world.Version);
-
-            var version = world.Version;
-            world.GetOrCreateManager<TestManager>();
-            Assert.AreNotEqual(version, world.Version);
-
-            version = world.Version;
-            var manager = world.GetOrCreateManager<TestManager>();
-            Assert.AreEqual(version, world.Version);
-
-            version = world.Version;
-            world.DestroyManager(manager);
-            Assert.AreNotEqual(version, world.Version);
-            
-            world.Dispose();
-        }
     }
 }

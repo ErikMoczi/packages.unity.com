@@ -2,6 +2,7 @@
     "name": "Unity.Transforms2D",
     "references": [
         "Unity.Entities",
+        "Unity.Entities.Hybrid",
         "Unity.Transforms",
         "Unity.Collections",
         "Unity.Burst",

@@ -83,7 +83,7 @@ namespace Unity.Transforms
             var transforms = m_TransformGroup.GetTransformAccessArray();
             var entities = m_TransformGroup.GetEntityArray();
 
-            var transformStashes = new NativeArray<TransformStash>(transforms.Length, Allocator.TempJob);
+            var transformStashes = new NativeArray<TransformStash>(transforms.length, Allocator.TempJob);
             var stashTransformsJob = new StashTransforms
             {
                 transformStashes = transformStashes

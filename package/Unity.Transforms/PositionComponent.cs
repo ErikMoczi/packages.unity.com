@@ -15,9 +15,9 @@ namespace Unity.Transforms
     /// part of the matrix.
     /// </summary>
     [Serializable]
-    public struct Position : IComponentData, ISingleValue<float3>
+    public struct Position : IComponentData
     {
-        public float3 Value { get; set; }
+        public float3 Value;
     }
 }
 

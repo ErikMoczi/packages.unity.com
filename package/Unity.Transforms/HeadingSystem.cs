@@ -6,8 +6,6 @@ using Unity.Transforms;
 
 namespace Unity.Transforms
 {
-    [UpdateAfter(typeof(TransformInputBarrier))]
-    [UpdateBefore(typeof(TransformSystem))]
     public class HeadingSystem : JobComponentSystem
     {
         struct HeadingsGroup

@@ -3,28 +3,33 @@ using Unity.Jobs;
 
 namespace Unity.Entities
 {
-    public interface ISingleValue<T>
-    {
-       T Value { get; set; } 
-    }
-    
     /// <summary>
     /// Copy ComponentDataArray to NativeArray Job.
     /// </summary>
-    /// <typeparam name="TSource">Component data type of ISingleValue<T></typeparam>
-    /// <typeparam name="TDestination">Blittable type matching T in source</typeparam>
+    /// <typeparam name="T">Component data type stored in ComponentDataArray to be copied to NativeArray<T></typeparam>
     
     [ComputeJobOptimization]
-    public struct CopyComponentData<TSource,TDestination> : IJobParallelFor
-    where TSource : struct, IComponentData, ISingleValue<TDestination>
-    where TDestination : struct
+    public struct CopyComponentData<T> : IJobParallelFor
+    where T : struct, IComponentData
     {
-        [ReadOnly] public ComponentDataArray<TSource> source;
-        public NativeArray<TDestination> results;
+        [ReadOnly] public ComponentDataArray<T> source;
+        public NativeArray<T> results;
 
         public void Execute(int index)
         {
-            results[index] = source[index].Value;
+            results[index] = source[index];
+        }
+    }
+    
+    [ComputeJobOptimization]
+    public struct CopyEntities : IJobParallelFor
+    {
+        [ReadOnly] public EntityArray source;
+        public NativeArray<Entity> results;
+
+        public void Execute(int index)
+        {
+            results[index] = source[index];
         }
     }
 }

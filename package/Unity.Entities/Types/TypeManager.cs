@@ -37,7 +37,7 @@ namespace Unity.Entities
             public readonly FastEquality.Layout[] FastEqualityLayout;
             public readonly TypeCategory          Category;
         }
-
+        
         static ComponentType[]    s_Types;
         static volatile int       s_Count;
         static SpinLock           s_CreateTypeLock;
@@ -167,7 +167,7 @@ namespace Unity.Entities
             {
                 category = TypeCategory.Class;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                if (type == typeof(GameObjectEntity))
+                if (type.FullName == "Unity.Entities.GameObjectEntity")
                     throw new ArgumentException("GameObjectEntity can not be used from EntityManager. The component is ignored when creating entities for a GameObject.");
 #endif
             }

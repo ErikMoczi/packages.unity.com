@@ -20,7 +20,7 @@ namespace Unity.Transforms
     [Serializable]
     public struct LocalRotation : IComponentData
     {
-        public quaternion Value { get; set; }
+        public quaternion Value;
     }
 
     public class LocalRotationComponent : ComponentDataWrapper<LocalRotation> { }

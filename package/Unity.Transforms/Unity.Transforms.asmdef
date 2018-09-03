@@ -2,6 +2,7 @@
     "name": "Unity.Transforms",
     "references": [
         "Unity.Entities",
+        "Unity.Entities.Hybrid",
         "Unity.Collections",
         "Unity.Burst",
         "Unity.Jobs",

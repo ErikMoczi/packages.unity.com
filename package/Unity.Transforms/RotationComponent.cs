@@ -14,9 +14,9 @@ namespace Unity.Transforms
     /// 3. If a TrasformMatrix exists, the value will be stored as the rotation 
     /// part of the matrix.
     /// </summary>
-    public struct Rotation : IComponentData, ISingleValue<quaternion>
+    public struct Rotation : IComponentData
     {
-        public quaternion Value { get; set; }
+        public quaternion Value;
     }
 
     public class RotationComponent : ComponentDataWrapper<Rotation> { }

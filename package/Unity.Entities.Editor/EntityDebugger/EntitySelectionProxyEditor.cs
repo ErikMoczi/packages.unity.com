@@ -1,9 +1,4 @@
-﻿
-using Unity.Mathematics;
-using Unity.Properties;
-using Unity.Entities.Properties;
-using UnityEngine;
-using UnityEditor;
+﻿using UnityEditor;
 
 namespace Unity.Entities.Editor
 {

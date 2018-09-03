@@ -63,7 +63,7 @@ namespace Unity.Entities
         internal EntityDataManager* Entities => m_Entities;
         internal ArchetypeManager ArchetypeManager => m_ArchetypeManager;
 
-        internal List<ComponentDataWrapperBase>    m_CachedComponentList;
+        internal object    m_CachedComponentList;
 
         EntityManagerDebug m_Debug;
 
@@ -74,8 +74,6 @@ namespace Unity.Entities
         protected override void OnCreateManager(int capacity)
         {
             TypeManager.Initialize();
-
-            m_CachedComponentList = new List<ComponentDataWrapperBase>();
 
             m_Entities = (EntityDataManager*)UnsafeUtility.Malloc(sizeof(EntityDataManager), 64, Allocator.Persistent);
             m_Entities->OnCreate(capacity);

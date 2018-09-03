@@ -20,7 +20,7 @@ namespace Unity.Transforms
     [Serializable]
     public struct LocalPosition : IComponentData
     {
-        public float3 Value { get; set; }
+        public float3 Value;
     }
 
     public class LocalPositionComponent : ComponentDataWrapper<LocalPosition> { } 

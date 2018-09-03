@@ -4,6 +4,9 @@ using Unity.Entities.Tests;
 
 namespace Unity.Entities.Tests
 {
+    public class EcsFooTestComponent : ComponentDataWrapper<EcsFooTest> { }
+    public class EcsTestComponent : ComponentDataWrapper<EcsTestData> { }
+
     public class EntityManagerTests : ECSTestsFixture
     {
         [Test]

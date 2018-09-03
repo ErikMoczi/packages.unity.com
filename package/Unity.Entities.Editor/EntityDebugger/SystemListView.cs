@@ -11,12 +11,11 @@ namespace Unity.Entities.Editor
 {
     public interface ISystemSelectionWindow
     {
-
         ScriptBehaviourManager SystemSelection { set; }
-
     }
     
-    public class SystemListView : TreeView {
+    public class SystemListView : TreeView
+    {
         private readonly Dictionary<Type, List<ScriptBehaviourManager>> managersByGroup = new Dictionary<Type, List<ScriptBehaviourManager>>();
         private readonly List<ScriptBehaviourManager> floatingManagers = new List<ScriptBehaviourManager>();
         private readonly Dictionary<int, ScriptBehaviourManager> managersByID = new Dictionary<int, ScriptBehaviourManager>();

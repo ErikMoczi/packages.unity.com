@@ -12,11 +12,10 @@ namespace Unity.Entities
 {
     //@TODO: This should be fully implemented in C++ for efficiency
     [RequireComponent(typeof(GameObjectEntity))]
-    public abstract class ComponentDataWrapperBase : MonoBehaviour, ISerializationCallbackReceiver
+    public abstract class ComponentDataWrapperBase : MonoBehaviour
     {
         internal abstract ComponentType GetComponentType();
         internal abstract void UpdateComponentData(EntityManager manager, Entity entity);
-        internal abstract void UpdateSerializedData(EntityManager manager, Entity entity);
 
         void OnValidate()
         {
@@ -32,22 +31,6 @@ namespace Unity.Entities
 
             UpdateComponentData(gameObjectEntity.EntityManager, gameObjectEntity.Entity);
         }
-        
-        public void OnBeforeSerialize()
-        {
-            var gameObjectEntity = GetComponent<GameObjectEntity>();
-            if (gameObjectEntity == null)
-                return;
-            if (gameObjectEntity.EntityManager == null)
-                return;
-            if (!gameObjectEntity.EntityManager.Exists(gameObjectEntity.Entity))
-                return;
-            if (!gameObjectEntity.EntityManager.HasComponent(gameObjectEntity.Entity, GetComponentType()))
-                return;
-            UpdateSerializedData(gameObjectEntity.EntityManager, gameObjectEntity.Entity);
-        }
-
-        public void OnAfterDeserialize() { }
     }
 
     //@TODO: This should be fully implemented in C++ for efficiency
@@ -78,11 +61,6 @@ namespace Unity.Entities
         {
             manager.SetComponentData(entity, m_SerializedData);
         }
-        
-        internal override void UpdateSerializedData(EntityManager manager, Entity entity)
-        {
-            m_SerializedData = manager.GetComponentData<T>(entity);
-        }
     }
 
     //@TODO: This should be fully implemented in C++ for efficiency
@@ -112,11 +90,6 @@ namespace Unity.Entities
         internal override void UpdateComponentData(EntityManager manager, Entity entity)
         {
             manager.SetSharedComponentData(entity, m_SerializedData);
-        }
-        
-        internal override void UpdateSerializedData(EntityManager manager, Entity entity)
-        {
-            m_SerializedData = manager.GetSharedComponentData<T>(entity);
         }
     }
 

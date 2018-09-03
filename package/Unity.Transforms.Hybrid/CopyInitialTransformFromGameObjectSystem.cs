@@ -77,14 +77,14 @@ namespace Unity.Transforms
             [ReadOnly]
             public EntityArray entities;
             public EntityCommandBuffer entityCommandBuffer;
-            
+
             public void Execute()
             {
                 for (int i = 0; i < entities.Length; i++)
                 {
                     entityCommandBuffer.RemoveComponent<CopyInitialTransformFromGameObject>(entities[i]);
                 }
-                
+
             }
         }
 
@@ -102,7 +102,7 @@ namespace Unity.Transforms
             var transforms = m_InitialTransformGroup.GetTransformAccessArray();
             var entities = m_InitialTransformGroup.GetEntityArray();
 
-            var transformStashes = new NativeArray<TransformStash>(transforms.Length, Allocator.TempJob);
+            var transformStashes = new NativeArray<TransformStash>(transforms.length, Allocator.TempJob);
             var stashTransformsJob = new StashTransforms
             {
                 transformStashes = transformStashes

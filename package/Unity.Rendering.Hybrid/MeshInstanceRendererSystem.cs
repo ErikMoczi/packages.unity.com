@@ -2,9 +2,9 @@
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.Assertions;
-using Unity.Transforms;
 using UnityEngine.Experimental.PlayerLoop;
 
 namespace Unity.Rendering
@@ -12,8 +12,9 @@ namespace Unity.Rendering
     /// <summary>
     /// Renders all Entities containing both MeshInstanceRenderer & TransformMatrix components.
     /// </summary>
-	[UpdateAfter(typeof(PreLateUpdate.ParticleSystemBeginUpdateAll))]
-	public class MeshInstanceRendererSystem : ComponentSystem
+    [UpdateAfter(typeof(PreLateUpdate.ParticleSystemBeginUpdateAll))]
+    [UnityEngine.ExecuteInEditMode]
+    public class MeshInstanceRendererSystem : ComponentSystem
 	{
         // Instance renderer takes only batches of 1023
         Matrix4x4[]                 m_MatricesArray = new Matrix4x4[1023];

@@ -1,9 +1,5 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Runtime.InteropServices;
-using Unity.Entities;
-using Unity.Entities.Properties;
 using UnityEditor;
 using UnityEngine;
 using UnityEditor.IMGUI.Controls;
@@ -108,7 +104,10 @@ namespace Unity.Entities.Editor
         
         public World WorldSelection
         {
-            get { return worldSelection; }
+            get
+            {
+                return worldSelection;
+            }
             set
             {
                 if (worldSelection != value)
@@ -116,7 +115,9 @@ namespace Unity.Entities.Editor
                     worldSelection = value;
                     if (worldSelection != null)
                         lastSelectedWorldName = worldSelection.Name;
+                    
                     CreateSystemListView();
+                    systemListView.multiColumnHeader.ResizeToFit();
                 }
             }
         }
@@ -149,10 +150,7 @@ namespace Unity.Entities.Editor
             }
         }
 
-        private bool worldsExist;
-
         private readonly string[] noWorldsName = new[] {"No worlds"};
-        private bool worldsAppeared;
 
         void OnEnable()
         {
@@ -182,7 +180,7 @@ namespace Unity.Entities.Editor
         
         void Update() 
         { 
-            if (EditorApplication.isPlaying && Time.time > lastUpdate + 0.5f) 
+            if (Time.realtimeSinceStartup > lastUpdate + 0.5f) 
             { 
                 Repaint(); 
             } 
@@ -190,7 +188,7 @@ namespace Unity.Entities.Editor
 
         void WorldPopup()
         {
-            if (!worldsExist)
+            if (World.AllWorlds.Count == 0)
             {
                 var guiEnabled = GUI.enabled;
                 GUI.enabled = false;
@@ -199,7 +197,7 @@ namespace Unity.Entities.Editor
             }
             else
             {
-                if (worldsAppeared && WorldSelection == null)
+                if (WorldSelection == null || !WorldSelection.IsCreated)
                 {
                     SelectWorldByName(lastSelectedWorldName);
                     if (WorldSelection == null)
@@ -214,10 +212,8 @@ namespace Unity.Entities.Editor
         void SystemList()
         {
             var rect = GUIHelpers.GetExpandingRect();
-            if (worldsExist)
+            if (World.AllWorlds.Count != 0)
             {
-                if (worldsAppeared)
-                    systemListView.multiColumnHeader.ResizeToFit();
                 systemListView.OnGUI(rect);
             }
             else
@@ -228,7 +224,6 @@ namespace Unity.Entities.Editor
 
         void SystemHeader()
         {
-
             GUILayout.BeginHorizontal();
             GUILayout.Label("Systems", EditorStyles.boldLabel);
             GUILayout.FlexibleSpace();
@@ -277,7 +272,7 @@ namespace Unity.Entities.Editor
             var somethingToShow = showingAllEntities || componentGroupHasEntities;
             if (!somethingToShow)
                 return;
-            if (repainted && EditorApplication.isPlaying)
+            if (repainted)
                 entityListView.RefreshData();
             entityListView.OnGUI(GUIHelpers.GetExpandingRect());
         }
@@ -303,10 +298,6 @@ namespace Unity.Entities.Editor
                 }
             }
 
-            var worldsExisted = worldsExist;
-            worldsExist = World.AllWorlds.Count > 0;
-            worldsAppeared = !worldsExisted && worldsExist;
-            
             GUILayout.BeginHorizontal();
             
             GUILayout.BeginVertical(GUILayout.Width(kSystemListWidth)); // begin System List
@@ -320,18 +311,15 @@ namespace Unity.Entities.Editor
             
             GUILayout.BeginVertical(GUILayout.Width(position.width - kSystemListWidth)); // begin Entity List
 
-            if (EditorApplication.isPlaying)
-            {
-                EntityHeader();
-                ComponentGroupList();
-                EntityList();
-            }
+            EntityHeader();
+            ComponentGroupList();
+            EntityList();
             
             GUILayout.EndVertical(); // end Component List
             
             GUILayout.EndHorizontal();
 
-            lastUpdate = EditorApplication.isPlaying ? 0f : Time.time;
+            lastUpdate = Time.realtimeSinceStartup;
 
             repainted = Event.current.type == EventType.Repaint;
         }

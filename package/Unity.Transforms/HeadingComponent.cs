@@ -8,11 +8,6 @@ namespace Unity.Transforms
     public struct Heading : IComponentData
     {
         public float3 Value;
-
-        public Heading(float3 heading)
-        {
-            Value = heading;
-        }
     }
 
     public class HeadingComponent : ComponentDataWrapper<Heading> { } 

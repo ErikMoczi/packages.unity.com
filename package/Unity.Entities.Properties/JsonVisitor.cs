@@ -6,15 +6,20 @@ using Unity.Properties.Serialization;
 
 namespace Unity.Entities.Properties
 {
-    public interface IOptimizedVisitor : IBuiltInPropertyVisitor
+    public interface IPrimitivePropertyVisitor : IBuiltInPropertyVisitor
+    {
+        // @TODO decouple from visitor ... 
+        HashSet<Type> SupportedPrimitiveTypes();
+    }
+
+    public interface IOptimizedVisitor : IPrimitivePropertyVisitor
         , IPropertyVisitor<float2>
         , IPropertyVisitor<float3>
         , IPropertyVisitor<float4>
         , IPropertyVisitor<float2x2>
         , IPropertyVisitor<float3x3>
         , IPropertyVisitor<float4x4>
-    {
-    }
+    { }
 
     public static class OptimizedVisitor
     {
@@ -22,7 +27,12 @@ namespace Unity.Entities.Properties
         {
             return s_OptimizedSet.Contains(t);
         }
-        
+
+        public static HashSet<Type> SupportedTypes()
+        {
+            return s_OptimizedSet;
+        }
+
         private static HashSet<Type> s_OptimizedSet;
 
         static OptimizedVisitor()
@@ -97,6 +107,11 @@ namespace Unity.Entities.Properties
 
     public class JsonVisitor : JsonPropertyVisitor, IOptimizedVisitor
     {
+        public HashSet<Type> SupportedPrimitiveTypes()
+        {
+            return OptimizedVisitor.SupportedTypes();
+        }
+ 
         public void Visit<TContainer>(ref TContainer container, VisitContext<float2> context) where TContainer : IPropertyContainer
         {
             StringBuffer.Append(' ', Style.Space * Indent);

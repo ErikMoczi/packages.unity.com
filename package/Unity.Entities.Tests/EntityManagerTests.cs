@@ -28,8 +28,6 @@ namespace Unity.Entities.Tests
         public EcsBarTest(int inValue) { value = inValue; }
     }
 
-    public class EcsFooTestComponent : ComponentDataWrapper<EcsFooTest> { }
-
     public class EntityManagerTests : ECSTestsFixture
     {
         [Test]

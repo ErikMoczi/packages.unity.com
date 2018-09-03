@@ -1,27 +1,15 @@
 ﻿using System;
 using System.Linq;
-using System.Collections.Generic;
+using UnityEngine;
 
 namespace Unity.Entities
 {
     static class DefaultWorldInitialization
     {
-        const string k_DefaultWorldName = "Default World";
-        static World s_CreatedWorld;
-
         static void DomainUnloadShutdown()
         {
-            if (World.Active == s_CreatedWorld)
-            {
-                World.Active.Dispose ();
-                World.Active = null;
-
-                ScriptBehaviourUpdateOrder.UpdatePlayerLoop();
-            }
-            else
-            {
-                Debug.LogError("World has already been destroyed");
-            }
+            World.DisposeAllWorlds();
+            ScriptBehaviourUpdateOrder.UpdatePlayerLoop();
         }
 
         static void GetBehaviourManagerAndLogException(World world, Type type)
@@ -36,11 +24,10 @@ namespace Unity.Entities
             }
         }
 
-        public static void Initialize()
+        public static void Initialize(string worldName, bool editorWorld)
         {
-            var world = new World(k_DefaultWorldName);
+            var world = new World(worldName);
             World.Active = world;
-            s_CreatedWorld = world;
 
             // Register hybrid injection hooks
             InjectionHookSupport.RegisterHook(new GameObjectArrayInjectionHook());
@@ -54,9 +41,16 @@ namespace Unity.Entities
                 var allTypes = ass.GetTypes();
 
                 // Create all ComponentSystem
-                var systemTypes = allTypes.Where(t => t.IsSubclassOf(typeof(ComponentSystemBase)) && !t.IsAbstract && !t.ContainsGenericParameters && t.GetCustomAttributes(typeof(DisableAutoCreationAttribute), true).Length == 0);
+                var systemTypes = allTypes.Where(t => 
+                    t.IsSubclassOf(typeof(ComponentSystemBase)) && 
+                    !t.IsAbstract && 
+                    !t.ContainsGenericParameters && 
+                    t.GetCustomAttributes(typeof(DisableAutoCreationAttribute), true).Length == 0);
                 foreach (var type in systemTypes)
                 {
+                    if (editorWorld && type.GetCustomAttributes(typeof(ExecuteInEditMode), true).Length == 0)
+                        continue;
+                        
                     GetBehaviourManagerAndLogException(world, type);
                 }
             }
