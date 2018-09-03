@@ -1,0 +1,11 @@
+{
+    "name": "Unity.2D.Common.Editor",
+    "references": [
+      "Unity.2D.Common.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true
+}
