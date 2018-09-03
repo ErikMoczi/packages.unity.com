@@ -28,3 +28,4 @@
 2.2.7-preview.3
 2.2.7
 2.2.8-preview.1
+2.2.8-preview.3
