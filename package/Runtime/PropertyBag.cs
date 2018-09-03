@@ -46,6 +46,7 @@ namespace Unity.Properties
 
         public void RemoveProperty(IProperty property)
         {
+            Assert.IsNotNull(property);
             m_Properties.Remove(property);
             m_Map.Remove(property.Name);
         }

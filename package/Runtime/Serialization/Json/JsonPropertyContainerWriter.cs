@@ -1,4 +1,7 @@
-﻿namespace Unity.Properties.Serialization
+﻿using UnityEngine;
+using UnityEngine.Assertions;
+
+namespace Unity.Properties.Serialization
 {
     public static class JsonPropertyContainerWriter
     {
@@ -8,7 +11,12 @@
         public static string Write<TContainer>(TContainer container, JsonPropertyVisitor visitor = null) 
             where TContainer : class, IPropertyContainer
         {
-            visitor = WritePrefix(visitor);
+            if (null == visitor)
+            {
+                visitor = s_DefaultVisitor;
+            }
+
+            WritePrefix(visitor);
             container.PropertyBag.Visit(container, visitor);
             WriteSuffix(visitor);
 
@@ -18,19 +26,21 @@
         public static string WriteStruct<TContainer>(ref TContainer container, JsonPropertyVisitor visitor = null) 
             where TContainer : struct, IPropertyContainer
         {
-            visitor = WritePrefix(visitor);
+            if (null == visitor)
+            {
+                visitor = s_DefaultVisitor;
+            }
+
+            WritePrefix(visitor);
             container.PropertyBag.VisitStruct(ref container, visitor);
             WriteSuffix(visitor);
 
             return s_StringBuffer.ToString();
         }
 
-        private static JsonPropertyVisitor WritePrefix(JsonPropertyVisitor visitor)
+        private static void WritePrefix(JsonPropertyVisitor visitor)
         {
-            if (null == visitor)
-            {
-                visitor = s_DefaultVisitor;
-            }
+            Assert.IsNotNull(visitor);
 
             visitor.StringBuffer = s_StringBuffer;
 
@@ -39,11 +49,12 @@
             s_StringBuffer.Append("{\n");
 
             visitor.Indent++;
-            return visitor;
         }
         
         private static void WriteSuffix(JsonPropertyVisitor visitor)
         {
+            Debug.Assert(visitor != null);
+
             visitor.Indent--;
 
             s_StringBuffer.Length -= 2;
