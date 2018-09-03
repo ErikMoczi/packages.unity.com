@@ -3,8 +3,6 @@ using NUnit.Framework;
 using Unity.Collections;
 using Unity.Jobs;
 
-#if ENABLE_MORE_CONTAINER_SUPPORT
-
 public class NativeListDeferredArrayTests
 {
     struct AliasJob : IJob
@@ -55,6 +53,7 @@ public class NativeListDeferredArrayTests
         {
         }
     }
+
     [Test]
     public void ResizedListToDeferredJobArray([Values(0, 1, 2, 3, 4, 5, 6, 42, 97, 1023)]int length)
     {
@@ -65,6 +64,24 @@ public class NativeListDeferredArrayTests
 
         var setValuesJob = new SetArrayValuesJobParallel { array = list.ToDeferredJobArray() };
         setValuesJob.Schedule(list, 3, jobHandle).Complete();
+        
+        Assert.AreEqual(length, list.Length);
+        for (int i = 0;i != list.Length;i++)
+            Assert.AreEqual(length, list[i]);
+
+        list.Dispose ();
+    }
+    
+    [Test]
+    public void ResizeListBeforeSchedule([Values(5)]int length)
+    {
+        var list = new NativeList<int> (Allocator.TempJob);
+
+        var setLengthJob = new SetListLengthJob { list = list, ResizeLength = length }.Schedule();
+        var setValuesJob = new SetArrayValuesJobParallel { array = list.ToDeferredJobArray() };
+		setLengthJob.Complete();
+
+        setValuesJob.Schedule(list, 3).Complete();
         
         Assert.AreEqual(length, list.Length);
         for (int i = 0;i != list.Length;i++)
@@ -97,7 +114,7 @@ public class NativeListDeferredArrayTests
         
         Assert.Throws<InvalidOperationException>(() => list.ResizeUninitialized(1) );
 
-        jobHandle .Complete();
+        jobHandle.Complete();
         list.Dispose ();
     }
     
@@ -124,5 +141,3 @@ public class NativeListDeferredArrayTests
         list.Dispose();
     }
 }
-
-#endif

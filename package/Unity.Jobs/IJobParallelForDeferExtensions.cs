@@ -1,10 +1,8 @@
-﻿#if ENABLE_MORE_CONTAINER_SUPPORT
-using System;
+﻿using System;
 using System.Reflection;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs.LowLevel.Unsafe;
-
 
 namespace Unity.Jobs
 {
@@ -50,5 +48,3 @@ namespace Unity.Jobs
 */
     }
 }
-
-#endif
