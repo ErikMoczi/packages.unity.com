@@ -3,6 +3,11 @@
     "references": [
         "Unity.XR.ARExtensions"
     ],
-    "includePlatforms": ["Android"],
-    "excludePlatforms": []
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Android",
+        "Editor"
+   ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
 }

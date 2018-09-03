@@ -28,3 +28,7 @@ and project files needed to adapt ARCore to the Unity multi-platform AR API.
 
 ## [1.0.0-preview.10] - 2018-05-23
 - Change dependency to `ARExtensions` preview.2
+
+## [1.0.0-preview.11] - 2018-05-24
+- Add Editor as an include platform to ensure ARCore extensions work. This was preventing the availability check from running.
+- Fix a bug which prevented the ARSession from restarting once destroyed.

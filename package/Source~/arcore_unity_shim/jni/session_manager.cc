@@ -45,7 +45,7 @@ SessionManager::SessionManager(JniManager *jni_manager,
     }
     else
     {
-        LOGE("ArPresto::ArCore session creation failed. %d", ar_status);
+        LOGE("ArPresto::ArCore session creation failed.");
         presto_status = ARPRESTO_STATUS_ERROR_FATAL;
     }
 }
@@ -100,8 +100,6 @@ void SessionManager::Update()
 
 void SessionManager::SetConfiguration(ArPrestoConfig* config)
 {
-    LOGI("ArConfig_setUpdateMode: %p, %p", ar_session, config);
-
     ArConfig_setUpdateMode(ar_session, ar_config, config->update_mode);
     ArConfig_setPlaneFindingMode(ar_session, ar_config,
         config->plane_finding_mode);

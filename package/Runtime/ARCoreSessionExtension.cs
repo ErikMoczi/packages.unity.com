@@ -9,7 +9,7 @@ namespace UnityEngine.XR.ARCore
     /// <summary>
     /// For internal use. Provides ARCore-specific extensions to the XRSessionSubsystem.
     /// </summary>
-    public class ARCoreSessionExtension
+    internal class ARCoreSessionExtension
     {
         /// <summary>
         /// For internal use. Use <c>XRSessionSubsystem.InstallAsync</c> instead.

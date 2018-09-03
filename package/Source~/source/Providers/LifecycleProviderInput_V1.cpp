@@ -56,4 +56,5 @@ void UNITY_INTERFACE_API LifecycleProviderInput_V1::Stop(IUnitySubsystem* subsys
 
 void LifecycleProviderInput_V1::ShutdownImpl()
 {
+    m_Initialized = false;
 }
