@@ -1,0 +1,19 @@
+{
+    "name": "Unity.2D.Animation.EditorTests",
+    "references": [
+        "Unity.2D.Common.Editor",
+        "Unity.2D.Common.Runtime",
+        "Unity.2D.Animation.Editor",
+        "Unity.2D.Animation.Runtime",
+        "Unity.2D.Triangle.Runtime",
+        "Unity.InternalAPIEngineBridge.001"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}

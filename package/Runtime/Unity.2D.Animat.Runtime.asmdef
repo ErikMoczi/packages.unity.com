@@ -1,0 +1,9 @@
+{
+    "name": "Unity.2D.Animation.Runtime",
+    "references": [
+        "Unity.2D.Common.Runtime",
+        "Unity.InternalAPIEngineBridge.001"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": []
+}

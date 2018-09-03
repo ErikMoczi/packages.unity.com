@@ -1,3 +1,3 @@
 using System.Runtime.CompilerServices;
-[assembly: InternalsVisibleTo("com.unity.2d.animation.EditorTests")]
-[assembly: InternalsVisibleTo("com.unity.2d.animation.Editor")]
+[assembly: InternalsVisibleTo("Unity.2D.Animation.EditorTests")]
+[assembly: InternalsVisibleTo("Unity.2D.Animation.Editor")]
