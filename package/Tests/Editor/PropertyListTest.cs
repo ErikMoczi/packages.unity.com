@@ -21,8 +21,6 @@ namespace Packages.com.unity.properties.Tests.Editor
             propertyList.Add(2);
             propertyList.Add(3);
 
-            IEnumerable e = (IEnumerable) propertyList;
-
             Assert.AreEqual(3, propertyList.Count());
         }
         
