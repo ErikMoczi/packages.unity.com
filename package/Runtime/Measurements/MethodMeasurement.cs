@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Unity.PerformanceTesting.Runtime;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 
 namespace Unity.PerformanceTesting.Measurements
@@ -15,15 +16,20 @@ namespace Unity.PerformanceTesting.Measurements
         private const int k_MaxIterations = 10000;
         private readonly Action m_Action;
         private readonly List<SampleGroup> m_SampleGroups = new List<SampleGroup>();
+        private readonly Recorder m_GCRecorder;
 
+        private Action m_Setup;
+        private Action m_Cleanup;
         private SampleGroupDefinition m_Definition;
         private int m_WarmupCount;
         private int m_MeasurementCount;
         private int m_IterationCount = 1;
+        private bool m_GC;
 
         public MethodMeasurement(Action action)
         {
             m_Action = action;
+            m_GCRecorder = Recorder.Get("GC.Alloc");
         }
 
         public MethodMeasurement ProfilerMarkers(SampleGroupDefinition[] profilerDefinitions)
@@ -82,7 +88,25 @@ namespace Unity.PerformanceTesting.Measurements
             m_MeasurementCount = count;
             return this;
         }
-        
+
+        public MethodMeasurement CleanUp(Action action)
+        {
+            m_Cleanup = action;
+            return this;
+        }
+
+        public MethodMeasurement SetUp(Action action)
+        {
+            m_Setup = action;
+            return this;
+        }
+
+        public MethodMeasurement GC()
+        {
+            m_GC = true;
+            return this;
+        }
+
         public void Run()
         {
             if (m_MeasurementCount > 0)
@@ -91,7 +115,7 @@ namespace Unity.PerformanceTesting.Measurements
                 RunForIterations(m_IterationCount, m_MeasurementCount);
                 return;
             }
-            
+
             var iterations = Probing();
             RunForIterations(iterations, k_MeasurementCount);
         }
@@ -101,15 +125,15 @@ namespace Unity.PerformanceTesting.Measurements
             UpdateSampleGroupDefinition();
 
             EnableMarkers();
-            for (int j = 0; j < measurements; j++)
+            for (var j = 0; j < measurements; j++)
             {
                 var executionTime = Time.realtimeSinceStartup;
-                for (var i = 0; i < iterations; i++)
-                {
-                    m_Action.Invoke();
-                }
+
+                ExecuteForIterations(iterations);
+
                 executionTime = (Time.realtimeSinceStartup - executionTime) * 1000f / iterations;
-                Measure.Custom(m_Definition, Utils.ConvertSample(SampleUnit.Millisecond, m_Definition.SampleUnit, executionTime));
+                Measure.Custom(m_Definition,
+                    Utils.ConvertSample(SampleUnit.Millisecond, m_Definition.SampleUnit, executionTime));
             }
 
             DisableAndMeasureMarkers();
@@ -155,8 +179,8 @@ namespace Unity.PerformanceTesting.Measurements
 
             if (iterations == 1)
             {
-                m_Action.Invoke();
-                m_Action.Invoke();
+                ExecuteAction();
+                ExecuteAction();
 
                 return 1;
             }
@@ -171,7 +195,7 @@ namespace Unity.PerformanceTesting.Measurements
         {
             for (var i = 0; i < iterations; i++)
             {
-                m_Action.Invoke();
+                ExecuteAction();
             }
         }
 
@@ -181,6 +205,39 @@ namespace Unity.PerformanceTesting.Measurements
             {
                 m_Definition = new SampleGroupDefinition("Time");
             }
+        }
+
+        private void ExecuteAction()
+        {
+            if (m_Setup != null) m_Setup.Invoke();
+            m_Action.Invoke();
+            if (m_Cleanup != null) m_Cleanup.Invoke();
+        }
+
+        private void ExecuteForIterations(int iterations)
+        {
+            if (m_GC) StartGCRecorder();
+            for (var i = 0; i < iterations; i++)
+            {
+                ExecuteAction();
+            }
+            if (m_GC) EndGCRecorderAndMeasure(iterations);
+        }
+
+        private void StartGCRecorder()
+        {
+            System.GC.Collect();
+
+            m_GCRecorder.enabled = false;
+            m_GCRecorder.enabled = true;
+        }
+
+        private void EndGCRecorderAndMeasure(int iterations)
+        {
+            m_GCRecorder.enabled = false;
+
+            var definiton = new SampleGroupDefinition(m_Definition.Name + ".GC()", SampleUnit.None);
+            Measure.Custom(definiton, m_GCRecorder.sampleBlockCount / iterations);
         }
     }
 }

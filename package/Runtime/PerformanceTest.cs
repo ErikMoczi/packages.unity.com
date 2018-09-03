@@ -23,7 +23,7 @@ namespace Unity.PerformanceTesting
         public List<SampleGroup> SampleGroups = new List<SampleGroup>();
 
         public static PerformanceTest Active { get; private set; }
-        internal static List<IDisposable> Disposables = new List<IDisposable>();
+        internal static List<IDisposable> Disposables = new List<IDisposable>(1024);
 
         public delegate void Callback();
 
@@ -50,13 +50,13 @@ namespace Unity.PerformanceTesting
         internal static void EndTest(Test test)
         {
             if (test.IsSuite) return;
-            if(test.FullName != Active.TestName) return;
+            if (test.FullName != Active.TestName) return;
             DisposeMeasurements();
             Active.CalculateStatisticalValues();
             Active.EndTime = Utils.DateToInt(DateTime.Now);
             if (OnTestEnded != null) OnTestEnded();
             Active.LogOutput();
-            
+
             TestContext.Out.WriteLine("##performancetestresult:" + JsonUtility.ToJson(Active));
             Active = null;
         }
@@ -67,6 +67,7 @@ namespace Unity.PerformanceTesting
             {
                 Disposables[i].Dispose();
             }
+
             Disposables.Clear();
         }
 
@@ -99,7 +100,7 @@ namespace Unity.PerformanceTesting
             {
                 throw new PerformanceTestException("At least on of the provided sample groups has no values.");
             }
-                
+
             CalculateStatisticalValue(group);
             CalculateStatisticalValue(group2);
 
@@ -115,8 +116,9 @@ namespace Unity.PerformanceTesting
             else if (group.Definition.IncreaseIsBetter || group2.Definition.IncreaseIsBetter)
             {
                 throw new PerformanceTestException(
-                    string.Format("Sample groups {0} and {1} have incompatible definitions. When comparing, sample groups should have a matching SampleGroupDefinition.IncreaseIsBetter value.",
-                    group.Definition.Name, group2.Definition.Name));
+                    string.Format(
+                        "Sample groups {0} and {1} have incompatible definitions. When comparing, sample groups should have a matching SampleGroupDefinition.IncreaseIsBetter value.",
+                        group.Definition.Name, group2.Definition.Name));
             }
 
             if (diff > percentage)
@@ -187,7 +189,8 @@ namespace Unity.PerformanceTesting
 
                 if (sampleGroup.Samples.Count == 1)
                 {
-                    logString.AppendFormat(" {0:0.00} {1}", sampleGroup.Samples[0], sampleGroup.Definition.SampleUnit);
+                        logString.AppendFormat(" {0:0.00} {1}", sampleGroup.Samples[0],
+                            sampleGroup.Definition.SampleUnit);
                 }
                 else
                 {

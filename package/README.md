@@ -11,13 +11,13 @@ YourProject/Packages/manifest.json
 ``` json
 {
     "dependencies": {
-        "com.unity.test-framework.performance": "0.1.34-preview",
+        "com.unity.test-framework.performance": "0.1.35-preview",
         "com.unity.modules.jsonserialize": "1.0.0",
-        "com.unity.modules.unitywebrequestwww": "1.0.0",
+        "com.unity.modules.unitywebrequest": "1.0.0",
         "com.unity.modules.vr": "1.0.0"
       },
       "testables": [
-            "com.unity.test-framework.performance"
+        "com.unity.test-framework.performance"
       ],
       "registry": "https://staging-packages.unity.com"
 }
@@ -97,6 +97,7 @@ In cases where you feel the default values are not ideal you can specify custom 
 WarmupCount - how many iterations to run without measuring for warmup
 MeasurementCount - how many measurements to take
 IterationsPerMeasurement - how many iterations per measurement to take
+GC - measures the amount of GC allocations
 
 ```
 [PerformanceTest]
@@ -106,6 +107,7 @@ public void Test()
         .WarmupCount(10)
         .MeasurementCount(10)
         .IterationsPerMeasurement(5)
+        .GC()
         .Run();
 }
 ```

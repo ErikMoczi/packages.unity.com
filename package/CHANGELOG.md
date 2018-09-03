@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.35] - 2018-8-27
+
+### Measure.Method improvements
+
+Add GC allocation to Measure.Method
+Add setup/cleanup for Measure.Method
+Move order of calls for Measure.Scope
+
 ## [0.1.34] - 2018-8-16
 
 ### Obsolete warnings
