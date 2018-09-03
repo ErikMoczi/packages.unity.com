@@ -100,7 +100,7 @@ namespace UnityEditor.U2D
             {
                 EditorGUILayout.PrefixLabel(m_Style.refRes);
 
-                EditorGUIUtility.labelWidth = k_SingleLetterLabelWidth;
+                EditorGUIUtility.labelWidth = k_SingleLetterLabelWidth * (EditorGUI.indentLevel + 1);
 
                 EditorGUILayout.PropertyField(m_RefResX, m_Style.x);
                 if (m_RefResX.intValue <= 0)
@@ -126,7 +126,7 @@ namespace UnityEditor.U2D
             {
                 EditorGUILayout.PrefixLabel(m_Style.cropFrame);
 
-                EditorGUIUtility.labelWidth = k_SingleLetterLabelWidth;
+                EditorGUIUtility.labelWidth = k_SingleLetterLabelWidth * (EditorGUI.indentLevel + 1);
                 EditorGUILayout.PropertyField(m_CropFrameX, m_Style.x, GUILayout.MaxWidth(40.0f));
                 EditorGUILayout.PropertyField(m_CropFrameY, m_Style.y);
                 EditorGUIUtility.labelWidth = originalLabelWidth;
@@ -146,15 +146,17 @@ namespace UnityEditor.U2D
 
             if (obj != null)
             {
-                EditorGUI.BeginDisabledGroup(EditorApplication.isPlaying || !obj.enabled);
+                EditorGUI.BeginDisabledGroup(EditorApplication.isPlaying || !obj.isActiveAndEnabled);
                 EditorGUI.BeginChangeCheck();
 
-                obj.runInEditMode = EditorGUILayout.Toggle(obj.runInEditMode, GUI.skin.button, GUILayout.Width(110.0f));
+                bool runInEditMode = EditorGUILayout.Toggle(obj.runInEditMode, GUI.skin.button, GUILayout.Width(110.0f));
                 GUI.Label(GUILayoutUtility.GetLastRect(), m_Style.runInEditMode, m_Style.centeredLabel);
 
                 if (EditorGUI.EndChangeCheck())
                 {
-                    if (obj.runInEditMode)
+                    obj.runInEditMode = runInEditMode;
+
+                    if (runInEditMode)
                         obj.GetComponent<Camera>().Render();
                     else
                         obj.OnDisable();
@@ -162,7 +164,7 @@ namespace UnityEditor.U2D
 
                 EditorGUI.EndDisabledGroup();
 
-                if (obj.enabled && (EditorApplication.isPlaying || obj.runInEditMode))
+                if (obj.isActiveAndEnabled && (EditorApplication.isPlaying || obj.runInEditMode))
                 {
                     if (Event.current.type == EventType.Layout)
                         m_CurrentPixelRatioValue.text = String.Format("{0}:1", obj.pixelRatio);

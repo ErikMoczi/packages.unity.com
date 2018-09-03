@@ -160,8 +160,9 @@ namespace UnityEngine.U2D
 
         private void OnPreRender()
         {
-            // Clear so that we can see black bars.
-            if (m_Internal.useOffscreenRT || m_Internal.cropFrameXOrY)
+            // Clear the screen to black so that we can see black bars.
+            // Need to do it before anything is drawn if we're rendering directly to the screen.
+            if (m_Internal.cropFrameXOrY && !m_Camera.forceIntoRenderTexture && !m_Camera.allowMSAA)
                 GL.Clear(false, true, Color.black);
 
             Experimental.U2D.PixelPerfectRendering.pixelSnapSpacing = m_Internal.unitsPerPixel;
@@ -170,6 +171,15 @@ namespace UnityEngine.U2D
         private void OnPostRender()
         {
             Experimental.U2D.PixelPerfectRendering.pixelSnapSpacing = 0.0f;
+
+            // Clear the screen to black so that we can see black bars.
+            // If a temporary offscreen RT is used, we do the clear after we're done with that RT to avoid an unnecessary RT switch. 
+            if (m_Camera.activeTexture != null)
+            {
+                Graphics.SetRenderTarget(null as RenderTexture);
+                GL.Viewport(new Rect(0.0f, 0.0f, Screen.width, Screen.height));
+                GL.Clear(false, true, Color.black);
+            }
 
             if (!m_Internal.useOffscreenRT)
                 return;
@@ -181,6 +191,14 @@ namespace UnityEngine.U2D
             m_Camera.pixelRect = m_Internal.CalculatePostRenderPixelRect(m_Camera.aspect, Screen.width, Screen.height);
         }
 
+#if UNITY_EDITOR
+        private void OnEnable()
+        {
+            if (!UnityEditor.EditorApplication.isPlaying)
+                UnityEditor.EditorApplication.playModeStateChanged += OnPlayModeChanged;
+        }
+#endif
+
         public void OnDisable()
         {
             m_Camera.rect = new Rect(0.0f, 0.0f, 1.0f, 1.0f);
@@ -188,6 +206,11 @@ namespace UnityEngine.U2D
             m_Camera.forceIntoRenderTexture = m_Internal.hasPostProcessLayer;
             m_Camera.ResetAspect();
             m_Camera.ResetWorldToCameraMatrix();
+
+#if UNITY_EDITOR
+            if (!UnityEditor.EditorApplication.isPlaying)
+                UnityEditor.EditorApplication.playModeStateChanged -= OnPlayModeChanged;
+#endif
         }
 
         // Show on-screen warning about invalid render resolutions.
@@ -221,5 +244,17 @@ namespace UnityEngine.U2D
 
             GUI.color = oldColor;
         }
+
+#if UNITY_EDITOR
+        private void OnPlayModeChanged(UnityEditor.PlayModeStateChange state)
+        {
+            // Stop running in edit mode when entering play mode.
+            if (state == UnityEditor.PlayModeStateChange.ExitingEditMode)
+            {
+                runInEditMode = false;
+                OnDisable();
+            }
+        }
+#endif
     }
 }
