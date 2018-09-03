@@ -18,7 +18,7 @@ namespace UnityEditor.Experimental.U2D.IK
         private GameObject m_Helper;
         private GameObject[] m_SelectedGameobjects;
         private bool m_IgnorePostProcessModifications = false;
-        private List<Transform> m_IgnoreTransformsOnUndo = new List<Transform>();
+        private HashSet<Transform> m_IgnoreTransformsOnUndo = new HashSet<Transform>();
         internal bool isDraggingDefaultTool { get; private set; }
         internal bool isDragging { get { return IKGizmos.instance.isDragging || isDraggingDefaultTool; } }
 
@@ -251,6 +251,10 @@ namespace UnityEditor.Experimental.U2D.IK
                 {
                     isDraggingDefaultTool = true;
                     Undo.SetCurrentGroupName("IK Update");
+
+                    foreach(var transform in Selection.transforms)
+                        m_IgnoreTransformsOnUndo.Add(transform);
+
                     RegisterUndoForDirtyManagers();
                 }
             }

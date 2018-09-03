@@ -91,6 +91,8 @@ namespace UnityEditor.Experimental.U2D.IK.Tests.IKEditorManagerTests
 
             Assert.That(targetPosition, Is.EqualTo(chain.target.position).Using(vec3Compare));
             Assert.That(0.0f, Is.EqualTo((targetPosition - chain.target.position).magnitude).Using(floatCompare));
+
+            Undo.PerformUndo();
         }
 
         [Test]
