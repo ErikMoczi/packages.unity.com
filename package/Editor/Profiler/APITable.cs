@@ -1,0 +1,59 @@
+using Unity.MemoryProfiler.Editor.Debuging;
+
+namespace Unity.MemoryProfiler.Editor.Database
+{
+    class APITable : Table
+    {
+        public CachedSnapshot m_Snapshot;
+        //public delegate int APIGetRowCount(UnityEditor.Profiling.PackedMemorySnapshot s);
+        public Soa.SoaDataSet m_DataSet;
+        System.Collections.Generic.List<MetaColumn> m_ListMetaColumns = new System.Collections.Generic.List<MetaColumn>();
+        System.Collections.Generic.List<Column> m_ListColumns = new System.Collections.Generic.List<Column>();
+        public APITable(Scheme scheme, CachedSnapshot s, Soa.SoaDataSet ds)
+            : base(scheme)
+        {
+            m_Snapshot = s;
+            m_DataSet = ds;
+        }
+
+        public APITable(Scheme scheme, CachedSnapshot s, long dataCount)
+            : base(scheme)
+        {
+            m_Snapshot = s;
+            m_DataSet = new Soa.SoaDataSet(dataCount, 4 * 1024);
+        }
+
+        public void AddColumn(MetaColumn mc, Column c)
+        {
+            m_ListMetaColumns.Add(mc);
+            m_ListColumns.Add(c);
+
+            var t1 = c.type;
+            var t2 = mc.type;
+            DebugUtility.CheckCondition(t1 == t2 || t1.Equals(t2), "Type of Column must be the same as its MetaColumn.\nColumn: '" + mc.name + "'");
+        }
+
+        public void CreateTable(string nameId, string nameDisplay)
+        {
+            m_Meta = new MetaTable();
+            m_Meta.SetColumns(m_ListMetaColumns.ToArray());
+            m_Meta.name = nameId;
+            m_Meta.displayName = nameDisplay;
+
+            m_Columns = m_ListColumns;
+
+            m_ListMetaColumns = null;
+            m_ListColumns = null;
+        }
+
+        public override long GetRowCount()
+        {
+            return m_DataSet.m_dataCount;
+        }
+
+        public override CellLink GetLinkTo(CellPosition pos)
+        {
+            return new LinkPosition(pos);
+        }
+    }
+}

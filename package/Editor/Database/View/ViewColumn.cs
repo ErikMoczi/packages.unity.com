@@ -1,0 +1,374 @@
+using System;
+using System.Xml;
+using Unity.MemoryProfiler.Editor.Debuging;
+
+namespace Unity.MemoryProfiler.Editor.Database.View
+{
+    public class MetaParameter
+    {
+        public string name;
+        public string value;
+    }
+    public class MetaParameterSet
+    {
+        public System.Collections.Generic.Dictionary<string, MetaParameter> param = new System.Collections.Generic.Dictionary<string, MetaParameter>();
+    }
+    public class MetaLink
+    {
+        public string linkViewName;
+        public System.Collections.Generic.List<Where.Builder> linkWhere;
+        public MetaParameterSet param;
+    }
+
+    public class LinkRequest
+    {
+        public MetaLink metaLink;
+        public ViewTable sourceView;
+        public Table sourceTable;
+        public Column sourceColumn;
+        public long row;
+        public ParameterSet param;
+
+        public static Database.View.LinkRequest MakeLinkRequest(Database.View.MetaLink metaLink, Table sourceTable, Column sourceColumn, long sourceRow, Database.Operation.ExpressionParsingContext expressionParsingContext)
+        {
+            if (metaLink == null) return null;
+            using (ScopeDebugContext.Func(() => { return "MakeLinkRequest from table '" + sourceTable.GetName() + "' row " + sourceRow; }))
+            {
+                var lr = new Database.View.LinkRequest();
+                lr.metaLink = metaLink;
+                lr.sourceTable = sourceTable;
+                lr.sourceView = sourceTable as ViewTable;
+                lr.sourceColumn = sourceColumn;
+                lr.row = sourceRow;
+
+                if (lr.metaLink.param != null)
+                {
+                    foreach (var p in lr.metaLink.param.param)
+                    {
+                        var opt = new Operation.Expression.ParseIdentifierOption(sourceTable.scheme as View.ViewScheme, sourceTable, true, true, typeof(string), expressionParsingContext);
+                        var metaExpression = new Operation.Expression.MetaExpression(p.Value.value);
+                        var exp = Operation.Expression.ParseIdentifier(metaExpression, opt);
+                        var exp2 = Operation.ColumnCreator.CreateTypedExpressionFixedRow(exp, sourceRow);
+                        if (lr.param == null) lr.param = new ParameterSet();
+                        lr.param.param.Add(p.Key, exp2);
+                    }
+                }
+                return lr;
+            }
+        }
+    }
+    public class ViewColumn
+    {
+        public Select select;
+        public Operation.ExpressionParsingContext ParsingContext;
+        public ViewTable viewTable;
+        public bool m_IsDisplayMergedOnly = false;
+        public MetaLink m_MetaLink;
+
+        public interface IViewColumn
+        {
+            void SetColumn(ViewColumn vc, Database.Column col);
+            void SetConstValue(string value); //used for const value column only
+            Database.Column GetColumn();
+        }
+        public class Builder
+        {
+            public string name;
+            public Database.Operation.Grouping.IGroupAlgorithm groupAlgo;
+
+            public Operation.Expression.MetaExpression value;
+
+            public int displayDefaultWidth = 100;
+            public Operation.Grouping.MergeAlgo mergeAlgoE;
+            public MetaLink m_MetaLink;
+            public bool isPrimaryKey = false;
+
+
+            private string FormatErrorContextInfo(ViewScheme vs, ViewTable vTable)
+            {
+                string str = "Error while building view column '" + name + "'";
+                if (vs != null) str += " schema '" + vs.name + "'";
+                if (vTable != null) str += " view table '" + vTable.GetName() + "'";
+                return str;
+            }
+
+            private Operation.Grouping.IMergeAlgorithm BuildOrGetMergeAlgo(ViewColumn vc, Type columnValueType, Database.MetaColumn metaColumn)
+            {
+                Operation.Grouping.IMergeAlgorithm mergeAlgo = null;
+                if (mergeAlgoE != Operation.Grouping.MergeAlgo.none)
+                {
+                    mergeAlgo = Operation.Grouping.GetMergeAlgo(mergeAlgoE, columnValueType);
+                    if (metaColumn != null)
+                    {
+                        metaColumn.defaultMergeAlgorithm = mergeAlgo;
+                    }
+                }
+                else
+                {
+                    if (metaColumn != null)
+                    {
+                        mergeAlgo = metaColumn.defaultMergeAlgorithm;
+                    }
+                }
+
+                if (vc != null && mergeAlgo != null && mergeAlgo.IsDisplayMergedRowsOnly())
+                {
+                    vc.m_IsDisplayMergedOnly = true;
+                }
+                return mergeAlgo;
+            }
+
+            private MetaColumn BuildOrUpdateMetaColumn(ref MetaColumn metaColumn, Type columnValueType, Operation.Grouping.IMergeAlgorithm mergeAlgo)
+            {
+                if (metaColumn == null)
+                {
+                    metaColumn = new MetaColumn(name, name, columnValueType, isPrimaryKey, groupAlgo, mergeAlgo);
+                    metaColumn.displayDefaultWidth = displayDefaultWidth;
+                }
+                else
+                {
+                    if (metaColumn.type == null)
+                    {
+                        metaColumn.type = columnValueType;
+                    }
+                    else if (columnValueType != null && metaColumn.type != columnValueType)
+                    {
+                        DebugUtility.LogError("Cannot redefine column type as '" + columnValueType + "'. Was already defined as '" + metaColumn.type + "'");
+                    }
+                }
+                return metaColumn;
+            }
+
+            // a column declaration only creates or adds to the column meta data. it does not create the actual column.
+            public void BuildOrUpdateDeclaration(ref MetaColumn metaColumn, Type aOverrideType = null)
+            {
+                Type finalType = aOverrideType != null ? aOverrideType : value.type;
+
+                //Build meta data
+                var mergeAlgo = BuildOrGetMergeAlgo(null, finalType, metaColumn);
+                BuildOrUpdateMetaColumn(ref metaColumn, finalType, mergeAlgo);
+            }
+
+            //Create a column that merge the result of all sub nodes
+            static public Column BuildColumnNodeMerge(ViewTable vTable, Database.MetaColumn metaColumn, Operation.ExpressionParsingContext expressionParsingContext)
+            {
+                var columnNode = (ViewColumnNode.IViewColumnNode)Operation.ColumnCreator.CreateColumn(typeof(ViewColumnNodeMergeTyped<>), metaColumn.type);
+                ViewColumnNode viewColumnNode = new ViewColumnNode(vTable, metaColumn, expressionParsingContext);
+                columnNode.SetColumn(viewColumnNode);
+                return columnNode.GetColumn();
+            }
+
+            static ViewColumnNode.IViewColumnNode BuildOrGetColumnNode(ViewTable vTable, Database.MetaColumn metaColumn, string columnName, Operation.ExpressionParsingContext expressionParsingContext)
+            {
+                var column = vTable.GetColumnByName(columnName);
+                if (column == null)
+                {
+                    var columnNode = (ViewColumnNode.IViewColumnNode)Operation.ColumnCreator.CreateColumn(typeof(ViewColumnNodeTyped<>), metaColumn.type);
+                    ViewColumnNode viewColumnNode = new ViewColumnNode(vTable, metaColumn, expressionParsingContext);
+
+                    columnNode.SetColumn(viewColumnNode);
+                    vTable.SetColumn(metaColumn, columnNode.GetColumn());
+                    return columnNode;
+                }
+
+                // View table use expand column to decorate the IViewColumnNode with required functionality for expanding rows.
+                // So we need to get the underlying column, which is the IViewColumnNode we want.
+                if (column is IColumnDecorator)
+                {
+                    column = (column as IColumnDecorator).GetBaseColumn();
+                }
+
+                if (column is ViewColumnNode.IViewColumnNode)
+                {
+                    return (ViewColumnNode.IViewColumnNode)column;
+                }
+                else
+                {
+                    throw new Exception("Expecting column  '" + vTable.GetName() + "." + metaColumn.name + "' to be a from a node data type (ViewColumnNode) but is of type '" + column.GetType().Name + "'");
+                }
+            }
+
+            //A column under a <Node> (or <View>) element is either a declaration (build meta data only) or defines an entry in the parent's ViewColumnNode
+            public void BuildNodeValue(ViewTable.Builder.Node node, long row, ViewScheme vs, Database.Scheme baseScheme, ViewTable parentViewTable, Operation.ExpressionParsingContext expressionParsingContext, ref Database.MetaColumn metaColum)
+            {
+                BuildOrUpdateDeclaration(ref metaColum);
+
+                //If the parent's node data type is Node
+                if (node.parent != null && node.parent.data.type == ViewTable.Builder.Node.Data.DataType.Node)
+                {
+                    // this column is an entry in the parent's column
+                    var option = new Operation.Expression.ParseIdentifierOption(vs, parentViewTable, true, true, metaColum != null ? metaColum.type : null, expressionParsingContext);
+                    option.formatError = (string s, Operation.Expression.ParseIdentifierOption opt) =>
+                        {
+                            return FormatErrorContextInfo(vs, parentViewTable) + " : " + s;
+                        };
+                    Operation.Expression expression = Operation.Expression.ParseIdentifier(value, option);
+
+                    //if the meta column does not have a type defined yet, define it as the expression's type.
+                    if (metaColum.type == null)
+                    {
+                        metaColum.type = expression.type;
+                    }
+                    ViewColumnNode.IViewColumnNode column = BuildOrGetColumnNode(parentViewTable, metaColum, name, expressionParsingContext);
+                    column.SetEntry(row, expression, m_MetaLink);
+                }
+            }
+
+            // Set a Node value to the merged result of it's sub entries
+            public static void BuildNodeValueDefault(ViewTable.Builder.Node node, long row, ViewScheme vs, Database.Scheme baseScheme, ViewTable parentViewTable, Operation.ExpressionParsingContext expressionParsingContext, Database.MetaColumn metaColumn)
+            {
+                //set the entry for merge column
+                if (metaColumn.defaultMergeAlgorithm != null && metaColumn.type != null)
+                {
+                    ViewColumnNode.IViewColumnNode column = BuildOrGetColumnNode(parentViewTable, metaColumn, metaColumn.name, expressionParsingContext);
+                    Operation.Expression expression = Operation.ColumnCreator.CreateTypedExpressionColumnMerge(metaColumn.type, parentViewTable, row, column.GetColumn(), metaColumn);
+                    column.SetEntry(row, expression, null);
+                }
+            }
+
+            public IViewColumn Build(ViewTable.Builder.Node node, ViewScheme vs, Database.Scheme baseScheme, ViewTable vTable, Operation.ExpressionParsingContext expressionParsingContext, ref Database.MetaColumn metaColumn)
+            {
+                // Check if we have a type mismatch
+                Type columnValueType = metaColumn != null ? metaColumn.type : null;
+                if (value.type != null)
+                {
+                    if (columnValueType != null && columnValueType != value.type)
+                    {
+                        DebugUtility.LogWarning("While building column '" + name + "' : "
+                            + "Cannot override type from '" + columnValueType.Name
+                            + "' to '" + value.type.Name + "'");
+                    }
+                    columnValueType = value.type;
+                }
+
+                // Parse expression value
+                Operation.Expression.ParseIdentifierOption parseOpt = new Operation.Expression.ParseIdentifierOption(vs, vTable, true, false, columnValueType, expressionParsingContext);
+                parseOpt.formatError = (string s, Operation.Expression.ParseIdentifierOption opt) => {
+                        return FormatErrorContextInfo(vs, vTable) + " : " + s;
+                    };
+
+                Operation.Expression expression = Operation.Expression.ParseIdentifier(value, parseOpt);
+
+
+                // Build declaration with the type we've just parsed
+                BuildOrUpdateDeclaration(ref metaColumn, expression.type);
+
+                IViewColumn result = (IViewColumn)Operation.ColumnCreator.CreateViewColumnExpression(expression);
+                ViewColumn vc = new ViewColumn();
+                vc.m_MetaLink = m_MetaLink;
+                vc.viewTable = vTable;
+                vc.ParsingContext = expressionParsingContext;
+                result.SetColumn(vc, null);
+                return result;
+            }
+
+            private static System.Collections.Generic.SortedDictionary<string, Operation.Grouping.MergeAlgo> _m_StringToMergeAlgo;
+            protected static System.Collections.Generic.SortedDictionary<string, Operation.Grouping.MergeAlgo> m_StringToMergeAlgo
+            {
+                get
+                {
+                    if (_m_StringToMergeAlgo == null)
+                    {
+                        _m_StringToMergeAlgo = new System.Collections.Generic.SortedDictionary<string, Operation.Grouping.MergeAlgo>();
+                        _m_StringToMergeAlgo.Add("first", Operation.Grouping.MergeAlgo.first);
+                        _m_StringToMergeAlgo.Add("sum", Operation.Grouping.MergeAlgo.sum);
+                        _m_StringToMergeAlgo.Add("min", Operation.Grouping.MergeAlgo.min);
+                        _m_StringToMergeAlgo.Add("max", Operation.Grouping.MergeAlgo.max);
+                        _m_StringToMergeAlgo.Add("average", Operation.Grouping.MergeAlgo.average);
+                        _m_StringToMergeAlgo.Add("deviation", Operation.Grouping.MergeAlgo.deviation);
+                        _m_StringToMergeAlgo.Add("median", Operation.Grouping.MergeAlgo.median);
+                        _m_StringToMergeAlgo.Add("sumpositive", Operation.Grouping.MergeAlgo.sumpositive);
+                        _m_StringToMergeAlgo.Add("count", Operation.Grouping.MergeAlgo.count);
+                    }
+                    return _m_StringToMergeAlgo;
+                }
+            }
+
+            private static void LoadLinkFromXML(Builder b, XmlElement root)
+            {
+                b.m_MetaLink = new MetaLink();
+                DebugUtility.TryGetMandatoryXmlAttribute(root, "view", out b.m_MetaLink.linkViewName);
+                foreach (XmlNode node in root.ChildNodes)
+                {
+                    if (node.NodeType == XmlNodeType.Element)
+                    {
+                        XmlElement e = (XmlElement)node;
+                        if (e.Name == "Where")
+                        {
+                            var w = Where.Builder.LoadFromXML(e);
+                            if (b.m_MetaLink.linkWhere == null)
+                            {
+                                b.m_MetaLink.linkWhere = new System.Collections.Generic.List<Where.Builder>();
+                            }
+                            b.m_MetaLink.linkWhere.Add(w);
+                        }
+                        else if (e.Name == "Param")
+                        {
+                            if (b.m_MetaLink.param == null)
+                            {
+                                b.m_MetaLink.param = new MetaParameterSet();
+                            }
+                            MetaParameter mp = new MetaParameter();
+                            mp.name = e.GetAttribute("name");
+                            mp.value = e.GetAttribute("value");
+                            b.m_MetaLink.param.param.Add(mp.name, mp);
+                        }
+                    }
+                }
+            }
+
+            private static void LoadParentGroupFromXML(Builder b, XmlElement root)
+            {
+            }
+
+            public static Builder LoadFromXML(XmlElement root)
+            {
+                Builder b = new Builder();
+                b.name = root.GetAttribute("name");
+                using (ScopeDebugContext.Func(() => { return "Column '" + b.name + "'"; }))
+                {
+                    b.value = Operation.Expression.MetaExpression.LoadFromXML(root);
+                    if (!int.TryParse(root.GetAttribute("width"), out b.displayDefaultWidth))
+                    {
+                        b.displayDefaultWidth = 100;
+                    }
+
+                    string strisKey = root.GetAttribute("isKey");
+                    if (strisKey != null && strisKey != "")
+                    {
+                        if (!bool.TryParse(strisKey, out b.isPrimaryKey))
+                        {
+                            UnityEngine.Debug.LogError("Error parsing bool value '" + strisKey + "', default to false");
+                            b.isPrimaryKey = false;
+                        }
+                    }
+                    string strGroupable = root.GetAttribute("groupable");
+                    if (strGroupable == "duplicate")
+                    {
+                        b.groupAlgo = Database.Operation.Grouping.groupByDuplicate;
+                    }
+                    string strOp = root.GetAttribute("merged");
+                    m_StringToMergeAlgo.TryGetValue(strOp, out b.mergeAlgoE);
+
+                    foreach (XmlNode node in root.ChildNodes)
+                    {
+                        if (node.NodeType == XmlNodeType.Element)
+                        {
+                            XmlElement e = (XmlElement)node;
+                            if (e.Name == "Link")
+                            {
+                                LoadLinkFromXML(b, e);
+                            }
+                            else if (e.Name == "ParentGroup")
+                            {
+                                LoadParentGroupFromXML(b, e);
+                            }
+                        }
+                    }
+
+                    return b;
+                }
+            }
+        }
+    }
+}
