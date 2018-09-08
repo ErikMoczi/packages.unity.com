@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Remove sentence "This package is installed for..." and all other sentence regarding status of the package
 - Hide buttons for embedded, git and local packages
 - Display "No results for ""
+- Support maximize/minimize
+- Support PackageManager UI saved maximized in a layout
+- Keep track of selected built-in package
+- Keep track of last selected filter
 
 ## [1.9.9] - 2018-05-09
 - Only show user visible versions in the UI
