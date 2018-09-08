@@ -82,7 +82,7 @@ namespace Unity.Properties
         public override void Accept(TContainer container, IPropertyVisitor visitor)
         {
             var context = new VisitContext<TValue> {Property = this, Value = GetValue(container), Index = -1};
-            if (!visitor.ExcludeVisit(container, context))
+            if (!visitor.ExcludeOrCustomVisit(container, context))
             {
                 visitor.Visit(container, context);
             }
@@ -108,7 +108,7 @@ namespace Unity.Properties
             var value = GetValue(container);
             var context = new VisitContext<TValue> {Property = this, Value = value, Index = -1};
 
-            if (visitor.ExcludeVisit(container, context))
+            if (visitor.ExcludeOrCustomVisit(container, context))
             {
                 return;
             }
@@ -159,7 +159,7 @@ namespace Unity.Properties
             {
                 var context = new VisitContext<TValue> { Property = p, Value = value, Index = -1 };
 
-                if (v.ExcludeVisit(c, context))
+                if (v.ExcludeOrCustomVisit(c, context))
                 {
                     return;
                 }
@@ -253,7 +253,7 @@ namespace Unity.Properties
         public override void Accept(ref TContainer container, IPropertyVisitor visitor)
         {
             var context = new VisitContext<TValue> {Property = this, Value = GetValue(ref container), Index = -1};
-            if (!visitor.ExcludeVisit(ref container, context))
+            if (!visitor.ExcludeOrCustomVisit(ref container, context))
             {
                 visitor.Visit(ref container, context);
             }
@@ -296,7 +296,7 @@ namespace Unity.Properties
             {
                 var context = new VisitContext<TValue> { Property = p, Value = value, Index = -1 };
 
-                if (v.ExcludeVisit(ref c, context))
+                if (v.ExcludeOrCustomVisit(ref c, context))
                 {
                     return;
                 }
@@ -329,7 +329,7 @@ namespace Unity.Properties
             var value = GetValue(container);
             var context = new VisitContext<TValue> { Property = this, Value = value, Index = -1 };
 
-            if (visitor.ExcludeVisit(ref container, context))
+            if (visitor.ExcludeOrCustomVisit(ref container, context))
             {
                return;
             }

@@ -620,7 +620,7 @@ namespace Unity.Properties
                 public override void Accept(MigrationContainer container, IPropertyVisitor visitor)
                 {
                     var context = new VisitContext<TValue> {Property = this, Value = GetValue(container), Index = -1};
-                    if (!visitor.ExcludeVisit(container, context))
+                    if (!visitor.ExcludeOrCustomVisit(container, context))
                     {
                         visitor.Visit(container, context);
                     }
@@ -662,7 +662,7 @@ namespace Unity.Properties
                         Index = -1
                     };
 
-                    if (visitor.ExcludeVisit(container, context))
+                    if (visitor.ExcludeOrCustomVisit(container, context))
                     {
                         return;
                     }
@@ -761,7 +761,7 @@ namespace Unity.Properties
                         Index = -1
                     };
 
-                    if (visitor.ExcludeVisit(container, listContext))
+                    if (visitor.ExcludeOrCustomVisit(container, listContext))
                     {
                         return;
                     }
@@ -780,7 +780,7 @@ namespace Unity.Properties
                             itemVisitContext.Value = item;
                             itemVisitContext.Index = i;
 
-                            if (false == visitor.ExcludeVisit(container, itemVisitContext))
+                            if (false == visitor.ExcludeOrCustomVisit(container, itemVisitContext))
                             {
                                 visitor.Visit(container, itemVisitContext);
                             }
@@ -807,7 +807,7 @@ namespace Unity.Properties
                         Index = -1
                     };
 
-                    if (visitor.ExcludeVisit(container, listContext))
+                    if (visitor.ExcludeOrCustomVisit(container, listContext))
                     {
                         return;
                     }
@@ -826,7 +826,7 @@ namespace Unity.Properties
                             itemVisitContext.Value = item;
                             itemVisitContext.Index = i;
 
-                            if (visitor.ExcludeVisit(container, itemVisitContext))
+                            if (visitor.ExcludeOrCustomVisit(container, itemVisitContext))
                             {
                                 continue;
                             }
@@ -885,7 +885,7 @@ namespace Unity.Properties
                 public override void Accept(MigrationContainer container, IPropertyVisitor visitor)
                 {
                     var context = new VisitContext<TValue> {Property = this, Value = GetValue(container), Index = -1};
-                    if (!visitor.ExcludeVisit(container, context))
+                    if (!visitor.ExcludeOrCustomVisit(container, context))
                     {
                         visitor.Visit(container, context);
                     }
@@ -922,7 +922,7 @@ namespace Unity.Properties
                         Index = -1
                     };
 
-                    if (visitor.ExcludeVisit(container, context))
+                    if (visitor.ExcludeOrCustomVisit(container, context))
                     {
                         return;
                     }
@@ -1018,7 +1018,7 @@ namespace Unity.Properties
                         Index = -1
                     };
 
-                    if (visitor.ExcludeVisit(container, listContext))
+                    if (visitor.ExcludeOrCustomVisit(container, listContext))
                     {
                         return;
                     }
@@ -1035,7 +1035,7 @@ namespace Unity.Properties
                             itemVisitContext.Value = TypeConversion.Convert<TItem>(list[i]);
                             itemVisitContext.Index = i;
 
-                            if (false == visitor.ExcludeVisit(container, itemVisitContext))
+                            if (false == visitor.ExcludeOrCustomVisit(container, itemVisitContext))
                             {
                                 visitor.Visit(container, itemVisitContext);
                             }

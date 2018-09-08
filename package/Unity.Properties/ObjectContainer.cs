@@ -180,10 +180,12 @@ namespace Unity.Properties
                         Index = -1
                     };
 
-                    if (!visitor.ExcludeVisit(container, context))
+                    if (visitor.ExcludeOrCustomVisit(container, context))
                     {
-                        visitor.Visit(container, context);
+                        return;
                     }
+                    
+                    visitor.Visit(container, context);
                 }
             }
 
@@ -219,7 +221,7 @@ namespace Unity.Properties
                         Index = -1
                     };
 
-                    if (visitor.ExcludeVisit(container, context))
+                    if (visitor.ExcludeOrCustomVisit(container, context))
                     {
                         return;
                     }
@@ -228,7 +230,6 @@ namespace Unity.Properties
                     {
                         value.Visit(visitor);
                     }
-
                     visitor.EndContainer(container, context);
                 }
             }
@@ -270,7 +271,7 @@ namespace Unity.Properties
                         Index = -1
                     };
 
-                    if (visitor.ExcludeVisit(container, listContext))
+                    if (visitor.ExcludeOrCustomVisit(container, listContext))
                     {
                         return;
                     }
@@ -289,10 +290,12 @@ namespace Unity.Properties
                             itemVisitContext.Value = item;
                             itemVisitContext.Index = i;
 
-                            if (false == visitor.ExcludeVisit(container, itemVisitContext))
+                            if (visitor.ExcludeOrCustomVisit(container, itemVisitContext))
                             {
-                                visitor.Visit(container, itemVisitContext);
+                                continue;
                             }
+
+                            visitor.Visit(container, itemVisitContext);
                         }
                     }
 
@@ -331,7 +334,7 @@ namespace Unity.Properties
                         Index = -1
                     };
 
-                    if (visitor.ExcludeVisit(container, listContext))
+                    if (visitor.ExcludeOrCustomVisit(container, listContext))
                     {
                         return;
                     }
@@ -349,6 +352,11 @@ namespace Unity.Properties
 
                             itemVisitContext.Value = item;
                             itemVisitContext.Index = i;
+
+                            if (visitor.ExcludeOrCustomVisit(container, itemVisitContext))
+                            {
+                                continue;
+                            }
 
                             if (visitor.BeginContainer(container, itemVisitContext))
                             {

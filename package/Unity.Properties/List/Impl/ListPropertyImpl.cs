@@ -128,9 +128,9 @@ namespace Unity.Properties
 
         public override void Accept(TContainer container, IPropertyVisitor visitor)
         {
-            var listContext = new VisitContext<TItem> {Property = this, Index = -1};
+            var listContext = new VisitContext<IList<TItem>> {Property = this, Index = -1, Value = GetList(container) };
 
-            if (visitor.ExcludeVisit(container, listContext))
+            if (visitor.ExcludeOrCustomVisit(container, listContext))
             {
                 return;
             }
@@ -149,10 +149,11 @@ namespace Unity.Properties
                     itemVisitContext.Value = item;
                     itemVisitContext.Index = i;
 
-                    if (false == visitor.ExcludeVisit(container, itemVisitContext))
+                    if (visitor.ExcludeOrCustomVisit(container, itemVisitContext))
                     {
-                        visitor.Visit(container, itemVisitContext);
+                        continue;
                     }
+                    visitor.Visit(container, itemVisitContext);
                 }
             }
             visitor.EndCollection(container, listContext);
@@ -169,9 +170,9 @@ namespace Unity.Properties
 
         public override void Accept(TContainer container, IPropertyVisitor visitor)
         {
-            var listContext = new VisitContext<TItem> {Property = this, Index = -1};
+            var listContext = new VisitContext<IList<TItem>> {Property = this, Index = -1, Value = GetList(container) };
             
-            if (visitor.ExcludeVisit(container, listContext))
+            if (visitor.ExcludeOrCustomVisit(container, listContext))
             {
                 return;
             }
@@ -191,7 +192,7 @@ namespace Unity.Properties
                     itemVisitContext.Value = item;
                     itemVisitContext.Index = i;
 
-                    if (visitor.ExcludeVisit(container, itemVisitContext))
+                    if (visitor.ExcludeOrCustomVisit(container, itemVisitContext))
                     {
                         continue;
                     }
@@ -217,9 +218,9 @@ namespace Unity.Properties
 
         public override void Accept(TContainer container, IPropertyVisitor visitor)
         {
-            var listContext = new VisitContext<TItem> {Property = this, Index = -1};
+            var listContext = new VisitContext<IList<TItem>> {Property = this, Index = -1, Value = GetList(container) };
             
-            if (visitor.ExcludeVisit(container, listContext))
+            if (visitor.ExcludeOrCustomVisit(container, listContext))
             {
                 return;
             }
@@ -238,7 +239,7 @@ namespace Unity.Properties
                     itemVisitContext.Value = item;
                     itemVisitContext.Index = i;
 
-                    if (visitor.ExcludeVisit(container, itemVisitContext))
+                    if (visitor.ExcludeOrCustomVisit(container, itemVisitContext))
                     {
                         continue;
                     }
@@ -248,8 +249,6 @@ namespace Unity.Properties
                         PropertyContainer.Visit(ref item, visitor);
                     }
                     visitor.EndContainer(container, itemVisitContext);
-                    
-                    SetAt(container, i, item);
                 }
             }
             visitor.EndCollection(container, listContext);
@@ -375,9 +374,9 @@ namespace Unity.Properties
 
         public override void Accept(ref TContainer container, IPropertyVisitor visitor)
         {
-            var listContext = new VisitContext<TItem> {Property = this, Index = -1};
+            var listContext = new VisitContext<IList<TItem>> {Property = this, Index = -1, Value = GetList(ref container) };
             
-            if (visitor.ExcludeVisit(ref container, listContext))
+            if (visitor.ExcludeOrCustomVisit(ref container, listContext))
             {
                 return;
             }
@@ -396,7 +395,7 @@ namespace Unity.Properties
                     itemVisitContext.Value = item;
                     itemVisitContext.Index = i;
 
-                    if (false == visitor.ExcludeVisit(ref container, itemVisitContext))
+                    if (false == visitor.ExcludeOrCustomVisit(ref container, itemVisitContext))
                     {
                         visitor.Visit(ref container, itemVisitContext);
                     }
@@ -416,14 +415,9 @@ namespace Unity.Properties
 
         public override void Accept(ref TContainer container, IPropertyVisitor visitor)
         {
-            var listContext = new VisitContext<IList<TItem>> {Property = this, Index = -1};
+            var listContext = new VisitContext<IList<TItem>> {Property = this, Index = -1, Value = GetList(ref container) };
             
-            if (visitor.ExcludeVisit(ref container, listContext))
-            {
-                return;
-            }
-            
-            if (visitor.ExcludeVisit(ref container, listContext))
+            if (visitor.ExcludeOrCustomVisit(ref container, listContext))
             {
                 return;
             }
@@ -442,7 +436,7 @@ namespace Unity.Properties
                     itemVisitContext.Value = item;
                     itemVisitContext.Index = i;
 
-                    if (visitor.ExcludeVisit(ref container, itemVisitContext))
+                    if (visitor.ExcludeOrCustomVisit(ref container, itemVisitContext))
                     {
                         continue;
                     }
@@ -468,9 +462,9 @@ namespace Unity.Properties
 
         public override void Accept(ref TContainer container, IPropertyVisitor visitor)
         {
-            var listContext = new VisitContext<TItem> {Property = this, Index = -1};
+            var listContext = new VisitContext<IList<TItem>> {Property = this, Index = -1, Value = GetList(ref container) };
             
-            if (visitor.ExcludeVisit(ref container, listContext))
+            if (visitor.ExcludeOrCustomVisit(ref container, listContext))
             {
                 return;
             }
@@ -489,7 +483,7 @@ namespace Unity.Properties
                     itemVisitContext.Value = item;
                     itemVisitContext.Index = i;
 
-                    if (visitor.ExcludeVisit(ref container, itemVisitContext))
+                    if (visitor.ExcludeOrCustomVisit(ref container, itemVisitContext))
                     {
                         continue;
                     }
@@ -499,8 +493,6 @@ namespace Unity.Properties
                         PropertyContainer.Visit(ref item, visitor);
                     }
                     visitor.EndContainer(ref container, itemVisitContext);
-                    
-                    SetAt(ref container, i, item);
                 }
             }
             visitor.EndCollection(ref container, listContext);

@@ -20,6 +20,18 @@ namespace Unity.Properties
             return false;
         }
 
+        public virtual bool CustomVisit<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+            where TContainer : class, IPropertyContainer
+        {
+            return false;
+        }
+
+        public virtual bool CustomVisit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+            where TContainer : struct, IPropertyContainer
+        {
+            return false;
+        }
+
         public abstract void Visit<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
             where TContainer : class, IPropertyContainer;
 
@@ -131,14 +143,18 @@ namespace Unity.Properties
             ListIndex = context.Index;
         }
 
-        private bool CustomVisit<TValue>(TValue value)
+        private bool ExcludeVisitImpl<TValue>(TValue value)
         {
             var validationHandler = this as IExcludeVisit<TValue>;
             if (validationHandler != null && validationHandler.ExcludeVisit(value) || ExcludeVisit(value))
             {
                 return true;
             }
-
+            return false;
+        }
+        
+        private bool CustomVisitImpl<TValue>(TValue value)
+        {
             var handler = this as ICustomVisit<TValue>;
             if (handler == null)
             {
@@ -157,7 +173,7 @@ namespace Unity.Properties
                 // lists are always visited - if required, override ExcludeVisit to return true
                 return false;
             }
-            return CustomVisit(context.Value);
+            return ExcludeVisitImpl(context.Value);
         }
         
         public override bool ExcludeVisit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
@@ -168,12 +184,24 @@ namespace Unity.Properties
                 // lists are always visited - if required, override ExcludeVisit to return true
                 return false;
             }
-            return CustomVisit(context.Value);
+            return ExcludeVisitImpl(context.Value);
         }
 
         protected virtual bool ExcludeVisit<TValue>(TValue value)
         {
             return false;
+        }
+        
+        public override bool CustomVisit<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+        {
+            VisitSetup(ref container, ref context);
+            return CustomVisitImpl(context.Value);
+        }
+
+        public override bool CustomVisit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+        {
+            VisitSetup(ref container, ref context);
+            return CustomVisitImpl(context.Value);
         }
 
         /// <summary>

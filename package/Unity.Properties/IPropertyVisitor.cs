@@ -55,6 +55,12 @@ namespace Unity.Properties
         bool ExcludeVisit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
             where TContainer : struct, IPropertyContainer;
         
+        bool CustomVisit<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+            where TContainer : class, IPropertyContainer;
+        
+        bool CustomVisit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+            where TContainer : struct, IPropertyContainer;
+        
         void Visit<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
             where TContainer : class, IPropertyContainer;
         
@@ -137,6 +143,21 @@ namespace Unity.Properties
         /// <param name="value">The current property value.</param>
         /// <returns>True if the property should be visited, False otherwise.</returns>
         bool ExcludeVisit(TValue value);
+    }
+
+    public static class PropertyVisitorExtensions
+    {
+        public static bool ExcludeOrCustomVisit<TContainer, TValue>(this IPropertyVisitor visitor, TContainer container, VisitContext<TValue> context)
+            where TContainer : class, IPropertyContainer
+        {
+            return visitor.ExcludeVisit(container, context) || visitor.CustomVisit(container, context);
+        }
+        
+        public static bool ExcludeOrCustomVisit<TContainer, TValue>(this IPropertyVisitor visitor, ref TContainer container, VisitContext<TValue> context)
+            where TContainer : struct, IPropertyContainer
+        {
+            return visitor.ExcludeVisit(ref container, context) || visitor.CustomVisit(ref container, context);
+        }
     }
 }
 

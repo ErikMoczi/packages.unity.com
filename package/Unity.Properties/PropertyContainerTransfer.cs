@@ -67,6 +67,16 @@ namespace Unity.Properties
                 return false;
             }
 
+            public bool CustomVisit<TContainer, TValue>(TContainer container, VisitContext<TValue> context) where TContainer : class, IPropertyContainer
+            {
+                return false;
+            }
+
+            public bool CustomVisit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context) where TContainer : struct, IPropertyContainer
+            {
+                return false;
+            }
+
             public void Visit<TContainer, TValue>(TContainer container, VisitContext<TValue> context) 
                 where TContainer : class, IPropertyContainer
             {
