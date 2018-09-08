@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.4-preview.29
+
+- Fix issue when calling an explicit interface method not being matched through a generic constraint
+- Fix issue with or/and binary operation on a bool returned by a function
+
 ## 0.2.4-preview.28
 
 - Fix a compilation issue when storing a bool returned from a function to a component of a bool vector
