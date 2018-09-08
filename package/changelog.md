@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.4-preview.28
+
+- Fix a compilation issue when storing a bool returned from a function to a component of a bool vector
+- Fix AOT compilation issue with a duplicated dictionary key 
+- Fix settings of ANDROID_NDK_ROOT if it is not setup in Unity Editor
+
 ## 0.2.4-preview.27
 
 - Improve detection of jobs within nested generics for AOT/burst inspector
