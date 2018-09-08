@@ -121,10 +121,6 @@ namespace UnityEditor.ProBuilder
 				SetFaceMaterial(pb.facesInternal, mat);
 				pb.GetComponent<MeshRenderer>().sharedMaterial = mat;
 			}
-			else
-			{
-				Debug.Log("mat is null");
-			}
 
 			EditorUtility.InitObject(pb);
 			EditorUtility.SetPivotAndSnapWithPref(pb, null);
@@ -588,12 +584,13 @@ namespace UnityEditor.ProBuilder
 		static float plane_height = 10, plane_width = 10;
 		static int plane_height_cuts = 3, plane_width_cuts = 3;
 		static Axis plane_axis = Axis.Up;
+
 		void PlaneGUI()
 		{
 			plane_axis = (Axis)EditorGUILayout.EnumPopup("Initial Orientation", plane_axis);
 
 			plane_width = EditorGUILayout.FloatField("Width", plane_width);
-			plane_height = EditorGUILayout.FloatField("Height", plane_height);
+			plane_height = EditorGUILayout.FloatField("Length", plane_height);
 
 			if(plane_height < 1f)
 				plane_height = 1f;
@@ -601,8 +598,8 @@ namespace UnityEditor.ProBuilder
 			if(plane_width < 1f)
 				plane_width = 1f;
 
-			plane_width_cuts = EditorGUILayout.IntField("Width Segments", plane_height_cuts);
-			plane_height_cuts= EditorGUILayout.IntField("Length Segments", plane_width_cuts);
+			plane_width_cuts= EditorGUILayout.IntField("Width Segments", plane_width_cuts);
+			plane_height_cuts = EditorGUILayout.IntField("Length Segments", plane_height_cuts);
 
 			if(plane_width_cuts < 0)
 				plane_width_cuts = 0;
@@ -1021,7 +1018,7 @@ namespace UnityEditor.ProBuilder
 		void CustomGUI()
 		{
 			GUILayout.Label("Custom Geometry", EditorStyles.boldLabel);
-			EditorGUILayout.HelpBox("Vertexes must be wound in faces, and counter-clockwise.\n(Think horizontally reversed Z)", MessageType.Info);
+			EditorGUILayout.HelpBox("Vertices must be wound in faces, and counter-clockwise.\n(Think horizontally reversed Z)", MessageType.Info);
 
 			scrollbar = GUILayout.BeginScrollView(scrollbar);
 				verts = EditorGUILayout.TextArea(verts, GUILayout.MinHeight(160));
@@ -1080,7 +1077,7 @@ namespace UnityEditor.ProBuilder
 			}
 		}
 
-		void SetPreviewObject(ProBuilderMesh pb, int[] vertexes = null)
+		void SetPreviewObject(ProBuilderMesh pb, int[] vertices = null)
 		{
 			pb.selectable = false;
 
@@ -1098,7 +1095,7 @@ namespace UnityEditor.ProBuilder
 			m_PreviewObject = pb.gameObject;
 
 			if(PreferencesInternal.GetBool(PreferenceKeys.pbForceGridPivot))
-				pb.CenterPivot(vertexes == null ? new int[1]{0} : vertexes);
+				pb.CenterPivot(vertices == null ? new int[1]{0} : vertices);
 
 			if(prevTransform)
 			{

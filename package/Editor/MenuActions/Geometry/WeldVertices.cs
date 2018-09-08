@@ -33,30 +33,36 @@ namespace UnityEditor.ProBuilder.Actions
 			keyCommandAlt, 'V'
 		);
 
-		public override bool IsEnabled()
+		public override bool enabled
 		{
-			return ProBuilderEditor.instance != null &&
-				ProBuilderEditor.instance.editLevel == EditLevel.Geometry &&
-				ProBuilderEditor.instance.selectionMode == SelectMode.Vertex &&
-				MeshSelection.Top().Any(x => x.selectedVertexCount > 1);
+			get
+			{
+				return ProBuilderEditor.instance != null &&
+					ProBuilderEditor.editLevel == EditLevel.Geometry &&
+					ProBuilderEditor.componentMode == ComponentMode.Vertex &&
+					MeshSelection.TopInternal().Any(x => x.selectedVertexCount > 1);
+			}
 		}
 
-		public override bool IsHidden()
+		public override bool hidden
 		{
-			return ProBuilderEditor.instance == null ||
-				ProBuilderEditor.instance.editLevel != EditLevel.Geometry ||
-				ProBuilderEditor.instance.selectionMode != SelectMode.Vertex;
+			get
+			{
+				return ProBuilderEditor.instance == null ||
+					ProBuilderEditor.editLevel != EditLevel.Geometry ||
+					ProBuilderEditor.componentMode != ComponentMode.Vertex;
+			}
 		}
 
-		public override MenuActionState AltState()
+		protected override MenuActionState optionsMenuState
 		{
-			return MenuActionState.VisibleAndEnabled;
+			get { return MenuActionState.VisibleAndEnabled; }
 		}
 
 		static readonly GUIContent gc_weldDistance = new GUIContent("Weld Distance", "The maximum distance between two vertices in order to be welded together.");
 		const float k_MinWeldDistance = .00001f;
 
-		public override void OnSettingsGUI()
+		protected override void OnSettingsGUI()
 		{
 			GUILayout.Label("Weld Settings", EditorStyles.boldLabel);
 
@@ -84,7 +90,7 @@ namespace UnityEditor.ProBuilder.Actions
 
 		public override ActionResult DoAction()
 		{
-			return MenuCommands.MenuWeldVertices(MeshSelection.Top());
+			return MenuCommands.MenuWeldVertices(MeshSelection.TopInternal());
 		}
 	}
 }
