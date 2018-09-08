@@ -1,4 +1,5 @@
 ﻿#if (NET_4_6 || NET_STANDARD_2_0)
+using System.Collections.Generic;
 
 namespace Unity.Properties
 {
@@ -82,24 +83,24 @@ namespace Unity.Properties
         {
         }
 
-        public virtual bool BeginCollection<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+        public virtual bool BeginCollection<TContainer, TValue>(TContainer container, VisitContext<IList<TValue>> context)
             where TContainer : class, IPropertyContainer
         {
             return true;
         }
         
-        public virtual bool BeginCollection<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+        public virtual bool BeginCollection<TContainer, TValue>(ref TContainer container, VisitContext<IList<TValue>> context)
             where TContainer : struct, IPropertyContainer
         {
             return true;
         }
 
-        public virtual void EndCollection<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+        public virtual void EndCollection<TContainer, TValue>(TContainer container, VisitContext<IList<TValue>> context)
             where TContainer : class, IPropertyContainer
         {
         }
         
-        public virtual void EndCollection<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+        public virtual void EndCollection<TContainer, TValue>(ref TContainer container, VisitContext<IList<TValue>> context)
             where TContainer : struct, IPropertyContainer
         {
         }
@@ -291,25 +292,25 @@ namespace Unity.Properties
             EndContainer();
         }
         
-        public override bool BeginCollection<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+        public override bool BeginCollection<TContainer, TValue>(TContainer container, VisitContext<IList<TValue>> context)
         {
             VisitSetup(ref container, ref context);
             return BeginCollection();
         }
         
-        public override bool BeginCollection<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+        public override bool BeginCollection<TContainer, TValue>(ref TContainer container, VisitContext<IList<TValue>> context)
         {
             VisitSetup(ref container, ref context);
             return BeginCollection();
         }
 
-        public override void EndCollection<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+        public override void EndCollection<TContainer, TValue>(TContainer container, VisitContext<IList<TValue>> context)
         {
             VisitSetup(ref container, ref context);
             EndCollection();
         }
         
-        public override void EndCollection<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+        public override void EndCollection<TContainer, TValue>(ref TContainer container, VisitContext<IList<TValue>> context)
         {
             VisitSetup(ref container, ref context);
             EndCollection();

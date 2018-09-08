@@ -1,5 +1,7 @@
 ﻿#if (NET_4_6 || NET_STANDARD_2_0)
 
+using System.Collections.Generic;
+
 namespace Unity.Properties
 {
     /// <summary>
@@ -83,16 +85,16 @@ namespace Unity.Properties
             where TContainer : struct, IPropertyContainer
             where TValue : IPropertyContainer;
 
-        bool BeginCollection<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+        bool BeginCollection<TContainer, TValue>(TContainer container, VisitContext<IList<TValue>> context)
             where TContainer : class, IPropertyContainer;
         
-        bool BeginCollection<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+        bool BeginCollection<TContainer, TValue>(ref TContainer container, VisitContext<IList<TValue>> context)
             where TContainer : struct, IPropertyContainer;
 
-        void EndCollection<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+        void EndCollection<TContainer, TValue>(TContainer container, VisitContext<IList<TValue>> context)
             where TContainer : class, IPropertyContainer;
         
-        void EndCollection<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
+        void EndCollection<TContainer, TValue>(ref TContainer container, VisitContext<IList<TValue>> context)
             where TContainer : struct, IPropertyContainer;
     }
     

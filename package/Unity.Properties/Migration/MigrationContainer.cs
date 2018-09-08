@@ -754,7 +754,7 @@ namespace Unity.Properties
 
                 public override void Accept(MigrationContainer container, IPropertyVisitor visitor)
                 {
-                    var listContext = new VisitContext<IList>
+                    var listContext = new VisitContext<IList<TItem>>
                     {
                         Property = this,
                         Value = null,
@@ -800,7 +800,7 @@ namespace Unity.Properties
                 
                 public override void Accept(MigrationContainer container, IPropertyVisitor visitor)
                 {
-                    var listContext = new VisitContext<IList>
+                    var listContext = new VisitContext<IList<TItem>>
                     {
                         Property = this,
                         Value = null,
@@ -1011,7 +1011,7 @@ namespace Unity.Properties
                 {
                     var list = GetList(container);
                     
-                    var listContext = new VisitContext<MigrationList<TItem>>
+                    var listContext = new VisitContext<IList<TItem>>
                     {
                         Property = this,
                         Value = list,

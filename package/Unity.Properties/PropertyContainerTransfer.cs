@@ -110,22 +110,22 @@ namespace Unity.Properties
                 PopContainer(context.Property.Name, context.Value, context.Index);
             }
             
-            public bool BeginCollection<TContainer, TValue>(TContainer container, VisitContext<TValue> context) where TContainer : class, IPropertyContainer
+            public bool BeginCollection<TContainer, TValue>(TContainer container, VisitContext<IList<TValue>> context) where TContainer : class, IPropertyContainer
             {
                 return BeginCollection(context.Property.Name);
             }
 
-            public bool BeginCollection<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context) where TContainer : struct, IPropertyContainer
+            public bool BeginCollection<TContainer, TValue>(ref TContainer container, VisitContext<IList<TValue>> context) where TContainer : struct, IPropertyContainer
             {
                 return BeginCollection(context.Property.Name);
             }
 
-            public void EndCollection<TContainer, TValue>(TContainer container, VisitContext<TValue> context) where TContainer : class, IPropertyContainer
+            public void EndCollection<TContainer, TValue>(TContainer container, VisitContext<IList<TValue>> context) where TContainer : class, IPropertyContainer
             {
                 
             }
 
-            public void EndCollection<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context) where TContainer : struct, IPropertyContainer
+            public void EndCollection<TContainer, TValue>(ref TContainer container, VisitContext<IList<TValue>> context) where TContainer : struct, IPropertyContainer
             {
             }
 
