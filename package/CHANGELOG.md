@@ -4,7 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.3.3-preview] - 2018-XX-XX
+## [0.3.4-preview] - 2018-09-05
+ - fixed bug in MacOS content update workflow
+ 
+## [0.3.3-preview] - 2018-08-31
  - fixed exception thrown when creating a group and using .NET 4.x
  - fixed bugs surrounding a project without addressables data.
   - AssetLabelReference inspector rendering
