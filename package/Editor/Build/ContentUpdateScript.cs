@@ -78,13 +78,12 @@ namespace UnityEditor.AddressableAssets
                 if (string.IsNullOrEmpty(buildPath))
                     buildPath = Application.dataPath;
 
-#if UNITY_EDITOR_OSX
-                buildPath = EditorUtility.OpenFilePanel("Build Folder", Path.GetDirectoryName(buildPath), "");
-#else
-                buildPath = EditorUtility.OpenFolderPanel("Build Folder", buildPath, "");
-#endif
+                buildPath = EditorUtility.OpenFilePanel("Build Data File", Path.GetDirectoryName(buildPath), "bin");
+
                 if (string.IsNullOrEmpty(buildPath))
                     return null;
+
+                return buildPath;
             }
             else
             {

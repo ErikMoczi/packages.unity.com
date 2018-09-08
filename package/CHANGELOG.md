@@ -4,26 +4,7 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.3.4-preview] - 2018-09-05
- - fixed bug in MacOS content update workflow
- 
-## [0.3.3-preview] - 2018-08-31
- - fixed exception thrown when creating a group and using .NET 4.x
- - fixed bugs surrounding a project without addressables data.
-  - AssetLabelReference inspector rendering
-  - AssetReference drag and drop
- - fixed profiler details view not updating when a mouse drag is completed
- - fixes surrounding the stability of interacting with the "default" group.
- 
-## [0.3.2-preview] - 2018-08-23
- - Added docs for the Content Update flow.
- 
-## [0.3.1-preview] - 2018-08-22
- - Adjusted UI slightly so single-clicking groups shows their inspector.
- - removed not-helpful "Build/Build Packed Data" item from menu.  
- - fixed bug where you could no longer create groups, and group assets were not named correctly
-
-## [0.3.0-preview] - 2018-08-20
+## [0.3.5-preview] - 2018-09-05
  - implemented content update workflow.  Added a dropdown to the "Build" button on main window's toolbar.   
     - "Build/Prepare for Content Update" will detect assets in locked bundles (bundles flagged as static, by default all local bundles).
     - "Build/Build for Content Update" will build assets with a catalog that is compatible with a previously released player.
@@ -53,6 +34,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - fixed bug where UnloadScene operation never entered Done state or called callback.
  - fixed loading of additonal catalogs. The API has changed to Addressables.LoadCatalogsFromRuntimeData.
  - fixed bug in InitializationOperation where content catalogs were not found.
+ - changed content update workflow to browse for cachedata.bin file instead of folder
+ - fixed exception thrown when creating a group and using .NET 4.x
+ - fixed bugs surrounding a project without addressables data.
+  - AssetLabelReference inspector rendering
+  - AssetReference drag and drop
+ - fixed profiler details view not updating when a mouse drag is completed
+ - fixes surrounding the stability of interacting with the "default" group.
+ - Added docs for the Content Update flow.
+ - Adjusted UI slightly so single-clicking groups shows their inspector.
+ - removed not-helpful "Build/Build Packed Data" item from menu.  
+ - fixed bug where you could no longer create groups, and group assets were not named correctly
  
  ## [0.2.2-preview] - 2018-08-08
  - disabled asset inspector gui for addressables checkbox due to editor bug

@@ -391,7 +391,7 @@ namespace UnityEditor.AddressableAssets
             {
                 foreach (var a in allEntries)
                 {
-                    locations.Add(new ContentCatalogDataEntry(a.address, a.guid, a.GetAssetLoadPath(false), typeof(AssetDatabaseProvider), a.labels));
+                    locations.Add(new ContentCatalogDataEntry(a.address, a.guid, a.AssetPath, typeof(AssetDatabaseProvider), a.labels));
                 }
             }
             else

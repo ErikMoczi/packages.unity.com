@@ -25,6 +25,7 @@ namespace UnityEngine.AddressableAssets
             ResourceManager.ResourceProviders.Add(new JsonAssetProvider());
             ResourceManager.ResourceProviders.Add(new TextDataProvider());
             ResourceManager.ResourceProviders.Add(new ContentCatalogProvider());
+            ResourceManager.ResourceProviders.Add(new LegacyResourcesProvider());
             //this line should NOT be removed as it is adding a reference to Application.streamingAssetsPath so that it doesnt get stripped
             Addressables.LogFormat("Addressables - initializing system from {0}.", Addressables.RuntimePath);
             var runtimeDataLocation = new ResourceLocationBase("RuntimeData", playerSettingsLocation, typeof(JsonAssetProvider).FullName);
@@ -79,9 +80,9 @@ namespace UnityEngine.AddressableAssets
                 if (op.Result != null)
                 {
                     var locator = op.Result.CreateLocator();
-                    Addressables.ResourceLocators.Add(locator);
                     if (m_playMode != ResourceManagerRuntimeData.EditorPlayMode.Invalid)
                         Addressables.ResourceLocators.Add(new AssetReferenceLocator());
+                    Addressables.ResourceLocators.Insert(0, locator);
                     SetResult(locator);
                     InvokeCompletionEvent();
                     Addressables.Log("Addressables - initialization complete.");
