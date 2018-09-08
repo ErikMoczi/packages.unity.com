@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.4-preview.27
+
+- Improve detection of jobs within nested generics for AOT/burst inspector
+- Fix compiler bug of comparison of a pointer to null pointer
+- Fix crash compilation of sincos on ARM (neon/AARCH64) 
+- Fix issue when using a pointer to a VectorType resulting in an incorrect access of a vector type
+- Add support for doubles (preview)
+- Improve AOT compiler error message/details if the compiler is failing before the linker
+
 ## 0.2.4-preview.26
 
 - Added support for cosh, sinh and tanh

@@ -27,6 +27,8 @@ namespace Unity.Burst.Editor
             //Debug.Log("Filtered Assembly List: " + string.Join(", ", assemblyList.Select(assembly => assembly.GetName().Name)));
 
             // Find all ways to execute job types (via producer attributes)
+            var typesVisited = new HashSet<string>();
+            var typesToVisit = new HashSet<string>();
             foreach (var assembly in assemblyList)
             {
                 var types = new List<Type>();
@@ -34,8 +36,50 @@ namespace Unity.Burst.Editor
                 // Collect all generic type instances (excluding indirect instances)
                 CollectGenericTypeInstances(assembly, types);
 
+                for (var i = 0; i < types.Count; i++)
+                {
+                    var t = types[i];
+                    if (typesToVisit.Add(t.FullName))
+                    {
+                        // Because the list of types returned by CollectGenericTypeInstances does not detect nested generic classes that are not
+                        // used explicitly, we need to create them if a declaring type is actually used
+                        // so for example if we have:
+                        // class MyClass<T> { class MyNestedClass { } }
+                        // class MyDerived : MyClass<int> { }
+                        // The CollectGenericTypeInstances will return typically the type MyClass<int>, but will not list MyClass<int>.MyNestedClass
+                        // So the following code is correcting this in order to fully query the full graph of generic instance types, including indirect types
+                        var nestedTypes = t.GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic);
+                        foreach (var nestedType in nestedTypes)
+                        {
+                            if (t.IsGenericType && !t.IsGenericTypeDefinition)
+                            {
+                                var parentGenericTypeArguments = t.GetGenericArguments();
+                                // Only create nested types that are closed generic types (full generic instance types)
+                                // It happens if for example the parent class is `class MClass<T> { class MyNestedGeneric<T1> {} }`
+                                // In that case, MyNestedGeneric<T1> is closed in the context of MClass<int>, so we don't process them
+                                if (nestedType.GetGenericArguments().Length == parentGenericTypeArguments.Length)
+                                {
+                                    var instanceNestedType = nestedType.MakeGenericType(parentGenericTypeArguments);
+                                    types.Add(instanceNestedType);
+                                }
+                            }
+                            else
+                            {
+                                types.Add(nestedType);
+                            }
+
+                        }
+                    }
+                }
+
                 foreach (var t in types)
                 {
+                    // If the type has been already visited, don't try to visit it
+                    if (!typesVisited.Add(t.FullName) || t.IsGenericTypeDefinition)
+                    {
+                        continue;
+                    }
+
                     try
                     {
                         if (t.IsInterface)
@@ -129,9 +173,9 @@ namespace Unity.Burst.Editor
                 return false;
             }
 
-#pragma warning disable CS0618
+#pragma warning disable 618
             var attr = type.GetCustomAttribute<BurstCompileAttribute>() ?? type.GetCustomAttribute<ComputeJobOptimizationAttribute>();
-#pragma warning restore CS0618
+#pragma warning restore 618
 
             if (attr == null)
                 return false;
