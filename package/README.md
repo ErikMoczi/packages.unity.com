@@ -5,7 +5,7 @@ This is the Code Analysis package containing Roslyn.
 ```json
 {
     "dependencies": {
-        "com.unity.code-analysis": "file:C:/code/my-amazing-vs-repo"
+        "com.unity.code-analysis": "0.0.1-preview.2"
     },
     "testables" : [ "com.unity.code-analysis" ],
     "registry": "https://staging-packages.unity.com"
