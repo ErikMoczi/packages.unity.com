@@ -12,10 +12,14 @@ namespace Unity.Mathematics
         public int2 c0;
         public int2 c1;
 
+        /// <summary>int2x2 identity transform.</summary>
         public static readonly int2x2 identity = new int2x2(1, 0,   0, 1);
+
+        /// <summary>int2x2 zero value.</summary>
         public static readonly int2x2 zero = new int2x2(0, 0,   0, 0);
 
-        // constructors
+
+        /// <summary>Constructs a int2x2 matrix from two int2 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int2x2(int2 c0, int2 c1)
         { 
@@ -23,6 +27,7 @@ namespace Unity.Mathematics
             this.c1 = c1;
         }
 
+        /// <summary>Constructs a int2x2 matrix from 4 int values given in row-major order.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int2x2(int m00, int m01,
                       int m10, int m11)
@@ -31,6 +36,7 @@ namespace Unity.Mathematics
             this.c1 = new int2(m01, m11);
         }
 
+        /// <summary>Constructs a int2x2 matrix from a single int value by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int2x2(int v)
         {
@@ -38,6 +44,7 @@ namespace Unity.Mathematics
             this.c1 = v;
         }
 
+        /// <summary>Constructs a int2x2 matrix from a single bool value by converting it to int and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int2x2(bool v)
         {
@@ -45,6 +52,7 @@ namespace Unity.Mathematics
             this.c1 = math.select(new int2(0), new int2(1), v);
         }
 
+        /// <summary>Constructs a int2x2 matrix from a bool2x2 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int2x2(bool2x2 v)
         {
@@ -52,6 +60,7 @@ namespace Unity.Mathematics
             this.c1 = math.select(new int2(0), new int2(1), v.c1);
         }
 
+        /// <summary>Constructs a int2x2 matrix from a single uint value by converting it to int and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int2x2(uint v)
         {
@@ -59,6 +68,7 @@ namespace Unity.Mathematics
             this.c1 = (int2)v;
         }
 
+        /// <summary>Constructs a int2x2 matrix from a uint2x2 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int2x2(uint2x2 v)
         {
@@ -66,6 +76,7 @@ namespace Unity.Mathematics
             this.c1 = (int2)v.c1;
         }
 
+        /// <summary>Constructs a int2x2 matrix from a single float value by converting it to int and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int2x2(float v)
         {
@@ -73,6 +84,7 @@ namespace Unity.Mathematics
             this.c1 = (int2)v;
         }
 
+        /// <summary>Constructs a int2x2 matrix from a float2x2 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int2x2(float2x2 v)
         {
@@ -80,6 +92,7 @@ namespace Unity.Mathematics
             this.c1 = (int2)v.c1;
         }
 
+        /// <summary>Constructs a int2x2 matrix from a single double value by converting it to int and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int2x2(double v)
         {
@@ -87,6 +100,7 @@ namespace Unity.Mathematics
             this.c1 = (int2)v;
         }
 
+        /// <summary>Constructs a int2x2 matrix from a double2x2 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int2x2(double2x2 v)
         {
@@ -95,169 +109,260 @@ namespace Unity.Mathematics
         }
 
 
-        // conversions
+        /// <summary>Implicitly converts a single int value to a int2x2 matrix by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator int2x2(int v) { return new int2x2(v); }
+
+        /// <summary>Explicitly converts a single bool value to a int2x2 matrix by converting it to int and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator int2x2(bool v) { return new int2x2(v); }
+
+        /// <summary>Explicitly converts a bool2x2 matrix to a int2x2 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator int2x2(bool2x2 v) { return new int2x2(v); }
+
+        /// <summary>Explicitly converts a single uint value to a int2x2 matrix by converting it to int and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator int2x2(uint v) { return new int2x2(v); }
+
+        /// <summary>Explicitly converts a uint2x2 matrix to a int2x2 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator int2x2(uint2x2 v) { return new int2x2(v); }
+
+        /// <summary>Explicitly converts a single float value to a int2x2 matrix by converting it to int and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator int2x2(float v) { return new int2x2(v); }
+
+        /// <summary>Explicitly converts a float2x2 matrix to a int2x2 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator int2x2(float2x2 v) { return new int2x2(v); }
+
+        /// <summary>Explicitly converts a single double value to a int2x2 matrix by converting it to int and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator int2x2(double v) { return new int2x2(v); }
+
+        /// <summary>Explicitly converts a double2x2 matrix to a int2x2 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator int2x2(double2x2 v) { return new int2x2(v); }
 
 
-        // mul
+        /// <summary>Returns the result of a componentwise multiplication operation on two int2x2 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator * (int2x2 lhs, int2x2 rhs) { return new int2x2 (lhs.c0 * rhs.c0, lhs.c1 * rhs.c1); }
+
+        /// <summary>Returns the result of a componentwise multiplication operation on an int2x2 matrix and an int value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator * (int2x2 lhs, int rhs) { return new int2x2 (lhs.c0 * rhs, lhs.c1 * rhs); }
+
+        /// <summary>Returns the result of a componentwise multiplication operation on an int value and an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator * (int lhs, int2x2 rhs) { return new int2x2 (lhs * rhs.c0, lhs * rhs.c1); }
 
-        // add
+
+        /// <summary>Returns the result of a componentwise addition operation on two int2x2 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator + (int2x2 lhs, int2x2 rhs) { return new int2x2 (lhs.c0 + rhs.c0, lhs.c1 + rhs.c1); }
+
+        /// <summary>Returns the result of a componentwise addition operation on an int2x2 matrix and an int value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator + (int2x2 lhs, int rhs) { return new int2x2 (lhs.c0 + rhs, lhs.c1 + rhs); }
+
+        /// <summary>Returns the result of a componentwise addition operation on an int value and an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator + (int lhs, int2x2 rhs) { return new int2x2 (lhs + rhs.c0, lhs + rhs.c1); }
 
-        // sub
+
+        /// <summary>Returns the result of a componentwise subtraction operation on two int2x2 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator - (int2x2 lhs, int2x2 rhs) { return new int2x2 (lhs.c0 - rhs.c0, lhs.c1 - rhs.c1); }
+
+        /// <summary>Returns the result of a componentwise subtraction operation on an int2x2 matrix and an int value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator - (int2x2 lhs, int rhs) { return new int2x2 (lhs.c0 - rhs, lhs.c1 - rhs); }
+
+        /// <summary>Returns the result of a componentwise subtraction operation on an int value and an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator - (int lhs, int2x2 rhs) { return new int2x2 (lhs - rhs.c0, lhs - rhs.c1); }
 
-        // div
+
+        /// <summary>Returns the result of a componentwise division operation on two int2x2 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator / (int2x2 lhs, int2x2 rhs) { return new int2x2 (lhs.c0 / rhs.c0, lhs.c1 / rhs.c1); }
+
+        /// <summary>Returns the result of a componentwise division operation on an int2x2 matrix and an int value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator / (int2x2 lhs, int rhs) { return new int2x2 (lhs.c0 / rhs, lhs.c1 / rhs); }
+
+        /// <summary>Returns the result of a componentwise division operation on an int value and an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator / (int lhs, int2x2 rhs) { return new int2x2 (lhs / rhs.c0, lhs / rhs.c1); }
 
-        // mod
+
+        /// <summary>Returns the result of a componentwise modulus operation on two int2x2 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator % (int2x2 lhs, int2x2 rhs) { return new int2x2 (lhs.c0 % rhs.c0, lhs.c1 % rhs.c1); }
+
+        /// <summary>Returns the result of a componentwise modulus operation on an int2x2 matrix and an int value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator % (int2x2 lhs, int rhs) { return new int2x2 (lhs.c0 % rhs, lhs.c1 % rhs); }
+
+        /// <summary>Returns the result of a componentwise modulus operation on an int value and an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator % (int lhs, int2x2 rhs) { return new int2x2 (lhs % rhs.c0, lhs % rhs.c1); }
 
-        // increment
+
+        /// <summary>Returns the result of a componentwise increment operation on an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator ++ (int2x2 val) { return new int2x2 (++val.c0, ++val.c1); }
 
 
-        // decrement
+        /// <summary>Returns the result of a componentwise decrement operation on an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator -- (int2x2 val) { return new int2x2 (--val.c0, --val.c1); }
 
 
-        // smaller 
+        /// <summary>Returns the result of a componentwise less than operation on two int2x2 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator < (int2x2 lhs, int2x2 rhs) { return new bool2x2 (lhs.c0 < rhs.c0, lhs.c1 < rhs.c1); }
+
+        /// <summary>Returns the result of a componentwise less than operation on an int2x2 matrix and an int value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator < (int2x2 lhs, int rhs) { return new bool2x2 (lhs.c0 < rhs, lhs.c1 < rhs); }
+
+        /// <summary>Returns the result of a componentwise less than operation on an int value and an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator < (int lhs, int2x2 rhs) { return new bool2x2 (lhs < rhs.c0, lhs < rhs.c1); }
+
+
+        /// <summary>Returns the result of a componentwise less or equal operation on two int2x2 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator <= (int2x2 lhs, int2x2 rhs) { return new bool2x2 (lhs.c0 <= rhs.c0, lhs.c1 <= rhs.c1); }
+
+        /// <summary>Returns the result of a componentwise less or equal operation on an int2x2 matrix and an int value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator <= (int2x2 lhs, int rhs) { return new bool2x2 (lhs.c0 <= rhs, lhs.c1 <= rhs); }
+
+        /// <summary>Returns the result of a componentwise less or equal operation on an int value and an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator <= (int lhs, int2x2 rhs) { return new bool2x2 (lhs <= rhs.c0, lhs <= rhs.c1); }
 
-        // greater 
+
+        /// <summary>Returns the result of a componentwise greater than operation on two int2x2 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator > (int2x2 lhs, int2x2 rhs) { return new bool2x2 (lhs.c0 > rhs.c0, lhs.c1 > rhs.c1); }
+
+        /// <summary>Returns the result of a componentwise greater than operation on an int2x2 matrix and an int value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator > (int2x2 lhs, int rhs) { return new bool2x2 (lhs.c0 > rhs, lhs.c1 > rhs); }
+
+        /// <summary>Returns the result of a componentwise greater than operation on an int value and an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator > (int lhs, int2x2 rhs) { return new bool2x2 (lhs > rhs.c0, lhs > rhs.c1); }
+
+
+        /// <summary>Returns the result of a componentwise greater or equal operation on two int2x2 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator >= (int2x2 lhs, int2x2 rhs) { return new bool2x2 (lhs.c0 >= rhs.c0, lhs.c1 >= rhs.c1); }
+
+        /// <summary>Returns the result of a componentwise greater or equal operation on an int2x2 matrix and an int value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator >= (int2x2 lhs, int rhs) { return new bool2x2 (lhs.c0 >= rhs, lhs.c1 >= rhs); }
+
+        /// <summary>Returns the result of a componentwise greater or equal operation on an int value and an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator >= (int lhs, int2x2 rhs) { return new bool2x2 (lhs >= rhs.c0, lhs >= rhs.c1); }
 
-        // neg 
+
+        /// <summary>Returns the result of a componentwise unary minus operation on an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator - (int2x2 val) { return new int2x2 (-val.c0, -val.c1); }
 
 
-        // plus 
+        /// <summary>Returns the result of a componentwise unary plus operation on an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator + (int2x2 val) { return new int2x2 (+val.c0, +val.c1); }
 
 
-        // left shift
+        /// <summary>Returns the result of a componentwise left shift operation on an int2x2 matrix by a number of bits specified by a single int.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int2x2 operator << (int2x2 lhs, int rhs) { return new int2x2 (lhs.c0 << rhs, lhs.c1 << rhs); }
+        public static int2x2 operator << (int2x2 x, int n) { return new int2x2 (x.c0 << n, x.c1 << n); }
 
-        // right shift
+        /// <summary>Returns the result of a componentwise right shift operation on an int2x2 matrix by a number of bits specified by a single int.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int2x2 operator >> (int2x2 lhs, int rhs) { return new int2x2 (lhs.c0 >> rhs, lhs.c1 >> rhs); }
+        public static int2x2 operator >> (int2x2 x, int n) { return new int2x2 (x.c0 >> n, x.c1 >> n); }
 
-        // equal 
+        /// <summary>Returns the result of a componentwise equality operation on two int2x2 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator == (int2x2 lhs, int2x2 rhs) { return new bool2x2 (lhs.c0 == rhs.c0, lhs.c1 == rhs.c1); }
+
+        /// <summary>Returns the result of a componentwise equality operation on an int2x2 matrix and an int value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator == (int2x2 lhs, int rhs) { return new bool2x2 (lhs.c0 == rhs, lhs.c1 == rhs); }
+
+        /// <summary>Returns the result of a componentwise equality operation on an int value and an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator == (int lhs, int2x2 rhs) { return new bool2x2 (lhs == rhs.c0, lhs == rhs.c1); }
 
-        // not equal 
+
+        /// <summary>Returns the result of a componentwise not equal operation on two int2x2 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator != (int2x2 lhs, int2x2 rhs) { return new bool2x2 (lhs.c0 != rhs.c0, lhs.c1 != rhs.c1); }
+
+        /// <summary>Returns the result of a componentwise not equal operation on an int2x2 matrix and an int value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator != (int2x2 lhs, int rhs) { return new bool2x2 (lhs.c0 != rhs, lhs.c1 != rhs); }
+
+        /// <summary>Returns the result of a componentwise not equal operation on an int value and an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool2x2 operator != (int lhs, int2x2 rhs) { return new bool2x2 (lhs != rhs.c0, lhs != rhs.c1); }
 
-        // operator ~ 
+
+        /// <summary>Returns the result of a componentwise bitwise not operation on an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator ~ (int2x2 val) { return new int2x2 (~val.c0, ~val.c1); }
 
 
-        // operator &
+        /// <summary>Returns the result of a componentwise bitwise and operation on two int2x2 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator & (int2x2 lhs, int2x2 rhs) { return new int2x2 (lhs.c0 & rhs.c0, lhs.c1 & rhs.c1); }
+
+        /// <summary>Returns the result of a componentwise bitwise and operation on an int2x2 matrix and an int value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator & (int2x2 lhs, int rhs) { return new int2x2 (lhs.c0 & rhs, lhs.c1 & rhs); }
+
+        /// <summary>Returns the result of a componentwise bitwise and operation on an int value and an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator & (int lhs, int2x2 rhs) { return new int2x2 (lhs & rhs.c0, lhs & rhs.c1); }
 
-        // operator |
+
+        /// <summary>Returns the result of a componentwise bitwise or operation on two int2x2 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator | (int2x2 lhs, int2x2 rhs) { return new int2x2 (lhs.c0 | rhs.c0, lhs.c1 | rhs.c1); }
+
+        /// <summary>Returns the result of a componentwise bitwise or operation on an int2x2 matrix and an int value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator | (int2x2 lhs, int rhs) { return new int2x2 (lhs.c0 | rhs, lhs.c1 | rhs); }
+
+        /// <summary>Returns the result of a componentwise bitwise or operation on an int value and an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator | (int lhs, int2x2 rhs) { return new int2x2 (lhs | rhs.c0, lhs | rhs.c1); }
 
-        // operator ^
+
+        /// <summary>Returns the result of a componentwise bitwise exclusive or operation on two int2x2 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator ^ (int2x2 lhs, int2x2 rhs) { return new int2x2 (lhs.c0 ^ rhs.c0, lhs.c1 ^ rhs.c1); }
+
+        /// <summary>Returns the result of a componentwise bitwise exclusive or operation on an int2x2 matrix and an int value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator ^ (int2x2 lhs, int rhs) { return new int2x2 (lhs.c0 ^ rhs, lhs.c1 ^ rhs); }
+
+        /// <summary>Returns the result of a componentwise bitwise exclusive or operation on an int value and an int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 operator ^ (int lhs, int2x2 rhs) { return new int2x2 (lhs ^ rhs.c0, lhs ^ rhs.c1); }
 
-        // [int index] 
+
+
+        /// <summary>Returns the int2 element at a specified index.</summary>
         unsafe public int2 this[int index]
         {
             get
@@ -278,24 +383,27 @@ namespace Unity.Mathematics
             }
         }
 
-        // Equals 
-        public bool Equals(int2x2 rhs) { return c0.Equals(rhs.c0) && c1.Equals(rhs.c1); }
+        /// <summary>Returns true if the int2x2 is equal to a given int2x2, false otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(int2x2 rhs) { return c0.Equals(rhs.c0) && c1.Equals(rhs.c1); }
+
+        /// <summary>Returns true if the int2x2 is equal to a given int2x2, false otherwise.</summary>
         public override bool Equals(object o) { return Equals((int2x2)o); }
 
 
-        // GetHashCode 
+        /// <summary>Returns a hash code for the int2x2.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() { return (int)math.hash(this); }
 
 
-        // ToString 
+        /// <summary>Returns a string representation of the int2x2.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString()
         {
             return string.Format("int2x2({0}, {1},  {2}, {3})", c0.x, c1.x, c0.y, c1.y);
         }
 
+        /// <summary>Returns a string representation of the int2x2 using a specified format and culture-specific format information.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string ToString(string format, IFormatProvider formatProvider)
         {
@@ -306,9 +414,11 @@ namespace Unity.Mathematics
 
     public static partial class math
     {
+        /// <summary>Returns a int2x2 matrix constructed from two int2 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 int2x2(int2 c0, int2 c1) { return new int2x2(c0, c1); }
 
+        /// <summary>Returns a int2x2 matrix constructed from from 4 int values given in row-major order.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 int2x2(int m00, int m01,
                                     int m10, int m11)
@@ -317,33 +427,43 @@ namespace Unity.Mathematics
                               m10, m11);
         }
 
+        /// <summary>Returns a int2x2 matrix constructed from a single int value by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 int2x2(int v) { return new int2x2(v); }
 
+        /// <summary>Returns a int2x2 matrix constructed from a single bool value by converting it to int and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 int2x2(bool v) { return new int2x2(v); }
 
+        /// <summary>Return a int2x2 matrix constructed from a bool2x2 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 int2x2(bool2x2 v) { return new int2x2(v); }
 
+        /// <summary>Returns a int2x2 matrix constructed from a single uint value by converting it to int and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 int2x2(uint v) { return new int2x2(v); }
 
+        /// <summary>Return a int2x2 matrix constructed from a uint2x2 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 int2x2(uint2x2 v) { return new int2x2(v); }
 
+        /// <summary>Returns a int2x2 matrix constructed from a single float value by converting it to int and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 int2x2(float v) { return new int2x2(v); }
 
+        /// <summary>Return a int2x2 matrix constructed from a float2x2 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 int2x2(float2x2 v) { return new int2x2(v); }
 
+        /// <summary>Returns a int2x2 matrix constructed from a single double value by converting it to int and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 int2x2(double v) { return new int2x2(v); }
 
+        /// <summary>Return a int2x2 matrix constructed from a double2x2 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 int2x2(double2x2 v) { return new int2x2(v); }
 
+        /// <summary>Return the int2x2 transpose of a int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2x2 transpose(int2x2 v)
         {
@@ -352,6 +472,7 @@ namespace Unity.Mathematics
                 v.c1.x, v.c1.y);
         }
 
+        /// <summary>Returns the determinant of a int2x2 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int determinant(int2x2 m)
         {
@@ -363,6 +484,7 @@ namespace Unity.Mathematics
             return a * d - b * c;
         }
 
+        /// <summary>Returns a uint hash code of a int2x2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint hash(int2x2 v)
         {
@@ -370,8 +492,13 @@ namespace Unity.Mathematics
                         asuint(v.c1) * uint2(0xCF6EBA1Du, 0x9D88E5A1u)) + 0xEADF0775u;
         }
 
+        /// <summary>
+        /// Returns a uint2 vector hash code of a int2x2 vector.
+        /// When multiple elements are to be hashes together, it can more efficient to calculate and combine wide hash
+        /// that are only reduced to a narrow uint hash at the very end instead of at every step.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint2 hash_wide(int2x2 v)
+        public static uint2 hashwide(int2x2 v)
         {
             return (asuint(v.c0) * uint2(0x747A9D7Bu, 0x4111F799u) + 
                     asuint(v.c1) * uint2(0xB5F05AF1u, 0xFD80290Bu)) + 0x8B65ADB7u;

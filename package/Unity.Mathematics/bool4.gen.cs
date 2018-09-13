@@ -22,7 +22,7 @@ namespace Unity.Mathematics
         public bool w;
 
 
-        // constructors
+        /// <summary>Constructs a bool4 vector from four bool values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool4(bool x, bool y, bool z, bool w)
         { 
@@ -32,6 +32,7 @@ namespace Unity.Mathematics
             this.w = w;
         }
 
+        /// <summary>Constructs a bool4 vector from two bool values and a bool2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool4(bool x, bool y, bool2 zw)
         { 
@@ -41,6 +42,7 @@ namespace Unity.Mathematics
             this.w = zw.y;
         }
 
+        /// <summary>Constructs a bool4 vector from a bool value, a bool2 vector and a bool value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool4(bool x, bool2 yz, bool w)
         { 
@@ -50,6 +52,7 @@ namespace Unity.Mathematics
             this.w = w;
         }
 
+        /// <summary>Constructs a bool4 vector from a bool value and a bool3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool4(bool x, bool3 yzw)
         { 
@@ -59,6 +62,7 @@ namespace Unity.Mathematics
             this.w = yzw.z;
         }
 
+        /// <summary>Constructs a bool4 vector from a bool2 vector and two bool values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool4(bool2 xy, bool z, bool w)
         { 
@@ -68,6 +72,7 @@ namespace Unity.Mathematics
             this.w = w;
         }
 
+        /// <summary>Constructs a bool4 vector from two bool2 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool4(bool2 xy, bool2 zw)
         { 
@@ -77,6 +82,7 @@ namespace Unity.Mathematics
             this.w = zw.y;
         }
 
+        /// <summary>Constructs a bool4 vector from a bool3 vector and a bool value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool4(bool3 xyz, bool w)
         { 
@@ -86,6 +92,7 @@ namespace Unity.Mathematics
             this.w = w;
         }
 
+        /// <summary>Constructs a bool4 vector from a bool4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool4(bool4 xyzw)
         { 
@@ -95,6 +102,7 @@ namespace Unity.Mathematics
             this.w = xyzw.w;
         }
 
+        /// <summary>Constructs a bool4 vector from a single bool value by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool4(bool v)
         {
@@ -105,50 +113,83 @@ namespace Unity.Mathematics
         }
 
 
-        // conversions
+        /// <summary>Implicitly converts a single bool value to a bool4 vector by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator bool4(bool v) { return new bool4(v); }
 
 
-        // equal 
+        /// <summary>Returns the result of a componentwise equality operation on two bool4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator == (bool4 lhs, bool4 rhs) { return new bool4 (lhs.x == rhs.x, lhs.y == rhs.y, lhs.z == rhs.z, lhs.w == rhs.w); }
+
+        /// <summary>Returns the result of a componentwise equality operation on a bool4 vector and a bool value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator == (bool4 lhs, bool rhs) { return new bool4 (lhs.x == rhs, lhs.y == rhs, lhs.z == rhs, lhs.w == rhs); }
+
+        /// <summary>Returns the result of a componentwise equality operation on a bool value and a bool4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator == (bool lhs, bool4 rhs) { return new bool4 (lhs == rhs.x, lhs == rhs.y, lhs == rhs.z, lhs == rhs.w); }
 
-        // not equal 
+
+        /// <summary>Returns the result of a componentwise not equal operation on two bool4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator != (bool4 lhs, bool4 rhs) { return new bool4 (lhs.x != rhs.x, lhs.y != rhs.y, lhs.z != rhs.z, lhs.w != rhs.w); }
+
+        /// <summary>Returns the result of a componentwise not equal operation on a bool4 vector and a bool value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator != (bool4 lhs, bool rhs) { return new bool4 (lhs.x != rhs, lhs.y != rhs, lhs.z != rhs, lhs.w != rhs); }
+
+        /// <summary>Returns the result of a componentwise not equal operation on a bool value and a bool4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator != (bool lhs, bool4 rhs) { return new bool4 (lhs != rhs.x, lhs != rhs.y, lhs != rhs.z, lhs != rhs.w); }
 
-        // operator &
+
+        /// <summary>Returns the result of a componentwise not operation on a bool4 vector.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool4 operator ! (bool4 val) { return new bool4 (!val.x, !val.y, !val.z, !val.w); }
+
+
+        /// <summary>Returns the result of a componentwise bitwise and operation on two bool4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator & (bool4 lhs, bool4 rhs) { return new bool4 (lhs.x & rhs.x, lhs.y & rhs.y, lhs.z & rhs.z, lhs.w & rhs.w); }
+
+        /// <summary>Returns the result of a componentwise bitwise and operation on a bool4 vector and a bool value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator & (bool4 lhs, bool rhs) { return new bool4 (lhs.x & rhs, lhs.y & rhs, lhs.z & rhs, lhs.w & rhs); }
+
+        /// <summary>Returns the result of a componentwise bitwise and operation on a bool value and a bool4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator & (bool lhs, bool4 rhs) { return new bool4 (lhs & rhs.x, lhs & rhs.y, lhs & rhs.z, lhs & rhs.w); }
 
-        // operator |
+
+        /// <summary>Returns the result of a componentwise bitwise or operation on two bool4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator | (bool4 lhs, bool4 rhs) { return new bool4 (lhs.x | rhs.x, lhs.y | rhs.y, lhs.z | rhs.z, lhs.w | rhs.w); }
+
+        /// <summary>Returns the result of a componentwise bitwise or operation on a bool4 vector and a bool value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator | (bool4 lhs, bool rhs) { return new bool4 (lhs.x | rhs, lhs.y | rhs, lhs.z | rhs, lhs.w | rhs); }
+
+        /// <summary>Returns the result of a componentwise bitwise or operation on a bool value and a bool4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator | (bool lhs, bool4 rhs) { return new bool4 (lhs | rhs.x, lhs | rhs.y, lhs | rhs.z, lhs | rhs.w); }
 
-        // operator ^
+
+        /// <summary>Returns the result of a componentwise bitwise exclusive or operation on two bool4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator ^ (bool4 lhs, bool4 rhs) { return new bool4 (lhs.x ^ rhs.x, lhs.y ^ rhs.y, lhs.z ^ rhs.z, lhs.w ^ rhs.w); }
+
+        /// <summary>Returns the result of a componentwise bitwise exclusive or operation on a bool4 vector and a bool value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator ^ (bool4 lhs, bool rhs) { return new bool4 (lhs.x ^ rhs, lhs.y ^ rhs, lhs.z ^ rhs, lhs.w ^ rhs); }
+
+        /// <summary>Returns the result of a componentwise bitwise exclusive or operation on a bool value and a bool4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator ^ (bool lhs, bool4 rhs) { return new bool4 (lhs ^ rhs.x, lhs ^ rhs.y, lhs ^ rhs.z, lhs ^ rhs.w); }
+
+
+
+
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public bool4 xxxx
         {
@@ -2958,7 +2999,7 @@ namespace Unity.Mathematics
 
 
 
-        // [int index] 
+        /// <summary>Returns the bool element at a specified index.</summary>
         unsafe public bool this[int index]
         {
             get
@@ -2979,18 +3020,20 @@ namespace Unity.Mathematics
             }
         }
 
-        // Equals 
-        public bool Equals(bool4 rhs) { return x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w; }
+        /// <summary>Returns true if the bool4 is equal to a given bool4, false otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(bool4 rhs) { return x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w; }
+
+        /// <summary>Returns true if the bool4 is equal to a given bool4, false otherwise.</summary>
         public override bool Equals(object o) { return Equals((bool4)o); }
 
 
-        // GetHashCode 
+        /// <summary>Returns a hash code for the bool4.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() { return (int)math.hash(this); }
 
 
-        // ToString 
+        /// <summary>Returns a string representation of the bool4.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString()
         {
@@ -3016,43 +3059,95 @@ namespace Unity.Mathematics
 
     public static partial class math
     {
+        /// <summary>Returns a bool4 vector constructed from four bool values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 bool4(bool x, bool y, bool z, bool w) { return new bool4(x, y, z, w); }
 
+        /// <summary>Returns a bool4 vector constructed from two bool values and a bool2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 bool4(bool x, bool y, bool2 zw) { return new bool4(x, y, zw); }
 
+        /// <summary>Returns a bool4 vector constructed from a bool value, a bool2 vector and a bool value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 bool4(bool x, bool2 yz, bool w) { return new bool4(x, yz, w); }
 
+        /// <summary>Returns a bool4 vector constructed from a bool value and a bool3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 bool4(bool x, bool3 yzw) { return new bool4(x, yzw); }
 
+        /// <summary>Returns a bool4 vector constructed from a bool2 vector and two bool values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 bool4(bool2 xy, bool z, bool w) { return new bool4(xy, z, w); }
 
+        /// <summary>Returns a bool4 vector constructed from two bool2 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 bool4(bool2 xy, bool2 zw) { return new bool4(xy, zw); }
 
+        /// <summary>Returns a bool4 vector constructed from a bool3 vector and a bool value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 bool4(bool3 xyz, bool w) { return new bool4(xyz, w); }
 
+        /// <summary>Returns a bool4 vector constructed from a bool4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 bool4(bool4 xyzw) { return new bool4(xyzw); }
 
+        /// <summary>Returns a bool4 vector constructed from a single bool value by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 bool4(bool v) { return new bool4(v); }
 
+        /// <summary>Returns a uint hash code of a bool4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint hash(bool4 v)
         {
             return csum(select(uint4(0xC53F4755u, 0x6985C229u, 0xE133B0B3u, 0xC3E0A3B9u), uint4(0xFE31134Fu, 0x712A34D7u, 0x9D77A59Bu, 0x4942CA39u), v));
         }
 
+        /// <summary>
+        /// Returns a uint4 vector hash code of a bool4 vector.
+        /// When multiple elements are to be hashes together, it can more efficient to calculate and combine wide hash
+        /// that are only reduced to a narrow uint hash at the very end instead of at every step.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint4 hash_wide(bool4 v)
+        public static uint4 hashwide(bool4 v)
         {
             return (select(uint4(0xB40EC62Du, 0x565ED63Fu, 0x93C30C2Bu, 0xDCAF0351u), uint4(0x6E050B01u, 0x750FDBF5u, 0x7F3DD499u, 0x52EAAEBBu), v));
+        }
+
+        /// <summary>Returns the result of specified shuffling of the components from two bool4 vectors into a bool value.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool shuffle(bool4 a, bool4 b, ShuffleComponent x)
+        {
+            return select_shuffle_component(a, b, x);
+        }
+
+        /// <summary>Returns the result of specified shuffling of the components from two bool4 vectors into a bool2 vector.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool2 shuffle(bool4 a, bool4 b, ShuffleComponent x, ShuffleComponent y)
+        {
+            return bool2(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y));
+        }
+
+        /// <summary>Returns the result of specified shuffling of the components from two bool4 vectors into a bool3 vector.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool3 shuffle(bool4 a, bool4 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z)
+        {
+            return bool3(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y),
+                select_shuffle_component(a, b, z));
+        }
+
+        /// <summary>Returns the result of specified shuffling of the components from two bool4 vectors into a bool4 vector.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool4 shuffle(bool4 a, bool4 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z, ShuffleComponent w)
+        {
+            return bool4(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y),
+                select_shuffle_component(a, b, z),
+                select_shuffle_component(a, b, w));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3079,39 +3174,6 @@ namespace Unity.Mathematics
                 default:
                     throw new System.ArgumentException("Invalid shuffle component: " + component);
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool shuffle(bool4 a, bool4 b, ShuffleComponent x)
-        {
-            return select_shuffle_component(a, b, x);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool2 shuffle(bool4 a, bool4 b, ShuffleComponent x, ShuffleComponent y)
-        {
-            return bool2(
-                select_shuffle_component(a, b, x),
-                select_shuffle_component(a, b, y));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool3 shuffle(bool4 a, bool4 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z)
-        {
-            return bool3(
-                select_shuffle_component(a, b, x),
-                select_shuffle_component(a, b, y),
-                select_shuffle_component(a, b, z));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool4 shuffle(bool4 a, bool4 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z, ShuffleComponent w)
-        {
-            return bool4(
-                select_shuffle_component(a, b, x),
-                select_shuffle_component(a, b, y),
-                select_shuffle_component(a, b, z),
-                select_shuffle_component(a, b, w));
         }
 
     }

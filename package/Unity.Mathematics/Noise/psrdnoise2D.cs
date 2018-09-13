@@ -86,7 +86,7 @@ namespace Unity.Mathematics
             float2 uv = float2(pos.x + pos.y * 0.5f, pos.y);
 
             float2 i0 = floor(uv);
-            float2 f0 = fract(uv);
+            float2 f0 = frac(uv);
             // Traversal order
             float2 i1 = (f0.x > f0.y) ? float2(1.0f, 0.0f) : float2(0.0f, 1.0f);
 
@@ -103,8 +103,8 @@ namespace Unity.Mathematics
 
             // Wrap p0, p1 and p2 to the desired period before gradient hashing:
             // wrap points in (x,y), map to (u,v)
-            float3 xw = mod(float3(p0.x, p1.x, p2.x), per.x);
-            float3 yw = mod(float3(p0.y, p1.y, p2.y), per.y);
+            float3 xw = fmod(float3(p0.x, p1.x, p2.x), per.x);
+            float3 yw = fmod(float3(p0.y, p1.y, p2.y), per.y);
             float3 iuw = xw + 0.5f * yw;
             float3 ivw = yw;
 
@@ -189,7 +189,7 @@ namespace Unity.Mathematics
             float2 uv = float2(pos.x + pos.y * 0.5f, pos.y);
 
             float2 i0 = floor(uv);
-            float2 f0 = fract(uv);
+            float2 f0 = frac(uv);
             // Traversal order
             float2 i1 = (f0.x > f0.y) ? float2(1.0f, 0.0f) : float2(0.0f, 1.0f);
 
@@ -206,8 +206,8 @@ namespace Unity.Mathematics
 
             // Wrap p0, p1 and p2 to the desired period before gradient hashing:
             // wrap points in (x,y), map to (u,v)
-            float3 xw = mod(float3(p0.x, p1.x, p2.x), per.x);
-            float3 yw = mod(float3(p0.y, p1.y, p2.y), per.y);
+            float3 xw = fmod(float3(p0.x, p1.x, p2.x), per.x);
+            float3 yw = fmod(float3(p0.y, p1.y, p2.y), per.y);
             float3 iuw = xw + 0.5f * yw;
             float3 ivw = yw;
 
@@ -264,7 +264,7 @@ namespace Unity.Mathematics
             float2 uv = float2(pos.x + pos.y * 0.5f, pos.y);
 
             float2 i0 = floor(uv);
-            float2 f0 = fract(uv);
+            float2 f0 = frac(uv);
             // Traversal order
             float2 i1 = (f0.x > f0.y) ? float2(1.0f, 0.0f) : float2(0.0f, 1.0f);
 
@@ -368,7 +368,7 @@ namespace Unity.Mathematics
             float2 uv = float2(pos.x + pos.y * 0.5f, pos.y);
 
             float2 i0 = floor(uv);
-            float2 f0 = fract(uv);
+            float2 f0 = frac(uv);
             // Traversal order
             float2 i1 = (f0.x > f0.y) ? float2(1.0f, 0.0f) : float2(0.0f, 1.0f);
 

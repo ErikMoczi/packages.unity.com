@@ -15,9 +15,11 @@ namespace Unity.Mathematics
         public double y;
         public double z;
 
+        /// <summary>double3 zero value.</summary>
         public static readonly double3 zero = new double3(0.0,   0.0,   0.0);
 
-        // constructors
+
+        /// <summary>Constructs a double3 vector from three double values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double3(double x, double y, double z)
         { 
@@ -26,6 +28,7 @@ namespace Unity.Mathematics
             this.z = z;
         }
 
+        /// <summary>Constructs a double3 vector from a double value and a double2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double3(double x, double2 yz)
         { 
@@ -34,6 +37,7 @@ namespace Unity.Mathematics
             this.z = yz.y;
         }
 
+        /// <summary>Constructs a double3 vector from a double2 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double3(double2 xy, double z)
         { 
@@ -42,6 +46,7 @@ namespace Unity.Mathematics
             this.z = z;
         }
 
+        /// <summary>Constructs a double3 vector from a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double3(double3 xyz)
         { 
@@ -50,6 +55,7 @@ namespace Unity.Mathematics
             this.z = xyz.z;
         }
 
+        /// <summary>Constructs a double3 vector from a single double value by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double3(double v)
         {
@@ -58,6 +64,7 @@ namespace Unity.Mathematics
             this.z = v;
         }
 
+        /// <summary>Constructs a double3 vector from a single bool value by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double3(bool v)
         {
@@ -66,6 +73,7 @@ namespace Unity.Mathematics
             this.z = v ? 1.0 : 0.0;
         }
 
+        /// <summary>Constructs a double3 vector from a bool3 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double3(bool3 v)
         {
@@ -74,6 +82,7 @@ namespace Unity.Mathematics
             this.z = v.z ? 1.0 : 0.0;
         }
 
+        /// <summary>Constructs a double3 vector from a single int value by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double3(int v)
         {
@@ -82,6 +91,7 @@ namespace Unity.Mathematics
             this.z = v;
         }
 
+        /// <summary>Constructs a double3 vector from a int3 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double3(int3 v)
         {
@@ -90,6 +100,7 @@ namespace Unity.Mathematics
             this.z = v.z;
         }
 
+        /// <summary>Constructs a double3 vector from a single uint value by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double3(uint v)
         {
@@ -98,6 +109,7 @@ namespace Unity.Mathematics
             this.z = v;
         }
 
+        /// <summary>Constructs a double3 vector from a uint3 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double3(uint3 v)
         {
@@ -106,6 +118,7 @@ namespace Unity.Mathematics
             this.z = v.z;
         }
 
+        /// <summary>Constructs a double3 vector from a single float value by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double3(float v)
         {
@@ -114,6 +127,7 @@ namespace Unity.Mathematics
             this.z = v;
         }
 
+        /// <summary>Constructs a double3 vector from a float3 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double3(float3 v)
         {
@@ -123,130 +137,208 @@ namespace Unity.Mathematics
         }
 
 
-        // conversions
+        /// <summary>Implicitly converts a single double value to a double3 vector by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator double3(double v) { return new double3(v); }
+
+        /// <summary>Explicitly converts a single bool value to a double3 vector by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator double3(bool v) { return new double3(v); }
+
+        /// <summary>Explicitly converts a bool3 vector to a double3 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator double3(bool3 v) { return new double3(v); }
+
+        /// <summary>Implicitly converts a single int value to a double3 vector by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator double3(int v) { return new double3(v); }
+
+        /// <summary>Implicitly converts a int3 vector to a double3 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator double3(int3 v) { return new double3(v); }
+
+        /// <summary>Implicitly converts a single uint value to a double3 vector by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator double3(uint v) { return new double3(v); }
+
+        /// <summary>Implicitly converts a uint3 vector to a double3 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator double3(uint3 v) { return new double3(v); }
+
+        /// <summary>Implicitly converts a single float value to a double3 vector by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator double3(float v) { return new double3(v); }
+
+        /// <summary>Implicitly converts a float3 vector to a double3 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator double3(float3 v) { return new double3(v); }
 
 
-        // mul
+        /// <summary>Returns the result of a componentwise multiplication operation on two double3 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator * (double3 lhs, double3 rhs) { return new double3 (lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z); }
+
+        /// <summary>Returns the result of a componentwise multiplication operation on a double3 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator * (double3 lhs, double rhs) { return new double3 (lhs.x * rhs, lhs.y * rhs, lhs.z * rhs); }
+
+        /// <summary>Returns the result of a componentwise multiplication operation on a double value and a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator * (double lhs, double3 rhs) { return new double3 (lhs * rhs.x, lhs * rhs.y, lhs * rhs.z); }
 
-        // add
+
+        /// <summary>Returns the result of a componentwise addition operation on two double3 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator + (double3 lhs, double3 rhs) { return new double3 (lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z); }
+
+        /// <summary>Returns the result of a componentwise addition operation on a double3 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator + (double3 lhs, double rhs) { return new double3 (lhs.x + rhs, lhs.y + rhs, lhs.z + rhs); }
+
+        /// <summary>Returns the result of a componentwise addition operation on a double value and a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator + (double lhs, double3 rhs) { return new double3 (lhs + rhs.x, lhs + rhs.y, lhs + rhs.z); }
 
-        // sub
+
+        /// <summary>Returns the result of a componentwise subtraction operation on two double3 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator - (double3 lhs, double3 rhs) { return new double3 (lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z); }
+
+        /// <summary>Returns the result of a componentwise subtraction operation on a double3 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator - (double3 lhs, double rhs) { return new double3 (lhs.x - rhs, lhs.y - rhs, lhs.z - rhs); }
+
+        /// <summary>Returns the result of a componentwise subtraction operation on a double value and a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator - (double lhs, double3 rhs) { return new double3 (lhs - rhs.x, lhs - rhs.y, lhs - rhs.z); }
 
-        // div
+
+        /// <summary>Returns the result of a componentwise division operation on two double3 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator / (double3 lhs, double3 rhs) { return new double3 (lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z); }
+
+        /// <summary>Returns the result of a componentwise division operation on a double3 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator / (double3 lhs, double rhs) { return new double3 (lhs.x / rhs, lhs.y / rhs, lhs.z / rhs); }
+
+        /// <summary>Returns the result of a componentwise division operation on a double value and a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator / (double lhs, double3 rhs) { return new double3 (lhs / rhs.x, lhs / rhs.y, lhs / rhs.z); }
 
-        // mod
+
+        /// <summary>Returns the result of a componentwise modulus operation on two double3 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator % (double3 lhs, double3 rhs) { return new double3 (lhs.x % rhs.x, lhs.y % rhs.y, lhs.z % rhs.z); }
+
+        /// <summary>Returns the result of a componentwise modulus operation on a double3 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator % (double3 lhs, double rhs) { return new double3 (lhs.x % rhs, lhs.y % rhs, lhs.z % rhs); }
+
+        /// <summary>Returns the result of a componentwise modulus operation on a double value and a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator % (double lhs, double3 rhs) { return new double3 (lhs % rhs.x, lhs % rhs.y, lhs % rhs.z); }
 
-        // increment
+
+        /// <summary>Returns the result of a componentwise increment operation on a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator ++ (double3 val) { return new double3 (++val.x, ++val.y, ++val.z); }
 
 
-        // decrement
+        /// <summary>Returns the result of a componentwise decrement operation on a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator -- (double3 val) { return new double3 (--val.x, --val.y, --val.z); }
 
 
-        // smaller 
+        /// <summary>Returns the result of a componentwise less than operation on two double3 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator < (double3 lhs, double3 rhs) { return new bool3 (lhs.x < rhs.x, lhs.y < rhs.y, lhs.z < rhs.z); }
+
+        /// <summary>Returns the result of a componentwise less than operation on a double3 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator < (double3 lhs, double rhs) { return new bool3 (lhs.x < rhs, lhs.y < rhs, lhs.z < rhs); }
+
+        /// <summary>Returns the result of a componentwise less than operation on a double value and a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator < (double lhs, double3 rhs) { return new bool3 (lhs < rhs.x, lhs < rhs.y, lhs < rhs.z); }
+
+
+        /// <summary>Returns the result of a componentwise less or equal operation on two double3 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator <= (double3 lhs, double3 rhs) { return new bool3 (lhs.x <= rhs.x, lhs.y <= rhs.y, lhs.z <= rhs.z); }
+
+        /// <summary>Returns the result of a componentwise less or equal operation on a double3 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator <= (double3 lhs, double rhs) { return new bool3 (lhs.x <= rhs, lhs.y <= rhs, lhs.z <= rhs); }
+
+        /// <summary>Returns the result of a componentwise less or equal operation on a double value and a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator <= (double lhs, double3 rhs) { return new bool3 (lhs <= rhs.x, lhs <= rhs.y, lhs <= rhs.z); }
 
-        // greater 
+
+        /// <summary>Returns the result of a componentwise greater than operation on two double3 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator > (double3 lhs, double3 rhs) { return new bool3 (lhs.x > rhs.x, lhs.y > rhs.y, lhs.z > rhs.z); }
+
+        /// <summary>Returns the result of a componentwise greater than operation on a double3 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator > (double3 lhs, double rhs) { return new bool3 (lhs.x > rhs, lhs.y > rhs, lhs.z > rhs); }
+
+        /// <summary>Returns the result of a componentwise greater than operation on a double value and a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator > (double lhs, double3 rhs) { return new bool3 (lhs > rhs.x, lhs > rhs.y, lhs > rhs.z); }
+
+
+        /// <summary>Returns the result of a componentwise greater or equal operation on two double3 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator >= (double3 lhs, double3 rhs) { return new bool3 (lhs.x >= rhs.x, lhs.y >= rhs.y, lhs.z >= rhs.z); }
+
+        /// <summary>Returns the result of a componentwise greater or equal operation on a double3 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator >= (double3 lhs, double rhs) { return new bool3 (lhs.x >= rhs, lhs.y >= rhs, lhs.z >= rhs); }
+
+        /// <summary>Returns the result of a componentwise greater or equal operation on a double value and a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator >= (double lhs, double3 rhs) { return new bool3 (lhs >= rhs.x, lhs >= rhs.y, lhs >= rhs.z); }
 
-        // neg 
+
+        /// <summary>Returns the result of a componentwise unary minus operation on a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator - (double3 val) { return new double3 (-val.x, -val.y, -val.z); }
 
 
-        // plus 
+        /// <summary>Returns the result of a componentwise unary plus operation on a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 operator + (double3 val) { return new double3 (+val.x, +val.y, +val.z); }
 
 
-        // equal 
+        /// <summary>Returns the result of a componentwise equality operation on two double3 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator == (double3 lhs, double3 rhs) { return new bool3 (lhs.x == rhs.x, lhs.y == rhs.y, lhs.z == rhs.z); }
+
+        /// <summary>Returns the result of a componentwise equality operation on a double3 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator == (double3 lhs, double rhs) { return new bool3 (lhs.x == rhs, lhs.y == rhs, lhs.z == rhs); }
+
+        /// <summary>Returns the result of a componentwise equality operation on a double value and a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator == (double lhs, double3 rhs) { return new bool3 (lhs == rhs.x, lhs == rhs.y, lhs == rhs.z); }
 
-        // not equal 
+
+        /// <summary>Returns the result of a componentwise not equal operation on two double3 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator != (double3 lhs, double3 rhs) { return new bool3 (lhs.x != rhs.x, lhs.y != rhs.y, lhs.z != rhs.z); }
+
+        /// <summary>Returns the result of a componentwise not equal operation on a double3 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator != (double3 lhs, double rhs) { return new bool3 (lhs.x != rhs, lhs.y != rhs, lhs.z != rhs); }
+
+        /// <summary>Returns the result of a componentwise not equal operation on a double value and a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3 operator != (double lhs, double3 rhs) { return new bool3 (lhs != rhs.x, lhs != rhs.y, lhs != rhs.z); }
+
+
+
+
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public double4 xxxx
         {
@@ -1208,7 +1300,7 @@ namespace Unity.Mathematics
 
 
 
-        // [int index] 
+        /// <summary>Returns the double element at a specified index.</summary>
         unsafe public double this[int index]
         {
             get
@@ -1229,24 +1321,27 @@ namespace Unity.Mathematics
             }
         }
 
-        // Equals 
-        public bool Equals(double3 rhs) { return x == rhs.x && y == rhs.y && z == rhs.z; }
+        /// <summary>Returns true if the double3 is equal to a given double3, false otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(double3 rhs) { return x == rhs.x && y == rhs.y && z == rhs.z; }
+
+        /// <summary>Returns true if the double3 is equal to a given double3, false otherwise.</summary>
         public override bool Equals(object o) { return Equals((double3)o); }
 
 
-        // GetHashCode 
+        /// <summary>Returns a hash code for the double3.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() { return (int)math.hash(this); }
 
 
-        // ToString 
+        /// <summary>Returns a string representation of the double3.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString()
         {
             return string.Format("double3({0}, {1}, {2})", x, y, z);
         }
 
+        /// <summary>Returns a string representation of the double3 using a specified format and culture-specific format information.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string ToString(string format, IFormatProvider formatProvider)
         {
@@ -1270,55 +1365,111 @@ namespace Unity.Mathematics
 
     public static partial class math
     {
+        /// <summary>Returns a double3 vector constructed from three double values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 double3(double x, double y, double z) { return new double3(x, y, z); }
 
+        /// <summary>Returns a double3 vector constructed from a double value and a double2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 double3(double x, double2 yz) { return new double3(x, yz); }
 
+        /// <summary>Returns a double3 vector constructed from a double2 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 double3(double2 xy, double z) { return new double3(xy, z); }
 
+        /// <summary>Returns a double3 vector constructed from a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 double3(double3 xyz) { return new double3(xyz); }
 
+        /// <summary>Returns a double3 vector constructed from a single double value by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 double3(double v) { return new double3(v); }
 
+        /// <summary>Returns a double3 vector constructed from a single bool value by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 double3(bool v) { return new double3(v); }
 
+        /// <summary>Return a double3 vector constructed from a bool3 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 double3(bool3 v) { return new double3(v); }
 
+        /// <summary>Returns a double3 vector constructed from a single int value by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 double3(int v) { return new double3(v); }
 
+        /// <summary>Return a double3 vector constructed from a int3 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 double3(int3 v) { return new double3(v); }
 
+        /// <summary>Returns a double3 vector constructed from a single uint value by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 double3(uint v) { return new double3(v); }
 
+        /// <summary>Return a double3 vector constructed from a uint3 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 double3(uint3 v) { return new double3(v); }
 
+        /// <summary>Returns a double3 vector constructed from a single float value by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 double3(float v) { return new double3(v); }
 
+        /// <summary>Return a double3 vector constructed from a float3 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 double3(float3 v) { return new double3(v); }
 
+        /// <summary>Returns a uint hash code of a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint hash(double3 v)
         {
             return csum(fold_to_uint(v) * uint3(0xEADF0775u, 0x747A9D7Bu, 0x4111F799u)) + 0xB5F05AF1u;
         }
 
+        /// <summary>
+        /// Returns a uint3 vector hash code of a double3 vector.
+        /// When multiple elements are to be hashes together, it can more efficient to calculate and combine wide hash
+        /// that are only reduced to a narrow uint hash at the very end instead of at every step.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint3 hash_wide(double3 v)
+        public static uint3 hashwide(double3 v)
         {
             return (fold_to_uint(v) * uint3(0xFD80290Bu, 0x8B65ADB7u, 0xDFF4F563u)) + 0x7069770Du;
+        }
+
+        /// <summary>Returns the result of specified shuffling of the components from two double3 vectors into a double value.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double shuffle(double3 a, double3 b, ShuffleComponent x)
+        {
+            return select_shuffle_component(a, b, x);
+        }
+
+        /// <summary>Returns the result of specified shuffling of the components from two double3 vectors into a double2 vector.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double2 shuffle(double3 a, double3 b, ShuffleComponent x, ShuffleComponent y)
+        {
+            return double2(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y));
+        }
+
+        /// <summary>Returns the result of specified shuffling of the components from two double3 vectors into a double3 vector.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double3 shuffle(double3 a, double3 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z)
+        {
+            return double3(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y),
+                select_shuffle_component(a, b, z));
+        }
+
+        /// <summary>Returns the result of specified shuffling of the components from two double3 vectors into a double4 vector.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double4 shuffle(double3 a, double3 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z, ShuffleComponent w)
+        {
+            return double4(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y),
+                select_shuffle_component(a, b, z),
+                select_shuffle_component(a, b, w));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1341,39 +1492,6 @@ namespace Unity.Mathematics
                 default:
                     throw new System.ArgumentException("Invalid shuffle component: " + component);
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double shuffle(double3 a, double3 b, ShuffleComponent x)
-        {
-            return select_shuffle_component(a, b, x);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double2 shuffle(double3 a, double3 b, ShuffleComponent x, ShuffleComponent y)
-        {
-            return double2(
-                select_shuffle_component(a, b, x),
-                select_shuffle_component(a, b, y));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double3 shuffle(double3 a, double3 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z)
-        {
-            return double3(
-                select_shuffle_component(a, b, x),
-                select_shuffle_component(a, b, y),
-                select_shuffle_component(a, b, z));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double4 shuffle(double3 a, double3 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z, ShuffleComponent w)
-        {
-            return double4(
-                select_shuffle_component(a, b, x),
-                select_shuffle_component(a, b, y),
-                select_shuffle_component(a, b, z),
-                select_shuffle_component(a, b, w));
         }
 
     }

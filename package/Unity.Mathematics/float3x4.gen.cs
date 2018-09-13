@@ -14,9 +14,11 @@ namespace Unity.Mathematics
         public float3 c2;
         public float3 c3;
 
+        /// <summary>float3x4 zero value.</summary>
         public static readonly float3x4 zero = new float3x4(0.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 0.0f, 0.0f);
 
-        // constructors
+
+        /// <summary>Constructs a float3x4 matrix from four float3 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3x4(float3 c0, float3 c1, float3 c2, float3 c3)
         { 
@@ -26,6 +28,7 @@ namespace Unity.Mathematics
             this.c3 = c3;
         }
 
+        /// <summary>Constructs a float3x4 matrix from 12 float values given in row-major order.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3x4(float m00, float m01, float m02, float m03,
                         float m10, float m11, float m12, float m13,
@@ -37,6 +40,7 @@ namespace Unity.Mathematics
             this.c3 = new float3(m03, m13, m23);
         }
 
+        /// <summary>Constructs a float3x4 matrix from a single float value by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3x4(float v)
         {
@@ -46,6 +50,7 @@ namespace Unity.Mathematics
             this.c3 = v;
         }
 
+        /// <summary>Constructs a float3x4 matrix from a single bool value by converting it to float and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3x4(bool v)
         {
@@ -55,6 +60,7 @@ namespace Unity.Mathematics
             this.c3 = math.select(new float3(0.0f), new float3(1.0f), v);
         }
 
+        /// <summary>Constructs a float3x4 matrix from a bool3x4 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3x4(bool3x4 v)
         {
@@ -64,6 +70,7 @@ namespace Unity.Mathematics
             this.c3 = math.select(new float3(0.0f), new float3(1.0f), v.c3);
         }
 
+        /// <summary>Constructs a float3x4 matrix from a single int value by converting it to float and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3x4(int v)
         {
@@ -73,6 +80,7 @@ namespace Unity.Mathematics
             this.c3 = v;
         }
 
+        /// <summary>Constructs a float3x4 matrix from a int3x4 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3x4(int3x4 v)
         {
@@ -82,6 +90,7 @@ namespace Unity.Mathematics
             this.c3 = v.c3;
         }
 
+        /// <summary>Constructs a float3x4 matrix from a single uint value by converting it to float and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3x4(uint v)
         {
@@ -91,6 +100,7 @@ namespace Unity.Mathematics
             this.c3 = v;
         }
 
+        /// <summary>Constructs a float3x4 matrix from a uint3x4 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3x4(uint3x4 v)
         {
@@ -100,6 +110,7 @@ namespace Unity.Mathematics
             this.c3 = v.c3;
         }
 
+        /// <summary>Constructs a float3x4 matrix from a single double value by converting it to float and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3x4(double v)
         {
@@ -109,6 +120,7 @@ namespace Unity.Mathematics
             this.c3 = (float3)v;
         }
 
+        /// <summary>Constructs a float3x4 matrix from a double3x4 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3x4(double3x4 v)
         {
@@ -119,132 +131,208 @@ namespace Unity.Mathematics
         }
 
 
-        // conversions
+        /// <summary>Implicitly converts a single float value to a float3x4 matrix by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator float3x4(float v) { return new float3x4(v); }
+
+        /// <summary>Explicitly converts a single bool value to a float3x4 matrix by converting it to float and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator float3x4(bool v) { return new float3x4(v); }
+
+        /// <summary>Explicitly converts a bool3x4 matrix to a float3x4 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator float3x4(bool3x4 v) { return new float3x4(v); }
+
+        /// <summary>Implicitly converts a single int value to a float3x4 matrix by converting it to float and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator float3x4(int v) { return new float3x4(v); }
+
+        /// <summary>Implicitly converts a int3x4 matrix to a float3x4 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator float3x4(int3x4 v) { return new float3x4(v); }
+
+        /// <summary>Implicitly converts a single uint value to a float3x4 matrix by converting it to float and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator float3x4(uint v) { return new float3x4(v); }
+
+        /// <summary>Implicitly converts a uint3x4 matrix to a float3x4 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator float3x4(uint3x4 v) { return new float3x4(v); }
+
+        /// <summary>Explicitly converts a single double value to a float3x4 matrix by converting it to float and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator float3x4(double v) { return new float3x4(v); }
+
+        /// <summary>Explicitly converts a double3x4 matrix to a float3x4 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator float3x4(double3x4 v) { return new float3x4(v); }
 
 
-        // mul
+        /// <summary>Returns the result of a componentwise multiplication operation on two float3x4 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator * (float3x4 lhs, float3x4 rhs) { return new float3x4 (lhs.c0 * rhs.c0, lhs.c1 * rhs.c1, lhs.c2 * rhs.c2, lhs.c3 * rhs.c3); }
+
+        /// <summary>Returns the result of a componentwise multiplication operation on a float3x4 matrix and a float value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator * (float3x4 lhs, float rhs) { return new float3x4 (lhs.c0 * rhs, lhs.c1 * rhs, lhs.c2 * rhs, lhs.c3 * rhs); }
+
+        /// <summary>Returns the result of a componentwise multiplication operation on a float value and a float3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator * (float lhs, float3x4 rhs) { return new float3x4 (lhs * rhs.c0, lhs * rhs.c1, lhs * rhs.c2, lhs * rhs.c3); }
 
-        // add
+
+        /// <summary>Returns the result of a componentwise addition operation on two float3x4 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator + (float3x4 lhs, float3x4 rhs) { return new float3x4 (lhs.c0 + rhs.c0, lhs.c1 + rhs.c1, lhs.c2 + rhs.c2, lhs.c3 + rhs.c3); }
+
+        /// <summary>Returns the result of a componentwise addition operation on a float3x4 matrix and a float value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator + (float3x4 lhs, float rhs) { return new float3x4 (lhs.c0 + rhs, lhs.c1 + rhs, lhs.c2 + rhs, lhs.c3 + rhs); }
+
+        /// <summary>Returns the result of a componentwise addition operation on a float value and a float3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator + (float lhs, float3x4 rhs) { return new float3x4 (lhs + rhs.c0, lhs + rhs.c1, lhs + rhs.c2, lhs + rhs.c3); }
 
-        // sub
+
+        /// <summary>Returns the result of a componentwise subtraction operation on two float3x4 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator - (float3x4 lhs, float3x4 rhs) { return new float3x4 (lhs.c0 - rhs.c0, lhs.c1 - rhs.c1, lhs.c2 - rhs.c2, lhs.c3 - rhs.c3); }
+
+        /// <summary>Returns the result of a componentwise subtraction operation on a float3x4 matrix and a float value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator - (float3x4 lhs, float rhs) { return new float3x4 (lhs.c0 - rhs, lhs.c1 - rhs, lhs.c2 - rhs, lhs.c3 - rhs); }
+
+        /// <summary>Returns the result of a componentwise subtraction operation on a float value and a float3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator - (float lhs, float3x4 rhs) { return new float3x4 (lhs - rhs.c0, lhs - rhs.c1, lhs - rhs.c2, lhs - rhs.c3); }
 
-        // div
+
+        /// <summary>Returns the result of a componentwise division operation on two float3x4 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator / (float3x4 lhs, float3x4 rhs) { return new float3x4 (lhs.c0 / rhs.c0, lhs.c1 / rhs.c1, lhs.c2 / rhs.c2, lhs.c3 / rhs.c3); }
+
+        /// <summary>Returns the result of a componentwise division operation on a float3x4 matrix and a float value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator / (float3x4 lhs, float rhs) { return new float3x4 (lhs.c0 / rhs, lhs.c1 / rhs, lhs.c2 / rhs, lhs.c3 / rhs); }
+
+        /// <summary>Returns the result of a componentwise division operation on a float value and a float3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator / (float lhs, float3x4 rhs) { return new float3x4 (lhs / rhs.c0, lhs / rhs.c1, lhs / rhs.c2, lhs / rhs.c3); }
 
-        // mod
+
+        /// <summary>Returns the result of a componentwise modulus operation on two float3x4 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator % (float3x4 lhs, float3x4 rhs) { return new float3x4 (lhs.c0 % rhs.c0, lhs.c1 % rhs.c1, lhs.c2 % rhs.c2, lhs.c3 % rhs.c3); }
+
+        /// <summary>Returns the result of a componentwise modulus operation on a float3x4 matrix and a float value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator % (float3x4 lhs, float rhs) { return new float3x4 (lhs.c0 % rhs, lhs.c1 % rhs, lhs.c2 % rhs, lhs.c3 % rhs); }
+
+        /// <summary>Returns the result of a componentwise modulus operation on a float value and a float3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator % (float lhs, float3x4 rhs) { return new float3x4 (lhs % rhs.c0, lhs % rhs.c1, lhs % rhs.c2, lhs % rhs.c3); }
 
-        // increment
+
+        /// <summary>Returns the result of a componentwise increment operation on a float3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator ++ (float3x4 val) { return new float3x4 (++val.c0, ++val.c1, ++val.c2, ++val.c3); }
 
 
-        // decrement
+        /// <summary>Returns the result of a componentwise decrement operation on a float3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator -- (float3x4 val) { return new float3x4 (--val.c0, --val.c1, --val.c2, --val.c3); }
 
 
-        // smaller 
+        /// <summary>Returns the result of a componentwise less than operation on two float3x4 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator < (float3x4 lhs, float3x4 rhs) { return new bool3x4 (lhs.c0 < rhs.c0, lhs.c1 < rhs.c1, lhs.c2 < rhs.c2, lhs.c3 < rhs.c3); }
+
+        /// <summary>Returns the result of a componentwise less than operation on a float3x4 matrix and a float value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator < (float3x4 lhs, float rhs) { return new bool3x4 (lhs.c0 < rhs, lhs.c1 < rhs, lhs.c2 < rhs, lhs.c3 < rhs); }
+
+        /// <summary>Returns the result of a componentwise less than operation on a float value and a float3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator < (float lhs, float3x4 rhs) { return new bool3x4 (lhs < rhs.c0, lhs < rhs.c1, lhs < rhs.c2, lhs < rhs.c3); }
+
+
+        /// <summary>Returns the result of a componentwise less or equal operation on two float3x4 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator <= (float3x4 lhs, float3x4 rhs) { return new bool3x4 (lhs.c0 <= rhs.c0, lhs.c1 <= rhs.c1, lhs.c2 <= rhs.c2, lhs.c3 <= rhs.c3); }
+
+        /// <summary>Returns the result of a componentwise less or equal operation on a float3x4 matrix and a float value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator <= (float3x4 lhs, float rhs) { return new bool3x4 (lhs.c0 <= rhs, lhs.c1 <= rhs, lhs.c2 <= rhs, lhs.c3 <= rhs); }
+
+        /// <summary>Returns the result of a componentwise less or equal operation on a float value and a float3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator <= (float lhs, float3x4 rhs) { return new bool3x4 (lhs <= rhs.c0, lhs <= rhs.c1, lhs <= rhs.c2, lhs <= rhs.c3); }
 
-        // greater 
+
+        /// <summary>Returns the result of a componentwise greater than operation on two float3x4 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator > (float3x4 lhs, float3x4 rhs) { return new bool3x4 (lhs.c0 > rhs.c0, lhs.c1 > rhs.c1, lhs.c2 > rhs.c2, lhs.c3 > rhs.c3); }
+
+        /// <summary>Returns the result of a componentwise greater than operation on a float3x4 matrix and a float value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator > (float3x4 lhs, float rhs) { return new bool3x4 (lhs.c0 > rhs, lhs.c1 > rhs, lhs.c2 > rhs, lhs.c3 > rhs); }
+
+        /// <summary>Returns the result of a componentwise greater than operation on a float value and a float3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator > (float lhs, float3x4 rhs) { return new bool3x4 (lhs > rhs.c0, lhs > rhs.c1, lhs > rhs.c2, lhs > rhs.c3); }
+
+
+        /// <summary>Returns the result of a componentwise greater or equal operation on two float3x4 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator >= (float3x4 lhs, float3x4 rhs) { return new bool3x4 (lhs.c0 >= rhs.c0, lhs.c1 >= rhs.c1, lhs.c2 >= rhs.c2, lhs.c3 >= rhs.c3); }
+
+        /// <summary>Returns the result of a componentwise greater or equal operation on a float3x4 matrix and a float value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator >= (float3x4 lhs, float rhs) { return new bool3x4 (lhs.c0 >= rhs, lhs.c1 >= rhs, lhs.c2 >= rhs, lhs.c3 >= rhs); }
+
+        /// <summary>Returns the result of a componentwise greater or equal operation on a float value and a float3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator >= (float lhs, float3x4 rhs) { return new bool3x4 (lhs >= rhs.c0, lhs >= rhs.c1, lhs >= rhs.c2, lhs >= rhs.c3); }
 
-        // neg 
+
+        /// <summary>Returns the result of a componentwise unary minus operation on a float3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator - (float3x4 val) { return new float3x4 (-val.c0, -val.c1, -val.c2, -val.c3); }
 
 
-        // plus 
+        /// <summary>Returns the result of a componentwise unary plus operation on a float3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 operator + (float3x4 val) { return new float3x4 (+val.c0, +val.c1, +val.c2, +val.c3); }
 
 
-        // equal 
+        /// <summary>Returns the result of a componentwise equality operation on two float3x4 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator == (float3x4 lhs, float3x4 rhs) { return new bool3x4 (lhs.c0 == rhs.c0, lhs.c1 == rhs.c1, lhs.c2 == rhs.c2, lhs.c3 == rhs.c3); }
+
+        /// <summary>Returns the result of a componentwise equality operation on a float3x4 matrix and a float value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator == (float3x4 lhs, float rhs) { return new bool3x4 (lhs.c0 == rhs, lhs.c1 == rhs, lhs.c2 == rhs, lhs.c3 == rhs); }
+
+        /// <summary>Returns the result of a componentwise equality operation on a float value and a float3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator == (float lhs, float3x4 rhs) { return new bool3x4 (lhs == rhs.c0, lhs == rhs.c1, lhs == rhs.c2, lhs == rhs.c3); }
 
-        // not equal 
+
+        /// <summary>Returns the result of a componentwise not equal operation on two float3x4 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator != (float3x4 lhs, float3x4 rhs) { return new bool3x4 (lhs.c0 != rhs.c0, lhs.c1 != rhs.c1, lhs.c2 != rhs.c2, lhs.c3 != rhs.c3); }
+
+        /// <summary>Returns the result of a componentwise not equal operation on a float3x4 matrix and a float value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator != (float3x4 lhs, float rhs) { return new bool3x4 (lhs.c0 != rhs, lhs.c1 != rhs, lhs.c2 != rhs, lhs.c3 != rhs); }
+
+        /// <summary>Returns the result of a componentwise not equal operation on a float value and a float3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator != (float lhs, float3x4 rhs) { return new bool3x4 (lhs != rhs.c0, lhs != rhs.c1, lhs != rhs.c2, lhs != rhs.c3); }
 
-        // [int index] 
+
+
+        /// <summary>Returns the float3 element at a specified index.</summary>
         unsafe public float3 this[int index]
         {
             get
@@ -265,24 +353,27 @@ namespace Unity.Mathematics
             }
         }
 
-        // Equals 
-        public bool Equals(float3x4 rhs) { return c0.Equals(rhs.c0) && c1.Equals(rhs.c1) && c2.Equals(rhs.c2) && c3.Equals(rhs.c3); }
+        /// <summary>Returns true if the float3x4 is equal to a given float3x4, false otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(float3x4 rhs) { return c0.Equals(rhs.c0) && c1.Equals(rhs.c1) && c2.Equals(rhs.c2) && c3.Equals(rhs.c3); }
+
+        /// <summary>Returns true if the float3x4 is equal to a given float3x4, false otherwise.</summary>
         public override bool Equals(object o) { return Equals((float3x4)o); }
 
 
-        // GetHashCode 
+        /// <summary>Returns a hash code for the float3x4.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() { return (int)math.hash(this); }
 
 
-        // ToString 
+        /// <summary>Returns a string representation of the float3x4.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString()
         {
             return string.Format("float3x4({0}f, {1}f, {2}f, {3}f,  {4}f, {5}f, {6}f, {7}f,  {8}f, {9}f, {10}f, {11}f)", c0.x, c1.x, c2.x, c3.x, c0.y, c1.y, c2.y, c3.y, c0.z, c1.z, c2.z, c3.z);
         }
 
+        /// <summary>Returns a string representation of the float3x4 using a specified format and culture-specific format information.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string ToString(string format, IFormatProvider formatProvider)
         {
@@ -293,9 +384,11 @@ namespace Unity.Mathematics
 
     public static partial class math
     {
+        /// <summary>Returns a float3x4 matrix constructed from four float3 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 float3x4(float3 c0, float3 c1, float3 c2, float3 c3) { return new float3x4(c0, c1, c2, c3); }
 
+        /// <summary>Returns a float3x4 matrix constructed from from 12 float values given in row-major order.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 float3x4(float m00, float m01, float m02, float m03,
                                         float m10, float m11, float m12, float m13,
@@ -306,33 +399,43 @@ namespace Unity.Mathematics
                                 m20, m21, m22, m23);
         }
 
+        /// <summary>Returns a float3x4 matrix constructed from a single float value by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 float3x4(float v) { return new float3x4(v); }
 
+        /// <summary>Returns a float3x4 matrix constructed from a single bool value by converting it to float and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 float3x4(bool v) { return new float3x4(v); }
 
+        /// <summary>Return a float3x4 matrix constructed from a bool3x4 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 float3x4(bool3x4 v) { return new float3x4(v); }
 
+        /// <summary>Returns a float3x4 matrix constructed from a single int value by converting it to float and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 float3x4(int v) { return new float3x4(v); }
 
+        /// <summary>Return a float3x4 matrix constructed from a int3x4 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 float3x4(int3x4 v) { return new float3x4(v); }
 
+        /// <summary>Returns a float3x4 matrix constructed from a single uint value by converting it to float and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 float3x4(uint v) { return new float3x4(v); }
 
+        /// <summary>Return a float3x4 matrix constructed from a uint3x4 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 float3x4(uint3x4 v) { return new float3x4(v); }
 
+        /// <summary>Returns a float3x4 matrix constructed from a single double value by converting it to float and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 float3x4(double v) { return new float3x4(v); }
 
+        /// <summary>Return a float3x4 matrix constructed from a double3x4 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 float3x4(double3x4 v) { return new float3x4(v); }
 
+        /// <summary>Return the float4x3 transpose of a float3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float4x3 transpose(float3x4 v)
         {
@@ -360,6 +463,7 @@ namespace Unity.Mathematics
             return float3x4(r0, r1, r2, pos);
         }
 
+        /// <summary>Returns a uint hash code of a float3x4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint hash(float3x4 v)
         {
@@ -369,8 +473,13 @@ namespace Unity.Mathematics
                         asuint(v.c3) * uint3(0x7461CA0Du, 0x79725379u, 0xD6258E5Bu)) + 0xEE390C97u;
         }
 
+        /// <summary>
+        /// Returns a uint3 vector hash code of a float3x4 vector.
+        /// When multiple elements are to be hashes together, it can more efficient to calculate and combine wide hash
+        /// that are only reduced to a narrow uint hash at the very end instead of at every step.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint3 hash_wide(float3x4 v)
+        public static uint3 hashwide(float3x4 v)
         {
             return (asuint(v.c0) * uint3(0x9C8A2F05u, 0x4DDC6509u, 0x7CF083CBu) + 
                     asuint(v.c1) * uint3(0x5C4D6CEDu, 0xF9137117u, 0xE857DCE1u) + 

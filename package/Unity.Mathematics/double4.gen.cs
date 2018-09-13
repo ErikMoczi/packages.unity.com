@@ -16,9 +16,11 @@ namespace Unity.Mathematics
         public double z;
         public double w;
 
+        /// <summary>double4 zero value.</summary>
         public static readonly double4 zero = new double4(0.0,   0.0,   0.0,   0.0);
 
-        // constructors
+
+        /// <summary>Constructs a double4 vector from four double values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(double x, double y, double z, double w)
         { 
@@ -28,6 +30,7 @@ namespace Unity.Mathematics
             this.w = w;
         }
 
+        /// <summary>Constructs a double4 vector from two double values and a double2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(double x, double y, double2 zw)
         { 
@@ -37,6 +40,7 @@ namespace Unity.Mathematics
             this.w = zw.y;
         }
 
+        /// <summary>Constructs a double4 vector from a double value, a double2 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(double x, double2 yz, double w)
         { 
@@ -46,6 +50,7 @@ namespace Unity.Mathematics
             this.w = w;
         }
 
+        /// <summary>Constructs a double4 vector from a double value and a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(double x, double3 yzw)
         { 
@@ -55,6 +60,7 @@ namespace Unity.Mathematics
             this.w = yzw.z;
         }
 
+        /// <summary>Constructs a double4 vector from a double2 vector and two double values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(double2 xy, double z, double w)
         { 
@@ -64,6 +70,7 @@ namespace Unity.Mathematics
             this.w = w;
         }
 
+        /// <summary>Constructs a double4 vector from two double2 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(double2 xy, double2 zw)
         { 
@@ -73,6 +80,7 @@ namespace Unity.Mathematics
             this.w = zw.y;
         }
 
+        /// <summary>Constructs a double4 vector from a double3 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(double3 xyz, double w)
         { 
@@ -82,6 +90,7 @@ namespace Unity.Mathematics
             this.w = w;
         }
 
+        /// <summary>Constructs a double4 vector from a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(double4 xyzw)
         { 
@@ -91,6 +100,7 @@ namespace Unity.Mathematics
             this.w = xyzw.w;
         }
 
+        /// <summary>Constructs a double4 vector from a single double value by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(double v)
         {
@@ -100,6 +110,7 @@ namespace Unity.Mathematics
             this.w = v;
         }
 
+        /// <summary>Constructs a double4 vector from a single bool value by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(bool v)
         {
@@ -109,6 +120,7 @@ namespace Unity.Mathematics
             this.w = v ? 1.0 : 0.0;
         }
 
+        /// <summary>Constructs a double4 vector from a bool4 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(bool4 v)
         {
@@ -118,6 +130,7 @@ namespace Unity.Mathematics
             this.w = v.w ? 1.0 : 0.0;
         }
 
+        /// <summary>Constructs a double4 vector from a single int value by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(int v)
         {
@@ -127,6 +140,7 @@ namespace Unity.Mathematics
             this.w = v;
         }
 
+        /// <summary>Constructs a double4 vector from a int4 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(int4 v)
         {
@@ -136,6 +150,7 @@ namespace Unity.Mathematics
             this.w = v.w;
         }
 
+        /// <summary>Constructs a double4 vector from a single uint value by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(uint v)
         {
@@ -145,6 +160,7 @@ namespace Unity.Mathematics
             this.w = v;
         }
 
+        /// <summary>Constructs a double4 vector from a uint4 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(uint4 v)
         {
@@ -154,6 +170,7 @@ namespace Unity.Mathematics
             this.w = v.w;
         }
 
+        /// <summary>Constructs a double4 vector from a single float value by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(float v)
         {
@@ -163,6 +180,7 @@ namespace Unity.Mathematics
             this.w = v;
         }
 
+        /// <summary>Constructs a double4 vector from a float4 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double4(float4 v)
         {
@@ -173,130 +191,208 @@ namespace Unity.Mathematics
         }
 
 
-        // conversions
+        /// <summary>Implicitly converts a single double value to a double4 vector by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator double4(double v) { return new double4(v); }
+
+        /// <summary>Explicitly converts a single bool value to a double4 vector by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator double4(bool v) { return new double4(v); }
+
+        /// <summary>Explicitly converts a bool4 vector to a double4 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator double4(bool4 v) { return new double4(v); }
+
+        /// <summary>Implicitly converts a single int value to a double4 vector by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator double4(int v) { return new double4(v); }
+
+        /// <summary>Implicitly converts a int4 vector to a double4 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator double4(int4 v) { return new double4(v); }
+
+        /// <summary>Implicitly converts a single uint value to a double4 vector by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator double4(uint v) { return new double4(v); }
+
+        /// <summary>Implicitly converts a uint4 vector to a double4 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator double4(uint4 v) { return new double4(v); }
+
+        /// <summary>Implicitly converts a single float value to a double4 vector by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator double4(float v) { return new double4(v); }
+
+        /// <summary>Implicitly converts a float4 vector to a double4 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator double4(float4 v) { return new double4(v); }
 
 
-        // mul
+        /// <summary>Returns the result of a componentwise multiplication operation on two double4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator * (double4 lhs, double4 rhs) { return new double4 (lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z, lhs.w * rhs.w); }
+
+        /// <summary>Returns the result of a componentwise multiplication operation on a double4 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator * (double4 lhs, double rhs) { return new double4 (lhs.x * rhs, lhs.y * rhs, lhs.z * rhs, lhs.w * rhs); }
+
+        /// <summary>Returns the result of a componentwise multiplication operation on a double value and a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator * (double lhs, double4 rhs) { return new double4 (lhs * rhs.x, lhs * rhs.y, lhs * rhs.z, lhs * rhs.w); }
 
-        // add
+
+        /// <summary>Returns the result of a componentwise addition operation on two double4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator + (double4 lhs, double4 rhs) { return new double4 (lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z, lhs.w + rhs.w); }
+
+        /// <summary>Returns the result of a componentwise addition operation on a double4 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator + (double4 lhs, double rhs) { return new double4 (lhs.x + rhs, lhs.y + rhs, lhs.z + rhs, lhs.w + rhs); }
+
+        /// <summary>Returns the result of a componentwise addition operation on a double value and a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator + (double lhs, double4 rhs) { return new double4 (lhs + rhs.x, lhs + rhs.y, lhs + rhs.z, lhs + rhs.w); }
 
-        // sub
+
+        /// <summary>Returns the result of a componentwise subtraction operation on two double4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator - (double4 lhs, double4 rhs) { return new double4 (lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z, lhs.w - rhs.w); }
+
+        /// <summary>Returns the result of a componentwise subtraction operation on a double4 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator - (double4 lhs, double rhs) { return new double4 (lhs.x - rhs, lhs.y - rhs, lhs.z - rhs, lhs.w - rhs); }
+
+        /// <summary>Returns the result of a componentwise subtraction operation on a double value and a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator - (double lhs, double4 rhs) { return new double4 (lhs - rhs.x, lhs - rhs.y, lhs - rhs.z, lhs - rhs.w); }
 
-        // div
+
+        /// <summary>Returns the result of a componentwise division operation on two double4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator / (double4 lhs, double4 rhs) { return new double4 (lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z, lhs.w / rhs.w); }
+
+        /// <summary>Returns the result of a componentwise division operation on a double4 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator / (double4 lhs, double rhs) { return new double4 (lhs.x / rhs, lhs.y / rhs, lhs.z / rhs, lhs.w / rhs); }
+
+        /// <summary>Returns the result of a componentwise division operation on a double value and a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator / (double lhs, double4 rhs) { return new double4 (lhs / rhs.x, lhs / rhs.y, lhs / rhs.z, lhs / rhs.w); }
 
-        // mod
+
+        /// <summary>Returns the result of a componentwise modulus operation on two double4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator % (double4 lhs, double4 rhs) { return new double4 (lhs.x % rhs.x, lhs.y % rhs.y, lhs.z % rhs.z, lhs.w % rhs.w); }
+
+        /// <summary>Returns the result of a componentwise modulus operation on a double4 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator % (double4 lhs, double rhs) { return new double4 (lhs.x % rhs, lhs.y % rhs, lhs.z % rhs, lhs.w % rhs); }
+
+        /// <summary>Returns the result of a componentwise modulus operation on a double value and a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator % (double lhs, double4 rhs) { return new double4 (lhs % rhs.x, lhs % rhs.y, lhs % rhs.z, lhs % rhs.w); }
 
-        // increment
+
+        /// <summary>Returns the result of a componentwise increment operation on a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator ++ (double4 val) { return new double4 (++val.x, ++val.y, ++val.z, ++val.w); }
 
 
-        // decrement
+        /// <summary>Returns the result of a componentwise decrement operation on a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator -- (double4 val) { return new double4 (--val.x, --val.y, --val.z, --val.w); }
 
 
-        // smaller 
+        /// <summary>Returns the result of a componentwise less than operation on two double4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator < (double4 lhs, double4 rhs) { return new bool4 (lhs.x < rhs.x, lhs.y < rhs.y, lhs.z < rhs.z, lhs.w < rhs.w); }
+
+        /// <summary>Returns the result of a componentwise less than operation on a double4 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator < (double4 lhs, double rhs) { return new bool4 (lhs.x < rhs, lhs.y < rhs, lhs.z < rhs, lhs.w < rhs); }
+
+        /// <summary>Returns the result of a componentwise less than operation on a double value and a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator < (double lhs, double4 rhs) { return new bool4 (lhs < rhs.x, lhs < rhs.y, lhs < rhs.z, lhs < rhs.w); }
+
+
+        /// <summary>Returns the result of a componentwise less or equal operation on two double4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator <= (double4 lhs, double4 rhs) { return new bool4 (lhs.x <= rhs.x, lhs.y <= rhs.y, lhs.z <= rhs.z, lhs.w <= rhs.w); }
+
+        /// <summary>Returns the result of a componentwise less or equal operation on a double4 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator <= (double4 lhs, double rhs) { return new bool4 (lhs.x <= rhs, lhs.y <= rhs, lhs.z <= rhs, lhs.w <= rhs); }
+
+        /// <summary>Returns the result of a componentwise less or equal operation on a double value and a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator <= (double lhs, double4 rhs) { return new bool4 (lhs <= rhs.x, lhs <= rhs.y, lhs <= rhs.z, lhs <= rhs.w); }
 
-        // greater 
+
+        /// <summary>Returns the result of a componentwise greater than operation on two double4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator > (double4 lhs, double4 rhs) { return new bool4 (lhs.x > rhs.x, lhs.y > rhs.y, lhs.z > rhs.z, lhs.w > rhs.w); }
+
+        /// <summary>Returns the result of a componentwise greater than operation on a double4 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator > (double4 lhs, double rhs) { return new bool4 (lhs.x > rhs, lhs.y > rhs, lhs.z > rhs, lhs.w > rhs); }
+
+        /// <summary>Returns the result of a componentwise greater than operation on a double value and a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator > (double lhs, double4 rhs) { return new bool4 (lhs > rhs.x, lhs > rhs.y, lhs > rhs.z, lhs > rhs.w); }
+
+
+        /// <summary>Returns the result of a componentwise greater or equal operation on two double4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator >= (double4 lhs, double4 rhs) { return new bool4 (lhs.x >= rhs.x, lhs.y >= rhs.y, lhs.z >= rhs.z, lhs.w >= rhs.w); }
+
+        /// <summary>Returns the result of a componentwise greater or equal operation on a double4 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator >= (double4 lhs, double rhs) { return new bool4 (lhs.x >= rhs, lhs.y >= rhs, lhs.z >= rhs, lhs.w >= rhs); }
+
+        /// <summary>Returns the result of a componentwise greater or equal operation on a double value and a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator >= (double lhs, double4 rhs) { return new bool4 (lhs >= rhs.x, lhs >= rhs.y, lhs >= rhs.z, lhs >= rhs.w); }
 
-        // neg 
+
+        /// <summary>Returns the result of a componentwise unary minus operation on a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator - (double4 val) { return new double4 (-val.x, -val.y, -val.z, -val.w); }
 
 
-        // plus 
+        /// <summary>Returns the result of a componentwise unary plus operation on a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 operator + (double4 val) { return new double4 (+val.x, +val.y, +val.z, +val.w); }
 
 
-        // equal 
+        /// <summary>Returns the result of a componentwise equality operation on two double4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator == (double4 lhs, double4 rhs) { return new bool4 (lhs.x == rhs.x, lhs.y == rhs.y, lhs.z == rhs.z, lhs.w == rhs.w); }
+
+        /// <summary>Returns the result of a componentwise equality operation on a double4 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator == (double4 lhs, double rhs) { return new bool4 (lhs.x == rhs, lhs.y == rhs, lhs.z == rhs, lhs.w == rhs); }
+
+        /// <summary>Returns the result of a componentwise equality operation on a double value and a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator == (double lhs, double4 rhs) { return new bool4 (lhs == rhs.x, lhs == rhs.y, lhs == rhs.z, lhs == rhs.w); }
 
-        // not equal 
+
+        /// <summary>Returns the result of a componentwise not equal operation on two double4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator != (double4 lhs, double4 rhs) { return new bool4 (lhs.x != rhs.x, lhs.y != rhs.y, lhs.z != rhs.z, lhs.w != rhs.w); }
+
+        /// <summary>Returns the result of a componentwise not equal operation on a double4 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator != (double4 lhs, double rhs) { return new bool4 (lhs.x != rhs, lhs.y != rhs, lhs.z != rhs, lhs.w != rhs); }
+
+        /// <summary>Returns the result of a componentwise not equal operation on a double value and a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4 operator != (double lhs, double4 rhs) { return new bool4 (lhs != rhs.x, lhs != rhs.y, lhs != rhs.z, lhs != rhs.w); }
+
+
+
+
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public double4 xxxx
         {
@@ -3106,7 +3202,7 @@ namespace Unity.Mathematics
 
 
 
-        // [int index] 
+        /// <summary>Returns the double element at a specified index.</summary>
         unsafe public double this[int index]
         {
             get
@@ -3127,24 +3223,27 @@ namespace Unity.Mathematics
             }
         }
 
-        // Equals 
-        public bool Equals(double4 rhs) { return x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w; }
+        /// <summary>Returns true if the double4 is equal to a given double4, false otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(double4 rhs) { return x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w; }
+
+        /// <summary>Returns true if the double4 is equal to a given double4, false otherwise.</summary>
         public override bool Equals(object o) { return Equals((double4)o); }
 
 
-        // GetHashCode 
+        /// <summary>Returns a hash code for the double4.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() { return (int)math.hash(this); }
 
 
-        // ToString 
+        /// <summary>Returns a string representation of the double4.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString()
         {
             return string.Format("double4({0}, {1}, {2}, {3})", x, y, z, w);
         }
 
+        /// <summary>Returns a string representation of the double4 using a specified format and culture-specific format information.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string ToString(string format, IFormatProvider formatProvider)
         {
@@ -3170,67 +3269,127 @@ namespace Unity.Mathematics
 
     public static partial class math
     {
+        /// <summary>Returns a double4 vector constructed from four double values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(double x, double y, double z, double w) { return new double4(x, y, z, w); }
 
+        /// <summary>Returns a double4 vector constructed from two double values and a double2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(double x, double y, double2 zw) { return new double4(x, y, zw); }
 
+        /// <summary>Returns a double4 vector constructed from a double value, a double2 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(double x, double2 yz, double w) { return new double4(x, yz, w); }
 
+        /// <summary>Returns a double4 vector constructed from a double value and a double3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(double x, double3 yzw) { return new double4(x, yzw); }
 
+        /// <summary>Returns a double4 vector constructed from a double2 vector and two double values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(double2 xy, double z, double w) { return new double4(xy, z, w); }
 
+        /// <summary>Returns a double4 vector constructed from two double2 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(double2 xy, double2 zw) { return new double4(xy, zw); }
 
+        /// <summary>Returns a double4 vector constructed from a double3 vector and a double value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(double3 xyz, double w) { return new double4(xyz, w); }
 
+        /// <summary>Returns a double4 vector constructed from a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(double4 xyzw) { return new double4(xyzw); }
 
+        /// <summary>Returns a double4 vector constructed from a single double value by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(double v) { return new double4(v); }
 
+        /// <summary>Returns a double4 vector constructed from a single bool value by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(bool v) { return new double4(v); }
 
+        /// <summary>Return a double4 vector constructed from a bool4 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(bool4 v) { return new double4(v); }
 
+        /// <summary>Returns a double4 vector constructed from a single int value by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(int v) { return new double4(v); }
 
+        /// <summary>Return a double4 vector constructed from a int4 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(int4 v) { return new double4(v); }
 
+        /// <summary>Returns a double4 vector constructed from a single uint value by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(uint v) { return new double4(v); }
 
+        /// <summary>Return a double4 vector constructed from a uint4 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(uint4 v) { return new double4(v); }
 
+        /// <summary>Returns a double4 vector constructed from a single float value by converting it to double and assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(float v) { return new double4(v); }
 
+        /// <summary>Return a double4 vector constructed from a float4 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 double4(float4 v) { return new double4(v); }
 
+        /// <summary>Returns a uint hash code of a double4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint hash(double4 v)
         {
             return csum(fold_to_uint(v) * uint4(0x9E19BFC3u, 0x8196B06Fu, 0xD24EFA19u, 0x7D8048BBu)) + 0x713BD06Fu;
         }
 
+        /// <summary>
+        /// Returns a uint4 vector hash code of a double4 vector.
+        /// When multiple elements are to be hashes together, it can more efficient to calculate and combine wide hash
+        /// that are only reduced to a narrow uint hash at the very end instead of at every step.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint4 hash_wide(double4 v)
+        public static uint4 hashwide(double4 v)
         {
             return (fold_to_uint(v) * uint4(0x753AD6ADu, 0xD19764C7u, 0xB5D0BF63u, 0xF9102C5Fu)) + 0x9881FB9Fu;
+        }
+
+        /// <summary>Returns the result of specified shuffling of the components from two double4 vectors into a double value.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double shuffle(double4 a, double4 b, ShuffleComponent x)
+        {
+            return select_shuffle_component(a, b, x);
+        }
+
+        /// <summary>Returns the result of specified shuffling of the components from two double4 vectors into a double2 vector.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double2 shuffle(double4 a, double4 b, ShuffleComponent x, ShuffleComponent y)
+        {
+            return double2(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y));
+        }
+
+        /// <summary>Returns the result of specified shuffling of the components from two double4 vectors into a double3 vector.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double3 shuffle(double4 a, double4 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z)
+        {
+            return double3(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y),
+                select_shuffle_component(a, b, z));
+        }
+
+        /// <summary>Returns the result of specified shuffling of the components from two double4 vectors into a double4 vector.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double4 shuffle(double4 a, double4 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z, ShuffleComponent w)
+        {
+            return double4(
+                select_shuffle_component(a, b, x),
+                select_shuffle_component(a, b, y),
+                select_shuffle_component(a, b, z),
+                select_shuffle_component(a, b, w));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3257,39 +3416,6 @@ namespace Unity.Mathematics
                 default:
                     throw new System.ArgumentException("Invalid shuffle component: " + component);
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double shuffle(double4 a, double4 b, ShuffleComponent x)
-        {
-            return select_shuffle_component(a, b, x);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double2 shuffle(double4 a, double4 b, ShuffleComponent x, ShuffleComponent y)
-        {
-            return double2(
-                select_shuffle_component(a, b, x),
-                select_shuffle_component(a, b, y));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double3 shuffle(double4 a, double4 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z)
-        {
-            return double3(
-                select_shuffle_component(a, b, x),
-                select_shuffle_component(a, b, y),
-                select_shuffle_component(a, b, z));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double4 shuffle(double4 a, double4 b, ShuffleComponent x, ShuffleComponent y, ShuffleComponent z, ShuffleComponent w)
-        {
-            return double4(
-                select_shuffle_component(a, b, x),
-                select_shuffle_component(a, b, y),
-                select_shuffle_component(a, b, z),
-                select_shuffle_component(a, b, w));
         }
 
     }

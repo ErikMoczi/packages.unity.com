@@ -15,7 +15,7 @@ namespace Unity.Mathematics
         public bool3 c3;
 
 
-        // constructors
+        /// <summary>Constructs a bool3x4 matrix from four bool3 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool3x4(bool3 c0, bool3 c1, bool3 c2, bool3 c3)
         { 
@@ -25,6 +25,7 @@ namespace Unity.Mathematics
             this.c3 = c3;
         }
 
+        /// <summary>Constructs a bool3x4 matrix from 12 bool values given in row-major order.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool3x4(bool m00, bool m01, bool m02, bool m03,
                        bool m10, bool m11, bool m12, bool m13,
@@ -36,6 +37,7 @@ namespace Unity.Mathematics
             this.c3 = new bool3(m03, m13, m23);
         }
 
+        /// <summary>Constructs a bool3x4 matrix from a single bool value by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool3x4(bool v)
         {
@@ -46,52 +48,83 @@ namespace Unity.Mathematics
         }
 
 
-        // conversions
+        /// <summary>Implicitly converts a single bool value to a bool3x4 matrix by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator bool3x4(bool v) { return new bool3x4(v); }
 
 
-        // equal 
+        /// <summary>Returns the result of a componentwise equality operation on two bool3x4 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator == (bool3x4 lhs, bool3x4 rhs) { return new bool3x4 (lhs.c0 == rhs.c0, lhs.c1 == rhs.c1, lhs.c2 == rhs.c2, lhs.c3 == rhs.c3); }
+
+        /// <summary>Returns the result of a componentwise equality operation on a bool3x4 matrix and a bool value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator == (bool3x4 lhs, bool rhs) { return new bool3x4 (lhs.c0 == rhs, lhs.c1 == rhs, lhs.c2 == rhs, lhs.c3 == rhs); }
+
+        /// <summary>Returns the result of a componentwise equality operation on a bool value and a bool3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator == (bool lhs, bool3x4 rhs) { return new bool3x4 (lhs == rhs.c0, lhs == rhs.c1, lhs == rhs.c2, lhs == rhs.c3); }
 
-        // not equal 
+
+        /// <summary>Returns the result of a componentwise not equal operation on two bool3x4 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator != (bool3x4 lhs, bool3x4 rhs) { return new bool3x4 (lhs.c0 != rhs.c0, lhs.c1 != rhs.c1, lhs.c2 != rhs.c2, lhs.c3 != rhs.c3); }
+
+        /// <summary>Returns the result of a componentwise not equal operation on a bool3x4 matrix and a bool value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator != (bool3x4 lhs, bool rhs) { return new bool3x4 (lhs.c0 != rhs, lhs.c1 != rhs, lhs.c2 != rhs, lhs.c3 != rhs); }
+
+        /// <summary>Returns the result of a componentwise not equal operation on a bool value and a bool3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator != (bool lhs, bool3x4 rhs) { return new bool3x4 (lhs != rhs.c0, lhs != rhs.c1, lhs != rhs.c2, lhs != rhs.c3); }
 
-        // operator &
+
+        /// <summary>Returns the result of a componentwise not operation on a bool3x4 matrix.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool3x4 operator ! (bool3x4 val) { return new bool3x4 (!val.c0, !val.c1, !val.c2, !val.c3); }
+
+
+        /// <summary>Returns the result of a componentwise bitwise and operation on two bool3x4 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator & (bool3x4 lhs, bool3x4 rhs) { return new bool3x4 (lhs.c0 & rhs.c0, lhs.c1 & rhs.c1, lhs.c2 & rhs.c2, lhs.c3 & rhs.c3); }
+
+        /// <summary>Returns the result of a componentwise bitwise and operation on a bool3x4 matrix and a bool value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator & (bool3x4 lhs, bool rhs) { return new bool3x4 (lhs.c0 & rhs, lhs.c1 & rhs, lhs.c2 & rhs, lhs.c3 & rhs); }
+
+        /// <summary>Returns the result of a componentwise bitwise and operation on a bool value and a bool3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator & (bool lhs, bool3x4 rhs) { return new bool3x4 (lhs & rhs.c0, lhs & rhs.c1, lhs & rhs.c2, lhs & rhs.c3); }
 
-        // operator |
+
+        /// <summary>Returns the result of a componentwise bitwise or operation on two bool3x4 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator | (bool3x4 lhs, bool3x4 rhs) { return new bool3x4 (lhs.c0 | rhs.c0, lhs.c1 | rhs.c1, lhs.c2 | rhs.c2, lhs.c3 | rhs.c3); }
+
+        /// <summary>Returns the result of a componentwise bitwise or operation on a bool3x4 matrix and a bool value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator | (bool3x4 lhs, bool rhs) { return new bool3x4 (lhs.c0 | rhs, lhs.c1 | rhs, lhs.c2 | rhs, lhs.c3 | rhs); }
+
+        /// <summary>Returns the result of a componentwise bitwise or operation on a bool value and a bool3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator | (bool lhs, bool3x4 rhs) { return new bool3x4 (lhs | rhs.c0, lhs | rhs.c1, lhs | rhs.c2, lhs | rhs.c3); }
 
-        // operator ^
+
+        /// <summary>Returns the result of a componentwise bitwise exclusive or operation on two bool3x4 matrices.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator ^ (bool3x4 lhs, bool3x4 rhs) { return new bool3x4 (lhs.c0 ^ rhs.c0, lhs.c1 ^ rhs.c1, lhs.c2 ^ rhs.c2, lhs.c3 ^ rhs.c3); }
+
+        /// <summary>Returns the result of a componentwise bitwise exclusive or operation on a bool3x4 matrix and a bool value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator ^ (bool3x4 lhs, bool rhs) { return new bool3x4 (lhs.c0 ^ rhs, lhs.c1 ^ rhs, lhs.c2 ^ rhs, lhs.c3 ^ rhs); }
+
+        /// <summary>Returns the result of a componentwise bitwise exclusive or operation on a bool value and a bool3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 operator ^ (bool lhs, bool3x4 rhs) { return new bool3x4 (lhs ^ rhs.c0, lhs ^ rhs.c1, lhs ^ rhs.c2, lhs ^ rhs.c3); }
 
-        // [int index] 
+
+
+        /// <summary>Returns the bool3 element at a specified index.</summary>
         unsafe public bool3 this[int index]
         {
             get
@@ -112,18 +145,20 @@ namespace Unity.Mathematics
             }
         }
 
-        // Equals 
-        public bool Equals(bool3x4 rhs) { return c0.Equals(rhs.c0) && c1.Equals(rhs.c1) && c2.Equals(rhs.c2) && c3.Equals(rhs.c3); }
+        /// <summary>Returns true if the bool3x4 is equal to a given bool3x4, false otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(bool3x4 rhs) { return c0.Equals(rhs.c0) && c1.Equals(rhs.c1) && c2.Equals(rhs.c2) && c3.Equals(rhs.c3); }
+
+        /// <summary>Returns true if the bool3x4 is equal to a given bool3x4, false otherwise.</summary>
         public override bool Equals(object o) { return Equals((bool3x4)o); }
 
 
-        // GetHashCode 
+        /// <summary>Returns a hash code for the bool3x4.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() { return (int)math.hash(this); }
 
 
-        // ToString 
+        /// <summary>Returns a string representation of the bool3x4.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString()
         {
@@ -134,9 +169,11 @@ namespace Unity.Mathematics
 
     public static partial class math
     {
+        /// <summary>Returns a bool3x4 matrix constructed from four bool3 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 bool3x4(bool3 c0, bool3 c1, bool3 c2, bool3 c3) { return new bool3x4(c0, c1, c2, c3); }
 
+        /// <summary>Returns a bool3x4 matrix constructed from from 12 bool values given in row-major order.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 bool3x4(bool m00, bool m01, bool m02, bool m03,
                                       bool m10, bool m11, bool m12, bool m13,
@@ -147,9 +184,11 @@ namespace Unity.Mathematics
                                m20, m21, m22, m23);
         }
 
+        /// <summary>Returns a bool3x4 matrix constructed from a single bool value by assigning it to every component.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool3x4 bool3x4(bool v) { return new bool3x4(v); }
 
+        /// <summary>Return the bool4x3 transpose of a bool3x4 matrix.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool4x3 transpose(bool3x4 v)
         {
@@ -160,6 +199,7 @@ namespace Unity.Mathematics
                 v.c3.x, v.c3.y, v.c3.z);
         }
 
+        /// <summary>Returns a uint hash code of a bool3x4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint hash(bool3x4 v)
         {
@@ -169,8 +209,13 @@ namespace Unity.Mathematics
                         select(uint3(0x88FCAB2Du, 0x614DA60Du, 0x5BA2C50Bu), uint3(0x8C455ACBu, 0xCD266C89u, 0xF1852A33u), v.c3));
         }
 
+        /// <summary>
+        /// Returns a uint3 vector hash code of a bool3x4 vector.
+        /// When multiple elements are to be hashes together, it can more efficient to calculate and combine wide hash
+        /// that are only reduced to a narrow uint hash at the very end instead of at every step.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint3 hash_wide(bool3x4 v)
+        public static uint3 hashwide(bool3x4 v)
         {
             return (select(uint3(0x77E35E77u, 0x863E3729u, 0xE191B035u), uint3(0x68586FAFu, 0xD4DFF6D3u, 0xCB634F4Du), v.c0) + 
                     select(uint3(0x9B13B92Du, 0x4ABF0813u, 0x86068063u), uint3(0xD75513F9u, 0x5AB3E8CDu, 0x676E8407u), v.c1) + 
