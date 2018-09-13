@@ -22,7 +22,7 @@ Automatic lifecycle management hooks into the following **MonoBehaviour** callba
 
 ## Build settings through *Unified Settings*
 
-A provider may need optionl settings to help manage build issues. They can do this by subclassing **XRBuildData** and providing the set of properties they want to surface for users to control build. Build settings will be surfaced in the **Unified Settings** window under the **XR** top level entry. If no special UI is provided, the **Unified Settings** window will display the build settings using the standard **ScriptableObject** UI Inspector. A provider can extend the UI by creating a custom **Editor** for their build settings type and that will be used in the **Unified Settings** window instead.
+A provider may need optionl settings to help manage build issues. They can do this by adding the **XRBuildData** attribute to their ScriptableObject and providing the set of properties they want to surface for users to control build. Build settings will be surfaced in the **Unified Settings** window under the **XR** top level entry. We will manage the lifecycle for one instance of the class marked with the attribute. If no special UI is provided, the **Unified Settings** window will display the build settings using the standard **ScriptableObject** UI Inspector. A provider can extend the UI by creating a custom **Editor** for their build settings type and that will be used in the **Unified Settings** window instead.
 
 # Installing *XR SDK Management*
 
@@ -45,10 +45,11 @@ This version of **XR SDK Management** includes:
 
 * **XRManager** - This is a **MonoBehaviour** that can be added to a **GameObject** in a scene and provides for management of **XRLoader** instances and their lifecycle.
 * **XRLoader** - This is the base class all loaders should derive from. It provides a basic the **XRManager** can use to manage lifecycle and a simple API to allow users to request specific subsystems from the loader as and when needed.
-* **XRBuildData** - This is a base class to allow for build settings to be hosted within the **Unified Settings** window. All build settings instance will be hosted under the top level **XR** entry within the **Unified Settings** window.
+* **XRBuildData** - This is an attribute that allows for build settings to be hosted within the **Unified Settings** window. All build settings instance will be hosted under the top level **XR** entry within the **Unified Settings** window. The management package will maintain and manage the lifecycle for one instance of the build settings using **EditorBuildSettings**. At any time, the provider or the user is free access the builds settings instance by asking **EditorBuildSettings** for the instance associated with the chosen key (set in the attribute).
 
 ## Document revision history
  
 |Date|Reason|
 |---|---|
+|June 22, 2018|Added updated information about the XRBuildData Attribute.|
 |June 21, 2018|Document created.|

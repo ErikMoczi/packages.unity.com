@@ -8,11 +8,19 @@ namespace UnityEngine.XR.Management
 {
 
 	/// <summary>
-    /// XR Loader abstract class used as an interfave to specific provider implementations. Providers should implement
-    /// subclasses of this class to provide specific initialization configurations that make sense for their supported
+    /// XR Loader abstract class used as a base class for specific provider implementations. Providers should implement
+    /// subclasses of this to provide specific initialization and management implementations that make sense for their supported
     /// scenarios and needs.
     /// </summary>
     public abstract class XRLoader : ScriptableObject {
+
+        /// <summary>
+        /// Allow the loader to load any settings it may need prior to initialization. This is a CoRoutine so that loaders that may need
+        /// to work with operations that are async can without having to be their own MonoBehaviours.
+        /// </summary>
+        ///
+        /// <returns>< description_of_the_return_value ></returns>
+        public virtual IEnumerator LoadSettings() { yield return null; }
 
         /// <summary>
         /// Initialize the loader. This should initialize all subsystems to support the desired runtime setup this

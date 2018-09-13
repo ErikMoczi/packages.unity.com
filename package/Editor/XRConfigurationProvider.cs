@@ -1,0 +1,105 @@
+using System;
+
+using UnityEngine;
+using UnityEngine.Experimental.UIElements;
+
+using UnityEditor;
+
+namespace UnityEditor.XR.Management
+{
+    internal class XRConfigurationProvider : SettingsProvider
+    {
+        static readonly GUIContent s_WarningToCreateSettings = EditorGUIUtility.TrTextContent("You must create a serialized instance of the settings data in order to modify the settings in this UI. Until then only default settings set by the provider will be available.");
+
+        private Type m_BuildDataType = null;
+        private string m_DisplayName;
+        private string m_BuildSettingsKey;
+        private Editor m_CachedEditor;
+        private SerializedObject m_SettingsWrapper;
+
+        public XRConfigurationProvider(string path, string displayName, string buildSettingsKey, Type buildDataType, SettingsScopes scopes = SettingsScopes.Any) : base(path, scopes)
+        {
+            m_DisplayName = displayName;
+            m_BuildDataType = buildDataType;
+            m_BuildSettingsKey = buildSettingsKey;
+        }
+
+        private ScriptableObject currentSettings
+        {
+            get
+            {
+                ScriptableObject settings = null;
+                EditorBuildSettings.TryGetConfigObject(m_BuildSettingsKey, out settings);
+                if (settings == null)
+                {
+                    string searchText = String.Format("t:{0}", m_BuildDataType.Name);
+                    string[] assets = AssetDatabase.FindAssets(searchText);
+                    if (assets.Length > 0)
+                    {
+                        string path = AssetDatabase.GUIDToAssetPath(assets[0]);
+                        settings = AssetDatabase.LoadAssetAtPath(path, m_BuildDataType) as ScriptableObject;
+                        EditorBuildSettings.AddConfigObject(m_BuildSettingsKey, settings, true);
+                    }
+                }
+                return settings;
+            }
+        }
+
+        private void InitEditorData(ScriptableObject settings)
+        {
+            if (settings != null)
+            {
+                m_SettingsWrapper = new SerializedObject(settings);
+                Editor.CreateCachedEditor(settings, null, ref m_CachedEditor);
+            }
+        }
+
+        public override void OnActivate(string searchContext, VisualElement rootElement)
+        {
+            InitEditorData(currentSettings);
+        }
+
+        public override void OnDeactivate()
+        {
+            m_CachedEditor = null;
+            m_SettingsWrapper = null;
+        }
+
+        public override void OnGUI(string searchContext)
+        {
+            if (m_SettingsWrapper == null || m_SettingsWrapper.targetObject == null)
+            {
+                EditorGUILayout.HelpBox(s_WarningToCreateSettings);
+                if (GUILayout.Button(EditorGUIUtility.TrTextContent("Create")))
+                {
+                     ScriptableObject settings = Create();
+                     InitEditorData(settings);
+                }
+            }
+
+            if (m_SettingsWrapper != null  && m_SettingsWrapper.targetObject != null && m_CachedEditor != null)
+            {
+                m_SettingsWrapper.Update();
+                m_CachedEditor.OnInspectorGUI();
+                m_SettingsWrapper.ApplyModifiedProperties();
+            }
+        }
+
+        ScriptableObject Create()
+        {
+            ScriptableObject settings = Activator.CreateInstance(m_BuildDataType) as ScriptableObject;
+            if (settings != null)
+            {
+                var path = EditorUtility.SaveFilePanelInProject(String.Format("Save {0} Settings", m_DisplayName), m_DisplayName, "asset", "Please enter a filename to save the settings to.");
+                if (!string.IsNullOrEmpty(path))
+                {
+                    AssetDatabase.CreateAsset(settings, path);
+                    EditorBuildSettings.AddConfigObject(m_BuildSettingsKey, settings, true);
+                    return settings;
+                }
+            }
+            return null;
+        }
+
+    }
+}
