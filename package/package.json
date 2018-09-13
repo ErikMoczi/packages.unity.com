@@ -1,0 +1,10 @@
+{
+    "name": "com.unity.code-analysis",
+    "displayName":"Code Analysis",
+    "version": "0.0.1-preview.1",
+    "unity": "2018.3",
+    "description": "Roslyn C# code analysis and evaluation tool.",
+    "keywords": ["scripting", "compiler"],
+    "dependencies": {
+    }
+}
