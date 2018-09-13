@@ -279,22 +279,6 @@ Each performance test will have a performance test summary. Every sample group w
 
 
 ``` csharp
-    // Records total and frame times for loading a scene async
-
-    [PerformanceUnityTest]
-    public IEnumerator LoadAsync_SampleScene()
-    {
-        using(Measure.Frames())
-        {
-            using (Measure.Scope())
-            {
-                yield return SceneManager.LoadSceneAsync("SampleScene");
-            }
-        }
-    }
-```
-
-``` csharp
     SampleGroupDefinition[] m_definitions =
     {
         new SampleGroupDefinition("Instantiate"),
@@ -313,7 +297,7 @@ Each performance test will have a performance test summary. Every sample group w
                 var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 for (var i = 0; i < 5000; i++)
                 {
-                    Object.Instantiate(cube);
+                    UnityEngine.Object.Instantiate(cube);
                 }
             }
         }
