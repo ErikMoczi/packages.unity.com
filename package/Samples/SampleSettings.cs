@@ -6,7 +6,8 @@ namespace Samples
     /// <summary>
     /// Simple sample settings showing how to create custom configuration data for your package.
     /// </summary>
-    [XRConfigurationData("Sample Settings", SampleConstants.kSettingsKey)]
+    // Uncomment below line to have the settings appear in unified settings.
+    //[XRConfigurationData("Sample Settings", SampleConstants.k_SettingsKey)]
     [System.Serializable]
     public class SampleSettings : ScriptableObject
     {
@@ -17,36 +18,36 @@ namespace Samples
         public static SampleSettings s_RuntimeInstance = null;
         #endif
 
-         public enum Requirement
-         {
-             Required,
-             Optional,
-             None
-         }
+        public enum Requirement
+        {
+            Required,
+            Optional,
+            None
+        }
 
-         [SerializeField, Tooltip("Changes item requirement.")]
-         Requirement m_RequiresItem;
+        [SerializeField, Tooltip("Changes item requirement.")]
+        Requirement m_RequiresItem;
 
-         public Requirement RequiresItem
-         {
-             get { return m_RequiresItem; }
-             set { m_RequiresItem = value; }
-         }
+        public Requirement requiresItem
+        {
+            get { return m_RequiresItem; }
+            set { m_RequiresItem = value; }
+        }
 
-         [SerializeField, Tooltip("Some toggle for runtime.")]
-         bool m_RuntimeToggle = true;
+        [SerializeField, Tooltip("Some toggle for runtime.")]
+        bool m_RuntimeToggle = true;
 
-         public bool RuntimeToggle
-         {
+        public bool runtimeToggle
+        {
             get { return m_RuntimeToggle; }
             set { m_RuntimeToggle = value; }
-         }
+        }
 
-         public void Awake()
-         {
+        public void Awake()
+        {
             #if !UNITY_EDITOR
             s_RuntimeInstance = this;
             #endif
-         }
+        }
     }
 }

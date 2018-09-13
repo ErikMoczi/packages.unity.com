@@ -1,18 +1,20 @@
 using UnityEngine;
 using UnityEngine.XR.Management;
 
-namespace ManagementTests.Runtime {
+namespace ManagementTests.Runtime
+{
+    internal class DummyLoader : XRLoader
+    {
+        public bool shouldFail = false;
+        public int id;
 
-    internal class DummyLoader : XRLoader {
-        public bool m_ShouldFail = false;
-        public int m_Id;
-
-        public DummyLoader ()
+        public DummyLoader()
         {
         }
 
-        public override bool Initialize () {
-            return !m_ShouldFail;
+        public override bool Initialize()
+        {
+            return !shouldFail;
         }
 
         public override T GetLoadedSubsystem<T>()
@@ -22,7 +24,7 @@ namespace ManagementTests.Runtime {
 
         protected bool Equals(DummyLoader other)
         {
-            return base.Equals(other) && m_ShouldFail == other.m_ShouldFail && m_Id == other.m_Id;
+            return base.Equals(other) && shouldFail == other.shouldFail && id == other.id;
         }
 
         public override bool Equals(object obj)
@@ -30,7 +32,7 @@ namespace ManagementTests.Runtime {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
-            return Equals((DummyLoader) obj);
+            return Equals((DummyLoader)obj);
         }
 
         public override int GetHashCode()
@@ -38,11 +40,10 @@ namespace ManagementTests.Runtime {
             unchecked
             {
                 int hashCode = base.GetHashCode();
-                hashCode = (hashCode * 397) ^ m_ShouldFail.GetHashCode();
-                hashCode = (hashCode * 397) ^ m_Id;
+                hashCode = (hashCode * 397) ^ shouldFail.GetHashCode();
+                hashCode = (hashCode * 397) ^ id;
                 return hashCode;
             }
         }
     }
-
 }

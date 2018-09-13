@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.XR;
@@ -6,19 +6,18 @@ using UnityEngine.Experimental;
 
 namespace UnityEngine.XR.Management
 {
-
-	/// <summary>
+    /// <summary>
     /// XR Loader abstract class used as a base class for specific provider implementations. Providers should implement
     /// subclasses of this to provide specific initialization and management implementations that make sense for their supported
     /// scenarios and needs.
     /// </summary>
-    public abstract class XRLoader : ScriptableObject {
-
+    public abstract class XRLoader : ScriptableObject
+    {
         /// <summary>
         /// Initialize the loader. This should initialize all subsystems to support the desired runtime setup this
         /// loader represents.
         /// </summary>
-         ///
+        ///
         /// <returns>< Whether or not initialization succeeded ></returns>
         public virtual bool Initialize() { return false; }
 
@@ -52,5 +51,5 @@ namespace UnityEngine.XR.Management
         ///
         /// <returns>The loaded subsystem or null if not found.</returns>
         public abstract T GetLoadedSubsystem<T>() where T : IntegratedSubsystem;
-	}
+    }
 }

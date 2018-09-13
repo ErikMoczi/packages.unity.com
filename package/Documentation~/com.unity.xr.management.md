@@ -2,6 +2,20 @@
 
 Use the **XR SDK Management** package to help streamline **XR SDK** lifecycle management and potentially provide users with build time UI through the Unity **Unified Settings** system.
 
+# End Users
+
+## Add an **XRManager** instance to your scene
+
+1) Create a new empty Game Object in your scene.
+2) Add an instance of the **XRManager** component to this new Game Object.
+3) Use the **XRManager** component Inspector UI to add/create, remove and reorder the loaders you widh to use.
+
+## Customize build and runtime settings
+
+Any package that needs build or runtime settings should provide a settings datatype for use. This will be surfaces in the **Unified Settings** UI window underneath a top leve **XR** node. By default a custom settings data instance will not be created. If you wish to modify build or runtime settings for the package you must go to the package authors entry in **Unified Settings** and select **Create**. This will create an instance of the settings that you can then modify inside of **Unified Settings**.
+
+# Package Authors
+
 ## Lifecycle Management
 
 This package provides for management of **XR SDK** subsystem lifecycles without the need for boilerplate code. The **XRManager** class provides a component that can be added to a game object in the scene that will manage initialization, start, stop and denitialization of a set of subsystems defined by an **XRLoader** instance. The **XRManager** instance can handle all of the lifecycle management, init/deinit only, subsystem start/stop only or can leave all of it up to the user.
@@ -28,7 +42,7 @@ A provider may need optionl settings to help manage build issues or runtime conf
 
 # Installing *XR SDK Management*
 
-To install this package, follow the instructions in the [Package Manager documentation](https://docs.unity3d.com/Packages/com.unity.package-manager-ui@latest/index.html). 
+To install this package, follow the instructions in the [Package Manager documentation](https://docs.unity3d.com/Packages/com.unity.package-manager-ui@latest/index.html).
 
 # Technical details
 
@@ -52,7 +66,7 @@ This version of **XR SDK Management** includes:
 * **Samples** - There is a samples folder in the package that contains an implementation of all parts of XR Management. Copy that folder to a location in your project/package to get started with implementing XR Management for your needs.
 
 ## Document revision history
- 
+
 |Date|Reason|
 |---|---|
 |July 25, 2018|Update docs to reflect API changes.|

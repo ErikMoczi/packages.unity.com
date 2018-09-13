@@ -7,19 +7,18 @@ using UnityEngine.Experimental;
 
 namespace UnityEngine.XR.Management
 {
-
-	/// <summary>
+    /// <summary>
     /// XR Loader abstract subclass used as a base class for specific provider implementations. Class provides some
     /// helper logic that can be used to handle subsystem handling in a typesafe manner, reducing potential boilerplate
     /// code.
     /// </summary>
-    public abstract class XRLoaderHelper : XRLoader {
-
+    public abstract class XRLoaderHelper : XRLoader
+    {
         /// <summary>
         /// Map of loaded susbsystems. Used so we don't always have to fo to XRSubsystemManger and do a manual
         /// search to find the instance we loaded.
         /// </summary>
-        protected Dictionary<Type,IntegratedSubsystem> subsystemInstanceMap = new Dictionary<Type, IntegratedSubsystem>();
+        protected Dictionary<Type, IntegratedSubsystem> m_SubsystemInstanceMap = new Dictionary<Type, IntegratedSubsystem>();
 
         /// <summary>
         /// Gets the loaded subsystem of the specified type. Implementation dependent as only implemetnations
@@ -33,7 +32,7 @@ namespace UnityEngine.XR.Management
         {
             Type subsystemType = typeof(T);
             IntegratedSubsystem subsystem;
-            subsystemInstanceMap.TryGetValue(subsystemType, out subsystem);
+            m_SubsystemInstanceMap.TryGetValue(subsystemType, out subsystem);
             return subsystem as T;
         }
 
@@ -100,10 +99,10 @@ namespace UnityEngine.XR.Management
                     if (descriptor.id == id)
                     {
                         IntegratedSubsystem s = descriptor.Create();
-                        subsystemInstanceMap[typeof(TSubsystem)] = s;
+                        m_SubsystemInstanceMap[typeof(TSubsystem)] = s;
                     }
                 }
             }
         }
-	}
+    }
 }

@@ -36,7 +36,7 @@ namespace Samples
             get { return 0;  }
         }
 
-        private void CleanOldSettings()
+        void CleanOldSettings()
         {
             UnityEngine.Object[] preloadedAssets = PlayerSettings.GetPreloadedAssets();
             if (preloadedAssets == null)
@@ -65,7 +65,7 @@ namespace Samples
             CleanOldSettings();
 
             SampleSettings settings = null;
-            EditorBuildSettings.TryGetConfigObject(SampleConstants.kSettingsKey, out settings);
+            EditorBuildSettings.TryGetConfigObject(SampleConstants.k_SettingsKey, out settings);
             if (settings == null)
                 return;
 

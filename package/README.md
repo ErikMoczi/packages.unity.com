@@ -2,6 +2,8 @@
 
 This package provides for management of **XR SDK** subsystem lifecycles without the need for boilerplate code as well as support for provider specific build settings.
 
+This package is primarily intented for XR SDK Package authors to provide management tools and touchpoints for their package users. As such, most end users will have thispackage installed transitievly through install and end user XR SDK pacakge using it.
+
 ## Installing XR Management
 
 To install this package, follow the instructions in the [Package Manager documentation](https://docs.unity3d.com/Packages/com.unity.package-manager-ui@latest/index.html).

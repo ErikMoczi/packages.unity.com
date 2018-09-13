@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-preview.8] - 2018-07-30
+
+* Updated UI for XR Manager to allow for adding, removing and reordering loaders. No more need for CreateAssetMenu attributes on loaders.
+* Updated code to match formatting and code standards.
+
 ## [0.1.0-preview.7] - 2018-07-25
 
 * Fix issue #3: Add ASMDEFs for sample code to get it to compile. No longer need to keep copy in project.

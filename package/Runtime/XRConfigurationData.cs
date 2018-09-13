@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -16,26 +16,27 @@ namespace UnityEngine.XR.Management
     /// portion of the Unity documentation for information and instructions on doing this.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class)]
-    public class XRConfigurationDataAttribute : Attribute
+    public sealed class XRConfigurationDataAttribute : Attribute
     {
         /// <summary>
         /// The display name to be presented to the user in the Unified Settings window.
         /// </summary>
-        public string DisplayName { get; set; }
+        public string displayName { get; set; }
+
         /// <summary>
         /// The key that will be used to store the singleton instance of these settings within EditorBuildSettings.
         ///
         /// See <a href="https://docs.unity3d.com/ScriptReference/EditorBuildSettings.html">EditorBuildSettings</a> scripting
         /// API documentation on how this is beign done.
         /// </summary>
-        public string BuildSettingsKey { get; set; }
+        public string buildSettingsKey { get; set; }
 
         private XRConfigurationDataAttribute() {}
 
         public XRConfigurationDataAttribute(string displayName, string buildSettingsKey)
         {
-            DisplayName = displayName;
-            BuildSettingsKey = buildSettingsKey;
+            this.displayName = displayName;
+            this.buildSettingsKey = buildSettingsKey;
         }
     }
 }

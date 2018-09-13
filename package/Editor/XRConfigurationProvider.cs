@@ -11,11 +11,11 @@ namespace UnityEditor.XR.Management
     {
         static readonly GUIContent s_WarningToCreateSettings = EditorGUIUtility.TrTextContent("You must create a serialized instance of the settings data in order to modify the settings in this UI. Until then only default settings set by the provider will be available.");
 
-        private Type m_BuildDataType = null;
-        private string m_DisplayName;
-        private string m_BuildSettingsKey;
-        private Editor m_CachedEditor;
-        private SerializedObject m_SettingsWrapper;
+        Type m_BuildDataType = null;
+        string m_DisplayName;
+        string m_BuildSettingsKey;
+        Editor m_CachedEditor;
+        SerializedObject m_SettingsWrapper;
 
         public XRConfigurationProvider(string path, string displayName, string buildSettingsKey, Type buildDataType, SettingsScopes scopes = SettingsScopes.Any) : base(path, scopes)
         {
@@ -24,7 +24,7 @@ namespace UnityEditor.XR.Management
             m_BuildSettingsKey = buildSettingsKey;
         }
 
-        private ScriptableObject currentSettings
+        ScriptableObject currentSettings
         {
             get
             {
@@ -45,7 +45,7 @@ namespace UnityEditor.XR.Management
             }
         }
 
-        private void InitEditorData(ScriptableObject settings)
+        void InitEditorData(ScriptableObject settings)
         {
             if (settings != null)
             {
@@ -72,8 +72,8 @@ namespace UnityEditor.XR.Management
                 EditorGUILayout.HelpBox(s_WarningToCreateSettings);
                 if (GUILayout.Button(EditorGUIUtility.TrTextContent("Create")))
                 {
-                     ScriptableObject settings = Create();
-                     InitEditorData(settings);
+                    ScriptableObject settings = Create();
+                    InitEditorData(settings);
                 }
             }
 
@@ -100,6 +100,5 @@ namespace UnityEditor.XR.Management
             }
             return null;
         }
-
     }
 }

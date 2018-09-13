@@ -12,12 +12,12 @@ namespace Samples
 {
     /// <summary>
     /// Sample loader implentation showing how to create simple loader.
+    /// NOTE: You have to rename this class to make it appear in the loader list for
+    /// XRManager.
     /// </summary>
-    // Uncomment this line to have your loader instantiatable by an end user.
-    //[CreateAssetMenu(menuName = "XR/Loaders/Sample Loader")]
     public class SampleLoader : XRLoaderHelper
     {
-        private static List<XRInputSubsystemDescriptor> s_InputSubsystemDescriptors =
+        static List<XRInputSubsystemDescriptor> s_InputSubsystemDescriptors =
             new List<XRInputSubsystemDescriptor>();
 
         public XRInputSubsystem inputSubsystem
@@ -25,20 +25,20 @@ namespace Samples
             get { return GetLoadedSubsystem<XRInputSubsystem>(); }
         }
 
-        private SampleSettings GetSettings()
+        SampleSettings GetSettings()
         {
             SampleSettings settings = null;
             // When running in the Unit Editor, we can a users customization of configuration data directly form
             // EditorBuildSettings. At runtime, we need to grab it from the static instance field instead.
             #if UNITY_EDITOR
-                UnityEditor.EditorBuildSettings.TryGetConfigObject(SampleConstants.kSettingsKey, out settings);
+            UnityEditor.EditorBuildSettings.TryGetConfigObject(SampleConstants.k_SettingsKey, out settings);
             #else
-                settings = SampleSettings.s_RuntimeInstance;
+            settings = SampleSettings.s_RuntimeInstance;
             #endif
             return settings;
         }
 
-#region XRLoader API Implementation
+        #region XRLoader API Implementation
 
         public override bool Initialize()
         {
@@ -70,7 +70,7 @@ namespace Samples
             DestroySubsystem<XRInputSubsystem>();
             return true;
         }
-#endregion
 
+        #endregion
     }
 }
