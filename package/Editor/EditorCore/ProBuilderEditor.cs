@@ -51,7 +51,6 @@ namespace UnityEditor.ProBuilder
 		GUIStyle VertexTranslationInfoStyle;
 
 		bool m_ShowSceneInfo;
-		bool m_HamSelection;
 
 		float m_SnapValue = .25f;
 		bool m_SnapAxisConstraint = true;
@@ -66,6 +65,7 @@ namespace UnityEditor.ProBuilder
 		GUIStyle m_CommandStyle;
 		Rect m_ElementModeToolbarRect = new Rect(3, 6, 128, 24);
 
+		int m_DefaultControl;
 		SceneSelection m_Hovering = new SceneSelection();
 		SceneSelection m_HoveringPrevious = new SceneSelection();
 		ScenePickerPreferences m_ScenePickerPreferences;
@@ -345,13 +345,12 @@ namespace UnityEditor.ProBuilder
 			m_ShowPreselectionHighlight = PreferencesInternal.GetBool(PreferenceKeys.pbShowPreselectionHighlight);
 
 			// ---
-			m_HamSelection = PreferencesInternal.GetBool(PreferenceKeys.pbElementSelectIsHamFisted);
 			bool selectHiddenFaces = PreferencesInternal.GetBool(PreferenceKeys.pbEnableBackfaceSelection);
 			SelectionModifierBehavior selectModifierBehavior = PreferencesInternal.GetEnum<SelectionModifierBehavior>(PreferenceKeys.pbDragSelectMode);
 
 			m_ScenePickerPreferences = new ScenePickerPreferences()
 			{
-				maxPointerDistance = m_HamSelection ? ScenePickerPreferences.maxPointerDistanceFuzzy : ScenePickerPreferences.maxPointerDistancePrecise,
+				maxPointerDistance = ScenePickerPreferences.maxPointerDistanceFuzzy,
 				cullMode = selectHiddenFaces ? CullingMode.None : CullingMode.Back,
 				selectionModifierBehavior = selectModifierBehavior,
 				rectSelectMode = PreferencesInternal.GetEnum<RectSelectMode>(PreferenceKeys.pbRectSelectMode)
@@ -562,7 +561,12 @@ namespace UnityEditor.ProBuilder
 				&& editLevel == EditLevel.Geometry)
 			{
 				m_Hovering.CopyTo(m_HoveringPrevious);
-				EditorSceneViewPicker.MouseRayHitTest(m_CurrentEvent.mousePosition, componentMode, m_ScenePickerPreferences, m_Hovering);
+
+				if(GUIUtility.hotControl == 0)
+					EditorSceneViewPicker.MouseRayHitTest(m_CurrentEvent.mousePosition, componentMode, m_ScenePickerPreferences, m_Hovering);
+				else
+					m_Hovering.Clear();
+
 				if (!m_Hovering.Equals(m_HoveringPrevious))
 					SceneView.RepaintAll();
 			}
@@ -622,8 +626,8 @@ namespace UnityEditor.ProBuilder
 
 			// This prevents us from selecting other objects in the scene,
 			// and allows for the selection of faces / vertices.
-			int controlID = GUIUtility.GetControlID(FocusType.Passive);
-			HandleUtility.AddDefaultControl(controlID);
+			m_DefaultControl = GUIUtility.GetControlID(FocusType.Passive);
+			HandleUtility.AddDefaultControl(m_DefaultControl);
 
 			// If selection is made, don't use default handle -- set it to Tools.None
 			if (m_SelectedVertexCount > 0)
@@ -1201,6 +1205,8 @@ namespace UnityEditor.ProBuilder
 
 			if (m_CurrentEvent.type == EventType.Repaint
 				&& m_Hovering != null
+				&& GUIUtility.hotControl == 0
+				&& HandleUtility.nearestControl == m_DefaultControl
 				&& editLevel == EditLevel.Geometry)
 			{
 				try
@@ -1686,14 +1692,10 @@ namespace UnityEditor.ProBuilder
 
 			Vector3 min = Vector3.zero, max = Vector3.zero;
 			var boundsInitialized = false;
-			HashSet<int> used = new HashSet<int>();
 
 			for (var i = 0; i < selection.Length; i++)
 			{
 				ProBuilderMesh mesh = selection[i];
-
-				used.Clear();
-				var lookup = mesh.sharedVertexLookup;
 
 				if (!boundsInitialized && mesh.selectedVertexCount > 0)
 				{
@@ -1704,19 +1706,15 @@ namespace UnityEditor.ProBuilder
 
 				if (mesh.selectedVertexCount > 0)
 				{
-					var indexes = mesh.selectedIndexesInternal;
+					var shared = mesh.sharedVerticesInternal;
+					m_SelectedVerticesCommon += mesh.selectedSharedVerticesCount;
 
-					for (int n = 0, c = mesh.selectedVertexCount; n < c; n++)
+					foreach(var sharedVertex in mesh.selectedSharedVertices)
 					{
-						if (used.Add(lookup[indexes[n]]))
-						{
-							Vector3 v = mesh.transform.TransformPoint(mesh.positionsInternal[indexes[n]]);
-							min = Vector3.Min(min, v);
-							max = Vector3.Max(max, v);
-						}
+						Vector3 v = mesh.transform.TransformPoint(mesh.positionsInternal[shared[sharedVertex][0]]);
+						min = Vector3.Min(min, v);
+						max = Vector3.Max(max, v);
 					}
-
-					m_SelectedVerticesCommon += used.Count;
 				}
 
 				selectedFacesInEditZone.Add(mesh, ElementSelection.GetNeighborFaces(mesh, mesh.selectedIndexesInternal));

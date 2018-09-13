@@ -426,7 +426,7 @@ namespace UnityEditor.ProBuilder
 					else
 					{
 						extrudedFaceCount += pb.selectedEdgeCount;
-						Edge[] newEdges = pb.Extrude(	pb.selectedEdges.ToArray(),
+						Edge[] newEdges = pb.Extrude(pb.selectedEdges,
 												PreferencesInternal.GetFloat(PreferenceKeys.pbExtrudeDistance),
 												PreferencesInternal.GetBool(PreferenceKeys.pbExtrudeAsGroup),
 												PreferencesInternal.GetBool(PreferenceKeys.pbManifoldEdgeExtrusion));
@@ -1577,15 +1577,16 @@ namespace UnityEditor.ProBuilder
 
 			foreach(ProBuilderMesh pb in selection)
 			{
-				Edge[] connections = pb.Connect(pb.selectedEdges).item2;
+				Edge[] connections;
+				Face[] faces;
+
+				res = ConnectElements.Connect(pb, pb.selectedEdges, out faces, out connections, true, true);
 
 				if (connections != null)
 				{
 					pb.SetSelectedEdges(connections);
 					pb.Refresh();
 					pb.Optimize();
-
-					res = new ActionResult(ActionResult.Status.Success, "Connected " + connections.Length + " Edges");
 				}
 			}
 
