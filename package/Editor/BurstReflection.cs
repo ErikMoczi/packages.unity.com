@@ -75,7 +75,7 @@ namespace Unity.Burst.Editor
                 foreach (var t in types)
                 {
                     // If the type has been already visited, don't try to visit it
-                    if (!typesVisited.Add(t.FullName) || t.IsGenericTypeDefinition)
+                    if (!typesVisited.Add(t.FullName) || (t.IsGenericTypeDefinition && !t.IsInterface))
                     {
                         continue;
                     }

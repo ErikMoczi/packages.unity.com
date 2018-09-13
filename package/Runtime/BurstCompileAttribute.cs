@@ -42,6 +42,11 @@ namespace Unity.Burst
             Accuracy = accuracy;
         }
     }
+
+    [AttributeUsage(AttributeTargets.Parameter)]
+    public class NoAliasAttribute : System.Attribute
+    {
+    }
 }
 
 namespace Unity.Jobs

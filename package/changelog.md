@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.4-preview.30
+
+- Fix IsValueType throwing a NullReferenceException in case of using generics
+- Fix discovery for burst inspector/AOT methods inheriting from IJobProcessComponentData or interfaces with generics
+- Add NoAliasAttribute
+- Improved codegen for csum
+- Improved codegen for abs(int)
+- Improved codegen for abs on floatN/doubleN
+
 ## 0.2.4-preview.29
 
 - Fix issue when calling an explicit interface method not being matched through a generic constraint
