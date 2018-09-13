@@ -4,9 +4,19 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.1.0-preview.1] - 2018-06-21
+## [0.1.0-preview.5] - 2018-07-17
 
-### This is the first release of *Unity Package XR SDK Management*.
+### Simplified settings for build/runtime
+
+Since we are 2018.3 and later only we can take advantage of the new PlayerSettings Preloaded Assets API. This API allows us to stash assets in PLayerSettings that are preloaded at runtime. Now, instead of figuring out where to write a file for which build target we just use the standard Unity engine and code access to get the settings we need when we need them.
+
+## [0.1.0-preview.4] - 2018-07-17
+
+### Added samples and abiity to load settings
+
+This change adds a full fledged sample base that shows how to work with XR Management from start to finish, across run and build. This includes serializing and de-serializing the settings.
+
+## [0.1.0-preview.3] - 2018-07-17
 
 
 ## [0.1.0-preview.2] - 2018-06-22
@@ -17,10 +27,6 @@ Changed XRBuildData froma class to an attribute. This allows providers to use si
 Added a SettingsProvider subclass that wraps each of these attribute tagged classes. We use the display name from the attribute to populate the path in Unified Settings. The key in the attribute is used to store a single instance of the build settings SO in EditorBuildSettings as a single point to manage the instance.
 Added code to auto create the first SO settings instance using a file panel since the Editor build settings container requires stored instances be backed in the Asset DB. There is no UI for creating the settings (unless added by the Provider) so this should allow us to maintain the singleton settings. Even if a user duplicates the settings instance, since it won't be in the Editor build settings container we won't honor it.
 
-## [0.1.0-preview.3] - 2018-07-17
+## [0.1.0-preview.1] - 2018-06-21
 
-## [0.1.0-preview.4] - 2018-07-17
-
-### Added samples and abiity to load settings
-
-This change adds a full fledged sample base that shows how to work with XR Management from start to finish, across run and build. This includes serializing and de-serializing the settings.
+### This is the first release of *Unity Package XR SDK Management*.

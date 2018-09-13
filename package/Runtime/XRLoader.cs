@@ -15,18 +15,10 @@ namespace UnityEngine.XR.Management
     public abstract class XRLoader : ScriptableObject {
 
         /// <summary>
-        /// Allow the loader to load any settings it may need prior to initialization. This is a CoRoutine so that loaders that may need
-        /// to work with operations that are async can without having to be their own MonoBehaviours.
-        /// </summary>
-        ///
-        /// <returns>< description_of_the_return_value ></returns>
-        public virtual IEnumerator LoadSettings() { yield return null; }
-
-        /// <summary>
         /// Initialize the loader. This should initialize all subsystems to support the desired runtime setup this
         /// loader represents.
         /// </summary>
-        ///
+         ///
         /// <returns>< Whether or not initialization succeeded ></returns>
         public virtual bool Initialize() { return false; }
 

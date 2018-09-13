@@ -20,25 +20,20 @@ namespace UnityEngine.XR.Management.Sample
             get { return GetLoadedSubsystem<XRInputSubsystem>(); }
         }
 
-
-        SampleSettings settings = null;
-        bool settingsLoadDone = false;
-
-        private void SettingsLoaded(SampleSettings s)
+        private SampleSettings GetSettings()
         {
-            settings = s;
-            settingsLoadDone = true;
-        }
-
-        public override IEnumerator LoadSettings()
-        {
-            var outputPath = Application.streamingAssetsPath;
-            string filename = SampleUtilities.GetSerializationFilename("SampleData", outputPath);
-            yield return SampleUtilities.ReadSettings(filename, SettingsLoaded );
+            SampleSettings settings = null;
+            #if UNITY_EDITOR
+                UnityEditor.EditorBuildSettings.TryGetConfigObject(SampleConstants.kSettingsKey, out settings);
+            #else
+                settings = SampleSettings.s_RuntimeInstance;
+            #endif
+            return settings;
         }
 
         public override bool Initialize()
         {
+            SampleSettings settings = GetSettings();
             if (settings != null)
             {
                 // TODO: Pass settings off to plugin prior to subsystem init.

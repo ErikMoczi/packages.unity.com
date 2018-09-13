@@ -7,6 +7,10 @@ namespace UnityEngine.XR.Management.Sample
     [System.Serializable]
     public class SampleSettings : ScriptableObject
     {
+        #if !UNITY_EDITOR
+        public static SampleSettings s_RuntimeInstance = null;
+        #endif
+
          public enum Requirement
          {
              Required,
@@ -30,6 +34,13 @@ namespace UnityEngine.XR.Management.Sample
          {
             get { return m_RuntimeToggle; }
             set { m_RuntimeToggle = value; }
+         }
+
+         public void Awake()
+         {
+            #if !UNITY_EDITOR
+            s_RuntimeInstance = this;
+            #endif
          }
     }
 }

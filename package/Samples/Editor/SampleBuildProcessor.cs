@@ -9,42 +9,57 @@ using UnityEngine;
 
 namespace UnityEditor.XR.Management.Sample
 {
-    class SampleBuildProcessor : IPreprocessBuildWithReport
+    class SampleBuildProcessor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
     {
-
         public int callbackOrder
         {
             get { return 0;  }
         }
 
+        private void CleanOldSettings()
+        {
+            UnityEngine.Object[] preloadedAssets = PlayerSettings.GetPreloadedAssets();
+            if (preloadedAssets == null)
+                return;
+
+            var oldSettings = from s in preloadedAssets
+                where s.GetType() == typeof(SampleSettings)
+                select s;
+
+            if (oldSettings.Any())
+            {
+                var assets = preloadedAssets.ToList();
+                foreach (var s in oldSettings)
+                {
+                    assets.Remove(s);
+                }
+
+                PlayerSettings.SetPreloadedAssets(assets.ToArray());
+            }
+        }
+
         public void OnPreprocessBuild(BuildReport report)
         {
-            BuildTargetGroup targetGroup = report.summary.platformGroup;
-            SerializeSettingsForBuildTargetGroup(targetGroup);
-        }
+            CleanOldSettings();
 
-        public void SerializeSettingsForBuildTargetGroup(BuildTargetGroup targetGroup, bool useTempPath = false)
-        {
-            var outputPath = SampleEditorUtilities.GetStreamingAssetsBuildPathForBuildTarget(targetGroup, useTempPath);
-
-            if (!Directory.Exists(outputPath))
-            {
-                Directory.CreateDirectory(outputPath);
-            }
-
-            SerializeProviderSettings(targetGroup, outputPath);
-        }
-
-        private void SerializeProviderSettings(BuildTargetGroup targetGroup, string outputPath)
-        {
             SampleSettings settings = null;
-
             EditorBuildSettings.TryGetConfigObject(SampleConstants.kSettingsKey, out settings);
             if (settings == null)
                 return;
 
-            string filename = SampleUtilities.GetSerializationFilename("SampleData", outputPath);
-            SampleUtilities.WriteSettings(settings, filename);
+            UnityEngine.Object[] preloadedAssets = PlayerSettings.GetPreloadedAssets();
+
+            if (!preloadedAssets.Contains(settings))
+            {
+                var assets = preloadedAssets.ToList();
+                assets.Add(settings);
+                PlayerSettings.SetPreloadedAssets(assets.ToArray());
+            }
+        }
+
+        public void OnPostprocessBuild(BuildReport report)
+        {
+            CleanOldSettings();
         }
     }
 }

@@ -109,7 +109,6 @@ namespace UnityEngine.XR.Management
             {
                 if (loader != null)
                 {
-                    yield return loader.LoadSettings();
                     if (loader.Initialize())
                     {
                         ActiveLoader = loader;
