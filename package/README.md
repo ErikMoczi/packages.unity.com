@@ -14,4 +14,4 @@ This package is `com.unity.xr.management`
 
 * [Editor Script API](Editor/)
 * [Runtime Script API](Runtime/)
-* [Manual](Documentation/com.unity.xr.management.md)
+* [Manual](Documentation~/com.unity.xr.management.md)
