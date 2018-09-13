@@ -1,0 +1,11 @@
+{
+    "name": "Unity.XR.Management.Tests",
+    "references": [
+        "Unity.XR.Management"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": []
+}
