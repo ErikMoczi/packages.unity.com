@@ -29,69 +29,23 @@ namespace UnityEngine.XR.Management
     /// * OnDisable -> <see cref="StopSubsystems"/>. Ask the active loader to stop all subsystems.
     /// * OnDestroy -> <see cref="DeinitializeLoader"/>. Deinitialize and remove the active loader.
     /// </summary>
-    public sealed class XRManager : MonoBehaviour, IEnumerable, IEnumerable<XRLoader>
+    public sealed class XRManager : MonoBehaviour
     {
         [HideInInspector]
         private bool m_InitializationComplete = false;
 
         [SerializeField]
         [Tooltip("Determines if the XR Manager instance is responsible for creating and destroying the apporpriate loader instance.")]
-        private bool ManageActiveLoaderLifetime = true;
+        public bool ManageActiveLoaderLifetime = true;
 
         [SerializeField]
         [Tooltip("Determines if the XR Manager instance is responsible for starting and stopping subsystems for the active loader instance.")]
-        private bool ManageSubsystems = true;
+        public bool ManageSubsystems = true;
 
         [SerializeField]
         [Tooltip("List of XR Loader instances arranged in desired load order.")]
-        List<XRLoader> Loaders = new List<XRLoader>();
+        public List<XRLoader> Loaders = new List<XRLoader>();
 
-
-#region Loaders Collection API
-        public int CountLoaders {
-            get { return Loaders.Count; }
-        }
-
-        public XRLoader this[int index]
-        {
-            get{
-                System.Diagnostics.Debug.Assert(index >= 0 && index < Loaders.Count);
-                return Loaders[index];
-            }
-
-            set {
-                Loaders[index] = value;
-            }
-        }
-
-        public void AddLoader(XRLoader loader)
-        {
-            System.Diagnostics.Debug.Assert(loader != null);
-            if (loader != null)
-                Loaders.Add(loader);
-        }
-
-        public void RemoveLoader(XRLoader loader)
-        {
-            System.Diagnostics.Debug.Assert(loader != null);
-            if (loader != null && Loaders.Contains(loader))
-                Loaders.Remove(loader);
-        }
-
-        public void ClearLoaders()
-        {
-            Loaders.Clear();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return Loaders.GetEnumerator();
-        }
-        IEnumerator<XRLoader> IEnumerable<XRLoader>.GetEnumerator()
-        {
-            return Loaders.GetEnumerator();
-        }
-#endregion
 
         /// <summary>
         /// Read only boolean letting us no if initialization is completed. Because initialization is
@@ -173,7 +127,7 @@ namespace UnityEngine.XR.Management
         /// If there is an active loader, this will request the loader to start all the subsystems that it
         /// is managing.
         ///
-        /// You must wait for <see cref="IsInitializationComplete"> to be set to tru prior to calling this API.
+        /// You must wait for <see cref="IsInitializationComplete"> to be set to true prior to calling this API.
         /// </summary>
         public void StartSubsystems()
         {

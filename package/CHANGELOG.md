@@ -4,7 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.1.0-preview.5] - 2018-07-17
+## [0.1.0-preview.7] - 2018-07-25
+
+* Fix issue #3: Add ASMDEFs for sample code to get it to compile. No longer need to keep copy in project.
+* Fix Issue #4: Update documentation to reflect API changes and to expand information and API documentation.
+* Fix Issue #5: Move boilerplate loader code to a common helper base class that can be used if an implementor wants to.
+
+## [0.1.0-preview.6] - 2018-07-17
 
 ### Added runtime tests for XRManager
 

@@ -8,12 +8,17 @@ using UnityEngine.XR.Management;
 using UnityEngine.Experimental;
 using UnityEngine.Experimental.XR;
 
-namespace UnityEngine.XR.Management.Sample
+namespace Samples
 {
-    [CreateAssetMenu(menuName = "XR/Loaders/Sample Loader")]
-    public class SampleLoader : XRLoader
+    /// <summary>
+    /// Sample loader implentation showing how to create simple loader.
+    /// </summary>
+    // Uncomment this line to have your loader instantiatable by an end user.
+    //[CreateAssetMenu(menuName = "XR/Loaders/Sample Loader")]
+    public class SampleLoader : XRLoaderHelper
     {
-        Dictionary<Type,IntegratedSubsystem> subsystemInstanceMap = new Dictionary<Type, IntegratedSubsystem>();
+        private static List<XRInputSubsystemDescriptor> s_InputSubsystemDescriptors =
+            new List<XRInputSubsystemDescriptor>();
 
         public XRInputSubsystem inputSubsystem
         {
@@ -23,6 +28,8 @@ namespace UnityEngine.XR.Management.Sample
         private SampleSettings GetSettings()
         {
             SampleSettings settings = null;
+            // When running in the Unit Editor, we can a users customization of configuration data directly form
+            // EditorBuildSettings. At runtime, we need to grab it from the static instance field instead.
             #if UNITY_EDITOR
                 UnityEditor.EditorBuildSettings.TryGetConfigObject(SampleConstants.kSettingsKey, out settings);
             #else
@@ -30,6 +37,8 @@ namespace UnityEngine.XR.Management.Sample
             #endif
             return settings;
         }
+
+#region XRLoader API Implementation
 
         public override bool Initialize()
         {
@@ -42,14 +51,6 @@ namespace UnityEngine.XR.Management.Sample
             CreateSubsystem<XRInputSubsystemDescriptor, XRInputSubsystem>(s_InputSubsystemDescriptors, "InputSubsystemDescriptor");
 
             return false;
-        }
-
-        public override T GetLoadedSubsystem<T>()
-        {
-            Type subsystemType = typeof(T);
-            IntegratedSubsystem subsystem;
-            subsystemInstanceMap.TryGetValue(subsystemType, out subsystem);
-            return subsystem as T;
         }
 
         public override bool Start()
@@ -69,51 +70,7 @@ namespace UnityEngine.XR.Management.Sample
             DestroySubsystem<XRInputSubsystem>();
             return true;
         }
+#endregion
 
-        private void StartSubsystem<T>() where T : Subsystem
-        {
-            T subsystem = GetLoadedSubsystem<T>();
-            if (subsystem != null)
-                subsystem.Start();
-        }
-
-        private void StopSubsystem<T>() where T : Subsystem
-        {
-            T subsystem = GetLoadedSubsystem<T>();
-            if (subsystem != null)
-                subsystem.Stop();
-        }
-
-        private void DestroySubsystem<T>() where T : Subsystem
-        {
-            T subsystem = GetLoadedSubsystem<T>();
-            if (subsystem != null)
-                subsystem.Destroy();
-        }
-
-        private static List<XRInputSubsystemDescriptor> s_InputSubsystemDescriptors =
-            new List<XRInputSubsystemDescriptor>();
-
-        private void CreateSubsystem<TDescriptor, TSubsystem>(List<TDescriptor> descriptors, string id)
-            where TDescriptor : IntegratedSubsystemDescriptor<TSubsystem>
-            where TSubsystem : IntegratedSubsystem<TDescriptor>
-        {
-            if (descriptors == null)
-                throw new ArgumentNullException("descriptors");
-
-            SubsystemManager.GetSubsystemDescriptors<TDescriptor>(descriptors);
-
-            if (descriptors.Count > 0)
-            {
-                foreach (var descriptor in descriptors)
-                {
-                    if (descriptor.id == id)
-                    {
-                        IntegratedSubsystem s = descriptor.Create();
-                        subsystemInstanceMap[typeof(TSubsystem)] = s;
-                    }
-                }
-            }
-        }
     }
 }

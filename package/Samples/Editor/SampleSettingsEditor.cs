@@ -1,12 +1,14 @@
 using UnityEditor;
-using UnityEditor.AnimatedValues;
 using UnityEditor.XR.Management;
 
 using UnityEngine;
 
-namespace UnityEditor.XR.Management.Sample
+namespace Samples
 {
-
+    /// <summary>
+    /// Simple custom editor used to show how to enable custom UI for XR Management
+    /// configuraton data.
+    /// </summary>
     [CustomEditor(typeof(SampleSettings))]
     public class SampleSettingsEditor : Editor
     {

@@ -1,12 +1,18 @@
 using UnityEngine;
-using UnityEditor.XR.Management;
+using UnityEngine.XR.Management;
 
-namespace UnityEngine.XR.Management.Sample
+namespace Samples
 {
+    /// <summary>
+    /// Simple sample settings showing how to create custom configuration data for your package.
+    /// </summary>
     [XRConfigurationData("Sample Settings", SampleConstants.kSettingsKey)]
     [System.Serializable]
     public class SampleSettings : ScriptableObject
     {
+        /// Static instance that will hold the runtime asset instance we created in our build process.
+        /// <see cref="SampleBuildProcessor"/>
+        ///
         #if !UNITY_EDITOR
         public static SampleSettings s_RuntimeInstance = null;
         #endif

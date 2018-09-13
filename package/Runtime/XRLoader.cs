@@ -43,7 +43,6 @@ namespace UnityEngine.XR.Management
         /// <returns>< Whether or not deinitialization succeeded ></returns>
         public virtual bool Deinitialize() { return false; }
 
-
         /// <summary>
         /// Gets the loaded subsystem of the specified type. Implementation dependent as only implemetnations
         /// know what they have loaded and how best to get it..

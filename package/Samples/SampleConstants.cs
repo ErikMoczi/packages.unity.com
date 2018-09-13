@@ -1,15 +1,15 @@
 using System;
 
-namespace UnityEngine.XR.Management.Sample
+namespace Samples
 {
+    /// <summary>
+    /// Static constants
+    /// </summary>
 	public struct SampleConstants
 	{
+        /// <summary>
+        /// Key we use to store and retrieve custom configuration settings from EditorBuildSettings
+        /// </summary>
 		public const string kSettingsKey = "com.unity.xr.management.sample_settings";
-
-	    public const string kSerialisedSettingsExt = ".xrsettings";
-        public const string kStagingArea = "Temp/StagingArea";
-        public const string kAndroidStreamingAssetsFolder = "raw";
-        public const string kiOSStreamingAssetsFolder = "Data/raw";
-        public const string kDesktopStreamingAssetsFolder = "Data/StreamingAssets";
 	}
 }
