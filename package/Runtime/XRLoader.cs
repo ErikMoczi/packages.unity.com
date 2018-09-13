@@ -52,6 +52,6 @@ namespace UnityEngine.XR.Management
         /// <paramref name="T">< Type of the subsystem to get ></paramref>
         ///
         /// <returns>The loaded subsystem or null if not found.</returns>
-        public abstract T GetLoadedSubsystem<T>() where T : Subsystem;
+        public abstract T GetLoadedSubsystem<T>() where T : IntegratedSubsystem;
 	}
 }

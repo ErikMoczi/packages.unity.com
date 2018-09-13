@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.1.0-preview.5] - 2018-07-17
 
+### Added runtime tests for XRManager
+
+### Updated code to reflect name changes for XR Subsystem types.
+
+## [0.1.0-preview.5] - 2018-07-17
+
 ### Simplified settings for build/runtime
 
 Since we are 2018.3 and later only we can take advantage of the new PlayerSettings Preloaded Assets API. This API allows us to stash assets in PLayerSettings that are preloaded at runtime. Now, instead of figuring out where to write a file for which build target we just use the standard Unity engine and code access to get the settings we need when we need them.

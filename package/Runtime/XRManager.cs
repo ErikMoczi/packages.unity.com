@@ -29,7 +29,7 @@ namespace UnityEngine.XR.Management
     /// * OnDisable -> <see cref="StopSubsystems"/>. Ask the active loader to stop all subsystems.
     /// * OnDestroy -> <see cref="DeinitializeLoader"/>. Deinitialize and remove the active loader.
     /// </summary>
-    public sealed class XRManager : MonoBehaviour
+    public sealed class XRManager : MonoBehaviour, IEnumerable, IEnumerable<XRLoader>
     {
         [HideInInspector]
         private bool m_InitializationComplete = false;
@@ -46,6 +46,52 @@ namespace UnityEngine.XR.Management
         [Tooltip("List of XR Loader instances arranged in desired load order.")]
         List<XRLoader> Loaders = new List<XRLoader>();
 
+
+#region Loaders Collection API
+        public int CountLoaders {
+            get { return Loaders.Count; }
+        }
+
+        public XRLoader this[int index]
+        {
+            get{
+                System.Diagnostics.Debug.Assert(index >= 0 && index < Loaders.Count);
+                return Loaders[index];
+            }
+
+            set {
+                Loaders[index] = value;
+            }
+        }
+
+        public void AddLoader(XRLoader loader)
+        {
+            System.Diagnostics.Debug.Assert(loader != null);
+            if (loader != null)
+                Loaders.Add(loader);
+        }
+
+        public void RemoveLoader(XRLoader loader)
+        {
+            System.Diagnostics.Debug.Assert(loader != null);
+            if (loader != null && Loaders.Contains(loader))
+                Loaders.Remove(loader);
+        }
+
+        public void ClearLoaders()
+        {
+            Loaders.Clear();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return Loaders.GetEnumerator();
+        }
+        IEnumerator<XRLoader> IEnumerable<XRLoader>.GetEnumerator()
+        {
+            return Loaders.GetEnumerator();
+        }
+#endregion
 
         /// <summary>
         /// Read only boolean letting us no if initialization is completed. Because initialization is

@@ -13,7 +13,7 @@ namespace UnityEngine.XR.Management.Sample
     [CreateAssetMenu(menuName = "XR/Loaders/Sample Loader")]
     public class SampleLoader : XRLoader
     {
-        Dictionary<Type, Subsystem> subsystemInstanceMap = new Dictionary<Type, Subsystem>();
+        Dictionary<Type,IntegratedSubsystem> subsystemInstanceMap = new Dictionary<Type, IntegratedSubsystem>();
 
         public XRInputSubsystem inputSubsystem
         {
@@ -47,7 +47,7 @@ namespace UnityEngine.XR.Management.Sample
         public override T GetLoadedSubsystem<T>()
         {
             Type subsystemType = typeof(T);
-            Subsystem subsystem;
+            IntegratedSubsystem subsystem;
             subsystemInstanceMap.TryGetValue(subsystemType, out subsystem);
             return subsystem as T;
         }
@@ -95,8 +95,8 @@ namespace UnityEngine.XR.Management.Sample
             new List<XRInputSubsystemDescriptor>();
 
         private void CreateSubsystem<TDescriptor, TSubsystem>(List<TDescriptor> descriptors, string id)
-            where TDescriptor : SubsystemDescriptor<TSubsystem>
-            where TSubsystem : Subsystem<TDescriptor>
+            where TDescriptor : IntegratedSubsystemDescriptor<TSubsystem>
+            where TSubsystem : IntegratedSubsystem<TDescriptor>
         {
             if (descriptors == null)
                 throw new ArgumentNullException("descriptors");
@@ -109,7 +109,7 @@ namespace UnityEngine.XR.Management.Sample
                 {
                     if (descriptor.id == id)
                     {
-                        Subsystem s = descriptor.Create();
+                        IntegratedSubsystem s = descriptor.Create();
                         subsystemInstanceMap[typeof(TSubsystem)] = s;
                     }
                 }
