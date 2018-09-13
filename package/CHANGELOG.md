@@ -4,7 +4,7 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2018-08-10
+## [2.0.0] - 2018-09-10
 - Always mark a package as up to date when it's not installed
 - Add "Advanced" menu
 - Hide preview packages by default
@@ -28,10 +28,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Remove sentence "This package is installed for..." and all other sentence regarding status of the package
 - Hide buttons for embedded, git and local packages
 - Display "No results for ""
-- Support maximize/minimize
-- Support PackageManager UI saved maximized in a layout
-- Keep track of selected built-in package
-- Keep track of last selected filter
 
 ## [1.9.9] - 2018-05-09
 - Only show user visible versions in the UI

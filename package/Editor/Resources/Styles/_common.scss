@@ -447,8 +447,6 @@ $toolbar-height: 18;
 	//--------------------------------------------------------------------------------------------------
 	#packageListGroup {
 		width: 270;
-		border-right-width: 1px;
-		border-color: rgba(0,0,0, 0.5);
 
 		#listContainerOuter {
 			@extend .column;
@@ -574,6 +572,8 @@ $toolbar-height: 18;
 	//--------------------------------------------------------------------------------------------------
 	#detailsGroup {
 		flex: 1 0 0;
+		border-left-width: 1px;
+		border-color: rgba(0,0,0, 0.5);
 
 		#detailsContainer {
 			flex: 1 0 0;
@@ -850,7 +850,7 @@ $toolbar-height: 18;
 		justify-content: space-between;
 
 		#loadingContainer{
-
+			
 			flex-direction: row;
 			align-items: center;
 			justify-content: flex-start;
@@ -864,11 +864,11 @@ $toolbar-height: 18;
 				margin-left: -12;
 				margin-right: 0;
 			}
-
+	
 			#loadingText {
 				padding-left: 2;
 				-unity-font-style: italic;
-
+	
 				&.icon {
 					margin-left: 0;
 				}

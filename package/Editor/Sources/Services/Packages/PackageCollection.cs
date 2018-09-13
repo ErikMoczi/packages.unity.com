@@ -8,56 +8,67 @@ namespace UnityEditor.PackageManager.UI
     [Serializable]
     internal class PackageCollection
     {
-        public event Action<PackageFilter, IEnumerable<Package>, string> OnPackagesChanged = delegate { };
+        private static PackageCollection instance = new PackageCollection();
+        public static PackageCollection Instance { get { return instance; } }
+
+        public event Action<IEnumerable<Package>> OnPackagesChanged = delegate { };
         public event Action<PackageFilter> OnFilterChanged = delegate { };
-        public event Action<string> OnUpdateTimeChange = delegate { };
 
         private readonly Dictionary<string, Package> packages;
 
-        [SerializeField]
         private PackageFilter filter;
 
-        [SerializeField]
         private string selectedListPackage;
-        [SerializeField]
         private string selectedSearchPackage;
-        [SerializeField]
-        private string selectedBuiltInPackage;
 
-        [SerializeField]
-        private string lastUpdateTime;
-        
-        [SerializeField]
+        internal string lastUpdateTime;
         private List<PackageInfo> listPackagesOffline;
-        [SerializeField]
         private List<PackageInfo> listPackages;
-        [SerializeField]
         private List<PackageInfo> searchPackages;
 
-        [SerializeField]
-        private readonly List<PackageError> packageErrors;
+        private List<PackageError> packageErrors;
 
-        [SerializeField]
         private int listPackagesVersion;
-        [SerializeField]
         private int listPackagesOfflineVersion;
 
-        [SerializeField]
-        public bool searchOperationOngoing;
-        [SerializeField]
-        public bool listOperationOngoing;
-        [SerializeField]
-        public bool listOperationOfflineOngoing;
+        private bool searchOperationOngoing;
+        private bool listOperationOngoing;
+        private bool listOperationOfflineOngoing;
 
-        [SerializeField]
         private IListOperation listOperationOffline;
-        [SerializeField]
         private IListOperation listOperation;
-        [SerializeField]
         private ISearchOperation searchOperation;
 
         public readonly OperationSignal<ISearchOperation> SearchSignal = new OperationSignal<ISearchOperation>();
         public readonly OperationSignal<IListOperation> ListSignal = new OperationSignal<IListOperation>();
+
+        public static void InitInstance(ref PackageCollection value)
+        {
+            if (value == null)  // UI window opened
+            {
+                value = instance;
+
+                Instance.OnPackagesChanged = delegate { };
+                Instance.OnFilterChanged = delegate { };
+                Instance.SearchSignal.ResetEvents();
+                Instance.ListSignal.ResetEvents();
+
+                Instance.FetchListOfflineCache(true);
+                Instance.FetchListCache(true);
+                Instance.FetchSearchCache(true);
+            }
+            else // Domain reload
+            {
+                instance = value;
+
+                Instance.RebuildPackageDictionary();
+
+                // Resume operations interrupted by domain reload
+                Instance.FetchListOfflineCache(Instance.listOperationOfflineOngoing);
+                Instance.FetchListCache(Instance.listOperationOngoing);
+                Instance.FetchSearchCache(Instance.searchOperationOngoing);
+            }
+        }
 
         public PackageFilter Filter
         {
@@ -74,35 +85,26 @@ namespace UnityEditor.PackageManager.UI
             }
         }
 
-        public IEnumerable<PackageInfo> LatestListPackages
+        public List<PackageInfo> LatestListPackages
         {
             get { return listPackagesVersion > listPackagesOfflineVersion? listPackages : listPackagesOffline; }
         }
 
-        public IEnumerable<PackageInfo> LatestSearchPackages { get { return searchPackages; } }
+        public List<PackageInfo> LatestSearchPackages { get { return searchPackages; } }
 
         public string SelectedPackage
         {
-            get
-            {
-                if (Filter == PackageFilter.All)
-                    return selectedSearchPackage;
-                if (Filter == PackageFilter.Local)
-                    return selectedListPackage;
-                return selectedBuiltInPackage;
-            }
+            get { return PackageFilter.All == Filter ? selectedSearchPackage : selectedListPackage; }
             set
             {
                 if (PackageFilter.All == Filter)
                     selectedSearchPackage = value;
-                else if (PackageFilter.Local == Filter)
-                    selectedListPackage = value;
                 else
-                    selectedBuiltInPackage = value;
+                    selectedListPackage = value;
             }
         }
         
-        public PackageCollection()
+        private PackageCollection()
         {
             packages = new Dictionary<string, Package>();
 
@@ -140,11 +142,10 @@ namespace UnityEditor.PackageManager.UI
             if (rebuildDictionary)
             {
                 lastUpdateTime = DateTime.Now.ToString("HH:mm");
-                OnUpdateTimeChange(lastUpdateTime);
                 RebuildPackageDictionary();
             }
-
-            OnPackagesChanged(Filter, OrderedPackages(), SelectedPackage);
+            if (packages.Any())
+                OnPackagesChanged(OrderedPackages());
         }
 
         internal void FetchListOfflineCache(bool forceRefetch = false)
@@ -235,7 +236,7 @@ namespace UnityEditor.PackageManager.UI
             return package;
         }
 
-        private Error GetPackageError(Package package)
+        public Error GetPackageError(Package package)
         {
             if (null == package) return null;
             var firstMatchingError = packageErrors.FirstOrDefault(p => p.PackageName == package.Name);
@@ -245,14 +246,12 @@ namespace UnityEditor.PackageManager.UI
         public void AddPackageError(Package package, Error error)
         {
             if (null == package || null == error) return;
-            package.Error = error;
             packageErrors.Add(new PackageError(package.Name, error));
         }
 
         public void RemovePackageErrors(Package package)
         {
             if (null == package) return;
-            package.Error = null;
             packageErrors.RemoveAll(p => p.PackageName == package.Name);
         }
 
@@ -278,7 +277,6 @@ namespace UnityEditor.PackageManager.UI
 
                 var packageQuery = from pkg in allPackageInfos where pkg.Name == packageName select pkg;
                 var package = new Package(packageName, packageQuery);
-                package.Error = GetPackageError(package);
                 packages[packageName] = package;
             }
         }

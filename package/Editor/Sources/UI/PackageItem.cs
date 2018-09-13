@@ -96,7 +96,7 @@ namespace UnityEditor.PackageManager.UI
             var stateClass = GetIconStateId(displayPackage);
             if (displayPackage.State == PackageState.Outdated && package.LatestUpdate == package.Current)
                 stateClass = GetIconStateId(PackageState.UpToDate);
-            if (package.Error != null)
+            if (PackageCollection.Instance.GetPackageError(package) != null)
                 stateClass = GetIconStateId(PackageState.Error);
             if (stateClass ==  GetIconStateId(PackageState.UpToDate) && package.Current != null)
                 stateClass = "installed";
@@ -128,20 +128,11 @@ namespace UnityEditor.PackageManager.UI
             StateLabel.RemoveFromClassList("no-icon");
         }
 
-        private Label _nameLabel;
-        private Label NameLabel { get { return _nameLabel ?? (_nameLabel = root.Q<Label>("packageName")); } }
-
-        private Label _stateLabel;
-        private Label StateLabel { get { return _stateLabel ?? (_stateLabel = root.Q<Label>("packageState")); } }
-
-        private Label _versionLabel;
-        private Label VersionLabel { get { return _versionLabel ?? (_versionLabel = root.Q<Label>("packageVersion")); } }
-
-        private VisualElement _packageContainer;
-        private VisualElement PackageContainer { get { return _packageContainer ?? (_packageContainer = root.Q<VisualElement>("packageContainer")); } }
-
-        private LoadingSpinner _spinner;
-        private LoadingSpinner Spinner { get { return _spinner ?? (_spinner = root.Q<LoadingSpinner>("packageSpinner")); } }
+        private Label NameLabel { get { return root.Q<Label>("packageName"); } }
+        private Label StateLabel { get { return root.Q<Label>("packageState"); } }
+        private Label VersionLabel { get { return root.Q<Label>("packageVersion"); } }
+        private VisualElement PackageContainer { get { return root.Q<VisualElement>("packageContainer"); } }
+        private LoadingSpinner Spinner { get { return root.Q<LoadingSpinner>("packageSpinner"); } }
 
         public static string GetIconStateId(PackageInfo packageInfo)
         {

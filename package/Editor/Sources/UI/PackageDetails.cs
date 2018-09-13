@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Semver;
@@ -23,9 +22,6 @@ namespace UnityEditor.PackageManager.UI
         internal new class UxmlFactory : UxmlFactory<PackageDetails> { }
 #endif
 
-        public event Action<Package> OnCloseError = delegate { };
-        public event Action<Package, Error> OnOperationError = delegate { };
-
         private readonly VisualElement root;
         private Package package;
         private const string emptyDescriptionClass = "empty";
@@ -35,7 +31,7 @@ namespace UnityEditor.PackageManager.UI
 
         private PackageInfo SelectedPackage
         {
-            get { return VersionPopup.value.Version; }
+            get { return VersionPopup.value.Version != null ? VersionPopup.value.Version : null; }
         }
 
         internal enum PackageAction
@@ -55,7 +51,7 @@ namespace UnityEditor.PackageManager.UI
 
         private static readonly VersionItem EmptyVersion = new VersionItem {Version = null};
         internal static readonly string[] PackageActionVerbs = { "Install", "Remove", "Update to", "Update to",  "Enable", "Disable", "Up to date", "Current", "Local", "Git", "Embedded" };
-        private static readonly string[] PackageActionInProgressVerbs = { "Installing", "Removing", "Updating to", "Updating to", "Enabling", "Disabling", "Up to date", "Current", "Local", "Git", "Embedded" };
+        internal static readonly string[] PackageActionInProgressVerbs = { "Installing", "Removing", "Updating to", "Updating to", "Enabling", "Disabling", "Up to date", "Current", "Local", "Git", "Embedded" };
 
         public PackageDetails()
         {
@@ -117,7 +113,7 @@ namespace UnityEditor.PackageManager.UI
                 UIUtils.SetElementDisplay(UpdateContainer, value);
         }
 
-        private void SetDisplayPackage(PackageInfo packageInfo, Error packageError)
+        internal void SetDisplayPackage(PackageInfo packageInfo)
         {
             DisplayPackage = packageInfo;
             
@@ -205,7 +201,7 @@ namespace UnityEditor.PackageManager.UI
             root.Q<VisualElement>("detail").visible = detailVisible;
 
             if (null == error)
-                error = packageError;
+                error = PackageCollection.Instance.GetPackageError(package);
 
             if (error != null)
                 SetError(error);
@@ -282,7 +278,7 @@ namespace UnityEditor.PackageManager.UI
             this.package = package;
             var displayPackage = package != null ? package.VersionToDisplay : null;
             ResetVersionItems(displayPackage);
-            SetDisplayPackage(displayPackage, package != null ? package.Error : null);
+            SetDisplayPackage(displayPackage);
         }
 
         private void SetError(Error error)
@@ -291,7 +287,8 @@ namespace UnityEditor.PackageManager.UI
             DetailError.SetError(error);
             DetailError.OnCloseError = () =>
             {
-                OnCloseError(package);
+                PackageCollection.Instance.RemovePackageErrors(package);
+                PackageCollection.Instance.UpdatePackageCollection();
             };
         }
 
@@ -310,11 +307,12 @@ namespace UnityEditor.PackageManager.UI
                 package.AddSignal.Operation = null;
             }
 
+            PackageCollection.Instance.AddPackageError(package, error);
+
+            SetError(error);
             if (package != null)
                 ResetVersionItems(package.VersionToDisplay);
-            
-            SetError(error);
-            OnOperationError(package, error);
+            PackageCollection.Instance.UpdatePackageCollection();
         }
 
         private void OnAddOperationSuccess(PackageInfo packageInfo)
@@ -349,8 +347,10 @@ namespace UnityEditor.PackageManager.UI
                 package.RemoveSignal.Operation = null;
             }
 
+            PackageCollection.Instance.AddPackageError(package, error);
+
             SetError(error);
-            OnOperationError(package, error);
+            PackageCollection.Instance.UpdatePackageCollection();
         }
 
         private void OnRemoveOperationSuccess(PackageInfo packageInfo)
@@ -576,6 +576,7 @@ namespace UnityEditor.PackageManager.UI
             }
         }
 
+
         private void RemoveClick()
         {
             DetailError.ClearError();
@@ -584,6 +585,7 @@ namespace UnityEditor.PackageManager.UI
             RefreshAddButton();
         }
         
+
         private void ViewDocClick()
         {
             Application.OpenURL(DisplayPackage.GetDocumentationUrl());
@@ -598,64 +600,27 @@ namespace UnityEditor.PackageManager.UI
         {    
             Application.OpenURL(DisplayPackage.GetLicensesUrl());            
         }
-
-        private Label _detailDesc;
-        private Label DetailDesc { get { return _detailDesc ?? (_detailDesc = root.Q<Label>("detailDesc")); } }
-
-        private Button _updateButton;
-        internal Button UpdateButton { get { return _updateButton ?? (_updateButton = root.Q<Button>("update")); } }
-
-        private Button _removeButton;
-        private Button RemoveButton { get { return _removeButton ?? (_removeButton = root.Q<Button>("remove")); } }
-
-        private Button _viewDocButton;
-        private Button ViewDocButton { get { return _viewDocButton ?? (_viewDocButton = root.Q<Button>("viewDocumentation")); } }
-
-        private VisualElement _documentationContainer;
-        private VisualElement DocumentationContainer { get { return _documentationContainer ?? (_documentationContainer = root.Q<VisualElement>("documentationContainer")); } }
-
-        private Button _viewChangeLogButton;
-        private Button ViewChangelogButton { get { return _viewChangeLogButton ?? (_viewChangeLogButton = root.Q<Button>("viewChangelog")); } }
-
-        private VisualElement _changeLogContainer;
-        private VisualElement ChangelogContainer { get { return _changeLogContainer ?? (_changeLogContainer = root.Q<VisualElement>("changeLogContainer")); } }
-
-        private Button _viewLicenses;
-        private Button ViewLicenses { get { return _viewLicenses ?? (_viewLicenses = root.Q<Button>("viewLicenses")); } }
-
-        private VisualElement _updateContainer;
-        private VisualElement UpdateContainer { get { return _updateContainer ?? (_updateContainer = root.Q<VisualElement>("updateContainer")); } }
-
-        private Alert _detailError;
-        private Alert DetailError { get { return _detailError ?? (_detailError = root.Q<Alert>("detailError")); } }
-
-        private ScrollView _detailView;
-        private ScrollView DetailView { get { return _detailView ?? (_detailView = root.Q<ScrollView>("detailView")); } }
         
-        private Label _detailModuleReference;
-        private Label DetailModuleReference { get { return _detailModuleReference ?? (_detailModuleReference = root.Q<Label>("detailModuleReference")); } }
-        
-        private Label _detailVersion;
-        private Label DetailVersion { get { return _detailVersion ?? (_detailVersion = root.Q<Label>("detailVersion")); } }
-        
-        private Label _detailAuthor;
-        private Label DetailAuthor { get { return _detailAuthor ?? (_detailAuthor = root.Q<Label>("detailAuthor")); } }
-        
-        private Label _verifyLabel;
-        private Label VerifyLabel { get { return _verifyLabel ?? (_verifyLabel = root.Q<Label>("tagVerify")); } }
-        
-        private VisualElement _customContainer;
-        private VisualElement CustomContainer { get { return _customContainer ?? (_customContainer = root.Q<VisualElement>("detailCustomContainer")); } }
-        
+        private Label DetailDesc { get { return root.Q<Label>("detailDesc"); } }
+        internal Button UpdateButton { get { return root.Q<Button>("update"); } }
+        private Button RemoveButton { get { return root.Q<Button>("remove"); } }
+        private Button ViewDocButton { get { return root.Q<Button>("viewDocumentation"); } }
+        private VisualElement DocumentationContainer { get { return root.Q<VisualElement>("documentationContainer"); } }
+        private Button ViewChangelogButton { get { return root.Q<Button>("viewChangelog"); } }
+        private VisualElement ChangelogContainer { get { return root.Q<VisualElement>("changeLogContainer"); } }
+        private VisualElement ViewLicensesContainer { get { return root.Q<VisualElement>("viewLicensesContainer"); } }
+        private Button ViewLicenses { get { return root.Q<Button>("viewLicenses"); } }        
+        private VisualElement UpdateContainer { get { return root.Q<VisualElement>("updateContainer"); } }
+        private Alert DetailError { get { return root.Q<Alert>("detailError"); } }
+        private ScrollView DetailView { get { return root.Q<ScrollView>("detailView"); } }
+        private Label DetailModuleReference { get { return root.Q<Label>("detailModuleReference"); } }
+        private Label DetailVersion { get { return root.Q<Label>("detailVersion");  }}
+        private Label DetailAuthor { get { return root.Q<Label>("detailAuthor");  }}
+        private Label VerifyLabel { get { return root.Q<Label>("tagVerify"); } }
+        private VisualElement CustomContainer { get { return root.Q<VisualElement>("detailCustomContainer"); } }
         internal VisualElement GetTag(PackageTag tag) {return root.Q<VisualElement>("tag-" + tag); }
-        
-        private VisualElement _updateDropdownContainer;
-        private VisualElement UpdateDropdownContainer { get { return _updateDropdownContainer ?? (_updateDropdownContainer = root.Q<VisualElement>("updateDropdownContainer")); } }
-        
-        private VisualElement _updateCombo;
-        internal VisualElement UpdateCombo { get { return _updateCombo ?? (_updateCombo = root.Q<VisualElement>("updateCombo")); } }
-
-        private Button _updateBuiltIn;
-        internal Button UpdateBuiltIn { get { return _updateBuiltIn ?? (_updateBuiltIn = root.Q<Button>("updateBuiltIn")); } }       
+        private VisualElement UpdateDropdownContainer { get { return root.Q<VisualElement>("updateDropdownContainer"); } }
+        internal VisualElement UpdateCombo { get { return root.Q<VisualElement>("updateCombo"); } }
+        internal Button UpdateBuiltIn { get { return root.Q<Button>("updateBuiltIn"); } }        
     }
 }

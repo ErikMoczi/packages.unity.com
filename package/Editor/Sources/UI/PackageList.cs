@@ -25,13 +25,10 @@ namespace UnityEditor.PackageManager.UI
         public event Action<Package> OnSelected = delegate { };
         public event Action OnLoaded = delegate { };
         public event Action OnFocusChange = delegate { };
-        public event Action OnReload = delegate { };
 
         private readonly VisualElement root;
-        private List<PackageGroup> Groups;
-
-        internal PackageSearchFilter searchFilter;
         internal PackageItem selectedItem;
+        private List<PackageGroup> Groups;
 
         public PackageList()
         {
@@ -44,6 +41,8 @@ namespace UnityEditor.PackageManager.UI
             UIUtils.SetElementDisplay(Empty, false);
             UIUtils.SetElementDisplay(NoResult, false);
 
+            PackageCollection.Instance.OnPackagesChanged += SetPackages;
+
             RegisterCallback<AttachToPanelEvent>(OnEnterPanel);
             RegisterCallback<DetachFromPanelEvent>(OnLeavePanel);
 
@@ -54,7 +53,7 @@ namespace UnityEditor.PackageManager.UI
         {
             if (selectedItem == null)
                 return;
-
+            
             selectedItem.Focus();
         }
 
@@ -72,7 +71,7 @@ namespace UnityEditor.PackageManager.UI
 
         public void ShowNoResults()
         {
-            NoResultText.text = string.Format("No results for \"{0}\"", searchFilter.SearchText);
+            NoResultText.text = string.Format("No results for \"{0}\"", PackageSearchFilter.Instance.SearchText);
             UIUtils.SetElementDisplay(NoResult, true);
             foreach (var group in Groups)
             {
@@ -80,11 +79,6 @@ namespace UnityEditor.PackageManager.UI
             }
             Select(null);
             OnSelected(null);
-        }
-
-        public void SetSearchFilter(PackageSearchFilter filter)
-        {
-            searchFilter = filter;
         }
 
         private void UpdateGroups()
@@ -108,7 +102,7 @@ namespace UnityEditor.PackageManager.UI
                 {
                     UIUtils.SetElementDisplay(group, false);
                 }
-                else
+                else 
                 {
                     UIUtils.SetElementDisplay(group, true);
                     group.firstPackage = firstPackage;
@@ -130,7 +124,7 @@ namespace UnityEditor.PackageManager.UI
         private void ScrollIfNeeded()
         {
             EditorApplication.delayCall -= ScrollIfNeeded;
-
+            
             if (selectedItem == null)
                 return;
 
@@ -165,7 +159,7 @@ namespace UnityEditor.PackageManager.UI
                 evt.StopPropagation();
                 return;
             }
-
+            
             if (evt.keyCode == KeyCode.UpArrow)
             {
                 if (selectedItem.previousItem != null)
@@ -248,7 +242,9 @@ namespace UnityEditor.PackageManager.UI
 
         private void Reload()
         {
-            OnReload();
+            // Force a re-init to initial condition
+            PackageCollection.Instance.UpdatePackageCollection();
+            SelectLastSelection();
         }
 
         private void ClearAll()
@@ -260,13 +256,13 @@ namespace UnityEditor.PackageManager.UI
             UIUtils.SetElementDisplay(NoResult, false);
         }
 
-        public void SetPackages(PackageFilter filter, IEnumerable<Package> packages, string lastSelection)
+        private void SetPackages(IEnumerable<Package> packages)
         {
-            if (filter == PackageFilter.Modules)
+            if (PackageCollection.Instance.Filter == PackageFilter.Modules)
             {
                 packages = packages.Where(pkg => pkg.IsBuiltIn);
             }
-            else if (filter== PackageFilter.All)
+            else if (PackageCollection.Instance.Filter== PackageFilter.All)
             {
                 packages = packages.Where(pkg => !pkg.IsBuiltIn);
             }
@@ -288,7 +284,7 @@ namespace UnityEditor.PackageManager.UI
             Groups.Add(builtInGroup);
             List.Add(builtInGroup);
 
-            if (filter == PackageFilter.Modules)
+            if ((PackageCollection.Instance.Filter & PackageFilter.Modules) == PackageFilter.Modules)
             {
                 packagesGroup.nextGroup = builtInGroup;
                 builtInGroup.previousGroup = packagesGroup;
@@ -300,6 +296,7 @@ namespace UnityEditor.PackageManager.UI
                 UIUtils.SetElementDisplay(builtInGroup, false);
             }
 
+            var lastSelection = PackageCollection.Instance.SelectedPackage;
             Select(null);
 
             PackageItem defaultSelection = null;
@@ -321,11 +318,12 @@ namespace UnityEditor.PackageManager.UI
             PackageFiltering.FilterPackageList(this);
         }
 
-        public void SelectLastSelection(string lastSelection)
+        public void SelectLastSelection()
         {
+            var lastSelection = PackageCollection.Instance.SelectedPackage;
             if (lastSelection == null)
                 return;
-
+            
             var list = List.Query<PackageItem>().ToList();
             PackageItem defaultSelection = null;
 
@@ -384,6 +382,9 @@ namespace UnityEditor.PackageManager.UI
             if (packageItem == selectedItem)
                 return;
 
+            var selectedPackageName = packageItem != null ? packageItem.package.Name : null;
+            PackageCollection.Instance.SelectedPackage = selectedPackageName;
+
             if (selectedItem != null)
                 selectedItem.SetSelected(false); // Clear Previous selection
 
@@ -399,16 +400,9 @@ namespace UnityEditor.PackageManager.UI
             OnSelected(selectedItem.package);
         }
 
-        private ScrollView _list;
-        private ScrollView List { get { return _list ?? (_list = root.Q<ScrollView>("scrollView")); } }
-
-        private VisualElement _empty;
-        private VisualElement Empty { get { return _empty ?? (_empty = root.Q<VisualElement>("emptyArea")); } }
-
-        private VisualElement _noResult;
-        private VisualElement NoResult { get { return _noResult ?? (_noResult = root.Q<VisualElement>("noResult")); } }
-
-        private Label _noResultText;
-        private Label NoResultText { get { return _noResultText ?? (_noResultText = root.Q<Label>("noResultText")); } }
+        private ScrollView List { get { return root.Q<ScrollView>("scrollView"); } }
+        private VisualElement Empty { get { return root.Q<VisualElement>("emptyArea"); } }
+        private VisualElement NoResult { get { return root.Q<VisualElement>("noResult"); } }
+        private Label NoResultText { get { return root.Q<Label>("noResultText"); } }
     }
 }

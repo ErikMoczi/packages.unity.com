@@ -66,7 +66,7 @@ namespace UnityEditor.PackageManager.UI
             var packageItems = packageList.Query<PackageItem>().ToList();
             foreach (var item in packageItems)
             {
-                if (FilterByText(item, packageList.searchFilter.SearchText))
+                if (FilterByText(item, PackageSearchFilter.Instance.SearchText))
                 {
                     if (firstItem == null)
                         firstItem = item;

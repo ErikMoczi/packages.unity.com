@@ -9,12 +9,12 @@ namespace UnityEditor.PackageManager.UI.Tests
     internal class PackageManagerWindowTests : UITests<PackageManagerWindow>
     {
         // Filter change shows correct result
-        private Action<PackageFilter, IEnumerable<Package>, string> onPackageChangedEvent;    // TODO: We need to have a discussion on event de-registration
+        private Action<IEnumerable<Package>> onPackageChangedEvent;    // TODO: We need to have a discussion on event de-registration
 
         [SetUp]
         public void Setup()
         {
-            Window.Collection.SetFilter(PackageFilter.Local);
+            PackageCollection.Instance.SetFilter(PackageFilter.Local);
             SetListPackages(Enumerable.Empty<PackageInfo>());
             SetSearchPackages(Enumerable.Empty<PackageInfo>());
             Factory.ResetOperations();
@@ -23,25 +23,13 @@ namespace UnityEditor.PackageManager.UI.Tests
         [TearDown]
         public void Dispose()
         {
-            Window.Collection.OnPackagesChanged -= onPackageChangedEvent;
-        }
-
-        private void SetSearchPackages(IEnumerable<PackageInfo> packages)
-        {
-            Factory.SearchOperation = new MockSearchOperation(Factory, packages);
-            Window.Collection.FetchSearchCache(true);
-        }
-
-        private void SetListPackages(IEnumerable<PackageInfo> packages)
-        {
-            Factory.Packages = packages;
-            Window.Collection.FetchListCache(true);
+            PackageCollection.Instance.OnPackagesChanged -= onPackageChangedEvent;
         }
 
         [Test]
         public void When_Default_FirstPackageUIElement_HasSelectedClass()
         {
-            onPackageChangedEvent = (filter, packages, selected) =>
+            onPackageChangedEvent = packages =>
             {
                 var package = Container.Query(null, "package").First();
 
@@ -49,7 +37,7 @@ namespace UnityEditor.PackageManager.UI.Tests
                 Assert.IsTrue(package.ClassListContains(PackageItem.SelectedClassName));
             };
             
-            Window.Collection.OnPackagesChanged += onPackageChangedEvent;
+            PackageCollection.Instance.OnPackagesChanged += onPackageChangedEvent;
             SetListPackages(PackageSets.Instance.Many(5, true));
         }
 
@@ -63,11 +51,11 @@ namespace UnityEditor.PackageManager.UI.Tests
             SetListPackages(packages);
             Factory.AddOperation = new MockAddOperation(Factory, latest);
 
-            var package = Window.Collection.GetPackageByName(current.Name);
+            var package = PackageCollection.Instance.GetPackageByName(current.Name);
 
-            onPackageChangedEvent = (filter, newpackages, selected) =>
+            onPackageChangedEvent = newpackages =>
             {
-                package = Window.Collection.GetPackageByName(current.Name);
+                package = PackageCollection.Instance.GetPackageByName(current.Name);
 
                 Assert.IsTrue(package.Current.PackageId == latest.PackageId);
 
@@ -85,7 +73,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             {
                 operation.OnOperationSuccess += packageInfo =>
                 {
-                    Window.Collection.OnPackagesChanged += onPackageChangedEvent;
+                    PackageCollection.Instance.OnPackagesChanged += onPackageChangedEvent;
                 };
             };
 
@@ -105,7 +93,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             Factory.AddOperation = new MockAddOperation(Factory, latest);
             Factory.AddOperation.ForceError = error;
 
-            var package = Window.Collection.GetPackageByName(current.Name);
+            var package = PackageCollection.Instance.GetPackageByName(current.Name);
 
             package.AddSignal.OnOperation += operation =>
             {
@@ -136,19 +124,19 @@ namespace UnityEditor.PackageManager.UI.Tests
             var current = packages.ToList().First();
 
             SetListPackages(packages);
-            var package = Window.Collection.GetPackageByName(current.Name);
+            var package = PackageCollection.Instance.GetPackageByName(current.Name);
             Assert.IsNotNull(package);
 
-            onPackageChangedEvent = (filter, allPackages, selected) =>
+            onPackageChangedEvent = allPackages =>
             {
-                package = Window.Collection.GetPackageByName(current.Name);
+                package = PackageCollection.Instance.GetPackageByName(current.Name);
                 Assert.IsNull(package);
             };
 
-            Window.Collection.OnPackagesChanged += onPackageChangedEvent;
+            PackageCollection.Instance.OnPackagesChanged += onPackageChangedEvent;
 
             package.Remove();
-            Window.Collection.FetchListOfflineCache(true);
+            PackageCollection.Instance.FetchListOfflineCache(true);
         }
 
         [Test]
@@ -160,7 +148,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             var error = MakeError(ErrorCode.Unknown, "Fake error");
             Factory.RemoveOperation = new MockRemoveOperation(Factory) {ForceError = error};
             SetListPackages(packages);
-            var package = Window.Collection.GetPackageByName(current.Name);
+            var package = PackageCollection.Instance.GetPackageByName(current.Name);
             Assert.IsNotNull(package);
 
             package.RemoveSignal.OnOperation += operation =>
@@ -168,7 +156,7 @@ namespace UnityEditor.PackageManager.UI.Tests
                 operation.OnOperationError += operationError => { Assert.AreEqual(error, operationError); };
                 operation.OnOperationFinalized += () =>
                 {
-                    package = Window.Collection.GetPackageByName(current.Name);
+                    package = PackageCollection.Instance.GetPackageByName(current.Name);
                     Assert.IsNotNull(package);
                 };
             };
@@ -185,7 +173,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             SetListPackages(packagesLocal);
             SetSearchPackages(packagesAll);
 
-            onPackageChangedEvent = (filter, packages, selected) =>
+            onPackageChangedEvent = packages =>
             {
                 foreach (var package in packagesAll)
                 {
@@ -193,27 +181,27 @@ namespace UnityEditor.PackageManager.UI.Tests
                 }
             };
 
-            Window.Collection.OnPackagesChanged += onPackageChangedEvent;
+            PackageCollection.Instance.OnPackagesChanged += onPackageChangedEvent;
             
-            Window.Collection.SetFilter(PackageFilter.All);
+            PackageCollection.Instance.SetFilter(PackageFilter.All);
         }
 
         [Test]
         public void ListPackages_UsesCache()
         {
-            Window.Collection.SetFilter(PackageFilter.Local);                            // Set filter to use list
+            PackageCollection.Instance.SetFilter(PackageFilter.Local);                            // Set filter to use list
             SetListPackages(PackageSets.Instance.Many(2));
             
-            Assert.IsTrue(Window.Collection.LatestListPackages.Any());            // Make sure packages are cached
+            Assert.IsTrue(PackageCollection.Instance.LatestListPackages.Any());            // Make sure packages are cached
         }
 
         [Test]
         public void SearchPackages_UsesCache()
         {
-            Window.Collection.SetFilter(PackageFilter.All);                                // Set filter to use search
+            PackageCollection.Instance.SetFilter(PackageFilter.All);                                // Set filter to use search
             SetSearchPackages(PackageSets.Instance.Many(2));
             
-            Assert.IsTrue(Window.Collection.LatestSearchPackages.Any());     // Make sure packages are cached
+            Assert.IsTrue(PackageCollection.Instance.LatestSearchPackages.Any());     // Make sure packages are cached
         }
     }
 }

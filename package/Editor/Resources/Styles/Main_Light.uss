@@ -463,8 +463,6 @@
 }
 #detailListView #packageListGroup {
   width: 270;
-  border-right-width: 1px;
-  border-color: rgba(0, 0, 0, 0.5);
 }
 #detailListView #packageListGroup #groupContainerOuter #headerContainer {
   flex: 1 0 0;
@@ -567,6 +565,8 @@
 }
 #detailListView #detailsGroup {
   flex: 1 0 0;
+  border-left-width: 1px;
+  border-color: rgba(0, 0, 0, 0.5);
 }
 #detailListView #detailsGroup #detailsContainer {
   flex: 1 0 0;

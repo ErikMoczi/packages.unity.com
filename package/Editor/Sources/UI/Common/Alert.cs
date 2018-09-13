@@ -68,10 +68,7 @@ namespace UnityEditor.PackageManager.UI
                 style.positionRight = originalPositionRight;
         }
 
-        private Label _alertMessage;
-        private Label AlertMessage { get { return _alertMessage ?? (_alertMessage = root.Q<Label>("alertMessage")); } }
-
-        private Button _closeButton;
-        private Button CloseButton { get { return _closeButton ?? (_closeButton = root.Q<Button>("close")); } }
+        private Label AlertMessage { get { return root.Q<Label>("alertMessage"); } }
+        private Button CloseButton { get { return root.Q<Button>("close"); } }
     }
 }
