@@ -13,7 +13,7 @@ namespace UnityEditor.PackageManager.UI
     }
 #endif
     
-    public class PackageAddFromUrlField : VisualElement
+    internal class PackageAddFromUrlField : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
         internal new class UxmlFactory : UxmlFactory<PackageAddFromUrlField> { }

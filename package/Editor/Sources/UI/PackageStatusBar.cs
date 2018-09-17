@@ -15,7 +15,7 @@ namespace UnityEditor.PackageManager.UI
     }
 #endif
     
-    public class PackageStatusBar : VisualElement
+    internal class PackageStatusBar : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
         internal new class UxmlFactory : UxmlFactory<PackageStatusBar> { }

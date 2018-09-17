@@ -426,12 +426,13 @@ When you install or update a package, the Package Manager downloads the package 
 
 This version of Unity Package Manager is compatible with the following versions of the Unity Editor:
 
-* 2018.2 and later (recommended)
+* 2018.3 and later (recommended)
 
 ## Documentation revision history
 |Date|Reason|
 |---|---|
-|June 4, 2018|Documentation updated. Matches package version 1.10.0.|
+|September 14, 2018|Documentation updated. Matches package version 2.0.1.|
+|June 4, 2018|Documentation updated. Matches package version 2.0.0.|
 |May 25, 2018|Documentation updated. Matches package version 1.9.9.|
 |May 4, 2018|Documentation updated. Matches package version 1.9.8.|
 |March 19, 2018|Documentation updated. Matches package version 1.9.0.|

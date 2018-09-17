@@ -2,7 +2,7 @@
 
 namespace UnityEditor.PackageManager.UI
 {
-    public static class Resources
+    internal static class Resources
     {
         private static string TemplateRoot { get { return PackageManagerWindow.ResourcesPath + "Templates"; } }
 

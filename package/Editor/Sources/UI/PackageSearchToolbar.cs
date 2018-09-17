@@ -14,7 +14,7 @@ namespace UnityEditor.PackageManager.UI
     }
 #endif
 
-    public class PackageSearchToolbar : VisualElement
+    internal class PackageSearchToolbar : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
         internal new class UxmlFactory : UxmlFactory<PackageSearchToolbar> { }
