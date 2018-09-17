@@ -1,8 +1,8 @@
 {
     "displayName": "Lightweight RP (Preview)", 
     "name": "com.unity.template.lightweight", 
-    "unity": "2018.3", 
-    "version": "1.0.3-preview", 
+    "unity": "2019.1", 
+    "version": "1.0.4-preview", 
     "dependencies": {
         "com.unity.modules.ui": "1.0.0", 
         "com.unity.modules.tilemap": "1.0.0", 
@@ -13,7 +13,7 @@
         "com.unity.modules.umbra": "1.0.0", 
         "com.unity.collab-proxy": "1.2.4-preview", 
         "com.unity.analytics": "2.0.16", 
-        "com.unity.textmeshpro": "1.2.1", 
+        "com.unity.textmeshpro": "1.2.4", 
         "com.unity.modules.imageconversion": "1.0.0", 
         "com.unity.modules.director": "1.0.0", 
         "com.unity.modules.video": "1.0.0", 
@@ -22,7 +22,7 @@
         "com.unity.modules.vehicles": "1.0.0", 
         "com.unity.modules.xr": "1.0.0", 
         "com.unity.modules.unitywebrequestwww": "1.0.0", 
-        "com.unity.purchasing": "2.0.1", 
+        "com.unity.purchasing": "2.0.3", 
         "com.unity.modules.particlesystem": "1.0.0", 
         "com.unity.standardevents": "1.0.13", 
         "com.unity.modules.imgui": "1.0.0", 
@@ -35,7 +35,7 @@
         "com.unity.modules.terrainphysics": "1.0.0", 
         "com.unity.ads": "2.0.8", 
         "com.unity.modules.animation": "1.0.0", 
-        "com.unity.render-pipelines.lightweight": "2.0.3-preview", 
+        "com.unity.render-pipelines.lightweight": "3.0.0-preview", 
         "com.unity.modules.cloth": "1.0.0", 
         "com.unity.modules.uielements": "1.0.0", 
         "com.unity.modules.vr": "1.0.0", 
@@ -43,5 +43,5 @@
         "com.unity.modules.wind": "1.0.0"
     }, 
     "type": "template", 
-    "description": "The Project Template utilzes the Lightweight Render Pipeline. \n\nIt is a great starting point for users targeting a broad range of mobile platforms, low-end to mid-tier hardware, or for developers making games that have limited realtime lighting needs. \n\nBeyond being tuned for the Lightweight Render Pipeline this project includes \n\u25aa Shadergraph \n\u25aa Post Processing V2 Stack  \n\u25aa Presets \n\u25aa Example content"
+    "description": "This Project Template utilzes the Lightweight Render Pipeline. \n\nIt is a great starting point for users targeting a broad range of mobile platforms, low-end to mid-tier hardware, or for developers making games that have limited realtime lighting needs. \n\nBeyond being tuned for the Lightweight Render Pipeline this project includes \n\u25aa Shadergraph \n\u25aa Post Processing V2 Stack  \n\u25aa Presets \n\u25aa Example content"
 }
