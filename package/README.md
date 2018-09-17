@@ -22,17 +22,23 @@ If you want to try out this template locally from a user's perspective, you will
 
     It is necessary to package your template to make it available to Unity, since you cannot simply copy your current package template development project.
 
-    We include a python `build.py` script that can easily do this. The script is used in Gitlab CI pipelines and can be used locally. You can package your project template locally through the following command:
+    We include a `build` script that can easily do this. The script is used in Gitlab CI pipelines and can be used locally. You can package your project template locally through the following command: 
 
     ```
-    python build.py package
+    ./build.sh template-ci pack
+    ```
+    or on Windows machines
+    ```
+    build.bat template-ci pack
     ```
 
     This will output a `com.unity.template.<your-template-name>-0.1.0-preview.1.tgz` file in your project's folder.
 
-    You need to make sure you have both `python` _(install it from [here](https://www.python.org/downloads/))_ and `npm` _(install it from [here](https://nodejs.org/en/))_ installed on your machine to package successfully, as the `build.py` calls `npm` under the hood for packaging and publishing. The script is tested with `python 2.7` and `python 3.6`.
+    You need to make sure you have `Node.js` and `npm` _(install it from [here](https://nodejs.org/en/))_ installed on your machine to package successfully, as the script calls `npm` under the hood for packaging and publishing. The script is tested with `node@v6.10.0` and `npm@3.10.10`.
 
-    You cannot directly use `npm package`, as the project template folder structure is different from the package folder structure.
+    Additionally, you need to make sure you have internet access when you use the `build` script for the first time, as the script will download and install the dependant `Node.js` package that's used under the hood.
+
+    You cannot directly use `npm pack`, as the project template folder structure is different from the package folder structure.
 
 1. Include the project template package in Unity editor
 
@@ -42,6 +48,10 @@ If you want to try out this template locally from a user's perspective, you will
 
     1. Windows: `<Unity Editor Root>/Data/Resources/PackageManager/ProjectTemplates`
 
-    The result when creating a new project should be something like this:
+1. Preview your project template
+
+    The result when creating a new project should be something like this when using the Unity Hub:
 
     ![Template in new project](Packages/com.unity.template.lightweight/Documentation~/images/template_in_new_project.png)
+
+    If you are launching the Unity editor without the hub, you will not see additional templates in the list.
