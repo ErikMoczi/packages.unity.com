@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.39] - 2018-9-14
+
+### remove duplicate module from docs
+
 ## [0.1.38] - 2018-9-14
 
 ### doc updates
