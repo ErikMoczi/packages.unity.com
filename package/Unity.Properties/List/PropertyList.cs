@@ -71,6 +71,8 @@ namespace Unity.Properties
         public bool IsReadOnly => false;
         public int Count => m_Property.Count(m_Container);
 
+        public IProperty Property => m_Property;
+
         public TValue this[int index]
         {
             get { return m_Property.GetAt(m_Container, index); }
