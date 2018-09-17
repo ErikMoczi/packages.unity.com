@@ -4,10 +4,15 @@ All notable changes to this project template will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2018-09-06
+
+### Changed
+- Updated HD version number
+
 ## [1.0.4] - 2018-07-17
 
 ### Changed
-- Migrating old lightweight templates into package format 
+- Migrating old templates into package format 
 - Updating version
 - adjusting spot light value for upgrade
 - adding collider to ground
