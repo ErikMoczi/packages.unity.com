@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.38] - 2018-9-14
+
+### doc updates
+
 ## [0.1.36] - 2018-8-27
 
 ### ProfilerMarkers now take params as arguments
