@@ -252,10 +252,10 @@ namespace UnityEngine.XR.ARFoundation
             {
                 go = new GameObject();
                 go.transform.SetParent(parentTransform, false);
+                go.layer = gameObject.layer;
             }
 
             go.name = string.Format("ReferencePoint {0}", referencePointId);
-            go.layer = gameObject.layer;
 
             // Make sure it has an ARReferencePoint component.
             var referencePoint = go.GetComponent<ARReferencePoint>();

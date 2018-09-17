@@ -178,13 +178,13 @@ namespace UnityEngine.XR.ARFoundation
 
             var go = new GameObject();
             go.transform.SetParent(m_SessionOrigin.trackablesParent, false);
+            go.layer = gameObject.layer;
             return go;
         }
 
         ARPlane AddPlane(BoundedPlane boundedPlane)
         {
             var go = CreateGameObject();
-            go.layer = gameObject.layer;
             var plane = go.GetComponent<ARPlane>();
             if (plane == null)
                 plane = go.AddComponent<ARPlane>();

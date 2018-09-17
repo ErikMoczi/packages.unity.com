@@ -72,6 +72,14 @@ namespace UnityEngine.XR.ARFoundation
         }
 
         /// <summary>
+        /// Gets the normal to this plane in world space.
+        /// </summary>
+        public Vector3 normal
+        {
+            get { return transform.up; }
+        }
+
+        /// <summary>
         /// Gets the current <c>TrackingState</c> of this <see cref="ARPlane"/>.
         /// </summary>
         public TrackingState trackingState

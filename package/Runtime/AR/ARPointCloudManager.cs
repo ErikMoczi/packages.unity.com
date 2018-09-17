@@ -81,9 +81,8 @@ namespace UnityEngine.XR.ARFoundation
                 {
                     newGameObject = new GameObject();
                     newGameObject.transform.SetParent(m_SessionOrigin.trackablesParent, false);
+                    newGameObject.layer = gameObject.layer;
                 }
-
-                newGameObject.layer = gameObject.layer;
 
                 pointCloud = newGameObject.GetComponent<ARPointCloud>();
                 if (pointCloud == null)

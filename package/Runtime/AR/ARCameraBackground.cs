@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
 namespace UnityEngine.XR.ARFoundation
@@ -65,7 +66,25 @@ namespace UnityEngine.XR.ARFoundation
             }
         }
 
-        ARBackgroundRenderer backgroundRenderer { get; set; }
+        [SerializeField]
+        bool m_UseCustomRendererAsset;
+
+        public bool useCustomRendererAsset
+        {
+            get { return m_UseCustomRendererAsset; }
+            set { m_UseCustomRendererAsset = value; }
+        }
+
+        [SerializeField] 
+        ARBackgroundRendererAsset m_CustomRendererAsset;
+
+        public ARBackgroundRendererAsset customRendererAsset
+        {
+            get { return m_CustomRendererAsset; }
+        }
+        
+
+        ARFoundationBackgroundRenderer backgroundRenderer { get; set; }
 
         Material CreateMaterialFromSubsystemShader()
         {
@@ -103,7 +122,17 @@ namespace UnityEngine.XR.ARFoundation
 
         void Awake()
         {
-            backgroundRenderer = new ARBackgroundRenderer();
+            var useRenderPipeline = GraphicsSettings.renderPipelineAsset != null;
+            if (useRenderPipeline && m_UseCustomRendererAsset && m_CustomRendererAsset != null)
+            {
+                backgroundRenderer = m_CustomRendererAsset.CreateARBackgroundRenderer();
+                m_CustomRendererAsset.CreateHelperComponents(gameObject);
+            }
+            else
+            {
+                backgroundRenderer = new ARFoundationBackgroundRenderer();
+            }
+            
             backgroundRenderer.camera = GetComponent<Camera>();
         }
 
@@ -146,7 +175,15 @@ namespace UnityEngine.XR.ARFoundation
 
         void UpdateMaterial()
         {
-            material = m_UseCustomMaterial ? m_CustomMaterial : subsystemMaterial;
+            var useRenderPipeline = GraphicsSettings.renderPipelineAsset != null;
+            if (useRenderPipeline && m_UseCustomRendererAsset && m_CustomRendererAsset != null)
+            {
+                material = lwrpMaterial;
+            }
+            else
+            {
+                material = m_UseCustomMaterial ? m_CustomMaterial : subsystemMaterial;
+            }
         }
 
         bool m_CameraSetupThrewException;
@@ -168,6 +205,22 @@ namespace UnityEngine.XR.ARFoundation
                     m_SubsystemMaterial = CreateMaterialFromSubsystemShader();
 
                 return m_SubsystemMaterial;
+            }
+        }
+
+        Material m_LwrpMaterial;
+
+        Material lwrpMaterial
+        {
+            get
+            {
+                if (m_LwrpMaterial != null) return m_LwrpMaterial;
+                if (m_UseCustomRendererAsset && m_CustomRendererAsset != null)
+                {
+                    m_LwrpMaterial = m_CustomRendererAsset.CreateCustomMaterial();
+                }
+
+                return m_LwrpMaterial;
             }
         }
     }

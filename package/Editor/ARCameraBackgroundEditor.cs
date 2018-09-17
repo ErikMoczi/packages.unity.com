@@ -10,6 +10,10 @@ namespace UnityEditor.XR.ARFoundation
 
         SerializedProperty m_CustomMaterial;
 
+        SerializedProperty m_UseCustomRendererAsset;
+
+        SerializedProperty m_CustomRendererAsset;
+
         static class Tooltips
         {
             public static readonly GUIContent useCustomMaterial = new GUIContent(
@@ -19,6 +23,16 @@ namespace UnityEditor.XR.ARFoundation
             public static readonly GUIContent customMaterial = new GUIContent(
                 "Custom Material",
                 "The material to use for background rendering.");
+            
+            public static readonly GUIContent useCustomRendererAsset = new GUIContent(
+                "Use Custom Renderer Asset",
+                "When false, default background renderer is used. When true, the Custom Render Asset is used to generate a background renderer, overriding the default one.");
+
+            public static readonly GUIContent customRendererAsset = new GUIContent(
+                "Custom Renderer Asset",
+                "The Render Asset to use to create background renderer.");
+
+
         }
 
         public override void OnInspectorGUI()
@@ -34,6 +48,15 @@ namespace UnityEditor.XR.ARFoundation
                 EditorGUI.indentLevel--;
             }
 
+            EditorGUILayout.PropertyField(m_UseCustomRendererAsset, Tooltips.useCustomRendererAsset);
+
+            if (m_UseCustomRendererAsset.boolValue)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(m_CustomRendererAsset, Tooltips.customRendererAsset);
+                EditorGUI.indentLevel--;
+            }
+
             serializedObject.ApplyModifiedProperties();
         }
 
@@ -41,6 +64,8 @@ namespace UnityEditor.XR.ARFoundation
         {
             m_UseCustomMaterial = serializedObject.FindProperty("m_UseCustomMaterial");
             m_CustomMaterial = serializedObject.FindProperty("m_CustomMaterial");
+            m_UseCustomRendererAsset = serializedObject.FindProperty("m_UseCustomRendererAsset");
+            m_CustomRendererAsset = serializedObject.FindProperty("m_CustomRendererAsset");
         }
     }
 }

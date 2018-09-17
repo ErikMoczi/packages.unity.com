@@ -126,6 +126,7 @@ namespace UnityEngine.XR.ARFoundation
             m_Plane.boundaryChanged -= OnBoundaryChanged;
             m_Plane.updated -= OnUpdated;
             ARSubsystemManager.systemStateChanged -= OnSystemStateChanged;
+            UpdateVisibility();
         }
 
         void Update()
