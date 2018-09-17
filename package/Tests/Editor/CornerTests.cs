@@ -5,44 +5,33 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Experimental.U2D;
+using UnityEngine.Experimental.Rendering;
 using Unity.VectorGraphics;
 using Unity.VectorGraphics.Editor;
-using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.U2D;
 
 public class CornerTests : MonoBehaviour
 {
-    public class Geometry
-    {
-        public Vector2[] vertices;
-        public Vector2[] uvs;
-        public UInt16[] indices;
-        public Color color;
-        public Matrix2D worldTransform = Matrix2D.identity;
-        public IFill fill;
-        public Matrix2D fillTransform;
-    }
-
-
     void Start()
     {
         float x = -1.0f;
         float xStep = 0.48f;
 
         var options = new VectorUtils.TessellationOptions();
-        options.maxCordDeviation = float.MaxValue;
-        options.maxTanAngleDeviation = Mathf.PI * 0.5f;
-        options.samplingStepSize = 1.0f / 100.0f;
+        options.MaxCordDeviation = float.MaxValue;
+        options.MaxTanAngleDeviation = Mathf.PI * 0.5f;
+        options.SamplingStepSize = 1.0f / 100.0f;
 
         // Fine tessellation
-        options.stepDistance = 1.0f;
+        options.StepDistance = 1.0f;
         BuildTestColumnWithProperties(x, 1.0f, PathEnding.Chop, PathCorner.Tipped, options);  x += xStep;
         BuildTestColumnWithProperties(x, 2.0f, PathEnding.Chop, PathCorner.Tipped, options);  x += xStep;
         BuildTestColumnWithProperties(x, 4.0f, PathEnding.Chop, PathCorner.Beveled, options); x += xStep;
         BuildTestColumnWithProperties(x, 6.0f, PathEnding.Round, PathCorner.Round, options);  x += xStep;
 
         // Coarse tessellation
-        options.stepDistance = 100.0f;
+        options.StepDistance = 100.0f;
         BuildTestColumnWithProperties(x, 1.0f, PathEnding.Chop, PathCorner.Tipped, options);  x += xStep;
         BuildTestColumnWithProperties(x, 2.0f, PathEnding.Chop, PathCorner.Tipped, options);  x += xStep;
         BuildTestColumnWithProperties(x, 4.0f, PathEnding.Chop, PathCorner.Beveled, options); x += xStep;
@@ -63,14 +52,14 @@ public class CornerTests : MonoBehaviour
         foreach (var angle in angles)
         {
             var path = LinesWithAngle(angle, width);
-            var pathProps = path.pathProps;
-            pathProps.head = ending;
-            pathProps.tail = ending;
-            pathProps.corners = corners;
-            path.pathProps = pathProps;
+            var pathProps = path.PathProps;
+            pathProps.Head = ending;
+            pathProps.Tail = ending;
+            pathProps.Corners = corners;
+            path.PathProps = pathProps;
 
-            var geoms = new List<Geometry>();
-            TessellatePath(path.contour, path.pathProps, geoms, options);
+            var geoms = new List<VectorUtils.Geometry>();
+            TessellatePath(path.Contours[0], path.PathProps, geoms, options);
             sprites.Add(SpriteFromGeometry(geoms));
         }
 
@@ -85,27 +74,29 @@ public class CornerTests : MonoBehaviour
         }
     }
 
-    private static Path LinesWithAngle(float angle, float width)
+    private static Shape LinesWithAngle(float angle, float width)
     {
         var p = Vector2.zero;
         var q = new Vector2(20.0f, 0.0f) + p;
         var r = new Vector2(Mathf.Cos(angle) * 20.0f, Mathf.Sin(angle) * 20.0f) + q;
-        var path = new Path() {
-            contour = new BezierContour() {
-                segments = new BezierPathSegment[] {
-                    new BezierPathSegment() { p0 = p, p1 = p + (q - p) / 3.0f, p2 = p + (q - p) / 3.0f * 2.0f },
-                    new BezierPathSegment() { p0 = q, p1 = q + (r - q) / 3.0f, p2 = q + (r - q) / 3.0f * 2.0f },
-                    new BezierPathSegment() { p0 = r }
+        var path = new Shape() {
+            Contours = new BezierContour[] {
+                new BezierContour() {
+                    Segments = new BezierPathSegment[] {
+                        new BezierPathSegment() { P0 = p, P1 = p + (q - p) / 3.0f, P2 = p + (q - p) / 3.0f * 2.0f },
+                        new BezierPathSegment() { P0 = q, P1 = q + (r - q) / 3.0f, P2 = q + (r - q) / 3.0f * 2.0f },
+                        new BezierPathSegment() { P0 = r }
+                    }
                 }
             },
-            pathProps = new PathProperties() {
-                stroke = new Stroke() { color = Color.white, halfThickness = width / 2 }
+            PathProps = new PathProperties() {
+                Stroke = new Stroke() { Color = Color.white, HalfThickness = width / 2 }
             }
         };
         return path;
     }
 
-    private static Sprite SpriteFromGeometry(List<Geometry> geoms)
+    private static Sprite SpriteFromGeometry(List<VectorUtils.Geometry> geoms)
     {
         var vertices = new List<Vector2>();
         var indices = new List<UInt16>();
@@ -113,15 +104,16 @@ public class CornerTests : MonoBehaviour
 
         foreach (var geom in geoms)
         {
-            if (geom.indices.Length == 0)
+            if (geom.Indices.Length == 0)
                 continue;
 
-            indices.AddRange(geom.indices.Select(x => (UInt16)(x + vertices.Count)));
-            vertices.AddRange(geom.vertices.Select(x => geom.worldTransform * x));
-            colors.AddRange(Enumerable.Repeat(geom.color, geom.vertices.Length));
+            indices.AddRange(geom.Indices.Select(x => (UInt16)(x + vertices.Count)));
+            vertices.AddRange(geom.Vertices.Select(x => geom.WorldTransform * x));
+            colors.AddRange(Enumerable.Repeat(geom.Color, geom.Vertices.Length));
         }
 
-        var bbox = VectorUtils.RealignVerticesInBounds(vertices, true);
+        var bbox = VectorUtils.Bounds(vertices);
+        VectorUtils.RealignVerticesInBounds(vertices, bbox, true);
         var rect = new Rect(0, 0, bbox.width, bbox.height);
 
         // The Sprite.Create(Rect, Vector2, float, Texture2D) method is internal. Using reflection
@@ -138,16 +130,16 @@ public class CornerTests : MonoBehaviour
         return sprite;
     }
 
-    private static void TessellatePath(BezierContour contour, PathProperties pathProps, List<Geometry> geoms, VectorUtils.TessellationOptions options)
+    private static void TessellatePath(BezierContour contour, PathProperties pathProps, List<VectorUtils.Geometry> geoms, VectorUtils.TessellationOptions options)
     {
-        if (pathProps.stroke != null)
+        if (pathProps.Stroke != null)
         {
             Vector2[] vertices;
             UInt16[] indices;
             VectorUtils.TessellatePath(contour, pathProps, options, out vertices, out indices);
 
-            var color = pathProps.stroke.color;
-            geoms.Add(new Geometry() { vertices = vertices, indices = indices, color = color });
+            var color = pathProps.Stroke.Color;
+            geoms.Add(new VectorUtils.Geometry() { Vertices = vertices, Indices = indices, Color = color });
         }
     }
 }

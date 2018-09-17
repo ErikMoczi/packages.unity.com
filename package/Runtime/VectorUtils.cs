@@ -15,15 +15,52 @@ namespace Unity.VectorGraphics
         /// <summary>A small value used everywhere by the vector graphics package.</summary>
         public static readonly float Epsilon = 0.000001f;
 
-        /// <summary>
-        /// Builds two BezierPathSegments from a BezierSegment. The second
-        /// BezierPathSegment will hold the ending position of the curve.
-        /// </summary>
-        /// <param name="s">The BezierSegment</param>
-        /// <returns>An array of two BezierPathSegment</returns>
-        public static BezierPathSegment[] PathSegments(BezierSegment s)
+        /// <summary>Convert a segments into a path.</summary>
+        /// <param name="segment">The BezierSegment</param>
+        /// <returns>An array of two path segments</returns>
+        /// <remarks>The second path segment will hold the ending position of the curve.</remarks>
+        public static BezierPathSegment[] BezierSegmentToPath(BezierSegment segment)
         {
-            return new BezierPathSegment[] { new BezierPathSegment() { p0 = s.p0, p1 = s.p1, p2 = s.p2 }, new BezierPathSegment() { p0 = s.p3 } };
+            return new BezierPathSegment[] {
+                new BezierPathSegment() { P0 = segment.P0, P1 = segment.P1, P2 = segment.P2 },
+                new BezierPathSegment() { P0 = segment.P3 }
+            };
+        }
+
+        /// <summary>Converts an array of BezierSegments into a connected path.</summary>
+        /// <param name="segments">An array of BezierSegment</param>
+        /// <returns>An array of path segments</returns>
+        /// <remarks>If two consecutive segments are disconnected, a straight line will be added between the two endpoints.</remarks>
+        public static BezierPathSegment[] BezierSegmentsToPath(BezierSegment[] segments)
+        {
+            if (segments.Count() == 0)
+                return new BezierPathSegment[0];
+
+            int segmentCount = segments.Length;
+            var path = new List<BezierPathSegment>(segments.Length*2 + 1);
+            for (int i = 0; i < segmentCount; ++i)
+            {
+                var seg = segments[i];
+                path.Add(new BezierPathSegment() { P0 = seg.P0, P1 = seg.P1, P2 = seg.P2 });
+
+                if (i == (segmentCount-1))
+                {
+                    // Last segment, close the path
+                    path.Add(new BezierPathSegment() { P0 = seg.P3 });
+                }
+                else
+                {
+                    // Check for connectivity, insert path to connect the endpoints when needed
+                    var nextSeg = segments[i+1];
+                    if (seg.P3 != nextSeg.P0)
+                    {
+                        var line = VectorUtils.MakeLine(seg.P3, nextSeg.P0);
+                        path.Add(new BezierPathSegment() { P0 = line.P0, P1 = line.P1, P2 = line.P2 });
+                    }
+                }
+            }
+
+            return path.ToArray();
         }
 
         /// <summary>
@@ -32,9 +69,12 @@ namespace Unity.VectorGraphics
         /// <param name="path">The chain of BezierPathSegments</param>
         /// <param name="index">The segment index</param>
         /// <returns>The BezierSegment at the given index</returns>
-        public static BezierSegment PathSegment(IList<BezierPathSegment> path, int index)
+        public static BezierSegment PathSegmentAtIndex(IList<BezierPathSegment> path, int index)
         {
-            return new BezierSegment() { p0 = path[index].p0, p1 = path[index].p1, p2 = path[index].p2, p3 = path[index + 1].p0 };
+            if (index < 0 || index >= path.Count)
+                throw new IndexOutOfRangeException("Invalid index passed to PathSegmentAtIndex");
+
+            return new BezierSegment() { P0 = path[index].P0, P1 = path[index].P1, P2 = path[index].P2, P3 = path[index + 1].P0 };
         }
 
         /// <summary>
@@ -47,45 +87,91 @@ namespace Unity.VectorGraphics
             if (path.Count < 2)
                 return false;
 
-            if ((path[0].p0 - path[path.Count - 1].p0).sqrMagnitude > Epsilon)
+            if ((path[0].P0 - path[path.Count - 1].P0).sqrMagnitude > Epsilon)
                 return false;
 
             return true;
         }
 
-        /// <summary>Builds an ellipse.</summary>
+        /// <summary>Builds a rectangle shape.</summary>
+        /// <param name="rectShape">The shape object that will be filled with a rectangle.</param>
+        /// <param name="rect">The position and dimensions of the rectangle.</param>
+        public static void MakeRectangleShape(Shape rectShape, Rect rect)
+        {
+            MakeRectangleShape(rectShape, rect, Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
+        }
+
+        /// <summary>Builds a rectangle shape.</summary>
+        /// <param name="rectShape">The shape object that will be filled with a rectangle.</param>
+        /// <param name="rect">The position and dimensions of the rectangle.</param>
+        /// <param name="radiusTL">The top-left radius of the rectangle</param>
+        /// <param name="radiusTR">The top-right radius of the rectangle</param>
+        /// <param name="radiusBR">The bottom-right radius of the rectangle</param>
+        /// <param name="radiusBL">The bottom-left radius of the rectangle</param>
+        public static void MakeRectangleShape(Shape rectShape, Rect rect, Vector2 radiusTL, Vector2 radiusTR, Vector2 radiusBR, Vector2 radiusBL)
+        {
+            var contour = BuildRectangleContour(rect, radiusTL, radiusTR, radiusBR, radiusBL);
+            if (rectShape.Contours == null || rectShape.Contours.Length != 1)
+                rectShape.Contours = new BezierContour[1];
+            rectShape.Contours[0] = contour;
+            rectShape.IsConvex = true;
+        }
+
+        /// <summary>Builds an ellipse shape.</summary>
+        /// <param name="ellipseShape">The shape object that will be filled with an ellipse.</param>
+        /// <param name="pos">The position of the circle, relative to its center.</param>
+        /// <param name="radius">The radius of the circle.</param>
+        public static void MakeEllipseShape(Shape ellipseShape, Vector2 pos, float radiusX, float radiusY)
+        {
+            var rect = new Rect(pos.x-radiusX, pos.y-radiusY, radiusX+radiusX, radiusY+radiusY);
+            var rad = new Vector2(radiusX, radiusY);
+            MakeRectangleShape(ellipseShape, rect, rad, rad, rad, rad);
+        }
+
+        /// <summary>Builds a circle shape.</summary>
+        /// <param name="circleShape">The shape object that will be filled with a circle.</param>
+        /// <param name="pos">The position of the circle, relative to its center.</param>
+        /// <param name="radius">The radius of the circle.</param>
+        public static void MakeCircleShape(Shape circleShape, Vector2 pos, float radius)
+        {
+            MakeEllipseShape(circleShape, pos, radius, radius);
+        }
+
+        /// <summary>Builds a rounded rectangle in an ellipse shape.</summary>
         /// <param name="rect">The Rectangle that will be rounded to hold the ellipse.</param>
         /// <param name="pos">The position of the ellipse, relative to its center.</param>
         /// <param name="radiusX">The X axis of the ellipse.</param>
         /// <param name="radiusY">The Y axis of the ellipse.</param>
         /// <returns>A rectangle object with rounded corners to form an ellipse</returns>
+        [Obsolete("Use MakeEllipseShape instead")]
         public static Rectangle MakeEllipse(Vector2 pos, float radiusX, float radiusY)
         {
             var rect = new Rectangle();
-            rect.position = new Vector2(pos.x - radiusX, pos.y - radiusY);
-            rect.size = new Vector2(radiusX + radiusX, radiusY + radiusY);
-            rect.radiusTL = rect.radiusTR = rect.radiusBL = rect.radiusBR = new Vector2(radiusX, radiusY);
+            rect.Position = new Vector2(pos.x - radiusX, pos.y - radiusY);
+            rect.Size = new Vector2(radiusX + radiusX, radiusY + radiusY);
+            rect.RadiusTL = rect.RadiusTR = rect.RadiusBL = rect.RadiusBR = new Vector2(radiusX, radiusY);
             return rect;
         }
 
-        /// <summary>Builds an circle.</summary>
+        /// <summary>Builds a rounded rectangle in a circle shape.</summary>
         /// <param name="rect">The Rectangle that will be rounded to hold the circle.</param>
         /// <param name="pos">The position of the circle, relative to its center.</param>
         /// <param name="radius">The radius of the circle.</param>
         /// <returns>A rectangle object with rounded corners to form a circle</returns>
+        [Obsolete("Use MakeCircleShape instead")]
         public static Rectangle MakeCircle(Vector2 pos, float radius)
         {
             return MakeEllipse(pos, radius, radius);
         }
 
-        /// <summary>Computes the bounds of a BezierContour.</summary>
-        /// <param name="contour">The BezierContour to compute the bounds from</param>
+        /// <summary>Computes the bounds of a bezier path.</summary>
+        /// <param name="path">The path to compute the bounds from</param>
         /// <returns>A Rect containing the axis-aligned bounding-box of the contour</returns>
-        public static Rect Bounds(BezierContour contour)
+        public static Rect Bounds(BezierPathSegment[] path)
         {
             var min = new Vector2(float.MaxValue, float.MaxValue);
             var max = new Vector2(-float.MaxValue, -float.MaxValue);
-            foreach (var s in VectorUtils.SegmentsInPath(contour.segments))
+            foreach (var s in VectorUtils.SegmentsInPath(path))
             {
                 Vector2 segMin, segMax;
                 Bounds(s, out segMin, out segMax);
@@ -119,10 +205,27 @@ namespace Unity.VectorGraphics
         {
             return new BezierSegment()
             {
-                p0 = from,
-                p1 = (to - from) / 3.0f + from,
-                p2 = (to - from) * 2.0f / 3.0f + from,
-                p3 = to
+                P0 = from,
+                P1 = (to - from) / 3.0f + from,
+                P2 = (to - from) * 2.0f / 3.0f + from,
+                P3 = to
+            };
+        }
+
+        /// <summary>Converts a quadratic bezier to a cubic bezier</summary>
+        /// <param name="p0">The starting position of the quadratic segment</param>
+        /// <param name="p1">The control position of the quadratic segment</param>
+        /// <param name="p2">The ending position of the quadratic segment</param>
+        /// <returns>The resulting BezierSegment</returns>
+        public static BezierSegment QuadraticToCubic(Vector2 p0, Vector2 p1, Vector2 p2)
+        {
+            var p = p1;
+            var t = 2.0f / 3.0f;
+            return new BezierSegment() {
+                P0 = p0,
+                P1 = p0 + t * (p - p0),
+                P2 = p2 + t * (p - p2),
+                P3 = p2,
             };
         }
 
@@ -134,23 +237,12 @@ namespace Unity.VectorGraphics
         public static BezierPathSegment[] MakePathLine(Vector2 from, Vector2 to)
         {
             return new BezierPathSegment[] {
-                new BezierPathSegment() { p0 = from, p1 = (to - from) / 3.0f + from, p2 = (to - from) * 2.0f / 3.0f + from },
-                new BezierPathSegment() { p0 = to }
+                new BezierPathSegment() { P0 = from, P1 = (to - from) / 3.0f + from, P2 = (to - from) * 2.0f / 3.0f + from },
+                new BezierPathSegment() { P0 = to }
             };
         }
 
-        /// <summary>Approximates a circle arc segment.</summary>
-        /// <param name="center">The center of the arc</param>
-        /// <param name="startAngleRads">The starting angle of the arc, in radians</param>
-        /// <param name="sweepAngleRads">The "length" of the arc, in radians</param>
-        /// <returns>A BezierSegment holding the arc</returns>
-        /// <remarks>
-        /// Note that a sweep angle larger than PI/2 will not approximate well.
-        /// To form a full circle, it is better to use at least 4 segments (see MakeArcSegments).
-        /// When startAngleRads is 0 the arc starts from X+ axis and a positive sweep revolves
-        /// it counter-clockwise.
-        /// </remarks>
-        public static BezierSegment MakeArc(Vector2 center, float startAngleRads, float sweepAngleRads)
+        internal static BezierSegment MakeArcQuarter(Vector2 center, float startAngleRads, float sweepAngleRads)
         {
             // Approximation adapted from http://spencermortensen.com/articles/bezier-circle/
             float s = Mathf.Sin(sweepAngleRads);
@@ -161,10 +253,10 @@ namespace Unity.VectorGraphics
             float f = 0.551915024494f;
             return new BezierSegment()
             {
-                p0 = m * new Vector2(1, 0),
-                p1 = m * new Vector2(1, f),
-                p2 = m * new Vector2(c + f * s, s),
-                p3 = m * new Vector2(c, s)
+                P0 = m * new Vector2(1, 0),
+                P1 = m * new Vector2(1, f),
+                P2 = m * new Vector2(c + f * s, s),
+                P3 = m * new Vector2(c, s)
             };
         }
 
@@ -173,7 +265,7 @@ namespace Unity.VectorGraphics
         /// <param name="startAngleRads">The starting angle of the arc, in radians</param>
         /// <param name="sweepAngleRads">The "length" of the arc, in radians</param>
         /// <returns>An array of up to four BezierSegments holding the arc</returns>
-        public static BezierSegment[] MakeArcSegments(Vector2 center, float startAngleRads, float sweepAngleRads)
+        public static BezierPathSegment[] MakeArc(Vector2 center, float startAngleRads, float sweepAngleRads, float radius)
         {
             bool shouldFlip = false;
             if (sweepAngleRads < 0.0f)
@@ -199,11 +291,10 @@ namespace Unity.VectorGraphics
                 var p0 = Vector2.zero;
                 var p1 = new Vector2(2.0f, 0.0f);
                 var intersects = FindBezierLineIntersections(seg, p0, p1);
-                if (intersects.Length > 0)
+                if (quadrant != 3 && intersects.Length > 0)
                 {
                     VectorUtils.SplitSegment(seg, intersects[0], out subSeg1, out subSeg2);
-                    if (subSeg2.p0 != subSeg2.p1 || subSeg2.p1 != subSeg2.p2 || subSeg2.p2 != subSeg2.p3 || subSeg2.p3 != subSeg2.p0)
-                        seg = subSeg2;
+                    seg = subSeg2;
                 }
 
                 p1 = new Vector2(Mathf.Cos(sweepAngleRads), Mathf.Sin(sweepAngleRads)) * 2.0f;
@@ -211,15 +302,15 @@ namespace Unity.VectorGraphics
                 if (intersects.Length > 0)
                 {
                     VectorUtils.SplitSegment(seg, intersects[0], out subSeg1, out subSeg2);
-                    if (subSeg1.p0 != subSeg1.p1 || subSeg1.p1 != subSeg1.p2 || subSeg1.p2 != subSeg1.p3 || subSeg1.p3 != subSeg1.p0)
-                        seg = subSeg1;
+                    seg = subSeg1;
                 }
 
-                segments.Add(seg);
+                if (!VectorUtils.IsEmptySegment(seg))
+                    segments.Add(seg);
             }
 
             for (int i = 0; i < segments.Count; ++i)
-                segments[i] = TransformSegment(segments[i], center, -startAngleRads, Vector2.one);
+                segments[i] = TransformSegment(segments[i], center, -startAngleRads, Vector2.one * radius);
 
             if (shouldFlip)
             {
@@ -239,7 +330,7 @@ namespace Unity.VectorGraphics
                 }
             }
 
-            return segments.ToArray();
+            return VectorUtils.BezierSegmentsToPath(segments.ToArray());
         }
 
         internal static int QuadrantAtAngle(float angle)
@@ -261,10 +352,10 @@ namespace Unity.VectorGraphics
         {
             switch (quadrant)
             {
-                case 0: return VectorUtils.MakeArc(Vector2.zero, 0.0f, Mathf.PI / 2.0f);
-                case 1: return VectorUtils.MakeArc(Vector2.zero, -Mathf.PI / 2.0f, Mathf.PI / 2.0f);
-                case 2: return VectorUtils.MakeArc(Vector2.zero, -Mathf.PI, Mathf.PI / 2.0f);
-                case 3: return VectorUtils.MakeArc(Vector2.zero, -Mathf.PI / 2.0f * 3.0f, Mathf.PI / 2.0f);
+                case 0: return VectorUtils.MakeArcQuarter(Vector2.zero, 0.0f, Mathf.PI / 2.0f);
+                case 1: return VectorUtils.MakeArcQuarter(Vector2.zero, -Mathf.PI / 2.0f, Mathf.PI / 2.0f);
+                case 2: return VectorUtils.MakeArcQuarter(Vector2.zero, -Mathf.PI, Mathf.PI / 2.0f);
+                case 3: return VectorUtils.MakeArcQuarter(Vector2.zero, -Mathf.PI / 2.0f * 3.0f, Mathf.PI / 2.0f);
                 default: return new BezierSegment();
             }
         }
@@ -276,13 +367,13 @@ namespace Unity.VectorGraphics
         {
             var s = segment;
 
-            var tmp = s.p0;
-            s.p0 = s.p3;
-            s.p3 = tmp;
+            var tmp = s.P0;
+            s.P0 = s.P3;
+            s.P3 = tmp;
 
-            tmp = s.p1;
-            s.p1 = s.p2;
-            s.p2 = tmp;
+            tmp = s.P1;
+            s.P1 = s.P2;
+            s.P2 = tmp;
 
             return s;
         }
@@ -293,12 +384,12 @@ namespace Unity.VectorGraphics
         /// <param name="max">The output max value of the segment</param>
         public static void Bounds(BezierSegment segment, out Vector2 min, out Vector2 max)
         {
-            min = Vector2.Min(segment.p0, segment.p3);
-            max = Vector2.Max(segment.p0, segment.p3);
+            min = Vector2.Min(segment.P0, segment.P3);
+            max = Vector2.Max(segment.P0, segment.P3);
 
-            Vector2 a = 3.0f * segment.p3 - 9.0f * segment.p2 + 9.0f * segment.p1 - 3.0f * segment.p0;
-            Vector2 b = 6.0f * segment.p2 - 12.0f * segment.p1 + 6.0f * segment.p0;
-            Vector2 c = 3.0f * segment.p1 - 3.0f * segment.p0;
+            Vector2 a = 3.0f * segment.P3 - 9.0f * segment.P2 + 9.0f * segment.P1 - 3.0f * segment.P0;
+            Vector2 b = 6.0f * segment.P2 - 12.0f * segment.P1 + 6.0f * segment.P0;
+            Vector2 c = 3.0f * segment.P1 - 3.0f * segment.P0;
 
             float[] solutions = new float[4];
             SolveQuadratic(a.x, b.x, c.x, out solutions[0], out solutions[1]);
@@ -322,10 +413,10 @@ namespace Unity.VectorGraphics
             float t2 = t * t;
             float t3 = t2 * t;
             return
-                (segment.p3 - 3.0f * segment.p2 + 3.0f * segment.p1 - segment.p0) * t3
-                + (3.0f * segment.p2 - 6.0f * segment.p1 + 3.0f * segment.p0) * t2
-                + (3.0f * segment.p1 - 3.0f * segment.p0) * t
-                + segment.p0;
+                (segment.P3 - 3.0f * segment.P2 + 3.0f * segment.P1 - segment.P0) * t3
+                + (3.0f * segment.P2 - 6.0f * segment.P1 + 3.0f * segment.P0) * t2
+                + (3.0f * segment.P1 - 3.0f * segment.P0) * t
+                + segment.P0;
         }
 
         /// <summary>Evaluates the tangent on a curve segment.</summary>
@@ -334,9 +425,9 @@ namespace Unity.VectorGraphics
         /// <returns>The tangent of the curve at parametric location "t"</returns>
         public static Vector2 EvalTangent(BezierSegment segment, float t)
         {
-            var tan = (segment.p3 - 3.0f * segment.p2 + 3.0f * segment.p1 - segment.p0) * 3.0f * t * t
-                + (3.0f * segment.p2 - 6.0f * segment.p1 + 3.0f * segment.p0) * 2.0f * t
-                + (3.0f * segment.p1 - 3.0f * segment.p0);
+            var tan = (segment.P3 - 3.0f * segment.P2 + 3.0f * segment.P1 - segment.P0) * 3.0f * t * t
+                + (3.0f * segment.P2 - 6.0f * segment.P1 + 3.0f * segment.P0) * 2.0f * t
+                + (3.0f * segment.P1 - 3.0f * segment.P0);
 
             // If the result is a zero vector (happens at coincident p0 and p1 or p2 and p3) try again by manual stepping
             if (tan.sqrMagnitude < Epsilon)
@@ -373,10 +464,10 @@ namespace Unity.VectorGraphics
         {
             float t2 = t * t;
             float t3 = t2 * t;
-            Vector2 C1 = segment.p3 - 3.0f * segment.p2 + 3.0f * segment.p1 - segment.p0;
-            Vector2 C2 = 3.0f * segment.p2 - 6.0f * segment.p1 + 3.0f * segment.p0;
-            Vector2 C3 = 3.0f * segment.p1 - 3.0f * segment.p0;
-            Vector2 C4 = segment.p0;
+            Vector2 C1 = segment.P3 - 3.0f * segment.P2 + 3.0f * segment.P1 - segment.P0;
+            Vector2 C2 = 3.0f * segment.P2 - 6.0f * segment.P1 + 3.0f * segment.P0;
+            Vector2 C3 = 3.0f * segment.P1 - 3.0f * segment.P0;
+            Vector2 C4 = segment.P0;
 
             var pos = C1 * t3 + C2 * t2 + C3 * t + C4;
             tangent = ((3.0f * C1 * t2) + (2.0f * C2 * t) + C3);
@@ -418,10 +509,8 @@ namespace Unity.VectorGraphics
         {
             float[] segmentLengths = new float[segments.Count - 1 + (closed ? 1 : 0)];
             int i = 0;
-            foreach (var segment in SegmentsInPath(segments))
+            foreach (var segment in SegmentsInPath(segments, closed))
                 segmentLengths[i++] = SegmentLength(segment, precision);
-            if (closed)
-                segmentLengths[i++] = (segments[segments.Count - 1].p0 - segments[0].p0).magnitude;
             return segmentLengths;
         }
 
@@ -439,7 +528,7 @@ namespace Unity.VectorGraphics
             foreach (var segment in SegmentsInPath(segments))
                 length += SegmentLength(segment, precision);
             if (closed)
-                length += (segments[segments.Count - 1].p0 - segments[0].p0).magnitude;
+                length += (segments[segments.Count - 1].P0 - segments[0].P0).magnitude;
             return length;
         }
 
@@ -464,15 +553,15 @@ namespace Unity.VectorGraphics
 
         static float AdaptiveQuadraticApproxSplitPoint(BezierSegment segment, float precision)
         {
-            float quadraticApproxDist = (segment.p3 - 3.0f * segment.p2 + 3.0f * segment.p1 - segment.p0).magnitude * 0.5f;
+            float quadraticApproxDist = (segment.P3 - 3.0f * segment.P2 + 3.0f * segment.P1 - segment.P0).magnitude * 0.5f;
             return Mathf.Pow((18.0f / Mathf.Sqrt(3.0f)) * precision / quadraticApproxDist, 1.0f / 3.0f);
         }
 
         static float MidPointQuadraticApproxLength(BezierSegment segment)
         {
-            var A = segment.p0;
-            var B = (3.0f * segment.p2 - segment.p3 + 3.0f * segment.p1 - segment.p0) / 4.0f;
-            var C = segment.p3;
+            var A = segment.P0;
+            var B = (3.0f * segment.P2 - segment.P3 + 3.0f * segment.P1 - segment.P0) / 4.0f;
+            var C = segment.P3;
 
             if (A == C)
                 return (A == B) ? 0.0f : (A - B).magnitude;
@@ -494,7 +583,7 @@ namespace Unity.VectorGraphics
                 double sumCBA = c + b + a;
 
                 var l0 = (0.25f / c) * (twoCpB * Math.Sqrt(sumCBA) - b * Math.Sqrt(a));
-                if (q == 0.0f)
+                if (Math.Abs(q) <= VectorUtils.Epsilon)
                     return (float)l0;
 
                 var l1 = (q / (8.0f * Math.Pow(c, 1.5f))) * (Math.Log(2.0f * Math.Sqrt(c * sumCBA) + twoCpB) - Math.Log(2.0f * Math.Sqrt(c * a) + b));
@@ -510,15 +599,15 @@ namespace Unity.VectorGraphics
         /// <param name="b2">The output of the second segment</param>
         public static void SplitSegment(BezierSegment segment, float t, out BezierSegment b1, out BezierSegment b2)
         {
-            var a = Vector2.LerpUnclamped(segment.p0, segment.p1, t);
-            var b = Vector2.LerpUnclamped(segment.p1, segment.p2, t);
-            var c = Vector2.LerpUnclamped(segment.p2, segment.p3, t);
+            var a = Vector2.LerpUnclamped(segment.P0, segment.P1, t);
+            var b = Vector2.LerpUnclamped(segment.P1, segment.P2, t);
+            var c = Vector2.LerpUnclamped(segment.P2, segment.P3, t);
             var m = Vector2.LerpUnclamped(a, b, t);
             var n = Vector2.LerpUnclamped(b, c, t);
             var p = Eval(segment, t);
 
-            b1 = new BezierSegment() { p0 = segment.p0, p1 = a, p2 = m, p3 = p };
-            b2 = new BezierSegment() { p0 = p, p1 = n, p2 = c, p3 = segment.p3 };
+            b1 = new BezierSegment() { P0 = segment.P0, P1 = a, P2 = m, P3 = p };
+            b2 = new BezierSegment() { P0 = p, P1 = n, P2 = c, P3 = segment.P3 };
         }
 
         /// <summary>Transforms a curve segment by a translation, rotation and scaling.</summary>
@@ -531,10 +620,10 @@ namespace Unity.VectorGraphics
         {
             var m = Matrix2D.Rotate(rotation);
             var newSeg = new BezierSegment() {
-                p0 = m * Vector2.Scale(segment.p0, scaling) + translation,
-                p1 = m * Vector2.Scale(segment.p1, scaling) + translation,
-                p2 = m * Vector2.Scale(segment.p2, scaling) + translation,
-                p3 = m * Vector2.Scale(segment.p3, scaling) + translation
+                P0 = m * Vector2.Scale(segment.P0, scaling) + translation,
+                P1 = m * Vector2.Scale(segment.P1, scaling) + translation,
+                P2 = m * Vector2.Scale(segment.P2, scaling) + translation,
+                P3 = m * Vector2.Scale(segment.P3, scaling) + translation
             };
             return newSeg;
         }
@@ -546,12 +635,33 @@ namespace Unity.VectorGraphics
         public static BezierSegment TransformSegment(BezierSegment segment, Matrix2D matrix)
         {
             var newSeg = new BezierSegment() {
-                p0 = matrix * segment.p0,
-                p1 = matrix * segment.p1,
-                p2 = matrix * segment.p2,
-                p3 = matrix * segment.p3
+                P0 = matrix * segment.P0,
+                P1 = matrix * segment.P1,
+                P2 = matrix * segment.P2,
+                P3 = matrix * segment.P3
             };
             return newSeg;
+        }
+
+        /// <summary>Transforms a path by a transformation matrix.</summary>
+        /// <param name="path">The path to transform</param>
+        /// <param name="matrix">The transformation matrix to apply on the curve segment</param>
+        /// <returns>The transformed path</returns>
+        public static BezierPathSegment[] TransformBezierPath(BezierPathSegment[] path, Vector2 translation, float rotation, Vector2 scaling)
+        {
+            var m = Matrix2D.Rotate(rotation);
+            var newPath = new BezierPathSegment[path.Length];
+            for (int i = 0; i < newPath.Length; ++i)
+            {
+                var seg = path[i];
+                newPath[i] = new BezierPathSegment()
+                {
+                    P0 = m * Vector2.Scale(seg.P0, scaling) + translation,
+                    P1 = m * Vector2.Scale(seg.P1, scaling) + translation,
+                    P2 = m * Vector2.Scale(seg.P2, scaling) + translation
+                };
+            }
+            return newPath;
         }
 
         /// <summary>Transforms a path by a transformation matrix.</summary>
@@ -565,24 +675,12 @@ namespace Unity.VectorGraphics
             {
                 var seg = path[i];
                 newPath[i] = new BezierPathSegment() {
-                    p0 = matrix * seg.p0,
-                    p1 = matrix * seg.p1,
-                    p2 = matrix * seg.p2
+                    P0 = matrix * seg.P0,
+                    P1 = matrix * seg.P1,
+                    P2 = matrix * seg.P2
                 };
             }
             return newPath;
-        }
-
-        /// <summary>Transforms a contour by a transformation matrix.</summary>
-        /// <param name="contour">The contour to transform</param>
-        /// <param name="matrix">The transformation matrix to apply on the contour</param>
-        /// <returns>The transformed contour</returns>
-        public static BezierContour TransformBezierContour(BezierContour contour, Matrix2D matrix)
-        {
-            return new BezierContour() {
-                segments = TransformBezierPath(contour.segments, matrix),
-                closed = contour.closed
-            };
         }
 
         /// <summary>Lists every nodes under a root node.</summary>
@@ -591,9 +689,9 @@ namespace Unity.VectorGraphics
         public static IEnumerable<SceneNode> SceneNodes(SceneNode root)
         {
             yield return root;
-            if (root.children != null)
+            if (root.Children != null)
             {
-                foreach (var c in root.children)
+                foreach (var c in root.Children)
                 {
                     foreach (var n in SceneNodes(c))
                         yield return n;
@@ -606,16 +704,16 @@ namespace Unity.VectorGraphics
         public struct SceneNodeWorldTransform
         {
             /// <summary>The node we are currently visiting.</summary>
-            public SceneNode node;
+            public SceneNode Node;
 
             /// <summary>The parent of the node we are currently visiting.</summary>
-            public SceneNode parent;
+            public SceneNode Parent;
 
             /// <summary>The accumulated world transform of this node.</summary>
-            public Matrix2D worldTransform;
+            public Matrix2D WorldTransform;
 
             /// <summary>The accumulated world opacity of this node.</summary>
-            public float worldOpacity;
+            public float WorldOpacity;
         }
 
         static IEnumerable<SceneNodeWorldTransform> WorldTransformedSceneNodes(SceneNode child, Dictionary<SceneNode, float> nodeOpacities, SceneNodeWorldTransform parent)
@@ -626,17 +724,17 @@ namespace Unity.VectorGraphics
 
             var childWorldTransform = new SceneNodeWorldTransform()
             {
-                node = child,
-                worldTransform = parent.worldTransform * child.transform,
-                worldOpacity = parent.worldOpacity * childOpacity,
-                parent = parent.node
+                Node = child,
+                WorldTransform = parent.WorldTransform * child.Transform,
+                WorldOpacity = parent.WorldOpacity * childOpacity,
+                Parent = parent.Node
             };
 
             yield return childWorldTransform;
 
-            if (child.children != null)
+            if (child.Children != null)
             {
-                foreach (var c in child.children)
+                foreach (var c in child.Children)
                 {
                     foreach (var n in WorldTransformedSceneNodes(c, nodeOpacities, childWorldTransform))
                         yield return n;
@@ -651,10 +749,10 @@ namespace Unity.VectorGraphics
         public static IEnumerable<SceneNodeWorldTransform> WorldTransformedSceneNodes(SceneNode root, Dictionary<SceneNode, float> nodeOpacities)
         {
             var rootNodeWorldTransform = new SceneNodeWorldTransform() {
-                node = root,
-                worldTransform = Matrix2D.identity,
-                worldOpacity = 1,
-                parent = null
+                Node = root,
+                WorldTransform = Matrix2D.identity,
+                WorldOpacity = 1,
+                Parent = null
             };
             return WorldTransformedSceneNodes(root, nodeOpacities, rootNodeWorldTransform);
         }
@@ -663,6 +761,7 @@ namespace Unity.VectorGraphics
         /// <param name="vertices">The vertices to realign</param>
         /// <param name="flip">A boolean indicating whether to flip the coordinates on the Y axis</param>
         /// <returns>The axis-aligned bounding-box of the original vertices</returns>
+        [Obsolete("Please use RealignVerticesInBounds(IList<Vector2>, Rect, bool) instead")]
         public static Rect RealignVerticesInBounds(IList<Vector2> vertices, bool flip)
         {
             var bbox = Bounds(vertices);
@@ -679,10 +778,49 @@ namespace Unity.VectorGraphics
             return bbox;
         }
 
+        /// <summary>Realigns the vertices (in-place) inside their axis-aligned bounding-box.</summary>
+        /// <param name="vertices">The vertices to realign</param>
+        /// <param name="bounds">The bounds into which the vertices will be realigned</param>
+        /// <param name="flip">A boolean indicating whether to flip the coordinates on the Y axis</param>
+        public static void RealignVerticesInBounds(IList<Vector2> vertices, Rect bounds, bool flip)
+        {
+            var p = bounds.position;
+            var h = bounds.height;
+            for (int i = 0; i < vertices.Count; ++i)
+            {
+                var v = vertices[i];
+                v -= p;
+                if (flip)
+                    v.y = h - v.y;
+                vertices[i] = v;
+            }
+        }
+
+        /// <summary>Flip the vertices (in-place) inside their axis-aligned bounding-box.</summary>
+        /// <param name="vertices">The vertices to realign</param>
+        /// <param name="bounds">The bounds into which the vertices will be realigned</param>
+        public static void FlipVerticesInBounds(IList<Vector2> vertices, Rect bounds)
+        {
+            var h = bounds.height;
+            for (int i = 0; i < vertices.Count; ++i)
+            {
+                var v = vertices[i];
+                v.y = h - v.y;
+                vertices[i] = v;
+            }
+        }
+
+        internal static void ClampVerticesInBounds(IList<Vector2> vertices, Rect bounds)
+        {
+            for (int i = 0; i < vertices.Count; ++i)
+                vertices[i] = Vector2.Max(bounds.min, Vector2.Min(bounds.max, vertices[i]));
+        }
+
         /// <summary>Iterates through every segment in a list of path segments.</summary>
         /// <param name="segments">The path segments to iterate from</param>
+        /// <param name="closed">Whether to return the segment connecting the last point to the beginning of the path</param>
         /// <returns>An enumerable of every segments in the path</returns>
-        public static IEnumerable<BezierSegment> SegmentsInPath(IEnumerable<BezierPathSegment> segments)
+        public static IEnumerable<BezierSegment> SegmentsInPath(IEnumerable<BezierPathSegment> segments, bool closed = false)
         {
             var e = segments.GetEnumerator();
             if (!e.MoveNext())
@@ -695,10 +833,13 @@ namespace Unity.VectorGraphics
             do
             {
                 var s2 = e.Current;
-                yield return new BezierSegment { p0 = s1.p0, p1 = s1.p1, p2 = s1.p2, p3 = s2.p0 };
+                yield return new BezierSegment { P0 = s1.P0, P1 = s1.P1, P2 = s1.P2, P3 = s2.P0 };
                 s1 = s2;
             }
             while (e.MoveNext());
+
+            if (closed)
+                yield return new BezierSegment { P0 = s1.P0, P1 = s1.P1, P2 = s1.P2, P3 = segments.First().P0 };
         }
 
         static void SolveQuadratic(float a, float b, float c, out float s1, out float s2)
@@ -863,10 +1004,10 @@ namespace Unity.VectorGraphics
         private static Vector2[] BezierCoefficients(BezierSegment segment)
         {
             var coeffs = new Vector2[4];
-            coeffs[0] = -segment.p0 + 3 * segment.p1 + -3 * segment.p2 + segment.p3;
-            coeffs[1] = 3 * segment.p0 - 6 * segment.p1 + 3 * segment.p2;
-            coeffs[2] = -3 * segment.p0 + 3 * segment.p1;
-            coeffs[3] = segment.p0;
+            coeffs[0] = -segment.P0 + 3 * segment.P1 + -3 * segment.P2 + segment.P3;
+            coeffs[1] = 3 * segment.P0 - 6 * segment.P1 + 3 * segment.P2;
+            coeffs[2] = -3 * segment.P0 + 3 * segment.P1;
+            coeffs[3] = segment.P0;
             return coeffs;
         }
 
@@ -876,56 +1017,71 @@ namespace Unity.VectorGraphics
         /// <remarks>
         /// This will properly evaluate the bounds of the paths and shapes, but will ignore the paths stroke widths.
         /// </remarks>
+        #pragma warning disable 612, 618 // Silence use of deprecated IDrawable
         public static Rect SceneNodeBounds(SceneNode root)
         {
             var min = new Vector2(float.MaxValue, float.MaxValue);
             var max = new Vector2(-float.MaxValue, -float.MaxValue);
             foreach (var tnode in WorldTransformedSceneNodes(root, null))
             {
-                if (tnode.node.drawables == null)
-                    continue;
+                var shapeMin = new Vector2(float.MaxValue, float.MaxValue);
+                var shapeMax = new Vector2(-float.MaxValue, -float.MaxValue);
 
-                var drawableMin = new Vector2(float.MaxValue, float.MaxValue);
-                var drawableMax = new Vector2(-float.MaxValue, -float.MaxValue);
-
-                foreach (var drawable in tnode.node.drawables)
+                // We process the drawables even though they are obsolete, until we remove the IDrawable interface entirely
+                if (tnode.Node.Drawables != null)
                 {
-                    var path = drawable as Path;
-                    if (path != null)
+                    foreach (var drawable in tnode.Node.Drawables)
                     {
-                        var bbox = Bounds(TransformBezierContour(path.contour, tnode.worldTransform));
-                        drawableMin = Vector2.Min(drawableMin, bbox.min);
-                        drawableMax = Vector2.Max(drawableMax, bbox.max);
-                    }
-
-                    var shape = drawable as Shape;
-                    if (shape != null)
-                    {
-                        foreach (var contour in shape.contours)
+                        var path = drawable as Path;
+                        if (path != null)
                         {
-                            var bbox = Bounds(TransformBezierContour(contour, tnode.worldTransform));
-                            drawableMin = Vector2.Min(drawableMin, bbox.min);
-                            drawableMax = Vector2.Max(drawableMax, bbox.max);
-                        }                        
-                    }
+                            var bbox = Bounds(TransformBezierPath(path.Contour.Segments, tnode.WorldTransform));
+                            shapeMin = Vector2.Min(shapeMin, bbox.min);
+                            shapeMax = Vector2.Max(shapeMax, bbox.max);
+                        }
 
-                    var rect = drawable as Rectangle;
-                    if (rect != null)
-                    {
-                        var vertices = new Vector2[] {
-                            tnode.worldTransform * rect.position,
-                            tnode.worldTransform * (rect.size + rect.position)
+                        var shape = drawable as Shape;
+                        if (shape != null)
+                        {
+                            foreach (var contour in shape.Contours)
+                            {
+                                var bbox = Bounds(TransformBezierPath(contour.Segments, tnode.WorldTransform));
+                                shapeMin = Vector2.Min(shapeMin, bbox.min);
+                                shapeMax = Vector2.Max(shapeMax, bbox.max);
+                            }
+                        }
+
+                        var rect = drawable as Rectangle;
+                        if (rect != null)
+                        {
+                            var vertices = new Vector2[] {
+                            tnode.WorldTransform * rect.Position,
+                            tnode.WorldTransform * (rect.Size + rect.Position)
                         };
-                        var bbox = Bounds(vertices);
-                        drawableMin = Vector2.Min(drawableMin, bbox.min);
-                        drawableMax = Vector2.Max(drawableMax, bbox.max);
+                            var bbox = Bounds(vertices);
+                            shapeMin = Vector2.Min(shapeMin, bbox.min);
+                            shapeMax = Vector2.Max(shapeMax, bbox.max);
+                        }
                     }
                 }
 
-                if (drawableMin.x != float.MaxValue)
+                if (tnode.Node.Shapes != null)
                 {
-                    min = Vector2.Min(min, drawableMin);
-                    max = Vector2.Max(max, drawableMax);
+                    foreach (var shape in tnode.Node.Shapes)
+                    {
+                        foreach (var contour in shape.Contours)
+                        {
+                            var bbox = Bounds(TransformBezierPath(contour.Segments, tnode.WorldTransform));
+                            shapeMin = Vector2.Min(shapeMin, bbox.min);
+                            shapeMax = Vector2.Max(shapeMax, bbox.max);
+                        }
+                    }
+                }
+
+                if (shapeMin.x != float.MaxValue)
+                {
+                    min = Vector2.Min(min, shapeMin);
+                    max = Vector2.Max(max, shapeMax);
                 }
             }
             return (min.x != float.MaxValue) ? new Rect(min, max - min) : Rect.zero;
@@ -943,60 +1099,69 @@ namespace Unity.VectorGraphics
 
             foreach (var tnode in WorldTransformedSceneNodes(root, null))
             {
-                if (tnode.node.drawables == null)
-                    continue;
-
-                foreach (var drawable in tnode.node.drawables)
+                // We process the drawables even though they are obsolete, until we remove the IDrawable interface entirely
+                if (tnode.Node.Drawables != null)
                 {
-                    var path = drawable as Path;
-                    if (path != null)
+                    foreach (var drawable in tnode.Node.Drawables)
                     {
-                        foreach (var seg in TransformBezierContour(path.contour, tnode.worldTransform).segments)
+                        var path = drawable as Path;
+                        if (path != null)
                         {
-                            vertices.Add(seg.p0);
-                            vertices.Add(seg.p1);
-                            vertices.Add(seg.p2);
-                        }
-                    }
-
-                    var shape = drawable as Shape;
-                    if (shape != null)
-                    {
-                        foreach (var contour in shape.contours)
-                        {
-                            foreach (var seg in TransformBezierContour(contour, tnode.worldTransform).segments)
+                            foreach (var seg in TransformBezierPath(path.Contour.Segments, tnode.WorldTransform))
                             {
-                                vertices.Add(seg.p0);
-                                vertices.Add(seg.p1);
-                                vertices.Add(seg.p2);
+                                vertices.Add(seg.P0);
+                                vertices.Add(seg.P1);
+                                vertices.Add(seg.P2);
                             }
                         }
-                    }
 
-                    var rect = drawable as Rectangle;
-                    if (rect != null)
+                        var shape = drawable as Shape;
+                        if (shape != null)
+                        {
+                            foreach (var contour in shape.Contours)
+                            {
+                                foreach (var seg in TransformBezierPath(contour.Segments, tnode.WorldTransform))
+                                {
+                                    vertices.Add(seg.P0);
+                                    vertices.Add(seg.P1);
+                                    vertices.Add(seg.P2);
+                                }
+                            }
+                        }
+
+                        var rect = drawable as Rectangle;
+                        if (rect != null)
+                        {
+                            vertices.Add(tnode.WorldTransform * rect.Position);
+                            vertices.Add(tnode.WorldTransform * (rect.Position + rect.Size));
+                        }
+                    }
+                }
+
+                if (tnode.Node.Shapes != null)
+                {
+                    foreach (var shape in tnode.Node.Shapes)
                     {
-                        vertices.Add(tnode.worldTransform * rect.position);
-                        vertices.Add(tnode.worldTransform * (rect.position+rect.size));
+                        foreach (var contour in shape.Contours)
+                        {
+                            foreach (var seg in TransformBezierPath(contour.Segments, tnode.WorldTransform))
+                            {
+                                vertices.Add(seg.P0);
+                                vertices.Add(seg.P1);
+                                vertices.Add(seg.P2);
+                            }
+                        }
                     }
                 }
             }
 
             return Bounds(vertices);
         }
+        #pragma warning restore 612, 618
 
-        internal static IList<BezierPathSegment> RemoveEmptySegments(IList<BezierPathSegment> path)
+        internal static bool IsEmptySegment(BezierSegment bs)
         {
-            var segments = new List<BezierPathSegment>(path.Count);
-            for (int i = 0; i < path.Count; ++i)
-            {
-                var currSeg = path[i];
-                var nextSeg = path[(i + 1) % path.Count];
-                if (currSeg.p0 == currSeg.p1 && currSeg.p0 == currSeg.p2 && currSeg.p0 == nextSeg.p0)
-                    continue;
-                segments.Add(currSeg);
-            }
-            return segments;
+            return (bs.P0 - bs.P1).sqrMagnitude <= Epsilon && (bs.P0 - bs.P2).sqrMagnitude <= Epsilon && (bs.P0 - bs.P3).sqrMagnitude <= Epsilon;
         }
     } // VectorUtils class
 
@@ -1004,32 +1169,25 @@ namespace Unity.VectorGraphics
     {
         class BezierLoop : IList<BezierPathSegment>
         {
-            IList<BezierPathSegment> openPath;
-            BezierPathSegment lastSegment;
-            BezierPathSegment beforeLastSegment;
+            IList<BezierPathSegment> OpenPath;
+
             public BezierLoop(IList<BezierPathSegment> openPath)
             {
-                this.openPath = openPath;
-
-                var line = VectorUtils.MakeLine(openPath[openPath.Count - 1].p0, openPath[0].p0);
-                beforeLastSegment = new BezierPathSegment() { p0 = line.p0, p1 = line.p1, p2 = line.p2 };
-                lastSegment = new BezierPathSegment() { p0 = line.p3 };
+                this.OpenPath = openPath;
             }
 
             public BezierPathSegment this[int index]
             {
                 get
                 {
-                    if (index == openPath.Count)
-                        return lastSegment;
-                    if (index == openPath.Count - 1)
-                        return beforeLastSegment;
-                    return openPath[index];
+                    if (index == OpenPath.Count)
+                        return OpenPath[0];
+                    return OpenPath[index];
                 }
                 set { throw new NotSupportedException(); }
             }
 
-            public int Count { get { return openPath.Count + 1; } }
+            public int Count { get { return OpenPath.Count + 1; } }
             public bool IsReadOnly { get { return true; } }
             public void Add(BezierPathSegment item) { throw new NotSupportedException(); }
             public void Clear() {}
@@ -1055,8 +1213,8 @@ namespace Unity.VectorGraphics
             this.maxCordDeviationSq = maxCordDeviationSq;
             this.maxTanAngleDevCosine = maxTanAngleDevCosine;
             this.stepSizeT = stepSizeT;
-            currentBezSeg = new BezierSegment() { p0 = pathSegments[0].p0, p1 = pathSegments[0].p1, p2 = pathSegments[0].p2, p3 = pathSegments[1].p0 };
-            lastPointEval = pathSegments[0].p0;
+            currentBezSeg = new BezierSegment() { P0 = pathSegments[0].P0, P1 = pathSegments[0].P1, P2 = pathSegments[0].P2, P3 = pathSegments[1].P0 };
+            lastPointEval = pathSegments[0].P0;
             currentTTangent = needTangentsDuringEval ? VectorUtils.EvalTangent(currentBezSeg, 0.0f) : Vector2.zero;
         }
 
@@ -1137,15 +1295,15 @@ namespace Unity.VectorGraphics
                 currentSegment++;
                 currentBezSeg = new BezierSegment()
                 {
-                    p0 = Segments[currentSegment].p0,
-                    p1 = Segments[currentSegment].p1,
-                    p2 = Segments[currentSegment].p2,
-                    p3 = Segments[currentSegment + 1].p0
+                    P0 = Segments[currentSegment].P0,
+                    P1 = Segments[currentSegment].P1,
+                    P2 = Segments[currentSegment].P2,
+                    P3 = Segments[currentSegment + 1].P0
                 };
                 segmentLengthSoFar = 0.0f;
                 currentT = 0.0f;
                 currentTTangent = tangent;
-                lastPointEval = currentBezSeg.p0;
+                lastPointEval = currentBezSeg.P0;
 
                 return Result.NewSegment;
             }

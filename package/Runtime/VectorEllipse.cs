@@ -9,8 +9,11 @@ namespace Unity.VectorGraphics
 {
     public partial class VectorUtils
     {
-        internal static BezierSegment[] BuildEllipsePath(Vector2 p0, Vector2 p1, float rotation, float rx, float ry, bool largeArc, bool sweep)
+        internal static BezierPathSegment[] BuildEllipsePath(Vector2 p0, Vector2 p1, float rotation, float rx, float ry, bool largeArc, bool sweep)
         {
+            if ((p1-p0).magnitude < VectorUtils.Epsilon)
+                return new BezierPathSegment[0];
+
             Vector2 c;
             float theta1;
             float sweepTheta;
@@ -18,11 +21,10 @@ namespace Unity.VectorGraphics
             float adjustedRy;
             ComputeEllipseParameters(p0, p1, rotation, rx, ry, largeArc, sweep, out c, out theta1, out sweepTheta, out adjustedRx, out adjustedRy);
 
-            var path = VectorUtils.MakeArcSegments(Vector2.zero, theta1, sweepTheta);
+            var path = VectorUtils.MakeArc(Vector2.zero, theta1, sweepTheta, 1.0f);
 
             var scaling = new Vector2(adjustedRx, adjustedRy);
-            for (int i = 0; i < path.Length; ++i)
-                path[i] = VectorUtils.TransformSegment(path[i], c, rotation, scaling);
+            path = VectorUtils.TransformBezierPath(path, c, rotation, scaling);
 
             return path;
         }
