@@ -1,3 +1,7 @@
+## [1.0.0-preview.17] - 2018-09-13
+
+### Support for sprite mesh type on textured sprites
+
 ## [1.0.0-preview.16] - 2018-09-13
 
 ### Fixed relative positioning with viewBox

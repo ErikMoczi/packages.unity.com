@@ -24,6 +24,7 @@ namespace Unity.VectorGraphics.Editor
         }
 
         private SerializedProperty m_SVGType;
+        private SerializedProperty m_TexturedSpriteMeshType;
         private SerializedProperty m_PixelsPerUnit;
         private SerializedProperty m_GradientResolution;
         private SerializedProperty m_Alignment;
@@ -45,6 +46,7 @@ namespace Unity.VectorGraphics.Editor
         private SerializedProperty m_FilterMode;
 
         private readonly GUIContent m_SVGTypeText = new GUIContent("Type", "How the SVG file will be imported.");
+        private readonly GUIContent m_TexturedSpriteMeshTypeText = new GUIContent("Mesh Type", "Type of the sprite mesh to generate.");
         private readonly GUIContent m_PixelsPerUnitText = new GUIContent("Pixels Per Unit", "How many pixels in the SVG correspond to one unit in the world.");
         private readonly GUIContent m_GradientResolutionText = new GUIContent("Gradient Resolution", "Size of each rasterized gradient in pixels. Higher values consume memory but result in more accurate gradients.");
         private readonly GUIContent m_AlignmentText = new GUIContent("Pivot", "Sprite pivot point in its local space.");
@@ -74,9 +76,21 @@ namespace Unity.VectorGraphics.Editor
 
         private readonly int[] svgTypeValues =
         {
-                (int)SVGType.VectorSprite,
-                (int)SVGType.TexturedSprite,
-                (int)SVGType.Texture2D
+            (int)SVGType.VectorSprite,
+            (int)SVGType.TexturedSprite,
+            (int)SVGType.Texture2D
+        };
+
+        private readonly GUIContent[] texturedSpriteMeshTypeOptions =
+        {
+            new GUIContent("Full Rect"),
+            new GUIContent("Tight")
+        };
+
+        private readonly int[] texturedSpriteMeshTypeValues =
+        {
+            (int)SpriteMeshType.FullRect,
+            (int)SpriteMeshType.Tight
         };
 
         private readonly GUIContent[] m_AlignmentOptions = new GUIContent[]
@@ -143,6 +157,7 @@ namespace Unity.VectorGraphics.Editor
         public override void OnEnable()
         {
             m_SVGType = serializedObject.FindProperty("m_SvgType");
+            m_TexturedSpriteMeshType = serializedObject.FindProperty("m_TexturedSpriteMeshType");
             m_PixelsPerUnit = serializedObject.FindProperty("m_SvgPixelsPerUnit");
             m_GradientResolution = serializedObject.FindProperty("m_GradientResolution");
             m_Alignment = serializedObject.FindProperty("m_Alignment");
@@ -167,6 +182,12 @@ namespace Unity.VectorGraphics.Editor
         public override void OnInspectorGUI()
         {
             IntPopup(m_SVGType, m_SVGTypeText, svgTypeOptions, svgTypeValues);
+
+            if (m_SVGType.intValue == (int)SVGType.TexturedSprite)
+            {
+                IntPopup(m_TexturedSpriteMeshType, m_TexturedSpriteMeshTypeText, texturedSpriteMeshTypeOptions, texturedSpriteMeshTypeValues);
+            }
+
             PropertyField(m_PixelsPerUnit, m_PixelsPerUnitText);
             PropertyField(m_GradientResolution, m_GradientResolutionText);
             IntPopup(m_Alignment, m_AlignmentText, m_AlignmentOptions);

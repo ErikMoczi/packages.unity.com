@@ -41,6 +41,14 @@ namespace Unity.VectorGraphics.Editor
         }
         [SerializeField] private SVGType m_SvgType = SVGType.VectorSprite;
 
+        /// <summary>How the SVG file will be imported</summary>
+        public SpriteMeshType TexturedSpriteMeshType
+        {
+            get { return m_TexturedSpriteMeshType; }
+            set { m_TexturedSpriteMeshType = value; }
+        }
+        [SerializeField] private SpriteMeshType m_TexturedSpriteMeshType = SpriteMeshType.FullRect;
+
         /// <summary>The number of pixels per Unity units.</summary>
         public float SvgPixelsPerUnit {
             get { return m_SvgPixelsPerUnit; }
@@ -287,7 +295,7 @@ namespace Unity.VectorGraphics.Editor
 
             var tex = BuildTexture(sprite, TextureSize, name);
 
-            var texturedSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), CustomPivot, SvgPixelsPerUnit);
+            var texturedSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), CustomPivot, SvgPixelsPerUnit, 0, TexturedSpriteMeshType);
             texturedSprite.name = name;
 
             m_ImportingSprite = texturedSprite;
