@@ -97,7 +97,9 @@ public class NativeListDeferredArrayTests
         list.Add(1);
         
         var array = list.ToDeferredJobArray();
+#pragma warning disable 0219 // assigned but its value is never used
         Assert.Throws<IndexOutOfRangeException>(() => { var value = array[0]; });
+#pragma warning restore 0219
         Assert.AreEqual(0, array.Length);
 
         list.Dispose ();
