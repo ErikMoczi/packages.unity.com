@@ -1,12 +1,16 @@
 # Changelog
 
+## [0.1.40] - 2018-9-17
+
+### Update documentation
+
 ## [0.1.39] - 2018-9-14
 
-### remove duplicate module from docs
+### Remove duplicate module from docs
 
 ## [0.1.38] - 2018-9-14
 
-### doc updates
+### Documentation updates
 
 ## [0.1.36] - 2018-8-27
 

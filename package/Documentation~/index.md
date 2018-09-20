@@ -2,7 +2,8 @@
 
 The Unity Performance Testing Extension is a Unity Editor package that, when installed, provides an API and test case decorators to make it easier to take measurements/samples of Unity profiler markers, and other custom metrics outside of the profiler, within the Unity Editor and built players. It also collects configuration metadata, such as build and player settings, which is useful when comparing data against different hardware and configurations.
 
-The Performance Testing Extension is intended to be used with, and complement, the Unity Test Runner framework.
+The Performance Testing Extension is intended to be used with, and complement, the Unity Test Runner framework. For more information on how to create and run tests please refer to [Unity Test Runner documentation](https://docs.unity3d.com/Manual/testing-editortestsrunner.html).
+
 
 **Important Note:** When tests are run with the Unity Test Runner, a development player is always built to support communication between the editor and player, effectively overriding the development build setting from the build settings UI or scripting API.
 
@@ -10,22 +11,22 @@ The Performance Testing Extension is intended to be used with, and complement, t
 
 To install the Performance Testing Extension package
 1. Open the manifest.json file for your Unity project (located in the YourProject/Packages directory) in a text editor
-2. Add com.unity.test-framework.performance to the dependencies as seen below
-3. Add com.unity.test-framework.performance to the testables section. If there is not a testables section in your manifest.json file, go ahead and add it.
+2. Add `com.unity.test-framework.performance` to the dependencies as seen below
+3. Add `com.unity.test-framework.performance` to the testables section. If there is not a testables section in your manifest.json file, go ahead and add it.
 4. Save the manifest.json file
 5. Verify the Performance Testing Extension is now installed opening the Unity Package Manager window
-6. Ensure you have created an Assembly Definition file in the same folder where your tests or scripts are that you’ll reference the Performance Testing Extension with. This Assembly Definition file needs to reference Unity.PerformanceTesting in order to use the Performance Testing Extension. Example of how to do this:
-    * Create a new folder for storing tests in ("Tests", for example)
-    * Create a new assembly definition file in the new folder using the context menu (right click/Create/Assembly definition) and name it "Tests" (or whatever you named the folder from step a. above)
-    * In inspector for the assembly definition file check "Test Assemblies", and then Apply.
-    * Open the assembly definition file in a text editor and add Unity.PerformanceTesting. To the references section. Save the file when you’re done doing this.
+6. Ensure you have created an Assembly Definition file in the same folder where your tests or scripts are that you’ll reference the Performance Testing Extension with. This Assembly Definition file needs to reference `Unity.PerformanceTesting` in order to use the Performance Testing Extension. Example of how to do this:
+    1. Create a new folder for storing tests in ("Tests", for example)
+    2. Create a new assembly definition file in the new folder using the context menu (right click/Create/Assembly definition) and name it "Tests" (or whatever you named the folder from step a. above)
+    3. In inspector for the assembly definition file check "Test Assemblies", and then Apply.
+    4. Open the assembly definition file in a text editor and add Unity.PerformanceTesting. To the references section. Save the file when you’re done doing this.
 
-> Example: manifest.json file
+#### Example: manifest.json file
 
 ``` json
 {
     "dependencies": {
-        "com.unity.test-framework.performance": "0.1.39-preview",
+        "com.unity.test-framework.performance": "0.1.40-preview",
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0",
         "com.unity.modules.unityanalytics": "1.0.0",
@@ -40,7 +41,7 @@ To install the Performance Testing Extension package
 ```
 
 
-> Example: assembly definition file
+#### Example: assembly definition file
 
 ``` json
 {
@@ -59,38 +60,34 @@ To install the Performance Testing Extension package
 }
 ```
 
-More information on how to create and run tests please refer to [Unity Test Runner docs](https://docs.unity3d.com/Manual/testing-editortestsrunner.html).
-
-
 ## Test Attributes
-**[PerformanceTest]** - Non yeilding performance test.
+**[PerformanceTest]** -  Non-yielding performance test. This type of performance test starts and ends within the same frame.
 
-**[PerformanceUnityTest]** - Yeilding performance test.
+**[PerformanceUnityTest]** - Yielding performance test. This is a good choice if you want to sample measurements across multiple frames.
 
-**[Version(string version)]** - Performance tests should be versioned with every change. If not specified it will be assumed to be 1
+**[Version(string version)]** - Performance tests should be versioned with every change. If not specified it will be assumed to be 1.
 
 
 ## SampleGroupDefinition
 
 **struct SampleGroupDefinition** - used to define how a measurement is used in reporting and in regression detection.
 
-Required parameters
-- **name** : Name of the measurement. Should be kept short and simple.
-
 Optional parameters
+- **name** : Name of the measurement. If unspecified a default name of "Time" will be used.
 - **sampleUnit** : Unit of the measurement to report samples in. Possible values are:
-    - Nanosecond, Microsecond, Millisecond, Second, Byte, Kilobyte, Megabyte, Gigabyte
+Nanosecond, Microsecond, Millisecond, Second, Byte, Kilobyte, Megabyte, Gigabyte
 - **aggregationType** : Preferred aggregation (default is median). Possible values are:
-    - Median, Average, Min, Max, Percentile
+Median, Average, Min, Max, Percentile
 - **percentile** : If aggregationType is Percentile, the percentile value used for the aggregation. e.g. 0.95.
 - **increaseIsBetter** : Determines whether or not an increase in the measurement value should be considered a progression (performance improved) or a performance regression. Default is false. **NOTE:** This value is not used directly in the Performance Testing Extension, but recorded for later use in a reporting tool (such as the [Unity Performance Benchmark Reporter](https://github.com/Unity-Technologies/PerformanceBenchmarkReporter/wiki)) to determine whether or not a performance regression has occurred when used with a baseline result set.
 - **threshold** : The threshold, as a percentage of the aggregated sample group value, to use for regression detection. Default value is 0.15f. **NOTE:** This value is not used directly in the Performance Testing Extension, but recorded for later use in a reporting tool (such as the [Unity Performance Benchmark Reporter](https://github.com/Unity-Technologies/PerformanceBenchmarkReporter/wiki)) to determine whether or not a performance regression has occurred when used with a baseline result set.
 
-If unspecified a default SampleGroupDefinition will be used with the name of "Time", it is recommended to specify a name that is descriptive of what it is measuring.
 
 ## Taking measurements
 
-The Performance Testing Extension provides several API methods you can use to take measurements in your performance test, depending on what you need to measure and how you want to do it. They are:
+The Performance Testing Extension provides several API methods you can use to take measurements in your performance test, depending on what you need to measure and how you want to do it.
+
+They are:
 * Measure.Method
 * Measure.Frames
 * Measure.Scope(SampleGroupdDefinition sampleGroupDefinition)
@@ -100,18 +97,16 @@ The Performance Testing Extension provides several API methods you can use to ta
 
 The sections below detail the specifics of each measurement method with examples.
 
-Preferred way is to use Measure.Method or Measure.Frames. They both do a couple of warmup iterations which are then used to decide how many iterations per measurement should be used.
 
-
-**MethodMeasurement Method()**
+### Measure.Method()
 
 This will execute the provided method, sampling performance using the following additional properties/methods to control how the measurements are taken:
-* **WarmupCount(int n)** - number of times to to execute before measurements are collected. Default is 3 if not specified.
+* **WarmupCount(int n)** - number of times to to execute before measurements are collected. If unspecified, a default warmup is executed. This default warmup will wait for 7 ms. However, if less than 3 method executions have finished in that time, the warmup will wait until 3 method executions have completed.
 * **MeasurementCount(int n)** - number of measurements to capture. Default is 7 if not specified.
-* **IterationsPerMeasurement(int n)** - number of iterations per measurement to use
-* **GC()** - if specified, will measure the Gargage Collection allocation value.
+* **IterationsPerMeasurement(int n)** - number of method executions per measurement to use. If this value is not specified, the method will be executed as many times as possible until approximately 1 ms has elapsed.
+* **GC()** - if specified, will measure the total number of Garbage Collection allocation calls.
 
-> Example 1: Simple method measurement using default values
+#### Example 1: Simple method measurement using default values
 
 ``` csharp
 [PerformanceTest]
@@ -121,7 +116,7 @@ public void Test()
 }
 ```
 
-> Example 2: Customize Measure.Method properties
+#### Example 2: Customize Measure.Method properties
 
 ```
 [PerformanceTest]
@@ -136,17 +131,17 @@ public void Test()
 }
 ```
 
-**FramesMeasurement Measure.Frames()**
+### Measure.Frames()
 
-This will sample perf frame, records time per frame by default and provides additional properties/methods to control how the measurements are taken:
-* **WarmupCount(int n)** - number of times to to execute before measurements are collected. Default is 3 if not specified.
-* **MeasurementCount(int n)** - number of measurements to capture. Default is 7 if not specified.
-* **DontRecordFrametime()** - disables frametime measurement
-* **ProfilerMarkers(...)** - sample profile markers per frame
+Records time per frame by default and provides additional properties/methods to control how the measurements are taken:
+* **WarmupCount(int n)** - number of times to to execute before measurements are collected. If unspecified, a default warmup is executed. This default warmup will wait for 80 ms. However, if less than 3 full frames have rendered in that time, the warmup will wait until 3 full frames have been rendered.
+* **MeasurementCount(int n)** - number of frames to capture measurements. If this value is not specified, frames will be captured as many times as possible until approximately 500 ms has elapsed.
+* **DontRecordFrametime()** - disables frametime measurement.
+* **ProfilerMarkers(...)** - sample profile markers per frame.
+* **Scope()** - measures frame times in a given asynchronous scope.
 
-It will automatically select the number of warmup and runtime frames.
 
-> Example 1: Simple frame time measurement
+#### Example 1: Simple frame time measurement using default values of at least 7 frames and default WarmupCount (see description above).
 
 ``` csharp
 [PerformanceUnityTest]
@@ -158,8 +153,9 @@ public IEnumerator Test()
 }
 ```
 
-In cases where you are measuring a system over frametime it is advised to disable frametime measurements and instead measure profiler markers for your system.
-> Example 2: Sample profile markers per frame, disable frametime measurement
+#### Example 2: Sample profile markers per frame, disable frametime measurement
+
+If you’d like to sample profiler markers across multiple frames, and don’t have a need to record frametime, it is possible to disable the frame time measurement.
 
 ``` csharp
 [PerformanceUnityTest]
@@ -174,8 +170,22 @@ public IEnumerator Test()
 }
 ```
 
+#### Example 3: Sample frame times in a scope
+
+``` csharp
+[PerformanceUnityTest]
+public IEnumerator Test()
+{
+    using (Measure.Frames().Scope())
+    {
+        yield return ...;
+    }
+}
+```
+
+#### Example 3: Specify custom WarmupCount and MeasurementCount per frame
+
 If you want more control, you can specify how many frames you want to measure.
-> Example 3: Specify custom WarmupCount and MeasurementCount per frame
 
 ``` csharp
 [PerformanceUnityTest]
@@ -190,11 +200,11 @@ public IEnumerator Test()
 }
 ```
 
-**IDisposable Measure.Scope(SampleGroupdDefinition sampleGroupDefinition)**
+### Measure.Scope()
 
-When method or frame measurements are not enough you can use the following to measure. It will measure Scope, Frames, Markers or Custom.
+Measures execution time for the scope as a single time, for both synchronous and asynchronous methods.
 
-> Example 1: Measuring a scope
+#### Example 1: Measuring a scope; execution time is measured for everything in the using statement
 
 ``` csharp
 [PerformanceTest]
@@ -207,27 +217,12 @@ public void Test()
 }
 ```
 
-**IDisposable Measure.FrameTimes(SampleGroupdDefinition sampleGroupDefinition)**
 
-> Example 1: Sample frame times for a scope
+### Measure.ProfilerMarkers()
 
-``` csharp
-[PerformanceUnityTest]
-public IEnumerator Test()
-{
-    using (Measure.Frames().Scope())
-    {
-        yield return ...;
-    }
-}
-```
+Used to record profiler markers. Profiler marker timings will be sampled within the scope of the `using` statement. Note that deep and editor profiling markers are not available.
 
-
-**IDisposable Measure.ProfilerMarkers(SampleGroupDefinition[] sampleGroupDefinitions)**
-
-When you want to record samples outside of frame time, method time, or profiler markers, use a custom measurement. It can be any double value. A sample group definition is required.
-
-> Example 1: Use a custom measurement to capture total allocated memory
+#### Example 1: Use a custom measurement to capture total allocated memory
 
 ``` csharp
 [PerformanceTest]
@@ -249,9 +244,11 @@ public void Test()
 ```
 
 
-**void Custom(SampleGroupDefinition sampleGroupDefinition, double value)**
+### Measure.Custom()
 
-Records a custom sample. It can be any double value. A sample group definition is required.
+When you want to record samples outside of frame time, method time, or profiler markers, use a custom measurement. It can be any double value. A sample group definition is required.
+
+#### Example 1: Use a custom measurement to capture total allocated memory
 
 ``` csharp
 [PerformanceTest]
@@ -264,11 +261,15 @@ public void Test()
 
 ## Output
 
-Each performance test will have a performance test summary. Every sample group will have multiple aggregated samples such as median, min, max, average, standard deviation, sample count, count of zero samples and sum of all samples.
+When a test is selected in the Unity Test Runner window within the Unity Editor, each performance test will have a performance test summary. This summary includes every sample group’s aggregated samples such as median, min, max, average, standard deviation, sample count, count of zero samples and sum of all samples.
+
+#### Example 1: Performance Test Summary from Unity Test Runner window
 
 `Time Millisecond Median:53.59 Min:53.36 Max:62.10 Avg:54.07 Std:1.90 Zeroes:0 SampleCount: 19 Sum: 1027.34`
 
-## Examples
+## More Examples
+
+#### Example 1: Measure execution time to serialize simple object to JSON
 
 ``` csharp
     [PerformanceTest, Version("2")]
@@ -313,6 +314,7 @@ Each performance test will have a performance test summary. Every sample group w
 ```
 
 
+#### Example 2: Measure execution time to create 5000 simple cubes
 
 ``` csharp
     SampleGroupDefinition[] m_definitions =
@@ -340,6 +342,7 @@ Each performance test will have a performance test summary. Every sample group w
     }
 ```
 
+#### Example 3: Scene measurements
 
 ``` csharp
     [PerformanceUnityTest]
@@ -355,10 +358,9 @@ Each performance test will have a performance test summary. Every sample group w
     }
 ```
 
+#### Example 4: Custom measurement to capture total allocated and reserved memory
 
 ``` csharp
-    // Records allocated and reserved memory, specifies that the sample unit is in Megabytes.
-
     [PerformanceTest, Version("1")]
     public void Measure_Empty()
     {
