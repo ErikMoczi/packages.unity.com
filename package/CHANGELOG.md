@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-preview.15] - 2018-09-18
+### Fixes
+- Fix memory leak when destroying the ARSession.
+
 ## [1.0.0-preview.14] - 2018-08-10
 - Add a pre build check to make sure Metal is the first selected Graphics API in Player Settings.
 - Remove restriction on symlinking Unity libraries in Build Settings if using Unity 2018.3 or newer.
