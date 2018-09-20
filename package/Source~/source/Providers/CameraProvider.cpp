@@ -155,13 +155,21 @@ bool UNITY_INTERFACE_API CameraProvider::GetFrame(const UnityXRCameraParams& par
 
     uint32_t cameraTextureName = GetCameraTextureName();
     textureDescOut.nativeId = cameraTextureName;
+    std::strncpy(textureDescOut.name, "_MainTex", kUnityXRStringSize);
 
     // TODO: fix this hard-coding
-    textureDescOut.format = kUnityRenderingExtFormatA8R8G8B8_SRGB;
+    textureDescOut.format = kUnityRenderingExtFormatR8G8B8A8_SRGB;
 
-    // TODO: plumb through proper values
-    textureDescOut.width = 2880;
-    textureDescOut.height = 1440;
+    int32_t imageWidth = 0, imageHeight = 0;
+    {
+        ArCameraIntrinsics* cameraIntrinsics = nullptr;
+        ArCameraIntrinsics_create(session, &cameraIntrinsics);
+        ArCamera_getTextureIntrinsics(session, m_WrappedCamera, cameraIntrinsics);
+        ArCameraIntrinsics_destroy(cameraIntrinsics);
+        ArCameraIntrinsics_getImageDimensions(session, cameraIntrinsics, &imageWidth, &imageHeight);
+    }
+    textureDescOut.width = imageWidth;
+    textureDescOut.height = imageHeight;
 
     return true;
 }

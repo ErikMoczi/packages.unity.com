@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-preview.19] - 2018-09-18
+### Fixed
+- Correctly set camera texture dimensions.
+- The background texture was not rendered correctly if a renderable `GameObject` in the scene had negative scale. This has been fixed.
+- Fixed issue [AR Camera does not work with video player on ARCore](https://issuetracker.unity3d.com/issues/ar-camera-does-not-work-with-video-player-on-arcore). The pass through video would conflict with the Video Player, producing a flickering effect. This has been fixed.
+
+### Improvements
+- Added a pre build step to ensure the Gradle build system is used.
+- The build will fail if anything other than the OpenGLES3 graphics API is selected as the primary graphics API.
+
 ## [1.0.0-preview.18] - 2018-07-17
 ### Fixed
 - Correctly detect whether the "ARCore Supported" checkbox is checked during player build in 2018.2+

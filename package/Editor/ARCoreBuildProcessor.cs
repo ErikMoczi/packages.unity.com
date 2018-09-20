@@ -21,8 +21,15 @@ namespace UnityEditor.XR.ARCore
             EnsureMultithreadedRenderingDisabled(report);
             EnsureARCoreSupportedIsNotChecked();
             EnsureMinSdkVersion();
-            EnsureVulkanIsNotUsed();
+            EnsureOnlyOpenGLES3IsUsed();
             EnsureTargetArchitecturesAreSupported();
+            EnsureGradleIsUsed();
+        }
+
+        void EnsureGradleIsUsed()
+        {
+            if (EditorUserBuildSettings.androidBuildSystem != AndroidBuildSystem.Gradle)
+                throw new BuildFailedException("ARCore XR Plugin requires the Gradle build system. See File > Build Settings... > Android");
         }
 
         void EnsureTargetArchitecturesAreSupported()
@@ -75,13 +82,15 @@ namespace UnityEditor.XR.ARCore
                 throw new BuildFailedException("Multithreaded Rendering (Player Settings > Other Settings) is not supported for ARCore.");
         }
 
-        void EnsureVulkanIsNotUsed()
+        void EnsureOnlyOpenGLES3IsUsed()
         {
             var graphicsApis = PlayerSettings.GetGraphicsAPIs(BuildTarget.Android);
-            foreach(var graphicsApi in graphicsApis)
+            if (graphicsApis.Length > 0)
             {
-                if (graphicsApi == GraphicsDeviceType.Vulkan)
-                    throw new BuildFailedException("You have enabled the Vulkan graphics API, which is not supported by ARCore.");
+                var graphicsApi = graphicsApis[0];
+                if (graphicsApi != GraphicsDeviceType.OpenGLES3)
+                    throw new BuildFailedException(
+                        string.Format("You have enabled the {0} graphics API, which is not supported by ARCore.", graphicsApi));
             }
         }
     }
