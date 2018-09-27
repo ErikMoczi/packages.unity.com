@@ -31,6 +31,23 @@ namespace Unity.Mathematics
             float3 v = m.c1;
             float3 w = m.c2;
 
+            uint u_sign = (asuint(u.x) & 0x80000000);
+            float t = v.y + asfloat(asuint(w.z) ^ u_sign);
+            uint4 u_mask = uint4((int)u_sign >> 31);
+            uint4 t_mask = uint4(asint(t) >> 31);
+            
+            float tr = 1.0f + abs(u.x);
+
+            uint4 sign_flips = uint4(0x00000000, 0x80000000, 0x80000000, 0x80000000) ^ (u_mask & uint4(0x00000000, 0x80000000, 0x00000000, 0x80000000)) ^ (t_mask & uint4(0x80000000, 0x80000000, 0x80000000, 0x00000000));
+
+            value = float4(tr, u.y, w.x, v.z) + asfloat(asuint(float4(t, v.x, u.z, w.y)) ^ sign_flips);   // +---, +++-, ++-+, +-++
+
+            //value = select(value, value.zwxy, u_mask != 0);   // TODO: get this to work without the redundant compare
+            //value = select(value.wzyx, value, t_mask != 0);
+            value = asfloat((asuint(value) & ~u_mask) | (asuint(value.zwxy) & u_mask));
+            value = asfloat((asuint(value.wzyx) & ~t_mask) | (asuint(value) & t_mask));
+
+            /*
             if (u.x >= 0f)
             {
                 float t = v.y + w.z;
@@ -46,7 +63,8 @@ namespace Unity.Mathematics
                     value = float4(u.y + v.x, 1f - u.x + t, v.z + w.y, w.x - u.z);
                 else
                     value = float4(w.x + u.z, v.z + w.y, 1f - u.x - t, u.y - v.x);
-            }
+            }*/
+
             value = normalize(value);
         }
 
@@ -57,22 +75,20 @@ namespace Unity.Mathematics
             float4 v = m.c1;
             float4 w = m.c2;
 
-            if (u.x >= 0f)
-            {
-                float t = v.y + w.z;
-                if (t >= 0f)
-                    value = float4(v.z - w.y, w.x - u.z, u.y - v.x, 1f + u.x + t);
-                else
-                    value = float4(1f + u.x - t, u.y + v.x, w.x + u.z, v.z - w.y);
-            }
-            else
-            {
-                float t = v.y - w.z;
-                if (t >= 0f)
-                    value = float4(u.y + v.x, 1f - u.x + t, v.z + w.y, w.x - u.z);
-                else
-                    value = float4(w.x + u.z, v.z + w.y, 1f - u.x - t, u.y - v.x);
-            }
+            uint u_sign = (asuint(u.x) & 0x80000000);
+            float t = v.y + asfloat(asuint(w.z) ^ u_sign);
+            uint4 u_mask = uint4((int)u_sign >> 31);
+            uint4 t_mask = uint4(asint(t) >> 31);
+
+            float tr = 1.0f + abs(u.x);
+
+            uint4 sign_flips = uint4(0x00000000, 0x80000000, 0x80000000, 0x80000000) ^ (u_mask & uint4(0x00000000, 0x80000000, 0x00000000, 0x80000000)) ^ (t_mask & uint4(0x80000000, 0x80000000, 0x80000000, 0x00000000));
+
+            value = float4(tr, u.y, w.x, v.z) + asfloat(asuint(float4(t, v.x, u.z, w.y)) ^ sign_flips);   // +---, +++-, ++-+, +-++
+
+            value = asfloat((asuint(value) & ~u_mask) | (asuint(value.zwxy) & u_mask));
+            value = asfloat((asuint(value.wzyx) & ~t_mask) | (asuint(value) & t_mask));
+
             value = normalize(value);
         }
 
@@ -339,59 +355,40 @@ namespace Unity.Mathematics
             return quaternion(0.0f, 0.0f, sina, cosa);
         }
 
-        public static quaternion LookRotation(float3 direction, float3 up)
+        /// <summary>
+        /// Returns a quaternion view rotation given a unit length forward vector and a unit length up vector.
+        /// The two input vectors are assumed to be unit length and not collinear.
+        /// If these assumptions are not met use float3x3.LookRotationSafe instead.
+        /// </summary>
+        public static quaternion LookRotation(float3 forward, float3 up)
         {
-            var vector = normalizesafe(direction);
-            var vector2 = cross(up, vector);
-            var vector3 = cross(vector, vector2);
-            var m00 = vector2.x;
-            var m01 = vector2.y;
-            var m02 = vector2.z;
-            var m10 = vector3.x;
-            var m11 = vector3.y;
-            var m12 = vector3.z;
-            var m20 = vector.x;
-            var m21 = vector.y;
-            var m22 = vector.z;
-            var num8 = (m00 + m11) + m22;
-            float4 q;
-            if (num8 > 0.0)
-            {
-                var num = sqrt(num8 + 1.0f);
-                q.w = num * 0.5f;
-                num = 0.5f / num;
-                q.x = (m12 - m21) * num;
-                q.y = (m20 - m02) * num;
-                q.z = (m01 - m10) * num;
-                return normalize(quaternion(q));
-            }
-            if ((m00 >= m11) && (m00 >= m22))
-            {
-                var num7 = sqrt(((1.0f + m00) - m11) - m22);
-                var num4 = 0.5f / num7;
-                q.x = 0.5f * num7;
-                q.y = (m01 + m10) * num4;
-                q.z = (m02 + m20) * num4;
-                q.w = (m12 - m21) * num4;
-                return normalize(quaternion(q));
-            }
-            if (m11 > m22)
-            {
-                var num6 = sqrt(((1.0f + m11) - m00) - m22);
-                var num3 = 0.5f / num6;
-                q.x = (m10 + m01) * num3;
-                q.y = 0.5f * num6;
-                q.z = (m21 + m12) * num3;
-                q.w = (m20 - m02) * num3;
-                return normalize(quaternion(q));
-            }
-            var num5 = sqrt(((1.0f + m22) - m00) - m11);
-            var num2 = 0.5f / num5;
-            q.x = (m20 + m02) * num2;
-            q.y = (m21 + m12) * num2;
-            q.z = 0.5f * num5;
-            q.w = (m01 - m10) * num2;
-            return normalize(quaternion(q));
+            float3 t = normalize(cross(up, forward));
+            return quaternion(float3x3(t, cross(forward, t), forward));
+        }
+
+        /// <summary>
+        /// Returns a quaternion view rotation given a forward vector and an up vector.
+        /// The two input vectors are not assumed to be unit length.
+        /// If the magnitude of either of the vectors is so extreme that the calculation cannot be carried out reliably or the vectors are collinear,
+        /// the identity will be returned instead.
+        /// </summary>
+        public static quaternion LookRotationSafe(float3 forward, float3 up)
+        {
+            float forwardLengthSq = dot(forward, forward);
+            float upLengthSq = dot(up, up);
+
+            forward *= rsqrt(forwardLengthSq);
+            up *= rsqrt(upLengthSq);
+
+            float3 t = cross(up, forward);
+            float tLengthSq = dot(t, t);
+            t *= rsqrt(tLengthSq);
+
+            float mn = min(min(forwardLengthSq, upLengthSq), tLengthSq);
+            float mx = max(max(forwardLengthSq, upLengthSq), tLengthSq);
+
+            bool accept = mn > 1e-35f && mx < 1e35f;
+            return quaternion(select(float4(0.0f, 0.0f, 0.0f, 1.0f), quaternion(float3x3(t, cross(forward, t),forward)).value, accept));
         }
 
         /// <summary>Returns true if the quaternion is equal to a given quaternion, false otherwise.</summary>

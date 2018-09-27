@@ -148,6 +148,10 @@ namespace Unity.Mathematics
         public static uint4 asuint(float4 x) { return uint4(asuint(x.x), asuint(x.y), asuint(x.z), asuint(x.w)); }
 
 
+        /// <summary>Returns the bit pattern of a ulong as a long.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long aslong(ulong x) { return (long)x; }
+
         /// <summary>Returns the bit pattern of a double as a long.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long aslong(double x)
@@ -158,6 +162,10 @@ namespace Unity.Mathematics
             return u.longValue;
         }
 
+
+        /// <summary>Returns the bit pattern of a long as a ulong.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong asulong(long x) { return (ulong)x; }
 
         /// <summary>Returns the bit pattern of a double as a ulong.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3192,6 +3200,119 @@ namespace Unity.Mathematics
 
             return index;
         }
+
+        /// <summary>Returns the floating point representation of a half-precision floating point value.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float f16tof32(uint x)
+        {
+            const uint shifted_exp = (0x7c00 << 13);
+            uint uf = (x & 0x7fff) << 13;
+            uint e = uf & shifted_exp;
+            uf += (127 - 15) << 23;
+            uf += select(0, (128u - 16u) << 23, e == shifted_exp);
+            uf = select(uf, asuint(asfloat(uf + (1 << 23)) - 6.10351563e-05f), e == 0);
+            uf |= (x & 0x8000) << 16;
+            return asfloat(uf);
+        }
+
+        /// <summary>Returns the floating point representation of a half-precision floating point vector.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float2 f16tof32(uint2 x)
+        {
+            const uint shifted_exp = (0x7c00 << 13);
+            uint2 uf = (x & 0x7fff) << 13;
+            uint2 e = uf & shifted_exp;
+            uf += (127 - 15) << 23;
+            uf += select(0, (128u - 16u) << 23, e == shifted_exp);
+            uf = select(uf, asuint(asfloat(uf + (1 << 23)) - 6.10351563e-05f), e == 0);
+            uf |= (x & 0x8000) << 16;
+            return asfloat(uf);
+        }
+
+        /// <summary>Returns the floating point representation of a half-precision floating point vector.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float3 f16tof32(uint3 x)
+        {
+            const uint shifted_exp = (0x7c00 << 13);
+            uint3 uf = (x & 0x7fff) << 13;
+            uint3 e = uf & shifted_exp;
+            uf += (127 - 15) << 23;
+            uf += select(0, (128u - 16u) << 23, e == shifted_exp);
+            uf = select(uf, asuint(asfloat(uf + (1 << 23)) - 6.10351563e-05f), e == 0);
+            uf |= (x & 0x8000) << 16;
+            return asfloat(uf);
+        }
+
+        /// <summary>Returns the floating point representation of a half-precision floating point vector.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float4 f16tof32(uint4 x)
+        {
+            const uint shifted_exp = (0x7c00 << 13);
+            uint4 uf = (x & 0x7fff) << 13;
+            uint4 e = uf & shifted_exp;
+            uf += (127 - 15) << 23;
+            uf += select(0, (128u - 16u) << 23, e == shifted_exp);
+            uf = select(uf, asuint(asfloat(uf + (1 << 23)) - 6.10351563e-05f), e == 0);
+            uf |= (x & 0x8000) << 16;
+            return asfloat(uf);
+        }
+
+        /// <summary>Returns the result converting a float value to its nearest half-precision floating point representation.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint f32tof16(float x)
+        {
+            const int infinity_32 = 255 << 23;
+            const uint msk = 0x7FFFF000u;
+
+            uint ux = asuint(x);
+            uint uux = ux & msk;
+            uint h = (uint)(asint(min(asfloat(uux) * 1.92592994e-34f, 260042752.0f)) + 0x1000) >> 13;   // Clamp to signed infinity if overflowed
+            h = select(h, select(0x7c00u, 0x7e00u, (int)uux > infinity_32), (int)uux >= infinity_32);   // NaN->qNaN and Inf->Inf
+            return h | (ux & ~msk) >> 16;
+        }
+
+        /// <summary>Returns the result of a componentwise conversion of a float2 vector to its nearest half-precision floating point representation.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint2 f32tof16(float2 x)
+        {
+            const int infinity_32 = 255 << 23;
+            const uint msk = 0x7FFFF000u;
+
+            uint2 ux = asuint(x);
+            uint2 uux = ux & msk;
+            uint2 h = (uint2)(asint(min(asfloat(uux) * 1.92592994e-34f, 260042752.0f)) + 0x1000) >> 13;   // Clamp to signed infinity if overflowed
+            h = select(h, select(0x7c00u, 0x7e00u, (int2)uux > infinity_32), (int2)uux >= infinity_32);   // NaN->qNaN and Inf->Inf
+            return h | (ux & ~msk) >> 16;
+        }
+
+        /// <summary>Returns the result of a componentwise conversion of a float3 vector to its nearest half-precision floating point representation.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint3 f32tof16(float3 x)
+        {
+            const int infinity_32 = 255 << 23;
+            const uint msk = 0x7FFFF000u;
+
+            uint3 ux = asuint(x);
+            uint3 uux = ux & msk;
+            uint3 h = (uint3)(asint(min(asfloat(uux) * 1.92592994e-34f, 260042752.0f)) + 0x1000) >> 13;   // Clamp to signed infinity if overflowed
+            h = select(h, select(0x7c00u, 0x7e00u, (int3)uux > infinity_32), (int3)uux >= infinity_32);   // NaN->qNaN and Inf->Inf
+            return h | (ux & ~msk) >> 16;
+        }
+
+        /// <summary>Returns the result of a componentwise conversion of a float4 vector to its nearest half-precision floating point representation.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint4 f32tof16(float4 x)
+        {
+            const int infinity_32 = 255 << 23;
+            const uint msk = 0x7FFFF000u;
+
+            uint4 ux = asuint(x);
+            uint4 uux = ux & msk;
+            uint4 h = (uint4)(asint(min(asfloat(uux) * 1.92592994e-34f, 260042752.0f)) + 0x1000) >> 13;   // Clamp to signed infinity if overflowed
+            h = select(h, select(0x7c00u, 0x7e00u, (int4)uux > infinity_32), (int4)uux >= infinity_32);   // NaN->qNaN and Inf->Inf
+            return h | (ux & ~msk) >> 16;
+        }
+
 
         /// <summary>Returns a uint hash from a block of memory using the xxhash32 algorithm. Can only be used in an unsafe context.</summary>
         /// <param name="pBuffer">A pointer to the beginning of the data.</param>
