@@ -88,7 +88,7 @@ namespace Unity.VectorGraphics
             List<Color> colors;
             List<Vector2> uvs;
             List<Vector2> settingIndices;
-            FillVertexChannels(geoms, 1.0f, texAtlas != null, out vertices, out indices, out colors, out uvs, out settingIndices);
+            FillVertexChannels(geoms, 1.0f, texAtlas != null, out vertices, out indices, out colors, out uvs, out settingIndices, flipYAxis);
 
             Texture2D texture = texAtlas != null ? texAtlas.Texture : null;
 
@@ -147,7 +147,7 @@ namespace Unity.VectorGraphics
             List<Color> colors;
             List<Vector2> uvs;
             List<Vector2> settingIndices;
-            FillVertexChannels(geoms, svgPixelsPerUnit, hasUVs, out vertices, out indices, out colors, out uvs, out settingIndices);
+            FillVertexChannels(geoms, svgPixelsPerUnit, hasUVs, out vertices, out indices, out colors, out uvs, out settingIndices, flipYAxis);
 
             if (flipYAxis)
                 FlipYAxis(vertices);
@@ -177,7 +177,7 @@ namespace Unity.VectorGraphics
             }
         }
 
-        private static void FillVertexChannels(List<Geometry> geoms, float pixelsPerUnit, bool hasUVs, out List<Vector2> vertices, out List<UInt16> indices, out List<Color> colors, out List<Vector2> uvs, out List<Vector2> settingIndices)
+        private static void FillVertexChannels(List<Geometry> geoms, float pixelsPerUnit, bool hasUVs, out List<Vector2> vertices, out List<UInt16> indices, out List<Color> colors, out List<Vector2> uvs, out List<Vector2> settingIndices, bool flipYAxis)
         {
             int totalVerts = 0, totalIndices = 0;
             foreach (var geom in geoms)
@@ -205,7 +205,7 @@ namespace Unity.VectorGraphics
                 vertices.AddRange(geom.Vertices.Select(x => (geom.WorldTransform * x) / pixelsPerUnit));
                 colors.AddRange(Enumerable.Repeat(geom.Color, geom.Vertices.Length));
 
-                FlipRangeIfNecessary(vertices, indices, indexStart, indexEnd);
+                FlipRangeIfNecessary(vertices, indices, indexStart, indexEnd, flipYAxis);
 
                 System.Diagnostics.Debug.Assert(uvs == null || geom.UVs != null);
                 if (uvs != null)
@@ -217,7 +217,7 @@ namespace Unity.VectorGraphics
             }
         }
 
-        private static void FlipRangeIfNecessary(List<Vector2> vertices, List<UInt16> indices, int indexStart, int indexEnd)
+        private static void FlipRangeIfNecessary(List<Vector2> vertices, List<UInt16> indices, int indexStart, int indexEnd, bool flipYAxis)
         {
             // For the range, find the first valid triangle and check its winding order. If that triangle needs flipping, then flip the whole range.
             bool shouldFlip = false;
@@ -234,7 +234,7 @@ namespace Unity.VectorGraphics
                 var n = Vector3.Cross(s, t);
                 if (n.sqrMagnitude < 0.001f)
                     continue;
-                shouldFlip = n.z < 0.0f;
+                shouldFlip = flipYAxis ? n.z < 0.0f : n.z > 0.0f;
                 break;
             }
             if (shouldFlip)

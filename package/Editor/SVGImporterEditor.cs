@@ -41,11 +41,15 @@ namespace Unity.VectorGraphics.Editor
         private SerializedProperty m_MaxCordDeviation;
         private SerializedProperty m_MaxTangentAngleEnabled;
         private SerializedProperty m_MaxTangentAngle;
+        private SerializedProperty m_KeepTextureAspectRatio;
         private SerializedProperty m_TextureSize;
+        private SerializedProperty m_TextureWidth;
+        private SerializedProperty m_TextureHeight;
         private SerializedProperty m_WrapMode;
         private SerializedProperty m_FilterMode;
+        private SerializedProperty m_SampleCount;
 
-        private readonly GUIContent m_SVGTypeText = new GUIContent("Type", "How the SVG file will be imported.");
+        private readonly GUIContent m_SVGTypeText = new GUIContent("Generated Asset Type", "How the SVG file will be imported.");
         private readonly GUIContent m_TexturedSpriteMeshTypeText = new GUIContent("Mesh Type", "Type of the sprite mesh to generate.");
         private readonly GUIContent m_PixelsPerUnitText = new GUIContent("Pixels Per Unit", "How many pixels in the SVG correspond to one unit in the world.");
         private readonly GUIContent m_GradientResolutionText = new GUIContent("Gradient Resolution", "Size of each rasterized gradient in pixels. Higher values consume memory but result in more accurate gradients.");
@@ -63,9 +67,11 @@ namespace Unity.VectorGraphics.Editor
         private readonly GUIContent m_MaxCordDeviationText = new GUIContent("Max Cord Deviation", "Distance on the cord to a straight line between two points after which more tessellation will be generated.");
         private readonly GUIContent m_MaxTangentAngleEnabledText = new GUIContent("Max Tangent Enabled", "Enables the \"max tangent angle\" tessellation test.");
         private readonly GUIContent m_MaxTangentAngleText = new GUIContent("Max Tangent Angle", "Max tangent angle (in degrees) after which more tessellation will be generated.");
+        private readonly GUIContent m_KeepTextureAspectRatioText = new GUIContent("Keep Aspect Ratio");
         private readonly GUIContent m_TextureSizeText = new GUIContent("Texture Size", "The size of the generated texture.");
         private readonly GUIContent m_WrapModeText = new GUIContent("Wrap Mode");
         private readonly GUIContent m_FilterModeText = new GUIContent("Filter Mode");
+        private readonly GUIContent m_SampleCountText = new GUIContent("Sample Count");
 
         private readonly GUIContent[] svgTypeOptions =
         {
@@ -154,6 +160,22 @@ namespace Unity.VectorGraphics.Editor
             (int)FilterMode.Trilinear
         };
 
+        public readonly GUIContent[] m_SampleCountContents =
+        {
+            new GUIContent("None"),
+            new GUIContent("2 samples"),
+            new GUIContent("4 samples"),
+            new GUIContent("8 samples")
+        };
+
+        public readonly int[] m_SampleCountValues =
+        {
+            1,
+            2,
+            4,
+            8
+        };
+
         public override void OnEnable()
         {
             m_SVGType = serializedObject.FindProperty("m_SvgType");
@@ -174,20 +196,17 @@ namespace Unity.VectorGraphics.Editor
             m_MaxCordDeviation = serializedObject.FindProperty("m_MaxCordDeviation");
             m_MaxTangentAngleEnabled = serializedObject.FindProperty("m_MaxTangentAngleEnabled");
             m_MaxTangentAngle = serializedObject.FindProperty("m_MaxTangentAngle");
+            m_KeepTextureAspectRatio = serializedObject.FindProperty("m_KeepTextureAspectRatio");
             m_TextureSize = serializedObject.FindProperty("m_TextureSize");
+            m_TextureWidth = serializedObject.FindProperty("m_TextureWidth");
+            m_TextureHeight = serializedObject.FindProperty("m_TextureHeight");
             m_WrapMode = serializedObject.FindProperty("m_WrapMode");
             m_FilterMode = serializedObject.FindProperty("m_FilterMode");
+            m_SampleCount = serializedObject.FindProperty("m_SampleCount");
         }
 
         public override void OnInspectorGUI()
         {
-            IntPopup(m_SVGType, m_SVGTypeText, svgTypeOptions, svgTypeValues);
-
-            if (m_SVGType.intValue == (int)SVGType.TexturedSprite)
-            {
-                IntPopup(m_TexturedSpriteMeshType, m_TexturedSpriteMeshTypeText, texturedSpriteMeshTypeOptions, texturedSpriteMeshTypeValues);
-            }
-
             PropertyField(m_PixelsPerUnit, m_PixelsPerUnitText);
             PropertyField(m_GradientResolution, m_GradientResolutionText);
             IntPopup(m_Alignment, m_AlignmentText, m_AlignmentOptions);
@@ -199,7 +218,7 @@ namespace Unity.VectorGraphics.Editor
                 GUILayout.EndHorizontal();
             }
 
-            if (!m_SVGType.hasMultipleDifferentValues && m_SVGType.intValue != (int)SVGType.Texture2D)
+            using (new EditorGUI.DisabledScope(m_SVGType.hasMultipleDifferentValues || m_SVGType.intValue == (int)SVGType.Texture2D))
                 IntToggle(m_GeneratePhysicsShape, m_GeneratePhysicsShapeText);
 
             IntToggle(m_PreserveViewport, m_PreserveViewportText);
@@ -255,25 +274,38 @@ namespace Unity.VectorGraphics.Editor
 
             EditorGUILayout.Space();
 
+            IntPopup(m_SVGType, m_SVGTypeText, svgTypeOptions, svgTypeValues);
+
             if (!m_SVGType.hasMultipleDifferentValues && (m_SVGType.intValue == (int)SVGType.TexturedSprite || m_SVGType.intValue == (int)SVGType.Texture2D))
             {
-                PropertyField(m_TextureSize, m_TextureSizeText);
+                ++EditorGUI.indentLevel;
+
+                if (m_SVGType.intValue == (int)SVGType.TexturedSprite)
+                    IntPopup(m_TexturedSpriteMeshType, m_TexturedSpriteMeshTypeText, texturedSpriteMeshTypeOptions, texturedSpriteMeshTypeValues);
+
+                PropertyField(m_KeepTextureAspectRatio, m_KeepTextureAspectRatioText);
+                if (!m_KeepTextureAspectRatio.hasMultipleDifferentValues && m_KeepTextureAspectRatio.boolValue)
+                {
+                    PropertyField(m_TextureSize, m_TextureSizeText);
+                }
+                else
+                {
+                    GUILayout.BeginHorizontal();
+                    EditorGUILayout.PrefixLabel(m_TextureSizeText);
+                    IntField(m_TextureWidth, GUIContent.none, GUILayout.MinWidth(40));
+                    GUILayout.Label("x");
+                    IntField(m_TextureHeight, GUIContent.none, GUILayout.MinWidth(40));
+                    GUILayout.EndHorizontal();
+                }
+
                 IntPopup(m_WrapMode, m_WrapModeText, m_WrapModeContents, m_WrapModeValues);
                 IntPopup(m_FilterMode, m_FilterModeText, m_FilterModeContents, m_FilterModeValues);
+                IntPopup(m_SampleCount, m_SampleCountText, m_SampleCountContents, m_SampleCountValues);
+
+                --EditorGUI.indentLevel;
+
+                EditorGUILayout.Space();
             }
-
-            EditorGUILayout.Space();
-
-            GUILayout.BeginVertical();
-            {
-                var labelStyle = EditorStyles.wordWrappedLabel;
-                labelStyle.fontStyle = FontStyle.Bold;
-                labelStyle.alignment = TextAnchor.UpperCenter;
-                GUILayout.Label(GetStatsString(), labelStyle);
-            }
-            GUILayout.EndVertical();
-
-            EditorGUILayout.Space();
 
             if (!m_SVGType.hasMultipleDifferentValues && (m_SVGType.intValue == (int)SVGType.VectorSprite || m_SVGType.intValue == (int)SVGType.TexturedSprite))
             {
@@ -309,6 +341,8 @@ namespace Unity.VectorGraphics.Editor
                 svgImporter.TargetResolution = (int)Mathf.Max(1, svgImporter.TargetResolution);
                 svgImporter.ResolutionMultiplier = Mathf.Clamp(svgImporter.ResolutionMultiplier, 1.0f, 100.0f);
                 svgImporter.TextureSize = Math.Max(1, svgImporter.TextureSize);
+                svgImporter.TextureWidth = Math.Max(1, svgImporter.TextureWidth);
+                svgImporter.TextureHeight = Math.Max(1, svgImporter.TextureHeight);
             }
         }
 
@@ -317,6 +351,16 @@ namespace Unity.VectorGraphics.Editor
             EditorGUI.showMixedValue = prop.hasMultipleDifferentValues;
             EditorGUILayout.PropertyField(prop, label);
             EditorGUI.showMixedValue = false;
+        }
+
+        private void IntField(SerializedProperty prop, GUIContent label, params GUILayoutOption[] options)
+        {
+            EditorGUI.BeginChangeCheck();
+            EditorGUI.showMixedValue = prop.hasMultipleDifferentValues;
+            int value = EditorGUILayout.IntField(label, prop.intValue, options);
+            EditorGUI.showMixedValue = false;
+            if (EditorGUI.EndChangeCheck())
+                prop.intValue = value;
         }
 
         private void IntPopup(SerializedProperty prop, GUIContent label, GUIContent[] displayedOptions)
@@ -407,11 +451,16 @@ namespace Unity.VectorGraphics.Editor
             return VectorUtils.RenderSpriteToTexture2D(sprite, width, height, SVGImporter.GetSVGSpriteMaterial(sprite), 4);
         }
 
-        private string GetStatsString()
+        public override string GetInfoString()
         {
             var sprite = SVGImporter.GetImportedSprite(assetTarget);
             if (sprite == null)
-                return "";
+            {
+                var tex = assetTarget as Texture2D;
+                if (tex == null)
+                    return "";
+                return InternalBridge.GetTextureInfoString(tex);
+            }
             
             int vertexCount = sprite.vertices.Length;
             int indexCount = sprite.triangles.Length;

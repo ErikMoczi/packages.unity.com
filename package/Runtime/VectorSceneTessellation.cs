@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using LibTessDotNet;
+using Unity.VectorGraphics.External.LibTessDotNet;
 
 namespace Unity.VectorGraphics
 {
@@ -453,7 +453,9 @@ namespace Unity.VectorGraphics
 
             int atlasWidth = (int)atlasSize.x;
             int atlasHeight = (int)atlasSize.y;
-            var atlasColors = new Color32[atlasWidth * atlasHeight]; // Comes out all black transparent
+            var atlasColors = new Color32[atlasWidth * atlasHeight];
+            for (int k = 0; k < atlasWidth * atlasHeight; ++k)
+                atlasColors[k] = Color.black;
             Vector2 atlasInvSize = new Vector2(1.0f / (float)atlasWidth, 1.0f / (float)atlasHeight);
             Vector2 whiteTexelsScreenPos = pack[pack.Count - 1].Position;
             Vector2 whiteTexelsPos = (whiteTexelsScreenPos + Vector2.one) * atlasInvSize;

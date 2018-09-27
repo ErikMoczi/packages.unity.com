@@ -1,3 +1,17 @@
+## [1.0.0-preview.18] - 2018-09-21
+
+### Improved texture import editor. Better basic tessellation defaults.
+### Enabled GPU instancing, _RendererColor works out-of-the-box
+### Made the auto-computed tessellation options less aggressive
+### Allowing different width/height when importing to a texture
+### Fixed flipped winding order when flipYAxis is false
+### Moved external libraries to their own namespaces
+### Moved the sprite stats over the preview
+### Filling atlas with opaque black to help with SVG sprite picking
+### Support for sample count (for import-to-texture)
+### Fixed SVGImageEditor for 2018.1
+### Setting DtdProcessing to ignore
+
 ## [1.0.0-preview.17] - 2018-09-13
 
 ### Support for sprite mesh type on textured sprites

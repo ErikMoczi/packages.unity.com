@@ -25,5 +25,13 @@ namespace Unity.VectorGraphics.Editor
                 return null;
             return paths.ToList();
         }
+
+        internal static string GetTextureInfoString(UnityEngine.Texture2D tex)
+        {
+            var format = TextureUtil.GetTextureFormat(tex);
+            return "" + tex.width + "x" + tex.height + " " + 
+                TextureUtil.GetTextureFormatString(format) + " " +
+                EditorUtility.FormatBytes(TextureUtil.GetStorageMemorySizeLong(tex));
+        }
     }
 }

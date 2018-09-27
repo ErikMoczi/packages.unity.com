@@ -41,7 +41,7 @@ namespace Unity.VectorGraphics.Editor
         }
         [SerializeField] private SVGType m_SvgType = SVGType.VectorSprite;
 
-        /// <summary>How the SVG file will be imported</summary>
+        /// <summary>For textured sprite, the mesh type</summary>
         public SpriteMeshType TexturedSpriteMeshType
         {
             get { return m_TexturedSpriteMeshType; }
@@ -162,11 +162,32 @@ namespace Unity.VectorGraphics.Editor
         [SerializeField] private float m_MaxTangentAngle = 5.0f;
 
         /// <summary>The size of the texture (only used when importing to a texture).</summary>
+        public bool KeepTextureAspectRatio {
+            get { return m_KeepTextureAspectRatio; }
+            set { m_KeepTextureAspectRatio = value; }
+        }
+        [SerializeField] private bool m_KeepTextureAspectRatio = true;
+
+        /// <summary>The size of the texture (only used when importing to a texture with "keep aspect ratio").</summary>
         public int TextureSize {
             get { return m_TextureSize; }
             set { m_TextureSize = value; }
         }
         [SerializeField] private int m_TextureSize = 256;
+
+        /// <summary>The width of the texture (only used when importing to a texture).</summary>
+        public int TextureWidth {
+            get { return m_TextureWidth; }
+            set { m_TextureWidth = value; }
+        }
+        [SerializeField] private int m_TextureWidth = 256;
+
+        /// <summary>The height of the texture (only used when importing to a texture).</summary>
+        public int TextureHeight {
+            get { return m_TextureHeight; }
+            set { m_TextureHeight = value; }
+        }
+        [SerializeField] private int m_TextureHeight = 256;
 
         /// <summary>The wrap mode of the texture (only used when importing to a texture).</summary>
         public TextureWrapMode WrapMode {
@@ -181,6 +202,14 @@ namespace Unity.VectorGraphics.Editor
             set { m_FilterMode = value; }
         }
         [SerializeField] private FilterMode m_FilterMode = FilterMode.Bilinear;
+
+        /// <summary>The number of samples per pixel (only used when importing to a texture).</summary>
+        public int SampleCount
+        {
+            get { return m_SampleCount; }
+            set { m_SampleCount = value; }
+        }
+        [SerializeField] private int m_SampleCount = 4;
 
         [SerializeField]
         private SVGSpriteData m_SpriteData = new SVGSpriteData();
@@ -293,7 +322,7 @@ namespace Unity.VectorGraphics.Editor
             if (sprite.texture != null)
                 sprite.texture.name = name + "Atlas";
 
-            var tex = BuildTexture(sprite, TextureSize, name);
+            var tex = BuildTexture(sprite, name);
 
             var texturedSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), CustomPivot, SvgPixelsPerUnit, 0, TexturedSpriteMeshType);
             texturedSprite.name = name;
@@ -325,7 +354,7 @@ namespace Unity.VectorGraphics.Editor
 
         private void GenerateTexture2DAsset(AssetImportContext ctx, Sprite sprite, string name)
         {
-            var tex = BuildTexture(sprite, TextureSize, name);
+            var tex = BuildTexture(sprite, name);
 
             m_ImportingTexture2D = tex;
 
@@ -337,15 +366,23 @@ namespace Unity.VectorGraphics.Editor
             GameObject.DestroyImmediate(sprite);
         }
 
-        private Texture2D BuildTexture(Sprite sprite, int textureSize, string name)
+        private Texture2D BuildTexture(Sprite sprite, string name)
         {
-            int textureWidth;
-            int textureHeight;
-            ComputeTextureDimensionsFromBounds(sprite, textureSize, out textureWidth, out textureHeight);
+            int textureWidth = 0;
+            int textureHeight = 0;
+            if (KeepTextureAspectRatio)
+            {
+                ComputeTextureDimensionsFromBounds(sprite, TextureSize, out textureWidth, out textureHeight);
+            }
+            else
+            {
+                textureWidth = TextureWidth;
+                textureHeight = TextureHeight;
+            }
 
             Material mat = MaterialForSVGSprite(sprite);
 
-            var tex = VectorUtils.RenderSpriteToTexture2D(sprite, textureWidth, textureHeight, mat, 4);
+            var tex = VectorUtils.RenderSpriteToTexture2D(sprite, textureWidth, textureHeight, mat, SampleCount);
             tex.hideFlags = HideFlags.None;
             tex.name = name;
             tex.wrapMode = WrapMode;
@@ -427,17 +464,15 @@ namespace Unity.VectorGraphics.Editor
         private void ComputeTessellationOptions(SVGParser.SceneInfo sceneInfo, int targetResolution, float multiplier, out float stepDist, out float maxCord, out float maxTangent)
         {
             var bbox = VectorUtils.ApproximateSceneNodeBounds(sceneInfo.Scene.Root);
-            float maxDim = Mathf.Max(bbox.width, bbox.height);
-
-            float ppuRatio = Mathf.Clamp(1.0f / (pixelsPerUnit / 100.0f), 0.1f, 10.0f);
+            float maxDim = Mathf.Max(bbox.width, bbox.height) / SvgPixelsPerUnit;
 
             // The scene ratio gives a rough estimate of coverage % of the vector scene on the screen.
             // Higher values should result in a more dense tessellation.
-            float sceneRatio = ((targetResolution * multiplier * ppuRatio) / maxDim);
+            float sceneRatio = maxDim / (targetResolution * multiplier);
 
             stepDist = float.MaxValue; // No need for uniform step distance
-            maxCord = 0.5f / sceneRatio;
-            maxTangent = 1.0f / sceneRatio;
+            maxCord = Mathf.Max(0.01f, 75.0f * sceneRatio);
+            maxTangent = Mathf.Max(0.1f, 100.0f * sceneRatio);
         }
 
         internal static Sprite GetImportedSprite(string assetPath)

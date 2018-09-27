@@ -52,9 +52,8 @@ namespace Unity.VectorGraphics
             settings.IgnoreWhitespace = true;
 
             // Validation and resolving can reach through HTTP to fetch and validate against schemas/DTDs, which could take ages
-            // settings.DtdProcessing = DtdProcessing.Ignore;
 #if (NET_STANDARD_2_0 || NET_4_6)
-            settings.DtdProcessing = System.Xml.DtdProcessing.Parse;
+            settings.DtdProcessing = System.Xml.DtdProcessing.Ignore;
 #else
             settings.ProhibitDtd = false;
 #endif

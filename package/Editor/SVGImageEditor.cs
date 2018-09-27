@@ -22,7 +22,7 @@ public class SVGImageEditor : GraphicEditor
     {
         base.OnEnable();
 
-        m_SpriteContent = EditorGUIUtility.TrTextContent("Source SVG Image");
+        m_SpriteContent = new GUIContent("Source SVG Image");
         m_Sprite = serializedObject.FindProperty("m_Sprite");
     }
 
