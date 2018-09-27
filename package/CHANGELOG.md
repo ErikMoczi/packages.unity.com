@@ -1,3 +1,8 @@
+## [1.0.0-preview.19] - 2018-09-24
+
+### Using viewBox for relative coordinates, when available
+### Fixed issue with gradient user-units when no viewBox is specified
+
 ## [1.0.0-preview.18] - 2018-09-21
 
 ### Improved texture import editor. Better basic tessellation defaults.

@@ -1034,7 +1034,10 @@ namespace Unity.VectorGraphics
             var viewBoxInfo = ParseViewBox(node, sceneNode, sceneViewport);
             ApplyViewBox(sceneNode, viewBoxInfo, sceneViewport);
 
-            currentContainerSize.Push(viewBoxInfo.ViewBox.size);
+            currentContainerSize.Push(sceneViewport.size);
+            if (!viewBoxInfo.IsEmpty)
+                currentViewBoxSize.Push(viewBoxInfo.ViewBox.size);
+
             currentSceneNode.Push(sceneNode);
             nodeGlobalSceneState[sceneNode] = new NodeGlobalSceneState() { ContainerSize = currentContainerSize.Peek() };
 
@@ -1042,10 +1045,13 @@ namespace Unity.VectorGraphics
                 SupportElems(node, allElems);
             ParseChildren(node, "svg");
 
-            currentContainerSize.Pop();
             if (currentSceneNode.Pop() != sceneNode)
                 throw SVGFormatException.StackError;
-            
+
+            if (!viewBoxInfo.IsEmpty)
+                currentViewBoxSize.Pop();
+            currentContainerSize.Pop();
+
             styleResolver.PopNode();
         }
 
@@ -1060,6 +1066,9 @@ namespace Unity.VectorGraphics
 
             Rect viewportRect = new Rect(Vector2.zero, currentContainerSize.Peek());
             var viewBoxInfo = ParseViewBox(node, sceneNode, viewportRect);
+            if (!viewBoxInfo.IsEmpty)
+                currentViewBoxSize.Push(viewBoxInfo.ViewBox.size);
+
             symbolViewBoxes[sceneNode] = viewBoxInfo;
 
             // Resolve any node that was referencing this symbol
@@ -1082,6 +1091,9 @@ namespace Unity.VectorGraphics
             ParseChildren(node, node.Name);
             if (currentSceneNode.Pop() != sceneNode)
                 throw SVGFormatException.StackError;
+
+            if (!viewBoxInfo.IsEmpty)
+                currentViewBoxSize.Pop();
 
             ParseClipAndMask(node, sceneNode);
         }
@@ -1406,7 +1418,11 @@ namespace Unity.VectorGraphics
                 if (number < 0)
                     throw node.GetException("Number in " + attribName + " cannot be negative");
                 number /= 100.0f;
-                var vpSize = currentContainerSize.Peek();
+
+                // If there's an active viewbox, this should be used as the reference size for relative coordinates.
+                // See https://www.w3.org/TR/SVG/coords.html#Units
+                Vector2 vpSize = currentViewBoxSize.Count > 0 ? currentViewBoxSize.Peek() : currentContainerSize.Peek();
+
                 switch (dimType)
                 {
                     case DimType.Width: return number * vpSize.x;
@@ -1461,10 +1477,10 @@ namespace Unity.VectorGraphics
 
         enum ViewBoxAlign { Min, Mid, Max }
         enum ViewBoxAspectRatio { DontPreserve, FitLargestDim, FitSmallestDim }
-        struct ViewBoxInfo { public Rect ViewBox; public ViewBoxAspectRatio AspectRatio; public ViewBoxAlign AlignX, AlignY; }
+        struct ViewBoxInfo { public Rect ViewBox; public ViewBoxAspectRatio AspectRatio; public ViewBoxAlign AlignX, AlignY; public bool IsEmpty; }
         ViewBoxInfo ParseViewBox(XmlReaderIterator.Node node, SceneNode sceneNode, Rect sceneViewport)
         {
-            var viewBoxInfo = new ViewBoxInfo();
+            var viewBoxInfo = new ViewBoxInfo() { IsEmpty = true };
             string viewBoxString = node["viewBox"];
             viewBoxString = viewBoxString != null ? viewBoxString.Trim() : null;
             if (string.IsNullOrEmpty(viewBoxString))
@@ -1483,6 +1499,7 @@ namespace Unity.VectorGraphics
             viewBoxInfo.ViewBox = new Rect(viewBoxMin, viewBoxSize);
             ParseViewBoxAspectRatio(node, ref viewBoxInfo);
 
+            viewBoxInfo.IsEmpty = false;
             return viewBoxInfo;
         }
 
@@ -2036,6 +2053,7 @@ namespace Unity.VectorGraphics
         Dictionary<string, List<NodeReferenceData>> postponedSymbolData = new Dictionary<string, List<NodeReferenceData>>();
         List<NodeWithParent> invisibleNodes = new List<NodeWithParent>();
         Stack<Vector2> currentContainerSize = new Stack<Vector2>();
+        Stack<Vector2> currentViewBoxSize = new Stack<Vector2>();
         Stack<SceneNode> currentSceneNode = new Stack<SceneNode>();
         GradientFill currentGradientFill;
         ElemHandler[] allElems;
