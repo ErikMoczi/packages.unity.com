@@ -78,7 +78,7 @@ namespace UnityEditor.ProBuilder
 
         protected MenuAction()
         {
-            iconMode = PreferencesInternal.GetBool(PreferenceKeys.pbIconGUI);
+	        iconMode = ProBuilderEditor.s_IsIconGui;
         }
 
 		/// <summary>
@@ -120,10 +120,6 @@ namespace UnityEditor.ProBuilder
                 }
             }
         }
-
-	    internal static EditLevel editLevel { get { return ProBuilderEditor.instance ? ProBuilderEditor.editLevel : EditLevel.Top; } }
-
-	    internal static ComponentMode componentMode { get { return ProBuilderEditor.instance ? ProBuilderEditor.componentMode : ComponentMode.Face; } }
 
         Texture2D m_DesaturatedIcon = null;
 
@@ -207,11 +203,22 @@ namespace UnityEditor.ProBuilder
 	    }
 
 	    /// <summary>
+	    /// In which SelectMode states is this action applicable. Drives the `virtual bool hidden { get; }` property unless overridden.
+	    /// </summary>
+	    public virtual SelectMode validSelectModes
+	    {
+		    get { return SelectMode.Any; }
+	    }
+
+	    /// <summary>
 	    /// A check for whether or not the action is valid given the current selection.
 	    /// </summary>
 	    /// <seealso cref="hidden"/>
 	    /// <value>True if this action is valid with current selection and mode.</value>
-	    public abstract bool enabled { get; }
+	    public virtual bool enabled
+	    {
+		    get { return ProBuilderEditor.instance != null && ProBuilderEditor.selectMode.ContainsFlag(validSelectModes); }
+	    }
 
 	    /// <summary>
 	    /// Is this action visible in the ProBuilder toolbar?
@@ -221,7 +228,7 @@ namespace UnityEditor.ProBuilder
 	    /// <value>True if this action should be shown in the toolbar with the current mode and settings, false otherwise.</value>
 	    public virtual bool hidden
 	    {
-		    get { return false; }
+		    get { return !ProBuilderEditor.selectMode.ContainsFlag(validSelectModes); }
 	    }
 
 	    /// <summary>
@@ -356,13 +363,13 @@ namespace UnityEditor.ProBuilder
 		{
 			if(iconMode)
 			{
-				m_LastCalculatedSize = ToolbarGroupUtility.GetStyle(ToolbarGroup.Object, isHorizontal).CalcSize(UI.EditorGUIUtility.TempGUIContent(null, null, icon));
+				m_LastCalculatedSize = ToolbarGroupUtility.GetStyle(ToolbarGroup.Object, isHorizontal).CalcSize(UI.EditorGUIUtility.TempContent(null, null, icon));
 			}
 			else
 			{
 				// in text mode always use the vertical layout.
 				isHorizontal = false;
-				m_LastCalculatedSize = MenuActionStyles.buttonStyleVertical.CalcSize(UI.EditorGUIUtility.TempGUIContent(menuTitle)) + AltButtonSize;
+				m_LastCalculatedSize = MenuActionStyles.buttonStyleVertical.CalcSize(UI.EditorGUIUtility.TempContent(menuTitle)) + AltButtonSize;
 			}
 			return m_LastCalculatedSize;
 		}

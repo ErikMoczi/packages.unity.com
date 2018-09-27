@@ -16,16 +16,9 @@ using UnityEngine.ProBuilder.MeshOperations;
 
 namespace UnityEditor.ProBuilder
 {
-	sealed class UVEditor : EditorWindow
+	sealed class UVEditor : ConfigurableWindow
 	{
-#if PROTOTYPE
-	public static void MenuOpenUVEditor()
-	{
-		Debug.LogWarning("UV Editor is ProBuilder Advanced feature.");
-	}
-#else
-
-		#region Fields
+#region Fields
 
 		ProBuilderEditor editor
 		{
@@ -46,16 +39,23 @@ namespace UnityEditor.ProBuilder
 		const int MIN_ACTION_WINDOW_SIZE = 128;
 		const float MIN_GRAPH_SCALE = .0001f;
 		const float MAX_GRAPH_SCALE = 250f;
-		/// Max canvas zoom
+		// Max canvas zoom
 		const float MAX_GRAPH_SCALE_SCROLL = 20f;
-		/// When scrolling use this value to taper the scroll effect
+		// When scrolling use this value to taper the scroll effect
 		const float MAX_PROXIMITY_SNAP_DIST_UV = .15f;
-		///< The maximum allowable distance magnitude between coords to be considered for proximity snapping (UV coordinates)
+		// The maximum allowable distance magnitude between coords to be considered for proximity snapping (UV coordinates)
 		const float MAX_PROXIMITY_SNAP_DIST_CANVAS = 12f;
-		///< The maximum allowable distance magnitude between coords to be considered for proximity snapping (Canvas coordinates)
+		// The maximum allowable distance magnitude between coords to be considered for proximity snapping (Canvas coordinates)
 		const float MIN_DIST_MOUSE_EDGE = 8f;
 
-		private float pref_gridSnapValue = .0625f;
+		// todo Support Range/Min/Max property decorators
+		static Pref<float> s_GridSnapIncrement = new Pref<float>("uvEditorGridSnapIncrement", .125f, Settings.Scope.Project);
+
+		[UserSettingBlock("UV Editor", new [] { "grid", "size" } )]
+		static void UVEditorSettings(string searchContext)
+		{
+			s_GridSnapIncrement.value = UI.EditorGUILayout.SearchableSlider(UI.EditorGUIUtility.TempContent("Grid Size"), s_GridSnapIncrement, .015625f, 2f, searchContext);
+		}
 
 		static readonly Color DRAG_BOX_COLOR_BASIC = new Color(0f, .7f, 1f, .2f);
 		static readonly Color DRAG_BOX_COLOR_PRO = new Color(0f, .7f, 1f, 1f);
@@ -84,8 +84,9 @@ namespace UnityEditor.ProBuilder
 			get { return Event.current.modifiers == EventModifiers.Shift; }
 		}
 
-		private bool pref_showMaterial = true;
-		///< Show a preview texture for the first selected face in UV space 0,1?
+		Pref<bool> m_ShowPreviewMaterial = new Pref<bool>("UVEditor.showPreviewMaterial", true, Settings.Scope.Project);
+
+		// Show a preview texture for the first selected face in UV space 0,1?
 #if PB_DEBUG
 	List<Texture2D> m_DebugUVRenderScreens = new List<Texture2D>();
 	#endif
@@ -154,15 +155,6 @@ namespace UnityEditor.ProBuilder
 
 		Tool tool = Tool.Move;
 
-		ComponentMode selectionMode
-		{
-			get { return editor != null ? ProBuilderEditor.componentMode : ComponentMode.Face; }
-			set
-			{
-				if (editor) editor.SetSelectionMode(value);
-			}
-		}
-
 		GUIContent[] ToolIcons;
 		GUIContent[] SelectionIcons;
 
@@ -204,32 +196,12 @@ namespace UnityEditor.ProBuilder
 		}
 
 		ObjectElementIndex nearestElement = new ObjectElementIndex(-1, -1, -1);
-
-		#endregion
-
-		#region Menu
+#endregion
+#region Menu
 
 		public static void MenuOpenUVEditor()
 		{
-			if (ProBuilderEditor.instance != null && ProBuilderEditor.editLevel == EditLevel.Top)
-				ProBuilderEditor.instance.SetEditLevel(EditLevel.Geometry);
-
-			EditorWindow.GetWindow<UVEditor>(PreferencesInternal.GetBool(PreferenceKeys.pbUVEditorFloating), "UV Editor", true);
-		}
-
-		void OpenContextMenu()
-		{
-			GenericMenu menu = new GenericMenu();
-
-			menu.AddItem(new GUIContent("Selection/Select Island", ""), false, Menu_SelectUVIsland);
-			menu.AddItem(new GUIContent("Selection/Select Face", ""), false, Menu_SelectUVFace);
-
-			menu.AddSeparator("");
-
-			menu.AddItem(new GUIContent("Window/Open as Floating Window", ""), false, ContextMenu_OpenFloatingWindow);
-			menu.AddItem(new GUIContent("Window/Open as Dockable Window", ""), false, ContextMenu_OpenDockableWindow);
-
-			menu.ShowAsContext();
+			GetWindow<UVEditor>("UV Editor");
 		}
 
 		void ScreenshotMenu()
@@ -253,26 +225,8 @@ namespace UnityEditor.ProBuilder
 				new Vector2(256, 152));
 #endif
 		}
-
-		static void ContextMenu_OpenFloatingWindow()
-		{
-			PreferencesInternal.SetBool(PreferenceKeys.pbUVEditorFloating, true);
-
-			EditorWindow.GetWindow<UVEditor>().Close();
-			EditorWindow.GetWindow<UVEditor>(true, "UV Editor", true);
-		}
-
-		static void ContextMenu_OpenDockableWindow()
-		{
-			PreferencesInternal.SetBool(PreferenceKeys.pbUVEditorFloating, false);
-
-			EditorWindow.GetWindow<UVEditor>().Close();
-			EditorWindow.GetWindow<UVEditor>(false, "UV Editor", true);
-		}
-
-		#endregion
-
-		#region Enable
+#endregion
+#region Enable
 
 		void OnEnable()
 		{
@@ -284,27 +238,24 @@ namespace UnityEditor.ProBuilder
 			this.autoRepaintOnSceneChange = true;
 
 			ProBuilderEditor.selectionUpdated += OnSelectionUpdate;
-			if (editor != null) OnSelectionUpdate(editor.selection);
+			if (editor != null)
+				OnSelectionUpdate(editor.selection);
 
 			instance = this;
 
 			ProBuilderMeshEditor.onGetFrameBoundsEvent += OnGetFrameBoundsEvent;
 
 			nearestElement.Clear();
-
-			// Find preferences
-			pref_showMaterial = PreferencesInternal.GetBool(PreferenceKeys.pbUVMaterialPreview);
-			pref_gridSnapValue = PreferencesInternal.GetFloat(PreferenceKeys.pbUVGridSnapValue);
 		}
 
 		void OnDisable()
 		{
 			instance = null;
 
-			if (editor && ProBuilderEditor.editLevel == EditLevel.Texture)
-				editor.PopEditLevel();
+			if(ProBuilderEditor.selectMode == SelectMode.Texture)
+				ProBuilderEditor.ResetToLastSelectMode();
 
-			if(uv2Editor != null)
+			if (uv2Editor != null)
 				Object.DestroyImmediate(uv2Editor);
 
 			// EditorApplication.delayCall -= this.Close;							// not sure if this is necessary?
@@ -363,10 +314,8 @@ namespace UnityEditor.ProBuilder
 				new GUIContent(face_Graphic_off, "Face Selection")
 			};
 		}
-
-		#endregion
-
-		#region GUI Loop
+#endregion
+#region GUI Loop
 
 		const int k_UVInspectorWidthMinManual = 100;
 		const int k_UVInspectorWidthMinAuto = 200;
@@ -505,10 +454,8 @@ namespace UnityEditor.ProBuilder
 		DrawDebugInfo(buggerRect);
 		#endif
 		}
-
-		#endregion
-
-		#region Editor Delegate and Event
+#endregion
+#region Editor Delegate and Event
 
 		void OnSelectionUpdate(ProBuilderMesh[] selection)
 		{
@@ -786,7 +733,8 @@ namespace UnityEditor.ProBuilder
 
 				Face anchor = pb.selectedFacesInternal[len - 1];
 
-				if (anchor == selectedFace) return false;
+				if (anchor == selectedFace)
+					return false;
 
 				UndoUtility.RecordObject(pb, "AutoStitch");
 
@@ -828,10 +776,8 @@ namespace UnityEditor.ProBuilder
 
 			return false;
 		}
-
-		#endregion
-
-		#region Key and Handle Input
+#endregion
+#region Key and Handle Input
 
 		bool m_ignore = false;
 		bool m_rightMouseDrag = false;
@@ -973,9 +919,17 @@ namespace UnityEditor.ProBuilder
 				case EventType.ContextClick:
 
 					if (!m_rightMouseDrag)
-						OpenContextMenu();
+					{
+						var menu = new GenericMenu();
+						menu.AddItem(new GUIContent("Selection/Select Island", ""), false, Menu_SelectUVIsland);
+						menu.AddItem(new GUIContent("Selection/Select Face", ""), false, Menu_SelectUVFace);
+						menu.AddSeparator("");
+						AddItemsToMenu(menu);
+						menu.ShowAsContext();
+					}
 					else
 						m_rightMouseDrag = false;
+
 					break;
 
 				default:
@@ -1058,9 +1012,9 @@ namespace UnityEditor.ProBuilder
 			ObjectElementIndex oei = nearestElement;
 			nearestElement.valid = false;
 
-			switch (selectionMode)
+			switch (ProBuilderEditor.selectMode)
 			{
-				case ComponentMode.Edge:
+				case SelectMode.Edge:
 					float dist, best = 100f;
 
 					try
@@ -1095,7 +1049,7 @@ namespace UnityEditor.ProBuilder
 					nearestElement.valid = best < MIN_DIST_MOUSE_EDGE;
 					break;
 
-				case ComponentMode.Face:
+				case SelectMode.Face:
 
 					try
 					{
@@ -1116,7 +1070,8 @@ namespace UnityEditor.ProBuilder
 									break;
 								}
 
-								if (superBreak) break;
+								if (superBreak)
+									break;
 							}
 						}
 					}
@@ -1160,11 +1115,12 @@ namespace UnityEditor.ProBuilder
 
 		void OnMouseClick(Vector2 mousePosition)
 		{
-			if (selection == null) return;
+			if (selection == null)
+				return;
 
-			switch (selectionMode)
+			switch (ProBuilderEditor.selectMode)
 			{
-				case ComponentMode.Edge:
+				case SelectMode.Edge:
 					if (nearestElement.valid)
 					{
 						ProBuilderMesh mesh = selection[nearestElement.objectIndex];
@@ -1180,7 +1136,7 @@ namespace UnityEditor.ProBuilder
 
 					break;
 
-				case ComponentMode.Face:
+				case SelectMode.Face:
 
 					Vector2 mpos = GUIToUVPoint(mousePosition);
 					bool superBreak = false;
@@ -1205,12 +1161,13 @@ namespace UnityEditor.ProBuilder
 
 						selection[i].SetSelectedFaces(selectedFaces.ToArray());
 
-						if (superBreak) break;
+						if (superBreak)
+							break;
 					}
 
 					break;
 
-				case ComponentMode.Vertex:
+				case SelectMode.Vertex:
 					RefreshUVCoordinates(new Rect(mousePosition.x - 8, mousePosition.y - 8, 16, 16), true);
 					break;
 			}
@@ -1239,10 +1196,8 @@ namespace UnityEditor.ProBuilder
 			RefreshUVCoordinates(dragRect, false);
 			e.Use();
 		}
-
-		#endregion
-
-		#region Tools
+#endregion
+#region Tools
 
 		// tool properties
 		float uvRotation = 0f;
@@ -1267,7 +1222,8 @@ namespace UnityEditor.ProBuilder
 			t_handlePosition = GUIToUVPoint(t_handlePosition);
 			EditorHandleUtility.limitToLeftButton = true;
 
-			if (!e.isMouse) return;
+			if (!e.isMouse)
+				return;
 
 			/**
 			 *	Setting a custom pivot
@@ -1278,7 +1234,7 @@ namespace UnityEditor.ProBuilder
 
 				if (ControlKey)
 				{
-					handlePosition = Snapping.SnapValue(t_handlePosition, (handlePosition - t_handlePosition).ToMask(Math.handleEpsilon) * pref_gridSnapValue);
+					handlePosition = Snapping.SnapValue(t_handlePosition, (handlePosition - t_handlePosition).ToMask(Math.handleEpsilon) * s_GridSnapIncrement);
 				}
 				else
 				{
@@ -1293,10 +1249,11 @@ namespace UnityEditor.ProBuilder
 						Vector2 offset = Vector2.zero;
 						for (int i = 0; i < selection.Length; i++)
 						{
-							/// todo reset MAX_PROXIMITY_SNAP_DIST
+							// todo reset MAX_PROXIMITY_SNAP_DIST
 							int index = EditorHandleUtility.NearestPoint(handlePosition, selection[i].texturesInternal, MAX_PROXIMITY_SNAP_DIST_CANVAS);
 
-							if (index < 0) continue;
+							if (index < 0)
+								continue;
 
 							dist = Vector2.Distance(selection[i].texturesInternal[index], handlePosition);
 
@@ -1339,7 +1296,7 @@ namespace UnityEditor.ProBuilder
 				Vector2 newUVPosition = t_handlePosition;
 
 				if (ControlKey)
-					newUVPosition = Snapping.SnapValue(newUVPosition, (handlePosition - t_handlePosition).ToMask(Math.handleEpsilon) * pref_gridSnapValue);
+					newUVPosition = Snapping.SnapValue(newUVPosition, (handlePosition - t_handlePosition).ToMask(Math.handleEpsilon) * s_GridSnapIncrement);
 
 				for (int n = 0; n < selection.Length; n++)
 				{
@@ -1429,7 +1386,7 @@ namespace UnityEditor.ProBuilder
 				handlePosition.y += delta.y;
 
 				if (ControlKey)
-					handlePosition = Snapping.SnapValue(handlePosition, (handlePosition - handlePosition).ToMask(Math.handleEpsilon) * pref_gridSnapValue);
+					handlePosition = Snapping.SnapValue(handlePosition, (handlePosition - handlePosition).ToMask(Math.handleEpsilon) * s_GridSnapIncrement);
 
 				for (int n = 0; n < selection.Length; n++)
 				{
@@ -1568,10 +1525,12 @@ namespace UnityEditor.ProBuilder
 			uvScale = EditorHandleUtility.ScaleHandle2d(2, UVToGUIPoint(handlePosition), uvScale, 128);
 
 			if (ControlKey)
-				uvScale = Snapping.SnapValue(uvScale, pref_gridSnapValue);
+				uvScale = Snapping.SnapValue(uvScale, s_GridSnapIncrement);
 
-			if (Math.Approx(uvScale.x, 0f, Mathf.Epsilon)) uvScale.x = .0001f;
-			if (Math.Approx(uvScale.y, 0f, Mathf.Epsilon)) uvScale.y = .0001f;
+			if (Math.Approx(uvScale.x, 0f, Mathf.Epsilon))
+				uvScale.x = .0001f;
+			if (Math.Approx(uvScale.y, 0f, Mathf.Epsilon))
+				uvScale.y = .0001f;
 
 			if (t_uvScale != uvScale)
 			{
@@ -1636,7 +1595,7 @@ namespace UnityEditor.ProBuilder
 			previousScale.y = 1f / previousScale.y;
 
 			if (ControlKey)
-				textureScale = Snapping.SnapValue(textureScale, pref_gridSnapValue);
+				textureScale = Snapping.SnapValue(textureScale, s_GridSnapIncrement);
 
 			if (!modifyingUVs)
 			{
@@ -1684,10 +1643,8 @@ namespace UnityEditor.ProBuilder
 			nearestElement.valid = false;
 			needsRepaint = true;
 		}
-
-		#endregion
-
-		#region UV Graph Drawing
+#endregion
+#region UV Graph Drawing
 
 		Vector2 UVGraphCenter = Vector2.zero;
 
@@ -1721,7 +1678,7 @@ namespace UnityEditor.ProBuilder
 
 				// Grid temp vars
 				int GridLines = 64;
-				float StepSize = pref_gridSnapValue; // In UV coordinates
+				float StepSize = s_GridSnapIncrement; // In UV coordinates
 
 				// Exponentially scale grid size
 				while (StepSize * uvGridSize * uvGraphScale < uvGridSize / 10)
@@ -1847,7 +1804,7 @@ namespace UnityEditor.ProBuilder
 
 			var texture = GetMainTexture(m_PreviewMaterial);
 
-			if (pref_showMaterial && m_PreviewMaterial && texture != null)
+			if (m_ShowPreviewMaterial && m_PreviewMaterial && texture != null)
 				EditorGUI.DrawPreviewTexture(UVRectIdentity, texture, null, ScaleMode.StretchToFill, 0);
 
 			if ((screenshotStatus != ScreenshotStatus.PrepareCanvas && screenshotStatus != ScreenshotStatus.CanvasReady) || !screenshot_hideGrid)
@@ -1865,7 +1822,7 @@ namespace UnityEditor.ProBuilder
 			r.height = DOT_SIZE;
 
 			// Draw all vertices if in vertex mode
-			if (selectionMode == ComponentMode.Vertex && screenshotStatus == ScreenshotStatus.Done)
+			if (ProBuilderEditor.selectMode == SelectMode.Vertex && screenshotStatus == ScreenshotStatus.Done)
 			{
 				for (int i = 0; i < selection.Length; i++)
 				{
@@ -2059,9 +2016,9 @@ namespace UnityEditor.ProBuilder
 
 					GL.End();
 
-					switch (selectionMode)
+					switch (ProBuilderEditor.selectMode)
 					{
-						case ComponentMode.Edge:
+						case SelectMode.Edge:
 
 							GL.Begin(GL.LINES);
 							GL.Color(Color.red);
@@ -2076,7 +2033,7 @@ namespace UnityEditor.ProBuilder
 
 							break;
 
-						case ComponentMode.Face:
+						case SelectMode.Face:
 						{
 							Vector3 v = Vector3.zero;
 
@@ -2157,10 +2114,8 @@ namespace UnityEditor.ProBuilder
 		GUI.EndGroup();
 	}
 	#endif
-
-		#endregion
-
-		#region UV Canvas Operations
+#endregion
+#region UV Canvas Operations
 
 		/**
 		 * Zooms in on the current UV selection
@@ -2169,7 +2124,7 @@ namespace UnityEditor.ProBuilder
 		{
 			needsRepaint = true;
 
-			if (selection == null || selection.Length < 1 || (editor && editor.selectedVertexCount < 1))
+			if (selection == null || selection.Length < 1 || (editor && MeshSelection.selectedVertexCount < 1))
 			{
 				SetCanvasCenter(Event.current.mousePosition - UVGraphCenter - uvGraphOffset);
 				return;
@@ -2324,10 +2279,8 @@ namespace UnityEditor.ProBuilder
 
 			return new Bounds2D(new Vector2((xMin + xMax) / 2f, (yMin + yMax) / 2f), new Vector2(xMax - xMin, yMax - yMin));
 		}
-
-		#endregion
-
-		#region Refresh / Set
+#endregion
+#region Refresh / Set
 
 		// Doesn't call Repaint for you
 		void RefreshUVCoordinates()
@@ -2341,7 +2294,8 @@ namespace UnityEditor.ProBuilder
 		 */
 		void RefreshUVCoordinates(Rect? dragRect, bool isClick)
 		{
-			if (editor == null || selection == null) return;
+			if (editor == null || selection == null)
+				return;
 
 			// Convert dragrect from Unity GUI space to UV coordinates
 			Bounds2D dragBounds;
@@ -2351,8 +2305,8 @@ namespace UnityEditor.ProBuilder
 			else
 				dragBounds = new Bounds2D(Vector2.zero, Vector2.zero);
 
-			selectedUVCount = editor.selectedVertexCount;
-			selectedFaceCount = editor.selectedFaceCount;
+			selectedUVCount = MeshSelection.selectedVertexCount;
+			selectedFaceCount = MeshSelection.selectedFaceCount;
 
 			for (int i = 0; i < selection.Length; i++)
 			{
@@ -2372,9 +2326,9 @@ namespace UnityEditor.ProBuilder
 				// this should be separate from RefreshUVCoordinates
 				if (dragRect != null && channel == 0)
 				{
-					switch (selectionMode)
+					switch (ProBuilderEditor.selectMode)
 					{
-						case ComponentMode.Vertex:
+						case SelectMode.Vertex:
 							List<int> selectedTris = new List<int>(pb.selectedIndexesInternal);
 
 							for (int j = 0; j < len; j++)
@@ -2397,7 +2351,7 @@ namespace UnityEditor.ProBuilder
 							pb.SetSelectedVertices(selectedTris.ToArray());
 							break;
 
-						case ComponentMode.Edge:
+						case SelectMode.Edge:
 							List<Edge> selectedEdges = new List<Edge>(pb.selectedEdges);
 
 							for (int n = 0; n < pb.facesInternal.Length; n++)
@@ -2422,7 +2376,7 @@ namespace UnityEditor.ProBuilder
 						/**
 						 * Check if any of the faces intersect with the mousedrag rect.
 						 */
-						case ComponentMode.Face:
+						case SelectMode.Face:
 
 							HashSet<Face> selectedFaces = new HashSet<Face>(selection[i].selectedFacesInternal);
 
@@ -2473,7 +2427,7 @@ namespace UnityEditor.ProBuilder
 			}
 
 			// figure out what the mode of selected faces is
-			if (editor.selectedFaceCount > 0)
+			if (MeshSelection.selectedFaceCount > 0)
 			{
 				// @todo write a more effecient method for this
 				List<bool> manual = new List<bool>();
@@ -2502,10 +2456,8 @@ namespace UnityEditor.ProBuilder
 		{
 			handlePosition = UVSelectionBounds().center - handlePosition_offset;
 		}
-
-		#endregion
-
-		#region UV Toolbar
+#endregion
+#region UV Toolbar
 
 		Rect toolbarRect_tool = new Rect(PAD, PAD, 130f, 24f);
 		Rect toolbarRect_select = new Rect(PAD + 130 + PAD, PAD, 130f, 24f);
@@ -2532,14 +2484,28 @@ namespace UnityEditor.ProBuilder
 				SceneView.RepaintAll();
 			}
 
-			int t_selectionMode = (int)selectionMode;
+			var mode = ProBuilderEditor.selectMode;
+
+			int currentSelectionMode = mode == SelectMode.Vertex ? 1
+				: mode == SelectMode.Edge ? 2
+				: mode == SelectMode.Face ? 3 : 0;
 
 			GUI.enabled = channel == 0;
 
-			t_selectionMode = GUI.Toolbar(toolbarRect_select, (int)t_selectionMode, SelectionIcons, "Command");
+			EditorGUI.BeginChangeCheck();
+			currentSelectionMode = GUI.Toolbar(toolbarRect_select, currentSelectionMode, SelectionIcons, "Command");
+			if (EditorGUI.EndChangeCheck())
+			{
+				if (currentSelectionMode == 0)
+					ProBuilderEditor.selectMode = SelectMode.Object;
+				else if (currentSelectionMode == 1)
+					ProBuilderEditor.selectMode = SelectMode.Vertex;
+				else if (currentSelectionMode == 2)
+					ProBuilderEditor.selectMode = SelectMode.Edge;
+				else if (currentSelectionMode == 3)
+					ProBuilderEditor.selectMode = SelectMode.Face;
+			}
 
-			if (t_selectionMode != (int)selectionMode)
-				selectionMode = (ComponentMode)t_selectionMode;
 
 			// begin Editor pref toggles (Show Texture, Lock UV sceneview handle, etc)
 
@@ -2547,14 +2513,14 @@ namespace UnityEditor.ProBuilder
 
 			if (editor)
 			{
-				gc_SceneViewUVHandles.image = ProBuilderEditor.editLevel == EditLevel.Texture ? icon_sceneUV_on : icon_sceneUV_off;
+				gc_SceneViewUVHandles.image = ProBuilderEditor.selectMode == SelectMode.Texture ? icon_sceneUV_on : icon_sceneUV_off;
 
 				if (GUI.Button(editor_toggles_rect, gc_SceneViewUVHandles))
 				{
-					if (ProBuilderEditor.editLevel == EditLevel.Texture)
-						editor.PopEditLevel();
+					if (ProBuilderEditor.selectMode == SelectMode.Texture)
+						ProBuilderEditor.ResetToLastSelectMode();
 					else
-						editor.SetEditLevel(EditLevel.Texture);
+						ProBuilderEditor.selectMode = SelectMode.Texture;
 				}
 			}
 
@@ -2562,12 +2528,10 @@ namespace UnityEditor.ProBuilder
 
 			editor_toggles_rect.x += editor_toggles_rect.width + PAD;
 
-			gc_ShowPreviewTexture.image = pref_showMaterial ? icon_textureMode_on : icon_textureMode_off;
+			gc_ShowPreviewTexture.image = m_ShowPreviewMaterial ? icon_textureMode_on : icon_textureMode_off;
+
 			if (GUI.Button(editor_toggles_rect, gc_ShowPreviewTexture))
-			{
-				pref_showMaterial = !pref_showMaterial;
-				PreferencesInternal.SetBool(PreferenceKeys.pbUVMaterialPreview, pref_showMaterial);
-			}
+				m_ShowPreviewMaterial.SetValue(!m_ShowPreviewMaterial, true);
 
 			editor_toggles_rect.x += editor_toggles_rect.width + PAD;
 
@@ -2676,7 +2640,7 @@ namespace UnityEditor.ProBuilder
 					}
 				}
 
-				foreach (var kvp in editor.selectedFacesInEditZone)
+				foreach (var kvp in MeshSelection.selectedFacesInEditZone)
 					kvp.Key.RefreshUV(kvp.Value);
 
 				RefreshSelectedUVCoordinates();
@@ -2728,7 +2692,7 @@ namespace UnityEditor.ProBuilder
 			if (GUILayout.Button("Select Island", EditorStyles.miniButton, GUILayout.MaxWidth(actionWindowRect.width)))
 				Menu_SelectUVIsland();
 
-			GUI.enabled = selectedUVCount > 0 && selectionMode != ComponentMode.Face;
+			GUI.enabled = selectedUVCount > 0 && ProBuilderEditor.selectMode != SelectMode.Face;
 			if (GUILayout.Button("Select Face", EditorStyles.miniButton, GUILayout.MaxWidth(actionWindowRect.width)))
 				Menu_SelectUVFace();
 
@@ -2773,36 +2737,30 @@ namespace UnityEditor.ProBuilder
 		}
 
 		const float k_MinimumSewUVDistance = .001f;
+		Pref<float> m_WeldDistance = new Pref<float>("UVEditor.weldDistance", .01f);
 
 		void WeldButtonGUI(int width)
 		{
 			EditorGUI.BeginChangeCheck();
 
-			float weldDistance = PreferencesInternal.GetFloat(PreferenceKeys.pbUVWeldDistance);
+			m_WeldDistance.value = EditorGUILayout.FloatField(new GUIContent("Max", "The maximum distance between two vertices in order to be welded together."), m_WeldDistance);
 
-			if (weldDistance <= k_MinimumSewUVDistance)
-				weldDistance = k_MinimumSewUVDistance;
-
-			weldDistance = EditorGUILayout.FloatField(new GUIContent("Max", "The maximum distance between two vertices in order to be welded together."), weldDistance);
+			if (m_WeldDistance <= k_MinimumSewUVDistance)
+				m_WeldDistance.value = k_MinimumSewUVDistance;
 
 			if (EditorGUI.EndChangeCheck())
-			{
-				if (weldDistance < k_MinimumSewUVDistance)
-					weldDistance = k_MinimumSewUVDistance;
-				PreferencesInternal.SetFloat(PreferenceKeys.pbUVWeldDistance, weldDistance);
-			}
+				Settings.Save();
 		}
-
-		#endregion
-
-		#region UV Selection
+#endregion
+#region UV Selection
 
 		/**
 		 * Given selected tris, return an array of all indexes attached to face
 		 */
 		private void SelectUVShell()
 		{
-			if (selection == null || selection.Length < 1) return;
+			if (selection == null || selection.Length < 1)
+				return;
 
 			foreach (ProBuilderMesh pb in selection)
 			{
@@ -2868,7 +2826,8 @@ namespace UnityEditor.ProBuilder
 		 */
 		private void SelectUVFace()
 		{
-			if (selection == null || selection.Length < 1) return;
+			if (selection == null || selection.Length < 1)
+				return;
 
 			foreach (ProBuilderMesh pb in selection)
 			{
@@ -2893,7 +2852,8 @@ namespace UnityEditor.ProBuilder
 			int eg = 0;
 			foreach (SharedVertex sharedVertex in sharedUVs)
 			{
-				if (sharedVertex.arrayInternal.Length < 2) continue;
+				if (sharedVertex.arrayInternal.Length < 2)
+					continue;
 
 				Face[] faces = GetFaces(pb, sharedVertex);
 
@@ -2965,10 +2925,8 @@ namespace UnityEditor.ProBuilder
 				System.Array.Copy(UVEditing.GetUVs(pb, channel), uvCopy[i], pb.vertexCount);
 			}
 		}
-
-		#endregion
-
-		#region Menu Commands
+#endregion
+#region Menu Commands
 
 		/// <summary>
 		/// Planar project UVs on all selected faces in selection.
@@ -2999,11 +2957,7 @@ namespace UnityEditor.ProBuilder
 
 			if (projected > 0)
 			{
-				if (PreferencesInternal.GetBool(PreferenceKeys.pbNormalizeUVsOnPlanarProjection))
-					Menu_FitUVs();
-				else
-					CenterUVsAtPoint(handlePosition);
-
+				CenterUVsAtPoint(handlePosition);
 				ResetUserPivot();
 			}
 
@@ -3184,7 +3138,7 @@ namespace UnityEditor.ProBuilder
 				return new ActionResult(ActionResult.Status.Canceled, "Invalid UV2 Operation");
 			}
 
-			float weldDistance = PreferencesInternal.GetFloat(PreferenceKeys.pbUVWeldDistance);
+			float weldDistance = m_WeldDistance;
 
 			UndoUtility.RecordSelection(selection, "Sew UV Seams");
 			for (int i = 0; i < selection.Length; i++)
@@ -3285,7 +3239,8 @@ namespace UnityEditor.ProBuilder
 
 			for (var i = 0; i < selection.Length; i++)
 			{
-				if (selection[i].selectedVertexCount < 3) continue;
+				if (selection[i].selectedVertexCount < 3)
+					continue;
 
 				selection[i].ToMesh();
 
@@ -3326,10 +3281,8 @@ namespace UnityEditor.ProBuilder
 				UVEditing.ApplyUVs(pb, uv, channel);
 			}
 		}
-
-		#endregion
-
-		#region Screenshot Rendering
+#endregion
+#region Screenshot Rendering
 
 		float curUvScale = 0f;
 		///< Store the user set positioning and scale before modifying them for a screenshot
@@ -3377,19 +3330,14 @@ namespace UnityEditor.ProBuilder
 			DoScreenshot();
 		}
 
-		/// Unity 5 changes the starting y position of a window now account for the tab
+		// Unity 5 changes the starting y position of a window now account for the tab
 		float editorWindowTabOffset
 		{
 			get
 			{
-				if (PreferencesInternal.GetBool(PreferenceKeys.pbUVEditorFloating))
+				if (IsUtilityWindow<UVEditor>())
 					return 0;
-				else
-#if UNITY_4_6
-				return 0;
-#else
-					return 11;
-#endif
+				return 11;
 			}
 		}
 
@@ -3542,9 +3490,6 @@ namespace UnityEditor.ProBuilder
 			#endif
 			}
 		}
-
-		#endregion
-
-#endif
+#endregion
 	}
 }

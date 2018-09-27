@@ -24,6 +24,7 @@ namespace UnityEditor.ProBuilder
 	/// <summary>
 	/// Manage ProBuilder preferences.
 	/// </summary>
+	[System.Obsolete("Use Pref<T> or Settings class directly.")]
 	[InitializeOnLoad]
 	static class PreferencesInternal
 	{
@@ -31,67 +32,18 @@ namespace UnityEditor.ProBuilder
 
 		static Dictionary<string, bool> s_BoolDefaults = new Dictionary<string, bool>()
 		{
-			{ PreferenceKeys.pbForceConvex, false },
-			{ PreferenceKeys.pbManifoldEdgeExtrusion, false },
-			{ PreferenceKeys.pbPBOSelectionOnly, false },
-			{ PreferenceKeys.pbCloseShapeWindow, false },
-			{ PreferenceKeys.pbGrowSelectionUsingAngle, false },
-			{ PreferenceKeys.pbNormalizeUVsOnPlanarProjection, false },
-			{ PreferenceKeys.pbDisableAutoUV2Generation, false },
-			{ PreferenceKeys.pbShowSceneInfo, false },
-			{ PreferenceKeys.pbEnableBackfaceSelection, false },
-			{ PreferenceKeys.pbVertexPaletteDockable, false },
-			{ PreferenceKeys.pbGrowSelectionAngleIterative, false },
-			{ PreferenceKeys.pbIconGUI, false },
-			{ PreferenceKeys.pbUniqueModeShortcuts, false },
-			{ PreferenceKeys.pbShiftOnlyTooltips, false },
-			{ PreferenceKeys.pbCollapseVertexToFirst, false },
-			{ PreferenceKeys.pbEnableExperimental, false },
-			{ PreferenceKeys.pbMeshesAreAssets, false },
-			{ PreferenceKeys.pbSelectedFaceDither, true },
-			{ PreferenceKeys.pbShowPreselectionHighlight, false },
 		};
 
 		static Dictionary<string, float> s_FloatDefaults = new Dictionary<string, float>()
 		{
-			{ PreferenceKeys.pbGrowSelectionAngle, 42f },
-			{ PreferenceKeys.pbExtrudeDistance, .5f },
-			{ PreferenceKeys.pbWeldDistance, .001f },
-			{ PreferenceKeys.pbUVGridSnapValue, .125f },
-			{ PreferenceKeys.pbUVWeldDistance, .01f },
-			{ PreferenceKeys.pbBevelAmount, .05f },
-			{ PreferenceKeys.pbVertexHandleSize, 3f },
-			{ PreferenceKeys.pbLineHandleSize, 1f },
-			{ PreferenceKeys.pbWireframeSize, .5f },
 		};
 
 		static Dictionary<string, int> s_IntDefaults = new Dictionary<string, int>()
 		{
-			{ PreferenceKeys.pbDefaultEditLevel, 0 },
-			{ PreferenceKeys.pbDefaultSelectionMode, 0 },
-			{ PreferenceKeys.pbHandleAlignment, 0 },
-			{ PreferenceKeys.pbDefaultCollider, (int) ColliderType.MeshCollider },
-			{ PreferenceKeys.pbToolbarLocation, (int) SceneToolbarLocation.UpperCenter },
-			{ PreferenceKeys.pbDefaultEntity, (int) EntityType.Detail },
-			{ PreferenceKeys.pbDragSelectMode, (int) SelectionModifierBehavior.Difference },
-			{ PreferenceKeys.pbExtrudeMethod, (int) ExtrudeMethod.VertexNormal },
-			{ PreferenceKeys.pbShadowCastingMode, (int) ShadowCastingMode.TwoSided },
 		};
-
-		static readonly Color k_ProBuilderWireframe = new Color(125f / 255f, 155f / 255f, 185f / 255f, 1f);
-		static readonly Color k_ProBuilderSelected = new Color(0f, 210f / 255f, 239f / 255f, 1f);
-		static readonly Color k_ProBuilderUnselected = new Color(44f / 255f, 44f / 255f, 44f / 255f, 1f);
-		static readonly Color k_ProBuilderPreselection = new Color(179f / 255f, 246f / 255f, 255f / 255f, 1f);
 
 		static Dictionary<string, Color> s_ColorDefaults = new Dictionary<string, Color>()
 		{
-			{ PreferenceKeys.pbSelectedFaceColor, k_ProBuilderSelected},
-			{ PreferenceKeys.pbWireframeColor, k_ProBuilderWireframe},
-			{ PreferenceKeys.pbUnselectedEdgeColor, k_ProBuilderUnselected},
-			{ PreferenceKeys.pbSelectedEdgeColor, k_ProBuilderSelected},
-			{ PreferenceKeys.pbUnselectedVertexColor, k_ProBuilderUnselected},
-			{ PreferenceKeys.pbSelectedVertexColor, k_ProBuilderSelected},
-			{ PreferenceKeys.pbPreselectionColor, k_ProBuilderPreselection },
 		};
 
 		static Dictionary<string, string> s_StringDefaults = new Dictionary<string, string>()
@@ -277,38 +229,49 @@ namespace UnityEditor.ProBuilder
 			return JsonUtility.FromJson<T>(str);
 		}
 
-		/// <summary>
-		/// Get a material from preferences.
-		/// </summary>
-		/// <param name="key"></param>
-		/// <returns></returns>
 		public static Material GetMaterial(string key)
 		{
-			if(s_Preferences != null && preferences.HasKey<Material>(key))
+			if(preferences.HasKey<Material>(key))
 				return preferences.GetMaterial(key);
 
-			Material mat = null;
+			return AssetDatabase.LoadAssetAtPath<Material>(EditorPrefs.GetString(key));
+		}
 
-			switch(key)
-			{
-				case PreferenceKeys.pbDefaultMaterial:
-					if(EditorPrefs.HasKey(key))
-					{
-						if(EditorPrefs.GetString(key) == "Default-Diffuse")
-							return BuiltinMaterials.GetLegacyDiffuse();
+		internal static bool TryGetValue(string key, System.Type type, out object value)
+		{
+			value = null;
 
-						mat = (Material) AssetDatabase.LoadAssetAtPath(EditorPrefs.GetString(key), typeof(Material));
-					}
-					break;
+			if (!HasKey(key))
+				return false;
 
-				default:
-					return BuiltinMaterials.defaultMaterial;
-			}
+			if (type == typeof(bool))
+				value = GetBool(key);
+			else if (type == typeof(float))
+				value = GetFloat(key);
+			else if (type == typeof(int))
+				value = GetInt(key);
+			else if (type == typeof(string))
+				value = GetString(key);
+			else if (type == typeof(Shortcut[]))
+				value = Shortcut.ParseShortcuts(EditorPrefs.GetString(key));
+			else if (type == typeof(Color))
+				value = GetColor(key);
+			else if (type == typeof(Material))
+				value = GetMaterial(key);
+			else if (type == typeof(ColliderType))
+				value = GetEnum<ColliderType>(key);
+			else if (type == typeof(UnityEngine.Rendering.ShadowCastingMode))
+				value = GetEnum<UnityEngine.Rendering.ShadowCastingMode>(key);
+			else if (type == typeof(UnityEngine.ProBuilder.LogLevel))
+				value = GetEnum<UnityEngine.ProBuilder.LogLevel>(key);
+			else if (type == typeof(UnityEngine.ProBuilder.LogOutput))
+				value = GetEnum<UnityEngine.ProBuilder.LogOutput>(key);
+			else if (type == typeof(ProBuilder.SceneToolbarLocation))
+				value = GetEnum<ProBuilder.SceneToolbarLocation>(key);
+			else
+				return false;
 
-			if(!mat)
-				mat = BuiltinMaterials.defaultMaterial;
-
-			return mat;
+			return true;
 		}
 
 		/// <summary>

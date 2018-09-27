@@ -11,7 +11,7 @@ namespace UnityEditor.ProBuilder
 	/// <summary>
 	/// Shape creation panel implementation.
 	/// </summary>
-	sealed class ShapeEditor : EditorWindow
+	sealed class ShapeEditor : ConfigurableWindow
 	{
 		enum ShapeType
 		{
@@ -32,18 +32,17 @@ namespace UnityEditor.ProBuilder
 
 		public static void MenuOpenShapeCreator()
 		{
-			GetWindow<ShapeEditor>(
-				PreferencesInternal.GetBool(PreferenceKeys.pbShapeWindowFloating),
-				"Shape Tool",
-				true).Show();
+			GetWindow<ShapeEditor>("Shape Tool");
 		}
 
 		static readonly Color k_ColorGreen = new Color(0f, .8f, 0f, .8f);
 
-		[SerializeField] ShapeType m_CurrentShape = ShapeType.Cube;
+		[SerializeField]
+		ShapeType m_CurrentShape = ShapeType.Cube;
 
 		GameObject m_PreviewObject;
 		bool m_ShowPreview = true;
+
 		// used to toggle preview on and off from class OnGUI
 		bool m_DoInitPreview = false;
 		Material m_DefaultMaterial = null;
@@ -51,15 +50,12 @@ namespace UnityEditor.ProBuilder
 		static readonly Color k_PreviewColor = new Color(.5f, .9f, 1f, .56f);
 		Material m_ShapePreviewMaterial;
 
-		// toogle for closing the window after shape creation from the prefrences window
-		static bool prefClose
-		{
-			get { return PreferencesInternal.GetBool(PreferenceKeys.pbCloseShapeWindow, false); }
-		}
+		[UserSetting("Toolbar", "Close Shape Window after Build", "If true the shape window will close after hitting the build button.")]
+		static Pref<bool> s_CloseWindowAfterCreateShape = new Pref<bool>("closeWindowAfterShapeCreation", false);
 
 		void OnEnable()
 		{
-			m_DefaultMaterial = PreferencesInternal.GetMaterial(PreferenceKeys.pbDefaultMaterial);
+			m_DefaultMaterial = EditorUtility.GetUserMaterial();
 			m_DoInitPreview = true;
 
 			if (m_ShapePreviewMaterial == null)
@@ -85,51 +81,22 @@ namespace UnityEditor.ProBuilder
 			DestroyPreviewObject();
 		}
 
-		void OpenContextMenu()
-		{
-			var menu = new GenericMenu();
-
-			menu.AddItem (
-				new GUIContent("Window/Open as Floating Window", ""),
-				PreferencesInternal.GetBool(PreferenceKeys.pbShapeWindowFloating),
-				() => { SetFloating(true); } );
-			menu.AddItem (
-				new GUIContent("Window/Open as Dockable Window", ""),
-				!PreferencesInternal.GetBool(PreferenceKeys.pbShapeWindowFloating),
-				() => { SetFloating(false); } );
-
-			menu.ShowAsContext ();
-		}
-
-		void SetFloating(bool floating)
-		{
-			PreferencesInternal.SetBool(PreferenceKeys.pbShapeWindowFloating, floating);
-			Close();
-			MenuOpenShapeCreator();
-		}
-
 		[MenuItem("GameObject/3D Object/" + PreferenceKeys.pluginTitle + " Cube _%k")]
 		public static void MenuCreateCube()
 		{
 			ProBuilderMesh pb = ShapeGenerator.GenerateCube(Vector3.one);
 			UndoUtility.RegisterCreatedObjectUndo(pb.gameObject, "Create Shape");
 
-			Material mat = PreferencesInternal.GetMaterial(PreferenceKeys.pbDefaultMaterial);
-
-			if(mat != null)
-			{
-				SetFaceMaterial(pb.facesInternal, mat);
-				pb.GetComponent<MeshRenderer>().sharedMaterial = mat;
-			}
+			Material mat = EditorUtility.GetUserMaterial();
+			SetFaceMaterial(pb.facesInternal, mat);
+			pb.GetComponent<MeshRenderer>().sharedMaterial = mat;
 
 			EditorUtility.InitObject(pb);
-			EditorUtility.SetPivotAndSnapWithPref(pb, null);
 		}
 
 		void OnGUI()
 		{
-			if(Event.current.type == EventType.ContextClick)
-				OpenContextMenu();
+			DoContextMenu();
 
 			GUILayout.BeginHorizontal();
 				bool sp = m_ShowPreview;
@@ -246,14 +213,13 @@ namespace UnityEditor.ProBuilder
 
 				if( m_DefaultMaterial ) SetFaceMaterial(pb.facesInternal, m_DefaultMaterial );
 
-				EditorUtility.SetPivotAndSnapWithPref(pb, null);
 				EditorUtility.InitObject(pb);
 
 				AlignWithPreviewObject(pb.gameObject);
 				DestroyPreviewObject();
 				m_ShowPreview = false;
 
-				if(prefClose)
+				if(s_CloseWindowAfterCreateShape)
 				{
 					this.Close();
 				}
@@ -300,14 +266,13 @@ namespace UnityEditor.ProBuilder
 
 				if( m_DefaultMaterial ) SetFaceMaterial(pb.facesInternal, m_DefaultMaterial );
 
-				EditorUtility.SetPivotAndSnapWithPref(pb, null);
 				EditorUtility.InitObject(pb);
 
 				AlignWithPreviewObject(pb.gameObject);
 				DestroyPreviewObject();
 				m_ShowPreview = false;
 
-				if (prefClose)
+				if (s_CloseWindowAfterCreateShape)
 				{
 					this.Close();
 				}
@@ -344,14 +309,13 @@ namespace UnityEditor.ProBuilder
 
 				if( m_DefaultMaterial ) SetFaceMaterial(pb.facesInternal, m_DefaultMaterial );
 
-				EditorUtility.SetPivotAndSnapWithPref(pb, null);
 				EditorUtility.InitObject(pb);
 
 				AlignWithPreviewObject(pb.gameObject);
 				DestroyPreviewObject();
 				m_ShowPreview = false;
 
-				if (prefClose)
+				if (s_CloseWindowAfterCreateShape)
 				{
 					this.Close();
 				}
@@ -439,14 +403,13 @@ namespace UnityEditor.ProBuilder
 
 				if( m_DefaultMaterial ) SetFaceMaterial(pb.facesInternal, m_DefaultMaterial );
 
-				EditorUtility.SetPivotAndSnapWithPref(pb, null);
 				EditorUtility.InitObject(pb);
 
 				AlignWithPreviewObject(pb.gameObject);
 				DestroyPreviewObject();
 				m_ShowPreview = false;
 
-				if (prefClose)
+				if (s_CloseWindowAfterCreateShape)
 				{
 					this.Close();
 				}
@@ -509,7 +472,6 @@ namespace UnityEditor.ProBuilder
 
 				if( m_DefaultMaterial ) SetFaceMaterial(pb.facesInternal, m_DefaultMaterial );
 
-				EditorUtility.SetPivotAndSnapWithPref(pb, new int[1] {centerIndex});
 				EditorUtility.InitObject(pb);
 
 				AlignWithPreviewObject(pb.gameObject);
@@ -517,7 +479,7 @@ namespace UnityEditor.ProBuilder
 				DestroyPreviewObject();
 				m_ShowPreview = false;
 
-				if (prefClose)
+				if (s_CloseWindowAfterCreateShape)
 				{
 					this.Close();
 				}
@@ -565,14 +527,13 @@ namespace UnityEditor.ProBuilder
 
 				if( m_DefaultMaterial ) SetFaceMaterial(pb.facesInternal, m_DefaultMaterial );
 
-				EditorUtility.SetPivotAndSnapWithPref(pb, null);
 				EditorUtility.InitObject(pb);
 
 				AlignWithPreviewObject(pb.gameObject);
 				DestroyPreviewObject();
 				m_ShowPreview = false;
 
-				if (prefClose)
+				if (s_CloseWindowAfterCreateShape)
 				{
 					this.Close();
 				}
@@ -628,14 +589,13 @@ namespace UnityEditor.ProBuilder
 
 				if( m_DefaultMaterial ) SetFaceMaterial(pb.facesInternal, m_DefaultMaterial );
 
-				EditorUtility.SetPivotAndSnapWithPref(pb, null);
 				EditorUtility.InitObject(pb);
 
 				AlignWithPreviewObject(pb.gameObject);
 				DestroyPreviewObject();
 				m_ShowPreview = false;
 
-				if (prefClose)
+				if (s_CloseWindowAfterCreateShape)
 				{
 					this.Close();
 				}
@@ -695,14 +655,13 @@ namespace UnityEditor.ProBuilder
 
 				if( m_DefaultMaterial ) SetFaceMaterial(pb.facesInternal, m_DefaultMaterial );
 
-				EditorUtility.SetPivotAndSnapWithPref(pb, null);
 				EditorUtility.InitObject(pb);
 
 				AlignWithPreviewObject(pb.gameObject);
 				DestroyPreviewObject();
 				m_ShowPreview = false;
 
-				if (prefClose)
+				if (s_CloseWindowAfterCreateShape)
 				{
 					this.Close();
 				}
@@ -754,14 +713,13 @@ namespace UnityEditor.ProBuilder
 
 				if( m_DefaultMaterial ) SetFaceMaterial(pb.facesInternal, m_DefaultMaterial );
 
-				EditorUtility.SetPivotAndSnapWithPref(pb, null);
 				EditorUtility.InitObject(pb);
 
 				AlignWithPreviewObject(pb.gameObject);
 				DestroyPreviewObject();
 				m_ShowPreview = false;
 
-				if (prefClose)
+				if (s_CloseWindowAfterCreateShape)
 				{
 					this.Close();
 				}
@@ -848,14 +806,13 @@ namespace UnityEditor.ProBuilder
 
 				if (m_DefaultMaterial) SetFaceMaterial(pb.facesInternal,m_DefaultMaterial);
 
-				EditorUtility.SetPivotAndSnapWithPref(pb, null);
 				EditorUtility.InitObject(pb);
 
 				AlignWithPreviewObject(pb.gameObject);
 				DestroyPreviewObject();
 				m_ShowPreview = false;
 
-				if (prefClose)
+				if (s_CloseWindowAfterCreateShape)
 				{
 					this.Close();
 				}
@@ -897,14 +854,13 @@ namespace UnityEditor.ProBuilder
 
 				if (m_DefaultMaterial) SetFaceMaterial(pb.facesInternal,m_DefaultMaterial);
 
-				EditorUtility.SetPivotAndSnapWithPref(pb, null);
 				EditorUtility.InitObject(pb);
 
 				AlignWithPreviewObject(pb.gameObject);
 				DestroyPreviewObject();
 				m_ShowPreview = false;
 
-				if (prefClose)
+				if (s_CloseWindowAfterCreateShape)
 				{
 					this.Close();
 				}
@@ -922,21 +878,16 @@ namespace UnityEditor.ProBuilder
 		static float torus_horizontalCircumference = 360f;
 		static float torus_verticalCircumference = 360f;
 		static Vector2 torus_innerOuter = new Vector2(1f, .7f);
-		static bool torus_useInnerOuterMethod = false;
+		static Pref<bool> torus_useInnerOuterMethod = new Pref<bool>("shape.torusDefinesInnerOuter", false, Settings.Scope.User);
 
 		void TorusGUI()
 		{
-			torus_useInnerOuterMethod = PreferencesInternal.GetBool("pb_TorusUsesInnerOuterMethod", true);
-
 			EditorGUI.BeginChangeCheck();
 
 			torus_rows = (int) EditorGUILayout.IntSlider(new GUIContent("Rows", "How many rows the torus will have.  More equates to smoother geometry."), torus_rows, 3, 32);
 			torus_colums = (int) EditorGUILayout.IntSlider(new GUIContent("Columns", "How many columns the torus will have.  More equates to smoother geometry."), torus_colums, 3, 64);
 
-			EditorGUI.BeginChangeCheck();
-			torus_useInnerOuterMethod = EditorGUILayout.Toggle("Define Inner / Out Radius", torus_useInnerOuterMethod);
-			if(EditorGUI.EndChangeCheck())
-				PreferencesInternal.SetBool("pb_TorusUsesInnerOuterMethod", torus_useInnerOuterMethod);
+			torus_useInnerOuterMethod.value = EditorGUILayout.Toggle("Define Inner / Out Radius", torus_useInnerOuterMethod);
 
 			if(!torus_useInnerOuterMethod)
 			{
@@ -997,14 +948,13 @@ namespace UnityEditor.ProBuilder
 
 				if (m_DefaultMaterial) SetFaceMaterial(pb.facesInternal,m_DefaultMaterial);
 
-				EditorUtility.SetPivotAndSnapWithPref(pb, null);
 				EditorUtility.InitObject(pb);
 
 				AlignWithPreviewObject(pb.gameObject);
 				DestroyPreviewObject();
 				m_ShowPreview = false;
 
-				if (prefClose)
+				if (s_CloseWindowAfterCreateShape)
 				{
 					this.Close();
 				}
@@ -1043,14 +993,13 @@ namespace UnityEditor.ProBuilder
 
 				if( m_DefaultMaterial ) SetFaceMaterial(pb.facesInternal, m_DefaultMaterial );
 
-				EditorUtility.SetPivotAndSnapWithPref(pb, null);
 				EditorUtility.InitObject(pb);
 
 				AlignWithPreviewObject(pb.gameObject);
 				DestroyPreviewObject();
 				m_ShowPreview = false;
 
-				if (prefClose)
+				if (s_CloseWindowAfterCreateShape)
 				{
 					this.Close();
 				}
@@ -1094,9 +1043,6 @@ namespace UnityEditor.ProBuilder
 
 			m_PreviewObject = pb.gameObject;
 
-			if(PreferencesInternal.GetBool(PreferenceKeys.pbForceGridPivot))
-				pb.CenterPivot(vertices == null ? new int[1]{0} : vertices);
-
 			if(prevTransform)
 			{
 				m_PreviewObject.transform.position = m_pos;
@@ -1108,11 +1054,7 @@ namespace UnityEditor.ProBuilder
 				EditorUtility.ScreenCenter(m_PreviewObject.gameObject);
 			}
 
-			if(ProGridsInterface.SnapEnabled())
-				pb.transform.position = Snapping.SnapValue(pb.transform.position, ProGridsInterface.SnapValue());
-			else
-			if(PreferencesInternal.GetBool(PreferenceKeys.pbForceVertexPivot))
-				pb.transform.position = Snapping.SnapValue(pb.transform.position, 1f);
+			EditorUtility.SetPivotLocationAndSnap(pb);
 
 			// Remove pb_Object
 			Mesh m = UnityEngine.ProBuilder.MeshUtility.DeepCopy( pb.mesh );
