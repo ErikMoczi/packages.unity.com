@@ -79,6 +79,7 @@ namespace Unity.Burst.Editor
         [SerializeField] private bool _optimizations = true;
 
         [SerializeField] private bool _safetyChecks = true;
+        [SerializeField] private bool _enhancedDisassembly = false;
         private Vector2 _scrollPos;
         private SearchField _searchField;
 
@@ -164,6 +165,7 @@ namespace Unity.Burst.Editor
 
                 GUILayout.BeginHorizontal();
 
+                _enhancedDisassembly = GUILayout.Toggle(_enhancedDisassembly, "Enhanced Disassembly");
                 _safetyChecks = GUILayout.Toggle(_safetyChecks, "Safety Checks");
                 _optimizations = GUILayout.Toggle(_optimizations, "Optimizations");
                 _fastMath = GUILayout.Toggle(_fastMath, "Fast Math");
@@ -190,6 +192,9 @@ namespace Unity.Burst.Editor
                     if (!_safetyChecks)
                         options.Append("\n" + GetOption(OptionDisableSafetyChecks) + "\n" + GetOption(OptionNoAlias));
 
+                    if (_enhancedDisassembly)
+                        options.Append("\n" + GetOption(OptionDebug));
+
                     if (!_optimizations) options.Append("\n" + GetOption(OptionDisableOpt));
 
                     if (_fastMath) options.Append("\n" + GetOption(OptionFastMath));
@@ -202,6 +207,12 @@ namespace Unity.Burst.Editor
 
                     for (var i = 0; i < DisasmOptions.Length; ++i)
                         target.Disassembly[i] = GetDisassembly(target.Method, baseOptions + DisasmOptions[i]);
+
+                    if (_enhancedDisassembly && (int)DisassemblyKind.Asm < target.Disassembly.Length)
+                    {
+                        var processor = new BurstDisassembler();
+                        target.Disassembly[(int)DisassemblyKind.Asm] = processor.Process(target.Disassembly[(int)DisassemblyKind.Asm]);
+                    }
 
                     disasm = target.Disassembly[(int) _disasmKind];
                 }

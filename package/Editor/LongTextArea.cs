@@ -33,6 +33,8 @@ namespace Unity.Burst.Editor
 
         public void Render(GUIStyle style)
         {
+            style.richText = true;
+
             foreach (var fragment in m_Fragments)
             {
                 GUILayout.Label(fragment.text, style);

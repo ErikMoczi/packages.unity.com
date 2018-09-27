@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.4-preview.31
+
+- Fix codegen for fmodf to use inline functions instead
+- Add extended disassembly output to the burst inspector
+- Fix generic resolution through de-virtualize methods
+- Fix bug when accessing float3.zero. Prevents static constructors being considered intrinsics.
+- Fix NoAlias attribute checking when generics are used
+
 ## 0.2.4-preview.30
 
 - Fix IsValueType throwing a NullReferenceException in case of using generics

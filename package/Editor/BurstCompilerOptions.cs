@@ -30,6 +30,8 @@ namespace Burst.Compiler.IL
         public const string OptionFormat = "format=";
         public const string OptionDebugTrap = "debugtrap";
         public const string OptionDisableVectors = "disable-vectors";
+        public const string OptionDebug = "debug";
+        public const string OptionDisableDebugSymbols = "disable-load-debug-symbols";
 
         // -------------------------------------------------------
         // Options used by the Jit compiler
