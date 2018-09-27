@@ -77,6 +77,9 @@ namespace UnityEditor.TestTools.TestRunner
         [SerializeField]
         private object m_CurrentYieldObject;
 
+        [SerializeField]
+        private EnumerableSetUpTearDownCommandState m_SetUpTearDownState;
+
         internal IUnityTestAssemblyRunner m_Runner;
 
         private ConstructDelegator m_ConstructDelegator;
@@ -139,6 +142,11 @@ namespace UnityEditor.TestTools.TestRunner
         public void Run()
         {
             EditModeTestCallbacks.RestoringTestContext += OnRestoringTest;
+            if (m_SetUpTearDownState == null)
+            {
+                m_SetUpTearDownState = CreateInstance<EnumerableSetUpTearDownCommandState>();
+            }
+            m_Runner.GetCurrentContext().SetUpTearDownState = m_SetUpTearDownState;
             m_CleanupVerifier.RegisterExistingFiles();
 
             if (!m_RunningTests)

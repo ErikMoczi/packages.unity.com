@@ -9,7 +9,7 @@ using UnityEngine.TestTools.TestRunner;
 
 namespace UnityEditor.TestTools.TestRunner.Api
 {
-    internal class CallbacksDelegator : ScriptableSingleton<CallbacksDelegator>, ITestRunnerListener
+    internal class CallbacksDelegator : ScriptableSingleton<CallbacksDelegator>
     {
         public void RunStarted(NUnit.Framework.Interfaces.ITest testsToRun)
         {

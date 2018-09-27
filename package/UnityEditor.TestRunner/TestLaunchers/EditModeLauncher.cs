@@ -47,7 +47,7 @@ namespace UnityEditor.TestTools.TestRunner
             callback.previousSceneSetup = previousSceneSetup;
             callback.undoGroup = undoGroup;
             callback.runner = m_EditModeRunner;
-            AddEventHandler<CallbacksDelegator>();
+            AddEventHandler<CallbacksDelegatorListener>();
 
             m_EditModeRunner.Run();
             AddEventHandler<BackgroundListener>();

@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Reflection;
+using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 
 namespace UnityEngine.TestTools.TestRunner
@@ -29,7 +33,19 @@ namespace UnityEngine.TestTools.TestRunner
 
         private IEnumerator HandleEnumerableTest(ITestExecutionContext context)
         {
-            return m_TestMethod.Method.MethodInfo.Invoke(context.TestObject, m_TestMethod.parms != null ? m_TestMethod.parms.OriginalArguments : null) as IEnumerator;
+            try
+            {
+                return m_TestMethod.Method.MethodInfo.Invoke(context.TestObject, m_TestMethod.parms != null ? m_TestMethod.parms.OriginalArguments : null) as IEnumerator;
+            }
+            catch (TargetInvocationException e)
+            {
+                if (e.InnerException is IgnoreException)
+                {
+                    context.CurrentResult.SetResult(ResultState.Ignored, e.InnerException.Message);
+                    return null;
+                }
+                throw;
+            }
         }
     }
 }

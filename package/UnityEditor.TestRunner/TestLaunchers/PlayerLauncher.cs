@@ -79,7 +79,7 @@ namespace UnityEditor.TestTools.TestRunner
         {
             var scene = CreateBootstrapScene(sceneName, runner =>
             {
-                    runner.AddEventHandlerMonoBehaviour<TestResultRendererCallback>();
+                runner.AddEventHandlerMonoBehaviour<TestResultRendererCallback>();
                 runner.AddEventHandlerMonoBehaviour<PlayModeRunnerCallback>();
                 runner.settings = m_Settings;
                 runner.AddEventHandlerMonoBehaviour<RemoteTestResultSender>();
@@ -118,8 +118,8 @@ namespace UnityEditor.TestTools.TestRunner
             var buildTargetGroup = EditorUserBuildSettings.activeBuildTargetGroup;
             var uniqueTempPathInProject = FileUtil.GetUniqueTempPathInProject();
 
-            //WSA have issues with MAX_PATH, try to minimize the path length
-            if (m_TargetPlatform == BuildTarget.WSAPlayer)
+            //WSA and XboxOne have issues with MAX_PATH, try to minimize the path length
+            if ((m_TargetPlatform == BuildTarget.WSAPlayer) || (m_TargetPlatform == BuildTarget.XboxOne))
             {
                 uniqueTempPathInProject = uniqueTempPathInProject.Substring(0, 25);
             }
@@ -138,11 +138,13 @@ namespace UnityEditor.TestTools.TestRunner
             string extensionForBuildTarget = PostprocessBuildPlayer.GetExtensionForBuildTarget(buildTargetGroup, buildOptions.target, buildOptions.options);
 
             var playerExecutableName = "PlayerWithTests";
+            var locationPath = Path.Combine(m_TempBuildLocation, "PlayerWithTests");
+
             if (!string.IsNullOrEmpty(extensionForBuildTarget))
             {
                 playerExecutableName += string.Format(".{0}", extensionForBuildTarget);
+                locationPath = Path.Combine(locationPath, playerExecutableName);
             }
-            var locationPath = Path.Combine(Path.Combine(m_TempBuildLocation, "PlayerWithTests"), playerExecutableName);
 
             buildOptions.locationPathName = locationPath;
 

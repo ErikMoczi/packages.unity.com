@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 
@@ -29,20 +30,27 @@ namespace UnityEngine.TestTools
                     {
                         //If we set the result state in the runner
                         if (m_Context.CurrentResult.ResultState != ResultState.Error &&
-                            m_Context.CurrentResult.ResultState != ResultState.Failure)
+                            m_Context.CurrentResult.ResultState != ResultState.Failure &&
+                            m_Context.CurrentResult.ResultState != ResultState.Ignored)
                         {
                             m_Context.CurrentResult.SetResult(ResultState.Success);
                         }
+
                         yield break;
                     }
 
                     if (m_Context.CurrentResult.ResultState == ResultState.Error ||
-                        m_Context.CurrentResult.ResultState == ResultState.Failure)
+                        m_Context.CurrentResult.ResultState == ResultState.Failure ||
+                        m_Context.CurrentResult.ResultState == ResultState.Ignored)
                     {
                         yield break;
                     }
 
                     current = m_TestEnumerator.Current;
+                }
+                catch (IgnoreException exception)
+                {
+                    m_Context.CurrentResult.SetResult(ResultState.Ignored, exception.Message);
                 }
                 catch (Exception exception)
                 {

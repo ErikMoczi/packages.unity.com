@@ -1,13 +1,12 @@
-﻿using NUnit.Framework.Interfaces;
+using NUnit.Framework.Interfaces;
 
 namespace UnityEngine.TestTools.TestRunner.Callbacks
 {
-    public class TestResultRendererCallback : MonoBehaviour, ITestRunnerListener
+    internal class TestResultRendererCallback : MonoBehaviour, ITestRunnerListener
     {
         private TestResultRenderer m_ResultRenderer;
         public void RunStarted(ITest testsToRun)
         {
-            throw new System.NotImplementedException();
         }
 
         public void RunFinished(ITestResult testResults)
@@ -19,6 +18,7 @@ namespace UnityEngine.TestTools.TestRunner.Callbacks
             m_ResultRenderer = new TestResultRenderer(testResults);
             m_ResultRenderer.ShowResults();
         }
+
         public void OnGUI()
         {
             if (m_ResultRenderer != null)

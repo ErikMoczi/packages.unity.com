@@ -32,7 +32,7 @@ namespace UnityEngine.TestTools
 
         public TestCommand Wrap(TestCommand command)
         {
-            return new UnityLogCheckDelegatingCommand(new EnumerableSetUpTearDownCommand(new EnumerableTestMethodCommand((TestMethod)command.Test)));
+            return new EnumerableSetUpTearDownCommand(new SetUpTearDownCommand(new UnityLogCheckDelegatingCommand(new EnumerableTestMethodCommand((TestMethod)command.Test))));
         }
     }
 }

@@ -15,9 +15,16 @@ namespace UnityEditor.TestTools.TestRunner
             PlayerSettings.WSA.SetCapability(PlayerSettings.WSACapability.InternetClientServer, true);
             PlayerSettings.WSA.SetCapability(PlayerSettings.WSACapability.PrivateNetworkClientServer, true);
 
-            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("UNITY_THISISABUILDMACHINE")))
+            // This setting is initialized only when Window Store App is selected from the Build Settings window, and
+            // is typically an empty strings when running tests via UTR on the command-line.
+            bool wsaSettingNotInitialized = string.IsNullOrEmpty(EditorUserBuildSettings.wsaArchitecture);
+
+            // If WSA build settings aren't fully initialized or running from a build machine, specify a default build configuration.
+            // Otherwise we can use the existing configuration specified by the user in Build Settings.
+            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("UNITY_THISISABUILDMACHINE")) || wsaSettingNotInitialized)
             {
                 EditorUserBuildSettings.wsaSubtarget = WSASubtarget.PC;
+                EditorUserBuildSettings.wsaArchitecture = "x64";
                 EditorUserBuildSettings.SetPlatformSettings(BuildPipeline.GetBuildTargetName(BuildTarget.WSAPlayer), k_SettingsBuildConfiguration, WSABuildType.Debug.ToString());
             }
         }

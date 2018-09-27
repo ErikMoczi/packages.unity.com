@@ -106,6 +106,7 @@ namespace UnityEngine.TestRunner.NUnitExtensions.Runner
 
         public virtual void Cancel(bool force)
         {
+            Context.Listener.TestFinished(Result);
         }
     }
 }

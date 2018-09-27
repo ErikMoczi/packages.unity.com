@@ -11,7 +11,6 @@ namespace UnityEngine.TestTools.TestRunner
         public bool sceneBased;
         public string originalScene;
         public string bootstrapScene;
-        public bool displayTestResultUi;
 
         public static PlaymodeTestsControllerSettings CreateRunnerSettings(TestRunnerFilter filter)
         {
@@ -20,8 +19,7 @@ namespace UnityEngine.TestTools.TestRunner
                 filter = filter,
                 sceneBased = false,
                 originalScene = null,
-                bootstrapScene = null,
-                displayTestResultUi = false,
+                bootstrapScene = null
             };
             return settings;
         }

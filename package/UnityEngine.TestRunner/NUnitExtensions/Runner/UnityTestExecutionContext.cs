@@ -7,6 +7,7 @@ using NUnit.Framework.Constraints;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using NUnit.Framework.Internal.Execution;
+using UnityEngine.TestTools;
 
 namespace UnityEngine.TestRunner.NUnitExtensions.Runner
 {
@@ -83,6 +84,7 @@ namespace UnityEngine.TestRunner.NUnitExtensions.Runner
             Listener = other.Listener;
             TestCaseTimeout = other.TestCaseTimeout;
             UpstreamActions = new List<ITestAction>(other.UpstreamActions);
+            SetUpTearDownState = other.SetUpTearDownState;
 
             TestContext.CurrentTestExecutionContext = this;
 
@@ -101,6 +103,7 @@ namespace UnityEngine.TestRunner.NUnitExtensions.Runner
         public Randomizer RandomGenerator { get; private set; }
         public ValueFormatter CurrentValueFormatter { get; private set; }
         public bool IsSingleThreaded { get; set; }
+        public EnumerableSetUpTearDownCommandState SetUpTearDownState { get; set; }
 
         internal int AssertCount
         {
