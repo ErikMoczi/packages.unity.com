@@ -20,7 +20,7 @@ For additional details on using Oculus with Unity or deploying to Gear VR, see t
 # Technical details
 ## Requirements
 This version of Oculus is compatible with the following versions of the Unity Editor:
- - 2018.3
+ - 2018.2
 
 To use this package, you must have the following 3rd party products:
 
