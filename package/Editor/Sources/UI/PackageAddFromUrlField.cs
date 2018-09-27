@@ -127,8 +127,13 @@ namespace UnityEditor.PackageManager.UI
             UrlTextField.Focus();
         }
 
-        private VisualElement AddFromUrlFieldContainer { get { return root.Q<VisualElement>("addFromUrlFieldContainer");  }}
-        private TextField UrlTextField { get { return root.Q<TextField>("urlTextField"); } }
-        private Button AddButton{ get { return root.Q<Button>("addFromUrlButton");  }}
+        private VisualElement _addFromUrlFieldContainer;
+        private VisualElement AddFromUrlFieldContainer { get { return _addFromUrlFieldContainer ?? (_addFromUrlFieldContainer = root.Q<VisualElement>("addFromUrlFieldContainer")); } }
+
+        private TextField _urlTextField;
+        private TextField UrlTextField { get { return _urlTextField ?? (_urlTextField = root.Q<TextField>("urlTextField")); } }
+
+        private Button _addButton;
+        private Button AddButton{ get { return _addButton ?? (_addButton = root.Q<Button>("addFromUrlButton")); } }
     }
 }

@@ -9,7 +9,7 @@ namespace UnityEditor.PackageManager.UI
     // History of a single package
     internal class Package : IEquatable<Package>
     {
-        static public bool ShouldProposeLatestVersions
+        public static bool ShouldProposeLatestVersions
         {
             get
             {
@@ -29,7 +29,7 @@ namespace UnityEditor.PackageManager.UI
 
         internal const string packageManagerUIName = "com.unity.package-manager-ui";
         private readonly string packageName;
-        private IEnumerable<PackageInfo> source;
+        private readonly IEnumerable<PackageInfo> source;
 
         internal Package(string packageName, IEnumerable<PackageInfo> infos)
         {
@@ -40,17 +40,10 @@ namespace UnityEditor.PackageManager.UI
                 throw new ArgumentException("Cannot be empty", "infos");
             
             this.packageName = packageName;
-            UpdateSource(infos);
+            source = infos;
         }
 
-        internal void UpdateSource(IEnumerable<PackageInfo> source)
-        {
-            this.source = source;
-#if UNITY_2018_3_OR_NEWER
-            if (IsPackageManagerUI)
-                this.source = this.source.Where(p => p != null && p.Version.Major >= 2);
-#endif
-        }
+        public Error Error { get; set; }
 
         public PackageInfo Current { get { return Versions.FirstOrDefault(package => package.IsCurrent); } }
 
@@ -163,7 +156,7 @@ namespace UnityEditor.PackageManager.UI
             {
                 AddSignal.Operation = null;
                 operation.OnOperationFinalized -= OnAddOperationFinalizedEvent;
-                PackageCollection.Instance.FetchListOfflineCache(true);
+                PackageManagerWindow.FetchListOfflineCacheForAllWindows();
             };
 
             operation.OnOperationFinalized += OnAddOperationFinalizedEvent;
@@ -210,7 +203,7 @@ namespace UnityEditor.PackageManager.UI
             {
                 RemoveSignal.Operation = null;
                 operation.OnOperationFinalized -= OnRemoveOperationFinalizedEvent;
-                PackageCollection.Instance.FetchListOfflineCache(true);
+                PackageManagerWindow.FetchListOfflineCacheForAllWindows();
             };
 
             operation.OnOperationFinalized += OnRemoveOperationFinalizedEvent;

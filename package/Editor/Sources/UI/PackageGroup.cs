@@ -69,7 +69,10 @@ namespace UnityEditor.PackageManager.UI
             return packageItem;
         }
 
-        private VisualElement List { get { return root.Q<VisualElement>("groupContainer"); } }
-        private Label HeaderTitle { get { return root.Q<Label>("headerTitle"); } }
+        private VisualElement _list;
+        private VisualElement List { get { return _list ?? (_list = root.Q<VisualElement>("groupContainer")); } }
+
+        private Label _headerTitle;
+        private Label HeaderTitle { get { return _headerTitle ?? (_headerTitle = root.Q<Label>("headerTitle")); } }
     }
 }

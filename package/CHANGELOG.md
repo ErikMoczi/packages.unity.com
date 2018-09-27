@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.1.0-preview.1] - 2018-09-20
+- Support maximize/minimize
+- Support PackageManager UI saved maximized in a layout
+- Keep track of selected built-in package
+- Keep track of last selected filter
+- Fix UI Layout
+
 ## [2.0.1] - 2018-09-14
 - Move undesired public classes to internal
 - Minor fix to the documentation

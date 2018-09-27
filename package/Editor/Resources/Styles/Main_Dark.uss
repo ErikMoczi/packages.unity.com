@@ -42,7 +42,6 @@
 }
 
 .row, #detailListView .combo, #detailListView #detailView .detail #detailActions, #detailListView #detailView .detail .detailActions, #detailListView #detailView .detail .versionContainer {
-  flex: 1 0 0;
   flex-direction: row;
 }
 
@@ -463,6 +462,8 @@
 }
 #detailListView #packageListGroup {
   width: 270;
+  border-right-width: 1px;
+  border-color: rgba(0, 0, 0, 0.5);
 }
 #detailListView #packageListGroup #groupContainerOuter #headerContainer {
   flex: 1 0 0;
@@ -508,7 +509,6 @@
   -unity-word-wrap: true;
 }
 #detailListView .package {
-  flex: 1 0 0;
   flex-direction: row;
   align-items: center;
   margin-top: 0;
@@ -552,6 +552,7 @@
 }
 #detailListView .package .name {
   flex: 1 0 0;
+  width: 160;
   font-size: 12;
   margin-left: 0;
   margin-right: 5;
@@ -565,8 +566,6 @@
 }
 #detailListView #detailsGroup {
   flex: 1 0 0;
-  border-left-width: 1px;
-  border-color: rgba(0, 0, 0, 0.5);
 }
 #detailListView #detailsGroup #detailsContainer {
   flex: 1 0 0;
@@ -586,21 +585,19 @@
   right: 0;
 }
 #detailListView #detailView .detail {
-  flex: 1 0 0;
-  flex-direction: column;
   padding-top: 5;
   padding-left: 5;
   padding-bottom: 5;
   padding-right: 5;
 }
 #detailListView #detailView .detail .header {
-  flex: 1 0 0;
   flex-direction: row;
   align-items: flex-start;
+  justify-content: space-between;
   margin-bottom: 8;
 }
 #detailListView #detailView .detail .header #titleContainer {
-  flex: 0.9 0 0;
+  flex: 1 0 0;
 }
 #detailListView #detailView .detail .header #titleContainer #detailTitle {
   font-size: 18;
@@ -612,7 +609,7 @@
   margin-right: 0;
 }
 #detailListView #detailView .detail .header #detailsControls {
-  flex: 1 0 0;
+  flex: 0 0 auto;
   height: 19;
   flex-direction: row;
   align-items: center;
@@ -623,7 +620,6 @@
   margin-right: 0;
 }
 #detailListView #detailView .detail .header #updateCombo {
-  flex: 1 0 0;
   height: 19;
   align-items: center;
   margin-top: 0;
@@ -675,7 +671,7 @@
 }
 #detailListView #detailView .detail .header #updateContainer {
   height: 19;
-  flex: 1 0 0;
+  flex: 0 0 auto;
   align-items: flex-end;
   padding-top: 0;
   padding-left: 0;
@@ -735,12 +731,10 @@
   max-height: 30;
 }
 #detailListView #detailView .detail #detailName {
-  flex: 1 0 0;
   max-height: 20;
   -unity-font-style: italic;
 }
 #detailListView #detailView .detail #detailPackageStatus {
-  flex: 1 0 0;
   -unity-font-style: bold;
   -unity-word-wrap: true;
 }
@@ -756,7 +750,6 @@
   -unity-text-align: middle-center;
 }
 #detailListView #detailView .detail #detailDesc, #detailListView #detailView .detail #detailModuleReference {
-  flex: 1 0 0;
   font-size: 12;
   -unity-word-wrap: true;
 }
@@ -764,12 +757,10 @@
   -unity-font-style: italic;
 }
 #detailListView #detailView .detail #detailAuthor {
-  flex: 1 0 0;
   font-size: 12;
   -unity-word-wrap: true;
 }
 #detailListView #detailView .detail #detailCategory {
-  flex: 1 0 0;
   font-size: 12;
   -unity-word-wrap: true;
   margin-bottom: 5;
@@ -1035,4 +1026,9 @@
   max-width: 32;
   max-height: 32;
   background-image: resource("Images/Dark/loading");
+}
+
+.fix-scroll-view {
+  left: 0;
+  right: 0;
 }
