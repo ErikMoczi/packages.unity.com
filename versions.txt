@@ -32,3 +32,4 @@
 2.2.8-preview.4
 2.2.8-preview.5
 2.2.8-preview.6
+2.2.8-preview.8
