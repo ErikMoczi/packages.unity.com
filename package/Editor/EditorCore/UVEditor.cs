@@ -13,6 +13,7 @@ using System.Reflection;
 using UnityEngine.ProBuilder;
 using UnityEditor.ProBuilder.UI;
 using UnityEngine.ProBuilder.MeshOperations;
+using UnityEditor.SettingsManagement;
 
 namespace UnityEditor.ProBuilder
 {
@@ -49,12 +50,13 @@ namespace UnityEditor.ProBuilder
 		const float MIN_DIST_MOUSE_EDGE = 8f;
 
 		// todo Support Range/Min/Max property decorators
-		static Pref<float> s_GridSnapIncrement = new Pref<float>("uvEditorGridSnapIncrement", .125f, Settings.Scope.Project);
+		[UserSetting]
+		static Pref<float> s_GridSnapIncrement = new Pref<float>("uv.uvEditorGridSnapIncrement", .125f, SettingScope.Project);
 
 		[UserSettingBlock("UV Editor", new [] { "grid", "size" } )]
 		static void UVEditorSettings(string searchContext)
 		{
-			s_GridSnapIncrement.value = UI.EditorGUILayout.SearchableSlider(UI.EditorGUIUtility.TempContent("Grid Size"), s_GridSnapIncrement, .015625f, 2f, searchContext);
+			s_GridSnapIncrement.value = SettingsGUILayout.SettingsSlider(UI.EditorGUIUtility.TempContent("Grid Size"), s_GridSnapIncrement, .015625f, 2f, searchContext);
 		}
 
 		static readonly Color DRAG_BOX_COLOR_BASIC = new Color(0f, .7f, 1f, .2f);
@@ -84,7 +86,7 @@ namespace UnityEditor.ProBuilder
 			get { return Event.current.modifiers == EventModifiers.Shift; }
 		}
 
-		Pref<bool> m_ShowPreviewMaterial = new Pref<bool>("UVEditor.showPreviewMaterial", true, Settings.Scope.Project);
+		Pref<bool> m_ShowPreviewMaterial = new Pref<bool>("UVEditor.showPreviewMaterial", true, SettingScope.Project);
 
 		// Show a preview texture for the first selected face in UV space 0,1?
 #if PB_DEBUG
@@ -2749,7 +2751,7 @@ namespace UnityEditor.ProBuilder
 				m_WeldDistance.value = k_MinimumSewUVDistance;
 
 			if (EditorGUI.EndChangeCheck())
-				Settings.Save();
+				ProBuilderSettings.Save();
 		}
 #endregion
 #region UV Selection
