@@ -52,6 +52,9 @@ public class ResourceManagerVirtualModeTests : ResourceManagerBaseTests
             virtualBundleData.AssetBundles.Add(b);
         }
 
-        new GameObject("AssetBundleSimulator", typeof(VirtualAssetBundleManager)).GetComponent<VirtualAssetBundleManager>().Initialize(virtualBundleData, (s) => s, 0, 0, 0, 0);
+        var abManager = new GameObject("AssetBundleSimulator", typeof(VirtualAssetBundleManager)).GetComponent<VirtualAssetBundleManager>();
+        abManager.Initialize(virtualBundleData, (s) => s);
+        ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(abManager, typeof(AssetBundleProvider).FullName), 0, 0));
+        ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualBundledAssetProvider(), 0, 0));
     }
 }

@@ -93,9 +93,16 @@ namespace UnityEngine.ResourceManagement
         public static void AddAction(Delegate action, float delay = 0, params object[] parameters)
         {
             if (m_instance == null)
-            {
+            { 
                 m_instance = new GameObject("DelayedActionManager", typeof(DelayedActionManager)).GetComponent<DelayedActionManager>();
                 m_instance.gameObject.hideFlags = HideFlags.HideAndDontSave;
+#if UNITY_EDITOR
+                if (!Application.isPlaying)
+                {
+//                    Debug.Log("DelayedActionManager called outside of play mode, registering with EditorApplication.update.");
+                    UnityEditor.EditorApplication.update += m_instance.LateUpdate;
+                }
+#endif
             }
             m_instance.AddActionInternal(action, delay, parameters);
         }
@@ -147,6 +154,26 @@ namespace UnityEngine.ResourceManagement
                         return true;
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Force the update loop to run until it is not active
+        /// </summary>
+        /// <param name="timeout">Optional timeout value in seconds.</param>
+        /// <returns>True if the DelayedActionManager is not active, False if the timeout is hit.</returns>
+        public static bool Wait(float timeout = 0)
+        {
+            if (!IsActive)
+                return true;
+
+            var timer = new System.Diagnostics.Stopwatch();
+            timer.Start();
+            do
+            {
+                m_instance.LateUpdate();
+
+            } while (IsActive && (timeout <= 0 || timer.Elapsed.TotalSeconds < timeout));
+            return !IsActive;
         }
 
         void LateUpdate()

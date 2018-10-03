@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement
 {
-    internal class VirtualBundledAssetProvider : ResourceProviderBase
+    public class VirtualBundledAssetProvider : ResourceProviderBase
     {
-        public override string ProviderId
+        public VirtualBundledAssetProvider()
         {
-            get { return typeof(BundledAssetProvider).FullName; }
+            m_providerId = typeof(BundledAssetProvider).FullName; 
         }
 
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
@@ -54,6 +54,7 @@ namespace UnityEngine.ResourceManagement
             internal override TObject ConvertResult(AsyncOperation operation) { return null; }
         }
 
+        /// <inheritdoc/>
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             if (location == null)
@@ -64,6 +65,7 @@ namespace UnityEngine.ResourceManagement
             return operation.Start(location, loadDependencyOperation);
         }
 
+        /// <inheritdoc/>
         public override bool Release(IResourceLocation location, object asset)
         {
             if (location == null)

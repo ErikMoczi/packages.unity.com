@@ -10,6 +10,9 @@ namespace UnityEngine.ResourceManagement
     public class AssetDatabaseProvider : ResourceProviderBase
     {
         float m_loadDelay = .1f;
+
+        public AssetDatabaseProvider() { }
+
         public AssetDatabaseProvider(float delay = .25f)
         {
             m_loadDelay = delay;

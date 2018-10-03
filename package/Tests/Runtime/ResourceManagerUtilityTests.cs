@@ -48,6 +48,60 @@ public class ResourceManagerUtilityTests
         yield return null;
     }
 
+    class NestableTestClass : IInitializableObject, IEquatable<NestableTestClass>
+    {
+        public string m_id;
+        public NestableTestClass m_child;
+
+        public bool Initialize(string id, string data)
+        {
+            m_id = id;
+            if (!string.IsNullOrEmpty(data))
+            {
+                var childInfo = JsonUtility.FromJson<ObjectInitializationData>(data);
+                m_child = childInfo.CreateInstance<NestableTestClass>();
+            }
+            return true;
+        }
+
+        public ObjectInitializationData CreateInitializationData()
+        {
+            object obj = null;
+            if (m_child != null)
+                obj = m_child.CreateInitializationData();
+            return ObjectInitializationData.CreateSerializedInitializationData(GetType(), m_id, obj);
+        }
+
+        public bool Equals(NestableTestClass other)
+        {
+            if (other == null)
+                return false;
+            if (m_id != other.m_id)
+                return false;
+            if (m_child == null)
+            {
+                return other.m_child == null;
+            }
+            else
+            {
+                if (other.m_child == null)
+                    return false;
+                return m_child.Equals(other.m_child);
+            }
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator SerializedProviderTest()
+    {
+        var root = new NestableTestClass() { m_id = "Root", m_child = new NestableTestClass() { m_id = "Child1", m_child = new NestableTestClass() { m_id = "Child2", m_child = new NestableTestClass() { m_id = "Child3", m_child = null } } } };
+        var serializedData = root.CreateInitializationData();
+        Debug.Log(JsonUtility.ToJson(serializedData));
+        var newRoot = serializedData.CreateInstance<NestableTestClass>();
+        Assert.IsTrue(root.Equals(newRoot));
+        yield return null;
+    }
+
     class DAMTest
     {
         public int frameInvoked;
@@ -85,7 +139,7 @@ public class ResourceManagerUtilityTests
         float timeCalled = Time.realtimeSinceStartup;
         DelayedActionManager.AddAction((Action)testObj.Method, .25f);
         yield return new WaitForSeconds(.5f);
-        Assert.LessOrEqual(timeCalled + .25f, testObj.timeInvoked);
+        Assert.LessOrEqual(timeCalled + .2f, testObj.timeInvoked);
     }
 
     [UnityTest]

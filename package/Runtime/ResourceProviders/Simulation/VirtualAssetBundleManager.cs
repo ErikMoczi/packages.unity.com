@@ -24,15 +24,16 @@ namespace UnityEngine.ResourceManagement
         /// Loads runtime data and creates a VirtualAssetBundleManager object.
         /// </summary>
         /// <param name="bundleNameConverter">Func used to expand variables in bundle names.</param>
-        /// <param name="assetCacheSize">How many assets to keep in the asset cache.</param>
-        /// <param name="assetCacheAge">How long to keep assets in the asset cache.</param>
-        /// <param name="bundleCacheSize">How many bundles to keep in the bundle cache.</param>
-        /// <param name="bundleCacheAge">How long to keep bundles in the bundle cache.</param>
-        public static void AddProviders(Func<string, string> bundleNameConverter, int assetCacheSize, float assetCacheAge, int bundleCacheSize, float bundleCacheAge)
+        /// <returns>The created VirtualAssetBundleManager.</returns>
+        public static VirtualAssetBundleManager CreateManager(Func<string, string> bundleNameConverter)
         {
             var virtualBundleData = VirtualAssetBundleRuntimeData.Load();
-            if (virtualBundleData != null)
-                new GameObject("AssetBundleSimulator", typeof(VirtualAssetBundleManager)).GetComponent<VirtualAssetBundleManager>().Initialize(virtualBundleData, bundleNameConverter, assetCacheSize, assetCacheAge, bundleCacheSize, bundleCacheAge);
+            if (virtualBundleData == null)
+                return null;
+
+            var mgr = new GameObject("VirtualAssetBundleManager", typeof(VirtualAssetBundleManager)).GetComponent<VirtualAssetBundleManager>();
+            mgr.Initialize(virtualBundleData, bundleNameConverter);
+            return mgr;
         }
 
         /// <summary>
@@ -40,19 +41,13 @@ namespace UnityEngine.ResourceManagement
         /// </summary>
         /// <param name="virtualBundleData">Runtime data that contains the virtual bundles.</param>
         /// <param name="bundleNameConverter">Func used to expand variables in bundle names.</param>
-        /// <param name="assetCacheSize">How many assets to keep in the asset cache.</param>
-        /// <param name="assetCacheAge">How long to keep assets in the asset cache.</param>
-        /// <param name="bundleCacheSize">How many bundles to keep in the bundle cache.</param>
-        /// <param name="bundleCacheAge">How long to keep bundles in the bundle cache.</param>
-        public void Initialize(VirtualAssetBundleRuntimeData virtualBundleData, Func<string, string> bundleNameConverter, int assetCacheSize, float assetCacheAge, int bundleCacheSize, float buncleCacheAge)
+        public void Initialize(VirtualAssetBundleRuntimeData virtualBundleData, Func<string, string> bundleNameConverter)
         {
             Debug.Assert(virtualBundleData != null);
             m_localLoadSpeed = virtualBundleData.LocalLoadSpeed;
             m_remoteLoadSpeed = virtualBundleData.RemoteLoadSpeed;
             foreach (var b in virtualBundleData.AssetBundles)
                 m_allBundles.Add(bundleNameConverter(b.Name), b);
-            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(this, typeof(AssetBundleProvider).FullName), bundleCacheSize, buncleCacheAge));
-            ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualBundledAssetProvider(), assetCacheSize, assetCacheAge));
         }
 
         internal bool Unload(IResourceLocation location)

@@ -5,7 +5,7 @@ namespace UnityEngine.ResourceManagement
     /// <summary>
     /// Resoure Providers handle loading (Provide) and unloading (Release) of objects
     /// </summary>
-    public interface IResourceProvider
+    public interface IResourceProvider : IInitializableObject
     {
         /// <summary>
         /// Unique identifier for this provider, used by Resource Locations to find a suitable Provider

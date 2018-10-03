@@ -38,6 +38,18 @@ namespace UnityEngine.ResourceManagement
         }
 
         /// <summary>
+        /// Used to set the function that will be used to resolve any runtime variables embedded in location internal ids.
+        /// </summary>
+        public static Func<string, string> OnResolveInternalId { internal get; set; }
+        public static string ResolveInternalId(string id)
+        {
+            if (OnResolveInternalId == null)
+                return id;
+            return OnResolveInternalId(id);
+        }
+
+
+        /// <summary>
         /// Gets the appropriate <see cref="IResourceProvider"/> for the given <paramref name="location"/>.
         /// </summary>
         /// <returns>The resource provider.</returns>
