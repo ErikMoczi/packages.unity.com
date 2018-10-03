@@ -81,7 +81,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
 
             entry = new CacheEntry { File = path };
             entry.Guid = HashingMethods.Calculate("FileHash", entry.File).ToGUID();
-            entry.Hash = HashingMethods.Calculate(entry.File).ToHash128();
+            entry.Hash = HashingMethods.CalculateFile(entry.File).ToHash128();
             entry.Type = CacheEntry.EntryType.File;
 
             m_PathToHash[entry.File] = entry;
