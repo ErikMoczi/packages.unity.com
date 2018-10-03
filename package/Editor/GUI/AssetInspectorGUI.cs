@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -13,8 +14,7 @@ namespace UnityEditor.AddressableAssets
         {
             toggleMixed = null;
             addressableAssetToggleText = new GUIContent("Addressable", "Check this to mark this asset as an Addressable Asset, which includes it in the bundled data and makes it loadable via script by its address.");
-            //This is disabled until the editor is fixed - there is a bug where the animation inspector gets messed up when this callback is set
-            //Editor.finishedDefaultHeaderGUI += OnPostHeaderGUI;
+            Editor.finishedDefaultHeaderGUI += OnPostHeaderGUI;
         }
 
         static void SetAAEntry(Editor editor, AddressableAssetSettings aaSettings, Object[] targets, bool create)
@@ -24,15 +24,22 @@ namespace UnityEditor.AddressableAssets
             var guid = string.Empty;
             //if (create || EditorUtility.DisplayDialog("Remove Addressable Asset Entries", "Do you want to remove Addressable Asset entries for " + targets.Length + " items?", "Yes", "Cancel"))
             {
+                var entriesAdded = new List<AddressableAssetEntry>();
+
                 foreach (var t in targets)
                 {
-                    if (AddressablesUtility.GetPathAndGUIDFromTarget(t, ref path, ref guid))
+                    if (AddressableAssetUtility.GetPathAndGUIDFromTarget(t, ref path, ref guid))
                     {
                         if (create)
-                            aaSettings.CreateOrMoveEntry(guid, aaSettings.DefaultGroup);
+                            entriesAdded.Add(aaSettings.CreateOrMoveEntry(guid, aaSettings.DefaultGroup, false, false));
                         else
                             aaSettings.RemoveAssetEntry(guid);
                     }
+                }
+
+                if (create)
+                {
+                    aaSettings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entriesAdded, true);
                 }
             }
         }
@@ -50,7 +57,7 @@ namespace UnityEditor.AddressableAssets
                 bool foundValidAsset = false;
                 foreach (var t in editor.targets)
                 {
-                    if ((AddressablesUtility.GetPathAndGUIDFromTarget(t, ref path, ref guid)) &&
+                    if ((AddressableAssetUtility.GetPathAndGUIDFromTarget(t, ref path, ref guid)) &&
                         (path.ToLower().Contains("assets")))
                     {
                         foundValidAsset = true;

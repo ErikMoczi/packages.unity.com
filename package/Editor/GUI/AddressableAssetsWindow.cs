@@ -53,9 +53,10 @@ namespace UnityEditor.AddressableAssets
 
         internal void OfferToConvert()
         {
-            if (EditorUtility.DisplayDialog("Legacy Bundles Detected", "We have detected the use of legacy bundles in this project.  Would you like to auto-convert those into Addressables?", "Convert", "Ignore"))
+            var bundleList = AssetDatabase.GetAllAssetBundleNames();
+            if (EditorUtility.DisplayDialog("Legacy Bundles Detected", "We have detected the use of legacy bundles in this project.  Would you like to auto-convert those into Addressables? \nThis will take each asset bundle you have defined (we have detected " + bundleList.Length + " bundles), create an Addressables group with a matching name, then move all assets from those bundles into corresponding groups.  This will remove the asset bundle assignment from all assets, and remove all asset bundle definitions from this project.  This cannot be undone.", "Convert", "Ignore"))
             {
-                AddressablesUtility.ConvertAssetBundlesToAddressables();
+                AddressableAssetUtility.ConvertAssetBundlesToAddressables();
             }
             else
                 m_ignoreLegacyBundles = true;
@@ -103,7 +104,7 @@ namespace UnityEditor.AddressableAssets
                         DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
                         foreach (var path in DragAndDrop.paths)
                         {
-                            if (AddressablesUtility.IsPathValidForEntry(path))
+                            if (AddressableAssetUtility.IsPathValidForEntry(path))
                             {
                                 var guid = AssetDatabase.AssetPathToGUID(path);
                                 if (!string.IsNullOrEmpty(guid))

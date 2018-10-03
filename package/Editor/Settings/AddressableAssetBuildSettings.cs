@@ -25,7 +25,7 @@ namespace UnityEditor.AddressableAssets
             set
             {
                 m_compression = value;
-                PostModificationEvent();
+                SetDirty();
             }
         }
 
@@ -44,7 +44,7 @@ namespace UnityEditor.AddressableAssets
             set
             {
                 m_compileScriptsInVirtualMode = value;
-                PostModificationEvent();
+                SetDirty();
             }
         }
         [UnityEngine.SerializeField]
@@ -59,7 +59,7 @@ namespace UnityEditor.AddressableAssets
             set
             {
                 m_cleanupStreamingAssetsAfterBuilds = value;
-                PostModificationEvent();
+                SetDirty();
             }
         }
         [UnityEngine.SerializeField]
@@ -75,7 +75,7 @@ namespace UnityEditor.AddressableAssets
             set
             {
                 m_bundleBuildPath = value;
-                PostModificationEvent();
+                SetDirty();
             }
         }
 
@@ -89,10 +89,10 @@ namespace UnityEditor.AddressableAssets
 
         [NonSerialized]
         AddressableAssetSettings m_Settings;
-        void PostModificationEvent()
+        void SetDirty()
         {
             if (m_Settings != null)
-                m_Settings.PostModificationEvent(AddressableAssetSettings.ModificationEvent.BuildSettingsChanged, this);
+                m_Settings.SetDirty(AddressableAssetSettings.ModificationEvent.BuildSettingsChanged, this, true);
         }
         internal void OnAfterDeserialize(AddressableAssetSettings settings)
         {

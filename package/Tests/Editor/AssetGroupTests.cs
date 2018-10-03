@@ -7,7 +7,7 @@ namespace UnityEditor.AddressableAssets.Tests
         [Test]
         public void AddRemoveEntry()
         {
-            var group = settings.FindGroup(AddressableAssetSettings.DefaultLocalGroupName);
+            var group = m_settings.FindGroup(AddressableAssetSettings.DefaultLocalGroupName);
             Assert.IsNotNull(group);
             var entry = new AddressableAssetEntry(assetGUID, "test", group, false);
             group.AddAssetEntry(entry);
