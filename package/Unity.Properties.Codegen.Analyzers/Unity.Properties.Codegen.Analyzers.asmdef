@@ -1,0 +1,6 @@
+{
+    "name": "Unity.Properties.Codegen.Analyzers",
+    "references": ["Unity.Properties", "Unity.Properties.Codegen.Base"],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": []
+}
