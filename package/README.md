@@ -7,17 +7,19 @@ Packages are separated into individual platform support packages. These packages
 
 ```
 <root>
-	com.unity.oculus (Contains all files that are the same across Oculus packages)
+	com.unity.oculus.standalone (Contains Standalone Oculus files)
+		plugins
+		package.json
 		README
 		Licenses
 		CHANGELOG
 		Documentation
 
-	com.unity.oculus.standalone (Contains Standalone specific Oculus files)
+	com.unity.oculus.android (Contains Android Oculus files)
 		plugins
 		package.json
-
-	com.unity.oculus.android (Contains Android specific Oculus files)
-		plugins
-		package.json
+		README
+		Licenses
+		CHANGELOG
+		Documentation
 ```
