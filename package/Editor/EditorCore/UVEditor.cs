@@ -254,7 +254,7 @@ namespace UnityEditor.ProBuilder
 		{
 			instance = null;
 
-			if(ProBuilderEditor.selectMode == SelectMode.Texture)
+			if(ProBuilderEditor.selectMode == SelectMode.TextureFace)
 				ProBuilderEditor.ResetToLastSelectMode();
 
 			if (uv2Editor != null)
@@ -708,7 +708,7 @@ namespace UnityEditor.ProBuilder
 					UndoUtility.RecordObject(pb, "Copy UV Settings");
 
 					selectedFace.uv = new AutoUnwrapSettings(source.uv);
-					selectedFace.material = source.material;
+					selectedFace.submeshIndex = source.submeshIndex;
 					EditorUtility.ShowNotification("Copy UV Settings");
 
 					pb.ToMesh();
@@ -2446,7 +2446,7 @@ namespace UnityEditor.ProBuilder
 				mode = UVMode.Manual;
 			}
 
-			editor.GetFirstSelectedMaterial(ref m_PreviewMaterial);
+			m_PreviewMaterial = editor.GetFirstSelectedMaterial();
 
 			handlePosition = UVSelectionBounds().center - handlePosition_offset;
 		}
@@ -2488,9 +2488,9 @@ namespace UnityEditor.ProBuilder
 
 			var mode = ProBuilderEditor.selectMode;
 
-			int currentSelectionMode = mode == SelectMode.Vertex ? 1
-				: mode == SelectMode.Edge ? 2
-				: mode == SelectMode.Face ? 3 : 0;
+			int currentSelectionMode = mode == SelectMode.Vertex ? 0
+				: mode == SelectMode.Edge ? 1
+				: mode == SelectMode.Face ? 2 : -1;
 
 			GUI.enabled = channel == 0;
 
@@ -2499,12 +2499,10 @@ namespace UnityEditor.ProBuilder
 			if (EditorGUI.EndChangeCheck())
 			{
 				if (currentSelectionMode == 0)
-					ProBuilderEditor.selectMode = SelectMode.Object;
-				else if (currentSelectionMode == 1)
 					ProBuilderEditor.selectMode = SelectMode.Vertex;
-				else if (currentSelectionMode == 2)
+				else if (currentSelectionMode == 1)
 					ProBuilderEditor.selectMode = SelectMode.Edge;
-				else if (currentSelectionMode == 3)
+				else if (currentSelectionMode == 2)
 					ProBuilderEditor.selectMode = SelectMode.Face;
 			}
 
@@ -2515,14 +2513,14 @@ namespace UnityEditor.ProBuilder
 
 			if (editor)
 			{
-				gc_SceneViewUVHandles.image = ProBuilderEditor.selectMode == SelectMode.Texture ? icon_sceneUV_on : icon_sceneUV_off;
+				gc_SceneViewUVHandles.image = ProBuilderEditor.selectMode == SelectMode.TextureFace ? icon_sceneUV_on : icon_sceneUV_off;
 
 				if (GUI.Button(editor_toggles_rect, gc_SceneViewUVHandles))
 				{
-					if (ProBuilderEditor.selectMode == SelectMode.Texture)
+					if (ProBuilderEditor.selectMode == SelectMode.TextureFace)
 						ProBuilderEditor.ResetToLastSelectMode();
 					else
-						ProBuilderEditor.selectMode = SelectMode.Texture;
+						ProBuilderEditor.selectMode = SelectMode.TextureFace;
 				}
 			}
 

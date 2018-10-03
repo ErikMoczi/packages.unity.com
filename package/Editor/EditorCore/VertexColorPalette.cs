@@ -30,7 +30,8 @@ namespace UnityEditor.ProBuilder
 		/// Older versions of probuilder stored a fixed size array of colors in EditorPrefs. Use this function to get a
 		/// pb_ColorPalette from the older version.
 		/// </summary>
-		/// <returns></returns>
+		/// <returns>
+		/// </returns>
 		static void CopyColorsFromEditorPrefs(ColorPalette target)
 		{
 			List<Color> colors = new List<Color>();
@@ -172,7 +173,7 @@ namespace UnityEditor.ProBuilder
 				switch (ProBuilderEditor.selectMode)
 				{
 					case SelectMode.Face:
-					case SelectMode.Texture:
+					case SelectMode.TextureFace:
 						foreach (ProBuilderMesh mesh in selection)
 						{
 							Color[] colors = mesh.GetColors();

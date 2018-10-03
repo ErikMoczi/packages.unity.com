@@ -199,10 +199,10 @@ namespace UnityEditor.ProBuilder
 				if (previous == SelectMode.Edge || previous == SelectMode.Vertex || previous == SelectMode.Face)
 					s_Instance.m_LastComponentMode = previous;
 
-				if (value == SelectMode.Texture)
+				if (value == SelectMode.TextureFace)
 					s_Instance.m_PreviousHandleAlignment = s_Instance.m_HandleAlignment;
 
-				if (previous == SelectMode.Texture)
+				if (previous == SelectMode.TextureFace)
 					s_Instance.SetHandleAlignment(s_Instance.m_PreviousHandleAlignment);
 
 				if (selectModeChanged != null)
@@ -524,7 +524,7 @@ namespace UnityEditor.ProBuilder
 			if (m_CurrentEvent.type == EventType.MouseUp && m_CurrentEvent.button == 1 || m_CurrentEvent.type == EventType.Ignore)
 				m_IsRightMouseDown = false;
 
-			m_EditorMeshHandles.DrawSceneHandles(selectMode);
+			m_EditorMeshHandles.DrawSceneHandles(SceneDragAndDropListener.isDragging ? SelectMode.None : selectMode);
 
 			DrawHandleGUI(sceneView);
 
@@ -554,7 +554,7 @@ namespace UnityEditor.ProBuilder
 			// Check mouse position in scene and determine if we should highlight something
 			if (s_ShowHoverHighlight
 				&& m_CurrentEvent.type == EventType.MouseMove
-				&& selectMode.ContainsFlag(SelectMode.Face | SelectMode.Edge | SelectMode.Vertex | SelectMode.Texture))
+				&& selectMode.ContainsFlag(SelectMode.Face | SelectMode.Edge | SelectMode.Vertex | SelectMode.TextureFace))
 			{
 				m_Hovering.CopyTo(m_HoveringPrevious);
 
@@ -570,11 +570,11 @@ namespace UnityEditor.ProBuilder
 			if (Tools.current != Tool.None && Tools.current != m_CurrentTool)
 				SetTool_Internal(Tools.current);
 
-			if ( selectMode.ContainsFlag(SelectMode.Vertex | SelectMode.Edge | SelectMode.Face | SelectMode.Texture) && Tools.current != Tool.View)
+			if ( selectMode.ContainsFlag(SelectMode.Vertex | SelectMode.Edge | SelectMode.Face | SelectMode.TextureFace) && Tools.current != Tool.View)
 			{
 				if (MeshSelection.selectedVertexCount > 0)
 				{
-					if (selectMode == SelectMode.Texture)
+					if (selectMode == SelectMode.TextureFace)
 					{
 						switch (m_CurrentTool)
 						{
@@ -1204,6 +1204,7 @@ namespace UnityEditor.ProBuilder
 				return;
 
 			if (m_CurrentEvent.type == EventType.Repaint
+				&& !SceneDragAndDropListener.isDragging
 				&& m_Hovering != null
 				&& GUIUtility.hotControl == 0
 				&& HandleUtility.nearestControl == m_DefaultControl
@@ -1226,7 +1227,8 @@ namespace UnityEditor.ProBuilder
 
 				int currentSelectionMode = m_SelectMode == SelectMode.Vertex ? 1
 					: m_SelectMode == SelectMode.Edge ? 2
-					: m_SelectMode == SelectMode.Face ? 3 : 0;
+					: m_SelectMode == SelectMode.Face ? 3
+					: m_SelectMode == SelectMode.Object ? 0 : -1;
 
 				switch ((SceneToolbarLocation) s_SceneToolbarLocation)
 				{
@@ -1431,7 +1433,7 @@ namespace UnityEditor.ProBuilder
 
 				/* handle alignment */
 				case "Toggle Handle Pivot":
-					if (MeshSelection.selectedVertexCount < 1 || selectMode == SelectMode.Texture)
+					if (MeshSelection.selectedVertexCount < 1 || selectMode == SelectMode.TextureFace)
 						return false;
 
 					ToggleHandleAlignment();
@@ -1489,7 +1491,7 @@ namespace UnityEditor.ProBuilder
 
 		internal void SetHandleAlignment(HandleAlignment ha)
 		{
-			if (selectMode == SelectMode.Texture)
+			if (selectMode == SelectMode.TextureFace)
 				ha = HandleAlignment.Plane;
 
 			m_HandleAlignment.SetValue(ha, true);
@@ -1898,20 +1900,22 @@ namespace UnityEditor.ProBuilder
 		/// </summary>
 		/// <param name="mat"></param>
 		/// <returns></returns>
-		internal bool GetFirstSelectedMaterial(ref Material mat)
+		internal Material GetFirstSelectedMaterial()
 		{
 			for (int i = 0; i < selection.Length; i++)
 			{
-				for (int n = 0; n < selection[i].selectedFaceCount; n++)
-				{
-					mat = selection[i].selectedFacesInternal[i].material;
+				var mesh = selection[i];
 
+				for (int n = 0; n < mesh.selectedFaceCount; n++)
+				{
+					var face = mesh.selectedFacesInternal[i];
+					var mat = UnityEngine.ProBuilder.MeshUtility.GetSharedMaterial(selection[i].renderer, face.submeshIndex);
 					if (mat != null)
-						return true;
+						return mat;
 				}
 			}
 
-			return false;
+			return null;
 		}
 	}
 }

@@ -15,7 +15,13 @@ namespace UnityEngine.ProBuilder
 		public int rows = 8;
 		public int columns = 16;
 		public bool smooth = true;
-		public bool isEditing { get; set; }
+		[SerializeField]
+		bool m_IsEditing;
+		public bool isEditing
+		{
+			get { return m_IsEditing; }
+			set { m_IsEditing = value; }
+		}
 
 		ProBuilderMesh m_Mesh;
 
@@ -52,7 +58,6 @@ namespace UnityEngine.ProBuilder
 		public void Refresh()
 		{
 			var mr = GetComponent<MeshRenderer>();
-			var mat = mr != null ? mr.sharedMaterial : null;
 
 			if (points.Count < 2)
 			{
@@ -64,14 +69,6 @@ namespace UnityEngine.ProBuilder
 			{
 				ProBuilderMesh m = mesh;
 				Spline.Extrude(points, radius, columns, rows, closeLoop, smooth, ref m);
-			}
-
-			if(mat != null)
-			{
-				foreach (var face in mesh.facesInternal)
-					face.material = mat;
-
-				mr.sharedMaterial = mat;
 			}
 		}
 	}

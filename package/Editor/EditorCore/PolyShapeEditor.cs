@@ -169,13 +169,10 @@ namespace UnityEditor.ProBuilder
 
 				polygon.polyEditMode = mode;
 
-				if (ProBuilderEditor.instance != null)
-				{
-					if (polygon.polyEditMode == PolyShape.PolyEditMode.None)
-						ProBuilderEditor.PopSelectMode();
-					else
-						ProBuilderEditor.PushSelectMode(SelectMode.None);
-				}
+				if (polygon.polyEditMode == PolyShape.PolyEditMode.None)
+					ProBuilderEditor.selectMode = ProBuilderEditor.selectMode & ~(SelectMode.InputTool);
+				else
+					ProBuilderEditor.selectMode = ProBuilderEditor.selectMode | SelectMode.InputTool;
 
 				if (polygon.polyEditMode != PolyShape.PolyEditMode.None)
 					Tools.current = Tool.None;
@@ -308,7 +305,10 @@ namespace UnityEditor.ProBuilder
 
 		void OnSceneGUI()
 		{
-			if(polygon == null || (polygon.polyEditMode == PolyShape.PolyEditMode.None) || Tools.current != Tool.None)
+			if (polygon.polyEditMode == PolyShape.PolyEditMode.None)
+				return;
+
+			if(polygon == null || Tools.current != Tool.None)
 			{
 				polygon.polyEditMode = PolyShape.PolyEditMode.None;
 				return;
@@ -356,16 +356,18 @@ namespace UnityEditor.ProBuilder
 
 			HandleUtility.AddDefaultControl(controlID);
 
-			DoPointPlacement( HandleUtility.GUIPointToWorldRay(evt.mousePosition) );
+			DoPointPlacement();
 		}
 
-		void DoPointPlacement(Ray ray)
+		void DoPointPlacement()
 		{
 			Event evt = Event.current;
 			EventType eventType = evt.type;
 
 			if(m_PlacingPoint)
 			{
+				Ray ray = HandleUtility.GUIPointToWorldRay(evt.mousePosition);
+
 				if(	eventType == EventType.MouseDrag )
 				{
 					float hitDistance = Mathf.Infinity;
@@ -385,6 +387,7 @@ namespace UnityEditor.ProBuilder
 					eventType == EventType.KeyDown ||
 					eventType == EventType.KeyUp )
 				{
+					evt.Use();
 					m_PlacingPoint = false;
 					m_SelectedIndex = -1;
 					SceneView.RepaintAll();
@@ -397,6 +400,7 @@ namespace UnityEditor.ProBuilder
 					if(polygon.m_Points.Count < 1)
 						SetPlane(evt.mousePosition);
 
+					Ray ray = HandleUtility.GUIPointToWorldRay(evt.mousePosition);
 					float hitDistance = Mathf.Infinity;
 
 					m_Plane.SetNormalAndPosition(polygon.transform.up, polygon.transform.position);
@@ -424,6 +428,8 @@ namespace UnityEditor.ProBuilder
 						m_PlacingPoint = true;
 						m_SelectedIndex = polygon.m_Points.Count - 1;
 						RebuildPolyShapeMesh(polygon);
+
+						evt.Use();
 					}
 				}
 			}
@@ -501,8 +507,11 @@ namespace UnityEditor.ProBuilder
 
 			if(polygon.polyEditMode == PolyShape.PolyEditMode.Height)
 			{
-				if(!used && evt.type == EventType.MouseUp && evt.button == 0 && !EditorHandleUtility.IsAppendModifier(evt.modifiers))
+				if (!used && evt.type == EventType.MouseUp && evt.button == 0 && !EditorHandleUtility.IsAppendModifier(evt.modifiers))
+				{
+					evt.Use();
 					SetPolyEditMode(PolyShape.PolyEditMode.Edit);
+				}
 
 				bool sceneInUse = EditorHandleUtility.SceneViewInUse(evt);
 				Ray r = HandleUtility.GUIPointToWorldRay(evt.mousePosition);
@@ -704,7 +713,10 @@ namespace UnityEditor.ProBuilder
 
 		void OnSelectModeChanged(SelectMode selectMode)
 		{
-			if( polygon != null && polygon.polyEditMode != PolyShape.PolyEditMode.None && selectMode != SelectMode.None)
+			// User changed select mode manually, remove InputTool flag
+			if( polygon != null
+				&& polygon.polyEditMode != PolyShape.PolyEditMode.None
+				&& !selectMode.ContainsFlag(SelectMode.InputTool))
 				polygon.polyEditMode = PolyShape.PolyEditMode.None;
 		}
 

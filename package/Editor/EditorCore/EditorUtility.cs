@@ -324,7 +324,9 @@ namespace UnityEditor.ProBuilder
 		{
 			SetPivotLocationAndSnap(pb);
 
-			pb.GetComponent<MeshRenderer>().shadowCastingMode = s_ShadowCastingMode;
+			pb.renderer.shadowCastingMode = s_ShadowCastingMode;
+			pb.renderer.sharedMaterial = GetUserMaterial();
+
 			ScreenCenter(pb.gameObject);
 
 			GameObjectUtility.SetStaticEditorFlags(pb.gameObject, s_StaticEditorFlags);
@@ -475,7 +477,7 @@ namespace UnityEditor.ProBuilder
 		/// <returns></returns>
 		internal static bool IsMeshElementMode(this SelectMode mode)
 		{
-			return mode.ContainsFlag(SelectMode.Vertex | SelectMode.Edge | SelectMode.Face | SelectMode.Texture);
+			return mode.ContainsFlag(SelectMode.Vertex | SelectMode.Edge | SelectMode.Face | SelectMode.TextureFace);
 		}
 
 		// HasFlag doesn't exist in .NET 3.5
@@ -505,7 +507,7 @@ namespace UnityEditor.ProBuilder
 					}
 
 				case EditLevel.Texture:
-					return SelectMode.Texture;
+					return SelectMode.TextureFace;
 
 				default:
 					return SelectMode.None;
@@ -518,7 +520,7 @@ namespace UnityEditor.ProBuilder
 			{
 				case SelectMode.Object:
 					return EditLevel.Top;
-				case SelectMode.Texture:
+				case SelectMode.TextureFace:
 					return EditLevel.Texture;
 				case SelectMode.None:
 					return EditLevel.Plugin;
@@ -542,13 +544,12 @@ namespace UnityEditor.ProBuilder
 
 		internal static Material GetUserMaterial()
 		{
-			var mat = s_DefaultMaterial;
+			var mat = (Material) s_DefaultMaterial;
 
 			if (mat != null)
 				return mat;
 
 			return BuiltinMaterials.defaultMaterial;
-
 		}
 	}
 }
