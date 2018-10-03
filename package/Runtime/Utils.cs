@@ -1,21 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Unity.PerformanceTesting;
 using Unity.PerformanceTesting.Exceptions;
 using UnityEngine;
-#if ENABLE_VR
-using UnityEngine.XR;
-
-#endif
 
 namespace Unity.PerformanceTesting.Runtime
 {
     public static class Utils
     {
-        public static readonly Guid k_sendTestDataToEditor = new Guid("f4920df8-1fd9-4e70-9e43-cfa29f0604f3");
-        public static readonly Guid k_sendPlayerDataToEditor = new Guid("da0678cb-d501-42ec-84ed-33f5e4b9f1fe");
-
         public static double DateToInt(DateTime date)
         {
             return date.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc))
@@ -148,11 +140,11 @@ namespace Unity.PerformanceTesting.Runtime
                 DeviceName = SystemInfo.deviceName,
                 ProcessorType = SystemInfo.processorType,
                 ProcessorCount = SystemInfo.processorCount,
-                XrModel = XRDevice.model,
                 GraphicsDeviceName = SystemInfo.graphicsDeviceName,
                 SystemMemorySize = SystemInfo.systemMemorySize,
 #if ENABLE_VR
-                XrDevice = XRSettings.loadedDeviceName
+                XrModel = UnityEngine.XR.XRDevice.model,
+                XrDevice = UnityEngine.XR.XRSettings.loadedDeviceName
 #endif
             };
         }

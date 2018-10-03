@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.41] - 2018-10-2
+
+### Test report graph
+
 ## [0.1.40] - 2018-9-17
 
 ### Update documentation

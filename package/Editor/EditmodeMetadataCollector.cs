@@ -6,7 +6,6 @@ using Unity.PerformanceTesting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
-using UnityEngine.XR;
 
 [Category("Performance")]
 public class EditmodeMetadataCollector : IPrebuildSetup
@@ -73,11 +72,11 @@ public class EditmodeMetadataCollector : IPrebuildSetup
             DeviceName = SystemInfo.deviceName,
             ProcessorType = SystemInfo.processorType,
             ProcessorCount = SystemInfo.processorCount,
-            XrModel = XRDevice.model,
             GraphicsDeviceName = SystemInfo.graphicsDeviceName,
             SystemMemorySize = SystemInfo.systemMemorySize,
 #if ENABLE_VR
-            XrDevice = XRSettings.loadedDeviceName
+            XrModel = UnityEngine.XR.XRDevice.model,
+            XrDevice = UnityEngine.XR.XRSettings.loadedDeviceName
 #endif
         };
     }

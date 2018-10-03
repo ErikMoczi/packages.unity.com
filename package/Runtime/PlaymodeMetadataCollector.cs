@@ -9,12 +9,6 @@ using Unity.PerformanceTesting.Runtime;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.TestTools;
-#if ENABLE_VR
-using UnityEngine.XR;
-#endif
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 [Category("Performance")]
 public class PlaymodeMetadataCollector : IPrebuildSetup
@@ -106,11 +100,11 @@ public class PlaymodeMetadataCollector : IPrebuildSetup
             DeviceName = SystemInfo.deviceName,
             ProcessorType = SystemInfo.processorType,
             ProcessorCount = SystemInfo.processorCount,
-            XrModel = XRDevice.model,
             GraphicsDeviceName = SystemInfo.graphicsDeviceName,
             SystemMemorySize = SystemInfo.systemMemorySize,
 #if ENABLE_VR
-            XrDevice = XRSettings.loadedDeviceName
+            XrModel = UnityEngine.XR.XRDevice.model,
+            XrDevice = UnityEngine.XR.XRSettings.loadedDeviceName
 #endif
         };
     }
@@ -183,10 +177,10 @@ public class PlaymodeMetadataCollector : IPrebuildSetup
         playerSettings.GpuSkinning = UnityEditor.PlayerSettings.gpuSkinning;
         playerSettings.GraphicsJobs = UnityEditor.PlayerSettings.graphicsJobs;
         playerSettings.GraphicsApi =
-            UnityEditor.PlayerSettings.GetGraphicsAPIs(EditorUserBuildSettings.activeBuildTarget)[0]
+            UnityEditor.PlayerSettings.GetGraphicsAPIs(UnityEditor.EditorUserBuildSettings.activeBuildTarget)[0]
                 .ToString();
         playerSettings.ScriptingBackend = UnityEditor.PlayerSettings
-            .GetScriptingBackend(EditorUserBuildSettings.selectedBuildTargetGroup)
+            .GetScriptingBackend(UnityEditor.EditorUserBuildSettings.selectedBuildTargetGroup)
             .ToString();
         playerSettings.StereoRenderingPath = UnityEditor.PlayerSettings.stereoRenderingPath.ToString();
         playerSettings.RenderThreadingMode = UnityEditor.PlayerSettings.graphicsJobs ? "GraphicsJobs" :
@@ -205,9 +199,9 @@ public class PlaymodeMetadataCollector : IPrebuildSetup
     {
         var buildSettings = new BuildSettings
         {
-            BuildTarget = EditorUserBuildSettings.activeBuildTarget.ToString(),
-            DevelopmentPlayer = EditorUserBuildSettings.development,
-            AndroidBuildSystem = EditorUserBuildSettings.androidBuildSystem.ToString()
+            BuildTarget = UnityEditor.EditorUserBuildSettings.activeBuildTarget.ToString(),
+            DevelopmentPlayer = UnityEditor.EditorUserBuildSettings.development,
+            AndroidBuildSystem = UnityEditor.EditorUserBuildSettings.androidBuildSystem.ToString()
         };
         return buildSettings;
     }
@@ -216,7 +210,7 @@ public class PlaymodeMetadataCollector : IPrebuildSetup
     {
         if (!Directory.Exists(Application.streamingAssetsPath))
         {
-            AssetDatabase.CreateFolder("Assets", "StreamingAssets");
+            UnityEditor.AssetDatabase.CreateFolder("Assets", "StreamingAssets");
         }
     }
 
@@ -224,7 +218,7 @@ public class PlaymodeMetadataCollector : IPrebuildSetup
     {
         string json = JsonUtility.ToJson(m_TestRun, true);
         File.WriteAllText(m_TestRunPath, json);
-        AssetDatabase.Refresh();
+        UnityEditor.AssetDatabase.Refresh();
 #endif
     }
 }

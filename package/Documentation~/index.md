@@ -85,7 +85,7 @@ Median, Average, Min, Max, Percentile
 
 ## Taking measurements
 
-The Performance Testing Extension provides several API methods you can use to take measurements in your performance test, depending on what you need to measure and how you want to do it.
+The Performance Testing Extension provides several API methods you can use to take measurements in your performance test, depending on what you need to measure and how you want to do it. In order to use this you have to include `using Unity.PerformanceTesting` at the top of your script.
 
 They are:
 * Measure.Method
@@ -222,7 +222,7 @@ public void Test()
 
 Used to record profiler markers. Profiler marker timings will be sampled within the scope of the `using` statement. Note that deep and editor profiling markers are not available.
 
-#### Example 1: Use a custom measurement to capture total allocated memory
+#### Example 1: Measuring profiler markers in a scope
 
 ``` csharp
 [PerformanceTest]
@@ -266,6 +266,28 @@ When a test is selected in the Unity Test Runner window within the Unity Editor,
 #### Example 1: Performance Test Summary from Unity Test Runner window
 
 `Time Millisecond Median:53.59 Min:53.36 Max:62.10 Avg:54.07 Std:1.90 Zeroes:0 SampleCount: 19 Sum: 1027.34`
+
+
+## Viewing performance test report
+
+The Performance Test Report window shows a detailed breakdown of individual test runs. This can be used to assess the stability of each test. It provides a visualisation of each individual sample recorded within a sample group along with summary statistics for the selected test. You can open the window by going to *Window > Analysis > Performance Test Report*.
+
+The Performance Test Report is split into two views: the *test view* and the *sample group view*.
+
+**Test View:** Provides a list of all tests. Each of the columns can be clicked to sort the view. Column values show the sample group with highest deviation.
+
+* *Name* - name of the test.
+* *Deviation* - The deviation is a value calculated by dividing the standard deviation by the median for a sample group. It shows the sample group with the highest 'deviation' value. Useful for defining stability of the test.
+* *Standard Deviation* - Standard deviation of the samples in a sample group. It shows the sample group with the highest standard deviation.
+
+**Sample Group View:** Visualizes sample groups for selected test in the Test View. Provides
+*   Sample group summary  displaying the min, max, and median values for a given sample group.
+*   Samples displayed in a bar chart, ordered by time, with a blue line indicating the median.
+*   Box plot showing upper (75%) and lower (25%) quartiles, min, max and median of the samples for a given sample group.
+
+*Note: Performance Test Report is supported in Unity version 2018.3 or newer.*
+
+![Performance test report](images/graphtool.png)
 
 ## More Examples
 
