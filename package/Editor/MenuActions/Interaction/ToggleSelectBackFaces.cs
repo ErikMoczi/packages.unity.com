@@ -44,7 +44,10 @@ The default value is <b>On</b>.
 
 		public override SelectMode validSelectModes
 		{
-			get { return SelectMode.Face | SelectMode.TextureFace; }
+			get
+			{
+				return SelectMode.Vertex | SelectMode.Edge | SelectMode.Face | SelectMode.TextureFace;
+			}
 		}
 
 		Texture2D[] m_Icons;
@@ -60,8 +63,7 @@ The default value is <b>On</b>.
 
 		public override ActionResult DoAction()
 		{
-			ProBuilderEditor.instance.m_BackfaceSelectEnabled.SetValue(!ProBuilderEditor.instance.m_BackfaceSelectEnabled, true);
-			ProBuilderEditor.instance.LoadPrefs();
+			ProBuilderEditor.instance.backfaceSelectionEnabled = !ProBuilderEditor.instance.backfaceSelectionEnabled;
 			return new ActionResult(ActionResult.Status.Success, "Set Hidden Element Selection\n" + (!ProBuilderEditor.instance.m_BackfaceSelectEnabled ? "On" : "Off"));
 		}
 	}

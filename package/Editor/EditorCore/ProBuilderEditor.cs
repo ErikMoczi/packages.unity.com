@@ -1,14 +1,11 @@
 using System;
 using UnityEngine;
-using UnityEditor;
 using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
 using UnityEngine.ProBuilder;
-using UnityEditor.ProBuilder.UI;
 using PMesh = UnityEngine.ProBuilder.ProBuilderMesh;
 using UnityEngine.ProBuilder.MeshOperations;
-using UnityEngine.SceneManagement;
 using Math = UnityEngine.ProBuilder.Math;
 using Object = UnityEngine.Object;
 using RaycastHit = UnityEngine.ProBuilder.RaycastHit;
@@ -41,9 +38,6 @@ namespace UnityEditor.ProBuilder
 		/// </value>
         public static event Action<SelectMode> selectModeChanged;
 
-        // Toggles for Face, Vertex, and Edge mode.
-        const int k_SelectModeLength = 3;
-
 		static EditorToolbar s_EditorToolbar;
 		static ProBuilderEditor s_Instance;
 		EditorMeshHandles m_EditorMeshHandles;
@@ -73,8 +67,65 @@ namespace UnityEditor.ProBuilder
 		internal Pref<ExtrudeMethod> m_ExtrudeMethod = new Pref<ExtrudeMethod>("editor.extrudeMethod", ExtrudeMethod.FaceNormal);
 		internal Pref<SelectionModifierBehavior> m_SelectModifierBehavior = new Pref<SelectionModifierBehavior>("editor.rectSelectModifier", SelectionModifierBehavior.Difference);
 		internal Pref<bool> m_ExtrudeEdgesAsGroup = new Pref<bool>("editor.extrudeEdgesAsGroup", true);
-		internal Pref<HandleAlignment> m_HandleAlignment = new Pref<HandleAlignment>("editor.handleAlignment", HandleAlignment.World);
+		internal Pref<HandleOrientation> m_HandleOrientation = new Pref<HandleOrientation>("editor.handleAlignment", HandleOrientation.World);
 		Pref<SelectMode> m_SelectMode = new Pref<SelectMode>("editor.selectMode", SelectMode.Object);
+
+		internal RectSelectMode rectSelectMode
+		{
+			get { return m_DragSelectRectMode.value; }
+			set
+			{
+				if (m_DragSelectRectMode.value == value)
+					return;
+				m_DragSelectRectMode.SetValue(value, true);
+				m_ScenePickerPreferences.rectSelectMode = value;
+			}
+		}
+
+		internal SelectionModifierBehavior selectionModifierBehavior
+		{
+			get { return m_SelectModifierBehavior.value; }
+
+			set
+			{
+				if (m_SelectModifierBehavior.value == value)
+					return;
+				m_SelectModifierBehavior.SetValue(value, true);
+				m_ScenePickerPreferences.selectionModifierBehavior = value;
+			}
+		}
+
+		internal HandleOrientation handleOrientation
+		{
+			get { return m_HandleOrientation.value; }
+
+			set
+			{
+				if (value == m_HandleOrientation.value)
+					return;
+
+				if (selectMode.ContainsFlag(SelectMode.TextureFace))
+					value = HandleOrientation.Normal;
+
+				m_HandleOrientation.SetValue(value, true);
+				m_HandleRotation = GetHandleRotation();
+			}
+
+		}
+
+		internal bool backfaceSelectionEnabled
+		{
+			get { return m_BackfaceSelectEnabled.value; }
+
+			set
+			{
+				if (value == m_BackfaceSelectEnabled.value)
+					return;
+
+				m_BackfaceSelectEnabled.SetValue(value, true);
+				m_ScenePickerPreferences.cullMode = value ? CullingMode.None : CullingMode.Back;
+			}
+		}
 
 		float m_SnapValue = .25f;
 		bool m_SnapAxisConstraint = true;
@@ -82,7 +133,7 @@ namespace UnityEditor.ProBuilder
 		MethodInfo m_FindNearestVertex;
 		// used for 'g' key shortcut to swap between object/vef modes
 		SelectMode m_LastComponentMode;
-		HandleAlignment m_PreviousHandleAlignment;
+		HandleOrientation m_PreviousHandleOrientation;
 		[UserSetting]
 		static internal Pref<Shortcut[]> s_Shortcuts = new Pref<Shortcut[]>("editor.sceneViewShortcuts", Shortcut.DefaultShortcuts().ToArray());
 		GUIStyle m_CommandStyle;
@@ -134,10 +185,9 @@ namespace UnityEditor.ProBuilder
 		Vector3 m_TextureScale = Vector3.one;
 		Rect m_SceneInfoRect = new Rect(10, 10, 200, 40);
 
-		Vector3 m_HandlePivotWorld = Vector3.zero;
+		Vector3 m_HandlePosition = Vector3.zero;
 
 		Matrix4x4 handleMatrix = Matrix4x4.identity;
-		Quaternion handleRotation = new Quaternion(0f, 0f, 0f, 1f);
 
 #if !UNITY_2018_2_OR_NEWER
 		static MethodInfo s_ResetOnSceneGUIState = null;
@@ -200,14 +250,15 @@ namespace UnityEditor.ProBuilder
 					s_Instance.m_LastComponentMode = previous;
 
 				if (value == SelectMode.TextureFace)
-					s_Instance.m_PreviousHandleAlignment = s_Instance.m_HandleAlignment;
+					s_Instance.m_PreviousHandleOrientation = s_Instance.m_HandleOrientation;
 
 				if (previous == SelectMode.TextureFace)
-					s_Instance.SetHandleAlignment(s_Instance.m_PreviousHandleAlignment);
+					s_Instance.handleOrientation = s_Instance.m_PreviousHandleOrientation;
 
 				if (selectModeChanged != null)
 					selectModeChanged(value);
 
+				s_Instance.UpdateMeshHandles();
 				s_Instance.Repaint();
 			}
 		}
@@ -293,22 +344,22 @@ namespace UnityEditor.ProBuilder
 
 			m_EditorMeshHandles = new EditorMeshHandles();
 
-			SceneView.onSceneGUIDelegate -= this.OnSceneGUI;
-			SceneView.onSceneGUIDelegate += this.OnSceneGUI;
-
+#if UNITY_2019_1_OR_NEWER
+			SceneView.duringSceneGui += OnSceneGUI;
+#else
+			SceneView.onSceneGUIDelegate += OnSceneGUI;
+#endif
 			ProGridsInterface.SubscribePushToGridEvent(PushToGrid);
 			ProGridsInterface.SubscribeToolbarEvent(ProGridsToolbarOpen);
+			MeshSelection.objectSelectionChanged += OnObjectSelectionChanged;
 
 			ProGridsToolbarOpen(ProGridsInterface.SceneToolbarIsExtended());
-
-			MeshSelection.objectSelectionChanged += OnObjectSelectionChanged;
 
 #if !UNITY_2018_2_OR_NEWER
 			s_ResetOnSceneGUIState = typeof(SceneView).GetMethod("ResetOnSceneGUIState", BindingFlags.Instance | BindingFlags.NonPublic);
 #endif
 
-			// make sure load prefs is called first, because other methods depend on the preferences set here
-			LoadPrefs();
+			LoadSettings();
 			InitGUI();
 			UpdateSelection();
 			HideSelectedWireframe();
@@ -336,8 +387,13 @@ namespace UnityEditor.ProBuilder
 			if (selectionUpdated != null)
 				selectionUpdated(null);
 
+#if UNITY_2019_1_OR_NEWER
+			SceneView.duringSceneGui -= OnSceneGUI;
+#else
+			SceneView.onSceneGUIDelegate -= OnSceneGUI;
+#endif
 			ProGridsInterface.UnsubscribePushToGridEvent(PushToGrid);
-			SceneView.onSceneGUIDelegate -= this.OnSceneGUI;
+			ProGridsInterface.UnsubscribeToolbarEvent(ProGridsToolbarOpen);
 			MeshSelection.objectSelectionChanged -= OnObjectSelectionChanged;
 
 			// re-enable unity wireframe
@@ -349,12 +405,16 @@ namespace UnityEditor.ProBuilder
 			SceneView.RepaintAll();
 		}
 
-		void OnDestroy()
+		internal static void ReloadSettings()
 		{
+			if(s_Instance != null)
+				s_Instance.LoadSettings();
 		}
 
-		internal void LoadPrefs()
+		void LoadSettings()
 		{
+			m_EditorMeshHandles.ReloadPreferences();
+
 			m_ScenePickerPreferences = new ScenePickerPreferences()
 			{
 				maxPointerDistance = ScenePickerPreferences.maxPointerDistanceFuzzy,
@@ -411,10 +471,10 @@ namespace UnityEditor.ProBuilder
 		/// <summary>
 		/// Rebuild the mesh wireframe and selection caches.
 		/// </summary>
-		public static void Refresh()
+		public static void Refresh(bool vertexCountChanged = true)
 		{
 			if (instance != null)
-				instance.UpdateSelection();
+				instance.UpdateSelection(vertexCountChanged);
 		}
 
 		void OnGUI()
@@ -547,7 +607,7 @@ namespace UnityEditor.ProBuilder
 			if ((m_IsMovingElements || m_IsMovingTextures) && GUIUtility.hotControl < 1)
 			{
 				OnFinishVertexModification();
-				UpdateHandleRotation();
+				m_HandleRotation = GetHandleRotation();
 				UpdateTextureHandles();
 			}
 
@@ -734,10 +794,12 @@ namespace UnityEditor.ProBuilder
 
 		void VertexMoveTool()
 		{
-			m_ElementHandlePosition = m_HandlePivotWorld;
+			if (!m_IsMovingElements)
+				m_ElementHandlePosition = m_HandlePosition;
+
 			m_ElementHandleCachedPosition = m_ElementHandlePosition;
 
-			m_ElementHandlePosition = Handles.PositionHandle(m_ElementHandlePosition, handleRotation);
+			m_ElementHandlePosition = Handles.PositionHandle(m_ElementHandlePosition, m_HandleRotation);
 
 			if (m_CurrentEvent.alt)
 				return;
@@ -830,19 +892,17 @@ namespace UnityEditor.ProBuilder
 					mesh.mesh.RecalculateBounds();
 				}
 
-				Internal_UpdateSelectionFast();
-
-				// profiler.EndSample();
+				UpdateMeshHandles();
 			}
 		}
 
 		void VertexScaleTool()
 		{
-			m_ElementHandlePosition = m_HandlePivotWorld;
+			m_ElementHandlePosition = m_HandlePosition;
 
 			m_HandleScalePrevious = m_HandleScale;
 
-			m_HandleScale = Handles.ScaleHandle(m_HandleScale, m_ElementHandlePosition, handleRotation,
+			m_HandleScale = Handles.ScaleHandle(m_HandleScale, m_ElementHandlePosition, m_HandleRotation,
 				HandleUtility.GetHandleSize(m_ElementHandlePosition));
 
 			if (m_CurrentEvent.alt) return;
@@ -877,7 +937,7 @@ namespace UnityEditor.ProBuilder
 				Vector3 ver; // resulting vertex from modification
 				Vector3 over; // vertex point to modify. different for world, local, and plane
 
-				bool gotoWorld = Selection.transforms.Length > 1 && m_HandleAlignment == HandleAlignment.Plane;
+				bool gotoWorld = Selection.transforms.Length > 1 && m_HandleOrientation == HandleOrientation.Normal;
 				bool gotoLocal = MeshSelection.selectedFaceCount < 1;
 
 				// if(pref_snapEnabled)
@@ -895,15 +955,15 @@ namespace UnityEditor.ProBuilder
 
 					for (int n = 0; n < mesh.selectedIndexesInternal.Length; n++)
 					{
-						switch (m_HandleAlignment.value)
+						switch (m_HandleOrientation.value)
 						{
-							case HandleAlignment.Plane:
+							case HandleOrientation.Normal:
 							{
 								if (gotoWorld)
-									goto case HandleAlignment.World;
+									goto case HandleOrientation.World;
 
 								if (gotoLocal)
-									goto case HandleAlignment.Local;
+									goto case HandleOrientation.Local;
 
 								// move center of vertices to 0,0,0 and set rotation as close to identity as possible
 								over = Quaternion.Inverse(localRot) * (m_VertexPositions[i][n] - m_VertexOffset[i]);
@@ -927,8 +987,8 @@ namespace UnityEditor.ProBuilder
 								break;
 							}
 
-							case HandleAlignment.World:
-							case HandleAlignment.Local:
+							case HandleOrientation.World:
+							case HandleOrientation.Local:
 							{
 								// move vertex to relative origin from center of selection
 								over = m_VertexPositions[i][n] - m_VertexOffset[i];
@@ -955,14 +1015,14 @@ namespace UnityEditor.ProBuilder
 					mesh.mesh.RecalculateBounds();
 				}
 
-				Internal_UpdateSelectionFast();
+				UpdateMeshHandles();
 			}
 		}
 
 		void VertexRotateTool()
 		{
 			if (!m_IsMovingElements)
-				m_ElementHandlePosition = m_HandlePivotWorld;
+				m_ElementHandlePosition = m_HandlePosition;
 
 			m_HandleRotationPrevious = m_HandleRotation;
 
@@ -1003,7 +1063,7 @@ namespace UnityEditor.ProBuilder
 						for (int nn = 0; nn < triangles.Length; nn++)
 							m_VertexPositions[i][nn] = selection[i].transform.TransformPoint(vertices[triangles[nn]]);
 
-						if (m_HandleAlignment == HandleAlignment.World)
+						if (m_HandleOrientation == HandleOrientation.World)
 							m_VertexOffset[i] = m_ElementHandlePosition;
 						else
 							m_VertexOffset[i] = Math.GetBounds(m_VertexPositions[i]).center;
@@ -1046,16 +1106,8 @@ namespace UnityEditor.ProBuilder
 					selection[i].Refresh(RefreshMask.Normals);
 					selection[i].mesh.RecalculateBounds();
 				}
-				// profiler.EndSample();
 
-				// don't modify the handle rotation because otherwise rotating with plane coordinates
-				// updates the handle rotation with every change, making moving things a changing target
-				Quaternion rotateToolHandleRotation = m_HandleRotation;
-
-				Internal_UpdateSelectionFast();
-
-				m_HandleRotation = rotateToolHandleRotation;
-				// profiler.EndSample();
+				UpdateMeshHandles();
 			}
 		}
 
@@ -1067,7 +1119,6 @@ namespace UnityEditor.ProBuilder
 			int ef = 0;
 			foreach (ProBuilderMesh pb in selection)
 			{
-				// @todo - If caching normals, remove this 'ToMesh' and move
 				Undo.RegisterCompleteObjectUndo(selection, "Extrude Vertices");
 
 				switch (selectMode)
@@ -1120,13 +1171,13 @@ namespace UnityEditor.ProBuilder
 
 			Vector3 cached = m_TextureHandlePosition;
 
-			m_TextureHandlePosition = Handles.PositionHandle(m_TextureHandlePosition, handleRotation);
+			m_TextureHandlePosition = Handles.PositionHandle(m_TextureHandlePosition, m_HandleRotation);
 
 			if (m_CurrentEvent.alt) return;
 
 			if (m_TextureHandlePosition != cached)
 			{
-				cached = Quaternion.Inverse(handleRotation) * m_TextureHandlePosition;
+				cached = Quaternion.Inverse(m_HandleRotation) * m_TextureHandlePosition;
 				cached.y = -cached.y;
 
 				Vector3 lossyScale = selection[0].transform.lossyScale;
@@ -1140,7 +1191,6 @@ namespace UnityEditor.ProBuilder
 
 				uvEditor.SceneMoveTool(pos - m_TextureHandlePositionPrevious);
 				m_TextureHandlePositionPrevious = pos;
-
 				uvEditor.Repaint();
 			}
 		}
@@ -1150,7 +1200,7 @@ namespace UnityEditor.ProBuilder
 			UVEditor uvEditor = UVEditor.instance;
 			if (!uvEditor) return;
 
-			float size = HandleUtility.GetHandleSize(m_HandlePivotWorld);
+			float size = HandleUtility.GetHandleSize(m_HandlePosition);
 
 			if (m_CurrentEvent.alt) return;
 
@@ -1177,7 +1227,7 @@ namespace UnityEditor.ProBuilder
 			UVEditor uvEditor = UVEditor.instance;
 			if (!uvEditor) return;
 
-			float size = HandleUtility.GetHandleSize(m_HandlePivotWorld);
+			float size = HandleUtility.GetHandleSize(m_HandlePosition);
 
 			Matrix4x4 prev = Handles.matrix;
 			Handles.matrix = handleMatrix;
@@ -1225,10 +1275,26 @@ namespace UnityEditor.ProBuilder
 				int screenWidth = (int) sceneView.position.width;
 				int screenHeight = (int) sceneView.position.height;
 
-				int currentSelectionMode = m_SelectMode == SelectMode.Vertex ? 1
-					: m_SelectMode == SelectMode.Edge ? 2
-					: m_SelectMode == SelectMode.Face ? 3
-					: m_SelectMode == SelectMode.Object ? 0 : -1;
+				int currentSelectionMode = -1;
+
+				switch (m_SelectMode.value)
+				{
+					case SelectMode.Object:
+						currentSelectionMode = 0;
+						break;
+					case SelectMode.Vertex:
+						currentSelectionMode = 1;
+						break;
+					case SelectMode.Edge:
+						currentSelectionMode = 2;
+						break;
+					case SelectMode.Face:
+						currentSelectionMode = 3;
+						break;
+					default:
+						currentSelectionMode = -1;
+						break;
+				}
 
 				switch ((SceneToolbarLocation) s_SceneToolbarLocation)
 				{
@@ -1437,7 +1503,7 @@ namespace UnityEditor.ProBuilder
 						return false;
 
 					ToggleHandleAlignment();
-					EditorUtility.ShowNotification("Handle Alignment: " + m_HandleAlignment.value.ToString());
+					EditorUtility.ShowNotification("Handle Alignment: " + m_HandleOrientation.value.ToString());
 					return true;
 
 				case "Set Pivot":
@@ -1489,29 +1555,12 @@ namespace UnityEditor.ProBuilder
 				UVEditor.instance.SetTool(newTool);
 		}
 
-		internal void SetHandleAlignment(HandleAlignment ha)
-		{
-			if (selectMode == SelectMode.TextureFace)
-				ha = HandleAlignment.Plane;
-
-			m_HandleAlignment.SetValue(ha, true);
-
-			UpdateHandleRotation();
-
-			m_HandleRotation = handleRotation;
-
-			SceneView.RepaintAll();
-
-			// todo
-			Repaint();
-		}
-
 		internal void ToggleHandleAlignment()
 		{
-			int newHa = (int) m_HandleAlignment.value + 1;
-			if (newHa >= Enum.GetValues(typeof(HandleAlignment)).Length)
+			int newHa = (int) m_HandleOrientation.value + 1;
+			if (newHa >= Enum.GetValues(typeof(HandleOrientation)).Length)
 				newHa = 0;
-			SetHandleAlignment((HandleAlignment) newHa);
+			handleOrientation = ((HandleOrientation) newHa);
 		}
 
 		/// <summary>
@@ -1527,22 +1576,28 @@ namespace UnityEditor.ProBuilder
 				m_SelectMode.SetValue(SelectMode.Vertex, true);
 		}
 
-		void UpdateSelection()
+		void UpdateSelection(bool selectionChanged = true)
 		{
-			selection = InternalUtility.GetComponents<ProBuilderMesh>(Selection.transforms);
+			selection = MeshSelection.TopInternal();
 
-			MeshSelection.OnComponentSelectionChanged();
+			m_HandlePosition = GetHandlePosition();
+			m_HandleRotation = GetHandleRotation();
 
-			m_HandlePivotWorld = MeshSelection.bounds.center;
-			UpdateHandleRotation();
 			UpdateTextureHandles();
-			m_HandleRotation = handleRotation;
+			UpdateMeshHandles();
+
+			if (selectionChanged)
+			{
+				UpdateSceneInfo();
+				MeshSelection.OnComponentSelectionChanged();
+			}
 
 			if (selectionUpdated != null)
 				selectionUpdated(selection);
+		}
 
-			UpdateSceneInfo();
-
+		void UpdateMeshHandles()
+		{
 			try
 			{
 				m_EditorMeshHandles.RebuildSelectedHandles(MeshSelection.TopInternal(), selectMode);
@@ -1568,19 +1623,6 @@ namespace UnityEditor.ProBuilder
 				MeshSelection.selectedVertexCount);
 		}
 
-		// Only updates things that absolutely need to be refreshed, and assumes that no selection changes have occured
-		internal void Internal_UpdateSelectionFast()
-		{
-			MeshSelection.RecalculateSelectionBounds();
-			m_HandlePivotWorld = MeshSelection.bounds.center;
-			UpdateHandleRotation();
-			m_HandleRotation = handleRotation;
-			if (selectionUpdated != null)
-				selectionUpdated(selection);
-			UpdateSceneInfo();
-			m_EditorMeshHandles.RebuildSelectedHandles(MeshSelection.TopInternal(), selectMode);
-		}
-
 		internal void ClearElementSelection()
 		{
 			foreach (ProBuilderMesh pb in selection)
@@ -1591,10 +1633,11 @@ namespace UnityEditor.ProBuilder
 
 		void UpdateTextureHandles()
 		{
-			if (selection.Length < 1) return;
+			if (!selectMode.ContainsFlag(SelectMode.TextureFace) || !selection.Any())
+				return;
 
 			// Reset temp vars
-			m_TextureHandlePosition = m_HandlePivotWorld;
+			m_TextureHandlePosition = m_HandlePosition;
 			m_TextureScale = Vector3.one;
 			m_TextureRotation = Quaternion.identity;
 
@@ -1620,24 +1663,30 @@ namespace UnityEditor.ProBuilder
 			}
 		}
 
-		internal void UpdateHandleRotation()
+		internal Vector3 GetHandlePosition()
 		{
-			Quaternion localRot = Selection.activeTransform == null ? Quaternion.identity : Selection.activeTransform.rotation;
+			MeshSelection.RecalculateSelectionBounds();
+			return MeshSelection.bounds.center;
+		}
 
-			switch (m_HandleAlignment.value)
+		internal Quaternion GetHandleRotation()
+		{
+			Quaternion localRotation = Selection.activeTransform == null ? Quaternion.identity : Selection.activeTransform.rotation;
+
+			switch (m_HandleOrientation.value)
 			{
-				case HandleAlignment.Plane:
+				case HandleOrientation.Normal:
 
 					if (Selection.transforms.Length > 1)
-						goto case HandleAlignment.World;
+						goto default;
 
 					ProBuilderMesh pb;
 					Face face;
 
 					if (!GetFirstSelectedFace(out pb, out face))
-						goto case HandleAlignment.Local;
+						goto case HandleOrientation.Local;
 
-					// use average normal, tangent, and bitangent to calculate rotation relative to local space
+					// use average normal, tangent, and bi-tangent to calculate rotation relative to local space
 					var tup = Math.NormalTangentBitangent(pb, face);
 					Vector3 nrm = tup.normal, bitan = tup.bitangent;
 
@@ -1647,16 +1696,13 @@ namespace UnityEditor.ProBuilder
 						bitan = Vector3.right;
 					}
 
-					handleRotation = localRot * Quaternion.LookRotation(nrm, bitan);
-					break;
+					return localRotation * Quaternion.LookRotation(nrm, bitan);
 
-				case HandleAlignment.Local:
-					handleRotation = localRot;
-					break;
+				case HandleOrientation.Local:
+					return localRotation;
 
-				case HandleAlignment.World:
-					handleRotation = Quaternion.identity;
-					break;
+				default:
+					return Quaternion.identity;
 			}
 		}
 
@@ -1780,7 +1826,7 @@ namespace UnityEditor.ProBuilder
 				mesh.Optimize();
 			}
 
-			Internal_UpdateSelectionFast();
+			UpdateSelection();
 		}
 
 		void ProGridsToolbarOpen(bool menuOpen)
@@ -1845,7 +1891,7 @@ namespace UnityEditor.ProBuilder
 			Lightmapping.PopGIWorkflowMode();
 
 			m_HandleScale = Vector3.one;
-			m_HandleRotation = handleRotation;
+			m_HandleRotation = GetHandleRotation();
 
 			if (m_IsMovingTextures)
 			{
@@ -1853,7 +1899,6 @@ namespace UnityEditor.ProBuilder
 					UVEditor.instance.OnFinishUVModification();
 
 				UpdateTextureHandles();
-
 				m_IsMovingTextures = false;
 			}
 			else if (m_IsMovingElements)
@@ -1867,6 +1912,8 @@ namespace UnityEditor.ProBuilder
 
 				m_IsMovingElements = false;
 			}
+
+			UpdateSelection();
 
 			if (afterMeshModification != null)
 				afterMeshModification(selection);
