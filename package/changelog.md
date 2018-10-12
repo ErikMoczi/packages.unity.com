@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4-preview.33
+
+- Fix a compiler crash with methods incorrectly being marked as external and throwing an exception related to ABI
+
 ## 0.2.4-preview.32
 
 - Fix codegen and linking errors for ARM when using mathematical functions on plain floats
