@@ -43,8 +43,7 @@ public class ParallelFilterJobTests
 	}
 
 	[Test]
-	[Theory]
-	public void AddElementForEach(bool userFilterJob)
+	public void AddElementForEach([Values]bool userFilterJob)
 	{
 		var list = new NativeList<int>(0, Allocator.TempJob);
 		list.Add (-1);
