@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.4-preview.32
+
+- Fix codegen and linking errors for ARM when using mathematical functions on plain floats
+- Add support for vector types GetHashCode
+- Add support for DllImport (only compatible with Unity `2018.2.12f1`+ and ` 2018.3.0b5`+)
+- Fix codegen when converting uint to int when used in a binary operation
+
 ## 0.2.4-preview.31
 
 - Fix codegen for fmodf to use inline functions instead
