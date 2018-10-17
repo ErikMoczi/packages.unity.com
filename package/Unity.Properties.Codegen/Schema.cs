@@ -307,6 +307,12 @@ namespace Unity.Properties.Codegen
                 (c, v) => c.m_PropertyType = v
             );
             
+            public static readonly ValueClassProperty<PropertyNode, string> Documentation = new ValueClassProperty<PropertyNode, string>(
+                "Documentation",
+                c => c.m_Documentation,
+                (c, v) => c.m_Documentation = v
+            );
+            
             public static readonly ValueClassProperty<PropertyNode, bool> IncludeDeclaration = new ValueClassProperty<PropertyNode, bool>(
                 "IncludeDeclaration",
                 c => c.m_IncludeDeclaration,
@@ -347,6 +353,7 @@ namespace Unity.Properties.Codegen
                 Name,
                 ValueType,
                 PropertyType,
+                Documentation,
                 IncludeDeclaration,
                 IncludeInitializer,
                 IncludeBackingField,
@@ -362,6 +369,7 @@ namespace Unity.Properties.Codegen
         private string m_Name;
         private string m_ValueType;
         private PropertyType m_PropertyType = PropertyType.Value;
+        private string m_Documentation;
         private bool m_IncludeDeclaration = true;
         private bool m_IncludeInitializer = true;
         private bool m_IncludeBackingField = true;
@@ -398,6 +406,15 @@ namespace Unity.Properties.Codegen
         {
             get { return Property.PropertyType.GetValue(this); }
             set { Property.PropertyType.SetValue(this, value); }
+        }
+        
+        /// <summary>
+        /// Documentation for this property.
+        /// </summary>
+        public string Documentation
+        {
+            get { return Property.Documentation.GetValue(this); }
+            set { Property.Documentation.SetValue(this, value); }
         }
         
         /// <summary>

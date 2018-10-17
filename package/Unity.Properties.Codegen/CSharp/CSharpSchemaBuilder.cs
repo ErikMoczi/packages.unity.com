@@ -120,6 +120,12 @@ namespace Unity.Properties.Codegen.CSharp
                 var propertyTypeName = GetPropertyTypeName(type, property);
                 var propertyName = GetPropertyName(property);
 
+                if (false == string.IsNullOrEmpty(property.Documentation))
+                {
+                    writer.Line("/// <summary>");
+                    writer.Line($"/// <see cref=\"{type.Name}.{property.Name}\" /> property.");
+                    writer.Line("/// </summary>");
+                }
                 writer.Line($"public static {propertyTypeName}<{type.Name}, {property.ValueType}> {propertyName} {{ get; private set; }}");
             }
 
@@ -135,11 +141,13 @@ namespace Unity.Properties.Codegen.CSharp
         
         private static void WriteVersionStorageAccessor(CodeWriter writer, TypeNode type)
         {
+            writer.Line("/// <inheritdoc cref=\"Unity.Properties.IPropertyContainer.VersionStorage\" />");
             writer.Line("public IVersionStorage VersionStorage => null;");
         }
         
         private static void WritePropertyBagAccessor(CodeWriter writer, TypeNode type)
         {
+            writer.Line("/// <inheritdoc cref=\"Unity.Properties.IPropertyContainer.PropertyBag\" />");
             writer.Line($"public IPropertyBag PropertyBag => {KPropertyBagName};");
         }
 
@@ -224,9 +232,6 @@ namespace Unity.Properties.Codegen.CSharp
         
         private static void WriteInitializeCustomPropertiesMethod(CodeWriter writer, TypeNode type)
         {
-            writer.Line($"/// <summary>");
-            writer.Line($"/// Implement this partial method to initialize custom properties");
-            writer.Line($"/// </summary>");
             writer.Line($"static partial void {KInitializeCustomPropertiesMethodName}();");
             writer.Line();
         }
@@ -319,6 +324,13 @@ namespace Unity.Properties.Codegen.CSharp
                 {
                     continue;
                 }
+
+                if (false == string.IsNullOrEmpty(property.Documentation))
+                {
+                    writer.Line("/// <summary>");
+                    writer.Line($"/// {property.Documentation}");
+                    writer.Line("/// </summary>");
+                }
                 
                 var propertyName = GetPropertyName(property);
 
@@ -354,6 +366,11 @@ namespace Unity.Properties.Codegen.CSharp
 
         private static void WriteMakeRefMethod(CodeWriter writer, TypeNode type)
         {
+            writer.Line("/// <summary>");
+            writer.Line("/// Pass this object as a reference to the given handler.");
+            writer.Line("/// </summary>");
+            writer.Line("/// <param name=\"byRef\">Handler to invoke.</param>");
+            writer.Line("/// <param name=\"context\">Context argument passed to the handler.</param>");
             using (writer.Scope($"public void MakeRef<TContext>(ByRef<{type.Name}, TContext> byRef, TContext context)"))
             {
                 writer.Line("byRef(ref this, context);");
@@ -361,6 +378,12 @@ namespace Unity.Properties.Codegen.CSharp
 
             writer.Line();
             
+            writer.Line("/// <summary>");
+            writer.Line("/// Pass this object as a reference to the given handler, and return the result.");
+            writer.Line("/// </summary>");
+            writer.Line("/// <param name=\"byRef\">Handler to invoke.</param>");
+            writer.Line("/// <param name=\"context\">Context argument passed to the handler.</param>");
+            writer.Line("/// <returns>The handler's return value.</returns>");
             using (writer.Scope($"public TReturn MakeRef<TContext, TReturn>(ByRef<{type.Name}, TContext, TReturn> byRef, TContext context)"))
             {
                 writer.Line("return byRef(ref this, context);");
