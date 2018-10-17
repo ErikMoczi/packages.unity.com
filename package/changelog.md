@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4-preview.34
+
+- Fix compiler exception with an invalid cast that could occur when using pinned variables (e.g `int32&` resolved to `int32**` instead of `int32*`)
+
 ## 0.2.4-preview.33
 
 - Fix a compiler crash with methods incorrectly being marked as external and throwing an exception related to ABI
