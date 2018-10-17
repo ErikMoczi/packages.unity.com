@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.42] - 2018-10-15
+
+### Improvements to report window and minor fixes
+
+Save profiler output on perf tests
+Add a button on report window to open profiler output for test
+Remove unsupported features for legacy scripting runtime
+Fix version attribute for test cases
+Remove unnecessary assembly definition
+
 ## [0.1.41] - 2018-10-2
 
 ### Test report graph

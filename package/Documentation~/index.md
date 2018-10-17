@@ -289,6 +289,19 @@ The Performance Test Report is split into two views: the *test view* and the *sa
 
 ![Performance test report](images/graphtool.png)
 
+## Viewing profiler data
+
+When running performance tests on editor or standalone platforms, the framework saves profiler data locally for each test. To view profiler data for a test:
+1. Open Profiler window
+2. Open Performance Test Report window
+3. Select the test you wish to view profiler data
+4. Click on "Load profiler data for test"
+5. Go back to profiler window, the data should be loaded
+
+*Note: If the button is not visible, it means profiler data has not been saved for the test.*
+
+![Open profiler button](images/graphtool2.png)
+
 ## More Examples
 
 #### Example 1: Measure execution time to serialize simple object to JSON

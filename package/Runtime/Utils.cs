@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Unity.PerformanceTesting.Exceptions;
+using UnityEditor;
 using UnityEngine;
 
 namespace Unity.PerformanceTesting.Runtime
 {
     public static class Utils
     {
+        public static Guid ProfileDataMsg = new Guid("f65778bc-f144-4821-8491-ef2552d7f392");
+        
         public static double DateToInt(DateTime date)
         {
             return date.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc))
@@ -129,6 +133,18 @@ namespace Unity.PerformanceTesting.Runtime
             }
 
             return sum;
+        }
+
+        public static string RemoveIllegalCharacters(string path)
+        {
+            string invalid = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+
+            foreach (char c in invalid)
+            {
+                path = path.Replace(c.ToString(), ""); 
+            }
+
+            return path;
         }
 
         public static PlayerSystemInfo GetSystemInfo()

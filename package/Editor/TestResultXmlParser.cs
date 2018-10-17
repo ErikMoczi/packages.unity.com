@@ -21,7 +21,7 @@ namespace Unity.PerformanceTesting.Editor
         {
             if (string.IsNullOrEmpty(resultXmlFileName))
             {
-                throw new ArgumentNullException(resultXmlFileName, nameof(resultXmlFileName));
+                throw new ArgumentNullException(resultXmlFileName, resultXmlFileName);
             }
 
             if (!File.Exists(resultXmlFileName))
@@ -171,7 +171,7 @@ namespace Unity.PerformanceTesting.Editor
 
         private string GetJsonFromHashtag(string tag, string line)
         {
-            if (!line.Contains($"##{tag}:")) return null;
+            if (!line.Contains(string.Format("##{0}:",tag))) return null;
             var jsonStart = line.IndexOf('{');
             var openBrackets = 0;
             var stringIndex = jsonStart;

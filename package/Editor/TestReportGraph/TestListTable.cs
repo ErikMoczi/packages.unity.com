@@ -13,22 +13,27 @@ namespace Unity.PerformanceTesting
         public PerformanceTest test;
         public double deviation;
         public double standardDeviation;
+        public double median;
 
-        public TestListTableItem(int id, int depth, string displayName, PerformanceTest test) : base(id, depth, displayName)
+        public TestListTableItem(int id, int depth, string displayName, PerformanceTest test) : base(id, depth,
+            displayName)
         {
             this.test = test;
 
             deviation = 0f;
-            if (test!=null)
+            if (test != null)
             {
                 foreach (var sample in test.SampleGroups)
                 {
                     if (sample.StandardDeviation > deviation)
                         standardDeviation = sample.StandardDeviation;
-                    
+
                     double thisDeviation = sample.StandardDeviation / sample.Median;
                     if (thisDeviation > deviation)
+                    {
                         deviation = thisDeviation;
+                        median = sample.Median;
+                    }
                 }
             }
         }
@@ -48,6 +53,7 @@ namespace Unity.PerformanceTesting
             SampleCount,
             StandardDeviation,
             Deviation,
+            Median
         }
 
         public enum SortOption
@@ -56,6 +62,7 @@ namespace Unity.PerformanceTesting
             SampleCount,
             StandardDeviation,
             Deviation,
+            Median
         }
 
         // Sort options per column
@@ -65,20 +72,25 @@ namespace Unity.PerformanceTesting
             SortOption.SampleCount,
             SortOption.StandardDeviation,
             SortOption.Deviation,
+            SortOption.Median
         };
 
 
-        public TestListTable(TreeViewState state, MultiColumnHeader multicolumnHeader, TestReportWindow testReportWindow) : base(state, multicolumnHeader)
+        public TestListTable(TreeViewState state, MultiColumnHeader multicolumnHeader,
+            TestReportWindow testReportWindow) : base(state, multicolumnHeader)
         {
             m_testReportWindow = testReportWindow;
 
-            Assert.AreEqual(m_SortOptions.Length, Enum.GetValues(typeof(MyColumns)).Length, "Ensure number of sort options are in sync with number of MyColumns enum values");
+            Assert.AreEqual(m_SortOptions.Length, Enum.GetValues(typeof(MyColumns)).Length,
+                "Ensure number of sort options are in sync with number of MyColumns enum values");
 
             // Custom setup
             rowHeight = kRowHeights;
             showAlternatingRowBackgrounds = true;
             showBorder = true;
-            customFoldoutYOffset = (kRowHeights - EditorGUIUtility.singleLineHeight) * 0.5f; // center foldout in the row since we also center content. See RowGUI
+            customFoldoutYOffset =
+                (kRowHeights - EditorGUIUtility.singleLineHeight) *
+                0.5f; // center foldout in the row since we also center content. See RowGUI
             // extraSpaceBeforeIconAndLabel = 0;
             multicolumnHeader.sortingChanged += OnSortingChanged;
 
@@ -186,6 +198,9 @@ namespace Unity.PerformanceTesting
                     case SortOption.StandardDeviation:
                         orderedQuery = orderedQuery.ThenBy(l => l.standardDeviation, ascending);
                         break;
+                    case SortOption.Median:
+                        orderedQuery = orderedQuery.ThenBy(l => l.median, ascending);
+                        break;
                 }
             }
 
@@ -206,6 +221,8 @@ namespace Unity.PerformanceTesting
                     return myTypes.Order(l => l.deviation, ascending);
                 case SortOption.StandardDeviation:
                     return myTypes.Order(l => l.standardDeviation, ascending);
+                case SortOption.Median:
+                    return myTypes.Order(l => l.median, ascending);
                 default:
                     Assert.IsTrue(false, "Unhandled enum");
                     break;
@@ -217,11 +234,11 @@ namespace Unity.PerformanceTesting
 
         protected override void RowGUI(RowGUIArgs args)
         {
-            var item = (TestListTableItem)args.item;
+            var item = (TestListTableItem) args.item;
 
             for (int i = 0; i < args.GetNumVisibleColumns(); ++i)
             {
-                CellGUI(args.GetCellRect(i), item, (MyColumns)args.GetColumn(i), ref args);
+                CellGUI(args.GetCellRect(i), item, (MyColumns) args.GetColumn(i), ref args);
             }
         }
 
@@ -233,10 +250,10 @@ namespace Unity.PerformanceTesting
             switch (column)
             {
                 case MyColumns.Name:
-                    {
-                        args.rowRect = cellRect;
-                        base.RowGUI(args);
-                    }
+                {
+                    args.rowRect = cellRect;
+                    base.RowGUI(args);
+                }
                     break;
                 case MyColumns.SampleCount:
                     EditorGUI.LabelField(cellRect, string.Format("{0}", item.test.SampleGroups.Count));
@@ -246,6 +263,9 @@ namespace Unity.PerformanceTesting
                     break;
                 case MyColumns.StandardDeviation:
                     EditorGUI.LabelField(cellRect, string.Format("{0:f2}", item.standardDeviation));
+                    break;
+                case MyColumns.Median:
+                    EditorGUI.LabelField(cellRect, string.Format("{0:f2}", item.median));
                     break;
             }
         }
@@ -273,7 +293,7 @@ namespace Unity.PerformanceTesting
                 autoResize = false,
                 allowToggleVisibility = false
             });
-            string[] names = { "Sample Groups", "Standard Deviation", "Deviation" };
+            string[] names = {"Sample Groups", "Standard Deviation", "Deviation", "Median"};
             foreach (var name in names)
             {
                 var column = new MultiColumnHeaderState.Column
@@ -287,18 +307,23 @@ namespace Unity.PerformanceTesting
                     autoResize = true
                 };
                 columnList.Add(column);
-            };
+            }
+
+            ;
             var columns = columnList.ToArray();
 
-            Assert.AreEqual(columns.Length, Enum.GetValues(typeof(MyColumns)).Length, "Number of columns should match number of enum values: You probably forgot to update one of them.");
+            Assert.AreEqual(columns.Length, Enum.GetValues(typeof(MyColumns)).Length,
+                "Number of columns should match number of enum values: You probably forgot to update one of them.");
 
             var state = new MultiColumnHeaderState(columns);
-            state.visibleColumns = new int[] {
-                        (int)MyColumns.Name,
-                        (int)MyColumns.SampleCount,
-                        (int)MyColumns.Deviation,
-                        (int)MyColumns.StandardDeviation
-                    };
+            state.visibleColumns = new int[]
+            {
+                (int) MyColumns.Name,
+                (int) MyColumns.SampleCount,
+                (int) MyColumns.Deviation,
+                (int) MyColumns.StandardDeviation,
+                (int) MyColumns.Median
+            };
             return state;
         }
 
@@ -313,7 +338,8 @@ namespace Unity.PerformanceTesting
 
     static class MyExtensionMethods
     {
-        public static IOrderedEnumerable<T> Order<T, TKey>(this IEnumerable<T> source, Func<T, TKey> selector, bool ascending)
+        public static IOrderedEnumerable<T> Order<T, TKey>(this IEnumerable<T> source, Func<T, TKey> selector,
+            bool ascending)
         {
             if (ascending)
             {
@@ -325,7 +351,8 @@ namespace Unity.PerformanceTesting
             }
         }
 
-        public static IOrderedEnumerable<T> ThenBy<T, TKey>(this IOrderedEnumerable<T> source, Func<T, TKey> selector, bool ascending)
+        public static IOrderedEnumerable<T> ThenBy<T, TKey>(this IOrderedEnumerable<T> source, Func<T, TKey> selector,
+            bool ascending)
         {
             if (ascending)
             {

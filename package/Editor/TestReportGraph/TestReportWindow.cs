@@ -8,6 +8,7 @@ using UnityEditor.IMGUI.Controls;
 using System.IO;
 using System.Linq;
 using Unity.PerformanceTesting;
+using Unity.PerformanceTesting.Runtime;
 
 namespace Unity.PerformanceTesting
 {
@@ -25,6 +26,7 @@ namespace Unity.PerformanceTesting
         public Color m_colorStandardLine = new Color(1.0f, 1.0f, 1.0f);
         public Color m_colorMedianLine = new Color(0.2f, 0.5f, 1.0f, 0.5f);
         public Color m_colorMedianText = new Color(0.4f, 0.7f, 1.0f, 1.0f);
+        public Color m_colorWarningText = Color.red;
         private PerformanceTestRun m_resultsData;
         private string m_selectedTest;
 
@@ -177,10 +179,6 @@ namespace Unity.PerformanceTesting
             Draw();
         }
 
-        private void Update()
-        {
-        }
-
         private double GetPercentageOffset(List<SamplePoint> samplePoint, float percent, out int outputFrameIndex)
         {
             int index = (int) ((samplePoint.Count - 1) * percent / 100);
@@ -240,9 +238,9 @@ namespace Unity.PerformanceTesting
             {
                 LoadData();
                 CreateTestListTable();
-                if(m_resultsData == null) return;
-                if(m_resultsData.Results == null) return;
-                if(m_resultsData.Results.Any(result => result.TestName == m_selectedTest))
+                if (m_resultsData == null) return;
+                if (m_resultsData.Results == null) return;
+                if (m_resultsData.Results.Any(result => result.TestName == m_selectedTest))
                     SelectTest(m_selectedTest);
                 else
                     SelectTest(0);
@@ -251,7 +249,7 @@ namespace Unity.PerformanceTesting
             if (m_resultsData == null)
                 return;
 
-            if (m_resultsData.Results.Count <=0)
+            if (m_resultsData.Results.Count <= 0)
                 GUILayout.Label("No performance test data found.\nNote this is supported only on 2018.3 or newer.");
             else
             {
@@ -263,6 +261,19 @@ namespace Unity.PerformanceTesting
                         Rect r = GUILayoutUtility.GetRect(position.width, s_windowHeight / 4, GUI.skin.box,
                             GUILayout.ExpandWidth(true));
                         m_testListTable.OnGUI(r);
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(m_selectedTest))
+                {
+                    var profileDataFile = Path.Combine(Application.persistentDataPath,
+                        Utils.RemoveIllegalCharacters(m_selectedTest) + ".raw");
+                    if (File.Exists(profileDataFile))
+                    {
+                        if (GUILayout.Button(string.Format("Load profiler data for test: {0}", m_selectedTest)))
+                        {
+                            ProfilerDriver.LoadProfile(profileDataFile, false);
+                        }
                     }
                 }
 
@@ -283,6 +294,7 @@ namespace Unity.PerformanceTesting
                             dataIndex += result.SampleGroups.Count;
                             continue;
                         }
+
                         foreach (var sampleGroup in result.SampleGroups)
                         {
                             var data = m_sampleGroupAdditionalData[dataIndex];
@@ -308,7 +320,10 @@ namespace Unity.PerformanceTesting
                             Draw2Column("Max", max);
                             GUILayout.FlexibleSpace();
                             Color oldColor = GUI.contentColor;
-                            GUI.contentColor = m_colorMedianText;
+                            if (median < 0.01f)
+                                GUI.contentColor = m_colorWarningText;
+                            else
+                                GUI.contentColor = m_colorMedianText;
                             Draw2Column("Median", median);
                             GUI.contentColor = oldColor;
                             //Draw2Column("SD", (float)sampleGroup.StandardDeviation);
@@ -318,7 +333,7 @@ namespace Unity.PerformanceTesting
                             EditorGUILayout.EndVertical();
                             DrawBarGraph(position.width - 200, 100, sampleGroup.Samples, graphMin, max, median);
                             DrawBoxAndWhiskerPlot(50, 100, min, lowerQuartile, median, upperQuartile, max, min, max,
-                                (float)sampleGroup.StandardDeviation, m_colorWhite, m_colorBoxAndWhiskerBackground);
+                                (float) sampleGroup.StandardDeviation, m_colorWhite, m_colorBoxAndWhiskerBackground);
                             EditorGUILayout.EndHorizontal();
 
                             EditorGUILayout.EndVertical();

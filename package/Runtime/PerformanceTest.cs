@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Unity.PerformanceTesting.Runtime;
 using NUnit.Framework;
@@ -7,6 +8,7 @@ using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using Unity.PerformanceTesting.Exceptions;
 using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.TestRunner.NUnitExtensions;
 
 namespace Unity.PerformanceTesting
@@ -37,20 +39,26 @@ namespace Unity.PerformanceTesting
 
         internal static void StartTest(ITest currentTest)
         {
+            if (currentTest.IsSuite) return;
             Active = new PerformanceTest
             {
                 TestName = currentTest.FullName,
                 TestCategories = currentTest.GetAllCategoriesFromTest()
             };
-            var va = (VersionAttribute) currentTest.Properties.Get("Version");
-            Active.TestVersion = va != null ? va.Version : "1";
+            var versions = currentTest.Method.GetCustomAttributes<VersionAttribute>(false);
+            if (versions.Length == 1) Active.TestVersion = versions[0].Version;
+            else Active.TestVersion = "1";
             Active.StartTime = Utils.DateToInt(DateTime.Now);
+            StartProfile(Utils.RemoveIllegalCharacters(currentTest.FullName));
         }
 
         internal static void EndTest(Test test)
         {
             if (test.IsSuite) return;
             if (test.FullName != Active.TestName) return;
+
+            EndProfile(Utils.RemoveIllegalCharacters(test.FullName));
+
             DisposeMeasurements();
             Active.CalculateStatisticalValues();
             Active.EndTime = Utils.DateToInt(DateTime.Now);
@@ -61,6 +69,24 @@ namespace Unity.PerformanceTesting
             Active = null;
         }
 
+        private static void StartProfile(string profileName)
+        {
+#if UNITY_2018_2_OR_NEWER
+            Profiler.enabled = false;
+            var filePath = Path.Combine(Application.persistentDataPath, profileName + ".raw");
+            Profiler.logFile = filePath;
+            Profiler.enableBinaryLog = true;
+            Profiler.enabled = true;
+#endif
+        }
+
+        private static void EndProfile(string profileName)
+        {
+#if UNITY_2018_2_OR_NEWER
+            Profiler.enableBinaryLog = false;
+#endif
+        }
+        
         private static void DisposeMeasurements()
         {
             for (var i = 0; i < Disposables.Count; i++)
@@ -189,8 +215,8 @@ namespace Unity.PerformanceTesting
 
                 if (sampleGroup.Samples.Count == 1)
                 {
-                        logString.AppendFormat(" {0:0.00} {1}", sampleGroup.Samples[0],
-                            sampleGroup.Definition.SampleUnit);
+                    logString.AppendFormat(" {0:0.00} {1}", sampleGroup.Samples[0],
+                        sampleGroup.Definition.SampleUnit);
                 }
                 else
                 {
