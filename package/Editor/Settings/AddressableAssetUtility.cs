@@ -51,7 +51,7 @@ namespace UnityEditor.AddressableAssets
             float fullCount = bundleList.Length;
             int currCount = 0;
 
-            var settings = AddressableAssetSettings.GetDefault(true, true);
+            var settings = AddressableAssetSettingsDefaultObject.GetSettings(true);
             foreach (var bundle in bundleList)
             {
                 if (EditorUtility.DisplayCancelableProgressBar("Converting Legacy Asset Bundles", bundle, currCount / fullCount))

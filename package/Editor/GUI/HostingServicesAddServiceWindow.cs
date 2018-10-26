@@ -61,7 +61,12 @@ namespace UnityEditor.AddressableAssets
                 if (script != m_script && script != null)
                 {
                     var scriptType = script.GetClass();
-                    if (scriptType.IsAbstract)
+                    if (scriptType == null)
+                    {
+                        EditorUtility.DisplayDialog("Error", "Unable to find a valid type from the specified script.", "Ok");
+                        m_script = null;
+                    }
+                    else if (scriptType.IsAbstract)
                     {
                         EditorUtility.DisplayDialog("Error", "Script cannot be an Abstract class", "Ok");
                         m_script = null;                       

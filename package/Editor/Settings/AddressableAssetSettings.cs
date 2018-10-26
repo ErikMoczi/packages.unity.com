@@ -16,14 +16,13 @@ namespace UnityEditor.AddressableAssets
     /// </summary>
     public partial class AddressableAssetSettings : ScriptableObject
     {
-        /// <summary>
-        /// Default name for the config object.
-        /// </summary>
-        public const string kDefaultConfigName = "AddressableAssetSettings";
-        /// <summary>
-        /// The default folder for the serialized version of this class.
-        /// </summary>
-        public const string kDefaultConfigFolder = "Assets/AddressableAssetsData";
+        [InitializeOnLoadMethod]
+        static void RegisterWithAssetPostProcessor()
+        {
+            //if the Libray folder has been deleted, this will be null and it will have to be set on the first access of the settings object
+            if(AddressableAssetSettingsDefaultObject.Settings != null)
+                AddressablesAssetPostProcessor.OnPostProcess = AddressableAssetSettingsDefaultObject.Settings.OnPostprocessAllAssets;
+        }
         /// <summary>
         /// Default name of a newly created group.
         /// </summary>
@@ -79,10 +78,10 @@ namespace UnityEditor.AddressableAssets
                 string guid;
                 long localId;
                 if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(this, out guid, out localId))
-                    return kDefaultConfigFolder + "/" + kDefaultConfigName + ".asset";
+                    return AddressableAssetSettingsDefaultObject.DefaultAssetPath;
                 var assetPath = AssetDatabase.GUIDToAssetPath(guid);
                 if (string.IsNullOrEmpty(assetPath))
-                    return kDefaultConfigFolder + "/" + kDefaultConfigName + ".asset";
+                    return AddressableAssetSettingsDefaultObject.DefaultAssetPath;
                 return assetPath;
             }
         }
@@ -171,7 +170,7 @@ namespace UnityEditor.AddressableAssets
                 return (m_cachedHash = HashingMethods.Calculate(stream).ToHash128());
             }
         }
-
+        
         [SerializeField]
         bool m_assetsModified = true;
         internal bool AssetsModifiedSinceLastPackedBuild
@@ -179,156 +178,24 @@ namespace UnityEditor.AddressableAssets
             get { return m_assetsModified; }
             set { m_assetsModified = value; }
         }
+        
 
         internal void DataBuilderCompleted(IDataBuilder builder, IDataBuilderResult result)
         {
             if (OnDataBuilderComplete != null)
                 OnDataBuilderComplete(this, builder, result);
         }
-
+        
         internal class FileModificationWarning : AssetModificationProcessor
         {
             static string[] OnWillSaveAssets(string[] paths)
             {
-                var aa = GetDefault(false, false);
-                if (aa != null)
-                    aa.AssetsModifiedSinceLastPackedBuild = true;
+                if (AddressableAssetSettingsDefaultObject.Settings != null)
+                    AddressableAssetSettingsDefaultObject.Settings.AssetsModifiedSinceLastPackedBuild = true;
                 return paths;
             }
         }
-
-        class AddressablesAssetPostProcessor : AssetPostprocessor
-        {
-            internal static bool ignoreAll = true;
-            static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
-            {
-                if (ignoreAll)
-                    return;
-                var aa = GetDefault(false, false);
-                if (aa == null)
-                    return;
-                bool modified = false;
-                foreach (string str in importedAssets)
-                {
-                    var assetType = AssetDatabase.GetMainAssetTypeAtPath(str);
-               /*     if (typeof(AddressableAssetGroup).IsAssignableFrom(assetType))
-                    {
-                        var group = AssetDatabase.LoadAssetAtPath<AddressableAssetGroup>(str);
-                        bool replaced = false;
-                        for (int i = 0; i < aa.m_groupAssets.Count; i++)
-                        {
-                            if (aa.m_groupAssets[i].Guid == group.Guid)
-                            {
-                                aa.m_groupAssets[i] = group;
-                                aa.SetDirty(ModificationEvent.GroupAdded, group, true);
-                                replaced = true;
-                            }
-                        }
-                        if (!replaced)
-                        {
-                            aa.m_groupAssets.Add(group);
-                            aa.SetDirty(ModificationEvent.GroupAdded, group, true);
-                        }
-                    }
-
-                    if (typeof(AddressableAssetGroupSchema).IsAssignableFrom(assetType))
-                    {
-                        var schema = AssetDatabase.LoadAssetAtPath<AddressableAssetGroupSchema>(str);
-                        for (int i = 0; i < aa.m_groupAssets.Count; i++)
-                        {
-                            aa.m_groupAssets[i].Validate();
-                            if (schema.Group == aa.m_groupAssets[i] && !aa.m_groupAssets[i].HasSchema(schema.GetType()))
-                            {
-                                aa.m_groupAssets[i].AddSchema(schema);
-                            }
-                        }
-                    }
-                    */
-                    if (typeof(AddressableAssetEntryCollection).IsAssignableFrom(assetType))
-                    {
-                        aa.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(str), aa.DefaultGroup);
-                        modified = true;
-                    }
-                    var guid = AssetDatabase.AssetPathToGUID(str);
-                    if (aa.FindAssetEntry(guid) != null)
-                        modified = true;
-
-                    if (AddressableAssetUtility.IsInResources(str))
-                        modified = true;
-                }
-                foreach (string str in deletedAssets)
-                {
-                    var guidOfDeletedAsset = AssetDatabase.AssetPathToGUID(str);
-                    var oldGroupName = Path.GetFileNameWithoutExtension(str);
-                    var group = aa.FindGroup(oldGroupName);
-                    var groupObj = group as object;
-                    bool assetIsGroup = false;
-                    if (groupObj != null)
-                    {
-                        string guidOfGroup;
-                        long localId;
-                        if (AssetDatabase.TryGetGUIDAndLocalFileIdentifier(group, out guidOfGroup, out localId))
-                        {
-                            if (guidOfGroup == guidOfDeletedAsset)
-                            {
-                                assetIsGroup = true;
-                                aa.RemoveGroupInternal(group, false, true);
-                            }
-                        }
-                    }
-
-                    if (!assetIsGroup)
-                    {
-                        var guid = AssetDatabase.AssetPathToGUID(str);
-                        if (aa.RemoveAssetEntry(guid))
-                            modified = true;
-                    }
-
-                    if (AddressableAssetUtility.IsInResources(str))
-                        modified = true;
-                }
-                for (int i = 0; i < movedAssets.Length; i++)
-                {
-                    var str = movedAssets[i];
-                    var assetType = AssetDatabase.GetMainAssetTypeAtPath(str);
-                    if (typeof(AddressableAssetGroup).IsAssignableFrom(assetType))
-                    {
-                        var oldGroupName = Path.GetFileNameWithoutExtension(movedFromAssetPaths[i]);
-                        var group = aa.FindGroup(oldGroupName);
-                        if (group != null)
-                        {
-                            var newGroupName = Path.GetFileNameWithoutExtension(str);
-                            group.Name = newGroupName;
-                        }
-                    }
-                    else
-                    {
-                        var guid = AssetDatabase.AssetPathToGUID(str);
-                        if (aa.FindAssetEntry(guid) != null)
-                            modified = true;
-
-                        //move to Resources
-                        if (AddressableAssetUtility.IsInResources(str))
-                        {
-                            modified = true;
-                            var fileName = Path.GetFileNameWithoutExtension(str);
-                            Debug.Log("You have moved addressable asset " + fileName + " into a Resources directory.  Thus we have un-marked it as Addressable. An asset cannot be both");
-                            aa.RemoveAssetEntry(guid, false);
-                        }
-                        //move from Resources
-                        if (AddressableAssetUtility.IsInResources(movedFromAssetPaths[i]))
-                        {
-                            modified = true;
-                        }
-                    }
-                }
-
-                if (modified)
-                    aa.SetDirty(ModificationEvent.BatchModification, null, true);
-                aa.AssetsModifiedSinceLastPackedBuild = true;
-            }
-        }
-
+        
         /// <summary>
         /// Create an AssetReference object.  If the asset is not already addressable, it will be added.  
         /// </summary>
@@ -750,25 +617,22 @@ namespace UnityEditor.AddressableAssets
             }
             return false;
         }
-
+        
         void OnEnable()
         {
-            AddressablesAssetPostProcessor.ignoreAll = true;
-
             //TODO: deprecate and remove once most users have transitioned to newer external data files
-            if (m_groups != null)
+          if (m_groups != null)
             {
                 for (int i = 0; i < m_groups.Count; i++)
                     if (m_groups[i] != null)
                         this.ConvertDeprecatedGroupData(m_groups[i], i < 2);
                 m_groups = null;
             }
-
+            
             profileSettings.OnAfterDeserialize(this);
             buildSettings.OnAfterDeserialize(this);
             Validate();
             HostingServicesManager.OnEnable();
-            AddressablesAssetPostProcessor.ignoreAll = false;
         }
 
         void OnDisable()
@@ -800,7 +664,7 @@ namespace UnityEditor.AddressableAssets
             profileSettings.Validate(this);
             buildSettings.Validate(this);
         }
-
+        
         T CreateScriptAsset<T>() where T : ScriptableObject
         {
             var script = CreateInstance<T>();
@@ -814,26 +678,6 @@ namespace UnityEditor.AddressableAssets
 
         internal const string PlayerDataGroupName = "Built In Data";
         internal const string DefaultLocalGroupName = "Default Local Group";
-        /// <summary>
-        /// Get the default addressables settings object.
-        /// </summary>
-        /// <param name="create">Create a new settings object if not found.</param>
-        /// <param name="browse">Prompt the user with a dialog to browse for the location of the settings asset.</param>
-        /// <returns></returns>
-        public static AddressableAssetSettings GetDefault(bool create, bool browse)
-        {
-            return GetDefault(create, browse, kDefaultConfigFolder, kDefaultConfigName);
-        }
-
-        internal static AddressableAssetSettings GetDefault(bool create, bool browse, string configFolder, string configName)
-        {
-            AddressableAssetSettings aa = null;
-            if (EditorBuildSettings.TryGetConfigObject(configName, out aa))
-                return aa;
-            if(create)
-               return Create(configFolder, configName, true, true);
-            return null;
-        }
 
         /// <summary>
         /// Create a new AddressableAssetSettings object.
@@ -846,9 +690,6 @@ namespace UnityEditor.AddressableAssets
         public static AddressableAssetSettings Create(string configFolder, string configName, bool createDefaultGroups, bool isPersisted)
         {
             AddressableAssetSettings aa = null;
-            if (isPersisted && EditorBuildSettings.TryGetConfigObject(configName, out aa))
-                return aa;
-
             var path = configFolder + "/" + configName + ".asset";
             aa = isPersisted ? AssetDatabase.LoadAssetAtPath<AddressableAssetSettings>(path) : null;
             if (aa == null)
@@ -879,10 +720,7 @@ namespace UnityEditor.AddressableAssets
                 }
 
                 if (isPersisted)
-                {
                     AssetDatabase.SaveAssets();
-                    EditorBuildSettings.AddConfigObject(configName, aa, true);
-                }
             }
             AddressableScenesManager.RegisterForSettingsCallback(aa);
             return aa;
@@ -1308,5 +1146,96 @@ namespace UnityEditor.AddressableAssets
             SetDirty(ModificationEvent.EntryMoved, entries, true);
         }
 
+        internal void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+        {
+            var aa = this;
+            bool modified = false;
+            foreach (string str in importedAssets)
+            {
+                var assetType = AssetDatabase.GetMainAssetTypeAtPath(str);
+
+                if (typeof(AddressableAssetEntryCollection).IsAssignableFrom(assetType))
+                {
+                    aa.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(str), aa.DefaultGroup);
+                    modified = true;
+                }
+                var guid = AssetDatabase.AssetPathToGUID(str);
+                if (aa.FindAssetEntry(guid) != null)
+                    modified = true;
+
+                if (AddressableAssetUtility.IsInResources(str))
+                    modified = true;
+            }
+            foreach (string str in deletedAssets)
+            {
+                var guidOfDeletedAsset = AssetDatabase.AssetPathToGUID(str);
+                var oldGroupName = Path.GetFileNameWithoutExtension(str);
+                var group = aa.FindGroup(oldGroupName);
+                var groupObj = group as object;
+                bool assetIsGroup = false;
+                if (groupObj != null)
+                {
+                    string guidOfGroup;
+                    long localId;
+                    if (AssetDatabase.TryGetGUIDAndLocalFileIdentifier(group, out guidOfGroup, out localId))
+                    {
+                        if (guidOfGroup == guidOfDeletedAsset)
+                        {
+                            assetIsGroup = true;
+                            aa.RemoveGroupInternal(group, false, true);
+                        }
+                    }
+                }
+
+                if (!assetIsGroup)
+                {
+                    var guid = AssetDatabase.AssetPathToGUID(str);
+                    if (aa.RemoveAssetEntry(guid))
+                        modified = true;
+                }
+
+                if (AddressableAssetUtility.IsInResources(str))
+                    modified = true;
+            }
+            for (int i = 0; i < movedAssets.Length; i++)
+            {
+                var str = movedAssets[i];
+                var assetType = AssetDatabase.GetMainAssetTypeAtPath(str);
+                if (typeof(AddressableAssetGroup).IsAssignableFrom(assetType))
+                {
+                    var oldGroupName = Path.GetFileNameWithoutExtension(movedFromAssetPaths[i]);
+                    var group = aa.FindGroup(oldGroupName);
+                    if (group != null)
+                    {
+                        var newGroupName = Path.GetFileNameWithoutExtension(str);
+                        group.Name = newGroupName;
+                    }
+                }
+                else
+                {
+                    var guid = AssetDatabase.AssetPathToGUID(str);
+                    if (aa.FindAssetEntry(guid) != null)
+                        modified = true;
+
+                    //move to Resources
+                    if (AddressableAssetUtility.IsInResources(str))
+                    {
+                        modified = true;
+                        var fileName = Path.GetFileNameWithoutExtension(str);
+                        Debug.Log("You have moved addressable asset " + fileName + " into a Resources directory.  Thus we have un-marked it as Addressable. An asset cannot be both");
+                        aa.RemoveAssetEntry(guid, false);
+                    }
+                    //move from Resources
+                    if (AddressableAssetUtility.IsInResources(movedFromAssetPaths[i]))
+                    {
+                        modified = true;
+                    }
+                }
+            }
+
+            if (modified)
+                aa.SetDirty(ModificationEvent.BatchModification, null, true);
+            aa.AssetsModifiedSinceLastPackedBuild = true;
+        }
     }
 }

@@ -7,7 +7,7 @@ namespace UnityEditor.AddressableAssets
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            var settings = AddressableAssetSettings.GetDefault(false, false);
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
             if (settings == null)
                 return;
             EditorGUI.BeginProperty(position, label, property);
@@ -22,7 +22,7 @@ namespace UnityEditor.AddressableAssets
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            var settings = AddressableAssetSettings.GetDefault(false, false);
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
             if (settings == null)
                 return 0;
             var idProp = property.FindPropertyRelative("m_id");

@@ -22,6 +22,7 @@ namespace UnityEditor.AddressableAssets
 
         List<AnalyzeResult> DoFakeBuild(AddressableAssetSettings settings)
         {
+            m_ImplicitAssets = new HashSet<GUID>();
             List<AnalyzeResult> emptyResult = new List<AnalyzeResult>();
             emptyResult.Add(new AnalyzeResult(name + " - No issues found"));
             IDataBuilderContext context = new AddressablesBuildDataBuilderContext(settings);
@@ -34,6 +35,7 @@ namespace UnityEditor.AddressableAssets
             var allBundleInputDefs = new List<AssetBundleBuild>();
             var bundleToAssetGroup = new Dictionary<string, AddressableAssetGroup>();
             var runtimeData = new ResourceManagerRuntimeData();
+            runtimeData.LogResourceManagerExceptions = aaSettings.buildSettings.LogResourceManagerExceptions;
 
             foreach (var assetGroup in aaSettings.groups)
             {
@@ -118,7 +120,6 @@ namespace UnityEditor.AddressableAssets
                     }
                 }
 
-                m_ImplicitAssets = new HashSet<GUID>();
                 //dictionary<group, dictionary<bundle, implicit assets >>
                 Dictionary<string, Dictionary<string, List<string>>> allIssues = new Dictionary<string, Dictionary<string, List<string>>>();
                 foreach (var g in implicitGuids)

@@ -30,7 +30,7 @@ namespace UnityEditor.AddressableAssets
 
         static void BuildPlayer(BuildPlayerOptions ops)
         {
-            var settings = AddressableAssetSettings.GetDefault(false, false);
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
             if (settings == null)
             {
                 if (BuildScript.buildCompleted != null)
@@ -61,10 +61,14 @@ namespace UnityEditor.AddressableAssets
                 var context = new AddressablesBuildDataBuilderContext(settings, ops.targetGroup, ops.target, (ops.options & BuildOptions.Development) != BuildOptions.None, ((ops.options & BuildOptions.ConnectWithProfiler) != BuildOptions.None) && ProjectConfigData.postProfilerEvents, settings.PlayerBuildVersion);
                 var res = settings.ActivePlayerDataBuilder.BuildData<AddressablesPlayerBuildResult>(context);
                 BuildPipeline.BuildPlayer(ops);
-                var newPath = ContentUpdateScript.GetContentStateDataPath(false);
-                if (File.Exists(newPath))
-                    File.Delete(newPath);
-                File.Copy(res.ContentStateDataPath, newPath);
+                if (!string.IsNullOrEmpty(res.ContentStateDataPath))
+                {      
+                    var newPath = ContentUpdateScript.GetContentStateDataPath(false);
+                    if (File.Exists(newPath))
+                          File.Delete(newPath);
+                    File.Copy(res.ContentStateDataPath, newPath);
+                }
+
                 if (BuildScript.buildCompleted != null)
                     BuildScript.buildCompleted(res);
                 settings.DataBuilderCompleted(settings.ActivePlayerDataBuilder, res);
@@ -75,7 +79,7 @@ namespace UnityEditor.AddressableAssets
         {
             if (state == PlayModeStateChange.ExitingEditMode)
             {
-                var settings = AddressableAssetSettings.GetDefault(false, false);
+                var settings = AddressableAssetSettingsDefaultObject.Settings;
                 if (settings == null)
                     return;
                 if (settings.ActivePlayModeDataBuilder == null)
@@ -106,7 +110,7 @@ namespace UnityEditor.AddressableAssets
             }
             else if (state == PlayModeStateChange.EnteredEditMode)
             {
-                var settings = AddressableAssetSettings.GetDefault(false, false);
+                var settings = AddressableAssetSettingsDefaultObject.Settings;
                 if(settings != null && settings.ActivePlayerDataBuilder != null && settings.ActivePlayerDataBuilder.CanBuildData<AddressablesPlayModeBuildResult>())
                     SceneManagerState.Restore();
             }

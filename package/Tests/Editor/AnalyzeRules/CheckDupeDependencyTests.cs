@@ -28,8 +28,8 @@ namespace UnityEditor.AddressableAssets
             meshB.material = mat;
 
 #if UNITY_2018_3_OR_NEWER
-            m_Prefab1 =PrefabUtility.SaveAsPrefabAsset(prefabA, TestConfigFolder + "/prefabA.prefab");
-            m_Prefab2 = PrefabUtility.SaveAsPrefabAsset(prefabB, TestConfigFolder + "/prefabB.prefab");
+            prefabA = PrefabUtility.SaveAsPrefabAsset(prefabA, TestConfigFolder + "/prefabA.prefab");
+            prefabB = PrefabUtility.SaveAsPrefabAsset(prefabB, TestConfigFolder + "/prefabB.prefab");
 #else
             PrefabUtility.CreatePrefab(TestConfigFolder + "/checkDupe_prefabA.prefab", prefabA);
             PrefabUtility.CreatePrefab(TestConfigFolder + "/checkDupe_prefabB.prefab", prefabB);

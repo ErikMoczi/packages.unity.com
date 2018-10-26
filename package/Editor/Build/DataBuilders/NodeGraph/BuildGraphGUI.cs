@@ -279,7 +279,7 @@ namespace UnityEditor.AddressableAssets.GraphBuild
                 if (evt.target is BuildGraphViewNode && graphWindow.context != null)
                 {
                     var node = graphWindow.graphData.GetNode((Hash128)(evt.target as BuildGraphViewNode).userData);
-#if UNITY_2019_OR_NEWER
+#if UNITY_2018_3_OR_NEWER
                     evt.menu.AppendAction("Evaluate", a => Debug.LogFormat("Result {0}", graphWindow.graphData.EvaluateNode(node.id, graphWindow.context)), a=> DropdownMenu.MenuAction.StatusFlags.Normal);
 #else
                     evt.menu.AppendAction("Evaluate", a => Debug.LogFormat("Result {0}", graphWindow.graphData.EvaluateNode(node.id, graphWindow.context)),

@@ -4,7 +4,7 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.4.0-preview] - 2018-10-01
+## [0.4.1-preview] - 2018-10-09
  - MINIMUM RECOMMENDED VERSION - 2018.2.11+ 
    - We have re-enabled the addressables checkbox. Versions of 2018.2 older than the .11 release will work unless you attempt to view the Animation Import Settings inspector.  If you do have animations you need to inspect, use .11+. If you do not, use any official release version of 2018.2.
  - refactored the way IResourceProviders are initialized in the player - serialized data is constructed at runtime to control how the providers are configured
@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
    - This process can be slow, as it runs most of a build to get accurate data.
    - Within the Analyze window there is a "fix" button that allows each rule to fix any issues if the rule knows how. 
    - The current rule is a "check duplicate asset" rule. This looks for assets that are pulled into multiple asset bundles due to dependency calculations. The way it fixes things is to move all of those into a newly created group.
+ - Added option to toggle logging of all exceptions within the Resource Manager
+ - Refactored initialization of the addressable asset settings to prevent it getting into a bad state.
 
 ## [0.3.5-preview] - 2018-09-05
  - implemented content update workflow.  Added a dropdown to the "Build" button on main window's toolbar.   

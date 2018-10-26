@@ -89,6 +89,7 @@ namespace UnityEditor.AddressableAssets
             if (m_generalFoldout)
             {
                 ProjectConfigData.postProfilerEvents = EditorGUILayout.Toggle("Send Profiler Events", ProjectConfigData.postProfilerEvents);
+                m_aasTarget.buildSettings.LogResourceManagerExceptions = EditorGUILayout.Toggle("Log Resource Manager Exceptions", m_aasTarget.buildSettings.LogResourceManagerExceptions);
             }
             GUILayout.Space(6);
             m_groupFoldout = EditorGUILayout.Foldout(m_groupFoldout, "Groups");

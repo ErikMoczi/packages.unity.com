@@ -20,7 +20,7 @@ namespace UnityEditor.AddressableAssets
         private const int k_fileReadBufferSize = 64 * 1024;
         
         private static readonly IPEndPoint DefaultLoopbackEndpoint = new IPEndPoint(IPAddress.Loopback, 0);
-
+        private int m_servicePort;
         private readonly List<string> m_contentRoots;
         private readonly Dictionary<string, string> m_profileVariables;
         
@@ -31,7 +31,18 @@ namespace UnityEditor.AddressableAssets
         /// The port number on which the service is listening
         /// </summary>
         // ReSharper disable once MemberCanBePrivate.Global
-        public int HostingServicePort { get; protected set; }
+        public int HostingServicePort
+        {
+            get
+            {
+                return m_servicePort;
+            }
+            protected set
+            {
+                if (IsPortAvailable(value))
+                    m_servicePort = value;
+            }
+        }
 
         /// <inheritdoc/>
         public override bool IsHostingServiceRunning
@@ -159,8 +170,15 @@ namespace UnityEditor.AddressableAssets
         /// </summary>
         protected virtual void ConfigureHttpListener()
         {
-            MyHttpListener.Prefixes.Clear();
-            MyHttpListener.Prefixes.Add("http://+:" + HostingServicePort + "/");
+            try
+            {
+                MyHttpListener.Prefixes.Clear();
+                MyHttpListener.Prefixes.Add("http://+:" + HostingServicePort + "/");
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
         }
 
         /// <summary>

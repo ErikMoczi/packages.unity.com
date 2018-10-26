@@ -117,6 +117,11 @@ namespace UnityEditor.AddressableAssets
             var buildPath = EditorUserBuildSettings.GetBuildLocation(EditorUserBuildSettings.activeBuildTarget);
             if (File.Exists(buildPath))
                 buildPath = Path.GetDirectoryName(buildPath);
+            #if UNITY_EDITOR_OSX
+                if(EditorUserBuildSettings.activeBuildTarget == BuildTarget.iOS || 
+                   EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneOSX)
+                    buildPath = Path.GetDirectoryName(buildPath);
+            #endif
             if (browse)
             {
                 if (string.IsNullOrEmpty(buildPath))

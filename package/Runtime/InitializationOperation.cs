@@ -23,7 +23,6 @@ namespace UnityEngine.AddressableAssets
             ResourceManager.ProvideResource<ResourceManagerRuntimeData>(runtimeDataLocation).Completed += OnDataLoaded;
         }
 
-
         void OnDataLoaded(IAsyncOperation<ResourceManagerRuntimeData> op)
         {
             Addressables.LogFormat("Addressables - runtime data operation completed with status = {0}, result = {1}.", op.Status, op.Result);
@@ -35,7 +34,8 @@ namespace UnityEngine.AddressableAssets
                 return;
             }
             var rtd = op.Result;
-
+            if (!rtd.LogResourceManagerExceptions)
+                ResourceManager.ExceptionHandler = null;
             if (m_LoadAll)
             {
                 DiagnosticEventCollector.ResourceManagerProfilerEventsEnabled = rtd.ProfileEvents;
@@ -113,7 +113,7 @@ namespace UnityEngine.AddressableAssets
                     if (index + 1 >= catalogs.Count)
                     {
                         Addressables.LogWarningFormat("Addressables - initialization failed.", (op.Context as IResourceLocation).InternalId);
-                        m_error = op.OperationException;
+                        OperationException = op.OperationException;
                         SetResult(null);
                         Status = AsyncOperationStatus.Failed;
                         InvokeCompletionEvent();

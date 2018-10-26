@@ -46,7 +46,7 @@ namespace UnityEditor.AddressableAssets
 
         static void OnPostHeaderGUI(Editor editor)
         {
-            var aaSettings = AddressableAssetSettings.GetDefault(false, false);
+            var aaSettings = AddressableAssetSettingsDefaultObject.Settings;
             string path = string.Empty;
             var guid = string.Empty;
             AddressableAssetEntry entry = null;
@@ -80,7 +80,7 @@ namespace UnityEditor.AddressableAssets
                 if (addressableCount == 0)
                 {
                     if (GUILayout.Toggle(false, addressableAssetToggleText, GUILayout.ExpandWidth(false)))
-                        SetAAEntry(editor, AddressableAssetSettings.GetDefault(true, true), editor.targets, true);
+                        SetAAEntry(editor, AddressableAssetSettingsDefaultObject.GetSettings(true), editor.targets, true);
                 }
                 else if (addressableCount == editor.targets.Length)
                 {
@@ -100,7 +100,7 @@ namespace UnityEditor.AddressableAssets
                     if (toggleMixed == null)
                         toggleMixed = new GUIStyle("ToggleMixed");
                     if (GUILayout.Toggle(false, addressableAssetToggleText, toggleMixed, GUILayout.ExpandWidth(false)))
-                        SetAAEntry(editor, AddressableAssetSettings.GetDefault(true, true), editor.targets, true);
+                        SetAAEntry(editor, AddressableAssetSettingsDefaultObject.GetSettings(true), editor.targets, true);
                     EditorGUILayout.LabelField(addressableCount + " out of " + editor.targets.Length + " assets are addressable.");
                     GUILayout.EndHorizontal();
                 }

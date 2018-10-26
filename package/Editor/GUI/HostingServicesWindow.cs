@@ -52,7 +52,7 @@ namespace UnityEditor.AddressableAssets
         [MenuItem("Window/Asset Management/Hosting Services", priority = 2052)]
         private static void InitializeWithDefaultSettings()
         {
-            var defaultSettings = AddressableAssetSettings.GetDefault(false, false);
+            var defaultSettings = AddressableAssetSettingsDefaultObject.Settings;
             if (defaultSettings == null)
             {
                 EditorUtility.DisplayDialog("Error", "Could not load default Addressable Asset settings.", "Ok");

@@ -45,6 +45,8 @@ namespace UnityEditor.AddressableAssets
             set
             {
                 m_name = value;
+                m_name = m_name.Replace('/', '-');
+                m_name = m_name.Replace('\\', '-');
                 if (m_name != name)
                 {
                     string guid;
@@ -58,18 +60,23 @@ namespace UnityEditor.AddressableAssets
                             if (path != newPath)
                             {
                                 var setPath = AssetDatabase.MoveAsset(path, newPath);
-                                if (setPath != newPath)
+                                if (!string.IsNullOrEmpty(setPath))
                                 {
                                     //unable to rename group due to invalid file name
-                                    m_name = name;
-                                    return;
+                                    Debug.LogError("Rename of Group failed. " + setPath);
                                 }
+                                m_name = name;
+                                
                             }
                         }
                     }
-                    name = m_name;
+                    else
+                    {
+                        //this isn't a valid asset, which means it wasn't persisted, so just set the object name to the desired display name.
+                        name = m_name;
+                    }
+                    SetDirty(AddressableAssetSettings.ModificationEvent.GroupRenamed, this, true);
                 }
-                SetDirty(AddressableAssetSettings.ModificationEvent.GroupRenamed, this, true);
             }
         }
         /// <summary>
@@ -224,7 +231,7 @@ namespace UnityEditor.AddressableAssets
             get
             {
                 if (m_settings == null)
-                    m_settings = AddressableAssetSettings.GetDefault(false, false);
+                    m_settings = AddressableAssetSettingsDefaultObject.Settings;
 
                 return m_settings;
             }
@@ -336,7 +343,7 @@ namespace UnityEditor.AddressableAssets
                     m_data = null;
                 }
             }
-            else
+            else if(Settings != null)
             {
                 if (m_name == null)
                     m_name = Settings.FindUniqueGroupName("Packed Content Group");

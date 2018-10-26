@@ -10,7 +10,7 @@ namespace UnityEditor.AddressableAssets
         static AddressableScenesManager()
         {
             EditorBuildSettings.sceneListChanged += OnScenesChanged;
-            RegisterForSettingsCallback(AddressableAssetSettings.GetDefault(false, false));
+            RegisterForSettingsCallback(AddressableAssetSettingsDefaultObject.Settings);
         }
 
         internal static void RegisterForSettingsCallback(AddressableAssetSettings settings)
@@ -40,7 +40,11 @@ namespace UnityEditor.AddressableAssets
 
         private static void OnScenesChanged()
         {
-            var settings = AddressableAssetSettings.GetDefault(false, false);
+            //ignore the play mode changes...
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                return;
+
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
             if (settings == null)
                 return;
             

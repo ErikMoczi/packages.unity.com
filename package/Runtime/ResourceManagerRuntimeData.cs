@@ -29,7 +29,14 @@ namespace UnityEngine.AddressableAssets
         /// Flag to control whether the ResourceManager sends profiler events.
         /// </summary>
         public bool ProfileEvents { get { return m_profileEvents; } set { m_profileEvents = value; } }
-        
+
+        [SerializeField]
+        bool m_logResourceManagerExceptions = true;
+        /// <summary>
+        /// When enabled, the ResourceManager.ExceptionHandler is set to (op, ex) => Debug.LogException(ex);
+        /// </summary>
+        public bool LogResourceManagerExceptions { get { return m_logResourceManagerExceptions; } set { m_logResourceManagerExceptions = value; } }
+
         [SerializeField]
         bool m_usePooledInstanceProvider = false;
         /// <summary>

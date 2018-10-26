@@ -28,7 +28,11 @@ namespace UnityEditor.AddressableAssets
         }
 
         [SerializeField]
+        [Tooltip("If true, the CRC and Hash values of the asset bundle are used to determine if a bundle can be loaded from the local cache instead of downloaded.")]
         private bool m_useAssetBundleCache = true;
+        /// <summary>
+        /// If true, the CRC and Hash values of the asset bundle are used to determine if a bundle can be loaded from the local cache instead of downloaded.
+        /// </summary>
         public bool UseAssetBundleCache
         {
             get { return m_useAssetBundleCache; }
@@ -40,6 +44,36 @@ namespace UnityEditor.AddressableAssets
         }
 
         [SerializeField]
+        [Tooltip("Sets UnityWebRequest to attempt to abort after the number of seconds in timeout have passed.")]
+        int m_timeout = 0;
+        /// <summary>
+        /// Sets UnityWebRequest to attempt to abort after the number of seconds in timeout have passed.
+        /// </summary>
+        public int Timeout { get { return m_timeout; } set { m_timeout = value; } }
+        [SerializeField]
+        [Tooltip("Indicates whether the UnityWebRequest system should employ the HTTP/1.1 chunked-transfer encoding method.")]
+        bool m_chunkedTransfer = false;
+        /// <summary>
+        /// Indicates whether the UnityWebRequest system should employ the HTTP/1.1 chunked-transfer encoding method.
+        /// </summary>
+        public bool ChunkedTransfer { get { return m_chunkedTransfer; } set { m_chunkedTransfer = value; } }
+        [SerializeField]
+        [Tooltip("Indicates the number of redirects which this UnityWebRequest will follow before halting with a “Redirect Limit Exceeded” system error.")]
+        int m_redirectLimit = -1;
+        /// <summary>
+        /// Indicates the number of redirects which this UnityWebRequest will follow before halting with a “Redirect Limit Exceeded” system error.
+        /// </summary>
+        public int RedirectLimit { get { return m_redirectLimit; } set { m_redirectLimit = value; } }
+        [SerializeField]
+        [Tooltip("Indicates the number of times the request will be retried.")]
+        int m_retryCount = 0;
+        /// <summary>
+        /// Indicates the number of times the request will be retried.  
+        /// </summary>
+        public int RetryCount { get { return m_retryCount; } set { m_retryCount = value; } }
+
+        [SerializeField]
+        [Tooltip("The path to copy asset bundles to.")]
         private ProfileValueReference m_buildPath = new ProfileValueReference();
         /// <summary>
         /// The path to copy asset bundles to.
@@ -50,6 +84,7 @@ namespace UnityEditor.AddressableAssets
         }
 
         [SerializeField]
+        [Tooltip("The path to load bundles from.")]
         private ProfileValueReference m_loadPath = new ProfileValueReference();
         /// <summary>
         /// The path to load bundles from.
@@ -60,9 +95,10 @@ namespace UnityEditor.AddressableAssets
         }
 
         [SerializeField]
+        [Tooltip("Controls how bundles are packed.  If set to PackTogether, a single asset bundle will be created for the entire group, with the exception of scenes, which are packed separately.  If set to PackSeparately, an asset bundle will be created for each top level entry in the group.")]
         private BundlePackingMode m_bundleMode = BundledAssetGroupSchema.BundlePackingMode.PackTogether;
         /// <summary>
-        /// The bundle mode.
+        /// Controls how bundles are packed.  If set to PackTogether, a single asset bundle will be created for the entire group, with the exception of scenes, which are packed separately.  If set to PackSeparately, an asset bundle will be created for each top level entry in the group.
         /// </summary>
         public BundlePackingMode BundleMode
         {
@@ -85,6 +121,7 @@ namespace UnityEditor.AddressableAssets
 
         [SerializeField]
         [SerializedTypeRestriction(type = typeof(IResourceProvider))]
+        [Tooltip("The provider type to use for loading asset bundles.")]
         private SerializedType m_assetBundleProviderType;
         /// <summary>
         /// The provider type to use for loading asset bundles.

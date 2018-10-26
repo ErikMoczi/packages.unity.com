@@ -96,7 +96,7 @@ namespace UnityEditor.AddressableAssets
 
             assetName = k_noAssetString;
             Texture2D icon = null;
-            var aaSettings = AddressableAssetSettings.GetDefault(false, false);
+            var aaSettings = AddressableAssetSettingsDefaultObject.Settings;
             if (aaSettings != null && !string.IsNullOrEmpty(guid))
             {
                 var entry = aaSettings.FindAssetEntry(guid);
@@ -218,8 +218,7 @@ namespace UnityEditor.AddressableAssets
 
                             if (SetObject(property, obj, out guid))
                             {
-                                if (aaSettings == null)
-                                    aaSettings = AddressableAssetSettings.GetDefault(true, true);
+                                aaSettings = AddressableAssetSettingsDefaultObject.GetSettings(true);
                                 var entry = aaSettings.FindAssetEntry(guid);
                                 if (entry == null && !string.IsNullOrEmpty(guid))
                                 {
@@ -413,7 +412,7 @@ namespace UnityEditor.AddressableAssets
             {
                 var root = new TreeViewItem(-1, -1);
 
-                var aaSettings = AddressableAssetSettings.GetDefault(false, false);
+                var aaSettings = AddressableAssetSettingsDefaultObject.Settings;
                 if (aaSettings == null)
                 {
                     var message = "Use 'Window->Addressable Assets' to initialize.";

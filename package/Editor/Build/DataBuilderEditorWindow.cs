@@ -22,7 +22,7 @@ namespace UnityEditor.AddressableAssets.GraphBuild
                 m_defaultEditor = null;
             }
 
-            var settings = AddressableAssetSettings.GetDefault(false, false);
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
             var context = new AddressablesBuildDataBuilderContext(settings);
             m_gui = target.CreateGUI(context);
             if (m_gui == null)

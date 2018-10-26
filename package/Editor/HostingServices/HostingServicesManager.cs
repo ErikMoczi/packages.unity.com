@@ -76,7 +76,7 @@ namespace UnityEditor.AddressableAssets
         /// </summary>
         public static void BatchMode()
         {
-            BatchMode(AddressableAssetSettings.GetDefault(false, false));
+            BatchMode(AddressableAssetSettingsDefaultObject.Settings);
         }
 
         /// <summary>

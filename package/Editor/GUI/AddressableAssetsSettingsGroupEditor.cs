@@ -21,7 +21,7 @@ namespace UnityEditor.AddressableAssets
 
         SearchField searchField;
         const int k_SearchHeight = 20;
-        internal AddressableAssetSettings settings { get { return AddressableAssetSettings.GetDefault(false, false); } }
+        internal AddressableAssetSettings settings { get { return AddressableAssetSettingsDefaultObject.Settings; } }
 
         bool m_ResizingVerticalSplitter = false;
         Rect m_VerticalSplitterRect = new Rect(0, 0, 10, k_SplitterWidth);
@@ -89,6 +89,7 @@ namespace UnityEditor.AddressableAssets
 
         void TopToolbar(Rect toolbarPos)
         {
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
             if (searchStyles == null)
             {
                 searchStyles = new List<GUIStyle>();
@@ -212,7 +213,7 @@ namespace UnityEditor.AddressableAssets
 
         private void OnCleanAddressables()
         {
-            var aa = AddressableAssetSettings.GetDefault(false, false);
+            var aa = AddressableAssetSettingsDefaultObject.Settings;
             if (aa == null)
                 return;
 
@@ -231,21 +232,21 @@ namespace UnityEditor.AddressableAssets
 
         private void OnPrepareUpdate()
         {
-            ContentUpdatePreviewWindow.PrepareForContentUpdate(AddressableAssetSettings.GetDefault(false, false), ContentUpdateScript.GetContentStateDataPath(true));
+            ContentUpdatePreviewWindow.PrepareForContentUpdate(AddressableAssetSettingsDefaultObject.Settings, ContentUpdateScript.GetContentStateDataPath(true));
         }
 
         private void OnUpdateBuild()
         {
-            ContentUpdateScript.BuildContentUpdate(AddressableAssetSettings.GetDefault(false, false), ContentUpdateScript.GetContentStateDataPath(true));
+            ContentUpdateScript.BuildContentUpdate(AddressableAssetSettingsDefaultObject.Settings, ContentUpdateScript.GetContentStateDataPath(true));
         }
 
         void OnSetActiveBuildScript(object context)
         {
-            settings.ActivePlayerDataBuilderIndex = (int)context;
+            AddressableAssetSettingsDefaultObject.Settings.ActivePlayerDataBuilderIndex = (int)context;
         }
         void OnSetActivePlayModeScript(object context)
         {
-            settings.ActivePlayModeDataBuilderIndex = (int)context;
+            AddressableAssetSettingsDefaultObject.Settings.ActivePlayModeDataBuilderIndex = (int)context;
         }
 
         void OnSendProfileClick()
@@ -259,6 +260,7 @@ namespace UnityEditor.AddressableAssets
         }
         void CreateDropdown()
         {
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
             var activeProfileName = settings.profileSettings.GetProfileName(settings.activeProfileId);
             if (settings.activeProfileId != null && string.IsNullOrEmpty(activeProfileName))
             {
@@ -288,28 +290,28 @@ namespace UnityEditor.AddressableAssets
         void SetActiveProfile(object context)
         {
             var n = context as string;
-            settings.activeProfileId = settings.profileSettings.GetProfileId(n);
+            AddressableAssetSettingsDefaultObject.Settings.activeProfileId = AddressableAssetSettingsDefaultObject.Settings.profileSettings.GetProfileId(n);
         }
         private void GoToSettingsAsset()
         {
-            EditorGUIUtility.PingObject(settings);
-            Selection.activeObject = settings;
+            EditorGUIUtility.PingObject(AddressableAssetSettingsDefaultObject.Settings);
+            Selection.activeObject = AddressableAssetSettingsDefaultObject.Settings;
         }
 
         private bool m_modificationRegistered = false;
         public void OnEnable()
         {
-            if (settings == null)
+            if (AddressableAssetSettingsDefaultObject.Settings == null)
                 return;
-            settings.OnModification += OnSettingsModification;
+            AddressableAssetSettingsDefaultObject.Settings.OnModification += OnSettingsModification;
             m_modificationRegistered = true;
         }
 
         public void OnDisable()
         {
-            if (settings == null)
+            if (AddressableAssetSettingsDefaultObject.Settings == null)
                 return;
-            settings.OnModification -= OnSettingsModification;
+            AddressableAssetSettingsDefaultObject.Settings.OnModification -= OnSettingsModification;
             m_modificationRegistered = false;
         }
 
@@ -318,6 +320,7 @@ namespace UnityEditor.AddressableAssets
 
         public bool OnGUI(Rect pos)
         {
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
             if (settings == null)
                 return false;
 

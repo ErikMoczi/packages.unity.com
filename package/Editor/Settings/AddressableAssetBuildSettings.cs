@@ -65,6 +65,16 @@ namespace UnityEditor.AddressableAssets
         [UnityEngine.SerializeField]
         private bool m_cleanupStreamingAssetsAfterBuilds = true;
 
+        [UnityEngine.SerializeField]
+        private bool m_logResourceManagerExceptions = true;
+        /// <summary>
+        /// When enabled, the ResourceManager.ExceptionHandler is set to (op, ex) => Debug.LogException(ex);
+        /// </summary>
+        public bool LogResourceManagerExceptions
+        {
+            get { return m_logResourceManagerExceptions; }
+            set { m_logResourceManagerExceptions = value; }
+        }
 
         /// <summary>
         /// //Specifies where to build asset bundles, this is usually a temporary folder (or a folder in the project).  Bundles are copied out of this location to their final destination.

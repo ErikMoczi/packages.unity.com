@@ -61,6 +61,7 @@ namespace UnityEditor.AddressableAssets
             var allBundleInputDefs = new List<AssetBundleBuild>();
             var bundleToAssetGroup = new Dictionary<string, AddressableAssetGroup>();
             var runtimeData = new ResourceManagerRuntimeData();
+            runtimeData.LogResourceManagerExceptions = aaSettings.buildSettings.LogResourceManagerExceptions;
             bool needsLegacyProvider = false;
             var assetBundleProviderTypes = new HashSet<Type>();
             foreach (var assetGroup in aaSettings.groups)
@@ -186,6 +187,7 @@ namespace UnityEditor.AddressableAssets
                 linker.AddTypes(id.ObjectType.Value);
                 linker.AddTypes(id.GetRuntimeTypes());
             }
+            linker.AddTypes(typeof(Addressables));
             if (isPlayerBuild)
                 linker.Save(Addressables.BuildPath + "/link.xml");
 
@@ -351,10 +353,18 @@ namespace UnityEditor.AddressableAssets
                 if (dataEntry != null)
                 {
                     isLocalBundle = IsInternalIdLocal(dataEntry.InternalId);
-                    if (!isLocalBundle && schema.UseAssetBundleCache)
+                    if (!isLocalBundle)
                     {
-                        var cacheData = new AssetBundleCacheInfo() { Crc = info.Crc, Hash = info.Hash.ToString() };
-                        dataEntry.Data = cacheData;
+                        var requestOptions = new AssetBundleRequestOptions()
+                        {
+                            Crc =  schema.UseAssetBundleCache ? info.Crc : 0,
+                            Hash = schema.UseAssetBundleCache ? info.Hash.ToString() : "",
+                            ChunkedTransfer = schema.ChunkedTransfer,
+                            RedirectLimit = schema.RedirectLimit,
+                            RetryCount = schema.RetryCount,
+                            Timeout = schema.Timeout
+                        };
+                        dataEntry.Data = requestOptions;
                         dataEntry.InternalId = dataEntry.InternalId.Replace(".bundle", "_" + info.Hash + ".bundle");
                     }
                 }
