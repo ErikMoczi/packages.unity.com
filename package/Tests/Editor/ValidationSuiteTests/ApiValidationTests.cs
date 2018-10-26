@@ -1,15 +1,10 @@
-﻿using System;
-using UnityEngine.TestTools;
-using NUnit.Framework;
-using System.Collections;
+﻿using NUnit.Framework;
 using System.IO;
 using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 #if UNITY_2018_1_OR_NEWER
 using UnityEditor.Compilation;
-using UnityEngine.Assertions.Must;
 using Debug = UnityEngine.Debug;
 
 namespace UnityEditor.PackageManager.ValidationSuite.Tests
@@ -19,172 +14,155 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         internal const string testPackageRoot =
             "Packages/com.unity.package-validation-suite/Tests/Editor/ValidationSuiteTests/ApiValidationTestAssemblies/";
         [Test]
-        public void AddingPropertyInPatchReleaseFails()
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInPatch")]
+        public void AddingProperty_FailsInPatch(ReleaseType releaseType, bool expectError)
         {
-            List<string> messagesExpected = new List<string> { "Error: Additions require a new minor or major version" };
-
-            var apiValidation = Validate("TestPackage_PropAdd", "0.0.2");
-
-            Assert.AreEqual(TestState.Failed, apiValidation.TestState);
-            Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
-        }
-        [Test]
-        public void AddingPropertyInMinorReleasePasses()
-        {
-            var apiValidation = Validate("TestPackage_PropAdd", "0.1.0");
-            Assert.AreEqual(TestState.Succeeded, apiValidation.TestState);
+            List<string> messagesExpected = new List<string> { "Error: Additions require a new minor or major version." };
+            var apiValidation = Validate("TestPackage_PropAdd", releaseType);
+            ExpectResult(apiValidation, expectError, messagesExpected);
         }
 
         [Test]
-        public void AddedEmptyAssemblyInPatchReleaseFalse()
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInPatch")]
+        public void AddingEmptyAssembly_FailsInPatch(ReleaseType releaseType, bool expectError)
         {
-            List<string> messagesExpected = new List<string> { "Error: Additions require a new minor or major version" };
-
-            var apiValidation = Validate("TestPackage_EmptyAsmdefAdd", "0.0.2");
-
-            Assert.AreEqual(TestState.Failed, apiValidation.TestState);
-            Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
+            List<string> messagesExpected = new List<string> { "Error: New assembly \"Unity.PackageValidationSuite.EditorTests.TestPackage_EmptyAsmdefAdd.NewAsmdef\" may only be added in a new minor or major version." };
+            var apiValidation = Validate("TestPackage_EmptyAsmdefAdd", releaseType);
+            ExpectResult(apiValidation, expectError, messagesExpected);
         }
 
         [Test]
-        public void AddedEmptyAssemblyInMinorReleasePasses()
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInPatch")]
+        public void AddingTypeInNewAssembly_FailsInPatch(ReleaseType releaseType, bool expectError)
         {
-            var apiValidation = Validate("TestPackage_EmptyAsmdefAdd", "0.0.2");
-            Assert.AreEqual(TestState.Succeeded, apiValidation.TestState);
+            List<string> messagesExpected = new List<string> { "Error: Additions require a new minor or major version." };
+
+            var apiValidation = Validate("TestPackage_PropAdd", releaseType);
+            ExpectResult(apiValidation, expectError, messagesExpected);
         }
 
         [Test]
-        public void AddingTypeInNewAssemblyInPatchReleaseFails()
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInPatch")]
+        public void AddIncludePlatform_FailsInPatch(ReleaseType releaseType, bool expectError)
         {
-            List<string> messagesExpected = new List<string> { "Error: Additions require a new minor or major version" };
-
-            var apiValidation = Validate("TestPackage_PropAdd", "0.0.2");
-
-            Assert.AreEqual(TestState.Failed, apiValidation.TestState);
-            Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
+            List<string> messagesExpected = new List<string> { "Error: Adding to includePlatforms requires a new minor or major version. Was:\"Editor\" Now:\"Editor, Android\"" };
+            var apiValidation = Validate("TestPackage_WithTwoIncludePlatforms", releaseType, "TestPackage_WithIncludePlatform");
+            ExpectResult(apiValidation, expectError, messagesExpected);
         }
 
         [Test]
-        public void AddIncludePlatformInPatchReleaseFails()
-        {
-            List<string> messagesExpected = new List<string> { "Error: Adding to includePlatforms requires a new minor or major version. Was:\"\" Now:\"Editor\"" };
-
-            var apiValidation = Validate("TestPackage_WithIncludePlatform", "0.0.2");
-
-            Assert.AreEqual(TestState.Failed, apiValidation.TestState);
-            Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
-        }
-
-        [Test]
-        public void AddIncludePlatformInMinorReleasePasses()
-        {
-            var apiValidation = Validate("TestPackage_WithTwoIncludePlatforms", "0.1.0", "TestPackage_WithIncludePlatform", "0.0.1");
-            Assert.AreEqual(TestState.Succeeded, apiValidation.TestState);
-        }
-
-        [Test]
-        public void AddFirstIncludePlatformInMinorReleaseFails()
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInMinor")]
+        public void AddFirstIncludePlatform_FailsInMinor(ReleaseType releaseType, bool expectError)
         {
             List<string> messagesExpected = new List<string> { "Error: Adding the first entry in inlcudePlatforms requires a new major version. Was:\"\" Now:\"Editor\"" };
-
-            var apiValidation = Validate("TestPackage_WithIncludePlatform", "0.1.0");
-
-            Assert.AreEqual(TestState.Failed, apiValidation.TestState);
-            Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
+            var apiValidation = Validate("TestPackage_WithIncludePlatform", releaseType);
+            ExpectResult(apiValidation, expectError, messagesExpected);
         }
 
         [Test]
-        public void AddExcludePlatformInMinorReleaseFails()
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInMinor")]
+        public void AddExcludePlatform_FailsInMinor(ReleaseType releaseType, bool expectError)
         {
             List<string> messagesExpected = new List<string> { "Error: Adding to excludePlatforms requires a new major version. Was:\"\" Now:\"Android\"" };
-
-            var apiValidation = Validate("TestPackage_WithExcludePlatform", "0.1.0");
-
-            Assert.AreEqual(TestState.Failed, apiValidation.TestState);
-            Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
+            var apiValidation = Validate("TestPackage_WithExcludePlatform", releaseType);
+            ExpectResult(apiValidation, expectError, messagesExpected);
         }
 
         [Test]
-        public void AddExcludePlatformInMajorReleasePasses()
-        {
-            var apiValidation = Validate("TestPackage_WithExcludePlatform", "1.0.0");
-            Assert.AreEqual(TestState.Succeeded, apiValidation.TestState);
-        }
-
-        [Test]
-        public void RemoveExcludePlatformInPatchReleaseFails()
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInPatch")]
+        public void RemoveExcludePlatform_FailsInPatch(ReleaseType releaseType, bool expectError)
         {
             List<string> messagesExpected = new List<string> { "Error: Removing from excludePlatfoms requires a new minor or major version. Was:\"Android\" Now:\"\"" };
-
-            var apiValidation = Validate("TestPackage_Base", "0.0.2", "TestPackage_WithExcludePlatform");
-
-            Assert.AreEqual(TestState.Failed, apiValidation.TestState);
-            Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
+            var apiValidation = Validate("TestPackage_Base", releaseType, "TestPackage_WithExcludePlatform");
+            ExpectResult(apiValidation, expectError, messagesExpected);
         }
-        
+
         [Test]
-        public void RemoveExcludePlatformInMinorReleasePasses()
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInMinor")]
+        public void RemoveIncludePlatform_FailsInMinor(ReleaseType releaseType, bool expectError)
         {
-            var apiValidation = Validate("TestPackage_Base", "0.1.0", "TestPackage_WithExcludePlatform");
-            Assert.AreEqual(TestState.Succeeded, apiValidation.TestState);
+            List<string> messagesExpected = new List<string> { "Error: Removing from includePlatfoms requires a new major version. Was:\"Editor, Android\" Now:\"Editor\"" };
+            var apiValidation = Validate("TestPackage_WithIncludePlatform", releaseType, "TestPackage_WithTwoIncludePlatforms");
+            ExpectResult(apiValidation, expectError, messagesExpected);
         }
 
         [Test]
-        public void RemoveIncludePlatformInMinorReleaseFails()
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInMinor")]
+        public void RemoveAllIncludePlatforms_FailsInMinor(ReleaseType releaseType, bool expectError)
         {
             List<string> messagesExpected = new List<string> { "Error: Removing from includePlatfoms requires a new major version. Was:\"Editor\" Now:\"\"" };
-
-            var apiValidation = Validate("TestPackage_Base", "0.1.0", "TestPackage_WithIncludePlatform");
-
-            Assert.AreEqual(TestState.Failed, apiValidation.TestState);
-            Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
+            var apiValidation = Validate("TestPackage_Base", releaseType, "TestPackage_WithIncludePlatform");
+            ExpectResult(apiValidation, expectError, messagesExpected);
         }
 
         [Test]
-        public void RemoveIncludePlatformInMajorReleasePasses()
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInMinor")]
+        public void BreakingChange_FailsInMinor(ReleaseType releaseType, bool expectError)
         {
-            var apiValidation = Validate("TestPackage_Base", "1.0.0", "TestPackage_WithIncludePlatform");
-            Assert.AreEqual(TestState.Succeeded, apiValidation.TestState);
+            List<string> messagesExpected = new List<string> { "Error: Breaking changes require a new major version." };
+
+            var apiValidation = Validate("TestPackage_BreakingChange", releaseType);
+            ExpectResult(apiValidation, expectError, messagesExpected);
         }
 
         [Test]
-        public void BreakingChangeInMinorReleaseFails()
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInMinor")]
+        public void ChangingAsmdefToTest_FailsInMinor(ReleaseType releaseType, bool expectError)
         {
-            List<string> messagesExpected = new List<string> { "Error: Breaking changes require a new major version" };
+            List<string> messagesExpected = new List<string> { "Error: Assembly \"Unity.PackageValidationSuite.EditorTests.TestPackage_Base\" no longer exists or is no longer included in build. This requires a new major version." };
 
-            var apiValidation = Validate("TestPackage_BreakingChange", "0.1.0");
-
-            Assert.AreEqual(TestState.Failed, apiValidation.TestState);
-            Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
+            var apiValidation = Validate("TestPackage_Base", VersionComparisonTestUtilities.VersionForReleaseType(releaseType), isPreviousPackageTest:false, isProjectPackageTest:true);
+            ExpectResult(apiValidation, expectError, messagesExpected);
         }
 
         [Test]
-        public void ChangingAsmdefToTestInMinorReleaseFails()
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInPatch")]
+        public void ChangingAsmdefToNonTest_FailsInPatch(ReleaseType releaseType, bool expectError)
         {
-            List<string> messagesExpected = new List<string> { "Error: Assembly \"Unity.PackageValidationSuite.EditorTests.TestPackage_Base.dll\" no longer exists or is no longer included in build. This requires a new major version." };
+            List<string> messagesExpected = new List<string>
+            {
+                "Error: Additions require a new minor or major version.",
+                "Error: New assembly \"Unity.PackageValidationSuite.EditorTests.TestPackage_Base\" may only be added in a new minor or major version."
+            };
 
-            var apiValidation = Validate("TestPackage_Base", "0.1.0", isPreviousPackageTest:false, isProjectPackageTest:true);
-
-            Assert.AreEqual(TestState.Failed, apiValidation.TestState);
-            Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
+            var apiValidation = Validate("TestPackage_Base", VersionComparisonTestUtilities.VersionForReleaseType(releaseType), isPreviousPackageTest: true, isProjectPackageTest: false);
+            ExpectResult(apiValidation, expectError, messagesExpected);
         }
 
         [Test]
-        public void RemovingAsmdefInMinorReleaseFails()
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInMinor")]
+        public void RemovingAsmdef_FailsInMinor(ReleaseType releaseType, bool expectError)
         {
-            List<string> messagesExpected = new List<string> { "Error: Assembly \"Unity.PackageValidationSuite.EditorTests.TestPackage_Base.NewAsmdef.dll\" no longer exists or is no longer included in build. This requires a new major version." };
+            List<string> messagesExpected = new List<string> { "Error: Assembly \"Unity.PackageValidationSuite.EditorTests.TestPackage_Base.NewAsmdef\" no longer exists or is no longer included in build. This requires a new major version." };
 
-            var apiValidation = Validate("TestPackage_Base", "0.1.0", "TestPackage_AsmdefWithTypeAdd");
-
-            Assert.AreEqual(TestState.Failed, apiValidation.TestState);
-            Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
+            var apiValidation = Validate("TestPackage_Base", releaseType, "TestPackage_AsmdefWithTypeAdd");
+            ExpectResult(apiValidation, expectError, messagesExpected);
         }
 
         [Test]
-        public void RemovingAsmdefInMajorReleaseSucceeds()
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInMinor")]
+        public void RenamingAsmdef_FailsInMinor(ReleaseType releaseType, bool expectError)
         {
-            var apiValidation = Validate("TestPackage_Base", "1.0.0", "TestPackage_AsmdefWithTypeAdd");
-            Assert.AreEqual(TestState.Succeeded, apiValidation.TestState);
+            List<string> messagesExpected;
+            if (releaseType == ReleaseType.Patch)
+            {
+                messagesExpected = new List<string>
+                {
+                    "Error: Additions require a new minor or major version.",
+                    "Error: Assembly \"Unity.PackageValidationSuite.EditorTests.TestPackage_RenamedAsmdef\" no longer exists or is no longer included in build. This requires a new major version.",
+                    "Error: New assembly \"SomeNewName\" may only be added in a new minor or major version."
+                };
+            }
+            else
+            {
+                messagesExpected = new List<string>
+                {
+                    "Error: Assembly \"Unity.PackageValidationSuite.EditorTests.TestPackage_RenamedAsmdef\" no longer exists or is no longer included in build. This requires a new major version.",
+                };
+            }
+
+            var apiValidation = Validate("TestPackage_RenamedAsmdef", releaseType);
+            ExpectResult(apiValidation, expectError, messagesExpected);
         }
 
         [Test]
@@ -193,9 +171,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             List<string> messagesExpected = new List<string> { "Error: Package Validation Suite does not support .asmdefs that are not built on the \"Editor\" platform. See \"Unity.PackageValidationSuite.EditorTests.TestPackage_ExcludesEditor\"" };
 
             var apiValidation = Validate("TestPackage_ExcludesEditor", "0.1.0", "TestPackage_ExcludesEditor", copyAssemblies:false);
-
-            Assert.AreEqual(TestState.Failed, apiValidation.TestState);
-            Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
+            ExpectResult(apiValidation, true, messagesExpected);
         }
 
         [Test]
@@ -204,12 +180,14 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             List<string> messagesExpected = new List<string> { "Error: Package Validation Suite does not support .asmdefs that are not built on the \"Editor\" platform. See \"Unity.PackageValidationSuite.EditorTests.TestPackage_IncludesAndroid\"" };
 
             var apiValidation = Validate("TestPackage_IncludesAndroid", "0.1.0", "TestPackage_IncludesAndroid", copyAssemblies: false);
-
-            Assert.AreEqual(TestState.Failed, apiValidation.TestState);
-            Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
+            ExpectResult(apiValidation, true, messagesExpected);
         }
         //need to make decisions on dependencies and write more tests
 
+        private static ApiValidation Validate(string projectPackageName, ReleaseType releaseType, string previousPackageName = "TestPackage_Base")
+        {
+            return Validate(projectPackageName, VersionComparisonTestUtilities.VersionForReleaseType(releaseType), previousPackageName);
+        }
         private static ApiValidation Validate(string projectPackageName, string projectPackageVersion,
             string previousPackageName = "TestPackage_Base", string previousPackageVersion = "0.0.1", 
             bool isPreviousPackageTest = false, bool isProjectPackageTest = false, bool copyAssemblies = true)
@@ -223,7 +201,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             Directory.CreateDirectory(VettingContext.PreviousVersionBinaryPath);
 
-            if (copyAssemblies)
+            //when the previous package is all test, there would be no binaries in the zip
+            if (copyAssemblies && !isPreviousPackageTest)
             {
                 var assemblyNamesPrevious = GetAssemblyNames(previousPackagePath).ToArray();
                 var assemblyNamesProject = GetAssemblyNames(projectPackagePath).ToArray();
@@ -259,9 +238,18 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             };
             apiValidation.Setup();
             apiValidation.RunTest();
-
-            apiValidation.TestOutput.ForEach(Debug.Log);
             return apiValidation;
+        }
+
+        private static void ExpectResult(ApiValidation apiValidation, bool expectError, List<string> messagesExpected)
+        {
+            if (expectError)
+            {
+                Assert.AreEqual(TestState.Failed, apiValidation.TestState);
+                Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
+            }
+            else
+                Assert.AreEqual(TestState.Succeeded, apiValidation.TestState);
         }
 
         private static IEnumerable<string> GetAssemblyNames(string previousPackagePath)

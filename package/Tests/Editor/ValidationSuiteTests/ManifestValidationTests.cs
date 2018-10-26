@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using NUnit.Framework;
 using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
 using UnityEngine;
@@ -31,19 +34,38 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         [Test]
         public void When_Manifest_WrongFormat_Validation_Fails()
         {
-            var packageJsonPath = Path.Combine(testDirectory, "package.json");
-            File.WriteAllText(packageJsonPath, "Test is not a package.json file");
+            var projectPackageInfo = new VettingContext.ManifestData
+            {
+                path = Path.Combine(testDirectory, "package.json")
+            };
+
             var manifestValidation = new ManifestValidation();
-            manifestValidation.Context = PrepareVettingContext(packageJsonPath);
+            var vettingContext = new VettingContext
+            {
+                ProjectPackageInfo = projectPackageInfo,
+                PublishPackageInfo = projectPackageInfo,
+                PreviousPackageInfo = null
+            };
+            manifestValidation.Context = vettingContext;
             manifestValidation.Setup();
             manifestValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, manifestValidation.TestState);
-            Assert.AreEqual(1, manifestValidation.TestOutput.Count);
+            Assert.AreEqual(6, manifestValidation.TestOutput.Count);
         }
 
         [Test]
         public void When_Manifest_OK_Validation_Succeeds()
+        {
+            var manifestData = GenerateValidManifestData();
+            var manifestValidation = SetupTestManifestAndRunValidation(manifestData);
+
+            Assert.AreEqual(TestState.Succeeded, manifestValidation.TestState);
+            Assert.AreEqual(0, manifestValidation.TestOutput.Count);
+        }
+
+        [Test]
+        public void When_Manifest_No_References_Validation_Succeeds()
         {
             var manifestData = GenerateValidManifestData();
             var manifestValidation = SetupTestManifestAndRunValidation(manifestData);
@@ -95,10 +117,10 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             var manifestValidation = SetupTestManifestAndRunValidation(manifestData);
 
             Assert.AreEqual(TestState.Failed, manifestValidation.TestState);
-            Assert.AreEqual(1, manifestValidation.TestOutput.Count);
+            Assert.AreEqual(2, manifestValidation.TestOutput.Count);
         }
 
-        [Test]
+        [Test, Ignore("Don't know whether this is a valuable test.")]
         public void When_UnityVersion_GreaterThanCurrent_Validation_Fails()
         {
             var manifestData = GenerateValidManifestData();
@@ -110,59 +132,165 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.AreEqual(TestState.Failed, manifestValidation.TestState);
             Assert.AreEqual(1, manifestValidation.TestOutput.Count);
         }
-
-        private ManifestValidation SetupTestManifestAndRunValidation(VettingContext.ManifestData manifestData)
+        public static IEnumerable<TestCaseData> FailsInMinor()
         {
-            var packageJsonPath = Path.Combine(testDirectory, "package.json");
-            File.WriteAllText(packageJsonPath, JsonUtility.ToJson(manifestData));
+            yield return new TestCaseData(ReleaseType.Patch, true);//.SetName("FailsInPatch");
+            yield return new TestCaseData(ReleaseType.Minor, true);//.SetName("FailsInMinor");
+            yield return new TestCaseData(ReleaseType.Major, false);//.SetName("SucceedsInMajor");
+        }
+
+        [Test]
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInMinor")]
+        public void DependencyAdded_FailsInMinor(ReleaseType releaseType, bool errorExpected)
+        {
+            var previousManifestData = GenerateValidManifestData();
+            var projectManifestData = GenerateValidManifestData();
+
+            projectManifestData.dependencies = new Dictionary<string, string>
+            {
+                {"package1", "1.0.0"}
+            };
+            projectManifestData.version = VersionComparisonTestUtilities.VersionForReleaseType(releaseType);
+
+            var messagesExpected = new List<string>
+            { @"Added dependency: ""package1"": ""1.0.0""", "Error: Adding package dependencies requires a new major version."};
+
+            var manifestValidation = SetupTestManifestAndRunValidation(projectManifestData, previousManifestData);
+
+            ExpectResult(errorExpected, manifestValidation, messagesExpected);
+        }
+
+        static IEnumerable<TestCaseData> When_DependencyChangedToDifferentVersion_Cases()
+        {
+            yield return new TestCaseData(ReleaseType.Patch, false, ReleaseType.Minor);
+            yield return new TestCaseData(ReleaseType.Patch, false, ReleaseType.Patch);
+            yield return new TestCaseData(ReleaseType.Minor, false, ReleaseType.Minor);
+            yield return new TestCaseData(ReleaseType.Minor, false, ReleaseType.Patch);
+            yield return new TestCaseData(ReleaseType.Major, false, ReleaseType.Minor);
+            yield return new TestCaseData(ReleaseType.Major, false, ReleaseType.Patch);
+
+            yield return new TestCaseData(ReleaseType.Patch, true, ReleaseType.Major);
+            yield return new TestCaseData(ReleaseType.Minor, true, ReleaseType.Major);
+            yield return new TestCaseData(ReleaseType.Major, false, ReleaseType.Major);
+        }
+
+        [Test]
+        [TestCaseSource("When_DependencyChangedToDifferentVersion_Cases")]
+        public void When_DependencyChangedToDifferentVersion(ReleaseType packageReleaseType, bool errorExpected, ReleaseType dependencyReleaseType)
+        {
+            var previousManifestData = GenerateValidManifestData();
+            var projectManifestData = GenerateValidManifestData();
+
+            previousManifestData.dependencies = new Dictionary<string, string>
+            {
+                { "package1", "0.0.1" }
+            };
+            projectManifestData.dependencies = new Dictionary<string, string>
+            {
+                { "package1", VersionComparisonTestUtilities.VersionForReleaseType(dependencyReleaseType) }
+            };
+            projectManifestData.version = VersionComparisonTestUtilities.VersionForReleaseType(packageReleaseType);
+
+            var messagesExpected = new List<string>
+            { String.Format(@"Error: Dependency major versions may only change in major releases. ""package1"": ""0.0.1"" -> ""{0}""", projectManifestData.dependencies["package1"]) };
+
+            var manifestValidation = SetupTestManifestAndRunValidation(projectManifestData, previousManifestData);
+
+            ExpectResult(errorExpected, manifestValidation, messagesExpected);
+        }
+
+        [Test]
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInPatch")]
+        public void DependencyRemoved_FailsInPatch(ReleaseType releaseType, bool errorExpected)
+        {
+            var previousManifestData = GenerateValidManifestData();
+            var projectManifestData = GenerateValidManifestData();
+
+            previousManifestData.dependencies = new Dictionary<string, string>
+            {
+                { "package1","0.0.1" }
+            };
+            projectManifestData.version = VersionComparisonTestUtilities.VersionForReleaseType(releaseType);
+
+            var messagesExpected = new List<string>
+            { @"Error: Removing dependencies is not forwards-compatible and requires a new major or minor version. Removed dependency: package1" };
+
+            var manifestValidation = SetupTestManifestAndRunValidation(projectManifestData, previousManifestData);
+
+            ExpectResult(errorExpected, manifestValidation, messagesExpected);
+        }
+
+        [Test]
+        public void InvalidDependencyVersionString_Fails()
+        {
+            var projectManifestData = GenerateValidManifestData();
+            projectManifestData.dependencies = new Dictionary<string, string>
+            {
+                { "package1","0.0.a" }
+            };
+
+            var messagesExpected = new List<string>
+            { @"Error: Invalid version number in dependency ""package1"" : ""0.0.a""" };
+
+            var manifestValidation = SetupTestManifestAndRunValidation(projectManifestData);
+
+            ExpectResult(true, manifestValidation, messagesExpected);
+        }
+
+        private static void ExpectResult(bool errorExpected, ManifestValidation manifestValidation, List<string> messagesExpected)
+        {
+            if (errorExpected)
+            {
+                Assert.AreEqual(TestState.Failed, manifestValidation.TestState);
+                Assert.That(manifestValidation.TestOutput, Is.EquivalentTo(messagesExpected));
+            }
+            else
+                Assert.AreEqual(TestState.Succeeded, manifestValidation.TestState);
+        }
+
+        private ManifestValidation SetupTestManifestAndRunValidation(VettingContext.ManifestData projectManifestData, VettingContext.ManifestData previousManifestData = null)
+        {
+            CreateAndWriteManifest(projectManifestData, "Project");
+            if (previousManifestData != null)
+                CreateAndWriteManifest(previousManifestData, "Previous");
 
             var manifestValidation = new ManifestValidation();
-            manifestValidation.Context = PrepareVettingContext(packageJsonPath);
+            var vettingContext = new VettingContext
+            {
+                ProjectPackageInfo = projectManifestData,
+                PublishPackageInfo = projectManifestData,
+                PreviousPackageInfo = previousManifestData
+            };
+            manifestValidation.Context = vettingContext;
             manifestValidation.Setup();
             manifestValidation.RunTest();
 
             return manifestValidation;
         }
 
+        private void CreateAndWriteManifest(VettingContext.ManifestData projectManifestData, string directoryName)
+        {
+            //var packageJsonPath = Path.Combine(testDirectory, Path.Combine(directoryName, "package.json"));
+            var packageJsonPath = Path.Combine(testDirectory + directoryName, "package.json");
+            Directory.CreateDirectory(Path.GetDirectoryName(packageJsonPath));
+            var contents = JsonUtility.ToJson(projectManifestData);
+            var deps = string.Join(",\n",
+                projectManifestData.dependencies.Select(d => string.Format("\"{0}\":\"{1}\"", d.Key, d.Value)).ToArray());
+            contents.Insert(contents.LastIndexOf("}"), @"""dependencies"": { " + deps +" }");
+            File.WriteAllText(packageJsonPath, contents);
+            projectManifestData.path = packageJsonPath;
+        }
+
         private VettingContext.ManifestData GenerateValidManifestData()
         {
             return new VettingContext.ManifestData()
             {
+                displayName = "My Test Package",
                 name = "com.unity.mytestpackage",
-                version = "0.1.1-preview",
+                version = "0.0.1-preview",
                 unity = UnityEngine.Application.unityVersion.Substring(0, UnityEngine.Application.unityVersion.LastIndexOf(".")),
                 description = "This is a test description which needs to be long enough so the test passes."
             };
-        }
-
-        private VettingContext PrepareVettingContext(string packagePath)
-        {
-            var packageJsonPath = Path.Combine(testDirectory, "package.json");
-            var packageJson = File.ReadAllText(packageJsonPath);
-            VettingContext.ManifestData manifestData = null;
-            try
-            {
-                manifestData = JsonUtility.FromJson<VettingContext.ManifestData>(packageJson);
-            }
-            catch (Exception)
-            {
-            }
-            
-            var vettingContext = new VettingContext
-            {
-                ProjectPackageInfo = manifestData,
-                PublishPackageInfo = manifestData,
-                PreviousPackageInfo = manifestData
-            };
-
-            if (manifestData != null)
-            {
-                vettingContext.ProjectPackageInfo.path = packagePath;
-                vettingContext.PublishPackageInfo.path = packagePath;
-                vettingContext.PreviousPackageInfo.path = packagePath;
-            }
-            
-            return vettingContext;
         }
     }
 }

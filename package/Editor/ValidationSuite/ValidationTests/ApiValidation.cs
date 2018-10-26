@@ -1,18 +1,13 @@
 ﻿#if UNITY_2018_1_OR_NEWER
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading;
+using Semver;
 using Unity.APIComparison.Framework.Changes;
 using Unity.APIComparison.Framework.Collectors;
 using UnityEditor.Compilation;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
@@ -32,7 +27,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         public ApiValidation(ApiValidationAssemblyInformation apiValidationAssemblyInformation)
             :this()
         {
-            this.assemblyInformation = apiValidationAssemblyInformation;
+            assemblyInformation = apiValidationAssemblyInformation;
         }
 
         public ApiValidationAssemblyInformation ApiValidationAssemblyInformation
@@ -40,75 +35,98 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             get { return assemblyInformation; }
         }
 
-        private void Error(string message)
+        public class AssemblyInfo
         {
-            this.TestOutput.Add("Error: " + message);
-            TestState = TestState.Failed;
+            public readonly Assembly assembly;
+            public readonly AssemblyDefinition assemblyDefinition;
+            public readonly string asmdefPath;
+
+            public AssemblyInfo(Assembly assembly, string asmdefPath)
+            {
+                this.assembly = assembly;
+                this.asmdefPath = asmdefPath;
+                assemblyDefinition = JsonUtility.FromJson<AssemblyDefinition>(File.ReadAllText(asmdefPath));
+            }
         }
 
-        private void CheckAsmdefs(HashSet<string> files, Assembly[] assemblies, out List<string> assemblyDefinitionFilePaths)
+        private AssemblyInfo[] GetAndCheckAsmdefs(HashSet<string> files)
         {
-            assemblyDefinitionFilePaths = new List<string>();
             var previousAssemblyDefinitions = GetAssemblyDefinitionDataInFolder(Context.PreviousPackageInfo.path);
-            var versionChangeType = DetermineVersionChangeType();
-            foreach (var assembly in assemblies)
+            var versionChangeType = Context.VersionChangeType;
+
+
+            var allAssemblyInfo = CompilationPipeline.GetAssemblies().Select(AssemblyInfoFromAssembly).Where(a => a != null).ToArray();
+
+            var badAssemblyInfo = allAssemblyInfo.Where(a => !a.asmdefPath.StartsWith(Context.ProjectPackageInfo.path)).ToArray();
+            foreach (var badFilePath in badAssemblyInfo.SelectMany(a => a.assembly.sourceFiles).Where(files.Contains))
+                Error(string.Format("Script \"{0}\" is not included by any asmdefs in the package.", badFilePath));
+
+            var relevantAssemblyInfo = files.Where(f => string.Equals(Path.GetExtension(f), ".asmdef", StringComparison.OrdinalIgnoreCase))
+                .Select(f => AssemblyInfoFromAsmdefPath(f, allAssemblyInfo))
+                .ToArray();
+
+            foreach (var assemblyInfo in relevantAssemblyInfo)
             {
-                var assemblyDefinitionFilePath = Path.GetFullPath(CompilationPipeline.GetAssemblyDefinitionFilePathFromAssemblyName(assembly.name));
-                if (!assemblyDefinitionFilePath.StartsWith(Context.ProjectPackageInfo.path))
+                //assembly is in the package
+                var previousAssemblyDefinition = previousAssemblyDefinitions.FirstOrDefault(ad => DoAssembliesMatch(ad, assemblyInfo.assemblyDefinition));
+                if (previousAssemblyDefinition == null)
+                    continue; //new asmdefs are fine
+                
+                var excludePlatformsDiff = string.Format("Was:\"{0}\" Now:\"{1}\"",
+                    string.Join(", ", previousAssemblyDefinition.excludePlatforms),
+                    string.Join(", ", assemblyInfo.assemblyDefinition.excludePlatforms));
+                if (previousAssemblyDefinition.excludePlatforms.Any(p => !assemblyInfo.assemblyDefinition.excludePlatforms.Contains(p)) &&
+                    versionChangeType == VersionChangeType.Patch)
+                    Error("Removing from excludePlatfoms requires a new minor or major version. " + excludePlatformsDiff);
+                else if (assemblyInfo.assemblyDefinition.excludePlatforms.Any(p =>
+                                !previousAssemblyDefinition.excludePlatforms.Contains(p)) &&
+                            (versionChangeType == VersionChangeType.Patch || versionChangeType == VersionChangeType.Minor))
+                    Error("Adding to excludePlatforms requires a new major version. " + excludePlatformsDiff);
+
+                var includePlatformsDiff = string.Format("Was:\"{0}\" Now:\"{1}\"",
+                    string.Join(", ", previousAssemblyDefinition.includePlatforms),
+                    string.Join(", ", assemblyInfo.assemblyDefinition.includePlatforms));
+                if (previousAssemblyDefinition.includePlatforms.Any(p => !assemblyInfo.assemblyDefinition.includePlatforms.Contains(p)) &&
+                    (versionChangeType == VersionChangeType.Patch || versionChangeType == VersionChangeType.Minor))
+                    Error("Removing from includePlatfoms requires a new major version. " + includePlatformsDiff);
+                else if (assemblyInfo.assemblyDefinition.includePlatforms.Any(p => !previousAssemblyDefinition.includePlatforms.Contains(p)))
                 {
-                    foreach (var file in assembly.sourceFiles.Where(files.Contains))
-                        Error(string.Format("Script \"{0}\" is not included by any asmdefs in the package.", file));
-                }
-                else
-                {
-                    //assembly is in the package
-                    assemblyDefinitionFilePaths.Add(assemblyDefinitionFilePath);
-
-                    var previousAssemblyDefinition = previousAssemblyDefinitions.FirstOrDefault(ad => DoAssembliesMatch(ad, assembly));
-                    if (previousAssemblyDefinition == null)
-                        continue; //new asmdefs are fine
-
-                    var projectAssemblyDefinition = Utilities.GetDataFromJson<AssemblyDefinition>(assemblyDefinitionFilePath);
-                    var excludePlatformsDiff = string.Format("Was:\"{0}\" Now:\"{1}\"",
-                        string.Join(", ", previousAssemblyDefinition.excludePlatforms),
-                        string.Join(", ", projectAssemblyDefinition.excludePlatforms));
-                    if (previousAssemblyDefinition.excludePlatforms.Any(p => !projectAssemblyDefinition.excludePlatforms.Contains(p)) &&
-                        versionChangeType == VersionChangeType.Patch)
-                        Error("Removing from excludePlatfoms requires a new minor or major version. " + excludePlatformsDiff);
-                    else if (projectAssemblyDefinition.excludePlatforms.Any(p =>
-                                 !previousAssemblyDefinition.excludePlatforms.Contains(p)) &&
-                             (versionChangeType == VersionChangeType.Patch || versionChangeType == VersionChangeType.Minor))
-                        Error("Adding to excludePlatforms requires a new major version. " + excludePlatformsDiff);
-
-                    var includePlatformsDiff = string.Format("Was:\"{0}\" Now:\"{1}\"",
-                        string.Join(", ", previousAssemblyDefinition.includePlatforms),
-                        string.Join(", ", projectAssemblyDefinition.includePlatforms));
-                    if (previousAssemblyDefinition.includePlatforms.Any(p => !projectAssemblyDefinition.includePlatforms.Contains(p)) &&
-                        (versionChangeType == VersionChangeType.Patch || versionChangeType == VersionChangeType.Minor))
-                        Error("Removing from includePlatfoms requires a new major version. " + includePlatformsDiff);
-                    else if (projectAssemblyDefinition.includePlatforms.Any(p =>
-                                 !previousAssemblyDefinition.includePlatforms.Contains(p)))
-                    {
-                        if (versionChangeType == VersionChangeType.Patch)
-                            Error("Adding to includePlatforms requires a new minor or major version. " + includePlatformsDiff);
-                        else if (previousAssemblyDefinition.includePlatforms.Length == 0 && versionChangeType == VersionChangeType.Minor)
-                            Error("Adding the first entry in inlcudePlatforms requires a new major version. " + includePlatformsDiff);
-                    }
-                             
+                    if (previousAssemblyDefinition.includePlatforms.Length == 0 && 
+                        (versionChangeType == VersionChangeType.Minor || versionChangeType == VersionChangeType.Patch))
+                        Error("Adding the first entry in inlcudePlatforms requires a new major version. " + includePlatformsDiff);
+                    else if (versionChangeType == VersionChangeType.Patch)
+                        Error("Adding to includePlatforms requires a new minor or major version. " + includePlatformsDiff);
                 }
             }
 
             CheckForAsmdefsNotIncludedInEditor();
+            return relevantAssemblyInfo;
         }
 
-        private bool DoAssembliesMatch(AssemblyDefinition assemblyDefinition, Assembly assembly)
+        private AssemblyInfo AssemblyInfoFromAsmdefPath(string asmdefPath, AssemblyInfo[] allAssemblyInfo)
         {
-            return assemblyInformation.GetAssemblyName(assemblyDefinition, true).Equals(assemblyInformation.GetAssemblyName(assembly, false));
+            AssemblyInfo existingInfo = allAssemblyInfo.FirstOrDefault(ai => ai.asmdefPath == asmdefPath);
+            return existingInfo ?? new AssemblyInfo(null, asmdefPath);
+        }
+
+        private AssemblyInfo AssemblyInfoFromAssembly(Assembly assembly)
+        {
+            var path = CompilationPipeline.GetAssemblyDefinitionFilePathFromAssemblyName(assembly.name);
+            if (string.IsNullOrEmpty(path))
+                return null;
+
+            var asmdefPath = Path.GetFullPath(path);
+            return new AssemblyInfo(assembly, asmdefPath);
+        }
+
+        private bool DoAssembliesMatch(AssemblyDefinition assemblyDefinition1, AssemblyDefinition assemblyDefinition2)
+        {
+            return assemblyInformation.GetAssemblyName(assemblyDefinition1, true).Equals(assemblyInformation.GetAssemblyName(assemblyDefinition2, false));
         }
 
         private void CheckForAsmdefsNotIncludedInEditor()
         {
-            var assemblyDefinitions = GetAssemblyDefinitionDataInFolder(this.Context.ProjectPackageInfo.path);
+            var assemblyDefinitions = GetAssemblyDefinitionDataInFolder(Context.ProjectPackageInfo.path);
             foreach (var assemblyDefinition in assemblyDefinitions)
             {
                 if (assemblyDefinition.includePlatforms.Any() &&
@@ -130,8 +148,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         protected override void Run()
         {
             TestState = TestState.Succeeded;
-            var packagePath = this.Context.ProjectPackageInfo.path;
-            var files = new HashSet<string>(Directory.GetFiles(packagePath, "*", SearchOption.AllDirectories).Select(Utilities.GetNormalizedRelativePath));
+            var packagePath = Context.ProjectPackageInfo.path;
+            var files = new HashSet<string>(Directory.GetFiles(packagePath, "*", SearchOption.AllDirectories).Select(Path.GetFullPath));
 
             //does it compile?
             if (EditorUtility.scriptCompilationFailed)
@@ -148,49 +166,40 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
             if (Context.PreviousPackageInfo == null)
             {
-                this.TestOutput.Add("No previous package version. Skipping Semantic Versioning checks.");
+                TestOutput.Add("No previous package version. Skipping Semantic Versioning checks.");
                 return;
             }
 
             //does it have asmdefs for all scripts?
-            List<string> assemblyDefinitionFilePaths;
-            var assemblies = GetRelevantAssemblies(files);
-            CheckAsmdefs(files, assemblies, out assemblyDefinitionFilePaths);
+            var assemblies = GetAndCheckAsmdefs(files);
 
-            CheckApiDiff(assemblies, files);
+            CheckApiDiff(assemblies);
 
             //Run analyzers
         }
 
-        private static Assembly[] GetRelevantAssemblies(HashSet<string> files)
-        {
-            return CompilationPipeline.GetAssemblies().Where(a => a.sourceFiles.Any(files.Contains)).ToArray();
-        }
-
+        [Serializable]
         class AssemblyChange
         {
-            public List<IEntityChange> apiChanges = new List<IEntityChange>();
+            public string assemblyName;
+            public List<EntityChangeBase> apiChanges = new List<EntityChangeBase>();
         }
 
+        [Serializable]
         class ApiDiff
         {
-            public List<string> missingAssemblies;
-            public Dictionary<string, ApiValidation.AssemblyChange> assemblyChanges;
+            public List<string> missingAssemblies = new List<string>();
+            public List<string> newAssemblies = new List<string>();
+            public List<AssemblyChange> assemblyChanges = new List<AssemblyChange>();
             public int breakingChanges;
             public int additions;
             public int removedAssemblyCount;
-
-            public ApiDiff()
-            {
-                missingAssemblies = new List<string>();
-                assemblyChanges = new Dictionary<string, ApiValidation.AssemblyChange>();
-            }
         }
 
-        private void CheckApiDiff(Assembly[] assemblies, IEnumerable<string> filesInPackage)
+        private void CheckApiDiff(AssemblyInfo[] assemblyInfo)
         {
-            ApiValidation.ApiDiff diff = new ApiValidation.ApiDiff();
-            var assembliesForPackage = NonTestAssembliesForPackage(assemblies, filesInPackage).ToArray();
+            var diff = new ApiDiff();
+            var assembliesForPackage = assemblyInfo.Where(a => !assemblyInformation.IsTestAssembly(a)).ToArray();
             if (Context.PreviousPackageBinaryDirectory == null)
             {
                 Error("Previous package binaries must be present on artifactory to do API diff.");
@@ -200,34 +209,41 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             var oldAssemblyPaths = Directory.GetFiles(Context.PreviousPackageBinaryDirectory, "*.dll");
 
             //Build diff
-            foreach (var currentAssembly in assembliesForPackage)
+            foreach (var info in assembliesForPackage)
             {
-                var currentAssemblyFilename = Path.GetFileName(currentAssembly.outputPath);
                 var oldAssemblyPath = oldAssemblyPaths.FirstOrDefault(p =>
-                    Path.GetFileName(p) == currentAssemblyFilename);
+                    Path.GetFileNameWithoutExtension(p) == info.assemblyDefinition.name);
 
-                var assemblyChange = new ApiValidation.AssemblyChange
+                if (info.assembly != null)
                 {
-                    apiChanges = APIChangesCollector.Collect(oldAssemblyPath, currentAssembly.outputPath).ToList()
-                };
+                    var assemblyChange = new AssemblyChange
+                    {
+                        assemblyName = info.assembly.name,
+                        apiChanges = APIChangesCollector.Collect(oldAssemblyPath, info.assembly.outputPath).Cast<EntityChangeBase>().ToList()
+                    };
 
-                diff.assemblyChanges[currentAssemblyFilename] = assemblyChange;
+                    if (assemblyChange.apiChanges.Count > 0)
+                        diff.assemblyChanges.Add(assemblyChange);
+                }
+
+                if (oldAssemblyPath == null)
+                    diff.newAssemblies.Add(info.assemblyDefinition.name);
             }
 
             foreach (var oldAssemblyPath in oldAssemblyPaths)
             {
-                var oldAssemblyFilename = Path.GetFileName(oldAssemblyPath);
-                if (assembliesForPackage.All(a => Path.GetFileName(a.outputPath) != oldAssemblyFilename))
-                    diff.missingAssemblies.Add(oldAssemblyFilename);
+                var oldAssemblyName = Path.GetFileNameWithoutExtension(oldAssemblyPath);
+                if (assembliesForPackage.All(a => a.assemblyDefinition.name != oldAssemblyName))
+                    diff.missingAssemblies.Add(oldAssemblyName);
             }
 
             //separate changes
-            var allChanges = diff.assemblyChanges.Values.SelectMany(v => v.apiChanges).SelectMany(c => c.Changes).ToList();
+            var allChanges = diff.assemblyChanges.SelectMany(v => v.apiChanges).SelectMany(c => c.Changes).ToList();
             diff.additions = allChanges.Count(c => c.IsAdd());
             diff.removedAssemblyCount = diff.missingAssemblies.Count;
             diff.breakingChanges = allChanges.Count - diff.additions;
 
-            this.TestOutput.Add(String.Format("API Diff - Breaking changes: {0} Additions: {1} Missing Assemblies: {2}", 
+            TestOutput.Add(String.Format("API Diff - Breaking changes: {0} Additions: {1} Missing Assemblies: {2}", 
                 diff.breakingChanges,
                 diff.additions,
                 diff.removedAssemblyCount));
@@ -238,15 +254,15 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
             //Figure out type of version change (patch, minor, major)
             //Error if changes are not allowed
-            var changeType = DetermineVersionChangeType();
+            var changeType = Context.VersionChangeType;
 
-            if (changeType == VersionChangeType.Invalid)
+            if (changeType == VersionChangeType.Unknown)
                 return;
             if (diff.breakingChanges > 0 && changeType != VersionChangeType.Major)
-                Error("Breaking changes require a new major version");
+                Error("Breaking changes require a new major version.");
             if (diff.additions > 0 && changeType == VersionChangeType.Patch)
-                Error("Additions require a new minor or major version");
-            if (diff.removedAssemblyCount > 0 && changeType != VersionChangeType.Major)
+                Error("Additions require a new minor or major version.");
+            if (changeType != VersionChangeType.Major)
             {
                 foreach (var assembly in diff.missingAssemblies)
                 {
@@ -254,43 +270,15 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                         "Assembly \"{0}\" no longer exists or is no longer included in build. This requires a new major version.", assembly));
                 }
             }
+            if (changeType == VersionChangeType.Patch)
+            {
+                foreach (var assembly in diff.newAssemblies)
+                {
+                    Error(string.Format(
+                        "New assembly \"{0}\" may only be added in a new minor or major version.", assembly));
+                }
+            }
         }
-
-        private IEnumerable<Assembly> NonTestAssembliesForPackage(Assembly[] assemblies, IEnumerable<string> filesInPackage)
-        {
-            return Utilities.AssembliesForPackage(assemblies, filesInPackage).Where(a => !ApiValidationAssemblyInformation.IsTestAssembly(a, false));
-        }
-
-        private VersionChangeType DetermineVersionChangeType()
-        {
-            var prevVersion = Semver.SemVersion.Parse(this.Context.PreviousPackageInfo.version);
-            var curVersion = Semver.SemVersion.Parse(this.Context.ProjectPackageInfo.version);
-
-            if (curVersion.Major > prevVersion.Major)
-                return VersionChangeType.Major;
-            if (curVersion.Major < prevVersion.Major)
-                throw new ArgumentException("Previous version number comes after current version number");
-            if (curVersion.Minor > prevVersion.Minor)
-                return VersionChangeType.Minor;
-            if (curVersion.Minor < prevVersion.Minor)
-                throw new ArgumentException("Previous version number comes after current version number");
-            if (curVersion.Patch > prevVersion.Patch)
-                return VersionChangeType.Patch;
-            if (curVersion.Patch < prevVersion.Patch)
-                throw new ArgumentException("Previous version number comes after current version number");
-
-            Error("Previous version number" + this.Context.PreviousPackageInfo.version + " is the same major/minor/patch version as the current package " + this.Context.ProjectPackageInfo.version);
-
-            return VersionChangeType.Invalid;
-        }
-    }
-
-    internal enum VersionChangeType
-    {
-        Patch,
-        Minor,
-        Major,
-        Invalid
     }
 }
 

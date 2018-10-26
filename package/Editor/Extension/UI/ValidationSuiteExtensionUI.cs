@@ -135,6 +135,12 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
         {
             ValidationSuite.RunAssetStoreValidationSuite("Graph & Charts", "5.3", "data/pkg1", "data/pkg2");
         }
+
+        [MenuItem("internal:Packages/Test AssetStore Validation no Previous")]
+        internal static void TestAssetStoreValidationNoPrevious()
+        {
+            ValidationSuite.RunAssetStoreValidationSuite("Graph & Charts", "5.3", "data/pkg1");
+        }
     }
 }
 

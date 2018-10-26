@@ -68,7 +68,12 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         private static string Get7zPath()
         {
-            string zipper = EditorApplication.applicationContentsPath + "/Tools/7z.exe";
+#if UNITY_EDITOR_OSX
+            string execFilename = "7za";
+#else
+            string execFilename = "7z.exe";
+#endif
+            string zipper = EditorApplication.applicationContentsPath + "/Tools/" + execFilename;
             if (!File.Exists(zipper))
                 throw new FileNotFoundException("Could not find " + zipper);
             return zipper;

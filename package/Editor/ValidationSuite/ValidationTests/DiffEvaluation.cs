@@ -54,6 +54,13 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
         public void GenerateReport(string outputPath, VettingContext.ManifestData package1, VettingContext.ManifestData package2)
         {
+            // no previous package was found.
+            if (Context.PreviousPackageInfo == null)
+            {
+                TestState = TestState.NotRun;
+                return;
+            }
+
             var compareData = new PackageCompareData();
 
             compareData.TreeOutput.AppendLine("<" + package1.name + ">");

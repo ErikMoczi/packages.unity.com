@@ -149,8 +149,10 @@ namespace UnityEditor.PackageManager.ValidationSuite
             process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.WorkingDirectory = workingPath;
-            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
             process.Start();
+
+            var processLog = process.StandardError.ReadToEnd();
 
             //Wait 10 minutes for pack to happen
             process.WaitForExit(1000*60*10);
@@ -159,9 +161,10 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 process.Kill();
                 throw new TimeoutException("Creating package failed...");
             }
-                
+
+            
             if(process.ExitCode != 0)
-                throw new ApplicationException("Creating package failed.");
+                throw new ApplicationException(string.Format("Creating package failed.\n{0}", processLog));
 
             var extractedPackagePath = Path.Combine(modulePath, packageName);
             if(!Directory.Exists(extractedPackagePath))
@@ -197,6 +200,9 @@ namespace UnityEditor.PackageManager.ValidationSuite
             var assemblyNames = new HashSet<string>();
             foreach (var path in filesInPackage)
             {
+                if (!string.Equals(Path.GetExtension(path), ".cs", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
                 var assemblyName = CompilationPipeline.GetAssemblyNameFromScriptPath(path);
                 if (assemblyName != null)
                     assemblyNames.Add(assemblyName.Replace(".dll", ""));

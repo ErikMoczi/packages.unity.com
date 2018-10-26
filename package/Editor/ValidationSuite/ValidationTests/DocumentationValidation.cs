@@ -15,6 +15,14 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             SupportedValidations = new[] { ValidationType.PackageManager };
         }
 
+        internal static string ShortVersionId(string packageName, SemVersion version)
+        {
+            var shortVersion = string.Format("{0}.{1}", version.Major, version.Minor);
+            var shortVersionId = string.Format("{0}@{1}", packageName.ToLower(), shortVersion);
+
+            return shortVersionId;
+        }
+
         protected override void Run()
         {
             // TODO:  Add check for local feature doc.
@@ -29,7 +37,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 return;
             }
 
-            var version = string.Format("{0}@{1}", Context.ProjectPackageInfo.name.ToLower(), packageJsonVersion.ShortVersion());
+            var version = ShortVersionId(Context.ProjectPackageInfo.name, packageJsonVersion);
             var url = string.Format("https://docs.unity3d.com/Packages/{0}/index.html", version);
 
             var request = HttpWebRequest.Create(url) as HttpWebRequest;
@@ -48,10 +56,18 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
             catch (WebException e)
             {
-                TestState = TestState.Failed;
-                TestOutput.Add("Couldn't find a documentation website for this package.  Please contact the docs team to ensure a site is up before you publish to production.");
-                TestOutput.Add("Expected Website: " + url);
-                TestOutput.Add(e.Message);
+                if (!Context.ProjectPackageInfo.IsPreview)
+                {
+                    TestState = TestState.Failed;
+                    TestOutput.Add(
+                        "Couldn't find a documentation website for this package.  Please contact the docs team to ensure a site is up before you publish to production.");
+                    TestOutput.Add("Expected Website: " + url);
+                    TestOutput.Add(e.Message);
+                }
+                else
+                {
+                    TestOutput.Add("Warning: this package contains no web based documentation, which is required before it can be removed from \"Preview\".  Contact the documentation team for assistance.");
+                }
             }
         }
     }

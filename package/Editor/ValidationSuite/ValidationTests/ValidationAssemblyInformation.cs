@@ -26,14 +26,13 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             this.projectAssemblyNameOverride = projectAssemblyNameOverride;
         }
 
-        public bool IsTestAssembly(Assembly assembly, bool isPrevious)
+        public bool IsTestAssembly(ApiValidation.AssemblyInfo assembly)
         {
-            if (isPrevious && isPreviousPackageTestOverride.HasValue)
-                return isPreviousPackageTestOverride.Value;
-            if (!isPrevious && isProjectPackageTestOverride.HasValue)
+            if (isProjectPackageTestOverride.HasValue)
                 return isProjectPackageTestOverride.Value;
 
-            return Utilities.IsTestAssembly(assembly);
+            return assembly.assemblyDefinition.references.Contains("TestAssemblies") ||
+                   assembly.assemblyDefinition.optionalUnityReferences.Contains("TestAssemblies");
         }
 
         public string GetAssemblyName(Assembly assembly, bool isPrevious)

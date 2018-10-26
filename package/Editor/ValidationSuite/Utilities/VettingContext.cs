@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Remoting.Contexts;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Semver;
 using UnityEditor;
@@ -9,6 +12,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 using UnityEditor.PackageManager.ValidationSuite;
+using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
 
 public enum ValidationType
 {
@@ -29,6 +33,12 @@ internal class VettingContext
         public string description = "";
         public string unity = "";
         public string version = "";
+        public Dictionary<string, string> dependencies = new Dictionary<string, string>();
+
+        public bool IsPreview
+        {
+            get { return version.ToLower().Contains("-preview"); }
+        }
     }
 
     public ManifestData ProjectPackageInfo { get; set; }
@@ -77,11 +87,36 @@ internal class VettingContext
         VettingContext context = new VettingContext();
 		context.ProjectPackageInfo = new ManifestData () { path = packagePath };
 		context.PublishPackageInfo = new ManifestData () { path = packagePath };
-		context.PreviousPackageInfo = new ManifestData () { path = previousPackagePath };
+		context.PreviousPackageInfo = string.IsNullOrEmpty(previousPackagePath) ? null : new ManifestData () { path = previousPackagePath };
         context.ValidationType = ValidationType.AssetStore;
         return context;
     }
 
+    public VersionChangeType VersionChangeType
+    {
+        get
+        {
+            if (PreviousPackageInfo == null || PreviousPackageInfo.version == null ||
+                PreviousPackageInfo == null || PreviousPackageInfo.version == null)
+            {
+                return VersionChangeType.Unknown;
+            }
+            var prevVersion = SemVersion.Parse(PreviousPackageInfo.version);
+            var curVersion = SemVersion.Parse(ProjectPackageInfo.version);
+
+            if (curVersion.CompareByPrecedence(prevVersion) < 0)
+                throw new ArgumentException("Previous version number comes after current version number");
+
+            if (curVersion.Major > prevVersion.Major)
+                return VersionChangeType.Major;
+            if (curVersion.Minor > prevVersion.Minor)
+                return VersionChangeType.Minor;
+            if (curVersion.Patch > prevVersion.Patch)
+                return VersionChangeType.Patch;
+
+            throw new ArgumentException("Previous version number" + PreviousPackageInfo.version + " is the same major/minor/patch version as the current package " + ProjectPackageInfo.version);
+        }
+    }
 
     private static ManifestData GetManifest(string packagePath)
     {
@@ -97,8 +132,25 @@ internal class VettingContext
         var textManifestData = File.ReadAllText(manifestPath);
         var manifest = JsonUtility.FromJson<ManifestData>(textManifestData);
         manifest.path = packagePath;
+        manifest.dependencies = ParseDictionary(textManifestData, "dependencies");
 
         return manifest;
+    }
+
+    private static Dictionary<string, string> ParseDictionary(string json, string key)
+    {
+        string minified = new Regex("[\"\\s]").Replace(json, "");
+        var regex = new Regex(key + ":{(.*?)}");
+        MatchCollection matches = regex.Matches(minified);
+        if (matches.Count == 0)
+            return new Dictionary<string, string>();
+
+        string match = matches[0].Groups[1].Value;    // Group 0 is full match, group 1 is capture group
+        if (match.Length == 0)                        // Found empty dictionary {}
+            return new Dictionary<string, string>();
+
+        string[] keyValuePairs = match.Split(',');
+        return keyValuePairs.Select(kvp => kvp.Split(':')).ToDictionary(k => k[0], v => v[1]);
     }
 
     private static string PublishPackage(string projectPackagePath)
@@ -142,9 +194,11 @@ internal class VettingContext
                     Utilities.ExtractPackage(packageName, tempPath, previousPackagePath, projectPackageInfo.name);
                     return previousPackagePath;
                 }
-                catch (Exception)
+                catch (Exception exception)
                 {
-                    EditorUtility.DisplayDialog("Data", "Failed", "ok");
+                    // Failing to fetch when there is no prior version, which is an accepted case.
+                    if (exception.Message != "Fetching package failed.")
+                        EditorUtility.DisplayDialog("Data: " + exception.Message, "Failed", "ok");
                 }
             }
         }

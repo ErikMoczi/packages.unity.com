@@ -56,5 +56,11 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
         // This needs to be implemented for every test
         protected abstract void Run();
+
+        protected void Error(string message)
+        {
+            TestOutput.Add("Error: " + message);
+            TestState = TestState.Failed;
+        }
     }
 }
