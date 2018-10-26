@@ -53,6 +53,7 @@ UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderCamera::StaticIniti
 
     UnityXRCameraProvider provider;
     thiz->m_CameraProvider.PopulateCStyleProvider(provider);
+    thiz->m_CameraProvider.OnLifecycleInitialize();
     return thiz->m_UnityInterface->RegisterCameraProvider(handle, &provider);
 }
 

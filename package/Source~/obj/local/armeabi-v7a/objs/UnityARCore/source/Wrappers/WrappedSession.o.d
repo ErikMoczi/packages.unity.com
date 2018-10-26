@@ -1,24 +1,33 @@
 obj/local/armeabi-v7a/objs/UnityARCore/source/Wrappers/WrappedSession.o: \
- jni/../source/Wrappers/WrappedSession.cpp source/Utility.h \
+ jni/../source/Wrappers/WrappedSession.cpp \
+ jni/../source/Wrappers/WrappedSession.h \
  arcore_unity_shim/include/arcore_c_api.h \
- external/Unity/UnityXRTrackable.h external/Unity/UnityXRTypes.h \
- jni/../source/Wrappers/WrappedFrame.h \
- jni/../source/Wrappers/WrappingBase.h \
- /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/gnu-libstdc++/4.9/include/cstddef \
- jni/../source/Wrappers/WrappedSession.h
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/stddef.h \
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/__config \
+ /cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/../../android/support/include/stdint.h \
+ external/Unity/IUnityXRCamera.h external/Unity/UnityXRTypes.h \
+ external/Unity/IUnitySubsystem.h external/Unity/IUnityInterface.h \
+ external/Unity/IUnityRenderingExtensions.h \
+ external/Unity/IUnityGraphics.h
 
-source/Utility.h:
+jni/../source/Wrappers/WrappedSession.h:
 
 arcore_unity_shim/include/arcore_c_api.h:
 
-external/Unity/UnityXRTrackable.h:
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/stddef.h:
+
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/include/__config:
+
+/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/llvm-libc++/../../android/support/include/stdint.h:
+
+external/Unity/IUnityXRCamera.h:
 
 external/Unity/UnityXRTypes.h:
 
-jni/../source/Wrappers/WrappedFrame.h:
+external/Unity/IUnitySubsystem.h:
 
-jni/../source/Wrappers/WrappingBase.h:
+external/Unity/IUnityInterface.h:
 
-/cygdrive/c/Users/timm/android-ndk_auto-r13b/sources/cxx-stl/gnu-libstdc++/4.9/include/cstddef:
+external/Unity/IUnityRenderingExtensions.h:
 
-jni/../source/Wrappers/WrappedSession.h:
+external/Unity/IUnityGraphics.h:
