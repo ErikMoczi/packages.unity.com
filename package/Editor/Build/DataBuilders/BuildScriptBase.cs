@@ -44,7 +44,7 @@ namespace UnityEditor.AddressableAssets
                 foreach (var a in entries)
                 {
                     string providerId = a.IsScene ? typeof(SceneProvider).FullName : typeof(LegacyResourcesProvider).FullName;
-                    locations.Add(new ContentCatalogDataEntry(a.AssetPath, providerId, a.CreateKeyList()));
+                    locations.Add(new ContentCatalogDataEntry(a.GetAssetLoadPath(false), providerId, a.CreateKeyList()));
                     if (!a.IsScene)
                         needsLegacyProvider = true;
                 }
