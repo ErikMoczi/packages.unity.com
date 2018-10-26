@@ -63,14 +63,14 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
             ValidationResults.text = string.Empty;
 
             if (ValidationSuiteReport.ReportExists(PackageId))
-				ViewResultsButton.RemoveFromClassList("display-none");
-			else
-            	ViewResultsButton.AddToClassList("display-none");
+                ViewResultsButton.RemoveFromClassList("display-none");
+            else
+                ViewResultsButton.AddToClassList("display-none");
 
             if (ValidationSuiteReport.DiffsReportExists(PackageId))
-				ViewDiffButton.RemoveFromClassList("display-none");
-			else
-            	ViewDiffButton.AddToClassList("display-none");
+                ViewDiffButton.RemoveFromClassList("display-none");
+            else
+                ViewDiffButton.AddToClassList("display-none");
 
             root.style.backgroundColor = Color.gray;
         }
@@ -79,13 +79,18 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
         {
             if (root == null)
                 return;
+            
+            // currently supported source to validate include: registry, embedded and local
+            var sourceSupported = CurrentPackageinfo.source == PackageSource.Embedded ||
+                                  CurrentPackageinfo.source == PackageSource.Local ||
+                                  CurrentPackageinfo.source == PackageSource.Registry;
 
-            if (CurrentPackageinfo.status != PackageStatus.Available || (CurrentPackageinfo.source != PackageSource.Embedded && CurrentPackageinfo.source != PackageSource.Registry))
+            if (CurrentPackageinfo.status != PackageStatus.Available || !sourceSupported)
             {
                 EditorUtility.DisplayDialog("Validation Suite", "Install the package in your project to Validate", "Got it")  ;  
             }
 
-            var results = ValidationSuite.RunValidationSuite(PackageId, CurrentPackageinfo.source == PackageSource.Embedded);
+            var results = ValidationSuite.RunValidationSuite(PackageId, CurrentPackageinfo.source);
             ValidationResults.text = results ? "Success" : "Failed";
             ViewResultsButton.visible = ValidationSuiteReport.ReportExists(PackageId);
             ViewDiffButton.visible = ValidationSuiteReport.DiffsReportExists(PackageId);

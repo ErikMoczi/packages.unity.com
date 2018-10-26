@@ -63,7 +63,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
             get { return validationTests.Cast<IValidationTestResult>(); }
         }
 
-        public static bool RunValidationSuite(string packageId, bool isEmbedded = true)
+        public static bool RunValidationSuite(string packageId, PackageSource source)
         {
             var parts = packageId.Split('@');
             var packageName = parts[0];
@@ -73,7 +73,9 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 return false;
 
             var report = new ValidationSuiteReport(packageId, packageName, packageVersion, packagePath);
-            if (!packagePath.StartsWith(Directory.GetCurrentDirectory()) && !packagePath.EndsWith(packageVersion))
+            var validEmbeddedPath = source == PackageSource.Embedded && packagePath.StartsWith(Directory.GetCurrentDirectory());
+            var validRegistryPath = source == PackageSource.Registry && packagePath.EndsWith(packageVersion);
+            if (!(validEmbeddedPath || validRegistryPath || source == PackageSource.Local))
             {
                 report.OutputErrorReport(string.Format("Package version mismatch: expecting \"{0}\" but was \"{1}\"", packageVersion, packagePath));
                 return false;
@@ -81,7 +83,8 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
             try
             {
-				var context = VettingContext.CreatePackmanContext(packagePath, isEmbedded);
+                // publish locally for embedded and local packages
+                var context = VettingContext.CreatePackmanContext(packagePath, source == PackageSource.Embedded || source == PackageSource.Local);
                 var testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletedDelegate, context, report);
                 testSuite.RunSync();
                 return testSuite.testSuiteState == TestState.Succeeded;

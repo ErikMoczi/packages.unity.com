@@ -23,3 +23,7 @@
   flex: 0;
   min-width: 100;
 }
+
+#ValidationSuiteUIContainer #ValidationResultsContainer Button.display-none {
+  min-width: 0;
+}

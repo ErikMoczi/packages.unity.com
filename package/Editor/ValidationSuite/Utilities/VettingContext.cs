@@ -42,7 +42,12 @@ internal class VettingContext
 
         public string Id
         {
-            get { return name + "@" + version; }
+            get { return GetPackageId(name, version); }
+        }
+
+        public static string GetPackageId(string name, string version)
+        {
+            return name + "@" + version;
         }
     }
 
@@ -53,7 +58,7 @@ internal class VettingContext
     public ValidationType ValidationType { get; set; }
     public const string PreviousVersionBinaryPath = "Temp/ApiValidationBinaries";
 
-    public static VettingContext CreatePackmanContext(string packagePath, bool isEmbedded)
+    public static VettingContext CreatePackmanContext(string packagePath, bool publishLocally)
     {
         VettingContext context = new VettingContext();
 
@@ -61,7 +66,7 @@ internal class VettingContext
         context.ProjectPackageInfo = GetManifest(packagePath);
 
         // Then, publish the package locally to get an actual snapshot of what we will publish
-		if (isEmbedded)
+        if (publishLocally)
         {
             var publishPackagePath = PublishPackage(packagePath);
             context.PublishPackageInfo = GetManifest(publishPackagePath);
@@ -90,9 +95,9 @@ internal class VettingContext
     public static VettingContext CreateAssetStoreContext(string packagePath, string previousPackagePath)
     {
         VettingContext context = new VettingContext();
-		context.ProjectPackageInfo = new ManifestData () { path = packagePath };
-		context.PublishPackageInfo = new ManifestData () { path = packagePath };
-		context.PreviousPackageInfo = string.IsNullOrEmpty(previousPackagePath) ? null : new ManifestData () { path = previousPackagePath };
+        context.ProjectPackageInfo = new ManifestData () { path = packagePath };
+        context.PublishPackageInfo = new ManifestData () { path = packagePath };
+        context.PreviousPackageInfo = string.IsNullOrEmpty(previousPackagePath) ? null : new ManifestData () { path = previousPackagePath };
         context.ValidationType = ValidationType.AssetStore;
         return context;
     }
@@ -119,7 +124,7 @@ internal class VettingContext
             if (curVersion.Patch > prevVersion.Patch)
                 return VersionChangeType.Patch;
 
-            throw new ArgumentException("Previous version number" + PreviousPackageInfo.version + " is the same major/minor/patch version as the current package " + ProjectPackageInfo.version);
+            throw new ArgumentException("Previous version number " + PreviousPackageInfo.version + " is the same major/minor/patch version as the current package " + ProjectPackageInfo.version);
         }
     }
 
@@ -172,7 +177,7 @@ internal class VettingContext
 
     private static string GetPreviousPackage(ManifestData projectPackageInfo)
     {
-		#if UNITY_2018_1_OR_NEWER
+        #if UNITY_2018_1_OR_NEWER
 
         // List out available versions for a package.
         var request = Client.Search(projectPackageInfo.name);
@@ -185,27 +190,34 @@ internal class VettingContext
         if (request.Result != null && request.Result.Length > 0)
         {
             var packageInfo = request.Result[0];
-            var previousVersion = packageInfo.versions.compatible.LastOrDefault(v => SemVersion.Parse(v) < SemVersion.Parse(projectPackageInfo.version));
+            var previousVersion = packageInfo.versions.compatible.LastOrDefault(v =>
+            {
+                var v1 = SemVersion.Parse(v);
+                var v2 = SemVersion.Parse(projectPackageInfo.version);
+                // ignore pre-release and build tags when finding previous version
+                return v1 < v2 && !(v1.Major == v2.Major && v1.Minor == v2.Minor && v1.Patch == v2.Patch);
+            });
 
             if (previousVersion != null)
             {
                 try
                 {
+                    var previousPackageId = ManifestData.GetPackageId(projectPackageInfo.name, previousVersion);
                     var tempPath = Path.GetTempPath();
-                    var previousPackagePath = Path.Combine(tempPath, "previous-" + projectPackageInfo.Id);
-                    var packageName = Utilities.DownloadPackage(projectPackageInfo.Id, tempPath);
-                    Utilities.ExtractPackage(packageName, tempPath, previousPackagePath, projectPackageInfo.name);
+                    var previousPackagePath = Path.Combine(tempPath, "previous-" + previousPackageId);
+                    var packageFileName = Utilities.DownloadPackage(previousPackageId, tempPath);
+                    Utilities.ExtractPackage(packageFileName, tempPath, previousPackagePath, projectPackageInfo.name);
                     return previousPackagePath;
                 }
                 catch (Exception exception)
                 {
                     // Failing to fetch when there is no prior version, which is an accepted case.
-                    if (exception.Data["reason"] == "fetchFailed")
+                    if ((string)exception.Data["reason"] == "fetchFailed")
                         EditorUtility.DisplayDialog("Data: " + exception.Message, "Failed", "ok");
                 }
             }
         }
-		#endif
+        #endif
         return string.Empty;
     }
 
@@ -230,7 +242,7 @@ internal class VettingContext
 
         if (request.isHttpError || request.isNetworkError || !PackageBinaryZipping.Unzip(zipPath, PreviousVersionBinaryPath))
         {
-            Debug.Log(String.Format("Could not download binaries for previous package version from {0}. {1}", uri, request.responseCode));
+            Debug.Log(String.Format("Could not download binary assemblies for previous package version from {0}. {1}", uri, request.responseCode));
             PreviousPackageBinaryDirectory = null;
         }
         else

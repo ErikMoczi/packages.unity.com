@@ -118,7 +118,6 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 {
                     if (Process.ExitCode != 0)
                     {
-                        Debug.LogError("Failed to run npm");
                         throw new ApplicationException("Launching npm has failed with command: " + Command + "\nOutput: " + OutputLog + "\nError: " + ErrorLog);
                     }
                 }
