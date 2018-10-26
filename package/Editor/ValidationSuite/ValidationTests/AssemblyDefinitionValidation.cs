@@ -18,7 +18,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestName = "Assembly Definition Validation";
             TestDescription = "Validate Presence and Contents of Assembly Definition Files.";
             TestCategory = TestCategory.ContentScan;
-            SupportedValidations = new[] { ValidationType.PackageManager };
+            SupportedValidations = new[] { ValidationType.CI, ValidationType.LocalDevelopment, ValidationType.Publishing, ValidationType.VerifiedSet };
         }
 
         bool FindValueInArray(string[] array, string value)

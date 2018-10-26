@@ -7,7 +7,7 @@
             TestName = "Signature Validation";
             TestDescription = "Verify that the package has a valid signature associated with it.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] { ValidationType.PackageManager };
+            SupportedValidations = new[] { ValidationType.CI, ValidationType.LocalDevelopment, ValidationType.Publishing, ValidationType.VerifiedSet };
         }
 
         protected override void Run()

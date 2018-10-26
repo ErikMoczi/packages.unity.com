@@ -14,7 +14,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestName = "ChangeLog Validation";
             TestDescription = "Validate Changelog contains entry for given package.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] { ValidationType.PackageManager };
+            SupportedValidations = new[] { ValidationType.CI, ValidationType.LocalDevelopment, ValidationType.Publishing, ValidationType.VerifiedSet };
         }
 
         protected override void Run()

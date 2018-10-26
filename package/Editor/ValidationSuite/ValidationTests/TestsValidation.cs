@@ -12,7 +12,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestName = "Tests Validation";
             TestDescription = "Verify that the package has tests, and that test coverage is good.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] { ValidationType.PackageManager };
+            SupportedValidations = new[] { ValidationType.CI, ValidationType.LocalDevelopment, ValidationType.Publishing };
         }
 
         protected override void Run()

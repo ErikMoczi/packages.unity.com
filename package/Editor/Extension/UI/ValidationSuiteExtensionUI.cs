@@ -41,6 +41,18 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
             ViewDiffButton.clickable.clicked += ViewDiffs;
         }
 
+        [MenuItem("internal:Packages/Validate Embedded Packages")]
+        internal static void TestEmbeddedPackages()
+        {
+            ValidationSuite.ValidateEmbeddedPackages();
+        }
+
+        [MenuItem("internal:Packages/Validate Project Packages")]
+        internal static void TestVerifiedPackages()
+        {
+            ValidationSuite.ValidateVerifiedPackages(ValidationType.VerifiedSet);
+        }
+
         public static bool SourceSupported(PackageSource source)
         {
             return source == PackageSource.Embedded || source == PackageSource.Local || source == PackageSource.Registry;
@@ -77,7 +89,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
                 return;
             }
 
-            var results = ValidationSuite.RunValidationSuite(PackageId, CurrentPackageinfo.source);
+            var results = ValidationSuite.RunValidationSuite(PackageId, ValidationType.LocalDevelopment);
             ValidationResults.text = results ? "Success" : "Failed";
             UIUtils.SetElementDisplay(ViewResultsButton, ValidationSuiteReport.ReportExists(PackageId));
             UIUtils.SetElementDisplay(ViewDiffButton, ValidationSuiteReport.DiffsReportExists(PackageId));

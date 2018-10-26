@@ -63,7 +63,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
         }
 
 #if UNITY_2018_1_OR_NEWER
-        public static bool RunValidationSuite(string packageId, PackageSource source)
+        public static bool RunValidationSuite(string packageId, ValidationType validationType)
         {
             var parts = packageId.Split('@');
             var packageName = parts[0];
@@ -77,18 +77,10 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 return false;
             }
 
-            var validEmbeddedPath = source == PackageSource.Embedded && packagePath.StartsWith(Directory.GetCurrentDirectory());
-            var validRegistryPath = source == PackageSource.Registry && packagePath.EndsWith(packageVersion);
-            if (!(validEmbeddedPath || validRegistryPath || source == PackageSource.Local))
-            {
-                report.OutputErrorReport(string.Format("Package version mismatch: expecting \"{0}\" but was \"{1}\"", packageVersion, packagePath));
-                return false;
-            }
-
             try
             {
                 // publish locally for embedded and local packages
-                var context = VettingContext.CreatePackmanContext(packagePath, source == PackageSource.Embedded || source == PackageSource.Local);
+                var context = VettingContext.CreatePackmanContext(packageId, validationType);
                 var testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletedDelegate, context, report);
 
                 report.Initialize(testSuite.context);
@@ -101,38 +93,69 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 return false;
             }
         }
-        
-        [MenuItem("Tools/Validate Embedded Packages")]
+
         public static void ValidateEmbeddedPackages()
         {
-            var success = true;
+            var packageIdList = new List<string>();
             var directories = Directory.GetDirectories("Packages/", "*", SearchOption.TopDirectoryOnly);
             foreach (var directory in directories)
             {
                 Debug.Log("Starting package validation for " + directory);
-                var packageId = VettingContext.GetManifest(directory).Id;
-                var result = RunValidationSuite(packageId, PackageSource.Embedded);
+                packageIdList.Add(VettingContext.GetManifest(directory).Id);
+            }
+
+            if (packageIdList.Any())
+            {
+                var success = ValidatePackages(packageIdList, ValidationType.LocalDevelopment);
+                Debug.Log("Package validation done and batchmode is set. Shutting down Editor");
+                EditorApplication.Exit(success ? 0 : 1);
+            }
+            else
+            {
+                EditorApplication.Exit(1);
+            }
+        }
+
+        // TODO: Move this function to the verified test framework.  For now, this is here for testing purposes.
+        public static bool ValidateVerifiedPackages(ValidationType validationType)
+        {
+            var success = true;
+            var packageIdList = Utilities.UpmListOffline().Where(p => p.source != PackageSource.BuiltIn).Select(p => Utilities.CreatePackageId(p.name, p.version)).ToList();
+
+            if (packageIdList.Any())
+            {
+                success = ValidatePackages(packageIdList, ValidationType.VerifiedSet);
+            }
+            else
+            {
+                Debug.Log("No packages included in this project.");
+                success = false;
+            }
+
+            return success;
+        }
+
+
+        public static bool ValidatePackages(IEnumerable<string> packageIds, ValidationType validationType)
+        {
+            var success = true;
+            foreach (var packageId in packageIds)
+            {
+                var result = RunValidationSuite(packageId, validationType);
                 if (result)
                 {
-                    Debug.Log("Validation succeeded for " + directory);
+                    Debug.Log("Validation succeeded for " + packageId);
                 }
                 else
                 {
                     success = false;
-                    Debug.LogError("Validation failed for " + directory);
+                    Debug.LogError("Validation failed for " + packageId);
                 }
             }
 
-            Debug.Log("The validation results are located in 'ValidationSuiteReports'");
-            if (Application.isBatchMode)
-            {
-                Debug.Log("Package validation done and batchmode is set. Shutting down Editor");
-                if(success)
-                    EditorApplication.Exit(0);
-                else
-                    EditorApplication.Exit(1);
-            }
+            return success;
         }
+
 #endif
 
         public static bool RunAssetStoreValidationSuite(string packageName, string packageVersion, string packagePath, string previousPackagePath = null)
@@ -229,7 +252,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
         }
 
         private static void AllTestsCompletedDelegate(ValidationSuite suite, TestState testRunState)
-        {            
+        {
             suite.report.OutputTextReport(suite);
             suite.report.OutputJsonReport(suite);
         }

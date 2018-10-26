@@ -14,12 +14,6 @@ using UnityEngine.Networking;
 using UnityEditor.PackageManager.ValidationSuite;
 using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
 
-public enum ValidationType
-{
-    PackageManager,
-    AssetStore
-}
-
 public class PackageDependencyInfo
 {
     public string DependencyVersion { get; set; }
@@ -38,6 +32,14 @@ public class PackageDependencyInfo
 /// </summary>
 internal class VettingContext
 {
+    [Serializable]
+    internal class SampleData
+    {
+        public string displayName = "";
+        public string description = "";
+        public string path = "";
+    }
+
     internal class ManifestData
     {
         public string path = "";
@@ -47,7 +49,7 @@ internal class VettingContext
         public string unity = "";
         public string version = "";
         public string type = "";
-        public string gitHead = "";
+        public List<SampleData> samples = new List<SampleData>();
         public Dictionary<string, string> repository = new Dictionary<string, string>();
         public Dictionary<string, string> dependencies = new Dictionary<string, string>();
 
@@ -72,6 +74,9 @@ internal class VettingContext
         }
     }
 
+    public bool IsPublished { get; set; }
+    public bool IsCore { get; set; }
+
     public ManifestData ProjectPackageInfo { get; set; }
     public ManifestData PublishPackageInfo { get; set; }
     public ManifestData PreviousPackageInfo { get; set; }
@@ -81,17 +86,26 @@ internal class VettingContext
     public ValidationType ValidationType { get; set; }
     public const string PreviousVersionBinaryPath = "Temp/ApiValidationBinaries";
 
-    public static VettingContext CreatePackmanContext(string packagePath, bool publishLocally)
+    public static VettingContext CreatePackmanContext(string packageId, ValidationType validationType)
     {
         VettingContext context = new VettingContext();
+        var packageParts = packageId.Split('@');
+        var packageInfo = Utilities.UpmListOffline().SingleOrDefault(p => p.name == packageParts[0] && p.version == packageParts[1]);
 
-        // First, get the manifest for the default build
-        context.ProjectPackageInfo = GetManifest(packagePath);
-
-        // Then, publish the package locally to get an actual snapshot of what we will publish
-        if (publishLocally)
+        if (packageInfo == null)
         {
-            var publishPackagePath = PublishPackage(packagePath);
+            throw new ArgumentException("Package Id " + packageId + " is not part of this project.");
+        }
+
+        context.IsCore = false; // TODO: change this to use Type and Source once "Type" is exposed by packman.
+        context.ValidationType = validationType;
+        context.IsPublished = packageInfo.source == PackageSource.Registry;
+        context.ProjectPackageInfo = GetManifest(packageInfo.resolvedPath);
+
+        // If this is a local package, package it so we can test it as packaged.
+        if (!context.IsPublished && context.ValidationType == ValidationType.LocalDevelopment)
+        {
+            var publishPackagePath = PublishPackage(context.ProjectPackageInfo, packageInfo.source == PackageSource.Embedded);
             context.PublishPackageInfo = GetManifest(publishPackagePath);
         }
         else
@@ -99,23 +113,29 @@ internal class VettingContext
             context.PublishPackageInfo = context.ProjectPackageInfo;
         }
 
-        // Get Previous Version of the package
 #if UNITY_2018_1_OR_NEWER
-        var previousPackagePath = GetPreviousPackage(context.ProjectPackageInfo);
-        if (!string.IsNullOrEmpty(previousPackagePath))
+        // No need to compare against the previous version of the package if we're testing out the verified set.
+        if (context.ValidationType != ValidationType.VerifiedSet)
         {
-            context.PreviousPackageInfo = GetManifest(previousPackagePath);
-            context.DownloadAssembliesForPreviousVersion();
+            var previousPackagePath = GetPreviousPackage(context.ProjectPackageInfo);
+            if (!string.IsNullOrEmpty(previousPackagePath))
+            {
+                context.PreviousPackageInfo = GetManifest(previousPackagePath);
+                context.DownloadAssembliesForPreviousVersion();
+            }
+
+#if UNITY_2018_2_OR_NEWER
+            context.PackageCoDependencies = BuildPackageDependencyTree(context.ProjectPackageInfo);
+#endif
+        }
+        else
+        {
+            context.PreviousPackageInfo = null;
+            context.PackageCoDependencies = new Dictionary<string, List<PackageDependencyInfo>>();
         }
 #else
         context.PreviousPackageInfo = null;
 #endif
-
-#if UNITY_2018_2_OR_NEWER
-        context.PackageCoDependencies = BuildPackageDependencyTree(context.ProjectPackageInfo);
-#endif
-
-        context.ValidationType = ValidationType.PackageManager;
         return context;
     }
 
@@ -191,27 +211,23 @@ internal class VettingContext
         return keyValuePairs.Select(kvp => kvp.Split(':')).ToDictionary(k => k[0], v => v[1]);
     }
 
-    private static string PublishPackage(string projectPackagePath)
+    private static string PublishPackage(ManifestData manifestData, bool isEmbedded)
     {
         // ***** HACK ****** until upm has an api to pack a folder, we will do it ourselves.
         var tempPath = System.IO.Path.GetTempPath();
 
-        var packageInfo = Utilities.GetDataFromJson<ManifestData>(Path.Combine(projectPackagePath, Utilities.PackageJsonFilename));
+        var projectPackagePath = manifestData.path;
         var packageName = string.Empty;
-        if (packageInfo.IsProjectTemplate)
+        if (manifestData.IsProjectTemplate && isEmbedded)
         {
-            var installedPackages = Utilities.UpmListOffline(packageInfo.name);
-            if (installedPackages.Length > 0 && installedPackages[0].source == PackageSource.Embedded)
-            {
-                var projectPath = Path.Combine(projectPackagePath, "../../");
-                // re-direct the package path to the folder where the converted project template will be
-                projectPackagePath = Path.Combine(tempPath, "converted-" + packageInfo.Id);
-                ProjectTemplateUtils.ConvertProjectToTemplate(projectPath, projectPackagePath);
-            }
+            var projectPath = Path.Combine(projectPackagePath, "../../");
+            // re-direct the package path to the folder where the converted project template will be
+            projectPackagePath = Path.Combine(tempPath, "converted-" + manifestData.Id);
+            ProjectTemplateUtils.ConvertProjectToTemplate(projectPath, projectPackagePath);
         }
         packageName = Utilities.CreatePackage(projectPackagePath, tempPath);
-        var publishPackagePath = Path.Combine(tempPath, "publish-" + packageInfo.Id);
-        return Utilities.ExtractPackage(packageName, tempPath, publishPackagePath, packageInfo.name);
+        var publishPackagePath = Path.Combine(tempPath, "publish-" + manifestData.Id);
+        return Utilities.ExtractPackage(packageName, tempPath, publishPackagePath, manifestData.name);
     }
 
     private static string GetPreviousPackage(ManifestData projectPackageInfo)

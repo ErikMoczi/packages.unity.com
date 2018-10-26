@@ -9,7 +9,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestName = "Dependency Validation";
             TestDescription = "Verify that dependencies of this package make sense.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] { ValidationType.PackageManager };
+            SupportedValidations = new[] { ValidationType.CI, ValidationType.LocalDevelopment, ValidationType.Publishing, ValidationType.VerifiedSet };
         }
 
         protected override void Run()

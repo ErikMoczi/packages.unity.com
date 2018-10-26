@@ -40,7 +40,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             ShouldRun = true;
             StartTime = DateTime.Now;
             EndTime = DateTime.Now;
-            SupportedValidations = new[] { ValidationType.AssetStore, ValidationType.PackageManager };
+            SupportedValidations = new[] { ValidationType.AssetStore, ValidationType.CI, ValidationType.LocalDevelopment, ValidationType.Publishing, ValidationType.VerifiedSet };
         }
 
         // This method is called synchronously during initialization, 
@@ -69,16 +69,22 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestOutput.Add(string.Format("Warning: " + message, args));
         }
 
+        protected void Information(string message, params object[] args)
+        {
+            TestOutput.Add(string.Format(message, args));
+        }
+
         protected void DirectorySearch(string path, string searchPattern, List<string> matches)
         {
-            foreach (string subDir in Directory.GetDirectories(path))
-            {
-                var files = Directory.GetFiles(subDir, searchPattern);
-                if (files.Any())
-                    matches.AddRange(files);
+            if (!Directory.Exists(path))
+                return;
 
+            var files = Directory.GetFiles(path, searchPattern);
+            if (files.Any())
+                matches.AddRange(files);
+
+            foreach (string subDir in Directory.GetDirectories(path))
                 DirectorySearch(subDir, searchPattern, matches);
-            }
         }
     }
 }

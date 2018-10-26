@@ -155,7 +155,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             TestState = TestState.Succeeded;
             TestDescription = "My Test Example";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] { ValidationType.PackageManager };
+            SupportedValidations = new[] { ValidationType.Publishing };
         }
 
         protected override void Run()

@@ -7,7 +7,7 @@
             TestName = "Project Template Validation";
             TestDescription = "Verify that the content of a project template meets expectations.";
             TestCategory = TestCategory.ContentScan;
-            SupportedValidations = new[] { ValidationType.PackageManager };
+            SupportedValidations = new[] { ValidationType.CI, ValidationType.LocalDevelopment, ValidationType.Publishing, ValidationType.VerifiedSet };
         }
 
         protected override void Run()

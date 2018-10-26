@@ -20,7 +20,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestName = "Manifest Validation";
             TestDescription = "Validate that the information found in the manifest is well formatted.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] { ValidationType.PackageManager };
+            SupportedValidations = new[] { ValidationType.CI, ValidationType.LocalDevelopment, ValidationType.Publishing, ValidationType.VerifiedSet };
         }
 
         protected override void Run()
@@ -164,23 +164,41 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 Error("In package.json, \"description\" must be fleshed out and informative, as it is used in the user interface.");
             }
 
-            var packageInfo = Utilities.UpmListOffline(manifestData.name).FirstOrDefault();
-            if (packageInfo != null && packageInfo.source == PackageSource.Registry)
+            if (Context.IsPublished)
             {
-                // Check if `gitHead` exist and the content is valid
-                if (string.IsNullOrEmpty(manifestData.gitHead) || manifestData.gitHead.Length != 40)
-                    Error("In package.json for a published package, there must be a \"gitHead\" field that contains 40 characters git commit hash.");
-
+                // Check if `repository.url` and `repository.revision` exist and the content is valid
                 string value;
                 if (!manifestData.repository.TryGetValue("url", out value) || string.IsNullOrEmpty(value))
                     Error("In package.json for a published package, there must be a \"repository.url\" field.");
+                if (!manifestData.repository.TryGetValue("revision", out value) || string.IsNullOrEmpty(value))
+                    Error("In package.json for a published package, there must be a \"repository.revision\" field.");
+            }
+            else
+            {
+                Information("Skipping Git tags check as this is a package in development.");
             }
 
+            ValidateVersion(manifestData);
+        }
+
+        private void ValidateVersion(VettingContext.ManifestData manifestData)
+        {
             // Check package version, make sure it's a valid SemVer string.
             SemVersion packageVersionNumber;
             if (!SemVersion.TryParse(manifestData.version, out packageVersionNumber))
             {
                 Error("In package.json, \"version\" needs to be a valid \"Semver\".");
+                return;
+            }
+
+            // Core packages must be versioned at 0.0.0-builtin right now.
+            if (Context.IsCore)
+            {
+                if (packageVersionNumber != "0.0.0-builtin")
+                {
+                    Error("In package.json, core packages must force \"version\" to \"0.0.0-builtin\".");
+                }
+
                 return;
             }
 
@@ -225,7 +243,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                         {
                             Error("In package.json, \"version\": the only pre-release filter supported is \"-preview.[num < 999]\".");
                         }
-                    }   
+                    }
                 }
             }
         }

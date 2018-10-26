@@ -38,8 +38,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             switch (releaseType)
             {
-                case ReleaseType.Patch: return "0.0.2";
-                case ReleaseType.Minor: return "0.1.0";
+                case ReleaseType.Patch: return "0.0.2-preview";
+                case ReleaseType.Minor: return "0.1.0-preview";
                 case ReleaseType.Major: return "1.0.0";
                 default: throw new NotSupportedException();
             }

@@ -152,7 +152,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             projectManifestData.version = VersionComparisonTestUtilities.VersionForReleaseType(releaseType);
 
             var messagesExpected = new List<string>
-            { @"Added dependency: ""package1"": ""1.0.0""", "Error: Adding package dependencies requires a new major version."};
+            { @"New dependency: ""package1"": ""1.0.0""", "Error: Adding package dependencies requires a new major version."};
 
             var manifestValidation = SetupTestManifestAndRunValidation(projectManifestData, previousManifestData);
 
@@ -182,7 +182,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             previousManifestData.dependencies = new Dictionary<string, string>
             {
-                { "package1", "0.0.1" }
+                { "package1", "0.0.1-preview" }
             };
             projectManifestData.dependencies = new Dictionary<string, string>
             {
@@ -207,7 +207,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             previousManifestData.dependencies = new Dictionary<string, string>
             {
-                { "package1","0.0.1" }
+                { "package1","0.0.1-preview" }
             };
             projectManifestData.version = VersionComparisonTestUtilities.VersionForReleaseType(releaseType);
 
@@ -258,7 +258,9 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             {
                 ProjectPackageInfo = projectManifestData,
                 PublishPackageInfo = projectManifestData,
-                PreviousPackageInfo = previousManifestData
+                PreviousPackageInfo = previousManifestData,
+                IsCore = false,
+                IsPublished = true
             };
             manifestValidation.Context = vettingContext;
             manifestValidation.Setup();
@@ -282,14 +284,20 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
         private VettingContext.ManifestData GenerateValidManifestData()
         {
-            return new VettingContext.ManifestData()
+            var manifest = new VettingContext.ManifestData()
             {
                 displayName = "My Test Package",
                 name = "com.unity.mytestpackage",
                 version = "0.0.1-preview",
                 unity = UnityEngine.Application.unityVersion.Substring(0, UnityEngine.Application.unityVersion.LastIndexOf(".")),
-                description = "This is a test description which needs to be long enough so the test passes."
+                description = "This is a test description which needs to be long enough so the test passes.",
+                repository = new Dictionary<string, string>()
             };
+
+            manifest.repository["revision"] = "1234567890123456789012345678909123456789";
+            manifest.repository["url"] = "http://test";
+
+            return manifest;
         }
     }
 }

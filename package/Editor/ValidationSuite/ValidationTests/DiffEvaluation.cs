@@ -13,6 +13,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestName = "Package Diff Evaluation";
             TestDescription = "Produces a report of what's been changed in this version of the package.";
             TestCategory = TestCategory.DataValidation;
+            SupportedValidations = new[] { ValidationType.AssetStore, ValidationType.LocalDevelopment, ValidationType.Publishing };
         }
 
         internal class PackageCompareData
