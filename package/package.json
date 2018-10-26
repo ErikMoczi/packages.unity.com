@@ -1,9 +1,20 @@
 {
-	"name": "com.unity.xr.legacyinputhelpers",
-	"displayName":"XR Legacy Input Helpers",
-	"version": "0.0.3",
-	"unity": "2019.1",
-	"category" : "XR",
-	"description": "This package includes the tracked pose driver for the legacy input system",
-	"keywords": ["TPD", "Tracked Pose Driver", "XR", "Input", "Helpers"] 	
+  "name": "com.unity.xr.legacyinputhelpers",
+  "displayName": "XR Legacy Input Helpers",
+  "version": "0.0.4",
+  "unity": "2019.1",
+  "category": "XR",
+  "description": "This package includes the tracked pose driver for the legacy input system",
+  "keywords": [
+    "TPD",
+    "Tracked Pose Driver",
+    "XR",
+    "Input",
+    "Helpers"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.internal.unity3d.com/upm-packages/XR/LegacyInputHelpers.git",
+    "revision": "c1405141564765da40b347201ad0d6bf75909f8d"
+  }
 }
