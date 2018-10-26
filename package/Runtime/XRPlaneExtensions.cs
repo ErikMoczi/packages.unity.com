@@ -30,16 +30,42 @@ namespace UnityEngine.XR.ARExtensions
             if (planeSubsystem == null)
                 throw new ArgumentNullException("planeSubsystem");
 
-            Func<XRPlaneSubsystem, TrackableId, TrackingState> handler;
-            if (s_GetTrackingStateDelegates.TryGetValue(planeSubsystem.SubsystemDescriptor.id, out handler))
+            return s_GetTrackingStateDelegate(planeSubsystem, planeId);
+        }
+
+        static TrackingState DefaultGetTrackingState(this XRPlaneSubsystem planeSubsystem, TrackableId planeId)
+        {
+            return TrackingState.Unknown;
+        }
+
+        /// <summary>
+        /// Sets the active subsystem whose extension methods should be used.
+        /// </summary>
+        /// <param name="planeSubsystem">The <c>XRPlaneSubsystem</c> being extended.</param>
+        public static void ActivateExtensions(this XRPlaneSubsystem planeSubsystem)
+        {
+            if (planeSubsystem == null)
             {
-                return handler(planeSubsystem, planeId);
+                SetDefaultDelegates();
             }
             else
             {
-                return TrackingState.Unknown;
+                var id = planeSubsystem.SubsystemDescriptor.id;
+                s_GetTrackingStateDelegate = RegistrationHelper.GetValueOrDefault(s_GetTrackingStateDelegates, id, DefaultGetTrackingState);
             }
         }
+
+        static void SetDefaultDelegates()
+        {
+            s_GetTrackingStateDelegate = DefaultGetTrackingState;
+        }
+
+        static XRPlaneExtensions()
+        {
+            SetDefaultDelegates();
+        }
+
+        static Func<XRPlaneSubsystem, TrackableId, TrackingState> s_GetTrackingStateDelegate;
 
         static Dictionary<string, Func<XRPlaneSubsystem, TrackableId, TrackingState>> s_GetTrackingStateDelegates =
             new Dictionary<string, Func<XRPlaneSubsystem, TrackableId, TrackingState>>();

@@ -22,12 +22,11 @@ namespace UnityEngine.XR.ARExtensions
         /// <summary>
         /// For internal use. Allows a reference point provider to register for the TryAttachReferencePoint extension
         /// </summary>
-        /// <param name="subsystemId">The string name associated with the camera provider to extend.</param>
+        /// <param name="subsystemId">The string name associated with the reference point provider to extend.</param>
         /// <param name="handler">A method that returns true if permission is granted.</param>
         public static void RegisterAttachReferencePointHandler(string subsystemId, AttachReferencePointDelegate handler)
         {
-            s_AttachReferencePointHandlers[subsystemId] = handler;
-            UpdateCurrentHandler(subsystemId, s_AttachReferencePointHandlers, ref s_CurrentAttachDelegate);
+            s_AttachReferencePointDelegates[subsystemId] = handler;
         }
 
         /// <summary>
@@ -42,10 +41,16 @@ namespace UnityEngine.XR.ARExtensions
         public static TrackableId AttachReferencePoint(this XRReferencePointSubsystem referencePointSubsystem,
             TrackableId trackableId, Pose pose)
         {
-            if (s_CurrentAttachDelegate == null)
-                return TrackableId.InvalidId;
+            if (referencePointSubsystem == null)
+                throw new ArgumentNullException("referencePointSubsystem");
 
-            return s_CurrentAttachDelegate(referencePointSubsystem, trackableId, pose);
+            return s_AttachReferencePointDelegate(referencePointSubsystem, trackableId, pose);
+        }
+
+        static TrackableId DefaultAttachReferencePoint(this XRReferencePointSubsystem referencePointSubsystem,
+            TrackableId trackableId, Pose pose)
+        {
+            return TrackableId.InvalidId;
         }
 
         /// <summary>
@@ -55,28 +60,29 @@ namespace UnityEngine.XR.ARExtensions
         public static void ActivateExtensions(this XRReferencePointSubsystem referencePointSubsystem)
         {
             if (referencePointSubsystem == null)
-                throw new ArgumentNullException("referencePointSubsystem");
-
-            s_CurrentSubsystem = referencePointSubsystem;
-
-            var id = referencePointSubsystem.SubsystemDescriptor.id;
-            s_AttachReferencePointHandlers.TryGetValue(id, out s_CurrentAttachDelegate);
+            {
+                SetDefaultDelegates();
+            }
+            else
+            {
+                var id = referencePointSubsystem.SubsystemDescriptor.id;
+                s_AttachReferencePointDelegate = RegistrationHelper.GetValueOrDefault(s_AttachReferencePointDelegates, id, DefaultAttachReferencePoint);
+            }
         }
 
-        static void UpdateCurrentHandler<T>(string subsystemId, Dictionary<string, T> handlers, ref T currentHandler)
+        static void SetDefaultDelegates()
         {
-            if (s_CurrentSubsystem == null)
-                return;
-
-            if (s_CurrentSubsystem.SubsystemDescriptor.id == subsystemId)
-                handlers.TryGetValue(subsystemId, out currentHandler);
+            s_AttachReferencePointDelegate = DefaultAttachReferencePoint;
         }
 
-        static AttachReferencePointDelegate s_CurrentAttachDelegate;
+        static XRReferencePointExtensions()
+        {
+            SetDefaultDelegates();
+        }
 
-        static XRReferencePointSubsystem s_CurrentSubsystem;
+        static AttachReferencePointDelegate s_AttachReferencePointDelegate;
 
-        static Dictionary<string, AttachReferencePointDelegate> s_AttachReferencePointHandlers =
+        static Dictionary<string, AttachReferencePointDelegate> s_AttachReferencePointDelegates =
             new Dictionary<string, AttachReferencePointDelegate>();
     }
 }

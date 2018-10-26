@@ -55,7 +55,15 @@ namespace UnityEngine.XR.ARExtensions
         /// availability has been determined and retrieve the result.</returns>
         public static Promise<SessionAvailability> GetAvailabilityAsync(this XRSessionSubsystem sessionSubsystem)
         {
-            return ExecuteAsync(sessionSubsystem, s_GetAvailabilityAsyncDelegates,
+            if (sessionSubsystem == null)
+                throw new ArgumentNullException("sessionSubsystem");
+
+            return s_GetAvailabilityAsyncDelegate(sessionSubsystem);
+        }
+
+        static Promise<SessionAvailability> DefaultGetAvailabilityAsync(this XRSessionSubsystem sessionSubsystem)
+        {
+            return Promise<SessionAvailability>.CreateResolvedPromise(
                 SessionAvailability.Supported | SessionAvailability.Installed);
         }
 
@@ -70,26 +78,49 @@ namespace UnityEngine.XR.ARExtensions
         /// installation completes and retrieve the result.</returns>
         public static Promise<SessionInstallationStatus> InstallAsync(this XRSessionSubsystem sessionSubsystem)
         {
-            return ExecuteAsync(sessionSubsystem, s_InstallAsyncDelegates,
-                SessionInstallationStatus.ErrorInstallNotSupported);
-        }
-
-        static Promise<T> ExecuteAsync<T>(this XRSessionSubsystem sessionSubsystem,
-            Dictionary<string, AsyncDelegate<T>> delegates, T defaultValue = default(T))
-        {
             if (sessionSubsystem == null)
                 throw new ArgumentNullException("sessionSubsystem");
 
-            AsyncDelegate<T> asyncDelegate;
-            if (delegates.TryGetValue(sessionSubsystem.SubsystemDescriptor.id, out asyncDelegate))
+            return s_InstallAsyncDelegate(sessionSubsystem);
+        }
+
+        static Promise<SessionInstallationStatus> DefaultInstallAsync(this XRSessionSubsystem sessionSubsystem)
+        {
+            return Promise<SessionInstallationStatus>.CreateResolvedPromise(
+                SessionInstallationStatus.ErrorInstallNotSupported);
+        }
+
+        /// <summary>
+        /// For internal use. Sets the active subsystem whose extension methods should be used.
+        /// </summary>
+        /// <param name="sessionSubsystem">The <c>XRSessionSubsystem</c> being extended.</param>
+        public static void ActivateExtensions(this XRSessionSubsystem sessionSubsystem)
+        {
+            if (sessionSubsystem == null)
             {
-                return asyncDelegate(sessionSubsystem);
+                SetDefaultDelegates();
             }
             else
             {
-                return Promise<T>.CreateResolvedPromise(defaultValue);
+                var id = sessionSubsystem.SubsystemDescriptor.id;
+                s_InstallAsyncDelegate = RegistrationHelper.GetValueOrDefault(s_InstallAsyncDelegates, id, DefaultInstallAsync);
+                s_GetAvailabilityAsyncDelegate = RegistrationHelper.GetValueOrDefault(s_GetAvailabilityAsyncDelegates, id, DefaultGetAvailabilityAsync);
             }
         }
+
+        static void SetDefaultDelegates()
+        {
+            s_InstallAsyncDelegate = DefaultInstallAsync;
+            s_GetAvailabilityAsyncDelegate = DefaultGetAvailabilityAsync;
+        }
+
+        static XRSessionExtensions()
+        {
+            SetDefaultDelegates();
+        }
+
+        static AsyncDelegate<SessionInstallationStatus> s_InstallAsyncDelegate;
+        static AsyncDelegate<SessionAvailability> s_GetAvailabilityAsyncDelegate;
 
         static Dictionary<string, AsyncDelegate<SessionInstallationStatus>> s_InstallAsyncDelegates =
             new Dictionary<string, AsyncDelegate<SessionInstallationStatus>>();
