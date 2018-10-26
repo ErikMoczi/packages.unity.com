@@ -62,6 +62,7 @@ namespace UnityEditor.AddressableAssets
             var bundleToAssetGroup = new Dictionary<string, AddressableAssetGroup>();
             var runtimeData = new ResourceManagerRuntimeData();
             runtimeData.LogResourceManagerExceptions = aaSettings.buildSettings.LogResourceManagerExceptions;
+            runtimeData.ProfileEvents = ProjectConfigData.postProfilerEvents;
             bool needsLegacyProvider = false;
             var assetBundleProviderTypes = new HashSet<Type>();
             foreach (var assetGroup in aaSettings.groups)

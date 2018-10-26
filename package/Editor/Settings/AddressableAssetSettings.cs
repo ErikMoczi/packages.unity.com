@@ -1057,11 +1057,13 @@ namespace UnityEditor.AddressableAssets
             return group;
         }
 
-        internal string FindUniqueGroupName(string name)
+        internal string FindUniqueGroupName(string potentialName)
         {
-            name = name.Replace('/', '-');
-            name = name.Replace('\\', '-');
-            var validName = name;
+            var cleanedName = potentialName.Replace('/', '-');
+            cleanedName = cleanedName.Replace('\\', '-');
+            if(cleanedName != potentialName)
+                Debug.Log("Group names cannot include '\\' or '/'.  Replacing with '-'. " + cleanedName);
+            var validName = cleanedName;
             int index = 1;
             bool foundExisting = true;
             while (foundExisting)
@@ -1069,12 +1071,12 @@ namespace UnityEditor.AddressableAssets
                 if (index > 1000)
                 {
                     Addressables.LogError("Unable to create valid name for new Addressable Assets group.");
-                    return name;
+                    return cleanedName;
                 }
                 foundExisting = IsNotUniqueGroupName(validName);
                 if (foundExisting)
                 {
-                    validName = name + index.ToString();
+                    validName = cleanedName + index.ToString();
                     index++;
                 }
             }

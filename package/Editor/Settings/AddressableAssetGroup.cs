@@ -47,6 +47,8 @@ namespace UnityEditor.AddressableAssets
                 m_name = value;
                 m_name = m_name.Replace('/', '-');
                 m_name = m_name.Replace('\\', '-');
+                if(m_name != value)
+                    Debug.Log("Group names cannot include '\\' or '/'.  Replacing with '-'. " + m_name);
                 if (m_name != name)
                 {
                     string guid;

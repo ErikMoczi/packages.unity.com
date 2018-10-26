@@ -67,6 +67,7 @@ namespace UnityEditor.AddressableAssets
             //create runtime data
             var runtimeData = new ResourceManagerRuntimeData();
             runtimeData.LogResourceManagerExceptions = aaSettings.buildSettings.LogResourceManagerExceptions;
+            runtimeData.ProfileEvents = ProjectConfigData.postProfilerEvents;
             runtimeData.CatalogLocations.Add(new ResourceLocationData(new string[] { "catalogs" }, string.Format(pathFormat, "file://{UnityEngine.Application.dataPath}/../", "catalog"), typeof(JsonAssetProvider)));
             if (needsLegacyProvider)
                 runtimeData.ResourceProviderData.Add(ObjectInitializationData.CreateSerializedInitializationData(typeof(LegacyResourcesProvider)));
