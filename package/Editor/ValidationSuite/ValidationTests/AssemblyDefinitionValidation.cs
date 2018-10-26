@@ -41,13 +41,13 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 if(isEditor && assemblyDefinitionData.includePlatforms.Length != 1)
                 {
                     TestState = TestState.Failed;
-                    TestOutput.Add(string.Format("Only 'Editor' should be present in 'includePlatform' in: [{0}]", assemblyDefinitionPath));
+                    TestOutput.Add(string.Format("For editor assemblies, only 'Editor' should be present in 'includePlatform' in: [{0}]", assemblyDefinitionPath));
                 }
                 
-                if(FindValueInArray(assemblyDefinitionData.includePlatforms, "Editor") != isEditor)
+                if(isEditor && !FindValueInArray(assemblyDefinitionData.includePlatforms, "Editor"))
                 {
                     TestState = TestState.Failed;
-                    TestOutput.Add(string.Format("'Editor' should{0} be present in includePlatform in: [{1}]", isEditor ? "":" not", assemblyDefinitionPath));
+                    TestOutput.Add(string.Format("For editor assemblies, 'Editor' should be present in the includePlatform section in: [{0}]", assemblyDefinitionPath));
                 }
 
                 if(FindValueInArray(assemblyDefinitionData.optionalUnityReferences, "TestAssemblies") != isTest)
