@@ -1,8 +1,8 @@
 {
 	"name": "com.unity.editorcoroutines",
 	"displayName":"Editor Coroutines",
-	"version": "0.0.1-preview.2",
-	"unity": "2018.3",
+	"version": "0.0.1-preview.3",
+	"unity": "2018.1",
 	"description": "The editor coroutines package allows developers to start constructs similar to Unity's monobehaviour based coroutines within the editor using abitrary objects. ",
 	"keywords": ["coroutine", "coroutines", "editor"],
   "dependencies": {
