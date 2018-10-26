@@ -42,22 +42,10 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 if (matchingFiles.Any())
                 {
                     foreach (var file in matchingFiles)
-                        TestOutput.Add("WARNING: " + file + " should not be included in packages.");
+                        Warning(file + " should not be included in packages.");
                 }
             }
 
-        }
-
-        void DirectorySearch(string path, string searchPattern, List<string> matches)
-        {
-            foreach (string subDir in Directory.GetDirectories(path))
-            {
-                var files = Directory.GetFiles(subDir, searchPattern);
-                if (files.Any())
-                    matches.AddRange(files);
-
-                DirectorySearch(subDir, searchPattern, matches);
-            }
         }
 
         private readonly string[] restrictedFileList =

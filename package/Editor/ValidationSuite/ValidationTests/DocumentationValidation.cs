@@ -82,7 +82,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
             var request = HttpWebRequest.Create(url) as HttpWebRequest;
             request.Method = "GET";
-
+            request.Timeout = 60 * 1000; // 60 seconds time out
             request.UserAgent = "UnityAgent";
 
             try
@@ -97,15 +97,13 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             {
                 if (!Context.ProjectPackageInfo.IsPreview)
                 {
-                    TestState = TestState.Failed;
-                    TestOutput.Add(
-                        "Couldn't find a documentation website for this package.  Please contact the docs team to ensure a site is up before you publish to production.");
+                    Error("Couldn't find a documentation website for this package.  Please contact the docs team to ensure a site is up before you publish to production.");
                     TestOutput.Add("Expected Website: " + url);
                     TestOutput.Add(e.Message);
                 }
                 else
                 {
-                    TestOutput.Add("Warning: this package contains no web based documentation, which is required before it can be removed from \"Preview\".  Contact the documentation team for assistance.");
+                    Warning("This package contains no web based documentation, which is required before it can be removed from \"Preview\".  Contact the documentation team for assistance.");
                 }
             }
         }

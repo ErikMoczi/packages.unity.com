@@ -69,7 +69,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
             var badAssemblyInfo = allAssemblyInfo.Where(a => !a.asmdefPath.StartsWith(Context.ProjectPackageInfo.path)).ToArray();
             foreach (var badFilePath in badAssemblyInfo.SelectMany(a => a.assembly.sourceFiles).Where(files.Contains))
-                Error(string.Format("Script \"{0}\" is not included by any asmdefs in the package.", badFilePath));
+                Error("Script \"{0}\" is not included by any asmdefs in the package.", badFilePath);
 
             var relevantAssemblyInfo = files.Where(f => string.Equals(Path.GetExtension(f), ".asmdef", StringComparison.OrdinalIgnoreCase))
                 .Select(f => AssemblyInfoFromAsmdefPath(f, allAssemblyInfo))
@@ -144,7 +144,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                     assemblyDefinition.excludePlatforms.Any() &&
                     assemblyDefinition.excludePlatforms.Contains("Editor"))
                 {
-                    Error(string.Format("Package Validation Suite does not support .asmdefs that are not built on the \"Editor\" platform. See \"{0}\"", assemblyDefinition.name));
+                    Error("Package Validation Suite does not support .asmdefs that are not built on the \"Editor\" platform. See \"{0}\"", assemblyDefinition.name);
                 }
             }
         }
@@ -292,16 +292,16 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             {
                 foreach (var assembly in diff.missingAssemblies)
                 {
-                    Error(string.Format(
-                        "Assembly \"{0}\" no longer exists or is no longer included in build. This requires a new major version.", assembly));
+                    Error(
+                        "Assembly \"{0}\" no longer exists or is no longer included in build. This requires a new major version.", assembly);
                 }
             }
             if (changeType == VersionChangeType.Patch)
             {
                 foreach (var assembly in diff.newAssemblies)
                 {
-                    Error(string.Format(
-                        "New assembly \"{0}\" may only be added in a new minor or major version.", assembly));
+                    Error(
+                        "New assembly \"{0}\" may only be added in a new minor or major version.", assembly);
                 }
             }
         }

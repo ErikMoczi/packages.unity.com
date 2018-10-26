@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
-using Semver;
+using System.Text.RegularExpressions;
 using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
 using UnityEngine;
 
@@ -100,6 +99,38 @@ namespace UnityEditor.PackageManager.ValidationSuite
             {
                 report.OutputErrorReport(string.Format("\r\nTest Setup Error: \"{0}\"\r\n", e));
                 return false;
+            }
+        }
+        
+        [MenuItem("Tools/Validate Embedded Packages")]
+        public static void ValidateEmbeddedPackages()
+        {
+            var success = true;
+            var directories = Directory.GetDirectories("Packages/", "*", SearchOption.TopDirectoryOnly);
+            foreach (var directory in directories)
+            {
+                Debug.Log("Starting package validation for " + directory);
+                var packageId = VettingContext.GetManifest(directory).Id;
+                var result = RunValidationSuite(packageId, PackageSource.Embedded);
+                if (result)
+                {
+                    Debug.Log("Validation succeeded for " + directory);
+                }
+                else
+                {
+                    success = false;
+                    Debug.LogError("Validation failed for " + directory);
+                }
+            }
+
+            Debug.Log("The validation results are located in 'ValidationSuiteReports'");
+            if (Application.isBatchMode)
+            {
+                Debug.Log("Package validation done and batchmode is set. Shutting down Editor");
+                if(success)
+                    EditorApplication.Exit(0);
+                else
+                    EditorApplication.Exit(1);
             }
         }
 #endif

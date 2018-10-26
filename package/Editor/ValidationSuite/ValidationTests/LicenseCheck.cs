@@ -15,11 +15,11 @@
             // Start by declaring victory
             TestState = TestState.NotImplementedYet;
 
-            // Check that the 3rd party notice file is not empty, if so, delete it.
+            // TODO: Check that the 3rd party notice file is not empty, if so, delete it.
 
-            // check that the code doesn't have any copyright headers if the 3rd party notice file is empty.
+            // TODO: check that the code doesn't have any copyright headers if the 3rd party notice file is empty.
 
-            // Check that license.md exists, and that it has the right signature.
+            // TODO: Check that license.md exists, and that it has the right signature.
         }
     }
 }

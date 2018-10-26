@@ -2,6 +2,7 @@ using System.IO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Semver;
 using UnityEditor.Sprites;
 using UnityEngine;
 
@@ -11,7 +12,7 @@ using UnityEditor.Compilation;
 
 namespace UnityEditor.PackageManager.ValidationSuite
 {
-    internal class Utilities
+    internal static class Utilities
     {
         internal const string PackageJsonFilename = "package.json";
         internal const string ChangeLogFilename = "CHANGELOG.md";
@@ -19,7 +20,22 @@ namespace UnityEditor.PackageManager.ValidationSuite
         internal const string EditorTestsAssemblyDefintionSuffix = ".EditorTests.asmdef";
         internal const string RuntimeAssemblyDefintionSuffix = ".Runtime.asmdef";
         internal const string RuntimeTestsAssemblyDefintionSuffix = ".RuntimeTests.asmdef";
-        internal const string ProductionRepositoryUrl = "https://packages.unity.com/";
+
+        public static bool NetworkNotReachable{ get { return Application.internetReachability == NetworkReachability.NotReachable; } }
+
+        public static string CreatePackageId(string name, string version)
+        {
+            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(version))
+                throw new ArgumentNullException("Both name and version must be specified.");
+
+            return string.Format("{0}@{1}", name, version);
+        }
+
+        public static bool IsPreviewVersion(string version)
+        {
+            var semVer = SemVersion.Parse(version);
+            return semVer.Prerelease.Contains("preview") || semVer.Major == 0;
+        }
 
         internal static T GetDataFromJson<T>(string jsonFile)
         {
@@ -31,24 +47,53 @@ namespace UnityEditor.PackageManager.ValidationSuite
             //No Need to delete the file, npm pack always overwrite: https://docs.npmjs.com/cli/pack
             var packagePath =  Path.Combine(Path.Combine(Application.dataPath, ".."), path);
 
-            var launcher = new NpmLauncher();
+            var launcher = new NodeLauncher();
             launcher.WorkingDirectory = workingDirectory;
-            launcher.Pack(packagePath);
+            launcher.NpmPack(packagePath);
 
             var packageName = launcher.OutputLog.ToString().Trim();
             return packageName;
         }
 
+        internal static PackageManager.PackageInfo[] UpmSearch(string packageIdOrName = null, bool throwOnRequestFailure = false)
+        {
+            var request = string.IsNullOrEmpty(packageIdOrName) ? Client.SearchAll() : Client.Search(packageIdOrName);
+            while (!request.IsCompleted)
+            {
+                if (Utilities.NetworkNotReachable)
+                    throw new Exception("Failed to fetch package infomation: network not reachable");
+                System.Threading.Thread.Sleep(100);
+            }
+            if (throwOnRequestFailure && request.Status == StatusCode.Failure)
+                throw new Exception("Failed to fetch package infomation.  Error details: " + request.Error.errorCode + " " + request.Error.message);
+            return request.Result;
+        }
+
+        internal static PackageManager.PackageInfo[] UpmListOffline(string packageIdOrName = null)
+        {
+            var request = Client.List(true);
+            while (!request.IsCompleted)
+                System.Threading.Thread.Sleep(100);
+            var result = new List<PackageManager.PackageInfo>();
+            foreach (var upmPackage in request.Result)
+            {
+                if (!string.IsNullOrEmpty(packageIdOrName) && !(upmPackage.name == packageIdOrName || upmPackage.packageId == packageIdOrName))
+                    continue;
+                result.Add(upmPackage);
+            }
+            return result.ToArray();
+        }
+
         internal static string DownloadPackage(string packageId, string workingDirectory)
         {
             //No Need to delete the file, npm pack always overwrite: https://docs.npmjs.com/cli/pack
-            var launcher = new NpmLauncher();
+            var launcher = new NodeLauncher();
             launcher.WorkingDirectory = workingDirectory;
-            launcher.Registry = NpmLauncher.ProductionRepositoryUrl;
+            launcher.NpmRegistry = NodeLauncher.ProductionRepositoryUrl;
 
             try
             {
-                launcher.Pack(packageId);
+                launcher.NpmPack(packageId);
             }
             catch (ApplicationException exception)
             {
@@ -62,12 +107,12 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         internal static bool PackageExistsOnProduction(string packageId)
         {
-            var launcher = new NpmLauncher();
-            launcher.Registry = NpmLauncher.ProductionRepositoryUrl;
+            var launcher = new NodeLauncher();
+            launcher.NpmRegistry = NodeLauncher.ProductionRepositoryUrl;
 
             try
             {
-                launcher.View(packageId);
+                launcher.NpmView(packageId);
             }
             catch (ApplicationException exception)
             {
@@ -100,10 +145,11 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 }
             }
             
-            var launcher = new NpmLauncher();
-            launcher.LogLevel = "error";
+            var launcher = new NodeLauncher();
+            launcher.NpmLogLevel = "error";
+            launcher.NpmRegistry = NodeLauncher.ProductionRepositoryUrl;
             launcher.WorkingDirectory = workingPath;
-            launcher.Install(packageFileName);
+            launcher.NpmInstall(packageFileName);
             
             var extractedPackagePath = Path.Combine(modulePath, packageName);
             if(!Directory.Exists(extractedPackagePath))

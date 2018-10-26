@@ -10,13 +10,13 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 {
     internal class AssemblyDefinitionValidationTests
     {
-        private const string testDirectory = "tempAssemblyDefinitionValidationTests";
+        private string testDirectory;
         private const string name = "com.unity.mypackage";
 
         [SetUp]
         public void Setup()
         {
-
+            testDirectory = Path.Combine(Path.GetTempPath(), "tempAssemblyDefinitionValidationTests");
             if (Directory.Exists(testDirectory))
             {
                 Directory.Delete(testDirectory, true);
@@ -28,10 +28,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         [TearDown]
         public void TearDown()
         {
-            if (Directory.Exists(testDirectory))
-            {
-                //Directory.Delete(testDirectory, true);
-            }
         }
 
         private void CreatePackageJsonFile(string name)

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
@@ -56,11 +58,27 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
         // This needs to be implemented for every test
         protected abstract void Run();
-
-        protected void Error(string message)
+        protected void Error(string message, params object[] args)
         {
-            TestOutput.Add("Error: " + message);
+            TestOutput.Add(string.Format("Error: " + message, args));
             TestState = TestState.Failed;
+        }
+
+        protected void Warning(string message, params object[] args)
+        {
+            TestOutput.Add(string.Format("Warning: " + message, args));
+        }
+
+        protected void DirectorySearch(string path, string searchPattern, List<string> matches)
+        {
+            foreach (string subDir in Directory.GetDirectories(path))
+            {
+                var files = Directory.GetFiles(subDir, searchPattern);
+                if (files.Any())
+                    matches.AddRange(files);
+
+                DirectorySearch(subDir, searchPattern, matches);
+            }
         }
     }
 }

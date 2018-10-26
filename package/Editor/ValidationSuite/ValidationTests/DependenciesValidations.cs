@@ -30,21 +30,17 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
                         if (vExisting.Major != vNew.Major)
                         {
-                            Error(string.Format("Package dependency {0}@{1} will create a major conflict with verified package {2}:{3}", dependency.Key, dependency.Value, verifiedDependency.ParentName, verifiedDependency.ParentVersion));
+                            Error("Package dependency {0}@{1} will create a major conflict with verified package {2}:{3}", dependency.Key, dependency.Value, verifiedDependency.ParentName, verifiedDependency.ParentVersion);
                         }
                     }
                 }
             }
 
-            // Package depenedencies dont conflict with dependencies from non-verified packages (WARNING)
+            // TODO: Package depenedencies dont conflict with dependencies from non-verified packages (WARNING)
 
-            // Package itself doesn't introduce new conflicting versions of itself if it is a dependency for the verified set. (WARNING)
+            // TODO: Package itself doesn't introduce new conflicting versions of itself if it is a dependency for the verified set. (WARNING)
 
-            // Package dependencies are all published on production
-
-            // List what templates depend on this package.
-            
-            // Validate the Package dependencies meet the minimum editor requirement (eg: 2018.3 minimum for package A is 2, make sure I don't use 1)
+            // TODO: List what templates depend on this package.
         }
     }
 }

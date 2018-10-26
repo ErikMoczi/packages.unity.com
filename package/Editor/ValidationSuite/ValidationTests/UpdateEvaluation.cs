@@ -28,21 +28,14 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             SemVersion version;
             if (!SemVersion.TryParse(Context.ProjectPackageInfo.version, out version, true))
             {
-                Error(String.Format("Failed to parse previous package version \"{0}\"", Context.ProjectPackageInfo.version));
+                Error("Failed to parse previous package version \"{0}\"", Context.ProjectPackageInfo.version);
                 return;
             }
 
             SemVersion previousVersion = null;
             if (Context.PreviousPackageInfo != null && !SemVersion.TryParse(Context.PreviousPackageInfo.version, out previousVersion, true))
             {
-                Error(string.Format("Failed to parse previous package version \"{0}\"", Context.ProjectPackageInfo.version));
-            }
-
-            // List out available versions for a package.
-            var request = Client.Search(Context.ProjectPackageInfo.name);
-            while (!request.IsCompleted)
-            {
-                System.Threading.Thread.Sleep(100);
+                Error("Failed to parse previous package version \"{0}\"", Context.ProjectPackageInfo.version);
             }
 
             if (string.IsNullOrEmpty(version.Prerelease))
@@ -50,7 +43,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 // This is a production submission, let's make sure it meets some criteria
                 if (Context.PreviousPackageInfo == null)
                 {
-                    TestOutput.Add("WARNING: This package is not a preview version, but it's the first version of the package.  Should this package version be tagged as " + Context.ProjectPackageInfo.version + "-preview?");
+                    Warning("This package is not a preview version, but it's the first version of the package.  Should this package version be tagged as " + Context.ProjectPackageInfo.version + "-preview?");
                 }
             }
 

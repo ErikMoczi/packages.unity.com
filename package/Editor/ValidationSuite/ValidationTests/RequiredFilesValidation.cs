@@ -1,7 +1,4 @@
-﻿using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-
+﻿
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
     internal class RequiredFilesValidation : BaseValidation
@@ -18,40 +15,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             // Start by declaring victory
             TestState = TestState.Succeeded;
 
-            // from the published project dir, check if each file type is present.
-            foreach (var fileType in requireFileList)
-            {
-                List<string> matchingFiles = new List<string>();
-                DirectorySearch(Context.PublishPackageInfo.path, fileType, matchingFiles);
-
-                if (matchingFiles.Any())
-                {
-                    foreach (var file in matchingFiles)
-                        TestOutput.Add(file + " cannot be included in a package.");
-
-                    TestState = TestState.Failed;
-                }
-            }
-
-            // This test needs work
-            TestState = TestState.NotImplementedYet;
+            // TODO: from the published project dir, check if each file type is present under the right conditions.
         }
-
-        void DirectorySearch(string path, string searchPattern, List<string> matches)
-        {
-            foreach (string subDir in Directory.GetDirectories(path))
-            {
-                var files = Directory.GetFiles(subDir, searchPattern);
-                if (files.Any())
-                    matches.AddRange(files);
-
-                DirectorySearch(subDir, searchPattern, matches);
-            }
-        }
-
-        private readonly string[] requireFileList =
-        {
-            "*.ttz",
-        };
     }
 }

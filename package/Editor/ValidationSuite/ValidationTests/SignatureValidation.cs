@@ -15,7 +15,7 @@
             // Start by declaring victory
             TestState = TestState.NotImplementedYet;
 
-            // THIS CAN ONLY BE TURNED ON ONCE WE HAVE PACKAGE SIGNATURE WORKING END TO END.
+            // TODO: THIS CAN ONLY BE TURNED ON ONCE WE HAVE PACKAGE SIGNATURE WORKING END TO END.
 
         }
     }

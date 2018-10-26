@@ -36,7 +36,36 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
 
             ValidateManifestData();
+            ValidateDependencies();
             ValidateDependencyChanges();
+        }
+
+        private void ValidateDependencies()
+        {
+            // if the package is a production quality package, it can't have preview dependencies.
+            if (!Context.ProjectPackageInfo.IsPreview)
+            {
+                foreach (var dependency in Context.ProjectPackageInfo.dependencies)
+                {
+                    if (Utilities.IsPreviewVersion(dependency.Value))
+                    {
+                        Error("This production quality package has a dependency on preview package \"{0}\".  Production quality packages can only depend on other production quality packages.");
+                    }
+                }
+            }
+
+            // Make sure all dependencies are already published in production.
+            foreach (var dependency in Context.ProjectPackageInfo.dependencies)
+            {
+                var packageId = Utilities.CreatePackageId(dependency.Key, dependency.Value);
+                if (!Utilities.PackageExistsOnProduction(packageId))
+                {
+                    Error("Package dependency {0} is not published in procuction.", packageId);
+                }
+            }
+
+            // TODO: Validate the Package dependencies meet the minimum editor requirement (eg: 2018.3 minimum for package A is 2, make sure I don't use 1)
+
         }
 
         private void ValidateDependencyChanges()
@@ -51,7 +80,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 SemVersion projectRefSemver;
                 if (!SemVersion.TryParse(projectRef.Value, out projectRefSemver))
                 {
-                    Error(String.Format(@"Invalid version number in dependency ""{0}"" : ""{1}""", projectRef.Key, projectRef.Value));
+                    Error(@"Invalid version number in dependency ""{0}"" : ""{1}""", projectRef.Key, projectRef.Value);
                     continue;
                 }
 
@@ -64,8 +93,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                         if (previousRefSemver.Major != projectRefSemver.Major &&
                             (versionChangeType == VersionChangeType.Patch || versionChangeType == VersionChangeType.Minor))
                         {
-                            Error(String.Format(@"Dependency major versions may only change in major releases. ""{0}"": ""{1}"" -> ""{2}""", 
-                                projectRef.Key, previousRefVersion, projectRef.Value));
+                            Error(@"Dependency major versions may only change in major releases. ""{0}"": ""{1}"" -> ""{2}""", 
+                                projectRef.Key, previousRefVersion, projectRef.Value);
                         }
                     }
                 }
@@ -87,7 +116,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                         TestOutput.Add(String.Format(@"Invalid version number in previous package dependency ""{0}"" : ""{1}""", previousRef.Key, previousRef.Value));
 
                     if (!projectRefs.ContainsKey(previousRef.Key) && versionChangeType == VersionChangeType.Patch)
-                        Error(string.Format("Removing dependencies is not forwards-compatible and requires a new major or minor version. Removed dependency: {0}", previousRef.Key));
+                        Error("Removing dependencies is not forwards-compatible and requires a new major or minor version. Removed dependency: {0}", previousRef.Key);
                 }
             }
         }
@@ -100,7 +129,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 !manifestData.name.StartsWith(PackageNamePrefix) || 
                 manifestData.name.Length == PackageNamePrefix.Length)
             {
-                Error(string.Format("In package.json, \"name\" needs to start with \"{0}\", and end with your package name.", PackageNamePrefix));
+                Error("In package.json, \"name\" needs to start with \"{0}\", and end with your package name.", PackageNamePrefix);
             }
 
             // There cannot be any capital letters in package names.
@@ -133,6 +162,18 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             if (manifestData.description.Length < MinDescriptionSize)
             {
                 Error("In package.json, \"description\" must be fleshed out and informative, as it is used in the user interface.");
+            }
+
+            var packageInfo = Utilities.UpmListOffline(manifestData.name).FirstOrDefault();
+            if (packageInfo != null && packageInfo.source == PackageSource.Registry)
+            {
+                // Check if `gitHead` exist and the content is valid
+                if (string.IsNullOrEmpty(manifestData.gitHead) || manifestData.gitHead.Length != 40)
+                    Error("In package.json for a published package, there must be a \"gitHead\" field that contains 40 characters git commit hash.");
+
+                string value;
+                if (!manifestData.repository.TryGetValue("url", out value) || string.IsNullOrEmpty(value))
+                    Error("In package.json for a published package, there must be a \"repository.url\" field.");
             }
 
             // Check package version, make sure it's a valid SemVer string.

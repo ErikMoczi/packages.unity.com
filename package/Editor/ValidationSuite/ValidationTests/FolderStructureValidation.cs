@@ -7,7 +7,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
     internal class FolderStructureValidation : BaseValidation
     {
-        // Move code that validates that development is happening on the right version based on the package.json
         public FolderStructureValidation()
         {
             TestName = "Folder Structure Validation";
@@ -19,6 +18,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         protected override void Run()
         {
             TestState = TestState.NotImplementedYet;
+
+            // TODO: Write test around expected structure.
         }
     }
 }

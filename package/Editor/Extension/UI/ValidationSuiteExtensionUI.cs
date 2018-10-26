@@ -71,6 +71,12 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
             if (root == null)
                 return;
 
+            if (Utilities.NetworkNotReachable)
+            {
+                EditorUtility.DisplayDialog("", "Validation suite requires network access and cannot be used offline.", "Ok");
+                return;
+            }
+
             var results = ValidationSuite.RunValidationSuite(PackageId, CurrentPackageinfo.source);
             ValidationResults.text = results ? "Success" : "Failed";
             UIUtils.SetElementDisplay(ViewResultsButton, ValidationSuiteReport.ReportExists(PackageId));
@@ -94,7 +100,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
                 catch (Exception)
                 {
                     var data = File.ReadAllText(filePath);
-                    EditorUtility.DisplayDialog("Validation Results", data, "Ok");                    
+                    EditorUtility.DisplayDialog("Validation Results", data, "Ok");
                 }
             }
             catch (Exception)

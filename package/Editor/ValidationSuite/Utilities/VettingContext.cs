@@ -46,11 +46,19 @@ internal class VettingContext
         public string description = "";
         public string unity = "";
         public string version = "";
+        public string type = "";
+        public string gitHead = "";
+        public Dictionary<string, string> repository = new Dictionary<string, string>();
         public Dictionary<string, string> dependencies = new Dictionary<string, string>();
 
         public bool IsPreview
         {
             get { return version.ToLower().Contains("-preview"); }
+        }
+
+        public bool IsProjectTemplate
+        {
+            get { return type.Equals("template", StringComparison.InvariantCultureIgnoreCase); }
         }
 
         public string Id
@@ -147,7 +155,7 @@ internal class VettingContext
         }
     }
 
-    private static ManifestData GetManifest(string packagePath)
+    public static ManifestData GetManifest(string packagePath)
     {
         // Start by parsing the package's manifest data.
         var manifestPath = Path.Combine(packagePath, Utilities.PackageJsonFilename);
@@ -162,6 +170,7 @@ internal class VettingContext
         var manifest = JsonUtility.FromJson<ManifestData>(textManifestData);
         manifest.path = packagePath;
         manifest.dependencies = ParseDictionary(textManifestData, "dependencies");
+        manifest.repository = ParseDictionary(textManifestData, "repository");
 
         return manifest;
     }
@@ -187,9 +196,20 @@ internal class VettingContext
         // ***** HACK ****** until upm has an api to pack a folder, we will do it ourselves.
         var tempPath = System.IO.Path.GetTempPath();
 
-        var packageName = Utilities.CreatePackage(projectPackagePath, tempPath);
         var packageInfo = Utilities.GetDataFromJson<ManifestData>(Path.Combine(projectPackagePath, Utilities.PackageJsonFilename));
-
+        var packageName = string.Empty;
+        if (packageInfo.IsProjectTemplate)
+        {
+            var installedPackages = Utilities.UpmListOffline(packageInfo.name);
+            if (installedPackages.Length > 0 && installedPackages[0].source == PackageSource.Embedded)
+            {
+                var projectPath = Path.Combine(projectPackagePath, "../../");
+                // re-direct the package path to the folder where the converted project template will be
+                projectPackagePath = Path.Combine(tempPath, "converted-" + packageInfo.Id);
+                ProjectTemplateUtils.ConvertProjectToTemplate(projectPath, projectPackagePath);
+            }
+        }
+        packageName = Utilities.CreatePackage(projectPackagePath, tempPath);
         var publishPackagePath = Path.Combine(tempPath, "publish-" + packageInfo.Id);
         return Utilities.ExtractPackage(packageName, tempPath, publishPackagePath, packageInfo.name);
     }
@@ -199,16 +219,12 @@ internal class VettingContext
         #if UNITY_2018_1_OR_NEWER
 
         // List out available versions for a package.
-        var request = Client.Search(projectPackageInfo.name);
-        while (!request.IsCompleted)
-        {
-            System.Threading.Thread.Sleep(100);
-        }
+        var foundPackages =  Utilities.UpmSearch(projectPackageInfo.name);
 
         // If it exists, get the last one from that list.
-        if (request.Result != null && request.Result.Length > 0)
+        if (foundPackages != null && foundPackages.Length > 0)
         {
-            var packageInfo = request.Result[0];
+            var packageInfo = foundPackages[0];
             var version = SemVersion.Parse(projectPackageInfo.version);
             var previousVersions = packageInfo.versions.compatible.Where(v =>
             {
@@ -266,6 +282,7 @@ internal class VettingContext
         var uri = Path.Combine("https://artifactory.eu-cph-1.unityops.net/pkg-api-validation", packageDataZipFilename);
 
         UnityWebRequest request = new UnityWebRequest(uri);
+        request.timeout = 60; // 60 seconds time out
         request.downloadHandler = new DownloadHandlerFile(zipPath);
         var operation = request.SendWebRequest();
         while (!operation.isDone)
@@ -286,20 +303,10 @@ internal class VettingContext
     {
         var packageCoDependencies = new Dictionary<string, List<PackageDependencyInfo>>();
 
-        var request = Client.SearchAll();
-
-        while (!request.IsCompleted)
-        {
-            System.Threading.Thread.Sleep(100);
-        }
-
-        if (request.Status == StatusCode.Failure)
-        {
-            throw new Exception("Failed to build package dependencies.  Error details: " + request.Error.errorCode + " " + request.Error.message);
-        }
+        var foundPackages =  Utilities.UpmSearch(string.Empty, true);
 
         // Fill in the dictionary
-        if (request.Result != null && request.Result.Length > 0)
+        if (foundPackages != null && foundPackages.Length > 0)
         {
             packageCoDependencies[manifestData.name] = new List<PackageDependencyInfo>();
             if (manifestData.dependencies != null)
@@ -310,7 +317,7 @@ internal class VettingContext
                 }
             }
 
-            foreach (var packageInfo in request.Result)
+            foreach (var packageInfo in foundPackages)
             {
                 // Check each of the packages dependencies against all other dependencies.
                 foreach (var dependency in packageCoDependencies)
@@ -325,20 +332,15 @@ internal class VettingContext
                 // Is there a verified version?  If so, if it is different than the returned version, let's make a call to retrieve it's data.
                 if (!string.IsNullOrEmpty(packageInfo.versions.recommended) && packageInfo.versions.recommended != packageInfo.version)
                 {
-                    var verifiedSearchRequest = Client.Search(packageInfo.name + "@" + packageInfo.versions.recommended);
-                    while (!verifiedSearchRequest.IsCompleted)
-                    {
-                        System.Threading.Thread.Sleep(100);
-                    }
-
-                    if (verifiedSearchRequest.Result.Length > 0)
+                    var foundVerifiedPackages = Utilities.UpmSearch(packageInfo.name + "@" + packageInfo.versions.recommended);
+                    if (foundVerifiedPackages.Length > 0)
                     {
                         foreach (var dependency in packageCoDependencies)
                         {
-                            var dependencyInfo = verifiedSearchRequest.Result[0].dependencies.SingleOrDefault(d => d.name == dependency.Key);
+                            var dependencyInfo = foundVerifiedPackages[0].dependencies.SingleOrDefault(d => d.name == dependency.Key);
                             if (!string.IsNullOrEmpty(dependencyInfo.name))
                             {
-                                packageCoDependencies[dependency.Key].Add(CreateDependencyInfo(dependencyInfo.version, verifiedSearchRequest.Result[0]));
+                                packageCoDependencies[dependency.Key].Add(CreateDependencyInfo(dependencyInfo.version, foundVerifiedPackages[0]));
                             }
                         }
                     }
