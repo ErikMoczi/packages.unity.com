@@ -47,10 +47,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 var cleanPrerelease = packageJsonVersion.Prerelease.Substring(0, buildInfoIndex - 1);
                 packageJsonVersion = packageJsonVersion.Change(null, null, null, cleanPrerelease, null);
             }
-            else
-            {
-                packageJsonVersion = packageJsonVersion.Change(null, null, null, "", null);
-            }
+            var packageJsonVersionNoPrelease = packageJsonVersion.Change(null, null, null, "", null);
 
             // We are basically searching for a string ## [Version] - YYYY-MM-DD
             var changeLogLineRegex = @"## \[(?<version>(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?)\] - (?<date>\d{4}-\d{1,2}-\d{1,2})";
@@ -77,7 +74,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                     return;
                 }
                 
-                if(versionInChangelog == packageJsonVersion)
+                if(versionInChangelog == packageJsonVersion || versionInChangelog == packageJsonVersionNoPrelease)
                 {
                     found = match;
                     DateTime date;
@@ -100,7 +97,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             if(found == null)
             {
                 TestState = TestState.Failed;
-                TestOutput.Add(string.Format("No changelog entry for version `{0}` (expected: `## [{0}] - YYYY-MM-DD`) found in: [{1}]", packageJsonVersion.ToString(), changeLogPath));
+                var expected = string.Format("`## [{0}] - YYYY-MM-DD` or `## [{1}] - YYYY-MM-DD`", packageJsonVersion.ToString(), packageJsonVersionNoPrelease.ToString());
+                TestOutput.Add(string.Format("No changelog entry for version `{0}` (expected: {1}) found in: [{2}]", packageJsonVersion.ToString(), expected, changeLogPath));
             }
             else if(found != null && index != 1)
             {

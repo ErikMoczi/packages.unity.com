@@ -32,28 +32,31 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
         void CheckAssemblyDefinitionContent(string assemblyDefinitionPath)
         {
-            var isEditor = assemblyDefinitionPath.IndexOf("Editor") >= 0;
-            var isTest = assemblyDefinitionPath.IndexOf("Test") >= 0;
+            var simplifiedPath = assemblyDefinitionPath.Replace(Context.PublishPackageInfo.path, "{Package-Root}");
+            TestOutput.Add("Checking: " + simplifiedPath);
+
+            var isEditor = simplifiedPath.IndexOf("Editor") >= 0;
+            var isTest = simplifiedPath.IndexOf("Test") >= 0;
 
             try{
                 var assemblyDefinitionData = Utilities.GetDataFromJson<AssemblyDefinition>(assemblyDefinitionPath);
                 
-                if(isEditor && assemblyDefinitionData.includePlatforms.Length != 1)
+                if(isEditor && assemblyDefinitionData.includePlatforms.Length > 1)
                 {
                     TestState = TestState.Failed;
-                    TestOutput.Add(string.Format("For editor assemblies, only 'Editor' should be present in 'includePlatform' in: [{0}]", assemblyDefinitionPath));
+                    TestOutput.Add(string.Format("For editor assemblies, only 'Editor' should be present in 'includePlatform' in: [{0}]", simplifiedPath));
                 }
                 
                 if(isEditor && !FindValueInArray(assemblyDefinitionData.includePlatforms, "Editor"))
                 {
                     TestState = TestState.Failed;
-                    TestOutput.Add(string.Format("For editor assemblies, 'Editor' should be present in the includePlatform section in: [{0}]", assemblyDefinitionPath));
+                    TestOutput.Add(string.Format("For editor assemblies, 'Editor' should be present in the includePlatform section in: [{0}]", simplifiedPath));
                 }
 
                 if(FindValueInArray(assemblyDefinitionData.optionalUnityReferences, "TestAssemblies") != isTest)
                 {
                     TestState = TestState.Failed;
-                    TestOutput.Add(string.Format("'TestAssemblies'{0} should be present in 'optionalUnityReferences' in: [{1}]", isTest? "" : " not", assemblyDefinitionPath));
+                    TestOutput.Add(string.Format("'TestAssemblies'{0} should be present in 'optionalUnityReferences' in: [{1}]", isTest? "" : " not", simplifiedPath));
                 }
             }
             catch(Exception e)
@@ -67,7 +70,9 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         {
             // Start by declaring victory
             TestState = TestState.Succeeded;
-            var manifestFilePath = Path.Combine(Context.PublishPackageInfo.path, Utilities.PackageJsonFilename);
+            var packagePath = Context.PublishPackageInfo.path;
+            
+            var manifestFilePath = Path.Combine(packagePath, Utilities.PackageJsonFilename);
             
             if (!File.Exists(manifestFilePath))
             {
@@ -76,13 +81,17 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 return;
             }
 
-            var packagePath = Context.PublishPackageInfo.path;
-
-            foreach(var asmdef in Directory.GetFiles(packagePath, AssemblyFileDefinitionExtension, SearchOption.AllDirectories))
+            var asmdefFiles = Directory.GetFiles(packagePath, AssemblyFileDefinitionExtension, SearchOption.AllDirectories);
+            if (asmdefFiles.Length == 0)
             {
-                TestOutput.Add("Checking: " + asmdef);
-                CheckAssemblyDefinitionContent(asmdef);
+                TestState = TestState.NotRun;
+                TestOutput.Add("No assembly definition found. Skipping assembly definition validation.");
+                return;
             }
+
+            TestOutput.Add("Checking " + packagePath + ": " + asmdefFiles.Length + " assembly definition(s) found");
+            foreach(var asmdef in asmdefFiles)
+                CheckAssemblyDefinitionContent(asmdef);
         }
     }
 }

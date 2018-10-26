@@ -41,36 +41,27 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
             ViewDiffButton.clickable.clicked += ViewDiffs;
         }
 
+        public static bool SourceSupported(PackageSource source)
+        {
+            return source == PackageSource.Embedded || source == PackageSource.Local || source == PackageSource.Registry;
+        }
+
         public void OnPackageSelectionChange(PackageInfo packageInfo)
         {
             if (root == null)
                 return;
 
-            if (packageInfo == null || packageInfo.source == PackageSource.BuiltIn)
-            {
-                AddToClassList("display-none");
-                visible = false;
+            var showValidationUI = packageInfo != null && packageInfo.status == PackageStatus.Available && SourceSupported(packageInfo.source);
+            UIUtils.SetElementDisplay(this, showValidationUI);
+            if (!showValidationUI)
                 return;
-            }
-            else
-            {
-                RemoveFromClassList("display-none");
-                visible = true;
-            }
 
             CurrentPackageinfo = packageInfo;
             PackageId = CurrentPackageinfo.name + "@" + CurrentPackageinfo.version;
             ValidationResults.text = string.Empty;
 
-            if (ValidationSuiteReport.ReportExists(PackageId))
-                ViewResultsButton.RemoveFromClassList("display-none");
-            else
-                ViewResultsButton.AddToClassList("display-none");
-
-            if (ValidationSuiteReport.DiffsReportExists(PackageId))
-                ViewDiffButton.RemoveFromClassList("display-none");
-            else
-                ViewDiffButton.AddToClassList("display-none");
+            UIUtils.SetElementDisplay(ViewResultsButton, ValidationSuiteReport.ReportExists(PackageId));
+            UIUtils.SetElementDisplay(ViewDiffButton, ValidationSuiteReport.DiffsReportExists(PackageId));
 
             root.style.backgroundColor = Color.gray;
         }
@@ -79,21 +70,11 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
         {
             if (root == null)
                 return;
-            
-            // currently supported source to validate include: registry, embedded and local
-            var sourceSupported = CurrentPackageinfo.source == PackageSource.Embedded ||
-                                  CurrentPackageinfo.source == PackageSource.Local ||
-                                  CurrentPackageinfo.source == PackageSource.Registry;
-
-            if (CurrentPackageinfo.status != PackageStatus.Available || !sourceSupported)
-            {
-                EditorUtility.DisplayDialog("Validation Suite", "Install the package in your project to Validate", "Got it")  ;  
-            }
 
             var results = ValidationSuite.RunValidationSuite(PackageId, CurrentPackageinfo.source);
             ValidationResults.text = results ? "Success" : "Failed";
-            ViewResultsButton.visible = ValidationSuiteReport.ReportExists(PackageId);
-            ViewDiffButton.visible = ValidationSuiteReport.DiffsReportExists(PackageId);
+            UIUtils.SetElementDisplay(ViewResultsButton, ValidationSuiteReport.ReportExists(PackageId));
+            UIUtils.SetElementDisplay(ViewDiffButton, ValidationSuiteReport.DiffsReportExists(PackageId));
             root.style.backgroundColor = results ? Color.green : Color.red;
         }
 

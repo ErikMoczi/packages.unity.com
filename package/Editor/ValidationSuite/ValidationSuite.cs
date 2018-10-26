@@ -69,10 +69,14 @@ namespace UnityEditor.PackageManager.ValidationSuite
             var packageName = parts[0];
             var packageVersion = parts[1];
             var packagePath = FindPackagePath(packageName);
-            if (string.IsNullOrEmpty(packagePath))
-                return false;
-
             var report = new ValidationSuiteReport(packageId, packageName, packageVersion, packagePath);
+
+            if (string.IsNullOrEmpty(packagePath))
+            {
+                report.OutputErrorReport(string.Format("Unable to find package \"{0}\" on disk.", packageName));
+                return false;
+            }
+
             var validEmbeddedPath = source == PackageSource.Embedded && packagePath.StartsWith(Directory.GetCurrentDirectory());
             var validRegistryPath = source == PackageSource.Registry && packagePath.EndsWith(packageVersion);
             if (!(validEmbeddedPath || validRegistryPath || source == PackageSource.Local))

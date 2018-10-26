@@ -56,7 +56,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 }
 
                 string previousRefVersion;
-                if (previousRefs.TryGetValue(projectRef.Key, out previousRefVersion))
+                if (previousRefs != null && previousRefs.TryGetValue(projectRef.Key, out previousRefVersion))
                 {
                     SemVersion previousRefSemver;
                     if (SemVersion.TryParse(previousRefVersion, out previousRefSemver))
@@ -118,15 +118,15 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
             if (string.IsNullOrEmpty(manifestData.displayName))
             {
-                Error("In package.json, \"DisplayName\" must be set.");
+                Error("In package.json, \"displayName\" must be set.");
             }
             else if (manifestData.displayName.Length > 25)
             {
-                Error("In package.json, \"DisplayName\" is too long. Max Length = 25");
+                Error("In package.json, \"displayName\" is too long. Max Length = 25");
             }
             else if (!Regex.Match(manifestData.displayName, UpmDisplayRegex).Success)
             {
-                Error("In package.json, \"DisplayName\" cannot have any special characters."); 
+                Error("In package.json, \"displayName\" cannot have any special characters."); 
             }
 
             // Check Description, make sure it's there, and not too short.

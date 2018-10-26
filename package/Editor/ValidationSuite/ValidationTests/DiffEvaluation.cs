@@ -81,7 +81,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 Outout.AppendLine("New in package:");
                 foreach (var addedFile in compareData.Added)
                 {
-                    Outout.AppendLine("    " + addedFile.Substring(package1.path.Length));
+                    Outout.AppendLine("    " + addedFile.Substring(package2.path.Length));
                 }
 
                 Outout.AppendLine("");
@@ -92,7 +92,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 Outout.AppendLine("Removed from package:");
                 foreach (var removedFile in compareData.Removed)
                 {
-                    Outout.AppendLine("    " + removedFile.Substring(package2.path.Length));
+                    Outout.AppendLine("    " + removedFile.Substring(package1.path.Length));
                 }
 
                 Outout.AppendLine("");

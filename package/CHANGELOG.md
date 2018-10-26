@@ -4,7 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.3.0] - 2018-05-29
+## [0.3.0] - 2018-06-05
+- Hide validation suite when packages are not available
+- Accept versions with and without  pre-release tag in changelog
+- Fixed 'View Results' button to show up after validation
+- Shorten assembly definition log by shortening the path
 - Fixed validation of Assembly Definition file to accept 'Editor' platform type.
 - Fixed npm launch in paths with spaces
 - Fixed validation suite UI to show up after new installation.
