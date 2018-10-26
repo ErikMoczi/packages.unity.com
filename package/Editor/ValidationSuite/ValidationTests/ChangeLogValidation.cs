@@ -41,7 +41,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
 
             // We are basically searching for a string ## [Version] - YYYY-MM-DD
-            var changeLogLineRegex = @"## \[(?<version>(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?)\] - (?<date>\d{4}-\d{2}-\d{2})";
+            var changeLogLineRegex = @"## \[(?<version>(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?)\] - (?<date>\d{4}-\d{1,2}-\d{1,2})";
             
             var textChangeLog = File.ReadAllText(changeLogPath);
 
@@ -69,10 +69,10 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 {
                     found = match;
                     DateTime date;
-                    string dateFormat = "yyyy-MM-dd";
+                    string[] dateFormats = { "yyyy-MM-dd", "yyyy-MM-d", "yyyy-M-dd", "yyyy-M-d" };
                     var dateToCheck = match.Groups["date"].ToString();
                     if(!DateTime.TryParseExact(dateToCheck, 
-                                dateFormat, 
+                                dateFormats, 
                                 CultureInfo.InvariantCulture, 
                                 DateTimeStyles.None, 
                                 out date))

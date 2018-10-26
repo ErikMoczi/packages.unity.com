@@ -40,7 +40,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             File.WriteAllText(packageJsonPath, "{\"name\":\"" + name + "\"}");
         }
 
-        private void CreateFolderAndAssembly(string packageName, AssemblyDefinitionValidation.AssemblyDefinitionData content, bool isEditor, bool isTest)
+        private void CreateFolderAndAssembly(string packageName, AssemblyDefinition content, bool isEditor, bool isTest)
         {
             var folderPath = Path.Combine(testDirectory, Path.Combine(isTest?"Tests":"", isEditor?"Editor":"Runtime"));
             Directory.CreateDirectory(folderPath);
@@ -74,11 +74,11 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
             
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".Editor";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".Editor";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, false);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, false);
 
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
@@ -93,12 +93,12 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
             
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".EditorTests";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".EditorTests";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, true);
             
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
@@ -127,17 +127,17 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
 
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".Editor";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".Editor";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, false);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, false);
 
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".EditorTests";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".EditorTests";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, true);
             
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
@@ -152,15 +152,15 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
 
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".Runtime";
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".Runtime";
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, false, false);
+            CreateFolderAndAssembly(name, assemblyDefinition, false, false);
 
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".RuntimeTests";
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".RuntimeTests";
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, false, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, false, true);
             
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
@@ -175,19 +175,19 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
 
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".Editor";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".Editor";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, false);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, false);
 
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".EditorTests";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".EditorTests";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, true);
             
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
@@ -202,17 +202,17 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
 
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".Runtime";
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".Runtime";
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, false, false);
+            CreateFolderAndAssembly(name, assemblyDefinition, false, false);
 
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".RuntimeTests";
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".RuntimeTests";
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, false, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, false, true);
             
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
@@ -227,17 +227,17 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
 
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".Editor";
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".Editor";
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, false);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, false);
 
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".EditorTests";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".EditorTests";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, true);
             
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
@@ -252,16 +252,16 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
 
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".Editor";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, false);
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".Editor";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
+            CreateFolderAndAssembly(name, assemblyDefinition, true, false);
 
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".EditorTests";
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".EditorTests";
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, true);
             
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
@@ -276,17 +276,17 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
 
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".Runtime";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".Runtime";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, false, false);
+            CreateFolderAndAssembly(name, assemblyDefinition, false, false);
 
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".RuntimeTests";
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".RuntimeTests";
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, false, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, false, true);
             
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
@@ -301,17 +301,17 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
 
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".Runtime";
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".Runtime";
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, false, false);
+            CreateFolderAndAssembly(name, assemblyDefinition, false, false);
 
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".RuntimeTests";
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".RuntimeTests";
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, false, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, false, true);
             
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
@@ -326,18 +326,18 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
 
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + "WRONG.Editor";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + "WRONG.Editor";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, false);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, false);
 
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".EditorTests";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".EditorTests";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, true);
             
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
@@ -352,18 +352,18 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
 
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".Editor";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".Editor";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, false);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, false);
 
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + "Wrong.EditorTests";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + "Wrong.EditorTests";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, true);
             
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
@@ -378,16 +378,16 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
 
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + "WRONG.Runtime";
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + "WRONG.Runtime";
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, false, false);
+            CreateFolderAndAssembly(name, assemblyDefinition, false, false);
 
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".RuntimeTests";
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".RuntimeTests";
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, false, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, false, true);
             
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
@@ -402,16 +402,16 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
 
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".Runtime";
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".Runtime";
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, false, false);
+            CreateFolderAndAssembly(name, assemblyDefinition, false, false);
 
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + "WRONG.RuntimeTests";
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + "WRONG.RuntimeTests";
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, false, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, false, true);
             
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
@@ -426,18 +426,18 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
 
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".Editor";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".Editor";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, false);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, false);
 
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".EditorTests";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".EditorTests";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, true);
             
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
@@ -452,16 +452,16 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
 
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".Runtime";
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".Runtime";
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, false, false);
+            CreateFolderAndAssembly(name, assemblyDefinition, false, false);
 
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".RuntimeTests";
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".RuntimeTests";
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, false, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, false, true);
             
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
@@ -476,29 +476,29 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             CreatePackageJsonFile(name);
 
-            AssemblyDefinitionValidation.AssemblyDefinitionData assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".Runtime";
+            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".Runtime";
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, false, false);
+            CreateFolderAndAssembly(name, assemblyDefinition, false, false);
 
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".RuntimeTests";
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".RuntimeTests";
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, false, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, false, true);
              
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".Editor";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".Editor";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, false);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, false);
 
-            assemblyDefinitionData = new AssemblyDefinitionValidation.AssemblyDefinitionData();
-            assemblyDefinitionData.name = name + ".EditorTests";
-            assemblyDefinitionData.includePlatforms = new string [1] {"Editor"};
-            assemblyDefinitionData.optionalUnityReferences = new string [1] {"TestAssemblies"};
+            assemblyDefinition = new AssemblyDefinition();
+            assemblyDefinition.name = name + ".EditorTests";
+            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
+            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
 
-            CreateFolderAndAssembly(name, assemblyDefinitionData, true, true);
+            CreateFolderAndAssembly(name, assemblyDefinition, true, true);
 
             var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);

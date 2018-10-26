@@ -32,12 +32,12 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 new FakeValidationTest() {TestState = TestState.Succeeded, TestOutput = new List<string> { "All Looks Good" }},
             };
 
-            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), ".");
+            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), new ValidationSuiteReport());
 
             // Setup tests we want to run
             validationSuite.ValidationTests = testList.Cast<IValidationTest>();
 
-            validationSuite.RunAsync();
+            validationSuite.RunSync();
 
             WaitForAsyncTestCompletion();
 
@@ -51,7 +51,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             // Check that our Fake validation test below was auto-detected by the Validation Suite,
             // which uses reflection to find all tests.
-            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), ".");
+            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), new ValidationSuiteReport());
 
             Assert.AreEqual(1, validationSuite.ValidationTests.Where(t => t.TestName == "Manifest Validation").Count());
         }
@@ -67,12 +67,12 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 new FakeValidationTest() {TestState = TestState.Failed, TestOutput = new List<string> { "Horrible breakage" }}
             };
 
-            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), ".");
+            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), new ValidationSuiteReport());
 
             // Setup tests we want to run
             validationSuite.ValidationTests = testList.Cast<IValidationTest>();
 
-            validationSuite.RunAsync();
+            validationSuite.RunSync();
 
             WaitForAsyncTestCompletion();
 
@@ -92,12 +92,12 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 new FakeValidationTest() {TestState = TestState.Succeeded, TestOutput = new List<string> { "All Looks Good" }},
             };
 
-            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), ".");
+            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), new ValidationSuiteReport());
 
             // Setup tests we want to run
             validationSuite.ValidationTests = testList.Cast<IValidationTest>();
 
-            validationSuite.RunAsync();
+            validationSuite.RunSync();
 
             WaitForAsyncTestCompletion();
 
@@ -107,33 +107,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             // Find the test that crashed, make sure it's data was updated properly.
             Assert.AreEqual(1, validationSuite.ValidationTestResults.Where(t => t.TestState == TestState.Failed).Count());
-        }
-
-        [Test]
-        public void When_Cancel_PartialResults_Registered()
-        {
-            var testList = new List<FakeValidationTest>()
-            {
-                new FakeValidationTest() {TestState = TestState.Succeeded, TestOutput = new List<string> { "All Looks Good" }},
-                new FakeValidationTest() {TestState = TestState.Succeeded, TestOutput = new List<string> { "All Looks Good" }, CreateDelay = true},
-                new FakeValidationTest() {TestState = TestState.Succeeded, TestOutput = new List<string> { "All Looks Good" }},
-                new FakeValidationTest() {TestState = TestState.Succeeded, TestOutput = new List<string> { "All Looks Good" }},
-            };
-
-            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), "ValidationSuiteTests.txt");
-
-            // Setup tests we want to run
-            validationSuite.ValidationTests = testList.Cast<IValidationTest>();
-
-            validationSuite.RunAsync();
-
-            // Allow the Validation Suite to do some work before we cancel the run.
-            Thread.Sleep(500);
-            validationSuite.Cancel();
-
-            // Validate Results
-            Assert.AreEqual(1, testSuccessCallbackCount);
-            Assert.AreEqual(0, testFailureCallbackCount);
         }
 
         private void SingleTestCompletedDelegate(IValidationTestResult testResult)

@@ -1,6 +1,9 @@
 using System.Diagnostics;
 using System.IO;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEditor.Compilation;
 using UnityEngine;
 using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
 
@@ -61,7 +64,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.WorkingDirectory = workingDirectory;
             process.StartInfo.RedirectStandardOutput = true;
-            process.OutputDataReceived += (sender, arg) => {if(!string.IsNullOrEmpty(arg.Data.Trim())) packageName = arg.Data;};
+            process.OutputDataReceived += (sender, arg) => {if(!String.IsNullOrEmpty(arg.Data.Trim())) packageName = arg.Data;};
  
             process.Start();
             process.BeginOutputReadLine();
@@ -81,19 +84,53 @@ namespace UnityEditor.PackageManager.ValidationSuite
             return packageName;
         }
 
-        internal static string ExtractPackage(string package, string workingDirectory, string packageName)
+        internal static string DownloadPackage(string registryUri, string packageId, string workingDirectory)
+        {
+            //No Need to delete the file, npm pack always overwrite: https://docs.npmjs.com/cli/pack
+            var args = GetNpmFilePath() + " pack --registry " + registryUri + " " + packageId;
+            var packageName = "";
+
+            Process process = new Process();
+            process.StartInfo.FileName = GetNodePath();
+            process.StartInfo.Arguments = args;
+            process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.WorkingDirectory = workingDirectory;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.OutputDataReceived += (sender, arg) => { if (!String.IsNullOrEmpty(arg.Data.Trim())) packageName = arg.Data; };
+
+            process.Start();
+            process.BeginOutputReadLine();
+
+            //Wait for maximum of 10 minutes
+            process.WaitForExit(1000 * 60 * 10);
+
+            if (!process.HasExited)
+            {
+                process.Kill();
+                throw new TimeoutException("Fetching package failed.");
+            }
+
+            if (process.ExitCode != 0)
+                throw new ApplicationException("Fetching package failed.");
+
+            return packageName;
+        }
+
+        internal static string ExtractPackage(string packageFileName, string workingPath, string outputDirectory, string packageName)
         {
             //verify if package exists
-            if(!package.EndsWith(".tgz"))
+            if(!packageFileName.EndsWith(".tgz"))
                 throw new ArgumentException("Package should be a .tgz file");
 
-            var fullPackagePath = Path.Combine(workingDirectory, package);
-            var modulePath = Path.Combine(workingDirectory, "node_modules");
-            if (!System.IO.File.Exists(fullPackagePath))
+            var fullPackagePath = Path.Combine(workingPath, packageFileName);
+            var modulePath = Path.Combine(workingPath, "node_modules");
+            if (!File.Exists(fullPackagePath))
                 throw new FileNotFoundException(fullPackagePath + " was not found.");
-            
+
+
             //Clean node_modules if it exists
-            if(System.IO.File.Exists(modulePath))
+            if (File.Exists(modulePath))
             {
                 try{
                     Directory.Delete(modulePath, true);
@@ -102,14 +139,14 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 }
             }
                 
-            var args = GetNpmFilePath() + " install \"" + package + "\" --loglevel=error";
+            var args = GetNpmFilePath() + " install \"" + packageFileName + "\" --loglevel=error";
             var process = new Process();
 
             process.StartInfo.FileName = GetNodePath();
             process.StartInfo.Arguments = args;
             process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             process.StartInfo.UseShellExecute = false;
-            process.StartInfo.WorkingDirectory = workingDirectory;
+            process.StartInfo.WorkingDirectory = workingPath;
             process.StartInfo.RedirectStandardOutput = true;
             process.Start();
 
@@ -125,11 +162,37 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 throw new ApplicationException("Creating package failed.");
 
             var extractedPackagePath = Path.Combine(modulePath, packageName);
-            if(!System.IO.Directory.Exists(extractedPackagePath))
+            if(!Directory.Exists(extractedPackagePath))
                 throw new DirectoryNotFoundException(extractedPackagePath + " was not found.");
 
-            return extractedPackagePath;
-        
+            if (Directory.Exists(outputDirectory))
+                Directory.Delete(outputDirectory, true);
+
+            Directory.Move(extractedPackagePath, outputDirectory);
+            return outputDirectory;
+
+        }
+
+        public static bool IsTestAssembly(Assembly assembly)
+        {
+            return assembly.allReferences.Contains("TestAssemblies");
+        }
+
+        public static string GetNormalizedRelativePath(string path)
+        {
+            var baseDirectory = new Uri(Path.GetDirectoryName(Application.dataPath) + "/");
+            var relativeUri = baseDirectory.MakeRelativeUri(new Uri(path));
+            return relativeUri.ToString();
+        }
+
+        /// <summary>
+        /// Returns the Assembly instances which contain one or more scripts in a package, given the list of files in the package.
+        /// </summary>
+        public static IEnumerable<Assembly> AssembliesForPackage(Assembly[] assemblies, IEnumerable<string> filesInPackage)
+        {
+            var assemblyNames = new HashSet<string>(filesInPackage.Select(CompilationPipeline.GetAssemblyNameFromScriptPath)
+                .Where(p => p != null).Select(p => p.Replace(".dll", "")));
+            return assemblies.Where(a => assemblyNames.Contains(a.name));
         }
     }
 }

@@ -18,6 +18,11 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             //Names finishing with ".meta" are considered meta files in Editor Code.
             if(Path.GetFileName(name).StartsWith(".") || name.EndsWith(".meta"))
                 return true;
+
+            // Honor the Unity tilde skipping of import
+            if (Path.GetDirectoryName(name).EndsWith("~") || name.EndsWith("~"))
+                return true;
+
             return false;
         }
         

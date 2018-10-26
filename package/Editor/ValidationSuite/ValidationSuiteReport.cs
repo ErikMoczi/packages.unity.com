@@ -20,19 +20,33 @@ namespace UnityEditor.PackageManager.ValidationSuite
     
     internal class ValidationSuiteReport
     {
-        public ValidationTestReport[] testReports;
+        public static readonly string resultsPath = "ValidationSuiteResults";
 
-        private ValidationSuite suite;
+        private readonly string txtReportPath;
+        private readonly string jsonReportPath;
 
-        public ValidationSuiteReport(ValidationSuite suite)
+        public ValidationSuiteReport()
+        { }
+
+        public ValidationSuiteReport(string packageId, string packageName, string packageVersion, string packagePath)
         {
-            this.suite = suite;
-            BuildReport();
+            if (!Directory.Exists(resultsPath))
+                Directory.CreateDirectory(resultsPath);
+
+            if (File.Exists(txtReportPath))
+                File.Delete(txtReportPath);
+
+            if (File.Exists(jsonReportPath))
+                File.Delete(jsonReportPath);
+
+            txtReportPath = Path.Combine(resultsPath, packageId + ".txt");
+            jsonReportPath = Path.Combine(resultsPath, packageId + ".json");
+            File.WriteAllText(txtReportPath, string.Format("Validation Suite Results for package \"{0}\"\r\n - Path: {1}\r\n - Version: {2}\r\n - Test Time: {3}\r\n\r\n", packageName, packagePath, packageVersion, DateTime.Now));
         }
 
-        private void BuildReport()
+        private ValidationTestReport[] BuildReport(ValidationSuite suite)
         {
-            testReports = new ValidationTestReport[suite.validationTests.Count()];
+            var testReports = new ValidationTestReport[suite.validationTests.Count()];
             var i = 0;
             foreach (var validationTest in suite.validationTests)
             {
@@ -47,10 +61,48 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 testReports[i].Elpased = span.TotalMilliseconds > 1 ? (int)(span.TotalMilliseconds): 1;
                 i++;
             }
+
+            return testReports;
         }
-        
-        public void OutputReport(string path)
+
+        public static string TextReportPath(string packageId)
         {
+            return Path.Combine(resultsPath, packageId + ".txt");
+        }
+
+        public static string DiffsReportPath(string packageId)
+        {
+            return Path.Combine(resultsPath, packageId + ".delta");
+        }
+
+        public static bool ReportExists(string packageId)
+        {
+            var txtReportPath = Path.Combine(resultsPath, packageId + ".txt");
+            return File.Exists(txtReportPath);
+        }
+
+        public static bool DiffsReportExists(string packageId)
+        {
+            var deltaReportPath = Path.Combine(resultsPath, packageId + ".delta");
+            return File.Exists(deltaReportPath);
+        }
+
+        public void OutputErrorReport(string error)
+        {
+            File.AppendAllText(txtReportPath, error);
+        }
+
+        public void OutputTextReport(ValidationSuite suite)
+        {
+            SaveTestResult(suite, TestState.Failed);
+            SaveTestResult(suite, TestState.Succeeded);
+            SaveTestResult(suite, TestState.NotRun);
+            SaveTestResult(suite, TestState.NotImplementedYet);
+        }
+
+        public void OutputJsonReport(ValidationSuite suite)
+        {
+            var testReports = BuildReport(suite);
             var span = suite.EndTime - suite.StartTime;
             var report = string.Format
                 ("{{\"TestResult\":\"{0}\", \"StartTime\":\"{1}\", \"EndTime\":\"{2}\", \"Elapsed\":{3}, \"Tests\":",
@@ -59,21 +111,31 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 suite.EndTime.ToString(),
                 span.TotalMilliseconds > 1 ? (int)(span.TotalMilliseconds): 1);
 
-            File.WriteAllText(path, report);
+            File.WriteAllText(jsonReportPath, report);
             if (testReports.Length == 0)
             {
-                File.AppendAllText(path, "[]}");
+                File.AppendAllText(jsonReportPath, "[]}");
                 return;
             }
             
-            File.AppendAllText(path, "[");
+            File.AppendAllText(jsonReportPath, "[");
             for (var i = 0 ; i < testReports.Length ; i++)
             {
-                File.AppendAllText(path, JsonUtility.ToJson(testReports[i], false));
+                File.AppendAllText(jsonReportPath, JsonUtility.ToJson(testReports[i], false));
                 if (i < testReports.Length - 1)
-                    File.AppendAllText(path, ",");
+                    File.AppendAllText(jsonReportPath, ",");
             }
-            File.AppendAllText(path, "]}");
+            File.AppendAllText(jsonReportPath, "]}");
+        }
+
+        private void SaveTestResult(ValidationSuite suite, TestState testState)
+        {
+            foreach (var testResult in suite.validationTests.Where(t => t.TestState == testState))
+            {
+                File.AppendAllText(txtReportPath, string.Format("\r\n{0} - \"{1}\"\r\n", testResult.TestState, testResult.TestName));
+                if (testResult.TestOutput.Any())
+                    File.AppendAllText(txtReportPath, string.Join("\r\n", testResult.TestOutput.ToArray()) + "\r\n");
+            }
         }
     }
 }

@@ -16,6 +16,9 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
         protected override void Run()
         {
+            // TODO:  Add check for local feature doc.
+            //        Check for XMLDocs
+
             SemVersion packageJsonVersion;
 
             if (!SemVersion.TryParse(Context.ProjectPackageInfo.version, out packageJsonVersion))

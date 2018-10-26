@@ -236,6 +236,32 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.AreEqual(0, metaFilesValidation.TestOutput.Count);
         }
 
+        [Test]
+        public void When_Folder_EndingWithTilde_Meta_IsMissing_Validation_Succeeds()
+        {
+            CreateFileOrFolder(true, "folder~", false);
+            var metaFilesValidation = new MetaFilesValidation();
+            metaFilesValidation.Context = PrepareVettingContext(testDirectory);
+            metaFilesValidation.RunTest();
+
+            Assert.AreEqual(TestState.Succeeded, metaFilesValidation.TestState);
+            Assert.AreEqual(0, metaFilesValidation.TestOutput.Count);
+        }
+
+        [Test]
+        public void When_Files_In_Folder_EndingWithTilde_Meta_IsMissing_Validation_Succeeds()
+        {
+            CreateFileOrFolder(true, "folder~", false);
+            CreateFileOrFolder(false, "file1", false, "folder~");
+            CreateFileOrFolder(false, "file2", true);
+            var metaFilesValidation = new MetaFilesValidation();
+            metaFilesValidation.Context = PrepareVettingContext(testDirectory);
+            metaFilesValidation.RunTest();
+
+            Assert.AreEqual(TestState.Succeeded, metaFilesValidation.TestState);
+            Assert.AreEqual(0, metaFilesValidation.TestOutput.Count);
+        }
+
         private VettingContext PrepareVettingContext(string packagePath)
         {
             return new VettingContext()

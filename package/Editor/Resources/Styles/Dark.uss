@@ -1,0 +1,21 @@
+#ValidationSuiteUIContainer {
+  flex-direction: row;
+}
+#ValidationSuiteUIContainer #ValidationActionContainer {
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+}
+#ValidationSuiteUIContainer #ValidationResultsContainer {
+  flex: 0;
+  flex-direction: row;
+}
+#ValidationSuiteUIContainer #ValidationActionContainer Button {
+  flex: 0;
+}
+#ValidationSuiteUIContainer #ValidationActionContainer Label {
+  flex: 1;
+}
+#ValidationSuiteUIContainer #ValidationResultsContainer Button {
+  flex: 0;
+}

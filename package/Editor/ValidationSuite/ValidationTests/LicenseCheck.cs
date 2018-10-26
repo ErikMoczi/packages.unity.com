@@ -1,12 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
-using Semver;
-using UnityEngine;
-using UnityEditor.PackageManager.ValidationSuite.UI;
-
-namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
+﻿namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
     internal class LicenseEvaluation : BaseValidation
     {

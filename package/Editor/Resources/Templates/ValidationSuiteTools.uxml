@@ -1,0 +1,13 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements">
+    <ui:VisualElement name="ValidationSuiteUIContainer">
+      <ui:VisualElement name="ValidationActionContainer">
+        <ui:Button name="validateButton" text="Validate"/>
+        <ui:Label name="validationResults"/>
+      </ui:VisualElement>
+      <ui:VisualElement name="ValidationResultsContainer">
+        <ui:Button name="viewResults" text="View Results"/>
+        <ui:Button name="viewdiff" text="View Diff"/>
+      </ui:VisualElement>
+
+    </ui:VisualElement>
+</UXML>

@@ -10,14 +10,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
     internal class AssemblyDefinitionValidation : BaseValidation
     {
         private const string AssemblyFileDefinitionExtension = "*.asmdef";
-        
-        internal class AssemblyDefinitionData {
-            public string name = "";
-            public string [] references = new string[0];
-            public string [] optionalUnityReferences = new string[0];
-            public string [] includePlatforms = new string[0];
-            public string [] excludePlatforms = new string[0];
-        }
     
         public AssemblyDefinitionValidation()
         {
@@ -40,7 +32,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         void CheckAssemblyDefinitionContent(string assemblyDefinitionPath, bool isEditor, bool isTest)
         {
             try{
-                var assemblyDefinitionData = Utilities.GetDataFromJson<AssemblyDefinitionData>(assemblyDefinitionPath);
+                var assemblyDefinitionData = Utilities.GetDataFromJson<AssemblyDefinition>(assemblyDefinitionPath);
                 
                 if(isEditor && assemblyDefinitionData.includePlatforms.Length != 1)
                 {

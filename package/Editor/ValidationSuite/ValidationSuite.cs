@@ -19,8 +19,6 @@ namespace UnityEditor.PackageManager.ValidationSuite
     [InitializeOnLoad]
     public class ValidationSuite
     {
-        public static readonly string resultsPath = "ValidationSuiteResults";
-
         // List of validation tests
         internal IEnumerable<BaseValidation> validationTests;
 
@@ -32,12 +30,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         // Vetting context
         private readonly VettingContext context;
-
-        // Path of the result output
-        internal readonly string resultOutputPath;
-
-        // Thread we will use to run tests.
-        private Thread testRunnerThread = null;
+        private readonly ValidationSuiteReport report;
 
         internal TestState testSuiteState;
 
@@ -48,12 +41,12 @@ namespace UnityEditor.PackageManager.ValidationSuite
         internal ValidationSuite(SingleTestCompletedDelegate singleTestCompletionDelegate,
                                AllTestsCompletedDelegate allTestsCompletedDelegate,
                                VettingContext context,
-                               string resultOutputPath)
+                               ValidationSuiteReport report)
         {
             this.singleTestCompletionDelegate += singleTestCompletionDelegate;
             this.allTestsCompletedDelegate += allTestsCompletedDelegate;
             this.context = context;
-            this.resultOutputPath = resultOutputPath;
+            this.report = report;
             testSuiteState = TestState.NotRun;
 
             BuildTestSuite();
@@ -70,7 +63,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
             get { return validationTests.Cast<IValidationTestResult>(); }
         }
 
-        public static bool RunValidationSuite(string packageId)
+        public static bool RunValidationSuite(string packageId, PackageSource source = PackageSource.Embedded)
         {
             var parts = packageId.Split('@');
             var packageName = parts[0];
@@ -79,65 +72,43 @@ namespace UnityEditor.PackageManager.ValidationSuite
             if (string.IsNullOrEmpty(packagePath))
                 return false;
 
-            if (!Directory.Exists(resultsPath))
-                Directory.CreateDirectory(resultsPath);
-
-            // Clear output file content
-            var path = Path.Combine(resultsPath, packageId + ".txt");
-            File.WriteAllText(path, string.Format("Validation Suite Results for package \"{0}\"\r\n - Path: {1}\r\n - Version: {2}\r\n\r\n", packageName, packagePath, packageVersion));
-
+            var report = new ValidationSuiteReport(packageId, packageName, packageVersion, packagePath);
             if (!packagePath.StartsWith(Directory.GetCurrentDirectory()) && !packagePath.EndsWith(packageVersion))
             {
-                File.AppendAllText(path, string.Format("Package version mismatch: expecting \"{0}\" but was \"{1}\"", packageVersion, packagePath));
+                report.OutputErrorReport(string.Format("Package version mismatch: expecting \"{0}\" but was \"{1}\"", packageVersion, packagePath));
                 return false;
             }
 
             try
             {
-                var context = VettingContext.CreatePackmanContext(packagePath);
-                var testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletedDelegate, context, path);
+                var context = VettingContext.CreatePackmanContext(packagePath, source);
+                var testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletedDelegate, context, report);
                 testSuite.RunSync();
                 return testSuite.testSuiteState == TestState.Succeeded;
             }
             catch (Exception e)
             {
-                File.AppendAllText(path, string.Format("\r\nTest Setup Error: \"{0}\"\r\n", e.Message));
+                report.OutputErrorReport(string.Format("\r\nTest Setup Error: \"{0}\"\r\n", e));
                 return false;
             }
         }
 
         public static bool RunAssetStoreValidationSuite(string packagePath, string previousPackagePath = null)
         {
+            var report = new ValidationSuiteReport();
+
             try
             {
                 var context = VettingContext.CreateAssetStoreContext(packagePath, previousPackagePath);
-                var testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletedDelegate, context, Path.GetFileName(packagePath));
+                var testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletedDelegate, context, report);
                 testSuite.RunSync();
                 return testSuite.testSuiteState == TestState.Succeeded;
             }
             catch (Exception e)
             {
-                File.AppendAllText(packagePath, string.Format("\r\nTest Setup Error: \"{0}\"\r\n", e.Message));
+                report.OutputErrorReport(string.Format("\r\nTest Setup Error: \"{0}\"\r\n", e));
                 return false;
             }
-        }
-
-        internal void RunAsync()
-        {
-            // Start by calling "setup" on each test to allow them to prepare editor data they cant query async.
-            foreach (var test in validationTests)
-            {
-                if (!test.ShouldRun)
-                    continue;
-
-                test.Context = context;
-                test.Suite = this;
-                test.Setup();
-            }
-
-            // Run the tests in another thread, so we can get results as tests complete, and we can cancel a test run easily
-            testRunnerThread = new Thread(Run);
-            testRunnerThread.Start();
         }
 
         internal void RunSync()
@@ -145,16 +116,11 @@ namespace UnityEditor.PackageManager.ValidationSuite
             foreach (var test in validationTests)
             {
                 test.Context = context;
+                test.Suite = this;
                 test.Setup();
             }
             
             Run();
-        }
-
-        internal void Cancel()
-        {
-            // Cancel validation tests running in the other thread
-            testRunnerThread.Abort();
         }
 
         private void BuildTestSuite()
@@ -218,22 +184,12 @@ namespace UnityEditor.PackageManager.ValidationSuite
         
         private static void SingleTestCompletedDelegate(IValidationTestResult testResult)
         {
-            File.AppendAllText(testResult.ValidationTest.Suite.resultOutputPath, string.Format("\r\nTest: \"{0}\"\r\nResult: {1}\r\n", testResult.ValidationTest.TestName, testResult.TestState));
-            if (testResult.TestOutput.Any())
-                File.AppendAllText(testResult.ValidationTest.Suite.resultOutputPath, string.Join("\r\n", testResult.TestOutput.ToArray()) + "\r\n");
         }
 
         private static void AllTestsCompletedDelegate(ValidationSuite suite, TestState testRunState)
-        {
-            File.AppendAllText(suite.resultOutputPath, "\r\nAll Done!  Result = " + testRunState);
-
-            var report = new ValidationSuiteReport(suite);
-            var parent = Directory.GetParent(suite.resultOutputPath).FullName;
-            var path = Path.Combine(parent, Path.GetFileNameWithoutExtension(suite.resultOutputPath) + ".json");
-            if (File.Exists(path))
-                File.Delete(path);
-            
-            report.OutputReport(path);
+        {            
+            suite.report.OutputTextReport(suite);
+            suite.report.OutputJsonReport(suite);
         }
     }
 }

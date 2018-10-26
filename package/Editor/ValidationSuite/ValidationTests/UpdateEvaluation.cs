@@ -1,12 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
-using Semver;
-using UnityEngine;
-using UnityEditor.PackageManager.ValidationSuite.UI;
-
-namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
+﻿namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
     internal class UpdateValidation : BaseValidation
     {
@@ -24,6 +16,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
             // Version bump was done.
             // Does the version bump make sense, go from beta to alpha on a path update seems wrong?
+            // Is this the first version of a package?  if so, it should be a pre-release
         }
     }
 }

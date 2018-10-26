@@ -1,0 +1,8 @@
+{
+    "name": "Unity.PackageValidationSuite.EditorTests.TestPackage_EmptyAsmdefAdd.NewAsmdef",
+    "references": [],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}
