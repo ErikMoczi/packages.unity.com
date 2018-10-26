@@ -1,0 +1,105 @@
+using NUnit.Framework;
+using System.Reflection;
+using System.Linq;
+using System;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
+using System.Collections;
+using UnityEngine.TestTools;
+
+namespace Unity.EditorCoroutines.Editor.Tests
+{
+    public class DummyEditorWindow : EditorWindow
+    {
+
+    }
+
+    [TestFixture]
+    public class EditorCoroutineTests
+    {
+        const float waitTime = 5.0f; //wait time in seconds
+        IEnumerator TestRoutine(IEnumerator yieldInstruction)
+        {
+            Debug.Log("PreExecution");
+            yield return yieldInstruction;
+            Debug.Log("PostExecution");
+        }
+
+        IEnumerator TestRoutineWithYield()
+        {
+            Debug.Log("PreExecution");
+            yield return new EditorWaitForSeconds(waitTime);
+            Debug.Log("PostExecution");
+        }
+
+        IEnumerator TestNestedRoutineswithYield()
+        {
+            Debug.Log("Outer PreExecution");
+            yield return EditorCoroutineUtility.StartCoroutineWithoutOwner(TestRoutineWithYield());
+            Debug.Log("Outer PostExecution");
+        }
+
+        [UnityTest]
+        public IEnumerator CoroutineLogsStepsAtExpectedTimes()
+        {
+            var currentWindow = EditorWindow.GetWindow<DummyEditorWindow>();
+
+            currentWindow.StartCoroutine(TestRoutine(null));
+            yield return null; //the coroutine starts execution the next frame
+            yield return null; //yield return null does not return end of frame
+            //coroutine will now be executed then yield
+            LogAssert.Expect(LogType.Log, "PreExecution");
+            yield return null;
+            LogAssert.Expect(LogType.Log, "PostExecution");
+            currentWindow.Close();
+        }
+
+        [UnityTest]
+        public IEnumerator CoroutineWaitsForSpecifiedNumberOfSeconds()
+        {
+
+            yield return new EnterPlayMode(); //both enter/exit play mode cause domain reload
+            var currentWindow = EditorWindow.GetWindow<DummyEditorWindow>();
+            currentWindow.StartCoroutine(TestRoutineWithYield());
+            yield return null;
+            yield return null; //one frame has passed and the routine got scheduled
+            double targetTime = EditorApplication.timeSinceStartup + waitTime;
+            LogAssert.Expect(LogType.Log, "PreExecution");
+
+            while (targetTime > EditorApplication.timeSinceStartup)
+            {
+                yield return null; //wait until target time is reached
+            }
+            yield return null; //wait for next frame to get evaluation of target time inside the coroutine manager
+
+            LogAssert.Expect(LogType.Log, "PostExecution");
+
+            currentWindow.Close();
+            yield return new ExitPlayMode();
+        }
+
+        [UnityTest]
+        public IEnumerator NestedCoroutinesWaitForSpecificNumberOfSeconds()
+        {
+            EditorCoroutineUtility.StartCoroutineWithoutOwner(TestNestedRoutineswithYield());
+            yield return null;
+            yield return null;
+        }
+
+        private IEnumerator NestedIEnumeratorRoutine()
+        {
+            Debug.Log("Start of nesting");
+            yield return TestRoutine(TestRoutine(null));
+            Debug.Log("End of nesting");
+        }
+
+        [UnityTest]
+        public IEnumerator CoroutineYieldingIEnumerator()
+        {
+            EditorCoroutineUtility.StartCoroutineWithoutOwner(NestedIEnumeratorRoutine());
+            yield return null;
+            yield return null;
+        }
+    }
+}

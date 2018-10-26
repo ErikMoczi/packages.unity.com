@@ -1,0 +1,241 @@
+using System;
+using System.Collections;
+using UnityEditor;
+using UnityEngine;
+
+namespace Unity.EditorCoroutines.Editor
+{
+    public class EditorCoroutine
+    {
+        private struct WaitforSecondsProcessor
+        {
+            double targetTime;
+            EditorWaitForSeconds current;
+
+            public void Set(EditorWaitForSeconds yieldStatement)
+            {
+                if (yieldStatement == current)
+                    return;
+
+                current = yieldStatement;
+                targetTime = EditorApplication.timeSinceStartup + yieldStatement.waitTime;
+            }
+
+            public bool MoveNext(IEnumerator enumerator)
+            {
+                if (current == null)
+                    throw new NullReferenceException("A target statement must be set before attempting to MoveNext");
+
+                if (enumerator.Current != current)
+                    throw new InvalidOperationException("Enumerator provided to TargetTime construct is not the currently tracked one.");
+
+                if (targetTime <= EditorApplication.timeSinceStartup)
+                {
+                    current = null;
+                    targetTime = 0;
+                    return enumerator.MoveNext();
+                }
+                return true;
+            }
+        }
+
+        private struct WaitForCoroutineProcessor
+        {
+            EditorCoroutine m_Current;
+
+            public void Set(EditorCoroutine routine)
+            {
+                if (m_Current == routine)
+                    return;
+
+                m_Current = routine;
+            }
+
+            public bool MoveNext(IEnumerator enumerator, EditorCoroutine routine)
+            {
+                if (routine != m_Current)
+                    throw new ArgumentException("Provided EditorCoroutine does not match currently tracked routine");
+
+                if (routine.m_IsDone)
+                {
+                    m_Current = null;
+                    return enumerator.MoveNext();
+                }
+
+                return true;
+            }
+
+        }
+
+        private struct WaitForAsyncOPProcessor
+        {
+            AsyncOperation current;
+
+            public void Set(AsyncOperation operation)
+            {
+                if (current != operation)
+                    current = operation;
+            }
+
+            public bool MoveNext(IEnumerator enumerator, AsyncOperation operation)
+            {
+                if (operation != current)
+                    throw new ArgumentException("Provided AsyncOperation does not match the currently tracked one.");
+
+                if (current.isDone)
+                {
+                    current = null;
+                    return enumerator.MoveNext();
+                }
+                return true;
+            }
+        }
+
+        object m_Owner;
+        IEnumerator m_Routine;
+
+        WaitforSecondsProcessor m_WaitProcessor;
+        WaitForCoroutineProcessor m_WaitForCoroutine;
+        WaitForAsyncOPProcessor m_WaitForAsyncOPProcessor;
+
+        bool m_IsDone;
+
+        public object Current { get { return null; } }
+
+        internal EditorCoroutine(IEnumerator routine)
+        {
+            m_Owner = new object();
+            m_Routine = routine;
+            EditorApplication.update += MoveNext;
+        }
+        internal EditorCoroutine(EditorWindow window, IEnumerator routine)
+        {
+            m_Routine = routine;
+            m_Owner = window;
+            EditorApplication.update += MoveNext;
+        }
+
+        internal void MoveNext()
+        {
+            if (m_Owner == null)
+            {
+                EditorApplication.update -= MoveNext;
+                return;
+            }
+
+            bool done = ProcessIEnumeratorRecursive(m_Routine, null);
+            m_IsDone = !done;
+
+            if(m_IsDone)
+                EditorApplication.update -= MoveNext;
+        }
+
+        private bool ProcessIEnumeratorRecursive(IEnumerator child, IEnumerator root)
+        {
+            bool isRoot = root == null;
+
+            var nestedEnumerator = child.Current as IEnumerator;
+            var result = false;
+            if (nestedEnumerator == null)
+            {
+                result = ProcessIEnumerator(child);
+            }
+            else
+            {
+                result = ProcessIEnumeratorRecursive(nestedEnumerator, child);
+            }
+
+            if (!result && !isRoot)
+                return root.MoveNext();
+
+            return result;
+        }
+
+        private bool ProcessIEnumerator(IEnumerator enumerator)
+        {
+            var nestedCoroutine = enumerator.Current as EditorCoroutine;
+            if (nestedCoroutine != null)
+            {
+                m_WaitForCoroutine.Set(nestedCoroutine);
+                return m_WaitForCoroutine.MoveNext(enumerator, nestedCoroutine);
+            }
+
+            var waitForSeconds = enumerator.Current as EditorWaitForSeconds;
+            if (waitForSeconds != null)
+            {
+                m_WaitProcessor.Set(waitForSeconds);
+                return m_WaitProcessor.MoveNext(enumerator);
+            }
+
+            var waitForAsyncOP = enumerator.Current as AsyncOperation;
+            if(waitForAsyncOP != null)
+            {
+                m_WaitForAsyncOPProcessor.Set(waitForAsyncOP);
+                return m_WaitForAsyncOPProcessor.MoveNext(enumerator, waitForAsyncOP);
+            }
+            else
+            {
+                if (!enumerator.MoveNext())
+                    return false;
+
+                waitForSeconds = enumerator.Current as EditorWaitForSeconds;
+                nestedCoroutine = enumerator.Current as EditorCoroutine;
+                waitForAsyncOP = enumerator.Current as AsyncOperation;
+
+                if (waitForSeconds != null)
+                    m_WaitProcessor.Set(waitForSeconds);
+                else if (nestedCoroutine != null)
+                    m_WaitForCoroutine.Set(nestedCoroutine);
+                else if (waitForAsyncOP != null)
+                    m_WaitForAsyncOPProcessor.Set(waitForAsyncOP);
+
+                return true;
+            }
+        }
+
+        internal void Stop()
+        {
+            m_Owner = null;
+            m_Routine = null;
+            EditorApplication.update -= MoveNext;
+        }
+    }
+
+    public static class EditorCoroutineUtility
+    {
+        public static EditorCoroutine StartCoroutineWithoutOwner(IEnumerator routine)
+        {
+            return new EditorCoroutine(routine);
+        }
+
+        public static void StopCoroutine(EditorCoroutine coroutine)
+        {
+            coroutine.Stop();
+        }
+    }
+
+    public static class EditorWindowExtension
+    {
+        public static EditorCoroutine StartCoroutine(this EditorWindow window, IEnumerator routine)
+        {
+            return new EditorCoroutine(window, routine);
+        }
+
+        public static void StopCoroutine(this EditorWindow window, EditorCoroutine coroutine)
+        {
+            EditorCoroutineUtility.StopCoroutine(coroutine);
+        }
+    }
+
+    public class EditorWaitForSeconds
+    {
+        public double waitTime { get; }
+
+        public object Current { get { return null; }  }
+
+        public EditorWaitForSeconds(float time)
+        {
+            waitTime = time;
+        }
+    }
+}
