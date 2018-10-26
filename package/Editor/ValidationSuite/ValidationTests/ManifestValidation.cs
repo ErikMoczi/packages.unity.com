@@ -49,7 +49,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 {
                     if (Utilities.IsPreviewVersion(dependency.Value))
                     {
-                        Error("This production quality package has a dependency on preview package \"{0}\".  Production quality packages can only depend on other production quality packages.");
+                        Error("This production quality package has a dependency on preview package \"{0}\".  Production quality packages can only depend on other production quality packages.", dependency.Value);
                     }
                 }
             }
@@ -61,7 +61,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 if (!Utilities.PackageExistsOnProduction(packageId))
                 {
                     if (Context.ValidationType == ValidationType.Publishing || Context.ValidationType == ValidationType.AssetStore)
-                        Error("Package dependency {0} is not published in procuction.", packageId);
+                        Error("Package dependency {0} is not published in production.", packageId);
                     else
                         Warning("Package dependency {0} must be published to production before this package is published to production.  (Except for core packages)", packageId);
                 }

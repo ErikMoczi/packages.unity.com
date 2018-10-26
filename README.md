@@ -1,1 +1,1 @@
-Unity Package Manager validation suite, used to evaluate a package's integrity before it's considered for publishing.
+Unity Package Manager validation suite, used to evaluate a package's integrity before it's considered for publishing.  This is a Unity internal tool at the moment, no support will be provided for this package.

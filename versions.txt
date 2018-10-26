@@ -19,3 +19,4 @@
 0.4.0-preview.3
 0.4.0-preview.4
 0.4.0-preview.5
+0.4.0-preview.6

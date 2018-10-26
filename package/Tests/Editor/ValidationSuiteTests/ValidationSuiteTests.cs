@@ -32,7 +32,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 new FakeValidationTest() {TestState = TestState.Succeeded, TestOutput = new List<string> { "All Looks Good" }},
             };
 
-            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), new ValidationSuiteReport());
+            var vettingContext = new VettingContext {ValidationType = ValidationType.Publishing};
+            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, vettingContext, new ValidationSuiteReport());
 
             // Setup tests we want to run
             validationSuite.ValidationTests = testList.Cast<BaseValidation>();
@@ -67,7 +68,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 new FakeValidationTest() {TestState = TestState.Failed, TestOutput = new List<string> { "Horrible breakage" }}
             };
 
-            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), new ValidationSuiteReport());
+            var vettingContext = new VettingContext {ValidationType = ValidationType.Publishing};
+            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, vettingContext, new ValidationSuiteReport());
 
             // Setup tests we want to run
             validationSuite.ValidationTests = testList.Cast<BaseValidation>();
@@ -92,7 +94,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 new FakeValidationTest() {TestState = TestState.Succeeded, TestOutput = new List<string> { "All Looks Good" }},
             };
 
-            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), new ValidationSuiteReport());
+            var vettingContext = new VettingContext {ValidationType = ValidationType.Publishing};
+            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, vettingContext, new ValidationSuiteReport());
 
             // Setup tests we want to run
             validationSuite.ValidationTests = testList.Cast<BaseValidation>();

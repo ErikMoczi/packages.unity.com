@@ -131,13 +131,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             Assert.AreEqual(TestState.Failed, manifestValidation.TestState);
         }
-        public static IEnumerable<TestCaseData> FailsInMinor()
-        {
-            yield return new TestCaseData(ReleaseType.Patch, true);//.SetName("FailsInPatch");
-            yield return new TestCaseData(ReleaseType.Minor, true);//.SetName("FailsInMinor");
-            yield return new TestCaseData(ReleaseType.Major, false);//.SetName("SucceedsInMajor");
-        }
-
+        
         [Test]
         [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInMinor")]
         public void DependencyAdded_FailsInMinor(ReleaseType releaseType, bool errorExpected)
@@ -152,30 +146,28 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             projectManifestData.version = VersionComparisonTestUtilities.VersionForReleaseType(releaseType);
 
             var messagesExpected = new List<string>
-            { @"New dependency: ""package1"": ""1.0.0""", "Error: Adding package dependencies requires a new major version."};
+            { "Warning: Package dependency package1@1.0.0 must be published to production before this package is published to production.  (Except for core packages)", 
+              @"New dependency: ""package1"": ""1.0.0""", "Error: Adding package dependencies requires a new major version."};
 
             var manifestValidation = SetupTestManifestAndRunValidation(projectManifestData, previousManifestData);
 
             ExpectResult(errorExpected, manifestValidation, messagesExpected);
         }
 
-        static IEnumerable<TestCaseData> When_DependencyChangedToDifferentVersion_Cases()
+        static IEnumerable<TestCaseData> When_DependencyChangedToDifferentVersion_Cases_Error()
         {
             yield return new TestCaseData(ReleaseType.Patch, false, ReleaseType.Minor);
             yield return new TestCaseData(ReleaseType.Patch, false, ReleaseType.Patch);
             yield return new TestCaseData(ReleaseType.Minor, false, ReleaseType.Minor);
             yield return new TestCaseData(ReleaseType.Minor, false, ReleaseType.Patch);
-            yield return new TestCaseData(ReleaseType.Major, false, ReleaseType.Minor);
-            yield return new TestCaseData(ReleaseType.Major, false, ReleaseType.Patch);
-
-            yield return new TestCaseData(ReleaseType.Patch, true, ReleaseType.Major);
-            yield return new TestCaseData(ReleaseType.Minor, true, ReleaseType.Major);
+            yield return new TestCaseData(ReleaseType.Major, true, ReleaseType.Minor);
+            yield return new TestCaseData(ReleaseType.Major, true, ReleaseType.Patch);
             yield return new TestCaseData(ReleaseType.Major, false, ReleaseType.Major);
         }
 
         [Test]
-        [TestCaseSource("When_DependencyChangedToDifferentVersion_Cases")]
-        public void When_DependencyChangedToDifferentVersion(ReleaseType packageReleaseType, bool errorExpected, ReleaseType dependencyReleaseType)
+        [TestCaseSource("When_DependencyChangedToDifferentVersion_Cases_Error")]
+        public void When_DependencyChangedToDifferentVersionError(ReleaseType packageReleaseType, bool errorExpected, ReleaseType dependencyReleaseType)
         {
             var previousManifestData = GenerateValidManifestData();
             var projectManifestData = GenerateValidManifestData();
@@ -191,7 +183,41 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             projectManifestData.version = VersionComparisonTestUtilities.VersionForReleaseType(packageReleaseType);
 
             var messagesExpected = new List<string>
-            { String.Format(@"Error: Dependency major versions may only change in major releases. ""package1"": ""0.0.1"" -> ""{0}""", projectManifestData.dependencies["package1"]) };
+            { string.Format(@"Error: This production quality package has a dependency on preview package ""{0}"".  Production quality packages can only depend on other production quality packages.", projectManifestData.dependencies["package1"]),
+              string.Format(@"Warning: Package dependency package1@{0} must be published to production before this package is published to production.  (Except for core packages)", projectManifestData.dependencies["package1"]) };
+
+            var manifestValidation = SetupTestManifestAndRunValidation(projectManifestData, previousManifestData);
+
+            ExpectResult(errorExpected, manifestValidation, messagesExpected);
+        }
+
+        static IEnumerable<TestCaseData> When_DependencyChangedToDifferentVersion_CasesWarning()
+        {
+            yield return new TestCaseData(ReleaseType.Patch, true, ReleaseType.Major);
+            yield return new TestCaseData(ReleaseType.Minor, true, ReleaseType.Major);
+        }
+        [Test]
+        [TestCaseSource("When_DependencyChangedToDifferentVersion_CasesWarning")]
+        public void When_DependencyChangedToDifferentVersionWarning(ReleaseType packageReleaseType, bool errorExpected, ReleaseType dependencyReleaseType)
+        {
+            var previousManifestData = GenerateValidManifestData();
+            var projectManifestData = GenerateValidManifestData();
+
+            previousManifestData.dependencies = new Dictionary<string, string>
+            {
+                { "package1", "0.0.1-preview" }
+            };
+            projectManifestData.dependencies = new Dictionary<string, string>
+            {
+                { "package1", VersionComparisonTestUtilities.VersionForReleaseType(dependencyReleaseType) }
+            };
+            projectManifestData.version = VersionComparisonTestUtilities.VersionForReleaseType(packageReleaseType);
+
+            var messagesExpected = new List<string>
+            {
+                string.Format(@"Warning: Package dependency package1@{0} must be published to production before this package is published to production.  (Except for core packages)", projectManifestData.dependencies["package1"]),
+                string.Format(@"Error: Dependency major versions may only change in major releases. ""package1"": ""{0}"" -> ""1.0.0""", previousManifestData.dependencies["package1"])
+            };
 
             var manifestValidation = SetupTestManifestAndRunValidation(projectManifestData, previousManifestData);
 
@@ -212,7 +238,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             projectManifestData.version = VersionComparisonTestUtilities.VersionForReleaseType(releaseType);
 
             var messagesExpected = new List<string>
-            { @"Error: Removing dependencies is not forwards-compatible and requires a new major or minor version. Removed dependency: package1" };
+            { "Error: Removing dependencies is not forwards-compatible and requires a new major or minor version. Removed dependency: package1" };
 
             var manifestValidation = SetupTestManifestAndRunValidation(projectManifestData, previousManifestData);
 
@@ -229,7 +255,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             };
 
             var messagesExpected = new List<string>
-            { @"Error: Invalid version number in dependency ""package1"" : ""0.0.a""" };
+            { "Warning: Package dependency package1@0.0.a must be published to production before this package is published to production.  (Except for core packages)",
+              @"Error: Invalid version number in dependency ""package1"" : ""0.0.a"""};
 
             var manifestValidation = SetupTestManifestAndRunValidation(projectManifestData);
 

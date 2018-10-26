@@ -32,7 +32,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
             }
 
             zipFilePath = Path.Combine(zipDirectory, PackageDataZipFilename(packageName, packageVersion));
-            var files = Directory.GetFiles(packageRootPath, "*", SearchOption.AllDirectories).Select(Utilities.GetNormalizedRelativePath);
+            var files = Directory.GetFiles(packageRootPath, "*", SearchOption.AllDirectories);
             var assemblies = Utilities.AssembliesForPackage(CompilationPipeline.GetAssemblies(), files).Where(a => !Utilities.IsTestAssembly(a)).ToArray();
             var assemblyFilenames = assemblies.Select(a => Path.GetFileName(a.outputPath)).ToArray();
             if (assemblyFilenames.Length == 0)

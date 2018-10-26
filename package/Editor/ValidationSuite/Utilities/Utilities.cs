@@ -170,13 +170,6 @@ namespace UnityEditor.PackageManager.ValidationSuite
             return assembly.allReferences.Contains("TestAssemblies");
         }
 
-        public static string GetNormalizedRelativePath(string path)
-        {
-            var baseDirectory = new Uri(Path.GetDirectoryName(Application.dataPath) + "/");
-            var relativeUri = baseDirectory.MakeRelativeUri(new Uri(path));
-            return relativeUri.ToString();
-        }
-
         /// <summary>
         /// Returns the Assembly instances which contain one or more scripts in a package, given the list of files in the package.
         /// </summary>
