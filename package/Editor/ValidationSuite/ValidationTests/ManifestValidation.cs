@@ -60,7 +60,10 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 var packageId = Utilities.CreatePackageId(dependency.Key, dependency.Value);
                 if (!Utilities.PackageExistsOnProduction(packageId))
                 {
-                    Error("Package dependency {0} is not published in procuction.", packageId);
+                    if (Context.ValidationType == ValidationType.Publishing || Context.ValidationType == ValidationType.AssetStore)
+                        Error("Package dependency {0} is not published in procuction.", packageId);
+                    else
+                        Warning("Package dependency {0} must be published to production before this package is published to production.  (Except for core packages)", packageId);
                 }
             }
 

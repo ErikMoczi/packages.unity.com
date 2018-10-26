@@ -5,21 +5,20 @@ namespace UnityEditor.PackageManager.ValidationSuite {
 
         private HttpWebRequest _request;
 
-        private string _method;
         public string Method {
-            get { return _method; }
+            get { return _request.Method; }
             set { _request.Method = value;  }
         }
-        private string _timeout;
+
         public int Timeout
         {
-            get { return Timeout; }
+            get { return _request.Timeout; }
             set { _request.Timeout = value; }
         }
-        private string _userAgent;
+
         public string UserAgent
         {
-            get { return _userAgent; }
+            get { return _request.UserAgent; }
             set { _request.UserAgent = value; }
         }
 

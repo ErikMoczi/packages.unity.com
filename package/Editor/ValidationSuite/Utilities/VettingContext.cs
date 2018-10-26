@@ -74,6 +74,7 @@ internal class VettingContext
         }
     }
 
+    public bool IsEmbedded { get; set; }
     public bool IsPublished { get; set; }
     public bool IsCore { get; set; }
 
@@ -100,12 +101,13 @@ internal class VettingContext
         context.IsCore = false; // TODO: change this to use Type and Source once "Type" is exposed by packman.
         context.ValidationType = validationType;
         context.IsPublished = packageInfo.source == PackageSource.Registry;
+        context.IsEmbedded = packageInfo.source == PackageSource.Embedded;
         context.ProjectPackageInfo = GetManifest(packageInfo.resolvedPath);
 
-        // If this is a local package, package it so we can test it as packaged.
-        if (!context.IsPublished && context.ValidationType == ValidationType.LocalDevelopment)
+        // For now, only try to publish the package for templates in development.
+        if (context.ProjectPackageInfo.IsProjectTemplate)
         {
-            var publishPackagePath = PublishPackage(context.ProjectPackageInfo, packageInfo.source == PackageSource.Embedded);
+            var publishPackagePath = PublishPackage(context);
             context.PublishPackageInfo = GetManifest(publishPackagePath);
         }
         else
@@ -211,23 +213,22 @@ internal class VettingContext
         return keyValuePairs.Select(kvp => kvp.Split(':')).ToDictionary(k => k[0], v => v[1]);
     }
 
-    private static string PublishPackage(ManifestData manifestData, bool isEmbedded)
+    private static string PublishPackage(VettingContext context)
     {
         // ***** HACK ****** until upm has an api to pack a folder, we will do it ourselves.
         var tempPath = System.IO.Path.GetTempPath();
 
-        var projectPackagePath = manifestData.path;
-        var packageName = string.Empty;
-        if (manifestData.IsProjectTemplate && isEmbedded)
+        var projectPackagePath = context.ProjectPackageInfo.path;
+        if (context.ProjectPackageInfo.IsProjectTemplate && context.IsEmbedded)
         {
             var projectPath = Path.Combine(projectPackagePath, "../../");
             // re-direct the package path to the folder where the converted project template will be
-            projectPackagePath = Path.Combine(tempPath, "converted-" + manifestData.Id);
+            projectPackagePath = Path.Combine(tempPath, "converted-" + context.ProjectPackageInfo.Id);
             ProjectTemplateUtils.ConvertProjectToTemplate(projectPath, projectPackagePath);
         }
-        packageName = Utilities.CreatePackage(projectPackagePath, tempPath);
-        var publishPackagePath = Path.Combine(tempPath, "publish-" + manifestData.Id);
-        return Utilities.ExtractPackage(packageName, tempPath, publishPackagePath, manifestData.name);
+        var packageName = Utilities.CreatePackage(projectPackagePath, tempPath);
+        var publishPackagePath = Path.Combine(tempPath, "publish-" + context.ProjectPackageInfo.Id);
+        return Utilities.ExtractPackage(packageName, tempPath, publishPackagePath, context.ProjectPackageInfo.name);
     }
 
     private static string GetPreviousPackage(ManifestData projectPackageInfo)
@@ -242,7 +243,7 @@ internal class VettingContext
         {
             var packageInfo = foundPackages[0];
             var version = SemVersion.Parse(projectPackageInfo.version);
-            var previousVersions = packageInfo.versions.compatible.Where(v =>
+            var previousVersions = packageInfo.versions.all.Where(v =>
             {
                 var prevVersion = SemVersion.Parse(v);
                 // ignore pre-release and build tags when finding previous version
