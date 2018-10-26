@@ -44,7 +44,7 @@ namespace UnityEditor.XR.Management
                 {
                     XRConfigurationDataAttribute xrbda = at.GetCustomAttributes(typeof(XRConfigurationDataAttribute), true)[0] as XRConfigurationDataAttribute;
                     string settingsPath = String.Format("XR/{0}", xrbda.displayName);
-                    var resProv = new XRConfigurationProvider(settingsPath, xrbda.displayName, xrbda.buildSettingsKey, at);
+                    var resProv = new XRConfigurationProvider(settingsPath, xrbda.buildSettingsKey, at);
                     ret.Add(resProv);
                 }
             }

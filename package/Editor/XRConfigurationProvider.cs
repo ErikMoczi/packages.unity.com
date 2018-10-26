@@ -13,14 +13,12 @@ namespace UnityEditor.XR.Management
         static readonly GUIContent s_WarningToCreateSettings = EditorGUIUtility.TrTextContent("You must create a serialized instance of the settings data in order to modify the settings in this UI. Until then only default settings set by the provider will be available.");
 
         Type m_BuildDataType = null;
-        string m_DisplayName;
         string m_BuildSettingsKey;
         Editor m_CachedEditor;
         SerializedObject m_SettingsWrapper;
 
-        public XRConfigurationProvider(string path, string displayName, string buildSettingsKey, Type buildDataType, SettingsScopes scopes = SettingsScopes.Any) : base(path, scopes)
+        public XRConfigurationProvider(string path, string buildSettingsKey, Type buildDataType, SettingsScopes scopes = SettingsScopes.Any) : base(path, scopes)
         {
-            m_DisplayName = displayName;
             m_BuildDataType = buildDataType;
             m_BuildSettingsKey = buildSettingsKey;
         }

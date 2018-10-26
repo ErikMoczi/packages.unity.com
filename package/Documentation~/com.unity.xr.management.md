@@ -66,7 +66,30 @@ Any package that needs build or runtime settings should provide a settings datat
 
 This package provides for management of **XR SDK** subsystem lifecycle without the need for boilerplate code. The **XRManager** class provides a component that can be added to a game object in the scene that will manage initialization, start, stop and de-initialization of a set of subsystems defined by an **XRLoader** instance. The **XRManager** instance can handle all of the lifecycle management, init/de-init only, subsystem start/stop only or can leave all of it up to the user.
 
-A provider will create a subclass of **XRLoader** to provide a loader for their particular runtime scheme. An **XRLoader** is simply a **ScriptableObject** and as such, the user is able to create and instance (or more if they want) of the loader. Each **XRLoader** subclass defines the subsystems and their load order and is responsible for managing the set of subsystems they require. A user will add all the **XRLoaders** instances they created to the Loaders property on the **XRManager**, arranging them in the load order that they desire.
+A provider must create a subclass of **XRLoader** to make a loader available for their particular runtime scheme.
+
+The **XRLoader** interface looks like this:
+
+```csharp
+public abstract class XRLoader : ScriptableObject
+{
+    public virtual bool Initialize() { return false; }
+
+    public virtual bool Start() { return false; }
+
+    public virtual bool Stop() { return false; }
+
+    public virtual bool Deinitialize() { return false; }
+
+    public abstract T GetLoadedSubsystem<T>() where T : IntegratedSubsystem;
+}
+```
+
+There is a class called **XRLoaderHelper** which you can derive from to handle subsystem management in a typesafe manner.  See **[Samples/SampleLoader.cs](/Samples/SampleLoader.cs)** for an example.
+
+An **XRLoader** is simply a **ScriptableObject** and as such, the user is able to create and instance (or more if they want) of the loader. Each **XRLoader** subclass defines the subsystems and their load order and is responsible for managing the set of subsystems they require.
+
+A user will add all the **XRLoaders** instances they created to the Loaders property on the **XRManager**, arranging them in the load order that they desire.
 
 **_NOTE_**: _At this time there is no way for a provider to ship an instance of their loader in their package that the user can find. To get around this, you will need to provide a means of allowing the user to create the necessary instance of your loader. The recommendation for this is to add a CreateAssetMenu attribute to your loader class and set the menu location to "XR/Loaders/[your loader name]"._
 
@@ -89,7 +112,10 @@ A provider may need optional settings to help manage build issues or runtime con
 The provider will need to handle getting the settings from **EditorUserBuildSettings** into the build application. This can be done with a custom build processing script. If all you need for build support is to make sure that you have access to the same settings at runtime you can derive from **XRBuildHelper<T>**. This is a generic abstract base class that handles the necessary work of getting the build settings stored in EditorUserBuildSettings and getting them into the build application for access at runtime. Simplest build script for your package would look like this:
 
 ```csharp
-public class MyBuildProcessor : XRBuildHelper<MySettings> { }
+public class MyBuildProcessor : XRBuildHelper<MySettings> 
+{
+    public override string BuildSettingsKey { get { return "MyPackageSettingsKey"; } }
+}
 ```
 
 You can override the build processing steps from **IPreprocessBuildWithReport** and **IPostprocessBuildWithReport** but make sure that you call to the base class implementation or else your settings will not be copied.
@@ -97,6 +123,8 @@ You can override the build processing steps from **IPreprocessBuildWithReport** 
 ```csharp
 public class MyBuildProcessor : XRBuildHelper<MySettings> 
 { 
+    public override string BuildSettingsKey { get { return "MyPackageSettingsKey"; } }
+
     public override void OnPreprocessBuild(BuildReport report)
     {
         base.OnPreprocessBuild(report);
@@ -107,6 +135,28 @@ public class MyBuildProcessor : XRBuildHelper<MySettings>
     {
         base.OnPreprocessBuild(report);
         // Do your work here
+    }
+}
+```
+
+If you wish to support per platform settings at build time, you can override `UnityEngine.Object SettingsForBuildTargetGroup(BuildTargetGroup buildTargetGroup)` and use the passed in buildTargetGroup to retrieve the appropriate platform settings. By default this method just uses the key associated with the settings instance to copy the entire settings object from EditorUserBuildSettings to PlayerSettings.
+
+```csharp
+public class MyBuildProcessor : XRBuildHelper<MySettings> 
+{ 
+    public override string BuildSettingsKey { get { return "MyPackageSettingsKey"; } }
+
+    public override UnityEngine.Object SettingsForBuildTargetGroup(BuildTargetGroup buildTargetGroup)
+    {
+        // ... Get platform specific settings and return them... Something like the following
+        // for simple settings data that isn't platform specific.
+        UnityEngine.Object settingsObj = null;
+        EditorBuildSettings.TryGetConfigObject(BuildSettingsKey, out settingsObj);
+        if (settingsObj == null || !(settingsObj is T))
+            return null;
+
+        return settingsObj;
+
     }
 }
 ```
