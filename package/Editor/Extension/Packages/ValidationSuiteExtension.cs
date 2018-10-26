@@ -25,6 +25,9 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
         {
             if (packageInfo == this.packageInfo)
                 return;
+
+            if (ui == null)
+                return;
             
             this.packageInfo = packageInfo;
             ui.OnPackageSelectionChange(this.packageInfo);

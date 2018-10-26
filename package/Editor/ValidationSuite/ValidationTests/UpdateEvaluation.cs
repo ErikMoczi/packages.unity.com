@@ -55,14 +55,9 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
 
             // If it exists, get the last one from that list.
-            try
+            if (Utilities.PackageExistsOnProduction(Context.ProjectPackageInfo.Id))
             {
-                Utilities.DownloadPackage(Context.ProjectPackageInfo.Id, Path.GetTempPath());
                 Error("Version " + Context.ProjectPackageInfo.version + " of this package already exists in production.");
-            }
-            catch (Exception)
-            {
-                // This is the expectation, that the package doesn't exist.
             }
 #endif
         }

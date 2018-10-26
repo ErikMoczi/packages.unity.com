@@ -8,7 +8,7 @@ using UnityEngine.WSA;
 using Debug = UnityEngine.Debug;
 
 namespace UnityEditor.PackageManager.ValidationSuite
-{    
+{
     /// <summary>
     /// Standardize npm launch in order to make sure registry is always specified and npm path is escaped
     /// </summary>
@@ -48,7 +48,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
         public string CommandArgs { get; set; }
         public string LogLevel { get; set; }
         public int WaitTime { get; set; }
-        
+
         public StringBuilder OutputLog = new StringBuilder();
         public StringBuilder ErrorLog = new StringBuilder();
 
@@ -58,11 +58,11 @@ namespace UnityEditor.PackageManager.ValidationSuite
         }
 
         public Process Process { get; protected set; }
-        
+
         public NpmLauncher()
         {
             WaitTime = 1000 * 60 * 10;        // 10 Minutes
-            
+
             Process = new Process();
             Process.StartInfo.FileName = GetNodePath();
             Process.StartInfo.Arguments = GetArguments();
@@ -87,9 +87,9 @@ namespace UnityEditor.PackageManager.ValidationSuite
         {
             if (string.IsNullOrEmpty(Command))
                 throw new Exception("No command set for npm;");
-            
+
             Process.StartInfo.Arguments = GetArguments();
-            
+
             using (AutoResetEvent outputWaitHandle = new AutoResetEvent(false))
             using (AutoResetEvent errorWaitHandle = new AutoResetEvent(false))
             {
@@ -133,14 +133,21 @@ namespace UnityEditor.PackageManager.ValidationSuite
         {
             Command = "install";
             CommandArgs = "\"" + packageFileName + "\"";
-            Launch();            
+            Launch();
         }
 
         public void Pack(string packageId)
         {
             Command = "pack";
+            CommandArgs = "\"" + packageId + "\"";
+            Launch();
+        }
+
+        public void View(string packageId)
+        {
+            Command = "view";
             CommandArgs = packageId;
-            Launch();                        
+            Launch();
         }
     }
 }

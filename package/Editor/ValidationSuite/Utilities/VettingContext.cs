@@ -20,6 +20,19 @@ public enum ValidationType
     AssetStore
 }
 
+public class PackageDependencyInfo
+{
+    public string DependencyVersion { get; set; }
+
+    public string ParentName { get; set; }
+
+    public string ParentVersion { get; set; }
+
+    public bool ParentIsVerified { get; set; }
+
+    public bool ParentIsPreview { get; set; }
+}
+
 /// <summary>
 /// Class containing package data required for vetting.
 /// </summary>
@@ -54,6 +67,8 @@ internal class VettingContext
     public ManifestData ProjectPackageInfo { get; set; }
     public ManifestData PublishPackageInfo { get; set; }
     public ManifestData PreviousPackageInfo { get; set; }
+    public Dictionary<string, List<PackageDependencyInfo>> PackageCoDependencies { get; set; }
+
     public string PreviousPackageBinaryDirectory { get; set; }
     public ValidationType ValidationType { get; set; }
     public const string PreviousVersionBinaryPath = "Temp/ApiValidationBinaries";
@@ -84,6 +99,8 @@ internal class VettingContext
             context.PreviousPackageInfo = GetManifest(previousPackagePath);
             context.DownloadAssembliesForPreviousVersion();
         }
+
+        context.PackageCoDependencies = BuildPackageDependencyTree(context.ProjectPackageInfo);
 #else
         context.PreviousPackageInfo = null;
 #endif
@@ -92,12 +109,12 @@ internal class VettingContext
         return context;
     }
 
-    public static VettingContext CreateAssetStoreContext(string packagePath, string previousPackagePath)
+    public static VettingContext CreateAssetStoreContext(string packageName, string packageVersion, string packagePath, string previousPackagePath)
     {
         VettingContext context = new VettingContext();
-        context.ProjectPackageInfo = new ManifestData () { path = packagePath };
-        context.PublishPackageInfo = new ManifestData () { path = packagePath };
-        context.PreviousPackageInfo = string.IsNullOrEmpty(previousPackagePath) ? null : new ManifestData () { path = previousPackagePath };
+        context.ProjectPackageInfo = new ManifestData () { path = packagePath, name = packageName, version = packageVersion};
+        context.PublishPackageInfo = new ManifestData () { path = packagePath, name = packageName, version = packageVersion };
+        context.PreviousPackageInfo = string.IsNullOrEmpty(previousPackagePath) ? null : new ManifestData () { path = previousPackagePath, name = packageName, version = "Previous" };
         context.ValidationType = ValidationType.AssetStore;
         return context;
     }
@@ -190,13 +207,25 @@ internal class VettingContext
         if (request.Result != null && request.Result.Length > 0)
         {
             var packageInfo = request.Result[0];
-            var previousVersion = packageInfo.versions.compatible.LastOrDefault(v =>
+            var version = SemVersion.Parse(projectPackageInfo.version);
+            var previousVersions = packageInfo.versions.compatible.Where(v =>
             {
-                var v1 = SemVersion.Parse(v);
-                var v2 = SemVersion.Parse(projectPackageInfo.version);
+                var prevVersion = SemVersion.Parse(v);
                 // ignore pre-release and build tags when finding previous version
-                return v1 < v2 && !(v1.Major == v2.Major && v1.Minor == v2.Minor && v1.Patch == v2.Patch);
+                return prevVersion < version && !(prevVersion.Major == version.Major && prevVersion.Minor == version.Minor && prevVersion.Patch == version.Patch);
             });
+
+            // Find the last version on Production
+            string previousVersion = null;
+            previousVersions = previousVersions.Reverse();
+            foreach (var prevVersion in previousVersions)
+            {
+                if (Utilities.PackageExistsOnProduction(packageInfo.name + "@" + prevVersion))
+                {
+                    previousVersion = prevVersion;
+                    break;
+                }
+            }
 
             if (previousVersion != null)
             {
@@ -249,4 +278,87 @@ internal class VettingContext
             PreviousPackageBinaryDirectory = PreviousVersionBinaryPath;
 #endif
     }
+
+#if UNITY_2018_1_OR_NEWER
+    private static Dictionary<string, List<PackageDependencyInfo>> BuildPackageDependencyTree(ManifestData manifestData)
+    {
+        var packageCoDependencies = new Dictionary<string, List<PackageDependencyInfo>>();
+
+        var request = Client.SearchAll();
+
+        while (!request.IsCompleted)
+        {
+            System.Threading.Thread.Sleep(100);
+        }
+
+        if (request.Status == StatusCode.Failure)
+        {
+            throw new Exception("Failed to build package dependencies.  Error details: " + request.Error.errorCode + " " + request.Error.message);
+        }
+
+        // Fill in the dictionary
+        if (request.Result != null && request.Result.Length > 0)
+        {
+            packageCoDependencies[manifestData.name] = new List<PackageDependencyInfo>();
+            if (manifestData.dependencies != null)
+            {
+                foreach (var dependency in manifestData.dependencies)
+                {
+                    packageCoDependencies[dependency.Key] = new List<PackageDependencyInfo>();
+                }
+            }
+
+            foreach (var packageInfo in request.Result)
+            {
+                // Check each of the packages dependencies against all other dependencies.
+                foreach (var dependency in packageCoDependencies)
+                {
+                    var dependencyInfo = packageInfo.dependencies.SingleOrDefault(d => d.name == dependency.Key);
+                    if (!string.IsNullOrEmpty(dependencyInfo.name) && Utilities.PackageExistsOnProduction(packageInfo.packageId))
+                    {
+                        packageCoDependencies[dependency.Key].Add(CreateDependencyInfo(dependencyInfo.version, packageInfo));
+                    }
+                }
+
+                // Is there a verified version?  If so, if it is different than the returned version, let's make a call to retrieve it's data.
+                if (!string.IsNullOrEmpty(packageInfo.versions.recommended) && packageInfo.versions.recommended != packageInfo.version)
+                {
+                    var verifiedSearchRequest = Client.Search(packageInfo.name + "@" + packageInfo.versions.recommended);
+                    while (!verifiedSearchRequest.IsCompleted)
+                    {
+                        System.Threading.Thread.Sleep(100);
+                    }
+
+                    if (verifiedSearchRequest.Result.Length > 0)
+                    {
+                        foreach (var dependency in packageCoDependencies)
+                        {
+                            var dependencyInfo = verifiedSearchRequest.Result[0].dependencies.SingleOrDefault(d => d.name == dependency.Key);
+                            if (!string.IsNullOrEmpty(dependencyInfo.name))
+                            {
+                                packageCoDependencies[dependency.Key].Add(CreateDependencyInfo(dependencyInfo.version, verifiedSearchRequest.Result[0]));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return packageCoDependencies;
+    }
+
+    private static PackageDependencyInfo CreateDependencyInfo(string version, UnityEditor.PackageManager.PackageInfo packageInfo)
+    {
+        var semVer = SemVersion.Parse(packageInfo.version);
+
+        return new PackageDependencyInfo()
+        {
+            DependencyVersion = version,
+            ParentName = packageInfo.name,
+            ParentVersion = packageInfo.version,
+            ParentIsVerified = packageInfo.versions.recommended == packageInfo.version,
+            ParentIsPreview = semVer.Prerelease.Contains("preview") || semVer.Major == 0
+        };
+    }
+#endif
 }

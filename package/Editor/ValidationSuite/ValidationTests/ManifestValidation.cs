@@ -71,7 +71,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 }
                 else
                 {
-                    this.TestOutput.Add(string.Format(@"Added dependency: ""{0}"": ""{1}""", projectRef.Key, projectRef.Value));
+                    this.TestOutput.Add(string.Format(@"New dependency: ""{0}"": ""{1}""", projectRef.Key, projectRef.Value));
                     if (versionChangeType == VersionChangeType.Patch ||
                         versionChangeType == VersionChangeType.Minor)
                         Error("Adding package dependencies requires a new major version.");
@@ -140,8 +140,19 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             if (!SemVersion.TryParse(manifestData.version, out packageVersionNumber))
             {
                 Error("In package.json, \"version\" needs to be a valid \"Semver\".");
+                return;
             }
-            else if (!string.IsNullOrEmpty(packageVersionNumber.Prerelease))
+
+            if (packageVersionNumber.Major < 1)
+            {
+                if (string.IsNullOrEmpty(packageVersionNumber.Prerelease) || packageVersionNumber.Prerelease.Split('.')[0] != "preview")
+                {
+                    Error("In package.json, \"version\" < 1, which makes it a preview version, please tag the package as " + packageVersionNumber + "-preview");
+                    return;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(packageVersionNumber.Prerelease))
             {
                 // We must strip the -build<commit> off the prerelease
                 var buildInfoIndex = packageVersionNumber.Prerelease.IndexOf("build");
@@ -175,7 +186,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                         }
                     }   
                 }
-
             }
         }
     }

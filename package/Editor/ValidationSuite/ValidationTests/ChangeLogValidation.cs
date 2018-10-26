@@ -58,7 +58,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             if(matches.Count == 0)
             {
                 TestState = TestState.Failed;
-                TestOutput.Add(string.Format("Can't find any entries in changelog that fits `format: ## [x.y.z] - YYYY-MM-DD` in: [{0}]", changeLogPath));
+                TestOutput.Add(string.Format("Can't find any entries in changelog that fits `format: ## [x.y.z] - YYYY-MM-DD`"));
                 return;
             }
 

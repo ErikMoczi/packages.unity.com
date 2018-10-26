@@ -63,6 +63,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
             get { return validationTests.Cast<IValidationTestResult>(); }
         }
 
+#if UNITY_2018_1_OR_NEWER
         public static bool RunValidationSuite(string packageId, PackageSource source)
         {
             var parts = packageId.Split('@');
@@ -90,6 +91,8 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 // publish locally for embedded and local packages
                 var context = VettingContext.CreatePackmanContext(packagePath, source == PackageSource.Embedded || source == PackageSource.Local);
                 var testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletedDelegate, context, report);
+
+                report.Initialize(testSuite.context);
                 testSuite.RunSync();
                 return testSuite.testSuiteState == TestState.Succeeded;
             }
@@ -99,6 +102,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 return false;
             }
         }
+#endif
 
         public static bool RunAssetStoreValidationSuite(string packageName, string packageVersion, string packagePath, string previousPackagePath = null)
         {
@@ -106,7 +110,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
             try
             {
-                var context = VettingContext.CreateAssetStoreContext(packagePath, previousPackagePath);
+                var context = VettingContext.CreateAssetStoreContext(packageName, packageVersion, packagePath, previousPackagePath);
                 var testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletedDelegate, context, report);
                 testSuite.RunSync();
                 return testSuite.testSuiteState == TestState.Succeeded;

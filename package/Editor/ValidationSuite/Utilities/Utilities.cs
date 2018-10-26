@@ -60,6 +60,25 @@ namespace UnityEditor.PackageManager.ValidationSuite
             return packageName;
         }
 
+        internal static bool PackageExistsOnProduction(string packageId)
+        {
+            var launcher = new NpmLauncher();
+            launcher.Registry = NpmLauncher.ProductionRepositoryUrl;
+
+            try
+            {
+                launcher.View(packageId);
+            }
+            catch (ApplicationException exception)
+            {
+                exception.Data["code"] = "fetchFailed";
+                throw exception;
+            }
+
+            var packageData = launcher.OutputLog.ToString().Trim();
+            return !string.IsNullOrEmpty(packageData);
+        }
+
         internal static string ExtractPackage(string packageFileName, string workingPath, string outputDirectory, string packageName)
         {
             //verify if package exists

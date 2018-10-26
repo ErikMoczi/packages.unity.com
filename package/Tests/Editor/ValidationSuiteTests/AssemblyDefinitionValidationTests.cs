@@ -40,7 +40,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             File.WriteAllText(packageJsonPath, "{\"name\":\"" + name + "\"}");
         }
 
-        private void CreateFolderAndAssembly(string packageName, AssemblyDefinition content, bool isEditor, bool isTest)
+        private void CreateFolderAndAssembly(string packageName, AssemblyDefinition content, bool isEditor, bool isTest, string csharpScriptName = "script.cs")
         {
             var folderPath = Path.Combine(testDirectory, Path.Combine(isTest?"Tests":"", isEditor?"Editor":"Runtime"));
             Directory.CreateDirectory(folderPath);
@@ -53,6 +53,22 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
                 File.WriteAllText(Path.Combine(folderPath, assemblyFileName), JsonUtility.ToJson(content));
             }
+
+            if (csharpScriptName != null)
+                File.WriteAllText(Path.Combine(folderPath, csharpScriptName), "");
+        }
+
+        [Test]
+        public void When_FolderEditor_IsPresent_But_No_CSharp_Script_And_AssemblyDef_AreMissing_Validation_Succeeds()
+        {
+            CreatePackageJsonFile(name);
+            CreateFolderAndAssembly(name, null, true, false, null);
+            
+            var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
+            assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
+            assemblyDefinitionValidation.RunTest();
+
+            Assert.AreEqual(TestState.Succeeded, assemblyDefinitionValidation.TestState);
         }
 
         [Test]
@@ -66,7 +82,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(1, assemblyDefinitionValidation.TestOutput.Count);
+            Assert.Greater(assemblyDefinitionValidation.TestOutput.Count, 0);
         }
 
         [Test]
@@ -85,11 +101,10 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(0, assemblyDefinitionValidation.TestOutput.Count);
         }
 
         [Test]
-        public void When_FolderTestsEditor_IsPresent_But_AssemblyDef_IsMissing_Validation_Fails()
+        public void When_FolderTestsEditor_IsPresent_AssemblyDefTests_IsPresent_But_AssemblyDef_IsMissing_Validation_Succeeds()
         {
             CreatePackageJsonFile(name);
             
@@ -104,8 +119,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
             assemblyDefinitionValidation.RunTest();
 
-            Assert.AreEqual(TestState.Failed, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(1, assemblyDefinitionValidation.TestOutput.Count);
+            Assert.AreEqual(TestState.Succeeded, assemblyDefinitionValidation.TestState);
         }
 
         [Test]
@@ -119,7 +133,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(2, assemblyDefinitionValidation.TestOutput.Count);
+            Assert.Greater(assemblyDefinitionValidation.TestOutput.Count, 0);
         }
 
         [Test]
@@ -144,7 +158,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(1, assemblyDefinitionValidation.TestOutput.Count);
+            Assert.Greater(assemblyDefinitionValidation.TestOutput.Count, 0);
         }
 
         [Test]
@@ -167,7 +181,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(1, assemblyDefinitionValidation.TestOutput.Count);
+            Assert.Greater(assemblyDefinitionValidation.TestOutput.Count, 0);
         }
 
         [Test]
@@ -194,7 +208,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(1, assemblyDefinitionValidation.TestOutput.Count);
+            Assert.Greater(assemblyDefinitionValidation.TestOutput.Count, 0);
         }
 
         [Test]
@@ -219,7 +233,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(1, assemblyDefinitionValidation.TestOutput.Count);
+            Assert.Greater(assemblyDefinitionValidation.TestOutput.Count, 0);
         }
 
         [Test]
@@ -244,7 +258,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(2, assemblyDefinitionValidation.TestOutput.Count);
+            Assert.Greater(assemblyDefinitionValidation.TestOutput.Count, 0);
         }
 
         [Test]
@@ -268,7 +282,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(2, assemblyDefinitionValidation.TestOutput.Count);
+            Assert.Greater(assemblyDefinitionValidation.TestOutput.Count, 0);
         }
 
         [Test]
@@ -293,7 +307,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(1, assemblyDefinitionValidation.TestOutput.Count);
+            Assert.Greater(assemblyDefinitionValidation.TestOutput.Count, 0);
         }
 
         [Test]
@@ -318,7 +332,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(1, assemblyDefinitionValidation.TestOutput.Count);
+            Assert.Greater(assemblyDefinitionValidation.TestOutput.Count, 0);
         }
 
         [Test]
@@ -344,7 +358,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(0, assemblyDefinitionValidation.TestOutput.Count);
         }
 
         [Test]
@@ -370,7 +383,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(0, assemblyDefinitionValidation.TestOutput.Count);
         }
 
         [Test]
@@ -394,7 +406,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(0, assemblyDefinitionValidation.TestOutput.Count);
         }
 
         [Test]
@@ -418,7 +429,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(0, assemblyDefinitionValidation.TestOutput.Count);
         }
 
         [Test]
@@ -444,7 +454,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(0, assemblyDefinitionValidation.TestOutput.Count);
         }
 
         [Test]
@@ -468,7 +477,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(0, assemblyDefinitionValidation.TestOutput.Count);
         }
 
         [Test]
@@ -505,7 +513,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             assemblyDefinitionValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, assemblyDefinitionValidation.TestState);
-            Assert.AreEqual(0, assemblyDefinitionValidation.TestOutput.Count);
         }
 
         private VettingContext PrepareVettingContext(string packagePath)
