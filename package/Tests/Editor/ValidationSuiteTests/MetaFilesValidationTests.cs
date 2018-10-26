@@ -49,7 +49,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             CreateFileOrFolder(false, "file1", false);
             var metaFilesValidation = new MetaFilesValidation();
             metaFilesValidation.Context = PrepareVettingContext(testDirectory);
-            metaFilesValidation.Run();
+            metaFilesValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, metaFilesValidation.TestState);
             Assert.AreEqual(1, metaFilesValidation.TestOutput.Count);
@@ -61,7 +61,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             CreateFileOrFolder(true, "folder1", false);
             var metaFilesValidation = new MetaFilesValidation();
             metaFilesValidation.Context = PrepareVettingContext(testDirectory);
-            metaFilesValidation.Run();
+            metaFilesValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, metaFilesValidation.TestState);
             Assert.AreEqual(1, metaFilesValidation.TestOutput.Count);
@@ -74,7 +74,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             CreateFileOrFolder(false, "file2", false);
             var metaFilesValidation = new MetaFilesValidation();
             metaFilesValidation.Context = PrepareVettingContext(testDirectory);
-            metaFilesValidation.Run();
+            metaFilesValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, metaFilesValidation.TestState);
             Assert.AreEqual(2, metaFilesValidation.TestOutput.Count);
@@ -87,7 +87,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             CreateFileOrFolder(true, "folder2", false);
             var metaFilesValidation = new MetaFilesValidation();
             metaFilesValidation.Context = PrepareVettingContext(testDirectory);
-            metaFilesValidation.Run();
+            metaFilesValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, metaFilesValidation.TestState);
             Assert.AreEqual(2, metaFilesValidation.TestOutput.Count);
@@ -100,7 +100,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             CreateFileOrFolder(false, "file", false);
             var metaFilesValidation = new MetaFilesValidation();
             metaFilesValidation.Context = PrepareVettingContext(testDirectory);
-            metaFilesValidation.Run();
+            metaFilesValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, metaFilesValidation.TestState);
             Assert.AreEqual(2, metaFilesValidation.TestOutput.Count);
@@ -113,7 +113,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             CreateFileOrFolder(false, "file", false, "folder1");
             var metaFilesValidation = new MetaFilesValidation();
             metaFilesValidation.Context = PrepareVettingContext(testDirectory);
-            metaFilesValidation.Run();
+            metaFilesValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, metaFilesValidation.TestState);
             Assert.AreEqual(1, metaFilesValidation.TestOutput.Count);
@@ -127,7 +127,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             CreateFileOrFolder(true, "folder2", false, "folder1");
             var metaFilesValidation = new MetaFilesValidation();
             metaFilesValidation.Context = PrepareVettingContext(testDirectory);
-            metaFilesValidation.Run();
+            metaFilesValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, metaFilesValidation.TestState);
             Assert.AreEqual(2, metaFilesValidation.TestOutput.Count);
@@ -140,7 +140,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             CreateFileOrFolder(true, "folder2", false, "folder1");
             var metaFilesValidation = new MetaFilesValidation();
             metaFilesValidation.Context = PrepareVettingContext(testDirectory);
-            metaFilesValidation.Run();
+            metaFilesValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, metaFilesValidation.TestState);
             Assert.AreEqual(1, metaFilesValidation.TestOutput.Count);
@@ -153,7 +153,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             CreateFileOrFolder(false, "file1", true);
             var metaFilesValidation = new MetaFilesValidation();
             metaFilesValidation.Context = PrepareVettingContext(testDirectory);
-            metaFilesValidation.Run();
+            metaFilesValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, metaFilesValidation.TestState);
             Assert.AreEqual(0, metaFilesValidation.TestOutput.Count);
@@ -165,7 +165,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             CreateFileOrFolder(true, "folder1", true);
             var metaFilesValidation = new MetaFilesValidation();
             metaFilesValidation.Context = PrepareVettingContext(testDirectory);
-            metaFilesValidation.Run();
+            metaFilesValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, metaFilesValidation.TestState);
             Assert.AreEqual(0, metaFilesValidation.TestOutput.Count);
@@ -178,7 +178,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             CreateFileOrFolder(false, "file1", true);            
             var metaFilesValidation = new MetaFilesValidation();
             metaFilesValidation.Context = PrepareVettingContext(testDirectory);
-            metaFilesValidation.Run();
+            metaFilesValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, metaFilesValidation.TestState);
             Assert.AreEqual(0, metaFilesValidation.TestOutput.Count);
@@ -192,7 +192,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             CreateFileOrFolder(true, "folder2", true, "folder1");
             var metaFilesValidation = new MetaFilesValidation();
             metaFilesValidation.Context = PrepareVettingContext(testDirectory);
-            metaFilesValidation.Run();
+            metaFilesValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, metaFilesValidation.TestState);
             Assert.AreEqual(0, metaFilesValidation.TestOutput.Count);
@@ -204,7 +204,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             CreateFileOrFolder(false, ".file", false);
             var metaFilesValidation = new MetaFilesValidation();
             metaFilesValidation.Context = PrepareVettingContext(testDirectory);
-            metaFilesValidation.Run();
+            metaFilesValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, metaFilesValidation.TestState);
             Assert.AreEqual(0, metaFilesValidation.TestOutput.Count);
@@ -216,7 +216,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             CreateFileOrFolder(true, ".folder", false);
             var metaFilesValidation = new MetaFilesValidation();
             metaFilesValidation.Context = PrepareVettingContext(testDirectory);
-            metaFilesValidation.Run();
+            metaFilesValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, metaFilesValidation.TestState);
             Assert.AreEqual(0, metaFilesValidation.TestOutput.Count);
@@ -230,7 +230,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             CreateFileOrFolder(false, "file2", true);
             var metaFilesValidation = new MetaFilesValidation();
             metaFilesValidation.Context = PrepareVettingContext(testDirectory);
-            metaFilesValidation.Run();
+            metaFilesValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, metaFilesValidation.TestState);
             Assert.AreEqual(0, metaFilesValidation.TestOutput.Count);
@@ -242,15 +242,15 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             {
                 ProjectPackageInfo = new VettingContext.ManifestData()
                 {
-                    Path = packagePath
+                    path = packagePath
                 },
                 PublishPackageInfo = new VettingContext.ManifestData()
                 {
-                    Path = packagePath
+                    path = packagePath
                 },
                 PreviousPackageInfo = new VettingContext.ManifestData()
                 {
-                    Path = packagePath
+                    path = packagePath
                 }
             };
         }

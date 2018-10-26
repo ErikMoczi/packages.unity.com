@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using NUnit.Framework;
 using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
@@ -7,13 +8,11 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 {
     internal class ManifestValidationTests
     {
-        private string testDirectory = "tempTest";
-        private string packagesJsonPath;
+        private string testDirectory = "tempManifestValidationTests";
 
         [SetUp]
         public void Setup()
         {
-            packagesJsonPath = Path.Combine(testDirectory, "package.json");
             if (!Directory.Exists(testDirectory))
             {
                 Directory.CreateDirectory(testDirectory);
@@ -32,13 +31,12 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         [Test]
         public void When_Manifest_WrongFormat_Validation_Fails()
         {
-            File.WriteAllText(packagesJsonPath, "Test is not a package.json file");
+            var packageJsonPath = Path.Combine(testDirectory, "package.json");
+            File.WriteAllText(packageJsonPath, "Test is not a package.json file");
             var manifestValidation = new ManifestValidation();
-            manifestValidation.Context = PrepareVettingContext(packagesJsonPath);
+            manifestValidation.Context = PrepareVettingContext(packageJsonPath);
             manifestValidation.Setup();
-            
-            manifestValidation.Context = PrepareVettingContext(testDirectory);
-            manifestValidation.Run();
+            manifestValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, manifestValidation.TestState);
             Assert.AreEqual(1, manifestValidation.TestOutput.Count);
@@ -115,14 +113,13 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
         private ManifestValidation SetupTestManifestAndRunValidation(VettingContext.ManifestData manifestData)
         {
-            File.WriteAllText(packagesJsonPath, JsonUtility.ToJson(manifestData));
+            var packageJsonPath = Path.Combine(testDirectory, "package.json");
+            File.WriteAllText(packageJsonPath, JsonUtility.ToJson(manifestData));
 
             var manifestValidation = new ManifestValidation();
-            manifestValidation.Context = PrepareVettingContext(packagesJsonPath);
+            manifestValidation.Context = PrepareVettingContext(packageJsonPath);
             manifestValidation.Setup();
-
-            manifestValidation.Context = PrepareVettingContext(testDirectory);
-            manifestValidation.Run();
+            manifestValidation.RunTest();
 
             return manifestValidation;
         }
@@ -140,21 +137,32 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
         private VettingContext PrepareVettingContext(string packagePath)
         {
-            return new VettingContext()
+            var packageJsonPath = Path.Combine(testDirectory, "package.json");
+            var packageJson = File.ReadAllText(packageJsonPath);
+            VettingContext.ManifestData manifestData = null;
+            try
             {
-                ProjectPackageInfo = new VettingContext.ManifestData()
-                {
-                    Path = packagePath
-                },
-                PublishPackageInfo = new VettingContext.ManifestData()
-                {
-                    Path = packagePath
-                },
-                PreviousPackageInfo = new VettingContext.ManifestData()
-                {
-                    Path = packagePath
-                }
+                manifestData = JsonUtility.FromJson<VettingContext.ManifestData>(packageJson);
+            }
+            catch (Exception)
+            {
+            }
+            
+            var vettingContext = new VettingContext
+            {
+                ProjectPackageInfo = manifestData,
+                PublishPackageInfo = manifestData,
+                PreviousPackageInfo = manifestData
             };
+
+            if (manifestData != null)
+            {
+                vettingContext.ProjectPackageInfo.path = packagePath;
+                vettingContext.PublishPackageInfo.path = packagePath;
+                vettingContext.PreviousPackageInfo.path = packagePath;
+            }
+            
+            return vettingContext;
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using NUnit.Framework;
 using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
@@ -9,18 +10,15 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 {
     internal class ChangeLogValidationTests
     {
-        private const string testDirectory = "tempChangeLogValidationTest";
+        private string testDirectory = "tempChangeLogValidationTests";
 
         [SetUp]
         public void Setup()
         {
-
-            if (Directory.Exists(testDirectory))
+            if (!Directory.Exists(testDirectory))
             {
-                Directory.Delete(testDirectory, true);
+                Directory.CreateDirectory(testDirectory);
             }
-
-            Directory.CreateDirectory(testDirectory);
         }
 
         [TearDown]
@@ -47,9 +45,10 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         [Test]
         public void When_ChangeLog_IsMissing_Validation_Fails()
         {
+            CreatePackageJsonFile("1.0.0");
             var changeLogValiation = new ChangeLogValidation();
             changeLogValiation.Context = PrepareVettingContext(testDirectory);
-            changeLogValiation.Run();
+            changeLogValiation.RunTest();
             Assert.AreEqual(TestState.Failed, changeLogValiation.TestState);
             Assert.AreEqual(1, changeLogValiation.TestOutput.Count);
         }
@@ -60,7 +59,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             CreatePackageJsonFile("1.0.0");
             var changeLogValiation = new ChangeLogValidation();
             changeLogValiation.Context = PrepareVettingContext(testDirectory);
-            changeLogValiation.Run();
+            changeLogValiation.RunTest();
             Assert.AreEqual(TestState.Failed, changeLogValiation.TestState);
             Assert.AreEqual(1, changeLogValiation.TestOutput.Count);
         }
@@ -73,7 +72,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             var changeLogValiation = new ChangeLogValidation();
             changeLogValiation.Context = PrepareVettingContext(testDirectory);
-            changeLogValiation.Run();
+            changeLogValiation.RunTest();
             Assert.AreEqual(TestState.Failed, changeLogValiation.TestState);
             Assert.AreEqual(1, changeLogValiation.TestOutput.Count);
         }
@@ -86,7 +85,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             var changeLogValiation = new ChangeLogValidation();
             changeLogValiation.Context = PrepareVettingContext(testDirectory);
-            changeLogValiation.Run();
+            changeLogValiation.RunTest();
             Assert.AreEqual(TestState.Failed, changeLogValiation.TestState);
             Assert.AreEqual(1, changeLogValiation.TestOutput.Count);
         }
@@ -99,7 +98,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             var changeLogValiation = new ChangeLogValidation();
             changeLogValiation.Context = PrepareVettingContext(testDirectory);
-            changeLogValiation.Run();
+            changeLogValiation.RunTest();
             Assert.AreEqual(TestState.Failed, changeLogValiation.TestState);
             Assert.AreEqual(1, changeLogValiation.TestOutput.Count);
         }
@@ -112,7 +111,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             var changeLogValiation = new ChangeLogValidation();
             changeLogValiation.Context = PrepareVettingContext(testDirectory);
-            changeLogValiation.Run();
+            changeLogValiation.RunTest();
             Assert.AreEqual(TestState.Failed, changeLogValiation.TestState);
             Assert.AreEqual(1, changeLogValiation.TestOutput.Count);
         }
@@ -125,7 +124,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             var changeLogValiation = new ChangeLogValidation();
             changeLogValiation.Context = PrepareVettingContext(testDirectory);
-            changeLogValiation.Run();
+            changeLogValiation.RunTest();
             Assert.AreEqual(TestState.Succeeded, changeLogValiation.TestState);
             Assert.AreEqual(0, changeLogValiation.TestOutput.Count);
         }
@@ -142,7 +141,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             var changeLogValiation = new ChangeLogValidation();
             changeLogValiation.Context = PrepareVettingContext(testDirectory);
-            changeLogValiation.Run();
+            changeLogValiation.RunTest();
             Assert.AreEqual(TestState.Failed, changeLogValiation.TestState);
             Assert.AreEqual(1, changeLogValiation.TestOutput.Count);
         }
@@ -159,7 +158,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             var changeLogValiation = new ChangeLogValidation();
             changeLogValiation.Context = PrepareVettingContext(testDirectory);
-            changeLogValiation.Run();
+            changeLogValiation.RunTest();
             Assert.AreEqual(TestState.Succeeded, changeLogValiation.TestState);
             Assert.AreEqual(0, changeLogValiation.TestOutput.Count);
         }
@@ -176,28 +175,38 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             var changeLogValiation = new ChangeLogValidation();
             changeLogValiation.Context = PrepareVettingContext(testDirectory);
-            changeLogValiation.Run();
+            changeLogValiation.RunTest();
             Assert.AreEqual(TestState.Failed, changeLogValiation.TestState);
             Assert.AreEqual(1, changeLogValiation.TestOutput.Count);
         }
 
         private VettingContext PrepareVettingContext(string packagePath)
         {
-            return new VettingContext()
+            var packageJson = File.ReadAllText(Path.Combine(packagePath, "package.json"));
+            VettingContext.ManifestData manifestData = null;
+            try
             {
-                ProjectPackageInfo = new VettingContext.ManifestData()
-                {
-                    Path = packagePath
-                },
-                PublishPackageInfo = new VettingContext.ManifestData()
-                {
-                    Path = packagePath
-                },
-                PreviousPackageInfo = new VettingContext.ManifestData()
-                {
-                    Path = packagePath
-                }
+                manifestData = JsonUtility.FromJson<VettingContext.ManifestData>(packageJson);
+            }
+            catch (Exception)
+            {
+            }
+            
+            var vettingContext = new VettingContext
+            {
+                ProjectPackageInfo = manifestData,
+                PublishPackageInfo = manifestData,
+                PreviousPackageInfo = manifestData
             };
+
+            if (manifestData != null)
+            {
+                vettingContext.ProjectPackageInfo.path = packagePath;
+                vettingContext.PublishPackageInfo.path = packagePath;
+                vettingContext.PreviousPackageInfo.path = packagePath;
+            }
+            
+            return vettingContext;
         }
     }
 }

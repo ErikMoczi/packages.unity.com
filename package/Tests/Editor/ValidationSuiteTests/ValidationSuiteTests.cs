@@ -32,7 +32,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 new FakeValidationTest() {TestState = TestState.Succeeded, TestOutput = new List<string> { "All Looks Good" }},
             };
 
-            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext());
+            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), ".");
 
             // Setup tests we want to run
             validationSuite.ValidationTests = testList.Cast<IValidationTest>();
@@ -51,7 +51,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             // Check that our Fake validation test below was auto-detected by the Validation Suite,
             // which uses reflection to find all tests.
-            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext());
+            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), ".");
 
             Assert.AreEqual(1, validationSuite.ValidationTests.Where(t => t.TestName == "Manifest Validation").Count());
         }
@@ -67,7 +67,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 new FakeValidationTest() {TestState = TestState.Failed, TestOutput = new List<string> { "Horrible breakage" }}
             };
 
-            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext());
+            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), ".");
 
             // Setup tests we want to run
             validationSuite.ValidationTests = testList.Cast<IValidationTest>();
@@ -92,7 +92,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 new FakeValidationTest() {TestState = TestState.Succeeded, TestOutput = new List<string> { "All Looks Good" }},
             };
 
-            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext());
+            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), ".");
 
             // Setup tests we want to run
             validationSuite.ValidationTests = testList.Cast<IValidationTest>();
@@ -120,7 +120,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 new FakeValidationTest() {TestState = TestState.Succeeded, TestOutput = new List<string> { "All Looks Good" }},
             };
 
-            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext());
+            var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), "ValidationSuiteTests.txt");
 
             // Setup tests we want to run
             validationSuite.ValidationTests = testList.Cast<IValidationTest>();
@@ -148,7 +148,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             }
         }
 
-        private void AllTestsCompletednDelegate(TestState testRunState)
+        private void AllTestsCompletednDelegate(ValidationSuite suite, TestState testRunState)
         {
             testComplete = true;
         }
@@ -184,7 +184,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             TestCategory = TestCategory.DataValidation;
         }
 
-        public override void Run()
+        protected override void Run()
         {
             // Set the Test State when done
             if (ThrowException)

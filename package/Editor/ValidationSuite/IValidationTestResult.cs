@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace UnityEditor.PackageManager.ValidationSuite
 {
@@ -6,7 +8,9 @@ namespace UnityEditor.PackageManager.ValidationSuite
     {
         Succeeded,
         Failed,
-        NotRun
+        NotRun,
+        Running,
+        NotImplementedYet
     }
 
     internal interface IValidationTestResult
@@ -18,6 +22,10 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         // Output string from test
         List<string> TestOutput { get;}
+
+        DateTime StartTime { get; }
+        
+        DateTime EndTime { get; }
     }
 
 }

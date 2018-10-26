@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
@@ -6,12 +7,12 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
     {
         public ValidationSuite Suite { get; set; }
         
-        public string TestName { get; set; }
+        public string TestName { get; protected set; }
 
-        public string TestDescription { get; set; }
+        public string TestDescription { get; protected set; }
 
         // Category mostly used for sorting tests, or grouping in UI.
-        public TestCategory TestCategory { get; set; }
+        public TestCategory TestCategory { get; protected set; }
 
         public IValidationTest ValidationTest { get { return this; } }
 
@@ -20,12 +21,21 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         // Output string from test
         public List<string> TestOutput { get; set; }
 
+        public DateTime StartTime { get; private set; }
+        
+        public DateTime EndTime { get; private set; }
+
         public VettingContext Context { get; set; }
+
+        public bool ShouldRun { get; set; }
 
         protected BaseValidation()
         {
             TestState = TestState.NotRun;
             TestOutput = new List<string>();
+            ShouldRun = true;
+            StartTime = DateTime.Now;
+            EndTime = DateTime.Now;
         }
 
         // This method is called synchronously during initialization, 
@@ -34,7 +44,14 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         {
         }
 
+        public void RunTest()
+        {
+            StartTime = DateTime.Now;
+            Run();
+            EndTime = DateTime.Now;
+        }
+
         // This needs to be implemented for every test
-        public abstract void Run();
+        protected abstract void Run();
     }
 }

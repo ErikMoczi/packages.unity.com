@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Globalization;
 using UnityEditor.PackageManager.ValidationSuite;
+using UnityEngine;
 
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
@@ -66,28 +67,28 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
         }
 
-        public override void Run()
+        protected override void Run()
         {
             // Start by declaring victory
             TestState = TestState.Succeeded;
-            var manifestFilePath = Path.Combine(Context.PublishPackageInfo.Path, Utilities.PackageJsonFilename);
+            var manifestFilePath = Path.Combine(Context.PublishPackageInfo.path, Utilities.PackageJsonFilename);
             
-            if(!File.Exists(manifestFilePath))
+            if (!File.Exists(manifestFilePath))
             {
                 TestState = TestState.Failed;
                 TestOutput.Add("Can't find manifest: " + manifestFilePath);
                 return;
             }
 
-            var packagePath = Context.PublishPackageInfo.Path;
+            var packagePath = Context.PublishPackageInfo.path;
             var editorProjectPath = Path.Combine(packagePath, "Editor");
             var runtimeProjectPath =  Path.Combine(packagePath, "Runtime");
             var editorTestProjectPath = Path.Combine(packagePath, Path.Combine("Tests", "Editor"));
             var runtimeTestProjectPath = Path.Combine(packagePath, Path.Combine("Tests", "Runtime"));
 
-            if (Directory.Exists(editorProjectPath))
+            if (Directory.Exists(editorProjectPath) || Directory.Exists(editorTestProjectPath))
             {
-                var assemblyDefinitionFiles = Directory.GetFiles(editorProjectPath, AssemblyFileDefinitionExtension);
+                var assemblyDefinitionFiles = Directory.Exists(editorProjectPath) ? Directory.GetFiles(editorProjectPath, AssemblyFileDefinitionExtension) : new string[0];
                 if (assemblyDefinitionFiles.Length != 1)
                 {
                     TestState = TestState.Failed;
@@ -95,8 +96,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 }
                 else
                 {
-                    var editorAssemblyDefinitionFilePath =
-                        Path.Combine(editorTestProjectPath, assemblyDefinitionFiles[0]);
+                    var editorAssemblyDefinitionFilePath = assemblyDefinitionFiles[0];
                     CheckAssemblyDefinitionContent(editorAssemblyDefinitionFilePath, true, false);
                 }
                 
@@ -110,16 +110,15 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                     }
                     else
                     {
-                        var editorTestAssemblyDefinitionFilePath =
-                            Path.Combine(editorTestProjectPath, assemblyDefinitionFiles[0]);
+                        var editorTestAssemblyDefinitionFilePath = assemblyDefinitionFiles[0];
                         CheckAssemblyDefinitionContent(editorTestAssemblyDefinitionFilePath, true, true);
                     }
                 }
             }
 
-            if (Directory.Exists(runtimeProjectPath))
+            if (Directory.Exists(runtimeProjectPath) || Directory.Exists(runtimeTestProjectPath))
             {
-                var assemblyDefinitionFiles = Directory.GetFiles(runtimeProjectPath, AssemblyFileDefinitionExtension);
+                var assemblyDefinitionFiles = Directory.Exists(runtimeProjectPath) ? Directory.GetFiles(runtimeProjectPath, AssemblyFileDefinitionExtension) : new string[0];
                 if (assemblyDefinitionFiles.Length != 1)
                 {
                     TestState = TestState.Failed;
@@ -127,8 +126,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 }
                 else
                 {
-                    var runtimeAssemblyDefinitionFilePath =
-                        Path.Combine(editorTestProjectPath, assemblyDefinitionFiles[0]);
+                    var runtimeAssemblyDefinitionFilePath = assemblyDefinitionFiles[0];
                     CheckAssemblyDefinitionContent(runtimeAssemblyDefinitionFilePath, false, false);
                 }
                 
@@ -142,8 +140,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                     }
                     else
                     {
-                        var runtimeTestAssemblyDefinitionFilePath =
-                            Path.Combine(runtimeTestProjectPath, assemblyDefinitionFiles[0]);
+                        var runtimeTestAssemblyDefinitionFilePath = assemblyDefinitionFiles[0];
                         CheckAssemblyDefinitionContent(runtimeTestAssemblyDefinitionFilePath, false, true);
                     }
                 }

@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Linq;
 using System;
-using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
+using UnityEngine;
 
 namespace UnityEditor.PackageManager.ValidationSuite.UI
 {
@@ -9,6 +9,15 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
     {
         private static string ResultsDisplay = "";
         private static bool ShowResultsDlg = false;
+
+        [MenuItem("internal:Project/Packages/Test")]
+        internal static void RunValidationSuiteTest()
+        {
+            if (ValidationSuite.RunValidationSuite("com.unity.package-manager-ui@1.6.1"))
+                Debug.Log("RunValidationSuiteTest succeeded");
+            else
+                Debug.Log("RunValidationSuiteTest failed");
+        }
 
         [MenuItem("internal:Project/Packages/Validate")]
         internal static void ShowPackageManagerWindow()
@@ -32,8 +41,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
             
             try
             {
-                var context = new VettingContext();
-                context.Initialize(packagePath);
+                var context = VettingContext.CreatePackmanContext(packagePath);
 
                 // Clear output file content
                 var path = Path.Combine(ValidationSuite.resultsPath, context.ProjectPackageInfo.name + ".txt");
@@ -41,11 +49,11 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
 
                 var testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletedDelegate, context, path);
 
-                testSuite.RunAsync();
+                testSuite.RunSync();
             }
             catch(Exception e)
             {
-                EditorUtility.DisplayDialog("Validation Setup Error", e.Message, "Dismiss", null);
+                Debug.Log(string.Format("\r\nTest Setup Error: \"{0}\"\r\n", e.Message));
             }
         }
 

@@ -1,5 +1,4 @@
-﻿
-namespace UnityEditor.PackageManager.ValidationSuite
+﻿namespace UnityEditor.PackageManager.ValidationSuite
 {
     internal enum TestCategory
     {

@@ -59,13 +59,13 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
         }
 
-        public override void Run()
+        protected override void Run()
         {
             // Start by declaring victory
             TestState = TestState.Succeeded;
 
             //check if each file/folder has its .meta counter-part
-            CheckMetaInFolderRecursively(Context.PublishPackageInfo.Path);
+            CheckMetaInFolderRecursively(Context.PublishPackageInfo.path);
         }
     }
 }

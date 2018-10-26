@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -17,12 +16,13 @@ namespace UnityEditor.PackageManager.ValidationSuite
     // Delegate called after the test run completed, whether it succeeded, failed or got canceled.
     internal delegate void AllTestsCompletedDelegate(ValidationSuite suite, TestState testRunState);
 
+    [InitializeOnLoad]
     public class ValidationSuite
     {
         public static readonly string resultsPath = "ValidationSuiteResults";
 
         // List of validation tests
-        private IEnumerable<BaseValidation> validationTests;
+        internal IEnumerable<BaseValidation> validationTests;
 
         // Delegate called after every test to provide immediate feedback on single test results.
         private SingleTestCompletedDelegate singleTestCompletionDelegate;
@@ -31,15 +31,19 @@ namespace UnityEditor.PackageManager.ValidationSuite
         private AllTestsCompletedDelegate allTestsCompletedDelegate;
 
         // Vetting context
-        private VettingContext context;
+        private readonly VettingContext context;
 
         // Path of the result output
-        internal string resultOutputPath;
+        internal readonly string resultOutputPath;
 
         // Thread we will use to run tests.
         private Thread testRunnerThread = null;
 
-        private TestState testSuiteState;
+        internal TestState testSuiteState;
+
+        internal DateTime StartTime;
+
+        internal DateTime EndTime;
 
         internal ValidationSuite(SingleTestCompletedDelegate singleTestCompletionDelegate,
                                AllTestsCompletedDelegate allTestsCompletedDelegate,
@@ -66,91 +70,6 @@ namespace UnityEditor.PackageManager.ValidationSuite
             get { return validationTests.Cast<IValidationTestResult>(); }
         }
 
-        internal void RunAsync()
-        {
-            // Start by calling "setup" on each test to allow them to prepare editor data they cant query async.
-            foreach (var test in validationTests)
-            {
-                test.Context = context;
-                test.Suite = this;
-                test.Setup();
-            }
-
-            // Run the tests in another thread, so we can get results as tests complete, and we can cancel a test run easily
-            testRunnerThread = new Thread(Run);
-            testRunnerThread.Start();
-        }
-
-        internal void RunSync()
-        {
-            foreach (var test in validationTests)
-            {
-                test.Context = context;
-                test.Suite = this;
-                test.Setup();
-            }
-            
-            Run();
-        }
-
-        internal void Cancel()
-        {
-            // Cancel validation tests running in the other thread
-            testRunnerThread.Abort();
-        }
-
-        private void BuildTestSuite()
-        {
-            // Use reflection to discover all Validation Tests in the project with base type == BaseValidationTest.
-            validationTests = (from t in Assembly.GetExecutingAssembly().GetTypes()
-                                where t.BaseType == (typeof(BaseValidation)) && t.GetConstructor(Type.EmptyTypes) != null
-                                select (BaseValidation)Activator.CreateInstance(t)).ToList();
-        }
-
-        private void Run()
-        {
-            testSuiteState = TestState.Succeeded;
-
-            // Run through tests
-            foreach (var test in validationTests)
-            {
-                try
-                {
-                    test.Run();
-
-                    if (test.TestState == TestState.Failed)
-                    {
-                        testSuiteState = TestState.Failed;
-                    }
-
-                    // Signal single test results to caller.
-                    singleTestCompletionDelegate(test);
-                }
-                catch (Exception ex)
-                {
-                    // if the test didn't behave, return an error.
-                    testSuiteState = TestState.Failed;
-
-                    // Change the test outcome.
-                    test.TestState = TestState.Failed;
-                    test.TestOutput.Add(ex.ToString());
-                    singleTestCompletionDelegate(test);
-                }
-            }
-
-            // when we're done, signal the main thread and all other interested
-            allTestsCompletedDelegate(this, testSuiteState);
-        }
-        
-        [MenuItem("internal:Project/Packages/Test")]
-        internal static void RunValidationSuiteTest()
-        {
-            if (RunValidationSuite("com.unity.package-manager-ui@1.6.1"))
-                Debug.Log("RunValidationSuiteTest succeeded");
-            else
-                Debug.Log("RunValidationSuiteTest failed");
-        }
-
         public static bool RunValidationSuite(string packageId)
         {
             var parts = packageId.Split('@');
@@ -175,20 +94,121 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
             try
             {
-                var context = new VettingContext();
-                context.Initialize(packagePath);
-
+                var context = VettingContext.CreatePackmanContext(packagePath);
                 var testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletedDelegate, context, path);
                 testSuite.RunSync();
                 return testSuite.testSuiteState == TestState.Succeeded;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 File.AppendAllText(path, string.Format("\r\nTest Setup Error: \"{0}\"\r\n", e.Message));
                 return false;
             }
         }
 
+        public static bool RunAssetStoreValidationSuite(string packagePath, string previousPackagePath = null)
+        {
+            try
+            {
+                var context = VettingContext.CreateAssetStoreContext(packagePath, previousPackagePath);
+                var testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletedDelegate, context, Path.GetFileName(packagePath));
+                testSuite.RunSync();
+                return testSuite.testSuiteState == TestState.Succeeded;
+            }
+            catch (Exception e)
+            {
+                File.AppendAllText(packagePath, string.Format("\r\nTest Setup Error: \"{0}\"\r\n", e.Message));
+                return false;
+            }
+        }
+
+        internal void RunAsync()
+        {
+            // Start by calling "setup" on each test to allow them to prepare editor data they cant query async.
+            foreach (var test in validationTests)
+            {
+                if (!test.ShouldRun)
+                    continue;
+
+                test.Context = context;
+                test.Suite = this;
+                test.Setup();
+            }
+
+            // Run the tests in another thread, so we can get results as tests complete, and we can cancel a test run easily
+            testRunnerThread = new Thread(Run);
+            testRunnerThread.Start();
+        }
+
+        internal void RunSync()
+        {
+            foreach (var test in validationTests)
+            {
+                test.Context = context;
+                test.Setup();
+            }
+            
+            Run();
+        }
+
+        internal void Cancel()
+        {
+            // Cancel validation tests running in the other thread
+            testRunnerThread.Abort();
+        }
+
+        private void BuildTestSuite()
+        {
+            // Use reflection to discover all Validation Tests in the project with base type == BaseValidationTest.
+            validationTests = (from t in Assembly.GetExecutingAssembly().GetTypes()
+                                where t.BaseType == (typeof(BaseValidation)) && t.GetConstructor(Type.EmptyTypes) != null
+                                select (BaseValidation)Activator.CreateInstance(t)).ToList();
+        }
+
+        private void Run()
+        {
+            testSuiteState = TestState.Succeeded;
+            StartTime = DateTime.Now;
+            testSuiteState = TestState.Running;
+
+            // Run through tests
+            foreach (var test in validationTests)
+            {
+                if (!test.ShouldRun)
+                    continue;
+
+                try
+                {
+                    test.RunTest();
+
+                    if (test.TestState == TestState.Failed)
+                    {
+                        testSuiteState = TestState.Failed;
+                    }
+
+                    // Signal single test results to caller.
+                    singleTestCompletionDelegate(test);
+                }
+                catch (Exception ex)
+                {
+                    // if the test didn't behave, return an error.
+                    testSuiteState = TestState.Failed;
+
+                    // Change the test outcome.
+                    test.TestState = TestState.Failed;
+                    test.TestOutput.Add(ex.ToString());
+                    singleTestCompletionDelegate(test);
+                }
+            }
+
+            EndTime = DateTime.Now;
+            if (testSuiteState != TestState.Failed)
+                testSuiteState = TestState.Succeeded;
+
+            // when we're done, signal the main thread and all other interested
+            allTestsCompletedDelegate(this, testSuiteState);
+        }
+        
         private static string FindPackagePath(string packageId)
         {
             var path = string.Format("Packages/{0}/package.json", packageId);
@@ -198,15 +218,22 @@ namespace UnityEditor.PackageManager.ValidationSuite
         
         private static void SingleTestCompletedDelegate(IValidationTestResult testResult)
         {
-            var path = testResult.ValidationTest.Suite.resultOutputPath;
-            File.AppendAllText(path, string.Format("\r\nTest: \"{0}\"\r\nResult: {1}\r\n", testResult.ValidationTest.TestName, testResult.TestState));
+            File.AppendAllText(testResult.ValidationTest.Suite.resultOutputPath, string.Format("\r\nTest: \"{0}\"\r\nResult: {1}\r\n", testResult.ValidationTest.TestName, testResult.TestState));
             if (testResult.TestOutput.Any())
-                File.AppendAllText(path, string.Join("\r\n", testResult.TestOutput.ToArray()) + "\r\n");
+                File.AppendAllText(testResult.ValidationTest.Suite.resultOutputPath, string.Join("\r\n", testResult.TestOutput.ToArray()) + "\r\n");
         }
 
         private static void AllTestsCompletedDelegate(ValidationSuite suite, TestState testRunState)
         {
             File.AppendAllText(suite.resultOutputPath, "\r\nAll Done!  Result = " + testRunState);
+
+            var report = new ValidationSuiteReport(suite);
+            var parent = Directory.GetParent(suite.resultOutputPath).FullName;
+            var path = Path.Combine(parent, Path.GetFileNameWithoutExtension(suite.resultOutputPath) + ".json");
+            if (File.Exists(path))
+                File.Delete(path);
+            
+            report.OutputReport(path);
         }
     }
 }

@@ -1,10 +1,7 @@
-﻿using System;
-using System.IO;
+﻿using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Semver;
-using UnityEngine;
-using UnityEditor.PackageManager.ValidationSuite.UI;
 
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
@@ -12,8 +9,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
     {
         private const string PackageNamePrefix = "com.unity.";
         private const string UpmRegex = @"^[a-z0-9][a-z0-9-._]{0,213}$";
-        private const int MinDescriptionSize = 20;
-        private string unityVersion;
+        private const int MinDescriptionSize = 50;
 
         public ManifestValidation()
         {
@@ -22,14 +18,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestCategory = TestCategory.DataValidation;
         }
 
-        // This method is called synchronously during initialization, 
-        // and allows a test to interact with APIs, which need to run from the main thread.
-        public override void Setup()
-        {
-            unityVersion = UnityEngine.Application.unityVersion;
-        }
-
-        public override void Run()
+        protected override void Run()
         {
             // Start by declaring victory
             TestState = TestState.Succeeded;
@@ -38,6 +27,13 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
         private void ValidateManifestData(VettingContext.ManifestData manifestData)
         {
+            if (manifestData == null)
+            {
+                TestState = TestState.Failed;
+                TestOutput.Add("Manifest is null");
+                return;
+            }
+                
             // Check the package Name, which needs to start with "com.unity."
             if (manifestData.name == (PackageNamePrefix + "[your package name]") ||
                 !manifestData.name.StartsWith(PackageNamePrefix) || 
@@ -48,7 +44,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
 
             // There cannot be any capital letters in package names.
-            if (manifestData.name.Any(char.IsUpper))
+            if (manifestData.name.ToLower(CultureInfo.InvariantCulture) != manifestData.name)
             {
                 TestState = TestState.Failed;
                 TestOutput.Add("In package.json, \"name\" cannot contain capital letter");
@@ -75,17 +71,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             {
                 TestState = TestState.Failed;
                 TestOutput.Add("In package.json, \"version\" needs to be a valid \"Semver\".");
-            }
-
-            // Check Unity Version, make sure it's valid given current version of Unity
-            double unityVersionNumber, packageUnityVersionNumber;
-
-            if (!double.TryParse(unityVersion.Substring(0, unityVersion.LastIndexOf(".")), out unityVersionNumber) ||
-                !double.TryParse(manifestData.unity, out packageUnityVersionNumber) ||
-                unityVersionNumber < packageUnityVersionNumber)
-            {
-                TestState = TestState.Failed;
-                TestOutput.Add("In package.json, \"unity\" is pointing to a version different from the editor you are using.  Validation needs to happen on the right version of the editor.");
             }
         }
     }

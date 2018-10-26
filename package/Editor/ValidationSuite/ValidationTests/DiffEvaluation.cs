@@ -17,10 +17,10 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestCategory = TestCategory.DataValidation;
         }
 
-        public override void Run()
+        protected override void Run()
         {
             // Start by declaring victory
-            TestState = TestState.Succeeded;
+            TestState = TestState.NotImplementedYet;
 
             // Flag certain file types are requiring special attention.
             // Asmdef - can cause breaks on client's updates to packages.

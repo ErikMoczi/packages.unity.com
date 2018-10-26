@@ -16,13 +16,13 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestCategory = TestCategory.DataValidation;
         }
 
-        public override void Run()
+        protected override void Run()
         {
             // Start by declaring victory
             TestState = TestState.Succeeded;
 
             // Check if the file exists first
-            var changeLogPath = Path.Combine(Context.ProjectPackageInfo.Path, Utilities.ChangeLogFilename);
+            var changeLogPath = Path.Combine(Context.ProjectPackageInfo.path, Utilities.ChangeLogFilename);
 
             if(!System.IO.File.Exists(changeLogPath))
             {
@@ -36,7 +36,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             if (!SemVersion.TryParse(Context.ProjectPackageInfo.version, out packageJsonVersion))
             {
                 TestState = TestState.Failed;
-                TestOutput.Add(string.Format("Version format is not valid: {0} in: [{1}]", Context.ProjectPackageInfo.version, Context.ProjectPackageInfo.Path));
+                TestOutput.Add(string.Format("Version format is not valid: {0} in: [{1}]", Context.ProjectPackageInfo.version, Context.ProjectPackageInfo.path));
                 return;
             }
 
