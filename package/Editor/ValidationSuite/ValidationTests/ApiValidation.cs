@@ -38,14 +38,23 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         public class AssemblyInfo
         {
             public readonly Assembly assembly;
-            public readonly AssemblyDefinition assemblyDefinition;
             public readonly string asmdefPath;
+
+            public AssemblyDefinition assemblyDefinition
+            {
+                get
+                {
+                    cachedAssemblyDefinition = cachedAssemblyDefinition ?? JsonUtility.FromJson<AssemblyDefinition>(File.ReadAllText(asmdefPath));
+
+                    return cachedAssemblyDefinition;
+                }
+            }
+            private AssemblyDefinition cachedAssemblyDefinition;
 
             public AssemblyInfo(Assembly assembly, string asmdefPath)
             {
                 this.assembly = assembly;
                 this.asmdefPath = asmdefPath;
-                assemblyDefinition = JsonUtility.FromJson<AssemblyDefinition>(File.ReadAllText(asmdefPath));
             }
         }
 
@@ -167,6 +176,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             if (Context.PreviousPackageInfo == null)
             {
                 TestOutput.Add("No previous package version. Skipping Semantic Versioning checks.");
+                TestState = TestState.NotRun;
                 return;
             }
 
@@ -182,7 +192,13 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         class AssemblyChange
         {
             public string assemblyName;
-            public List<EntityChangeBase> apiChanges = new List<EntityChangeBase>();
+            public List<string> additions = new List<string>();
+            public List<string> breakingChanges = new List<string>();
+
+            public AssemblyChange(string assemblyName)
+            {
+                this.assemblyName = assemblyName;
+            }
         }
 
         [Serializable]
@@ -202,7 +218,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             var assembliesForPackage = assemblyInfo.Where(a => !assemblyInformation.IsTestAssembly(a)).ToArray();
             if (Context.PreviousPackageBinaryDirectory == null)
             {
-                Error("Previous package binaries must be present on artifactory to do API diff.");
+                TestState = TestState.NotRun;
+                TestOutput.Add("Previous package binaries must be present on artifactory to do API diff.");
                 return;
             }
 
@@ -211,23 +228,25 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             //Build diff
             foreach (var info in assembliesForPackage)
             {
+                var assemblyDefinition = info.assemblyDefinition;
                 var oldAssemblyPath = oldAssemblyPaths.FirstOrDefault(p =>
-                    Path.GetFileNameWithoutExtension(p) == info.assemblyDefinition.name);
+                    Path.GetFileNameWithoutExtension(p) == assemblyDefinition.name);
 
                 if (info.assembly != null)
                 {
-                    var assemblyChange = new AssemblyChange
+                    var entityChanges = APIChangesCollector.Collect(oldAssemblyPath, info.assembly.outputPath).SelectMany(c => c.Changes).ToList();
+                    var assemblyChange = new AssemblyChange(info.assembly.name)
                     {
-                        assemblyName = info.assembly.name,
-                        apiChanges = APIChangesCollector.Collect(oldAssemblyPath, info.assembly.outputPath).Cast<EntityChangeBase>().ToList()
+                        additions = entityChanges.Where(c => c.IsAdd()).Select(c => c.ToString()).ToList(),
+                        breakingChanges = entityChanges.Where(c => !c.IsAdd()).Select(c => c.ToString()).ToList()
                     };
 
-                    if (assemblyChange.apiChanges.Count > 0)
+                    if (entityChanges.Count > 0)
                         diff.assemblyChanges.Add(assemblyChange);
                 }
 
                 if (oldAssemblyPath == null)
-                    diff.newAssemblies.Add(info.assemblyDefinition.name);
+                    diff.newAssemblies.Add(assemblyDefinition.name);
             }
 
             foreach (var oldAssemblyPath in oldAssemblyPaths)
@@ -238,17 +257,22 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
 
             //separate changes
-            var allChanges = diff.assemblyChanges.SelectMany(v => v.apiChanges).SelectMany(c => c.Changes).ToList();
-            diff.additions = allChanges.Count(c => c.IsAdd());
+            diff.additions = diff.assemblyChanges.Sum(v => v.additions.Count);
             diff.removedAssemblyCount = diff.missingAssemblies.Count;
-            diff.breakingChanges = allChanges.Count - diff.additions;
+            diff.breakingChanges = diff.assemblyChanges.Sum(v => v.breakingChanges.Count);
 
             TestOutput.Add(String.Format("API Diff - Breaking changes: {0} Additions: {1} Missing Assemblies: {2}", 
                 diff.breakingChanges,
                 diff.additions,
                 diff.removedAssemblyCount));
 
-            var json = JsonUtility.ToJson(diff);
+            if (diff.breakingChanges > 0 || diff.additions > 0)
+            {
+                TestOutput.AddRange(diff.assemblyChanges.Select(c => JsonUtility.ToJson(c, true)));
+            }
+
+
+            string json = JsonUtility.ToJson(diff, true);
             Directory.CreateDirectory(ValidationSuiteReport.resultsPath);
             File.WriteAllText(Path.Combine(ValidationSuiteReport.resultsPath, "ApiValidationReport.json"), json);
 
@@ -258,6 +282,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
             if (changeType == VersionChangeType.Unknown)
                 return;
+           
             if (diff.breakingChanges > 0 && changeType != VersionChangeType.Major)
                 Error("Breaking changes require a new major version.");
             if (diff.additions > 0 && changeType == VersionChangeType.Patch)

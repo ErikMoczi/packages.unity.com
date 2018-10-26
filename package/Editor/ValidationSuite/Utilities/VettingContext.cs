@@ -39,6 +39,11 @@ internal class VettingContext
         {
             get { return version.ToLower().Contains("-preview"); }
         }
+
+        public string Id
+        {
+            get { return name + "@" + version; }
+        }
     }
 
     public ManifestData ProjectPackageInfo { get; set; }
@@ -161,8 +166,7 @@ internal class VettingContext
         var packageName = Utilities.CreatePackage(projectPackagePath, tempPath);
         var packageInfo = Utilities.GetDataFromJson<ManifestData>(Path.Combine(projectPackagePath, Utilities.PackageJsonFilename));
 
-        var packageId = packageInfo.name + "@" + packageInfo.version;
-        var publishPackagePath = Path.Combine(tempPath, "publish-" + packageId);
+        var publishPackagePath = Path.Combine(tempPath, "publish-" + packageInfo.Id);
         return Utilities.ExtractPackage(packageName, tempPath, publishPackagePath, packageInfo.name);
     }
 
@@ -188,9 +192,8 @@ internal class VettingContext
                 try
                 {
                     var tempPath = Path.GetTempPath();
-                    var packageId = projectPackageInfo.name + "@" + previousVersion;
-                    var previousPackagePath = Path.Combine(tempPath, "previous-" + packageId);
-                    var packageName = Utilities.DownloadPackage("https://packages.unity.com/", packageId, tempPath);
+                    var previousPackagePath = Path.Combine(tempPath, "previous-" + projectPackageInfo.Id);
+                    var packageName = Utilities.DownloadPackage("https://packages.unity.com/", projectPackageInfo.Id, tempPath);
                     Utilities.ExtractPackage(packageName, tempPath, previousPackagePath, projectPackageInfo.name);
                     return previousPackagePath;
                 }

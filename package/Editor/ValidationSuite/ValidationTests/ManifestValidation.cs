@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Semver;
@@ -11,6 +12,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
     {
         private const string PackageNamePrefix = "com.unity.";
         private const string UpmRegex = @"^[a-z0-9][a-z0-9-._]{0,213}$";
+        private const string UpmDisplayRegex = @"^[a-zA-Z0-9 ]+$";
         private const int MinDescriptionSize = 50;
 
         public ManifestValidation()
@@ -34,7 +36,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
 
             ValidateManifestData();
-            ValidateVersion();
             ValidateDependencyChanges();
         }
 
@@ -123,6 +124,10 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             {
                 Error("In package.json, \"DisplayName\" is too long. Max Length = 25");
             }
+            else if (!Regex.Match(manifestData.displayName, UpmDisplayRegex).Success)
+            {
+                Error("In package.json, \"DisplayName\" cannot have any special characters."); 
+            }
 
             // Check Description, make sure it's there, and not too short.
             if (manifestData.description.Length < MinDescriptionSize)
@@ -136,49 +141,31 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             {
                 Error("In package.json, \"version\" needs to be a valid \"Semver\".");
             }
-        }
-
-        private void ValidateVersion()
-        {
-#if UNITY_2018_2_OR_NEWER
-            SemVersion version;
-            if (!SemVersion.TryParse(Context.ProjectPackageInfo.version, out version, true))
+            else if (!string.IsNullOrEmpty(packageVersionNumber.Prerelease))
             {
-                Error(String.Format("Failed to parse previous package version \"{0}\"", Context.ProjectPackageInfo.version));
-                return;
-            }
+                // The only pre-release tag we support is -preview
+                var preleleaseParts = packageVersionNumber.Prerelease.Split('.');
 
-            SemVersion previousVersion = null;
-            if (Context.PreviousPackageInfo != null && !SemVersion.TryParse(Context.PreviousPackageInfo.version, out previousVersion, true))
-            {
-                Error(string.Format("Failed to parse previous package version \"{0}\"", Context.ProjectPackageInfo.version));
-            }
-
-            // List out available versions for a package.
-            var request = Client.Search(Context.ProjectPackageInfo.name);
-            while (!request.IsCompleted)
-            {
-                System.Threading.Thread.Sleep(100);
-            }
-
-            // If it exists, get the last one from that list.
-            if (request.Result != null && request.Result.Length > 0)
-            {
-                if (request.Result[0].versions.all.Any(v => v == Context.ProjectPackageInfo.version))
+                if (preleleaseParts.Length > 2)
                 {
-                    Error("Version " + Context.ProjectPackageInfo.version + " of this package already exists in production.");
+                    Error("In package.json, \"version\": the only pre-release filter supported is \"-preview.[num < 999]\".");
+                }
+
+                if (preleleaseParts[0] != ("preview"))
+                {
+                    Error("In package.json, \"version\": the only pre-release filter supported is \"-preview.[num < 999]\".");
+                }
+
+                if (preleleaseParts.Length > 1 && !string.IsNullOrEmpty(preleleaseParts[1]))
+                {
+                    int previewVersion;
+                    var results = int.TryParse(preleleaseParts[1], out previewVersion);
+                    if (!results || previewVersion > 999)
+                    {
+                        Error("In package.json, \"version\": the only pre-release filter supported is \"-preview.[num < 999]\".");
+                    }
                 }
             }
-
-            if (string.IsNullOrEmpty(version.Prerelease))
-            {
-                // This is a production submission, let's make sure it meets some criteria
-                if (Context.PreviousPackageInfo == null)
-                {
-                    TestOutput.Add("WARNING: This package is not a preview version, but it's the first version of the package.  Should this package version be tagged as " + Context.ProjectPackageInfo.version + "-preview?");
-                }
-            }
-#endif
         }
     }
 }

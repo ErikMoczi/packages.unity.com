@@ -37,6 +37,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             // no previous package was found.
             if (Context.PreviousPackageInfo == null)
             {
+                TestOutput.Add("No previous package version. Skipping diff evaluation.");
                 TestState = TestState.NotRun;
                 return;
             }

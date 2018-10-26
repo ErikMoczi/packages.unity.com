@@ -1,5 +1,6 @@
 ﻿
 using System.IO;
+using System.Linq;
 using System.Net;
 using Semver;
 
@@ -25,9 +26,44 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
         protected override void Run()
         {
+            TestState = TestState.Succeeded;
+            CheckOnlineDocumentation();
+            CheckLocalDocumentation();
+
+        }
+
+        protected void CheckLocalDocumentation()
+        {
+            // Check for a documentation directory.
+            var rootDirs = Directory.GetDirectories(Context.ProjectPackageInfo.path);
+            var docsDir = rootDirs.SingleOrDefault(d => Path.GetFileName(d).ToLower() == "documentation");
+            if (string.IsNullOrEmpty(docsDir))
+            {
+                Error("Your package must contain a \"Documentation\" folder, which holds your package's documentation.");
+                return;
+            }
+
+            var docFiles = Directory.GetFiles(docsDir, "your-package-name.md");
+            // Check for at least 1 md file in that directory.
+            if (docFiles.Length > 0)
+            {
+                Error("File \"your-package-name.md\" found in \"Documentation\" directory, which comes from the package template.  Please take the time to work on your documentation.");
+            }
+
+            docFiles = Directory.GetFiles(docsDir, "*.md");
+
+            // Check for at least 1 md file in that directory.
+            if (docFiles.Length == 0)
+            {
+                Error("Your package must contain a \"Documentation\" folder, with at least one \"*.md\" file in order for documentation to properly get built.");
+            }
+            
             // TODO:  Add check for local feature doc.
             //        Check for XMLDocs
+        }
 
+        protected void CheckOnlineDocumentation()
+        {
             SemVersion packageJsonVersion;
 
             if (!SemVersion.TryParse(Context.ProjectPackageInfo.version, out packageJsonVersion))
@@ -51,7 +87,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 {
                     var responseReader = new StreamReader(webResponse.GetResponseStream());
                     responseReader.ReadToEnd();
-                    TestState = TestState.Succeeded;
                 }
             }
             catch (WebException e)

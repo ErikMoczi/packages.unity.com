@@ -41,7 +41,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             Directory.CreateDirectory(testFolder);
             string zipFilePath;
-            Assert.IsTrue(PackageBinaryZipping.TryZipPackageBinaries(ApiValidationTests.testPackageRoot + "TestPackage_Empty", "TestPackage_Empty", "0.1.0", testFolder, out zipFilePath), "ZipPackageBinaries failed");
+            Assert.IsTrue(PackageBinaryZipping.TryZipPackageBinaries(testFolder, "TestPackage_Empty", "0.1.0", testFolder, out zipFilePath), "ZipPackageBinaries failed");
 
             var destPath = Path.Combine(testFolder, "zipContents");
             Assert.IsTrue(PackageBinaryZipping.Unzip(zipFilePath, destPath), "Unzip failed");

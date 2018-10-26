@@ -47,11 +47,16 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
             if (root == null)
                 return;
 
-            if (packageInfo == null)
+            if (packageInfo == null || packageInfo.source == PackageSource.BuiltIn)
             {
                 AddToClassList("display-none");
                 visible = false;
                 return;
+            }
+            else
+            {
+                RemoveFromClassList("display-none");
+                visible = true;
             }
 
             CurrentPackageinfo = packageInfo;

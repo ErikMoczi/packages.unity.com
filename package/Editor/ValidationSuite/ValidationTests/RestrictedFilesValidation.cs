@@ -33,8 +33,19 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 }
             }
 
-            // This test needs work
-            TestState = TestState.NotImplementedYet;
+            // from the published project dir, check if each file type is present.
+            foreach (var fileType in unapprovedFileList)
+            {
+                List<string> matchingFiles = new List<string>();
+                DirectorySearch(Context.PublishPackageInfo.path, fileType, matchingFiles);
+
+                if (matchingFiles.Any())
+                {
+                    foreach (var file in matchingFiles)
+                        TestOutput.Add("WARNING: " + file + " should not be included in packages.");
+                }
+            }
+
         }
 
         void DirectorySearch(string path, string searchPattern, List<string> matches)
@@ -51,7 +62,22 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
         private readonly string[] restrictedFileList =
         {
-            "*.ttz",
+            "*.js",
+            "*.jpg",
+            "*.jpeg",
+            "*.exe",
+            "AssetStoreTools.dll",
+            "AssetStoreToolsExtra.dll",
+            "DroidSansMono.ttf",
+            "AssetStoreToolsExtra.dll",
+        };
+
+        private readonly string[] unapprovedFileList =
+        {
+            "Standard Assets.*",
+            "*.unitypackage",
+            "*.zip",
+            "*.rar",
         };
     }
 }

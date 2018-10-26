@@ -1,7 +1,13 @@
-﻿namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
+﻿using System;
+using System.IO;
+using Semver;
+
+namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
     internal class UpdateValidation : BaseValidation
     {
+        private const string ProductionRepositoryUrl = "https://packages.unity.com/";
+
         public UpdateValidation()
         {
             TestName = "Package Update Validation";
@@ -13,11 +19,54 @@
         protected override void Run()
         {
             // Start by declaring victory
-            TestState = TestState.NotImplementedYet;
+            TestState = TestState.Succeeded;
+            ValidateVersion();
+        }
 
-            // Version bump was done.
-            // Does the version bump make sense, go from beta to alpha on a path update seems wrong?
-            // Is this the first version of a package?  if so, it should be a pre-release
+
+        private void ValidateVersion()
+        {
+#if UNITY_2018_2_OR_NEWER
+            SemVersion version;
+            if (!SemVersion.TryParse(Context.ProjectPackageInfo.version, out version, true))
+            {
+                Error(String.Format("Failed to parse previous package version \"{0}\"", Context.ProjectPackageInfo.version));
+                return;
+            }
+
+            SemVersion previousVersion = null;
+            if (Context.PreviousPackageInfo != null && !SemVersion.TryParse(Context.PreviousPackageInfo.version, out previousVersion, true))
+            {
+                Error(string.Format("Failed to parse previous package version \"{0}\"", Context.ProjectPackageInfo.version));
+            }
+
+            // List out available versions for a package.
+            var request = Client.Search(Context.ProjectPackageInfo.name);
+            while (!request.IsCompleted)
+            {
+                System.Threading.Thread.Sleep(100);
+            }
+
+            if (string.IsNullOrEmpty(version.Prerelease))
+            {
+                // This is a production submission, let's make sure it meets some criteria
+                if (Context.PreviousPackageInfo == null)
+                {
+                    TestOutput.Add("WARNING: This package is not a preview version, but it's the first version of the package.  Should this package version be tagged as " + Context.ProjectPackageInfo.version + "-preview?");
+                }
+            }
+
+            // If it exists, get the last one from that list.
+            try
+            {
+                Utilities.DownloadPackage(ProductionRepositoryUrl, Context.ProjectPackageInfo.Id, Path.GetTempPath());
+                Error("Version " + Context.ProjectPackageInfo.version + " of this package already exists in production.");
+            }
+            catch (Exception)
+            {
+                // This is the expectation, that the package doesn't exist.
+            }
+#endif
         }
     }
 }
