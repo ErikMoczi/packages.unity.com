@@ -1,11 +1,6 @@
 {
-    "name": "Unity.ProBuilder.Editor",
-    "references": [
-        "Unity.ProBuilder",
-        "Unity.ProBuilder.AssetIdRemapUtility",
-        "Unity.Settings.Editor",
-        "Unity.ProBuilder.Stl"
-    ],
+    "name": "Unity.Settings.Editor",
+    "references": [],
     "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"

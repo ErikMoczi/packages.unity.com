@@ -12,6 +12,10 @@ using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.SettingsManagement
 {
+	/// <summary>
+	/// A <see cref="UnityEditor.SettingsProvider"/> implementation that creates an interface from settings reflected
+	/// from a collection of assemblies.
+	/// </summary>
 #if SETTINGS_PROVIDER_ENABLED
 	public sealed class UserSettingsProvider : SettingsProvider
 #else
@@ -19,9 +23,31 @@ namespace UnityEditor.SettingsManagement
 #endif
 	{
 		const string k_UserSettingsProviderSettingsPath = "ProjectSettings/UserSettingsProviderSettings.json";
-		const string k_SettingsGearIcon = "Packages/com.unity.probuilder/Settings/Content/Options.png";
+
 #if SETTINGS_PROVIDER_ENABLED
 		const int k_LabelWidth = 240;
+
+		int labelWidth
+		{
+			get
+			{
+				if (s_DefaultLabelWidth != null)
+					return (int) ((float) s_DefaultLabelWidth.GetValue(null));
+
+				return k_LabelWidth;
+			}
+		}
+
+		int defaultLayoutMaxWidth
+		{
+			get
+			{
+				if (s_DefaultLayoutMaxWidth != null)
+					return (int) ((float)s_DefaultLayoutMaxWidth.GetValue(null));
+
+				return 0;
+			}
+		}
 #else
 		const int k_LabelWidth = 180;
 #endif
@@ -33,70 +59,56 @@ namespace UnityEditor.SettingsManagement
 		HashSet<string> keywords = new HashSet<string>();
 #endif
 		static readonly string[] s_SearchContext = new string[1];
+		EventType m_SettingsBlockKeywordsInitialized;
 		Assembly[] m_Assemblies;
 		static Settings s_Settings;
 		Settings m_SettingsInstance;
-		public event Action afterSettingsSaved;
+
+#if SETTINGS_PROVIDER_ENABLED
+		static PropertyInfo s_DefaultLabelWidth;
+		static PropertyInfo s_DefaultLayoutMaxWidth;
+#endif
 
 		static Settings userSettingsProviderSettings
 		{
 			get
 			{
-				if(s_Settings == null)
-					s_Settings = new Settings(k_UserSettingsProviderSettingsPath);
+				if (s_Settings == null)
+				{
+					s_Settings = new Settings(new ISettingsRepository[]
+					{
+						new ProjectSettingsRepository(k_UserSettingsProviderSettingsPath),
+						new UserSettingsRepository()
+					});
+				}
+
 				return s_Settings;
 			}
 		}
 
-		public Settings settingsInstance
-		{
-			get { return m_SettingsInstance; }
-		}
-
-		internal static UserSetting<bool> showHiddenSettings = new UserSetting<bool>(userSettingsProviderSettings, "settings.showHidden", false, SettingScope.User);
-		internal static UserSetting<bool> showUnregisteredSettings = new UserSetting<bool>(userSettingsProviderSettings, "settings.showUnregistered", false, SettingScope.User);
-		internal static UserSetting<bool> listByKey = new UserSetting<bool>(userSettingsProviderSettings, "settings.listByKey", false, SettingScope.User);
-		internal static UserSetting<bool> showUserSettings = new UserSetting<bool>(userSettingsProviderSettings, "settings.showUserSettings", false, SettingScope.User);
-		internal static UserSetting<bool> showProjectSettings = new UserSetting<bool>(userSettingsProviderSettings, "settings.showProjectSettings", false, SettingScope.User);
-
-		static class Styles
-		{
-			static bool s_Initialized;
-
-			public static GUIStyle settingsArea;
-			public static GUIStyle settingsGizmo;
-
-			public static void Init()
-			{
-				if (s_Initialized)
-					return;
-
-				s_Initialized = true;
-
-				settingsArea = new GUIStyle()
-				{
-					margin = new RectOffset(6, 6, 0, 0)
-				};
-
-				settingsGizmo = new GUIStyle()
-				{
-					normal = new GUIStyleState()
-					{
-						background = AssetDatabase.LoadAssetAtPath<Texture2D>(k_SettingsGearIcon)
-					},
-					fixedWidth = 14,
-					fixedHeight = 14,
-					padding = new RectOffset(0,0,0,0),
-					margin = new RectOffset(4,4,4,4),
-					imagePosition = ImagePosition.ImageOnly
-				};
-			}
-		}
+		internal static UserSetting<bool> showHiddenSettings = new UserSetting<bool>(userSettingsProviderSettings, "settings.showHidden", false, SettingsScopes.User);
+		internal static UserSetting<bool> showUnregisteredSettings = new UserSetting<bool>(userSettingsProviderSettings, "settings.showUnregistered", false, SettingsScopes.User);
+		internal static UserSetting<bool> listByKey = new UserSetting<bool>(userSettingsProviderSettings, "settings.listByKey", false, SettingsScopes.User);
+		internal static UserSetting<bool> showUserSettings = new UserSetting<bool>(userSettingsProviderSettings, "settings.showUserSettings", false, SettingsScopes.User);
+		internal static UserSetting<bool> showProjectSettings = new UserSetting<bool>(userSettingsProviderSettings, "settings.showProjectSettings", false, SettingsScopes.User);
 
 #if SETTINGS_PROVIDER_ENABLED
+		/// <summary>
+		/// Create a new UserSettingsProvider.
+		/// </summary>
+		/// <param name="path">The settings menu path.</param>
+		/// <param name="settings">The Settings instance that this provider is inspecting.</param>
+		/// <param name="assemblies">A collection of assemblies to scan for <see cref="UserSettingAttribute"/> and <see cref="UserSettingBlockAttribute"/> attributes.</param>
+		/// <param name="scopes">Which scopes this provider is valid for.</param>
+		/// <exception cref="ArgumentNullException">Thrown if settings or assemblies is null.</exception>
 		public UserSettingsProvider(string path, Settings settings, Assembly[] assemblies, SettingsScopes scopes = SettingsScopes.Any)
 			: base(path, scopes)
 #else
+		/// <summary>
+		/// Create a new UserSettingsProvider.
+		/// </summary>
+		/// <param name="settings">The Settings instance that this provider is inspecting.</param>
+		/// <param name="assemblies">A collection of assemblies to scan for <see cref="UserSettingAttribute"/> and <see cref="UserSettingBlockAttribute"/> attributes.</param>
 		public UserSettingsProvider(Settings settings, Assembly[] assemblies)
 #endif
 		{
@@ -108,30 +120,35 @@ namespace UnityEditor.SettingsManagement
 
 			m_SettingsInstance = settings;
 			m_Assemblies = assemblies;
-			m_SettingsInstance.afterSettingsSaved += OnAfterSettingsSaved;
 
 #if !SETTINGS_PROVIDER_ENABLED
+			m_SettingsInstance.beforeSettingsSaved += OnBeforeSettingsSaved;
+			m_SettingsInstance.afterSettingsSaved += OnAfterSettingsSaved;
 			SearchForUserSettingAttributes();
 #endif
-		}
-
-		~UserSettingsProvider()
-		{
-			m_SettingsInstance.afterSettingsSaved -= OnAfterSettingsSaved;
 		}
 
 #if SETTINGS_PROVIDER_ENABLED
+
+		/// <summary>
+		/// Invoked by the SettingsProvider when activated in the Editor.
+		/// </summary>
+		/// <param name="searchContext"></param>
+		/// <param name="rootElement"></param>
 		public override void OnActivate(string searchContext, VisualElement rootElement)
 		{
 			SearchForUserSettingAttributes();
-		}
-#endif
 
-		void OnAfterSettingsSaved()
-		{
-			if (afterSettingsSaved != null)
-				afterSettingsSaved();
+			var window = GetType().GetProperty("settingsWindow", BindingFlags.Instance | BindingFlags.NonPublic);
+
+			if (window != null)
+			{
+				s_DefaultLabelWidth = window.PropertyType.GetProperty("s_DefaultLabelWidth", BindingFlags.Public | BindingFlags.Static);
+				s_DefaultLayoutMaxWidth = window.PropertyType.GetProperty("s_DefaultLayoutMaxWidth", BindingFlags.Public | BindingFlags.Static);
+			}
 		}
+
+#endif
 
 		struct PrefEntry
 		{
@@ -196,7 +213,7 @@ namespace UnityEditor.SettingsManagement
 
 				if (pref == null)
 				{
-					Debug.LogWarning("[UserSettingAttribute] is only valid for types inheriting Pref<T>. Skipping \"" + field.Name + "\"");
+					Debug.LogWarning("[UserSettingAttribute] is only valid for types implementing the IUserSetting interface. Skipping \"" + field.Name + "\"");
 					continue;
 				}
 
@@ -229,12 +246,6 @@ namespace UnityEditor.SettingsManagement
 					blocks.Add(method);
 				else
 					m_SettingBlocks.Add(category, new List<MethodInfo>() { method });
-
-				if (attrib.keywords != null)
-				{
-					foreach (var word in attrib.keywords)
-						keywords.Add(word);
-				}
 			}
 
 			if (showHiddenSettings)
@@ -272,108 +283,151 @@ namespace UnityEditor.SettingsManagement
 		}
 
 #if SETTINGS_PROVIDER_ENABLED
+		/// <summary>
+		/// Invoked by the SettingsProvider container when drawing the UI header.
+		/// </summary>
 		public override void OnTitleBarGUI()
 		{
-			Styles.Init();
-
-			if (GUILayout.Button(GUIContent.none, Styles.settingsGizmo))
+			if (GUILayout.Button(GUIContent.none, SettingsGUIStyles.settingsGizmo))
 				DoContextMenu();
 		}
 #endif
+
+		void InitSettingsBlockKeywords()
+		{
+			// Have to let the blocks run twice - one for Layout, one for Repaint.
+			if (m_SettingsBlockKeywordsInitialized == EventType.Repaint)
+				return;
+
+			m_SettingsBlockKeywordsInitialized = Event.current.type;
+
+			// Allows SettingsGUILayout.SettingsField to populate keywords
+			SettingsGUILayout.s_Keywords = keywords;
+
+			// Set a dummy value so that GUI blocks with conditional foldouts will behave as though searching.
+			s_SearchContext[0] = "Search";
+
+			foreach (var category in m_SettingBlocks)
+			{
+				foreach (var block in category.Value)
+					block.Invoke(null, s_SearchContext);
+			}
+
+			SettingsGUILayout.s_Keywords = null;
+			s_SearchContext[0] = "";
+		}
 
 		void DoContextMenu()
 		{
 			var menu = new GenericMenu();
 
-			if (EditorPrefs.GetBool("DeveloperMode", false))
-			{
-				menu.AddItem(new GUIContent("Refresh"), false, SearchForUserSettingAttributes);
-
-				menu.AddSeparator("");
-
-				menu.AddItem(new GUIContent("List Settings By Key"), listByKey, () =>
-				{
-					listByKey.SetValue(!listByKey, true);
-					SearchForUserSettingAttributes();
-				});
-
-				menu.AddSeparator("");
-
-				menu.AddItem(new GUIContent("Show User Settings"), showUserSettings, () =>
-				{
-					showUserSettings.SetValue(!showUserSettings, true);
-					SearchForUserSettingAttributes();
-				});
-
-				menu.AddItem(new GUIContent("Show Project Settings"), showProjectSettings, () =>
-				{
-					showProjectSettings.SetValue(!showProjectSettings, true);
-					SearchForUserSettingAttributes();
-				});
-
-				menu.AddSeparator("");
-
-				menu.AddItem(new GUIContent("Show Unlisted Settings"), showHiddenSettings, () =>
-				{
-					showHiddenSettings.SetValue(!showHiddenSettings, true);
-					SearchForUserSettingAttributes();
-				});
-
-				menu.AddItem(new GUIContent("Show Unregistered Settings"), showUnregisteredSettings, () =>
-				{
-					showUnregisteredSettings.SetValue(!showUnregisteredSettings, true);
-					SearchForUserSettingAttributes();
-				});
-
-				menu.AddSeparator("");
-
-				menu.AddItem(new GUIContent("Open Project Settings File"), false, () =>
-				{
-					var path = Path.GetFullPath(settingsInstance.settingsPath);
-					System.Diagnostics.Process.Start(path);
-				});
-
-				menu.AddItem(new GUIContent("Print All Settings"), false, () =>
-				{
-					Debug.Log(UserSettings.GetSettingsString(m_Assemblies));
-				});
-
-				menu.AddSeparator("");
-			}
-
 			menu.AddItem(new GUIContent("Reset All"), false, () =>
 			{
-				if (!UnityEditor.EditorUtility.DisplayDialog("Reset All Settings", "Reset all ProBuilder settings? This is not undo-able.", "Reset", "Cancel"))
+				if (!UnityEditor.EditorUtility.DisplayDialog("Reset All Settings", "Reset all settings? This is not undo-able.", "Reset", "Cancel"))
 					return;
 
 				// Do not reset SettingVisibility.Unregistered
 				foreach (var pref in UserSettings.FindUserSettings(m_Assemblies, SettingVisibility.Visible | SettingVisibility.Hidden | SettingVisibility.Unlisted))
 					pref.Reset();
 
-				settingsInstance.Save();
+				m_SettingsInstance.Save();
 			});
+
+			if (EditorPrefs.GetBool("DeveloperMode", false))
+			{
+				menu.AddSeparator("");
+
+				menu.AddItem(new GUIContent("Developer/List Settings By Key"), listByKey, () =>
+				{
+					listByKey.SetValue(!listByKey, true);
+					SearchForUserSettingAttributes();
+				});
+
+				menu.AddSeparator("Developer/");
+
+				menu.AddItem(new GUIContent("Developer/Show User Settings"), showUserSettings, () =>
+				{
+					showUserSettings.SetValue(!showUserSettings, true);
+					SearchForUserSettingAttributes();
+				});
+
+				menu.AddItem(new GUIContent("Developer/Show Project Settings"), showProjectSettings, () =>
+				{
+					showProjectSettings.SetValue(!showProjectSettings, true);
+					SearchForUserSettingAttributes();
+				});
+
+				menu.AddSeparator("Developer/");
+
+				menu.AddItem(new GUIContent("Developer/Show Unlisted Settings"), showHiddenSettings, () =>
+				{
+					showHiddenSettings.SetValue(!showHiddenSettings, true);
+					SearchForUserSettingAttributes();
+				});
+
+				menu.AddItem(new GUIContent("Developer/Show Unregistered Settings"), showUnregisteredSettings, () =>
+				{
+					showUnregisteredSettings.SetValue(!showUnregisteredSettings, true);
+					SearchForUserSettingAttributes();
+				});
+
+				menu.AddSeparator("Developer/");
+
+				menu.AddItem(new GUIContent("Developer/Open Project Settings File"), false, () =>
+				{
+					var project = m_SettingsInstance.GetRepository(SettingsScopes.Project);
+
+					if (project != null)
+					{
+						var path = Path.GetFullPath(project.path);
+						System.Diagnostics.Process.Start(path);
+					}
+				});
+
+				menu.AddItem(new GUIContent("Developer/Print All Settings"), false, () =>
+				{
+					Debug.Log(UserSettings.GetSettingsString(m_Assemblies));
+				});
+			}
 
 			menu.ShowAsContext();
 		}
 
 #if SETTINGS_PROVIDER_ENABLED
+		/// <summary>
+		/// Invoked by the Settings editor.
+		/// </summary>
+		/// <param name="searchContext">
+		/// A string containing the contents of the search bar.
+		/// </param>
 		public override void OnGUI(string searchContext)
 #else
+		/// <summary>
+		/// Invoked by the Settings editor.
+		/// </summary>
+		/// <param name="searchContext">
+		/// A string containing the contents of the search bar.
+		/// </param>
 		public void OnGUI(string searchContext)
 #endif
 		{
-			Styles.Init();
-
 #if !SETTINGS_PROVIDER_ENABLED
 			var evt = Event.current;
 			if(evt.type == EventType.ContextClick)
 				DoContextMenu();
 #endif
+			InitSettingsBlockKeywords();
 
-			EditorGUIUtility.labelWidth = k_LabelWidth;
+			EditorGUIUtility.labelWidth = labelWidth;
 
 			EditorGUI.BeginChangeCheck();
-			GUILayout.BeginVertical(Styles.settingsArea);
+
+			var maxWidth = defaultLayoutMaxWidth;
+
+			if(maxWidth != 0)
+				GUILayout.BeginVertical(SettingsGUIStyles.settingsArea, GUILayout.MaxWidth(maxWidth));
+			else
+				GUILayout.BeginVertical(SettingsGUIStyles.settingsArea);
 
 			var hasSearchContext = !string.IsNullOrEmpty(searchContext);
 			s_SearchContext[0] = searchContext;
@@ -383,13 +437,21 @@ namespace UnityEditor.SettingsManagement
 				var searchKeywords = searchContext.Split(' ');
 
 				foreach (var settingField in m_Settings)
-				foreach (var setting in settingField.Value)
-					if (searchKeywords.Any(x => !string.IsNullOrEmpty(x) && setting.content.text.IndexOf(x, StringComparison.InvariantCultureIgnoreCase) > -1))
-						DoPreferenceField(setting.content, setting.pref);
+				{
+					foreach (var setting in settingField.Value)
+					{
+						if (searchKeywords.Any(x => !string.IsNullOrEmpty(x) && setting.content.text.IndexOf(x, StringComparison.InvariantCultureIgnoreCase) > -1))
+							DoPreferenceField(setting.content, setting.pref);
+					}
+				}
 
 				foreach (var settingsBlock in m_SettingBlocks)
-				foreach (var block in settingsBlock.Value)
-					block.Invoke(null, s_SearchContext);
+				{
+					foreach (var block in settingsBlock.Value)
+					{
+						block.Invoke(null, s_SearchContext);
+					}
+				}
 			}
 			else
 			{
@@ -419,7 +481,7 @@ namespace UnityEditor.SettingsManagement
 
 			if (EditorGUI.EndChangeCheck())
 			{
-				settingsInstance.Save();
+				m_SettingsInstance.Save();
 			}
 		}
 
@@ -427,9 +489,9 @@ namespace UnityEditor.SettingsManagement
 		{
 			if (EditorPrefs.GetBool("DeveloperMode", false))
 			{
-				if (pref.scope == SettingScope.Project && !showProjectSettings)
+				if (pref.scope == SettingsScopes.Project && !showProjectSettings)
 					return;
-				if (pref.scope == SettingScope.User && !showUserSettings)
+				if (pref.scope == SettingsScopes.User && !showUserSettings)
 					return;
 			}
 
@@ -457,6 +519,21 @@ namespace UnityEditor.SettingsManagement
 			{
 				var cast = (UserSetting<Color>)pref;
 				cast.value = EditorGUILayout.ColorField(title, cast.value);
+			}
+			else if (pref is UserSetting<Vector2>)
+			{
+				var cast = (UserSetting<Vector2>)pref;
+				cast.value = EditorGUILayout.Vector2Field(title, cast.value);
+			}
+			else if (pref is UserSetting<Vector3>)
+			{
+				var cast = (UserSetting<Vector3>)pref;
+				cast.value = EditorGUILayout.Vector3Field(title, cast.value);
+			}
+			else if (pref is UserSetting<Vector4>)
+			{
+				var cast = (UserSetting<Vector4>)pref;
+				cast.value = EditorGUILayout.Vector4Field(title, cast.value);
 			}
 			else if (typeof(Enum).IsAssignableFrom(pref.type))
 			{

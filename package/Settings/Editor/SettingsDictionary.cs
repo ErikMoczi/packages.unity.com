@@ -5,7 +5,7 @@ using UnityEngine;
 namespace UnityEditor.SettingsManagement
 {
 	[Serializable]
-	public sealed class SettingsDictionary : ISerializationCallbackReceiver
+	sealed class SettingsDictionary : ISerializationCallbackReceiver
 	{
 		[Serializable]
 		struct SettingsKeyValuePair

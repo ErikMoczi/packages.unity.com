@@ -1,17 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using UnityEngine;
 
 namespace UnityEditor.SettingsManagement
 {
     [Flags]
-    public enum SettingVisibility
+    enum SettingVisibility
     {
         None = 0 << 0,
         /// <value>
-        /// Matches any static field implementing IPref and tagged with [UserSettingAttribute(visibleInSettingsProvider = true)].
+        /// Matches any static field implementing IUserSetting and tagged with [UserSettingAttribute(visibleInSettingsProvider = true)].
         /// </value>
         /// <summary>
         /// These fields are automatically scraped by the SettingsProvider and displayed.
@@ -19,7 +16,7 @@ namespace UnityEditor.SettingsManagement
         Visible = 1 << 0,
 
         /// <value>
-        /// Matches any static field implementing IPref and tagged with [UserSettingAttribute(visibleInSettingsProvider = false)].
+        /// Matches any static field implementing IUserSetting and tagged with [UserSettingAttribute(visibleInSettingsProvider = false)].
         /// </value>
         /// <summary>
         /// These fields will be reset by the "Reset All" menu in SettingsProvider, but are not shown in the interface.
@@ -38,25 +35,74 @@ namespace UnityEditor.SettingsManagement
         Unlisted = 1 << 2,
 
         /// <value>
-        /// A static field implementing IPref that is not marked with any setting attribute.
+        /// A static field implementing IUserSetting that is not marked with any setting attribute.
         /// </value>
         /// <summary>
-        /// Unregistered IPref fields are not affected by the SettingsProvider.
+        /// Unregistered IUserSetting fields are not affected by the SettingsProvider.
         /// </summary>
         Unregistered = 1 << 3,
 
         All = Visible | Hidden | Unlisted | Unregistered
     }
 
+    /// <summary>
+    /// Types implementing IUserSetting are eligible for use with <see cref="UserSettingAttribute"/>, which enables
+    /// fields to automatically populate the <see cref="UserSettingsProvider"/> interface.
+    /// </summary>
     public interface IUserSetting
     {
+        /// <value>
+        /// The key for this value.
+        /// </value>
         string key { get; }
+
+        /// <value>
+        /// The type of the stored value.
+        /// </value>
         Type type { get; }
-        SettingScope scope { get; }
+
+        /// <value>
+        /// At which scope this setting is saved.
+        /// </value>
+        SettingsScopes scope { get; }
+
+        /// <value>
+        /// The <see cref="Settings"/> instance that this setting should be saved and loaded from.
+        /// </value>
         Settings settings { get; }
+
+        /// <summary>
+        /// Get the stored value.
+        /// If you are implementing IUserSetting it is recommended that you cache this value.
+        /// </summary>
+        /// <returns>
+        /// The stored value.
+        /// </returns>
         object GetValue();
+
+        /// <summary>
+        /// Get the default value for this setting.
+        /// </summary>
+        /// <returns>
+        /// The default value for this setting.
+        /// </returns>
         object GetDefaultValue();
+
+        /// <summary>
+        /// Set the value for this setting.
+        /// </summary>
+        /// <param name="value">The new value.</param>
+        /// <param name="saveProjectSettingsImmediately">
+        /// True to immediately serialize the ISettingsRepository that is backing this value, or false to postpone.
+        /// If not serializing immediately, be sure to call <see cref="Settings.Save"/>.
+        /// </param>
         void SetValue(object value, bool saveProjectSettingsImmediately = false);
+
+        /// <summary>
+        /// When the inspected type is a reference value, it is possible to change properties without affecting the
+        /// backing setting. ApplyModifiedProperties provides a method to force serialize these changes.
+        /// </summary>
+        void ApplyModifiedProperties();
 
         /// <summary>
         /// Set the current value back to the default.
@@ -72,18 +118,30 @@ namespace UnityEditor.SettingsManagement
         void Delete(bool saveProjectSettingsImmediately = false);
     }
 
+    /// <summary>
+    /// A generic implementation of IUserSetting.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <inheritdoc />
     public class UserSetting<T> : IUserSetting
     {
         bool m_Initialized;
         string m_Key;
         T m_Value;
         T m_DefaultValue;
-        SettingScope m_Scope;
+        SettingsScopes m_Scope;
         Settings m_Settings;
 
         UserSetting() { }
 
-        public UserSetting(Settings settings, string key, T value, SettingScope scope = SettingScope.Project)
+        /// <summary>
+        /// Constructor for UserSetting{T} type.
+        /// </summary>
+        /// <param name="settings">The <see cref="Settings"/> instance that this setting should be saved and loaded from.</param>
+        /// <param name="key">The key for this value.</param>
+        /// <param name="value">The default value for this key.</param>
+        /// <param name="scope">The scope at which to save this setting.</param>
+        public UserSetting(Settings settings, string key, T value, SettingsScopes scope = SettingsScopes.Project)
         {
             m_Key = key;
             m_Value = value;
@@ -92,36 +150,79 @@ namespace UnityEditor.SettingsManagement
             m_Settings = settings;
         }
 
+        /// <value>
+        /// The key for this value.
+        /// </value>
+        /// <inheritdoc />
         public string key
         {
             get { return m_Key; }
         }
 
+        /// <value>
+        /// The type that this setting represents ({T}).
+        /// </value>
+        /// <inheritdoc />
         public Type type
         {
             get { return typeof(T); }
         }
 
+        /// <summary>
+        /// Get a copy of the default value.
+        /// </summary>
+        /// <returns>
+        /// The default value.
+        /// </returns>
+        /// <inheritdoc />
         public object GetDefaultValue()
         {
             return defaultValue;
         }
 
+        /// <summary>
+        /// Get the currently stored value.
+        /// </summary>
+        /// <returns>
+        /// The value that is currently set.
+        /// </returns>
+        /// <inheritdoc />
         public object GetValue()
         {
             return value;
         }
 
-        public SettingScope scope
+        /// <summary>
+        /// The scope affects which <see cref="ISettingsRepository"/> the <see cref="settings"/> instance will save
+        /// it's data to.
+        /// </summary>
+        /// <value>
+        /// The scope at which to save this key and value.
+        /// </value>
+        /// <inheritdoc />
+        public SettingsScopes scope
         {
             get { return m_Scope; }
         }
 
+        /// <value>
+        /// The <see cref="Settings"/> instance that this setting will be read from and saved to.
+        /// </value>
+        /// <inheritdoc />
         public Settings settings
         {
             get { return m_Settings; }
         }
 
+        /// <summary>
+        /// Set the value for this setting.
+        /// </summary>
+        /// <param name="value">The new value.</param>
+        /// <param name="saveProjectSettingsImmediately">
+        /// True to immediately serialize the ISettingsRepository that is backing this value, or false to postpone.
+        /// If not serializing immediately, be sure to call <see cref="Settings.Save"/>.
+        /// </param>
+        /// <inheritdoc />
         public void SetValue(object value, bool saveProjectSettingsImmediately = false)
         {
             // we do want to allow null values
@@ -130,32 +231,55 @@ namespace UnityEditor.SettingsManagement
             SetValue((T) value, saveProjectSettingsImmediately);
         }
 
+        /// <summary>
+        /// Set the value for this setting.
+        /// </summary>
+        /// <param name="value">The new value.</param>
+        /// <param name="saveProjectSettingsImmediately">
+        /// True to immediately serialize the ISettingsRepository that is backing this value, or false to postpone.
+        /// If not serializing immediately, be sure to call <see cref="Settings.Save"/>.
+        /// </param>
         public void SetValue(T value, bool saveProjectSettingsImmediately = false)
         {
-            // If not initialized, that means this key might not be serialized yet. Initialize and continue so that
-            // saveProjectSettingsImmediately is respected.
-            if(!m_Initialized)
-                Init();
-            else if (Equals(m_Value, value))
-                return;
-
+            Init();
             m_Value = value;
-
             settings.Set<T>(key, m_Value, m_Scope);
 
-            if (m_Scope == SettingScope.Project && saveProjectSettingsImmediately)
+            if (m_Scope == SettingsScopes.Project && saveProjectSettingsImmediately)
                 settings.Save();
         }
 
+        /// <summary>
+        /// Delete the saved setting. Does not clear the current value.
+        /// </summary>
+        /// <see cref="M:UnityEditor.SettingsManagement.UserSetting`1.Reset(System.Boolean)" />
+        /// <param name="saveProjectSettingsImmediately">True to immediately re-serialize project settings.</param>
+        /// <inheritdoc cref="IUserSetting.Delete"/>
         public void Delete(bool saveProjectSettingsImmediately = false)
         {
-            settings.Delete<T>(key, scope);
+            settings.DeleteKey<T>(key, scope);
             // Don't Init() because that will set the key again. We just want to reset the m_Value with default and
             // pretend that this field hasn't been initialised yet.
             m_Value = ValueWrapper<T>.DeepCopy(m_DefaultValue);
             m_Initialized = false;
         }
 
+        /// <summary>
+        /// When the inspected type is a reference value, it is possible to change properties without affecting the
+        /// backing setting. ApplyModifiedProperties provides a method to force serialize these changes.
+        /// </summary>
+        /// <inheritdoc cref="IUserSetting.ApplyModifiedProperties"/>
+        public void ApplyModifiedProperties()
+        {
+            settings.Set<T>(key, m_Value, m_Scope);
+            settings.Save();
+        }
+
+        /// <summary>
+        /// Set the current value back to the default.
+        /// </summary>
+        /// <param name="saveProjectSettingsImmediately">True to immediately re-serialize project settings.</param>
+        /// <inheritdoc cref="IUserSetting.Reset"/>
         public void Reset(bool saveProjectSettingsImmediately = false)
         {
             SetValue(defaultValue, saveProjectSettingsImmediately);
@@ -165,8 +289,8 @@ namespace UnityEditor.SettingsManagement
         {
             if (!m_Initialized)
             {
-                if (m_Scope == SettingScope.Project && settings == null)
-                    throw new Exception("UserSetting \"" + m_Key + "\" is attempting to access SettingScope.Project setting with no Settings instance!");
+                if (m_Scope == SettingsScopes.Project && settings == null)
+                    throw new Exception("UserSetting \"" + m_Key + "\" is attempting to access SettingsScopes.Project setting with no Settings instance!");
 
                 m_Initialized = true;
 
@@ -180,6 +304,9 @@ namespace UnityEditor.SettingsManagement
             }
         }
 
+        /// <value>
+        /// The default value for this setting.
+        /// </value>
         public T defaultValue
         {
             get
@@ -189,6 +316,9 @@ namespace UnityEditor.SettingsManagement
             }
         }
 
+        /// <value>
+        /// The currently stored value.
+        /// </value>
         public T value
         {
             get
@@ -200,142 +330,25 @@ namespace UnityEditor.SettingsManagement
             set { SetValue(value); }
         }
 
+        /// <summary>
+        /// Implicit cast to backing type.
+        /// </summary>
+        /// <param name="pref">The UserSetting{T} to cast to {T}.</param>
+        /// <returns>
+        /// The currently stored <see cref="value"/>.
+        /// </returns>
         public static implicit operator T(UserSetting<T> pref)
         {
             return pref.value;
         }
 
+        /// <summary>
+        /// Get a summary of this setting.
+        /// </summary>
+        /// <returns>A string summary of this setting.</returns>
         public override string ToString()
         {
             return string.Format("{0} setting. Key: {1}  Value: {2}", scope, key, value);
-        }
-    }
-
-    static class UserSettings
-    {
-        internal static string GetSettingsString(IEnumerable<Assembly> assemblies, params SettingScope[] scopes)
-        {
-            var settings = FindUserSettings(assemblies, SettingVisibility.All);
-            if(scopes != null && scopes.Length > 0)
-                settings = settings.Where(x => scopes.Contains(x.scope));
-            var sb = new System.Text.StringBuilder();
-            Type t = null;
-
-            foreach (var pref in settings.OrderBy(x => x.type.ToString()))
-            {
-                if (pref.type != t)
-                {
-                    if (t != null)
-                        sb.AppendLine();
-                    t = pref.type;
-                    sb.AppendLine(pref.type.ToString());
-                }
-
-                var val = pref.GetValue();
-                sb.AppendLine(string.Format("{0,-4}{1,-24}{2,-64}{3}", "", pref.scope, pref.key, val != null ? val.ToString() : "null"));
-            }
-
-            return sb.ToString();
-        }
-
-        /// <summary>
-        /// Collect all registered UserSetting and HiddenSetting attributes.
-        /// </summary>
-        /// <returns></returns>
-        public static IEnumerable<IUserSetting> FindUserSettings(IEnumerable<Assembly> assemblies, SettingVisibility visibility, BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
-        {
-            var loadedTypes = assemblies.SelectMany(x => x.GetTypes());
-            var loadedFields = loadedTypes.SelectMany(x => x.GetFields(flags));
-            var settings = new List<IUserSetting>();
-
-            if ((visibility & (SettingVisibility.Visible | SettingVisibility.Unlisted)) > 0)
-            {
-                var attributes = loadedFields.Where(prop => Attribute.IsDefined(prop, typeof(UserSettingAttribute)));
-
-                foreach (var field in attributes)
-                {
-                    var userSetting = (UserSettingAttribute) Attribute.GetCustomAttribute(field, typeof(UserSettingAttribute));
-
-                    if (!field.IsStatic || !typeof(IUserSetting).IsAssignableFrom(field.FieldType))
-                    {
-                        Debug.LogError("[UserSetting] is only valid on static fields of a type implementing `interface IPref`. \"" + field.Name + "\" (" + field.FieldType + ")\n" + field.DeclaringType);
-                        continue;
-                    }
-
-                    bool visible = userSetting.visibleInSettingsProvider;
-
-                    if (visible && (visibility & SettingVisibility.Visible) == SettingVisibility.Visible)
-                        settings.Add((IUserSetting)field.GetValue(null));
-                    else if (!visible && (visibility & SettingVisibility.Hidden) == SettingVisibility.Hidden)
-                        settings.Add((IUserSetting)field.GetValue(null));
-                }
-            }
-
-            if ((visibility & SettingVisibility.Unlisted) == SettingVisibility.Unlisted)
-            {
-                var settingsKeys = loadedFields.Where(y => Attribute.IsDefined(y, typeof(SettingsKeyAttribute)));
-
-                foreach (var field in settingsKeys)
-                {
-                    if (field.IsStatic)
-                    {
-                        settings.Add((IUserSetting)field.GetValue(null));
-                    }
-                    else
-                    {
-                        var settingAttribute = (SettingsKeyAttribute) Attribute.GetCustomAttribute(field, typeof(SettingsKeyAttribute));
-                        var pref = CreateGenericPref(settingAttribute.key, settingAttribute.scope, field);
-                        if (pref != null)
-                            settings.Add(pref);
-                        else
-                            Debug.LogWarning("Failed adding [SettingsKey] " + field.FieldType + "\"" + settingAttribute.key + "\" in " +  field.DeclaringType);
-                    }
-                }
-            }
-
-            if ((visibility & SettingVisibility.Unregistered) == SettingVisibility.Unregistered)
-            {
-                var unregisterd = loadedFields.Where(y => typeof(IUserSetting).IsAssignableFrom(y.FieldType)
-                    && !Attribute.IsDefined(y, typeof(SettingsKeyAttribute))
-                    && !Attribute.IsDefined(y, typeof(UserSettingAttribute)) );
-
-                foreach (var field in unregisterd)
-                {
-                    if (field.IsStatic)
-                    {
-                        settings.Add((IUserSetting)field.GetValue(null));
-                    }
-                    else
-                    {
-#if PB_DEBUG
-                        Log.Warning("Found unregistered instance field: "
-                            + field.FieldType
-                            + " "
-                            + field.Name
-                            + " in " + field.DeclaringType);
-#endif
-                    }
-                }
-            }
-
-            return settings;
-        }
-
-        static IUserSetting CreateGenericPref(string key, SettingScope scope, FieldInfo field)
-        {
-            try
-            {
-                var type = field.FieldType;
-                if (typeof(IUserSetting).IsAssignableFrom(type) && type.IsGenericType)
-                    type = type.GetGenericArguments().FirstOrDefault();
-                var genericPrefClass = typeof(UserSetting<>).MakeGenericType(type);
-                var defaultValue = type.IsValueType ? Activator.CreateInstance(type) : null;
-                return (IUserSetting) Activator.CreateInstance(genericPrefClass, new object[] { key, defaultValue, scope });
-            }
-            catch
-            {
-                return null;
-            }
         }
     }
 }

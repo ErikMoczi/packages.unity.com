@@ -1,104 +1,143 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 namespace UnityEditor.SettingsManagement
 {
+	static class SettingsGUIStyles
+	{
+		const string k_SettingsGearIcon = "Packages/com.unity.probuilder/Settings/Content/Options.png";
+
+		static bool s_Initialized;
+		public static GUIStyle s_SettingsGizmo;
+		public static GUIStyle s_SettingsArea;
+		public static GUIStyle s_IndentedSettingBlock;
+
+		static void Init()
+		{
+			if (s_Initialized)
+				return;
+
+			s_Initialized = true;
+
+			s_SettingsGizmo = new GUIStyle()
+			{
+				normal = new GUIStyleState()
+				{
+					background = AssetDatabase.LoadAssetAtPath<Texture2D>(k_SettingsGearIcon)
+				},
+				fixedWidth = 14,
+				fixedHeight = 14,
+				padding = new RectOffset(0,0,0,0),
+				margin = new RectOffset(4,4,4,4),
+				imagePosition = ImagePosition.ImageOnly
+			};
+
+			s_SettingsArea = new GUIStyle()
+			{
+				margin = new RectOffset(6, 6, 0, 0)
+			};
+
+			s_IndentedSettingBlock = new GUIStyle()
+			{
+				padding = new RectOffset(16, 0, 0, 0)
+			};
+
+
+		}
+
+		public static GUIStyle settingsGizmo
+		{
+			get
+			{
+				Init();
+				return s_SettingsGizmo;
+			}
+		}
+
+		public static GUIStyle settingsArea
+		{
+			get
+			{
+				Init();
+				return s_SettingsArea;
+			}
+		}
+
+		public static GUIStyle indentedSettingBlock
+		{
+			get
+			{
+				Init();
+				return s_IndentedSettingBlock;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Extension methods for GUILayout that also implement settings-specific functionality.
+	/// </summary>
 	public static class SettingsGUILayout
 	{
-		public static float SearchableSlider(GUIContent content, float value, float min, float max, string searchContext)
+		/// <inheritdoc />
+		/// <summary>
+		/// Create an indented GUI section.
+		/// </summary>
+		public class IndentedGroup : IDisposable
 		{
-			if (!MatchSearchGroups(searchContext, content.text))
-				return value;
-			return UnityEditor.EditorGUILayout.Slider(content, value, min, max);
+			/// <summary>
+			/// Create an indented GUI section.
+			/// </summary>
+			public IndentedGroup()
+			{
+				UnityEditor.EditorGUIUtility.labelWidth -= SettingsGUIStyles.indentedSettingBlock.padding.left - 4;
+				GUILayout.BeginVertical(SettingsGUIStyles.indentedSettingBlock);
+			}
+
+			/// <summary>
+			/// Create an indented GUI section with a header.
+			/// </summary>
+			public IndentedGroup(string label)
+			{
+				GUILayout.Label(label);
+
+				UnityEditor.EditorGUIUtility.labelWidth -= SettingsGUIStyles.indentedSettingBlock.padding.left - 4;
+				GUILayout.BeginVertical(SettingsGUIStyles.indentedSettingBlock);
+			}
+
+			/// <inheritdoc />
+			/// <summary>
+			/// Revert the GUI indent back to it's original value.
+			/// </summary>
+			public void Dispose()
+			{
+				GUILayout.EndVertical();
+				UnityEditor.EditorGUIUtility.labelWidth += SettingsGUIStyles.indentedSettingBlock.padding.left - 4;
+			}
 		}
 
-		public static float SearchableSlider(string content, float value, float min, float max, string searchContext)
-		{
-			if (!MatchSearchGroups(searchContext, content))
-				return value;
-			return UnityEditor.EditorGUILayout.Slider(content, value, min, max);
-		}
+		internal static HashSet<string> s_Keywords = null;
 
-		internal static float SearchableFloatField(GUIContent title, float value, string searchContext)
+		internal static bool MatchSearchGroups(string searchContext, string label)
 		{
-			if(!MatchSearchGroups(searchContext, title.text))
-				return value;
-			return UnityEditor.EditorGUILayout.FloatField(title, value);
-		}
+			if (s_Keywords != null)
+			{
+				foreach (var keyword in label.Split(' '))
+					s_Keywords.Add(keyword);
+			}
 
-		internal static float SearchableFloatField(string title, float value, string searchContext)
-		{
-			if(!MatchSearchGroups(searchContext, title))
-				return value;
-			return UnityEditor.EditorGUILayout.FloatField(title, value);
-		}
-
-		internal static int SearchableIntField(GUIContent title, int value, string searchContext)
-		{
-			if(!MatchSearchGroups(searchContext, title.text))
-				return value;
-			return UnityEditor.EditorGUILayout.IntField(title, value);
-		}
-
-		internal static int SearchableIntField(string title, int value, string searchContext)
-		{
-			if(!MatchSearchGroups(searchContext, title))
-				return value;
-			return UnityEditor.EditorGUILayout.IntField(title, value);
-		}
-
-		internal static bool SearchableToggle(GUIContent title, bool value, string searchContext)
-		{
-			if(!MatchSearchGroups(searchContext, title.text))
-				return value;
-			return UnityEditor.EditorGUILayout.Toggle(title, value);
-		}
-
-		internal static bool SearchableToggle(string title, bool value, string searchContext)
-		{
-			if(!MatchSearchGroups(searchContext, title))
-				return value;
-			return UnityEditor.EditorGUILayout.Toggle(title, value);
-		}
-
-		internal static string SearchableTextField(GUIContent title, string value, string searchContext)
-		{
-			if(!MatchSearchGroups(searchContext, title.text))
-				return value;
-			return UnityEditor.EditorGUILayout.TextField(title, value);
-		}
-
-		internal static string SearchableTextField(string title, string value, string searchContext)
-		{
-			if(!MatchSearchGroups(searchContext, title))
-				return value;
-			return UnityEditor.EditorGUILayout.TextField(title, value);
-		}
-
-		internal static Color SearchableColorField(GUIContent title, Color value, string searchContext)
-		{
-			if(!MatchSearchGroups(searchContext, title.text))
-				return value;
-			return UnityEditor.EditorGUILayout.ColorField(title, value);
-		}
-
-		internal static Color SearchableColorField(string title, Color value, string searchContext)
-		{
-			if (!MatchSearchGroups(searchContext, title))
-				return value;
-			return UnityEditor.EditorGUILayout.ColorField(title, value);
-		}
-
-		internal static bool MatchSearchGroups(string searchContext, string content)
-		{
 			if (searchContext == null)
 				return true;
+
 			var ctx = searchContext.Trim();
+
 			if (string.IsNullOrEmpty(ctx))
 				return true;
+
 			var split = searchContext.Split(' ');
-			return split.Any(x => !string.IsNullOrEmpty(x) && content.IndexOf(x, StringComparison.InvariantCultureIgnoreCase) > -1);
+
+			return split.Any(x => !string.IsNullOrEmpty(x) && label.IndexOf(x, StringComparison.InvariantCultureIgnoreCase) > -1);
 		}
 
 		internal static bool DebugModeFilter(IUserSetting pref)
@@ -106,129 +145,429 @@ namespace UnityEditor.SettingsManagement
 			if (!EditorPrefs.GetBool("DeveloperMode", false))
 				return true;
 
-			if (pref.scope == SettingScope.Project && UserSettingsProvider.showProjectSettings)
+			if (pref.scope == SettingsScopes.Project && UserSettingsProvider.showProjectSettings)
 				return true;
 
-			if (pref.scope == SettingScope.User && UserSettingsProvider.showUserSettings)
+			if (pref.scope == SettingsScopes.User && UserSettingsProvider.showUserSettings)
 				return true;
 
 			return false;
 		}
 
-		public static float SettingsSlider(GUIContent content, UserSetting<float> value, float min, float max, string searchContext)
+		/// <summary>
+		/// A slider that implements search filtering.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="min">The value at the left end of the slider.</param>
+		/// <param name="max">The value at the right end of the slider.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static float SearchableSlider(GUIContent label, float value, float min, float max, string searchContext)
 		{
-			if (!DebugModeFilter(value) || !MatchSearchGroups(searchContext, content.text))
+			if (!MatchSearchGroups(searchContext, label.text))
 				return value;
-			var res = UnityEditor.EditorGUILayout.Slider(content, value, min, max);
+			return EditorGUILayout.Slider(label, value, min, max);
+		}
+
+		/// <summary>
+		/// A slider that implements search filtering.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="min">The value at the left end of the slider.</param>
+		/// <param name="max">The value at the right end of the slider.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static float SearchableSlider(string label, float value, float min, float max, string searchContext)
+		{
+			if (!MatchSearchGroups(searchContext, label))
+				return value;
+			return EditorGUILayout.Slider(label, value, min, max);
+		}
+
+		/// <summary>
+		/// A float field that implements search filtering.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static float SearchableFloatField(GUIContent label, float value, string searchContext)
+		{
+			if(!MatchSearchGroups(searchContext, label.text))
+				return value;
+			return EditorGUILayout.FloatField(label, value);
+		}
+
+		/// <summary>
+		/// A float field that implements search filtering.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static float SearchableFloatField(string label, float value, string searchContext)
+		{
+			if(!MatchSearchGroups(searchContext, label))
+				return value;
+			return EditorGUILayout.FloatField(label, value);
+		}
+
+		/// <summary>
+		/// An int field that implements search filtering.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static int SearchableIntField(GUIContent label, int value, string searchContext)
+		{
+			if(!MatchSearchGroups(searchContext, label.text))
+				return value;
+			return EditorGUILayout.IntField(label, value);
+		}
+
+		/// <summary>
+		/// An int field that implements search filtering.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static int SearchableIntField(string label, int value, string searchContext)
+		{
+			if(!MatchSearchGroups(searchContext, label))
+				return value;
+			return EditorGUILayout.IntField(label, value);
+		}
+
+		/// <summary>
+		/// An toggle field that implements search filtering.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static bool SearchableToggle(GUIContent label, bool value, string searchContext)
+		{
+			if(!MatchSearchGroups(searchContext, label.text))
+				return value;
+			return EditorGUILayout.Toggle(label, value);
+		}
+
+		/// <summary>
+		/// An toggle field that implements search filtering.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static bool SearchableToggle(string label, bool value, string searchContext)
+		{
+			if(!MatchSearchGroups(searchContext, label))
+				return value;
+			return EditorGUILayout.Toggle(label, value);
+		}
+
+		/// <summary>
+		/// An text field that implements search filtering.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static string SearchableTextField(GUIContent label, string value, string searchContext)
+		{
+			if(!MatchSearchGroups(searchContext, label.text))
+				return value;
+			return EditorGUILayout.TextField(label, value);
+		}
+
+		/// <summary>
+		/// An text field that implements search filtering.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static string SearchableTextField(string label, string value, string searchContext)
+		{
+			if(!MatchSearchGroups(searchContext, label))
+				return value;
+			return EditorGUILayout.TextField(label, value);
+		}
+
+		/// <summary>
+		/// An color field that implements search filtering.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static Color SearchableColorField(GUIContent label, Color value, string searchContext)
+		{
+			if(!MatchSearchGroups(searchContext, label.text))
+				return value;
+			return EditorGUILayout.ColorField(label, value);
+		}
+
+		/// <summary>
+		/// An color field that implements search filtering.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static Color SearchableColorField(string label, Color value, string searchContext)
+		{
+			if (!MatchSearchGroups(searchContext, label))
+				return value;
+			return EditorGUILayout.ColorField(label, value);
+		}
+
+		/// <summary>
+		/// A slider that implements search filtering and context menu reset.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="min">The value at the left end of the slider.</param>
+		/// <param name="max">The value at the right end of the slider.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static float SettingsSlider(GUIContent label, UserSetting<float> value, float min, float max, string searchContext)
+		{
+			if (!DebugModeFilter(value) || !MatchSearchGroups(searchContext, label.text))
+				return value;
+			var res = EditorGUILayout.Slider(label, value, min, max);
 			DoResetContextMenuForLastRect(value);
 			return res;
 		}
 
-		public static float SettingsSlider(string content, UserSetting<float> value, float min, float max, string searchContext)
+		/// <summary>
+		/// A slider that implements search filtering and context menu reset.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="min">The value at the left end of the slider.</param>
+		/// <param name="max">The value at the right end of the slider.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static float SettingsSlider(string label, UserSetting<float> value, float min, float max, string searchContext)
 		{
-			if (!DebugModeFilter(value) || !MatchSearchGroups(searchContext, content))
+			if (!DebugModeFilter(value) || !MatchSearchGroups(searchContext, label))
 				return value;
-			var res = UnityEditor.EditorGUILayout.Slider(content, value, min, max);
+			var res = EditorGUILayout.Slider(label, value, min, max);
 			DoResetContextMenuForLastRect(value);
 			return res;
 		}
 
-		public static float SettingsFloatField(GUIContent title, UserSetting<float> value, string searchContext)
+		/// <summary>
+		/// A slider that implements search filtering and context menu reset.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="min">The value at the left end of the slider.</param>
+		/// <param name="max">The value at the right end of the slider.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static int SettingsSlider(GUIContent label, UserSetting<int> value, int min, int max, string searchContext)
 		{
-			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, title.text))
+			if (!DebugModeFilter(value) || !MatchSearchGroups(searchContext, label.text))
 				return value;
-			var res = UnityEditor.EditorGUILayout.FloatField(title, value);
+			var res = EditorGUILayout.IntSlider(label, value, min, max);
 			DoResetContextMenuForLastRect(value);
 			return res;
 		}
 
-		public static float SettingsFloatField(string title, UserSetting<float> value, string searchContext)
+		/// <summary>
+		/// A slider that implements search filtering and context menu reset.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="min">The value at the left end of the slider.</param>
+		/// <param name="max">The value at the right end of the slider.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static int SettingsSlider(string label, UserSetting<int> value, int min, int max, string searchContext)
 		{
-			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, title))
+			if (!DebugModeFilter(value) || !MatchSearchGroups(searchContext, label))
 				return value;
-			var res = UnityEditor.EditorGUILayout.FloatField(title, value);
+			var res = EditorGUILayout.IntSlider(label, value, min, max);
 			DoResetContextMenuForLastRect(value);
 			return res;
 		}
 
-		public static int SettingsIntField(GUIContent title, UserSetting<int> value, string searchContext)
+		/// <summary>
+		/// A float field that implements search filtering and context menu reset.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static float SettingsFloatField(GUIContent label, UserSetting<float> value, string searchContext)
 		{
-			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, title.text))
+			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, label.text))
 				return value;
-			var res = UnityEditor.EditorGUILayout.IntField(title, value);
+			var res = EditorGUILayout.FloatField(label, value);
 			DoResetContextMenuForLastRect(value);
 			return res;
 		}
 
-		public static int SettingsIntField(string title, UserSetting<int> value, string searchContext)
+		/// <summary>
+		/// A float field that implements search filtering and context menu reset.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static float SettingsFloatField(string label, UserSetting<float> value, string searchContext)
 		{
-			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, title))
+			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, label))
 				return value;
-			var res = UnityEditor.EditorGUILayout.IntField(title, value);
+			var res = EditorGUILayout.FloatField(label, value);
 			DoResetContextMenuForLastRect(value);
 			return res;
 		}
 
-		public static bool SettingsToggle(GUIContent title, UserSetting<bool> value, string searchContext)
+		/// <summary>
+		/// An integer field that implements search filtering and context menu reset.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static int SettingsIntField(GUIContent label, UserSetting<int> value, string searchContext)
 		{
-			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, title.text))
+			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, label.text))
 				return value;
-			var res = UnityEditor.EditorGUILayout.Toggle(title, value);
+			var res = EditorGUILayout.IntField(label, value);
 			DoResetContextMenuForLastRect(value);
 			return res;
 		}
 
-		public static bool SettingsToggle(string title, UserSetting<bool> value, string searchContext)
+		/// <summary>
+		/// An integer field that implements search filtering and context menu reset.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static int SettingsIntField(string label, UserSetting<int> value, string searchContext)
 		{
-			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, title))
+			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, label))
 				return value;
-			var res = UnityEditor.EditorGUILayout.Toggle(title, value);
+			var res = EditorGUILayout.IntField(label, value);
 			DoResetContextMenuForLastRect(value);
 			return res;
 		}
 
-		public static string SettingsTextField(GUIContent title, UserSetting<string> value, string searchContext)
+		/// <summary>
+		/// A boolean toggle field that implements search filtering and context menu reset.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static bool SettingsToggle(GUIContent label, UserSetting<bool> value, string searchContext)
 		{
-			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, title.text))
+			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, label.text))
 				return value;
-			var res = UnityEditor.EditorGUILayout.TextField(title, value);
+			var res = EditorGUILayout.Toggle(label, value);
 			DoResetContextMenuForLastRect(value);
 			return res;
 		}
 
-		public static string SettingsTextField(string title, UserSetting<string> value, string searchContext)
+		/// <summary>
+		/// A boolean toggle field that implements search filtering and context menu reset.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static bool SettingsToggle(string label, UserSetting<bool> value, string searchContext)
 		{
-			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, title))
+			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, label))
 				return value;
-			var res = UnityEditor.EditorGUILayout.TextField(title, value);
+			var res = EditorGUILayout.Toggle(label, value);
 			DoResetContextMenuForLastRect(value);
 			return res;
 		}
 
-		public static Color SettingsColorField(GUIContent title, UserSetting<Color> value, string searchContext)
+		/// <summary>
+		/// A text field that implements search filtering and context menu reset.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static string SettingsTextField(GUIContent label, UserSetting<string> value, string searchContext)
 		{
-			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, title.text))
+			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, label.text))
 				return value;
-			var res = UnityEditor.EditorGUILayout.ColorField(title, value);
+			var res = EditorGUILayout.TextField(label, value);
 			DoResetContextMenuForLastRect(value);
 			return res;
 		}
 
-		public static Color SettingsColorField(string title, UserSetting<Color> value, string searchContext)
+		/// <summary>
+		/// A text field that implements search filtering and context menu reset.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static string SettingsTextField(string label, UserSetting<string> value, string searchContext)
 		{
-			if (!DebugModeFilter(value) || !MatchSearchGroups(searchContext, title))
+			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, label))
 				return value;
-			var res = UnityEditor.EditorGUILayout.ColorField(title, value);
+			var res = EditorGUILayout.TextField(label, value);
 			DoResetContextMenuForLastRect(value);
 			return res;
 		}
 
-		public static void DoResetContextMenuForLastRect(IUserSetting pref)
+		/// <summary>
+		/// A color field that implements search filtering and context menu reset.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static Color SettingsColorField(GUIContent label, UserSetting<Color> value, string searchContext)
 		{
-			DoResetContextMenu(GUILayoutUtility.GetLastRect(), pref);
+			if(!DebugModeFilter(value) || !MatchSearchGroups(searchContext, label.text))
+				return value;
+			var res = EditorGUILayout.ColorField(label, value);
+			DoResetContextMenuForLastRect(value);
+			return res;
 		}
 
-		public static void DoResetContextMenu(Rect rect, IUserSetting pref)
+		/// <summary>
+		/// A color field that implements search filtering and context menu reset.
+		/// </summary>
+		/// <param name="label">Label in front of the value field.</param>
+		/// <param name="value">The value to edit.</param>
+		/// <param name="searchContext">A string representing the current search query. Empty or null strings are to be treated as matching any value.</param>
+		/// <returns>The value that has been set by the user.</returns>
+		public static Color SettingsColorField(string label, UserSetting<Color> value, string searchContext)
+		{
+			if (!DebugModeFilter(value) || !MatchSearchGroups(searchContext, label))
+				return value;
+			var res = EditorGUILayout.ColorField(label, value);
+			DoResetContextMenuForLastRect(value);
+			return res;
+		}
+
+		/// <summary>
+		/// Using the last automatically layoutted rect, implement a context click menu for a user setting.
+		/// </summary>
+		/// <param name="setting">The target setting for the reset context menu.</param>
+		public static void DoResetContextMenuForLastRect(IUserSetting setting)
+		{
+			DoResetContextMenu(GUILayoutUtility.GetLastRect(), setting);
+		}
+
+		static void DoResetContextMenu(Rect rect, IUserSetting pref)
 		{
 			var evt = Event.current;
 

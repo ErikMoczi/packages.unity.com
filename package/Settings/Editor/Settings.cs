@@ -1,206 +1,155 @@
-#define PRETTY_PRINT_JSON
-
 using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace UnityEditor.SettingsManagement
 {
-	public enum SettingScope
-	{
-		/// <value>
-		/// Setting will be stored in ProjectSettings/k_SettingsPath.
-		/// </value>
-		Project,
-
-		/// <value>
-		/// Setting will be stored in EditorPrefs.
-		/// </value>
-		User
-	}
-
-	[Serializable]
+	/// <summary>
+	/// The Settings class is provides an interface for getting and setting preference values. It manages the available
+	/// `ISettingsRepository` instances.
+	/// </summary>
 	public sealed class Settings
 	{
-		[SerializeField]
-		string m_SettingsPath;
+		ISettingsRepository[] m_SettingsRepositories;
 
-		[SerializeField]
-		bool m_Initialized;
-
+		/// <value>
+		/// An event that is raised prior to an `ISettingsRepository` serializing it's current state.
+		/// </value>
 		public event Action beforeSettingsSaved;
+
+		/// <value>
+		/// An event that is raised after an `ISettingsRepository` has serialized it's current state.
+		/// </value>
 		public event Action afterSettingsSaved;
-
-#if PRETTY_PRINT_JSON
-		const bool k_PrettyPrintJson = true;
-#else
-		const bool k_PrettyPrintJson = false;
-#endif
-
-		[SerializeField]
-		SettingsDictionary m_Dictionary = new SettingsDictionary();
-
-		internal string settingsPath
-		{
-			get { return m_SettingsPath; }
-			set { m_SettingsPath = value; }
-		}
-
-		internal SettingsDictionary dictionary
-		{
-			get { return m_Dictionary; }
-		}
 
 		Settings()
 		{
-			m_Initialized = false;
 		}
 
-		public Settings(string settingsPath)
+		/// <summary>
+		/// Create a new Settings instance with a collection of settings repositories.
+		/// </summary>
+		/// <param name="repositories"></param>
+		public Settings(IEnumerable<ISettingsRepository> repositories)
 		{
-			m_SettingsPath = settingsPath;
-			m_Initialized = false;
+			m_SettingsRepositories = repositories.ToArray();
 		}
 
-		void Init()
+		/// <summary>
+		/// Find a settings repository that matches the requested scope.
+		/// </summary>
+		/// <param name="scope">The scope of the settings repository to match.</param>
+		/// <returns>
+		/// An ISettingsRepository instance that is implementing the requested scope. May return null if no
+		/// matching repository is found.
+		/// </returns>
+		public ISettingsRepository GetRepository(SettingsScopes scope)
 		{
-			// Lazy initialize dictionary because EditorJsonUtility can't be called in constructors
-			if (!m_Initialized)
-				Load();
+			foreach(var repo in m_SettingsRepositories)
+				if (repo.scope == scope)
+					return repo;
+			return null;
 		}
 
+		/// <summary>
+		/// Serialize the state of all settings repositories.
+		/// </summary>
 		public void Save()
 		{
-			Init();
-
 			if (beforeSettingsSaved!= null)
 				beforeSettingsSaved();
 
-			File.WriteAllText(m_SettingsPath, EditorJsonUtility.ToJson(this, k_PrettyPrintJson));
+			foreach(var repo in m_SettingsRepositories)
+				repo.Save();
 
 			if (afterSettingsSaved!= null)
 				afterSettingsSaved();
 		}
 
-		public void Load()
+		/// <summary>
+		/// Set a value for key of type T.
+		/// </summary>
+		/// <param name="key">The settings key.</param>
+		/// <param name="value">The value to set. Must be serializable.</param>
+		/// <param name="scope">Which scope this settings should be saved in.</param>
+		/// <typeparam name="T">Type of value.</typeparam>
+		public void Set<T>(string key, T value, SettingsScopes scope = SettingsScopes.Project)
 		{
-			m_Initialized = true;
+			bool foundScopeRepository = false;
 
-			if (File.Exists(m_SettingsPath))
+			foreach (var repo in m_SettingsRepositories)
 			{
-				m_Dictionary = null;
-				var json = File.ReadAllText(m_SettingsPath);
-				EditorJsonUtility.FromJsonOverwrite(json, this);
+				if (repo.scope == scope)
+				{
+					repo.Set<T>(key, value);
+					foundScopeRepository = true;
+				}
 			}
+
+			if (!foundScopeRepository)
+				Debug.LogWarning("No repository for scope " + scope + " found!");
 		}
 
-		public void Reload()
+		/// <summary>
+		/// Get a value with key of type T, or return the fallback value if no matching key is found.
+		/// </summary>
+		/// <param name="key">The settings key.</param>
+		/// <param name="scope">Which scope this settings should be retrieved from.</param>
+		/// <param name="fallback">If no key with a value of type T is found, this value is returned.</param>
+		/// <typeparam name="T">Type of value to search for.</typeparam>
+		public T Get<T>(string key, SettingsScopes scope = SettingsScopes.Project, T fallback = default(T))
 		{
-			m_Dictionary = null;
-			m_Dictionary = new SettingsDictionary();
-			Load();
-		}
-
-		static string GetEditorPrefKey<T>(string key)
-		{
-			return GetEditorPrefKey(typeof(T).FullName, key);
-		}
-
-		static string GetEditorPrefKey(string fullName, string key)
-		{
-			return fullName + "::" + key;
-		}
-
-		static void SetEditorPref<T>(string key, T value)
-		{
-			var k = GetEditorPrefKey<T>(key);
-
-			if(typeof(T) == typeof(string))
-			 	EditorPrefs.SetString(k, (string) (object) value);
-			else if(typeof(T) == typeof(bool))
-			 	EditorPrefs.SetBool(k, (bool) (object) value);
-			else if(typeof(T) == typeof(float))
-			 	EditorPrefs.SetFloat(k, (float) (object) value);
-			else if(typeof(T) == typeof(int))
-			 	EditorPrefs.SetInt(k, (int) (object) value);
-			else
-				EditorPrefs.SetString(k, ValueWrapper<T>.Serialize(value));
-		}
-
-		static T GetEditorPref<T>(string key, T fallback = default(T))
-		{
-			var k = GetEditorPrefKey<T>(key);
-
-			if(!EditorPrefs.HasKey(k))
-				return fallback;
-
-			var o = (object) fallback;
-
-			if(typeof(T) == typeof(string))
-				o = EditorPrefs.GetString(k, (string) o);
-			else if(typeof(T) == typeof(bool))
-				o = EditorPrefs.GetBool(k, (bool) o);
-			else if(typeof(T) == typeof(float))
-				o = EditorPrefs.GetFloat(k, (float) o);
-			else if(typeof(T) == typeof(int))
-				o = EditorPrefs.GetInt(k, (int) o);
-			else
-				return ValueWrapper<T>.Deserialize(EditorPrefs.GetString(k));
-
-			return (T) o;
-		}
-
-		public void Set<T>(string key, T value, SettingScope scope = SettingScope.Project)
-		{
-			Init();
-
-			switch (scope)
+			foreach (var repo in m_SettingsRepositories)
 			{
-				case SettingScope.Project:
-					m_Dictionary.Set<T>(key, value);
-				break;
-
-				case SettingScope.User:
-					SetEditorPref<T>(key, value);
-				break;
+				if (repo.scope == scope)
+					return repo.Get<T>(key, fallback);
 			}
+
+			Debug.LogWarning("No repository for scope " + scope + " found!");
+			return fallback;
 		}
 
-		public T Get<T>(string key, SettingScope scope = SettingScope.Project, T fallback = default(T))
+		/// <summary>
+		/// Does the repository contain a setting with key and type.
+		/// </summary>
+		/// <param name="key">The settings key.</param>
+		/// <typeparam name="T">The type of value to search for.</typeparam>
+		/// <param name="scope">Which scope should be searched for matching key.</param>
+		/// <returns>True if a setting matching both key and type is found, false if no entry is found.</returns>
+		public bool ContainsKey<T>(string key, SettingsScopes scope = SettingsScopes.Project)
 		{
-			Init();
-
-			if(scope == SettingScope.Project)
-				return m_Dictionary.Get<T>(key, fallback);
-
-			return GetEditorPref(key, fallback);
-		}
-
-		public bool ContainsKey<T>(string key, SettingScope scope = SettingScope.Project)
-		{
-			Init();
-
-			if(scope == SettingScope.Project)
-				return m_Dictionary.ContainsKey<T>(key);
-
-			return EditorPrefs.HasKey(GetEditorPrefKey<T>(key));
-		}
-
-		public void Delete<T>(string key, SettingScope scope = SettingScope.Project)
-		{
-			Init();
-
-			if (scope == SettingScope.Project)
+			foreach (var repo in m_SettingsRepositories)
 			{
-				m_Dictionary.Remove<T>(key);
+				if (repo.scope == scope)
+					return repo.ContainsKey<T>(key);
 			}
-			else
-			{
-				var k = GetEditorPrefKey<T>(key);
 
-				if(EditorPrefs.HasKey(k))
-					EditorPrefs.DeleteKey(k);
+			Debug.LogWarning("No repository for scope " + scope + " found!");
+			return false;
+		}
+
+		/// <summary>
+		/// Remove a key value pair from a settings repository.
+		/// </summary>
+		/// <param name="key">The key to remove.</param>
+		/// <param name="scope">Which scope should be searched for matching key.</param>
+		/// <typeparam name="T">The type that this key is pointing to.</typeparam>
+		public void DeleteKey<T>(string key, SettingsScopes scope = SettingsScopes.Project)
+		{
+			bool foundScopeRepository = false;
+
+			foreach (var repo in m_SettingsRepositories)
+			{
+				if (repo.scope == scope)
+				{
+					foundScopeRepository = true;
+					repo.Remove<T>(key);
+				}
 			}
+
+			if(!foundScopeRepository)
+				Debug.LogWarning("No repository for scope " + scope + " found!");
 		}
 	}
 }
