@@ -11,6 +11,8 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
     internal interface IValidationTest
     {
+        ValidationSuite Suite { get; }
+        
         string TestName { get; }
 
         string TestDescription { get; }

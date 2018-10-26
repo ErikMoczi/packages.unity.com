@@ -7,11 +7,10 @@ using Mono.Cecil.Cil;
 
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
-    /** Skip it for now
     internal class APIEvaluation : BaseValidation
     {
-        public Dictionary<string, int> methodCounts = new Dictionary<string, int>();
-        public HashSet<string> localMethods = new HashSet<string>();
+        //public Dictionary<string, int> methodCounts = new Dictionary<string, int>();
+        //public HashSet<string> localMethods = new HashSet<string>();
 
         public APIEvaluation()
         {
@@ -24,6 +23,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         {
             // Start by declaring victory
             TestState = TestState.Succeeded;
+            
+            /*
             var resolver = new DefaultAssemblyResolver();
 
             var readerParameters = new ReaderParameters
@@ -74,8 +75,10 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 Console.WriteLine(e.ToString());
                 TestState = TestState.Failed;
             }
+            */
         }
 
+        /*
         private void ProcessMemberReference(string fullname)
         {
             // At least filter System calls
@@ -95,6 +98,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 methodCounts.Add(fullname, 1);
             }
         }
+        */
     }
-    **/
 }

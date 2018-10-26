@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -14,11 +15,11 @@ namespace UnityEditor.PackageManager.ValidationSuite
     internal delegate void SingleTestCompletedDelegate(IValidationTestResult testResult);
 
     // Delegate called after the test run completed, whether it succeeded, failed or got canceled.
-    internal delegate void AllTestsCompletedDelegate(TestState testRunState);
+    internal delegate void AllTestsCompletedDelegate(ValidationSuite suite, TestState testRunState);
 
     public class ValidationSuite
     {
-        public const string resultsFilePath = "ValidationSuiteResults.txt";
+        public static readonly string resultsPath = "ValidationSuiteResults";
 
         // List of validation tests
         private IEnumerable<BaseValidation> validationTests;
@@ -29,8 +30,11 @@ namespace UnityEditor.PackageManager.ValidationSuite
         // Delegate called after the test run completed, whether it succeeded, failed or got canceled.
         private AllTestsCompletedDelegate allTestsCompletedDelegate;
 
-        // Path of the package within the project
+        // Vetting context
         private VettingContext context;
+
+        // Path of the result output
+        internal string resultOutputPath;
 
         // Thread we will use to run tests.
         private Thread testRunnerThread = null;
@@ -39,11 +43,13 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         internal ValidationSuite(SingleTestCompletedDelegate singleTestCompletionDelegate,
                                AllTestsCompletedDelegate allTestsCompletedDelegate,
-                               VettingContext context)
+                               VettingContext context,
+                               string resultOutputPath)
         {
             this.singleTestCompletionDelegate += singleTestCompletionDelegate;
             this.allTestsCompletedDelegate += allTestsCompletedDelegate;
             this.context = context;
+            this.resultOutputPath = resultOutputPath;
             testSuiteState = TestState.NotRun;
 
             BuildTestSuite();
@@ -66,6 +72,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
             foreach (var test in validationTests)
             {
                 test.Context = context;
+                test.Suite = this;
                 test.Setup();
             }
 
@@ -79,6 +86,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
             foreach (var test in validationTests)
             {
                 test.Context = context;
+                test.Suite = this;
                 test.Setup();
             }
             
@@ -131,7 +139,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
             }
 
             // when we're done, signal the main thread and all other interested
-            allTestsCompletedDelegate(testSuiteState);
+            allTestsCompletedDelegate(this, testSuiteState);
         }
         
         [MenuItem("internal:Project/Packages/Test")]
@@ -152,27 +160,31 @@ namespace UnityEditor.PackageManager.ValidationSuite
             if (string.IsNullOrEmpty(packagePath))
                 return false;
 
+            if (!Directory.Exists(resultsPath))
+                Directory.CreateDirectory(resultsPath);
+
             // Clear output file content
-            File.WriteAllText(resultsFilePath, string.Format("Validation Suite Results for package \"{0}\"\r\n - Path: {1}\r\n - Version: {2}\r\n\r\n", packageName, packagePath, packageVersion));
+            var path = Path.Combine(resultsPath, packageId + ".txt");
+            File.WriteAllText(path, string.Format("Validation Suite Results for package \"{0}\"\r\n - Path: {1}\r\n - Version: {2}\r\n\r\n", packageName, packagePath, packageVersion));
 
             if (!packagePath.StartsWith(Directory.GetCurrentDirectory()) && !packagePath.EndsWith(packageVersion))
             {
-                File.AppendAllText(resultsFilePath, string.Format("Package version mismatch: expecting \"{0}\" but was \"{1}\"", packageVersion, packagePath));
+                File.AppendAllText(path, string.Format("Package version mismatch: expecting \"{0}\" but was \"{1}\"", packageVersion, packagePath));
                 return false;
             }
 
             try
             {
-                var package = new VettingContext();
-                package.Initialize(packagePath);
+                var context = new VettingContext();
+                context.Initialize(packagePath);
 
-                var testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletedDelegate, package);
+                var testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletedDelegate, context, path);
                 testSuite.RunSync();
                 return testSuite.testSuiteState == TestState.Succeeded;
             }
             catch(Exception e)
             {
-                File.AppendAllText(resultsFilePath, string.Format("\r\nTest Setup Error: \"{0}\"\r\n", e.Message));
+                File.AppendAllText(path, string.Format("\r\nTest Setup Error: \"{0}\"\r\n", e.Message));
                 return false;
             }
         }
@@ -181,19 +193,20 @@ namespace UnityEditor.PackageManager.ValidationSuite
         {
             var path = string.Format("Packages/{0}/package.json", packageId);
             var absolutePath = Path.GetFullPath(path);
-            return !File.Exists(absolutePath) ? null : Directory.GetParent(absolutePath).FullName;
+            return !File.Exists(absolutePath) ? string.Empty : Directory.GetParent(absolutePath).FullName;
         }
         
         private static void SingleTestCompletedDelegate(IValidationTestResult testResult)
         {
-            File.AppendAllText(resultsFilePath, string.Format("\r\nTest: \"{0}\"\r\nResult: {1}\r\n", testResult.ValidationTest.TestName, testResult.TestState));
+            var path = testResult.ValidationTest.Suite.resultOutputPath;
+            File.AppendAllText(path, string.Format("\r\nTest: \"{0}\"\r\nResult: {1}\r\n", testResult.ValidationTest.TestName, testResult.TestState));
             if (testResult.TestOutput.Any())
-                File.AppendAllText(resultsFilePath, string.Join("\r\n", testResult.TestOutput.ToArray()) + "\r\n");
+                File.AppendAllText(path, string.Join("\r\n", testResult.TestOutput.ToArray()) + "\r\n");
         }
 
-        private static void AllTestsCompletedDelegate(TestState testRunState)
+        private static void AllTestsCompletedDelegate(ValidationSuite suite, TestState testRunState)
         {
-            File.AppendAllText(resultsFilePath, "\r\nAll Done!  Result = " + testRunState);
+            File.AppendAllText(suite.resultOutputPath, "\r\nAll Done!  Result = " + testRunState);
         }
     }
 }

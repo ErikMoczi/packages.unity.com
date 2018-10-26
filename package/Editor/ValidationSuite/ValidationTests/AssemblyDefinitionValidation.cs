@@ -6,9 +6,10 @@ using UnityEditor.PackageManager.ValidationSuite;
 
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
-    /** Skip it for now
     internal class AssemblyDefinitionValidation : BaseValidation
     {
+        private const string AssemblyFileDefinitionExtension = "*.asmdef";
+        
         internal class AssemblyDefinitionData {
             public string name = "";
             public string [] references = new string[0];
@@ -35,18 +36,11 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             return foundValue;
         }
 
-        void CheckAssemblyDefinitionContent(string assemblyDefinitionPath, string packageName, bool isEditor, bool isTest)
+        void CheckAssemblyDefinitionContent(string assemblyDefinitionPath, bool isEditor, bool isTest)
         {
             try{
                 var assemblyDefinitionData = Utilities.GetDataFromJson<AssemblyDefinitionData>(assemblyDefinitionPath);
                 
-                var expectedName = packageName + (isEditor ? ".Editor" : ".Runtime") + (isTest ? "Tests": "");
-                if(assemblyDefinitionData.name != expectedName)
-                {
-                    TestState = TestState.Failed;
-                    TestOutput.Add(string.Format("Wrong Name: {0}, expected: {1} in: [{2}]", assemblyDefinitionData.name, expectedName, assemblyDefinitionPath));
-                }
-
                 if(isEditor && assemblyDefinitionData.includePlatforms.Length != 1)
                 {
                     TestState = TestState.Failed;
@@ -78,7 +72,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestState = TestState.Succeeded;
             var manifestFilePath = Path.Combine(Context.PublishPackageInfo.Path, Utilities.PackageJsonFilename);
             
-            if(!System.IO.File.Exists(manifestFilePath))
+            if(!File.Exists(manifestFilePath))
             {
                 TestState = TestState.Failed;
                 TestOutput.Add("Can't find manifest: " + manifestFilePath);
@@ -91,58 +85,69 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             var editorTestProjectPath = Path.Combine(packagePath, Path.Combine("Tests", "Editor"));
             var runtimeTestProjectPath = Path.Combine(packagePath, Path.Combine("Tests", "Runtime"));
 
-            if (System.IO.Directory.Exists(editorProjectPath) || System.IO.Directory.Exists(editorTestProjectPath))
+            if (Directory.Exists(editorProjectPath))
             {
-                var editorAssemblyDefinitionFilePath = Path.Combine(editorProjectPath, Context.PublishPackageInfo.name + Utilities.EditorAssemblyDefintionSuffix);
-                var editorTestsAssemblyDefinitionFilePath = Path.Combine(editorTestProjectPath, Context.PublishPackageInfo.name + Utilities.EditorTestsAssemblyDefintionSuffix);
-
-                if(!System.IO.File.Exists(editorAssemblyDefinitionFilePath))
+                var assemblyDefinitionFiles = Directory.GetFiles(editorProjectPath, AssemblyFileDefinitionExtension);
+                if (assemblyDefinitionFiles.Length != 1)
                 {
                     TestState = TestState.Failed;
-                    TestOutput.Add(string.Format("Editor assembly definition is missing.  Expecting {0} to exist.", editorAssemblyDefinitionFilePath));
+                    TestOutput.Add("Editor assembly definition is missing.");
                 }
                 else
                 {
-                    CheckAssemblyDefinitionContent(editorAssemblyDefinitionFilePath, Context.PublishPackageInfo.name, true, false);
+                    var editorAssemblyDefinitionFilePath =
+                        Path.Combine(editorTestProjectPath, assemblyDefinitionFiles[0]);
+                    CheckAssemblyDefinitionContent(editorAssemblyDefinitionFilePath, true, false);
                 }
-
-                if(!System.IO.File.Exists(editorTestsAssemblyDefinitionFilePath))
+                
+                if (Directory.Exists(editorTestProjectPath))
                 {
-                    TestState = TestState.Failed;
-                    TestOutput.Add(string.Format("Editor Tests assembly definition is missing.  Expecting {0} to exist.", editorTestsAssemblyDefinitionFilePath));
+                    assemblyDefinitionFiles = Directory.GetFiles(editorTestProjectPath, AssemblyFileDefinitionExtension);
+                    if (assemblyDefinitionFiles.Length != 1)
+                    {
+                        TestState = TestState.Failed;
+                        TestOutput.Add("Editor assembly definition is missing.");
+                    }
+                    else
+                    {
+                        var editorTestAssemblyDefinitionFilePath =
+                            Path.Combine(editorTestProjectPath, assemblyDefinitionFiles[0]);
+                        CheckAssemblyDefinitionContent(editorTestAssemblyDefinitionFilePath, true, true);
+                    }
                 }
-                else
-                {
-                    CheckAssemblyDefinitionContent(editorTestsAssemblyDefinitionFilePath, Context.PublishPackageInfo.name, true, true);
-                }    
             }
-           
-            if (System.IO.Directory.Exists(runtimeProjectPath) || System.IO.Directory.Exists(runtimeTestProjectPath))
+
+            if (Directory.Exists(runtimeProjectPath))
             {
-                var runtimeAssemblyDefinitionFilePath = Path.Combine(runtimeProjectPath, Context.PublishPackageInfo.name + Utilities.RuntimeAssemblyDefintionSuffix);
-                var runtimeTestsAssemblyDefinitionFilePath = Path.Combine(runtimeTestProjectPath, Context.PublishPackageInfo.name + Utilities.RuntimeTestsAssemblyDefintionSuffix);
-
-                if(!System.IO.File.Exists(runtimeAssemblyDefinitionFilePath))
+                var assemblyDefinitionFiles = Directory.GetFiles(runtimeProjectPath, AssemblyFileDefinitionExtension);
+                if (assemblyDefinitionFiles.Length != 1)
                 {
                     TestState = TestState.Failed;
-                    TestOutput.Add(string.Format("Runtime assembly definition is missing.  Expecting {0} to exist.", runtimeAssemblyDefinitionFilePath));
+                    TestOutput.Add("Editor assembly definition is missing.");
                 }
                 else
                 {
-                    CheckAssemblyDefinitionContent(runtimeAssemblyDefinitionFilePath, Context.PublishPackageInfo.name, false, false);
+                    var runtimeAssemblyDefinitionFilePath =
+                        Path.Combine(editorTestProjectPath, assemblyDefinitionFiles[0]);
+                    CheckAssemblyDefinitionContent(runtimeAssemblyDefinitionFilePath, false, false);
                 }
-
-                if(!System.IO.File.Exists(runtimeTestsAssemblyDefinitionFilePath))
+                
+                if (Directory.Exists(runtimeTestProjectPath))
                 {
-                    TestState = TestState.Failed;
-                    TestOutput.Add(string.Format("Runtime Tests assembly definition is missing.  Expecting {0} to exist.", runtimeTestsAssemblyDefinitionFilePath));
-                }
-                else
-                {
-                    CheckAssemblyDefinitionContent(runtimeTestsAssemblyDefinitionFilePath, Context.PublishPackageInfo.name, false, true);
+                    assemblyDefinitionFiles = Directory.GetFiles(runtimeTestProjectPath, AssemblyFileDefinitionExtension);
+                    if (assemblyDefinitionFiles.Length != 1)
+                    {
+                        TestState = TestState.Failed;
+                        TestOutput.Add("Editor assembly definition is missing.");
+                    }
+                    else
+                    {
+                        var runtimeTestAssemblyDefinitionFilePath =
+                            Path.Combine(runtimeTestProjectPath, assemblyDefinitionFiles[0]);
+                        CheckAssemblyDefinitionContent(runtimeTestAssemblyDefinitionFilePath, false, true);
+                    }
                 }
             }
         }
     }
-    **/
 }
