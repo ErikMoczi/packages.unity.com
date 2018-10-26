@@ -1,12 +1,13 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
+    /** Skip it for now
     internal class APIEvaluation : BaseValidation
     {
         public Dictionary<string, int> methodCounts = new Dictionary<string, int>();
@@ -34,7 +35,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
             try
             {
-                var assembly = AssemblyDefinition.ReadAssembly("Library\\ScriptAssemblies", readerParameters);
+                var scriptsPath = Path.Combine("Library", "ScriptAssemblies");
+                var assembly = AssemblyDefinition.ReadAssembly(scriptsPath, readerParameters);
 
                 assembly.Modules.ToList().ForEach(m => {
                     if (m.Types != null)
@@ -94,4 +96,5 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
         }
     }
+    **/
 }
