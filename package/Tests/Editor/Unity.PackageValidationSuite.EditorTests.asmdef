@@ -1,0 +1,13 @@
+{
+    "name": "Unity.PackageValidationSuite.EditorTests",
+    "references": [
+        "Unity.PackageValidationSuite.Editor"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

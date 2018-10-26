@@ -1,0 +1,8 @@
+{
+	"name": "com.unity.package-validation-suite",
+	"version": "0.1.0",
+	"unity": "2018.1",
+	"description": "Unity Package Manager validation suite, used to evaluate a package's integrity before it's considered for publishing.",
+	"dependencies": {
+	}
+}

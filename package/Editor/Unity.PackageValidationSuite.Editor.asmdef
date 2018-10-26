@@ -1,0 +1,9 @@
+{
+    "name": "Unity.PackageValidationSuite.Editor",
+    "references": [],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
