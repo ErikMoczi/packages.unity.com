@@ -1,12 +1,14 @@
 {
   "name": "UnityEditor.XR.LegacyInputHelpers.Tests",
     "references": [
-        "UnityEditor.XR.LegacyInputHelpers"
+        "UnityEditor.XR.LegacyInputHelpers"   
     ],
     "optionalUnityReferences": [
         "TestAssemblies"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

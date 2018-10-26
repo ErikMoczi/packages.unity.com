@@ -529,6 +529,7 @@ namespace UnityEditor.XR.LegacyInputHelpers
         {
             SeedXRInputBindings sxrib = new SeedXRInputBindings();
             sxrib.GenerateXRBindings();
+            SettingsService.OpenProjectSettings("Project/Input");
         }
 
         /// <summary>
