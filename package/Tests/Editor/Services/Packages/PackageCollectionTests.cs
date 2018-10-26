@@ -7,28 +7,25 @@ namespace UnityEditor.PackageManager.UI.Tests
     internal class PackageCollectionTests : PackageBaseTests
     {
         private Action<PackageFilter> OnFilterChangeEvent;
-        private Action<PackageFilter, IEnumerable<Package>, string> OnPackagesChangeEvent;
-        private PackageCollection Collection;
+        private Action<IEnumerable<Package>> OnPackagesChangeEvent;
 
         [SetUp]
         public void Setup()
         {
-            Collection = new PackageCollection();
-            Collection.SetFilter(PackageFilter.Local);
+            PackageCollection.Instance.SetFilter(PackageFilter.Local);
         }
 
         [TearDown]
         public void TearDown()
         {
-            Collection.OnFilterChanged -= OnFilterChangeEvent;
-            Collection.OnPackagesChanged -= OnPackagesChangeEvent;
-            Collection = null;
+            PackageCollection.Instance.OnFilterChanged -= OnFilterChangeEvent;
+            PackageCollection.Instance.OnPackagesChanged -= OnPackagesChangeEvent;
         }
 
         [Test]
         public void Constructor_Instance_FilterIsLocal()
         {
-            Assert.AreEqual(PackageFilter.Local, Collection.Filter);
+            Assert.AreEqual(PackageFilter.Local, PackageCollection.Instance.Filter);
         }
 
         [Test]
@@ -40,8 +37,8 @@ namespace UnityEditor.PackageManager.UI.Tests
                 wasCalled = true;
             };
 
-            Collection.OnFilterChanged += OnFilterChangeEvent;
-            Collection.SetFilter(PackageFilter.All, false);
+            PackageCollection.Instance.OnFilterChanged += OnFilterChangeEvent;
+            PackageCollection.Instance.SetFilter(PackageFilter.All, false);
             Assert.IsTrue(wasCalled);
         }
 
@@ -54,29 +51,29 @@ namespace UnityEditor.PackageManager.UI.Tests
                 wasCalled = true;
             };
 
-            Collection.OnFilterChanged += OnFilterChangeEvent;
-            Collection.SetFilter(PackageFilter.Local, false);
+            PackageCollection.Instance.OnFilterChanged += OnFilterChangeEvent;
+            PackageCollection.Instance.SetFilter(PackageFilter.Local, false);
             Assert.IsFalse(wasCalled);
         }
 
         [Test]
         public void SetFilter_WhenFilterChange_FilterIsChanged()
         {
-            Collection.SetFilter(PackageFilter.All, false);
-            Assert.AreEqual(PackageFilter.All, Collection.Filter);
+            PackageCollection.Instance.SetFilter(PackageFilter.All, false);
+            Assert.AreEqual(PackageFilter.All, PackageCollection.Instance.Filter);
         }
 
         [Test]
         public void SetFilter_WhenNoFilterChangeRefresh_PackagesChangeEventIsNotPropagated()
         {
             var wasCalled = false;
-            OnPackagesChangeEvent = (filter, packages, selected) =>
+            OnPackagesChangeEvent = packages =>
             {
                 wasCalled = true;
             };
 
-            Collection.OnPackagesChanged += OnPackagesChangeEvent;
-            Collection.SetFilter(PackageFilter.Local);
+            PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
+            PackageCollection.Instance.SetFilter(PackageFilter.Local);
             Assert.IsFalse(wasCalled);
         }
 
@@ -84,13 +81,13 @@ namespace UnityEditor.PackageManager.UI.Tests
         public void SetFilter_WhenFilterChangeNoRefresh_PackagesChangeEventIsNotPropagated()
         {
             var wasCalled = false;
-            OnPackagesChangeEvent = (filter, packages, selected) =>
+            OnPackagesChangeEvent = packages =>
             {
                 wasCalled = true;
             };
 
-            Collection.OnPackagesChanged += OnPackagesChangeEvent;
-            Collection.SetFilter(PackageFilter.All, false);
+            PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
+            PackageCollection.Instance.SetFilter(PackageFilter.All, false);
             Assert.IsFalse(wasCalled);
         }
 
@@ -98,13 +95,13 @@ namespace UnityEditor.PackageManager.UI.Tests
         public void SetFilter_WhenNoFilterChangeNoRefresh_PackagesChangeEventIsNotPropagated()
         {
             var wasCalled = false;
-            OnPackagesChangeEvent = (filter, packages, selected) =>
+            OnPackagesChangeEvent = packages =>
             {
                 wasCalled = true;
             };
 
-            Collection.OnPackagesChanged += OnPackagesChangeEvent;
-            Collection.SetFilter(PackageFilter.Local, false);
+            PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
+            PackageCollection.Instance.SetFilter(PackageFilter.Local, false);
             Assert.IsFalse(wasCalled);
         }
 
@@ -112,14 +109,14 @@ namespace UnityEditor.PackageManager.UI.Tests
         public void FetchListCache_PackagesChangeEventIsPropagated()
         {
             var wasCalled = false;
-            OnPackagesChangeEvent = (filter, packages, selected) =>
+            OnPackagesChangeEvent = packages =>
             {
                 wasCalled = true;
             };
 
-            Collection.OnPackagesChanged += OnPackagesChangeEvent;
+            PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
             Factory.Packages = PackageSets.Instance.Many(5);
-            Collection.FetchListCache(true);
+            PackageCollection.Instance.FetchListCache(true);
 
             Assert.IsTrue(wasCalled);
         }
@@ -129,14 +126,14 @@ namespace UnityEditor.PackageManager.UI.Tests
         public void FetchListOfflineCache_PackagesChangeEventIsPropagated()
         {
             var wasCalled = false;
-            OnPackagesChangeEvent = (filter, packages, selected) =>
+            OnPackagesChangeEvent = packages =>
             {
                 wasCalled = true;
             };
-            Collection.OnPackagesChanged += OnPackagesChangeEvent;
+            PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
 
             Factory.Packages = PackageSets.Instance.Many(5);
-            Collection.FetchListOfflineCache(true);
+            PackageCollection.Instance.FetchListOfflineCache(true);
 
             Assert.IsTrue(wasCalled);
         }
@@ -145,14 +142,14 @@ namespace UnityEditor.PackageManager.UI.Tests
         public void FetchSearchCache_PackagesChangeEventIsPropagated()
         {
             var wasCalled = false;
-            OnPackagesChangeEvent = (filter, packages, selected) =>
+            OnPackagesChangeEvent = packages =>
             {
                 wasCalled = true;
             };
-            Collection.OnPackagesChanged += OnPackagesChangeEvent;
+            PackageCollection.Instance.OnPackagesChanged += OnPackagesChangeEvent;
 
             Factory.SearchOperation = new MockSearchOperation(Factory, PackageSets.Instance.Many(5));
-            Collection.FetchSearchCache(true);
+            PackageCollection.Instance.FetchSearchCache(true);
 
             Assert.IsTrue(wasCalled);
         }

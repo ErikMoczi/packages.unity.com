@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
@@ -24,13 +23,10 @@ namespace UnityEditor.PackageManager.UI
 
         private readonly VisualElement root;
         private string LastErrorMessage;
-        private string LastUpdateTime;
 
         private List<IBaseOperation> operationsInProgress;
 
         private enum StatusType {Normal, Loading, Error};  
-
-        public event Action OnCheckInternetReachability = delegate { };
 
         public PackageStatusBar()
         {
@@ -41,18 +37,22 @@ namespace UnityEditor.PackageManager.UI
 
             LastErrorMessage = string.Empty;
             operationsInProgress = new List<IBaseOperation>();
+
+            SetDefaultMessage();
+
+            PackageCollection.Instance.ListSignal.WhenOperation(OnListOrSearchOperation);
+            PackageCollection.Instance.SearchSignal.WhenOperation(OnListOrSearchOperation);
         }
 
-        public void SetDefaultMessage(string lastUpdateTime)
+        private void SetDefaultMessage()
         {
-            LastUpdateTime = lastUpdateTime;
-            if(!string.IsNullOrEmpty(LastUpdateTime))
-                SetStatusMessage(StatusType.Normal, "Last update " + LastUpdateTime);
+            if(!string.IsNullOrEmpty(PackageCollection.Instance.lastUpdateTime))
+                SetStatusMessage(StatusType.Normal, "Last update " + PackageCollection.Instance.lastUpdateTime);
             else
                 SetStatusMessage(StatusType.Normal, string.Empty);
         }
 
-        internal void OnListOrSearchOperation(IBaseOperation operation)
+        private void OnListOrSearchOperation(IBaseOperation operation)
         {
             if (operation == null || operation.IsCompleted)
                 return;
@@ -82,7 +82,7 @@ namespace UnityEditor.PackageManager.UI
             if (!string.IsNullOrEmpty(errorMessage))
                 SetStatusMessage(StatusType.Error, errorMessage);
             else
-                SetDefaultMessage(LastUpdateTime);
+                SetDefaultMessage();
         }
 
         private void OnOperationError(Error error)
@@ -92,10 +92,10 @@ namespace UnityEditor.PackageManager.UI
 
         private void CheckInternetReachability()
         {
-            if (Application.internetReachability == NetworkReachability.NotReachable) 
-                return;
+            if (Application.internetReachability == NetworkReachability.NotReachable) return;
 
-            OnCheckInternetReachability();
+            PackageCollection.Instance.FetchListCache(true);
+            PackageCollection.Instance.FetchSearchCache(true);
             EditorApplication.update -= CheckInternetReachability;
         }
 
@@ -121,6 +121,14 @@ namespace UnityEditor.PackageManager.UI
 
             var addPackageFromDiskItem = new GUIContent("Add package from disk...");
 
+            /* // Disable adding from url field before the feature is ready
+            var addPackageFromUrlItem = new GUIContent("Add package from URL...");
+            menu.AddItem(addPackageFromUrlItem, false, delegate
+            {
+                AddFromUrlField.Show(true);
+            });
+            */
+
             menu.AddItem(addPackageFromDiskItem, false, delegate
             {
                 var path = EditorUtility.OpenFilePanelWithFilters("Select package on disk", "", new[] { "package.json file", "json" });
@@ -132,16 +140,11 @@ namespace UnityEditor.PackageManager.UI
             menu.DropDown(menuRect);
         }
 
-        private LoadingSpinner _loadingSpinner;
-        private LoadingSpinner LoadingSpinner { get { return _loadingSpinner ?? (_loadingSpinner = root.Q<LoadingSpinner>("packageSpinner")); }}
-
-        private Label _loadingIcon;
-        private Label LoadingIcon { get { return _loadingIcon ?? (_loadingIcon = root.Q<Label>("loadingIcon")); }}
-
-        private Label _loadingText;
-        private Label LoadingText { get { return _loadingText ?? (_loadingText = root.Q<Label>("loadingText")); }}
-
-        private Button _moreAddOptionsButton;
-        private Button MoreAddOptionsButton{ get { return _moreAddOptionsButton ?? (_moreAddOptionsButton = root.Q<Button>("moreAddOptionsButton")); }}
+        private PackageAddFromUrlField AddFromUrlField { get { return root.Q<PackageAddFromUrlField>("packageAddFromUrlField");  }}
+        private VisualElement LoadingSpinnerContainer { get { return root.Q<VisualElement>("loadingSpinnerContainer");  }}
+        private LoadingSpinner LoadingSpinner { get { return root.Q<LoadingSpinner>("packageSpinner");  }}
+        private Label LoadingIcon { get { return root.Q<Label>("loadingIcon");  }}
+        private Label LoadingText { get { return root.Q<Label>("loadingText");  }}
+        private Button MoreAddOptionsButton{ get { return root.Q<Button>("moreAddOptionsButton");  }}
     }
 }

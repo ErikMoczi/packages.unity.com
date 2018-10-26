@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Semver;
-using UnityEngine;
 
 namespace UnityEditor.PackageManager.UI
 {
     [Serializable]
-    internal class PackageInfo : IEquatable<PackageInfo>, ISerializationCallbackReceiver
+    internal class PackageInfo : IEquatable<PackageInfo>
     {
         // Module package.json files contain a documentation url embedded in the description.
         // We parse that to have the "View Documentation" button direct to it, instead of showing
@@ -17,8 +16,6 @@ namespace UnityEditor.PackageManager.UI
         public string Name;
         public string DisplayName;
         private string _PackageId;
-        [SerializeField]
-        private string _Version; // Required cause SemVersion is not Serializable
         public SemVersion Version;
         public string Description;
         public string Category;
@@ -178,16 +175,6 @@ namespace UnityEditor.PackageManager.UI
         public bool CanBeRemoved
         {
             get { return Origin == PackageSource.Registry || Origin == PackageSource.BuiltIn || Origin == PackageSource.Local; }
-        }
-
-        public void OnBeforeSerialize()
-        {
-            _Version = Version.ToString();
-        }
-
-        public void OnAfterDeserialize()
-        {
-            Version = _Version;
         }
     }
 }

@@ -10,19 +10,17 @@ namespace UnityEditor.PackageManager.UI.Tests
     {
         private Action<IAddOperation> OnAddOperation;
         private Action<IRemoveOperation> OnRemoveOperation;
-        private PackageCollection Collection;
 
         // Package version to display
         public PackageInfo Display(Package package)
         {
-            return Collection.Filter == PackageFilter.All || package.Current == null ? package.Latest : package.Current;
+            return PackageCollection.Instance.Filter == PackageFilter.All || package.Current == null ? package.Latest : package.Current;
         }
 
         [SetUp]
         public void Setup()
         {
-            Collection = new PackageCollection();
-            Collection.SetFilter(PackageFilter.Local);
+            PackageCollection.Instance.SetFilter(PackageFilter.Local);
         }
         
         [TearDown]
@@ -30,7 +28,6 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             Factory.ResetOperations();
             Factory.Packages = Enumerable.Empty<PackageInfo>();
-            Collection = null;
         }
 
         [Test]

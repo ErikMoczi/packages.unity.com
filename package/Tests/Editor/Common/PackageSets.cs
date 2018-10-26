@@ -160,6 +160,105 @@ namespace UnityEditor.PackageManager.UI.Tests
             return packages;
         }
 
+        // Package that actually exist. Useful when using test package that will be added to manifest
+        public List<PackageInfo> RealPackages()
+        {
+            var packages = new List<PackageInfo>();
+
+            // Don't add this package if it exists
+            if (PackageCollection.Instance.GetPackageByName("a") == null)
+            {
+                var package = new PackageInfo
+                {
+                    DisplayName = "A",
+                    Name = "a",
+                    Description = LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
+                    PackageId = "a@1.0.1",
+                    State = PackageState.UpToDate,
+                    Version = "1.0.1",
+                    Group = PackageGroupOrigins.Packages.ToString(),
+                    IsCurrent = true,
+                    IsLatest = true,
+                    Errors = new List<Error>()
+                };
+                packages.Add(package);
+            }
+
+            if (PackageCollection.Instance.GetPackageByName("b") == null)
+            {
+                var package = new PackageInfo
+                {
+                    DisplayName = "B",
+                    Name = "b",
+                    Description = LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
+                    PackageId = "b@1.0.1",
+                    State = PackageState.UpToDate,
+                    Version = "1.0.1",
+                    Group = PackageGroupOrigins.Packages.ToString(),
+                    IsCurrent = true,
+                    IsLatest = true,
+                    Errors = new List<Error>()
+                };
+                packages.Add(package);
+            }
+
+            if (PackageCollection.Instance.GetPackageByName("c") == null)
+            {
+                var package = new PackageInfo
+                {
+                    DisplayName = "C",
+                    Name = "c",
+                    Description = LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
+                    PackageId = "c@1.0.1",
+                    State = PackageState.UpToDate,
+                    Version = "1.0.1",
+                    Group = PackageGroupOrigins.Packages.ToString(),
+                    IsCurrent = true,
+                    IsLatest = true,
+                    Errors = new List<Error>()
+                };
+                packages.Add(package);
+            }
+
+            if (PackageCollection.Instance.GetPackageByName("d") == null)
+            {
+                var package = new PackageInfo
+                {
+                    DisplayName = "NonExistingVersion(d)",
+                    Name = "d",
+                    Description = "Non existing package", //LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
+                    PackageId = "d@4.0.0",
+                    State = PackageState.UpToDate,
+                    Version = "4.0.0",
+                    Group = PackageGroupOrigins.Packages.ToString(),
+                    IsCurrent = true,
+                    IsLatest = true,
+                    Errors = new List<Error>()
+                };
+                packages.Add(package);
+            }
+
+            if (PackageCollection.Instance.GetPackageByName("nonexistingpackage") == null)
+            {
+                var package = new PackageInfo
+                {
+                    DisplayName = "NonExistingPackage",
+                    Name = "nonexistingpackage",
+                    Description = LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
+                    PackageId = "nonexistingpackage@0.0.1",
+                    State = PackageState.UpToDate,
+                    Version = "0.0.1",
+                    Group = PackageGroupOrigins.Packages.ToString(),
+                    IsCurrent = true,
+                    IsLatest = true,
+                    Errors = new List<Error>()
+                };
+                packages.Add(package);
+            }
+
+            return packages;
+        }
+
         public List<PackageInfo> Outdated()
         {
             const string name = "TestOutdated";

@@ -10,23 +10,11 @@ namespace UnityEditor.PackageManager.UI.Tests
         [SetUp]
         public void Setup()
         {
-            Window.Collection.SetFilter(PackageFilter.Local);
-            Window.Collection.UpdatePackageCollection(true);
+            PackageCollection.Instance.SetFilter(PackageFilter.Local);
+            PackageCollection.Instance.UpdatePackageCollection(true);
             SetSearchPackages(Enumerable.Empty<PackageInfo>());
             SetListPackages(Enumerable.Empty<PackageInfo>());
             Factory.ResetOperations();
-        }
-
-        private void SetSearchPackages(IEnumerable<PackageInfo> packages)
-        {
-            Factory.SearchOperation = new MockSearchOperation(Factory, packages);
-            Window.Collection.FetchSearchCache(true);
-        }
-
-        private void SetListPackages(IEnumerable<PackageInfo> packages)
-        {
-            Factory.Packages = packages;
-            Window.Collection.FetchListCache(true);
         }
 
         [Test]
@@ -70,7 +58,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             SetListPackages(new List<PackageInfo> {PackageSets.Instance.Single(PackageSource.Registry, "name", "1.0.0", false)});
 
-            Window.Collection.SetFilter(PackageFilter.All);
+            PackageCollection.Instance.SetFilter(PackageFilter.All);
 
             var details = Container.Q<PackageDetails>("detailsGroup");
             Assert.IsTrue(details.UpdateButton.text == PackageDetails.PackageActionVerbs[(int)PackageDetails.PackageAction.Add]);
