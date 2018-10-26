@@ -10,3 +10,4 @@
 0.2.0-preview.1
 0.2.0-preview.2
 0.2.0-preview.3
+0.2.0-preview.4

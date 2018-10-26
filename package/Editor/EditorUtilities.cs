@@ -10,6 +10,7 @@ namespace UnityEditor.XR.Management
 {
     internal static class EditorUtilities
     {
+        internal static readonly string[] s_DefaultGeneralSettingsPath = {"XR"};
         internal static readonly string[] s_DefaultLoaderPath = {"XR","Loaders"};
         internal static readonly string[] s_DefaultSettingsPath = {"XR","Settings"};
 

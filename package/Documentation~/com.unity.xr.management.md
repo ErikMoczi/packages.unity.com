@@ -52,9 +52,24 @@ If you wish not to create this at installation time, the appropriate portion of 
 
 ## Add an **XRManager** instance to your scene
 
+### If you wish to start XR SDK on a per scene basis (i.e. start in 2D and transition into VR)
 * Create a new empty Game Object in your scene.
 * Add an instance of the **XRManager** component to this new Game Object.
 * Use the **XRManager** component Inspector UI to add/create, remove and reorder the loaders you wish to use.
+
+When the scene loads, XR Manager will attempt to create and start the set of subsystems for the first loader that successfully initializes. Unless otherwise specified, XR Manager will manage the lifetime of the XR SDK session within the life time of the scene.
+
+### If you wish to start XR SDK at launch and keep it running throughout the app lifetime.
+* Open and scene and create an empty **Game Object**. Add an **XR Manager** component to that **Game Object**. 
+* Drag the **Game Object** to the Project heirarchy and create a prefab from that instance. Delete the **Game Object** instance from the scene.
+* Open the prefab in the Prefab Editor and go to the inspector for the prefab.
+* Populate the **XR Manager** instance with the set of loaders you wish to use for your application.
+* Navigate to **Unified Settings**.
+* Select the top level **XR** node. Drag the prefab to the XR Manager Instance and drop it. This prefab is now assigned to the global XR settings system and will be used to manage the lifetime of the XR SDK for the lifetime of the application.
+
+The instance of the **Game Object** that contains the **XR Manager** component instance you wish to use can be set/accessed using **XRGeneralSettings.Instance.m_LoaderManagerInstance**. This allows you to change the prefab instance that you want to use at build time so that you can change loader configuration depending on build target.
+
+**NOTE**: You can always manually control the XR SDK system by accessing the **XRManager.activeLoader** field once XR SDK has been initialized.
 
 ## Customize build and runtime settings
 
@@ -95,7 +110,7 @@ A user will add all the **XRLoaders** instances they created to the Loaders prop
 
 When asked to initialize, **XRManager** will call each **XRLoader** instance it has a reference to in the order it has and attempt to initialize each one. The first loader that succeeds initialization becomes the active loader and all further attempts to initialize are stopped. From this point the user can ask for the static **XRManager.ActiveLoader** instance to get access to the active loader. If initialization fails for all loaders, **ActiveLoader** is set to null.
 
-Automatic lifecycle management hooks into the following **MonoBehaviour** callback points:
+Scene based Automatic lifecycle management hooks into the following **MonoBehaviour** callback points:
 
 |Callback|Lifecycle Step|
 |---|---|
@@ -104,6 +119,14 @@ Automatic lifecycle management hooks into the following **MonoBehaviour** callba
 |OnDisable|Stop all subsystems|
 |OnDestroy|De-initialize all subsystems and remove the ActiveLoader instance.|
 
+App lifetime based Automatic lifecycle management hooks into the following callback points:
+
+|Callback|Lifecycle Step|
+|---|---|
+|Runtime Initialization After Assemblies Loaded|Find the first loader that succeeds intiialization and set ActiveLoader.|
+|Runtime Initialization Before splash screen is shown|Start all subsystems|
+|OnDisable|Stop all subsystems|
+|OnDestroy|Deintialize all subsystems and remove the ActiveLoader instance.|
 
 ## Build and Runtime settings through *Unified Settings*
 
@@ -192,6 +215,7 @@ This version of **XR SDK Management** includes:
 * **XRConfigurationData** - This is an attribute that allows for build and runtime settings to be hosted within the **Unified Settings** window. All instances will be hosted under the top level **XR** entry within the **Unified Settings** window under the name supplied as part of the attribute. The management package will maintain and manage the lifecycle for one instance of the build settings using **EditorBuildSettings** config object API, stored with the key provided in the attribute. At any time, the provider or the user is free access the configuration settings instance by asking **EditorBuildSettings** for the instance associated with the chosen key (as set in the attribute).
 * **XRPackageInitializationBase** - Helper class to derive from that simplifies some of the busy work for package initialization. Helps to create a default instance of the packages XRLoader and default settings at the time of package installation. Initialization is run once only and the package developer should not depend on the user creating the specified instances.
 * **XRBuildHelper** - Abstract class useful for handling some boilerplate around moving settings from Editor -> Runtime. Derive from this class and specific the appropriate settings type and the system will take care of marshaling that type from EditorUserBuildSettings to PlayerSettings to be used at runtime.
+* **XRGeneralSettings** - Contains settings specifix to all of XR SDK and not to any single provider.
 * **Samples** - There is a samples folder in the package that contains an implementation of all parts of XR Management. Copy that folder to a location in your project/package to get started with implementing XR Management for your needs.
 
 ## Document revision history
