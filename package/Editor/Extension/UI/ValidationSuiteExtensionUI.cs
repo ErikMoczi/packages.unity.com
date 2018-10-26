@@ -72,7 +72,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
                 EditorUtility.DisplayDialog("Validation Suite", "Install the package in your project to Validate", "Got it")  ;  
             }
 
-            var results = ValidationSuite.RunValidationSuite(PackageId, CurrentPackageinfo.source);
+            var results = ValidationSuite.RunValidationSuite(PackageId, CurrentPackageinfo.source == PackageSource.Embedded);
             ValidationResults.text = results ? "Success" : "Failed";
             ViewResultsButton.visible = ValidationSuiteReport.ReportExists(PackageId);
             ViewDiffButton.visible = ValidationSuiteReport.DiffsReportExists(PackageId);

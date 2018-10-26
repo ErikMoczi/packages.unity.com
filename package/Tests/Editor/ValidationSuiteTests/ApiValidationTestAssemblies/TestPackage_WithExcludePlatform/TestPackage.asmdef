@@ -1,0 +1,10 @@
+{
+    "name": "Unity.PackageValidationSuite.EditorTests.TestPackage_WithExcludePlatform",
+    "references": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": ["Android"],
+    "allowUnsafeCode": false
+}

@@ -87,9 +87,14 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                         (versionChangeType == VersionChangeType.Patch || versionChangeType == VersionChangeType.Minor))
                         Error("Removing from includePlatfoms requires a new major version. " + includePlatformsDiff);
                     else if (projectAssemblyDefinition.includePlatforms.Any(p =>
-                                 !previousAssemblyDefinition.includePlatforms.Contains(p)) &&
-                             (versionChangeType == VersionChangeType.Patch))
-                        Error("Adding to includePlatforms requires a new minor or major version. " + includePlatformsDiff);
+                                 !previousAssemblyDefinition.includePlatforms.Contains(p)))
+                    {
+                        if (versionChangeType == VersionChangeType.Patch)
+                            Error("Adding to includePlatforms requires a new minor or major version. " + includePlatformsDiff);
+                        else if (previousAssemblyDefinition.includePlatforms.Length == 0 && versionChangeType == VersionChangeType.Minor)
+                            Error("Adding the first entry in inlcudePlatforms requires a new major version. " + includePlatformsDiff);
+                    }
+                             
                 }
             }
 
@@ -170,7 +175,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         class ApiDiff
         {
             public List<string> missingAssemblies;
-            public List<IEntityChange> entityChanges;
             public Dictionary<string, ApiValidation.AssemblyChange> assemblyChanges;
             public int breakingChanges;
             public int additions;
@@ -229,6 +233,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 diff.removedAssemblyCount));
 
             var json = JsonUtility.ToJson(diff);
+            Directory.CreateDirectory(ValidationSuiteReport.resultsPath);
             File.WriteAllText(Path.Combine(ValidationSuiteReport.resultsPath, "ApiValidationReport.json"), json);
 
             //Figure out type of version change (patch, minor, major)

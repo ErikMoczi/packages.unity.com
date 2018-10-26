@@ -1,9 +1,14 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
-using UnityEditor.PackageManager.ValidationSuite;
+using Semver;
+using UnityEditor;
+using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.Networking;
+
+using UnityEditor.PackageManager.ValidationSuite;
 
 public enum ValidationType
 {
@@ -52,7 +57,7 @@ internal class VettingContext
         }
 
         // Get Previous Version of the package
-#if UNITY_2018_2_OR_NEWER
+#if UNITY_2018_1_OR_NEWER
         var previousPackagePath = GetPreviousPackage(context.ProjectPackageInfo);
         if (!string.IsNullOrEmpty(previousPackagePath))
         {
@@ -168,7 +173,7 @@ internal class VettingContext
 
         if (request.isHttpError || request.isNetworkError || !PackageBinaryZipping.Unzip(zipPath, PreviousVersionBinaryPath))
         {
-            Debug.Log(String.Format("Could not download binaries for previous package version from {0}. {1}", uri, request.error));
+            Debug.Log(String.Format("Could not download binaries for previous package version from {0}. {1}", uri, request.responseCode));
             PreviousPackageBinaryDirectory = null;
         }
         else

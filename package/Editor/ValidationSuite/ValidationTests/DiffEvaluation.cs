@@ -8,13 +8,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
     internal class DiffEvaluation : BaseValidation
     {
-        private HashSet<string> importantFiles = new HashSet<string>()
-        {
-            "package.json",
-            "*.asmdef",
-            "license.md",
-        };
-
         public DiffEvaluation()
         {
             TestName = "Package Diff Evaluation";

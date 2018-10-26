@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-#if UNITY_2018_2_OR_NEWER
+#if UNITY_2018_1_OR_NEWER
 using UnityEditor.Compilation;
 #endif
 
@@ -194,8 +194,22 @@ namespace UnityEditor.PackageManager.ValidationSuite
         /// </summary>
         public static IEnumerable<Assembly> AssembliesForPackage(Assembly[] assemblies, IEnumerable<string> filesInPackage)
         {
-            var assemblyNames = new HashSet<string>(filesInPackage.Select(CompilationPipeline.GetAssemblyNameFromScriptPath)
-                .Where(p => p != null).Select(p => p.Replace(".dll", "")));
+            var assemblyNames = new HashSet<string>();
+            foreach (var path in filesInPackage)
+            {
+                var assemblyName = CompilationPipeline.GetAssemblyNameFromScriptPath(path);
+                if (assemblyName != null)
+                    assemblyNames.Add(assemblyName.Replace(".dll", ""));
+
+                if (string.Equals(".asmdef", Path.GetExtension(path), StringComparison.OrdinalIgnoreCase))
+                {
+                    var assemblyDefinition = GetDataFromJson<AssemblyDefinition>(path);
+                    if (string.IsNullOrEmpty(assemblyDefinition.name))
+                        throw new ArgumentException(path + " does not have a name field");
+
+                    assemblyNames.Add(assemblyDefinition.name);
+                }
+            }
             return assemblies.Where(a => assemblyNames.Contains(a.name));
         }
 #endif

@@ -36,7 +36,18 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         }
 
         [Test]
-        public void AddedEmptyAssemblyInPatchReleasePasses()
+        public void AddedEmptyAssemblyInPatchReleaseFalse()
+        {
+            List<string> messagesExpected = new List<string> { "Error: Additions require a new minor or major version" };
+
+            var apiValidation = Validate("TestPackage_EmptyAsmdefAdd", "0.0.2");
+
+            Assert.AreEqual(TestState.Failed, apiValidation.TestState);
+            Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
+        }
+
+        [Test]
+        public void AddedEmptyAssemblyInMinorReleasePasses()
         {
             var apiValidation = Validate("TestPackage_EmptyAsmdefAdd", "0.0.2");
             Assert.AreEqual(TestState.Succeeded, apiValidation.TestState);
@@ -63,11 +74,23 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.AreEqual(TestState.Failed, apiValidation.TestState);
             Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
         }
+
         [Test]
         public void AddIncludePlatformInMinorReleasePasses()
         {
-            var apiValidation = Validate("TestPackage_WithIncludePlatform", "0.1.0");
+            var apiValidation = Validate("TestPackage_WithTwoIncludePlatforms", "0.1.0", "TestPackage_WithIncludePlatform", "0.0.1");
             Assert.AreEqual(TestState.Succeeded, apiValidation.TestState);
+        }
+
+        [Test]
+        public void AddFirstIncludePlatformInMinorReleaseFails()
+        {
+            List<string> messagesExpected = new List<string> { "Error: Adding the first entry in inlcudePlatforms requires a new major version. Was:\"\" Now:\"Editor\"" };
+
+            var apiValidation = Validate("TestPackage_WithIncludePlatform", "0.1.0");
+
+            Assert.AreEqual(TestState.Failed, apiValidation.TestState);
+            Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
         }
 
         [Test]
@@ -80,6 +103,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.AreEqual(TestState.Failed, apiValidation.TestState);
             Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
         }
+
         [Test]
         public void AddExcludePlatformInMajorReleasePasses()
         {
@@ -97,6 +121,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.AreEqual(TestState.Failed, apiValidation.TestState);
             Assert.That(apiValidation.TestOutput.Where(o => o.StartsWith("Error")), Is.EquivalentTo(messagesExpected));
         }
+        
         [Test]
         public void RemoveExcludePlatformInMinorReleasePasses()
         {
