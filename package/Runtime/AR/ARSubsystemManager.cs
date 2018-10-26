@@ -342,11 +342,7 @@ namespace UnityEngine.XR.ARFoundation
             inputSubsystem = ARSubsystemUtil.CreateInputSubsystem(subsystemFilter);
             depthSubsystem = ARSubsystemUtil.CreateDepthSubsystem(subsystemFilter);
             planeSubsystem = ARSubsystemUtil.CreatePlaneSubsystem(subsystemFilter);
-
             referencePointSubsystem = ARSubsystemUtil.CreateReferencePointSubsystem(subsystemFilter);
-            if (referencePointSubsystem != null)
-                referencePointSubsystem.ActivateExtensions();
-
             raycastSubsystem = ARSubsystemUtil.CreateRaycastSubsystem(subsystemFilter);
 
             if (planeSubsystem != null)

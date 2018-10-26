@@ -69,6 +69,10 @@ namespace UnityEngine.XR.ARFoundation
         [SerializeField]
         bool m_UseCustomRendererAsset;
 
+        /// <summary>
+        /// Whether to use a <see cref="ARBackgroundRendererAsset"/>. This can assist with
+        /// usage of the light weight render pipeline.
+        /// </summary>
         public bool useCustomRendererAsset
         {
             get { return m_UseCustomRendererAsset; }
@@ -78,11 +82,14 @@ namespace UnityEngine.XR.ARFoundation
         [SerializeField] 
         ARBackgroundRendererAsset m_CustomRendererAsset;
 
+        /// <summary>
+        /// Get the custom <see cref="ARBackgroundRendererAsset "/> to use. This can
+        /// assist with usage of the light weight render pipeline.
+        /// </summary>
         public ARBackgroundRendererAsset customRendererAsset
         {
             get { return m_CustomRendererAsset; }
         }
-        
 
         ARFoundationBackgroundRenderer backgroundRenderer { get; set; }
 
@@ -214,7 +221,9 @@ namespace UnityEngine.XR.ARFoundation
         {
             get
             {
-                if (m_LwrpMaterial != null) return m_LwrpMaterial;
+                if (m_LwrpMaterial != null)
+                    return m_LwrpMaterial;
+
                 if (m_UseCustomRendererAsset && m_CustomRendererAsset != null)
                 {
                     m_LwrpMaterial = m_CustomRendererAsset.CreateCustomMaterial();

@@ -11,3 +11,4 @@
 1.0.0-preview.16
 1.0.0-preview.17
 1.0.0-preview.18
+1.0.0-preview.19

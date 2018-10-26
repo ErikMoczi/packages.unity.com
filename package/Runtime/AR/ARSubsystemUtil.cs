@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.Experimental;
 using UnityEngine.Experimental.XR;
+using UnityEngine.XR.ARExtensions;
 
 namespace UnityEngine.XR.ARFoundation
 {
@@ -21,7 +22,9 @@ namespace UnityEngine.XR.ARFoundation
         /// <returns>A <c>XRSessionSubsystem</c> if successful, <c>null</c> otherwise.</returns>
         public static XRSessionSubsystem CreateSessionSubsystem(string id = null)
         {
-            return CreateSubsystem<XRSessionSubsystemDescriptor, XRSessionSubsystem>(s_SessionSubsystemDescriptors, id);
+            var subsystem = CreateSubsystem<XRSessionSubsystemDescriptor, XRSessionSubsystem>(s_SessionSubsystemDescriptors, id);
+            subsystem.ActivateExtensions();
+            return subsystem;
         }
 
         /// <summary>
@@ -31,7 +34,9 @@ namespace UnityEngine.XR.ARFoundation
         /// <returns>A <c>XRCameraSubsystem</c> if successful, <c>null</c> otherwise.</returns>
         public static XRCameraSubsystem CreateCameraSubsystem(string id = null)
         {
-            return CreateSubsystem<XRCameraSubsystemDescriptor, XRCameraSubsystem>(s_CameraSubsystemDescriptors, id);
+            var subsystem = CreateSubsystem<XRCameraSubsystemDescriptor, XRCameraSubsystem>(s_CameraSubsystemDescriptors, id);
+            subsystem.ActivateExtensions();
+            return subsystem;
         }
 
         /// <summary>
@@ -61,7 +66,9 @@ namespace UnityEngine.XR.ARFoundation
         /// <returns>A <c>XRPlaneSubsystem</c> if successful, <c>null</c> otherwise.</returns>
         public static XRPlaneSubsystem CreatePlaneSubsystem(string id = null)
         {
-            return CreateSubsystem<XRPlaneSubsystemDescriptor, XRPlaneSubsystem>(s_PlaneSubsystemDescriptors, id);
+            var subsystem = CreateSubsystem<XRPlaneSubsystemDescriptor, XRPlaneSubsystem>(s_PlaneSubsystemDescriptors, id);
+            subsystem.ActivateExtensions();
+            return subsystem;
         }
 
         /// <summary>
@@ -71,7 +78,9 @@ namespace UnityEngine.XR.ARFoundation
         /// <returns>A <c>XRReferencePointSubsystem</c> if successful, <c>null</c> otherwise.</returns>
         public static XRReferencePointSubsystem CreateReferencePointSubsystem(string id = null)
         {
-            return CreateSubsystem<XRReferencePointSubsystemDescriptor, XRReferencePointSubsystem>(s_ReferencePointSubsystemDescriptors, id);
+            var subsystem = CreateSubsystem<XRReferencePointSubsystemDescriptor, XRReferencePointSubsystem>(s_ReferencePointSubsystemDescriptors, id);
+            subsystem.ActivateExtensions();
+            return subsystem;
         }
 
         /// <summary>

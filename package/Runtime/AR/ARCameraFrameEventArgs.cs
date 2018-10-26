@@ -32,7 +32,10 @@ namespace UnityEngine.XR.ARFoundation
 
         public override int GetHashCode()
         {
-            return lightEstimation.GetHashCode() ^ time.GetHashCode();
+            unchecked
+            {
+                return lightEstimation.GetHashCode() * 486187739 + time.GetHashCode();
+            }
         }
 
         public override bool Equals(object obj)

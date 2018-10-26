@@ -40,10 +40,13 @@ namespace UnityEngine.XR.ARFoundation
 
         public override int GetHashCode()
         {
-            return
-                averageBrightness.GetHashCode() ^
-                averageColorTemperature.GetHashCode() ^
-                colorCorrection.GetHashCode();
+            unchecked
+            {
+                return
+                    (averageBrightness.GetHashCode() * 486187739 +
+                    averageColorTemperature.GetHashCode()) * 486187739 +
+                    colorCorrection.GetHashCode();
+            }
         }
 
         public override bool Equals(object obj)

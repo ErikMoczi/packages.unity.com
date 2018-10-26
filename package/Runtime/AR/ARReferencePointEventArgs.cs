@@ -63,7 +63,10 @@ namespace UnityEngine.XR.ARFoundation
 
         public override int GetHashCode()
         {
-            return referencePoint.GetHashCode() ^ previousTrackingState.GetHashCode() ^ previousSessionRelativePose.GetHashCode();
+            unchecked
+            {
+                return ((referencePoint == null ? 0 : referencePoint.GetHashCode()) * 486187739 + previousTrackingState.GetHashCode()) * 486187739 + previousSessionRelativePose.GetHashCode();
+            }
         }
 
         public override bool Equals(object obj)

@@ -116,6 +116,10 @@ The camera textures are likely [External Textures](https://docs.unity3d.com/Scri
 Graphics.Blit(null, m_MyRenderTexture, m_ARBackgroundCamera.material);
 ```
 
+### Accessing the Camera Image on the CPU
+
+See [Camera Image Manual Documentation](cpu-camera-image.md).
+
 ### AR Managers
 
 The `ARSessionOrigin`'s' `GameObject` can also have a number of additional components on it, which manage the addition, updating, and removal of `GameObject`s to represent planes, point cloud, and reference points. These are the `ARPlaneManager`, `ARPointCloudManager`, and `ARReferencePointManager`, respectively:

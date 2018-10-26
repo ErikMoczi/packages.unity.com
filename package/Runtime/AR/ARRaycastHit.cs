@@ -71,7 +71,10 @@ namespace UnityEngine.XR.ARFoundation
 
         public override int GetHashCode()
         {
-            return m_Hit.GetHashCode() ^ distance.GetHashCode() ^ m_Transform.GetHashCode();
+            unchecked
+            {
+                return (m_Hit.GetHashCode() * 486187739 + distance.GetHashCode()) * 486187739 + (m_Transform == null ? 0 : m_Transform.GetHashCode());
+            }
         }
 
         public override bool Equals(object obj)

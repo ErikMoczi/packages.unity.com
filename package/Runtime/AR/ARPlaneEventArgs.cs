@@ -27,7 +27,7 @@ namespace UnityEngine.XR.ARFoundation
 
         public override int GetHashCode()
         {
-            return plane.GetHashCode();
+            return plane == null ? 0 : plane.GetHashCode();
         }
 
         public override bool Equals(object obj)
@@ -83,7 +83,7 @@ namespace UnityEngine.XR.ARFoundation
 
         public override int GetHashCode()
         {
-            return plane.GetHashCode();
+            return plane == null ? 0 : plane.GetHashCode();
         }
 
         public override bool Equals(object obj)
@@ -138,7 +138,7 @@ namespace UnityEngine.XR.ARFoundation
 
         public override int GetHashCode()
         {
-            return plane.GetHashCode();
+            return plane == null ? 0 : plane.GetHashCode();
         }
 
         public override bool Equals(object obj)
@@ -219,11 +219,10 @@ namespace UnityEngine.XR.ARFoundation
 
         public override int GetHashCode()
         {
-            return
-                plane.GetHashCode() ^
-                center.GetHashCode() ^
-                normal.GetHashCode() ^
-                convexBoundary.GetHashCode();
+            unchecked
+            {
+                return (((plane == null ? 0 : plane.GetHashCode()) * 486187739 + center.GetHashCode()) * 486187739 + normal.GetHashCode()) * 486187739 + convexBoundary.GetHashCode();
+            }
         }
 
         public override bool Equals(object obj)

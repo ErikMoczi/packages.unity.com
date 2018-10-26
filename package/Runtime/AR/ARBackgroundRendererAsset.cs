@@ -1,8 +1,4 @@
-﻿using UnityEngine;
-using UnityEngine.XR;
-
-
-namespace UnityEngine.XR.ARFoundation
+﻿namespace UnityEngine.XR.ARFoundation
 {
     public abstract class ARBackgroundRendererAsset : ScriptableObject
     {
