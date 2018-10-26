@@ -12,6 +12,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestName = "Documentation Validation";
             TestDescription = "Make sure the documentation site exists for this version of the package.";
             TestCategory = TestCategory.DataValidation;
+            SupportedValidations = new[] { ValidationType.PackageManager };
         }
 
         protected override void Run()

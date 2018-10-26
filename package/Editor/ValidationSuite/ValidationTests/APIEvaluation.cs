@@ -10,6 +10,7 @@
             TestName = "API Evaluation";
             TestDescription = "Produces report of APIs exposed by package, as well as APIs the package depends on.";
             TestCategory = TestCategory.DataValidation;
+            SupportedValidations = new[] { ValidationType.PackageManager };
         }
 
         protected override void Run()

@@ -7,6 +7,7 @@
             TestName = "License Validation";
             TestDescription = "Verify there is a license, and that its valid.";
             TestCategory = TestCategory.DataValidation;
+            SupportedValidations = new[] { ValidationType.PackageManager };
         }
 
         protected override void Run()

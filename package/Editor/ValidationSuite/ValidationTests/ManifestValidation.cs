@@ -16,17 +16,20 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestName = "Manifest Validation";
             TestDescription = "Validate that the information found in the manifest is well formatted.";
             TestCategory = TestCategory.DataValidation;
+            SupportedValidations = new[] { ValidationType.PackageManager };
         }
 
         protected override void Run()
         {
             // Start by declaring victory
             TestState = TestState.Succeeded;
-            ValidateManifestData(Context.PublishPackageInfo);
+            ValidateManifestData();
+            ValidateVersion();
         }
 
-        private void ValidateManifestData(VettingContext.ManifestData manifestData)
+        private void ValidateManifestData()
         {
+            var manifestData = Context.ProjectPackageInfo;
             if (manifestData == null)
             {
                 TestState = TestState.Failed;
@@ -58,6 +61,17 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 TestOutput.Add("In package.json, \"name\" is not a valid name.");
             }
 
+            if (string.IsNullOrEmpty(manifestData.displayName))
+            {
+                TestState = TestState.Failed;
+                TestOutput.Add("In package.json, \"DisplayName\" must be set.");
+            }
+            else if (manifestData.displayName.Length > 25)
+            {
+                TestState = TestState.Failed;
+                TestOutput.Add("In package.json, \"DisplayName\" is too long. Max Length = 25");
+            }
+
             // Check Description, make sure it's there, and not too short.
             if (manifestData.description.Length < MinDescriptionSize)
             {
@@ -72,6 +86,48 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 TestState = TestState.Failed;
                 TestOutput.Add("In package.json, \"version\" needs to be a valid \"Semver\".");
             }
+        }
+
+        private void ValidateVersion()
+        {
+#if UNITY_2018_2_OR_NEWER
+            var version = SemVersion.Parse(Context.ProjectPackageInfo.version);
+            var previousVersion = Context.PreviousPackageInfo != null ? SemVersion.Parse(Context.PreviousPackageInfo.version) : null;
+
+            // List out available versions for a package.
+            var request = Client.Search(Context.ProjectPackageInfo.name);
+            while (!request.IsCompleted)
+            {
+                System.Threading.Thread.Sleep(100);
+            }
+
+            // If it exists, get the last one from that list.
+            if (request.Result != null && request.Result.Length > 0)
+            {
+                if (request.Result[0].versions.all.Any(v => v == Context.ProjectPackageInfo.version))
+                {
+                    TestState = TestState.Failed;
+                    TestOutput.Add("Version " + Context.ProjectPackageInfo.version + " of this package already exists in production.");
+                }
+            }
+
+            if (string.IsNullOrEmpty(version.Prerelease))
+            {
+                // This is a production submission, let's make sure it meets some criteria
+                if (previousVersion == null)
+                {
+                    TestOutput.Add("WARNING: This package is not a preview version, but it's the first version of the package.  Should this package version be tagged as " + Context.ProjectPackageInfo.version + "-preview?");
+                }
+                else
+                {
+                    
+                }
+            }
+            else
+            {
+
+            }
+#endif
         }
     }
 }

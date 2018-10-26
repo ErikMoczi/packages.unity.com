@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿#if UNITY_2018_1_OR_NEWER
+using System.Linq;
 using UnityEditor.Compilation;
 
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
@@ -56,3 +57,4 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         }
     }
 }
+#endif

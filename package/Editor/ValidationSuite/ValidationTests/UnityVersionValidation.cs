@@ -15,6 +15,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestName = "Unity Version Validation";
             TestDescription = "Validate that the package was developed on the right version of Unity.";
             TestCategory = TestCategory.DataValidation;
+            SupportedValidations = new[] { ValidationType.PackageManager };
         }
 
         // This method is called synchronously during initialization, 

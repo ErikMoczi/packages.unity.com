@@ -5,6 +5,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
     internal abstract class BaseValidation : IValidationTest, IValidationTestResult
     {
+        public ValidationType[] SupportedValidations { get; set; }
+
         public ValidationSuite Suite { get; set; }
         
         public string TestName { get; protected set; }
@@ -36,6 +38,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             ShouldRun = true;
             StartTime = DateTime.Now;
             EndTime = DateTime.Now;
+            SupportedValidations = new[] { ValidationType.AssetStore, ValidationType.PackageManager };
         }
 
         // This method is called synchronously during initialization, 

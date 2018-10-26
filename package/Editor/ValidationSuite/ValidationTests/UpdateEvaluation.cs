@@ -7,6 +7,7 @@
             TestName = "Package Update Validation";
             TestDescription = "If this is an update, validate that the package's metadata is correct.";
             TestCategory = TestCategory.DataValidation;
+            SupportedValidations = new[] { ValidationType.PackageManager };
         }
 
         protected override void Run()

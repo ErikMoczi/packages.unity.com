@@ -1,4 +1,5 @@
-﻿#define NEW_PACKMAN
+﻿#if UNITY_2018_2_OR_NEWER
+#define NEW_PACKMAN
 
 using UnityEditor.PackageManager.UI;
 using UnityEngine.Experimental.UIElements;
@@ -6,12 +7,7 @@ using UnityEngine.Experimental.UIElements;
 namespace UnityEditor.PackageManager.ValidationSuite.UI
 {
     [InitializeOnLoad]
-#if UNITY_2018_2_OR_NEWER
     internal class ValidationSuiteExtension : IPackageManagerExtension
-#else
-    internal class ValidationSuiteExtension
-#endif
-
     {
         private PackageInfo packageInfo;
         private ValidationSuiteExtensionUI ui;
@@ -44,9 +40,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
 
         static ValidationSuiteExtension()
         {
-#if UNITY_2018_2_OR_NEWER
             PackageManagerExtensions.RegisterExtension(new ValidationSuiteExtension());
-#endif
         }
     }
 }
+#endif

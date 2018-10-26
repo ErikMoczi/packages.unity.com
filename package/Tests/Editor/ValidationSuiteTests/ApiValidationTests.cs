@@ -7,6 +7,7 @@ using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+#if UNITY_2018_1_OR_NEWER
 using UnityEditor.Compilation;
 using UnityEngine.Assertions.Must;
 using Debug = UnityEngine.Debug;
@@ -248,3 +249,4 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         }
     }
 }
+#endif

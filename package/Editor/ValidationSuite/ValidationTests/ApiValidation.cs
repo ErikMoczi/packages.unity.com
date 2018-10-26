@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if UNITY_2018_1_OR_NEWER
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -287,3 +288,5 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         Invalid
     }
 }
+
+#endif

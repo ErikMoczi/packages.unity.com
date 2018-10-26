@@ -1,32 +1,26 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
-using System.Runtime.Remoting.Contexts;
 using System.Threading;
-using Semver;
-using UnityEditor;
 using UnityEditor.PackageManager.ValidationSuite;
 using UnityEngine;
-
-using UnityEditor.PackageManager;
-using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
 using UnityEngine.Networking;
+
+public enum ValidationType
+{
+    PackageManager,
+    AssetStore
+}
 
 /// <summary>
 /// Class containing package data required for vetting.
 /// </summary>
 internal class VettingContext
 {
-    public enum ContextType
-    {
-        PackageManager,
-        AssetStore
-    }
-
     internal class ManifestData
     {
         public string path = "";
         public string name = "";
+        public string displayName = "";
         public string description = "";
         public string unity = "";
         public string version = "";
@@ -36,12 +30,10 @@ internal class VettingContext
     public ManifestData PublishPackageInfo { get; set; }
     public ManifestData PreviousPackageInfo { get; set; }
     public string PreviousPackageBinaryDirectory { get; set; }
-
-    public ContextType Type { get; set; }
-
+    public ValidationType ValidationType { get; set; }
     public const string PreviousVersionBinaryPath = "Temp/ApiValidationBinaries";
 
-    public static VettingContext CreatePackmanContext(string packagePath, PackageSource source)
+    public static VettingContext CreatePackmanContext(string packagePath, bool isEmbedded)
     {
         VettingContext context = new VettingContext();
 
@@ -49,7 +41,7 @@ internal class VettingContext
         context.ProjectPackageInfo = GetManifest(packagePath);
 
         // Then, publish the package locally to get an actual snapshot of what we will publish
-        if (source == PackageSource.Embedded)
+		if (isEmbedded)
         {
             var publishPackagePath = PublishPackage(packagePath);
             context.PublishPackageInfo = GetManifest(publishPackagePath);
@@ -71,13 +63,17 @@ internal class VettingContext
         context.PreviousPackageInfo = null;
 #endif
 
+        context.ValidationType = ValidationType.PackageManager;
         return context;
     }
 
     public static VettingContext CreateAssetStoreContext(string packagePath, string previousPackagePath)
     {
         VettingContext context = new VettingContext();
-
+		context.ProjectPackageInfo = new ManifestData () { path = packagePath };
+		context.PublishPackageInfo = new ManifestData () { path = packagePath };
+		context.PreviousPackageInfo = new ManifestData () { path = previousPackagePath };
+        context.ValidationType = ValidationType.AssetStore;
         return context;
     }
 
@@ -115,6 +111,8 @@ internal class VettingContext
 
     private static string GetPreviousPackage(ManifestData projectPackageInfo)
     {
+		#if UNITY_2018_1_OR_NEWER
+
         // List out available versions for a package.
         var request = Client.Search(projectPackageInfo.name);
         while (!request.IsCompleted)
@@ -145,7 +143,7 @@ internal class VettingContext
                 }
             }
         }
-
+		#endif
         return string.Empty;
     }
 
@@ -155,6 +153,8 @@ internal class VettingContext
             Directory.Delete(PreviousVersionBinaryPath, true);
 
         Directory.CreateDirectory(PreviousVersionBinaryPath);
+
+#if UNITY_2018_1_OR_NEWER
 
         var packageDataZipFilename = PackageBinaryZipping.PackageDataZipFilename(PreviousPackageInfo.name, PreviousPackageInfo.version);
         var zipPath = Path.Combine(PreviousVersionBinaryPath, packageDataZipFilename);
@@ -173,5 +173,6 @@ internal class VettingContext
         }
         else
             PreviousPackageBinaryDirectory = PreviousVersionBinaryPath;
+#endif
     }
 }

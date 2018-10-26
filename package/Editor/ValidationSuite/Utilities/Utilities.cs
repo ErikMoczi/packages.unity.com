@@ -3,9 +3,11 @@ using System.IO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.Compilation;
 using UnityEngine;
-using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
+
+#if UNITY_2018_2_OR_NEWER
+using UnityEditor.Compilation;
+#endif
 
 namespace UnityEditor.PackageManager.ValidationSuite
 {   
@@ -22,12 +24,12 @@ namespace UnityEditor.PackageManager.ValidationSuite
         {
             var nodePath = Path.Combine(EditorApplication.applicationContentsPath, "Tools");
             nodePath = Path.Combine(nodePath, "nodejs");
-            #if UNITY_EDITOR_OSX
+#if UNITY_EDITOR_OSX
             nodePath = Path.Combine(nodePath, "bin");
             nodePath = Path.Combine(nodePath, "node");
-            #elif UNITY_EDITOR_WIN
+#elif UNITY_EDITOR_WIN
             nodePath = Path.Combine(nodePath, "node.exe");
-            #endif
+#endif
             return nodePath;
         }
 
@@ -35,9 +37,9 @@ namespace UnityEditor.PackageManager.ValidationSuite
         {
             var npmFilePath = Path.Combine(EditorApplication.applicationContentsPath, "Tools");
             npmFilePath = Path.Combine(npmFilePath, "nodejs");
-            #if UNITY_EDITOR_OSX            
+#if UNITY_EDITOR_OSX
             npmFilePath = Path.Combine(npmFilePath, "lib");
-            #endif
+#endif
             npmFilePath = Path.Combine(npmFilePath, "node_modules");
             npmFilePath = Path.Combine(npmFilePath, "npm");
             npmFilePath = Path.Combine(npmFilePath, "bin");
@@ -173,6 +175,8 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         }
 
+#if UNITY_2018_1_OR_NEWER
+
         public static bool IsTestAssembly(Assembly assembly)
         {
             return assembly.allReferences.Contains("TestAssemblies");
@@ -194,5 +198,6 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 .Where(p => p != null).Select(p => p.Replace(".dll", "")));
             return assemblies.Where(a => assemblyNames.Contains(a.name));
         }
+#endif
     }
 }

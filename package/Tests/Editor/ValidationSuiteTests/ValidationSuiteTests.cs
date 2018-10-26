@@ -35,7 +35,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), new ValidationSuiteReport());
 
             // Setup tests we want to run
-            validationSuite.ValidationTests = testList.Cast<IValidationTest>();
+            validationSuite.ValidationTests = testList.Cast<BaseValidation>();
 
             validationSuite.RunSync();
 
@@ -70,7 +70,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), new ValidationSuiteReport());
 
             // Setup tests we want to run
-            validationSuite.ValidationTests = testList.Cast<IValidationTest>();
+            validationSuite.ValidationTests = testList.Cast<BaseValidation>();
 
             validationSuite.RunSync();
 
@@ -95,7 +95,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             var validationSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletednDelegate, new VettingContext(), new ValidationSuiteReport());
 
             // Setup tests we want to run
-            validationSuite.ValidationTests = testList.Cast<IValidationTest>();
+            validationSuite.ValidationTests = testList.Cast<BaseValidation>();
 
             validationSuite.RunSync();
 
@@ -155,6 +155,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             TestState = TestState.Succeeded;
             TestDescription = "My Test Example";
             TestCategory = TestCategory.DataValidation;
+            SupportedValidations = new[] { ValidationType.PackageManager };
         }
 
         protected override void Run()

@@ -13,6 +13,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestName = "Folder Structure Validation";
             TestDescription = "Verify that the folder structure meets expectations.";
             TestCategory = TestCategory.ContentScan;
+            SupportedValidations = new[] { ValidationType.PackageManager };
         }
 
         protected override void Run()

@@ -46,9 +46,9 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         private ValidationTestReport[] BuildReport(ValidationSuite suite)
         {
-            var testReports = new ValidationTestReport[suite.validationTests.Count()];
+            var testReports = new ValidationTestReport[suite.ValidationTests.Count()];
             var i = 0;
-            foreach (var validationTest in suite.validationTests)
+            foreach (var validationTest in suite.ValidationTests)
             {
                 testReports[i] = new ValidationTestReport();
                 testReports[i].TestName = validationTest.TestName;
@@ -130,7 +130,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         private void SaveTestResult(ValidationSuite suite, TestState testState)
         {
-            foreach (var testResult in suite.validationTests.Where(t => t.TestState == testState))
+            foreach (var testResult in suite.ValidationTests.Where(t => t.TestState == testState))
             {
                 File.AppendAllText(txtReportPath, string.Format("\r\n{0} - \"{1}\"\r\n", testResult.TestState, testResult.TestName));
                 if (testResult.TestOutput.Any())

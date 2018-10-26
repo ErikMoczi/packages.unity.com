@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if UNITY_2018_2_OR_NEWER
+
+using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -115,3 +117,25 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
         internal Button ViewDiffButton { get { return root.Q<Button>("viewdiff"); } }
     }
 }
+
+#else
+
+namespace UnityEditor.PackageManager.ValidationSuite.UI
+{
+    internal class ValidationSuiteUI
+    {
+        [MenuItem("internal:Packages/Test Packman Validation")]
+        internal static void TestPackmanValidation()
+        {
+            ValidationSuite.RunValidationSuite(string.Format("{0}@{1}", "com.unity.package-manager-ui", "1.8.1"));
+        }
+
+        [MenuItem("internal:Packages/Test AssetStore Validation")]
+        internal static void TestAssetStoreValidation()
+        {
+            ValidationSuite.RunAssetStoreValidationSuite("Graph & Charts", "5.3", "data/pkg1", "data/pkg2");
+        }
+    }
+}
+
+#endif

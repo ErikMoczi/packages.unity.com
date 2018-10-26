@@ -20,7 +20,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
     public class ValidationSuite
     {
         // List of validation tests
-        internal IEnumerable<BaseValidation> validationTests;
+        private IEnumerable<BaseValidation> validationTests;
 
         // Delegate called after every test to provide immediate feedback on single test results.
         private SingleTestCompletedDelegate singleTestCompletionDelegate;
@@ -52,10 +52,10 @@ namespace UnityEditor.PackageManager.ValidationSuite
             BuildTestSuite();
         }
 
-        internal IEnumerable<IValidationTest> ValidationTests
+        internal IEnumerable<BaseValidation> ValidationTests
         {
-            get { return validationTests.Cast<IValidationTest>(); }
-            set { validationTests = value.Cast<BaseValidation>(); }
+            get { return validationTests.Where(test => test.SupportedValidations.Contains(context.ValidationType)); }
+            set { validationTests = value; }
         }
 
         internal IEnumerable<IValidationTestResult> ValidationTestResults
@@ -63,7 +63,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
             get { return validationTests.Cast<IValidationTestResult>(); }
         }
 
-        public static bool RunValidationSuite(string packageId, PackageSource source = PackageSource.Embedded)
+        public static bool RunValidationSuite(string packageId, bool isEmbedded = true)
         {
             var parts = packageId.Split('@');
             var packageName = parts[0];
@@ -81,7 +81,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
             try
             {
-                var context = VettingContext.CreatePackmanContext(packagePath, source);
+				var context = VettingContext.CreatePackmanContext(packagePath, isEmbedded);
                 var testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletedDelegate, context, report);
                 testSuite.RunSync();
                 return testSuite.testSuiteState == TestState.Succeeded;
@@ -93,9 +93,9 @@ namespace UnityEditor.PackageManager.ValidationSuite
             }
         }
 
-        public static bool RunAssetStoreValidationSuite(string packagePath, string previousPackagePath = null)
+        public static bool RunAssetStoreValidationSuite(string packageName, string packageVersion, string packagePath, string previousPackagePath = null)
         {
-            var report = new ValidationSuiteReport();
+            var report = new ValidationSuiteReport(packageName + "@" + packageVersion, packageName, packageVersion, packagePath);
 
             try
             {
@@ -138,7 +138,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
             testSuiteState = TestState.Running;
 
             // Run through tests
-            foreach (var test in validationTests)
+            foreach (var test in ValidationTests)
             {
                 if (!test.ShouldRun)
                     continue;
