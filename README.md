@@ -1,1 +1,1 @@
-This package includes the tracked pose driver for the legacy input system
+This package includes the tracked pose driver for the legacy input system and the XR Bindings Seeding Tool. The Tracked Pose Driver is a monobehavior that enables GameObjects to track input devices, the XR Bindings Seeding Tool adds a menu item under the 'Assets' menu which populates the Input Asset with Unity's crossplatform Input Bindings
