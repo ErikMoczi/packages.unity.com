@@ -134,7 +134,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
             {
                 File.AppendAllText(txtReportPath, string.Format("\r\n{0} - \"{1}\"\r\n", testResult.TestState, testResult.TestName));
                 if (testResult.TestOutput.Any())
-                    File.AppendAllText(txtReportPath, string.Join("\r\n", testResult.TestOutput.ToArray()) + "\r\n");
+                    File.AppendAllText(txtReportPath, string.Join("\r\n\n", testResult.TestOutput.ToArray()) + "\r\n");
             }
         }
     }

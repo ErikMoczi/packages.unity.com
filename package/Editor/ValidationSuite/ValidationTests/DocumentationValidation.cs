@@ -36,7 +36,11 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         {
             // Check for a documentation directory.
             var rootDirs = Directory.GetDirectories(Context.ProjectPackageInfo.path);
-            var docsDir = rootDirs.SingleOrDefault(d => Path.GetFileName(d).ToLower() == "documentation");
+            var docsDir = rootDirs.SingleOrDefault(d =>
+            {
+            	var path = Path.GetFileName(d).ToLower();
+            	return path == "documentation" || path == ".documentation" || path == "documentation~";
+            });
             if (string.IsNullOrEmpty(docsDir))
             {
                 Error("Your package must contain a \"Documentation\" folder, which holds your package's documentation.");

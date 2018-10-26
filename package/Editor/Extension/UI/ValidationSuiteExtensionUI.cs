@@ -1,12 +1,14 @@
 ﻿#if UNITY_2018_2_OR_NEWER
 
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
+using Debug = UnityEngine.Debug;
 
 namespace UnityEditor.PackageManager.ValidationSuite.UI
 {
@@ -89,8 +91,19 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
             var filePath = ValidationSuiteReport.TextReportPath(PackageId);
             try
             {
-                var data = File.ReadAllText(filePath);
-                EditorUtility.DisplayDialog("Validation Results", data, "Ok");
+                try
+                {
+                    var targetFile = Directory.GetCurrentDirectory() + "/" + filePath;
+                    if (!File.Exists(targetFile))
+                        throw new Exception("Validation Result not found!");
+                    
+                    Process.Start(targetFile);
+                }
+                catch (Exception)
+                {
+                    var data = File.ReadAllText(filePath);
+                    EditorUtility.DisplayDialog("Validation Results", data, "Ok");                    
+                }
             }
             catch (Exception)
             {
