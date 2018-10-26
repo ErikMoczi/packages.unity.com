@@ -128,7 +128,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
 {
     internal class ValidationSuiteUI
     {
-#if UNITY_2018_1_OR_NEWER
+#if UNITY_2018_2_OR_NEWER
         [MenuItem("internal:Packages/Test Packman Validation")]
         internal static void TestPackmanValidation()
         {

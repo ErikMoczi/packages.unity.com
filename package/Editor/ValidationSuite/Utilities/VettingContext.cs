@@ -99,10 +99,12 @@ internal class VettingContext
             context.PreviousPackageInfo = GetManifest(previousPackagePath);
             context.DownloadAssembliesForPreviousVersion();
         }
-
-        context.PackageCoDependencies = BuildPackageDependencyTree(context.ProjectPackageInfo);
 #else
         context.PreviousPackageInfo = null;
+#endif
+
+#if UNITY_2018_2_OR_NEWER
+        context.PackageCoDependencies = BuildPackageDependencyTree(context.ProjectPackageInfo);
 #endif
 
         context.ValidationType = ValidationType.PackageManager;
@@ -279,7 +281,7 @@ internal class VettingContext
 #endif
     }
 
-#if UNITY_2018_1_OR_NEWER
+#if UNITY_2018_2_OR_NEWER
     private static Dictionary<string, List<PackageDependencyInfo>> BuildPackageDependencyTree(ManifestData manifestData)
     {
         var packageCoDependencies = new Dictionary<string, List<PackageDependencyInfo>>();

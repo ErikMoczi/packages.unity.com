@@ -22,6 +22,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestDescription = "Checks public API for style and changest that conflict with Semantic Versioning.";
             TestCategory = TestCategory.ApiValidation;
             assemblyInformation = new ApiValidationAssemblyInformation();
+            SupportedValidations = new[] { ValidationType.PackageManager };
         }
 
         public ApiValidation(ApiValidationAssemblyInformation apiValidationAssemblyInformation)
