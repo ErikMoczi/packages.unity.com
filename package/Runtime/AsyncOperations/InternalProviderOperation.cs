@@ -12,7 +12,7 @@ namespace UnityEngine.ResourceManagement
         {
             Validate();
             if (location == null)
-                m_error = new ArgumentNullException("location");
+                OperationException = new ArgumentNullException("location");
             startFrame = Time.frameCount;
             Context = location;
             return this;
@@ -22,7 +22,7 @@ namespace UnityEngine.ResourceManagement
         {
             Validate();
             if (op.Status != AsyncOperationStatus.Succeeded)
-                m_error = op.OperationException;
+                OperationException = op.OperationException;
 
             SetResult(op.Result);
             OnComplete();
@@ -38,7 +38,7 @@ namespace UnityEngine.ResourceManagement
             }
             catch (Exception ex)
             {
-                m_error = ex;
+                OperationException = ex;
             }
             SetResult(res);
             OnComplete();

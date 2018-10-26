@@ -51,6 +51,12 @@ namespace UnityEngine.ResourceManagement
                     Validate();
                     return m_error != null ? m_error : m_operation.OperationException;
                 }
+                protected set
+                {
+                    m_error = value;
+                    if (m_error != null && ResourceManager.ExceptionHandler != null)
+                        ResourceManager.ExceptionHandler(this, value);
+                }
             }
 
             new public TObject Result
@@ -191,9 +197,8 @@ namespace UnityEngine.ResourceManagement
                     }
                     catch (Exception e)
                     {
-                        Debug.LogException(e);
-                        m_error = e;
                         m_status = AsyncOperationStatus.Failed;
+                        OperationException = e;
                     }
                 }
 
@@ -207,9 +212,8 @@ namespace UnityEngine.ResourceManagement
                         }
                         catch (Exception e)
                         {
-                            Debug.LogException(e);
-                            m_error = e;
                             m_status = AsyncOperationStatus.Failed;
+                            OperationException = e;
                         }
                     }
                     m_completedActionT.Clear();

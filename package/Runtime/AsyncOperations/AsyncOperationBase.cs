@@ -141,6 +141,8 @@ namespace UnityEngine.ResourceManagement
             protected set
             {
                 m_error = value;
+                if (m_error != null && ResourceManager.ExceptionHandler != null)
+                    ResourceManager.ExceptionHandler(this, value);
             }
         }
         /// <inheritdoc />
@@ -235,9 +237,8 @@ namespace UnityEngine.ResourceManagement
                 }
                 catch (Exception e)
                 {
-                    Debug.LogException(e);
-                    m_error = e;
                     m_status = AsyncOperationStatus.Failed;
+                    OperationException = e;
                 }
             }
 
@@ -251,9 +252,8 @@ namespace UnityEngine.ResourceManagement
                     }
                     catch (Exception e)
                     {
-                        Debug.LogException(e);
-                        m_error = e;
                         m_status = AsyncOperationStatus.Failed;
+                        OperationException = e;
                     }
                 }
                 m_completedActionT.Clear();
@@ -539,7 +539,7 @@ namespace UnityEngine.ResourceManagement
                     if (op.Status != AsyncOperationStatus.Succeeded)
                     {
                         Status = op.Status;
-                        m_error = op.OperationException;
+                        OperationException = op.OperationException;
                     }
                     break;
                 }

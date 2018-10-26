@@ -32,7 +32,7 @@ namespace UnityEngine.ResourceManagement
                     }
                     else
                     {
-                        m_error = op.OperationException;
+                        OperationException = op.OperationException;
                         SetResult(default(TObject));
                         OnComplete();
                     }
@@ -74,7 +74,7 @@ namespace UnityEngine.ResourceManagement
                 var webReq = (op as UnityWebRequestAsyncOperation).webRequest;
                 if (string.IsNullOrEmpty(webReq.error))
                     return m_convertFunc(webReq.downloadHandler);
-                m_error = new System.Exception(string.Format("RawDataProvider unable to load from url {0}, result='{1}'.", webReq.url, webReq.error));
+                OperationException = new System.Exception(string.Format("RawDataProvider unable to load from url {0}, result='{1}'.", webReq.url, webReq.error));
                 return default(TObject);
             }
         }

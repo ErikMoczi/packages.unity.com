@@ -33,7 +33,7 @@ namespace UnityEngine.ResourceManagement
                     }
                     else
                     {
-                        m_error = op.OperationException;
+                        OperationException = op.OperationException;
                         SetResult(default(Scene));
                         OnSceneLoaded(null);
                     }

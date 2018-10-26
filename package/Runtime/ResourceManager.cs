@@ -25,6 +25,11 @@ namespace UnityEngine.ResourceManagement
         public static ISceneProvider SceneProvider { get; set; }
 
         /// <summary>
+        /// Global exception handler.  This will be called whenever an IAsyncOperation.OperationException is set to a non-null value.
+        /// </summary>
+        public static Action<IAsyncOperation, Exception> ExceptionHandler { get; set; }
+
+        /// <summary>
         /// Gets the list of configured <see cref="IResourceProvider"/> objects. Resource Providers handle load and release operations for <see cref="IResourceLocation"/> objects.
         /// </summary>
         /// <value>The resource providers list.</value>

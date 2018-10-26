@@ -42,7 +42,7 @@ namespace UnityEngine.ResourceManagement
         /// <inheritdoc/>
         public override string ToString()
         {
-            return string.Format("[{0}]", ProviderId);
+            return ProviderId;
         }
 
         /// <inheritdoc/>
