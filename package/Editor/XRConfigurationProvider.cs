@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
@@ -87,13 +88,15 @@ namespace UnityEditor.XR.Management
 
         ScriptableObject Create()
         {
-            ScriptableObject settings = Activator.CreateInstance(m_BuildDataType) as ScriptableObject;
+            ScriptableObject settings = ScriptableObject.CreateInstance(m_BuildDataType) as ScriptableObject;
             if (settings != null)
             {
-                var path = EditorUtility.SaveFilePanelInProject(String.Format("Save {0} Settings", m_DisplayName), m_DisplayName, "asset", "Please enter a filename to save the settings to.");
-                if (!string.IsNullOrEmpty(path))
+                string newAssetName = String.Format("{0}.asset", EditorUtilities.TypeNameToString(m_BuildDataType));
+                string assetPath = EditorUtilities.GetAssetPathForComponents(EditorUtilities.s_DefaultSettingsPath);
+                if (!string.IsNullOrEmpty(assetPath))
                 {
-                    AssetDatabase.CreateAsset(settings, path);
+                    assetPath = Path.Combine(assetPath, newAssetName);
+                    AssetDatabase.CreateAsset(settings, assetPath);
                     EditorBuildSettings.AddConfigObject(m_BuildSettingsKey, settings, true);
                     return settings;
                 }
