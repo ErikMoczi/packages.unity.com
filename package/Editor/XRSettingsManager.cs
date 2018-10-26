@@ -16,7 +16,7 @@ namespace UnityEditor.XR.Management
         static XRSettingsManager s_SettingsManager = null;
 
         [UnityEngine.Internal.ExcludeFromDocs]
-        XRSettingsManager(string path, SettingsScopes scopes = SettingsScopes.Any) : base(path, scopes)
+        XRSettingsManager(string path, SettingsScopes scopes = SettingsScopes.Project) : base(path, scopes)
         {
         }
 
