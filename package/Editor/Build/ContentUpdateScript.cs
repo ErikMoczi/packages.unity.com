@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -91,6 +92,7 @@ namespace UnityEditor.AddressableAssets
         /// <param name="buildCache">The cache dependency information generated from the build.</param>
         /// <param name="playerVersion">The player version to save. This is usually set to AddressableAssetSettings.PlayerBuildVersion.</param>
         /// <returns></returns>
+        [Obsolete("Use SaveContentState instead. (UnityUpgradable) -> SaveContentState")]
         public static string SaveCacheData(List<AddressableAssetEntry> entries, IBuildCache buildCache, string playerVersion)
         {
             return SaveContentState(entries, buildCache, playerVersion);
@@ -102,6 +104,7 @@ namespace UnityEditor.AddressableAssets
         /// </summary>
         /// <param name="browse">If true, the user is allowed to browse for a specific file.</param>
         /// <returns></returns>
+        [Obsolete("Use GetContentStateDataPath instead. (UnityUpgradable) -> GetContentStateDataPath")]
         public static string GetCacheDataPath(bool browse)
         {
             return GetContentStateDataPath(browse);

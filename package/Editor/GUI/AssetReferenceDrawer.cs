@@ -70,7 +70,6 @@ namespace UnityEditor.AddressableAssets
             
             if (assetRefObject == null)
             {
-                Debug.LogError("Error rendering drawer for AssetReference property " + label.text + ".");
                 return;
             }
             
@@ -528,11 +527,13 @@ namespace UnityEditor.AddressableAssets
                 T actualObject = null;
                 if (arrayIndex >= 0)
                 {
-                    if (newObj.GetType().IsArray)
+                    if (newObj.GetType().IsArray && ((T[])newObj).Length > arrayIndex)
                         actualObject = ((T[])newObj)[arrayIndex];
-                    if (newObj is List<T>)
+
+                    var newObjList = newObj as List<T>;
+                    if (newObjList != null && newObjList.Count > arrayIndex)
                     {
-                        actualObject = (newObj as List<T>)[arrayIndex];
+                        actualObject = newObjList[arrayIndex];
                         //if (actualObject == null)
                         //    actualObject = new T();
                     }

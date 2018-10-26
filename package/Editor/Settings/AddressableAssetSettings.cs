@@ -1237,5 +1237,17 @@ namespace UnityEditor.AddressableAssets
                 aa.SetDirty(ModificationEvent.BatchModification, null, true);
             aa.AssetsModifiedSinceLastPackedBuild = true;
         }
+
+        /// <summary>
+        /// [Obsolete] Get the default addressables settings object
+        /// </summary>
+        /// <param name="create">Create settings asset if it does not exist.</param>
+        /// <param name="browse">Unused.</param>
+        /// <returns>The default settings object or null if it has not been set.</returns>
+        [Obsolete("Use AddressableAssetSettingsDefaultObject.Settings instead. (UnityUpgradable) -> AddressableAssetSettingsDefaultObject.Settings")]
+        public static AddressableAssetSettings GetDefault(bool create, bool browse)
+        {
+            return AddressableAssetSettingsDefaultObject.GetSettings(create);
+        }
     }
 }
