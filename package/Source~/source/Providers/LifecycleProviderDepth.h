@@ -14,13 +14,14 @@ public:
     UnitySubsystemErrorCode UNITY_INTERFACE_API Start(IUnitySubsystem* subsystem) override;
     void UNITY_INTERFACE_API Stop(IUnitySubsystem* subsystem) override;
 
-    UnitySubsystemErrorCode SetUnityInterfaceAndRegister(IUnityXRDepthInterface* cStyleInterface, const char* subsystemId);
+    UnitySubsystemErrorCode SetUnityInterfaceAndRegister(IUnityXRDepthInterface* unityInterface, const char* subsystemId);
+
+private:
     static UnitySubsystemErrorCode UNITY_INTERFACE_API StaticInitialize(UnitySubsystemHandle handle, void* userData);
     static void UNITY_INTERFACE_API StaticShutdown(UnitySubsystemHandle handle, void* userData);
     static UnitySubsystemErrorCode UNITY_INTERFACE_API StaticStart(UnitySubsystemHandle handle, void* userData);
     static void UNITY_INTERFACE_API StaticStop(UnitySubsystemHandle handle, void* userData);
 
-private:
     IUnityXRDepthInterface* m_UnityInterface;
     DepthProvider m_DepthProvider;
 };

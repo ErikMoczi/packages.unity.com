@@ -1,14 +1,14 @@
 using AOT;
 using System;
-using UnityEngine.XR.ARExtensions;
 using UnityEngine.Experimental.XR;
+using UnityEngine.XR.ARExtensions;
 
 namespace UnityEngine.XR.ARCore
 {
     /// <summary>
     /// For internal use. Provides ARCore-specific extensions to the XRCameraSubsystem.
     /// </summary>
-    internal class ARCoreCameraExtension
+    internal static class ARCoreCameraExtension
     {
         static readonly string k_CameraPermissionName = "android.permission.CAMERA";
 
@@ -18,6 +18,12 @@ namespace UnityEngine.XR.ARCore
             Api.UnityARCore_setCameraPermissionProvider(CameraPermissionRequestProvider);
             XRCameraExtensions.RegisterIsPermissionGrantedHandler(k_SubsystemId, IsPermissionGranted);
             XRCameraExtensions.RegisterTryGetColorCorrectionHandler(k_SubsystemId, TryGetColorCorrection);
+            XRCameraExtensions.RegisterCameraImageApi(k_SubsystemId, s_AsyncCameraImageApi);
+        }
+
+        static ARCoreCameraExtension()
+        {
+            s_AsyncCameraImageApi = new ARCoreCameraImageApi();
         }
 
         static bool IsPermissionGranted(XRCameraSubsystem cameraSubsystem)
@@ -50,5 +56,7 @@ namespace UnityEngine.XR.ARCore
         }
 
         static readonly string k_SubsystemId = "ARCore-Camera";
+
+        static readonly ARCoreCameraImageApi s_AsyncCameraImageApi;
     }
 }

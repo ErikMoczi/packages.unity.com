@@ -2,163 +2,163 @@
 
 #include <cstring>
 
-void MathConversion::ToUnity(UnityXRVector3& positionUnity, const mathfu::Vector<float, 3>& positionFu)
+void MathConversion::ToUnity(UnityXRVector3& xrPosition, const mathfu::Vector<float, 3>& fuPosition)
 {
-    positionUnity.x = positionFu.data_[0];
-    positionUnity.y = positionFu.data_[1];
-    positionUnity.z = positionFu.data_[2];
+    xrPosition.x = fuPosition.data_[0];
+    xrPosition.y = fuPosition.data_[1];
+    xrPosition.z = fuPosition.data_[2];
 }
 
-void MathConversion::ToUnity(UnityXRVector4& rotationUnity, const mathfu::Quaternion<float>& rotationFu)
+void MathConversion::ToUnity(UnityXRVector4& xrRotation, const mathfu::Quaternion<float>& fuRotation)
 {
-    rotationUnity.x = rotationFu.vector().data_[0];
-    rotationUnity.y = rotationFu.vector().data_[1];
-    rotationUnity.z = rotationFu.vector().data_[2];
-    rotationUnity.w = rotationFu.scalar();
+    xrRotation.x = fuRotation.vector().data_[0];
+    xrRotation.y = fuRotation.vector().data_[1];
+    xrRotation.z = fuRotation.vector().data_[2];
+    xrRotation.w = fuRotation.scalar();
 }
 
-void MathConversion::ToUnity(UnityXRMatrix4x4& matrixUnity, const mathfu::Matrix<float, 4, 4>& matrixFu)
+void MathConversion::ToUnity(UnityXRMatrix4x4& xrMatrix, const mathfu::Matrix<float, 4, 4>& fuMatrix)
 {
-    std::memcpy(&matrixUnity, &matrixFu, sizeof(UnityXRMatrix4x4));
+    std::memcpy(&xrMatrix, &fuMatrix, sizeof(UnityXRMatrix4x4));
 }
 
-void MathConversion::ToMathFu(mathfu::Vector<float, 3>& positionFu, const UnityXRVector3& positionUnity)
+void MathConversion::ToMathFu(mathfu::Vector<float, 3>& fuPosition, const UnityXRVector3& xrPosition)
 {
-    positionFu.data_[0] = positionUnity.x;
-    positionFu.data_[1] = positionUnity.y;
-    positionFu.data_[2] = positionUnity.z;
+    fuPosition.data_[0] = xrPosition.x;
+    fuPosition.data_[1] = xrPosition.y;
+    fuPosition.data_[2] = xrPosition.z;
 }
 
-void MathConversion::ToMathFu(mathfu::Quaternion<float>& rotationFu, const UnityXRVector4& rotationUnity)
+void MathConversion::ToMathFu(mathfu::Quaternion<float>& fuRotation, const UnityXRVector4& xrRotation)
 {
-    rotationFu.vector().data_[0] = rotationUnity.x;
-    rotationFu.vector().data_[1] = rotationUnity.y;
-    rotationFu.vector().data_[2] = rotationUnity.z;
-    rotationFu.scalar() = rotationUnity.w;
+    fuRotation.vector().data_[0] = xrRotation.x;
+    fuRotation.vector().data_[1] = xrRotation.y;
+    fuRotation.vector().data_[2] = xrRotation.z;
+    fuRotation.scalar() = xrRotation.w;
 }
 
-void MathConversion::ToMathFu(mathfu::Matrix<float, 4, 4>& matrixFu, const UnityXRMatrix4x4& matrixUnity)
+void MathConversion::ToMathFu(mathfu::Matrix<float, 4, 4>& fuMatrix, const UnityXRMatrix4x4& xrMatrix)
 {
-    std::memcpy(&matrixFu, &matrixUnity, sizeof(UnityXRMatrix4x4));
+    std::memcpy(&fuMatrix, &xrMatrix, sizeof(UnityXRMatrix4x4));
 }
 
-void MathConversion::ToUnity(UnityXRVector3& positionUnity, const float* rawPositionGoogle)
+void MathConversion::ToUnity(UnityXRVector3& xrPosition, const float* googlePositionRaw)
 {
-    positionUnity.x = rawPositionGoogle[ToIndex(eGooglePose::PositionX) - ToIndex(eGooglePose::PositionBegin)];
-    positionUnity.y = rawPositionGoogle[ToIndex(eGooglePose::PositionY) - ToIndex(eGooglePose::PositionBegin)];
-    positionUnity.z = -rawPositionGoogle[ToIndex(eGooglePose::PositionZ) - ToIndex(eGooglePose::PositionBegin)];
+    xrPosition.x = googlePositionRaw[ToIndex(eGooglePose::PositionX) - ToIndex(eGooglePose::PositionBegin)];
+    xrPosition.y = googlePositionRaw[ToIndex(eGooglePose::PositionY) - ToIndex(eGooglePose::PositionBegin)];
+    xrPosition.z = -googlePositionRaw[ToIndex(eGooglePose::PositionZ) - ToIndex(eGooglePose::PositionBegin)];
 }
 
-void MathConversion::ToUnity(UnityXRVector4& rotationUnity, const float* rawRotationGoogle)
+void MathConversion::ToUnity(UnityXRVector4& xrRotation, const float* googleRotationRaw)
 {
-    rotationUnity.x = -rawRotationGoogle[ToIndex(eGooglePose::RotationX) - ToIndex(eGooglePose::RotationBegin)];
-    rotationUnity.y = -rawRotationGoogle[ToIndex(eGooglePose::RotationY) - ToIndex(eGooglePose::RotationBegin)];
-    rotationUnity.z = rawRotationGoogle[ToIndex(eGooglePose::RotationZ) - ToIndex(eGooglePose::RotationBegin)];
-    rotationUnity.w = rawRotationGoogle[ToIndex(eGooglePose::RotationW) - ToIndex(eGooglePose::RotationBegin)];
+    xrRotation.x = -googleRotationRaw[ToIndex(eGooglePose::RotationX) - ToIndex(eGooglePose::RotationBegin)];
+    xrRotation.y = -googleRotationRaw[ToIndex(eGooglePose::RotationY) - ToIndex(eGooglePose::RotationBegin)];
+    xrRotation.z = googleRotationRaw[ToIndex(eGooglePose::RotationZ) - ToIndex(eGooglePose::RotationBegin)];
+    xrRotation.w = googleRotationRaw[ToIndex(eGooglePose::RotationW) - ToIndex(eGooglePose::RotationBegin)];
 }
 
-void MathConversion::ToUnity(UnityXRVector3& positionUnity, UnityXRVector4& rotationUnity, const float* rawPoseGoogle)
+void MathConversion::ToUnity(UnityXRVector3& xrPosition, UnityXRVector4& xrRotation, const float* googlePoseRaw)
 {
-    ToUnity(positionUnity, rawPoseGoogle + ToIndex(eGooglePose::PositionBegin));
-    ToUnity(rotationUnity, rawPoseGoogle + ToIndex(eGooglePose::RotationBegin));
+    ToUnity(xrPosition, googlePoseRaw + ToIndex(eGooglePose::PositionBegin));
+    ToUnity(xrRotation, googlePoseRaw + ToIndex(eGooglePose::RotationBegin));
 }
 
-void MathConversion::ToUnity(UnityXRPose& poseUnity, const float* rawPoseGoogle)
+void MathConversion::ToUnity(UnityXRPose& xrPose, const float* googlePoseRaw)
 {
-    ToUnity(poseUnity.position, poseUnity.rotation, rawPoseGoogle);
+    ToUnity(xrPose.position, xrPose.rotation, googlePoseRaw);
 }
 
-void MathConversion::ToUnity(UnityXRMatrix4x4& matrixUnity, const float* rawMatrixGoogle)
+void MathConversion::ToUnity(UnityXRMatrix4x4& xrMatrix, const float* rawMatrixGoogle)
 {
-    std::memcpy(&matrixUnity, rawMatrixGoogle, sizeof(UnityXRMatrix4x4));
-    float* matrixUnityAsFloatArray = reinterpret_cast<float*>(&matrixUnity);
-    matrixUnityAsFloatArray[ 2] *= -1.0f;
-    matrixUnityAsFloatArray[ 6] *= -1.0f;
-    matrixUnityAsFloatArray[ 8] *= -1.0f;
-    matrixUnityAsFloatArray[ 9] *= -1.0f;
-    matrixUnityAsFloatArray[11] *= -1.0f;
-    matrixUnityAsFloatArray[14] *= -1.0f;
+    std::memcpy(&xrMatrix, rawMatrixGoogle, sizeof(UnityXRMatrix4x4));
+    float* xrMatrixAsFloatArray = reinterpret_cast<float*>(&xrMatrix);
+    xrMatrixAsFloatArray[ 2] *= -1.0f;
+    xrMatrixAsFloatArray[ 6] *= -1.0f;
+    xrMatrixAsFloatArray[ 8] *= -1.0f;
+    xrMatrixAsFloatArray[ 9] *= -1.0f;
+    xrMatrixAsFloatArray[11] *= -1.0f;
+    xrMatrixAsFloatArray[14] *= -1.0f;
 }
 
-void MathConversion::ToUnityProjectionMatrix(UnityXRMatrix4x4& projectionMatrixUnity, const float* rawProjectionMatrixGoogle)
+void MathConversion::ToUnityProjectionMatrix(UnityXRMatrix4x4& xrProjectionMatrix, const float* googleProjectionMatrixRaw)
 {
-    std::memcpy(&projectionMatrixUnity, rawProjectionMatrixGoogle, sizeof(UnityXRMatrix4x4));
+    std::memcpy(&xrProjectionMatrix, googleProjectionMatrixRaw, sizeof(UnityXRMatrix4x4));
 }
 
-void MathConversion::ToGoogle(float* rawPositionGoogle, const UnityXRVector3& positionUnity)
+void MathConversion::ToGoogle(float* googlePositionRaw, const UnityXRVector3& xrPosition)
 {
-    rawPositionGoogle[ToIndex(eGooglePose::PositionX) - ToIndex(eGooglePose::PositionBegin)] = positionUnity.x;
-    rawPositionGoogle[ToIndex(eGooglePose::PositionY) - ToIndex(eGooglePose::PositionBegin)] = positionUnity.y;
-    rawPositionGoogle[ToIndex(eGooglePose::PositionZ) - ToIndex(eGooglePose::PositionBegin)] = -positionUnity.z;
+    googlePositionRaw[ToIndex(eGooglePose::PositionX) - ToIndex(eGooglePose::PositionBegin)] = xrPosition.x;
+    googlePositionRaw[ToIndex(eGooglePose::PositionY) - ToIndex(eGooglePose::PositionBegin)] = xrPosition.y;
+    googlePositionRaw[ToIndex(eGooglePose::PositionZ) - ToIndex(eGooglePose::PositionBegin)] = -xrPosition.z;
 }
 
-void MathConversion::ToGoogle(float* rawRotationGoogle, const UnityXRVector4& rotationUnity)
+void MathConversion::ToGoogle(float* googleRotationRaw, const UnityXRVector4& xrRotation)
 {
-    rawRotationGoogle[ToIndex(eGooglePose::RotationX) - ToIndex(eGooglePose::RotationBegin)] = -rotationUnity.x;
-    rawRotationGoogle[ToIndex(eGooglePose::RotationY) - ToIndex(eGooglePose::RotationBegin)] = -rotationUnity.y;
-    rawRotationGoogle[ToIndex(eGooglePose::RotationZ) - ToIndex(eGooglePose::RotationBegin)] = rotationUnity.z;
-    rawRotationGoogle[ToIndex(eGooglePose::RotationW) - ToIndex(eGooglePose::RotationBegin)] = rotationUnity.w;
+    googleRotationRaw[ToIndex(eGooglePose::RotationX) - ToIndex(eGooglePose::RotationBegin)] = -xrRotation.x;
+    googleRotationRaw[ToIndex(eGooglePose::RotationY) - ToIndex(eGooglePose::RotationBegin)] = -xrRotation.y;
+    googleRotationRaw[ToIndex(eGooglePose::RotationZ) - ToIndex(eGooglePose::RotationBegin)] = xrRotation.z;
+    googleRotationRaw[ToIndex(eGooglePose::RotationW) - ToIndex(eGooglePose::RotationBegin)] = xrRotation.w;
 }
 
-void MathConversion::ToGoogle(float* rawPoseGoogle, const UnityXRVector3& positionUnity, const UnityXRVector4& rotationUnity)
+void MathConversion::ToGoogle(float* googlePoseRaw, const UnityXRVector3& xrPosition, const UnityXRVector4& xrRotation)
 {
-    ToGoogle(rawPoseGoogle + ToIndex(eGooglePose::PositionBegin), positionUnity);
-    ToGoogle(rawPoseGoogle + ToIndex(eGooglePose::RotationBegin), rotationUnity);
+    ToGoogle(googlePoseRaw + ToIndex(eGooglePose::PositionBegin), xrPosition);
+    ToGoogle(googlePoseRaw + ToIndex(eGooglePose::RotationBegin), xrRotation);
 }
 
-void MathConversion::ToGoogle(float* rawPoseGoogle, const UnityXRPose& poseUnity)
+void MathConversion::ToGoogle(float* googlePoseRaw, const UnityXRPose& xrPose)
 {
-    ToGoogle(rawPoseGoogle, poseUnity.position, poseUnity.rotation);
+    ToGoogle(googlePoseRaw, xrPose.position, xrPose.rotation);
 }
 
-void MathConversion::ToGoogle(float* rawMatrixGoogle, const UnityXRMatrix4x4& matrixUnity)
+void MathConversion::ToGoogle(float* googleMatrixRaw, const UnityXRMatrix4x4& xrMatrix)
 {
-    std::memcpy(rawMatrixGoogle, &matrixUnity, sizeof(UnityXRMatrix4x4));
+    std::memcpy(googleMatrixRaw, &xrMatrix, sizeof(UnityXRMatrix4x4));
     for (int rowAndColumnIndex = 0; rowAndColumnIndex < 4;++rowAndColumnIndex)
     {
-        rawMatrixGoogle[2 + 4 * rowAndColumnIndex] *= -1.0f;
-        rawMatrixGoogle[8 + rowAndColumnIndex] *= -1.0f;
+        googleMatrixRaw[2 + 4 * rowAndColumnIndex] *= -1.0f;
+        googleMatrixRaw[8 + rowAndColumnIndex] *= -1.0f;
     }
 }
 
-void MathConversion::ToMathFu(mathfu::Vector<float, 3>& positionFu, const float* rawPositionGoogle)
+void MathConversion::ToMathFu(mathfu::Vector<float, 3>& fuPosition, const float* googlePositionRaw)
 {
-    UnityXRVector3 positionUnity;
-    ToUnity(positionUnity, rawPositionGoogle);
-    ToMathFu(positionFu, positionUnity);
+    UnityXRVector3 xrPosition;
+    ToUnity(xrPosition, googlePositionRaw);
+    ToMathFu(fuPosition, xrPosition);
 }
 
-void MathConversion::ToMathFu(mathfu::Quaternion<float>& rotationFu, const float* rawRotationGoogle)
+void MathConversion::ToMathFu(mathfu::Quaternion<float>& fuRotation, const float* googleRotationRaw)
 {
-    UnityXRVector4 rotationUnity;
-    ToUnity(rotationUnity, rawRotationGoogle);
-    ToMathFu(rotationFu, rotationUnity);
+    UnityXRVector4 xrRotation;
+    ToUnity(xrRotation, googleRotationRaw);
+    ToMathFu(fuRotation, xrRotation);
 }
 
-void MathConversion::ToMathFu(mathfu::Matrix<float, 4, 4>& matrixFu, const float* rawMatrixGoogle)
+void MathConversion::ToMathFu(mathfu::Matrix<float, 4, 4>& fuMatrix, const float* googleMatrixRaw)
 {
-    UnityXRMatrix4x4 matrixUnity;
-    ToUnity(matrixUnity, rawMatrixGoogle);
-    ToMathFu(matrixFu, matrixUnity);
+    UnityXRMatrix4x4 xrMatrix;
+    ToUnity(xrMatrix, googleMatrixRaw);
+    ToMathFu(fuMatrix, xrMatrix);
 }
 
-void MathConversion::ToGoogle(float* rawPositionGoogle, const mathfu::Vector<float, 3>& positionFu)
+void MathConversion::ToGoogle(float* googlePositionRaw, const mathfu::Vector<float, 3>& fuPosition)
 {
-    UnityXRVector3 positionUnity;
-    ToUnity(positionUnity, positionFu);
-    ToGoogle(rawPositionGoogle, positionUnity);
+    UnityXRVector3 xrPosition;
+    ToUnity(xrPosition, fuPosition);
+    ToGoogle(googlePositionRaw, xrPosition);
 }
 
-void MathConversion::ToGoogle(float* rawRotationGoogle, const mathfu::Quaternion<float>& rotationFu)
+void MathConversion::ToGoogle(float* googleRotationRaw, const mathfu::Quaternion<float>& fuRotation)
 {
-    UnityXRVector4 rotationUnity;
-    ToUnity(rotationUnity, rotationFu);
-    ToGoogle(rawRotationGoogle, rotationUnity);
+    UnityXRVector4 xrRotation;
+    ToUnity(xrRotation, fuRotation);
+    ToGoogle(googleRotationRaw, xrRotation);
 }
 
-void MathConversion::ToGoogle(float* rawMatrixGoogle, const mathfu::Matrix<float, 4, 4>& matrixFu)
+void MathConversion::ToGoogle(float* googleMatrixRaw, const mathfu::Matrix<float, 4, 4>& fuMatrix)
 {
-    UnityXRMatrix4x4 matrixUnity;
-    ToUnity(matrixUnity, matrixFu);
-    ToGoogle(rawMatrixGoogle, matrixUnity);
+    UnityXRMatrix4x4 xrMatrix;
+    ToUnity(xrMatrix, fuMatrix);
+    ToGoogle(googleMatrixRaw, xrMatrix);
 }

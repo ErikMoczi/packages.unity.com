@@ -29,9 +29,9 @@ void UNITY_INTERFACE_API LifecycleProviderDepth::Stop(IUnitySubsystem* /*subsyst
     // can't enable/disable point clouds - nothing to do on session configuration
 }
 
-UnitySubsystemErrorCode LifecycleProviderDepth::SetUnityInterfaceAndRegister(IUnityXRDepthInterface* cStyleInterface, const char* subsystemId)
+UnitySubsystemErrorCode LifecycleProviderDepth::SetUnityInterfaceAndRegister(IUnityXRDepthInterface* unityInterface, const char* subsystemId)
 {
-    m_UnityInterface = cStyleInterface;
+    m_UnityInterface = unityInterface;
 
     UnityLifecycleProvider provider;
     std::memset(&provider, 0, sizeof(provider));
@@ -42,7 +42,7 @@ UnitySubsystemErrorCode LifecycleProviderDepth::SetUnityInterfaceAndRegister(IUn
     provider.Start = &StaticStart;
     provider.Stop = &StaticStop;
 
-    return cStyleInterface->RegisterLifecycleProvider("UnityARCore", subsystemId, &provider);
+    return unityInterface->RegisterLifecycleProvider("UnityARCore", subsystemId, &provider);
 }
 
 UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderDepth::StaticInitialize(UnitySubsystemHandle handle, void* userData)

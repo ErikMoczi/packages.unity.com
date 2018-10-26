@@ -1,25 +1,47 @@
 #pragma once
 
 #include "arcore_c_api.h"
-#include "WrappingBase.h"
 
-struct UnityXRVector3;
-
-class WrappedPointCloud : public WrappingBase<ArPointCloud>
+class WrappedPointCloud
 {
 public:
     WrappedPointCloud();
-    WrappedPointCloud(eWrappedConstruction);
+    WrappedPointCloud(const ArPointCloud* arPointCloud);
 
-    void AcquireFromFrameAndGetData();
+    operator const ArPointCloud*() const;
+    const ArPointCloud* Get() const;
 
-    int32_t GetNumPoints() const;
-    void GetPositionAt(int32_t index, UnityXRVector3& position);
-    float GetConfidenceAt(int32_t index);
+    int32_t NumPoints() const;
+    void GetData(const float*& pointCloudData) const;
+    int64_t GetTimestamp() const;
+
+protected:
+    const ArPointCloud* m_ArPointCloud;
+};
+
+class WrapppedPointCloudMutable : public WrappedPointCloud
+{
+public:
+    WrapppedPointCloudMutable();
+    WrapppedPointCloudMutable(ArPointCloud* pointCloud);
+
+    operator ArPointCloud*();
+    ArPointCloud* Get();
+
+protected:
+    ArPointCloud*& GetArPointCloudMutable();
+};
+
+class WrappedPointCloudRaii : public WrapppedPointCloudMutable
+{
+public:
+    WrappedPointCloudRaii();
+    ~WrappedPointCloudRaii();
+
+    ArStatus TryAcquireFromFrame();
+    void Release();
 
 private:
-    static const int kNumFloatsPerPoint;
-    static const int kOffsetToConfindenceWithinPoint;
-
-    const float* m_Data;
+    WrappedPointCloudRaii(const WrappedPointCloudRaii&);
+    WrappedPointCloudRaii& operator=(const WrappedPointCloudRaii&);
 };

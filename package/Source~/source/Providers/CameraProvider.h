@@ -8,28 +8,35 @@ class CameraProvider : public IUnityXRCameraProvider
 public:
     CameraProvider();
 
-    const WrappedCamera& GetWrappedCamera() const;
-    WrappedCamera& GetWrappedCameraMutable();
+    const ArCamera* GetArCamera() const;
+    ArCamera* GetArCameraMutable();
 
     float GetScreenWidth() const;
     float GetScreenHeight() const;
 
+    void OnLifecycleInitialize();
     void OnLifecycleShutdown();
 
-    virtual bool UNITY_INTERFACE_API GetFrame(const UnityXRCameraParams& paramsIn, UnityXRCameraFrame* frameOut) override;
+    virtual bool UNITY_INTERFACE_API GetFrame(const UnityXRCameraParams& xrParamsIn, UnityXRCameraFrame* xrFrameOut) override;
     virtual void UNITY_INTERFACE_API SetLightEstimationRequested(bool requested) override;
     virtual bool UNITY_INTERFACE_API GetShaderName(char(&shaderName)[kUnityXRStringSize]) override;
 
-    void PopulateCStyleProvider(UnityXRCameraProvider& provider);
+    void PopulateCStyleProvider(UnityXRCameraProvider& xrProvider);
+
+    void AcquireCameraFromNewFrame();
 
 private:
-    WrappedCamera m_WrappedCamera;
+    static UnitySubsystemErrorCode UNITY_INTERFACE_API StaticGetFrame(UnitySubsystemHandle handle, void* userData, const UnityXRCameraParams* xrParamsIn, UnityXRCameraFrame* xrFrameOut);
+    static void UNITY_INTERFACE_API StaticSetLightEstimationRequested(UnitySubsystemHandle handle, void* userData, bool requested);
+    static UnitySubsystemErrorCode UNITY_INTERFACE_API StaticGetShaderName(UnitySubsystemHandle handle, void* userData, char shaderName[kUnityXRStringSize]);
+
+    WrappedCameraRaii m_WrappedCamera;
     bool m_LightEstimationEnabled;
 
-    void RetrieveMatricesIfNeeded(ArSession* session, ArFrame* frame, const UnityXRCameraParams& paramsIn);
+    void RetrieveMatricesIfNeeded(const UnityXRCameraParams& xrParamsIn);
     bool m_HaveRetrievedMatrices;
-    UnityXRMatrix4x4 m_DisplayMatrix;
-    UnityXRMatrix4x4 m_ProjectionMatrix;
+    UnityXRMatrix4x4 m_XrDisplayMatrix;
+    UnityXRMatrix4x4 m_XrProjectionMatrix;
 
     float m_ScreenWidth;
     float m_ScreenHeight;

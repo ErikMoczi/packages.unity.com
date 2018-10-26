@@ -155,7 +155,132 @@ namespace UnityEngine.XR.ARCore
 
         [DllImport("UnityARCore")]
         static internal extern bool UnityARCore_tryGetColorCorrection(out float red, out float green, out float blue, out float alpha);
+
+        [DllImport("UnityARCore")]
+        static internal extern bool UnityARCore_cameraImage_tryAcquireLatestImage(
+            out int nativeHandle, out Vector2Int dimensions, out int planeCount, out double timestamp, out CameraImageFormat format);
+
+        [DllImport("UnityARCore")]
+        static internal extern bool UnityARCore_cameraImage_tryGetConvertedDataSize(
+            int nativeHandle, Vector2Int dimensions, TextureFormat format, out int size);
+
+        [DllImport("UnityARCore")]
+        static internal extern bool UnityARCore_cameraImage_tryConvert(
+            int nativeHandle, CameraImageConversionParams conversionParams,
+            IntPtr buffer, int bufferLength);
+
+        [DllImport("UnityARCore")]
+        static internal extern bool UnityARCore_cameraImage_tryGetPlane(
+            int nativeHandle, int planeIndex,
+            out int rowStride, out int pixelStride, out IntPtr dataPtr, out int dataLength);
+
+        [DllImport("UnityARCore")]
+        static internal extern bool UnityARCore_cameraImage_handleValid(
+            int nativeHandle);
+
+        [DllImport("UnityARCore")]
+        static internal extern void UnityARCore_cameraImage_disposeImage(
+            int nativeHandle);
+
+        [DllImport("UnityARCore")]
+        static internal extern int UnityARCore_cameraImage_createAsyncConversionRequest(
+            int nativeHandle, CameraImageConversionParams conversionParams);
+
+        [DllImport("UnityARCore")]
+        static internal extern void UnityARCore_cameraImage_createAsyncConversionRequestWithCallback(
+            int nativeHandle, CameraImageConversionParams conversionParams,
+            XRCameraExtensions.OnImageRequestCompleteDelegate callback, IntPtr context);
+
+        [DllImport("UnityARCore")]
+        static internal extern AsyncCameraImageConversionStatus
+            UnityARCore_cameraImage_getAsyncRequestStatus(int requestId);
+
+        [DllImport("UnityARCore")]
+        static internal extern void UnityARCore_cameraImage_disposeAsyncRequest(
+            int requestHandle);
+
+        [DllImport("UnityARCore")]
+        static internal extern bool UnityARCore_cameraImage_tryGetAsyncRequestData(
+            int requestHandle, out IntPtr dataPtr, out int dataLength);
+
 #else
+        static internal bool UnityARCore_cameraImage_tryAcquireLatestImage(
+            out int nativeHandle, out Vector2Int dimensions, out int planeCount, out double timestamp, out CameraImageFormat format)
+        {
+            nativeHandle = 0;
+            dimensions = default(Vector2Int);
+            planeCount = default(int);
+            timestamp = default(double);
+            format = default(CameraImageFormat);
+            return false;
+        }
+
+        static internal bool UnityARCore_cameraImage_tryGetConvertedDataSize(
+            int nativeHandle, Vector2Int dimensions, TextureFormat format, out int size)
+        {
+            size = default(int);
+            return false;
+        }
+
+        static internal bool UnityARCore_cameraImage_tryConvert(
+            int nativeHandle, CameraImageConversionParams conversionParams,
+            IntPtr buffer, int bufferLength)
+        {
+            return false;
+        }
+
+        static internal bool UnityARCore_cameraImage_tryGetPlane(
+            int nativeHandle, int planeIndex,
+            out int rowStride, out int pixelStride, out IntPtr dataPtr, out int dataLength)
+        {
+            rowStride = default(int);
+            pixelStride = default(int);
+            dataPtr = default(IntPtr);
+            dataLength = default(int);
+            return false;
+        }
+
+        static internal bool UnityARCore_cameraImage_handleValid(
+            int nativeHandle)
+        {
+            return false;
+        }
+
+        static internal void UnityARCore_cameraImage_disposeImage(
+            int nativeHandle)
+        { }
+
+        static internal int UnityARCore_cameraImage_createAsyncConversionRequest(
+            int nativeHandle, CameraImageConversionParams conversionParams)
+        {
+            return 0;
+        }
+
+        static internal void UnityARCore_cameraImage_createAsyncConversionRequestWithCallback(
+            int nativeHandle, CameraImageConversionParams conversionParams,
+            XRCameraExtensions.OnImageRequestCompleteDelegate callback, IntPtr context)
+        {
+            callback(AsyncCameraImageConversionStatus.Disposed, conversionParams, IntPtr.Zero, 0, context);
+        }
+
+        static internal AsyncCameraImageConversionStatus
+            UnityARCore_cameraImage_getAsyncRequestStatus(int requestId)
+        {
+            return AsyncCameraImageConversionStatus.Disposed;
+        }
+
+        static internal void UnityARCore_cameraImage_disposeAsyncRequest(
+            int requestHandle)
+        { }
+
+        static internal bool UnityARCore_cameraImage_tryGetAsyncRequestData(
+            int requestHandle, out IntPtr dataPtr, out int dataLength)
+        {
+            dataPtr = default(IntPtr);
+            dataLength = default(int);
+            return false;
+        }
+
         static internal void ArPresto_checkApkAvailability(
             Action<ArAvailability, IntPtr> on_result, IntPtr context)
         {

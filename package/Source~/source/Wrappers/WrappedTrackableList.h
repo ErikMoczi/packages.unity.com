@@ -1,60 +1,45 @@
 #pragma once
 
 #include "arcore_c_api.h"
-#include "Utility.h"
-#include "WrappingBase.h"
 
-template<typename T_WrappedTrackable, ArTrackableType T_TrackableType>
-class WrappedTrackableList : public WrappingBase<ArTrackableList>
+class WrappedTrackableList
 {
 public:
-    WrappedTrackableList()
-        : WrappingBase<ArTrackableList>()
-    {}
+    WrappedTrackableList();
+    WrappedTrackableList(const ArTrackableList* arTrackableList);
 
-    WrappedTrackableList(eWrappedConstruction)
-        : WrappingBase<ArTrackableList>()
-    {
-        CreateOrAcquireDefault();
-    }
+    operator const ArTrackableList*() const;
+    const ArTrackableList* Get() const;
 
-    void CreateDefault()
-    {
-        CreateOrAcquireDefault();
-    }
-
-    int32_t Size() const
-    {
-        int32_t ret = 0;
-        ArTrackableList_getSize(GetArSession(), m_Ptr, &ret);
-        return ret;
-    }
-
-    bool TryAcquireAt(int32_t trackableIndex, T_WrappedTrackable& trackable) const
-    {
-        ArTrackable* getter = nullptr;
-        ArTrackableList_acquireItem(GetArSession(), m_Ptr, trackableIndex, &getter);
-
-        ArTrackableType getterType = EnumCast<ArTrackableType>(-1);
-        ArTrackable_getType(GetArSession(), getter, &getterType);
-        if (getterType != T_TrackableType)
-        {
-            ArTrackable_release(getter);
-            return false;
-        }
-
-        trackable.AssumeOwnership(reinterpret_cast<typename T_WrappedTrackable::UnderlyingType*>(getter));
-        return true;
-    }
+    int32_t Size() const;
 
 protected:
-    void GetAllTrackables()
-    {
-        ArSession_getAllTrackables(GetArSession(), T_TrackableType, m_Ptr);
-    }
+    const ArTrackableList* m_ArTrackableList;
+};
 
-    void GetUpdatedTrackables()
-    {
-        ArFrame_getUpdatedTrackables(GetArSession(), GetArFrame(), T_TrackableType, m_Ptr);
-    }
+class WrappedTrackableListMutable : public WrappedTrackableList
+{
+public:
+    WrappedTrackableListMutable();
+    WrappedTrackableListMutable(ArTrackableList* arTrackableList);
+
+    operator ArTrackableList*();
+    ArTrackableList* Get();
+
+    void PopulateList_All(ArTrackableType arTrackableType);
+    void PopulateList_UpdatedOnly(ArTrackableType arTrackableType);    
+
+protected:
+    ArTrackableList*& GetArTrackableListMutable();
+};
+
+class WrappedTrackableListRaii : public WrappedTrackableListMutable
+{
+public:
+    WrappedTrackableListRaii();
+    ~WrappedTrackableListRaii();
+
+private:
+    WrappedTrackableListRaii(const WrappedTrackableListRaii&);
+    WrappedTrackableListRaii& operator=(const WrappedTrackableListRaii&);
 };

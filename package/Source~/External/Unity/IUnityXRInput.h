@@ -201,8 +201,8 @@ typedef enum UnityXRInputUpdateType
 
 typedef enum UnityXRInputEventType
 {
-    kUnityXRInputEventTypeRecenter = 'XRC0',
-    kUnityXRInputEventTypeSimpleRumble = 'XRR0'
+    kUnityXRInputEventTypeRecenter = 0x58524330,    // 'XRC0',
+    kUnityXRInputEventTypeSimpleRumble = 0x58525230 //'XRR0'
 } UnityXRInputEventType;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////

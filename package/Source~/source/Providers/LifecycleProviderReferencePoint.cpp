@@ -28,9 +28,9 @@ void UNITY_INTERFACE_API LifecycleProviderReferencePoint::Stop(IUnitySubsystem* 
     // can't enable/disable reference points - nothing to do on session configuration
 }
 
-UnitySubsystemErrorCode LifecycleProviderReferencePoint::SetUnityInterfaceAndRegister(IUnityXRReferencePointInterface* cStyleInterface, const char* subsystemId)
+UnitySubsystemErrorCode LifecycleProviderReferencePoint::SetUnityInterfaceAndRegister(IUnityXRReferencePointInterface* unityInterface, const char* subsystemId)
 {
-    m_UnityInterface = cStyleInterface;
+    m_UnityInterface = unityInterface;
 
     UnityLifecycleProvider provider;
     std::memset(&provider, 0, sizeof(provider));
@@ -41,7 +41,7 @@ UnitySubsystemErrorCode LifecycleProviderReferencePoint::SetUnityInterfaceAndReg
     provider.Start = &StaticStart;
     provider.Stop = &StaticStop;
 
-    return cStyleInterface->RegisterLifecycleProvider("UnityARCore", subsystemId, &provider);
+    return unityInterface->RegisterLifecycleProvider("UnityARCore", subsystemId, &provider);
 }
 
 UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderReferencePoint::StaticInitialize(UnitySubsystemHandle handle, void* userData)
@@ -50,9 +50,9 @@ UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderReferencePoint::Sta
     if (thiz == nullptr)
         return kUnitySubsystemErrorCodeInvalidArguments;
 
-    UnityXRReferencePointProvider provider;
-    thiz->m_ReferencePointProvider.PopulateCStyleProvider(provider);
-    return thiz->m_UnityInterface->RegisterReferencePointProvider(handle, &provider);
+    UnityXRReferencePointProvider xrProvider;
+    thiz->m_ReferencePointProvider.PopulateCStyleProvider(xrProvider);
+    return thiz->m_UnityInterface->RegisterReferencePointProvider(handle, &xrProvider);
 }
 
 void UNITY_INTERFACE_API LifecycleProviderReferencePoint::StaticShutdown(UnitySubsystemHandle handle, void* userData)

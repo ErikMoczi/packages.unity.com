@@ -1,53 +1,58 @@
 #include "MathConversion.h"
-#include "mathfu/quaternion.h"
-#include "Unity/IUnityXRPlane.deprecated.h"
 #include "Utility.h"
 #include "WrappedPlane.h"
 #include "WrappedPose.h"
 
+#include "mathfu/quaternion.h"
+#include "Unity/IUnityXRPlane.deprecated.h"
+
 #include <cstring>
 
-template<>
-void WrappingBase<ArPlane>::ReleaseImpl()
+WrappedPlane::WrappedPlane()
+    : m_ArPlane(nullptr)
 {
-    ArTrackable_release(ArAsTrackable(m_Ptr));
 }
 
-void WrappedPlane::ConvertToUnityXRPlane(UnityXRPlane& unityPlane, IUnityXRPlaneDataAllocator& allocator)
+WrappedPlane::WrappedPlane(const ArPlane* arPlane)
+    : m_ArPlane(arPlane)
 {
-    ConvertToTrackableId(unityPlane.id, m_Ptr);
+}
 
-    WrappedPose centerPose = eWrappedConstruction::Default;
-    ArPlane_getCenterPose(GetArSession(), m_Ptr, centerPose);
+WrappedPlane::operator const ArPlane*() const
+{
+    return m_ArPlane;
+}
 
-    centerPose.GetPosition(unityPlane.pose.position);
-    centerPose.GetRotation(unityPlane.pose.rotation);
-    std::memcpy(&unityPlane.center, &unityPlane.pose.position, sizeof(UnityXRVector3));
+const ArPlane* WrappedPlane::Get() const
+{
+    return m_ArPlane;
+}
 
-    ArPlane_getExtentX(GetArSession(), m_Ptr, &unityPlane.bounds.x);
-    ArPlane_getExtentZ(GetArSession(), m_Ptr, &unityPlane.bounds.y);
+void WrappedPlane::ConvertToXRPlane(UnityXRPlane& xrPlane, IUnityXRPlaneDataAllocator& xrAllocator) const
+{
+    ConvertToTrackableId(xrPlane.id, m_ArPlane);
 
-    int32_t polygonSize = 0;
-    ArPlane_getPolygonSize(GetArSession(), m_Ptr, &polygonSize);
+    GetCenterPose(xrPlane.pose);
+    std::memcpy(&xrPlane.center, &xrPlane.pose.position, sizeof(UnityXRVector3));
+
+    GetExtents(xrPlane.bounds.x, xrPlane.bounds.y);
+
+    mathfu::Vector<float, 3> fuCenterPosition;
+    mathfu::Quaternion<float> fuCenterRotation;
+    MathConversion::ToMathFu(fuCenterPosition, xrPlane.pose.position);
+    MathConversion::ToMathFu(fuCenterRotation, xrPlane.pose.rotation);
+
+    const int32_t polygonSize = GetPolygonSize();
 
     int32_t numVerts = polygonSize / 2;
-    UnityXRVector3* boundaryVerts = allocator.AllocateBoundaryPoints(unityPlane.id, numVerts);
+    UnityXRVector3* boundaryVerts = xrAllocator.AllocateBoundaryPoints(xrPlane.id, numVerts);
 
     float* boundaryVertsAsFloatPtr = reinterpret_cast<float*>(boundaryVerts);
-    ArPlane_getPolygon(GetArSession(), m_Ptr, boundaryVertsAsFloatPtr);
+    GetPolygon(boundaryVertsAsFloatPtr);
 
     float* xzPair = boundaryVertsAsFloatPtr + 2 * (numVerts - 1);
     for (int32_t vertIndex = numVerts - 1; vertIndex >= 0; --vertIndex, xzPair -= 2)
     {
-        UnityXRPose xrPose;
-        ArPlane_getCenterPose(GetArSession(), m_Ptr, centerPose);
-        centerPose.GetXrPose(xrPose);
-
-        mathfu::Vector<float, 3> fuPosePosition;
-        MathConversion::ToMathFu(fuPosePosition, xrPose.position);
-        mathfu::Quaternion<float> fuPoseRotation;
-        MathConversion::ToMathFu(fuPoseRotation, xrPose.rotation);
-
         float rawPlaneLocalPosition[3];
         rawPlaneLocalPosition[0] = xzPair[0];
         rawPlaneLocalPosition[1] = 0.0f;
@@ -56,8 +61,8 @@ void WrappedPlane::ConvertToUnityXRPlane(UnityXRPlane& unityPlane, IUnityXRPlane
         mathfu::Vector<float, 3> fuPlaneLocalPosition;
         MathConversion::ToMathFu(fuPlaneLocalPosition, rawPlaneLocalPosition);
 
-        mathfu::Vector<float, 3> fuTransformedPosition = fuPoseRotation * fuPlaneLocalPosition;
-        fuTransformedPosition += fuPosePosition;
+        mathfu::Vector<float, 3> fuTransformedPosition = fuCenterRotation * fuPlaneLocalPosition;
+        fuTransformedPosition += fuCenterPosition;
 
         MathConversion::ToUnity(boundaryVerts[vertIndex], fuTransformedPosition);
     }
@@ -72,21 +77,116 @@ void WrappedPlane::ConvertToUnityXRPlane(UnityXRPlane& unityPlane, IUnityXRPlane
         boundaryVerts[otherVertIndex] = temp;
     }
 
-    WrappedPlane subsumedBy;
-    unityPlane.wasMerged = AcquireSubsumedBy(subsumedBy);
-    if (unityPlane.wasMerged)
-        ConvertToTrackableId(unityPlane.mergedInto, subsumedBy.Get());
+    WrappedPlaneRaii wrappedSubsumingPlane;
+    xrPlane.wasMerged = wrappedSubsumingPlane.TryAcquireSubsumedBy(m_ArPlane);
+    if (xrPlane.wasMerged)
+        ConvertToTrackableId(xrPlane.mergedInto, wrappedSubsumingPlane.Get());
 
     // up to the calling function to fill this out as true when needed
-    unityPlane.wasUpdated = false;
+    xrPlane.wasUpdated = false;
 }
 
-bool WrappedPlane::AcquireSubsumedBy(WrappedPlane& subsumedBy)
+bool WrappedPlane::IsPoseInPolygon(const ArPose* arPose) const
 {
-    ArPlane_acquireSubsumedBy(GetArSession(), m_Ptr, subsumedBy.ReleaseAndGetAddressOf());
-    if (nullptr == subsumedBy)
-        return false;
+    int32_t retAsInt = 0;
+    ArPlane_isPoseInPolygon(GetArSession(), m_ArPlane, arPose, &retAsInt);
+    return retAsInt != 0;
+}
 
-    subsumedBy.InitRefCount();
-    return true;
+bool WrappedPlane::IsPoseInPolygon(const UnityXRPose& xrPose) const
+{
+    WrappedPoseRaii wrappedPose = xrPose;
+    return IsPoseInPolygon(wrappedPose);
+}
+
+bool WrappedPlane::IsPoseInExtents(const ArPose* arPose) const
+{
+    int32_t retAsInt = 0;
+    ArPlane_isPoseInExtents(GetArSession(), m_ArPlane, arPose, &retAsInt);
+    return retAsInt != 0;
+}
+
+bool WrappedPlane::IsPoseInExtents(const UnityXRPose& xrPose) const
+{
+    WrappedPoseRaii wrappedPose = xrPose;
+    return IsPoseInPolygon(wrappedPose);
+}
+
+void WrappedPlane::GetExtents(float& x, float& z) const
+{
+    ArPlane_getExtentX(GetArSession(), m_ArPlane, &x);
+    ArPlane_getExtentZ(GetArSession(), m_ArPlane, &z);
+}
+
+int32_t WrappedPlane::GetPolygonSize() const
+{
+    int32_t ret = 0;
+    ArPlane_getPolygonSize(GetArSession(), m_ArPlane, &ret);
+    return ret;
+}
+
+void WrappedPlane::GetPolygon(float* boundaryVerts) const
+{
+    ArPlane_getPolygon(GetArSession(), m_ArPlane, boundaryVerts);
+}
+
+void WrappedPlane::GetCenterPose(ArPose* arPose) const
+{
+    ArPlane_getCenterPose(GetArSession(), m_ArPlane, arPose);
+}
+
+void WrappedPlane::GetCenterPose(UnityXRPose& xrPose) const
+{
+    WrappedPoseRaii wrappedPose = GetIdentityPose();
+    GetCenterPose(wrappedPose);
+    wrappedPose.GetPose(xrPose);
+}
+
+WrappedPlaneMutable::WrappedPlaneMutable()
+{
+}
+
+WrappedPlaneMutable::WrappedPlaneMutable(ArPlane* arPlane)
+    : WrappedPlane(arPlane)
+{
+}
+
+WrappedPlaneMutable::operator ArPlane*()
+{
+    return GetArPlaneMutable();
+}
+
+ArPlane* WrappedPlaneMutable::Get()
+{
+    return GetArPlaneMutable();
+}
+
+ArPlane*& WrappedPlaneMutable::GetArPlaneMutable()
+{
+    return *const_cast<ArPlane**>(&m_ArPlane);
+}
+
+WrappedPlaneRaii::WrappedPlaneRaii()
+{
+}
+
+WrappedPlaneRaii::~WrappedPlaneRaii()
+{
+    Release();
+}
+
+bool WrappedPlaneRaii::TryAcquireSubsumedBy(const ArPlane* planeSubsumed)
+{
+    Release();
+    ArPlane_acquireSubsumedBy(GetArSession(), planeSubsumed, &GetArPlaneMutable());
+    return m_ArPlane != nullptr;
+}
+
+void WrappedPlaneRaii::Release()
+{
+    if (m_ArPlane == nullptr)
+        return;
+
+    ArTrackable_release(ArAsTrackable(GetArPlaneMutable()));
+    m_ArPlane = nullptr;
 }

@@ -1,95 +1,91 @@
 #include "DepthProvider.h"
 #include "Utility.h"
 
+#include "Wrappers/WrappedPointCloud.h"
+
 static const int kNumFloatsPerPoint = 4;
-static const int kOffsetToConfindenceWithinPoint = 3;
 
 DepthProvider::DepthProvider(IUnityXRDepthInterface*& unityInterface)
     : m_UnityInterface(unityInterface)
 {
 }
 
-struct DepthDataAllocatorWrapper : public IUnityXRDepthDataAllocator
+struct DepthDataAllocatorRedirect : public IUnityXRDepthDataAllocator
 {
-    DepthDataAllocatorWrapper(const UnityXRDepthDataAllocator* allocator, IUnityXRDepthInterface* unityInterface)
-        : m_Allocator(allocator)
+    DepthDataAllocatorRedirect(const UnityXRDepthDataAllocator* xrAllocator, IUnityXRDepthInterface* unityInterface)
+        : m_XrAllocator(xrAllocator)
         , m_UnityInterface(unityInterface)
     {}
 
     virtual void UNITY_INTERFACE_API SetNumberOfPoints(size_t numPoints) override
     {
-        m_UnityInterface->Allocator_SetNumberOfPoints(m_Allocator, numPoints);
+        m_UnityInterface->Allocator_SetNumberOfPoints(m_XrAllocator, numPoints);
     }
 
     virtual UnityXRVector3* UNITY_INTERFACE_API GetPointsBuffer() const override
     {
-        return m_UnityInterface->Allocator_GetPointsBuffer(m_Allocator);
+        return m_UnityInterface->Allocator_GetPointsBuffer(m_XrAllocator);
     }
 
     virtual float* UNITY_INTERFACE_API GetConfidenceBuffer() const override
     {
-        return m_UnityInterface->Allocator_GetConfidenceBuffer(m_Allocator);
+        return m_UnityInterface->Allocator_GetConfidenceBuffer(m_XrAllocator);
     }
 
 private:
-	const UnityXRDepthDataAllocator* m_Allocator;
+	const UnityXRDepthDataAllocator* m_XrAllocator;
 	IUnityXRDepthInterface* m_UnityInterface;
 };
 
-UnitySubsystemErrorCode UNITY_INTERFACE_API DepthProvider::StaticGetPointCloud(UnitySubsystemHandle handle, void* userData, const UnityXRDepthDataAllocator* allocator)
-{
-    DepthProvider* provider = static_cast<DepthProvider*>(userData);
-    if (provider == nullptr || allocator == nullptr)
-        return kUnitySubsystemErrorCodeInvalidArguments;
-
-    DepthDataAllocatorWrapper wrapper(allocator, provider->m_UnityInterface);
-    return provider->GetPointCloud(wrapper) ? kUnitySubsystemErrorCodeSuccess : kUnitySubsystemErrorCodeFailure;
-}
-
 // TODO: return false under the right circumstances (I'm guessing at least during tracking loss... anything else?)
-bool UNITY_INTERFACE_API DepthProvider::GetPointCloud(IUnityXRDepthDataAllocator& allocator)
+bool UNITY_INTERFACE_API DepthProvider::GetPointCloud(IUnityXRDepthDataAllocator& xrAllocator)
 {
-    auto session = GetArSession();
-    if (session == nullptr)
+    if (GetArSession() == nullptr)
         return false;
 
-    auto frame = GetArFrame();
-    if (frame == nullptr)
+    if (GetArFrame() == nullptr)
         return false;
 
-    ArPointCloud* pointCloud;
-    ArStatus ars = ArFrame_acquirePointCloud(session, frame, &pointCloud);
-    if (ARSTATUS_FAILED(ars))
+    WrappedPointCloudRaii wrappedPointCloud;
+    auto status = wrappedPointCloud.TryAcquireFromFrame();
+    if (ARSTATUS_FAILED(status))
         return false;
 
-    const float* data;
-    ArPointCloud_getData(session, pointCloud, &data);
+    const float* data = nullptr;
+    wrappedPointCloud.GetData(data);
 
-    int32_t numPoints;
-    ArPointCloud_getNumberOfPoints(session, pointCloud, &numPoints);
-    allocator.SetNumberOfPoints(numPoints);
+    int32_t numPoints = wrappedPointCloud.NumPoints();
+    xrAllocator.SetNumberOfPoints(numPoints);
 
     // TODO: might want to profile this against an implementation where we split
     //       up the point- and confidence-populating into separate loops to test
     //       for whether potential lack of cache coherency is an issue on-device
-    UnityXRVector3* pointsBuffer = allocator.GetPointsBuffer();
-    float* confidenceBuffer = allocator.GetConfidenceBuffer();
-    for (int32_t pointIndex = 0; pointIndex < numPoints; ++pointIndex, data += kNumFloatsPerPoint, ++pointsBuffer, ++confidenceBuffer)
+    UnityXRVector3* xrPointsBuffer = xrAllocator.GetPointsBuffer();
+    float* xrConfidenceBuffer = xrAllocator.GetConfidenceBuffer();
+    for (int32_t pointIndex = 0; pointIndex < numPoints; ++pointIndex, data += kNumFloatsPerPoint, ++xrPointsBuffer, ++xrConfidenceBuffer)
     {
-        pointsBuffer->x = data[0];
-        pointsBuffer->y = data[1];
-        pointsBuffer->z = -data[2];
-        *confidenceBuffer = data[3];
+        xrPointsBuffer->x = data[0];
+        xrPointsBuffer->y = data[1];
+        xrPointsBuffer->z = -data[2];
+        *xrConfidenceBuffer = data[3];
     }
-
-    ArPointCloud_release(pointCloud);
 
     return true;
 }
 
-void DepthProvider::PopulateCStyleProvider(UnityXRDepthProvider& provider)
+void DepthProvider::PopulateCStyleProvider(UnityXRDepthProvider& xrProvider)
 {
-	std::memset(&provider, 0, sizeof(provider));
-	provider.userData = this;
-	provider.GetPointCloud = &StaticGetPointCloud;
+	std::memset(&xrProvider, 0, sizeof(xrProvider));
+	xrProvider.userData = this;
+	xrProvider.GetPointCloud = &StaticGetPointCloud;
+}
+
+UnitySubsystemErrorCode UNITY_INTERFACE_API DepthProvider::StaticGetPointCloud(UnitySubsystemHandle handle, void* userData, const UnityXRDepthDataAllocator* xrAllocator)
+{
+    DepthProvider* thiz = static_cast<DepthProvider*>(userData);
+    if (thiz == nullptr || xrAllocator == nullptr)
+        return kUnitySubsystemErrorCodeInvalidArguments;
+
+    DepthDataAllocatorRedirect redirect(xrAllocator, thiz->m_UnityInterface);
+    return thiz->GetPointCloud(redirect) ? kUnitySubsystemErrorCodeSuccess : kUnitySubsystemErrorCodeFailure;
 }

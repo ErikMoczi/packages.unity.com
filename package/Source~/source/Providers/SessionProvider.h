@@ -1,6 +1,5 @@
 #include "arcore_c_api.h"
 #include "Unity/IUnityXRSession.deprecated.h"
-#include "Wrappers/WrappedConfig.h"
 #include <jni.h>
 
 class SessionProvider : public IUnityXRSessionProvider
@@ -30,9 +29,15 @@ public:
     virtual void UNITY_INTERFACE_API ApplicationPaused() override;
     virtual void UNITY_INTERFACE_API ApplicationResumed() override;
 
-    void PopulateCStyleProvider(UnityXRSessionProvider& provider);
+    void PopulateCStyleProvider(UnityXRSessionProvider& xrProvider);
 
 private:
+    static void UNITY_INTERFACE_API StaticBeginFrame(UnitySubsystemHandle handle, void* userData);
+    static void UNITY_INTERFACE_API StaticBeforeRender(UnitySubsystemHandle handle, void* userData);
+    static void UNITY_INTERFACE_API StaticApplicationPaused(UnitySubsystemHandle handle, void* userData);
+    static void UNITY_INTERFACE_API StaticApplicationResumed(UnitySubsystemHandle handle, void* userData);
+    static UnityXRTrackingState UNITY_INTERFACE_API StaticGetTrackingState(UnitySubsystemHandle handle, void* userData);
+
     uint32_t m_CameraTextureName;
 
     enum class eConfigFlags : int

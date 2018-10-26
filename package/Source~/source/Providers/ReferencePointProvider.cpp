@@ -1,192 +1,166 @@
 #include "ReferencePointProvider.h"
 #include "Wrappers/WrappedAnchorList.h"
-#include "Wrappers/WrappedPose.h"
 
-static const UnityXRTrackableId s_InvalidId = {};
-ReferencePointProvider* ReferencePointProvider::s_Instance = nullptr;
+static const UnityXRTrackableId k_InvalidId = {};
+static ReferencePointProvider* s_ReferencePointProvider = nullptr;
 
 extern "C" UnityXRTrackableId UnityARCore_attachReferencePoint(UnityXRTrackableId trackableId, UnityXRPose pose)
 {
-    auto instance = ReferencePointProvider::Get();
-    if (instance == nullptr)
-        return s_InvalidId;
+    if (s_ReferencePointProvider == nullptr)
+        return k_InvalidId;
 
-    return instance->AttachReferencePoint(trackableId, pose);
+    return s_ReferencePointProvider->AttachReferencePoint(trackableId, pose);
 }
 
 ReferencePointProvider::ReferencePointProvider(IUnityXRReferencePointInterface*& unityInterface)
     : m_UnityInterface(unityInterface)
 {
-    s_Instance = this;    
+    s_ReferencePointProvider = this;    
 }
 
 ReferencePointProvider::~ReferencePointProvider()
 {
-    s_Instance = nullptr;
+    s_ReferencePointProvider = nullptr;
 }
 
-UnityXRTrackableId ReferencePointProvider::AttachReferencePoint(UnityXRTrackableId trackableId, UnityXRPose pose)
+UnityXRTrackableId ReferencePointProvider::AttachReferencePoint(const UnityXRTrackableId& xrTrackableId, const UnityXRPose& xrPose)
 {
-    auto session = GetArSession();
-    if (session == nullptr)
-        return s_InvalidId;
+    if (GetArSession() == nullptr)
+        return k_InvalidId;
 
-    auto trackable = ConvertTrackableIdToPtr<ArTrackable>(trackableId);
-    if (trackable == nullptr)
-        return s_InvalidId;
+    auto arTrackable = ConvertTrackableIdToPtr<ArTrackable>(xrTrackableId);
+    if (arTrackable == nullptr)
+        return k_InvalidId;
 
-    const float poseRaw[7] =
-    {
-        pose.rotation.x,
-        pose.rotation.y,
-        -pose.rotation.z,
-        -pose.rotation.w,
-        pose.position.x,
-        pose.position.y,
-        -pose.position.z
-    };
-
-    ArPose* arPose = nullptr;
-    ArPose_create(session, poseRaw, &arPose);
-
-    ArAnchor* anchor = nullptr;
-    auto status = ArTrackable_acquireNewAnchor(session, trackable, arPose, &anchor);
-    ArPose_destroy(arPose);
-
+    WrappedAnchorRaii wrappedAnchor;
+    auto status = wrappedAnchor.TryAcquireAtTrackable(arTrackable, xrPose);
     if (ARSTATUS_FAILED(status))
-        return s_InvalidId;
+	    return k_InvalidId;
 
     UnityXRTrackableId newReferencePointId;
-    ConvertToTrackableId(newReferencePointId, anchor);
-
-    WrappedAnchor wrappedAnchor;
-    wrappedAnchor.AssumeOwnership(anchor);
-
-    m_IdToAnchorMap[newReferencePointId] = wrappedAnchor;
-
+    ConvertToTrackableId(newReferencePointId, wrappedAnchor.Get());
+    m_IdToAnchorMap[newReferencePointId] = wrappedAnchor.TransferOwnership();
     return newReferencePointId;
 }
 
-bool UNITY_INTERFACE_API ReferencePointProvider::TryAddReferencePoint(const UnityXRPose& xrPose, UnityXRTrackableId& outId, UnityXRTrackingState& outTrackingState)
+bool UNITY_INTERFACE_API ReferencePointProvider::TryAddReferencePoint(const UnityXRPose& xrPose, UnityXRTrackableId& xrIdOut, UnityXRTrackingState& xrTrackingStateOut)
 {
     if (GetArSession() == nullptr)
         return false;
 
-    WrappedAnchor anchor;
-    ArStatus ars = anchor.CreateFromPose(xrPose);
-    if (ARSTATUS_FAILED(ars))
+    WrappedAnchorRaii wrappedAnchor;
+    auto status = wrappedAnchor.TryAcquireAtPose(xrPose);
+    if (ARSTATUS_FAILED(status))
     {
-        DEBUG_LOG_WARNING("Failed to create reference point! Error: '%s'.", PrintArStatus(ars));
+        DEBUG_LOG_WARNING("Failed to create reference point! Error: '%s'.", PrintArStatus(status));
         return false;
     }
 
-    ConvertToTrackableId(outId, anchor.Get());
-    std::pair<IdToAnchorMap::iterator, bool> inserter = m_IdToAnchorMap.insert(std::make_pair(outId, anchor));
-    IdToAnchorMap::iterator& iter = inserter.first;
+    ConvertToTrackableId(xrIdOut, wrappedAnchor.Get());
+	xrTrackingStateOut = wrappedAnchor.GetTrackingState();
+
+	std::pair<IdToAnchorMap::iterator, bool> inserter = m_IdToAnchorMap.insert(std::make_pair(xrIdOut, wrappedAnchor.TransferOwnership()));
+	IdToAnchorMap::iterator& iter = inserter.first;
     if (!inserter.second || iter == m_IdToAnchorMap.end())
     {
         DEBUG_LOG_ERROR("Internal error - can't create entry for new reference point!");
         return false;
     }
 
-    ArTrackingState arTrackingState = anchor.GetTrackingState();
-    outTrackingState = ConvertGoogleTrackingStateToUnity(arTrackingState);
     return true;
 }
 
-bool UNITY_INTERFACE_API ReferencePointProvider::TryRemoveReferencePoint(const UnityXRTrackableId& id)
+bool UNITY_INTERFACE_API ReferencePointProvider::TryRemoveReferencePoint(const UnityXRTrackableId& xrId)
 {
     if (GetArSession() == nullptr)
         return false;
 
-    IdToAnchorMap::iterator iter = m_IdToAnchorMap.find(id);
+    IdToAnchorMap::iterator iter = m_IdToAnchorMap.find(xrId);
     if (iter == m_IdToAnchorMap.end())
         return false;
 
-    iter->second.RemoveFromSessionAndRelease();
-    m_IdToAnchorMap.erase(iter);
+	WrappedAnchorRaii wrappedAnchor;
+	wrappedAnchor.AssumeOwnership(iter->second);
+	wrappedAnchor.Detach();
+
+	m_IdToAnchorMap.erase(iter);
     return true;
 }
 
-bool UNITY_INTERFACE_API ReferencePointProvider::GetAllReferencePoints(IUnityXRReferencePointAllocator& allocator)
+bool UNITY_INTERFACE_API ReferencePointProvider::GetAllReferencePoints(IUnityXRReferencePointAllocator& xrAllocator)
 {
     if (GetArSession() == nullptr)
         return false;
 
-    WrappedAnchorList anchorList = eWrappedConstruction::Default;
-    anchorList.GetAllAnchors();
+    WrappedAnchorListRaii wrappedAnchorList;
+    wrappedAnchorList.PopulateList();
 
-    int32_t numAnchors = anchorList.Size();
-    UnityXRReferencePoint* unityPoints = allocator.AllocateReferencePoints(static_cast<size_t>(numAnchors));
+    const int32_t numAnchors = wrappedAnchorList.Size();
+    UnityXRReferencePoint* xrPoints = xrAllocator.AllocateReferencePoints(static_cast<size_t>(numAnchors));
     for (int32_t anchorIndex = 0; anchorIndex < numAnchors; ++anchorIndex)
     {
-        WrappedAnchor anchor;
-        anchorList.AcquireAt(anchorIndex, anchor);
+        WrappedAnchorRaii wrappedAnchor;
+        wrappedAnchor.AcquireFromList(wrappedAnchorList, anchorIndex);
 
-        ConvertToTrackableId(unityPoints[anchorIndex].id, anchor.Get());
-
-        ArTrackingState arTrackingState = anchor.GetTrackingState();
-        unityPoints[anchorIndex].trackingState = ConvertGoogleTrackingStateToUnity(arTrackingState);
-
-        WrappedPose pose;
-        anchor.GetPose(pose);
-        pose.GetXrPose(unityPoints[anchorIndex].pose);
+        xrPoints[anchorIndex].trackingState = wrappedAnchor.GetTrackingState();
+        ConvertToTrackableId(xrPoints[anchorIndex].id, wrappedAnchor.Get());
+		wrappedAnchor.GetPose(xrPoints[anchorIndex].pose);
     }
 
     return true;
 }
 
-struct ReferencePointAllocatorWrapper : public IUnityXRReferencePointAllocator
+struct ReferencePointAllocatorRedirect : public IUnityXRReferencePointAllocator
 {
-    ReferencePointAllocatorWrapper(IUnityXRReferencePointInterface* unityInterface, UnityXRReferencePointDataAllocator* allocator)
+    ReferencePointAllocatorRedirect(IUnityXRReferencePointInterface* unityInterface, UnityXRReferencePointDataAllocator* xrAllocator)
         : m_UnityInterface(unityInterface)
-        , m_Allocator(allocator)
+        , m_XrAllocator(xrAllocator)
     {}
 
     virtual UnityXRReferencePoint* AllocateReferencePoints(
         size_t numReferencePoints) override
     {
-        return m_UnityInterface->Allocator_AllocateReferencePoints(m_Allocator, numReferencePoints);
+        return m_UnityInterface->Allocator_AllocateReferencePoints(m_XrAllocator, numReferencePoints);
     }
 
 private:
     IUnityXRReferencePointInterface* m_UnityInterface;
-    UnityXRReferencePointDataAllocator* m_Allocator;
+    UnityXRReferencePointDataAllocator* m_XrAllocator;
 };
 
-UnitySubsystemErrorCode UNITY_INTERFACE_API ReferencePointProvider::StaticTryAddReferencePoint(UnitySubsystemHandle handle, void* userData, const UnityXRPose* xrPose, UnityXRTrackableId* outId, UnityXRTrackingState* outTrackingState)
+UnitySubsystemErrorCode UNITY_INTERFACE_API ReferencePointProvider::StaticTryAddReferencePoint(UnitySubsystemHandle handle, void* userData, const UnityXRPose* xrPose, UnityXRTrackableId* xrIdOut, UnityXRTrackingState* xrTrackingStateOut)
 {
     ReferencePointProvider* thiz = static_cast<ReferencePointProvider*>(userData);
-    if (thiz == nullptr || xrPose == nullptr || outId == nullptr || outTrackingState == nullptr)
+    if (thiz == nullptr || xrPose == nullptr || xrIdOut == nullptr || xrTrackingStateOut == nullptr)
         return kUnitySubsystemErrorCodeInvalidArguments;
 
-    return thiz->TryAddReferencePoint(*xrPose, *outId, *outTrackingState) ? kUnitySubsystemErrorCodeSuccess : kUnitySubsystemErrorCodeFailure;
+    return thiz->TryAddReferencePoint(*xrPose, *xrIdOut, *xrTrackingStateOut) ? kUnitySubsystemErrorCodeSuccess : kUnitySubsystemErrorCodeFailure;
 }
 
-UnitySubsystemErrorCode UNITY_INTERFACE_API ReferencePointProvider::StaticTryRemoveReferencePoint(UnitySubsystemHandle handle, void* userData, const UnityXRTrackableId* id)
+UnitySubsystemErrorCode UNITY_INTERFACE_API ReferencePointProvider::StaticTryRemoveReferencePoint(UnitySubsystemHandle handle, void* userData, const UnityXRTrackableId* xrId)
 {
     ReferencePointProvider* thiz = static_cast<ReferencePointProvider*>(userData);
-    if (thiz == nullptr || id == nullptr)
+    if (thiz == nullptr || xrId == nullptr)
         return kUnitySubsystemErrorCodeInvalidArguments;
 
-    return thiz->TryRemoveReferencePoint(*id) ? kUnitySubsystemErrorCodeSuccess : kUnitySubsystemErrorCodeFailure;
+    return thiz->TryRemoveReferencePoint(*xrId) ? kUnitySubsystemErrorCodeSuccess : kUnitySubsystemErrorCodeFailure;
 }
 
-UnitySubsystemErrorCode UNITY_INTERFACE_API ReferencePointProvider::StaticGetAllReferencePoints(UnitySubsystemHandle handle, void* userData, UnityXRReferencePointDataAllocator* allocator)
+UnitySubsystemErrorCode UNITY_INTERFACE_API ReferencePointProvider::StaticGetAllReferencePoints(UnitySubsystemHandle handle, void* userData, UnityXRReferencePointDataAllocator* xrAllocator)
 {
     ReferencePointProvider* thiz = static_cast<ReferencePointProvider*>(userData);
     if (thiz == nullptr || thiz == nullptr)
         return kUnitySubsystemErrorCodeInvalidArguments;
 
-    ReferencePointAllocatorWrapper wrapper(thiz->m_UnityInterface, allocator);
-    return thiz->GetAllReferencePoints(wrapper) ? kUnitySubsystemErrorCodeSuccess : kUnitySubsystemErrorCodeFailure;
+    ReferencePointAllocatorRedirect redirect(thiz->m_UnityInterface, xrAllocator);
+    return thiz->GetAllReferencePoints(redirect) ? kUnitySubsystemErrorCodeSuccess : kUnitySubsystemErrorCodeFailure;
 }
 
-void ReferencePointProvider::PopulateCStyleProvider(UnityXRReferencePointProvider& provider)
+void ReferencePointProvider::PopulateCStyleProvider(UnityXRReferencePointProvider& xrProvider)
 {
-    std::memset(&provider, 0, sizeof(provider));
-    provider.userData = this;
-    provider.TryAddReferencePoint = &StaticTryAddReferencePoint;
-    provider.TryRemoveReferencePoint = &StaticTryRemoveReferencePoint;
-    provider.GetAllReferencePoints = &StaticGetAllReferencePoints;
+    std::memset(&xrProvider, 0, sizeof(xrProvider));
+    xrProvider.userData = this;
+    xrProvider.TryAddReferencePoint = &StaticTryAddReferencePoint;
+    xrProvider.TryRemoveReferencePoint = &StaticTryRemoveReferencePoint;
+    xrProvider.GetAllReferencePoints = &StaticGetAllReferencePoints;
 }

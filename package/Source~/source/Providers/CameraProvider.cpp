@@ -1,9 +1,13 @@
+#include "CameraImageApi.h"
 #include "CameraProvider.h"
 #include "MathConversion.h"
 #include "SessionProvider.h"
 #include "Utility.h"
+#include "Wrappers/WrappedCameraIntrinsics.h"
+#include "Wrappers/WrappedFrame.h"
 #include "Wrappers/WrappedLightEstimate.h"
 #include "Wrappers/WrappedPose.h"
+#include "Wrappers/WrappedSession.h"
 
 #include <cstring>
 #include <GLES2/gl2.h>
@@ -27,16 +31,16 @@ CameraProvider::CameraProvider()
     , m_ScreenWidth(-1.0f)
     , m_ScreenHeight(-1.0f)
 {
-    std::memset(&m_DisplayMatrix, 0, sizeof(m_DisplayMatrix));
-    std::memset(&m_ProjectionMatrix, 0, sizeof(m_ProjectionMatrix));
+    std::memset(&m_XrDisplayMatrix, 0, sizeof(m_XrDisplayMatrix));
+    std::memset(&m_XrProjectionMatrix, 0, sizeof(m_XrProjectionMatrix));
 }
 
-const WrappedCamera& CameraProvider::GetWrappedCamera() const
+const ArCamera* CameraProvider::GetArCamera() const
 {
     return m_WrappedCamera;
 }
 
-WrappedCamera& CameraProvider::GetWrappedCameraMutable()
+ArCamera* CameraProvider::GetArCameraMutable()
 {
     return m_WrappedCamera;
 }
@@ -51,78 +55,42 @@ float CameraProvider::GetScreenHeight() const
     return m_ScreenHeight;
 }
 
+void CameraProvider::OnLifecycleInitialize()
+{
+    CameraImageApi::Create();
+}
+
 void CameraProvider::OnLifecycleShutdown()
 {
-	if (m_WrappedCamera)
-	{
-        m_WrappedCamera.Release();
-	}
+    m_WrappedCamera.Release();
+    CameraImageApi::Destroy();
 }
 
-// what should we do when the light estimation mode is AR_LIGHT_ESTIMATION_MODE_DISABLED?
-// and when the light estimate state is AR_LIGHT_ESTIMATE_STATE_INVALID?
-static bool TryGetLightEstimatePixelIntensity(float& outPixelIntensity)
+bool UNITY_INTERFACE_API CameraProvider::GetFrame(const UnityXRCameraParams& xrParamsIn, UnityXRCameraFrame* frameOut)
 {
-    WrappedLightEstimate lightEstimate = eWrappedConstruction::Default;
-    lightEstimate.GetFromFrame();
+    CameraImageApi::Update();
 
-    if (lightEstimate.GetState() != AR_LIGHT_ESTIMATE_STATE_VALID)
+    WrappedSessionMutable wrappedSession = GetArSessionMutable();
+    if (wrappedSession == nullptr)
         return false;
 
-    outPixelIntensity = lightEstimate.GetPixelIntensity();
-    return true;
-}
-
-const int kInvalidOrientation = -1;
-static int ConvertUnityToGoogleOrientation(UnityXRScreenOrientation unityOrientation)
-{
-    switch (unityOrientation)
-    {
-    case kUnityXRScreenOrientationPortrait:
-        return 0; // ROTATION_0
-
-    case kUnityXRScreenOrientationPortraitUpsideDown:
-        return 2; // ROTATION_180
-
-    case kUnityXRScreenOrientationLandscapeLeft:
-        return 1; // ROTATION_90
-
-    case kUnityXRScreenOrientationLandscapeRight:
-        return 3; // ROTATION_270
-    }
-
-    return kInvalidOrientation;
-}
-
-bool UNITY_INTERFACE_API CameraProvider::GetFrame(const UnityXRCameraParams& paramsIn, UnityXRCameraFrame* frameOut)
-{
-    auto session = GetArSession();
-    if (session == nullptr)
+    if (GetArFrame() == nullptr)
         return false;
 
-    auto frame = GetArFrame();
-    if (frame == nullptr)
-        return false;
+    m_ScreenWidth = xrParamsIn.screenWidth;
+    m_ScreenHeight = xrParamsIn.screenHeight;
 
-    m_ScreenWidth = paramsIn.screenWidth;
-    m_ScreenHeight = paramsIn.screenHeight;
-
-    ArFrame_getTimestamp(session, frame, &frameOut->timestampNs);
+    frameOut->timestampNs = GetLatestTimestamp();
     frameOut->providedFields = kUnityXRCameraFramePropertiesTimestamp;
 
-    int googleOrientation = ConvertUnityToGoogleOrientation(paramsIn.orientation);
-    if (kInvalidOrientation == googleOrientation)
+    if (!wrappedSession.TrySetDisplayGeometry(xrParamsIn.orientation, xrParamsIn.screenWidth, xrParamsIn.screenHeight))
         return false;
 
-    ArSession_setDisplayGeometry(session, googleOrientation, paramsIn.screenWidth, paramsIn.screenHeight);
-
-    if (frame != nullptr)
-        RetrieveMatricesIfNeeded(session, frame, paramsIn);
-
+    RetrieveMatricesIfNeeded(xrParamsIn);
     if (m_HaveRetrievedMatrices)
     {
-        frameOut->displayMatrix = m_DisplayMatrix;
-        frameOut->projectionMatrix = m_ProjectionMatrix;
+        frameOut->displayMatrix = m_XrDisplayMatrix;
+        frameOut->projectionMatrix = m_XrProjectionMatrix;
         frameOut->providedFields = EnumCast<UnityXRCameraFramePropertyFlags>(
             frameOut->providedFields |
             kUnityXRCameraFramePropertiesProjectionMatrix |
@@ -130,13 +98,10 @@ bool UNITY_INTERFACE_API CameraProvider::GetFrame(const UnityXRCameraParams& par
     }
 
     {
-        ArLightEstimate* lightEstimate;
-        ArLightEstimate_create(session, &lightEstimate);
-        ArFrame_getLightEstimate(session, frame, lightEstimate);
-        ArLightEstimate_getColorCorrection(session, lightEstimate, g_LastColorCorrection);
-        ArLightEstimateState lightEstimateState;
-        ArLightEstimate_getState(session, lightEstimate, &lightEstimateState);
-        ArLightEstimate_destroy(lightEstimate);
+        WrappedLightEstimateRaii wrappedLightEstimate;
+        wrappedLightEstimate.GetFromFrame();
+        wrappedLightEstimate.GetColorCorrection(g_LastColorCorrection);
+        ArLightEstimateState lightEstimateState = wrappedLightEstimate.GetState();
 
         if (lightEstimateState == AR_LIGHT_ESTIMATE_STATE_VALID)
         {
@@ -160,17 +125,9 @@ bool UNITY_INTERFACE_API CameraProvider::GetFrame(const UnityXRCameraParams& par
     // TODO: fix this hard-coding
     textureDescOut.format = kUnityRenderingExtFormatR8G8B8A8_SRGB;
 
-    int32_t imageWidth = 0, imageHeight = 0;
-    {
-        ArCameraIntrinsics* cameraIntrinsics = nullptr;
-        ArCameraIntrinsics_create(session, &cameraIntrinsics);
-        ArCamera_getTextureIntrinsics(session, m_WrappedCamera, cameraIntrinsics);
-        ArCameraIntrinsics_destroy(cameraIntrinsics);
-        ArCameraIntrinsics_getImageDimensions(session, cameraIntrinsics, &imageWidth, &imageHeight);
-    }
-    textureDescOut.width = imageWidth;
-    textureDescOut.height = imageHeight;
-
+    WrappedCameraIntrinsicsRaii wrappedIntrinsics;
+    wrappedIntrinsics.GetFromCameraTexture();
+    wrappedIntrinsics.GetImageDimensions(textureDescOut.width, textureDescOut.height);
     return true;
 }
 
@@ -188,21 +145,39 @@ bool UNITY_INTERFACE_API CameraProvider::GetShaderName(char(&shaderName)[kUnityX
     return true;
 }
 
-UnitySubsystemErrorCode UNITY_INTERFACE_API Impl_GetFrame(UnitySubsystemHandle handle, void* userData, const UnityXRCameraParams* paramsIn, UnityXRCameraFrame* frameOut)
+void CameraProvider::PopulateCStyleProvider(UnityXRCameraProvider& xrProvider)
 {
-    if (userData == nullptr)
+    std::memset(&xrProvider, 0, sizeof(xrProvider));
+    xrProvider.userData = this;
+    xrProvider.GetFrame = &StaticGetFrame;
+    xrProvider.SetLightEstimationRequested = &StaticSetLightEstimationRequested;
+    xrProvider.GetShaderName = &StaticGetShaderName;
+}
+
+void CameraProvider::AcquireCameraFromNewFrame()
+{
+    m_WrappedCamera.AcquireFromFrame();
+}
+
+UnitySubsystemErrorCode UNITY_INTERFACE_API CameraProvider::StaticGetFrame(UnitySubsystemHandle handle, void* userData, const UnityXRCameraParams* xrParamsIn, UnityXRCameraFrame* xrFrameOut)
+{
+    CameraProvider* thiz = static_cast<CameraProvider*>(userData);
+    if (thiz == nullptr)
         return kUnitySubsystemErrorCodeInvalidArguments;
-    return static_cast<CameraProvider*>(userData)->GetFrame(*paramsIn, frameOut) ? kUnitySubsystemErrorCodeSuccess : kUnitySubsystemErrorCodeFailure;
+
+    return thiz->GetFrame(*xrParamsIn, xrFrameOut) ? kUnitySubsystemErrorCodeSuccess : kUnitySubsystemErrorCodeFailure;
 }
 
-void UNITY_INTERFACE_API Impl_SetLightEstimationRequested(UnitySubsystemHandle handle, void* userData, bool requested)
+void UNITY_INTERFACE_API CameraProvider::StaticSetLightEstimationRequested(UnitySubsystemHandle handle, void* userData, bool requested)
 {
-    if (userData == nullptr)
+    CameraProvider* thiz = static_cast<CameraProvider*>(userData);
+    if (thiz == nullptr)
         return;
-    static_cast<CameraProvider*>(userData)->SetLightEstimationRequested(requested);
+
+    thiz->SetLightEstimationRequested(requested);
 }
 
-UnitySubsystemErrorCode UNITY_INTERFACE_API Impl_GetShaderName(UnitySubsystemHandle handle, void* userData, char shaderName[kUnityXRStringSize])
+UnitySubsystemErrorCode UNITY_INTERFACE_API CameraProvider::StaticGetShaderName(UnitySubsystemHandle handle, void* userData, char shaderName[kUnityXRStringSize])
 {
     if (shaderName == nullptr)
         return kUnitySubsystemErrorCodeInvalidArguments;
@@ -211,25 +186,20 @@ UnitySubsystemErrorCode UNITY_INTERFACE_API Impl_GetShaderName(UnitySubsystemHan
     return kUnitySubsystemErrorCodeSuccess;
 }
 
-void CameraProvider::PopulateCStyleProvider(UnityXRCameraProvider& provider)
-{
-    provider.userData = this;
-    provider.GetFrame = &Impl_GetFrame;
-    provider.SetLightEstimationRequested = &Impl_SetLightEstimationRequested;
-    provider.GetShaderName = &Impl_GetShaderName;
-}
-
-void CameraProvider::RetrieveMatricesIfNeeded(ArSession* session, ArFrame* frame, const UnityXRCameraParams& paramsIn)
+void CameraProvider::RetrieveMatricesIfNeeded(const UnityXRCameraParams& xrParamsIn)
 {
     // We can early out if the matrices haven't changed.
     // * If the zNear or zFar has changed, then we need to recompute them
     // * If ArFrame_getDisplayGeometryChanged has /never/ returned true, then
     //   we need to wait for that before computing the matrices.
 
-    int32_t didGeometryChange;
-    ArFrame_getDisplayGeometryChanged(session, frame, &didGeometryChange);
+    WrappedFrame wrappedFrame = GetArFrame();
+    if (wrappedFrame == nullptr)
+        return;
 
-    if (!m_HaveRetrievedMatrices && didGeometryChange == 0)
+    const bool didGeometryChange = wrappedFrame.DidDisplayGeometryChange();
+
+    if (!m_HaveRetrievedMatrices && !didGeometryChange)
         return;
     else if (didGeometryChange)
         m_HaveRetrievedMatrices = true;
@@ -256,20 +226,20 @@ void CameraProvider::RetrieveMatricesIfNeeded(ArSession* session, ArFrame* frame
         uvsToTransform[kOffsetV] = 0.0f;
 
         float transformedUVs[kNumUVTransformElements];
-        ArFrame_transformDisplayUvCoords(session, frame, kNumUVTransformElements, uvsToTransform, transformedUVs);
+        wrappedFrame.TransformDisplayUvCoords(kNumUVTransformElements, uvsToTransform, transformedUVs);
 
-        m_DisplayMatrix.columns[0].x = transformedUVs[kBasisU1] - transformedUVs[kOffsetU];
-        m_DisplayMatrix.columns[0].y = transformedUVs[kBasisV1] - transformedUVs[kOffsetV];
-        m_DisplayMatrix.columns[1].x = transformedUVs[kBasisU2] - transformedUVs[kOffsetU];
-        m_DisplayMatrix.columns[1].y = transformedUVs[kBasisV2] - transformedUVs[kOffsetV];
-        m_DisplayMatrix.columns[2].x = transformedUVs[kOffsetU];
-        m_DisplayMatrix.columns[2].y = transformedUVs[kOffsetV];
+        m_XrDisplayMatrix.columns[0].x = transformedUVs[kBasisU1] - transformedUVs[kOffsetU];
+        m_XrDisplayMatrix.columns[0].y = transformedUVs[kBasisV1] - transformedUVs[kOffsetV];
+        m_XrDisplayMatrix.columns[1].x = transformedUVs[kBasisU2] - transformedUVs[kOffsetU];
+        m_XrDisplayMatrix.columns[1].y = transformedUVs[kBasisV2] - transformedUVs[kOffsetV];
+        m_XrDisplayMatrix.columns[2].x = transformedUVs[kOffsetU];
+        m_XrDisplayMatrix.columns[2].y = transformedUVs[kOffsetV];
     }
 
-    if (m_CachedZFar != paramsIn.zFar || m_CachedZNear != paramsIn.zNear || didGeometryChange)
+    if (m_CachedZFar != xrParamsIn.zFar || m_CachedZNear != xrParamsIn.zNear || didGeometryChange)
     {
-        m_CachedZNear = paramsIn.zNear;
-        m_CachedZFar = paramsIn.zFar;
-        m_WrappedCamera.GetProjectionMatrix(m_ProjectionMatrix, paramsIn.zNear, paramsIn.zFar);
+        m_CachedZNear = xrParamsIn.zNear;
+        m_CachedZFar = xrParamsIn.zFar;
+        m_WrappedCamera.GetProjectionMatrix(m_XrProjectionMatrix, xrParamsIn.zNear, xrParamsIn.zFar);
     }
 }

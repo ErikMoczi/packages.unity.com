@@ -1,15 +1,46 @@
-#include "arcore_c_api.h"
-#include "WrappingBase.h"
+#pragma once
 
-class WrappedLightEstimate : public WrappingBase<ArLightEstimate>
+#include "arcore_c_api.h"
+
+class WrappedLightEstimate
 {
 public:
     WrappedLightEstimate();
-    WrappedLightEstimate(eWrappedConstruction);
+    WrappedLightEstimate(const ArLightEstimate* arLightEstimate);
 
-    void CreateDefault();
+    operator const ArLightEstimate*() const;
+    const ArLightEstimate* Get() const;
+
+    void GetColorCorrection(float* colorCorrection) const;
+    ArLightEstimateState GetState() const;
+    float GetPixelIntensity() const;    
+
+protected:
+    const ArLightEstimate* m_ArLightEstimate;
+};
+
+class WrappedLightEstimateMutable : public WrappedLightEstimate
+{
+public:
+    WrappedLightEstimateMutable();
+    WrappedLightEstimateMutable(ArLightEstimate* arLightEstimate);
+
+    operator ArLightEstimate*();
+    ArLightEstimate* Get();
+
     void GetFromFrame();
 
-    ArLightEstimateState GetState() const;
-    float GetPixelIntensity() const;
+protected:
+    ArLightEstimate*& GetArLightEstimateMutable();
+};
+
+class WrappedLightEstimateRaii : public WrappedLightEstimateMutable
+{
+public:
+    WrappedLightEstimateRaii();
+    ~WrappedLightEstimateRaii();
+
+private:
+    WrappedLightEstimateRaii(const WrappedLightEstimateRaii&);
+    WrappedLightEstimateRaii& operator=(const WrappedLightEstimateRaii&);
 };

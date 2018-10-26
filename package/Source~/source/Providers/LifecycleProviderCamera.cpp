@@ -1,15 +1,18 @@
+#include "CameraImage/CameraImageAndroid.h"
 #include "LifecycleProviderCamera.h"
 #include "Utility.h"
 
 LifecycleProviderCamera::LifecycleProviderCamera()
     : m_UnityInterface(nullptr)
 {
+    CameraImageApi::RegisterInterface();
 }
 
 UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderCamera::Initialize(IUnitySubsystem* subsystem)
 {
     IUnityXRCameraSubsystem* xrCameraSubsystem = static_cast<IUnityXRCameraSubsystem*>(subsystem);
     xrCameraSubsystem->RegisterCameraProvider(&m_CameraProvider);
+    m_CameraProvider.OnLifecycleInitialize();
     return kUnitySubsystemErrorCodeSuccess;
 }
 
@@ -24,12 +27,11 @@ UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderCamera::Start(IUnit
 }
 
 void UNITY_INTERFACE_API LifecycleProviderCamera::Stop(IUnitySubsystem* /*subsystem*/)
-{
-}
+{ }
 
-UnitySubsystemErrorCode LifecycleProviderCamera::SetUnityInterfaceAndRegister(IUnityXRCameraInterface* cStyleInterface, const char* subsystemId)
+UnitySubsystemErrorCode LifecycleProviderCamera::SetUnityInterfaceAndRegister(IUnityXRCameraInterface* unityInterface, const char* subsystemId)
 {
-    m_UnityInterface = cStyleInterface;
+    m_UnityInterface = unityInterface;
 
     UnityLifecycleProvider provider;
     std::memset(&provider, 0, sizeof(provider));
@@ -40,7 +42,7 @@ UnitySubsystemErrorCode LifecycleProviderCamera::SetUnityInterfaceAndRegister(IU
     provider.Start = &StaticStart;
     provider.Stop = &StaticStop;
 
-    return cStyleInterface->RegisterLifecycleProvider("UnityARCore", subsystemId, &provider);
+    return unityInterface->RegisterLifecycleProvider("UnityARCore", subsystemId, &provider);
 }
 
 UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderCamera::StaticInitialize(UnitySubsystemHandle handle, void* userData)

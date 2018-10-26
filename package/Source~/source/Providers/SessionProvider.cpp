@@ -11,9 +11,7 @@
 static JavaVM* s_JavaVM = nullptr;
 static JNIEnv* s_JNIEnv = nullptr;
 static jobject s_AppActivity = nullptr;
-static jobject s_AppContext = nullptr;
 static bool s_ArSessionEnabled = false;
-
 
 jobject CallJavaMethod(jobject object, const char* name, const char* sig)
 {
@@ -29,12 +27,12 @@ extern "C" void UnityARCore_setCameraPermissionProvider(CameraPermissionRequestP
     g_CameraPermissionRequestProvider = provider;
 }
 
-void CameraPermissionRequestProvider(CameraPermissionsResultCallback_FP on_complete, void *context)
+void CameraPermissionRequestProvider(CameraPermissionsResultCallback_FP onComplete, void *context)
 {
     if (g_CameraPermissionRequestProvider)
-        g_CameraPermissionRequestProvider(on_complete, context);
+        g_CameraPermissionRequestProvider(onComplete, context);
     else
-        on_complete(false, context);
+        onComplete(false, context);
 }
 
 bool IsArSessionEnabled()
@@ -72,7 +70,6 @@ jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/)
         return ret;
 
     jclass playerClass = s_JNIEnv->FindClass("com/unity3d/player/UnityPlayer");
-    jclass activityClass = s_JNIEnv->FindClass("android/app/Activity");
     jfieldID activityField = s_JNIEnv->GetStaticFieldID(playerClass, "currentActivity", "Landroid/app/Activity;");
     s_AppActivity = s_JNIEnv->GetStaticObjectField(playerClass, activityField);
     s_AppActivity = s_JNIEnv->NewGlobalRef(s_AppActivity);
@@ -169,9 +166,8 @@ UnityXRTrackingState UNITY_INTERFACE_API SessionProvider::GetTrackingState()
     if (GetArSession() == nullptr)
         return kUnityXRTrackingStateUnknown;
 
-    const WrappedCamera& wrappedCamera = GetWrappedCamera();
-    ArTrackingState trackingState = wrappedCamera != nullptr ? wrappedCamera.GetTrackingState() : AR_TRACKING_STATE_PAUSED;
-    return ConvertGoogleTrackingStateToUnity(trackingState);
+    WrappedCamera wrappedCamera = GetArCamera();
+    return wrappedCamera != nullptr ? wrappedCamera.GetTrackingState() : kUnityXRTrackingStateUnavailable;
 }
 
 void UNITY_INTERFACE_API SessionProvider::BeginFrame()
@@ -179,23 +175,24 @@ void UNITY_INTERFACE_API SessionProvider::BeginFrame()
 
 void UNITY_INTERFACE_API SessionProvider::BeforeRender()
 {
-    const ArPlaneFindingMode requestedPlaneFindingMode =
+    const ArPlaneFindingMode requestedArPlaneFindingMode =
             (m_RequestedConfigFlags & eConfigFlags::planeRecognition) != eConfigFlags::none
             ? AR_PLANE_FINDING_MODE_HORIZONTAL_AND_VERTICAL : AR_PLANE_FINDING_MODE_DISABLED;
 
-    SetPlaneFindingMode(requestedPlaneFindingMode);
+    SetPlaneFindingMode(requestedArPlaneFindingMode);
 
-    const ArLightEstimationMode requestedLightEstimationMode =
+    const ArLightEstimationMode requestedArLightEstimationMode =
         (m_RequestedConfigFlags & eConfigFlags::lightEstimation) != eConfigFlags::none
         ? AR_LIGHT_ESTIMATION_MODE_AMBIENT_INTENSITY : AR_LIGHT_ESTIMATION_MODE_DISABLED;
 
-    SetLightEstimationMode(requestedLightEstimationMode);
+    SetLightEstimationMode(requestedArLightEstimationMode);
 
     UpdateConfigIfNeeded();
 
     ArPresto_update();
 
-    GetWrappedCameraMutable().AcquireFromFrame();
+    if (GetArSession() != nullptr && GetArFrame() != nullptr)
+        AcquireCameraFromNewFrame();
 }
 
 void UNITY_INTERFACE_API SessionProvider::ApplicationPaused()
@@ -208,60 +205,60 @@ void UNITY_INTERFACE_API SessionProvider::ApplicationResumed()
     ArPresto_handleActivityResume();
 }
 
-static UnityXRTrackingState UNITY_INTERFACE_API Impl_GetTrackingState(UnitySubsystemHandle handle, void* userData)
+void SessionProvider::PopulateCStyleProvider(UnityXRSessionProvider& xrProvider)
 {
-    SessionProvider* provider = static_cast<SessionProvider*>(userData);
-    if (provider == nullptr)
+    std::memset(&xrProvider, 0, sizeof(xrProvider));
+    xrProvider.userData = this;
+    xrProvider.GetTrackingState = &StaticGetTrackingState;
+    xrProvider.BeginFrame = &StaticBeginFrame;
+    xrProvider.BeforeRender = &StaticBeforeRender;
+    xrProvider.ApplicationPaused = &StaticApplicationPaused;
+    xrProvider.ApplicationResumed = &StaticApplicationResumed;
+}
+
+void UNITY_INTERFACE_API SessionProvider::StaticBeginFrame(UnitySubsystemHandle handle, void* userData)
+{
+    SessionProvider* thiz = static_cast<SessionProvider*>(userData);
+    if (thiz == nullptr)
+        return;
+
+    thiz->BeginFrame();
+}
+
+void UNITY_INTERFACE_API SessionProvider::StaticBeforeRender(UnitySubsystemHandle handle, void* userData)
+{
+    SessionProvider* thiz = static_cast<SessionProvider*>(userData);
+    if (thiz == nullptr)
+        return;
+
+    thiz->BeforeRender();
+}
+
+void UNITY_INTERFACE_API SessionProvider::StaticApplicationPaused(UnitySubsystemHandle handle, void* userData)
+{
+    SessionProvider* thiz = static_cast<SessionProvider*>(userData);
+    if (thiz == nullptr)
+        return;
+
+    thiz->ApplicationPaused();
+}
+
+void UNITY_INTERFACE_API SessionProvider::StaticApplicationResumed(UnitySubsystemHandle handle, void* userData)
+{
+    SessionProvider* thiz = static_cast<SessionProvider*>(userData);
+    if (thiz == nullptr)
+        return;
+
+    thiz->ApplicationResumed();
+}
+
+UnityXRTrackingState UNITY_INTERFACE_API SessionProvider::StaticGetTrackingState(UnitySubsystemHandle handle, void* userData)
+{
+    SessionProvider* thiz = static_cast<SessionProvider*>(userData);
+    if (thiz == nullptr)
         return kUnityXRTrackingStateUnknown;
 
-    return provider->GetTrackingState();
-}
-
-static void UNITY_INTERFACE_API Impl_BeginFrame(UnitySubsystemHandle handle, void* userData)
-{
-    SessionProvider* provider = static_cast<SessionProvider*>(userData);
-    if (provider == nullptr)
-        return;
-
-    provider->BeginFrame();
-}
-
-static void UNITY_INTERFACE_API Impl_BeforeRender(UnitySubsystemHandle handle, void* userData)
-{
-    SessionProvider* provider = static_cast<SessionProvider*>(userData);
-    if (provider == nullptr)
-        return;
-
-    provider->BeforeRender();
-}
-
-static void UNITY_INTERFACE_API Impl_ApplicationPaused(UnitySubsystemHandle handle, void* userData)
-{
-    SessionProvider* provider = static_cast<SessionProvider*>(userData);
-    if (provider == nullptr)
-        return;
-
-    provider->ApplicationPaused();
-}
-
-static void UNITY_INTERFACE_API Impl_ApplicationResumed(UnitySubsystemHandle handle, void* userData)
-{
-    SessionProvider* provider = static_cast<SessionProvider*>(userData);
-    if (provider == nullptr)
-        return;
-
-    provider->ApplicationResumed();
-}
-
-void SessionProvider::PopulateCStyleProvider(UnityXRSessionProvider& provider)
-{
-    std::memset(&provider, 0, sizeof(provider));
-    provider.userData = this;
-    provider.GetTrackingState = &Impl_GetTrackingState;
-    provider.BeginFrame = &Impl_BeginFrame;
-    provider.BeforeRender = &Impl_BeforeRender;
-    provider.ApplicationPaused = &Impl_ApplicationPaused;
-    provider.ApplicationResumed = &Impl_ApplicationResumed;
+    return thiz->GetTrackingState();
 }
 
 SessionProvider::eConfigFlags& operator|=(SessionProvider::eConfigFlags& lhs, SessionProvider::eConfigFlags rhs)

@@ -1,19 +1,44 @@
 #pragma once
 
 #include "arcore_c_api.h"
-#include "WrappingBase.h"
 
-class WrappedHitResult;
-
-class WrappedHitResultList : public WrappingBase<ArHitResultList>
+class WrappedHitResultList
 {
 public:
     WrappedHitResultList();
-    WrappedHitResultList(eWrappedConstruction);
+    WrappedHitResultList(const ArHitResultList* arHitResultList);
 
-    void CreateDefault();
-    void HitTest(float xPixel, float yPixel);
+    operator const ArHitResultList*() const;
+    const ArHitResultList* Get() const;
 
     int32_t Size() const;
-    void GetHitResultAt(int32_t index, WrappedHitResult& hitResult);
+
+protected:
+    const ArHitResultList* m_ArHitResultList;
+};
+
+class WrappedHitResultListMutable : public WrappedHitResultList
+{
+public:
+    WrappedHitResultListMutable();
+    WrappedHitResultListMutable(ArHitResultList* arHitResultList);
+
+    operator ArHitResultList*();
+    ArHitResultList* Get();
+
+    void HitTest(float xPixel, float yPixel);
+
+protected:
+    ArHitResultList*& GetArHitResultListMutable();
+};
+
+class WrappedHitResultListRaii : public WrappedHitResultListMutable
+{
+public:
+    WrappedHitResultListRaii();
+    ~WrappedHitResultListRaii();
+
+private:
+    WrappedHitResultListRaii(const WrappedHitResultListRaii&);
+    WrappedHitResultListRaii& operator=(const WrappedHitResultListRaii&);
 };

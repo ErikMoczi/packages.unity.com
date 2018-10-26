@@ -1,21 +1,48 @@
 #pragma once
 
 #include "arcore_c_api.h"
-#include "WrappingBase.h"
 
-class WrappedPose;
-class WrappedTrackable;
+struct UnityXRPose;
 
-class WrappedHitResult : public WrappingBase<ArHitResult>
+class WrappedHitResult
 {
 public:
     WrappedHitResult();
-    WrappedHitResult(eWrappedConstruction);
+    WrappedHitResult(const ArHitResult* arHitResult);
 
-    void CreateDefault();
+    operator const ArHitResult*() const;
+    const ArHitResult* Get() const;
 
-    void AcquireTrackable(WrappedTrackable& trackable);
-    void GetPose(WrappedPose& pose);
+    void GetPose(ArPose* arPose) const;
+    void GetPose(UnityXRPose& xrPose) const;
+    float GetDistance() const;    
 
-    float GetDistance() const;
+protected:
+    const ArHitResult* m_ArHitResult;
+};
+
+class WrappedHitResultMutable : public WrappedHitResult
+{
+public:
+    WrappedHitResultMutable();
+    WrappedHitResultMutable(ArHitResult* arHitResult);
+
+    operator ArHitResult*();
+    ArHitResult* Get();
+
+    void GetFromList(const ArHitResultList* hitResultList, int32_t index);
+
+protected:
+    ArHitResult*& GetArHitResultMutable();
+};
+
+class WrappedHitResultRaii : public WrappedHitResultMutable
+{
+public:
+    WrappedHitResultRaii();
+    ~WrappedHitResultRaii();
+
+private:
+    WrappedHitResultRaii(const WrappedHitResultRaii&);
+    WrappedHitResultRaii& operator=(const WrappedHitResultRaii&);
 };

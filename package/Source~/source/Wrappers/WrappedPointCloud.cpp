@@ -1,55 +1,89 @@
-#include "MathConversion.h"
-#include "Utility.h"
 #include "WrappedPointCloud.h"
-
-const int WrappedPointCloud::kNumFloatsPerPoint = 4;
-const int WrappedPointCloud::kOffsetToConfindenceWithinPoint = 3;
-
-template<>
-void WrappingBase<ArPointCloud>::ReleaseImpl()
-{
-    ArPointCloud_release(m_Ptr);
-}
+#include "Utility.h"
 
 WrappedPointCloud::WrappedPointCloud()
-    : WrappingBase<ArPointCloud>()
-    , m_Data(nullptr)
+    : m_ArPointCloud(nullptr)
 {
 }
 
-WrappedPointCloud::WrappedPointCloud(eWrappedConstruction)
-    : WrappedPointCloud()
+WrappedPointCloud::WrappedPointCloud(const ArPointCloud* arPointCloud)
+    : m_ArPointCloud(arPointCloud)
 {
-    AcquireFromFrameAndGetData();
 }
 
-void WrappedPointCloud::AcquireFromFrameAndGetData()
+WrappedPointCloud::operator const ArPointCloud*() const
 {
-    ArStatus ars = ArFrame_acquirePointCloud(GetArSession(), GetArFrame(), ReleaseAndGetAddressOf());
-    if (ARSTATUS_FAILED(ars))
-    {
-        DEBUG_LOG_ERROR("Failed to acquire point cloud - this should never happen, given how we handle frames and the documented error codes for this in ARCore's API! Error: '%s'.", PrintArStatus(ars));
-        m_Ptr = nullptr;
-        return;
-    }
-
-    InitRefCount();
-    ArPointCloud_getData(GetArSession(), m_Ptr, &m_Data);
+    return m_ArPointCloud;
 }
 
-int32_t WrappedPointCloud::GetNumPoints() const
+const ArPointCloud* WrappedPointCloud::Get() const
+{
+    return m_ArPointCloud;
+}
+
+int32_t WrappedPointCloud::NumPoints() const
 {
     int32_t ret = 0;
-    ArPointCloud_getNumberOfPoints(GetArSession(), m_Ptr, &ret);
+    ArPointCloud_getNumberOfPoints(GetArSession(), m_ArPointCloud, &ret);
     return ret;
 }
 
-void WrappedPointCloud::GetPositionAt(int32_t index, UnityXRVector3& position)
+void WrappedPointCloud::GetData(const float*& pointCloudData) const
 {
-    MathConversion::ToUnity(position, m_Data + index * kNumFloatsPerPoint);
+    ArPointCloud_getData(GetArSession(), m_ArPointCloud, &pointCloudData);
 }
 
-float WrappedPointCloud::GetConfidenceAt(int32_t index)
+int64_t WrappedPointCloud::GetTimestamp() const
 {
-    return m_Data[kNumFloatsPerPoint * index + kOffsetToConfindenceWithinPoint];
+    int64_t ret = 0;
+    ArPointCloud_getTimestamp(GetArSession(), m_ArPointCloud, &ret);
+    return ret;
+}
+
+WrapppedPointCloudMutable::WrapppedPointCloudMutable()
+{
+}
+
+WrapppedPointCloudMutable::WrapppedPointCloudMutable(ArPointCloud* pointCloud)
+    : WrappedPointCloud(pointCloud)
+{
+}
+
+WrapppedPointCloudMutable::operator ArPointCloud*()
+{
+    return GetArPointCloudMutable();
+}
+
+ArPointCloud* WrapppedPointCloudMutable::Get()
+{
+    return GetArPointCloudMutable();
+}
+
+ArPointCloud*& WrapppedPointCloudMutable::GetArPointCloudMutable()
+{
+    return *const_cast<ArPointCloud**>(&m_ArPointCloud);
+}
+
+WrappedPointCloudRaii::WrappedPointCloudRaii()
+{
+}
+
+WrappedPointCloudRaii::~WrappedPointCloudRaii()
+{
+    Release();
+}
+
+ArStatus WrappedPointCloudRaii::TryAcquireFromFrame()
+{
+    Release();
+    return ArFrame_acquirePointCloud(GetArSession(), GetArFrame(), &GetArPointCloudMutable());
+}
+
+void WrappedPointCloudRaii::Release()
+{
+    if (m_ArPointCloud == nullptr)
+        return;
+
+    ArPointCloud_release(GetArPointCloudMutable());
+    m_ArPointCloud = nullptr;
 }

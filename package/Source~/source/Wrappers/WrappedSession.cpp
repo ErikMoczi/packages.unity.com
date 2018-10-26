@@ -1,111 +1,77 @@
-#include "Utility.h"
-#include "WrappedFrame.h"
 #include "WrappedSession.h"
 
-template<>
-void WrappingBase<ArSession>::ReleaseImpl()
+const int kInvalidOrientation = -1;
+static int ConvertUnityToGoogleOrientation(UnityXRScreenOrientation unityOrientation)
 {
-    ArSession_destroy(m_Ptr);
+    switch (unityOrientation)
+    {
+    case kUnityXRScreenOrientationPortrait:
+        return 0; // ROTATION_0
+
+    case kUnityXRScreenOrientationPortraitUpsideDown:
+        return 2; // ROTATION_180
+
+    case kUnityXRScreenOrientationLandscapeLeft:
+        return 1; // ROTATION_90
+
+    case kUnityXRScreenOrientationLandscapeRight:
+        return 3; // ROTATION_270
+
+    default:
+        return kInvalidOrientation;
+    }
 }
 
 WrappedSession::WrappedSession()
-    : m_IsConnected(false)
+    : m_ArSession(nullptr)
 {
 }
 
-WrappedSession::~WrappedSession()
+WrappedSession::WrappedSession(const ArSession* arSession)
+    : m_ArSession(arSession)
 {
-    DisconnectOrPause();
 }
 
-ArStatus WrappedSession::TryCreate(JNIEnv* jniEnv, jobject applicationContext)
+WrappedSession::operator const ArSession*() const
 {
-    if (m_Ptr != nullptr)
-        return AR_ERROR_FATAL;
-
-    return ArSession_create(jniEnv, applicationContext, &m_Ptr);
+    return m_ArSession;
 }
 
-bool WrappedSession::TryConfigure(const ArConfig* config)
+const ArSession* WrappedSession::Get() const
 {
-    ArStatus ars = ArSession_configure(m_Ptr, config);
-    if (ARSTATUS_FAILED(ars))
-    {
-        DEBUG_LOG_FATAL("Failed to set configuration, even though we checked that it was supported - cannot start ARCore! Error: '%s'.", PrintArStatus(ars));
+    return m_ArSession;
+}
+
+WrappedSessionMutable::WrappedSessionMutable()
+{
+}
+
+WrappedSessionMutable::WrappedSessionMutable(ArSession* arSession)
+    : WrappedSession(arSession)
+{
+}
+
+WrappedSessionMutable::operator ArSession*()
+{
+    return GetArSessionMutable();
+}
+
+ArSession* WrappedSessionMutable::Get()
+{
+    return GetArSessionMutable();
+}
+
+bool WrappedSessionMutable::TrySetDisplayGeometry(UnityXRScreenOrientation xrOrientation, float screenWidth, float screenHeight)
+{
+    int googleOrientation = ConvertUnityToGoogleOrientation(xrOrientation);
+    if (kInvalidOrientation == googleOrientation)
         return false;
-    }
 
+    ArSession_setDisplayGeometry(GetArSessionMutable(), googleOrientation, screenWidth, screenHeight);
     return true;
 }
 
-int64_t WrappedSession::GetTimestamp() const
+ArSession*& WrappedSessionMutable::GetArSessionMutable()
 {
-    int64_t timestamp = 0;
-    WrappedFrame& frame = GetWrappedFrameMutable();
-    ArFrame_getTimestamp(m_Ptr, frame.Get(), &timestamp);
-
-    return timestamp;
-}
-
-bool WrappedSession::UpdateAndOverwriteFrame()
-{
-    if (!m_IsConnected)
-        return false;
-
-    WrappedFrame& frame = GetWrappedFrameMutable();
-    ArStatus ars = ArSession_update(m_Ptr, frame.Get());
-    if (ARSTATUS_FAILED(ars))
-    {
-        DEBUG_LOG_ERROR("Failed to update session! Error: '%s'.", PrintArStatus(ars));
-        return false;
-    }
-
-    return true;
-}
-
-void WrappedSession::SetCameraTextureName(uint32_t textureId)
-{
-    ArSession_setCameraTextureName(m_Ptr, textureId);
-}
-
-void WrappedSession::SetDisplayGeometry(int rotation, int width, int height)
-{
-    ArSession_setDisplayGeometry(m_Ptr, rotation, width, height);
-}
-
-bool WrappedSession::ConnectOrResume()
-{
-    if (m_IsConnected)
-        return true;
-
-    ArStatus ars = ArSession_resume(m_Ptr);
-    if (ARSTATUS_FAILED(ars))
-    {
-        DEBUG_LOG_ERROR("Failed to start or resume session! Error: '%s'.", PrintArStatus(ars));
-        return false;
-    }
-
-    m_IsConnected = true;
-    return true;
-}
-
-bool WrappedSession::DisconnectOrPause()
-{
-    if (!m_IsConnected)
-        return true;
-
-    ArStatus ars = ArSession_pause(m_Ptr);
-    if (ARSTATUS_FAILED(ars))
-    {
-        DEBUG_LOG_ERROR("Failed to pause or disconnect session! Error: '%s'.", PrintArStatus(ars));
-        return false;
-    }
-
-    m_IsConnected = false;
-    return true;
-}
-
-bool WrappedSession::IsConnected() const
-{
-    return m_IsConnected;
+    return *const_cast<ArSession**>(&m_ArSession);
 }

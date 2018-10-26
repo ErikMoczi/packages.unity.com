@@ -18,13 +18,16 @@ void UNITY_INTERFACE_API InputProvider_V1::FillDeviceDefinition(UnityXRInternalI
 
 bool UNITY_INTERFACE_API InputProvider_V1::UpdateDeviceState(UnityXRInternalInputDeviceId deviceId, IUnityXRInputDeviceState* const deviceState)
 {
-    const WrappedCamera& wrappedCamera = GetWrappedCamera();
-    if (wrappedCamera.GetTrackingState() != AR_TRACKING_STATE_TRACKING)
+    WrappedCamera wrappedCamera = GetArCamera();
+    if (wrappedCamera == nullptr)
         return false;
 
-    UnityXRPose cameraPose;
-    wrappedCamera.GetDisplayOrientedPose(cameraPose);
+    if (wrappedCamera.GetTrackingState() != kUnityXRTrackingStateTracking)
+        return false;
 
-    deviceState->SetPoseValue(m_PoseFeatureIndex, cameraPose);
+    UnityXRPose xrCameraPose;
+    wrappedCamera.GetDisplayOrientedPose(xrCameraPose);
+
+    deviceState->SetPoseValue(m_PoseFeatureIndex, xrCameraPose);
     return true;
 }

@@ -2,48 +2,69 @@
 #include "WrappedAnchor.h"
 #include "WrappedAnchorList.h"
 
-template<>
-void WrappingBase<ArAnchorList>::CreateOrAcquireDefaultImpl()
-{
-    ArAnchorList_create(GetArSession(), &m_Ptr);
-}
-
-template<>
-void WrappingBase<ArAnchorList>::ReleaseImpl()
-{
-    ArAnchorList_destroy(m_Ptr);
-}
-
 WrappedAnchorList::WrappedAnchorList()
-    : WrappingBase<ArAnchorList>()
+    : m_ArAnchorList(nullptr)
 {
 }
 
-WrappedAnchorList::WrappedAnchorList(eWrappedConstruction)
-    : WrappingBase<ArAnchorList>()
+WrappedAnchorList::WrappedAnchorList(const ArAnchorList* arAnchorList)
+    : m_ArAnchorList(arAnchorList)
 {
-    CreateOrAcquireDefault();
 }
 
-void WrappedAnchorList::CreateDefault()
+WrappedAnchorList::operator const ArAnchorList*()
 {
-    CreateOrAcquireDefault();
+    return m_ArAnchorList;
 }
 
-void WrappedAnchorList::GetAllAnchors()
+const ArAnchorList* WrappedAnchorList::Get() const
 {
-    ArSession_getAllAnchors(GetArSession(), m_Ptr);
-}
-
-void WrappedAnchorList::AcquireAt(int32_t index, WrappedAnchor& anchor) const
-{
-    ArAnchorList_acquireItem(GetArSession(), m_Ptr, index, &anchor);
-    anchor.InitRefCount();
+    return m_ArAnchorList;
 }
 
 int32_t WrappedAnchorList::Size() const
 {
     int32_t ret = 0;
-    ArAnchorList_getSize(GetArSession(), m_Ptr, &ret);
+    ArAnchorList_getSize(GetArSession(), m_ArAnchorList, &ret);
     return ret;
+}
+
+WrappedAnchorListMutable::WrappedAnchorListMutable()
+{
+}
+
+WrappedAnchorListMutable::WrappedAnchorListMutable(ArAnchorList* arAnchorList)
+    : WrappedAnchorList(arAnchorList)
+{
+}
+
+WrappedAnchorListMutable::operator ArAnchorList*()
+{
+    return GetArAnchorListMutable();
+}
+
+ArAnchorList* WrappedAnchorListMutable::Get()
+{
+    return GetArAnchorListMutable();
+}
+
+void WrappedAnchorListMutable::PopulateList()
+{
+    ArSession_getAllAnchors(GetArSession(), GetArAnchorListMutable());
+}
+
+ArAnchorList*& WrappedAnchorListMutable::GetArAnchorListMutable()
+{
+    return *const_cast<ArAnchorList**>(&m_ArAnchorList);
+}
+
+WrappedAnchorListRaii::WrappedAnchorListRaii()
+{
+    ArAnchorList_create(GetArSession(), &GetArAnchorListMutable());
+}
+
+WrappedAnchorListRaii::~WrappedAnchorListRaii()
+{
+    if (m_ArAnchorList != nullptr)
+        ArAnchorList_destroy(GetArAnchorListMutable());
 }

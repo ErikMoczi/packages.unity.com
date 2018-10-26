@@ -1,19 +1,44 @@
 #pragma once
 
 #include "arcore_c_api.h"
-#include "WrappingBase.h"
 
-class WrappedAnchor;
-
-class WrappedAnchorList : public WrappingBase<ArAnchorList>
+class WrappedAnchorList
 {
 public:
     WrappedAnchorList();
-    WrappedAnchorList(eWrappedConstruction);
+    WrappedAnchorList(const ArAnchorList* arAnchorList);
 
-    void CreateDefault();
+    operator const ArAnchorList*();
+    const ArAnchorList* Get() const;
 
-    void GetAllAnchors();
-    void AcquireAt(int32_t index, WrappedAnchor& anchor) const;
     int32_t Size() const;
+
+protected:
+    const ArAnchorList* m_ArAnchorList;
+};
+
+class WrappedAnchorListMutable : public WrappedAnchorList
+{
+public:
+    WrappedAnchorListMutable();
+    WrappedAnchorListMutable(ArAnchorList* arAnchorList);
+
+    operator ArAnchorList*();
+    ArAnchorList* Get();
+
+    void PopulateList();
+
+protected:
+    ArAnchorList*& GetArAnchorListMutable();
+};
+
+class WrappedAnchorListRaii : public WrappedAnchorListMutable
+{
+public:
+    WrappedAnchorListRaii();
+    ~WrappedAnchorListRaii();
+
+private:
+    WrappedAnchorListRaii(const WrappedAnchorListRaii& original);
+    WrappedAnchorListRaii& operator=(const WrappedAnchorListRaii& copyFrom);
 };

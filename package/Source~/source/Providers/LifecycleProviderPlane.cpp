@@ -30,9 +30,9 @@ void UNITY_INTERFACE_API LifecycleProviderPlane::Stop(IUnitySubsystem* /*subsyst
     DoStop();
 }
 
-UnitySubsystemErrorCode LifecycleProviderPlane::SetUnityInterfaceAndRegister(IUnityXRPlaneInterface* cStyleInterface, const char* subsystemId)
+UnitySubsystemErrorCode LifecycleProviderPlane::SetUnityInterfaceAndRegister(IUnityXRPlaneInterface* unityInterface, const char* subsystemId)
 {
-    m_UnityInterface = cStyleInterface;
+    m_UnityInterface = unityInterface;
 
     UnityLifecycleProvider provider;
     std::memset(&provider, 0, sizeof(provider));
@@ -43,7 +43,7 @@ UnitySubsystemErrorCode LifecycleProviderPlane::SetUnityInterfaceAndRegister(IUn
     provider.Start = &StaticStart;
     provider.Stop = &StaticStop;
 
-    return cStyleInterface->RegisterLifecycleProvider("UnityARCore", subsystemId, &provider);
+    return unityInterface->RegisterLifecycleProvider("UnityARCore", subsystemId, &provider);
 }
 
 UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderPlane::StaticInitialize(UnitySubsystemHandle handle, void* userData)

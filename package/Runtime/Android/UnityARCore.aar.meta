@@ -7,7 +7,6 @@ PluginImporter:
   executionOrder: {}
   isPreloaded: 0
   isOverridable: 0
-  isExplicitlyReferenced: 0
   platformData:
   - first:
       '': Any
@@ -86,6 +85,12 @@ PluginImporter:
         CPU: AnyCPU
   - first:
       Standalone: Win64
+    second:
+      enabled: 0
+      settings:
+        CPU: AnyCPU
+  - first:
+      Windows Store Apps: WindowsStoreApps
     second:
       enabled: 0
       settings:

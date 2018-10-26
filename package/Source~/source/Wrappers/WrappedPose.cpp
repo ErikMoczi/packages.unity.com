@@ -2,78 +2,139 @@
 #include "WrappedPose.h"
 #include <cstring>
 
-template<>
-void WrappingBase<ArPose>::CreateOrAcquireDefaultImpl()
-{
-    float rawIdentity[kGooglePoseArraySize];
-    std::memset(rawIdentity, 0, sizeof(rawIdentity));
-    rawIdentity[3] = 1.0f;
-
-    ArPose_create(GetArSession(), rawIdentity, &m_Ptr);
-}
-
-template<>
-void WrappingBase<ArPose>::ReleaseImpl()
-{
-    ArPose_destroy(m_Ptr);
-}
+#include "Unity/UnityXRTypes.h"
 
 WrappedPose::WrappedPose()
-    : WrappingBase<ArPose>()
+    : m_ArPose(nullptr)
 {
 }
 
-WrappedPose::WrappedPose(eWrappedConstruction)
-    : WrappingBase<ArPose>()
+WrappedPose::WrappedPose(const ArPose* arPose)
+    : m_ArPose(arPose)
 {
-    CreateOrAcquireDefault();
 }
 
-WrappedPose::WrappedPose(const UnityXRPose& xrPose)
-    : WrappingBase<ArPose>()
+WrappedPose::operator const ArPose*() const
 {
-    CreateOrAcquireDefault();
-    CopyFromXrPose(xrPose);
+    return m_ArPose;
 }
 
-WrappedPose& WrappedPose::operator=(const UnityXRPose& xrPose)
+const ArPose* WrappedPose::Get() const
 {
-    CopyFromXrPose(xrPose);
+    return m_ArPose;
+}
+
+void WrappedPose::GetPose(UnityXRPose& xrPose) const
+{
+    float googlePoseRaw[kGooglePoseArraySize];
+    ArPose_getPoseRaw(GetArSession(), m_ArPose, googlePoseRaw);
+    MathConversion::ToUnity(xrPose, googlePoseRaw);
+}
+
+void WrappedPose::GetPosition(UnityXRVector3& position) const
+{
+    float googlePoseRaw[kGooglePoseArraySize];
+    ArPose_getPoseRaw(GetArSession(), m_ArPose, googlePoseRaw);
+    MathConversion::ToUnity(position, googlePoseRaw + ToIndex(eGooglePose::PositionBegin));
+}
+
+void WrappedPose::GetRotation(UnityXRVector4& rotation) const
+{
+    float googlePoseRaw[kGooglePoseArraySize];
+    ArPose_getPoseRaw(GetArSession(), m_ArPose, googlePoseRaw);
+    MathConversion::ToUnity(rotation, googlePoseRaw + ToIndex(eGooglePose::RotationBegin));
+}
+
+WrappedPoseMutable::WrappedPoseMutable()
+{
+}
+
+WrappedPoseMutable::WrappedPoseMutable(ArPose* arPose)
+    : WrappedPose(arPose)
+{
+}
+
+WrappedPoseMutable::operator ArPose*()
+{
+    return GetArPoseMutable();
+}
+
+ArPose* WrappedPoseMutable::Get()
+{
+    return GetArPoseMutable();
+}
+
+ArPose*& WrappedPoseMutable::GetArPoseMutable()
+{
+    return *const_cast<ArPose**>(&m_ArPose);
+}
+
+WrappedPoseRaii::WrappedPoseRaii()
+{
+    CopyFrom(GetIdentityPose());
+}
+
+WrappedPoseRaii::WrappedPoseRaii(const ArPose* arPose)
+{
+    CopyFrom(arPose);
+}
+
+WrappedPoseRaii::WrappedPoseRaii(const UnityXRPose& xrPose)
+{
+    CopyFrom(xrPose);
+}
+
+WrappedPoseRaii& WrappedPoseRaii::operator=(const ArPose* arPose)
+{
+    CopyFrom(arPose);
     return *this;
 }
 
-void WrappedPose::CreateIdentity()
+WrappedPoseRaii& WrappedPoseRaii::operator=(const UnityXRPose& xrPose)
 {
-    CreateOrAcquireDefault();
+    CopyFrom(xrPose);
+    return *this;
 }
 
-void WrappedPose::GetXrPose(UnityXRPose& xrPose)
+WrappedPoseRaii::~WrappedPoseRaii()
 {
-    float rawPose[kGooglePoseArraySize];
-    ArPose_getPoseRaw(GetArSession(), m_Ptr, rawPose);
-    MathConversion::ToUnity(xrPose, rawPose);
+    Destroy();
 }
 
-void WrappedPose::GetPosition(UnityXRVector3& position)
+void WrappedPoseRaii::CopyFrom(const ArPose* arPose)
 {
-    float rawPose[kGooglePoseArraySize];
-    ArPose_getPoseRaw(GetArSession(), m_Ptr, rawPose);
-    MathConversion::ToUnity(position, rawPose + ToIndex(eGooglePose::PositionBegin));
+    Destroy();
+
+    float googlePoseRaw[kGooglePoseArraySize];
+    ArPose_getPoseRaw(GetArSession(), arPose, googlePoseRaw);
+    ArPose_create(GetArSession(), googlePoseRaw, &GetArPoseMutable());
 }
 
-void WrappedPose::GetRotation(UnityXRVector4& rotation)
+void WrappedPoseRaii::CopyFrom(const UnityXRPose& xrPose)
 {
-    float rawPose[kGooglePoseArraySize];
-    ArPose_getPoseRaw(GetArSession(), m_Ptr, rawPose);
-    MathConversion::ToUnity(rotation, rawPose + ToIndex(eGooglePose::RotationBegin));
+    Destroy();
+
+    float googlePoseRaw[kGooglePoseArraySize];
+    MathConversion::ToGoogle(googlePoseRaw, xrPose);
+    ArPose_create(GetArSession(), googlePoseRaw, &GetArPoseMutable());
 }
 
-void WrappedPose::CopyFromXrPose(const UnityXRPose& xrPose)
+void WrappedPoseRaii::Destroy()
 {
-    float rawPose[kGooglePoseArraySize];
-    MathConversion::ToGoogle(rawPose, xrPose);
+    if (m_ArPose == nullptr)
+        return;
 
-    Release();
-    ArPose_create(GetArSession(), rawPose, &m_Ptr);
-    InitRefCount();
+    ArPose_destroy(GetArPoseMutable());
+    m_ArPose = nullptr;
+}
+
+static const UnityXRPose kIdentityPose =
+{
+    { 0.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f }
+};
+
+const UnityXRPose& GetIdentityPose()
+{
+	return kIdentityPose;
 }

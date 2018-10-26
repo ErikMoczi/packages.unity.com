@@ -1,30 +1,32 @@
 #pragma once
-#include <jni.h>
 
 #include "arcore_c_api.h"
-#include "WrappingBase.h"
+#include "Unity/IUnityXRCamera.h"
 
-class WrappedSession : public WrappingBase<ArSession>
+class WrappedSession
 {
 public:
     WrappedSession();
-    ~WrappedSession();
+    WrappedSession(const ArSession* arSession);
 
-    ArStatus TryCreate(JNIEnv* jniEnv, jobject applicationContext);
+    operator const ArSession*() const;
+    const ArSession* Get() const;
 
-    bool TryConfigure(const ArConfig* config);
-    bool UpdateAndOverwriteFrame();
-
-    void SetCameraTextureName(uint32_t textureId);
-    void SetDisplayGeometry(int rotation, int width, int height);
-
-    bool ConnectOrResume();
-    bool DisconnectOrPause();
-    bool IsConnected() const;
-
-    int64_t GetTimestamp() const;
-
-private:
-    bool m_IsConnected;
+protected:
+    const ArSession* m_ArSession;
 };
 
+class WrappedSessionMutable : public WrappedSession
+{
+public:
+    WrappedSessionMutable();
+    WrappedSessionMutable(ArSession* arSession);
+
+    operator ArSession*();
+    ArSession* Get();
+
+    bool TrySetDisplayGeometry(UnityXRScreenOrientation xrOrientation, float screenWidth, float screenHeight);
+
+protected:
+    ArSession*& GetArSessionMutable();
+};

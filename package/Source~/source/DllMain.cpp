@@ -10,6 +10,7 @@
 #include "Unity/IUnityInterface.h"
 #include "Utility.h"
 #include "Wrappers/WrappedCamera.h"
+#include "Wrappers/WrappedFrame.h"
 
 #include "arpresto_api.h"
 
@@ -23,14 +24,14 @@ static LifecycleProviderRaycast s_LifecycleProviderRaycast;
 static LifecycleProviderReferencePoint s_LifecycleProviderReferencePoint;
 static LifecycleProviderSession s_LifecycleProviderSession;
 
-const WrappedCamera& GetWrappedCamera()
+const ArCamera* GetArCamera()
 {
-    return s_LifecycleProviderCamera.GetCameraProvider().GetWrappedCamera();
+    return s_LifecycleProviderCamera.GetCameraProvider().GetArCamera();
 }
 
-WrappedCamera& GetWrappedCameraMutable()
+ArCamera* GetArCameraMutable()
 {
-    return s_LifecycleProviderCamera.GetCameraProviderMutable().GetWrappedCameraMutable();
+    return s_LifecycleProviderCamera.GetCameraProviderMutable().GetArCameraMutable();
 }
 
 const SessionProvider& GetSessionProvider()
@@ -56,6 +57,12 @@ float GetScreenWidth()
 float GetScreenHeight()
 {
     return s_LifecycleProviderCamera.GetCameraProvider().GetScreenHeight();
+}
+
+int64_t GetLatestTimestamp()
+{
+    WrappedFrame wrappedFrame = GetArFrame();
+    return wrappedFrame.GetTimestamp();
 }
 
 template<typename T_LifecycleProvider, typename T_DeprecatedInterface>
@@ -118,23 +125,18 @@ UnityPluginLoad(IUnityInterfaces* unityInterfaces)
     }
 
 	bool registered = false;
-    if(nullptr != xrInputInterface)
-    {
-        s_LifecycleProviderInput.SetInputInterface(xrInputInterface);
-        
-        UnityLifecycleProvider lifecycleProvider;
-        lifecycleProvider.pluginData = &s_LifecycleProviderInput;
-        lifecycleProvider.Initialize = &LifecycleProviderInput::Initialize;
-        lifecycleProvider.Start = &LifecycleProviderInput::Start;
-        lifecycleProvider.Stop = &LifecycleProviderInput::Stop;
-        lifecycleProvider.Shutdown = &LifecycleProviderInput::Shutdown;
-        UnitySubsystemErrorCode errorCode = xrInputInterface->RegisterLifecycleProvider("UnityARCore", "ARCore-Input", &lifecycleProvider);
-        registered =  errorCode == kUnitySubsystemErrorCodeSuccess;
-    }    
-    else if(nullptr != xrInputInterface_V2)
+    if (nullptr != xrInputInterface)
+        registered = s_LifecycleProviderInput.SetUnityInterfaceAndRegister(xrInputInterface, "ARCore-Input") == kUnitySubsystemErrorCodeSuccess;
+    else if (nullptr != xrInputInterface_V2)
         registered = xrInputInterface_V2->RegisterLifecycleProvider("UnityARCore", "ARCore-Input", &s_LifecycleProviderInput_V2);
-    else if(nullptr != xrInputInterface_V1)
+    else if (nullptr != xrInputInterface_V1)
         registered = xrInputInterface_V1->RegisterLifecycleProvider("UnityARCore", "ARCore-Input", &s_LifecycleProviderInput_V1);   
+
     if (!registered)
         DEBUG_LOG_ERROR("Failed to register input lifecycle provider - camera pose can't update for this run of ARCore!");
+}
+
+void AcquireCameraFromNewFrame()
+{
+    return s_LifecycleProviderCamera.GetCameraProviderMutable().AcquireCameraFromNewFrame();
 }

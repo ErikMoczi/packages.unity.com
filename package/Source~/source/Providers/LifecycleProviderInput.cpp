@@ -3,60 +3,76 @@
 
 const UnityXRInternalInputDeviceId kInputDeviceId = 0;
 
-void LifecycleProviderInput::SetInputInterface(IUnityXRInputInterface* inputInterface)
+LifecycleProviderInput::LifecycleProviderInput()
+    : m_UnityInterface(nullptr)
 {
-    m_InputInterface = inputInterface;
-    m_InputProvider.SetInputInterface(inputInterface);
 }
 
-UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderInput::Initialize(UnitySubsystemHandle handle, void* lifecycleProviderPtr)
+UnitySubsystemErrorCode LifecycleProviderInput::SetUnityInterfaceAndRegister(IUnityXRInputInterface* unityInterface, const char* subsystemId)
 {
-    LifecycleProviderInput* lifecycleProvider = static_cast<LifecycleProviderInput*>(lifecycleProviderPtr);
-    return lifecycleProvider->InitializeImpl(handle);
+    m_UnityInterface = unityInterface;
+    m_InputProvider.SetInputInterface(unityInterface);
+
+    UnityLifecycleProvider provider;
+    std::memset(&provider, 0, sizeof(provider));
+
+    provider.pluginData = this;
+    provider.Initialize = &StaticInitialize;
+    provider.Shutdown = &StaticShutdown;
+    provider.Start = &StaticStart;
+    provider.Stop = &StaticStop;
+
+    return unityInterface->RegisterLifecycleProvider("UnityARCore", subsystemId, &provider);
 }
 
-UnitySubsystemErrorCode LifecycleProviderInput::InitializeImpl(UnitySubsystemHandle handle)
+UnitySubsystemErrorCode LifecycleProviderInput::Initialize(UnitySubsystemHandle handle)
 {
-    UnityXRInputProvider inputProvider;
-    inputProvider.userData = &m_InputProvider;
-    inputProvider.OnNewInputFrame = &InputProvider::OnNewInputFrame;
-    inputProvider.FillDeviceDefinition = &InputProvider::FillDeviceDefinition;
-    inputProvider.UpdateDeviceState = &InputProvider::UpdateDeviceState;
-    inputProvider.HandleEvent = &InputProvider::HandleEvent;
-    
-    m_InputInterface->RegisterInputProvider(handle, &inputProvider);
-    
+    UnityXRInputProvider xrProvider;
+    m_InputProvider.PopulateCStyleProvider(xrProvider);
+    m_UnityInterface->RegisterInputProvider(handle, &xrProvider);
     return kUnitySubsystemErrorCodeSuccess;
 }
 
-UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderInput::Start(UnitySubsystemHandle handle, void* lifecycleProviderPtr)
+UnitySubsystemErrorCode LifecycleProviderInput::Start(UnitySubsystemHandle handle)
 {
-    LifecycleProviderInput* lifecycleProvider = static_cast<LifecycleProviderInput*>(lifecycleProviderPtr);
-    return lifecycleProvider->StartImpl(handle);
-}
-
-UnitySubsystemErrorCode LifecycleProviderInput::StartImpl(UnitySubsystemHandle handle)
-{
-    m_InputInterface->InputSubsystem_DeviceConnected(handle, 0);    
+    m_UnityInterface->InputSubsystem_DeviceConnected(handle, 0);    
     return kUnitySubsystemErrorCodeSuccess;
 }
 
-void UNITY_INTERFACE_API LifecycleProviderInput::Stop(UnitySubsystemHandle handle, void* lifecycleProviderPtr)
+void LifecycleProviderInput::Stop(UnitySubsystemHandle handle)
 {
-    LifecycleProviderInput* lifecycleProvider = static_cast<LifecycleProviderInput*>(lifecycleProviderPtr);
-    return lifecycleProvider->StopImpl(handle);
+    m_UnityInterface->InputSubsystem_DeviceDisconnected(handle, 0);
 }
 
-void LifecycleProviderInput::StopImpl(UnitySubsystemHandle handle)
-{
-    m_InputInterface->InputSubsystem_DeviceDisconnected(handle, 0);
-}
-
-void UNITY_INTERFACE_API LifecycleProviderInput::Shutdown(UnitySubsystemHandle handle, void* lifecycleProviderPtr)
-{
-    LifecycleProviderInput* lifecycleProvider = static_cast<LifecycleProviderInput*>(lifecycleProviderPtr);
-    return lifecycleProvider->ShutdownImpl(handle);
-}
-
-void LifecycleProviderInput::ShutdownImpl(UnitySubsystemHandle handle)
+void LifecycleProviderInput::Shutdown(UnitySubsystemHandle handle)
 {}
+
+UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderInput::StaticInitialize(UnitySubsystemHandle handle, void* userData)
+{
+    LifecycleProviderInput* thiz = static_cast<LifecycleProviderInput*>(userData);
+    if (thiz == nullptr)
+        return kUnitySubsystemErrorCodeInvalidArguments;
+
+    return thiz->Initialize(handle);
+}
+
+UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderInput::StaticStart(UnitySubsystemHandle handle, void* userData)
+{
+    LifecycleProviderInput* thiz = static_cast<LifecycleProviderInput*>(userData);
+    if (thiz == nullptr)
+        return kUnitySubsystemErrorCodeInvalidArguments;
+
+    return thiz->Start(handle);
+}
+
+void UNITY_INTERFACE_API LifecycleProviderInput::StaticStop(UnitySubsystemHandle handle, void* userData)
+{
+    LifecycleProviderInput* lifecycleProvider = static_cast<LifecycleProviderInput*>(userData);
+    return lifecycleProvider->Stop(handle);
+}
+
+void UNITY_INTERFACE_API LifecycleProviderInput::StaticShutdown(UnitySubsystemHandle handle, void* userData)
+{
+    LifecycleProviderInput* lifecycleProvider = static_cast<LifecycleProviderInput*>(userData);
+    return lifecycleProvider->Shutdown(handle);
+}

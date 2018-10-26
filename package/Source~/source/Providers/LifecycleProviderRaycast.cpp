@@ -29,9 +29,9 @@ void UNITY_INTERFACE_API LifecycleProviderRaycast::Stop(IUnitySubsystem* /*subsy
     // can't enable/disable raycasting - nothing to do on session configuration
 }
 
-UnitySubsystemErrorCode LifecycleProviderRaycast::SetUnityInterfaceAndRegister(IUnityXRRaycastInterface* cStyleInterface, const char* subsystemId)
+UnitySubsystemErrorCode LifecycleProviderRaycast::SetUnityInterfaceAndRegister(IUnityXRRaycastInterface* unityInterface, const char* subsystemId)
 {
-    m_UnityInterface = cStyleInterface;
+    m_UnityInterface = unityInterface;
 
     UnityLifecycleProvider provider;
     std::memset(&provider, 0, sizeof(provider));
@@ -42,7 +42,7 @@ UnitySubsystemErrorCode LifecycleProviderRaycast::SetUnityInterfaceAndRegister(I
     provider.Start = &StaticStart;
     provider.Stop = &StaticStop;
 
-    return cStyleInterface->RegisterLifecycleProvider("UnityARCore", subsystemId, &provider);
+    return unityInterface->RegisterLifecycleProvider("UnityARCore", subsystemId, &provider);
 }
 
 UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderRaycast::StaticInitialize(UnitySubsystemHandle handle, void* userData)

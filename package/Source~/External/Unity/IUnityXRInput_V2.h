@@ -200,13 +200,13 @@ namespace UnityXRInput_V2
     
         kUnityXRInputTrackingStateAll = (1 << 6) - 1 // Keep this as the last entry, if you add an entry, bump this shift up by 1 as well
     };
-    
+
     enum UnityXRInputEventType
     {
-        kUnityXRInputEventTypeRecenter = 'XRC0',
-        kUnityXRInputEventTypeSimpleRumble = 'XRR0'
+        kUnityXRInputEventTypeRecenter = 0x58524330,    // 'XRC0',
+        kUnityXRInputEventTypeSimpleRumble = 0x58525230 //'XRR0'
     };
-    
+
     /// Device Definition
     /// A Definition of what your device is capable of doing.  Immutable information are provided here when Unity called IUnityXRInputProvider::FillDeviceDefinition with a specific Device Id.
     /// It will only be called once for each device connection.  For APIs that use and update the device definition see IUnityXRInputSubsystem functions prefixed with DeviceDefinition

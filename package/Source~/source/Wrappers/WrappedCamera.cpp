@@ -1,71 +1,119 @@
 #include "MathConversion.h"
-#include "Unity/UnityXRTypes.h"
 #include "Utility.h"
 #include "WrappedCamera.h"
 #include "WrappedPose.h"
 
-template<>
-void WrappingBase<ArCamera>::ReleaseImpl()
+#include "Unity/UnityXRTypes.h"
+
+WrappedCamera::WrappedCamera()
+    : m_ArCamera(nullptr)
 {
-    ArCamera_release(m_Ptr);
 }
 
-void WrappedCamera::AcquireFromFrame()
+WrappedCamera::WrappedCamera(const ArCamera* arCamera)
+    : m_ArCamera(arCamera)
 {
-    auto session = GetArSession();
-    if (session == nullptr)
+}
+
+WrappedCamera::operator const ArCamera*() const
+{
+    return m_ArCamera;
+}
+
+const ArCamera* WrappedCamera::Get() const
+{
+    return m_ArCamera;
+}
+
+void WrappedCamera::GetPose(ArPose* arPose) const
+{
+    ArCamera_getPose(GetArSession(), m_ArCamera, arPose);
+}
+
+void WrappedCamera::GetPose(UnityXRPose& xrPose) const
+{
+    WrappedPoseRaii wrappedPose;
+    ArCamera_getPose(GetArSession(), m_ArCamera, wrappedPose);
+    wrappedPose.GetPose(xrPose);
+}
+
+void WrappedCamera::GetDisplayOrientedPose(ArPose* arPose) const
+{
+    ArCamera_getDisplayOrientedPose(GetArSession(), m_ArCamera, arPose);
+}
+
+void WrappedCamera::GetDisplayOrientedPose(UnityXRPose& xrPose) const
+{
+    WrappedPoseRaii wrappedPose;
+    GetDisplayOrientedPose(wrappedPose);
+    wrappedPose.GetPose(xrPose);
+}
+
+void WrappedCamera::GetViewMatrix(UnityXRMatrix4x4& xrViewMatrix) const
+{
+    float googleViewMatrix[16];
+    ArCamera_getViewMatrix(GetArSession(), m_ArCamera, googleViewMatrix);
+    MathConversion::ToUnity(xrViewMatrix, googleViewMatrix);
+}
+
+void WrappedCamera::GetProjectionMatrix(UnityXRMatrix4x4& xrProjectionMatrix, float nearPlane, float farPlane) const
+{
+    float googleProjectionMatrix[16];
+    ArCamera_getProjectionMatrix(GetArSession(), m_ArCamera, nearPlane, farPlane, googleProjectionMatrix);
+    MathConversion::ToUnityProjectionMatrix(xrProjectionMatrix, googleProjectionMatrix);
+}
+
+UnityXRTrackingState WrappedCamera::GetTrackingState() const
+{
+    ArTrackingState arTrackingState = AR_TRACKING_STATE_STOPPED;
+    ArCamera_getTrackingState(GetArSession(), m_ArCamera, &arTrackingState);
+    return ConvertGoogleTrackingStateToUnity(arTrackingState);
+}
+
+WrappedCameraMutable::WrappedCameraMutable()
+{
+}
+
+WrappedCameraMutable::WrappedCameraMutable(ArCamera* arCamera)
+    : WrappedCamera(arCamera)
+{
+}
+
+WrappedCameraMutable::operator ArCamera*()
+{
+    return GetArCameraMutable();
+}
+
+ArCamera* WrappedCameraMutable::Get()
+{
+    return GetArCameraMutable();
+}
+
+ArCamera*& WrappedCameraMutable::GetArCameraMutable()
+{
+    return *const_cast<ArCamera**>(&m_ArCamera);
+}
+
+WrappedCameraRaii::WrappedCameraRaii()
+{
+}
+
+WrappedCameraRaii::~WrappedCameraRaii()
+{
+    Release();
+}
+
+void WrappedCameraRaii::AcquireFromFrame()
+{
+    Release();
+    ArFrame_acquireCamera(GetArSession(), GetArFrame(), &GetArCameraMutable());
+}
+
+void WrappedCameraRaii::Release()
+{
+    if (m_ArCamera == nullptr)
         return;
 
-    auto frame = GetArFrame();
-    if (frame == nullptr)
-        return;
-
-    ArFrame_acquireCamera(session, frame, ReleaseAndGetAddressOf());
-    InitRefCount();
-}
-
-void WrappedCamera::GetPose(UnityXRPose& pose) const
-{
-    WrappedPose wrappedPose = eWrappedConstruction::Default;
-    ArCamera_getPose(GetArSession(), m_Ptr, wrappedPose);
-    wrappedPose.GetXrPose(pose);
-}
-
-void WrappedCamera::GetPose(WrappedPose& pose) const
-{
-    ArCamera_getPose(GetArSession(), m_Ptr, pose);
-}
-
-void WrappedCamera::GetDisplayOrientedPose(UnityXRPose& pose) const
-{
-    WrappedPose wrappedPose = eWrappedConstruction::Default;
-    ArCamera_getDisplayOrientedPose(GetArSession(), m_Ptr, wrappedPose);
-    wrappedPose.GetXrPose(pose);
-}
-
-void WrappedCamera::GetDisplayOrientedPose(WrappedPose& pose) const
-{
-    ArCamera_getDisplayOrientedPose(GetArSession(), m_Ptr, pose);
-}
-
-void WrappedCamera::GetViewMatrix(UnityXRMatrix4x4& viewMatrix) const
-{
-    float rawViewMatrix[16];
-    ArCamera_getViewMatrix(GetArSession(), m_Ptr, rawViewMatrix);
-    MathConversion::ToUnity(viewMatrix, rawViewMatrix);
-}
-
-void WrappedCamera::GetProjectionMatrix(UnityXRMatrix4x4& projectionMatrix, float nearPlane, float farPlane) const
-{
-    float rawProjectionMatrix[16];
-    ArCamera_getProjectionMatrix(GetArSession(), m_Ptr, nearPlane, farPlane, rawProjectionMatrix);
-    MathConversion::ToUnityProjectionMatrix(projectionMatrix, rawProjectionMatrix);
-}
-
-ArTrackingState WrappedCamera::GetTrackingState() const
-{
-    ArTrackingState ret = AR_TRACKING_STATE_STOPPED;
-    if (m_Ptr != nullptr)
-        ArCamera_getTrackingState(GetArSession(), m_Ptr, &ret);
-    return ret;
+    ArCamera_release(GetArCameraMutable());
+    m_ArCamera = nullptr;
 }

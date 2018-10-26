@@ -2,47 +2,69 @@
 #include "WrappedHitResult.h"
 #include "WrappedHitResultList.h"
 
-template<>
-void WrappingBase<ArHitResultList>::CreateOrAcquireDefaultImpl()
-{
-    ArHitResultList_create(GetArSession(), &m_Ptr);
-}
-
-template<>
-void WrappingBase<ArHitResultList>::ReleaseImpl()
-{
-    ArHitResultList_destroy(m_Ptr);
-}
-
 WrappedHitResultList::WrappedHitResultList()
-    : WrappingBase<ArHitResultList>()
+    : m_ArHitResultList(nullptr)
 {
 }
 
-WrappedHitResultList::WrappedHitResultList(eWrappedConstruction)
-    : WrappingBase<ArHitResultList>()
+WrappedHitResultList::WrappedHitResultList(const ArHitResultList* arHitResultList)
+    : m_ArHitResultList(arHitResultList)
 {
-    CreateOrAcquireDefault();
 }
 
-void WrappedHitResultList::CreateDefault()
+WrappedHitResultList::operator const ArHitResultList*() const
 {
-    CreateOrAcquireDefault();
+    return m_ArHitResultList;
 }
 
-void WrappedHitResultList::HitTest(float xPixel, float yPixel)
+const ArHitResultList* WrappedHitResultList::Get() const
 {
-    ArFrame_hitTest(GetArSession(), GetArFrame(), xPixel, yPixel, m_Ptr);
+    return m_ArHitResultList;
 }
 
 int32_t WrappedHitResultList::Size() const
 {
     int32_t ret = 0;
-    ArHitResultList_getSize(GetArSession(), m_Ptr, &ret);
+    ArHitResultList_getSize(GetArSession(), m_ArHitResultList, &ret);
     return ret;
 }
 
-void WrappedHitResultList::GetHitResultAt(int32_t index, WrappedHitResult& hitResult)
+WrappedHitResultListMutable::WrappedHitResultListMutable()
 {
-    ArHitResultList_getItem(GetArSession(), m_Ptr, index, hitResult);
+}
+
+WrappedHitResultListMutable::WrappedHitResultListMutable(ArHitResultList* arHitResultList)
+    : WrappedHitResultList(arHitResultList)
+{
+}
+
+WrappedHitResultListMutable::operator ArHitResultList*()
+{
+    return GetArHitResultListMutable();
+}
+
+ArHitResultList* WrappedHitResultListMutable::Get()
+{
+    return GetArHitResultListMutable();
+}
+
+void WrappedHitResultListMutable::HitTest(float xPixel, float yPixel)
+{
+    ArFrame_hitTest(GetArSession(), GetArFrame(), xPixel, yPixel, GetArHitResultListMutable());
+}
+
+ArHitResultList*& WrappedHitResultListMutable::GetArHitResultListMutable()
+{
+    return *const_cast<ArHitResultList**>(&m_ArHitResultList);
+}
+
+WrappedHitResultListRaii::WrappedHitResultListRaii()
+{
+    ArHitResultList_create(GetArSession(), &GetArHitResultListMutable());
+}
+
+WrappedHitResultListRaii::~WrappedHitResultListRaii()
+{
+    if (m_ArHitResultList != nullptr)
+        ArHitResultList_destroy(GetArHitResultListMutable());
 }

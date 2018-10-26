@@ -5,23 +5,21 @@
 class LifecycleProviderInput
 {
 public:
-    LifecycleProviderInput()
-    : m_InputInterface(nullptr)
-    {}
+    LifecycleProviderInput();
 
-    static UnitySubsystemErrorCode UNITY_INTERFACE_API Initialize(UnitySubsystemHandle handle, void* lifecycleProviderPtr);
-    static UnitySubsystemErrorCode UNITY_INTERFACE_API Start(UnitySubsystemHandle handle, void* lifecycleProviderPtr);
-    static void UNITY_INTERFACE_API Stop(UnitySubsystemHandle handle, void* lifecycleProviderPtr);
-    static void UNITY_INTERFACE_API Shutdown(UnitySubsystemHandle handle, void* lifecycleProviderPtr);
-
-    void SetInputInterface(IUnityXRInputInterface* inputInterface);
-    
-    UnitySubsystemErrorCode InitializeImpl(UnitySubsystemHandle handle);
-    void ShutdownImpl(UnitySubsystemHandle handle);
-    UnitySubsystemErrorCode StartImpl(UnitySubsystemHandle handle);
-    void StopImpl(UnitySubsystemHandle handle);
+    UnitySubsystemErrorCode SetUnityInterfaceAndRegister(IUnityXRInputInterface* unityInterface, const char* subsystemId);
 
 private:
-    IUnityXRInputInterface* m_InputInterface;
+    UnitySubsystemErrorCode Initialize(UnitySubsystemHandle handle);
+    void Shutdown(UnitySubsystemHandle handle);
+    UnitySubsystemErrorCode Start(UnitySubsystemHandle handle);
+    void Stop(UnitySubsystemHandle handle);
+
+    static UnitySubsystemErrorCode UNITY_INTERFACE_API StaticInitialize(UnitySubsystemHandle handle, void* userData);
+    static UnitySubsystemErrorCode UNITY_INTERFACE_API StaticStart(UnitySubsystemHandle handle, void* userData);
+    static void UNITY_INTERFACE_API StaticStop(UnitySubsystemHandle handle, void* userData);
+    static void UNITY_INTERFACE_API StaticShutdown(UnitySubsystemHandle handle, void* userData);
+
+    IUnityXRInputInterface* m_UnityInterface;
     InputProvider m_InputProvider;
 };

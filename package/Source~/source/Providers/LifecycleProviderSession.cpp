@@ -1,6 +1,11 @@
 #include "LifecycleProviderSession.h"
 #include "Utility.h"
 
+LifecycleProviderSession::LifecycleProviderSession()
+    : m_UnityInterface(nullptr)
+{
+}
+
 UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderSession::Initialize(IUnitySubsystem* subsystem)
 {
     IUnityXRSessionSubsystem* sessionSubsystem = static_cast<IUnityXRSessionSubsystem*>(subsystem);
@@ -33,9 +38,9 @@ SessionProvider& LifecycleProviderSession::GetSessionProviderMutable()
     return m_SessionProvider;
 }
 
-UnitySubsystemErrorCode LifecycleProviderSession::SetUnityInterfaceAndRegister(IUnityXRSessionInterface* cStyleInterface, const char* subsystemId)
+UnitySubsystemErrorCode LifecycleProviderSession::SetUnityInterfaceAndRegister(IUnityXRSessionInterface* unityInterface, const char* subsystemId)
 {
-    m_UnityInterface = cStyleInterface;
+    m_UnityInterface = unityInterface;
 
     UnityLifecycleProvider provider;
     std::memset(&provider, 0, sizeof(provider));
@@ -46,7 +51,7 @@ UnitySubsystemErrorCode LifecycleProviderSession::SetUnityInterfaceAndRegister(I
     provider.Start = &StaticStart;
     provider.Stop = &StaticStop;
 
-    return cStyleInterface->RegisterLifecycleProvider("UnityARCore", subsystemId, &provider);
+    return unityInterface->RegisterLifecycleProvider("UnityARCore", subsystemId, &provider);
 }
 
 UnitySubsystemErrorCode UNITY_INTERFACE_API LifecycleProviderSession::StaticInitialize(UnitySubsystemHandle handle, void* userData)

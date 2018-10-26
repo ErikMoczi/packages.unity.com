@@ -1,12 +1,20 @@
 #pragma once
 
 #include "arcore_c_api.h"
-#include "WrappingBase.h"
 
-class WrappedFrame : public WrappingBase<ArFrame>
+class WrappedFrame
 {
 public:
-    void CreateDefault();
+    WrappedFrame();
+    WrappedFrame(const ArFrame* arFrame);
 
+    operator const ArFrame*() const;
+    const ArFrame* Get() const;
+
+    int64_t GetTimestamp() const;
     bool DidDisplayGeometryChange() const;
+    void TransformDisplayUvCoords(int32_t numCoords, const float* uvsToTransform, float* results) const;
+
+protected:
+    const ArFrame* m_ArFrame;
 };

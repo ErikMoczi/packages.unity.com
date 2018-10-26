@@ -9,16 +9,16 @@ public:
 
     virtual bool UNITY_INTERFACE_API Raycast(
         float screenX, float screenY,
-        UnityXRTrackableType hitFlags,
-        IUnityXRRaycastAllocator& allocator) override;
-
+        UnityXRTrackableType xrHitFlags,
+        IUnityXRRaycastAllocator& xrAllocator) override;
 
     static UnitySubsystemErrorCode StaticRaycast(
         UnitySubsystemHandle handle, void* userData,
         float screenX, float screenY,
-        UnityXRTrackableType hitFlags,
-    UnityXRRaycastDataAllocator* allocator);
-    void PopulateCStyleProvider(UnityXRRaycastProvider& provider);
+        UnityXRTrackableType xrHitFlags,
+        UnityXRRaycastDataAllocator* xrAllocator);
+
+    void PopulateCStyleProvider(UnityXRRaycastProvider& xrProvider);
 
 private:
     IUnityXRRaycastInterface*& m_UnityInterface;

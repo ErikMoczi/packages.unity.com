@@ -9,12 +9,14 @@
 
 #define EnumCast static_cast
 
-class WrappedCamera;
-const WrappedCamera& GetWrappedCamera();
-WrappedCamera& GetWrappedCameraMutable();
+const ArCamera* GetArCamera();
+ArCamera* GetArCameraMutable();
 
-ArFrame* GetArFrame();
-ArSession* GetArSession();
+const ArFrame* GetArFrame();
+ArFrame* GetArFrameMutable();
+const ArSession* GetArSession();
+ArSession* GetArSessionMutable();
+int64_t GetLatestTimestamp();
 
 class SessionProvider;
 const SessionProvider& GetSessionProvider();
@@ -91,7 +93,42 @@ T* ConvertTrackableIdToPtr(const UnityXRTrackableId& id)
     return reinterpret_cast<T*>(id.idPart[kIdPartIndexPointerInscription]);
 }
 
+// we really should ask Google to add const-correctness to their header
+// so that we don't have to basically duplicate their code here like this...
+
+inline const ArTrackable* ArAsTrackable(const ArPlane* arPlane)
+{
+    return reinterpret_cast<const ArTrackable*>(arPlane);
+}
+
+inline const ArTrackable* ArAsTrackable(const ArPoint* arPoint)
+{
+    return reinterpret_cast<const ArTrackable*>(arPoint);
+}
+
+inline const ArTrackable* ArAsTrackable(const ArAugmentedImage* arAugmentedImage)
+{
+    return reinterpret_cast<const ArTrackable*>(arAugmentedImage);
+}
+
+inline const ArPlane* ArAsPlane(const ArTrackable* arTrackable)
+{
+    return reinterpret_cast<const ArPlane*>(arTrackable);
+}
+
+inline const ArPoint* ArAsPoint(const ArTrackable* arTrackable)
+{
+    return reinterpret_cast<const ArPoint*>(arTrackable);
+}
+
+inline const ArAugmentedImage* ArAsAugmentedImage(const ArTrackable* arTrackable)
+{
+    return reinterpret_cast<const ArAugmentedImage*>(arTrackable);
+}
+
 UnityXRTrackingState ConvertGoogleTrackingStateToUnity(ArTrackingState arTrackingState);
+
+void AcquireCameraFromNewFrame();
 
 const char* PrintArLightEstimateState(ArLightEstimateState state);
 const char* PrintArLightEstimationMode(ArLightEstimationMode mode);
