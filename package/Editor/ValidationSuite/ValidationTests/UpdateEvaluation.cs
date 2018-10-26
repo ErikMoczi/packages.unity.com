@@ -6,8 +6,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
     internal class UpdateValidation : BaseValidation
     {
-        private const string ProductionRepositoryUrl = "https://packages.unity.com/";
-
         public UpdateValidation()
         {
             TestName = "Package Update Validation";
@@ -59,7 +57,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             // If it exists, get the last one from that list.
             try
             {
-                Utilities.DownloadPackage(ProductionRepositoryUrl, Context.ProjectPackageInfo.Id, Path.GetTempPath());
+                Utilities.DownloadPackage(Context.ProjectPackageInfo.Id, Path.GetTempPath());
                 Error("Version " + Context.ProjectPackageInfo.version + " of this package already exists in production.");
             }
             catch (Exception)

@@ -193,14 +193,14 @@ internal class VettingContext
                 {
                     var tempPath = Path.GetTempPath();
                     var previousPackagePath = Path.Combine(tempPath, "previous-" + projectPackageInfo.Id);
-                    var packageName = Utilities.DownloadPackage("https://packages.unity.com/", projectPackageInfo.Id, tempPath);
+                    var packageName = Utilities.DownloadPackage(projectPackageInfo.Id, tempPath);
                     Utilities.ExtractPackage(packageName, tempPath, previousPackagePath, projectPackageInfo.name);
                     return previousPackagePath;
                 }
                 catch (Exception exception)
                 {
                     // Failing to fetch when there is no prior version, which is an accepted case.
-                    if (exception.Message != "Fetching package failed.")
+                    if (exception.Data["reason"] == "fetchFailed")
                         EditorUtility.DisplayDialog("Data: " + exception.Message, "Failed", "ok");
                 }
             }
