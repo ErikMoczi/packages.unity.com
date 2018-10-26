@@ -10,10 +10,13 @@ namespace UnityEditor.PackageManager.UI.Tests
     {
         // Filter change shows correct result
         private Action<IEnumerable<Package>> onPackageChangedEvent;    // TODO: We need to have a discussion on event de-registration
+        private bool showPreviewPackagesPreviousValue;
 
         [SetUp]
         public void Setup()
         {
+            showPreviewPackagesPreviousValue = PackageManagerPrefs.ShowPreviewPackages;
+            PackageManagerPrefs.ShowPreviewPackages = true;
             PackageCollection.Instance.SetFilter(PackageFilter.Local);
             SetListPackages(Enumerable.Empty<PackageInfo>());
             SetSearchPackages(Enumerable.Empty<PackageInfo>());
@@ -21,9 +24,10 @@ namespace UnityEditor.PackageManager.UI.Tests
         }
 
         [TearDown]
-        public void Dispose()
+        public void TearDown()
         {
             PackageCollection.Instance.OnPackagesChanged -= onPackageChangedEvent;
+            PackageManagerPrefs.ShowPreviewPackages = showPreviewPackagesPreviousValue;
         }
 
         [Test]

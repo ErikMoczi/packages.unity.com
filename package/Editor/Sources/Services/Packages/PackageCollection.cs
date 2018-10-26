@@ -259,12 +259,12 @@ namespace UnityEditor.PackageManager.UI
         {
             // Merge list & search packages
             var allPackageInfos = new List<PackageInfo>(LatestListPackages);
-            var packageIdSet = new HashSet<string>(allPackageInfos.Select(p => p.PackageId));
-            allPackageInfos.AddRange(searchPackages.Where(p => !packageIdSet.Contains(p.PackageId)));
+            var installedPackageIds = new HashSet<string>(allPackageInfos.Select(p => p.PackageId));
+            allPackageInfos.AddRange(searchPackages.Where(p => !installedPackageIds.Contains(p.PackageId)));
 
             if (!PackageManagerPrefs.ShowPreviewPackages)
             {
-                allPackageInfos = allPackageInfos.Where(p => !p.IsPreRelease || p.IsCurrent).ToList();
+                allPackageInfos = allPackageInfos.Where(p => !p.IsPreRelease || installedPackageIds.Contains(p.PackageId)).ToList();
             }
 
             // Rebuild packages dictionary
