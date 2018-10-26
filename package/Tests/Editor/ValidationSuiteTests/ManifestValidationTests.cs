@@ -11,7 +11,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 {
     internal class ManifestValidationTests
     {
-        private string testDirectory = "tempManifestValidationTests";
+        private string testDirectory = Path.Combine(Path.GetTempPath(), "tempManifestValidationTests");
 
         [SetUp]
         public void Setup()
@@ -271,7 +271,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
         private void CreateAndWriteManifest(VettingContext.ManifestData projectManifestData, string directoryName)
         {
-            //var packageJsonPath = Path.Combine(testDirectory, Path.Combine(directoryName, "package.json"));
             var packageJsonPath = Path.Combine(testDirectory + directoryName, "package.json");
             Directory.CreateDirectory(Path.GetDirectoryName(packageJsonPath));
             var contents = JsonUtility.ToJson(projectManifestData);

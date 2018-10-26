@@ -13,7 +13,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         [Test]
         public void ZipPackageBinariesCreatesCorrectZip()
         {
-            var testFolder = "ZipPackageBinariesCreatesCorrectZip";
+            var testFolder = Path.Combine(Path.GetTempPath(), "ZipPackageBinariesCreatesCorrectZip");
             if (Directory.Exists(testFolder))
                 Directory.Delete(testFolder, true);
 
@@ -35,7 +35,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         [Test]
         public void ZipPackageBinariesCreatesEmptyZipOnEmptyPackage()
         {
-            var testFolder = "ZipPackageBinariesCreatesEmptyZipOnEmptyPackage";
+            var testFolder = Path.Combine(Path.GetTempPath(), "ZipPackageBinariesCreatesEmptyZipOnEmptyPackage");
             if (Directory.Exists(testFolder))
                 Directory.Delete(testFolder, true);
 
