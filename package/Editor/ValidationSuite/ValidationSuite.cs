@@ -62,12 +62,28 @@ namespace UnityEditor.PackageManager.ValidationSuite
             get { return validationTests.Cast<IValidationTestResult>(); }
         }
 
-#if UNITY_2018_1_OR_NEWER
-        public static bool RunValidationSuite(string packageId, ValidationType validationType)
+        public static bool ValidatePackage(string packageId, ValidationType validationType)
         {
-            var parts = packageId.Split('@');
-            var packageName = parts[0];
-            var packageVersion = parts[1];
+            if (string.IsNullOrWhiteSpace(packageId))
+                throw new ArgumentNullException(packageId);
+
+            var packageIdParts = packageId.Split('@');
+
+            if (packageIdParts.Length != 2)
+                throw new ArgumentException("Malformed package Id " + packageId);
+
+            return ValidatePackage(packageIdParts[0], packageIdParts[1], validationType);
+        }
+
+        public static bool ValidatePackage(string packageName, string packageVersion, ValidationType validationType)
+        {
+            if (string.IsNullOrWhiteSpace(packageName))
+                throw new ArgumentNullException(packageName);
+
+            if (string.IsNullOrWhiteSpace(packageVersion))
+                throw new ArgumentNullException(packageVersion);
+
+            var packageId = Utilities.CreatePackageId(packageName, packageVersion);
             var packagePath = FindPackagePath(packageName);
             var report = new ValidationSuiteReport(packageId, packageName, packageVersion, packagePath);
 
@@ -116,50 +132,18 @@ namespace UnityEditor.PackageManager.ValidationSuite
             }
         }
 
-        // TODO: Move this function to the verified test framework.  For now, this is here for testing purposes.
-        public static bool ValidateVerifiedPackages(ValidationType validationType)
-        {
-            var success = true;
-            var packageIdList = Utilities.UpmListOffline().Where(p => p.source != PackageSource.BuiltIn).Select(p => Utilities.CreatePackageId(p.name, p.version)).ToList();
-
-            if (packageIdList.Any())
-            {
-                success = ValidatePackages(packageIdList, ValidationType.VerifiedSet);
-            }
-            else
-            {
-                Debug.Log("No packages included in this project.");
-                success = false;
-            }
-
-            return success;
-        }
-
-
-        public static bool ValidatePackages(IEnumerable<string> packageIds, ValidationType validationType)
-        {
-            var success = true;
-            foreach (var packageId in packageIds)
-            {
-                var result = RunValidationSuite(packageId, validationType);
-                if (result)
-                {
-                    Debug.Log("Validation succeeded for " + packageId);
-                }
-                else
-                {
-                    success = false;
-                    Debug.LogError("Validation failed for " + packageId);
-                }
-            }
-
-            return success;
-        }
-
-#endif
 
         public static bool RunAssetStoreValidationSuite(string packageName, string packageVersion, string packagePath, string previousPackagePath = null)
         {
+            if (string.IsNullOrWhiteSpace(packageName))
+                throw new ArgumentNullException(packageName);
+
+            if (string.IsNullOrWhiteSpace(packageVersion))
+                throw new ArgumentNullException(packageVersion);
+
+            if (string.IsNullOrWhiteSpace(packagePath))
+                throw new ArgumentNullException(packageName);
+
             var report = new ValidationSuiteReport(packageName + "@" + packageVersion, packageName, packageVersion, packagePath);
 
             try
@@ -176,6 +160,26 @@ namespace UnityEditor.PackageManager.ValidationSuite
             }
         }
 
+        public static string GetValidationSuiteReport(string packageName, string packageVersion)
+        {
+            if (string.IsNullOrWhiteSpace(packageName))
+                throw new ArgumentNullException(packageName);
+
+            if (string.IsNullOrWhiteSpace(packageVersion))
+                throw new ArgumentNullException(packageVersion);
+
+            var packageId = Utilities.CreatePackageId(packageName, packageVersion);
+            return GetValidationSuiteReport(packageId);
+        }
+
+        public static string GetValidationSuiteReport(string packageId)
+        {
+            if (string.IsNullOrWhiteSpace(packageId))
+                throw new ArgumentNullException(packageId);
+
+            return ValidationSuiteReport.ReportExists(packageId) ? File.ReadAllText(ValidationSuiteReport.TextReportPath(packageId)) : null;
+        }
+
         internal void RunSync()
         {
             foreach (var test in validationTests)
@@ -187,6 +191,27 @@ namespace UnityEditor.PackageManager.ValidationSuite
             
             Run();
         }
+
+        private static bool ValidatePackages(IEnumerable<string> packageIds, ValidationType validationType)
+        {
+            var success = true;
+            foreach (var packageId in packageIds)
+            {
+                var result = ValidatePackage(packageId, validationType);
+                if (result)
+                {
+                    Debug.Log("Validation succeeded for " + packageId);
+                }
+                else
+                {
+                    success = false;
+                    Debug.LogError("Validation failed for " + packageId);
+                }
+            }
+
+            return success;
+        }
+
 
         private void BuildTestSuite()
         {

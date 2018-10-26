@@ -98,7 +98,11 @@ internal class VettingContext
             throw new ArgumentException("Package Id " + packageId + " is not part of this project.");
         }
 
-        context.IsCore = false; // TODO: change this to use Type and Source once "Type" is exposed by packman.
+#if UNITY_2019_1_OR_NEWER
+        context.IsCore = packageInfo.source == PackageSource.BuiltIn && packageInfo.type != "module";
+#else
+        context.IsCore = false; // there are no core packages before 2019.1
+#endif
         context.ValidationType = validationType;
         context.IsPublished = packageInfo.source == PackageSource.Registry;
         context.IsEmbedded = packageInfo.source == PackageSource.Embedded;
@@ -233,7 +237,7 @@ internal class VettingContext
 
     private static string GetPreviousPackage(ManifestData projectPackageInfo)
     {
-        #if UNITY_2018_1_OR_NEWER
+#if UNITY_2018_1_OR_NEWER
 
         // List out available versions for a package.
         var foundPackages =  Utilities.UpmSearch(projectPackageInfo.name);
@@ -281,7 +285,7 @@ internal class VettingContext
                 }
             }
         }
-        #endif
+#endif
         return string.Empty;
     }
 
