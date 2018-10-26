@@ -266,6 +266,8 @@ namespace UnityEngine.AddressableAssets
             //these need to be referenced in order to prevent stripping on IL2CPP platforms.
             var sap = Application.streamingAssetsPath;
             var pdp = Application.persistentDataPath;
+            Debug.LogFormat("Using StreamingAssetsPath {0}.", sap);
+            Debug.LogFormat("Using PersistentDataPath {0}.", pdp);
             ResourceManager.ExceptionHandler = (op, ex) => Debug.LogException(ex);
             ResourceManager.OnResolveInternalId = AddressablesRuntimeProperties.EvaluateString;
 #if !ADDRESSABLES_DISABLE_AUTO_INITIALIZATION
