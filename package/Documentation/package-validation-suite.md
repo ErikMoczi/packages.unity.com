@@ -11,7 +11,7 @@ To add the Package Validation Suite to your project, edit your project's `manife
 ```
 {
     "dependencies": {
-        "com.unity.package-validation-suite": "0.3.0-preview.3"
+        "com.unity.package-validation-suite": "0.3.0-preview.6"
     }
 }
 ```
@@ -19,7 +19,7 @@ To add the Package Validation Suite to your project, edit your project's `manife
 ## Validate Package
 As shown below, once the validation package is installed in your project, the Package Manager UI will expose a new "Validate" option in the details section of the UI.
 
-![Validate button](Images/Validate.png)
+![Validate button](images/Validate.png)
 
  By pressing the `Validate` button in the details pane of a package in development, the validation process will begin.  The following will take place:
  - The package being tested will get "built", to reflect the file set it will contain.
@@ -28,7 +28,7 @@ As shown below, once the validation package is installed in your project, the Pa
  - A report will be produced for viewing.
 
 
- ![results](Images/ValidateResults.png)
+ ![results](images/ValidateResults.png)
 
 ## Known Limitations
 

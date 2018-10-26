@@ -143,28 +143,39 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
             else if (!string.IsNullOrEmpty(packageVersionNumber.Prerelease))
             {
+                // We must strip the -build<commit> off the prerelease
+                var buildInfoIndex = packageVersionNumber.Prerelease.IndexOf("build");
+                if (buildInfoIndex > 0)
+                {
+                    var cleanPrerelease = packageVersionNumber.Prerelease.Substring(0, buildInfoIndex - 1);
+                    packageVersionNumber = packageVersionNumber.Change(null, null, null, cleanPrerelease, null);
+                }
+                else
+                {
+                    packageVersionNumber = packageVersionNumber.Change(null, null, null, "", null);
+                }
+
                 // The only pre-release tag we support is -preview
-                var preleleaseParts = packageVersionNumber.Prerelease.Split('.');
-
-                if (preleleaseParts.Length > 2)
+                if (!string.IsNullOrEmpty(packageVersionNumber.Prerelease))
                 {
-                    Error("In package.json, \"version\": the only pre-release filter supported is \"-preview.[num < 999]\".");
-                }
+                    var preleleaseParts = packageVersionNumber.Prerelease.Split('.');
 
-                if (preleleaseParts[0] != ("preview"))
-                {
-                    Error("In package.json, \"version\": the only pre-release filter supported is \"-preview.[num < 999]\".");
-                }
-
-                if (preleleaseParts.Length > 1 && !string.IsNullOrEmpty(preleleaseParts[1]))
-                {
-                    int previewVersion;
-                    var results = int.TryParse(preleleaseParts[1], out previewVersion);
-                    if (!results || previewVersion > 999)
+                    if ((preleleaseParts.Length > 2) || (preleleaseParts[0] != ("preview")))
                     {
                         Error("In package.json, \"version\": the only pre-release filter supported is \"-preview.[num < 999]\".");
                     }
+
+                    if (preleleaseParts.Length > 1 && !string.IsNullOrEmpty(preleleaseParts[1]))
+                    {
+                        int previewVersion;
+                        var results = int.TryParse(preleleaseParts[1], out previewVersion);
+                        if (!results || previewVersion > 999)
+                        {
+                            Error("In package.json, \"version\": the only pre-release filter supported is \"-preview.[num < 999]\".");
+                        }
+                    }   
                 }
+
             }
         }
     }

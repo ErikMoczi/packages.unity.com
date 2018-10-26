@@ -2,10 +2,7 @@
 
 using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
 using Debug = UnityEngine.Debug;
@@ -25,14 +22,14 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
         private PackageInfo CurrentPackageinfo { get; set; }
         private string PackageId { get; set; }
 
-        public ValidationSuiteExtensionUI()
+        public static ValidationSuiteExtensionUI CreateUI()
         {
             var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath);
-            if (asset == null)
-            {
-                Debug.LogError("Could not find asset \"" + TemplatePath + "\"");
-                return;
-            }
+            return asset == null ? null : new ValidationSuiteExtensionUI(asset);
+        }
+
+        private ValidationSuiteExtensionUI(VisualTreeAsset asset)
+        {
 
             root = asset.CloneTree(null);
 
@@ -64,8 +61,17 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
             CurrentPackageinfo = packageInfo;
             PackageId = CurrentPackageinfo.name + "@" + CurrentPackageinfo.version;
             ValidationResults.text = string.Empty;
-            ViewResultsButton.visible = ValidationSuiteReport.ReportExists(PackageId);
-            ViewDiffButton.visible = ValidationSuiteReport.DiffsReportExists(PackageId);
+
+            if (ValidationSuiteReport.ReportExists(PackageId))
+				ViewResultsButton.RemoveFromClassList("display-none");
+			else
+            	ViewResultsButton.AddToClassList("display-none");
+
+            if (ValidationSuiteReport.DiffsReportExists(PackageId))
+				ViewDiffButton.RemoveFromClassList("display-none");
+			else
+            	ViewDiffButton.AddToClassList("display-none");
+
             root.style.backgroundColor = Color.gray;
         }
 
@@ -118,12 +124,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
             {
                 Application.OpenURL("file://" + Path.GetFullPath(ValidationSuiteReport.DiffsReportPath(PackageId)));
             }
-        }
-
-        [MenuItem("internal:Project/Packages/Validate Packman UI")]
-        internal static void ShowPackageManagerWindow()
-        {
-            ValidationSuite.RunValidationSuite(string.Format("{0}@{1}", "com.unity.package-manager-ui", "1.8.1"));
         }
 
         internal Label ValidationResults { get { return root.Q<Label>("validationResults");} }

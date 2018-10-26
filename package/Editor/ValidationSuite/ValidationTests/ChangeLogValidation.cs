@@ -40,6 +40,17 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 TestOutput.Add(string.Format("Version format is not valid: {0} in: [{1}]", Context.ProjectPackageInfo.version, Context.ProjectPackageInfo.path));
                 return;
             }
+            // We must strip the -build<commit> off the prerelease
+            var buildInfoIndex = packageJsonVersion.Prerelease.IndexOf("build");
+            if (buildInfoIndex > 0)
+            {
+                var cleanPrerelease = packageJsonVersion.Prerelease.Substring(0, buildInfoIndex - 1);
+                packageJsonVersion = packageJsonVersion.Change(null, null, null, cleanPrerelease, null);
+            }
+            else
+            {
+                packageJsonVersion = packageJsonVersion.Change(null, null, null, "", null);
+            }
 
             // We are basically searching for a string ## [Version] - YYYY-MM-DD
             var changeLogLineRegex = @"## \[(?<version>(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?)\] - (?<date>\d{4}-\d{1,2}-\d{1,2})";

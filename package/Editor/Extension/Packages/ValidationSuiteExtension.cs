@@ -18,7 +18,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
 
         public VisualElement CreateExtensionUI()
         {
-            return ui ?? (ui = new ValidationSuiteExtensionUI());
+            return ui ?? (ui = ValidationSuiteExtensionUI.CreateUI()) ?? new VisualElement();
         }
 
         public void OnPackageSelectionChange(PackageInfo packageInfo)

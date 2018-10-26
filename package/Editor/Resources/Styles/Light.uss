@@ -9,13 +9,17 @@
 #ValidationSuiteUIContainer #ValidationResultsContainer {
   flex: 0;
   flex-direction: row;
+  min-width: 225;
 }
 #ValidationSuiteUIContainer #ValidationActionContainer Button {
   flex: 0;
+  min-width: 100;
 }
 #ValidationSuiteUIContainer #ValidationActionContainer Label {
   flex: 1;
+  max-width: 125;
 }
 #ValidationSuiteUIContainer #ValidationResultsContainer Button {
   flex: 0;
+  min-width: 100;
 }
