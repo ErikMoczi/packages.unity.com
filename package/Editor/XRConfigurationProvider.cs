@@ -17,7 +17,7 @@ namespace UnityEditor.XR.Management
         Editor m_CachedEditor;
         SerializedObject m_SettingsWrapper;
 
-        public XRConfigurationProvider(string path, string buildSettingsKey, Type buildDataType, SettingsScopes scopes = SettingsScopes.Project) : base(path, scopes)
+        public XRConfigurationProvider(string path, string buildSettingsKey, Type buildDataType, SettingsScope scopes = SettingsScope.Project) : base(path, scopes)
         {
             m_BuildDataType = buildDataType;
             m_BuildSettingsKey = buildSettingsKey;

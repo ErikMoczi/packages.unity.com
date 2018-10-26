@@ -63,7 +63,7 @@ namespace UnityEditor.XR.Management
         }
 
         [UnityEngine.Internal.ExcludeFromDocs]
-        XRSettingsManager(string path, SettingsScopes scopes = SettingsScopes.Project) : base(path, scopes)
+        XRSettingsManager(string path, SettingsScope scopes = SettingsScope.Project) : base(path, scopes)
         {
         }
 

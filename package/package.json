@@ -1,7 +1,7 @@
 {
     "name": "com.unity.xr.management",
     "displayName": "XR SDK Management",
-    "version": "0.2.0-preview.4",
+    "version": "0.2.0-preview.5",
     "unity": "2018.3",
     "description": "Package to provide for simple management of XR SDK loading, unloading and configuration.",
     "keywords": [
