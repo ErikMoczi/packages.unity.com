@@ -59,7 +59,7 @@
                 <engine:Label name="detailAuthor"/>
                 <engine:Label name="detailModuleReference"/>
                 <engine:Label name="detailDesc"/>
-
+                <upm:PackageSampleList name="detailSampleList"/>
             </engine:VisualElement>
         </engine:ScrollView>
         <upm:Alert name="detailError" class="display-none"/>

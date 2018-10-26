@@ -4,15 +4,15 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.0.3] - 2018-10-10
-- When a preview package is installed, keep showing updates even if "Show Preview Packages" is not checked
-- When user as not already choose to show or hide Preview Packages:
-	- If a preview package is already installed, "Show Preview Packages" is checked
-	- If no preview packages are installed, "Show Preview Packages" is not checked
-
-## [2.0.2] - 2018-10-04
-- Documentation Update
-- Update dialog title to "Unity Package Manager"
+## [2.1.0] - 2018-10-03
+- Support maximize/minimize
+- Support PackageManager UI saved maximized in a layout
+- Keep track of selected built-in package
+- Keep track of last selected filter
+- Fix UI Layout
+- Add samples in the details panel
+- Move the `+` button to the top toolbar
+- Show date in the `Last Update` message
 
 ## [2.0.1] - 2018-09-14
 - Move undesired public classes to internal

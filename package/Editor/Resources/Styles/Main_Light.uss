@@ -7,7 +7,7 @@
 ***************************************************************************************************/
 #container {
   -unity-position: absolute;
-  top: 0;
+  top: -2;
   left: 0;
   bottom: 0;
   right: 0;
@@ -41,8 +41,7 @@
   margin-right: 0;
 }
 
-.row, #detailListView .combo, #detailListView #detailView .detail #detailActions, #detailListView #detailView .detail .detailActions, #detailListView #detailView .detail .versionContainer {
-  flex: 1 0 0;
+.row, #detailListView .combo, #detailListView #detailView .detail #detailActions, #detailListView #detailView .detail .detailActions, #detailListView #detailView .detail .versionContainer, #detailListView #detailView .detail #samplesContainer {
   flex-direction: row;
 }
 
@@ -72,6 +71,7 @@
   flex-direction: row;
   align-items: flex-start;
   height: 18;
+  overflow: hidden;
 }
 #toolbarContainer #toolbarView {
   flex: 1 0 0;
@@ -156,6 +156,14 @@
   flex: 0 0 auto;
   flex-direction: row;
   align-items: flex-start;
+}
+#toolbarContainer #toolbarView #toolbarLeft #toolbarAddButton {
+  font-size: 13;
+  padding-top: 0;
+  padding-left: 8;
+  padding-bottom: 4;
+  padding-right: 8;
+  margin-right: -8;
 }
 #toolbarContainer #toolbarView #toolbarRight {
   flex: 1 0 0;
@@ -463,6 +471,8 @@
 }
 #detailListView #packageListGroup {
   width: 270;
+  border-right-width: 1px;
+  border-color: rgba(0, 0, 0, 0.5);
 }
 #detailListView #packageListGroup #groupContainerOuter #headerContainer {
   flex: 1 0 0;
@@ -508,7 +518,6 @@
   -unity-word-wrap: true;
 }
 #detailListView .package {
-  flex: 1 0 0;
   flex-direction: row;
   align-items: center;
   margin-top: 0;
@@ -552,6 +561,7 @@
 }
 #detailListView .package .name {
   flex: 1 0 0;
+  width: 160;
   font-size: 12;
   margin-left: 0;
   margin-right: 5;
@@ -565,8 +575,6 @@
 }
 #detailListView #detailsGroup {
   flex: 1 0 0;
-  border-left-width: 1px;
-  border-color: rgba(0, 0, 0, 0.5);
 }
 #detailListView #detailsGroup #detailsContainer {
   flex: 1 0 0;
@@ -586,21 +594,19 @@
   right: 0;
 }
 #detailListView #detailView .detail {
-  flex: 1 0 0;
-  flex-direction: column;
   padding-top: 5;
   padding-left: 5;
   padding-bottom: 5;
   padding-right: 5;
 }
 #detailListView #detailView .detail .header {
-  flex: 1 0 0;
   flex-direction: row;
   align-items: flex-start;
+  justify-content: space-between;
   margin-bottom: 8;
 }
 #detailListView #detailView .detail .header #titleContainer {
-  flex: 0.9 0 0;
+  flex: 1 0 0;
 }
 #detailListView #detailView .detail .header #titleContainer #detailTitle {
   font-size: 18;
@@ -612,7 +618,7 @@
   margin-right: 0;
 }
 #detailListView #detailView .detail .header #detailsControls {
-  flex: 1 0 0;
+  flex: 0 0 auto;
   height: 19;
   flex-direction: row;
   align-items: center;
@@ -623,7 +629,6 @@
   margin-right: 0;
 }
 #detailListView #detailView .detail .header #updateCombo {
-  flex: 1 0 0;
   height: 19;
   align-items: center;
   margin-top: 0;
@@ -675,7 +680,7 @@
 }
 #detailListView #detailView .detail .header #updateContainer {
   height: 19;
-  flex: 1 0 0;
+  flex: 0 0 auto;
   align-items: flex-end;
   padding-top: 0;
   padding-left: 0;
@@ -735,12 +740,10 @@
   max-height: 30;
 }
 #detailListView #detailView .detail #detailName {
-  flex: 1 0 0;
   max-height: 20;
   -unity-font-style: italic;
 }
 #detailListView #detailView .detail #detailPackageStatus {
-  flex: 1 0 0;
   -unity-font-style: bold;
   -unity-word-wrap: true;
 }
@@ -756,7 +759,6 @@
   -unity-text-align: middle-center;
 }
 #detailListView #detailView .detail #detailDesc, #detailListView #detailView .detail #detailModuleReference {
-  flex: 1 0 0;
   font-size: 12;
   -unity-word-wrap: true;
 }
@@ -764,12 +766,10 @@
   -unity-font-style: italic;
 }
 #detailListView #detailView .detail #detailAuthor {
-  flex: 1 0 0;
   font-size: 12;
   -unity-word-wrap: true;
 }
 #detailListView #detailView .detail #detailCategory {
-  flex: 1 0 0;
   font-size: 12;
   -unity-word-wrap: true;
   margin-bottom: 5;
@@ -819,6 +819,44 @@
 }
 #detailListView #detailView .detail .versionContainer #detailVersion {
   flex: 0 0 auto;
+}
+#detailListView #detailView .detail #samplesHeaderLabel {
+  margin-top: 10;
+  -unity-font-style: bold;
+}
+#detailListView #detailView .detail #samplesContainer #importStatusContainer Label {
+  width: 16;
+  height: 16;
+  margin-top: 6;
+  margin-left: 2;
+  margin-bottom: 6;
+  margin-right: 2;
+}
+#detailListView #detailView .detail #samplesContainer #importStatusContainer Label.imported {
+  background-image: resource("Builtin Skins/LightSkin/Images/MenuItemOn.png");
+}
+#detailListView #detailView .detail #samplesContainer #nameLabelContainer Label {
+  margin-top: 2;
+  margin-left: 4;
+  margin-bottom: 2;
+  margin-right: 12;
+  height: 24;
+  -unity-text-align: middle-left;
+}
+#detailListView #detailView .detail #samplesContainer #sizeLabelContainer Label {
+  margin-top: 2;
+  margin-left: 8;
+  margin-bottom: 2;
+  margin-right: 12;
+  height: 24;
+  -unity-text-align: middle-left;
+}
+#detailListView #detailView .detail #samplesContainer #importButtonContainer Button {
+  margin-top: 4;
+  margin-left: 8;
+  margin-bottom: 4;
+  margin-right: 12;
+  height: 20;
 }
 #detailListView #detailView .detail .tag {
   border-color: #d25a00;
@@ -878,44 +916,20 @@
 #detailListView #statusBarContainer {
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-}
-#detailListView #statusBarContainer #loadingContainer {
-  flex-direction: row;
-  align-items: center;
   justify-content: flex-start;
+  height: 24;
   margin-left: 2;
 }
-#detailListView #statusBarContainer #loadingContainer #loadingIcon {
+#detailListView #statusBarContainer #errorIcon {
   background-image: resource("Images/Dark/error");
   width: 16;
   height: 16;
-  margin-left: -12;
+  margin-left: 2;
   margin-right: 0;
 }
-#detailListView #statusBarContainer #loadingContainer #loadingText {
+#detailListView #statusBarContainer #statusLabel {
   padding-left: 2;
   -unity-font-style: italic;
-}
-#detailListView #statusBarContainer #loadingContainer #loadingText.icon {
-  margin-left: 0;
-}
-#detailListView #statusBarContainer #moreAddOptionsButton {
-  font-size: 16;
-  background-image: none;
-  margin-top: 0;
-  margin-left: 0;
-  margin-bottom: -2;
-  margin-right: 0;
-  padding-top: 3;
-  padding-left: 6;
-  padding-bottom: 6;
-  padding-right: 6;
-  border-color: rgba(0, 0, 0, 0.5);
-  border-top-width: 0;
-  border-left-width: 1;
-  border-bottom-width: 0;
-  border-right-width: 0;
 }
 #detailListView #packageAddFromUrlField {
   -unity-position: absolute;
@@ -1035,4 +1049,9 @@
   max-width: 32;
   max-height: 32;
   background-image: resource("Images/Light/loading");
+}
+
+.fix-scroll-view {
+  left: 0;
+  right: 0;
 }

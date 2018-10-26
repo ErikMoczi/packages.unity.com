@@ -5,15 +5,13 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="UnityEngine.Experimental.UIElements UIElementsSchema/UnityEngine.Experimental.UIElements.xsd
                             UnityEditor.PackageManager.UI UIElementsSchema/UnityEditor.PackageManager.UI.xsd">
-    <engine:VisualElement name="statusBarContainer">
-        <engine:VisualElement name="loadingSpinnerContainer" class="loading">
-            <upm:LoadingSpinner name="packageSpinner" class="spinner"/>
+    <engine:VisualElement name="samplesOuterContainer">
+        <engine:Label name="samplesHeaderLabel" text="Samples"/>
+        <engine:VisualElement name="samplesContainer">
+            <engine:VisualElement name="importStatusContainer"/>
+            <engine:VisualElement name="nameLabelContainer"/>
+            <engine:VisualElement name="sizeLabelContainer"/>
+            <engine:VisualElement name="importButtonContainer" />
         </engine:VisualElement>
-        <engine:Label name="errorIcon"/>
-        <engine:Label name="statusLabel"/>
     </engine:VisualElement>
-    <!--
-    <upm:PackageAddFromUrlField name="packageAddFromUrlField"/>
-    -->
 </engine:UXML>
-

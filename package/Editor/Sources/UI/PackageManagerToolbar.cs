@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
 
@@ -21,8 +22,11 @@ namespace UnityEditor.PackageManager.UI
 #endif
         private readonly VisualElement root;
 
+        public event Action<PackageFilter> OnFilterChange = delegate { };
+        public event Action OnTogglePreviewChange = delegate { };
+
         [SerializeField]
-        private PackageFilter selectedFilter = PackageFilter.All;
+        private PackageFilter selectedFilter;
 
         public PackageManagerToolbar()
         {
@@ -30,10 +34,9 @@ namespace UnityEditor.PackageManager.UI
             Add(root);
             root.StretchToParentSize();
 
-            SetFilter(PackageCollection.Instance.Filter);
-            
-            RegisterCallback<AttachToPanelEvent>(OnEnterPanel);
-            RegisterCallback<DetachFromPanelEvent>(OnLeavePanel);
+            AddButton.RegisterCallback<MouseDownEvent>(OnAddButtonMouseDown);
+            FilterButton.RegisterCallback<MouseDownEvent>(OnFilterButtonMouseDown);
+            AdvancedButton.RegisterCallback<MouseDownEvent>(OnAdvancedButtonMouseDown);
         }
 
         public void GrabFocus()
@@ -59,21 +62,38 @@ namespace UnityEditor.PackageManager.UI
                     return "In Project";
                 case PackageFilter.Modules:
                     return "Built-in packages";
-                case PackageFilter.None:
-                    return "None";
                 default:
                     return filter.ToString();
             }
         }
 
-        private void SetFilter(object obj)
+        public void SetFilter(object obj)
         {
             var previouSelectedFilter = selectedFilter;
             selectedFilter = (PackageFilter) obj;
             FilterButton.text = string.Format("{0} ▾", GetFilterDisplayName(selectedFilter));
 
             if (selectedFilter != previouSelectedFilter)
-                PackageCollection.Instance.SetFilter(selectedFilter);
+                OnFilterChange(selectedFilter);
+        }
+
+        private void OnAddButtonMouseDown(MouseDownEvent evt)
+        {
+            if (evt.propagationPhase != PropagationPhase.AtTarget)
+                return;
+
+            var menu = new GenericMenu();
+            var addPackageFromDiskItem = new GUIContent("Add package from disk...");
+            menu.AddItem(addPackageFromDiskItem, false, delegate
+            {
+                var path = EditorUtility.OpenFilePanelWithFilters("Select package on disk", "", new[] { "package.json file", "json" });
+                if (!string.IsNullOrEmpty(path) && !Package.AddRemoveOperationInProgress)
+                    Package.AddFromLocalDisk(path);
+            });
+            var menuPosition = new Vector2(AddButton.layout.xMin, AddButton.layout.center.y);
+            menuPosition = this.LocalToWorld(menuPosition);
+            var menuRect = new Rect(menuPosition, Vector2.zero);
+            menu.DropDown(menuRect);
         }
 
         private void OnFilterButtonMouseDown(MouseDownEvent evt)
@@ -106,7 +126,6 @@ namespace UnityEditor.PackageManager.UI
             var menu = new GenericMenu();
 
             menu.AddItem(new GUIContent("Show preview packages"), PackageManagerPrefs.ShowPreviewPackages, TogglePreviewPackages);
-            //menu.AddItem(new GUIContent("Reset to defaults"), false, ResetToDefaultsClick);
 
             var menuPosition = new Vector2(AdvancedButton.layout.xMax + 30, AdvancedButton.layout.center.y);
             menuPosition = this.LocalToWorld(menuPosition);
@@ -114,7 +133,7 @@ namespace UnityEditor.PackageManager.UI
             menu.DropDown(menuRect);
         }
 
-        private static void TogglePreviewPackages()
+        private void TogglePreviewPackages()
         {
             var showPreviewPackages = PackageManagerPrefs.ShowPreviewPackages;
             if (!showPreviewPackages && PackageManagerPrefs.ShowPreviewPackagesWarning)
@@ -125,40 +144,19 @@ namespace UnityEditor.PackageManager.UI
                 PackageManagerPrefs.ShowPreviewPackagesWarning = false;
             }
             PackageManagerPrefs.ShowPreviewPackages = !showPreviewPackages;
-            PackageCollection.Instance.UpdatePackageCollection(true);
+            OnTogglePreviewChange();
         }
 
-        private void ResetToDefaultsClick()
-        {
-            if (!EditorUtility.DisplayDialog("Unity Package Manager", "Operation will reset all your packages to Editor defaults. Do you want to continue?", "Yes", "No"))
-                return;
+        private Label _addButton;
+        private Label AddButton{ get { return _addButton ?? (_addButton = root.Q<Label>("toolbarAddButton")); }}
 
-            // Registered on callback
-            AssemblyReloadEvents.beforeAssemblyReload += PackageManagerWindow.ShowPackageManagerWindow;
+        private Label _filterButton;
+        private Label FilterButton { get { return _filterButton ?? (_filterButton = root.Q<Label>("toolbarFilterButton")); } }
 
-            Client.ResetToEditorDefaults();
+        private Label _advancedButton;
+        private Label AdvancedButton { get { return _advancedButton ?? (_advancedButton = root.Q<Label>("toolbarAdvancedButton")); } }
 
-            var windows = UnityEngine.Resources.FindObjectsOfTypeAll<PackageManagerWindow>();
-            if (windows.Length > 0)
-            {
-                windows[0].Close();
-            }
-        }
-
-        private void OnEnterPanel(AttachToPanelEvent evt)
-        {
-            FilterButton.RegisterCallback<MouseDownEvent>(OnFilterButtonMouseDown);
-            AdvancedButton.RegisterCallback<MouseDownEvent>(OnAdvancedButtonMouseDown);
-        }
-
-        private void OnLeavePanel(DetachFromPanelEvent evt)
-        {
-            FilterButton.UnregisterCallback<MouseDownEvent>(OnFilterButtonMouseDown);
-            AdvancedButton.UnregisterCallback<MouseDownEvent>(OnAdvancedButtonMouseDown);
-        }
-
-        private Label FilterButton { get { return root.Q<Label>("toolbarFilterButton"); } }
-        private Label AdvancedButton { get { return root.Q<Label>("toolbarAdvancedButton"); } }
-        internal PackageSearchToolbar SearchToolbar { get { return root.Q<PackageSearchToolbar>("toolbarSearch"); } }
+        private PackageSearchToolbar _searchToolbar;
+        internal PackageSearchToolbar SearchToolbar { get { return _searchToolbar ?? (_searchToolbar = root.Q<PackageSearchToolbar>("toolbarSearch")); } }
     }
 }

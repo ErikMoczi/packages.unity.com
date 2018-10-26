@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
@@ -98,7 +99,23 @@ namespace UnityEditor.PackageManager.UI
                     Author = author,
                     Info = info
                 };
-                
+
+                if (version == info.version && !string.IsNullOrEmpty(info.resolvedPath))
+                {
+                    packageInfo.Samples = PackageSample.LoadSamplesFromPackageJson(info.resolvedPath);
+                    foreach(var sample in packageInfo.Samples)
+                    {
+                        sample.resolvedPath = Path.Combine(info.resolvedPath, sample.path);
+                        sample.importPath = IOUtils.CombinePaths
+                        (
+                            Application.dataPath,
+                            "Samples",
+                            IOUtils.SanitizeFileName(packageInfo.DisplayName),
+                            packageInfo.Version.ToString(),
+                            IOUtils.SanitizeFileName(sample.displayName)
+                        );
+                    }
+                }
                 packages.Add(packageInfo);
             }
 

@@ -8,67 +8,56 @@ namespace UnityEditor.PackageManager.UI
     [Serializable]
     internal class PackageCollection
     {
-        private static PackageCollection instance = new PackageCollection();
-        public static PackageCollection Instance { get { return instance; } }
-
-        public event Action<IEnumerable<Package>> OnPackagesChanged = delegate { };
+        public event Action<PackageFilter, IEnumerable<Package>, string> OnPackagesChanged = delegate { };
         public event Action<PackageFilter> OnFilterChanged = delegate { };
+        public event Action<string> OnUpdateTimeChange = delegate { };
 
         private readonly Dictionary<string, Package> packages;
 
+        [SerializeField]
         private PackageFilter filter;
 
+        [SerializeField]
         private string selectedListPackage;
+        [SerializeField]
         private string selectedSearchPackage;
+        [SerializeField]
+        private string selectedBuiltInPackage;
 
+        [SerializeField]
         internal string lastUpdateTime;
+        
+        [SerializeField]
         private List<PackageInfo> listPackagesOffline;
+        [SerializeField]
         private List<PackageInfo> listPackages;
+        [SerializeField]
         private List<PackageInfo> searchPackages;
 
-        private List<PackageError> packageErrors;
+        [SerializeField]
+        private readonly List<PackageError> packageErrors;
 
+        [SerializeField]
         private int listPackagesVersion;
+        [SerializeField]
         private int listPackagesOfflineVersion;
 
-        private bool searchOperationOngoing;
-        private bool listOperationOngoing;
-        private bool listOperationOfflineOngoing;
+        [SerializeField]
+        public bool searchOperationOngoing;
+        [SerializeField]
+        public bool listOperationOngoing;
+        [SerializeField]
+        public bool listOperationOfflineOngoing;
 
+        [SerializeField]
         private IListOperation listOperationOffline;
+        [SerializeField]
         private IListOperation listOperation;
+        [SerializeField]
         private ISearchOperation searchOperation;
 
         public readonly OperationSignal<ISearchOperation> SearchSignal = new OperationSignal<ISearchOperation>();
         public readonly OperationSignal<IListOperation> ListSignal = new OperationSignal<IListOperation>();
-
-        public static void InitInstance(ref PackageCollection value)
-        {
-            if (value == null)  // UI window opened
-            {
-                value = instance;
-
-                Instance.OnPackagesChanged = delegate { };
-                Instance.OnFilterChanged = delegate { };
-                Instance.SearchSignal.ResetEvents();
-                Instance.ListSignal.ResetEvents();
-
-                Instance.FetchListOfflineCache(true);
-                Instance.FetchListCache(true);
-                Instance.FetchSearchCache(true);
-            }
-            else // Domain reload
-            {
-                instance = value;
-
-                Instance.RebuildPackageDictionary();
-
-                // Resume operations interrupted by domain reload
-                Instance.FetchListOfflineCache(Instance.listOperationOfflineOngoing);
-                Instance.FetchListCache(Instance.listOperationOngoing);
-                Instance.FetchSearchCache(Instance.searchOperationOngoing);
-            }
-        }
 
         public PackageFilter Filter
         {
@@ -85,26 +74,35 @@ namespace UnityEditor.PackageManager.UI
             }
         }
 
-        public List<PackageInfo> LatestListPackages
+        public IEnumerable<PackageInfo> LatestListPackages
         {
             get { return listPackagesVersion > listPackagesOfflineVersion? listPackages : listPackagesOffline; }
         }
 
-        public List<PackageInfo> LatestSearchPackages { get { return searchPackages; } }
+        public IEnumerable<PackageInfo> LatestSearchPackages { get { return searchPackages; } }
 
         public string SelectedPackage
         {
-            get { return PackageFilter.All == Filter ? selectedSearchPackage : selectedListPackage; }
+            get
+            {
+                if (Filter == PackageFilter.All)
+                    return selectedSearchPackage;
+                if (Filter == PackageFilter.Local)
+                    return selectedListPackage;
+                return selectedBuiltInPackage;
+            }
             set
             {
                 if (PackageFilter.All == Filter)
                     selectedSearchPackage = value;
-                else
+                else if (PackageFilter.Local == Filter)
                     selectedListPackage = value;
+                else
+                    selectedBuiltInPackage = value;
             }
         }
         
-        private PackageCollection()
+        public PackageCollection()
         {
             packages = new Dictionary<string, Package>();
 
@@ -140,12 +138,8 @@ namespace UnityEditor.PackageManager.UI
         public void UpdatePackageCollection(bool rebuildDictionary = false)
         {
             if (rebuildDictionary)
-            {
-                lastUpdateTime = DateTime.Now.ToString("HH:mm");
                 RebuildPackageDictionary();
-            }
-            if (packages.Any())
-                OnPackagesChanged(OrderedPackages());
+            OnPackagesChanged(Filter, OrderedPackages(), SelectedPackage);
         }
 
         internal void FetchListOfflineCache(bool forceRefetch = false)
@@ -222,6 +216,13 @@ namespace UnityEditor.PackageManager.UI
         private void UpdateSearchPackageInfos(IEnumerable<PackageInfo> newInfos)
         {
             searchPackages = newInfos.Where(p => p.IsUserVisible).ToList();
+            
+            // Only refresh update time after a search operation successfully returns while online
+            if (Application.internetReachability != NetworkReachability.NotReachable)
+            {
+                lastUpdateTime = DateTime.Now.ToString("MMM d, HH:mm");
+                OnUpdateTimeChange(lastUpdateTime);
+            }
         }
 
         private IEnumerable<Package> OrderedPackages()
@@ -236,7 +237,7 @@ namespace UnityEditor.PackageManager.UI
             return package;
         }
 
-        public Error GetPackageError(Package package)
+        private Error GetPackageError(Package package)
         {
             if (null == package) return null;
             var firstMatchingError = packageErrors.FirstOrDefault(p => p.PackageName == package.Name);
@@ -246,12 +247,14 @@ namespace UnityEditor.PackageManager.UI
         public void AddPackageError(Package package, Error error)
         {
             if (null == package || null == error) return;
+            package.Error = error;
             packageErrors.Add(new PackageError(package.Name, error));
         }
 
         public void RemovePackageErrors(Package package)
         {
             if (null == package) return;
+            package.Error = null;
             packageErrors.RemoveAll(p => p.PackageName == package.Name);
         }
 
@@ -259,12 +262,12 @@ namespace UnityEditor.PackageManager.UI
         {
             // Merge list & search packages
             var allPackageInfos = new List<PackageInfo>(LatestListPackages);
-            var installedPackageIds = new HashSet<string>(allPackageInfos.Select(p => p.PackageId));
-            allPackageInfos.AddRange(searchPackages.Where(p => !installedPackageIds.Contains(p.PackageId)));
+            var packageIdSet = new HashSet<string>(allPackageInfos.Select(p => p.PackageId));
+            allPackageInfos.AddRange(searchPackages.Where(p => !packageIdSet.Contains(p.PackageId)));
 
             if (!PackageManagerPrefs.ShowPreviewPackages)
             {
-                allPackageInfos = allPackageInfos.Where(p => !p.IsPreRelease || installedPackageIds.Contains(p.PackageId)).ToList();
+                allPackageInfos = allPackageInfos.Where(p => !p.IsPreRelease || p.IsCurrent).ToList();
             }
 
             // Rebuild packages dictionary
@@ -277,6 +280,7 @@ namespace UnityEditor.PackageManager.UI
 
                 var packageQuery = from pkg in allPackageInfos where pkg.Name == packageName select pkg;
                 var package = new Package(packageName, packageQuery);
+                package.Error = GetPackageError(package);
                 packages[packageName] = package;
             }
         }

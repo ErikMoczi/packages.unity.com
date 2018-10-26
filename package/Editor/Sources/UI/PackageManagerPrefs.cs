@@ -1,41 +1,43 @@
-using System.Linq;
+using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace UnityEditor.PackageManager.UI
 {
     internal static class PackageManagerPrefs
     {
-        private const string kShowPreviewPackagesPrefKeyPrefix = "PackageManager.ShowPreviewPackages_";
-        private const string kShowPreviewPackagesWarningPrefKey = "PackageManager.ShowPreviewPackagesWarning";
-
-        private static string GetProjectIdentifier()
-        {
-            // PlayerSettings.productGUID is already used as LocalProjectID by Analytics, so we use it too
-            return PlayerSettings.productGUID.ToString();
-        }
+        private const string showPreviewPackagesPrefs = "PackageManager.ShowPreviewPackages";
+        private const string showPreviewPackagesWarningPrefs = "PackageManager.ShowPreviewPackagesWarning";
+        private const string lastUsedFilterPrefix = "PackageManager.Filter_";
 
         public static bool ShowPreviewPackages
         {
-            get
-            {
-                var key = kShowPreviewPackagesPrefKeyPrefix + GetProjectIdentifier();
-
-                // If user manually choose to show or not preview packages, use this value
-                if (EditorPrefs.HasKey(key))
-                    return EditorPrefs.GetBool(key);
-
-                // Returns true if at least one preview package is installed, false otherwise
-                return PackageCollection.Instance.LatestListPackages.Any(p => p.IsPreview && p.IsCurrent);
-            }
-            set
-            {
-                EditorPrefs.SetBool(kShowPreviewPackagesPrefKeyPrefix + GetProjectIdentifier(), value);
-            }
+            get { return EditorPrefs.GetBool(showPreviewPackagesPrefs, false); }
+            set { EditorPrefs.SetBool(showPreviewPackagesPrefs, value); }
         }
 
         public static bool ShowPreviewPackagesWarning
         {
-            get { return EditorPrefs.GetBool(kShowPreviewPackagesWarningPrefKey, true); }
-            set { EditorPrefs.SetBool(kShowPreviewPackagesWarningPrefKey, value); }
+            get { return EditorPrefs.GetBool(showPreviewPackagesWarningPrefs, true); }
+            set { EditorPrefs.SetBool(showPreviewPackagesWarningPrefs, value); }
+        }
+
+        private static string GetHascodeHexString(string str)
+        {
+            var bytes = new SHA1Managed().ComputeHash(Encoding.UTF8.GetBytes(Directory.GetCurrentDirectory()));
+            return BitConverter.ToString(bytes);            
+        }
+
+        public static PackageFilter GetLastUsedPackageFilter(string str)
+        {
+            return (PackageFilter)Enum.Parse(typeof(PackageFilter),
+                EditorPrefs.GetString(lastUsedFilterPrefix + GetHascodeHexString(str), PackageFilter.All.ToString()));
+        }
+
+        public static void SetLastUsedPackageFilter(string str, PackageFilter filter)
+        {
+            EditorPrefs.SetString(lastUsedFilterPrefix + GetHascodeHexString(str), filter.ToString());
         }
     }
 }

@@ -7,8 +7,8 @@
                             UnityEditor.PackageManager.UI UIElementsSchema/UnityEditor.PackageManager.UI.xsd">
     <engine:VisualElement name="toolbarView">
         <engine:VisualElement name="toolbarLeft">
+            <engine:Label name="toolbarAddButton" class="toolbarButton space pulldown" text="+"/>
             <engine:Label name="toolbarFilterButton" class="toolbarButton space pulldown" text="All Packages ▾"/>
-            <engine:Label class="toolbarButton"/>
         </engine:VisualElement>
         <engine:VisualElement name="toolbarRight">
             <engine:Label name="toolbarAdvancedButton" class="toolbarButton pulldown" text="Advanced ▾"/>

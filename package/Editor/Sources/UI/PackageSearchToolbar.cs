@@ -35,27 +35,11 @@ namespace UnityEditor.PackageManager.UI
             Add(root);
             root.StretchToParentSize();
 
-            SearchTextField.value = searchText;
             SearchTextField.maxLength = 54;
             SearchCancelButton.clickable.clicked += SearchCancelButtonClick;
             
             RegisterCallback<AttachToPanelEvent>(OnEnterPanel);
             RegisterCallback<DetachFromPanelEvent>(OnLeavePanel);
-
-            searchText = PackageSearchFilter.Instance.SearchText;
-            
-            if (string.IsNullOrEmpty(searchText))
-            {
-                showingPlaceHolder = true;
-                SearchTextField.value = kPlaceHolder;
-                SearchTextField.AddToClassList("placeholder");
-            }
-            else
-            {
-                showingPlaceHolder = false;
-                SearchTextField.value = searchText;
-                SearchTextField.RemoveFromClassList("placeholder");
-            }
         }
         
         public void GrabFocus()
@@ -68,6 +52,23 @@ namespace UnityEditor.PackageManager.UI
             base.SetEnabled(enable);
             SearchTextField.SetEnabled(enable);
             SearchCancelButton.SetEnabled(enable);
+        }
+
+        public void SetSearchText(string text)
+        {
+            searchText = text;
+            if (string.IsNullOrEmpty(searchText))
+            {
+                showingPlaceHolder = true;
+                SearchTextField.value = kPlaceHolder;
+                SearchTextField.AddToClassList("placeholder");
+            }
+            else
+            {
+                showingPlaceHolder = false;
+                SearchTextField.value = searchText;
+                SearchTextField.RemoveFromClassList("placeholder");
+            }
         }
 
         private void OnSearchTextFieldChange(ChangeEvent<string> evt)
@@ -147,7 +148,11 @@ namespace UnityEditor.PackageManager.UI
                 evt.StopImmediatePropagation();
             }
         }
-        private TextField SearchTextField { get { return root.Q<TextField>("searchTextField"); } }
-        private Button SearchCancelButton { get { return root.Q<Button>("searchCancelButton"); } }
+
+        private TextField _searchTextField;
+        private TextField SearchTextField { get { return _searchTextField ?? (_searchTextField = root.Q<TextField>("searchTextField")); } }
+
+        private Button _searchCancelButton;
+        private Button SearchCancelButton { get { return _searchCancelButton ?? (_searchCancelButton = root.Q<Button>("searchCancelButton")); } }
     }
 }

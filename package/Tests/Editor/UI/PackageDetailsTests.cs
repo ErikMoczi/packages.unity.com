@@ -10,11 +10,23 @@ namespace UnityEditor.PackageManager.UI.Tests
         [SetUp]
         public void Setup()
         {
-            PackageCollection.Instance.SetFilter(PackageFilter.Local);
-            PackageCollection.Instance.UpdatePackageCollection(true);
+            Window.Collection.SetFilter(PackageFilter.Local);
+            Window.Collection.UpdatePackageCollection(true);
             SetSearchPackages(Enumerable.Empty<PackageInfo>());
             SetListPackages(Enumerable.Empty<PackageInfo>());
             Factory.ResetOperations();
+        }
+
+        private void SetSearchPackages(IEnumerable<PackageInfo> packages)
+        {
+            Factory.SearchOperation = new MockSearchOperation(Factory, packages);
+            Window.Collection.FetchSearchCache(true);
+        }
+
+        private void SetListPackages(IEnumerable<PackageInfo> packages)
+        {
+            Factory.Packages = packages;
+            Window.Collection.FetchListCache(true);
         }
 
         [Test]
@@ -58,7 +70,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             SetListPackages(new List<PackageInfo> {PackageSets.Instance.Single(PackageSource.Registry, "name", "1.0.0", false)});
 
-            PackageCollection.Instance.SetFilter(PackageFilter.All);
+            Window.Collection.SetFilter(PackageFilter.All);
 
             var details = Container.Q<PackageDetails>("detailsGroup");
             Assert.IsTrue(details.UpdateButton.text == PackageDetails.PackageActionVerbs[(int)PackageDetails.PackageAction.Add]);
@@ -117,6 +129,63 @@ namespace UnityEditor.PackageManager.UI.Tests
             Assert.IsFalse(details.UpdateButton.enabledSelf);
             Assert.IsFalse(details.VersionPopup.enabledSelf);
         }
-        
+
+        [Test]
+        public void Samples_Section_Invisible_When_No_Samples()
+        {
+            SetListPackages(new List<PackageInfo> {PackageSets.Instance.Single(PackageSource.Registry, "packagewithoutsample", "1.0.0")});
+
+            var sampleList = Container.Q<PackageSampleList>("detailSampleList");
+            Assert.IsFalse(sampleList.visible);
+            Assert.AreEqual(sampleList.ImportStatusContainer.childCount, 0);
+            Assert.AreEqual(sampleList.NameLabelContainer.childCount, 0);
+            Assert.AreEqual(sampleList.SizeLabelContainer.childCount, 0);
+            Assert.AreEqual(sampleList.ImportButtonContainer.childCount, 0);
+        }
+
+        [Test]
+        public void Samples_Section_Visible_When_Two_Samples_Exist()
+        {
+            var packageWithSample = PackageSets.Instance.Single(PackageSource.Registry, "packagewithsample", "1.0.0");
+            packageWithSample.Samples = new List<PackageSample>
+            {
+                new PackageSample { displayName = "Sample A" },
+                new PackageSample { displayName = "Sample B" }
+            };
+
+            SetListPackages(new List<PackageInfo> { packageWithSample });
+
+            var sampleList = Container.Q<PackageSampleList>("detailSampleList");
+            Assert.IsTrue(sampleList.visible);
+            Assert.AreEqual(sampleList.ImportStatusContainer.childCount, 2);
+            Assert.AreEqual(sampleList.NameLabelContainer.childCount, 2);
+            Assert.AreEqual(sampleList.SizeLabelContainer.childCount, 2);
+            Assert.AreEqual(sampleList.ImportButtonContainer.childCount, 2);
+
+            sampleList.Query().Children<Button>().ForEach(b => {
+                Assert.IsTrue(b.enabledSelf);
+            });
+        }
+
+        [Test]
+        public void Samples_Import_Button_Disabled_When_Package_Not_Installed()
+        {
+            var packageWithSample = PackageSets.Instance.Single(PackageSource.Registry, "packagewithsamplenotinstalled", "1.0.0", false);
+            packageWithSample.Samples = new List<PackageSample> { new PackageSample { displayName = "Sample A" }, };
+
+            Window.Collection.SetFilter(PackageFilter.All);
+            SetListPackages(new List<PackageInfo> { packageWithSample });
+
+            var sampleList = Container.Q<PackageSampleList>("detailSampleList");
+            Assert.IsTrue(sampleList.visible);
+            Assert.AreEqual(sampleList.ImportStatusContainer.childCount, 1);
+            Assert.AreEqual(sampleList.NameLabelContainer.childCount, 1);
+            Assert.AreEqual(sampleList.SizeLabelContainer.childCount, 1);
+            Assert.AreEqual(sampleList.ImportButtonContainer.childCount, 1);
+
+            sampleList.Query().Children<Button>().ForEach(b => {
+                Assert.IsFalse(b.enabledSelf);
+            });
+        }
     }
 }
