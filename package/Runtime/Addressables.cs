@@ -499,7 +499,7 @@ namespace UnityEngine.AddressableAssets
                     var provider = ResourceManager.GetResourceProvider<TObject>(loc);
                     if (provider != null)
                     {
-                        var op = provider.Provide<TObject>(loc, ResourceManager.LoadDependencies(loc));
+                        var op = provider.Provide<TObject>(loc, ResourceManager.LoadDependencies(loc)).Retain();
                         (op as IAsyncOperation).Completed += s_recordAssetAction;
                         op.Key = key;
                         return op;
