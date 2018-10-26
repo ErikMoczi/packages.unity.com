@@ -27,6 +27,10 @@ Windows 10 Fall Creators Update or Later
 Improvements
 Updated perception simulation and holographic streamer libraries.
 
+# 1.0.6
+Improvements
+Updated 64-bit perception remoting plugin.
+
 ## Document revision history
 |May 17, 2018|Updated compatible Unity versions to 2018.3 and later. 
 |April 20, 2018|First official version of the package, 1.0.0|
