@@ -82,7 +82,12 @@ namespace UnityEditor.Build.Pipeline.Tasks
 
         void PackSceneBundle(string bundleName, List<GUID> includedScenes, Dictionary<GUID, List<GUID>> assetToReferences)
         {
-            var firstFileName = "";
+            if (includedScenes.IsNullOrEmpty())
+                return;
+
+            string firstFileName = "";
+            HashSet<ObjectIdentifier> previousSceneObjects = new HashSet<ObjectIdentifier>();
+            List<string> sceneInternalNames = new List<string>();
             foreach (var scene in includedScenes)
             {
                 var scenePath = AssetDatabase.GUIDToAssetPath(scene.ToString());
@@ -95,15 +100,21 @@ namespace UnityEditor.Build.Pipeline.Tasks
 
                 var references = new List<ObjectIdentifier>();
                 references.AddRange(sceneInfo.referencedObjects);
-                assetToReferences[scene] = FilterReferencesForAsset(scene, references);
+                assetToReferences[scene] = FilterReferencesForAsset(scene, references, previousSceneObjects);
+                previousSceneObjects.UnionWith(references);
 
                 m_WriteData.FileToObjects.Add(internalName, references);
                 m_WriteData.FileToBundle.Add(internalName, bundleName);
-                m_WriteData.AssetToFiles[scene] = new List<string> { internalName };
+
+                var files = new List<string>{ internalName };
+                files.AddRange(sceneInternalNames);
+                m_WriteData.AssetToFiles[scene] = files;
+
+                sceneInternalNames.Add(internalName);
             }
         }
 
-        List<GUID> FilterReferencesForAsset(GUID asset, List<ObjectIdentifier> references)
+        List<GUID> FilterReferencesForAsset(GUID asset, List<ObjectIdentifier> references, HashSet<ObjectIdentifier> previousSceneObjects = null)
         {
             var referencedAssets = new HashSet<AssetLoadInfo>();
 
@@ -148,6 +159,11 @@ namespace UnityEditor.Build.Pipeline.Tasks
 
                 references.RemoveAll(x => referencedAsset.referencedObjects.Contains(x));
             }
+
+            // Special path for scenes, they can use data from previous sharedAssets in the same bundle
+            if (!previousSceneObjects.IsNullOrEmpty())
+                references.RemoveAll(previousSceneObjects.Contains);
+
             return referencedAssets.Select(x => x.asset).ToList();
         }
     }

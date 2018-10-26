@@ -17,3 +17,4 @@
 1.0.0-preview
 1.0.1-preview
 1.1.0-preview
+1.1.1-preview

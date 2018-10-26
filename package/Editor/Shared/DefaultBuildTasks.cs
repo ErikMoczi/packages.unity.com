@@ -26,16 +26,16 @@ namespace UnityEditor.Build.Pipeline
         /// <param name="preset">The preset build pipeline to construct and return.</param>
         /// <param name="compileScripts">The boolean to allow bypassing script compilation of a preset build pipeline if supported.</param>
         /// <returns>IList containing the build tasks in the correct order for the preset build pipeline.</returns>
-        public static IList<IBuildTask> Create(Preset preset, bool compileScripts = true)
+        public static IList<IBuildTask> Create(Preset preset)
         {
             switch (preset)
             {
                 case Preset.PlayerScriptsOnly:
                     return PlayerScriptsOnly();
                 case Preset.AssetBundleCompatible:
-                    return AssetBundleCompatible(compileScripts);
+                    return AssetBundleCompatible();
                 case Preset.AssetBundleBuiltInShaderExtraction:
-                    return AssetBundleBuiltInShaderExtraction(compileScripts);
+                    return AssetBundleBuiltInShaderExtraction();
                 default:
                     throw new NotImplementedException(string.Format("Preset for '{0}' not yet implemented.", preset));
             }
@@ -64,7 +64,7 @@ namespace UnityEditor.Build.Pipeline
             return buildTasks;
         }
 
-        static IList<IBuildTask> AssetBundleCompatible(bool compileScripts)
+        static IList<IBuildTask> AssetBundleCompatible()
         {
             var buildTasks = new List<IBuildTask>();
 
@@ -73,11 +73,8 @@ namespace UnityEditor.Build.Pipeline
             buildTasks.Add(new RebuildSpriteAtlasCache());
 
             // Player Scripts
-            if (compileScripts)
-            {
-                buildTasks.Add(new BuildPlayerScripts());
-                buildTasks.Add(new PostScriptsCallback());
-            }
+            buildTasks.Add(new BuildPlayerScripts());
+            buildTasks.Add(new PostScriptsCallback());
 
             // Dependency
             buildTasks.Add(new CalculateSceneDependencyData());
@@ -104,7 +101,7 @@ namespace UnityEditor.Build.Pipeline
             return buildTasks;
         }
 
-        static IList<IBuildTask> AssetBundleBuiltInShaderExtraction(bool compileScripts)
+        static IList<IBuildTask> AssetBundleBuiltInShaderExtraction()
         {
             var buildTasks = new List<IBuildTask>();
 
@@ -113,11 +110,8 @@ namespace UnityEditor.Build.Pipeline
             buildTasks.Add(new RebuildSpriteAtlasCache());
 
             // Player Scripts
-            if (compileScripts)
-            {
-                buildTasks.Add(new BuildPlayerScripts());
-                buildTasks.Add(new PostScriptsCallback());
-            }
+            buildTasks.Add(new BuildPlayerScripts());
+            buildTasks.Add(new PostScriptsCallback());
 
             // Dependency
             buildTasks.Add(new CalculateSceneDependencyData());

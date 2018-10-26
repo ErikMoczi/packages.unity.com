@@ -8,6 +8,11 @@ using UnityEditor.Build.Pipeline.Utilities;
 using UnityEditor.Build.Pipeline.WriteTypes;
 using UnityEditor.Build.Utilities;
 
+#if !UNITY_2019_1_OR_NEWER
+using System;
+using UnityEngine;
+#endif
+
 namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class GenerateBundleCommands : IBuildTask
@@ -87,11 +92,46 @@ namespace UnityEditor.Build.Pipeline.Tasks
             m_WriteData.WriteOperations.Add(abOp);
         }
 
+#if !UNITY_2019_1_OR_NEWER
+        static int GetSortIndex(Type type)
+        {
+            if (type == typeof(MonoScript))
+                return Int32.MinValue;
+            if (typeof(ScriptableObject).IsAssignableFrom(type))
+                return Int32.MaxValue - 4;
+            if (typeof(MonoBehaviour).IsAssignableFrom(type))
+                return Int32.MaxValue - 3;
+            if (typeof(TerrainData).IsAssignableFrom(type))
+                return Int32.MaxValue - 2;
+            return BitConverter.ToInt32(HashingMethods.Calculate(type.Name).ToBytes(), 0);
+        }
+
+        struct SortObject
+        {
+            public ObjectIdentifier objectId;
+            public int sortIndex;
+        }
+
+        static List<ObjectIdentifier> GetSortedSceneObjectIdentifiers(List<ObjectIdentifier> objects)
+        {
+            var types = new List<Type>(ContentBuildInterface.GetTypeForObjects(objects.ToArray()));
+            var sortedObjects = new List<SortObject>();
+            for (int i = 0; i < objects.Count; i++)
+                sortedObjects.Add(new SortObject { sortIndex = GetSortIndex(types[i]), objectId = objects[i] });
+            return sortedObjects.OrderBy(x => x.sortIndex).Select(x => x.objectId).ToList();
+        }
+#endif
+
         void CreateSceneBundleCommand(string bundleName, string internalName, GUID asset, List<GUID> assets)
         {
             var sbOp = new SceneBundleWriteOperation();
 
             var fileObjects = m_WriteData.FileToObjects[internalName];
+#if !UNITY_2019_1_OR_NEWER
+            // ContentBuildInterface.PrepareScene was not returning stable sorted references, causing a indeterminism and loading errors in some cases
+            // Add correct sorting here until patch lands to fix the API.
+            fileObjects = GetSortedSceneObjectIdentifiers(fileObjects);
+#endif
             sbOp.Command = CreateWriteCommand(internalName, fileObjects, new LinearPackedIdentifiers(3)); // Start at 3: PreloadData = 1, AssetBundle = 2
 
             sbOp.UsageSet = new BuildUsageTagSet();
@@ -127,6 +167,11 @@ namespace UnityEditor.Build.Pipeline.Tasks
             var sdOp = new SceneDataWriteOperation();
 
             var fileObjects = m_WriteData.FileToObjects[internalName];
+#if !UNITY_2019_1_OR_NEWER
+            // ContentBuildInterface.PrepareScene was not returning stable sorted references, causing a indeterminism and loading errors in some cases
+            // Add correct sorting here until patch lands to fix the API.
+            fileObjects = GetSortedSceneObjectIdentifiers(fileObjects);
+#endif
             sdOp.Command = CreateWriteCommand(internalName, fileObjects, new LinearPackedIdentifiers(2)); // Start at 2: PreloadData = 1
 
             sdOp.UsageSet = new BuildUsageTagSet();

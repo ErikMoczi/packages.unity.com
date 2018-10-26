@@ -31,7 +31,7 @@ namespace UnityEditor.Build.Pipeline
         /// <returns>Return code with status information about success or failure causes.</returns>
         public static ReturnCode BuildAssetBundles(IBundleBuildParameters parameters, IBundleBuildContent content, out IBundleBuildResults result)
         {
-            var taskList = DefaultBuildTasks.Create(DefaultBuildTasks.Preset.AssetBundleCompatible, parameters.ScriptInfo == null);
+            var taskList = DefaultBuildTasks.Create(DefaultBuildTasks.Preset.AssetBundleCompatible);
             return BuildAssetBundles(parameters, content, out result, taskList);
         }
 
@@ -68,6 +68,8 @@ namespace UnityEditor.Build.Pipeline
                 result = null;
                 return ReturnCode.UnsavedChanges;
             }
+
+            AssetDatabase.SaveAssets();
 
             ReturnCode exitCode;
             result = new BundleBuildResults();

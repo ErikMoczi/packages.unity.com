@@ -32,5 +32,10 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// Reusable cache for calculating usage tags
         /// </summary>
         BuildUsageCache DependencyUsageCache { get; }
+
+        /// <summary>
+        /// BuildUsageTagGlobal value from GraphicsSettings
+        /// </summary>
+        BuildUsageTagGlobal GlobalUsage { get; }
     }
 }

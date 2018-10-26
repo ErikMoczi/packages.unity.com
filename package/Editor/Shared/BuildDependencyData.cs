@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Pipeline.Utilities;
 
 namespace UnityEditor.Build.Pipeline
 {
@@ -21,6 +22,8 @@ namespace UnityEditor.Build.Pipeline
         public Dictionary<GUID, SceneDependencyInfo> SceneInfo { get; private set; }
         /// <inheritdoc />
         public Dictionary<GUID, BuildUsageTagSet> SceneUsage { get; private set; }
+
+        public BuildUsageTagGlobal GlobalUsage { get; private set; }
 
         [NonSerialized]
         BuildUsageCache m_BuildUsageCache;
@@ -44,6 +47,7 @@ namespace UnityEditor.Build.Pipeline
             SceneInfo = new Dictionary<GUID, SceneDependencyInfo>();
             SceneUsage = new Dictionary<GUID, BuildUsageTagSet>();
             m_BuildUsageCache = new BuildUsageCache();
+            GlobalUsage = GraphicsSettingsApi.GetGlobalUsage();
         }
     }
 }

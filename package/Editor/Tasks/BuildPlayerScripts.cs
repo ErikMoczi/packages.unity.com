@@ -19,6 +19,9 @@ namespace UnityEditor.Build.Pipeline.Tasks
 
         public ReturnCode Run()
         {
+            if (m_Parameters.ScriptInfo != null)
+                return ReturnCode.SuccessNotRun;
+
             // TODO: Replace with call to GetTempOrCachePath
             // TODO: Create tasks to copy scripts to correct output folder?
             m_Results.ScriptResults = PlayerBuildInterface.CompilePlayerScripts(m_Parameters.GetScriptCompilationSettings(), m_Parameters.TempOutputFolder);

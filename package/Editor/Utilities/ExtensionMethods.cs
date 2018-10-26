@@ -29,20 +29,6 @@ namespace UnityEditor.Build.Pipeline.Utilities
             dictionary.Add(key, value);
         }
 
-        public static void Swap<T>(this IList<T> array, int index1, int index2)
-        {
-            var t = array[index2];
-            array[index2] = array[index1];
-            array[index1] = t;
-        }
-
-        public static void Swap<T>(this T[] array, int index1, int index2)
-        {
-            var t = array[index2];
-            array[index2] = array[index1];
-            array[index1] = t;
-        }
-
         public static Hash128 GetHash128(this BuildSettings settings)
         {
             if (settings.typeDB == null)

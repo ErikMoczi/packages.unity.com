@@ -65,7 +65,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
 
         public ReturnCode Run()
         {
-            BuildUsageTagGlobal globalUsage = new BuildUsageTagGlobal();
+            BuildUsageTagGlobal globalUsage = m_DependencyData.GlobalUsage;
             foreach (var sceneInfo in m_DependencyData.SceneInfo)
                 globalUsage |= sceneInfo.Value.globalUsage;
 

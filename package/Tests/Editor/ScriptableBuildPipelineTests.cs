@@ -33,7 +33,11 @@ namespace UnityEditor.Build.Pipeline.Tests
         {
             EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo();
             Directory.CreateDirectory(k_TestAssetsPath);
+#if UNITY_2018_3_OR_NEWER
+            PrefabUtility.SaveAsPrefabAsset(GameObject.CreatePrimitive(PrimitiveType.Cube), k_CubePath);
+#else
             PrefabUtility.CreatePrefab(k_CubePath, GameObject.CreatePrimitive(PrimitiveType.Cube));
+#endif
         }
 
         [OneTimeTearDown]
@@ -93,7 +97,7 @@ namespace UnityEditor.Build.Pipeline.Tests
             return buildContent;
         }
 
-        static IDependencyData GetDependancyData()
+        static IDependencyData GetDependencyData()
         {
             GUID guid;
             GUID.TryParse(AssetDatabase.AssetPathToGUID(k_CubePath), out guid);
@@ -123,7 +127,7 @@ namespace UnityEditor.Build.Pipeline.Tests
 
             GameObject objectWeAdded = GameObject.Find("Cube");
             Assert.IsNotNull(objectWeAdded, "No object before entering playmode");
-            Assert.AreEqual("testScene", EditorSceneManager.GetActiveScene().name);
+            Assert.AreEqual("testScene", SceneManager.GetActiveScene().name);
 
             IBundleBuildParameters buildParameters = GetBuildParameters();
             IBundleBuildContent buildContent = GetBundleContent();
@@ -132,7 +136,7 @@ namespace UnityEditor.Build.Pipeline.Tests
             ReturnCode exitCode = ContentPipeline.BuildAssetBundles(buildParameters, buildContent, out results);
             Assert.AreEqual(ReturnCode.UnsavedChanges, exitCode);
 
-            Assert.AreEqual("testScene", EditorSceneManager.GetActiveScene().name);
+            Assert.AreEqual("testScene", SceneManager.GetActiveScene().name);
             objectWeAdded = GameObject.Find("Cube");
             Assert.IsNotNull(objectWeAdded, "No object after entering playmode");
         }
@@ -153,7 +157,7 @@ namespace UnityEditor.Build.Pipeline.Tests
         }
 
         [Test]
-        public void DefaultBuildTasks_WriteSerialziedFiles()
+        public void DefaultBuildTasks_WriteSerializedFiles()
         {
             IBuildParameters buildParams = GetBuildParameters();
             IDependencyData dependencyData = new BuildDependencyData();
@@ -168,11 +172,11 @@ namespace UnityEditor.Build.Pipeline.Tests
         public void DefaultBuildTasks_GenerateBundlePacking()
         {
             IBundleBuildContent buildContent = GetBundleContent();
-            IDependencyData dep = GetDependancyData();
+            IDependencyData dep = GetDependencyData();
             IBundleWriteData writeData = new BundleWriteData();
-            IDeterministicIdentifiers determinsiticId = new PrefabPackedIdentifiers();
+            IDeterministicIdentifiers deterministicId = new PrefabPackedIdentifiers();
 
-            ReturnCode exitCode = RunTask<GenerateBundlePacking>(buildContent, dep, writeData, determinsiticId);
+            ReturnCode exitCode = RunTask<GenerateBundlePacking>(buildContent, dep, writeData, deterministicId);
             Assert.AreEqual(ReturnCode.Success, exitCode);
         }
 
@@ -180,20 +184,20 @@ namespace UnityEditor.Build.Pipeline.Tests
         public void DefaultBuildTasks_GenerateBundleCommands()
         {
             IBundleBuildContent buildContent = GetBundleContent();
-            IDependencyData dep = GetDependancyData();
+            IDependencyData dep = GetDependencyData();
             IBundleWriteData writeData = new BundleWriteData();
-            IDeterministicIdentifiers determinsiticId = new PrefabPackedIdentifiers();
+            IDeterministicIdentifiers deterministicId = new PrefabPackedIdentifiers();
 
-            RunTask<GenerateBundlePacking>(buildContent, dep, writeData, determinsiticId);
+            RunTask<GenerateBundlePacking>(buildContent, dep, writeData, deterministicId);
 
-            ReturnCode exitCode = RunTask<GenerateBundleCommands>(buildContent, dep, writeData, determinsiticId);
+            ReturnCode exitCode = RunTask<GenerateBundleCommands>(buildContent, dep, writeData, deterministicId);
             Assert.AreEqual(ReturnCode.Success, exitCode);
         }
 
         [Test]
         public void DefaultBuildTasks_GenerateBundleMaps()
         {
-            IDependencyData dep = GetDependancyData();
+            IDependencyData dep = GetDependencyData();
             IBundleWriteData writeData = new BundleWriteData();
 
             ReturnCode exitCode = RunTask<GenerateBundleMaps>(dep, writeData);
@@ -206,7 +210,7 @@ namespace UnityEditor.Build.Pipeline.Tests
             bool packingCallbackCalled = false;
 
             IBuildParameters buildParams = GetBuildParameters();
-            IDependencyData dep = GetDependancyData();
+            IDependencyData dep = GetDependencyData();
             IBundleWriteData writeData = new BundleWriteData();
             BuildCallbacks callback = new BuildCallbacks();
             callback.PostPackingCallback = (parameters, data, arg3) =>
@@ -226,7 +230,7 @@ namespace UnityEditor.Build.Pipeline.Tests
             bool writingCallbackCalled = false;
 
             IBuildParameters buildParams = GetBuildParameters();
-            IDependencyData dep = GetDependancyData();
+            IDependencyData dep = GetDependencyData();
             IWriteData writeData = new BuildWriteData();
             IBuildResults results = new BuildResults();
             BuildCallbacks callback = new BuildCallbacks();
@@ -247,7 +251,7 @@ namespace UnityEditor.Build.Pipeline.Tests
             bool dependencyCallbackCalled = false;
 
             IBuildParameters buildParameters = GetBuildParameters();
-            IDependencyData dep = GetDependancyData();
+            IDependencyData dep = GetDependencyData();
             BuildCallbacks callback = new BuildCallbacks();
             callback.PostDependencyCallback = (parameters, data) =>
             {
