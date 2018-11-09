@@ -40,11 +40,22 @@ namespace UnityEngine.XR.ARCore
             });
         }
 
+        /// <summary>
+        /// For internal use. Use <c>XRSessionSubsystem.GetNativePtr</c> instead.
+        /// </summary>
+        /// <param name="sessionSubsystem">The <c>XRSessionSubsystem</c> which this method extends.</param>
+        /// <returns>An <c>IntPtr</c> associated with the <paramref name="sessionSubsystem"/>.</returns>
+        public static IntPtr GetNativePtr(XRSessionSubsystem sessionSubsystem)
+        {
+            return Api.UnityARCore_getNativeSessionPtr();
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Register()
         {
             XRSessionExtensions.RegisterGetAvailabilityAsyncHandler(k_SubsystemId, GetAvailabilityAsync);
             XRSessionExtensions.RegisterInstallAsyncHandler(k_SubsystemId, InstallAsync);
+            XRSessionExtensions.RegisterGetNativePtrHandler(k_SubsystemId, GetNativePtr);
         }
 
         static Promise<T> ExecuteAsync<T>(Action<IntPtr> apiMethod)

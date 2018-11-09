@@ -4,6 +4,7 @@
 #include "arcore_c_api.h"
 #include "Unity/UnityXRTrackable.h"
 #include "Unity/UnityXRTypes.h"
+#include <functional> // For std::hash
 #include <cstring>
 #include <stdio.h>
 
@@ -138,3 +139,13 @@ const char* PrintArStatus(ArStatus status);
 const char* PrintArTrackableType(ArTrackableType type);
 const char* PrintArTrackingState(ArTrackingState state);
 const char* PrintArUpdateMode(ArUpdateMode mode);
+
+struct TrackableIdHasher
+{
+    std::size_t operator()(const UnityXRTrackableId& trackableId) const
+    {
+        const auto h0 = std::hash<uint64_t>()(trackableId.idPart[0]);
+        const auto h1 = std::hash<uint64_t>()(trackableId.idPart[1]);
+        return h0 * 486187739 + h1;
+    }
+};

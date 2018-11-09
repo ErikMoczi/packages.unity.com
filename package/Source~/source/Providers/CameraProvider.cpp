@@ -1,3 +1,4 @@
+#include "arpresto_api.h"
 #include "CameraImageApi.h"
 #include "CameraProvider.h"
 #include "MathConversion.h"
@@ -8,6 +9,7 @@
 #include "Wrappers/WrappedLightEstimate.h"
 #include "Wrappers/WrappedPose.h"
 #include "Wrappers/WrappedSession.h"
+#include "Unity/UnityXRNativePtrs.h"
 
 #include <cstring>
 #include <GLES2/gl2.h>
@@ -15,6 +17,7 @@
 
 static bool g_HasColorCorrection = false;
 static float g_LastColorCorrection[4] = {0, 0, 0, 0};
+static UnityXRNativeCamera s_NativeCamera;
 
 extern "C" bool UnityARCore_tryGetColorCorrection(float* red, float* green, float* blue, float* alpha)
 {
@@ -23,6 +26,15 @@ extern "C" bool UnityARCore_tryGetColorCorrection(float* red, float* green, floa
     *blue = g_LastColorCorrection[2];
     *alpha = g_LastColorCorrection[3];
     return g_HasColorCorrection;
+}
+
+extern "C" void* UnityARCore_getNativeFramePtr()
+{
+    ArFrame* frame = nullptr;
+    ArPresto_getFrame(&frame);
+    s_NativeCamera.version = kUnityXRNativeCameraVersion;
+    s_NativeCamera.framePtr = frame;
+    return &s_NativeCamera;
 }
 
 CameraProvider::CameraProvider()

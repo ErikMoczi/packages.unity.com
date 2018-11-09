@@ -1,9 +1,11 @@
 #include "PlaneProvider.h"
+#include "RemoveAbsentKeys.h"
 #include "SessionProvider.h"
 #include "Utility.h"
 #include "Wrappers/WrappedPlane.h"
 #include "Wrappers/WrappedTrackable.h"
 #include "Wrappers/WrappedTrackableList.h"
+#include "Unity/UnityXRNativePtrs.h"
 
 #include <algorithm>
 #include <cstring>
@@ -11,44 +13,60 @@
 #include <set>
 #include <unordered_map>
 
-struct TrackableIdHasher
-{
-    std::size_t operator()(const UnityXRTrackableId& trackableId) const
-    {
-        return ((std::hash<uint64_t>()(trackableId.idPart[0]) ^
-                (std::hash<uint64_t>()(trackableId.idPart[1]) << 1)));
-    }
-};
-
-struct PlaneData
-{
-    UnityXRPlane plane;
-    UnityXRTrackingState trackingState = kUnityXRTrackingStateUnknown;
-};
-
-typedef std::unordered_map<UnityXRTrackableId, PlaneData, TrackableIdHasher> PlaneIdToDataMap;
-
-static std::mutex g_PlaneMutex;
-static PlaneIdToDataMap g_Planes;
+PlaneProvider* PlaneProvider::s_Instance = nullptr;
 
 extern "C" UnityXRTrackingState UnityARCore_getAnchorTrackingState(UnityXRTrackableId id)
 {
-    if (!IsArSessionEnabled())
-        return kUnityXRTrackingStateUnavailable;
+    if (auto provider = PlaneProvider::Get())
+        return provider->GetTrackingState(id);
 
-    std::lock_guard<std::mutex> lock(g_PlaneMutex);
+    return kUnityXRTrackingStateUnknown;
+}
 
-    auto iter = g_Planes.find(id);
-    if (iter == g_Planes.end())
-        return kUnityXRTrackingStateUnknown;
+extern "C" void* UnityARCore_getNativePlanePtr(UnityXRTrackableId planeId)
+{
+    if (auto provider = PlaneProvider::Get())
+        return provider->GetNativePlane(planeId);
 
-    return iter->second.trackingState;
+    return nullptr;
 }
 
 PlaneProvider::PlaneProvider(IUnityXRPlaneInterface*& unityInterface)
     : m_UnityInterface(unityInterface)
     , m_LastFrameTimestamp(0)
-{ }
+{
+    s_Instance = this;
+}
+
+PlaneProvider::~PlaneProvider()
+{
+    s_Instance = nullptr;
+}
+
+UnityXRTrackingState PlaneProvider::GetTrackingState(const UnityXRTrackableId& planeId) const
+{
+    if (!IsArSessionEnabled())
+        return kUnityXRTrackingStateUnavailable;
+
+    std::lock_guard<std::mutex> lock(m_Mutex);
+
+    auto iter = m_Planes.find(planeId);
+    if (iter == m_Planes.end())
+        return kUnityXRTrackingStateUnknown;
+
+    return iter->second.trackingState;
+}
+
+UnityXRNativePlane* PlaneProvider::GetNativePlane(const UnityXRTrackableId& planeId)
+{
+    std::lock_guard<std::mutex> lock(m_Mutex);
+
+    auto iter = m_Planes.find(planeId);
+    if (iter != m_Planes.end())
+        return iter->second.nativePlane.get();
+
+    return nullptr;
+}
 
 // TODO: return false under the right circumstances (I'm guessing at least during tracking loss... anything else?)
 bool UNITY_INTERFACE_API PlaneProvider::GetAllPlanes(IUnityXRPlaneDataAllocator& xrAllocator)
@@ -80,7 +98,9 @@ bool UNITY_INTERFACE_API PlaneProvider::GetAllPlanes(IUnityXRPlaneDataAllocator&
     WrappedTrackableListRaii detectedPlanes;
     detectedPlanes.PopulateList_All(AR_TRACKABLE_PLANE);
 
-    std::lock_guard<std::mutex> lock(g_PlaneMutex);
+    std::unordered_set<UnityXRTrackableId, TrackableIdHasher> currentPlanes;
+
+    std::lock_guard<std::mutex> lock(m_Mutex);
 
     const int32_t numPlanes = detectedPlanes.Size();
     UnityXRPlane* currentXrPlane = xrAllocator.AllocatePlaneData(numPlanes);
@@ -91,15 +111,27 @@ bool UNITY_INTERFACE_API PlaneProvider::GetAllPlanes(IUnityXRPlaneDataAllocator&
 
         WrappedPlane wrappedPlane = ArAsPlane(wrappedTrackable);
         wrappedPlane.ConvertToXRPlane(*currentXrPlane, xrAllocator);
-        currentXrPlane->wasUpdated = updatedIds.find(currentXrPlane->id) != updatedIds.end();
+        const auto& planeId = currentXrPlane->id;
+        currentXrPlane->wasUpdated = updatedIds.find(planeId) != updatedIds.end();
 
-        auto& planeData = g_Planes[currentXrPlane->id];
+        auto& planeData = m_Planes[planeId];
 
         auto xrTrackingState = wrappedTrackable.GetTrackingState();
         currentXrPlane->wasUpdated = currentXrPlane->wasUpdated || (planeData.trackingState != xrTrackingState);
         planeData.plane = *currentXrPlane;
         planeData.trackingState = xrTrackingState;
+        if (planeData.nativePlane == nullptr)
+        {
+            auto nativePlane = std::unique_ptr<UnityXRNativePlane>(new UnityXRNativePlane);
+            nativePlane->version = kUnityXRNativePlaneVersion;
+            nativePlane->planePtr = ConvertTrackableIdToPtr<void*>(planeId);
+            planeData.nativePlane = std::move(nativePlane);
+        }
+
+        currentPlanes.insert(planeId);
     }
+
+    RemoveAbsentKeys(currentPlanes, &m_Planes);
 
     m_LastFrameTimestamp = latestFrameTimestamp;
     return true;

@@ -4,6 +4,7 @@
 #include "Wrappers/PrestoConfig.h"
 #include "arcore_c_api.h"
 #include "arpresto_api.h"
+#include "Unity/UnityXRNativePtrs.h"
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
@@ -12,6 +13,7 @@ static JavaVM* s_JavaVM = nullptr;
 static JNIEnv* s_JNIEnv = nullptr;
 static jobject s_AppActivity = nullptr;
 static bool s_ArSessionEnabled = false;
+static UnityXRNativeSession s_NativeSession;
 
 jobject CallJavaMethod(jobject object, const char* name, const char* sig)
 {
@@ -25,6 +27,15 @@ static CameraPermissionRequestProvider_FP g_CameraPermissionRequestProvider = nu
 extern "C" void UnityARCore_setCameraPermissionProvider(CameraPermissionRequestProvider_FP provider)
 {
     g_CameraPermissionRequestProvider = provider;
+}
+
+extern "C" void* UnityARCore_getNativeSessionPtr()
+{
+    ArSession* session = nullptr;
+    ArPresto_getSession(&session);
+    s_NativeSession.version = kUnityXRNativeSessionVersion;
+    s_NativeSession.sessionPtr = session;
+    return &s_NativeSession;
 }
 
 void CameraPermissionRequestProvider(CameraPermissionsResultCallback_FP onComplete, void *context)

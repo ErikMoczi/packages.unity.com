@@ -1,8 +1,18 @@
 #include "ReferencePointProvider.h"
+#include "RemoveAbsentKeys.h"
 #include "Wrappers/WrappedAnchorList.h"
+#include "Unity/UnityXRNativePtrs.h"
 
 static const UnityXRTrackableId k_InvalidId = {};
 static ReferencePointProvider* s_ReferencePointProvider = nullptr;
+
+extern "C" void* UnityARCore_getNativeReferencePointPtr(UnityXRTrackableId referencePointId)
+{
+    if (s_ReferencePointProvider)
+        return s_ReferencePointProvider->GetNativeReferencePoint(referencePointId);
+
+    return nullptr;
+}
 
 extern "C" UnityXRTrackableId UnityARCore_attachReferencePoint(UnityXRTrackableId trackableId, UnityXRPose pose)
 {
@@ -15,12 +25,25 @@ extern "C" UnityXRTrackableId UnityARCore_attachReferencePoint(UnityXRTrackableI
 ReferencePointProvider::ReferencePointProvider(IUnityXRReferencePointInterface*& unityInterface)
     : m_UnityInterface(unityInterface)
 {
-    s_ReferencePointProvider = this;    
+    s_ReferencePointProvider = this;
 }
 
 ReferencePointProvider::~ReferencePointProvider()
 {
     s_ReferencePointProvider = nullptr;
+}
+
+void ReferencePointProvider::AssumeOwnership(const UnityXRTrackableId& id, ArAnchor* anchor)
+{
+    auto nativeReferencePoint = std::unique_ptr<UnityXRNativeReferencePoint>(new UnityXRNativeReferencePoint);
+    nativeReferencePoint->referencePointPtr = anchor;
+    nativeReferencePoint->version = kUnityXRNativeReferencePointVersion;
+
+    ReferencePointData data = {};
+    data.arAnchor = anchor;
+    data.nativeReferencePoint = std::move(nativeReferencePoint);
+
+    m_ReferencePoints.emplace(id, std::move(data));
 }
 
 UnityXRTrackableId ReferencePointProvider::AttachReferencePoint(const UnityXRTrackableId& xrTrackableId, const UnityXRPose& xrPose)
@@ -35,11 +58,14 @@ UnityXRTrackableId ReferencePointProvider::AttachReferencePoint(const UnityXRTra
     WrappedAnchorRaii wrappedAnchor;
     auto status = wrappedAnchor.TryAcquireAtTrackable(arTrackable, xrPose);
     if (ARSTATUS_FAILED(status))
-	    return k_InvalidId;
+        return k_InvalidId;
 
     UnityXRTrackableId newReferencePointId;
     ConvertToTrackableId(newReferencePointId, wrappedAnchor.Get());
-    m_IdToAnchorMap[newReferencePointId] = wrappedAnchor.TransferOwnership();
+
+    std::lock_guard<std::mutex> lock(m_Mutex);
+    AssumeOwnership(newReferencePointId, wrappedAnchor.TransferOwnership());
+
     return newReferencePointId;
 }
 
@@ -57,16 +83,10 @@ bool UNITY_INTERFACE_API ReferencePointProvider::TryAddReferencePoint(const Unit
     }
 
     ConvertToTrackableId(xrIdOut, wrappedAnchor.Get());
-	xrTrackingStateOut = wrappedAnchor.GetTrackingState();
+    xrTrackingStateOut = wrappedAnchor.GetTrackingState();
 
-	std::pair<IdToAnchorMap::iterator, bool> inserter = m_IdToAnchorMap.insert(std::make_pair(xrIdOut, wrappedAnchor.TransferOwnership()));
-	IdToAnchorMap::iterator& iter = inserter.first;
-    if (!inserter.second || iter == m_IdToAnchorMap.end())
-    {
-        DEBUG_LOG_ERROR("Internal error - can't create entry for new reference point!");
-        return false;
-    }
-
+    std::lock_guard<std::mutex> lock(m_Mutex);
+    AssumeOwnership(xrIdOut, wrappedAnchor.TransferOwnership());
     return true;
 }
 
@@ -75,15 +95,16 @@ bool UNITY_INTERFACE_API ReferencePointProvider::TryRemoveReferencePoint(const U
     if (GetArSession() == nullptr)
         return false;
 
-    IdToAnchorMap::iterator iter = m_IdToAnchorMap.find(xrId);
-    if (iter == m_IdToAnchorMap.end())
+    std::lock_guard<std::mutex> lock(m_Mutex);
+
+    auto iter = m_ReferencePoints.find(xrId);
+    if (iter == m_ReferencePoints.end())
         return false;
 
-	WrappedAnchorRaii wrappedAnchor;
-	wrappedAnchor.AssumeOwnership(iter->second);
-	wrappedAnchor.Detach();
+    WrappedAnchorMutable wrappedAnchor = iter->second.arAnchor;
+    wrappedAnchor.Detach();
 
-	m_IdToAnchorMap.erase(iter);
+    m_ReferencePoints.erase(iter);
     return true;
 }
 
@@ -97,15 +118,27 @@ bool UNITY_INTERFACE_API ReferencePointProvider::GetAllReferencePoints(IUnityXRR
 
     const int32_t numAnchors = wrappedAnchorList.Size();
     UnityXRReferencePoint* xrPoints = xrAllocator.AllocateReferencePoints(static_cast<size_t>(numAnchors));
+    std::unordered_set<UnityXRTrackableId, TrackableIdHasher> currentReferencePoints;
+    std::lock_guard<std::mutex> lock(m_Mutex);
     for (int32_t anchorIndex = 0; anchorIndex < numAnchors; ++anchorIndex)
     {
         WrappedAnchorRaii wrappedAnchor;
         wrappedAnchor.AcquireFromList(wrappedAnchorList, anchorIndex);
 
+        UnityXRTrackableId referencePointId;
+        ConvertToTrackableId(referencePointId, wrappedAnchor.Get());
+
         xrPoints[anchorIndex].trackingState = wrappedAnchor.GetTrackingState();
-        ConvertToTrackableId(xrPoints[anchorIndex].id, wrappedAnchor.Get());
-		wrappedAnchor.GetPose(xrPoints[anchorIndex].pose);
+        xrPoints[anchorIndex].id = referencePointId;
+        wrappedAnchor.GetPose(xrPoints[anchorIndex].pose);
+
+        if (m_ReferencePoints.find(referencePointId) == m_ReferencePoints.end())
+            AssumeOwnership(referencePointId, wrappedAnchor.TransferOwnership());
+
+        currentReferencePoints.insert(referencePointId);
     }
+
+    RemoveAbsentKeys(currentReferencePoints, &m_ReferencePoints);
 
     return true;
 }
@@ -163,4 +196,16 @@ void ReferencePointProvider::PopulateCStyleProvider(UnityXRReferencePointProvide
     xrProvider.TryAddReferencePoint = &StaticTryAddReferencePoint;
     xrProvider.TryRemoveReferencePoint = &StaticTryRemoveReferencePoint;
     xrProvider.GetAllReferencePoints = &StaticGetAllReferencePoints;
+}
+
+UnityXRNativeReferencePoint* ReferencePointProvider::GetNativeReferencePoint(
+    const UnityXRTrackableId& referencePointId)
+{
+    std::lock_guard<std::mutex> lock(m_Mutex);
+
+    auto iter = m_ReferencePoints.find(referencePointId);
+    if (iter != m_ReferencePoints.end())
+        return iter->second.nativeReferencePoint.get();
+
+    return nullptr;
 }

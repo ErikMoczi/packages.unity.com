@@ -1,3 +1,4 @@
+using System;
 using UnityEngine.XR.ARExtensions;
 using UnityEngine.Experimental.XR;
 
@@ -12,6 +13,12 @@ namespace UnityEngine.XR.ARCore
         static void Register()
         {
             XRReferencePointExtensions.RegisterAttachReferencePointHandler(k_SubsystemId, AttachReferencePoint);
+            XRReferencePointExtensions.RegisterGetNativePtrHandler(k_SubsystemId, GetNativePtr);
+        }
+
+        static IntPtr GetNativePtr(XRReferencePointSubsystem referencePointSubsystem, TrackableId trackableId)
+        {
+            return Api.UnityARCore_getNativeReferencePointPtr(trackableId);
         }
 
         static TrackableId AttachReferencePoint(XRReferencePointSubsystem referencePointSubsystem,

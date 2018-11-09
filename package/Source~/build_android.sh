@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-if [ "$ANDROID_NDK_ROOT" == "" ]; then
+if [ -z "$ANDROID_NDK_ROOT" ]; then
     echo "ERROR: Path to Android NDK is not setup. Please make sure you set the ANDROID_NDK env variable to the location of your NDK installation!"
     exit -1
 fi

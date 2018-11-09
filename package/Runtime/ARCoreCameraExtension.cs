@@ -18,6 +18,7 @@ namespace UnityEngine.XR.ARCore
             Api.UnityARCore_setCameraPermissionProvider(CameraPermissionRequestProvider);
             XRCameraExtensions.RegisterIsPermissionGrantedHandler(k_SubsystemId, IsPermissionGranted);
             XRCameraExtensions.RegisterTryGetColorCorrectionHandler(k_SubsystemId, TryGetColorCorrection);
+            XRCameraExtensions.RegisterGetNativePtrHandler(k_SubsystemId, GetNativePtr);
             XRCameraExtensions.RegisterCameraImageApi(k_SubsystemId, s_AsyncCameraImageApi);
         }
 
@@ -44,6 +45,11 @@ namespace UnityEngine.XR.ARCore
                 color = default(Color);
                 return false;
             }
+        }
+
+        static IntPtr GetNativePtr(XRCameraSubsystem cameraSubsystem)
+        {
+            return Api.UnityARCore_getNativeFramePtr();
         }
 
         [MonoPInvokeCallback(typeof(Api.CameraPermissionRequestProvider))]

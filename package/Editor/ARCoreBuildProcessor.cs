@@ -1,11 +1,11 @@
 #if UNITY_ANDROID
-using System.Reflection;
 using System.Xml;
-using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEditor.Android;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
+using UnityEditor.XR.ARExtensions;
+using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace UnityEditor.XR.ARCore
 {
@@ -24,6 +24,9 @@ namespace UnityEditor.XR.ARCore
             EnsureOnlyOpenGLES3IsUsed();
             EnsureTargetArchitecturesAreSupported();
             EnsureGradleIsUsed();
+
+            if (LinkerUtility.AssemblyStrippingEnabled(report.summary.platformGroup))
+                LinkerUtility.EnsureLinkXmlExistsFor("ARCore");
         }
 
         void EnsureGradleIsUsed()

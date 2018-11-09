@@ -154,6 +154,18 @@ namespace UnityEngine.XR.ARCore
         static internal extern TrackableId UnityARCore_attachReferencePoint(TrackableId trackableId, Pose pose);
 
         [DllImport("UnityARCore")]
+        static internal extern IntPtr UnityARCore_getNativePlanePtr(TrackableId planeId);
+
+        [DllImport("UnityARCore")]
+        static internal extern IntPtr UnityARCore_getNativeReferencePointPtr(TrackableId planeId);
+
+        [DllImport("UnityARCore")]
+        static internal extern IntPtr UnityARCore_getNativeSessionPtr();
+
+        [DllImport("UnityARCore")]
+        static internal extern IntPtr UnityARCore_getNativeFramePtr();
+
+        [DllImport("UnityARCore")]
         static internal extern bool UnityARCore_tryGetColorCorrection(out float red, out float green, out float blue, out float alpha);
 
         [DllImport("UnityARCore")]
@@ -305,6 +317,26 @@ namespace UnityEngine.XR.ARCore
         static internal TrackableId UnityARCore_attachReferencePoint(TrackableId trackableId, Pose pose)
         {
             return TrackableId.InvalidId;
+        }
+
+        static internal IntPtr UnityARCore_getNativePlanePtr(TrackableId trackableId)
+        {
+            return IntPtr.Zero;
+        }
+
+        static internal IntPtr UnityARCore_getNativeReferencePointPtr(TrackableId planeId)
+        {
+            return IntPtr.Zero;
+        }
+
+        static internal IntPtr UnityARCore_getNativeSessionPtr()
+        {
+            return IntPtr.Zero;
+        }
+
+        static internal IntPtr UnityARCore_getNativeFramePtr()
+        {
+            return IntPtr.Zero;
         }
 
         static internal bool UnityARCore_tryGetColorCorrection(out float red, out float green, out float blue, out float alpha)
