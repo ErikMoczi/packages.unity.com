@@ -107,7 +107,20 @@ namespace Unity.Burst.Editor
                     if (directory != null)
                     {
                         var fullPath = Path.GetFullPath(directory);
-                        if (!assemblyFolders.Contains(fullPath))
+                        if (IsMonoReferenceAssemblyDirectory(fullPath) || IsDotNetStandardAssemblyDirectory(fullPath))
+                        {
+                            // Don't pass reference assemblies to burst because they contain methods without implementation
+                            // If burst accidentally resolves them, it will emit calls to burst_abort.
+                            fullPath = Path.Combine(EditorApplication.applicationContentsPath, "MonoBleedingEdge/lib/mono/unityaot");
+                            fullPath = Path.GetFullPath(fullPath); // GetFullPath will normalize path separators to OS native format
+                            if (!assemblyFolders.Contains(fullPath))
+                                assemblyFolders.Add(fullPath);
+
+                            fullPath = Path.Combine(fullPath, "Facades");
+                            if (!assemblyFolders.Contains(fullPath))
+                                assemblyFolders.Add(fullPath);
+                        }
+                        else if (!assemblyFolders.Contains(fullPath))
                         {
                             assemblyFolders.Add(fullPath);
                         }
@@ -196,6 +209,7 @@ namespace Unity.Burst.Editor
                 combinations.Add(new BurstOutputCombination("Plugins/x64", TargetCpu.X64_SSE4));
                 combinations.Add(new BurstOutputCombination("Plugins/x86", TargetCpu.X86_SSE2));
                 combinations.Add(new BurstOutputCombination("Plugins/ARM", TargetCpu.THUMB2_NEON32));
+                combinations.Add(new BurstOutputCombination("Plugins/ARM64", TargetCpu.ARMV8A_AARCH64));
             }
             else
             {
@@ -217,8 +231,27 @@ namespace Unity.Burst.Editor
 
                 //Debug.Log("Burst compile with response file: " + responseFile);
 
-                Runner.RunManagedProgram(Path.Combine(BurstLoader.RuntimePath, BurstAotCompilerExecutable),  "@" + responseFile, Application.dataPath + "/..", new BclParser(), null);
+                try
+                {
+	                Runner.RunManagedProgram(Path.Combine(BurstLoader.RuntimePath, BurstAotCompilerExecutable),  "@" + responseFile, Application.dataPath + "/..", new BclParser(), null);
+                }
+                catch (Exception e)
+                {
+	                Debug.LogError(e.ToString());
+                }
             }
+        }
+
+        private static bool IsMonoReferenceAssemblyDirectory(string path)
+        {
+            var editorDir = Path.GetFullPath(EditorApplication.applicationContentsPath);
+            return path.IndexOf(editorDir, StringComparison.OrdinalIgnoreCase) != -1 && path.IndexOf("MonoBleedingEdge", StringComparison.OrdinalIgnoreCase) != -1 && path.IndexOf("-api", StringComparison.OrdinalIgnoreCase) != -1;
+        }
+
+        private static bool IsDotNetStandardAssemblyDirectory(string path)
+        {
+            var editorDir = Path.GetFullPath(EditorApplication.applicationContentsPath);
+            return path.IndexOf(editorDir, StringComparison.OrdinalIgnoreCase) != -1 && path.IndexOf("netstandard", StringComparison.OrdinalIgnoreCase) != -1 && path.IndexOf("shims", StringComparison.OrdinalIgnoreCase) != -1;
         }
 
         public static TargetPlatform GetTargetPlatformAndDefaultCpu(BuildTarget target, out TargetCpu targetCpu)

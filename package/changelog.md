@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.4-preview.35
+
+- Try to fix a crash on macosx in the editor when a job is being compiled by burst at startup time
+- Fix burst accidentally resolving reference assemblies
+- Add support for burst for ARM64 when building UWP player
+
 ## 0.2.4-preview.34
 
 - Fix compiler exception with an invalid cast that could occur when using pinned variables (e.g `int32&` resolved to `int32**` instead of `int32*`)
