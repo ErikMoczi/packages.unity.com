@@ -48,14 +48,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
             else if (string.IsNullOrEmpty(docsDir))
             {
-                if (!Context.ProjectPackageInfo.IsPreview)
-                {
-                    Error("Your package must contain a \"Documentation~\" folder at the root, which holds your package's documentation.");
-                }
-                else
-                {
-                    Warning("It is recommended for a preview package to contain a \"Documentation~\" folder. Documentation is required for verified packages.");
-                }
+                Error("Your package must contain a \"Documentation~\" folder at the root, which holds your package's documentation.");
                 return;
             }
 

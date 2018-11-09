@@ -64,7 +64,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         public static bool ValidatePackage(string packageId, ValidationType validationType)
         {
-            if (string.IsNullOrWhiteSpace(packageId))
+            if (string.IsNullOrEmpty(packageId))
                 throw new ArgumentNullException(packageId);
 
             var packageIdParts = packageId.Split('@');
@@ -77,10 +77,10 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         public static bool ValidatePackage(string packageName, string packageVersion, ValidationType validationType)
         {
-            if (string.IsNullOrWhiteSpace(packageName))
+            if (string.IsNullOrEmpty(packageName))
                 throw new ArgumentNullException(packageName);
 
-            if (string.IsNullOrWhiteSpace(packageVersion))
+            if (string.IsNullOrEmpty(packageVersion))
                 throw new ArgumentNullException(packageVersion);
 
             var packageId = Utilities.CreatePackageId(packageName, packageVersion);
@@ -135,13 +135,13 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         public static bool RunAssetStoreValidationSuite(string packageName, string packageVersion, string packagePath, string previousPackagePath = null)
         {
-            if (string.IsNullOrWhiteSpace(packageName))
+            if (string.IsNullOrEmpty(packageName))
                 throw new ArgumentNullException(packageName);
 
-            if (string.IsNullOrWhiteSpace(packageVersion))
+            if (string.IsNullOrEmpty(packageVersion))
                 throw new ArgumentNullException(packageVersion);
 
-            if (string.IsNullOrWhiteSpace(packagePath))
+            if (string.IsNullOrEmpty(packagePath))
                 throw new ArgumentNullException(packageName);
 
             var report = new ValidationSuiteReport(packageName + "@" + packageVersion, packageName, packageVersion, packagePath);
@@ -162,10 +162,10 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         public static string GetValidationSuiteReport(string packageName, string packageVersion)
         {
-            if (string.IsNullOrWhiteSpace(packageName))
+            if (string.IsNullOrEmpty(packageName))
                 throw new ArgumentNullException(packageName);
 
-            if (string.IsNullOrWhiteSpace(packageVersion))
+            if (string.IsNullOrEmpty(packageVersion))
                 throw new ArgumentNullException(packageVersion);
 
             var packageId = Utilities.CreatePackageId(packageName, packageVersion);
@@ -174,7 +174,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         public static string GetValidationSuiteReport(string packageId)
         {
-            if (string.IsNullOrWhiteSpace(packageId))
+            if (string.IsNullOrEmpty(packageId))
                 throw new ArgumentNullException(packageId);
 
             return ValidationSuiteReport.ReportExists(packageId) ? File.ReadAllText(ValidationSuiteReport.TextReportPath(packageId)) : null;

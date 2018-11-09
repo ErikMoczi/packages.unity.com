@@ -51,10 +51,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
         private void AddMissingTestsErrors()
         {
-            if (Context.ProjectPackageInfo.IsPreview)
-                Warning("Package must include tests before it can come out of preview.");
-            else
-                Error("Production quality packages must include test for automated testing.");
+            Error("Preview and Production quality packages must include test for automated testing.");
         }
     }
 }

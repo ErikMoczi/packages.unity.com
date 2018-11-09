@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Hide npm pop-ups on Windows.
 - Fix validation suite freeze issues when used offline
 - Add validation to check repository information in `package.json`
+- Validate that both preview and verified packages have their required documentation.
+- Refactor unit tests to use parametrized arguments.
 
 ## [0.3.0] - 2018-06-05
 - Hide validation suite when packages are not available

@@ -58,13 +58,14 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Directory.CreateDirectory(toCreatePath);
         }
 
-        [Test]
-        public void When_Local_Documentation_Missing_Validation_Folder_Fails()
+        [TestCase(version)]
+        [TestCase(previewVersion)]
+        public void When_Local_Documentation_Missing_Validation_Folder_Fails(string currentVersion)
         {
             CreateFolder("folder");
             CreateFile("file1", "folder");
             var documentationValidation = new LocalDocumentationValidation();
-            documentationValidation.Context = PrepareVettingContext(testDirectory, version);
+            documentationValidation.Context = PrepareVettingContext(testDirectory, currentVersion);
             documentationValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, documentationValidation.TestState);
@@ -72,29 +73,16 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.AreEqual(messagesExpected, documentationValidation.TestOutput);
         }
 
-        [Test]
-        public void When_Preview_Local_Documentation_Missing_Validation_Folder_Succeeds_With_Warning()
-        {
-            CreateFolder("folder");
-            CreateFile("file1", "folder");
-            var documentationValidation = new LocalDocumentationValidation();
-            documentationValidation.Context = PrepareVettingContext(testDirectory, previewVersion);
-            documentationValidation.RunTest();
-
-            Assert.AreEqual(TestState.Succeeded, documentationValidation.TestState);
-            List<string> messagesExpected = new List<string> { "Warning: It is recommended for a preview package to contain a \"Documentation~\" folder. Documentation is required for verified packages." };
-            Assert.AreEqual(messagesExpected, documentationValidation.TestOutput);
-        }
-
-        [Test]
-        public void When_Local_Documentation_Has2Folders_Fails()
+        [TestCase(version)]
+        [TestCase(previewVersion)]
+        public void When_Local_Documentation_Has2Folders_Fails(string currentVersion)
         {
             CreateFolder("Documentation~");
             CreateFile("documentation.md", "Documentation~", "This is my documentation");
             CreateFolder(".Documentation");
             CreateFile("documentation.md", ".Documentation", "This is my documentation");
             var documentationValidation = new LocalDocumentationValidation();
-            documentationValidation.Context = PrepareVettingContext(testDirectory, version);
+            documentationValidation.Context = PrepareVettingContext(testDirectory, currentVersion);
             documentationValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, documentationValidation.TestState);
@@ -102,31 +90,16 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.AreEqual(messagesExpected, documentationValidation.TestOutput);
         }
 
-        [Test]
-        public void When_Preview_Local_Documentation_Has2Folders_Fails()
-        {
-            CreateFolder("Documentation~");
-            CreateFile("documentation.md", "Documentation~", "This is my documentation");
-            CreateFolder(".Documentation");
-            CreateFile("documentation.md", ".Documentation", "This is my documentation");
-            var documentationValidation = new LocalDocumentationValidation();
-            documentationValidation.Context = PrepareVettingContext(testDirectory, previewVersion);
-            documentationValidation.RunTest();
-
-            Assert.AreEqual(TestState.Failed, documentationValidation.TestState);
-            List<string> messagesExpected = new List<string> { "Error: You have multiple documentation folders. Please keep only the one named \"Documentation~\"." };
-            Assert.AreEqual(messagesExpected, documentationValidation.TestOutput);
-        }
-
-        [Test]
-        public void When_Local_Documentation_Has2FoldersWithoutTilde_Fails()
+        [TestCase(version)]
+        [TestCase(previewVersion)]
+        public void When_Local_Documentation_Has2FoldersWithoutTilde_Fails(string currentVersion)
         {
             CreateFolder("Documentation");
             CreateFile("documentation.md", "Documentation", "This is my documentation");
             CreateFolder(".Documentation");
             CreateFile("documentation.md", ".Documentation", "This is my documentation");
             var documentationValidation = new LocalDocumentationValidation();
-            documentationValidation.Context = PrepareVettingContext(testDirectory, version);
+            documentationValidation.Context = PrepareVettingContext(testDirectory, currentVersion);
             documentationValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, documentationValidation.TestState);
@@ -134,15 +107,16 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.AreEqual(messagesExpected, documentationValidation.TestOutput);
         }
 
-        [Test]
-        public void When_Local_Documentation_Has2FoldersWithTilde_Fails()
+        [TestCase(version)]
+        [TestCase(previewVersion)]
+        public void When_Local_Documentation_Has2FoldersWithTilde_Fails(string currentVersion)
         {
             CreateFolder("Documentation~");
             CreateFile("documentation.md", "Documentation~", "This is my documentation");
             CreateFolder(".Documentation~");
             CreateFile("documentation.md", ".Documentation~", "This is my documentation");
             var documentationValidation = new LocalDocumentationValidation();
-            documentationValidation.Context = PrepareVettingContext(testDirectory, version);
+            documentationValidation.Context = PrepareVettingContext(testDirectory, currentVersion);
             documentationValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, documentationValidation.TestState);
@@ -150,12 +124,13 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.AreEqual(messagesExpected, documentationValidation.TestOutput);
         }
 
-        [Test]
-        public void When_Local_Documentation_Missing_Validation_File_Fails()
+        [TestCase(version)]
+        [TestCase(previewVersion)]
+        public void When_Local_Documentation_Missing_Validation_File_Fails(string currentVersion)
         {
             CreateFolder("Documentation~");
             var documentationValidation = new LocalDocumentationValidation();
-            documentationValidation.Context = PrepareVettingContext(testDirectory, version);
+            documentationValidation.Context = PrepareVettingContext(testDirectory, currentVersion);
             documentationValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, documentationValidation.TestState);
@@ -163,26 +138,14 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.AreEqual(messagesExpected, documentationValidation.TestOutput);
         }
 
-        [Test]
-        public void When_Preview_Local_Documentation_Missing_Validation_File_Fails()
-        {
-            CreateFolder("Documentation~");
-            var documentationValidation = new LocalDocumentationValidation();
-            documentationValidation.Context = PrepareVettingContext(testDirectory, previewVersion);
-            documentationValidation.RunTest();
-
-            Assert.AreEqual(TestState.Failed, documentationValidation.TestState);
-            List<string> messagesExpected = new List<string> { "Error: Your package must contain a \"Documentation~\" folder, with at least one \"*.md\" file in order for documentation to properly get built." };
-            Assert.AreEqual(messagesExpected, documentationValidation.TestOutput);
-        }
-
-        [Test]
-        public void When_Local_Documentation_Only_Contains_Default_File_Fails()
+        [TestCase(version)]
+        [TestCase(previewVersion)]
+        public void When_Local_Documentation_Only_Contains_Default_File_Fails(string currentVersion)
         {
             CreateFolder("Documentation~");
             CreateFile("your-package-name.md", "Documentation~");
             var documentationValidation = new LocalDocumentationValidation();
-            documentationValidation.Context = PrepareVettingContext(testDirectory, version);
+            documentationValidation.Context = PrepareVettingContext(testDirectory, currentVersion);
             documentationValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, documentationValidation.TestState);
@@ -190,14 +153,15 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.AreEqual(messagesExpected, documentationValidation.TestOutput);
         }
 
-        [Test]
-        public void When_Local_Documentation_Contains_Default_File_Fails()
+        [TestCase(version)]
+        [TestCase(previewVersion)]
+        public void When_Local_Documentation_Contains_Default_File_Fails(string currentVersion)
         {
             CreateFolder("Documentation~");
             CreateFile("documentation.md", "Documentation~", "This is my documentation");
             CreateFile("your-package-name.md", "Documentation~");
             var documentationValidation = new LocalDocumentationValidation();
-            documentationValidation.Context = PrepareVettingContext(testDirectory, version);
+            documentationValidation.Context = PrepareVettingContext(testDirectory, currentVersion);
             documentationValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, documentationValidation.TestState);
@@ -205,14 +169,15 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.AreEqual(messagesExpected, documentationValidation.TestOutput);
         }
 
-        [Test]
-        public void When_Local_Documentation_InSubFolder_Validation_Fails()
+        [TestCase(version)]
+        [TestCase(previewVersion)]
+        public void When_Local_Documentation_InSubFolder_Validation_Fails(string currentVersion)
         {
             CreateFolder("folder1");
             CreateFolder("Documentation~", "folder1");
             CreateFile("documentation.md", "folder1/Documentation~", "This is my documentation");
             var documentationValidation = new LocalDocumentationValidation();
-            documentationValidation.Context = PrepareVettingContext(testDirectory, version);
+            documentationValidation.Context = PrepareVettingContext(testDirectory, currentVersion);
             documentationValidation.RunTest();
 
             Assert.AreEqual(TestState.Failed, documentationValidation.TestState);
@@ -220,26 +185,28 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.AreEqual(messagesExpected, documentationValidation.TestOutput);
         }
 
-        [Test]
-        public void When_Local_Documentation_Folder_StartingWithDot_Validation_Succeeds()
+        [TestCase(version)]
+        [TestCase(previewVersion)]
+        public void When_Local_Documentation_Folder_StartingWithDot_Validation_Succeeds(string currentVersion)
         {
             CreateFolder(".Documentation~");
             CreateFile("documentation.md", ".Documentation~", "This is my documentation");
             var documentationValidation = new LocalDocumentationValidation();
-            documentationValidation.Context = PrepareVettingContext(testDirectory, version);
+            documentationValidation.Context = PrepareVettingContext(testDirectory, currentVersion);
             documentationValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, documentationValidation.TestState);
             Assert.AreEqual(0, documentationValidation.TestOutput.Count);
         }
 
-        [Test]
-        public void When_Local_Documentation_Folder_EndingWithTilde_Validation_Succeeds()
+        [TestCase(version)]
+        [TestCase(previewVersion)]
+        public void When_Local_Documentation_Folder_EndingWithTilde_Validation_Succeeds(string currentVersion)
         {
             CreateFolder("Documentation~");
             CreateFile("documentation.md", "Documentation~", "This is my documentation");
             var documentationValidation = new LocalDocumentationValidation();
-            documentationValidation.Context = PrepareVettingContext(testDirectory, version);
+            documentationValidation.Context = PrepareVettingContext(testDirectory, currentVersion);
             documentationValidation.RunTest();
 
             Assert.AreEqual(TestState.Succeeded, documentationValidation.TestState);

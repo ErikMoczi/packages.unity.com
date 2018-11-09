@@ -13,17 +13,22 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         private const string docsurl = "https://docs.unity3d.com/Packages/{0}/manual/index.html";
         private IHttpWebRequestFactory httpWebRequestFactory;
 
+        /*public OnlineDocumentationValidation()
+        {
+            Initialize(new HttpWebRequestFactory());
+        }*/
+
         public OnlineDocumentationValidation(IHttpWebRequestFactory httpFactory)
+        {
+            Initialize(httpFactory);
+        }
+
+        private void Initialize(IHttpWebRequestFactory httpFactory)
         {
             TestName = "Online Documentation Validation";
             TestDescription = "Make sure the package has online documentation. It is required for a verified package and optional for a preview package";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] { ValidationType.LocalDevelopment, ValidationType.Publishing, ValidationType.VerifiedSet };
-
-            if (httpFactory == null)
-            {
-                httpFactory = new HttpWebRequestFactory() as IHttpWebRequestFactory;
-            }
+            SupportedValidations = new[] { ValidationType.LocalDevelopment, ValidationType.Publishing };
             httpWebRequestFactory = httpFactory;
         }
 
@@ -65,16 +70,21 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                     {
                         var responseReader = new StreamReader(webResponse.GetResponseStream());
                         responseReader.ReadToEnd();
-                    } else
+                    }
+                    else
                     {
                         if (!Context.ProjectPackageInfo.IsPreview)
                         {
-                            Error("The documentation website could not complete your request. Please contact the docs team to ensure a site is up before you publish to production. (StatusCode: " + webResponse.StatusCode + ")");
+                            Error(
+                                "The documentation website could not complete your request. Please contact the docs team to ensure a site is up before you publish to production. (StatusCode: " +
+                                webResponse.StatusCode + ")");
                             TestOutput.Add("Expected Website: " + url);
                         }
                         else
                         {
-                            Warning("The documentation website could not complete your request, which is required before it can be removed from \"Preview\".  Contact the documentation team for assistance. (StatusCode: " + webResponse.StatusCode + ")");
+                            Warning(
+                                "The documentation website could not complete your request, which is required before it can be removed from \"Preview\".  Contact the documentation team for assistance. (StatusCode: " +
+                                webResponse.StatusCode + ")");
                         }
                     }
                 }
@@ -83,13 +93,15 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             {
                 if (!Context.ProjectPackageInfo.IsPreview)
                 {
-                    Error("Couldn't find a documentation website for this package.  Please contact the docs team to ensure a site is up before you publish to production.");
+                    Error(
+                        "Couldn't find a documentation website for this package.  Please contact the docs team to ensure a site is up before you publish to production.");
                     TestOutput.Add("Expected Website: " + url);
                     TestOutput.Add(e.Message);
                 }
                 else
                 {
-                    Warning("This package contains no web based documentation, which is required before it can be removed from \"Preview\".  Contact the documentation team for assistance.");
+                    Warning(
+                        "This package contains no web based documentation, which is required before it can be removed from \"Preview\".  Contact the documentation team for assistance.");
                 }
             }
         }

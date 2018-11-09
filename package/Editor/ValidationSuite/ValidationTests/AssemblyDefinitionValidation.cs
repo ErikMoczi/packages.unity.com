@@ -45,12 +45,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 var assemblyDefinitionData = Utilities.GetDataFromJson<AssemblyDefinition>(assemblyDefinitionPath);
                 var editorInIncludePlatforms = FindValueInArray(assemblyDefinitionData.includePlatforms, "Editor");
 
-                if (isRuntime && editorInIncludePlatforms)
-                {
-                    TestState = TestState.Failed;
-                    TestOutput.Add(string.Format("For runtime assemblies, 'Editor' should not be present in the includePlatform section in: [{0}]", simplifiedPath));
-                }
-
                 if(isEditor && assemblyDefinitionData.includePlatforms.Length > 1)
                 {
                     TestState = TestState.Failed;
