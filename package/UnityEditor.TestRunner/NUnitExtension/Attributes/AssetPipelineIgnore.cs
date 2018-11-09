@@ -41,7 +41,7 @@ namespace UnityEditor.TestTools
                 ? AssetPipelineBackend.V2
                 : AssetPipelineBackend.V1;
 
-            static string ActiveBackendName => Enum.GetName(typeof(AssetPipelineBackend), k_ActiveBackend);
+            static string ActiveBackendName = Enum.GetName(typeof(AssetPipelineBackend), k_ActiveBackend);
 
             public AssetPipelineIgnoreAttribute(AssetPipelineBackend backend, string ignoreReason)
             {
@@ -54,7 +54,7 @@ namespace UnityEditor.TestTools
                 if (k_ActiveBackend == m_IgnoredBackend)
                 {
                     test.RunState = RunState.Ignored;
-                    var skipReason = $"Not supported by asset pipeline '{ActiveBackendName}' backend ({m_IgnoreReason})";
+                    var skipReason = string.Format("Not supported by asset pipeline {0} backend {1}", ActiveBackendName, m_IgnoreReason);
                     test.Properties.Add(PropertyNames.SkipReason, skipReason);
                 }
             }
