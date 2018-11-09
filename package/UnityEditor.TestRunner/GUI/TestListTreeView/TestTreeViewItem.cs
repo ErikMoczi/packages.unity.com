@@ -35,14 +35,7 @@ namespace UnityEditor.TestTools.TestRunner.GUI
                 method = test.Method.MethodInfo;
             }
 
-            var name = test.Name;
-            if (name.Length > 100)
-            {
-                name = name.Substring(0, 100);
-            }
-            name = name.Replace("\n", "");
-
-            displayName = name;
+            displayName = test.Name.Replace("\n", "");
             icon = Icons.s_UnknownImg;
         }
 

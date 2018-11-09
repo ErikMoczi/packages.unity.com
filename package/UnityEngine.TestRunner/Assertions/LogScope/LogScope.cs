@@ -38,6 +38,11 @@ namespace UnityEngine.TestTools.Logging
             }
         }
 
+        internal static bool HasCurrentLogScope()
+        {
+            return s_CurrentScope != null;
+        }
+
         public LogScope()
         {
             AllLogs = new List<LogEvent>();

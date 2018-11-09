@@ -70,7 +70,11 @@ namespace UnityEditor.TestTools.TestRunner
             output = currentContext.CurrentResult.Output;
             StartTicks = currentContext.StartTicks;
             StartTimeOA = currentContext.StartTime.ToOADate();
-            m_ExpectedLogs = LogScope.Current.ExpectedLogs.ToArray();
+            if (LogScope.HasCurrentLogScope())
+            {
+                m_ExpectedLogs = LogScope.Current.ExpectedLogs.ToArray();
+            }
+
             m_ShouldRestore = true;
         }
 
@@ -83,7 +87,11 @@ namespace UnityEditor.TestTools.TestRunner
 
             currentContext.StartTicks = StartTicks;
             currentContext.StartTime = DateTime.FromOADate(StartTimeOA);
-            LogScope.Current.ExpectedLogs = new Queue<LogMatch>(m_ExpectedLogs);
+            if (LogScope.HasCurrentLogScope())
+            {
+                LogScope.Current.ExpectedLogs = new Queue<LogMatch>(m_ExpectedLogs);
+            }
+
             m_ShouldRestore = false;
         }
 

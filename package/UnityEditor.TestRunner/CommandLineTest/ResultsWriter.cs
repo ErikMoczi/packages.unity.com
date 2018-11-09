@@ -32,7 +32,7 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
 
         public void WriteResultToFile(ITestResult result, string filePath)
         {
-            Debug.Log("Saving results to: " + filePath);
+            Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "Saving results to: {0}", filePath);
 
             try
             {

@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEditor.Compilation;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace UnityEditor.TestTools.TestRunner.UnityTestProtocol
 {
@@ -23,7 +24,9 @@ namespace UnityEditor.TestTools.TestRunner.UnityTestProtocol
 
         public static void OnAssemblyCompilationFinished(string assembly, CompilerMessage[] messages)
         {
-            if (messages.Any(x => x.type == CompilerMessageType.Error))
+            bool checkCompileErrors = RecompileScripts.Current == null || RecompileScripts.Current.ExpectScriptCompilationSuccess;
+
+            if (checkCompileErrors && messages.Any(x => x.type == CompilerMessageType.Error))
             {
                 var compilerErrorMessages = messages.Where(x => x.type == CompilerMessageType.Error);
                 var utpMessageReporter = new UtpMessageReporter(new UtpDebugLogger());

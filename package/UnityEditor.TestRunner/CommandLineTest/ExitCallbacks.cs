@@ -15,7 +15,7 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
         {
             if (!m_AnyTestsExecuted)
             {
-                Debug.LogWarning("No tests were executed");
+                Debug.LogFormat(LogType.Warning, LogOption.NoStacktrace, null, "No tests were executed");
             }
             EditorApplication.Exit(m_RunFailed ? (int)Executer.ReturnCodes.Failed : (int)Executer.ReturnCodes.Ok);
         }

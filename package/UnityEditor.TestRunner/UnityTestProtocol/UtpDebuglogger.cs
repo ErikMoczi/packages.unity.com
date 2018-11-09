@@ -7,7 +7,7 @@ namespace UnityEditor.TestTools.TestRunner.UnityTestProtocol
         public void Log(Message msg)
         {
             var msgJson = JsonUtility.ToJson(msg);
-            Debug.Log("\n##utp:" + msgJson);
+            Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "\n##utp:{0}", msgJson);
         }
     }
 }

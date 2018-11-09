@@ -12,7 +12,7 @@ namespace UnityEditor.TestTools.TestRunner.Api
                 throw new ArgumentException("Filter for execution is undefined.");
             }
 
-            Debug.Log("Executing tests with settings: " + ExecutionSettingsToString(executionSettings));
+            Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "Executing tests with settings: {0}", ExecutionSettingsToString(executionSettings));
 
             var launcherFactory = new TestLauncherFactory();
             var data = TestRunData.instance;

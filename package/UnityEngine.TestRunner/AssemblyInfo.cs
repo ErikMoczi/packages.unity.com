@@ -9,7 +9,5 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Unity.PerformanceTesting.Editor")]
 [assembly: InternalsVisibleTo("Assembly-CSharp-testable")]
 [assembly: InternalsVisibleTo("Assembly-CSharp-Editor-testable")]
-[assembly: InternalsVisibleTo("UnityEditor.TestRunner.Tests")]
-[assembly: InternalsVisibleTo("UnityEngine.TestRunner.Tests")]
 
 [assembly: AssemblyVersion("1.0.0")]

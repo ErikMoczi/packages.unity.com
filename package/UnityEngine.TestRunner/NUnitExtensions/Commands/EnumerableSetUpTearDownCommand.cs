@@ -6,6 +6,7 @@ using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using NUnit.Framework.Internal.Commands;
 using UnityEngine.TestRunner.NUnitExtensions.Runner;
+using UnityEngine.TestTools.Logging;
 
 namespace UnityEngine.TestTools
 {
@@ -57,13 +58,39 @@ namespace UnityEngine.TestTools
                 var enumerator = Run(context, methodInfo);
                 SetEnumeratorPC(enumerator, state.NextSetUpStepPc);
 
-                while (enumerator.MoveNext())
+                var logScope = new LogScope();
+
+                while (true)
                 {
+                    try
+                    {
+                        if (!enumerator.MoveNext())
+                        {
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        state.TestHasRun = true;
+                        Debug.LogException(ex);
+                        context.CurrentResult.SetResult(ResultState.Failure, ex.Message);
+                        break;
+                    }
+
                     state.NextSetUpStepPc = GetEnumeratorPC(enumerator);
                     yield return enumerator.Current;
                 }
 
+                if (logScope.AnyFailingLogs())
+                {
+                    state.TestHasRun = true;
+                    context.CurrentResult.SetResult(ResultState.Failure);
+                }
+
+                logScope.Dispose();
+
                 state.NextSetUpStepIndex++;
+                state.NextSetUpStepPc = 0;
             }
 
             if (!state.TestHasRun)
@@ -100,13 +127,38 @@ namespace UnityEngine.TestTools
                 var enumerator = Run(context, methodInfo);
                 SetEnumeratorPC(enumerator, state.NextTearDownStepPc);
 
-                while (enumerator.MoveNext())
+                var logScope = new LogScope();
+
+                while (true)
                 {
+                    try
+                    {
+                        if (!enumerator.MoveNext())
+                        {
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogException(ex);
+                        context.CurrentResult.SetResult(ResultState.Failure, ex.Message);
+                        break;
+                    }
+
                     state.NextTearDownStepPc = GetEnumeratorPC(enumerator);
                     yield return enumerator.Current;
                 }
 
+                if (logScope.AnyFailingLogs())
+                {
+                    state.TestHasRun = true;
+                    context.CurrentResult.SetResult(ResultState.Failure);
+                }
+
+                logScope.Dispose();
+
                 state.NextTearDownStepIndex++;
+                state.NextTearDownStepPc = 0;
             }
 
             context.CurrentResult.SetResult(new ResultState(state.CurrentTestResultStatus, state.CurrentTestResultLabel, state.CurrentTestResultSite), state.CurrentTestMessage, state.CurrentTestStrackTrace);

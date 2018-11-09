@@ -94,7 +94,7 @@ namespace UnityEditor.TestTools.TestRunner.GUI
                 return false;
             }
 
-            var hasTestAssemblyFlag = theNearestCustomScriptAssembly.PrecompiledReferences != null && theNearestCustomScriptAssembly.PrecompiledReferences.Any(x => Path.GetFileName(x) == kNunit); ;
+            var hasTestAssemblyFlag = theNearestCustomScriptAssembly.PrecompiledReferences != null && theNearestCustomScriptAssembly.PrecompiledReferences.Any(x => Path.GetFileName(x) == kNunit);;
             var editorOnlyAssembly = (theNearestCustomScriptAssembly.AssemblyFlags & AssemblyFlags.EditorOnly) != 0;
 
             return hasTestAssemblyFlag && !editorOnlyAssembly;

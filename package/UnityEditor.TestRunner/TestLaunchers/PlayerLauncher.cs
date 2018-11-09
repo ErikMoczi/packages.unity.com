@@ -79,7 +79,6 @@ namespace UnityEditor.TestTools.TestRunner
         {
             var scene = CreateBootstrapScene(sceneName, runner =>
             {
-                runner.AddEventHandlerMonoBehaviour<TestResultRendererCallback>();
                 runner.AddEventHandlerMonoBehaviour<PlayModeRunnerCallback>();
                 runner.settings = m_Settings;
                 runner.AddEventHandlerMonoBehaviour<RemoteTestResultSender>();
@@ -89,7 +88,7 @@ namespace UnityEditor.TestTools.TestRunner
 
         private static bool BuildAndRunPlayer(PlayerLauncherBuildOptions buildOptions)
         {
-            Debug.Log("Building player with following options:\n" + buildOptions);
+            Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "Building player with following options:\n{0}", buildOptions);
 
 
             // Android has to be in listen mode to establish player connection
@@ -108,6 +107,14 @@ namespace UnityEditor.TestTools.TestRunner
         private PlayerLauncherBuildOptions GetBuildOptions(Scene scene)
         {
             var buildOptions = new BuildPlayerOptions();
+            var reduceBuildLocationPathLength = false;
+
+            //Some platforms hit MAX_PATH limits during the build process, in these cases minimize the path length
+            if ((m_TargetPlatform == BuildTarget.WSAPlayer) || (m_TargetPlatform == BuildTarget.XboxOne))
+            {
+                reduceBuildLocationPathLength = true;
+            }
+
             var scenes = new List<string>() { scene.path };
             scenes.AddRange(EditorBuildSettings.scenes.Select(x => x.path));
             buildOptions.scenes = scenes.ToArray();
@@ -118,10 +125,11 @@ namespace UnityEditor.TestTools.TestRunner
             var buildTargetGroup = EditorUserBuildSettings.activeBuildTargetGroup;
             var uniqueTempPathInProject = FileUtil.GetUniqueTempPathInProject();
 
-            //WSA and XboxOne have issues with MAX_PATH, try to minimize the path length
-            if ((m_TargetPlatform == BuildTarget.WSAPlayer) || (m_TargetPlatform == BuildTarget.XboxOne))
+            if (reduceBuildLocationPathLength)
             {
-                uniqueTempPathInProject = uniqueTempPathInProject.Substring(0, 25);
+                var guid = Guid.NewGuid();
+                var guidString = guid.ToString("N");
+                uniqueTempPathInProject = string.Format(@"Temp/{0}", guidString.Substring(0, 5));
             }
 
             //Check if Lz4 is supported for the current buildtargetgroup and enable it if need be
@@ -138,7 +146,9 @@ namespace UnityEditor.TestTools.TestRunner
             string extensionForBuildTarget = PostprocessBuildPlayer.GetExtensionForBuildTarget(buildTargetGroup, buildOptions.target, buildOptions.options);
 
             var playerExecutableName = "PlayerWithTests";
-            var locationPath = Path.Combine(m_TempBuildLocation, "PlayerWithTests");
+            var playerDirectoryName = reduceBuildLocationPathLength ? "PwT" : "PlayerWithTests";
+
+            var locationPath = Path.Combine(m_TempBuildLocation, playerDirectoryName);
 
             if (!string.IsNullOrEmpty(extensionForBuildTarget))
             {
@@ -151,7 +161,7 @@ namespace UnityEditor.TestTools.TestRunner
             return new PlayerLauncherBuildOptions
             {
                 BuildPlayerOptions = buildOptions,
-                PlayerDirectory = Path.Combine(m_TempBuildLocation, "PlayerWithTests"),
+                PlayerDirectory = Path.Combine(m_TempBuildLocation, playerDirectoryName),
             };
         }
     }

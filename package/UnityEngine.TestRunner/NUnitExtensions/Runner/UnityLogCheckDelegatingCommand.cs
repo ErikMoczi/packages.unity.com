@@ -29,7 +29,7 @@ namespace UnityEngine.TestRunner.NUnitExtensions.Runner
 
                 if (logCollector.ExpectedLogs.Any())
                 {
-                    throw new UnexpectedLogMessageException(LogScope.Current.ExpectedLogs.Peek());
+                    throw new UnexpectedLogMessageException(logCollector.ExpectedLogs.Peek());
                 }
             }
             catch (Exception exception)

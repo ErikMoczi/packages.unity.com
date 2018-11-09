@@ -293,9 +293,13 @@ namespace UnityEditor.TestTools.TestRunner
                 return;
             }
 
-            if (m_CurrentYieldObject is RestoreTestContextAfterDomainReload && m_TestRunnerStateSerializer.ShouldRestore())
+            if (m_CurrentYieldObject is RestoreTestContextAfterDomainReload)
             {
-                m_TestRunnerStateSerializer.RestoreContext();
+                if (m_TestRunnerStateSerializer.ShouldRestore())
+                {
+                    m_TestRunnerStateSerializer.RestoreContext();
+                }
+                
                 return;
             }
 

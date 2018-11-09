@@ -95,12 +95,7 @@ namespace UnityEditor.TestTools.TestRunner.GUI
             GUIUtility.ExitGUI();
         }
 
-        public override ITest GetTestListNUnit()
-        {
-            var testAssemblyProvider = new EditorLoadedTestAssemblyProvider(new EditorCompilationInterfaceProxy(), new EditorAssembliesProxy());
-            var assemblies = testAssemblyProvider.GetAssembliesGroupedByType(TestPlatform.PlayMode);
-            return TestAssemblyHelper.BuildTests(TestPlatform.PlayMode, assemblies.Select(x => x.Assembly).ToArray());
-        }
+        public override TestPlatform TestPlatform { get { return TestPlatform.PlayMode; } }
 
         protected override bool IsBusy()
         {

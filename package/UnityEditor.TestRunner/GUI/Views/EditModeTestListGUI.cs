@@ -63,12 +63,7 @@ namespace UnityEditor.TestTools.TestRunner.GUI
             testExecutor.Run();
         }
 
-        public override ITest GetTestListNUnit()
-        {
-            var testAssemblyProvider = new EditorLoadedTestAssemblyProvider(new EditorCompilationInterfaceProxy(), new EditorAssembliesProxy());
-            var assemblies = testAssemblyProvider.GetAssembliesGroupedByType(TestPlatform.EditMode);
-            return TestAssemblyHelper.BuildTests(TestPlatform.EditMode, assemblies.Select(x => x.Assembly).ToArray());
-        }
+        public override TestPlatform TestPlatform { get { return TestPlatform.EditMode; } }
 
         protected override bool IsBusy()
         {

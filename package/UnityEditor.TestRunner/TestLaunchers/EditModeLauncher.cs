@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework.Interfaces;
 using UnityEditor.SceneManagement;
 using UnityEditor.TestTools.TestRunner.Api;
@@ -98,14 +99,19 @@ namespace UnityEditor.TestTools.TestRunner
         {
             int sceneCount = SceneManager.sceneCount;
 
+            var scenesToClose = new List<Scene>();
             for (var i = 0; i < sceneCount; i++)
             {
                 var scene = SceneManager.GetSceneAt(i);
                 var isSceneNotPersisted = string.IsNullOrEmpty(scene.path);
                 if (isSceneNotPersisted)
                 {
-                    EditorSceneManager.CloseScene(scene, true);
+                    scenesToClose.Add(scene);
                 }
+            }
+            foreach (Scene scene in scenesToClose)
+            {
+                EditorSceneManager.CloseScene(scene, true);
             }
         }
 

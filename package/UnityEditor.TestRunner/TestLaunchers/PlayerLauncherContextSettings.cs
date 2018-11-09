@@ -15,10 +15,11 @@ namespace UnityEditor.TestTools.TestRunner
         private bool m_ResizableWindow;
         private bool m_ShowUnitySplashScreen;
         private string m_OldproductName;
+        private string m_OldAotOptions;
         private Lightmapping.GIWorkflowMode m_OldLightmapping;
+        private bool m_explicitNullChecks;
 
         private bool m_Disposed;
-        private string m_OldAotOptions;
 
         public PlayerLauncherContextSettings(ITestRunSettings overloadSettings)
         {
@@ -74,6 +75,9 @@ namespace UnityEditor.TestTools.TestRunner
 
             m_OldLightmapping = Lightmapping.giWorkflowMode;
             Lightmapping.giWorkflowMode = Lightmapping.GIWorkflowMode.OnDemand;
+
+            m_explicitNullChecks = EditorUserBuildSettings.explicitNullChecks;
+            EditorUserBuildSettings.explicitNullChecks = true;
         }
 
         private void CleanupProjectParameters()
@@ -88,6 +92,7 @@ namespace UnityEditor.TestTools.TestRunner
             PlayerSettings.productName = m_OldproductName;
             PlayerSettings.aotOptions = m_OldAotOptions;
             Lightmapping.giWorkflowMode = m_OldLightmapping;
+            EditorUserBuildSettings.explicitNullChecks = m_explicitNullChecks;
 
             EditorApplication.UnlockReloadAssemblies();
         }

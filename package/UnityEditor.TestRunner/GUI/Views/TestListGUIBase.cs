@@ -5,11 +5,19 @@ using NUnit.Framework.Interfaces;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UnityEngine.TestTools.TestRunner.GUI;
+using UnityEngine.TestTools;
 
 namespace UnityEditor.TestTools.TestRunner.GUI
 {
     internal abstract class TestListGUI
     {
+        public static ITest GetTestListNUnit(TestPlatform testPlatform)
+        {
+            var testAssemblyProvider = new EditorLoadedTestAssemblyProvider(new EditorCompilationInterfaceProxy(), new EditorAssembliesProxy());
+            var assemblies = testAssemblyProvider.GetAssembliesGroupedByType(testPlatform);
+            return TestAssemblyHelper.BuildTests(TestPlatform.PlayMode, assemblies.Select(x => x.Assembly).ToArray());
+        }
+
         private static readonly GUIContent s_GUIRunSelectedTests = EditorGUIUtility.TrTextContent("Run Selected", "Run selected test(s)");
         private static readonly GUIContent s_GUIRunAllTests = EditorGUIUtility.TrTextContent("Run All", "Run all tests");
         private static readonly GUIContent s_GUIRerunFailedTests = EditorGUIUtility.TrTextContent("Rerun Failed", "Rerun all failed tests");
@@ -345,7 +353,12 @@ namespace UnityEditor.TestTools.TestRunner.GUI
             return null;
         }
 
-        public abstract ITest GetTestListNUnit();
+        public abstract TestPlatform TestPlatform { get; }
+
+        public ITest GetTestListNUnit()
+        {
+            return GetTestListNUnit(TestPlatform);
+        }
 
         public void RebuildUIFilter()
         {
