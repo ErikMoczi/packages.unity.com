@@ -1,4 +1,7 @@
 #if UNITY_ANDROID
+#if UNITY_2018_1
+using System.Reflection;
+#endif
 using System.Xml;
 using UnityEditor.Android;
 using UnityEditor.Build;
