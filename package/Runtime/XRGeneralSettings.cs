@@ -189,7 +189,7 @@ namespace UnityEngine.XR.Management
 
         private void StartXRSDK()
         {
-            if (XRManager.activeLoader != null)
+            if (m_XRManager != null && XRManager.activeLoader != null)
             {
                 m_XRManager.StartSubsystems();
             }
@@ -197,7 +197,7 @@ namespace UnityEngine.XR.Management
 
         private void StopXRSDK()
         {
-            if (XRManager.activeLoader != null)
+            if (m_XRManager != null && XRManager.activeLoader != null)
             {
                 m_XRManager.StopSubsystems();
             }
@@ -205,7 +205,7 @@ namespace UnityEngine.XR.Management
 
         private void DeInitXRSDK()
         {
-            if (XRManager.activeLoader != null)
+            if (m_XRManager != null && XRManager.activeLoader != null)
             {
                 m_XRManager.DeinitializeLoader();
                 m_XRManager = null;
