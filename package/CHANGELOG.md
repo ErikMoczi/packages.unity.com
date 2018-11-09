@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.45] - 2018-11-8
+
+### Fix breaking changes to data submodule
+
 ## [0.1.44] - 2018-11-8
 
 ### Disable GC and update API to work around warning
