@@ -63,3 +63,4 @@
 2.3.0-preview
 2.4.0-preview
 2.4.1-preview
+2.4.1-preview20181108-nightly

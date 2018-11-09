@@ -158,24 +158,6 @@ namespace UnityEngine.ResourceManagement
 
 #if UNITY_EDITOR
         Type[] m_runtimeTypes;
-        /*
-        /// <summary>
-        /// Construct a serialized data for the object.
-        /// </summary>
-        /// <param name="objectType">The type of object to create.</param>
-        /// <param name="id">The object id.</param>
-        /// <param name="data">Initialization data for the object.  This can be null if not needed.</param>
-        /// <returns>Contains data used to construct and initialize an object at runtime.</returns>
-        public static ObjectInitializationData CreateSerializedInitializationData(Type objectType, string id, string data, params Type[] rtTypes)
-        {
-            return new ObjectInitializationData()
-            {
-                m_objectType = new SerializedType() { Value = objectType },
-                m_id = string.IsNullOrEmpty(id) ? objectType.FullName : id,
-                m_data = data,
-                m_runtimeTypes = rtTypes
-            };
-        }*/
         /// <summary>
         /// Construct a serialized data for the object.
         /// </summary>
@@ -190,7 +172,7 @@ namespace UnityEngine.ResourceManagement
                 m_objectType = new SerializedType() { Value = objectType },
                 m_id = string.IsNullOrEmpty(id) ? objectType.FullName : id,
                 m_data = dataObject == null ? null : JsonUtility.ToJson(dataObject),
-                m_runtimeTypes = dataObject == null ? new Type[0] : new Type[] { dataObject.GetType() }
+                m_runtimeTypes = dataObject == null ? null : new Type[] { dataObject.GetType() }
             };
         }
 
