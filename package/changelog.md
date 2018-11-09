@@ -1,8 +1,12 @@
 # Changelog
 
+## 0.2.4-preview.37
+
+- Fix a crash on Linux and MacOS in the editor with dlopen crashing when trying to load burst-llvm (linux)
+
 ## 0.2.4-preview.36
 
-- Fix a crash on Linux and MacOS in the editor with dlopen crashing when trying to load burst-llvm
+- Fix a crash on Linux and MacOS in the editor with dlopen crashing when trying to load burst-llvm (mac)
 
 ## 0.2.4-preview.35
 
