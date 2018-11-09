@@ -5,7 +5,7 @@ using NUnit.Framework.Internal;
 
 namespace Unity.PerformanceTesting
 {
-    [AttributeUsage(AttributeTargets.Method)]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
     public class VersionAttribute : NUnitAttribute, IApplyToTest
     {
         public string Version;

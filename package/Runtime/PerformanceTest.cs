@@ -43,17 +43,44 @@ namespace Unity.PerformanceTesting
             Active = new PerformanceTest
             {
                 TestName = currentTest.FullName,
-                TestCategories = currentTest.GetAllCategoriesFromTest()
+                TestCategories = currentTest.GetAllCategoriesFromTest(),
+                TestVersion = GetVersion(currentTest)
             };
-            var versions = currentTest.Method.GetCustomAttributes<VersionAttribute>(false);
-            if (versions.Length == 1) Active.TestVersion = versions[0].Version;
-            else Active.TestVersion = "1";
+
             Active.StartTime = Utils.DateToInt(DateTime.Now);
             StartProfile(Utils.RemoveIllegalCharacters(currentTest.FullName));
+#if UNITY_2019_1_OR_NEWER
+            var settings = currentTest.Method.GetCustomAttributes<PerformanceSettingsAttribute>(false);
+            if (settings.Length == 1) 
+                if(settings[0].enableGC)
+                    return;
+
+            UnityEngine.Scripting.GarbageCollector.GCMode = UnityEngine.Scripting.GarbageCollector.Mode.Disabled;
+#endif
+        }
+
+        private static string GetVersion(ITest currentTest)
+        {
+            string version = "";
+            var methodVersions = currentTest.Method.GetCustomAttributes<VersionAttribute>(false);
+            var classVersion = currentTest.TypeInfo.Type.GetCustomAttributes(typeof(VersionAttribute), true);
+
+            if (classVersion.Length > 0) 
+                version = ((VersionAttribute) classVersion[0]).Version+".";
+            if (methodVersions.Length > 0)
+                version += methodVersions[0].Version;
+            else
+                version += "1";
+
+            return version;
         }
 
         internal static void EndTest(Test test)
         {
+#if UNITY_2019_1_OR_NEWER
+            UnityEngine.Scripting.GarbageCollector.GCMode = UnityEngine.Scripting.GarbageCollector.Mode.Enabled;
+#endif
+            
             if (test.IsSuite) return;
             if (test.FullName != Active.TestName) return;
 
@@ -67,6 +94,7 @@ namespace Unity.PerformanceTesting
 
             TestContext.Out.WriteLine("##performancetestresult:" + JsonUtility.ToJson(Active));
             Active = null;
+            GC.Collect();
         }
 
         private static void StartProfile(string profileName)
@@ -162,7 +190,7 @@ namespace Unity.PerformanceTesting
             }
         }
 
-        private void CalculateStatisticalValues()
+        public void CalculateStatisticalValues()
         {
             foreach (var sampleGroup in SampleGroups)
             {

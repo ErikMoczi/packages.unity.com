@@ -11,7 +11,7 @@ namespace Unity.PerformanceTesting.Runtime
     public static class Utils
     {
         public static Guid ProfileDataMsg = new Guid("f65778bc-f144-4821-8491-ef2552d7f392");
-        
+
         public static double DateToInt(DateTime date)
         {
             return date.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc))
@@ -173,7 +173,11 @@ namespace Unity.PerformanceTesting.Runtime
                 AntiAliasing = UnityEngine.QualitySettings.antiAliasing,
                 ColorSpace = UnityEngine.QualitySettings.activeColorSpace.ToString(),
                 AnisotropicFiltering = UnityEngine.QualitySettings.anisotropicFiltering.ToString(),
+#if UNITY_2019_1_OR_NEWER
+                BlendWeights = UnityEngine.QualitySettings.skinWeights.ToString()
+#else
                 BlendWeights = UnityEngine.QualitySettings.blendWeights.ToString()
+#endif
             };
         }
 

@@ -61,7 +61,7 @@ public class PlaymodeMetadataCollector : IPrebuildSetup
         }
     }
 
-    
+
     private IEnumerator ReadPerformanceTestRunJsonAsync()
     {
         string json;
@@ -83,14 +83,14 @@ public class PlaymodeMetadataCollector : IPrebuildSetup
             if (!File.Exists(m_TestRunPath))
             {
                 m_TestRun = new PerformanceTestRun {PlayerSettings = new Unity.PerformanceTesting.PlayerSettings()};
-                yield break;                
+                yield break;
             }
             json = File.ReadAllText(m_TestRunPath);
         }
-        
+
         m_TestRun = JsonUtility.FromJson<PerformanceTestRun>(json);
     }
-    
+
     private static PlayerSystemInfo GetSystemInfo()
     {
         return new PlayerSystemInfo
@@ -117,7 +117,11 @@ public class PlaymodeMetadataCollector : IPrebuildSetup
             AntiAliasing = UnityEngine.QualitySettings.antiAliasing,
             ColorSpace = UnityEngine.QualitySettings.activeColorSpace.ToString(),
             AnisotropicFiltering = UnityEngine.QualitySettings.anisotropicFiltering.ToString(),
+#if UNITY_2019_1_OR_NEWER
+            BlendWeights = UnityEngine.QualitySettings.skinWeights.ToString()
+#else
             BlendWeights = UnityEngine.QualitySettings.blendWeights.ToString()
+#endif
         };
     }
 

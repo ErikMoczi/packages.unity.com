@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.44] - 2018-11-8
+
+### Disable GC and update API to work around warning
+
+## [0.1.43] - 2018-10-30
+
+### Fix method measurements setup and cleanup
+
 ## [0.1.42] - 2018-10-15
 
 ### Improvements to report window and minor fixes

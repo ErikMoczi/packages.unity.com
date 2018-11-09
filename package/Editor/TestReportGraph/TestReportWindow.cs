@@ -313,6 +313,7 @@ namespace Unity.PerformanceTesting
                                                 (GUI.skin.box.padding.horizontal + GUI.skin.box.margin.horizontal)),
                                 GUILayout.ExpandHeight(false));
                             EditorGUILayout.LabelField(sampleGroup.Definition.Name, m_boldStyle);
+                            EditorGUILayout.LabelField("Sample Unit: " + sampleGroup.Definition.SampleUnit.ToString());
 
                             EditorGUILayout.BeginHorizontal(GUILayout.Height(100), GUILayout.ExpandHeight(false));
 
@@ -363,6 +364,8 @@ namespace Unity.PerformanceTesting
                 float y = 0;
                 float spacing = 2;
                 float w = xAxisInc - spacing;
+                if (w < 1) spacing = 0;
+
                 float h = 0;
                 for (int i = 0; i < samples.Count; i++)
                 {

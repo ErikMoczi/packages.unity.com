@@ -127,11 +127,11 @@ namespace Unity.PerformanceTesting.Measurements
             EnableMarkers();
             for (var j = 0; j < measurements; j++)
             {
-                var executionTime = Time.realtimeSinceStartup;
-
-                ExecuteForIterations(iterations);
-
-                executionTime = (Time.realtimeSinceStartup - executionTime) * 1000f / iterations;
+                float executionTime;
+                if (iterations == 1)
+                    executionTime = ExecuteSingleIteration();
+                else
+                    executionTime = ExecuteForIterations(iterations);
                 Measure.Custom(m_Definition,
                     Utils.ConvertSample(SampleUnit.Millisecond, m_Definition.SampleUnit, executionTime));
             }
@@ -154,9 +154,10 @@ namespace Unity.PerformanceTesting.Measurements
                 sampleGroup.Recorder.enabled = false;
                 var sample = sampleGroup.Recorder.elapsedNanoseconds;
                 var blockCount = sampleGroup.Recorder.sampleBlockCount;
-                Measure.Custom(sampleGroup.Definition,
-                    Utils.ConvertSample(SampleUnit.Nanosecond, sampleGroup.Definition.SampleUnit,
-                        sample / blockCount));
+                var convertedSample = Utils.ConvertSample(
+                    SampleUnit.Nanosecond, sampleGroup.Definition.SampleUnit,
+                    (double) sample / blockCount);
+                Measure.Custom(sampleGroup.Definition, convertedSample);
             }
         }
 
@@ -179,8 +180,8 @@ namespace Unity.PerformanceTesting.Measurements
 
             if (iterations == 1)
             {
-                ExecuteAction();
-                ExecuteAction();
+                ExecuteActionWithCleanupWarmup();
+                ExecuteActionWithCleanupWarmup();
 
                 return 1;
             }
@@ -195,7 +196,7 @@ namespace Unity.PerformanceTesting.Measurements
         {
             for (var i = 0; i < iterations; i++)
             {
-                ExecuteAction();
+                ExecuteActionWithCleanupWarmup();
             }
         }
 
@@ -207,21 +208,39 @@ namespace Unity.PerformanceTesting.Measurements
             }
         }
 
-        private void ExecuteAction()
+        private void ExecuteActionWithCleanupWarmup()
         {
             if (m_Setup != null) m_Setup.Invoke();
             m_Action.Invoke();
             if (m_Cleanup != null) m_Cleanup.Invoke();
         }
 
-        private void ExecuteForIterations(int iterations)
+        private float ExecuteSingleIteration()
         {
             if (m_GC) StartGCRecorder();
+            if (m_Setup != null) m_Setup.Invoke();
+
+            var executionTime = Time.realtimeSinceStartup;
+            m_Action.Invoke();
+            executionTime = (Time.realtimeSinceStartup - executionTime) * 1000f;
+
+            if (m_Cleanup != null) m_Cleanup.Invoke();
+            if (m_GC) EndGCRecorderAndMeasure(1);
+            return executionTime;
+        }
+
+        private float ExecuteForIterations(int iterations)
+        {
+            if (m_GC) StartGCRecorder();
+            var executionTime = Time.realtimeSinceStartup;
             for (var i = 0; i < iterations; i++)
             {
-                ExecuteAction();
+                ExecuteActionWithCleanupWarmup();
             }
+
+            executionTime = (Time.realtimeSinceStartup - executionTime) * 1000f / iterations;
             if (m_GC) EndGCRecorderAndMeasure(iterations);
+            return executionTime;
         }
 
         private void StartGCRecorder()

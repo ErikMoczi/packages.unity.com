@@ -26,7 +26,7 @@ To install the Performance Testing Extension package
 ``` json
 {
     "dependencies": {
-        "com.unity.test-framework.performance": "0.1.40-preview",
+        "com.unity.test-framework.performance": "0.1.44-preview",
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0",
         "com.unity.modules.unityanalytics": "1.0.0",
@@ -137,7 +137,7 @@ Records time per frame by default and provides additional properties/methods to 
 * **WarmupCount(int n)** - number of times to to execute before measurements are collected. If unspecified, a default warmup is executed. This default warmup will wait for 80 ms. However, if less than 3 full frames have rendered in that time, the warmup will wait until 3 full frames have been rendered.
 * **MeasurementCount(int n)** - number of frames to capture measurements. If this value is not specified, frames will be captured as many times as possible until approximately 500 ms has elapsed.
 * **DontRecordFrametime()** - disables frametime measurement.
-* **ProfilerMarkers(...)** - sample profile markers per frame.
+* **ProfilerMarkers(...)** - sample profile markers per frame. Does not work for deep profiling and `Profiler.BeginSample()`
 * **Scope()** - measures frame times in a given asynchronous scope.
 
 
@@ -220,7 +220,7 @@ public void Test()
 
 ### Measure.ProfilerMarkers()
 
-Used to record profiler markers. Profiler marker timings will be sampled within the scope of the `using` statement. Note that deep and editor profiling markers are not available.
+Used to record profiler markers. Profiler marker timings will be sampled within the scope of the `using` statement. Note that deep and editor profiling are not available. Profiler markers created using `Profiler.BeginSample()` are not supported, switch to `ProfilerMarker` if possible.
 
 #### Example 1: Measuring profiler markers in a scope
 
@@ -301,6 +301,83 @@ When running performance tests on editor or standalone platforms, the framework 
 *Note: If the button is not visible, it means profiler data has not been saved for the test.*
 
 ![Open profiler button](images/graphtool2.png)
+
+## Tips
+
+### Project settings
+
+- Remove all QualitySettings but one under project settings. Otherwise you may have different configurations when running on different platforms. If you require different settings per platform then make sure they are being set as expected.
+- Disable VSync under QualitySettings. Some platforms like Android have a forced VSync and this will not be possible.
+- Disable HW Reporting `PlayerSettings -> Other -> Disable HW Reporting`
+- Remove camera and run in batchmode if you are not measuring rendering
+
+### Generating assets
+
+Use IPrebuildSetup attribute when you need to generate some assets. [documentation](https://docs.unity3d.com/Manual/PlaymodeTestFramework.html)
+Place assets in Resources or StreamingAssets folders, scenes can be placed anywhere in the project, but should be added to build settings. [documentation](https://docs.unity3d.com/Manual/SpecialFolders.html)
+
+#### Example 2: IPrebuildSetup implementation
+
+``` csharp
+public class TestsWithPrebuildStep : IPrebuildSetup
+{
+    public void Setup()
+    {
+        // this code is executed before entering playmode or the player is executed
+    }
+}
+
+public class MyAmazingPerformanceTest
+{
+    [PerformanceTest]
+    [PrebuildSetup(typeof(TestsWithPrebuildStep))]
+    public void Test()
+    {
+        ...
+    }
+}
+```
+
+When loading scenes in IPrebuildSetup you have to use `LoadSceneMode.Additive`.
+
+#### Example 2: Using EditorSceneManager to create new scenes additively, save and add them to build settings.
+
+``` csharp
+private static string m_ArtifactsPath = "Assets/Artifacts/";
+
+public static Scene NewScene(NewSceneSetup setup)
+{
+    Scene scene = EditorSceneManager.NewScene(setup, NewSceneMode.Additive);
+    EditorSceneManager.SetActiveScene(scene);
+    return scene;
+}
+
+public static void SaveScene(Scene scene, string name, bool closeScene = true)
+{
+    EditorSceneManager.SaveScene(scene, GetScenePath(name));
+
+    if (closeScene)
+    {
+        foreach (var sceneSetting in EditorBuildSettings.scenes)
+            if (sceneSetting.path == GetScenePath((name)))
+                return;
+
+        EditorSceneManager.CloseScene(scene, true);
+        EditorSceneManager.SetActiveScene(EditorSceneManager.GetSceneAt(0));
+
+        var newListOfScenes = new List<EditorBuildSettingsScene>();
+        newListOfScenes.Add(new EditorBuildSettingsScene(GetScenePath(name), true));
+        newListOfScenes.AddRange(EditorBuildSettings.scenes);
+        EditorBuildSettings.scenes = newListOfScenes.ToArray();
+    }
+}
+
+public static string GetScenePath(string name)
+{
+    return m_ArtifactsPath + name + ".unity";
+}
+```
+
 
 ## More Examples
 
