@@ -62,7 +62,7 @@ namespace UnityEditor.PackageManager.UI
         {
             get
             {
-                if (IsBuiltIn)
+                if (string.IsNullOrEmpty(Description))
                     return string.Format("This built in package controls the presence of the {0} module.", DisplayName);
                 else
                     return Description.Split(new[] {builtinPackageDocsUrlKey}, StringSplitOptions.None)[0];
@@ -99,7 +99,7 @@ namespace UnityEditor.PackageManager.UI
         public bool HasChangelog(PackageInfo packageInfo)
         {
             // Packages with no docs have no third party notice
-            return !RedirectsToManual(packageInfo);
+            return !RedirectsToManual(packageInfo) && !IsBuiltIn;
         }
 
         public string GetDocumentationUrl()

@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.1.1-preview.4] - 2018-11-07
+- Added accordion view
+- Show core packages in package list instead of builtin
+- Re-enable "View Documentation" Button on built-in packages.
+- Fix descriptions on built-in packages.
+
 ## [2.1.1-preview.1] - 2018-10-19
 - Added new version list scheme
 - Added dependency view for packages

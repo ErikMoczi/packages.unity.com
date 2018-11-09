@@ -156,7 +156,9 @@ namespace UnityEditor.PackageManager.UI
             else
             {
                 SetUpdateVisibility(true);
+                var isBuiltIn = DisplayPackage.IsBuiltIn;
                 UIUtils.SetElementDisplay(ViewDocButton, true);
+                UIUtils.SetElementDisplay(ViewLicensesContainer, !isBuiltIn);
                 RemoveButton.visible = true;
 
                 if (string.IsNullOrEmpty(DisplayPackage.Description))
@@ -188,7 +190,7 @@ namespace UnityEditor.PackageManager.UI
                 UIUtils.SetElementDisplay(GetTag(PackageTag.git), DisplayPackage.IsGit);
                 UIUtils.SetElementDisplay(GetTag(PackageTag.preview), DisplayPackage.IsPreview);
 
-                UIUtils.SetElementDisplay(DocumentationContainer, DisplayPackage.Origin != PackageSource.BuiltIn);
+                UIUtils.SetElementDisplay(DocumentationContainer, true);
                 UIUtils.SetElementDisplay(ChangelogContainer, DisplayPackage.HasChangelog(DisplayPackage));
 
                 SampleList.SetPackage(DisplayPackage);
@@ -197,7 +199,6 @@ namespace UnityEditor.PackageManager.UI
                 root.Q<ScrollView>("detailView").scrollOffset = new Vector2(0, 0);
 
                 DetailModuleReference.text = "";
-                var isBuiltIn = DisplayPackage.IsBuiltIn;
                 if (isBuiltIn)
                     DetailModuleReference.text = DisplayPackage.BuiltInDescription;
 
@@ -650,6 +651,7 @@ namespace UnityEditor.PackageManager.UI
         private Button ViewChangelogButton { get { return Cache.Get<Button>("viewChangelog"); } }
         private VisualElement ChangelogContainer { get { return Cache.Get<VisualElement>("changeLogContainer"); } }
         private Button ViewLicenses { get { return Cache.Get<Button>("viewLicenses"); } }
+        private VisualElement ViewLicensesContainer { get { return Cache.Get<VisualElement>("viewLicensesContainer"); } }
         private Alert DetailError { get { return Cache.Get<Alert>("detailError"); } }
         private ScrollView DetailView { get { return Cache.Get<ScrollView>("detailView"); } }
         private Label DetailModuleReference { get { return Cache.Get<Label>("detailModuleReference"); } }

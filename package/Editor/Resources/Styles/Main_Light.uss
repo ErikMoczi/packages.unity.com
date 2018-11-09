@@ -1204,6 +1204,3 @@
 .arrow.expanded {
   padding-right: 1px;
 }
-.expanderHidden {
-  padding-right: 6px;
-}

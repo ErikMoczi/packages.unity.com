@@ -29,6 +29,19 @@ namespace UnityEditor.PackageManager.UI
             set { EditorPrefs.SetBool(kShowPackageDependenciesPrefs, value); }
         }
 
+        public static bool HasShowPreviewPackagesKey
+        {
+            get
+            {
+                var key = kShowPreviewPackagesPrefKeyPrefix + GetProjectIdentifier();
+
+                // If user manually choose to show or not preview packages, use this value
+                return EditorPrefs.HasKey(key);
+            }
+        }
+
+        public static bool ShowPreviewPackagesFromInstalled { get; set; }
+        
         public static bool ShowPreviewPackages
         {
             get
@@ -40,7 +53,7 @@ namespace UnityEditor.PackageManager.UI
                     return EditorPrefs.GetBool(key);
 
                 // Returns true if at least one preview package is installed, false otherwise
-                return PackageCollection.packages.Values.Any(p => p.Current != null && p.Current.IsPreview);
+                return ShowPreviewPackagesFromInstalled;
             }
             set
             {

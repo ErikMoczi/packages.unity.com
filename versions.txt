@@ -55,3 +55,4 @@
 2.0.3
 2.1.0-preview.2
 2.1.0-preview.3
+2.1.0-preview.4

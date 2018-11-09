@@ -337,6 +337,9 @@ namespace UnityEditor.PackageManager.UI
             var installedPackageIds = new HashSet<string>(allPackageInfos.Select(p => p.PackageId));
             allPackageInfos.AddRange(searchPackages.Where(p => !installedPackageIds.Contains(p.PackageId)));
 
+            PackageManagerPrefs.ShowPreviewPackagesFromInstalled = allPackageInfos.Any(p => p.IsCurrent && p.IsPreview);
+
+            // Filter Preview versions
             if (!PackageManagerPrefs.ShowPreviewPackages)
             {
                 allPackageInfos = allPackageInfos.Where(p => !p.IsPreRelease || installedPackageIds.Contains(p.PackageId)).ToList();
