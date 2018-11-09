@@ -1,17 +1,19 @@
 {
   "name": "com.unity.template.3dextra",
   "displayName": "3D With Extras (Preview)",
-  "version": "1.0.5-preview",
+  "version": "1.1.0-preview",
   "type": "template",
   "unity": "2019.1",
   "description": "This Project Template utilzes the new Post Processing stack with the built-in renderer. \n\nIt also includes \n▪ Presets \n▪ Example content ",
   "dependencies": {
     "com.unity.ads": "2.0.8",
-    "com.unity.analytics": "3.0.5",
-    "com.unity.collab-proxy": "1.2.6",
+    "com.unity.analytics": "3.0.9",
+    "com.unity.collab-proxy": "1.2.9",
+    "com.unity.package-manager-ui": "2.1.0-preview.1",
+    "com.unity.postprocessing": "2.0.16-preview",
     "com.unity.purchasing": "2.0.1",
-    "com.unity.postprocessing": "2.0.11-preview",
-    "com.unity.textmeshpro": "1.2.1",
+    "com.unity.textmeshpro": "1.3.0",
+    "com.unity.xr.legacyinputhelpers": "1.0.0",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
     "com.unity.modules.assetbundle": "1.0.0",
@@ -45,7 +47,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://gitlab.internal.unity3d.com/upm-packages/project-templates/upm-package-template-3DWExtras.git"
-  },
-  "gitHead": "8b1aacb01d42e10c006a25e126ca123436420bc2"
+    "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/project-templates/upm-package-template-3DWExtras.git",
+    "revision": "74ca32c6ad452072fe9209d0ab3a58b981785d3b"
+  }
 }
