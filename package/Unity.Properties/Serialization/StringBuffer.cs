@@ -162,6 +162,15 @@ namespace Unity.Properties.Serialization
             m_Generated = false;
             EnsureCapacity(32); // Check we have enough buffer allocated to handle any float number
 
+            if (float.IsInfinity(valueF))
+            {
+                foreach (var c in $"\"{(float.IsNegativeInfinity(valueF) ? "-": "")}Infinity\"")
+                {
+                    m_Buffer[m_Position++] = c;
+                }
+                return;
+            }
+            
             // Handle the 0 case
             if (value == 0)
             {
