@@ -1,17 +1,18 @@
 {
   "name": "com.unity.template.2d",
   "displayName": "2D",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "type": "template",
   "unity": "2019.1",
   "description": "This is an empty project configured for 2D apps. It uses Unity's built-in renderer.",
   "dependencies": {
     "com.unity.ads": "2.0.8",
-    "com.unity.analytics": "3.0.5",
-    "com.unity.collab-proxy": "1.2.6",
-    "com.unity.package-manager-ui": "2.0.0-preview.3",
+    "com.unity.analytics": "3.0.9",
+    "com.unity.collab-proxy": "1.2.9",
+    "com.unity.package-manager-ui": "2.1.0-preview.1",
     "com.unity.purchasing": "2.0.1",
-    "com.unity.textmeshpro": "1.2.1",
+    "com.unity.textmeshpro": "1.3.0",
+    "com.unity.xr.legacyinputhelpers": "1.0.0",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
     "com.unity.modules.assetbundle": "1.0.0",
@@ -45,7 +46,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://gitlab.internal.unity3d.com/upm-packages/project-templates/upm-package-template-2D.git"
-  },
-  "gitHead": "52469a07d797a146aa8d06a88f097b33b35dc1bf"
+    "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/project-templates/upm-package-template-2D.git",
+    "revision": "ff758f3f6ced86fa650dab1ad5a5b1055ce344e2"
+  }
 }
