@@ -13,6 +13,7 @@ namespace UnityEngine.XR.ARKit
         static void Register()
         {
             XRCameraExtensions.RegisterIsPermissionGrantedHandler(k_SubsystemId, IsPermissionGranted);
+            XRCameraExtensions.RegisterGetNativePtrHandler(k_SubsystemId, GetNativePtr);
             XRCameraExtensions.RegisterCameraImageApi(k_SubsystemId, s_CameraImageApi);
         }
 
@@ -24,6 +25,11 @@ namespace UnityEngine.XR.ARKit
         static bool IsPermissionGranted(XRCameraSubsystem cameraSubsystem)
         {
             return Api.UnityARKit_IsCameraPermissionGranted();
+        }
+
+        static IntPtr GetNativePtr(XRCameraSubsystem cameraSubsystem)
+        {
+            return Api.UnityARKit_getNativeFramePtr();
         }
 
         static readonly string k_SubsystemId = "ARKit-Camera";

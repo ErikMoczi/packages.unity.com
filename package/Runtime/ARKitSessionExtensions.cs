@@ -1,4 +1,5 @@
-﻿using UnityEngine.XR.ARExtensions;
+﻿using System;
+using UnityEngine.XR.ARExtensions;
 using UnityEngine.Experimental.XR;
 
 namespace UnityEngine.XR.ARKit
@@ -6,7 +7,7 @@ namespace UnityEngine.XR.ARKit
     /// <summary>
     /// For internal use. Provides ARKit-specific extensions to the XRSessionSubsystem.
     /// </summary>
-    internal class ARKitSessionExtension
+    internal static class ARKitSessionExtension
     {
         static readonly string k_SubsystemId = "ARKit-Session";
 
@@ -25,10 +26,21 @@ namespace UnityEngine.XR.ARKit
             return Promise<SessionAvailability>.CreateResolvedPromise(retVal);
         }
 
+        /// <summary>
+        /// For internal use. Use <c>XRSessionSubsystem.GetNativePtr</c> instead.
+        /// </summary>
+        /// <param name="sessionSubsystem">The <c>XRSessionSubsystem</c> which this method extends.</param>
+        /// <returns>An <c>IntPtr</c> associated with the <paramref name="sessionSubsystem"/>.</returns>
+        public static IntPtr GetNativePtr(XRSessionSubsystem sessionSubsystem)
+        {
+            return Api.UnityARKit_getNativeSessionPtr();
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Register()
         {
             XRSessionExtensions.RegisterGetAvailabilityAsyncHandler(k_SubsystemId, GetAvailabilityAsync);
+            XRSessionExtensions.RegisterGetNativePtrHandler(k_SubsystemId, GetNativePtr);
         }
     }
 }

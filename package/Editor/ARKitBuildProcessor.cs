@@ -1,16 +1,17 @@
 #if UNITY_IOS
-using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEditor;
-using UnityEditor.Callbacks;
-using UnityEditor.iOS.Xcode;
-using UnityEditor.Build;
-using UnityEditor.Build.Reporting;
-using System.IO;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System;
+using UnityEditor;
+using UnityEditor.Build;
+using UnityEditor.Build.Reporting;
+using UnityEditor.Callbacks;
+using UnityEditor.iOS.Xcode;
+using UnityEditor.XR.ARExtensions;
+using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace UnityEditor.XR.ARKit
 {
@@ -55,6 +56,9 @@ namespace UnityEditor.XR.ARKit
                 if ((report.summary.options & BuildOptions.SymlinkLibraries) != BuildOptions.None)
                     throw new BuildFailedException("The \"ARKit XR Plugin\" package cannot be symlinked. Go to File > Build Settings... and uncheck \"Symlink Unity libraries\".");
 #endif
+
+                if (LinkerUtility.AssemblyStrippingEnabled(report.summary.platformGroup))
+                    LinkerUtility.EnsureLinkXmlExistsFor("ARKit");
             }
 
             void EnsureOnlyMetalIsUsed()

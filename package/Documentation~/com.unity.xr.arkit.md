@@ -48,7 +48,6 @@ This version of *ARKit XR Plugin* is compatible with the following versions of t
     * 2D Image Recognition
     * 2D Image Tracking
     * 3D Object Recognition
-    * ARWorldMap
     * Color Correction as an RGB Value
 * If you tick the "Symlink Unity libraries" checkbox in the iOS Build Settings, then the trampoline Xcode project will not be able to find `UnityARKit.m`
 
@@ -64,5 +63,6 @@ This version of *ARKit XR Plugin* includes:
 ## Document revision history
 |Date|Reason|
 |---|---|
+|October 9, 2018|Remove lack of ARWorldMap support as a known limitation; it is now supported.|
 |April 19, 2018|Documentation update. Added support for vertical planes and boundary points for all planes.|
 

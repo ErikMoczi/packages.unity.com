@@ -2,5 +2,6 @@
     "name": "Unity.XR.ARKit",
     "references": ["Unity.XR.ARExtensions"],
     "includePlatforms": ["iOS", "Editor"],
-    "excludePlatforms": []
+    "excludePlatforms": [],
+    "allowUnsafeCode": true
 }

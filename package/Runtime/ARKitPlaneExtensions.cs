@@ -14,11 +14,17 @@ namespace UnityEngine.XR.ARKit
         static void Register()
         {
             XRPlaneExtensions.RegisterGetTrackingStateHandler(k_SubsystemId, GetTrackingState);
+            XRPlaneExtensions.RegisterGetNativePtrHandler(k_SubsystemId, GetNativePtr);
         }
 
         static TrackingState GetTrackingState(XRPlaneSubsystem planeSubsystem, TrackableId planeId)
         {
             return Api.UnityARKit_getAnchorTrackingState(planeId);
+        }
+
+        static IntPtr GetNativePtr(XRPlaneSubsystem planeSubsystem, TrackableId planeId)
+        {
+            return Api.UnityARKit_getNativePlanePtr(planeId);
         }
 
         static readonly string k_SubsystemId = "ARKit-Plane";

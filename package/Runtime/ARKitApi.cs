@@ -28,6 +28,50 @@ namespace UnityEngine.XR.ARKit
         internal static extern TrackingState UnityARKit_getAnchorTrackingState(TrackableId id);
 
         [DllImport("__Internal")]
+        internal static extern int UnityARKit_createWorldMapRequest();
+
+        [DllImport("__Internal")]
+        internal static extern void UnityARKit_createWorldMapRequestWithCallback(
+            ARWorldMapSessionExtensions.OnAsyncConversionCompleteDelegate callback,
+            IntPtr context);
+
+        [DllImport("__Internal")]
+        internal static extern ARWorldMapRequestStatus UnityARKit_getWorldMapRequestStatus(int worldMapId);
+
+        [DllImport("__Internal")]
+        internal static extern void UnityARKit_disposeWorldMap(int worldMapId);
+
+        [DllImport("__Internal")]
+        internal static extern void UnityARKit_disposeWorldMapRequest(int worldMapId);
+
+        [DllImport("__Internal")]
+        internal static extern bool UnityARKit_worldMapSupported();
+
+        [DllImport("__Internal")]
+        internal static extern ARWorldMappingStatus UnityARKit_getWorldMappingStatus();
+
+        [DllImport("__Internal")]
+        internal static extern void UnityARKit_applyWorldMap(int worldMapId);
+
+        [DllImport("__Internal")]
+        internal static extern int UnityARKit_getWorldMapIdFromRequestId(int requestId);
+
+        [DllImport("__Internal")]
+        internal static extern bool UnityARKit_isWorldMapValid(int nativeHandle);
+
+        [DllImport("__Internal")]
+        internal static extern bool UnityARKit_trySerializeWorldMap(
+            int nativeHandle, out IntPtr nsdata, out int length);
+
+        [DllImport("__Internal")]
+        internal static extern int UnityARKit_copyAndReleaseNsData(
+            IntPtr destination, IntPtr sourceNsData, int length);
+
+        [DllImport("__Internal")]
+        internal static extern int UnityARKit_deserializeWorldMap(
+            IntPtr buffer, int bufferLength);
+		
+		[DllImport("__Internal")]
         static internal extern bool UnityARKit_cameraImage_tryAcquireLatestImage(
             out int nativeHandle, out Vector2Int dimensions, out int planeCount, out double timestamp, out CameraImageFormat format);
 
@@ -74,7 +118,84 @@ namespace UnityEngine.XR.ARKit
         static internal extern bool UnityARKit_cameraImage_tryGetAsyncRequestData(
             int requestHandle, out IntPtr dataPtr, out int dataLength);
 
+        [DllImport("__Internal")]
+        static internal extern IntPtr UnityARKit_getNativePlanePtr(TrackableId trackableId);
+
+        [DllImport("__Internal")]
+        static internal extern IntPtr UnityARKit_getNativeReferencePointPtr(TrackableId trackableId);
+
+        [DllImport("__Internal")]
+        static internal extern IntPtr UnityARKit_getNativeSessionPtr();
+
+        [DllImport("__Internal")]
+        static internal extern IntPtr UnityARKit_getNativeFramePtr();
 #else
+        internal static bool UnityARKit_worldMapSupported()
+        {
+            return false;
+        }
+
+        internal static int UnityARKit_createWorldMapRequest()
+        {
+            return default(int);
+        }
+
+        internal static void UnityARKit_createWorldMapRequestWithCallback(
+            ARWorldMapSessionExtensions.OnAsyncConversionCompleteDelegate callback,
+            IntPtr context)
+        {
+            callback(ARWorldMapRequestStatus.ErrorNotSupported, ARWorldMap.k_InvalidHandle, context);
+        }
+
+
+        internal static ARWorldMapRequestStatus UnityARKit_getWorldMapRequestStatus(int worldMapId)
+        {
+            return default(ARWorldMapRequestStatus);
+        }
+
+        internal static void UnityARKit_disposeWorldMap(int worldMapId)
+        { }
+
+        internal static void UnityARKit_disposeWorldMapRequest(int worldMapId)
+        { }
+
+        internal static void UnityARKit_applyWorldMap(int worldMapId)
+        { }
+
+        internal static int UnityARKit_getWorldMapIdFromRequestId(int requestId)
+        {
+            return default(int);
+        }
+
+        internal static ARWorldMappingStatus UnityARKit_getWorldMappingStatus()
+        {
+            return ARWorldMappingStatus.NotAvailable;
+        }
+
+        internal static int UnityARKit_deserializeWorldMap(IntPtr buffer, int bufferLength)
+        {
+            return ARWorldMap.k_InvalidHandle;
+        }
+
+        internal static bool UnityARKit_isWorldMapValid(int nativeHandle)
+        {
+            return false;
+        }
+
+        internal static bool UnityARKit_trySerializeWorldMap(
+            int nativeHandle, out IntPtr nsdata, out int length)
+        {
+            nsdata = default(IntPtr);
+            length = default(int);
+            return false;
+        }
+
+        internal static int UnityARKit_copyAndReleaseNsData(
+            IntPtr destination, IntPtr sourceNsData, int length)
+        {
+            return 0;
+        }
+
         static internal bool UnityARKit_cameraImage_tryAcquireLatestImage(
             out int nativeHandle, out Vector2Int dimensions, out int planeCount, out double timestamp, out CameraImageFormat format)
         {
@@ -150,7 +271,9 @@ namespace UnityEngine.XR.ARKit
             dataPtr = default(IntPtr);
             dataLength = default(int);
             return false;
-        }        internal static Availability UnityARKit_CheckAvailability() { return Availability.None; }
+        }
+
+        internal static Availability UnityARKit_CheckAvailability() { return Availability.None; }
 
         internal static TrackableId UnityARKit_attachReferencePoint(TrackableId trackableId, Pose pose)
         {
@@ -160,6 +283,14 @@ namespace UnityEngine.XR.ARKit
         internal static bool UnityARKit_IsCameraPermissionGranted() { return false; }
 
         internal static TrackingState UnityARKit_getAnchorTrackingState(TrackableId id) { return TrackingState.Unavailable; }
+
+        static internal IntPtr UnityARKit_getNativePlanePtr(TrackableId trackableId) { return IntPtr.Zero; }
+
+        static internal IntPtr UnityARKit_getNativeReferencePointPtr(TrackableId trackableId) { return IntPtr.Zero; }
+
+        static internal IntPtr UnityARKit_getNativeSessionPtr() { return IntPtr.Zero; }
+
+        static internal IntPtr UnityARKit_getNativeFramePtr() { return IntPtr.Zero; }
 #endif
     }
 }

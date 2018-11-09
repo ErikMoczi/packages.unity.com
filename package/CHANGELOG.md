@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-preview.17] - 2018-10-06
+### Fixes
+- Fixed an issue where toggling plane detection or light estimation would momentarily pause the ARSession, causing tracking to become temporarily unstable.
+- Fixed the (new) CameraImage API to work with the 2018.3 betas.
+- ARKit's `ARTrackingStateLimited` was reported as `TrackingState.Tracking`. It is now reported as `TrackingState.Unavailable`.
+
+### Improvements
+- Add support for native pointer access for several ARSession-related native objects.
+- Add [ARWorldMap](https://developer.apple.com/documentation/arkit/arworldmap) support.
+- Add linker validation when building with the IL2CPP scripting backend to avoid stripping the Unity.XR.ARKit assembly.
+
 ## [1.0.0-preview.16] - 2018-10-10
 ### New
 - Added support for `XRCameraExtensions` API to get the raw camera image data on the CPU. See the [ARFoundation manual documentation](https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/manual/cpu-camera-image.html) for more information.
