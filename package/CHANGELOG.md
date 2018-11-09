@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.4.2-preview] - 2018-10-30
+ - slight change to init code to support Addressables.
+ 
 ## [2.4.1-preview] - 2018-10-09
  - Added static ExceptionHandler property to ResourceManager to handle any execptions thrown in IAsyncOperations.
  - Exposed CachedProvider.Settings object that can be used to set up the cached provider during the build.
