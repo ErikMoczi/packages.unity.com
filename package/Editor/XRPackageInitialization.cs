@@ -22,6 +22,72 @@ namespace UnityEditor.XR.Management
         bool PopulateSettingsOnInitialization(ScriptableObject obj);
     }
 
+    class PackageInitializationSettings : ScriptableObject
+    {
+        private static PackageInitializationSettings s_PackageSettings = null;
+        private static object s_Lock = new object();
+
+        [SerializeField]
+        private List<string> m_Settings = new List<string>();
+
+        private PackageInitializationSettings(){ }
+
+        public static PackageInitializationSettings Instance
+        {
+            get
+            {
+                if (s_PackageSettings == null)
+                {
+                    lock(s_Lock)
+                    {
+                        if (s_PackageSettings == null)
+                        {
+                            s_PackageSettings = ScriptableObject.CreateInstance<PackageInitializationSettings>();
+                        }
+                    }
+                }
+                return s_PackageSettings;
+            }
+        }
+
+        public void LoadSettings()
+        {
+            string packageInitPath = Path.Combine("ProjectSettings", "XRPackageSettings.asset");
+
+            if (File.Exists(packageInitPath))
+            {
+                using (StreamReader sr = new StreamReader(packageInitPath))
+                {
+                    string settings = sr.ReadToEnd();
+                    JsonUtility.FromJsonOverwrite(settings, this);
+                }
+            }
+        }
+
+
+        public void SaveSettings()
+        {
+            string packageInitPath = Path.Combine("ProjectSettings", "XRPackageSettings.asset");
+            using (StreamWriter sw = new StreamWriter(packageInitPath))
+            {
+                string settings = JsonUtility.ToJson(this, true);
+                sw.Write(settings);
+            }
+        }
+
+        public bool HasSettings(string key)
+        {
+            return m_Settings.Contains(key);
+        }
+
+        public void AddSettings(string key)
+        {
+            if (!HasSettings(key))
+                m_Settings.Add(key);
+        }
+    }
+
+
     [InitializeOnLoad]
     class PackageInitializationBootstrap
     {
@@ -45,7 +111,9 @@ namespace UnityEditor.XR.Management
 
         static void InitPackage(XRPackageInitializationBase packageInit)
         {
-            if (EditorPrefs.GetBool(packageInit.PackageInitKey, false))
+            PackageInitializationSettings.Instance.LoadSettings();
+
+            if (PackageInitializationSettings.Instance.HasSettings(packageInit.PackageInitKey))
                 return;
 
             EditorApplication.update -= BeginPackageInitialization;
@@ -62,8 +130,8 @@ namespace UnityEditor.XR.Management
                     String.Format("{0} Settings Initialization not completed. You will need to create an instance of settings to customize options specific to this pacakge. This can be done by selecting Edit->Settings and navigating to the XR/Windows Mixed Reality panel.", packageInit.PackageName));
             }
 
-            EditorPrefs.SetBool(packageInit.PackageInitKey, true);
-
+            PackageInitializationSettings.Instance.AddSettings(packageInit.PackageInitKey);
+            PackageInitializationSettings.Instance.SaveSettings();
         }
 
         static ScriptableObject CreateScriptableObjectInstance(string packageName, string typeName, string instanceType, string path)

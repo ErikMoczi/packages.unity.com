@@ -1,11 +1,28 @@
 {
-	"name": "com.unity.xr.management",
-	"displayName":"XR SDK Management",
-	"version": "0.1.0-preview.12",
-	"unity": "2018.3",
-	"description": "Package to provide for simple management of XR SDK loading, unloading and configuration.",
-	"keywords":["xr","sdk","ar","vr","management","build"],
-	"dependencies": {
-	    "com.unity.modules.xr": "1.0.0"
-	}
+  "name": "com.unity.xr.management",
+  "displayName": "XR SDK Management",
+  "version": "0.2.0-preview.6",
+  "unity": "2018.3",
+  "description": "Package to provide for simple management of XR SDK loading, unloading and configuration.",
+  "keywords": [
+    "xr",
+    "sdk",
+    "ar",
+    "vr",
+    "management",
+    "build"
+  ],
+  "dependencies": {
+    "com.unity.modules.xr": "1.0.0"
+  },
+  "repository": {
+    "revision": "0c0becf4cb36a25c646770cb87536c80236c3778"
+  },
+  "samples": [
+    {
+      "displayName": "Example XR Management implementation",
+      "description": "Example code showing how to implement various portions of the XR Management API.",
+      "path": "Samples~"
+    }
+  ]
 }

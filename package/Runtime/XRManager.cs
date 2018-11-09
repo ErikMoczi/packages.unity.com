@@ -1,14 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
 using UnityEditor;
 
 using UnityEngine;
-#if UNITY_2019_1_OR_NEWER
-using UnityEngine.UIElements;
-#else
 using UnityEngine.Experimental.UIElements;
-#endif
 using UnityEngine.Serialization;
 using UnityEngine.XR.Management;
 
@@ -119,6 +116,32 @@ namespace UnityEngine.XR.Management
         public static T ActiveLoaderAs<T>() where T : XRLoader
         {
             return activeLoader as T;
+        }
+
+        public void InitializeLoaderSync()
+        {
+            if (activeLoader != null)
+            {
+                Debug.LogWarning(
+                    "XR Management has already initialized an active loader in this scene." +
+                    "Please make sure to stop all subsystems and deinitialize the active loader before initializing a new one.");
+                return;
+            }
+
+            foreach (var loader in loaders)
+            {
+                if (loader != null)
+                {
+                    if (loader.Initialize())
+                    {
+                        activeLoader = loader;
+                        m_InitializationComplete = true;
+                        return;
+                    }
+                }
+            }
+
+            activeLoader = null;
         }
 
         /// <summary>
