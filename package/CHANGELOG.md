@@ -4,6 +4,24 @@ All notable changes to this project template will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2018-09-24
+
+### Changed
+- LW version updated ]
+- AndroidTVCompatibility to false
+- TPD now from package
+
+## [1.0.6] - 2018-09-24
+
+### Changed
+- Oculus XR settings default to dash support and depth export enabled.
+- update default webgl memory size
+- update default upload manager ring buffer size to 16 mb
+- remove platform overrides for texture presets
+- update textures affected by texture overrides 
+- update lw package to 4.0.0-preview
+- adding oculus and openvr package to manifest
+
 ## [1.0.5] - 2018-09-06
 
 ### Changed
