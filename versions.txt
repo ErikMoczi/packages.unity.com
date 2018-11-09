@@ -71,3 +71,4 @@
 0.0.42-preview.24
 0.0.42-preview.25
 0.0.42-preview.26
+0.0.42-preview.27
