@@ -1,5 +1,7 @@
-﻿using System.Linq;
-using UnityEngine.Experimental.UIElements;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -16,11 +18,12 @@ namespace UnityEditor.PackageManager.UI
     internal class PackageGroup : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
-        internal new class UxmlFactory : UxmlFactory<PackageGroup> { }
+        internal new class UxmlFactory : UxmlFactory<PackageGroup> {}
 #endif
 
         private readonly VisualElement root;
         internal readonly PackageGroupOrigins Origin;
+        private Selection Selection;
 
         public PackageGroup previousGroup;
         public PackageGroup nextGroup;
@@ -28,15 +31,18 @@ namespace UnityEditor.PackageManager.UI
         public PackageItem firstPackage;
         public PackageItem lastPackage;
 
-        public PackageGroup() : this(string.Empty)
+        public PackageGroup() : this(string.Empty, null)
         {
         }
 
-        public PackageGroup(string groupName)
+        public PackageGroup(string groupName, Selection selection)
         {
             name = groupName;
             root = Resources.GetTemplate("PackageGroup.uxml");
             Add(root);
+            Cache = new VisualElementCache(root);
+
+            Selection = selection;
 
             if (string.IsNullOrEmpty(groupName) || groupName != PackageGroupOrigins.BuiltInPackages.ToString())
             {
@@ -50,16 +56,16 @@ namespace UnityEditor.PackageManager.UI
             }
         }
 
+        public IEnumerable<IPackageSelection> GetSelectionList()
+        {
+            foreach (var item in List.Children().Cast<PackageItem>())
+                foreach (var selection in item.GetSelectionList())
+                    yield return selection;
+        }
+
         internal PackageItem AddPackage(Package package)
         {
-            var packageItem = new PackageItem(package) {packageGroup = this};
-            var lastItem = List.Children().LastOrDefault() as PackageItem;
-            if (lastItem != null)
-            {
-                lastItem.nextItem = packageItem;
-                packageItem.previousItem = lastItem;
-                packageItem.nextItem = null;
-            }
+            var packageItem = new PackageItem(package, Selection);
 
             List.Add(packageItem);
 
@@ -69,10 +75,8 @@ namespace UnityEditor.PackageManager.UI
             return packageItem;
         }
 
-        private VisualElement _list;
-        private VisualElement List { get { return _list ?? (_list = root.Q<VisualElement>("groupContainer")); } }
-
-        private Label _headerTitle;
-        private Label HeaderTitle { get { return _headerTitle ?? (_headerTitle = root.Q<Label>("headerTitle")); } }
+        private VisualElementCache Cache { get; set; }
+        private VisualElement List { get { return Cache.Get<VisualElement>("groupContainer"); } }
+        private Label HeaderTitle { get { return Cache.Get<Label>("headerTitle"); } }
     }
 }

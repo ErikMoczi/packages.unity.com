@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor.PackageManager.Requests;
@@ -10,17 +10,23 @@ namespace UnityEditor.PackageManager.UI
         [SerializeField]
         private Action<IEnumerable<PackageInfo>> _doneCallbackAction;
 
-        public void GetAllPackageAsync(Action<IEnumerable<PackageInfo>> doneCallbackAction = null, Action<Error> errorCallbackAction = null)
+        private string _packageNameOrId;
+
+        public void GetAllPackageAsync(string packageNameOrId = null, Action<IEnumerable<PackageInfo>> doneCallbackAction = null, Action<Error> errorCallbackAction = null)
         {
             _doneCallbackAction = doneCallbackAction;
             OnOperationError += errorCallbackAction;
-            
+            _packageNameOrId = packageNameOrId;
+
             Start();
         }
 
         protected override Request CreateRequest()
         {
-            return Client.SearchAll();            
+            if (string.IsNullOrEmpty(_packageNameOrId))
+                return Client.SearchAll();
+            else
+                return Client.Search(_packageNameOrId);
         }
 
         protected override void ProcessData()

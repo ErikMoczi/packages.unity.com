@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 
 namespace UnityEditor.PackageManager.UI
 {
     [Serializable]
-    internal class OperationSignal<T> where T: IBaseOperation
+    internal class OperationSignal<T> where T : IBaseOperation
     {
-        public event Action<T> OnOperation = delegate { };
+        public event Action<T> OnOperation = delegate {};
 
         public T Operation { get; set; }
 
@@ -24,7 +24,7 @@ namespace UnityEditor.PackageManager.UI
 
         internal void ResetEvents()
         {
-            OnOperation = delegate { };
+            OnOperation = delegate {};
         }
     }
 }

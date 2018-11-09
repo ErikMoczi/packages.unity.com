@@ -1,43 +1,69 @@
 using System;
-using System.IO;
-using System.Security.Cryptography;
-using System.Text;
+using System.Linq;
 
 namespace UnityEditor.PackageManager.UI
 {
     internal static class PackageManagerPrefs
     {
-        private const string showPreviewPackagesPrefs = "PackageManager.ShowPreviewPackages";
-        private const string showPreviewPackagesWarningPrefs = "PackageManager.ShowPreviewPackagesWarning";
-        private const string lastUsedFilterPrefix = "PackageManager.Filter_";
+        private const string kSkipRemoveConfirmationPrefs = "PackageManager.SkipRemoveConfirmation";
+        private const string kShowPackageDependenciesPrefs = "PackageManager.ShowPackageDependencies";
+        private const string kShowPreviewPackagesPrefKeyPrefix = "PackageManager.ShowPreviewPackages_";
+        private const string kShowPreviewPackagesWarningPrefs = "PackageManager.ShowPreviewPackagesWarning";
+        private const string kLastUsedFilterPrefix = "PackageManager.Filter_";
+
+        private static string GetProjectIdentifier()
+        {
+            // PlayerSettings.productGUID is already used as LocalProjectID by Analytics, so we use it too
+            return PlayerSettings.productGUID.ToString();
+        }
+
+        public static bool SkipRemoveConfirmation
+        {
+            get { return EditorPrefs.GetBool(kSkipRemoveConfirmationPrefs, false); }
+            set { EditorPrefs.SetBool(kSkipRemoveConfirmationPrefs, value); }
+        }
+
+        public static bool ShowPackageDependencies
+        {
+            get { return EditorPrefs.GetBool(kShowPackageDependenciesPrefs, false); }
+            set { EditorPrefs.SetBool(kShowPackageDependenciesPrefs, value); }
+        }
 
         public static bool ShowPreviewPackages
         {
-            get { return EditorPrefs.GetBool(showPreviewPackagesPrefs, false); }
-            set { EditorPrefs.SetBool(showPreviewPackagesPrefs, value); }
+            get
+            {
+                var key = kShowPreviewPackagesPrefKeyPrefix + GetProjectIdentifier();
+
+                // If user manually choose to show or not preview packages, use this value
+                if (EditorPrefs.HasKey(key))
+                    return EditorPrefs.GetBool(key);
+
+                // Returns true if at least one preview package is installed, false otherwise
+                return PackageCollection.packages.Values.Any(p => p.Current != null && p.Current.IsPreview);
+            }
+            set
+            {
+                EditorPrefs.SetBool(kShowPreviewPackagesPrefKeyPrefix + GetProjectIdentifier(), value);
+            }
         }
 
         public static bool ShowPreviewPackagesWarning
         {
-            get { return EditorPrefs.GetBool(showPreviewPackagesWarningPrefs, true); }
-            set { EditorPrefs.SetBool(showPreviewPackagesWarningPrefs, value); }
+            get { return EditorPrefs.GetBool(kShowPreviewPackagesWarningPrefs, true); }
+            set { EditorPrefs.SetBool(kShowPreviewPackagesWarningPrefs, value); }
         }
 
-        private static string GetHascodeHexString(string str)
+        public static PackageFilter LastUsedPackageFilter
         {
-            var bytes = new SHA1Managed().ComputeHash(Encoding.UTF8.GetBytes(Directory.GetCurrentDirectory()));
-            return BitConverter.ToString(bytes);            
-        }
-
-        public static PackageFilter GetLastUsedPackageFilter(string str)
-        {
-            return (PackageFilter)Enum.Parse(typeof(PackageFilter),
-                EditorPrefs.GetString(lastUsedFilterPrefix + GetHascodeHexString(str), PackageFilter.All.ToString()));
-        }
-
-        public static void SetLastUsedPackageFilter(string str, PackageFilter filter)
-        {
-            EditorPrefs.SetString(lastUsedFilterPrefix + GetHascodeHexString(str), filter.ToString());
+            get
+            {
+                return (PackageFilter)Enum.Parse(typeof(PackageFilter), EditorPrefs.GetString(kLastUsedFilterPrefix + GetProjectIdentifier(), PackageFilter.All.ToString()));
+            }
+            set
+            {
+                EditorPrefs.SetString(kLastUsedFilterPrefix + GetProjectIdentifier(), value.ToString());
+            }
         }
     }
 }

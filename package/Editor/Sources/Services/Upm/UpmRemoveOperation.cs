@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using UnityEditor.PackageManager.Requests;
 
@@ -9,7 +9,7 @@ namespace UnityEditor.PackageManager.UI
         [SerializeField]
         private PackageInfo _package;
 
-        public event Action<PackageInfo> OnOperationSuccess = delegate { };
+        public event Action<PackageInfo> OnOperationSuccess = delegate {};
 
         public void RemovePackageAsync(PackageInfo package, Action<PackageInfo> doneCallbackAction = null,  Action<Error> errorCallbackAction = null)
         {

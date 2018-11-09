@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML
+        xmlns:engine="UnityEngine.UIElements"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="UnityEngine.UIElements UIElementsSchema/UnityEngine.UIElements.xsd">
+    <engine:VisualElement name="dependenciesOuterContainer">
+        <engine:VisualElement name="dependenciesInnerContainer">
+            <engine:Label name="dependenciesHeaderLabel" text="Dependencies"/>
+            <engine:VisualElement name="dependenciesContainer">
+                <engine:Label name="noDependencies" text="No dependencies"/>
+                <engine:VisualElement name="dependenciesNames"/>
+                <engine:VisualElement name="dependenciesVersions"/>
+                <engine:VisualElement name="dependenciesStatuses"/>
+            </engine:VisualElement>
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

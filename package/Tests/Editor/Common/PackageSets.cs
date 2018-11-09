@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -18,8 +18,8 @@ namespace UnityEditor.PackageManager.UI.Tests
         }
 
         private static readonly string[] Words = new[] { "lorem", "ipsum", "dolor", "sit", "amet", "consectetuer",
-            "adipiscing", "elit", "sed", "diam", "nonummy", "nibh", "euismod",
-            "tincidunt", "ut", "laoreet", "dolore", "magna", "aliquam", "erat" };
+                                                         "adipiscing", "elit", "sed", "diam", "nonummy", "nibh", "euismod",
+                                                         "tincidunt", "ut", "laoreet", "dolore", "magna", "aliquam", "erat" };
 
         private static string LoremIpsum(int numParagraphs, int minSentences, int maxSentences, int minWords, int maxWords)
         {
@@ -41,14 +41,14 @@ namespace UnityEditor.PackageManager.UI.Tests
                         {
                             if (w == 0)
                             {
-                                var firstWord = Words [Random.Next (Words.Length)];
-                                firstWord = char.ToUpper (firstWord [0]) + firstWord.Substring (1);
-                                result.Append (firstWord);
+                                var firstWord = Words[Random.Next(Words.Length)];
+                                firstWord = char.ToUpper(firstWord[0]) + firstWord.Substring(1);
+                                result.Append(firstWord);
                             }
                             else
                             {
-                                result.Append (" ");
-                                result.Append (Words [Random.Next (Words.Length)]);
+                                result.Append(" ");
+                                result.Append(Words[Random.Next(Words.Length)]);
                             }
                         }
                     }
@@ -65,11 +65,11 @@ namespace UnityEditor.PackageManager.UI.Tests
 
         public PackageInfo Single(string name = null, string version = null)
         {
-            var type = Random.NextDouble() > 0.5 ? PackageSource.Unknown : PackageSource.Registry;
-            return Single(type, name, version);
+            var source = Random.NextDouble() > 0.5 ? PackageSource.Unknown : PackageSource.Registry;
+            return Single(source, name, version);
         }
 
-        public PackageInfo Single(PackageSource type, string name = null, string version = null, bool isCurrent = true, bool isVerified = false)
+        public PackageInfo Single(PackageSource source, string name = null, string version = null, bool isCurrent = true, bool isVerified = false, PackageType type = PackageType.package)
         {
             if (name == null)
                 name = RandomString(Random.Next(5, 10));
@@ -80,12 +80,12 @@ namespace UnityEditor.PackageManager.UI.Tests
                     version += "-preview";
             }
 
-            var group = UpmBaseOperation.GroupName(type);
+            var group = UpmBaseOperation.GroupName(source);
             var package = new PackageInfo
             {
                 DisplayName = char.ToUpper(name[0]) + name.Substring(1),
                 Name = string.Format("com.unity.{0}", name),
-                Description = LoremIpsum(Random.Next(3,5), 2, 10, 5, 20),
+                Description = LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
                 PackageId = string.Format("com.unity.{0}@{1}", name, version),
                 State = PackageState.UpToDate,
                 Group = group,
@@ -93,8 +93,10 @@ namespace UnityEditor.PackageManager.UI.Tests
                 IsVerified = isVerified,
                 IsCurrent = isCurrent,
                 IsLatest = false,
-                Origin = type,
+                Origin = source,
+                Type = type.ToString(),
                 Category = null,
+                HasFullFetch = true,
                 Errors = new List<Error>()
             };
 

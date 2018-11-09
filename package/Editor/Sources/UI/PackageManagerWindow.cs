@@ -1,8 +1,9 @@
+﻿using System;
 using System.Linq;
 using System.IO;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
-using UnityEditor.Experimental.UIElements;
+using UnityEngine.UIElements;
+using UnityEditor.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -14,12 +15,17 @@ namespace UnityEditor.PackageManager.UI
         private const string DarkStylePath = ResourcesPath + "Styles/Main_Dark.uss";
         private const string LightStylePath = ResourcesPath + "Styles/Main_Light.uss";
 
-#if UNITY_2018_1_OR_NEWER
+        VisualElement GetRootElement()
+        {
+            return this.rootVisualElement;
+        }
 
         [SerializeField]
         internal PackageCollection Collection;
         [SerializeField]
         private PackageSearchFilter SearchFilter;
+        [SerializeField]
+        internal SelectionManager SelectionManager;
 
         private VisualElement root;
 
@@ -31,23 +37,36 @@ namespace UnityEditor.PackageManager.UI
 
             if (SearchFilter == null)
                 SearchFilter = new PackageSearchFilter();
+
+            if (SelectionManager == null)
+                SelectionManager = new SelectionManager();
+
+            var rootElement = GetRootElement();
+            string path = EditorGUIUtility.isProSkin ? DarkStylePath : LightStylePath;
+            rootElement.styleSheets.Add(EditorGUIUtility.Load(path) as StyleSheet);
             
-            this.GetRootVisualContainer().AddStyleSheetPath(EditorGUIUtility.isProSkin ? DarkStylePath : LightStylePath);
             // Temporarly fix for case 1075335 (UIElements)
-            this.GetRootVisualContainer().style.positionLeft = 2;
-            this.GetRootVisualContainer().style.positionTop = 22;
-            this.GetRootVisualContainer().style.positionRight = 2;
-            this.GetRootVisualContainer().style.positionBottom = 2;
-            this.GetRootVisualContainer().style.flexGrow = 1;
+            rootElement.style.left = 2;
+            rootElement.style.top = 22;
+            rootElement.style.right = 2;
+            rootElement.style.bottom = 2;
+            rootElement.style.flexGrow = 1;
 
             var windowResource = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath);
             if (windowResource != null)
             {
-                root = windowResource.CloneTree(null);
-                this.GetRootVisualContainer().Add(root);
+                root = windowResource.CloneTree();
+                rootElement.Add(root);
                 root.StretchToParentSize();
 
-                Collection.SetFilter(PackageManagerPrefs.GetLastUsedPackageFilter(Directory.GetCurrentDirectory()));
+                Cache = new VisualElementCache(root);
+
+                SelectionManager.SetCollection(Collection);
+                Collection.OnFilterChanged += filter => SetupSelection();
+                Collection.SetFilter(PackageManagerPrefs.LastUsedPackageFilter);
+
+                if (!collectionWasNull)
+                    Collection.UpdatePackageCollection(true);
 
                 SetupPackageDetails();
                 SetupPackageList();
@@ -55,30 +74,32 @@ namespace UnityEditor.PackageManager.UI
                 SetupToolbar();
                 SetupStatusbar();
                 SetupCollection();
-                
+                SetupSelection();
+
                 // Disable filter while fetching first results
                 if (!Collection.LatestListPackages.Any())
                     PackageManagerToolbar.SetEnabled(false);
-                else
-                    PackageList.SelectLastSelection(Collection.SelectedPackage);
-                
-                Collection.FetchListOfflineCache(Collection.listOperationOfflineOngoing);
-                Collection.FetchListCache(Collection.listOperationOngoing);
-                Collection.FetchSearchCache(Collection.searchOperationOngoing);
-                
-                if (!collectionWasNull)
-                    Collection.UpdatePackageCollection(true);
+
+                Collection.FetchListOfflineCache(!Collection.listOperationOfflineOngoing);
+                Collection.FetchListCache(!Collection.listOperationOngoing);
+                Collection.FetchSearchCache(!Collection.searchOperationOngoing);
+
+                Collection.TriggerPackagesChanged();
             }
         }
 
         public void OnDisable()
         {
-            PackageManagerPrefs.SetLastUsedPackageFilter(Directory.GetCurrentDirectory(), Collection.Filter);
+            PackageManagerPrefs.LastUsedPackageFilter = Collection.Filter;
         }
 
         private void SetupCollection()
         {
-            Collection.OnPackagesChanged += PackageList.SetPackages;
+            Collection.OnPackagesChanged += (filter, packages) =>
+            {
+                PackageList.SetPackages(filter, packages);
+                SelectionManager.Selection.TriggerNewSelection();
+            };
             Collection.OnUpdateTimeChange += PackageStatusbar.SetUpdateTimeMessage;
             Collection.ListSignal.WhenOperation(PackageStatusbar.OnListOrSearchOperation);
             Collection.SearchSignal.WhenOperation(PackageStatusbar.OnListOrSearchOperation);
@@ -87,7 +108,7 @@ namespace UnityEditor.PackageManager.UI
         private void SetupStatusbar()
         {
             PackageStatusbar.OnCheckInternetReachability += OnCheckInternetReachability;
-            PackageStatusbar.Setup(Collection.lastUpdateTime);
+            PackageStatusbar.Setup(Collection);
         }
 
         private void SetupToolbar()
@@ -106,10 +127,8 @@ namespace UnityEditor.PackageManager.UI
 
         private void SetupPackageList()
         {
-            PackageList.OnSelected += OnPackageSelected;
             PackageList.OnLoaded += OnPackagesLoaded;
             PackageList.OnFocusChange += OnListFocusChange;
-            PackageList.OnReload += OnReload;
             PackageList.SetSearchFilter(SearchFilter);
         }
 
@@ -117,6 +136,13 @@ namespace UnityEditor.PackageManager.UI
         {
             PackageDetails.OnCloseError += OnCloseError;
             PackageDetails.OnOperationError += OnOperationError;
+            PackageDetails.SetCollection(Collection);
+        }
+
+        private void SetupSelection()
+        {
+            PackageList.SetSelection(SelectionManager.Selection);
+            PackageDetails.SetSelection(SelectionManager.Selection);
         }
 
         private void OnCloseError(Package package)
@@ -164,73 +190,38 @@ namespace UnityEditor.PackageManager.UI
             PackageFiltering.FilterPackageList(PackageList);
         }
 
-        private void OnReload()
-        {
-            // Force a re-init to initial condition
-            Collection.UpdatePackageCollection();
-            PackageList.SelectLastSelection(Collection.SelectedPackage);
-        }
-
-        private void OnPackageSelected(Package package)
-        {
-            Collection.SelectedPackage = package == null ? null : package.Name;
-            PackageDetails.SetPackage(package);
-        }
-
         private void OnPackagesLoaded()
         {
             PackageManagerToolbar.SetEnabled(true);
         }
 
-        private PackageList _packageList;
-        private PackageList PackageList
-        {
-            get { return _packageList ?? (_packageList = root.Q<PackageList>("packageList")); }
-        }
+        private VisualElementCache Cache { get; set; }
 
-        private PackageDetails _packageDetails;
-        private PackageDetails PackageDetails
-        {
-            get { return _packageDetails ?? (_packageDetails = root.Q<PackageDetails>("detailsGroup")); }
-        }
-
-        private PackageManagerToolbar _packageManagerToolbar;
-        private PackageManagerToolbar PackageManagerToolbar
-        {
-            get {return _packageManagerToolbar ?? (_packageManagerToolbar = root.Q<PackageManagerToolbar>("toolbarContainer"));}
-        }
-
-        private PackageStatusBar _packageStatusbar;
-        private PackageStatusBar PackageStatusbar
-        {
-            get {return _packageStatusbar ?? (_packageStatusbar = root.Q<PackageStatusBar>("packageStatusBar"));}
-        }
+        private PackageList PackageList { get { return Cache.Get<PackageList>("packageList"); } }
+        private PackageDetails PackageDetails { get { return Cache.Get<PackageDetails>("detailsGroup"); } }
+        private PackageManagerToolbar PackageManagerToolbar { get {return Cache.Get<PackageManagerToolbar>("toolbarContainer");} }
+        private PackageStatusBar PackageStatusbar { get {return Cache.Get<PackageStatusBar>("packageStatusBar");} }
 
         internal static void FetchListOfflineCacheForAllWindows()
         {
             var windows = UnityEngine.Resources.FindObjectsOfTypeAll<PackageManagerWindow>();
-            if (windows == null || windows.Length <= 0) 
+            if (windows == null || windows.Length <= 0)
                 return;
-            
+
             foreach (var window in windows)
             {
                 if (window.Collection != null)
                     window.Collection.FetchListOfflineCache(true);
             }
         }
-#endif
+
 
         [MenuItem("Window/Package Manager", priority = 1500)]
         internal static void ShowPackageManagerWindow()
         {
-#if UNITY_2018_1_OR_NEWER
             var window = GetWindow<PackageManagerWindow>(false, "Packages", true);
             window.minSize = new Vector2(700, 250);
             window.Show();
-#else
-            const double targetVersionNumber = 2018.1;
-            EditorUtility.DisplayDialog("Unsupported Unity Version", string.Format("The Package Manager requires Unity Version {0} or higher to operate.", targetVersionNumber), "Ok");
-#endif
         }
     }
 }

@@ -12,9 +12,9 @@ namespace UnityEditor.PackageManager.UI
 
         static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
-            if (!importedAssets.Any(IsPackageJsonAsset) && !deletedAssets.Any(IsPackageJsonAsset) && !movedAssets.Any(IsPackageJsonAsset)) 
+            if (!importedAssets.Any(IsPackageJsonAsset) && !deletedAssets.Any(IsPackageJsonAsset) && !movedAssets.Any(IsPackageJsonAsset))
                 return;
-            
+
             PackageManagerWindow.FetchListOfflineCacheForAllWindows();
         }
     }

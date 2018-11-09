@@ -4,7 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.1.0] - 2018-10-03
+## [2.1.1-preview.1] - 2018-10-19
+- Added new version list scheme
+- Added dependency view for packages
+- Added warning when removing packages
+
+## [2.1.0] - 2018-10-25
 - Support maximize/minimize
 - Support PackageManager UI saved maximized in a layout
 - Keep track of selected built-in package
@@ -13,6 +18,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add samples in the details panel
 - Move the `+` button to the top toolbar
 - Show date in the `Last Update` message
+- Add publish API to find samples by package and import them
+- Enable adding packages by package ID in the `+` menu
+- When a preview package is installed, keep showing updates even if "Show Preview Packages" is not checked
+- When user as not already choose to show or hide Preview Packages:
+    - If a preview package is already installed, "Show Preview Packages" is checked
+    - If no preview packages are installed, "Show Preview Packages" is not checked
 
 ## [2.0.1] - 2018-09-14
 - Move undesired public classes to internal
@@ -28,8 +39,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated docs to reflect the new UI
 - Fix incorrect verified tag on preview packages
 - UI Fixes:
-	- Change mouse cursor when hovering over links
-	- Tweak UI layout for better alignment
+    - Change mouse cursor when hovering over links
+    - Tweak UI layout for better alignment
 - Fixed dropdown to work with 2018.3 editor
 - Updated style to reflect changes in VisualElements
 - Added packages serialization to avoid unnecessary refreshes
@@ -58,10 +69,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Optimize packages list loading
 - Fixes for UXML factories changes in Unity
 - UI Fixes:
-	- "View changes" update position and label should say "View Changelog"
-	- Packages list should not have padding
-	- preview and verified tags should be lower case everywhere
-	- the package displayed name should stay on 1 line
+    - "View changes" update position and label should say "View Changelog"
+    - Packages list should not have padding
+    - preview and verified tags should be lower case everywhere
+    - the package displayed name should stay on 1 line
 
 ## [1.9.3] - 2018-03-11
 - Added caching for faster UI response time
@@ -103,8 +114,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added "Go back to" when latest version is less than current one
 - Removed "Update to" when current version is greater than latest one. (case for embedded or local packages)
 - Replaced packages action button label:
-	- "Install" instead of "Add" for packages
-	- "Enable/Disable" instead of "Add/Remove" for built-in packages
+    - "Install" instead of "Add" for packages
+    - "Enable/Disable" instead of "Add/Remove" for built-in packages
 - Added "alpha", "beta", "experimental" and "recommended" tags support
 - Added loading progress while opening window
 - Added package description and display name update

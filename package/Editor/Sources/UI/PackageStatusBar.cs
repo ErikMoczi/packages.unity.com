@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -15,11 +15,11 @@ namespace UnityEditor.PackageManager.UI
         }
     }
 #endif
-    
+
     internal class PackageStatusBar : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
-        internal new class UxmlFactory : UxmlFactory<PackageStatusBar> { }
+        internal new class UxmlFactory : UxmlFactory<PackageStatusBar> {}
 #endif
 
         private readonly VisualElement root;
@@ -28,29 +28,37 @@ namespace UnityEditor.PackageManager.UI
 
         private List<IBaseOperation> operationsInProgress;
 
-        private enum StatusType {Normal, Loading, Error};  
+        private enum StatusType { Normal, Loading, Error };
 
-        public event Action OnCheckInternetReachability = delegate { };
+        public event Action OnCheckInternetReachability = delegate {};
 
         public PackageStatusBar()
         {
             root = Resources.GetTemplate("PackageStatusBar.uxml");
             Add(root);
+            Cache = new VisualElementCache(root);
 
             LastErrorMessage = string.Empty;
             operationsInProgress = new List<IBaseOperation>();
         }
 
-        public void Setup(string lastUpdateTime)
+        public void Setup(PackageCollection collection)
         {
-            LastUpdateTime = lastUpdateTime;
+            LastUpdateTime = collection.lastUpdateTime;
             UpdateStatusMessage();
+
+            StatusLabel.RegisterCallback<MouseDownEvent>(e =>
+            {
+                collection.FetchListOfflineCache(true);
+                collection.FetchListCache(true);
+                collection.FetchSearchCache(true);
+            });
         }
 
         public void SetUpdateTimeMessage(string lastUpdateTime)
         {
             LastUpdateTime = lastUpdateTime;
-            if(!string.IsNullOrEmpty(LastUpdateTime))
+            if (!string.IsNullOrEmpty(LastUpdateTime))
                 SetStatusMessage(StatusType.Normal, "Last update " + LastUpdateTime);
             else
                 SetStatusMessage(StatusType.Normal, string.Empty);
@@ -97,7 +105,7 @@ namespace UnityEditor.PackageManager.UI
 
         private void CheckInternetReachability()
         {
-            if (Application.internetReachability == NetworkReachability.NotReachable) 
+            if (Application.internetReachability == NetworkReachability.NotReachable)
                 return;
 
             OnCheckInternetReachability();
@@ -117,20 +125,16 @@ namespace UnityEditor.PackageManager.UI
                 LoadingSpinnerContainer.RemoveFromClassList("loading");
             }
 
+
             UIUtils.SetElementDisplay(ErrorIcon, status == StatusType.Error);
             StatusLabel.text = message;
         }
 
-        private VisualElement _loadingSpinnerContainer;
-        private VisualElement LoadingSpinnerContainer { get { return _loadingSpinnerContainer ?? (_loadingSpinnerContainer = root.Q<VisualElement>("loadingSpinnerContainer")); }}
+        private VisualElementCache Cache { get; set; }
 
-        private LoadingSpinner _loadingSpinner;
-        private LoadingSpinner LoadingSpinner { get { return _loadingSpinner ?? (_loadingSpinner = root.Q<LoadingSpinner>("packageSpinner")); }}
-
-        private Label _errorIcon;
-        private Label ErrorIcon { get { return _errorIcon ?? (_errorIcon = root.Q<Label>("errorIcon")); }}
-
-        private Label _statusLabel;
-        private Label StatusLabel { get { return _statusLabel ?? (_statusLabel = root.Q<Label>("statusLabel")); }}
+        private VisualElement LoadingSpinnerContainer { get { return Cache.Get<VisualElement>("loadingSpinnerContainer"); }}
+        private LoadingSpinner LoadingSpinner { get { return Cache.Get<LoadingSpinner>("packageSpinner"); }}
+        private Label ErrorIcon { get { return Cache.Get<Label>("errorIcon"); }}
+        private Label StatusLabel { get { return Cache.Get<Label>("statusLabel"); }}
     }
 }

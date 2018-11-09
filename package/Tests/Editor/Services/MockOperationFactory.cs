@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace UnityEditor.PackageManager.UI.Tests
@@ -17,11 +17,11 @@ namespace UnityEditor.PackageManager.UI.Tests
 
         public void ResetOperations()
         {
-            if (AddOperation != null) 
+            if (AddOperation != null)
                 AddOperation.ResetEvents();
             AddOperation = null;
-            
-            if (RemoveOperation != null) 
+
+            if (RemoveOperation != null)
                 RemoveOperation.ResetEvents();
             RemoveOperation = null;
 
@@ -29,12 +29,12 @@ namespace UnityEditor.PackageManager.UI.Tests
         }
 
         public IListOperation CreateListOperation(bool offlineMode = false)
-        {          
+        {
             return new MockListOperation(this);
         }
 
         public ISearchOperation CreateSearchOperation()
-        {          
+        {
             return SearchOperation ?? new MockSearchOperation(this, Packages);
         }
 

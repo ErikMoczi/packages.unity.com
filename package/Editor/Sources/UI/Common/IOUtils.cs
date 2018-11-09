@@ -1,13 +1,13 @@
-﻿using System.IO;
+using System.IO;
 using System.Linq;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
     internal static class IOUtils
     {
         // Need to re-create this method since Unity's FileUtil equivalent (with overwrite) is internal only.
-        // From: https://stackoverflow.com/questions/58744/copy-the-entire-contents-of-a-directory-in-c-sharp        
+        // From: https://stackoverflow.com/questions/58744/copy-the-entire-contents-of-a-directory-in-c-sharp
         public static void DirectoryCopy(string sourcePath, string destinationPath)
         {
             Directory.CreateDirectory(destinationPath);
@@ -18,7 +18,7 @@ namespace UnityEditor.PackageManager.UI
 
             //Copy all the files & Replaces any files with the same name
             foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
-                File.Copy(newPath, newPath.Replace(sourcePath, destinationPath), true);            
+                File.Copy(newPath, newPath.Replace(sourcePath, destinationPath), true);
         }
 
         public static string SanitizeFileName(string name)
@@ -26,7 +26,7 @@ namespace UnityEditor.PackageManager.UI
             foreach (char c in Path.GetInvalidFileNameChars())
                 name = name.Replace(c, '_');
             // Remove additional special characters that Unity doesn't like
-            foreach(char c in "/:?<>*|\\~")
+            foreach (char c in "/:?<>*|\\~")
                 name = name.Replace(c, '_');
             return name.Trim();
         }

@@ -5,7 +5,7 @@ namespace UnityEditor.PackageManager.UI
         internal PackageInfo Version;
 
         public string MenuName { get; set; }
-        
+
         // Base label
         public string Label
         {
@@ -13,13 +13,13 @@ namespace UnityEditor.PackageManager.UI
             {
                 if (Version == null)
                     return MenuName;
-                
+
                 var label = Version.VersionWithoutTag;
 
                 return label;
             }
         }
-        
+
         public string DropdownLabel
         {
             get
@@ -28,9 +28,11 @@ namespace UnityEditor.PackageManager.UI
                     return MenuName;
 
                 var label = MenuName + Label;
-                
+
                 if (Version.IsLocal)
                     label += " - local";
+                if (Version.IsGit)
+                    label += " - git";
                 if (Version.IsCurrent)
                     label += " - current";
                 if (Version.IsVerified)
@@ -48,7 +50,7 @@ namespace UnityEditor.PackageManager.UI
         {
             return DropdownLabel;
         }
-        
+
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(obj, null)) return false;
@@ -61,6 +63,6 @@ namespace UnityEditor.PackageManager.UI
         public override int GetHashCode()
         {
             return Version.GetHashCode();
-        }        
+        }
     }
 }

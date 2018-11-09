@@ -19,7 +19,7 @@ $unity-background: #383838;
 // Custom colors
 //--------------------------------------------------------------------------------------------------
 
-$unity-background-light-contrast: #3c3c3c;			// For dark contrast, use: #404040 and #232323
+$unity-background-light-contrast: #3f3f3f;			// For dark contrast, use: #404040 and #232323
 $unity-background-dark-contrast: #707070;			//	$
 $unity-text-color-highlight: #f4f4f4;
 
@@ -38,6 +38,8 @@ $link-text-color: #4F80F8;
 //--------------------------------------------------------------------------------------------------
 $installed-package-background: resource("Builtin Skins/DarkSkin/Images/MenuItemOn.png");
 
+$background-button: resource("Builtin Skins/DarkSkin/Images/btn.png");
+$background-button-selected: resource("Builtin Skins/DarkSkin/Images/btn on.png");;
 $background-left-button: resource("Builtin Skins/DarkSkin/Images/btn left.png");
 $background-left-button-selected: resource("Builtin Skins/DarkSkin/Images/btn left on.png");;
 $background-mid-button: resource("Builtin Skins/DarkSkin/Images/btn mid.png");

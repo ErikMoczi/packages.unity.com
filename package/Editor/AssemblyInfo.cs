@@ -1,5 +1,5 @@
 using System.Runtime.CompilerServices;
-using UnityEditor.Experimental.UIElements;
+using UnityEditor.UIElements;
 
 [assembly: InternalsVisibleTo("Unity.PackageManagerCaptain.Editor")]
 [assembly: InternalsVisibleTo("Unity.PackageManagerUI.EditorTests")]

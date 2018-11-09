@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor.PackageManager.Requests;
@@ -10,7 +10,7 @@ namespace UnityEditor.PackageManager.UI
         [SerializeField]
         private Action<IEnumerable<PackageInfo>> _doneCallbackAction;
 
-        public UpmListOperation(bool offlineMode) : base() 
+        public UpmListOperation(bool offlineMode) : base()
         {
             OfflineMode = offlineMode;
         }
@@ -21,13 +21,13 @@ namespace UnityEditor.PackageManager.UI
         {
             this._doneCallbackAction = doneCallbackAction;
             OnOperationError += errorCallbackAction;
-            
+
             Start();
         }
 
         protected override Request CreateRequest()
         {
-            return Client.List(OfflineMode);            
+            return Client.List(OfflineMode);
         }
 
         protected override void ProcessData()

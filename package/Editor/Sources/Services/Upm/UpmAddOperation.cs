@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEditor.PackageManager.Requests;
 using System.Linq;
 
@@ -8,7 +8,7 @@ namespace UnityEditor.PackageManager.UI
     {
         public PackageInfo PackageInfo { get; protected set; }
 
-        public event Action<PackageInfo> OnOperationSuccess = delegate { };
+        public event Action<PackageInfo> OnOperationSuccess = delegate {};
 
         public void AddPackageAsync(PackageInfo packageInfo, Action<PackageInfo> doneCallbackAction = null, Action<Error> errorCallbackAction = null)
         {
@@ -19,6 +19,11 @@ namespace UnityEditor.PackageManager.UI
             Start();
         }
 
+        public void AddPackageAsync(string packageId, Action<PackageInfo> doneCallbackAction = null, Action<Error> errorCallbackAction = null)
+        {
+            AddPackageAsync(new PackageInfo {PackageId = packageId}, doneCallbackAction, errorCallbackAction);
+        }
+
         protected override Request CreateRequest()
         {
             return Client.Add(PackageInfo.PackageId);
@@ -27,7 +32,7 @@ namespace UnityEditor.PackageManager.UI
         protected override void ProcessData()
         {
             var request = CurrentRequest as AddRequest;
-            var package = FromUpmPackageInfo(request.Result).First();
+            var package = FromUpmPackageInfo(request.Result).First(p => p.PackageId == PackageInfo.PackageId);
             OnOperationSuccess(package);
         }
     }

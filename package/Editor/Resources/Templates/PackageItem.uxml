@@ -1,18 +1,27 @@
-<?xml version="1.0" encoding="utf-8"?>
-<engine:UXML 
-        xmlns:engine="UnityEngine.Experimental.UIElements" 
+﻿<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML
+        xmlns:engine="UnityEngine.UIElements"
         xmlns:upm="UnityEditor.PackageManager.UI"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="UnityEngine.Experimental.UIElements UIElementsSchema/UnityEngine.Experimental.UIElements.xsd
+        xsi:schemaLocation="UnityEngine.UIElements UIElementsSchema/UnityEngine.UIElements.xsd
                             UnityEditor.PackageManager.UI UIElementsSchema/UnityEditor.PackageManager.UI.xsd">
-  <engine:VisualElement name="packageContainer" class="package">
-    <engine:VisualElement name="spinnerContainer">
+  <engine:VisualElement name="packageContainer" class="packageItem">
+      <engine:VisualElement name="itemLabel" class="endText">
+        <upm:ArrowToggle name="expander"/>
+        <engine:Label name="expanderHidden" class="expanderHidden"/>
+        <engine:Label name="packageName" class="name" />
+        <engine:Label name="packageVersion" class="version"/>
         <engine:VisualElement name="loadingSpinnerContainer" class="loading">
-            <upm:LoadingSpinner name="packageSpinner" class="spinner"/>
+          <upm:LoadingSpinner name="packageSpinner" class="spinner"/>
+        </engine:VisualElement>
+        <engine:Label name="packageState" class="status"/>
+      </engine:VisualElement>
+    <engine:VisualElement name="itemVersions">
+        <engine:ScrollView name="versionList" vertical-page-size="10"/>
+        <engine:VisualElement name="versionsToolbar" class="endText">
+            <engine:Label name="seeAllVersions" text="See all versions"/>
+            <engine:Label name="noVersions" text="There are no other versions for this package."/>
         </engine:VisualElement>
     </engine:VisualElement>
-    <engine:Label name="packageState" class="status" />
-    <engine:Label name="packageName" class="name" />
-    <engine:Label name="packageVersion" class="version"/>
-  </engine:VisualElement>
+    </engine:VisualElement>
 </engine:UXML>

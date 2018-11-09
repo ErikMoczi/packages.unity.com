@@ -1,71 +1,77 @@
 using System.Linq;
 using Semver;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 using UnityEditor;
 
 namespace UnityEditor.PackageManager.UI
 {
     internal class PackageSampleItem
     {
-        private PackageSample sample;
+        private Sample sample;
 
-        public PackageSampleItem(PackageSample sample)
+        public PackageSampleItem(Sample sample)
         {
             this.sample = sample;
-            if (sample != null)
+            NameLabel.text = sample.displayName;
+            SizeLabel.text = sample.Size;
+            RefreshImportStatus();
+            ImportButton.clickable.clicked += OnImportButtonClicked;
+        }
+
+        private void OnImportButtonClicked()
+        {
+            var previousImports = sample.PreviousImports;
+            var previousImportPaths = string.Empty;
+            foreach (var v in previousImports)
+                previousImportPaths += v.Replace(Application.dataPath, "Assets") + "\n";
+
+            var warningMessage = string.Empty;
+            if (previousImports.Count > 1)
             {
-                NameLabel.text = sample.displayName;
-                SizeLabel.text = sample.Size;
-                RefreshImportStatus();
-                ImportButton.clickable.clicked += () =>
+                warningMessage = "Different versions of the sample are already imported at\n\n"
+                    + previousImportPaths + "\nThey will be deleted when you update.";
+            }
+            else if (previousImports.Count == 1)
+            {
+                if (sample.isImported)
                 {
-                    string[] mismatchVersions;
-                    if (sample.IsImportedToAssets)
-                    {
-                        if (EditorUtility.DisplayDialog("Unity Package Manager",
-                            "The sample is already imported at\n\n" +
-                            sample.importPath.Replace(Application.dataPath, "Assets") + 
-                            "\n\nImporting again will override all changes you have made to it. Are you sure you want to continue?", "No", "Yes"))
-                            return;
-                        IOUtils.RemovePathAndMeta(sample.importPath, true);
-                    }
-                    else if((mismatchVersions = sample.MismatchedVersions).Length != 0)
-                    {
-                        var warningMessage = string.Empty;
-                        if (mismatchVersions.Length > 1)
-                        {
-                            warningMessage = "Different versions of the sample are already imported at\n\n";
-                            foreach(var v in mismatchVersions)
-                                warningMessage += v.Replace(Application.dataPath, "Assets") + "\n";
-                            warningMessage += "\nThey will be deleted when you update.";
-                        }
-                        else
-                        {
-                            warningMessage = "A different version of the sample is already imported at\n\n" + 
-                                              mismatchVersions[0].Replace(Application.dataPath, "Assets") + 
-                                              "\n\nIt will be deleted when you update.";
-                        }
-                        if (EditorUtility.DisplayDialog("Unity Package Manager",
-                            warningMessage + " Are you sure you want to continue?", "No", "Yes"))
-                            return;
-                        foreach(var v in mismatchVersions)
-                            IOUtils.RemovePathAndMeta(v, true);
-                    }
-                    sample.ImportToAssets();
-                    RefreshImportStatus();
-                };
+                    warningMessage = "The sample is already imported at\n\n" + previousImportPaths
+                        + "\nImporting again will override all changes you have made to it.";
+                }
+                else
+                {
+                    warningMessage = "A different version of the sample is already imported at\n\n"
+                        + previousImportPaths + "\nIt will be deleted when you update.";
+                }
+            }
+
+            if (!string.IsNullOrEmpty(warningMessage) &&
+                EditorUtility.DisplayDialog("Unity Package Manager", warningMessage + " Are you sure you want to continue?", "No", "Yes"))
+                return;
+
+            if (sample.Import(Sample.ImportOptions.OverridePreviousImports))
+            {
+                RefreshImportStatus();
+                if (sample.isImported)
+                {
+                    // Highlight import path
+                    var importRelativePath = sample.importPath.Replace(Application.dataPath, "Assets");
+                    UnityEngine.Object obj = AssetDatabase.LoadAssetAtPath(importRelativePath, typeof(UnityEngine.Object));
+                    UnityEditor.Selection.activeObject = obj;
+                    EditorGUIUtility.PingObject(obj);
+                }
             }
         }
 
         private void RefreshImportStatus()
         {
-            if (sample.IsImportedToAssets)
+            if (sample.isImported)
             {
                 ImportStatus.AddToClassList("imported");
                 ImportButton.text = "Import again";
             }
-            else if(sample.MismatchedVersions.Length != 0)
+            else if (sample.PreviousImports.Count != 0)
             {
                 ImportStatus.AddToClassList("imported");
                 ImportButton.text = "Update";
@@ -82,7 +88,7 @@ namespace UnityEditor.PackageManager.UI
         private Label _nameLabel;
         internal Label NameLabel { get { return _nameLabel ?? (_nameLabel = new Label()); } }
         private Label _sizeLabel;
-        internal Label SizeLabel { get { return _sizeLabel ?? ( _sizeLabel = new Label()); } }
+        internal Label SizeLabel { get { return _sizeLabel ?? (_sizeLabel = new Label()); } }
         private Button _importButton;
         internal Button ImportButton { get { return _importButton ?? (_importButton = new Button()); } }
     }

@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -22,13 +22,13 @@ namespace UnityEditor.PackageManager.UI
             }
 
             IsDone = false;
-            
+
             Thread newThread = new Thread(() =>
             {
                 Thread.Sleep(Length);
                 IsDone = true;
             });
-            
+
             newThread.Start();
         }
     }

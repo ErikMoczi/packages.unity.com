@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML
+        xmlns:engine="UnityEngine.UIElements"
+        xmlns:upm="UnityEditor.PackageManager.UI"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="UnityEngine.UIElements UIElementsSchema/UnityEngine.UIElements.xsd
+                            UnityEditor.PackageManager.UI UIElementsSchema/UnityEditor.PackageManager.UI.xsd">
+    <engine:VisualElement name="addFromIdFieldContainer">
+        <engine:TextField name="idTextField"/>
+        <engine:Label name="addFromIdButton" text="Add"/>
+    </engine:VisualElement>
+</engine:UXML>

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using Semver;
 using UnityEngine;
 
 namespace UnityEditor.PackageManager.UI
@@ -8,25 +10,33 @@ namespace UnityEditor.PackageManager.UI
     [Serializable]
     internal class PackageCollection
     {
-        public event Action<PackageFilter, IEnumerable<Package>, string> OnPackagesChanged = delegate { };
-        public event Action<PackageFilter> OnFilterChanged = delegate { };
-        public event Action<string> OnUpdateTimeChange = delegate { };
+        public static readonly SemVersion EmbdeddedVersion = new SemVersion(int.MaxValue, int.MaxValue, int.MaxValue, "embedded");
+        public static readonly SemVersion LocalVersion = new SemVersion(int.MaxValue, int.MaxValue, int.MaxValue, "local");
 
-        private readonly Dictionary<string, Package> packages;
+        public event Action<PackageFilter, IEnumerable<Package>> OnPackagesChanged = delegate {};
+        public event Action<PackageFilter> OnFilterChanged = delegate {};
+        public event Action<string> OnUpdateTimeChange = delegate {};
+
+        private Dictionary<string, SemVersion> projectDependencies;
+        public Dictionary<string, SemVersion> ProjectDependencies
+        {
+            get
+            {
+                if (projectDependencies == null)
+                    RebuildDependenciesDictionnary();
+
+                return projectDependencies;
+            }
+        }
+
+        internal static readonly Dictionary<string, Package> packages = new Dictionary<string, Package>();
 
         [SerializeField]
         private PackageFilter filter;
 
         [SerializeField]
-        private string selectedListPackage;
-        [SerializeField]
-        private string selectedSearchPackage;
-        [SerializeField]
-        private string selectedBuiltInPackage;
-
-        [SerializeField]
         internal string lastUpdateTime;
-        
+
         [SerializeField]
         private List<PackageInfo> listPackagesOffline;
         [SerializeField]
@@ -55,6 +65,8 @@ namespace UnityEditor.PackageManager.UI
         private IListOperation listOperation;
         [SerializeField]
         private ISearchOperation searchOperation;
+        [SerializeField]
+        private ISearchOperation fetchLatestInfoOperation;
 
         public readonly OperationSignal<ISearchOperation> SearchSignal = new OperationSignal<ISearchOperation>();
         public readonly OperationSignal<IListOperation> ListSignal = new OperationSignal<IListOperation>();
@@ -62,49 +74,33 @@ namespace UnityEditor.PackageManager.UI
         public PackageFilter Filter
         {
             get { return filter; }
-            
+
             // For public usage, use SetFilter() instead
             private set
             {
                 var changed = value != filter;
                 filter = value;
-                
+
                 if (changed)
                     OnFilterChanged(filter);
             }
         }
 
+        private IEnumerable<PackageInfo> CompletePackageInfosList
+        {
+            get { return listPackagesOffline.Concat(listPackages).Concat(searchPackages); }
+        }
+
         public IEnumerable<PackageInfo> LatestListPackages
         {
-            get { return listPackagesVersion > listPackagesOfflineVersion? listPackages : listPackagesOffline; }
+            get { return listPackagesVersion > listPackagesOfflineVersion ? listPackages : listPackagesOffline; }
         }
 
         public IEnumerable<PackageInfo> LatestSearchPackages { get { return searchPackages; } }
 
-        public string SelectedPackage
-        {
-            get
-            {
-                if (Filter == PackageFilter.All)
-                    return selectedSearchPackage;
-                if (Filter == PackageFilter.Local)
-                    return selectedListPackage;
-                return selectedBuiltInPackage;
-            }
-            set
-            {
-                if (PackageFilter.All == Filter)
-                    selectedSearchPackage = value;
-                else if (PackageFilter.Local == Filter)
-                    selectedListPackage = value;
-                else
-                    selectedBuiltInPackage = value;
-            }
-        }
-        
         public PackageCollection()
         {
-            packages = new Dictionary<string, Package>();
+            packages.Clear();
 
             listPackagesOffline = new List<PackageInfo>();
             listPackages = new List<PackageInfo>();
@@ -124,9 +120,9 @@ namespace UnityEditor.PackageManager.UI
 
         public bool SetFilter(PackageFilter value, bool refresh = true)
         {
-            if (value == Filter) 
+            if (value == Filter)
                 return false;
-            
+
             Filter = value;
             if (refresh)
             {
@@ -139,7 +135,15 @@ namespace UnityEditor.PackageManager.UI
         {
             if (rebuildDictionary)
                 RebuildPackageDictionary();
-            OnPackagesChanged(Filter, OrderedPackages(), SelectedPackage);
+
+            RebuildDependenciesDictionnary();
+
+            TriggerPackagesChanged();
+        }
+
+        public void TriggerPackagesChanged()
+        {
+            OnPackagesChanged(Filter, OrderedPackages());
         }
 
         internal void FetchListOfflineCache(bool forceRefetch = false)
@@ -192,9 +196,52 @@ namespace UnityEditor.PackageManager.UI
                 searchOperationOngoing = false;
                 UpdatePackageCollection(true);
             };
-            searchOperation.GetAllPackageAsync(UpdateSearchPackageInfos,
+            searchOperation.GetAllPackageAsync(null, UpdateSearchPackageInfos,
                 error => { Debug.LogError("Error searching packages online."); });
             SearchSignal.SetOperation(searchOperation);
+        }
+
+        public bool NeedsFetchLatest(PackageInfo packageInfo)
+        {
+            if (packageInfo == null) return false;
+            if (packageInfo.HasFullFetch) return false;
+            if (packageInfo.Origin != PackageSource.Registry) return false;
+
+            return true;
+        }
+
+        public void CancelFetchLatest()
+        {
+            if (fetchLatestInfoOperation == null)
+                return;
+
+            fetchLatestInfoOperation.Cancel();
+            fetchLatestInfoOperation = null;
+        }
+
+        public void FetchLatestPackageInfo(PackageInfo packageInfo, Action<PackageInfo> onFetched = null)
+        {
+            if (!NeedsFetchLatest(packageInfo))
+            {
+                onFetched(packageInfo);
+                return;
+            }
+
+            // Currently only one fetch operation at a time is supported
+            CancelFetchLatest();
+
+            fetchLatestInfoOperation = OperationFactory.Instance.CreateSearchOperation();
+            fetchLatestInfoOperation.GetAllPackageAsync(packageInfo.PackageId, packageInfos =>
+            {
+                var result = packageInfos.FirstOrDefault(p => p.PackageId == packageInfo.PackageId);
+                result.HasFullFetch = true;
+
+                foreach (var info in CompletePackageInfosList.Where(p => p.PackageId == packageInfo.PackageId))
+                    info.Consolidate(result);
+
+                if (onFetched != null)
+                    onFetched(result);
+            });
         }
 
         private void UpdateListPackageInfosOffline(IEnumerable<PackageInfo> newInfos, int version)
@@ -216,7 +263,7 @@ namespace UnityEditor.PackageManager.UI
         private void UpdateSearchPackageInfos(IEnumerable<PackageInfo> newInfos)
         {
             searchPackages = newInfos.Where(p => p.IsUserVisible).ToList();
-            
+
             // Only refresh update time after a search operation successfully returns while online
             if (Application.internetReachability != NetworkReachability.NotReachable)
             {
@@ -235,6 +282,31 @@ namespace UnityEditor.PackageManager.UI
             Package package;
             packages.TryGetValue(name, out package);
             return package;
+        }
+
+        public Package GetPackage(PackageInfo packageInfo)
+        {
+            return GetPackageByName(packageInfo.Name);
+        }
+
+        public PackageVersion GetPackageVersion(PackageInfo packageInfo)
+        {
+            return new PackageVersion(GetPackage(packageInfo), packageInfo);
+        }
+
+        /// <summary>
+        /// Get package from package Id
+        /// </summary>
+        /// <param name="packageId">mypackage@1.0.0</param>
+        /// <returns></returns>
+        public PackageVersion GetPackageVersion(string packageId)
+        {
+            var tokens = packageId.Split('@');    // 0 = PackageName -- 1 = PackageVersion
+            var package = GetPackageByName(tokens[0]);
+            if (package == null)
+                return null;
+
+            return new PackageVersion(package, package.Versions.FirstOrDefault(p => p.Version == tokens[1]));
         }
 
         private Error GetPackageError(Package package)
@@ -262,12 +334,12 @@ namespace UnityEditor.PackageManager.UI
         {
             // Merge list & search packages
             var allPackageInfos = new List<PackageInfo>(LatestListPackages);
-            var packageIdSet = new HashSet<string>(allPackageInfos.Select(p => p.PackageId));
-            allPackageInfos.AddRange(searchPackages.Where(p => !packageIdSet.Contains(p.PackageId)));
+            var installedPackageIds = new HashSet<string>(allPackageInfos.Select(p => p.PackageId));
+            allPackageInfos.AddRange(searchPackages.Where(p => !installedPackageIds.Contains(p.PackageId)));
 
             if (!PackageManagerPrefs.ShowPreviewPackages)
             {
-                allPackageInfos = allPackageInfos.Where(p => !p.IsPreRelease || p.IsCurrent).ToList();
+                allPackageInfos = allPackageInfos.Where(p => !p.IsPreRelease || installedPackageIds.Contains(p.PackageId)).ToList();
             }
 
             // Rebuild packages dictionary
@@ -282,6 +354,60 @@ namespace UnityEditor.PackageManager.UI
                 var package = new Package(packageName, packageQuery);
                 package.Error = GetPackageError(package);
                 packages[packageName] = package;
+            }
+        }
+
+        private void RebuildDependenciesDictionnary()
+        {
+            projectDependencies = new Dictionary<string, SemVersion>();
+            var allPackageInfos = new List<PackageInfo>(LatestListPackages);
+            var installedPackages = allPackageInfos.Where(p => p.IsCurrent);
+
+            foreach (var p in installedPackages)
+            {
+                if (projectDependencies.ContainsKey(p.Name))
+                {
+                    var version = projectDependencies[p.Name];
+                    if (p.Version.CompareByPrecedence(version) > 0)
+                        projectDependencies[p.Name] = p.Version;
+                }
+                else
+                {
+                    if (p.IsInDevelopment)
+                        projectDependencies[p.Name] = EmbdeddedVersion;
+                    else if (p.IsLocal)
+                        projectDependencies[p.Name] = LocalVersion;
+                    else
+                        projectDependencies[p.Name] = p.Version;
+                }
+
+                var dependencies = p.Info == null ? null : p.Info.resolvedDependencies;
+                if (dependencies == null)
+                    continue;
+                foreach (var dependency in dependencies)
+                {
+                    if (dependency.version.StartsWith("file:"))
+                    {
+                        var dependencyPath = dependency.version.Substring(5).Replace('\\', '/');
+                        var projectPath = Directory.GetCurrentDirectory().Replace('\\', '/');
+                        if (dependencyPath.StartsWith(projectPath))
+                            projectDependencies[dependency.name] = EmbdeddedVersion;
+                        else
+                            projectDependencies[dependency.name] = LocalVersion;
+                    }
+                    else
+                    {
+                        SemVersion newVersion = dependency.version;
+                        if (projectDependencies.ContainsKey(dependency.name))
+                        {
+                            var version = projectDependencies[dependency.name];
+                            if (newVersion.CompareByPrecedence(version) > 0)
+                                projectDependencies[dependency.name] = newVersion;
+                        }
+                        else
+                            projectDependencies[dependency.name] = newVersion;
+                    }
+                }
             }
         }
     }

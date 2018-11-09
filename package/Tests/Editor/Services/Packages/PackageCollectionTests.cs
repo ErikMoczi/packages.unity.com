@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 
@@ -7,7 +7,7 @@ namespace UnityEditor.PackageManager.UI.Tests
     internal class PackageCollectionTests : PackageBaseTests
     {
         private Action<PackageFilter> OnFilterChangeEvent;
-        private Action<PackageFilter, IEnumerable<Package>, string> OnPackagesChangeEvent;
+        private Action<PackageFilter, IEnumerable<Package>> OnPackagesChangeEvent;
         private PackageCollection Collection;
 
         [SetUp]
@@ -70,7 +70,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         public void SetFilter_WhenNoFilterChangeRefresh_PackagesChangeEventIsNotPropagated()
         {
             var wasCalled = false;
-            OnPackagesChangeEvent = (filter, packages, selected) =>
+            OnPackagesChangeEvent = (filter, packages) =>
             {
                 wasCalled = true;
             };
@@ -84,7 +84,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         public void SetFilter_WhenFilterChangeNoRefresh_PackagesChangeEventIsNotPropagated()
         {
             var wasCalled = false;
-            OnPackagesChangeEvent = (filter, packages, selected) =>
+            OnPackagesChangeEvent = (filter, packages) =>
             {
                 wasCalled = true;
             };
@@ -98,7 +98,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         public void SetFilter_WhenNoFilterChangeNoRefresh_PackagesChangeEventIsNotPropagated()
         {
             var wasCalled = false;
-            OnPackagesChangeEvent = (filter, packages, selected) =>
+            OnPackagesChangeEvent = (filter, packages) =>
             {
                 wasCalled = true;
             };
@@ -112,7 +112,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         public void FetchListCache_PackagesChangeEventIsPropagated()
         {
             var wasCalled = false;
-            OnPackagesChangeEvent = (filter, packages, selected) =>
+            OnPackagesChangeEvent = (filter, packages) =>
             {
                 wasCalled = true;
             };
@@ -124,12 +124,11 @@ namespace UnityEditor.PackageManager.UI.Tests
             Assert.IsTrue(wasCalled);
         }
 
-
         [Test]
         public void FetchListOfflineCache_PackagesChangeEventIsPropagated()
         {
             var wasCalled = false;
-            OnPackagesChangeEvent = (filter, packages, selected) =>
+            OnPackagesChangeEvent = (filter, packages) =>
             {
                 wasCalled = true;
             };
@@ -145,7 +144,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         public void FetchSearchCache_PackagesChangeEventIsPropagated()
         {
             var wasCalled = false;
-            OnPackagesChangeEvent = (filter, packages, selected) =>
+            OnPackagesChangeEvent = (filter, packages) =>
             {
                 wasCalled = true;
             };

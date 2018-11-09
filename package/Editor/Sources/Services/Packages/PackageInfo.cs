@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Semver;
@@ -26,19 +26,25 @@ namespace UnityEditor.PackageManager.UI
         public bool IsCurrent;
         public bool IsLatest;
         public string Group;
+        public string Type;
         public PackageSource Origin;
         public List<Error> Errors;
         public bool IsVerified;
         public string Author;
 
-        public List<PackageSample> Samples;
+        public List<Sample> Samples;
 
-        public PackageManager.PackageInfo Info { get; set; }
-        
-        public string PackageId {
+        // Full fetch is when the information this package has isn't derived from another version
+        // (and therefore may be slightly wrong)
+        public bool HasFullFetch;
+
+        public PackageManager.PackageInfo Info;
+
+        public string PackageId
+        {
             get
             {
-                if (!string.IsNullOrEmpty(_PackageId )) 
+                if (!string.IsNullOrEmpty(_PackageId))
                     return _PackageId;
                 return string.Format("{0}@{1}", Name.ToLower(), Version);
             }
@@ -52,12 +58,16 @@ namespace UnityEditor.PackageManager.UI
         public string VersionId { get { return string.Format("{0}@{1}", Name.ToLower(), Version); } }
         public string ShortVersionId { get { return string.Format("{0}@{1}", Name.ToLower(), Version.ShortVersion()); } }
 
-        public string BuiltInDescription { get {
-            if (IsBuiltIn)
-                return string.Format("This built in package controls the presence of the {0} module.", DisplayName);
-            else
-                return Description.Split(new[] {builtinPackageDocsUrlKey}, StringSplitOptions.None)[0];
-        } }
+        public string BuiltInDescription
+        {
+            get
+            {
+                if (IsBuiltIn)
+                    return string.Format("This built in package controls the presence of the {0} module.", DisplayName);
+                else
+                    return Description.Split(new[] {builtinPackageDocsUrlKey}, StringSplitOptions.None)[0];
+            }
+        }
 
         // Method content must be matched in package-manager-doctools extension
         public static string GetPackageUrlRedirect(string packageName)
@@ -65,13 +75,13 @@ namespace UnityEditor.PackageManager.UI
             var redirectUrl = "";
             if (packageName == "com.unity.ads")
                 redirectUrl = "https://docs.unity3d.com/Manual/UnityAds.html";
-            else if  (packageName == "com.unity.analytics")
+            else if (packageName == "com.unity.analytics")
                 redirectUrl = "https://docs.unity3d.com/Manual/UnityAnalytics.html";
-            else if  (packageName == "com.unity.purchasing")
+            else if (packageName == "com.unity.purchasing")
                 redirectUrl = "https://docs.unity3d.com/Manual/UnityIAP.html";
-            else if  (packageName == "com.unity.standardevents")
+            else if (packageName == "com.unity.standardevents")
                 redirectUrl = "https://docs.unity3d.com/Manual/UnityAnalyticsStandardEvents.html";
-            else if  (packageName == "com.unity.xiaomi")
+            else if (packageName == "com.unity.xiaomi")
                 redirectUrl = "https://unity3d.com/cn/partners/xiaomi/guide";
             else if (packageName == "com.unity.shadergraph")
                 redirectUrl = "https://github.com/Unity-Technologies/ShaderGraph/wiki";
@@ -119,14 +129,14 @@ namespace UnityEditor.PackageManager.UI
 
             return url;
         }
-        
+
         public bool Equals(PackageInfo other)
         {
-            if (other == null) 
+            if (other == null)
                 return false;
             if (other == this)
                 return true;
-            
+
             return Name == other.Name && Version == other.Version;
         }
 
@@ -149,15 +159,15 @@ namespace UnityEditor.PackageManager.UI
         }
 
         // Is it a pre-release (alpha/beta/experimental/preview)?
-        //        Current logic is any tag is considered pre-release, except recommended
+        //        Current logic is any tag is considered pre-release, except recommended and core
         public bool IsPreRelease
         {
-            get { return !string.IsNullOrEmpty(Version.Prerelease) || Version.Major == 0; }
+            get { return (!string.IsNullOrEmpty(Version.Prerelease) || Version.Major == 0) && !IsCore; }
         }
 
         public bool IsPreview
         {
-            get { return HasVersionTag(PackageTag.preview) || Version.Major == 0; }
+            get { return HasVersionTag(PackageTag.preview) || Version.Major == 0 && !IsCore; }
         }
 
         // A version is user visible if it has a supported tag (or no tag at all)
@@ -168,10 +178,14 @@ namespace UnityEditor.PackageManager.UI
 
         public bool IsInDevelopment { get { return Origin == PackageSource.Embedded; } }
         public bool IsLocal { get { return Origin == PackageSource.Local; } }
-        public bool IsBuiltIn { get { return Origin == PackageSource.BuiltIn; } }
-        
+        public bool IsGit { get { return Origin == PackageSource.Git; } }
+        // A builtin package is a module
+        public bool IsBuiltIn { get { return Origin == PackageSource.BuiltIn && Type == PackageType.module.ToString(); } }
+        // A core package is built from the trunk/Packages folder and has a version of 0.0.0-builtin
+        public bool IsCore { get { return Version.Major == 0 && Version.Minor == 0 && Version.Patch == 0 && HasVersionTag(PackageTag.builtin); } }
+
         public string VersionWithoutTag { get { return Version.VersionOnly(); } }
-        
+
         public bool IsVersionLocked
         {
             get { return Origin == PackageSource.Embedded || Origin == PackageSource.Git || Origin == PackageSource.BuiltIn; }
@@ -179,7 +193,7 @@ namespace UnityEditor.PackageManager.UI
 
         public bool CanBeRemoved
         {
-            get { return Origin == PackageSource.Registry || Origin == PackageSource.BuiltIn || Origin == PackageSource.Local; }
+            get { return Origin == PackageSource.Registry || Origin == PackageSource.BuiltIn || Origin == PackageSource.Local || Origin == PackageSource.Git; }
         }
 
         public void OnBeforeSerialize()
@@ -190,6 +204,49 @@ namespace UnityEditor.PackageManager.UI
         public void OnAfterDeserialize()
         {
             Version = _Version;
+        }
+
+        public void Consolidate(PackageInfo other)
+        {
+            Name = other.Name;
+            DisplayName = other.DisplayName;
+            PackageId = other.PackageId;
+            Version = other.Version;
+            Description = other.Description;
+            Category = other.Category;
+            IsCurrent = other.IsCurrent;
+            IsLatest = other.IsLatest;
+            IsVerified = other.IsVerified;
+            Errors = other.Errors;
+            Group = other.Group;
+            Type = other.Type;
+            State = other.State;
+            Origin = other.Origin;
+            Author = other.Author;
+            Info = other.Info;
+            HasFullFetch = other.HasFullFetch;
+        }
+
+        public string StandardizedLabel(bool showSimplified = true)
+        {
+            if (Version == null)
+                return string.Empty;
+
+            var label = VersionWithoutTag;
+
+            if (IsLocal && showSimplified)
+                label = "local - " + label;
+            if (IsCurrent && showSimplified)
+                label = "current - " + label;
+            if (IsVerified && showSimplified)
+                label = "verified - " + label;
+            else if (!string.IsNullOrEmpty(Version.Prerelease))
+				if (!IsCore)
+                	label = string.Format("{0} - ", Version.Prerelease) + label;
+            else if (IsPreview)
+                label = "preview - " + label;
+
+            return label;
         }
     }
 }

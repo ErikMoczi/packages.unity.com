@@ -1,6 +1,8 @@
-﻿using System;
+using System;
+using System.Linq;
 using System.Text.RegularExpressions;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -10,7 +12,7 @@ namespace UnityEditor.PackageManager.UI
         {
             if (info == null)
                 return false;
-            
+
             if (info.Name.IndexOf(text, StringComparison.CurrentCultureIgnoreCase) >= 0)
                 return true;
 
@@ -22,7 +24,7 @@ namespace UnityEditor.PackageManager.UI
                 var prerelease = text.StartsWith("-") ? text.Substring(1) : text;
                 if (info.Version != null && info.Version.Prerelease.IndexOf(prerelease, StringComparison.CurrentCultureIgnoreCase) >= 0)
                     return true;
-    
+
                 if (info.VersionWithoutTag.StartsWith(text, StringComparison.CurrentCultureIgnoreCase))
                     return true;
 
@@ -37,6 +39,12 @@ namespace UnityEditor.PackageManager.UI
                     if (PackageTag.verified.ToString().IndexOf(text, StringComparison.CurrentCultureIgnoreCase) >= 0)
                         return true;
                 }
+                
+                if (info.IsCore)
+                {
+                    if (PackageTag.builtin.ToString().IndexOf(text, StringComparison.CurrentCultureIgnoreCase) >= 0)
+                        return true;
+                }
             }
 
             return false;
@@ -46,7 +54,7 @@ namespace UnityEditor.PackageManager.UI
         {
             if (string.IsNullOrEmpty(text))
                 return true;
-            
+
             var trimText = text.Trim(' ', '\t');
             trimText = Regex.Replace(trimText, @"[ ]{2,}", " ");
             return string.IsNullOrEmpty(trimText) || FilterByText(package.Current ?? package.Latest, trimText);
@@ -60,9 +68,8 @@ namespace UnityEditor.PackageManager.UI
         public static void FilterPackageList(PackageList packageList)
         {
             PackageItem firstItem = null;
-            PackageItem lastItem = null;
             var selectedItemInFilter = false;
-            var selectedItem = packageList.selectedItem;
+            var selectedItem = packageList.SelectedItem;
             var packageItems = packageList.Query<PackageItem>().ToList();
             foreach (var item in packageItems)
             {
@@ -72,25 +79,18 @@ namespace UnityEditor.PackageManager.UI
                         firstItem = item;
                     if (item == selectedItem)
                         selectedItemInFilter = true;
-                    
+
                     UIUtils.SetElementDisplay(item, true);
-                    
-                    if (lastItem != null)
-                        lastItem.nextItem = item;
-                
-                    item.previousItem = lastItem;
-                    item.nextItem = null;
-                    
-                    lastItem = item;
                 }
                 else
                     UIUtils.SetElementDisplay(item, false);
             }
 
-            if (firstItem == null)
-                packageList.ShowNoResults();
-            else
-                packageList.ShowResults(selectedItemInFilter ? selectedItem : firstItem);
+            if (packageItems.Any())
+                if (firstItem == null)
+                    packageList.ShowNoResults();
+                else
+                    packageList.ShowResults(selectedItemInFilter ? selectedItem : firstItem);
         }
     }
 }

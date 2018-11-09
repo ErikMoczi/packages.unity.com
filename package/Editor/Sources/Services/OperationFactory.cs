@@ -1,17 +1,19 @@
-﻿namespace UnityEditor.PackageManager.UI
+namespace UnityEditor.PackageManager.UI
 {
     internal static class OperationFactory
     {
         private static IOperationFactory _instance;
 
-        public static IOperationFactory Instance 
+        public static IOperationFactory Instance
         {
-            get {
+            get
+            {
                 if (_instance == null)
-                    _instance = new UpmOperationFactory ();
+                    _instance = new UpmOperationFactory();
                 return _instance;
             }
-            internal set {
+            internal set
+            {
                 _instance = value;
             }
         }

@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using Semver;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -18,7 +18,7 @@ namespace UnityEditor.PackageManager.UI
     internal class PackageSampleList : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
-        internal new class UxmlFactory : UxmlFactory<PackageSampleList> { }
+        internal new class UxmlFactory : UxmlFactory<PackageSampleList> {}
 #endif
 
         private readonly VisualElement root;
@@ -27,6 +27,7 @@ namespace UnityEditor.PackageManager.UI
         {
             root = Resources.GetTemplate("PackageSampleList.uxml");
             Add(root);
+            Cache = new VisualElementCache(root);
         }
 
         public void SetPackage(PackageInfo package)
@@ -42,7 +43,7 @@ namespace UnityEditor.PackageManager.UI
                 return;
             }
             UIUtils.SetElementDisplay(this, true);
-            foreach(var sample in package.Samples)
+            foreach (var sample in package.Samples)
             {
                 var sampleItem = new PackageSampleItem(sample);
                 ImportStatusContainer.Add(sampleItem.ImportStatus);
@@ -53,13 +54,11 @@ namespace UnityEditor.PackageManager.UI
             }
         }
 
-        private VisualElement _importStatusContainer;
-        internal VisualElement ImportStatusContainer { get { return _importStatusContainer ?? (_importStatusContainer = root.Q<VisualElement>("importStatusContainer")); } }
-        private VisualElement _nameLabelContainer;
-        internal VisualElement NameLabelContainer { get { return _nameLabelContainer ?? (_nameLabelContainer = root.Q<VisualElement>("nameLabelContainer")); } }
-        private VisualElement _sizeLabelContainer;
-        internal VisualElement SizeLabelContainer { get { return _sizeLabelContainer ?? (_sizeLabelContainer = root.Q<VisualElement>("sizeLabelContainer")); } }
-        private VisualElement _importButtonContainer;
-        internal VisualElement ImportButtonContainer { get { return _importButtonContainer ?? (_importButtonContainer = root.Q<VisualElement>("importButtonContainer")); } }
+        private VisualElementCache Cache { get; set; }
+
+        internal VisualElement ImportStatusContainer { get { return Cache.Get<VisualElement>("importStatusContainer"); } }
+        internal VisualElement NameLabelContainer { get { return Cache.Get<VisualElement>("nameLabelContainer"); } }
+        internal VisualElement SizeLabelContainer { get { return Cache.Get<VisualElement>("sizeLabelContainer"); } }
+        internal VisualElement ImportButtonContainer { get { return Cache.Get<VisualElement>("importButtonContainer"); } }
     }
 }

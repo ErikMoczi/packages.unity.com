@@ -1,5 +1,5 @@
 using System;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -16,7 +16,7 @@ namespace UnityEditor.PackageManager.UI
     internal class Alert : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
-        internal new class UxmlFactory : UxmlFactory<Alert> { }
+        internal new class UxmlFactory : UxmlFactory<Alert> {}
 #endif
 
         private const string TemplatePath = PackageManagerWindow.ResourcesPath + "Templates/Alert.uxml";
@@ -30,7 +30,7 @@ namespace UnityEditor.PackageManager.UI
         {
             UIUtils.SetElementDisplay(this, false);
 
-            root = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath).CloneTree(null);
+            root = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath).CloneTree();
             Add(root);
             root.StretchToParentSize();
 
@@ -63,9 +63,9 @@ namespace UnityEditor.PackageManager.UI
         public void AdjustSize(bool verticalScrollerVisible)
         {
             if (verticalScrollerVisible)
-                style.positionRight = originalPositionRight + positionRightWithScroll;
+                style.right = originalPositionRight + positionRightWithScroll;
             else
-                style.positionRight = originalPositionRight;
+                style.right = originalPositionRight;
         }
 
         private Label _alertMessage;

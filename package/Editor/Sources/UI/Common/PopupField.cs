@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
@@ -66,7 +66,7 @@ namespace UnityEditor.PackageManager.UI
                     text = m_Callback(m_Value);
                 else
                     text = m_Value.ToString();
- 
+
 #if UNITY_2018_3_OR_NEWER
                 MarkDirtyRepaint();
 #else
@@ -99,7 +99,7 @@ namespace UnityEditor.PackageManager.UI
         {
             m_Callback = callback;
         }
-        
+
         private PopupField(List<T> possibleValues)
         {
             if (possibleValues == null)

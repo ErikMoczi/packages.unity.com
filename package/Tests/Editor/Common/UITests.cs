@@ -1,15 +1,15 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using NUnit.Framework;
-using UnityEditor.Experimental.UIElements;
+using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.PackageManager.UI.Tests
 {
     internal abstract class UITests<TWindow> where TWindow : EditorWindow
     {
         protected TWindow Window { get; set; }
-        protected VisualElement Container { get { return Window.GetRootVisualContainer(); } }
+        protected VisualElement Container { get { return Window.rootVisualElement; } }
         protected MockOperationFactory Factory { get; private set; }
 
         [OneTimeSetUp]

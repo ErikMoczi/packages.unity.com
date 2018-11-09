@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
@@ -24,7 +24,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             Collection = new PackageCollection();
             Collection.SetFilter(PackageFilter.Local);
         }
-        
+
         [TearDown]
         public void TearDown()
         {
@@ -37,7 +37,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         public void Constructor_WithNullPackageName_ThrowsException()
         {
             var packages = PackageSets.Instance.Many(kPackageTestName, 1, true);
-            Assert.Throws<ArgumentException>(() => 
+            Assert.Throws<ArgumentException>(() =>
             {
                 new Package(null, packages);
             });
@@ -47,7 +47,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         public void Constructor_WithEmptyPackageName_ThrowsException()
         {
             var packages = PackageSets.Instance.Many(kPackageTestName, 1, true);
-            Assert.Throws<ArgumentException>(() => 
+            Assert.Throws<ArgumentException>(() =>
             {
                 new Package("", packages);
             });
@@ -56,7 +56,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         [Test]
         public void Constructor_WithNullPackageInfos_ThrowsException()
         {
-            Assert.Throws<ArgumentNullException>(() => 
+            Assert.Throws<ArgumentNullException>(() =>
             {
                 new Package(kPackageTestName, null);
             });
@@ -66,67 +66,67 @@ namespace UnityEditor.PackageManager.UI.Tests
         public void Constructor_WithEmptyPackageInfos_ThrowsException()
         {
             var packages = Enumerable.Empty<PackageInfo>();
-            Assert.Throws<ArgumentException>(() => 
+            Assert.Throws<ArgumentException>(() =>
             {
                 new Package(kPackageTestName, packages);
             });
         }
-        
+
         [Test]
         public void Constructor_WithOnePackageInfo_CurrentIsFirstVersion()
         {
             var packages = PackageSets.Instance.Many(kPackageTestName, 1, true);
             var package = new Package(kPackageTestName, packages);
-            
+
             Assert.AreEqual(package.Current, package.Versions.First());
             Assert.IsTrue(package.Current.IsCurrent);
         }
-        
+
         [Test]
         public void Constructor_WithOnePackageInfo_LatestIsLastVersion()
         {
             var packages = PackageSets.Instance.Many(kPackageTestName, 1, true);
             var package = new Package(kPackageTestName, packages);
-            
+
             Assert.AreEqual(package.Latest, package.Versions.Last());
             Assert.IsTrue(package.Latest.IsCurrent);
         }
-        
+
         [Test]
         public void Constructor_WithOnePackageInfo_LatestAndCurrentAreEqual()
         {
             var packages = PackageSets.Instance.Many(kPackageTestName, 1, true);
             var package = new Package(kPackageTestName, packages);
-            
+
             Assert.AreEqual(package.Current, package.Latest);
         }
-        
+
         [Test]
         public void Constructor_WithTwoPackageInfos_CurrentIsFirstVersion()
         {
             var packages = PackageSets.Instance.Many(kPackageTestName, 2, true);
             var package = new Package(kPackageTestName, packages);
-            
+
             Assert.AreEqual(package.Current, package.Versions.First());
             Assert.IsTrue(package.Current.IsCurrent);
         }
-        
+
         [Test]
         public void Constructor_WithTwoPackageInfos_LatestIsLastVersion()
         {
             var packages = PackageSets.Instance.Many(kPackageTestName, 2, true);
             var package = new Package(kPackageTestName, packages);
-            
+
             Assert.AreEqual(package.Latest, package.Versions.Last());
             Assert.IsFalse(package.Latest.IsCurrent);
         }
-        
+
         [Test]
         public void Constructor_WithTwoPackagesInfo_LatestAndCurrentAreNotEqual()
         {
             var packages = PackageSets.Instance.Many(kPackageTestName, 2, true);
             var package = new Package(kPackageTestName, packages);
-            
+
             Assert.AreNotEqual(package.Current, package.Latest);
         }
 
@@ -138,7 +138,7 @@ namespace UnityEditor.PackageManager.UI.Tests
 
             Assert.AreEqual(packages, package.Versions);
         }
-        
+
         [Test]
         public void Add_WhenPackageInfoIsCurrent_AddOperationIsNotCalled()
         {
@@ -151,11 +151,11 @@ namespace UnityEditor.PackageManager.UI.Tests
             {
                 addOperationCalled = true;
             };
-            
+
             package.AddSignal.OnOperation += OnAddOperation;
             package.Add(packages.First());
             package.AddSignal.OnOperation -= OnAddOperation;
-            
+
             Assert.IsFalse(addOperationCalled);
         }
 
@@ -172,13 +172,14 @@ namespace UnityEditor.PackageManager.UI.Tests
             {
                 addOperationCalled = true;
             };
-            
+
             package.AddSignal.OnOperation += OnAddOperation;
             package.Add(packages[1]);
             package.AddSignal.OnOperation -= OnAddOperation;
-            
+
             Assert.IsTrue(addOperationCalled);
         }
+
         [Test]
         public void Update_WhenCurrentIsLatest_AddOperationIsNotCalled()
         {
@@ -191,14 +192,14 @@ namespace UnityEditor.PackageManager.UI.Tests
             {
                 addOperationCalled = true;
             };
-            
+
             package.AddSignal.OnOperation += OnAddOperation;
             package.Update();
             package.AddSignal.OnOperation -= OnAddOperation;
-            
+
             Assert.IsFalse(addOperationCalled);
         }
-        
+
         [Test]
         public void Update_WhenCurrentIsNotLatest_AddOperationIsCalled()
         {
@@ -212,14 +213,14 @@ namespace UnityEditor.PackageManager.UI.Tests
             {
                 addOperationCalled = true;
             };
-            
+
             package.AddSignal.OnOperation += OnAddOperation;
             package.Update();
             package.AddSignal.OnOperation -= OnAddOperation;
-            
+
             Assert.IsTrue(addOperationCalled);
         }
-        
+
         [Test]
         public void Remove_RemoveOperationIsCalled()
         {
@@ -232,11 +233,11 @@ namespace UnityEditor.PackageManager.UI.Tests
             {
                 removeOperationCalled = true;
             };
-            
+
             package.RemoveSignal.OnOperation += OnRemoveOperation;
             package.Remove();
             package.RemoveSignal.OnOperation -= OnRemoveOperation;
-            
+
             Assert.IsTrue(removeOperationCalled);
         }
 
@@ -248,47 +249,47 @@ namespace UnityEditor.PackageManager.UI.Tests
                 PackageSets.Instance.Single(PackageSource.Unknown, Package.packageManagerUIName, "1.0.0")
             };
             var package = new Package(Package.packageManagerUIName, packages);
-            
+
             Assert.IsTrue(package.IsPackageManagerUI);
         }
-        
+
         [Test]
         public void IsPackageManagerUI_WhenNotPackageManagerUIPackage_ReturnsFalse()
         {
             var packages = PackageSets.Instance.Many(kPackageTestName, 1, true);
             var package = new Package(kPackageTestName, packages);
-            
+
             Assert.IsFalse(package.IsPackageManagerUI);
         }
-        
+
         [Test]
         public void Name_ReturnsExpectedValue()
         {
             var packages = PackageSets.Instance.Many(kPackageTestName, 1, true);
             var package = new Package(kPackageTestName, packages);
-            
+
             Assert.AreEqual(kPackageTestName, package.Name);
         }
-        
+
         [Test]
         public void Display_WhenCurrentIsNotNull_ReturnsCurrent()
         {
             var packages = PackageSets.Instance.Many(kPackageTestName, 2, true);
             var package = new Package(kPackageTestName, packages);
-            
+
             Assert.AreEqual(package.Current, Display(package));
         }
-        
+
         [Test]
         public void Display_WhenCurrentIsNull_ReturnsLatest()
         {
             var packages = PackageSets.Instance.Many(kPackageTestName, 2, true);
             packages[0].IsCurrent = false;
             var package = new Package(kPackageTestName, packages);
-            
+
             Assert.AreEqual(package.Latest, Display(package));
         }
-        
+
         [Test]
         public void Display_WhenCurrentAndLatest_ReturnsLatest()
         {
@@ -299,16 +300,16 @@ namespace UnityEditor.PackageManager.UI.Tests
 
             Assert.AreEqual(Display(package).Version, answer);
         }
-        
+
         [Test]
         public void Versions_WhenOrderedPackageInfo_ReturnsOrderedValues()
         {
             var packages = PackageSets.Instance.Many(kPackageTestName, 5, true);
             var package = new Package(kPackageTestName, packages);
-            
+
             Assert.AreEqual(packages, package.Versions);
         }
-        
+
         [Test]
         public void Versions_WhenUnorderedPackageInfo_ReturnsOrderedValues()
         {
@@ -320,9 +321,9 @@ namespace UnityEditor.PackageManager.UI.Tests
             packages[4].Version = new SemVersion(3);
 
             var orderPackages = packages.OrderBy(p => p.Version);
-            
+
             var package = new Package(kPackageTestName, packages);
-            
+
             Assert.AreEqual(orderPackages, package.Versions);
         }
 
@@ -336,7 +337,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             var package = new Package(name, new List<PackageInfo>
             {
-                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", true), 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", true),
                 PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false, true),        // Verified
                 PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0", false)
             });
@@ -361,7 +362,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             var package = new Package(name, new List<PackageInfo>
             {
-                PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0", true), 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0", true),
                 PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false, true),        // Verified
             });
 
@@ -373,7 +374,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             var package = new Package(name, new List<PackageInfo>
             {
-                PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0", true), 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0", true),
                 PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false, true),        // Verified
                 PackageSets.Instance.Single(PackageSource.Registry, name, "4.0.0", false)
             });
@@ -386,7 +387,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             var package = new Package(name, new List<PackageInfo>
             {
-                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", true), 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", true),
                 PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false),
                 PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0", false)
             });
@@ -399,19 +400,19 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             var package = new Package(name, new List<PackageInfo>
             {
-                PackageSets.Instance.Single(PackageSource.Registry, name, "0.0.0", false), 
-                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", true) 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "0.0.0", false),
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", true)
             });
 
             Assert.IsTrue(package.LatestUpdate.Version == "1.0.0");
         }
-        
+
         [Test]
         public void VersionUpdate_NoCurrent_WithVerified()
         {
             var package = new Package(name, new List<PackageInfo>
             {
-                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false, true),    // verified 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false, true),    // verified
                 PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false)
             });
 
@@ -423,7 +424,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             var package = new Package(name, new List<PackageInfo>
             {
-                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false), 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false),
                 PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false)
             });
 
@@ -435,7 +436,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             var package = new Package(name, new List<PackageInfo>
             {
-                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false), 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false),
                 PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false),
                 PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0-preview", false)
             });
@@ -448,7 +449,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             var package = new Package(name, new List<PackageInfo>
             {
-                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false, true),    // verified 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false, true),    // verified
                 PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false),
                 PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0-preview", false)
             });
@@ -461,7 +462,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             var package = new Package(name, new List<PackageInfo>
             {
-                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0-preview", false), 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0-preview", false),
                 PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0-preview", false)
             });
 
@@ -473,20 +474,20 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             var package = new Package(name, new List<PackageInfo>
             {
-                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false, true),    // verified 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false, true),    // verified
                 PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false),
                 PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0-preview", true)    // current
             });
 
             Assert.IsTrue(package.LatestUpdate.Version == "3.0.0-preview");
         }
-        
+
         [Test]
         public void VersionUpdate_CurrentPreview_WithLatestPreview()
         {
             var package = new Package(name, new List<PackageInfo>
             {
-                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false, true),    // verified 
+                PackageSets.Instance.Single(PackageSource.Registry, name, "1.0.0", false, true),    // verified
                 PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false),
                 PackageSets.Instance.Single(PackageSource.Registry, name, "3.0.0-preview", true),    // current
                 PackageSets.Instance.Single(PackageSource.Registry, name, "4.0.0-preview", false)
@@ -514,7 +515,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             var package = new Package(name, new List<PackageInfo>
             {
-                PackageSets.Instance.Single(PackageSource.Embedded, name, "1.0.0", true), 
+                PackageSets.Instance.Single(PackageSource.Embedded, name, "1.0.0", true),
                 PackageSets.Instance.Single(PackageSource.Registry, name, "2.0.0", false, true),    // verified
             });
 
