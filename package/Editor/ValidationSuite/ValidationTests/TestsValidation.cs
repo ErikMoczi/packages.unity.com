@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Runtime.Remoting.Contexts;
+using System.Threading;
 
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
@@ -28,19 +29,43 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 return;
 
             var testDir = Path.Combine(Context.PublishPackageInfo.path, "Tests");
-            if (!Directory.Exists(testDir))
+            if (!Directory.Exists(testDir) && !Context.ProjectPackageInfo.relatedPackages.Any())
+            {
+                AddMissingTestsErrors();
+                return;
+            }
+            
+            // let's look for files in the "test" directory.
+            matchingFiles.Clear();
+            DirectorySearch(testDir, "*.cs", matchingFiles);
+            if (!matchingFiles.Any() && !Context.ProjectPackageInfo.relatedPackages.Any())
             {
                 AddMissingTestsErrors();
                 return;
             }
 
-            // let's look for files in the "test" directory.
-            matchingFiles.Clear();
-            DirectorySearch(testDir, "*.cs", matchingFiles);
-            if (!matchingFiles.Any())
+            //Check if there are relatedPackages that may contain the tests
+            foreach (var relatedPackage in Context.ProjectPackageInfo.relatedPackages)
             {
-                AddMissingTestsErrors();
-                return;
+                var relatedPackagePath = Path.Combine(Directory.GetParent(Context.ProjectPackageInfo.path).ToString(), relatedPackage.Key);
+
+                var relatedPackageTestDir = Path.Combine(relatedPackagePath, "Tests");
+                if (!Directory.Exists(relatedPackageTestDir))
+                {
+                    AddMissingTestsErrors();
+                    return;
+                }
+            
+                // let's look for files in the "test" directory.
+                matchingFiles.Clear();
+                DirectorySearch(relatedPackageTestDir, "*.cs", matchingFiles);
+                if (!matchingFiles.Any())
+                {
+                    AddMissingTestsErrors();
+                    return;
+                }
+                
+                
             }
 
             // TODO: Go through files, make sure they have actual tests.
@@ -48,6 +73,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             // TODO: Can we evaluate coverage imperically for now, until we have code coverage numbers?
 
         }
+
 
         private void AddMissingTestsErrors()
         {

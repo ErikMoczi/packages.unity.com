@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.Remoting.Contexts;
@@ -52,6 +53,7 @@ internal class VettingContext
         public List<SampleData> samples = new List<SampleData>();
         public Dictionary<string, string> repository = new Dictionary<string, string>();
         public Dictionary<string, string> dependencies = new Dictionary<string, string>();
+        public Dictionary<string, string> relatedPackages = new Dictionary<string, string>();
 
         public bool IsPreview
         {
@@ -118,6 +120,8 @@ internal class VettingContext
         {
             context.PublishPackageInfo = context.ProjectPackageInfo;
         }
+
+        GetRelatedPackages(context);
 
 #if UNITY_2018_1_OR_NEWER
         // No need to compare against the previous version of the package if we're testing out the verified set.
@@ -196,6 +200,7 @@ internal class VettingContext
         var manifest = JsonUtility.FromJson<ManifestData>(textManifestData);
         manifest.path = packagePath;
         manifest.dependencies = ParseDictionary(textManifestData, "dependencies");
+        manifest.relatedPackages = ParseDictionary(textManifestData, "relatedPackages");
         manifest.repository = ParseDictionary(textManifestData, "repository");
 
         return manifest;
@@ -233,6 +238,37 @@ internal class VettingContext
         var packageName = Utilities.CreatePackage(projectPackagePath, tempPath);
         var publishPackagePath = Path.Combine(tempPath, "publish-" + context.ProjectPackageInfo.Id);
         return Utilities.ExtractPackage(packageName, tempPath, publishPackagePath, context.ProjectPackageInfo.name);
+    }
+
+    private static void GetRelatedPackages(VettingContext context)
+    {
+#if UNITY_2018_1_OR_NEWER
+
+        foreach (var relatedPackage in context.ProjectPackageInfo.relatedPackages)
+        {
+            var relatedPackagePath = "";
+            var offlineFoundPackages = Utilities.UpmListOffline(relatedPackage.Key);
+            if (offlineFoundPackages.Any())
+            {
+                relatedPackagePath = offlineFoundPackages[0].resolvedPath;
+                
+            }
+            
+            if (Utilities.PackageExistsOnProduction(relatedPackage.Key))
+            {
+                var tempPath = Path.GetTempPath();
+                var packageFileName = Utilities.DownloadPackage(relatedPackage.Key, tempPath);
+                var packagesPath = Path.Combine(Directory.GetParent(context.ProjectPackageInfo.path).ToString(), relatedPackage.Key);
+                relatedPackagePath = Utilities.ExtractPackage(packageFileName, tempPath, packagesPath, relatedPackage.Key);
+            }
+
+            if (relatedPackagePath.Equals(""))
+            {
+                Debug.Log("Cannot find the relatedPackage " + relatedPackage.Key + " locally or remotely");
+            }
+        }
+#endif      
+        
     }
 
     private static string GetPreviousPackage(ManifestData projectPackageInfo)

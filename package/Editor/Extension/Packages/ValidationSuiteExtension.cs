@@ -2,7 +2,11 @@
 #define NEW_PACKMAN
 
 using UnityEditor.PackageManager.UI;
-using UnityEngine.Experimental.UIElements;
+#if UNITY_2019_1_OR_NEWER
+	using UnityEngine.UIElements;
+#else
+	using UnityEngine.Experimental.UIElements;
+#endif
 
 namespace UnityEditor.PackageManager.ValidationSuite.UI
 {
