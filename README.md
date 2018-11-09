@@ -1,1 +1,1 @@
-Roslyn C# code analysis and evaluation tool.
+Roslyn C# code analysis and evaluation tool for Unity.
