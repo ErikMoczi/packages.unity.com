@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.2.0-preview.7] 2018-10-29
+* Hopefully all CI issues are resolved now.
+  
 ## [0.2.0-preview.4] 2018-10-24
 * Merged in gneral settings support. Initial implentation allows for ability to assign an XR Manager instance for loading XR SDK at boot launch time.
 
