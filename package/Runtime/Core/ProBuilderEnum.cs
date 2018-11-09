@@ -39,11 +39,15 @@ namespace UnityEngine.ProBuilder
 		/// </summary>
 		TextureFace = 1 << 4,
 
-		// TextureEdge = 1 << 5,
-		Reserved0 = 1 << 5,
+		/// <summary>
+		/// Texture coordinates are selectable.
+		/// </summary>
+		TextureEdge = 1 << 5,
 
-		// TextureVertex = 1 << 6,
-		Reserved1 = 1 << 6,
+		/// <summary>
+		/// Texture coordinates are selectable.
+		/// </summary>
+		TextureVertex = 1 << 6,
 
 		/// <summary>
 		/// Other input tool (Poly Shape editor, Bezier editor, etc)
@@ -372,7 +376,7 @@ namespace UnityEngine.ProBuilder
         /// </summary>
         Tangents = 0x8,
         /// <summary>
-        /// If userCollisions is not true, any primitive colliders will be resized to best fit the mesh bounds.
+        /// Re-assign the MeshCollider sharedMesh.
         /// </summary>
         Collisions = 0x10,
         /// <summary>

@@ -298,44 +298,14 @@ namespace UnityEngine.ProBuilder
 
 		void RefreshCollisions()
 		{
-			Mesh m = mesh;
+			mesh.RecalculateBounds();
 
-			m.RecalculateBounds();
+			var meshCollider = GetComponent<MeshCollider>();
 
-			if (!userCollisions && GetComponent<Collider>())
+			if (meshCollider != null)
 			{
-				foreach (Collider c in gameObject.GetComponents<Collider>())
-				{
-					System.Type t = c.GetType();
-
-					if (t == typeof(BoxCollider))
-					{
-						((BoxCollider)c).center = m.bounds.center;
-						((BoxCollider)c).size = m.bounds.size;
-					}
-					else if (t == typeof(SphereCollider))
-					{
-						((SphereCollider)c).center = m.bounds.center;
-						((SphereCollider)c).radius = Math.LargestValue(m.bounds.extents);
-					}
-					else if (t == typeof(CapsuleCollider))
-					{
-						((CapsuleCollider)c).center = m.bounds.center;
-						Vector2 xy = new Vector2(m.bounds.extents.x, m.bounds.extents.z);
-						((CapsuleCollider)c).radius = Math.LargestValue(xy);
-						((CapsuleCollider)c).height = m.bounds.size.y;
-					}
-					else if (t == typeof(WheelCollider))
-					{
-						((WheelCollider)c).center = m.bounds.center;
-						((WheelCollider)c).radius = Math.LargestValue(m.bounds.extents);
-					}
-					else if (t == typeof(MeshCollider))
-					{
-						gameObject.GetComponent<MeshCollider>().sharedMesh = null; // this is stupid.
-						gameObject.GetComponent<MeshCollider>().sharedMesh = m;
-					}
-				}
+				gameObject.GetComponent<MeshCollider>().sharedMesh = null;
+				gameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
 			}
 		}
 
@@ -492,6 +462,40 @@ namespace UnityEngine.ProBuilder
 		/// <summary>
 		/// Populate a list of vertices that are coincident to any of the vertices in the passed vertices parameter.
 		/// </summary>
+		/// <param name="faces">A collection of faces to gather vertices from.</param>
+		/// <param name="coincident">A list to be cleared and populated with any vertices that are coincident.</param>
+		/// <exception cref="ArgumentNullException">The vertices and coincident parameters may not be null.</exception>
+		public void GetCoincidentVertices(IEnumerable<Face> faces, List<int> coincident)
+		{
+			if (faces == null)
+				throw new ArgumentNullException("faces");
+
+			if (coincident == null)
+				throw new ArgumentNullException("coincident");
+
+			s_CachedHashSet.Clear();
+			var lookup = sharedVertexLookup;
+
+			foreach(var face in faces)
+			{
+				foreach (var v in face.distinctIndexesInternal)
+				{
+					var common = lookup[v];
+
+					if (s_CachedHashSet.Add(common))
+					{
+						var indices = m_SharedVertices[common];
+
+						for (int i = 0, c = indices.Count; i < c; i++)
+							coincident.Add(indices[i]);
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Populate a list of vertices that are coincident to any of the vertices in the passed vertices parameter.
+		/// </summary>
 		/// <param name="vertices">A collection of indexes relative to the mesh positions.</param>
 		/// <param name="coincident">A list to be cleared and populated with any vertices that are coincident.</param>
 		/// <exception cref="ArgumentNullException">The vertices and coincident parameters may not be null.</exception>
@@ -511,7 +515,12 @@ namespace UnityEngine.ProBuilder
 				var common = lookup[v];
 
 				if (s_CachedHashSet.Add(common))
-					coincident.AddRange(m_SharedVertices[common]);
+				{
+					var indices = m_SharedVertices[common];
+
+					for (int i = 0, c = indices.Count; i < c; i++)
+						coincident.Add(indices[i]);
+				}
 			}
 		}
 
@@ -532,7 +541,10 @@ namespace UnityEngine.ProBuilder
 			if (!sharedVertexLookup.TryGetValue(vertex, out common))
 				throw new ArgumentOutOfRangeException("vertex");
 
-			coincident.AddRange(m_SharedVertices[common]);
+			var indices = m_SharedVertices[common];
+
+			for (int i = 0, c = indices.Count; i < c; i++)
+				coincident.Add(indices[i]);
 		}
 
 		/// <summary>

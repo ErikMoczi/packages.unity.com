@@ -8,7 +8,13 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
+#if SETTINGS_PROVIDER_ENABLED
+#if UNITY_2018_3
 using UnityEngine.Experimental.UIElements;
+#else
+using UnityEngine.UIElements;
+#endif
+#endif
 
 namespace UnityEditor.SettingsManagement
 {
@@ -50,6 +56,16 @@ namespace UnityEditor.SettingsManagement
 		}
 #else
 		const int k_LabelWidth = 180;
+
+		int labelWidth
+		{
+			get { return k_LabelWidth; }
+		}
+
+		int defaultLayoutMaxWidth
+		{
+			get { return 0; }
+		}
 #endif
 
 		List<string> m_Categories;
@@ -86,11 +102,11 @@ namespace UnityEditor.SettingsManagement
 			}
 		}
 
-		internal static UserSetting<bool> showHiddenSettings = new UserSetting<bool>(userSettingsProviderSettings, "settings.showHidden", false, SettingsScopes.User);
-		internal static UserSetting<bool> showUnregisteredSettings = new UserSetting<bool>(userSettingsProviderSettings, "settings.showUnregistered", false, SettingsScopes.User);
-		internal static UserSetting<bool> listByKey = new UserSetting<bool>(userSettingsProviderSettings, "settings.listByKey", false, SettingsScopes.User);
-		internal static UserSetting<bool> showUserSettings = new UserSetting<bool>(userSettingsProviderSettings, "settings.showUserSettings", false, SettingsScopes.User);
-		internal static UserSetting<bool> showProjectSettings = new UserSetting<bool>(userSettingsProviderSettings, "settings.showProjectSettings", false, SettingsScopes.User);
+		internal static UserSetting<bool> showHiddenSettings = new UserSetting<bool>(userSettingsProviderSettings, "settings.showHidden", false, SettingsScope.User);
+		internal static UserSetting<bool> showUnregisteredSettings = new UserSetting<bool>(userSettingsProviderSettings, "settings.showUnregistered", false, SettingsScope.User);
+		internal static UserSetting<bool> listByKey = new UserSetting<bool>(userSettingsProviderSettings, "settings.listByKey", false, SettingsScope.User);
+		internal static UserSetting<bool> showUserSettings = new UserSetting<bool>(userSettingsProviderSettings, "settings.showUserSettings", false, SettingsScope.User);
+		internal static UserSetting<bool> showProjectSettings = new UserSetting<bool>(userSettingsProviderSettings, "settings.showProjectSettings", false, SettingsScope.User);
 
 #if SETTINGS_PROVIDER_ENABLED
 		/// <summary>
@@ -101,7 +117,7 @@ namespace UnityEditor.SettingsManagement
 		/// <param name="assemblies">A collection of assemblies to scan for <see cref="UserSettingAttribute"/> and <see cref="UserSettingBlockAttribute"/> attributes.</param>
 		/// <param name="scopes">Which scopes this provider is valid for.</param>
 		/// <exception cref="ArgumentNullException">Thrown if settings or assemblies is null.</exception>
-		public UserSettingsProvider(string path, Settings settings, Assembly[] assemblies, SettingsScopes scopes = SettingsScopes.Any)
+		public UserSettingsProvider(string path, Settings settings, Assembly[] assemblies, SettingsScope scopes = SettingsScope.User)
 			: base(path, scopes)
 #else
 		/// <summary>
@@ -122,8 +138,6 @@ namespace UnityEditor.SettingsManagement
 			m_Assemblies = assemblies;
 
 #if !SETTINGS_PROVIDER_ENABLED
-			m_SettingsInstance.beforeSettingsSaved += OnBeforeSettingsSaved;
-			m_SettingsInstance.afterSettingsSaved += OnAfterSettingsSaved;
 			SearchForUserSettingAttributes();
 #endif
 		}
@@ -174,7 +188,7 @@ namespace UnityEditor.SettingsManagement
 
 		void SearchForUserSettingAttributes()
 		{
-			keywords.Clear();
+			var keywordsHash = new HashSet<string>();
 
 			if(m_Settings != null)
 				m_Settings.Clear();
@@ -273,11 +287,12 @@ namespace UnityEditor.SettingsManagement
 					if(content != null && !string.IsNullOrEmpty(content.text))
 					{
 						foreach (var word in content.text.Split(' '))
-							keywords.Add(word);
+							keywordsHash.Add(word);
 					}
 				}
 			}
 
+			keywords = keywordsHash;
 			m_Categories = m_Settings.Keys.Union(m_SettingBlocks.Keys).ToList();
 			m_Categories.Sort();
 		}
@@ -302,7 +317,7 @@ namespace UnityEditor.SettingsManagement
 			m_SettingsBlockKeywordsInitialized = Event.current.type;
 
 			// Allows SettingsGUILayout.SettingsField to populate keywords
-			SettingsGUILayout.s_Keywords = keywords;
+			SettingsGUILayout.s_Keywords = new HashSet<string>(keywords);
 
 			// Set a dummy value so that GUI blocks with conditional foldouts will behave as though searching.
 			s_SearchContext[0] = "Search";
@@ -313,6 +328,7 @@ namespace UnityEditor.SettingsManagement
 					block.Invoke(null, s_SearchContext);
 			}
 
+			keywords = SettingsGUILayout.s_Keywords;
 			SettingsGUILayout.s_Keywords = null;
 			s_SearchContext[0] = "";
 		}
@@ -375,7 +391,7 @@ namespace UnityEditor.SettingsManagement
 
 				menu.AddItem(new GUIContent("Developer/Open Project Settings File"), false, () =>
 				{
-					var project = m_SettingsInstance.GetRepository(SettingsScopes.Project);
+					var project = m_SettingsInstance.GetRepository(SettingsScope.Project);
 
 					if (project != null)
 					{
@@ -489,9 +505,9 @@ namespace UnityEditor.SettingsManagement
 		{
 			if (EditorPrefs.GetBool("DeveloperMode", false))
 			{
-				if (pref.scope == SettingsScopes.Project && !showProjectSettings)
+				if (pref.scope == SettingsScope.Project && !showProjectSettings)
 					return;
-				if (pref.scope == SettingsScopes.User && !showUserSettings)
+				if (pref.scope == SettingsScope.User && !showUserSettings)
 					return;
 			}
 

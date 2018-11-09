@@ -3,6 +3,15 @@ using UnityEngine;
 
 namespace UnityEditor.SettingsManagement
 {
+#if !UNITY_2018_3_OR_NEWER
+    public enum SettingsScope
+    {
+        Any = 0x0,
+        User = 0x1,
+        Project = 0x2
+    }
+#endif
+
     /// <summary>
     /// Register a static field of type IUserSetting with the UserSettingsProvider window.
     /// </summary>
@@ -68,7 +77,7 @@ namespace UnityEditor.SettingsManagement
     public sealed class SettingsKeyAttribute : Attribute
     {
         string m_Key;
-        SettingsScopes m_Scope;
+        SettingsScope m_Scope;
 
         /// <value>
         /// The key for this value.
@@ -81,7 +90,7 @@ namespace UnityEditor.SettingsManagement
         /// <value>
         /// Where this setting is serialized.
         /// </value>
-        public SettingsScopes scope
+        public SettingsScope scope
         {
             get { return m_Scope; }
         }
@@ -92,7 +101,7 @@ namespace UnityEditor.SettingsManagement
         /// </summary>
         /// <param name="key">The setting key.</param>
         /// <param name="scope">The scope in which this setting is serialized.</param>
-        public SettingsKeyAttribute(string key, SettingsScopes scope = SettingsScopes.Project)
+        public SettingsKeyAttribute(string key, SettingsScope scope = SettingsScope.Project)
         {
             m_Key = key;
             m_Scope = scope;
