@@ -38,7 +38,7 @@ Next, create a new Profile. In this example it is called "Editor Hosted".
 
 ![Create Profile](images/HostingServicesProfiles_1.png)
 
-Now modify all variables used for loading paths (such as `LocalLoadPath` and `RemoteLoadPath` in this example) to instead load from the hosting service. With HttpHostingService, this is a URL that uses the local IP address and the port assigned to the service. From the Hosting Services window, you can use the Profile Variables named `PrivateIPAddress` and `HostingServicePort` to construct the url. e.g. `http://[PrivateIPAddress]:[HostingServicePort]`
+Now modify all variables used for loading paths (such as `LocalLoadPath` and `RemoteLoadPath` in this example) to instead load from the hosting service. With HttpHostingService, this is a URL that uses the local IP address and the port assigned to the service. From the Hosting Services window, you can use the Profile Variables named `PrivateIpAddress` and `HostingServicePort` to construct the url. e.g. `http://[PrivateIpAddress]:[HostingServicePort]`
 
 Additionally, modify all variables used for build paths (such as `LocalBuildPath` and `RemoteBuildPath`) to point to a common directory outside of the project `Assets` folder.
 

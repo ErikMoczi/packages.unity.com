@@ -44,3 +44,4 @@
 0.4.5-preview
 0.4.6-preview
 0.4.7-preview
+0.4.7-preview20181108-nightly
