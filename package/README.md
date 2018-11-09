@@ -2,7 +2,7 @@
 
 This package provides for management of **XR SDK** subsystem lifecycles without the need for boilerplate code as well as support for provider specific build settings.
 
-This package is primarily intented for XR SDK Package authors to provide management tools and touchpoints for their package users. As such, most end users will have this package installed transitively through install of the end user XR SDK package using it.
+This package is primarily intented for XR SDK Package authors to provide management tools and touchpoints for their package users. As such, most end users will have thispackage installed transitievly through install and end user XR SDK pacakge using it.
 
 ## Installing XR Management
 

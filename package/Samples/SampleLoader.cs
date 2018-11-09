@@ -28,7 +28,7 @@ namespace Samples
         SampleSettings GetSettings()
         {
             SampleSettings settings = null;
-            // When running in the Unity Editor, we have to load user's customization of configuration data directly from
+            // When running in the Unit Editor, we can a users customization of configuration data directly form
             // EditorBuildSettings. At runtime, we need to grab it from the static instance field instead.
             #if UNITY_EDITOR
             UnityEditor.EditorBuildSettings.TryGetConfigObject(SampleConstants.k_SettingsKey, out settings);

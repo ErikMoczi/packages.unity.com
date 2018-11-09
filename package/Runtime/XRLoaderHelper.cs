@@ -99,11 +99,7 @@ namespace UnityEngine.XR.Management
                     if (descriptor.id == id)
                     {
                         IntegratedSubsystem s = descriptor.Create();
-                        if (s != null)
-                        {
-                            m_SubsystemInstanceMap[typeof(TSubsystem)] = s;
-                            break;
-                        }
+                        m_SubsystemInstanceMap[typeof(TSubsystem)] = s;
                     }
                 }
             }
