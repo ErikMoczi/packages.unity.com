@@ -57,6 +57,16 @@ namespace UnityEngine.XR.ARExtensions
         }
 
         /// <summary>
+        /// For internal use. Allows a camera provider to register for the GetNativePtr extension.
+        /// </summary>
+        /// <param name="subsystemId">The string name associated with the camera provider to extend.</param>
+        /// <param name="handler">A method that returns an <c>IntPtr</c> associated with a <c>XRCameraSubsystem</c>.</param>
+        public static void RegisterGetNativePtrHandler(string subsystemId, Func<XRCameraSubsystem, IntPtr> handler)
+        {
+            s_GetNativePtrDelegates[subsystemId] = handler;
+        }
+
+        /// <summary>
         /// Allows a camera provider to register support for <see cref="ICameraImageApi"/>.
         /// This is typically only used by platform-specific packages.
         /// </summary>
@@ -98,6 +108,19 @@ namespace UnityEngine.XR.ARExtensions
         }
 
         /// <summary>
+        /// Retrieve a native <c>IntPtr</c> associated with the <c>XRCameraSubsystem</c>.
+        /// </summary>
+        /// <param name="cameraSubsystem">The <c>XRCameraSubsystem</c> being extended.</param>
+        /// <returns>An <c>IntPtr</c> associated with <paramref name="cameraSubsystem"/>.</returns>
+        public static IntPtr GetNativePtr(this XRCameraSubsystem cameraSubsystem)
+        {
+            if (cameraSubsystem == null)
+                throw new ArgumentNullException("cameraSubsystem");
+
+            return s_GetNativePtrDelegate(cameraSubsystem);
+        }
+
+        /// <summary>
         /// Attempt to get the latest camera image. This provides directly access to the raw
         /// pixel data, as well as utilities to convert to RGB and Grayscale formats.
         /// The <see cref="CameraImage"/> must be disposed to avoid resource leaks.
@@ -136,6 +159,7 @@ namespace UnityEngine.XR.ARExtensions
         public static void ActivateExtensions(this XRCameraSubsystem cameraSubsystem)
         {
             if (cameraSubsystem == null)
+
             {
                 SetDefaultDelegates();
             }
@@ -144,6 +168,7 @@ namespace UnityEngine.XR.ARExtensions
                 var id = cameraSubsystem.SubsystemDescriptor.id;
                 s_IsPermissionGrantedDelegate = RegistrationHelper.GetValueOrDefault(s_IsPermissionGrantedDelegates, id, DefaultIsPermissionGranted);
                 s_TryGetColorCorrectionDelegate = RegistrationHelper.GetValueOrDefault(s_TryGetColorCorrectionDelegates, id, DefaultTryGetColorCorrection);
+                s_GetNativePtrDelegate = RegistrationHelper.GetValueOrDefault(s_GetNativePtrDelegates, id, DefaultGetNativePtr);
                 s_AsyncCameraImageApi = RegistrationHelper.GetValueOrDefault(s_CameraImageApis, id, s_DefaultAsyncCameraImageApi);
             }
         }
@@ -157,6 +182,11 @@ namespace UnityEngine.XR.ARExtensions
         {
             color = default(Color);
             return false;
+        }
+
+        static IntPtr DefaultGetNativePtr(XRCameraSubsystem cameraSubsystem)
+        {
+            return IntPtr.Zero;
         }
 
         class DefaultCameraImageApi : ICameraImageApi
@@ -229,6 +259,7 @@ namespace UnityEngine.XR.ARExtensions
         {
             s_IsPermissionGrantedDelegate = DefaultIsPermissionGranted;
             s_TryGetColorCorrectionDelegate = DefaultTryGetColorCorrection;
+            s_GetNativePtrDelegate = DefaultGetNativePtr;
             s_AsyncCameraImageApi = s_DefaultAsyncCameraImageApi;
         }
 
@@ -240,6 +271,7 @@ namespace UnityEngine.XR.ARExtensions
 
         static Func<XRCameraSubsystem, bool> s_IsPermissionGrantedDelegate;
         static TryGetColorCorrectionDelegate s_TryGetColorCorrectionDelegate;
+        static Func<XRCameraSubsystem, IntPtr> s_GetNativePtrDelegate;
         static ICameraImageApi s_AsyncCameraImageApi;
         static DefaultCameraImageApi s_DefaultAsyncCameraImageApi;
 
@@ -248,6 +280,9 @@ namespace UnityEngine.XR.ARExtensions
 
         static Dictionary<string, TryGetColorCorrectionDelegate> s_TryGetColorCorrectionDelegates =
             new Dictionary<string, TryGetColorCorrectionDelegate>();
+
+        static Dictionary<string, Func<XRCameraSubsystem, IntPtr>> s_GetNativePtrDelegates =
+            new Dictionary<string, Func<XRCameraSubsystem, IntPtr>>();
 
         static Dictionary<string, ICameraImageApi> s_CameraImageApis =
             new Dictionary<string, ICameraImageApi>();

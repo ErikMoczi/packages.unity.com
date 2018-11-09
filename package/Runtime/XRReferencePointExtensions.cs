@@ -30,6 +30,16 @@ namespace UnityEngine.XR.ARExtensions
         }
 
         /// <summary>
+        /// For internal use. Allows a reference point provider to register for the <see cref="GetNativePtr(XRReferencePointSubsystem, TrackableId)"/> extension.
+        /// </summary>
+        /// <param name="subsystemId">The string name associated with the reference point provider to extend.</param>
+        /// <param name="handler">A method that returns the <c>IntPtr</c> associated with a given <c>TrackableId</c>.</param>
+        public static void RegisterGetNativePtrHandler(string subsystemId, Func<XRReferencePointSubsystem, TrackableId, IntPtr> handler)
+        {
+            s_GetNativePtrDelegates[subsystemId] = handler;
+        }
+
+        /// <summary>
         /// Creates a new reference point that is "attached" to an existing trackable, like a plane.
         /// The reference point will update with the trackable according to rules specific to that
         /// trackable type.
@@ -54,6 +64,28 @@ namespace UnityEngine.XR.ARExtensions
         }
 
         /// <summary>
+        /// Retrieves a native <c>IntPtr</c> associated with a reference point with <c>TrackableId</c>
+        /// <paramref name="trackableId"/>.
+        /// </summary>
+        /// <param name="referencePointSubsystem">The <c>XRReferencePointSubsystem</c> being extended.</param>
+        /// <param name="trackableId">The <c>TrackableId</c> of a reference point.</param>
+        /// <returns>An <c>IntPtr</c> associated with the reference point, or <c>IntPtr.Zero</c> if unavailable.</returns>
+        public static IntPtr GetNativePtr(this XRReferencePointSubsystem referencePointSubsystem,
+            TrackableId referencePointId)
+        {
+            if (referencePointSubsystem == null)
+                throw new ArgumentNullException("referencePointSubsystem");
+
+            return s_GetNativePtrDelegate(referencePointSubsystem, referencePointId);
+        }
+
+        static IntPtr DefaultGetNativePtr(XRReferencePointSubsystem referencePointSubsystem,
+            TrackableId trackableId)
+        {
+            return IntPtr.Zero;
+        }
+
+        /// <summary>
         /// Sets the active subsystem whose extension methods should be used.
         /// </summary>
         /// <param name="referencePointSubsystem">The <c>XRReferencePointSubsystem</c> being extended.</param>
@@ -67,12 +99,14 @@ namespace UnityEngine.XR.ARExtensions
             {
                 var id = referencePointSubsystem.SubsystemDescriptor.id;
                 s_AttachReferencePointDelegate = RegistrationHelper.GetValueOrDefault(s_AttachReferencePointDelegates, id, DefaultAttachReferencePoint);
+                s_GetNativePtrDelegate = RegistrationHelper.GetValueOrDefault(s_GetNativePtrDelegates, id, DefaultGetNativePtr);
             }
         }
 
         static void SetDefaultDelegates()
         {
             s_AttachReferencePointDelegate = DefaultAttachReferencePoint;
+            s_GetNativePtrDelegate = DefaultGetNativePtr;
         }
 
         static XRReferencePointExtensions()
@@ -81,8 +115,12 @@ namespace UnityEngine.XR.ARExtensions
         }
 
         static AttachReferencePointDelegate s_AttachReferencePointDelegate;
+        static Func<XRReferencePointSubsystem, TrackableId, IntPtr> s_GetNativePtrDelegate;
 
         static Dictionary<string, AttachReferencePointDelegate> s_AttachReferencePointDelegates =
             new Dictionary<string, AttachReferencePointDelegate>();
+
+        static Dictionary<string, Func<XRReferencePointSubsystem, TrackableId, IntPtr>> s_GetNativePtrDelegates =
+            new Dictionary<string, Func<XRReferencePointSubsystem, TrackableId, IntPtr>>();
     }
 }

@@ -18,6 +18,19 @@ namespace UnityEngine.XR.ARExtensions
         public delegate Promise<T> AsyncDelegate<T>(XRSessionSubsystem sessionSubsystem);
 
         /// <summary>
+        /// Registers a handler for retrieving a platform-specific <c>IntPtr</c> associated with the session.
+        /// </summary>
+        /// <remarks>
+        /// A platform-specific package should implement a method to get a native ptr and register it using this method.
+        /// </remarks>
+        /// <param name="subsystemId">The string name associated with the package's session subsystem.</param>
+        /// <param name="handler">The delegate which returns an <c>IntPtr</c> associated with the session.</param>
+        public static void RegisterGetNativePtrHandler(string subsystemId, Func<XRSessionSubsystem, IntPtr> handler)
+        {
+            s_GetNativePtrDelegates[subsystemId] = handler;
+        }
+
+        /// <summary>
         /// Registers a handler for asynchronous AR software installation. See <see cref="InstallAsync(XRSessionSubsystem)"/>.
         /// </summary>
         /// <remarks>
@@ -91,6 +104,26 @@ namespace UnityEngine.XR.ARExtensions
         }
 
         /// <summary>
+        /// Retrieves a native <c>IntPtr</c> associated with the <c>XRSessionSubsystem</c>.
+        /// Note: This is for advanced usage or access to platform-specific features
+        /// not exposed by the existing API.
+        /// </summary>
+        /// <param name="sessionSubsystem">The <c>XRSessionSubsystem</c> to extend.</param>
+        /// <returns>An <c>IntPtr</c> associated with the platform-specific session.</returns>
+        public static IntPtr GetNativePtr(this XRSessionSubsystem sessionSubsystem)
+        {
+            if (sessionSubsystem == null)
+                throw new ArgumentNullException("sessionSubsystem");
+
+            return s_GetNativePtrDelegate(sessionSubsystem);
+        }
+
+        static IntPtr DefaultGetNativePtr(XRSessionSubsystem sessionSubsystem)
+        {
+            return IntPtr.Zero;
+        }
+
+        /// <summary>
         /// For internal use. Sets the active subsystem whose extension methods should be used.
         /// </summary>
         /// <param name="sessionSubsystem">The <c>XRSessionSubsystem</c> being extended.</param>
@@ -105,6 +138,7 @@ namespace UnityEngine.XR.ARExtensions
                 var id = sessionSubsystem.SubsystemDescriptor.id;
                 s_InstallAsyncDelegate = RegistrationHelper.GetValueOrDefault(s_InstallAsyncDelegates, id, DefaultInstallAsync);
                 s_GetAvailabilityAsyncDelegate = RegistrationHelper.GetValueOrDefault(s_GetAvailabilityAsyncDelegates, id, DefaultGetAvailabilityAsync);
+                s_GetNativePtrDelegate = RegistrationHelper.GetValueOrDefault(s_GetNativePtrDelegates, id, DefaultGetNativePtr);
             }
         }
 
@@ -112,6 +146,7 @@ namespace UnityEngine.XR.ARExtensions
         {
             s_InstallAsyncDelegate = DefaultInstallAsync;
             s_GetAvailabilityAsyncDelegate = DefaultGetAvailabilityAsync;
+            s_GetNativePtrDelegate = DefaultGetNativePtr;
         }
 
         static XRSessionExtensions()
@@ -121,11 +156,15 @@ namespace UnityEngine.XR.ARExtensions
 
         static AsyncDelegate<SessionInstallationStatus> s_InstallAsyncDelegate;
         static AsyncDelegate<SessionAvailability> s_GetAvailabilityAsyncDelegate;
+        static Func<XRSessionSubsystem, IntPtr> s_GetNativePtrDelegate;
 
         static Dictionary<string, AsyncDelegate<SessionInstallationStatus>> s_InstallAsyncDelegates =
             new Dictionary<string, AsyncDelegate<SessionInstallationStatus>>();
 
         static Dictionary<string, AsyncDelegate<SessionAvailability>> s_GetAvailabilityAsyncDelegates =
             new Dictionary<string, AsyncDelegate<SessionAvailability>>();
+
+        static Dictionary<string, Func<XRSessionSubsystem, IntPtr>> s_GetNativePtrDelegates =
+            new Dictionary<string, Func<XRSessionSubsystem, IntPtr>>();
     }
 }

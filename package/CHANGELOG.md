@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-preview.6] - 2018-10-06
+### Fixes
+- Fix crash when repeatedly enabling and disabling AR
+
+### Improvements
+- Add native pointer support in several subsystems.
+- Switch default session availability check to return `SessionAvailability.None` instead of supported. This was previously there for backwards compatibility before all platforms implemented this method. Now it can cause confusion if the platform is not correctly installed.
+- Add IL2CPP linker validation utility for use in platform-specific packages to prevent runtime assembly stripping.
+
 ## [1.0.0-preview.5] - 2018-10-10
 - Added new API to `XRCameraExtensions` to access the raw camera image data on the CPU. See the [ARFoundation manual documentation](https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/manual/cpu-camera-image.html) for more information.
 
