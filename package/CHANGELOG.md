@@ -4,6 +4,22 @@ All notable changes to this project template will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2018-10-24
+
+### Changed
+- Updating HD version
+- AndroidTVCompatibility to false
+
+## [1.0.6] - 2018-09-24
+
+### Changed
+- Oculus XR settings default to dash support and depth export enabled.
+- updated default webgl memory size
+- updated default upload manager ring buffer to 16mb
+- HD updated to 4.0.0-preview
+- updating PP Vinette to be less extreme
+- fixing position of reflection probes 
+
 ## [1.0.5] - 2018-09-06
 
 ### Changed
