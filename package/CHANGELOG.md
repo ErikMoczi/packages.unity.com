@@ -4,8 +4,8 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.1.0] - 2017-MM-DD
+## [0.0.9-preview] - 2018-11-14
 
-### This is the first release of *Unity Package \<Your package name\>*.
+### This is the first release of *Unity Package com.unity.test-framework*.
 
-*Short description of this release*
+- Migrated the test-framework from the current extension in unity.
