@@ -82,7 +82,7 @@ namespace Unity.Properties
         public override void Accept(TContainer container, IPropertyVisitor visitor)
         {
             var context = new VisitContext<TValue> {Property = this, Value = GetValue(container), Index = -1};
-            if (!visitor.ExcludeOrCustomVisit(container, context))
+            if (false == visitor.ExcludeOrCustomVisit(container, context))
             {
                 visitor.Visit(container, context);
             }
@@ -91,7 +91,7 @@ namespace Unity.Properties
 
     /// <inheritdoc />
     /// <summary>
-    /// Property of a class thats hosts a nested class (IPropertyContainer) value
+    /// Property of a class that hosts a nested class (IPropertyContainer) value
     /// </summary>
     /// <typeparam name="TContainer"></typeparam>
     /// <typeparam name="TValue"></typeparam>

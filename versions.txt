@@ -43,3 +43,4 @@
 0.3.6-preview
 0.3.7-preview
 0.3.8-preview
+0.4.0-preview

@@ -47,6 +47,21 @@ namespace Unity.Properties
             m_Parts = new List<Part>(path.m_Parts);
         }
 
+        public void Insert(int index, string propertyName, int listIndex = InvalidListIndex)
+        {
+            Assert.IsFalse(string.IsNullOrEmpty(propertyName));
+
+            if (listIndex < 0)
+            {
+                listIndex = InvalidListIndex;
+            }
+            m_Parts.Insert(index, new Part()
+            {
+                propertyName = propertyName,
+                listIndex = listIndex
+            });
+        }
+
         public void Push(string propertyName, int listIndex = InvalidListIndex)
         {
             Assert.IsFalse(string.IsNullOrEmpty(propertyName));

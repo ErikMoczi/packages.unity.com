@@ -4,96 +4,216 @@ using System.Collections.Generic;
 
 namespace Unity.Properties
 {
-    /// <summary>
-    /// Generic visitable class
-    /// </summary>
-    public interface IVisitableClass
+    internal interface IVisitableClass
     {
         void Visit<TContainer>(TContainer container, IPropertyVisitor visitor)
             where TContainer : class, IPropertyContainer;
     }
 
-    /// <summary>
-    /// Generic visitable struct class
-    /// </summary>
-    public interface IVisitableStruct
+    internal interface IVisitableStruct
     {
         void Visit<TContainer>(ref TContainer container, IPropertyVisitor visitor)
             where TContainer : struct, IPropertyContainer;
     }
     
-    /// <summary>
-    /// Typed visitable class
-    /// </summary>
-    /// <typeparam name="TContainer"></typeparam>
-    public interface IVisitableClass<in TContainer>
+    internal interface IVisitableClass<in TContainer>
         where TContainer : IPropertyContainer
     {
         void Visit(TContainer container, IPropertyVisitor visitor);
     }
     
-    /// <summary>
-    /// Typed visitable struct
-    /// </summary>
-    /// <typeparam name="TContainer"></typeparam>
-    public interface IVisitableStruct<TContainer>
+    internal interface IVisitableStruct<TContainer>
         where TContainer : struct, IPropertyContainer
     {
         void Visit(ref TContainer container, IPropertyVisitor visitor);
     }
     
+    /// <summary>
+    /// Represents a property visit context.
+    /// Object created by <see cref="IProperty"/> implementations and passed to the <see cref="IPropertyVisitor"/> API.
+    /// </summary>
+    /// <typeparam name="TValue">Type of the <see cref="IProperty"/> value being visited.</typeparam>
     public struct VisitContext<TValue>
     {
+        /// <summary>
+        /// Property being visited.
+        /// </summary>
         public IProperty Property;
+        
+        /// <summary>
+        /// Property value.
+        /// </summary>
         public TValue Value;
+        
+        /// <summary>
+        /// Property value index within the collection.
+        /// If the <see cref="Property"/> is not a collection property, -1 is returned.
+        /// </summary>
         public int Index;
     }
 
+    /// <summary>
+    /// Base interface for all property visitors.
+    /// </summary>
+    /// <remarks>
+    /// The intent of this interface is to support: non-allocating visits to class and struct <see cref="IPropertyContainer"/>,
+    /// visit exclusion and customization mechanisms, nested property containers, and collection properties.
+    /// </remarks>
     public interface IPropertyVisitor
     {
+        /// <summary>
+        /// Whether or not to exclude the visit of this container in the given context.
+        /// </summary>
+        /// <param name="container">Container about to be visited.</param>
+        /// <param name="context">Visit context object.</param>
+        /// <typeparam name="TContainer">Container type.</typeparam>
+        /// <typeparam name="TValue">Property value type.</typeparam>
+        /// <returns>true if the visit should be excluded, false otherwise.</returns>
         bool ExcludeVisit<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
             where TContainer : class, IPropertyContainer;
         
+        /// <summary>
+        /// Whether or not to exclude the visit of this container in the given context.
+        /// </summary>
+        /// <param name="container">Container about to be visited.</param>
+        /// <param name="context">Visit context object.</param>
+        /// <typeparam name="TContainer">Container type.</typeparam>
+        /// <typeparam name="TValue">Property value type.</typeparam>
+        /// <returns>true if the visit should be excluded, false otherwise.</returns>
         bool ExcludeVisit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
             where TContainer : struct, IPropertyContainer;
         
+        /// <summary>
+        /// Whether or not a custom visit was performed on this container in the given context.
+        /// </summary>
+        /// <param name="container">Container to visit.</param>
+        /// <param name="context">Visit context object.</param>
+        /// <typeparam name="TContainer">Container type.</typeparam>
+        /// <typeparam name="TValue">Property value type.</typeparam>
+        /// <returns>true if a custom visit was performed, false otherwise.</returns>
         bool CustomVisit<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
             where TContainer : class, IPropertyContainer;
         
+        /// <summary>
+        /// Whether or not a custom visit was performed on this container in the given context.
+        /// </summary>
+        /// <param name="container">Container to visit.</param>
+        /// <param name="context">Visit context object.</param>
+        /// <typeparam name="TContainer">Container type.</typeparam>
+        /// <typeparam name="TValue">Property value type.</typeparam>
+        /// <returns>true if a custom visit was performed, false otherwise.</returns>
         bool CustomVisit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
             where TContainer : struct, IPropertyContainer;
         
+        /// <summary>
+        /// Performs a generic visit on this container in the given context.
+        /// </summary>
+        /// <param name="container">Container to visit.</param>
+        /// <param name="context">Visit context object.</param>
+        /// <typeparam name="TContainer">Container type.</typeparam>
+        /// <typeparam name="TValue">Property value type.</typeparam>
         void Visit<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
             where TContainer : class, IPropertyContainer;
         
+        /// <summary>
+        /// Performs a generic visit on this container in the given context.
+        /// </summary>
+        /// <param name="container">Container to visit.</param>
+        /// <param name="context">Visit context object.</param>
+        /// <typeparam name="TContainer">Container type.</typeparam>
+        /// <typeparam name="TValue">Property value type.</typeparam>
         void Visit<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
             where TContainer : struct, IPropertyContainer;
         
+        /// <summary>
+        /// Method called when visiting a nested <see cref="IPropertyContainer"/> property.
+        /// </summary>
+        /// <param name="container">Container to visit.</param>
+        /// <param name="context">Visit context object.</param>
+        /// <typeparam name="TContainer">Container type.</typeparam>
+        /// <typeparam name="TValue">Property value type.</typeparam>
+        /// <returns>true if the visit should enter this nested container, false otherwise.</returns>
         bool BeginContainer<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
             where TContainer : class, IPropertyContainer
             where TValue : IPropertyContainer;
         
+        /// <summary>
+        /// Method called when visiting a nested <see cref="IPropertyContainer"/> property.
+        /// </summary>
+        /// <param name="container">Container to visit.</param>
+        /// <param name="context">Visit context object.</param>
+        /// <typeparam name="TContainer">Container type.</typeparam>
+        /// <typeparam name="TValue">Property value type.</typeparam>
+        /// <returns>true if the visit should enter this nested container, false otherwise.</returns>
         bool BeginContainer<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
             where TContainer : struct, IPropertyContainer
             where TValue : IPropertyContainer;
 
+        /// <summary>
+        /// Method always called after <see cref="BeginContainer{TContainer,TValue}(TContainer,Unity.Properties.VisitContext{TValue})"/>,
+        /// regardless of its return value.
+        /// </summary>
+        /// <param name="container">Container to visit.</param>
+        /// <param name="context">Visit context object.</param>
+        /// <typeparam name="TContainer">Container type.</typeparam>
+        /// <typeparam name="TValue">Property value type.</typeparam>
         void EndContainer<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
             where TContainer : class, IPropertyContainer
             where TValue : IPropertyContainer;
         
+        /// <summary>
+        /// Method always called after <see cref="BeginContainer{TContainer,TValue}(ref TContainer,Unity.Properties.VisitContext{TValue})"/>,
+        /// regardless of its return value.
+        /// </summary>
+        /// <param name="container">Container to visit.</param>
+        /// <param name="context">Visit context object.</param>
+        /// <typeparam name="TContainer">Container type.</typeparam>
+        /// <typeparam name="TValue">Property value type.</typeparam>
         void EndContainer<TContainer, TValue>(ref TContainer container, VisitContext<TValue> context)
             where TContainer : struct, IPropertyContainer
             where TValue : IPropertyContainer;
 
+        /// <summary>
+        /// Method called when visiting a collection property.
+        /// </summary>
+        /// <param name="container">Container to visit.</param>
+        /// <param name="context">Visit context object.</param>
+        /// <typeparam name="TContainer">Container type.</typeparam>
+        /// <typeparam name="TValue">Property value type.</typeparam>
+        /// <returns>true if the visit should enter this collection, false otherwise.</returns>
         bool BeginCollection<TContainer, TValue>(TContainer container, VisitContext<IList<TValue>> context)
             where TContainer : class, IPropertyContainer;
         
+        /// <summary>
+        /// Method called when visiting a collection property.
+        /// </summary>
+        /// <param name="container">Container to visit.</param>
+        /// <param name="context">Visit context object.</param>
+        /// <typeparam name="TContainer">Container type.</typeparam>
+        /// <typeparam name="TValue">Property value type.</typeparam>
+        /// <returns>true if the visit should enter this collection, false otherwise.</returns>
         bool BeginCollection<TContainer, TValue>(ref TContainer container, VisitContext<IList<TValue>> context)
             where TContainer : struct, IPropertyContainer;
 
+        /// <summary>
+        /// Method always called after <see cref="BeginCollection{TContainer,TValue}(TContainer,Unity.Properties.VisitContext{System.Collections.Generic.IList{TValue}})"/>,
+        /// regardless of its return value.
+        /// </summary>
+        /// <param name="container">Container to visit.</param>
+        /// <param name="context">Visit context object.</param>
+        /// <typeparam name="TContainer">Container type.</typeparam>
+        /// <typeparam name="TValue">Property value type.</typeparam>
         void EndCollection<TContainer, TValue>(TContainer container, VisitContext<IList<TValue>> context)
             where TContainer : class, IPropertyContainer;
         
+        /// <summary>
+        /// Method always called after <see cref="BeginCollection{TContainer,TValue}(ref TContainer,Unity.Properties.VisitContext{System.Collections.Generic.IList{TValue}})"/>,
+        /// regardless of its return value.
+        /// </summary>
+        /// <param name="container">Container to visit.</param>
+        /// <param name="context">Visit context object.</param>
+        /// <typeparam name="TContainer">Container type.</typeparam>
+        /// <typeparam name="TValue">Property value type.</typeparam>
         void EndCollection<TContainer, TValue>(ref TContainer container, VisitContext<IList<TValue>> context)
             where TContainer : struct, IPropertyContainer;
     }
@@ -103,7 +223,7 @@ namespace Unity.Properties
     /// See <see cref="PropertyVisitor"/> for usage.
     /// </summary>
     /// <typeparam name="TValue">Property value type to visit.</typeparam>
-    public interface ICustomVisit<TValue>
+    public interface ICustomVisit<in TValue>
     {
         /// <summary>
         /// Performs the visitor logic on this property value type.
@@ -112,7 +232,7 @@ namespace Unity.Properties
         void CustomVisit(TValue value);
     }
     
-    /// <inheritdoc cref="ICustomVisit"/>
+    /// <inheritdoc cref="ICustomVisit{TValue}"/>
     /// <summary>
     /// ICustomVisit declarations for all .NET primitive types.
     /// </summary>

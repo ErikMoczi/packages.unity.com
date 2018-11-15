@@ -669,7 +669,7 @@ namespace Unity.Properties
 
                     if (visitor.BeginContainer(container, context))
                     {
-                        value.Visit(visitor);
+                        value?.Visit(visitor);
                     }
                     visitor.EndContainer(container, context);
                 }

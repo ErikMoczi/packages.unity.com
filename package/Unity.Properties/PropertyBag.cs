@@ -90,8 +90,13 @@ namespace Unity.Properties
                 }
                 else
                 {
-                    // Valid scenario when IPropertyContainer is used as TContainer
+                    // Valid scenario when IPropertyContainer is used as TContainer for a class
                     (property as IClassProperty)?.Accept(container, visitor);
+
+                    // Valid scenario when IPropertyContainer is used as TContainer for a struct
+                    // @TODO Fixme
+                    IPropertyContainer c = container;
+                    (property as IStructProperty)?.Accept(ref c, visitor);
                 }
             }
         }
