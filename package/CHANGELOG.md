@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.47] - 2018-11-14
+
+### Remove debug logs
+
 ## [0.1.46] - 2018-11-14
 
 ### Fix breaking changes introduced by testrunner API rename

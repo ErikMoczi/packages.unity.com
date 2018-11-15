@@ -31,7 +31,6 @@ namespace Unity.PerformanceTesting
             {
                 SetUps = GetMethodsWithAttributeFromFixture(Test.TypeInfo.Type, typeof(UnitySetUpAttribute));
                 TearDowns = GetMethodsWithAttributeFromFixture(Test.TypeInfo.Type, typeof(UnityTearDownAttribute));
-                Debug.Log(innerCommand.Test.Name + " " + SetUps.Length + " " + TearDowns.Length);
             }
         }
 
