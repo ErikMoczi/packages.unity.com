@@ -7,6 +7,10 @@ using NUnit.Framework.Internal.Builders;
 using UnityEngine;
 using UnityEngine.TestTools;
 
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.TestRunner.NUnitExtensions.Runner;
+#endif
+
 namespace Unity.PerformanceTesting
 {
     [AttributeUsage(AttributeTargets.Method)]
@@ -39,7 +43,9 @@ namespace Unity.PerformanceTesting
 
         public TestCommand Wrap(TestCommand command)
         {
-        #if UNITY_2018_2_OR_NEWER
+        #if UNITY_2019_1_OR_NEWER
+            return new PerformanceTestCommand(new UnityEngine.TestTools.SetUpTearDownCommand(new UnityLogCheckDelegatingCommand(new EnumerableTestMethodCommand((TestMethod)command.Test))));
+        #elif UNITY_2018_2_OR_NEWER
             return new PerformanceTestCommand(new EnumerableSetUpTearDownCommand(new EnumerableTestMethodCommand((TestMethod)command.Test)));
         #else
             return new PerformanceTestCommand((TestMethod) command.Test);

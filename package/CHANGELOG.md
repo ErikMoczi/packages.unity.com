@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.46] - 2018-11-14
+
+### Fix breaking changes introduced by testrunner API rename
+
 ## [0.1.45] - 2018-11-8
 
 ### Fix breaking changes to data submodule
