@@ -26,7 +26,7 @@ To install the Performance Testing Extension package
 ``` json
 {
     "dependencies": {
-        "com.unity.test-framework.performance": "0.1.47-preview",
+        "com.unity.test-framework.performance": "0.1.48-preview",
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0",
         "com.unity.modules.unityanalytics": "1.0.0",
@@ -301,6 +301,20 @@ When running performance tests on editor or standalone platforms, the framework 
 *Note: If the button is not visible, it means profiler data has not been saved for the test.*
 
 ![Open profiler button](images/graphtool2.png)
+
+## Unity alpha version compatibility
+
+Unity alpha releases include a lot of changes and some of them can lead to breaking compatible with the Performance Testing Extension. We cannot currently make the package work with each version of Unity alpha releases, therefore we will provide details on which version of the package is compatible in case of a breaking change.
+
+
+We are actively testing the latest version of the Performance Testing Extension package with latest versions of Unity 2018.1, 2018.2, 2018.3 and 2019.1 to make sure these Unity versions are compatible with the latest version of the package.
+
+### Breaking changes
+
+**Unity versions 2019.1.0a01 - 2019.1.0a10**
+
+For these Unity versions use version `0.1.42-preview` or older of the Performance Testing Extension package. Latest version of the package does not work with these Unity versions.
+
 
 ## Tips
 

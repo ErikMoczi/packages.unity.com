@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.48] - 2018-11-22
+
+### Doc updates and ignore GC api in editor due to api issues
+
 ## [0.1.47] - 2018-11-14
 
 ### Remove debug logs

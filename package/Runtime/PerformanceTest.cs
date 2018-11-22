@@ -50,6 +50,8 @@ namespace Unity.PerformanceTesting
             Active.StartTime = Utils.DateToInt(DateTime.Now);
             StartProfile(Utils.RemoveIllegalCharacters(currentTest.FullName));
 #if UNITY_2019_1_OR_NEWER
+            if(Application.isEditor)
+                return;
             var settings = currentTest.Method.GetCustomAttributes<PerformanceSettingsAttribute>(false);
             if (settings.Length == 1) 
                 if(settings[0].enableGC)
@@ -78,7 +80,10 @@ namespace Unity.PerformanceTesting
         internal static void EndTest(Test test)
         {
 #if UNITY_2019_1_OR_NEWER
-            UnityEngine.Scripting.GarbageCollector.GCMode = UnityEngine.Scripting.GarbageCollector.Mode.Enabled;
+            if(Application.isEditor)
+            {
+                UnityEngine.Scripting.GarbageCollector.GCMode = UnityEngine.Scripting.GarbageCollector.Mode.Enabled;
+            }
 #endif
             
             if (test.IsSuite) return;
