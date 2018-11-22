@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.4-preview.38
+
+- Fix issue when converting an unsigned integer constant to a larger unsigned integer (e.g (ulong)uint.MaxValue)
+- Fix crash in editor when IRAnalysis can return an empty string 
+- Fix potential crash of Cecil when reading symbols from assembly definition
+
 ## 0.2.4-preview.37
 
 - Fix a crash on Linux and MacOS in the editor with dlopen crashing when trying to load burst-llvm (linux)
