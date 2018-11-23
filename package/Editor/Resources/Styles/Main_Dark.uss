@@ -224,7 +224,7 @@
 #searchContainer #searchCancelButton {
   width: 14px;
   height: 15px;
-  min-height: unset;
+  min-height: 15px;
   background-image: resource("Builtin Skins/DarkSkin/Images/toolbarsearchCancelButtonOff.png");
   flex: 0 0 auto;
   padding-top: 0;
@@ -239,7 +239,7 @@
   -unity-slice-left: 0;
   -unity-slice-bottom: 1px;
   -unity-slice-right: 14px;
-  margin-top: 3px;
+  margin-top: 1px;
   margin-left: -10px;
   margin-bottom: 0;
   margin-right: 0;
@@ -483,7 +483,7 @@
 }
 #detailListView #packageListGroup #groupContainerOuter #headerContainer #headerTitle {
   height: 0;
-  min-height: unset;
+  min-height: 0;
   margin-top: 0;
   margin-left: 0;
   margin-bottom: 0;
@@ -627,7 +627,6 @@
   border-color: rgba(0, 0, 0, 0.5);
 }
 #detailListView .packageItem #itemVersions #versionsToolbar .unity-label {
-  overflow: hidden;
   padding-top: 1px;
   padding-left: 2px;
   padding-bottom: 2px;
@@ -699,7 +698,6 @@
   padding-left: 2px;
   padding-bottom: 2px;
   padding-right: 2px;
-  overflow: hidden;
 }
 #detailListView #detailView .detail #detailVersion {
   font-size: 16px;
@@ -823,6 +821,7 @@
   -unity-text-align: middle-left;
 }
 #detailListView #detailView .detail #samplesContainer #importButtonContainer Button {
+  overflow: visible;
   margin-top: 4px;
   margin-left: 8px;
   margin-bottom: 4px;
@@ -1081,22 +1080,16 @@
   padding-right: 2px;
 }
 #detailListView #dependenciesOuterContainer #dependenciesInnerContainer #dependenciesContainer #dependenciesNames {
-  flex: 0 0 auto;
-  flex-direction: column;
   margin-left: -4px;
   margin-bottom: 3px;
   margin-right: 8px;
 }
 #detailListView #dependenciesOuterContainer #dependenciesInnerContainer #dependenciesContainer #dependenciesVersions {
-  flex: 0 0 auto;
-  flex-direction: column;
   margin-left: 2px;
   margin-bottom: 3px;
   margin-right: 2px;
 }
 #detailListView #dependenciesOuterContainer #dependenciesInnerContainer #dependenciesContainer #dependenciesVersions {
-  flex: 0 0 auto;
-  flex-direction: column;
   margin-left: 2px;
   margin-bottom: 3px;
   margin-right: 2px;

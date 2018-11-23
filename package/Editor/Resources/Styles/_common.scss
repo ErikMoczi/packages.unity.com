@@ -299,11 +299,11 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 	#searchCancelButton {
 		width: 14px;
 		height: 15px;
-		min-height: unset;
+		min-height: 15px;
 		background-image: $toolbar-search-cancel-off-background;
 		@include button-box(0);
 		@include slice(1px, 14px, 1px, 0);
-		@include margin(3px, 0, 0, -10px);
+		@include margin(1px, 0, 0, -10px);
 		@include padding-box(0);
 		@include border-box(0);
 
@@ -480,7 +480,7 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 
 				#headerTitle {
 					height: 0;
-					min-height: unset;
+					min-height: 0;
 					@include margin-box(0);
 					@include padding-box(0);
 					@include border-box(0);
@@ -637,7 +637,6 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 				border-color: rgba(0, 0, 0, 0.5);
 
 				.unity-label {
-					overflow: hidden;
 					@include padding(1px, 2px, 2px, 2px);
 					@include margin(2px, 4px, 2px, 4px);
 					min-height: unset;
@@ -705,7 +704,6 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 			.unity-label {
 				@include margin(2px, 4px, 2px, 4px);
 				@include padding(1px, 2px, 2px, 2px);
-				overflow:hidden;
 			}
 			
 			#detailVersion {
@@ -841,6 +839,7 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 
 				#importButtonContainer {
 					Button {
+						overflow: visible;
 						@include margin(4px, 12px, 4px, 8px);
 						height: 20px;
 					}
@@ -1070,20 +1069,14 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 				}
 
 				#dependenciesNames {
-					flex: 0 0 auto;
-					flex-direction: column;
 					@include margin(auto, 8px, 3px, -4px);
 				}
 
 				#dependenciesVersions {
-					flex: 0 0 auto;
-					flex-direction: column;
 					@include margin(auto, 2px, 3px, 2px);
 				}
 
 				#dependenciesVersions {
-					flex: 0 0 auto;
-					flex-direction: column;
 					@include margin(auto, 2px, 3px, 2px);
 				}
 			}

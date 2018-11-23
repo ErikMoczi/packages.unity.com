@@ -601,18 +601,18 @@ namespace UnityEditor.PackageManager.UI
 
         private void RemoveClick()
         {
-            var result = 0;    // Cancel
+            var result = 1;    // Cancel
             if (!PackageManagerPrefs.SkipRemoveConfirmation)
             {
                 result = EditorUtility.DisplayDialogComplex("Removing Package",
                     "Are you sure you wanted to remove this package?",
-                    "Cancel", "Remove", "Remove and do not ask again");
+                    "Remove", "Cancel", "Remove and do not ask again");
             }
             else
-                result = 1;
+                result = 0;
 
             // Cancel
-            if (result == 0)
+            if (result == 1)
                 return;
 
             // Do not ask again

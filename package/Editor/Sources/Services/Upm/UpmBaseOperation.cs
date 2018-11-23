@@ -11,10 +11,10 @@ namespace UnityEditor.PackageManager.UI
 {
     internal abstract class UpmBaseOperation : IBaseOperation
     {
-        public static string GroupName(PackageSource origin)
+        public static string GroupName(PackageSource origin, string type)
         {
             var group = PackageGroupOrigins.Packages.ToString();
-            if (origin == PackageSource.BuiltIn)
+            if (PackageInfo.IsPackageBuiltIn(origin, type))
                 group = PackageGroupOrigins.BuiltInPackages.ToString();
 
             return group;
@@ -93,7 +93,7 @@ namespace UnityEditor.PackageManager.UI
                     IsLatest = version == lastCompatible,
                     IsVerified = isVerified,
                     Errors = info.errors.ToList(),
-                    Group = GroupName(info.source),
+                    Group = GroupName(info.source, info.type),
 					Type = info.type,
                     State = state,
                     Origin = isBuiltIn || isVersionCurrent ? info.source : PackageSource.Registry,

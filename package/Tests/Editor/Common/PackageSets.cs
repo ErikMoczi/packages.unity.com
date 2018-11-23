@@ -80,7 +80,7 @@ namespace UnityEditor.PackageManager.UI.Tests
                     version += "-preview";
             }
 
-            var group = UpmBaseOperation.GroupName(source);
+            var group = UpmBaseOperation.GroupName(source, type.ToString());
             var package = new PackageInfo
             {
                 DisplayName = char.ToUpper(name[0]) + name.Substring(1),

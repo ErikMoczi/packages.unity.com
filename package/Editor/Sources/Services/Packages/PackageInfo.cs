@@ -176,11 +176,16 @@ namespace UnityEditor.PackageManager.UI
             get { return IsCurrent || string.IsNullOrEmpty(Version.Prerelease) || HasVersionTag(PackageTag.preview) || IsVerified; }
         }
 
+        public static bool IsPackageBuiltIn(PackageSource source, string type)
+        {
+            return source == PackageSource.BuiltIn && type == PackageType.module.ToString(); 
+        }
+
         public bool IsInDevelopment { get { return Origin == PackageSource.Embedded; } }
         public bool IsLocal { get { return Origin == PackageSource.Local; } }
         public bool IsGit { get { return Origin == PackageSource.Git; } }
         // A builtin package is a module
-        public bool IsBuiltIn { get { return Origin == PackageSource.BuiltIn && Type == PackageType.module.ToString(); } }
+        public bool IsBuiltIn { get { return IsPackageBuiltIn(Origin, Type); } }
         // A core package is built from the trunk/Packages folder and has a version of 0.0.0-builtin
         public bool IsCore { get { return Version.Major == 0 && Version.Minor == 0 && Version.Patch == 0 && HasVersionTag(PackageTag.builtin); } }
 
