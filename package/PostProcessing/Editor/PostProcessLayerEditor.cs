@@ -12,10 +12,12 @@ namespace UnityEditor.Rendering.PostProcessing
     using EXRFlags = Texture2D.EXRFlags;
 
     [CanEditMultipleObjects, CustomEditor(typeof(PostProcessLayer))]
-    public sealed class PostProcessLayerEditor : BaseEditor<PostProcessLayer>
+    sealed class PostProcessLayerEditor : BaseEditor<PostProcessLayer>
     {
         SerializedProperty m_StopNaNPropagation;
+#pragma warning disable 414
         SerializedProperty m_DirectToCameraTarget;
+#pragma warning restore 414
         SerializedProperty m_VolumeTrigger;
         SerializedProperty m_VolumeLayer;
 

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
@@ -32,12 +33,15 @@ class PostProcessingTests : IPrebuildSetup
 #if UNITY_EDITOR
         Debug.Log("Adding scenes to build settings...");
 
-        var scenes = new EditorBuildSettingsScene[s_Scenes.Count];
+        var scenes = EditorBuildSettings.scenes.ToList();
 
         for (int i = 0; i < s_Scenes.Count; i++)
-            scenes[i] = new EditorBuildSettingsScene(s_Scenes[i], true);
+        {
+            if (!scenes.Exists(x => x.path == s_Scenes[i]))
+                scenes.Add(new EditorBuildSettingsScene(s_Scenes[i], true));
+        }
 
-        EditorBuildSettings.scenes = scenes;
+        EditorBuildSettings.scenes = scenes.ToArray();
 #endif
     }
 
@@ -56,11 +60,13 @@ class PostProcessingTests : IPrebuildSetup
         var bloom = profile.AddSettings<Bloom>();
         Assert.IsNotNull(bloom);
 
-        var exists = profile.TryGetSettings(out Bloom outBloom);
+        Bloom outBloom;
+        var exists = profile.TryGetSettings(out outBloom);
         Assert.IsTrue(exists);
         Assert.IsNotNull(outBloom);
 
-        exists = profile.TryGetSettings(out ChromaticAberration outChroma);
+        ChromaticAberration outChroma;
+        exists = profile.TryGetSettings(out outChroma);
         Assert.IsFalse(exists);
         Assert.IsNull(outChroma);
 
