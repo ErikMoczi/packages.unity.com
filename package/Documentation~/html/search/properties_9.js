@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['onremotenotificationreceived',['OnRemoteNotificationReceived',['../db/db1/class_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_manager.html#a805c35aac29f8f9b2e8a27cd88b32c7f',1,'Unity::Notifications::iOS::iOSNotificationManager']]]
+  ['onremotenotificationreceived',['OnRemoteNotificationReceived',['../dd/d32/class_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_center.html#a10ff2111595357a5f454dfdc7fe782d1',1,'Unity::Notifications::iOS::iOSNotificationCenter']]]
 ];

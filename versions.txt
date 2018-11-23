@@ -3,3 +3,4 @@
 0.9.3-preview
 0.9.4-preview
 0.9.5-preview
+0.9.6-preview

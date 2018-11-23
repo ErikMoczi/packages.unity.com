@@ -97,7 +97,7 @@ Properties</h2></td></tr>
 <tr class="memdesc:a49b5aa3f2ea95674aa72b1b0e845db95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Contains error information of the request failed for some reason or an empty string if no error occurred.  <a href="#a49b5aa3f2ea95674aa72b1b0e845db95">More...</a><br /></td></tr>
 <tr class="separator:a49b5aa3f2ea95674aa72b1b0e845db95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa47c025f6f9f51fc7e3f56c60c393f9e"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/dba/class_unity_1_1_notifications_1_1i_o_s_1_1_request_authorization_request.html#aa47c025f6f9f51fc7e3f56c60c393f9e">DeviceToken</a><code> [get]</code></td></tr>
-<tr class="memdesc:aa47c025f6f9f51fc7e3f56c60c393f9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">A globally unique token that identifies this device to Apple Push Notification Network. Send this token to the server that you use to generate remote notifications. Your server must pass this token unmodified back to APNs when sending those remote notifications. This property will be empty if you set the [[registerForRemoteNotifications]] to false when creating the Authorization requests or if the app fails registereing with the APN.  <a href="#aa47c025f6f9f51fc7e3f56c60c393f9e">More...</a><br /></td></tr>
+<tr class="memdesc:aa47c025f6f9f51fc7e3f56c60c393f9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">A globally unique token that identifies this device to Apple Push Notification Network. Send this token to the server that you use to generate remote notifications. Your server must pass this token unmodified back to APNs when sending those remote notifications. This property will be empty if you set the [[registerForRemoteNotifications]] to false when creating the Authorization requests or if the app fails registering with the APN.  <a href="#aa47c025f6f9f51fc7e3f56c60c393f9e">More...</a><br /></td></tr>
 <tr class="separator:aa47c025f6f9f51fc7e3f56c60c393f9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -106,7 +106,7 @@ Properties</h2></td></tr>
 <p>using (var req = new <a class="el" href="../../d8/dba/class_unity_1_1_notifications_1_1i_o_s_1_1_request_authorization_request.html" title="Use this to request authorization to interact with the user when local and remote notifications are d...">RequestAuthorizationRequest</a>(<a class="el" href="../../d1/d0e/namespace_unity_1_1_notifications_1_1i_o_s.html#aa788617412562d4572165e9ee1e06df1a0efadb6c3e45917172cab7dd06786515" title="The ability to display alerts. ">AuthorizationOption.AuthorizationOptionAlert</a> | <a class="el" href="../../d1/d0e/namespace_unity_1_1_notifications_1_1i_o_s.html#aa788617412562d4572165e9ee1e06df1a0468f934605ea04bb48e9f84defed6d9" title="The ability to update the app’s badge. ">AuthorizationOption.AuthorizationOptionBadge</a>, true)) { while (!req.IsFinished) { yield return null; };</p>
 <p>string ressult = "\n RequestAuthorization: \n"; ressult += "\n finished: " + req.IsFinished; ressult += "\n granted :  " + req.Granted; ressult += "\n error:  " + req.Error; ressult += "\n deviceToken:  " + req.DeviceToken; Debug.Log(res); } </p>
 
-<p class="definition">Definition at line <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html#l00602">602</a> of file <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html">iOSNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html#l00602">602</a> of file <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html">iOSNotificationCenter.cs</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="aa7e23015398d3f59a57ffe68c4bccc13"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa7e23015398d3f59a57ffe68c4bccc13">&#9670;&nbsp;</a></span>RequestAuthorizationRequest()</h2>
@@ -143,7 +143,7 @@ Properties</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html#l00634">634</a> of file <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html">iOSNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html#l00634">634</a> of file <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html">iOSNotificationCenter.cs</a>.</p>
 
 </div>
 </div>
@@ -168,9 +168,9 @@ Properties</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>A globally unique token that identifies this device to Apple Push Notification Network. Send this token to the server that you use to generate remote notifications. Your server must pass this token unmodified back to APNs when sending those remote notifications. This property will be empty if you set the [[registerForRemoteNotifications]] to false when creating the Authorization requests or if the app fails registereing with the APN. </p>
+<p>A globally unique token that identifies this device to Apple Push Notification Network. Send this token to the server that you use to generate remote notifications. Your server must pass this token unmodified back to APNs when sending those remote notifications. This property will be empty if you set the [[registerForRemoteNotifications]] to false when creating the Authorization requests or if the app fails registering with the APN. </p>
 
-<p class="definition">Definition at line <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html#l00623">623</a> of file <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html">iOSNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html#l00623">623</a> of file <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html">iOSNotificationCenter.cs</a>.</p>
 
 </div>
 </div>
@@ -196,7 +196,7 @@ Properties</h2></td></tr>
 
 <p>Contains error information of the request failed for some reason or an empty string if no error occurred. </p>
 
-<p class="definition">Definition at line <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html#l00617">617</a> of file <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html">iOSNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html#l00617">617</a> of file <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html">iOSNotificationCenter.cs</a>.</p>
 
 </div>
 </div>
@@ -222,7 +222,7 @@ Properties</h2></td></tr>
 
 <p>A property indicating whether authorization was granted. The value of this parameter is set tot true when authorization was granted for one or more options. The value is setr false when authorization is denied for all options. </p>
 
-<p class="definition">Definition at line <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html#l00612">612</a> of file <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html">iOSNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html#l00612">612</a> of file <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html">iOSNotificationCenter.cs</a>.</p>
 
 </div>
 </div>
@@ -248,12 +248,12 @@ Properties</h2></td></tr>
 
 <p></p>
 
-<p class="definition">Definition at line <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html#l00607">607</a> of file <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html">iOSNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html#l00607">607</a> of file <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html">iOSNotificationCenter.cs</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>Runtime/iOS/<a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html">iOSNotificationManager.cs</a></li>
+<li>Runtime/iOS/<a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html">iOSNotificationCenter.cs</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

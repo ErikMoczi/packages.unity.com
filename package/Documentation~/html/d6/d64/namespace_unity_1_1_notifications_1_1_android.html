@@ -79,8 +79,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d11/struct_unity_1_1_notifications_1_1_android_1_1_android_notification.html">AndroidNotification</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="../../dc/d11/struct_unity_1_1_notifications_1_1_android_1_1_android_notification.html" title="The AndroidNotification is used schedule a local notification, which includes the content of the noti...">AndroidNotification</a> is used schedule a local notification, which includes the content of the notification.  <a href="../../dc/d11/struct_unity_1_1_notifications_1_1_android_1_1_android_notification.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d4b/class_unity_1_1_notifications_1_1_android_1_1_android_notification_manager.html">AndroidNotificationManager</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Use the <a class="el" href="../../d1/d4b/class_unity_1_1_notifications_1_1_android_1_1_android_notification_manager.html" title="Use the AndroidNotificationManager to register notification channels and schedule local notifications...">AndroidNotificationManager</a> to register notification channels and schedule local notifications.  <a href="../../d1/d4b/class_unity_1_1_notifications_1_1_android_1_1_android_notification_manager.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d48/class_unity_1_1_notifications_1_1_android_1_1_android_notification_center.html">AndroidNotificationCenter</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Use the <a class="el" href="../../d1/d48/class_unity_1_1_notifications_1_1_android_1_1_android_notification_center.html" title="Use the AndroidNotificationCenter to register notification channels and schedule local notifications...">AndroidNotificationCenter</a> to register notification channels and schedule local notifications.  <a href="../../d1/d48/class_unity_1_1_notifications_1_1_android_1_1_android_notification_center.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
@@ -133,6 +133,7 @@ Enumerations</h2></td></tr>
 </div><div class="memdoc">
 
 <p>The level of interruption of this notification channel. The importance of a notification is used to determine how much the notification should interrupt the user (visually and audibly). The higher the importance of a notification, the more interruptive the notification will be. </p>
+<p>The exact behaviour of each importance level might vary depending on the device and OS version on devices running <a class="el" href="../../d6/d64/namespace_unity_1_1_notifications_1_1_android.html">Android</a> 7.1 or older. </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a41afec390c66555a41196dede6c19707a6adf97f83acf6453d4a6a4b1070f3754"></a>None&#160;</td><td class="fielddoc"><p>A notification with no importance: does not show in the shade. </p>
 </td></tr>
@@ -144,7 +145,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="../../dc/db0/_android_notification_manager_8cs_source.html#l00014">14</a> of file <a class="el" href="../../dc/db0/_android_notification_manager_8cs_source.html">AndroidNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d1/d49/_android_notification_center_8cs_source.html#l00017">17</a> of file <a class="el" href="../../d1/d49/_android_notification_center_8cs_source.html">AndroidNotificationCenter.cs</a>.</p>
 
 </div>
 </div>
@@ -178,7 +179,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="../../dc/db0/_android_notification_manager_8cs_source.html#l00040">40</a> of file <a class="el" href="../../dc/db0/_android_notification_manager_8cs_source.html">AndroidNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d1/d49/_android_notification_center_8cs_source.html#l00043">43</a> of file <a class="el" href="../../d1/d49/_android_notification_center_8cs_source.html">AndroidNotificationCenter.cs</a>.</p>
 
 </div>
 </div>
@@ -214,7 +215,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="../../dc/db0/_android_notification_manager_8cs_source.html#l00061">61</a> of file <a class="el" href="../../dc/db0/_android_notification_manager_8cs_source.html">AndroidNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d1/d49/_android_notification_center_8cs_source.html#l00064">64</a> of file <a class="el" href="../../d1/d49/_android_notification_center_8cs_source.html">AndroidNotificationCenter.cs</a>.</p>
 
 </div>
 </div>
@@ -246,7 +247,7 @@ Enumerations</h2></td></tr>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="../../dc/db0/_android_notification_manager_8cs_source.html#l00087">87</a> of file <a class="el" href="../../dc/db0/_android_notification_manager_8cs_source.html">AndroidNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d1/d49/_android_notification_center_8cs_source.html#l00090">90</a> of file <a class="el" href="../../d1/d49/_android_notification_center_8cs_source.html">AndroidNotificationCenter.cs</a>.</p>
 
 </div>
 </div>

@@ -80,7 +80,7 @@ $(function() {
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:af8bf47cffc1ec61b1ee6fcc0a5e0633a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d0e/namespace_unity_1_1_notifications_1_1i_o_s.html#ad9d5e88330e2e10b0cf0938dda7f3924">AuthorizationStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d3b/struct_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_settings.html#af8bf47cffc1ec61b1ee6fcc0a5e0633a">AuthorizationStatus</a> =&gt; (<a class="el" href="../../d1/d0e/namespace_unity_1_1_notifications_1_1i_o_s.html#ad9d5e88330e2e10b0cf0938dda7f3924">AuthorizationStatus</a>)authorizationStatus</td></tr>
-<tr class="memdesc:af8bf47cffc1ec61b1ee6fcc0a5e0633a"><td class="mdescLeft">&#160;</td><td class="mdescRight">When the value set to is set to AuthorizationStatusAuthorized your app is allowed to schedule and receive local and remote notifications.  <a href="#af8bf47cffc1ec61b1ee6fcc0a5e0633a">More...</a><br /></td></tr>
+<tr class="memdesc:af8bf47cffc1ec61b1ee6fcc0a5e0633a"><td class="mdescLeft">&#160;</td><td class="mdescRight">When the value is set to AuthorizationStatusAuthorized your app is allowed to schedule and receive local and remote notifications.  <a href="#af8bf47cffc1ec61b1ee6fcc0a5e0633a">More...</a><br /></td></tr>
 <tr class="separator:af8bf47cffc1ec61b1ee6fcc0a5e0633a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0c9f2fa54a60f9d2bb07ade9938b2868"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d0e/namespace_unity_1_1_notifications_1_1i_o_s.html#ab58ebb6b401f25c21c5018feba13c30f">NotificationSetting</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d3b/struct_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_settings.html#a0c9f2fa54a60f9d2bb07ade9938b2868">NotificationCenterSetting</a> =&gt; (<a class="el" href="../../d1/d0e/namespace_unity_1_1_notifications_1_1i_o_s.html#ab58ebb6b401f25c21c5018feba13c30f">NotificationSetting</a>)notificationCenterSetting</td></tr>
 <tr class="memdesc:a0c9f2fa54a60f9d2bb07ade9938b2868"><td class="mdescLeft">&#160;</td><td class="mdescRight">The setting that indicates whether your app’s notifications are displayed in Notification Center.  <a href="#a0c9f2fa54a60f9d2bb07ade9938b2868">More...</a><br /></td></tr>
@@ -103,9 +103,9 @@ Public Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="../../d6/d3b/struct_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_settings.html" title="iOSNotificationSettings contains the current authorization status and notification-related settings f...">iOSNotificationSettings</a> contains the current authorization status and notification-related settings for your app. Your app must receive authorization to schedule notifications. </p>
-<p>Use this struct to determine what notification-related actions your app is allowed to perform byt the user. This information should be used to enable, disable, or adjust your app's notification-related behaviors. The system enforces your app's settings by preventing denied interactions from occurring. </p>
+<p>Use this struct to determine what notification-related actions your app is allowed to perform by the user. This information should be used to enable, disable, or adjust your app's notification-related behaviors. The system enforces your app's settings by preventing denied interactions from occurring. </p>
 
-<p class="definition">Definition at line <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html#l00160">160</a> of file <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html">iOSNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html#l00160">160</a> of file <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html">iOSNotificationCenter.cs</a>.</p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
 <a id="a1d5be05ade4b361c40b7c36b7b351b53"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1d5be05ade4b361c40b7c36b7b351b53">&#9670;&nbsp;</a></span>AlertSetting</h2>
@@ -121,7 +121,7 @@ Public Attributes</h2></td></tr>
 
 <p>The authorization status for displaying alerts. </p>
 
-<p class="definition">Definition at line <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html#l00197">197</a> of file <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html">iOSNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html#l00197">197</a> of file <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html">iOSNotificationCenter.cs</a>.</p>
 
 </div>
 </div>
@@ -137,10 +137,10 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>When the value set to is set to AuthorizationStatusAuthorized your app is allowed to schedule and receive local and remote notifications. </p>
+<p>When the value is set to AuthorizationStatusAuthorized your app is allowed to schedule and receive local and remote notifications. </p>
 <p>When authorized, use the alertSetting, badgeSetting, and soundSetting properties to specify which types of interactions are allowed. When the value is AuthorizationStatusDenied, the system doesn't deliver notifications to your app, and the system ignores any attempts to schedule local notifications. </p>
 
-<p class="definition">Definition at line <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html#l00177">177</a> of file <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html">iOSNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html#l00177">177</a> of file <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html">iOSNotificationCenter.cs</a>.</p>
 
 </div>
 </div>
@@ -158,7 +158,7 @@ Public Attributes</h2></td></tr>
 
 <p>The authorization status for badging your app’s icon. </p>
 
-<p class="definition">Definition at line <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html#l00202">202</a> of file <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html">iOSNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html#l00202">202</a> of file <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html">iOSNotificationCenter.cs</a>.</p>
 
 </div>
 </div>
@@ -176,7 +176,7 @@ Public Attributes</h2></td></tr>
 
 <p>The setting that indicates whether your app’s notifications may be displayed in a CarPlay environment. </p>
 
-<p class="definition">Definition at line <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html#l00192">192</a> of file <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html">iOSNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html#l00192">192</a> of file <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html">iOSNotificationCenter.cs</a>.</p>
 
 </div>
 </div>
@@ -194,7 +194,7 @@ Public Attributes</h2></td></tr>
 
 <p>The setting that indicates whether your app’s notifications appear onscreen when the device is locked. </p>
 
-<p class="definition">Definition at line <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html#l00187">187</a> of file <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html">iOSNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html#l00187">187</a> of file <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html">iOSNotificationCenter.cs</a>.</p>
 
 </div>
 </div>
@@ -212,7 +212,7 @@ Public Attributes</h2></td></tr>
 
 <p>The setting that indicates whether your app’s notifications are displayed in Notification Center. </p>
 
-<p class="definition">Definition at line <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html#l00182">182</a> of file <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html">iOSNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html#l00182">182</a> of file <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html">iOSNotificationCenter.cs</a>.</p>
 
 </div>
 </div>
@@ -230,12 +230,12 @@ Public Attributes</h2></td></tr>
 
 <p>The authorization status for playing sounds for incoming notifications. </p>
 
-<p class="definition">Definition at line <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html#l00207">207</a> of file <a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html">iOSNotificationManager.cs</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html#l00207">207</a> of file <a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html">iOSNotificationCenter.cs</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this struct was generated from the following file:<ul>
-<li>Runtime/iOS/<a class="el" href="../../db/dcb/i_o_s_notification_manager_8cs_source.html">iOSNotificationManager.cs</a></li>
+<li>Runtime/iOS/<a class="el" href="../../d8/dc0/i_o_s_notification_center_8cs_source.html">iOSNotificationCenter.cs</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['onnotificationreceived',['OnNotificationReceived',['../d1/d4b/class_unity_1_1_notifications_1_1_android_1_1_android_notification_manager.html#ad337ce4e48c0788b2e8ddc1f99d49b3b',1,'Unity.Notifications.Android.AndroidNotificationManager.OnNotificationReceived()'],['../db/db1/class_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_manager.html#a266120e0c1612b1c396d0ba69fcedb44',1,'Unity.Notifications.iOS.iOSNotificationManager.OnNotificationReceived()']]],
-  ['onremotenotificationreceived',['OnRemoteNotificationReceived',['../db/db1/class_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_manager.html#a805c35aac29f8f9b2e8a27cd88b32c7f',1,'Unity::Notifications::iOS::iOSNotificationManager']]]
+  ['onnotificationreceived',['OnNotificationReceived',['../d1/d48/class_unity_1_1_notifications_1_1_android_1_1_android_notification_center.html#afdb40eaef39d682e5f91f9d3a81b954b',1,'Unity.Notifications.Android.AndroidNotificationCenter.OnNotificationReceived()'],['../dd/d32/class_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_center.html#ac64a632763d7511b4c12b060f94223c5',1,'Unity.Notifications.iOS.iOSNotificationCenter.OnNotificationReceived()']]],
+  ['onremotenotificationreceived',['OnRemoteNotificationReceived',['../dd/d32/class_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_center.html#a10ff2111595357a5f454dfdc7fe782d1',1,'Unity::Notifications::iOS::iOSNotificationCenter']]]
 ];

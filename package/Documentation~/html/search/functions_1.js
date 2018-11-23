@@ -1,9 +1,9 @@
 var searchData=
 [
-  ['cancelalldisplayednotifications',['CancelAllDisplayedNotifications',['../d1/d4b/class_unity_1_1_notifications_1_1_android_1_1_android_notification_manager.html#a2ff4e4ab3c7369d8e85baf7465e99bbe',1,'Unity::Notifications::Android::AndroidNotificationManager']]],
-  ['cancelallnotifications',['CancelAllNotifications',['../d1/d4b/class_unity_1_1_notifications_1_1_android_1_1_android_notification_manager.html#aeb966fad1f8b3fee49ca02ca03da096e',1,'Unity::Notifications::Android::AndroidNotificationManager']]],
-  ['cancelallschedulednotifications',['CancelAllScheduledNotifications',['../d1/d4b/class_unity_1_1_notifications_1_1_android_1_1_android_notification_manager.html#a00e90765630d58322968843efcb2b1d8',1,'Unity::Notifications::Android::AndroidNotificationManager']]],
-  ['cancelnotification',['CancelNotification',['../d1/d4b/class_unity_1_1_notifications_1_1_android_1_1_android_notification_manager.html#a88e5fe62dede1bd45575747505710acd',1,'Unity::Notifications::Android::AndroidNotificationManager']]],
-  ['cancelschedulednotification',['CancelScheduledNotification',['../d1/d4b/class_unity_1_1_notifications_1_1_android_1_1_android_notification_manager.html#a48c558faca9eefd1a9353a3b8785e605',1,'Unity::Notifications::Android::AndroidNotificationManager']]],
-  ['checkschedulednotificationstatus',['CheckScheduledNotificationStatus',['../d1/d4b/class_unity_1_1_notifications_1_1_android_1_1_android_notification_manager.html#aa6bb2b7385090be34d81d1ca9b37a0e9',1,'Unity::Notifications::Android::AndroidNotificationManager']]]
+  ['cancelalldisplayednotifications',['CancelAllDisplayedNotifications',['../d1/d48/class_unity_1_1_notifications_1_1_android_1_1_android_notification_center.html#a4c2cfff94dd73359a5e04c54543a2746',1,'Unity::Notifications::Android::AndroidNotificationCenter']]],
+  ['cancelallnotifications',['CancelAllNotifications',['../d1/d48/class_unity_1_1_notifications_1_1_android_1_1_android_notification_center.html#a0b5ea81d253787aafb297c70a3b4c736',1,'Unity::Notifications::Android::AndroidNotificationCenter']]],
+  ['cancelallschedulednotifications',['CancelAllScheduledNotifications',['../d1/d48/class_unity_1_1_notifications_1_1_android_1_1_android_notification_center.html#a2670da2772a9cae3eda7227e57edd584',1,'Unity::Notifications::Android::AndroidNotificationCenter']]],
+  ['cancelnotification',['CancelNotification',['../d1/d48/class_unity_1_1_notifications_1_1_android_1_1_android_notification_center.html#ae48f932ad9ac19decf7e41492d261ebc',1,'Unity::Notifications::Android::AndroidNotificationCenter']]],
+  ['cancelschedulednotification',['CancelScheduledNotification',['../d1/d48/class_unity_1_1_notifications_1_1_android_1_1_android_notification_center.html#aa605df211283efa2402bfe60a2282c89',1,'Unity::Notifications::Android::AndroidNotificationCenter']]],
+  ['checkschedulednotificationstatus',['CheckScheduledNotificationStatus',['../d1/d48/class_unity_1_1_notifications_1_1_android_1_1_android_notification_center.html#a85edea74b1f0f411e95f1bff058a31c0',1,'Unity::Notifications::Android::AndroidNotificationCenter']]]
 ];
