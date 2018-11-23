@@ -2,9 +2,9 @@
 //  UnityNotificationWrapper.m
 //  iOS.notifications
 //
-//  Created by Paulius on 26/07/2018.
 //  Copyright © 2018 Unity Technologies. All rights reserved.
 //
+
 #import <Foundation/Foundation.h>
 
 #if defined(UNITY_USES_LOCATION) && UNITY_USES_LOCATION
@@ -81,9 +81,10 @@ void _ScheduleLocalNotification(struct iOSNotificationData* data)
 {
     UnityNotificationManager* manager = [UnityNotificationManager sharedInstance];
     
-    if (!manager.authorized)
+    UNAuthorizationStatus authorizationStatus = manager.cachedNotificationSettings.authorizationStatus;
+    if (authorizationStatus != UNAuthorizationStatusAuthorized && authorizationStatus != UNAuthorizationStatusProvisional)
     {
-        [manager requestAuthorization:(UNAuthorizationOptionSound + UNAuthorizationOptionAlert + UNAuthorizationOptionBadge) : YES];
+        return;
     }
     
     assert(manager.onNotificationReceivedCallback != NULL);

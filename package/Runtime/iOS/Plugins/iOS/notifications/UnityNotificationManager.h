@@ -2,7 +2,6 @@
 //  UnityNotificationManager.h
 //  iOS.notifications
 //
-//  Created by Paulius on 24/07/2018.
 //  Copyright © 2018 Unity Technologies. All rights reserved.
 //
 
@@ -39,13 +38,6 @@ typedef struct iOSNotificationData
     
     //Time trigger
     int timeTriggerInterval;
-
-    //Location trigger
-    float locationTriggerCenterX;
-    float locationTriggerCenterY;
-    float locationTriggerRadius;
-    bool locationTriggerNotifyOnEntry;
-    bool locationTriggerNotifyOnExit;
     
     //Calendar trigger
     int calendarTriggerYear;
@@ -54,6 +46,14 @@ typedef struct iOSNotificationData
     int calendarTriggerHour;
     int calendarTriggerMinute;
     int calendarTriggerSecond;
+    
+    //Location trigger
+    float locationTriggerCenterX;
+    float locationTriggerCenterY;
+    float locationTriggerRadius;
+    bool locationTriggerNotifyOnEntry;
+    bool locationTriggerNotifyOnExit;
+
 
 } iOSNotificationData;
 
