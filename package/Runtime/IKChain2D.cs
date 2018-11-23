@@ -1,14 +1,15 @@
 using System;
+using UnityEngine.Serialization;
 
 namespace UnityEngine.Experimental.U2D.IK
 {
     [Serializable]
     public class IKChain2D
     {
-        [SerializeField]
-        private Transform m_Target;
-        [SerializeField]
-        private Transform m_Effector;
+        [SerializeField][FormerlySerializedAs("m_Target")]
+        private Transform m_EffectorTransform;
+        [SerializeField][FormerlySerializedAs("m_Effector")]
+        private Transform m_TargetTransform;
         [SerializeField]
         private int m_TransformCount;
         [SerializeField]
@@ -20,16 +21,16 @@ namespace UnityEngine.Experimental.U2D.IK
 
         protected float[] m_Lengths;
 
-        public Transform target
-        {
-            get { return m_Target; }
-            set { m_Target = value; }
-        }
-
         public Transform effector
         {
-            get { return m_Effector; }
-            set { m_Effector = value; }
+            get { return m_EffectorTransform; }
+            set { m_EffectorTransform = value; }
+        }
+
+        public Transform target
+        {
+            get { return m_TargetTransform; }
+            set { m_TargetTransform = value; }
         }
 
         public Transform[] transforms
@@ -84,7 +85,7 @@ namespace UnityEngine.Experimental.U2D.IK
 
         private bool Validate()
         {
-            if (target == null)
+            if (effector == null)
                 return false;
             if (transformCount == 0)
                 return false;
@@ -96,23 +97,23 @@ namespace UnityEngine.Experimental.U2D.IK
                 return false;
             if (rootTransform == null)
                 return false;
-            if (lastTransform != target)
+            if (lastTransform != effector)
                 return false;
-            if (effector && IKUtility.IsDescendentOf(effector, rootTransform))
+            if (target && IKUtility.IsDescendentOf(target, rootTransform))
                 return false;
             return true;
         }
 
         public void Initialize()
         {
-            if (target == null || transformCount == 0 || IKUtility.GetAncestorCount(target) < transformCount - 1)
+            if (effector == null || transformCount == 0 || IKUtility.GetAncestorCount(effector) < transformCount - 1)
                 return;
 
             m_Transforms = new Transform[transformCount];
             m_DefaultLocalRotations = new Quaternion[transformCount];
             m_StoredLocalRotations = new Quaternion[transformCount];
 
-            var currentTransform = target;
+            var currentTransform = effector;
             int index = transformCount - 1;
 
             while (currentTransform && index >= 0)
@@ -127,7 +128,7 @@ namespace UnityEngine.Experimental.U2D.IK
 
         private void PrepareLengths()
         {
-            var currentTransform = target;
+            var currentTransform = effector;
             int index = transformCount - 1;
 
             if (m_Lengths == null || m_Lengths.Length != transformCount - 1)

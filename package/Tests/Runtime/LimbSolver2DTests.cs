@@ -9,7 +9,7 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.LimbSolver2DTests
 
         private GameObject go;
         private GameObject ikGO;
-        private GameObject effectorGO;
+        private GameObject targetGO;
 
         private IKManager2D manager;
         private LimbSolver2D solver;
@@ -22,12 +22,12 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.LimbSolver2DTests
             var childGO = new GameObject();
             childGO.transform.parent = go.transform;
 
-            var targetGO = new GameObject();
-            targetGO.transform.parent = childGO.transform;
+            var effectorGO = new GameObject();
+            effectorGO.transform.parent = childGO.transform;
 
             go.transform.position = Vector3.zero;
             childGO.transform.position = new Vector3(1.0f, 0.0f, 0.0f);
-            targetGO.transform.position = new Vector3(3.0f, 0.0f, 0.0f);
+            effectorGO.transform.position = new Vector3(3.0f, 0.0f, 0.0f);
 
             ikGO = new GameObject();
             manager = ikGO.AddComponent<IKManager2D>();
@@ -35,12 +35,12 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.LimbSolver2DTests
             solver = lsGO.AddComponent<LimbSolver2D>();
             lsGO.transform.parent = ikGO.transform;
 
-            effectorGO = new GameObject();
-            effectorGO.transform.parent = solver.transform;
+            this.targetGO = new GameObject();
+            this.targetGO.transform.parent = solver.transform;
 
             chain = solver.GetChain(0);
-            chain.target = targetGO.transform;
             chain.effector = effectorGO.transform;
+            chain.target = this.targetGO.transform;
 
             solver.Initialize();
 
@@ -71,7 +71,7 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.LimbSolver2DTests
         {
             var targetPosition = new Vector2(1.0f, 2.0f);
 
-            effectorGO.transform.position = targetPosition;
+            targetGO.transform.position = targetPosition;
 
             manager.UpdateManager();
 
@@ -87,7 +87,7 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.LimbSolver2DTests
             solver.flip = true;
             Assert.AreEqual(true, solver.flip);
 
-            effectorGO.transform.position = targetPosition;
+            targetGO.transform.position = targetPosition;
 
             manager.UpdateManager();
 
@@ -100,7 +100,7 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.LimbSolver2DTests
         {
             var targetPosition = new Vector2(0.0f, 4.0f);
 
-            effectorGO.transform.position = targetPosition;
+            targetGO.transform.position = targetPosition;
 
             manager.UpdateManager();
 

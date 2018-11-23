@@ -9,9 +9,9 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.FabrikSolver2DTests
         private FloatCompare floatCompare = new FloatCompare();
 
         private GameObject go;
-        private GameObject targetGO;
-        private GameObject ikGO;
         private GameObject effectorGO;
+        private GameObject ikGO;
+        private GameObject targetGO;
 
         private IKManager2D manager;
         private FabrikSolver2D solver;
@@ -30,14 +30,14 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.FabrikSolver2DTests
             var child3GO = new GameObject();
             child3GO.transform.parent = child2GO.transform;
 
-            targetGO = new GameObject();
-            targetGO.transform.parent = child3GO.transform;
+            effectorGO = new GameObject();
+            effectorGO.transform.parent = child3GO.transform;
 
             go.transform.position = Vector3.zero;
             child1GO.transform.position = new Vector3(1.0f, 0.0f, 0.0f);
             child2GO.transform.position = new Vector3(3.0f, 0.0f, 0.0f);
             child3GO.transform.position = new Vector3(6.0f, 0.0f, 0.0f);
-            targetGO.transform.position = new Vector3(10.0f, 0.0f, 0.0f);
+            effectorGO.transform.position = new Vector3(10.0f, 0.0f, 0.0f);
 
             ikGO = new GameObject();
             manager = ikGO.AddComponent<IKManager2D>();
@@ -45,12 +45,12 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.FabrikSolver2DTests
             solver = lsGO.AddComponent<FabrikSolver2D>();
             lsGO.transform.parent = ikGO.transform;
 
-            effectorGO = new GameObject();
-            effectorGO.transform.parent = solver.transform;
+            targetGO = new GameObject();
+            targetGO.transform.parent = solver.transform;
 
             chain = solver.GetChain(0);
-            chain.target = targetGO.transform;
             chain.effector = effectorGO.transform;
+            chain.target = targetGO.transform;
             chain.transformCount = 5;
 
             solver.Initialize();
@@ -111,7 +111,7 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.FabrikSolver2DTests
             Assert.AreEqual(transformCount, chain.transformCount);
             Assert.AreEqual(transformCount, chain.transforms.Length);
 
-            var tr = targetGO.transform;
+            var tr = effectorGO.transform;
             for (int i = 1; i < transformCount; ++i)
                 tr = tr.parent;
 
@@ -123,9 +123,9 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.FabrikSolver2DTests
         [TestCase(2)]
         [TestCase(6)]
         [TestCase(666)]
-        public void SetInvalidTarget_SetsNoRootTransform(int transformCount)
+        public void SetInvalidEffector_SetsNoRootTransform(int transformCount)
         {
-            chain.target = null;
+            chain.effector = null;
             chain.transformCount = transformCount;
             chain.Initialize();
 
@@ -151,12 +151,12 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.FabrikSolver2DTests
         {
             var targetPosition = new Vector3(9.0f, 1.0f, 0.0f);
 
-            effectorGO.transform.position = targetPosition;
+            targetGO.transform.position = targetPosition;
 
             manager.UpdateManager();
 
-            Assert.That(targetPosition, Is.EqualTo(chain.target.position).Using(vec3Compare));
-            Assert.That(0.0f, Is.EqualTo((targetPosition - chain.target.position).magnitude).Using(floatCompare));
+            Assert.That(targetPosition, Is.EqualTo(chain.effector.position).Using(vec3Compare));
+            Assert.That(0.0f, Is.EqualTo((targetPosition - chain.effector.position).magnitude).Using(floatCompare));
         }
 
         [Test]
@@ -164,12 +164,12 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.FabrikSolver2DTests
         {
             var targetPosition = new Vector3(0.0f, 12.0f, 0.0f);
 
-            effectorGO.transform.position = targetPosition;
+            targetGO.transform.position = targetPosition;
 
             manager.UpdateManager();
 
-            Assert.That(targetPosition, Is.Not.EqualTo(chain.target.position).Using(vec3Compare));
-            Assert.That(2.0f, Is.EqualTo((targetPosition - chain.target.position).magnitude).Using(floatCompare));
+            Assert.That(targetPosition, Is.Not.EqualTo(chain.effector.position).Using(vec3Compare));
+            Assert.That(2.0f, Is.EqualTo((targetPosition - chain.effector.position).magnitude).Using(floatCompare));
         }
     }
 }

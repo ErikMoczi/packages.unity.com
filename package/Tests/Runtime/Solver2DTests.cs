@@ -9,19 +9,19 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
         public class WeightTestCase
         {
             public float weight;
-            public Vector3 effectorPosition;
-            public Vector3 expectedTargetPosition;
+            public Vector3 targetPosition;
+            public Vector3 expectedEffectorPosition;
 
-            public WeightTestCase(float w, Vector3 ef, Vector3 ex)
+            public WeightTestCase(float w, Vector3 t, Vector3 ex)
             {
                 weight = w;
-                effectorPosition = ef;
-                expectedTargetPosition = ex;
+                targetPosition = t;
+                expectedEffectorPosition = ex;
             }
 
             public override string ToString()
             {
-                return "Weight: " + weight + " effectorPosition: " + effectorPosition + " expectedTargetPosition: " + expectedTargetPosition;
+                return "Weight: " + weight + " targetPosition: " + targetPosition + " expectedEffectorPosition: " + expectedEffectorPosition;
             }
         }
 
@@ -29,9 +29,9 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
         private FloatCompare floatCompare = new FloatCompare();
 
         private GameObject go;
-        private GameObject targetGO;
-        private GameObject ikGO;
         private GameObject effectorGO;
+        private GameObject ikGO;
+        private GameObject targetGO;
 
         private IKManager2D manager;
         private Solver2D solver;
@@ -49,14 +49,14 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
             var child3GO = new GameObject();
             child3GO.transform.parent = child2GO.transform;
 
-            targetGO = new GameObject();
-            targetGO.transform.parent = child3GO.transform;
+            effectorGO = new GameObject();
+            effectorGO.transform.parent = child3GO.transform;
 
             go.transform.position = Vector3.zero;
             child1GO.transform.position = new Vector3(1.0f, 0.0f, 0.0f);
             child2GO.transform.position = new Vector3(3.0f, 0.0f, 0.0f);
             child3GO.transform.position = new Vector3(6.0f, 0.0f, 0.0f);
-            targetGO.transform.position = new Vector3(10.0f, 0.0f, 0.0f);
+            effectorGO.transform.position = new Vector3(10.0f, 0.0f, 0.0f);
 
             ikGO = new GameObject();
             manager = ikGO.AddComponent<IKManager2D>();
@@ -66,12 +66,12 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
             solver = lsGO.AddComponent<FabrikSolver2D>();
             lsGO.transform.parent = ikGO.transform;
 
-            effectorGO = new GameObject();
-            effectorGO.transform.parent = solver.transform;
+            targetGO = new GameObject();
+            targetGO.transform.parent = solver.transform;
 
             var chain = solver.GetChain(0);
-            chain.target = targetGO.transform;
             chain.effector = effectorGO.transform;
+            chain.target = targetGO.transform;
             chain.transformCount = 5;
             chain.Initialize();
 
@@ -98,14 +98,14 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
         {
             var targetPosition = new Vector3(9.0f, 1.0f, 0.0f);
 
-            effectorGO.transform.position = targetPosition;
+            targetGO.transform.position = targetPosition;
 
             manager.UpdateManager();
 
             var chain = solver.GetChain(0);
 
-            Assert.That(targetPosition, Is.EqualTo(chain.target.position).Using(vec3Compare));
-            Assert.That(0.0f, Is.EqualTo((targetPosition - chain.target.position).magnitude).Using(floatCompare));
+            Assert.That(targetPosition, Is.EqualTo(chain.effector.position).Using(vec3Compare));
+            Assert.That(0.0f, Is.EqualTo((targetPosition - chain.effector.position).magnitude).Using(floatCompare));
         }
 
         [Test]
@@ -113,14 +113,14 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
         {
             var targetPosition = new Vector3(0.0f, 12.0f, 0.0f);
 
-            effectorGO.transform.position = targetPosition;
+            targetGO.transform.position = targetPosition;
 
             manager.UpdateManager();
 
             var chain = solver.GetChain(0);
 
-            Assert.That(targetPosition, Is.Not.EqualTo(chain.target.position).Using(vec3Compare));
-            Assert.That(2.0f, Is.EqualTo((targetPosition - chain.target.position).magnitude).Using(floatCompare));
+            Assert.That(targetPosition, Is.Not.EqualTo(chain.effector.position).Using(vec3Compare));
+            Assert.That(2.0f, Is.EqualTo((targetPosition - chain.effector.position).magnitude).Using(floatCompare));
         }
 
         [Test]
@@ -128,7 +128,7 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
         {
             var targetPosition = new Vector3(9.0f, 1.0f, 0.0f);
 
-            effectorGO.transform.position = targetPosition;
+            targetGO.transform.position = targetPosition;
 
             solver.weight = 0f;
             Assert.AreEqual(0f, solver.weight);
@@ -136,7 +136,7 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
             manager.UpdateManager();
 
             var chain = solver.GetChain(0);
-            Assert.That(targetPosition, Is.Not.EqualTo(chain.target.position).Using(vec3Compare));
+            Assert.That(targetPosition, Is.Not.EqualTo(chain.effector.position).Using(vec3Compare));
             Assert.That(new Vector3(0f, 0f, 0f), Is.EqualTo(chain.transforms[0].position).Using(vec3Compare));
             Assert.That(new Vector3(1f, 0f, 0f), Is.EqualTo(chain.transforms[1].position).Using(vec3Compare));
             Assert.That(new Vector3(3f, 0f, 0f), Is.EqualTo(chain.transforms[2].position).Using(vec3Compare));
@@ -149,7 +149,7 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
         {
             var targetPosition = new Vector3(9.0f, 1.0f, 0.0f);
 
-            effectorGO.transform.position = targetPosition;
+            targetGO.transform.position = targetPosition;
 
             manager.weight = 0f;
             Assert.AreEqual(0f, manager.weight);
@@ -157,7 +157,7 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
             manager.UpdateManager();
 
             var chain = solver.GetChain(0);
-            Assert.That(targetPosition, Is.Not.EqualTo(chain.target.position).Using(vec3Compare));
+            Assert.That(targetPosition, Is.Not.EqualTo(chain.effector.position).Using(vec3Compare));
             Assert.That(new Vector3(0f, 0f, 0f), Is.EqualTo(chain.transforms[0].position).Using(vec3Compare));
             Assert.That(new Vector3(1f, 0f, 0f), Is.EqualTo(chain.transforms[1].position).Using(vec3Compare));
             Assert.That(new Vector3(3f, 0f, 0f), Is.EqualTo(chain.transforms[2].position).Using(vec3Compare));
@@ -175,7 +175,7 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
         {
             var targetPosition = new Vector3(0f, 12f, 0f);
 
-            effectorGO.transform.position = targetPosition;
+            targetGO.transform.position = targetPosition;
 
             solver.weight = weight;
             Assert.AreEqual(weight, solver.weight);
@@ -185,8 +185,8 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
             var weightedPosition = Vector3.Slerp(new Vector3(10f, 0f, 0f), new Vector3(0f, 10f, 0f), weight);
 
             var chain = solver.GetChain(0);
-            Assert.That(targetPosition, Is.Not.EqualTo(chain.target.position).Using(vec3Compare));
-            Assert.That(0.0f, Is.EqualTo((chain.target.position - weightedPosition).magnitude).Using(floatCompare));
+            Assert.That(targetPosition, Is.Not.EqualTo(chain.effector.position).Using(vec3Compare));
+            Assert.That(0.0f, Is.EqualTo((chain.effector.position - weightedPosition).magnitude).Using(floatCompare));
         }
 
         [Test]
@@ -199,7 +199,7 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
         {
             var targetPosition = new Vector3(0f, 12f, 0f);
 
-            effectorGO.transform.position = targetPosition;
+            targetGO.transform.position = targetPosition;
 
             solver.weight = solverWeight;
             Assert.AreEqual(solverWeight, solver.weight);
@@ -212,8 +212,8 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
             var weightedPosition = Vector3.Slerp(new Vector3(10f, 0f, 0f), new Vector3(0f, 10f, 0f), solverWeight * managerWeight);
 
             var chain = solver.GetChain(0);
-            Assert.That(targetPosition, Is.Not.EqualTo(chain.target.position).Using(vec3Compare));
-            Assert.That(0.0f, Is.EqualTo((chain.target.position - weightedPosition).magnitude).Using(floatCompare));
+            Assert.That(targetPosition, Is.Not.EqualTo(chain.effector.position).Using(vec3Compare));
+            Assert.That(0.0f, Is.EqualTo((chain.effector.position - weightedPosition).magnitude).Using(floatCompare));
         }
 
         [Test]
@@ -222,8 +222,8 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
             var targetPosition = new Vector3(0.0f, 12.0f, 0.0f);
             var effectorRotation = Quaternion.Euler(52f, 34f, 44f);
 
-            effectorGO.transform.position = targetPosition;
-            effectorGO.transform.rotation = effectorRotation;
+            targetGO.transform.position = targetPosition;
+            targetGO.transform.rotation = effectorRotation;
 
             solver.constrainRotation = true;
             Assert.AreEqual(true, solver.constrainRotation);
@@ -231,20 +231,20 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
             manager.UpdateManager();
 
             var chain = solver.GetChain(0);
-            Assert.That(effectorRotation.x, Is.EqualTo(chain.target.rotation.x).Using(floatCompare));
-            Assert.That(effectorRotation.y, Is.EqualTo(chain.target.rotation.y).Using(floatCompare));
-            Assert.That(effectorRotation.z, Is.EqualTo(chain.target.rotation.z).Using(floatCompare));
-            Assert.That(effectorRotation.w, Is.EqualTo(chain.target.rotation.w).Using(floatCompare));
+            Assert.That(effectorRotation.x, Is.EqualTo(chain.effector.rotation.x).Using(floatCompare));
+            Assert.That(effectorRotation.y, Is.EqualTo(chain.effector.rotation.y).Using(floatCompare));
+            Assert.That(effectorRotation.z, Is.EqualTo(chain.effector.rotation.z).Using(floatCompare));
+            Assert.That(effectorRotation.w, Is.EqualTo(chain.effector.rotation.w).Using(floatCompare));
         }
 
         [Test]
         public void NoConstrainRotation_DoesNotConstrainRotation()
         {
             var targetPosition = new Vector3(0.0f, 12.0f, 0.0f);
-            var effectorRotation = Quaternion.Euler(52f, 34f, 44f);
+            var targetRotation = Quaternion.Euler(52f, 34f, 44f);
 
-            effectorGO.transform.position = targetPosition;
-            effectorGO.transform.rotation = effectorRotation;
+            targetGO.transform.position = targetPosition;
+            targetGO.transform.rotation = targetRotation;
 
             solver.constrainRotation = false;
             Assert.AreEqual(false, solver.constrainRotation);
@@ -252,10 +252,10 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
             manager.UpdateManager();
 
             var chain = solver.GetChain(0);
-            Assert.That(0f, Is.EqualTo(chain.target.localRotation.x).Using(floatCompare));
-            Assert.That(0f, Is.EqualTo(chain.target.localRotation.y).Using(floatCompare));
-            Assert.That(0f, Is.EqualTo(chain.target.localRotation.z).Using(floatCompare));
-            Assert.That(1f, Is.EqualTo(chain.target.localRotation.w).Using(floatCompare));
+            Assert.That(0f, Is.EqualTo(chain.effector.localRotation.x).Using(floatCompare));
+            Assert.That(0f, Is.EqualTo(chain.effector.localRotation.y).Using(floatCompare));
+            Assert.That(0f, Is.EqualTo(chain.effector.localRotation.z).Using(floatCompare));
+            Assert.That(1f, Is.EqualTo(chain.effector.localRotation.w).Using(floatCompare));
         }
 
         [Test]
@@ -267,7 +267,7 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
 
             var targetPosition = new Vector3(9.0f, 1.0f, 0.0f);
 
-            effectorGO.transform.position = targetPosition;
+            targetGO.transform.position = targetPosition;
 
             // With the positions set to default every iteration, solver will never reach target
             for (int i = 0; i < 10; ++i)
@@ -275,8 +275,8 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
 
             var chain = solver.GetChain(0);
 
-            Assert.That(targetPosition, Is.Not.EqualTo(chain.target.position).Using(vec3Compare));
-            Assert.That(0.0f, Is.Not.EqualTo((targetPosition - chain.target.position).magnitude).Using(floatCompare));
+            Assert.That(targetPosition, Is.Not.EqualTo(chain.effector.position).Using(vec3Compare));
+            Assert.That(0.0f, Is.Not.EqualTo((targetPosition - chain.effector.position).magnitude).Using(floatCompare));
         }
 
         [Test]
@@ -288,15 +288,15 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
 
             var targetPosition = new Vector3(9.0f, 1.0f, 0.0f);
 
-            effectorGO.transform.position = targetPosition;
+            targetGO.transform.position = targetPosition;
 
             for (int i = 0; i < 10; ++i)
                 manager.UpdateManager();
 
             var chain = solver.GetChain(0);
 
-            Assert.That(targetPosition, Is.EqualTo(chain.target.position).Using(vec3Compare));
-            Assert.That(0.0f, Is.EqualTo((targetPosition - chain.target.position).magnitude).Using(floatCompare));
+            Assert.That(targetPosition, Is.EqualTo(chain.effector.position).Using(vec3Compare));
+            Assert.That(0.0f, Is.EqualTo((targetPosition - chain.effector.position).magnitude).Using(floatCompare));
         }
 
         private static IEnumerable<WeightTestCase> WeightTestCases()
@@ -312,25 +312,25 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
         public void SetWeight_SolverUpdates([ValueSource("WeightTestCases")] WeightTestCase testCase)
         {
             var chain = solver.GetChain(0);
-            chain.effector.position = testCase.effectorPosition;
+            chain.target.position = testCase.targetPosition;
             solver.weight = testCase.weight;
             
             solver.UpdateIK(1f);
-            Assert.That(chain.target.position, Is.EqualTo(testCase.expectedTargetPosition).Using(vec3Compare)); 
+            Assert.That(chain.effector.position, Is.EqualTo(testCase.expectedEffectorPosition).Using(vec3Compare)); 
         }
 
         [Test]
-        public void SetWeight_NoEffector_PositionListProvided_SolverUpdates([ValueSource("WeightTestCases")] WeightTestCase testCase)
+        public void SetWeight_NoTarget_PositionListProvided_SolverUpdates([ValueSource("WeightTestCases")] WeightTestCase testCase)
         {
             var chain = solver.GetChain(0);
-            chain.effector = null;
+            chain.target = null;
             solver.weight = testCase.weight;
 
             var positions = new List<Vector3>();
-            positions.Add(testCase.effectorPosition);
+            positions.Add(testCase.targetPosition);
 
             solver.UpdateIK(positions, 1f);
-            Assert.That(chain.target.position, Is.EqualTo(testCase.expectedTargetPosition).Using(vec3Compare)); 
+            Assert.That(chain.effector.position, Is.EqualTo(testCase.expectedEffectorPosition).Using(vec3Compare)); 
         }
     }
 }

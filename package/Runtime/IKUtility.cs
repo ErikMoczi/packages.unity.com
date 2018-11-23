@@ -39,8 +39,8 @@ namespace UnityEngine.Experimental.U2D.IK
         {
             int maxChainCount = 0;
 
-            if (chain.target)
-                maxChainCount = GetAncestorCount(chain.target) + 1;
+            if (chain.effector)
+                maxChainCount = GetAncestorCount(chain.effector) + 1;
 
             return maxChainCount;
         }

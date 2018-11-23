@@ -7,7 +7,7 @@ namespace UnityEditor.Experimental.U2D.IK
 {
     internal class IKGizmos : ScriptableSingleton<IKGizmos>
     {
-        private static readonly int kEffectorHashCode = "IkEffector".GetHashCode();
+        private static readonly int kTargetHashCode = "IkTarget".GetHashCode();
         private Color enabledColor = Color.green;
         private Color disabledColor = Color.grey;
         private const float kCircleHandleRadius = 0.1f;
@@ -25,7 +25,7 @@ namespace UnityEditor.Experimental.U2D.IK
 
             DrawSolver(solver);
 
-            var allChainsHaveEffectors = solver.allChainsHaveEffectors;
+            var allChainsHaveTargets = solver.allChainsHaveTargets;
 
             for (int i = 0; i < solver.chainCount; ++i)
             {
@@ -33,12 +33,12 @@ namespace UnityEditor.Experimental.U2D.IK
                 if (chain == null)
                     continue;
 
-                if (allChainsHaveEffectors)
+                if (allChainsHaveTargets)
                 {
-                    if (!IsEffectorTransformSelected(chain))
-                        DoEffectorGUI(solver, chain);
+                    if (!IsTargetTransformSelected(chain))
+                        DoTargetGUI(solver, chain);
                 }
-                else if(chain.effector == null)
+                else if(chain.target == null)
                     DoIkPoseGUI(solver, chain);
             }
 
@@ -46,41 +46,41 @@ namespace UnityEditor.Experimental.U2D.IK
                 isDragging = false;
         }
 
-        private void DoEffectorGUI(Solver2D solver, IKChain2D chain)
+        private void DoTargetGUI(Solver2D solver, IKChain2D chain)
         {
-            int controlId = GUIUtility.GetControlID(kEffectorHashCode, FocusType.Passive);
+            int controlId = GUIUtility.GetControlID(kTargetHashCode, FocusType.Passive);
 
             var color = FadeFromChain(Color.white, chain);
 
-            if (!isDragging && (color.a == 0f || !IsVisible(chain.effector.position)))
+            if (!isDragging && (color.a == 0f || !IsVisible(chain.target.position)))
                 return;
 
             EditorGUI.BeginChangeCheck();
 
             Handles.color = color;
-            var newPosition = Handles.Slider2D(controlId, chain.effector.position, chain.effector.forward, chain.effector.up, chain.effector.right, HandleUtility.GetHandleSize(chain.target.position) * kCircleHandleRadius, Handles.CircleHandleCap, Vector2.zero);
+            var newPosition = Handles.Slider2D(controlId, chain.target.position, chain.target.forward, chain.target.up, chain.target.right, HandleUtility.GetHandleSize(chain.effector.position) * kCircleHandleRadius, Handles.CircleHandleCap, Vector2.zero);
 
             if (EditorGUI.EndChangeCheck())
             {
                 if(!isDragging)
                 {
                     isDragging = true;
-                    IKEditorManager.instance.RegisterUndo(solver, "Move Effector");
+                    IKEditorManager.instance.RegisterUndo(solver, "Move Target");
                 }
 
-                Undo.RecordObject(chain.effector, "Move Effector");
+                Undo.RecordObject(chain.target, "Move Target");
 
-                chain.effector.position = newPosition;
+                chain.target.position = newPosition;
             }
         }
 
         private void DoIkPoseGUI(Solver2D solver, IKChain2D chain)
         {
-            int controlId = GUIUtility.GetControlID(kEffectorHashCode, FocusType.Passive);
+            int controlId = GUIUtility.GetControlID(kTargetHashCode, FocusType.Passive);
 
             var color = FadeFromChain(Color.white, chain);
 
-            if (!isDragging && (color.a == 0f || !IsVisible(chain.target.position)))
+            if (!isDragging && (color.a == 0f || !IsVisible(chain.effector.position)))
                 return;
 
             if (HandleUtility.nearestControl == controlId && Event.current.type == EventType.MouseDown && Event.current.button == 0)
@@ -89,7 +89,7 @@ namespace UnityEditor.Experimental.U2D.IK
             EditorGUI.BeginChangeCheck();
 
             Handles.color = color;
-            Vector3 newPosition = Handles.Slider2D(controlId, chain.target.position, chain.target.forward, chain.target.up, chain.target.right, HandleUtility.GetHandleSize(chain.target.position) * kCircleHandleRadius, Handles.CircleHandleCap, Vector2.zero);
+            Vector3 newPosition = Handles.Slider2D(controlId, chain.effector.position, chain.effector.forward, chain.effector.up, chain.effector.right, HandleUtility.GetHandleSize(chain.effector.position) * kCircleHandleRadius, Handles.CircleHandleCap, Vector2.zero);
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -106,20 +106,20 @@ namespace UnityEditor.Experimental.U2D.IK
 
         private void StoreSolverPositionOverrides(Solver2D solver)
         {
-            Debug.Assert(solver.allChainsHaveEffectors == false);
+            Debug.Assert(solver.allChainsHaveTargets == false);
 
             m_ChainPositionOverrides.Clear();
 
             IKManager2D manager = IKEditorManager.instance.FindManager(solver);
             foreach (Solver2D l_solver in manager.solvers)
             {
-                if(l_solver.allChainsHaveEffectors)
+                if(l_solver.allChainsHaveTargets)
                     continue;
                     
                 for (int i = 0; i < l_solver.chainCount; ++i)
                 {
                     var chain = l_solver.GetChain(i);
-                        m_ChainPositionOverrides[chain] = chain.target.position;
+                        m_ChainPositionOverrides[chain] = chain.effector.position;
                 }
             }
         }
@@ -130,11 +130,11 @@ namespace UnityEditor.Experimental.U2D.IK
                 IKEditorManager.instance.SetChainPositionOverride(pair.Key, pair.Value);
         }
 
-        private bool IsEffectorTransformSelected(IKChain2D chain)
+        private bool IsTargetTransformSelected(IKChain2D chain)
         {
-            Debug.Assert(chain.effector != null);
+            Debug.Assert(chain.target != null);
 
-            return Selection.Contains(chain.effector.gameObject);
+            return Selection.Contains(chain.target.gameObject);
         }
 
         private void DrawSolver(Solver2D solver)
@@ -149,18 +149,18 @@ namespace UnityEditor.Experimental.U2D.IK
             {
                 var chain = solver.GetChain(i);
                 if (chain != null)
-                    DrawChain(chain, isManagerDisabled, solver.allChainsHaveEffectors);
+                    DrawChain(chain, isManagerDisabled, solver.allChainsHaveTargets);
             }
         }
 
-        private void DrawChain(IKChain2D chain, bool isManagerDisabled, bool solverHasEffectors)
+        private void DrawChain(IKChain2D chain, bool isManagerDisabled, bool solverHasTargets)
         {
             Handles.matrix = Matrix4x4.identity;
             Color color = enabledColor;
 
             if (isManagerDisabled)
                 color = disabledColor;
-            else if (!solverHasEffectors)
+            else if (!solverHasTargets)
                 color = Color.yellow;
 
             color = FadeFromChain(color, chain);
@@ -168,7 +168,7 @@ namespace UnityEditor.Experimental.U2D.IK
             if (color.a == 0f)
                 return;
 
-            Transform currentTransform = chain.target;
+            Transform currentTransform = chain.effector;
             for (int i = 0; i < chain.transformCount - 1; ++i)
             {
                 var parentPosition = currentTransform.parent.position;
@@ -195,7 +195,7 @@ namespace UnityEditor.Experimental.U2D.IK
             }
 
             Handles.color = color;
-            currentTransform = chain.target;
+            currentTransform = chain.effector;
             for (int i = 0; i < chain.transformCount; ++i)
             {
                 var position = currentTransform.position;
@@ -212,7 +212,7 @@ namespace UnityEditor.Experimental.U2D.IK
 
         private Color FadeFromChain(Color color, IKChain2D chain)
         {
-            var size = HandleUtility.GetHandleSize(chain.target.position);
+            var size = HandleUtility.GetHandleSize(chain.effector.position);
             var scaleFactor = 1f;
             var lengths = chain.lengths;
             foreach (var length in lengths)

@@ -156,10 +156,10 @@ namespace UnityEditor.Experimental.U2D.IK
                             var chain = solver.GetChain(i);
                             chain.RestoreDefaultPose(solver.constrainRotation);
                             
-                            if(chain.effector)
+                            if(chain.target)
                             {
-                                chain.effector.position = chain.target.position;
-                                chain.effector.rotation = chain.target.rotation;
+                                chain.target.position = chain.effector.position;
+                                chain.target.rotation = chain.effector.rotation;
                             }
                         }
                     }

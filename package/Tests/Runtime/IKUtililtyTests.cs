@@ -123,7 +123,7 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.IKUtililtyTests
             var ikGO = new GameObject();
             var solver = ikGO.AddComponent<FabrikSolver2D>();
             var chain = solver.GetChain(0);
-            chain.target = grandChildGO.transform;
+            chain.effector = grandChildGO.transform;
 
             Assert.AreEqual(3, IKUtility.GetMaxChainCount(chain));
 
@@ -136,7 +136,7 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.IKUtililtyTests
             var ikGO = new GameObject();
             var solver = ikGO.AddComponent<FabrikSolver2D>();
             var chain = solver.GetChain(0);
-            chain.target = otherChildGO.transform;
+            chain.effector = otherChildGO.transform;
 
             Assert.AreEqual(2, IKUtility.GetMaxChainCount(chain));
 

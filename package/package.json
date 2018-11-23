@@ -1,7 +1,7 @@
 {
     "name": "com.unity.2d.ik",
     "displayName": "2D IK",
-    "version": "1.0.6-preview",
+    "version": "1.0.6-preview.1",
     "unity": "2018.1",
     "description": "2D IK package provides the necessary editor tooling to setup inverse kinematics for 2D characters and a runtime component to execute it.",
     "keywords": ["2d", "ik"],

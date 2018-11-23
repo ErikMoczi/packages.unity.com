@@ -46,19 +46,19 @@ This is a standard two bone solver.
 
 - Flip
 Use this to flip the result of the Limb solver.
-- Target
-The transform to perform IK on to reach a desired position. 
 - Effector
-The transform which is used as the desired position for the target.
+The transform to perform IK on to reach a desired position. 
+- Target
+The transform which is used as the desired position for the effector.
 
 #### CCD (Cyclic Coordinate Descent)
 
 This solver uses the Cyclic Coordinate Descent algorithm to solve the IKs. This is an iterative solver which generates an approximate solution for the IKs and slowly converges to a better solution the more times the algorithm is run. Due to this an exact solution may not be reached and this solver will run to a predefined tolerance or number of runs.
 
-- Target
-The transform to perform IK on to reach a desired position. 
 - Effector
-The transform which is used as the desired position for the target.
+The transform to perform IK on to reach a desired position. 
+- Target
+The transform which is used as the desired position for the effector.
 - Chain Length
 The number of transforms involved in the IK solution starting from the target.
 - Iterations
@@ -72,10 +72,10 @@ How fast transforms in the chain iterate to the desired position. Having a high 
 
 This solver uses the Forward And Backward Reaching Inverse Kinematics algorithm to solve the IKs. This is also an iterative solver which generates an approximate solution for the IKs and slowly converges to a better solution the more times the algorithm is run. Due to this an exact solution may not be reached and this solver will run to a predefined tolerance or number of runs.
 
-- Target
-The transform to perform IK on to reach a desired position. 
 - Effector
-The transform which is used as the desired position for the target.
+The transform to perform IK on to reach a desired position. 
+- Target
+The transform which is used as the desired position for the effector.
 - Chain Length
 The number of transforms involved in the IK solution starting from the target.
 - Iterations

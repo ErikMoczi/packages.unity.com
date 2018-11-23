@@ -13,7 +13,7 @@ namespace UnityEditor.Experimental.U2D.IK
         private readonly HashSet<Solver2D> m_IKSolvers = new HashSet<Solver2D>();
         private readonly List<IKManager2D> m_IKManagers = new List<IKManager2D>();
         private readonly Dictionary<IKChain2D, Vector3> m_ChainPositionOverrides = new Dictionary<IKChain2D, Vector3>();
-        private readonly List<Vector3> m_EffectorPositions = new List<Vector3>();
+        private readonly List<Vector3> m_TargetPositions = new List<Vector3>();
 
         private GameObject m_Helper;
         private GameObject[] m_SelectedGameobjects;
@@ -173,8 +173,8 @@ namespace UnityEditor.Experimental.U2D.IK
                         }
                         
 
-                        if(chain.effector && !m_IgnoreTransformsOnUndo.Contains(chain.effector))
-                            Undo.RecordObject(chain.effector, undoName);
+                        if(chain.target && !m_IgnoreTransformsOnUndo.Contains(chain.target))
+                            Undo.RecordObject(chain.target, undoName);
                     }
                     else
                     {
@@ -186,8 +186,8 @@ namespace UnityEditor.Experimental.U2D.IK
                             Undo.RegisterCompleteObjectUndo(t, undoName);
                         }
 
-                        if(chain.effector && !m_IgnoreTransformsOnUndo.Contains(chain.effector))
-                            Undo.RegisterCompleteObjectUndo(chain.effector, undoName);
+                        if(chain.target && !m_IgnoreTransformsOnUndo.Contains(chain.target))
+                            Undo.RegisterCompleteObjectUndo(chain.target, undoName);
                     }
                 }
 
@@ -371,12 +371,12 @@ namespace UnityEditor.Experimental.U2D.IK
                     {
                         var chain = solver.GetChain(i);
 
-                        if(chain.effector == null)
+                        if(chain.target == null)
                             continue;
 
-                        if (hierarchyRoot == chain.effector ||
-                            IKUtility.IsDescendentOf(chain.effector, hierarchyRoot) ||
-                            IKUtility.IsDescendentOf(chain.target, hierarchyRoot))
+                        if (hierarchyRoot == chain.target ||
+                            IKUtility.IsDescendentOf(chain.target, hierarchyRoot) ||
+                            IKUtility.IsDescendentOf(chain.effector, hierarchyRoot))
                         {
                             SetSolverDirty(solver);
                             break;
@@ -396,11 +396,11 @@ namespace UnityEditor.Experimental.U2D.IK
                     {
                         var chain = solver.GetChain(i);
 
-                        if(chain.effector == null)
+                        if(chain.target == null)
                             continue;
 
-                        if (!(IKUtility.IsDescendentOf(chain.effector, transform) && IKUtility.IsDescendentOf(chain.rootTransform, transform)) &&
-                            (chain.effector == transform || IKUtility.IsDescendentOf(chain.effector, transform) || IKUtility.IsDescendentOf(chain.target, transform)))
+                        if (!(IKUtility.IsDescendentOf(chain.target, transform) && IKUtility.IsDescendentOf(chain.rootTransform, transform)) &&
+                            (chain.target == transform || IKUtility.IsDescendentOf(chain.target, transform) || IKUtility.IsDescendentOf(chain.effector, transform)))
                         {
                             SetSolverDirty(solver);
                             break;
@@ -434,10 +434,10 @@ namespace UnityEditor.Experimental.U2D.IK
                     if (!solver.isValid)
                         continue;
 
-                    if(solver.allChainsHaveEffectors)
+                    if(solver.allChainsHaveTargets)
                         solver.UpdateIK(manager.weight);
-                    else if(PrepareEffectorOverrides(solver))
-                        solver.UpdateIK(m_EffectorPositions, manager.weight);
+                    else if(PrepareTargetOverrides(solver))
+                        solver.UpdateIK(m_TargetPositions, manager.weight);
 
                     for (int i = 0; i < solver.chainCount; ++i)
                     {
@@ -446,8 +446,8 @@ namespace UnityEditor.Experimental.U2D.IK
                         if (recordRootLoops)
                             InternalEngineBridge.SetLocalEulerHint(chain.rootTransform);
 
-                        if(solver.constrainRotation && chain.effector != null)
-                            InternalEngineBridge.SetLocalEulerHint(chain.target);
+                        if(solver.constrainRotation && chain.target != null)
+                            InternalEngineBridge.SetLocalEulerHint(chain.effector);
                     }
                 }
             }
@@ -456,9 +456,9 @@ namespace UnityEditor.Experimental.U2D.IK
             m_ChainPositionOverrides.Clear();
         }
 
-        private bool PrepareEffectorOverrides(Solver2D solver)
+        private bool PrepareTargetOverrides(Solver2D solver)
         {
-            m_EffectorPositions.Clear();
+            m_TargetPositions.Clear();
 
             for (int i = 0; i < solver.chainCount; ++i)
             {
@@ -467,11 +467,11 @@ namespace UnityEditor.Experimental.U2D.IK
                 Vector3 positionOverride;
                 if (!m_ChainPositionOverrides.TryGetValue(chain, out positionOverride))
                 {
-                    m_EffectorPositions.Clear();
+                    m_TargetPositions.Clear();
                     return false;
                 }
 
-                m_EffectorPositions.Add(positionOverride);
+                m_TargetPositions.Add(positionOverride);
             }
 
             return true;

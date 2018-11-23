@@ -12,7 +12,7 @@ namespace UnityEngine.Experimental.U2D.IK
         private float m_Weight = 1f;
 
         private Plane m_Plane;
-        private List<Vector3> m_EffectorPositions = new List<Vector3>();
+        private List<Vector3> m_TargetPositions = new List<Vector3>();
 
         public int chainCount
         {
@@ -36,9 +36,9 @@ namespace UnityEngine.Experimental.U2D.IK
             get { return Validate(); }
         }
 
-        public bool allChainsHaveEffectors
+        public bool allChainsHaveTargets
         {
-            get { return HasEffectors(); }
+            get { return HasTargets(); }
         }
 
         public float weight
@@ -68,12 +68,12 @@ namespace UnityEngine.Experimental.U2D.IK
             return DoValidate();
         }
 
-        private bool HasEffectors()
+        private bool HasTargets()
         {
             for (int i = 0; i < GetChainCount(); ++i)
             {
                 var chain = GetChain(i);
-                if (chain.effector == null)
+                if (chain.target == null)
                     return false;
             }
             return true;
@@ -102,7 +102,7 @@ namespace UnityEngine.Experimental.U2D.IK
             for (int i = 0; i < GetChainCount(); ++i)
             {
                 var chain = GetChain(i);
-                var constrainTargetRotation = constrainRotation && chain.effector != null;
+                var constrainTargetRotation = constrainRotation && chain.target != null;
 
                 if (m_RestoreDefaultPose)
                     chain.RestoreDefaultPose(constrainTargetRotation);
@@ -113,23 +113,23 @@ namespace UnityEngine.Experimental.U2D.IK
 
         private void PrepareEffectorPositions()
         {
-            m_EffectorPositions.Clear();
+            m_TargetPositions.Clear();
 
             for (int i = 0; i < GetChainCount(); ++i)
             {
                 var chain = GetChain(i);
 
-                if (chain.effector)
-                    m_EffectorPositions.Add(chain.effector.position);
+                if (chain.target)
+                    m_TargetPositions.Add(chain.target.position);
             }
         }
 
         public void UpdateIK(float globalWeight)
         {
-            if(allChainsHaveEffectors)
+            if(allChainsHaveTargets)
             {
                 PrepareEffectorPositions();
-                UpdateIK(m_EffectorPositions, globalWeight);
+                UpdateIK(m_TargetPositions, globalWeight);
             }
         }
 
@@ -158,8 +158,8 @@ namespace UnityEngine.Experimental.U2D.IK
                 {
                     var chain = GetChain(i);
 
-                    if (chain.effector)
-                        chain.target.rotation = chain.effector.rotation;
+                    if (chain.target)
+                        chain.effector.rotation = chain.target.rotation;
                 }
             }
 
@@ -181,7 +181,7 @@ namespace UnityEngine.Experimental.U2D.IK
             for (int i = 0; i < GetChainCount(); ++i)
             {
                 var chain = GetChain(i);
-                var constrainTargetRotation = constrainRotation && chain.effector != null;
+                var constrainTargetRotation = constrainRotation && chain.target != null;
                 chain.BlendFkToIk(finalWeight, constrainTargetRotation);
             }
         }

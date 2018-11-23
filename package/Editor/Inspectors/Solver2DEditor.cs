@@ -41,8 +41,8 @@ namespace UnityEditor.Experimental.U2D.IK
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
 
-            EditorGUI.BeginDisabledGroup(!EnableCreateEffector());
-            DoCreateEffectorButton();
+            EditorGUI.BeginDisabledGroup(!EnableCreateTarget());
+            DoCreateTargetButton();
             EditorGUI.EndDisabledGroup();
 
             EditorGUI.BeginDisabledGroup(!EnableRestoreDefaultPose());
@@ -70,7 +70,7 @@ namespace UnityEditor.Experimental.U2D.IK
             return false;
         }
 
-        private bool EnableCreateEffector()
+        private bool EnableCreateTarget()
         {
             foreach (var l_target in targets)
             {
@@ -83,7 +83,7 @@ namespace UnityEditor.Experimental.U2D.IK
                 {
                     var chain = solver.GetChain(i);
 
-                    if(chain.effector == null)
+                    if(chain.target == null)
                         return true;
                 }
             }
@@ -109,10 +109,10 @@ namespace UnityEditor.Experimental.U2D.IK
                         var chain = solver.GetChain(i);
                         chain.RestoreDefaultPose(solver.constrainRotation);
                         
-                        if(chain.effector)
+                        if(chain.target)
                         {
-                            chain.effector.position = chain.target.position;
-                            chain.effector.rotation = chain.target.rotation;
+                            chain.target.position = chain.effector.position;
+                            chain.target.rotation = chain.effector.rotation;
                         }
                     }
 
@@ -121,9 +121,9 @@ namespace UnityEditor.Experimental.U2D.IK
             }
         }
 
-        private void DoCreateEffectorButton()
+        private void DoCreateTargetButton()
         {
-            if (GUILayout.Button("Create Effector", GUILayout.MaxWidth(125f)))
+            if (GUILayout.Button("Create Target", GUILayout.MaxWidth(125f)))
             {
                 foreach (var l_target in targets)
                 {
@@ -136,16 +136,16 @@ namespace UnityEditor.Experimental.U2D.IK
                     {
                         var chain = solver.GetChain(i);
                         
-                        if(chain.effector == null)
+                        if(chain.target == null)
                         {
-                            Undo.RegisterCompleteObjectUndo(solver, "Create Effector");
+                            Undo.RegisterCompleteObjectUndo(solver, "Create Target");
                             
-                            chain.effector = new GameObject(solver.name + "_Effector").transform;
-                            chain.effector.SetParent(solver.transform);
-                            chain.effector.position = chain.target.position;
-                            chain.effector.rotation = chain.target.rotation;
+                            chain.target = new GameObject(solver.name + "_Target").transform;
+                            chain.target.SetParent(solver.transform);
+                            chain.target.position = chain.effector.position;
+                            chain.target.rotation = chain.effector.rotation;
 
-                            Undo.RegisterCreatedObjectUndo(chain.effector.gameObject, "Create Effector");
+                            Undo.RegisterCreatedObjectUndo(chain.target.gameObject, "Create Target");
                         }
                     }
                 }

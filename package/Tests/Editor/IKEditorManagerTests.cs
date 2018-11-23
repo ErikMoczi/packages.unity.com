@@ -58,8 +58,8 @@ namespace UnityEditor.Experimental.U2D.IK.Tests.IKEditorManagerTests
             effectorGO.transform.position = new Vector3(10.0f, 0.0f, 0.0f);
 
             chain = solver.GetChain(0);
-            chain.target = targetGO.transform;
-            chain.effector = effectorGO.transform;
+            chain.effector = targetGO.transform;
+            chain.target = effectorGO.transform;
             chain.transformCount = 5;
 
             solver.Initialize();
@@ -89,8 +89,8 @@ namespace UnityEditor.Experimental.U2D.IK.Tests.IKEditorManagerTests
 
             editorManager.OnLateUpdate();
 
-            Assert.That(targetPosition, Is.EqualTo(chain.target.position).Using(vec3Compare));
-            Assert.That(0.0f, Is.EqualTo((targetPosition - chain.target.position).magnitude).Using(floatCompare));
+            Assert.That(targetPosition, Is.EqualTo(chain.effector.position).Using(vec3Compare));
+            Assert.That(0.0f, Is.EqualTo((targetPosition - chain.effector.position).magnitude).Using(floatCompare));
 
             Undo.PerformUndo();
         }
@@ -106,7 +106,7 @@ namespace UnityEditor.Experimental.U2D.IK.Tests.IKEditorManagerTests
         [Test]
         public void UndoDirtyIK_UndosMoveForTransforms()
         {
-            var originalPosition = chain.target.position;
+            var originalPosition = chain.effector.position;
             var targetPosition = new Vector3(9.0f, 1.0f, 0.0f);
 
             editorManager.RegisterUndo(solver, "Move Effector");
@@ -114,13 +114,13 @@ namespace UnityEditor.Experimental.U2D.IK.Tests.IKEditorManagerTests
             effectorGO.transform.position = targetPosition;
             editorManager.UpdateSolverImmediate(solver, false);
 
-            Assert.That(targetPosition, Is.EqualTo(chain.target.position).Using(vec3Compare));
+            Assert.That(targetPosition, Is.EqualTo(chain.effector.position).Using(vec3Compare));
 
             Undo.PerformUndo();
 
             Assert.That(targetPosition, Is.Not.EqualTo(originalPosition).Using(vec3Compare));
-            Assert.That(targetPosition, Is.Not.EqualTo(chain.target.position).Using(vec3Compare));
-            Assert.That(originalPosition, Is.EqualTo(chain.target.position).Using(vec3Compare));
+            Assert.That(targetPosition, Is.Not.EqualTo(chain.effector.position).Using(vec3Compare));
+            Assert.That(originalPosition, Is.EqualTo(chain.effector.position).Using(vec3Compare));
             Assert.That(originalPosition, Is.EqualTo(effectorGO.transform.position).Using(vec3Compare));
         }
 
@@ -130,15 +130,15 @@ namespace UnityEditor.Experimental.U2D.IK.Tests.IKEditorManagerTests
             var targetPosition = new Vector3(9.0f, -1.0f, 0.0f);
             var effectorPosition = new Vector3(9.0f, 1.0f, 0.0f);
 
-            chain.effector = null;
+            chain.target = null;
             effectorGO.transform.position = effectorPosition;
 
             editorManager.SetChainPositionOverride(chain, targetPosition);
             editorManager.UpdateSolverImmediate(solver, false);
 
-            Assert.That(effectorPosition, Is.Not.EqualTo(chain.target.position).Using(vec3Compare));
-            Assert.That(targetPosition, Is.EqualTo(chain.target.position).Using(vec3Compare));
-            Assert.That(0.0f, Is.EqualTo((targetPosition - chain.target.position).magnitude).Using(floatCompare));
+            Assert.That(effectorPosition, Is.Not.EqualTo(chain.effector.position).Using(vec3Compare));
+            Assert.That(targetPosition, Is.EqualTo(chain.effector.position).Using(vec3Compare));
+            Assert.That(0.0f, Is.EqualTo((targetPosition - chain.effector.position).magnitude).Using(floatCompare));
         }
     }
 }
