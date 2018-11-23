@@ -11,3 +11,4 @@
 0.9.12-preview
 0.9.13-preview
 0.9.14-preview
+1.0.0-preview.1
