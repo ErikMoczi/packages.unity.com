@@ -1,4 +1,4 @@
-Mobile Notifications package ads support for sending local notifications on iOS & Android. 
+Mobile Notifications package adds support for sending local notifications on iOS & Android. 
 
 It allows scheduling local repeatable or one-time and location based notifications (only on iOS).
 
