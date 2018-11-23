@@ -81,11 +81,6 @@ namespace UnityEngine.Experimental.U2D.Animation
             ValidateTransformArray();
         }
 
-        private void OnValidate()
-        {
-            ValidateTransformArray();
-        }
-
         private void ValidateTransformArray()
         {
             if (spriteRenderer.sprite)

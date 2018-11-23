@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.16-preview.2] - 2018-11-14
+### Added
+- Fix 2 Issues:
+  1. Prefabs with SpriteSkin loses references to bone hierarchy when Library folder is rebuilt/different.
+  2. The scene viewport shows the character without any bones applied, needing an re-import. 
+
 ## [1.0.16-preview.1] - 2018-7-18
 ### Added
 - Fix error log about VertexAttribute

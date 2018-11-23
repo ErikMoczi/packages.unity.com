@@ -1,6 +1,6 @@
 {
     "name": "com.unity.2d.animation",
-    "version": "1.0.16-preview.1",
+    "version": "1.0.16-preview.2",
     "unity": "2018.1",
     "displayName": "2D Animation",
     "description": "2D Animation provides the all the necessary tooling and runtime components for skeletal animation using Sprites.",
