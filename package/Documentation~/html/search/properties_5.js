@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['granted',['Granted',['../d8/dba/class_unity_1_1_notifications_1_1i_o_s_1_1_request_authorization_request.html#a88109f2b58c82f3a668c404c9204c9dc',1,'Unity::Notifications::iOS::RequestAuthorizationRequest']]]
+  ['granted',['Granted',['../d6/dcf/class_unity_1_1_notifications_1_1i_o_s_1_1_authorization_request.html#aae4075b2b30a51b7cf9a7b6a548e4b28',1,'Unity::Notifications::iOS::AuthorizationRequest']]]
 ];

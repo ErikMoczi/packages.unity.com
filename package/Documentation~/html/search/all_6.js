@@ -5,5 +5,5 @@ var searchData=
   ['getnotificationchannels',['GetNotificationChannels',['../d1/d48/class_unity_1_1_notifications_1_1_android_1_1_android_notification_center.html#a3a05c07b54176c4da8d27a0616cd8ed2',1,'Unity::Notifications::Android::AndroidNotificationCenter']]],
   ['getnotificationsettings',['GetNotificationSettings',['../dd/d32/class_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_center.html#a6fd3a0833b02f884dc9acccf4fe2c908',1,'Unity::Notifications::iOS::iOSNotificationCenter']]],
   ['getschedulednotifications',['GetScheduledNotifications',['../dd/d32/class_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_center.html#a9d1e31492da9ae401ae51f2e6f8ea348',1,'Unity::Notifications::iOS::iOSNotificationCenter']]],
-  ['granted',['Granted',['../d8/dba/class_unity_1_1_notifications_1_1i_o_s_1_1_request_authorization_request.html#a88109f2b58c82f3a668c404c9204c9dc',1,'Unity::Notifications::iOS::RequestAuthorizationRequest']]]
+  ['granted',['Granted',['../d6/dcf/class_unity_1_1_notifications_1_1i_o_s_1_1_authorization_request.html#aae4075b2b30a51b7cf9a7b6a548e4b28',1,'Unity::Notifications::iOS::AuthorizationRequest']]]
 ];

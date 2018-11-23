@@ -4,6 +4,5 @@ var searchData=
   ['removealldeliverednotifications',['RemoveAllDeliveredNotifications',['../dd/d32/class_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_center.html#abc4e7b2c482a2dcbfb4ea7c425b30414',1,'Unity::Notifications::iOS::iOSNotificationCenter']]],
   ['removeallschedulednotifications',['RemoveAllScheduledNotifications',['../dd/d32/class_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_center.html#a16a8c52bdbf0824c026a0e234e178da5',1,'Unity::Notifications::iOS::iOSNotificationCenter']]],
   ['removedeliverednotification',['RemoveDeliveredNotification',['../dd/d32/class_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_center.html#a559fc9adc052aacb98cce0fb1c8bdd73',1,'Unity::Notifications::iOS::iOSNotificationCenter']]],
-  ['removeschedulednotification',['RemoveScheduledNotification',['../dd/d32/class_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_center.html#a65a5de0f0aee9afe51c067dd074b8604',1,'Unity::Notifications::iOS::iOSNotificationCenter']]],
-  ['requestauthorizationrequest',['RequestAuthorizationRequest',['../d8/dba/class_unity_1_1_notifications_1_1i_o_s_1_1_request_authorization_request.html#aa7e23015398d3f59a57ffe68c4bccc13',1,'Unity::Notifications::iOS::RequestAuthorizationRequest']]]
+  ['removeschedulednotification',['RemoveScheduledNotification',['../dd/d32/class_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_center.html#a65a5de0f0aee9afe51c067dd074b8604',1,'Unity::Notifications::iOS::iOSNotificationCenter']]]
 ];
