@@ -8,3 +8,4 @@
 0.9.9-preview
 0.9.10-preview
 0.9.11-preview
+0.9.12-preview
