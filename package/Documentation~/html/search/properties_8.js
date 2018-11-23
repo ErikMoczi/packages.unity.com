@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['notifyonentry',['NotifyOnEntry',['../db/d9c/struct_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_location_trigger.html#a99119b0abaacf7d1b9b0a0df78d00370',1,'Unity::Notifications::iOS::iOSNotificationLocationTrigger']]],
-  ['notifyonexit',['NotifyOnExit',['../db/d9c/struct_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_location_trigger.html#ae0de63a2c46f7c3d4efe6f9b1b89ed21',1,'Unity::Notifications::iOS::iOSNotificationLocationTrigger']]],
-  ['number',['Number',['../dc/d11/struct_unity_1_1_notifications_1_1_android_1_1_android_notification.html#ab62a3ec782140153de382724ac357319',1,'Unity::Notifications::Android::AndroidNotification']]]
+  ['largeicon',['LargeIcon',['../dc/d11/struct_unity_1_1_notifications_1_1_android_1_1_android_notification.html#a503d3b03afb556b4991f5d15017ccf08',1,'Unity::Notifications::Android::AndroidNotification']]],
+  ['lockscreensetting',['LockScreenSetting',['../d6/d3b/struct_unity_1_1_notifications_1_1i_o_s_1_1i_o_s_notification_settings.html#a02ed13e5783a63db6c37b3fa2705725c',1,'Unity::Notifications::iOS::iOSNotificationSettings']]]
 ];
