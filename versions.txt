@@ -51,3 +51,4 @@
 4.0.0-preview.27
 4.0.0-preview.28
 4.0.0-preview.29
+4.0.0-preview.30
