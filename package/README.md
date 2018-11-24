@@ -17,6 +17,9 @@ The purpose of this package is to provide ARKit XR Support.
   ├── QAReport.md
   ├── README.md
   └── Runtime
+      ├── FaceTracking
+      │   ├── ARKitFaceSubsystem.cs
+      │   ├── Unity.XR.ARKit.FaceTracking.asmdef 
       ├── iOS
       │   ├── link.xml
       │   ├── Resources 

@@ -1,5 +1,6 @@
 using AOT;
 using System;
+using System.Runtime.InteropServices;
 using UnityEngine.XR.ARExtensions;
 using UnityEngine.Experimental.XR;
 
@@ -15,6 +16,12 @@ namespace UnityEngine.XR.ARKit
         {
             XRPlaneExtensions.RegisterGetTrackingStateHandler(k_SubsystemId, GetTrackingState);
             XRPlaneExtensions.RegisterGetNativePtrHandler(k_SubsystemId, GetNativePtr);
+            XRPlaneExtensions.RegisterTrySetPlaneDetectionFlagsHandler(k_SubsystemId, TrySetPlaneDetectionFlags);
+        }
+
+        static bool TrySetPlaneDetectionFlags(XRPlaneSubsystem planeSubsystem, PlaneDetectionFlags flags)
+        {
+            return UnityARKit_trySetPlaneDetectionFlags(flags);
         }
 
         static TrackingState GetTrackingState(XRPlaneSubsystem planeSubsystem, TrackableId planeId)
@@ -28,5 +35,15 @@ namespace UnityEngine.XR.ARKit
         }
 
         static readonly string k_SubsystemId = "ARKit-Plane";
+
+#if UNITY_IOS && !UNITY_EDITOR
+        [DllImport("__Internal")]
+        static extern bool UnityARKit_trySetPlaneDetectionFlags(PlaneDetectionFlags flags);
+#else
+        static bool UnityARKit_trySetPlaneDetectionFlags(PlaneDetectionFlags flags)
+        {
+            return false;
+        }
+#endif
     }
 }

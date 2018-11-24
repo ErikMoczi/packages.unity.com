@@ -36,8 +36,42 @@ namespace UnityEditor.XR.ARKit
             const string arkitFramework = "ARKit.framework";
             proj.AddFrameworkToProject(targetGuid, arkitFramework, isFrameworkOptional);
 
+            HandleARKitRequiredFlag(pathToBuiltProject);
+
             // Finally, write out the modified project with the framework added.
             File.WriteAllText(projPath, proj.WriteToString());
+        }
+
+        static void HandleARKitRequiredFlag(string pathToBuiltProject)
+        {
+            var arkitSettings = ARKitSettings.GetOrCreateSettings();
+            string plistPath = Path.Combine(pathToBuiltProject, "Info.plist");
+            PlistDocument plist = new PlistDocument();
+            plist.ReadFromString(File.ReadAllText(plistPath));
+            PlistElementDict rootDict = plist.root;
+
+            // Get or create array to manage device capabilities
+            const string capsKey = "UIRequiredDeviceCapabilities";
+            PlistElementArray capsArray;
+            PlistElement pel;
+            if (rootDict.values.TryGetValue(capsKey, out pel))
+            {
+                capsArray = pel.AsArray();
+            }
+            else
+            {
+                capsArray = rootDict.CreateArray(capsKey);
+            }
+            // Remove any existing "arkit" plist entries
+            const string arkitStr = "arkit";
+            capsArray.values.RemoveAll(x => arkitStr.Equals(x.AsString()));
+            if (arkitSettings.ARKitRequirement == ARKitSettings.Requirement.Required)
+            {
+                // Add "arkit" plist entry
+                capsArray.AddString(arkitStr);
+            }
+
+            File.WriteAllText(plistPath, plist.WriteToString());
         }
 
         internal class ARKitPreprocessBuild : IPreprocessBuildWithReport
@@ -58,7 +92,14 @@ namespace UnityEditor.XR.ARKit
 #endif
 
                 if (LinkerUtility.AssemblyStrippingEnabled(report.summary.platformGroup))
+                {
                     LinkerUtility.EnsureLinkXmlExistsFor("ARKit");
+                    var arkitSettings = ARKitSettings.GetOrCreateSettings();
+                    if (arkitSettings.ARKitFaceTrackingEnabled)
+                    {
+                        LinkerUtility.EnsureLinkXmlExistsFor("ARKit.FaceTracking");
+                    }
+                }
             }
 
             void EnsureOnlyMetalIsUsed()
@@ -74,7 +115,6 @@ namespace UnityEditor.XR.ARKit
 
             public int callbackOrder { get { return 0; } }
         }
-
     }
 }
 #endif

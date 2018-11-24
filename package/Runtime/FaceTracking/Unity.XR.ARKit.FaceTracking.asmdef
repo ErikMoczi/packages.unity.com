@@ -1,0 +1,13 @@
+{
+    "name": "Unity.XR.ARKit.FaceTracking",
+    "references": [
+        "Unity.XR.FaceSubsystem"
+    ],
+    "includePlatforms": [
+        "Editor",
+        "iOS"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "autoReferenced": true
+}
