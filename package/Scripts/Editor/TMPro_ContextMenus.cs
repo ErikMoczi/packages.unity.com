@@ -153,7 +153,6 @@ namespace TMPro.EditorUtilities
 
 
         // Enable Resetting of Material properties without losing unique properties of the font atlas.
-        //[MenuItem("CONTEXT/MaterialComponent/Reset", false, 2100)]
         [MenuItem("CONTEXT/Material/Reset", false, 2100)]
         static void ResetSettings(MenuCommand command)
         {

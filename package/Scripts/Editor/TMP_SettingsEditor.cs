@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
@@ -9,7 +10,7 @@ namespace TMPro.EditorUtilities
     [CustomEditor(typeof(TMP_Settings))]
     public class TMP_SettingsEditor : Editor
     {
-        class Styles
+        internal class Styles
         {
             public static readonly GUIContent defaultFontAssetLabel = new GUIContent("Default Font Asset", "The Font Asset that will be assigned by default to newly created text objects when no Font Asset is specified.");
             public static readonly GUIContent defaultFontAssetPathLabel = new GUIContent("Path:        Resources/", "The relative path to a Resources folder where the Font Assets and Material Presets are located.\nExample \"Fonts & Materials/\"");
@@ -24,6 +25,7 @@ namespace TMPro.EditorUtilities
 
             public static readonly GUIContent textMeshProLabel = new GUIContent("TextMeshPro");
             public static readonly GUIContent textMeshProUiLabel = new GUIContent("TextMeshPro UI");
+            public static readonly GUIContent enableRaycastTarget = new GUIContent("Enable Raycast Target");
             public static readonly GUIContent autoSizeContainerLabel = new GUIContent("Auto Size Text Container", "Set the size of the text container to match the text.");
             
             public static readonly GUIContent textComponentDefaultSettingsLabel = new GUIContent("Text Component Default Settings");
@@ -62,6 +64,7 @@ namespace TMPro.EditorUtilities
         SerializedProperty m_PropDefaultTextMeshProTextContainerSize;
         SerializedProperty m_PropDefaultTextMeshProUITextContainerSize;
         SerializedProperty m_PropAutoSizeTextContainer;
+        SerializedProperty m_PropEnableRaycastTarget;
 
         SerializedProperty m_PropSpriteAsset;
         SerializedProperty m_PropSpriteAssetPath;
@@ -97,6 +100,7 @@ namespace TMPro.EditorUtilities
             m_PropDefaultTextMeshProTextContainerSize = serializedObject.FindProperty("m_defaultTextMeshProTextContainerSize");
             m_PropDefaultTextMeshProUITextContainerSize = serializedObject.FindProperty("m_defaultTextMeshProUITextContainerSize");
             m_PropAutoSizeTextContainer = serializedObject.FindProperty("m_autoSizeTextContainer");
+            m_PropEnableRaycastTarget = serializedObject.FindProperty("m_EnableRaycastTarget");
 
             m_PropSpriteAsset = serializedObject.FindProperty("m_defaultSpriteAsset");
             m_PropSpriteAssetPath = serializedObject.FindProperty("m_defaultSpriteAssetPath");
@@ -185,6 +189,7 @@ namespace TMPro.EditorUtilities
             
             EditorGUILayout.PropertyField(m_PropDefaultTextMeshProTextContainerSize, Styles.textMeshProLabel);
             EditorGUILayout.PropertyField(m_PropDefaultTextMeshProUITextContainerSize, Styles.textMeshProUiLabel);
+            EditorGUILayout.PropertyField(m_PropEnableRaycastTarget, Styles.enableRaycastTarget);
             EditorGUILayout.PropertyField(m_PropAutoSizeTextContainer, Styles.autoSizeContainerLabel);
             EditorGUI.indentLevel = 0;
 
@@ -277,17 +282,54 @@ namespace TMPro.EditorUtilities
                 EditorUtility.SetDirty(target);
                 TMPro_EventManager.ON_TMP_SETTINGS_CHANGED();
             }
-
+        }
         }
 
-        #if UNITY_2018_3_OR_NEWER
-        [SettingsProvider]
-        static SettingsProvider CreateTMPSettingsProvider()
+    #if UNITY_2018_3_OR_NEWER
+    class TMP_ResourceImporterProvider : SettingsProvider
+    {
+        TMP_PackageResourceImporter m_ResourceImporter;
+        public TMP_ResourceImporterProvider()
+            : base("Project/TextMesh Pro", SettingsScope.Project)
         {
-            var provider = new AssetSettingsProvider("Project/TextMesh Pro", () => TMP_Settings.instance);
-            provider.PopulateSearchKeywordsFromGUIContentProperties<Styles>();
-            return provider;
         }
-        #endif
+
+        public override void OnGUI(string searchContext)
+        {
+            // Lazy creation that supports domain reload
+            if (m_ResourceImporter == null)
+            {
+                m_ResourceImporter = new TMP_PackageResourceImporter();
+            }
+            m_ResourceImporter.OnGUI();
+        }
+
+        public override void OnDeactivate()
+        {
+            if (m_ResourceImporter != null)
+            {
+                m_ResourceImporter.OnDestroy();
+            }
+        }
+
+        static UnityEngine.Object GetTMPSettings()
+        {
+            return Resources.Load<TMP_Settings>("TMP Settings");
+        }
+
+        [SettingsProviderGroup]
+        static SettingsProvider[] CreateTMPSettingsProvider()
+        {
+            var providers = new List<SettingsProvider> { new TMP_ResourceImporterProvider() };
+            if (GetTMPSettings() != null)
+        {
+                var provider = new AssetSettingsProvider("Project/TextMesh Pro/Settings", GetTMPSettings);
+                provider.PopulateSearchKeywordsFromGUIContentProperties<TMP_SettingsEditor.Styles>();
+                providers.Add(provider);
+            }
+
+            return providers.ToArray();
+        }
+        }
+    #endif
     }
-}

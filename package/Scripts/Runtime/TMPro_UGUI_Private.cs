@@ -12,6 +12,7 @@ using UnityEngine.UI;
 
 namespace TMPro
 {  
+
     public partial class TextMeshProUGUI
     {
         [SerializeField]
@@ -70,7 +71,7 @@ namespace TMPro
 
         protected override void Awake()
         {
-            //Debug.Log("***** Awake() *****");
+            //Debug.Log("***** Awake() called on object ID " + GetInstanceID() + ". *****");
 
             #if UNITY_EDITOR
             // Special handling for TMP Settings and importing Essential Resources
@@ -153,7 +154,7 @@ namespace TMPro
 
         protected override void OnEnable()
         {
-            //Debug.Log("*** OnEnable() ***", this);
+            //Debug.Log("***** OnEnable() called on object ID " + GetInstanceID() + ". *****");
 
             // Return if Awake() has not been called on the text object.
             if (m_isAwake == false)
@@ -184,6 +185,9 @@ namespace TMPro
             // Register Graphic Component to receive event triggers
             GraphicRegistry.RegisterGraphicForCanvas(m_canvas, this);
 
+            // Register text object for updates
+            TMP_UpdateManager.RegisterTextObjectForUpdate(this);
+
             ComputeMarginSize();
 
             m_verticesAlreadyDirty = false;
@@ -198,8 +202,7 @@ namespace TMPro
 
         protected override void OnDisable()
         {
-            //base.OnDisable();
-            //Debug.Log("***** OnDisable() *****"); //for " + this.name + " with ID: " + this.GetInstanceID() + " has been called.");
+            //Debug.Log("***** OnDisable() called on object ID " + GetInstanceID() + ". *****");
 
             // Return if Awake() has not been called on the text object.
             if (m_isAwake == false)
@@ -215,6 +218,8 @@ namespace TMPro
             GraphicRegistry.UnregisterGraphicForCanvas(m_canvas, this);
             CanvasUpdateRegistry.UnRegisterCanvasElementForRebuild((ICanvasElement)this);
 
+            TMP_UpdateManager.UnRegisterTextObjectForUpdate(this);
+
             if (m_canvasRenderer != null)
                 m_canvasRenderer.Clear();
 
@@ -227,11 +232,12 @@ namespace TMPro
 
         protected override void OnDestroy()
         {
-            //base.OnDestroy();
-            //Debug.Log("***** OnDestroy() *****");
+            //Debug.Log("***** OnDestroy() called on object ID " + GetInstanceID() + ". *****");
 
             // UnRegister Graphic Component
             GraphicRegistry.UnregisterGraphicForCanvas(m_canvas, this);
+
+            TMP_UpdateManager.UnRegisterTextObjectForUpdate(this);
 
             // Clean up remaining mesh
             if (m_mesh != null)
@@ -318,6 +324,9 @@ namespace TMPro
         void ON_RESOURCES_LOADED()
         {
             TMPro_EventManager.RESOURCE_LOAD_EVENT.Remove(ON_RESOURCES_LOADED);
+
+            if (this == null)
+                return;
 
             Awake();
             OnEnable();
@@ -1554,21 +1563,20 @@ namespace TMPro
 
 
         /// <summary>
-        /// Unity standard function used to check if the transform or scale of the text object has changed.
+        /// Function used as a replacement for LateUpdate to check if the transform or scale of the text object has changed.
         /// </summary>
-        void LateUpdate()
-        {
-            if (m_rectTransform.hasChanged)
+        internal override void InternalUpdate()
             {
                 // We need to update the SDF scale or possibly regenerate the text object if lossy scale has changed.
+            if (m_havePropertiesChanged == false)
+            {
                 float lossyScaleY = m_rectTransform.lossyScale.y;
-                if (!m_havePropertiesChanged && lossyScaleY != m_previousLossyScaleY && m_text != string.Empty && m_text != null)
+                if (lossyScaleY != m_previousLossyScaleY && m_text != string.Empty && m_text != null)
                 {
                     UpdateSDFScale(lossyScaleY);
 
                     m_previousLossyScaleY = lossyScaleY;
                 }
-                m_rectTransform.hasChanged = false;
             }
 
             // Added to handle legacy animation mode.

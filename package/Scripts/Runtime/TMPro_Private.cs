@@ -67,7 +67,7 @@ namespace TMPro
 
         protected override void Awake()
         {
-            //Debug.Log("Awake() called on Object ID " + GetInstanceID());
+            //Debug.Log("***** Awake() called on object ID " + GetInstanceID() + ". *****");
 
             #if UNITY_EDITOR
             // Special handling for TMP Settings and importing Essential Resources
@@ -168,7 +168,7 @@ namespace TMPro
 
         protected override void OnEnable()
         {
-            //Debug.Log("***** OnEnable() called on object ID " + GetInstanceID() + ". *****"); // called. Renderer.MeshFilter ID " + m_renderer.GetComponent<MeshFilter>().sharedMesh.GetInstanceID() + "  Mesh ID " + m_mesh.GetInstanceID() + "  MeshFilter ID " + m_meshFilter.GetInstanceID()); //has been called. HavePropertiesChanged = " + havePropertiesChanged); // has been called on Object ID:" + gameObject.GetInstanceID());      
+            //Debug.Log("***** OnEnable() called on object ID " + GetInstanceID() + ". *****");
 
             // Return if Awake() has not been called on the text object.
             if (m_isAwake == false)
@@ -189,6 +189,8 @@ namespace TMPro
                 m_isRegisteredForEvents = true;
             }
 
+            TMP_UpdateManager.RegisterTextObjectForUpdate(this);
+
             meshFilter.sharedMesh = mesh;
             SetActiveSubMeshes(true);
 
@@ -204,13 +206,14 @@ namespace TMPro
 
         protected override void OnDisable()
         {
-            //Debug.Log("***** OnDisable() called on object ID " + GetInstanceID() + ". *****"); //+ m_renderer.GetComponent<MeshFilter>().sharedMesh.GetInstanceID() + "  Mesh ID " + m_mesh.GetInstanceID() + "  MeshFilter ID " + m_meshFilter.GetInstanceID()); //has been called. HavePropertiesChanged = " + havePropertiesChanged); // has been called on Object ID:" + gameObject.GetInstanceID());      
+            //Debug.Log("***** OnDisable() called on object ID " + GetInstanceID() + ". *****");
 
             // Return if Awake() has not been called on the text object.
             if (m_isAwake == false)
                 return;
 
             TMP_UpdateManager.UnRegisterTextElementForRebuild(this);
+            TMP_UpdateManager.UnRegisterTextObjectForUpdate(this);
 
             m_meshFilter.sharedMesh = null;
             SetActiveSubMeshes(false);
@@ -241,6 +244,7 @@ namespace TMPro
 
             m_isRegisteredForEvents = false;
             TMP_UpdateManager.UnRegisterTextElementForRebuild(this);
+            TMP_UpdateManager.UnRegisterTextObjectForUpdate(this);
         }
 
 
@@ -295,6 +299,9 @@ namespace TMPro
         void ON_RESOURCES_LOADED()
         {
             TMPro_EventManager.RESOURCE_LOAD_EVENT.Remove(ON_RESOURCES_LOADED);
+
+            if (this == null)
+                return;
 
             Awake();
             OnEnable();
@@ -1461,16 +1468,15 @@ namespace TMPro
 
 
         /// <summary>
-        /// Unity standard function used to check if the transform or scale of the text object has changed.
+        /// Function used as a replacement for LateUpdate to check if the transform or scale of the text object has changed.
         /// </summary>
-        void LateUpdate()
-        {
-            // TODO : Review this
-            if (m_rectTransform.hasChanged)
+        internal override void InternalUpdate()
             {
                 // We need to update the SDF scale or possibly regenerate the text object if lossy scale has changed.
+            if (m_havePropertiesChanged == false)
+            {
                 float lossyScaleY = m_rectTransform.lossyScale.y;
-                if (!m_havePropertiesChanged && lossyScaleY != m_previousLossyScaleY && m_text != string.Empty && m_text != null)
+                if (lossyScaleY != m_previousLossyScaleY && m_text != string.Empty && m_text != null)
                 {
                     UpdateSDFScale(lossyScaleY);
 
@@ -1542,7 +1548,6 @@ namespace TMPro
                 GenerateTextMesh();
             }
         }
-
 
 
         /// <summary>

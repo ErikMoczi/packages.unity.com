@@ -118,7 +118,7 @@ namespace TMPro
             set { if (m_text == value) return; m_text = old_text = value; m_inputSource = TextInputSources.String; m_havePropertiesChanged = true; m_isCalculateSizeRequired = true; m_isInputParsingRequired = true; SetVerticesDirty(); SetLayoutDirty(); }
         }
         [SerializeField]
-        [TextArea(3, 10)]
+        [TextArea(5, 10)]
         protected string m_text;
 
 
@@ -1778,16 +1778,6 @@ namespace TMPro
         /// <param name="arg2">Value is a float.</param>
         public void SetText(string text, float arg0, float arg1, float arg2)
         {
-            // Early out if nothing has been changed from previous invocation.
-            //if (text == old_text && arg0 == old_arg0 && arg1 == old_arg1 && arg2 == old_arg2)
-            //{
-            //    return;
-            //}
-
-            //old_text = text;
-            //old_arg1 = 255;
-            //old_arg2 = 255;
-
             int decimalPrecision = 0;
             int index = 0;
 
@@ -1806,15 +1796,12 @@ namespace TMPro
                     switch (text[i + 1] - 48)
                     {
                         case 0: // 1st Arg
-                            //old_arg0 = arg0;
                             AddFloatToCharArray(arg0, ref index, decimalPrecision);
                             break;
                         case 1: // 2nd Arg
-                            //old_arg1 = arg1;
                             AddFloatToCharArray(arg1, ref index, decimalPrecision);
                             break;
                         case 2: // 3rd Arg
-                            //old_arg2 = arg2;
                             AddFloatToCharArray(arg2, ref index, decimalPrecision);
                             break;
                     }
@@ -3323,7 +3310,7 @@ namespace TMPro
         /// <param name="number"></param>
         /// <param name="index"></param>
         /// <param name="precision"></param>
-        protected void AddFloatToCharArray(float number, ref int index, int precision)
+        protected void AddFloatToCharArray(double number, ref int index, int precision)
         {
             if (number < 0)
             {
@@ -3333,7 +3320,8 @@ namespace TMPro
 
             number += k_Power[Mathf.Min(9, precision)];
 
-            int integer = (int)number;
+            double integer = Math.Truncate(number);
+
             AddIntToCharArray(integer, ref index, precision);
 
             if (precision > 0)
@@ -3345,7 +3333,7 @@ namespace TMPro
                 for (int p = 0; p < precision; p++)
                 {
                     number *= 10;
-                    int d = (int)(number);
+                    long d = (long)(number);
 
                     m_input_CharArray[index++] = (char)(d + 48);
                     number -= d;
@@ -3360,7 +3348,7 @@ namespace TMPro
         /// <param name="number"></param>
         /// <param name="index"></param>
         /// <param name="precision"></param>
-        protected void AddIntToCharArray(int number, ref int index, int precision)
+        protected void AddIntToCharArray(double number, ref int index, int precision)
         {
             if (number < 0)
             {
@@ -3373,7 +3361,7 @@ namespace TMPro
             {
                 m_input_CharArray[i++] = (char)(number % 10 + 48);
                 number /= 10;
-            } while (number > 0);
+            } while (number > 0.999d);
 
             int lastIndex = i;
 
@@ -5407,6 +5395,7 @@ namespace TMPro
                         m_rectTransform.sizeDelta = TMP_Settings.defaultTextMeshProUITextContainerSize;
                 }
 
+                raycastTarget = TMP_Settings.enableRaycastTarget;
                 m_enableWordWrapping = TMP_Settings.enableWordWrapping;
                 m_enableKerning = TMP_Settings.enableKerning;
                 m_enableExtraPadding = TMP_Settings.enableExtraPadding;
@@ -5604,6 +5593,12 @@ namespace TMPro
 
             return (float)((x0 * 4096) + y0);
         }
+
+
+        /// <summary>
+        /// Function used as a replacement for LateUpdate()
+        /// </summary>
+        internal virtual void InternalUpdate() { }
 
 
         /// <summary>

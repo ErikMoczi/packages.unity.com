@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace TMPro
 {
-    [ExecuteInEditMode]
+
     [DisallowMultipleComponent]
     [RequireComponent(typeof(MeshRenderer))]
     [RequireComponent(typeof(MeshFilter))] 
@@ -43,19 +43,6 @@ namespace TMPro
             get { return m_autoSizeTextContainer; }
 
             set { if (m_autoSizeTextContainer == value) return; m_autoSizeTextContainer = value; if (m_autoSizeTextContainer) { TMP_UpdateManager.RegisterTextElementForLayoutRebuild(this); SetLayoutDirty(); } }
-        }
-
-
-        /// <summary>
-        /// Returns a reference to the Text Container
-        /// </summary>
-        [Obsolete("The TextContainer is now obsolete. Use the RectTransform instead.")]
-        public TextContainer textContainer
-        {
-            get
-            {
-                return null;
-            }
         }
 
 

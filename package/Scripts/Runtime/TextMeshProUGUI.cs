@@ -13,7 +13,6 @@ using UnityEngine.UI.CoroutineTween;
 namespace TMPro
 {
 
-    [ExecuteInEditMode]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(RectTransform))]
     [RequireComponent(typeof(CanvasRenderer))]

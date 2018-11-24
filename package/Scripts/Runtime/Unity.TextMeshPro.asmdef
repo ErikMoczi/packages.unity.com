@@ -1,6 +1,6 @@
 {
     "name": "Unity.TextMeshPro",
-    "references": [],
+    "references": [	"Unity.ugui" ],
     "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": []

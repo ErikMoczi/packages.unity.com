@@ -253,6 +253,9 @@ namespace TMPro.EditorUtilities
         /// <returns></returns>
         public static string GetDecimalCharacterSequence(int[] characterSet)
         {
+            if (characterSet == null || characterSet.Length == 0)
+                return string.Empty;
+
             string characterSequence = string.Empty;
             int count = characterSet.Length;
             int first = characterSet[0];
@@ -293,6 +296,9 @@ namespace TMPro.EditorUtilities
         /// <returns></returns>
         public static string GetUnicodeCharacterSequence(int[] characterSet)
         {
+            if (characterSet == null || characterSet.Length == 0)
+                return string.Empty;
+
             string characterSequence = string.Empty;
             int count = characterSet.Length;
             int first = characterSet[0];

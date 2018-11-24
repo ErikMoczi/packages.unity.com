@@ -1,6 +1,19 @@
 # Changelog
 These are the release notes for the TextMesh Pro UPM package which was first introduced with Unity 2018.1. Please see the following link for the Release Notes for prior versions of TextMesh Pro. http://digitalnativestudios.com/forum/index.php?topic=1363.0
 
+## [1.3.1] - 2018-11-12
+### Changes
+- Accessing the TextMesh Pro Settings via the new Edit - Settings menu when TMP Essential Resources have not yet been imported in the project will no longer open a new window to provide the options to import these resources.
+- Fixed an issue where using int.MaxValue, int.MinValue, float.MaxValue and float.MinValue in conjunction with SetText() would display incorrect numerical values. Case #1078521.
+- Added public setter to the TMP Settings' missingGlyphCharacter to allow changing which character will be used for missing characters via scripting.
+- Fixed a potential Null Reference Exception related to loading the Default Style Sheet.
+- Added compiler conditional to TMP_UpdateManager.cs to address changes to SRP.
+- Added new menu option to allow the quick creation of a UI Button using TMP. New menu option is located in Create - UI - Button (TextMeshPro).
+- Renamed TMP related create menu options.
+- Added package dependency on UGUI package.
+- Updated assembly definitions to add reference to UGUI assembly.
+- Fixed TMP object creation handling when using Prefab isolation mode. case #1077392
+
 ## [1.3.0] - 2018-08-09
 ### Changes
 - Revamped UI to conform to Unity Human Interface Guidelines.
