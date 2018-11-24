@@ -3,21 +3,19 @@ using UnityEngine.XR;
 using System.Collections.Generic;
 using UnityEngine.XR.Tango;
 using UnityEngine.Experimental.XR.Interaction;
-using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("UnityEditor.SpatialTracking")]
-
+//trackedposedriver
 namespace UnityEngine.SpatialTracking
 {
-    internal class TrackedPoseDriverDataDescription
+    public class TrackedPoseDriverDataDescription
     {        
-        internal struct PoseData
+        public struct PoseData
         {
             public List<string> PoseNames;
             public List<TrackedPoseDriver.TrackedPose> Poses;
         }
      
-        internal static List<PoseData> DeviceData = new List<PoseData>
+        public static List<PoseData> DeviceData = new List<PoseData>
         {
             // Generic XR Device
             new PoseData
@@ -68,7 +66,7 @@ namespace UnityEngine.SpatialTracking
     /// </summary>
     static public class PoseDataSource
     {
-        static internal List<XR.XRNodeState> nodeStates = new List<XR.XRNodeState>();        
+        static List<XR.XRNodeState> nodeStates = new List<XR.XRNodeState>();        
         static internal bool TryGetNodePoseData(XR.XRNode node, out Pose resultPose)
         {
             XR.InputTracking.GetNodeStates(nodeStates);
@@ -133,13 +131,18 @@ namespace UnityEngine.SpatialTracking
                         return TryGetNodePoseData(XR.XRNode.CenterEye, out resultPose);
                     }
                     return true;
-                }               
+                } 
+                default:
+                {
+                    Debug.LogWarningFormat("Unable to retrieve pose data for poseSource: {0}", poseSource.ToString());
+                    break;
+                }           
             }
             resultPose = Pose.identity;
             return false;
         }
 
-        static internal bool TryGetTangoPose(out Pose pose)
+        static bool TryGetTangoPose(out Pose pose)
         {
             PoseData poseOut;
             if (TangoInputTracking.TryGetPoseAtTime(out poseOut) && poseOut.statusCode == PoseStatus.Valid)
@@ -222,9 +225,21 @@ namespace UnityEngine.SpatialTracking
             /// </summary>
             ColorCamera = 6,
             /// <summary>
+            /// No Longer Used
+            /// </summary>
+            DepthCameraDeprecated = 7,
+            /// <summary>
+            /// No Longer Used
+            /// </summary>
+            FisheyeCameraDeprected = 8,
+            /// <summary>
+            /// No Longer Used
+            /// </summary>
+            DeviceDeprecated = 9,
+            /// <summary>
             /// The pose of a mobile remote
             /// </summary>
-            RemotePose = 7,
+            RemotePose = 10,
         }
 
         [SerializeField]
