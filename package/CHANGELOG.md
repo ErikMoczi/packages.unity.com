@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.29.1] - 2018-10-29
+
+Update the to the universal android plugin (arm64 and armv7 plugins included)
+
 ## [1.29.0] - 2018-10-01
 
 Update Plugins to version 1.29.0
