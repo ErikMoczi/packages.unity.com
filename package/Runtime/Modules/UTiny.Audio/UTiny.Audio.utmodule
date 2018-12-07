@@ -11,18 +11,5 @@
         { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" },
         { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" },
         { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" }
-    ],
-    "Configurations": [
-        { "Id": "e816e7b93a13b9e5ddf993486ca79278", "Name": "AudioConfig" }
-    ],
-    "Components": [
-        { "Id": "8677f23e1c99f638132eb87b982e7892", "Name": "AudioClip" },
-        { "Id": "8a98c537af2529ff3129223be034eab3", "Name": "AudioClipLoadFromFile" },
-        { "Id": "fb67fae37e3e484fa554012ae4edd7c6", "Name": "AudioSourceStart" },
-        { "Id": "7e8da1847b7abee1bcfb53b82c7f7c2a", "Name": "AudioSourceStop" },
-        { "Id": "a60aa1b9ad84a83eefb0d5382a4d5967", "Name": "AudioSource" }
-    ],
-    "Enums": [
-        { "Id": "1a0a4a5051e408f545b064c5a6a0bc3b", "Name": "AudioClipStatus" }
     ]
 }]

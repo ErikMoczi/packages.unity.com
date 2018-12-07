@@ -8,10 +8,16 @@ namespace Unity.Tiny
 {
     internal class WebSocketServer : BasicServer
     {
-        private Dictionary<int, Connection> m_Connections = new Dictionary<int, Connection>();
-        private List<Client> m_ClientsConnected = new List<Client>();
-        private List<Message> m_ClientsDataReceived = new List<Message>();
-        private List<Client> m_ClientsDisconnected = new List<Client>();
+        private readonly Dictionary<int, Connection> m_Connections = new Dictionary<int, Connection>();
+        private Client m_LastActiveClient;
+
+        private struct SyncServerEvent
+        {
+            public ServerEvent Event;
+            public Client Client;
+            public Message Message;
+        }
+        private readonly List<SyncServerEvent> m_SyncServerEvents = new List<SyncServerEvent>();
 
         private class Connection
         {
@@ -73,6 +79,7 @@ namespace Unity.Tiny
             $"-p {Port}",
             $"-w {Process.GetCurrentProcess().Id}"
         };
+        public override Uri URL => new UriBuilder("ws", LocalIP, Port).Uri;
 
         public bool HasClients
         {
@@ -96,11 +103,22 @@ namespace Unity.Tiny
             }
         }
 
-        public event EventHandler<Client> ClientConnected;
-        public event EventHandler<Message> ClientDataReceived;
-        public event EventHandler<Client> ClientDisconnected;
+        public Client ActiveClient { get; set; }
+        public int ActiveClientIndex
+        {
+            get { return Clients.ToList().FindIndex(c => c == ActiveClient); }
+            set { ActiveClient = value >= 0 && value < Clients.Count() ? Clients[value] : null; }
+        }
 
-        [TinyInitializeOnLoad]
+        public delegate void ClientEventHandler(Client client);
+        public delegate void MessageEventHandler(Message message);
+
+        public event ClientEventHandler OnClientConnected;
+        public event MessageEventHandler OnClientDataReceived;
+        public event ClientEventHandler OnClientDisconnected;
+        public event ClientEventHandler OnActiveClientChanged;
+
+        [TinyInitializeOnLoad(100)]
         private static void Initialize()
         {
             Instance = new WebSocketServer();
@@ -116,7 +134,7 @@ namespace Unity.Tiny
             };
         }
 
-        private WebSocketServer() : base("wsserver", useIPC: true)
+        private WebSocketServer() : base("WSServer", useIPC: true)
         {
             if (Listening)
             {
@@ -128,6 +146,7 @@ namespace Unity.Tiny
         {
             base.Close();
             m_Connections.Clear();
+            ActiveClient = null;
         }
 
         private static T[] GetItemsFromConcurrentList<T>(List<T> list)
@@ -150,31 +169,32 @@ namespace Unity.Tiny
 
         private static void OnEditorUpdate()
         {
-            var connectedClients = GetItemsFromConcurrentList(Instance.m_ClientsConnected);
-            if (connectedClients != null)
+            var serverEvents = GetItemsFromConcurrentList(Instance.m_SyncServerEvents);
+            if (serverEvents != null)
             {
-                foreach (var client in connectedClients)
+                foreach (var serverEvent in serverEvents)
                 {
-                    Instance.ClientConnected?.Invoke(Instance, client);
+                    switch (serverEvent.Event)
+                    {
+                        case ServerEvent.Connected:
+                            Instance.OnClientConnected?.Invoke(serverEvent.Client);
+                            break;
+                        case ServerEvent.DataReceived:
+                            Instance.OnClientDataReceived?.Invoke(serverEvent.Message);
+                            break;
+                        case ServerEvent.Disconnected:
+                            Instance.OnClientDisconnected?.Invoke(serverEvent.Client);
+                            break;
+                        default:
+                            throw new InvalidOperationException();
+                    }
                 }
             }
 
-            var messages = GetItemsFromConcurrentList(Instance.m_ClientsDataReceived);
-            if (messages != null)
+            if (Instance.ActiveClient != Instance.m_LastActiveClient)
             {
-                foreach (var message in messages)
-                {
-                    Instance.ClientDataReceived?.Invoke(Instance, message);
-                }
-            }
-
-            var disconnectedClients = GetItemsFromConcurrentList(Instance.m_ClientsDisconnected);
-            if (disconnectedClients != null)
-            {
-                foreach (var client in disconnectedClients)
-                {
-                    Instance.ClientDisconnected?.Invoke(Instance, client);
-                }
+                Instance.OnActiveClientChanged?.Invoke(Instance.ActiveClient);
+                Instance.m_LastActiveClient = Instance.ActiveClient;
             }
         }
 
@@ -209,13 +229,13 @@ namespace Unity.Tiny
                 switch (@event)
                 {
                     case ServerEvent.Connected:
-                        OnClientConnected(id, bytes, size);
+                        ClientConnectedEvent(id, bytes, size);
                         break;
                     case ServerEvent.DataReceived:
-                        OnClientDataReceived(id, bytes, size);
+                        ClientDataReceivedEvent(id, bytes, size);
                         break;
                     case ServerEvent.Disconnected:
-                        OnClientDisconnected(id);
+                        ClientDisconnectedEvent(id);
                         break;
                     default:
                         throw new Exception($"invalid server event {@event}");
@@ -230,7 +250,7 @@ namespace Unity.Tiny
             Listen(Port);
         }
 
-        unsafe private void OnClientConnected(int id, byte* bytes, int size)
+        unsafe private void ClientConnectedEvent(int id, byte* bytes, int size)
         {
             var address = bytes != null ? Encoding.ASCII.GetString(bytes, size) : null;
             var client = new Client() { Id = id, Address = address };
@@ -242,19 +262,24 @@ namespace Unity.Tiny
                     return;
                 }
                 m_Connections.Add(id, new Connection { Client = client });
+
+                if (ActiveClient == null || m_Connections.Values.FirstOrDefault(c => c.Client == ActiveClient) == null)
+                {
+                    ActiveClient = client;
+                }
             }
 
             SendGetConnectionInfo(client, (message) =>
             {
-                client.Info = message.Data.ToString();
-                lock (m_ClientsConnected)
+                client.Info = Encoding.ASCII.GetString(message.Data);
+                lock (m_SyncServerEvents)
                 {
-                    m_ClientsConnected.Add(client);
+                    m_SyncServerEvents.Add(new SyncServerEvent { Event = ServerEvent.Connected, Client = client });
                 }
             });
         }
 
-        unsafe private void OnClientDataReceived(int id, byte* bytes, int size)
+        unsafe private void ClientDataReceivedEvent(int id, byte* bytes, int size)
         {
             Connection connection = null;
             lock (m_Connections)
@@ -268,14 +293,14 @@ namespace Unity.Tiny
             Protocol.Decode(connection.Buffers, bytes, size, (buffers) =>
             {
                 var message = new Message(connection.Client, buffers);
-                lock (m_ClientsDataReceived)
+                lock (m_SyncServerEvents)
                 {
-                    m_ClientsDataReceived.Add(message);
+                    m_SyncServerEvents.Add(new SyncServerEvent { Event = ServerEvent.DataReceived, Message = message });
                 }
             });
         }
 
-        private void OnClientDisconnected(int id)
+        private void ClientDisconnectedEvent(int id)
         {
             Connection connection = null;
             lock (m_Connections)
@@ -285,11 +310,20 @@ namespace Unity.Tiny
                     return;
                 }
                 m_Connections.Remove(id);
+
+                if (m_Connections.Count == 0)
+                {
+                    ActiveClient = null;
+                }
+                else if (ActiveClient == connection.Client || m_Connections.Values.FirstOrDefault(c => c.Client == ActiveClient) == null)
+                {
+                    ActiveClient = m_Connections.Values.FirstOrDefault().Client;
+                }
             }
 
-            lock (m_ClientsDisconnected)
+            lock (m_SyncServerEvents)
             {
-                m_ClientsDisconnected.Add(connection.Client);
+                m_SyncServerEvents.Add(new SyncServerEvent { Event = ServerEvent.Disconnected, Client = connection.Client });
             }
         }
 
@@ -336,6 +370,15 @@ namespace Unity.Tiny
             IPCStream.WriteAsync(Protocol.Combine(@event, id, data));
         }
 
+        private void MessageHandler(Client client, Action<Message> callback, string name, Message message, MessageEventHandler handler)
+        {
+            if (message.Client == client && message.Name == name)
+            {
+                callback(message);
+                OnClientDataReceived -= handler;
+            }
+        }
+
         public void SendReload()
         {
             SendToClients("reload");
@@ -343,44 +386,67 @@ namespace Unity.Tiny
 
         public void SendGetConnectionInfo(Client client, Action<Message> callback)
         {
-            void messageHandler(object sender, Message message)
+            void handler(Message message)
             {
-                if (message.Client.Id == client.Id && message.Name == "connectionInfo")
-                {
-                    callback(message);
-                    ClientDataReceived -= messageHandler;
-                }
+                MessageHandler(client, callback, "connectionInfo", message, handler);
             }
-            ClientDataReceived += messageHandler;
+            OnClientDataReceived += handler;
             SendToClient(client, "getConnectionInfo");
         }
 
         public void SendGetWorldState(Client client, Action<Message> callback)
         {
-            void messageHandler(object sender, Message message)
+            void handler(Message message)
             {
-                if (message.Client.Id == client.Id && message.Name == "worldState")
-                {
-                    callback(message);
-                    ClientDataReceived -= messageHandler;
-                }
+                MessageHandler(client, callback, "worldState", message, handler);
             }
-            ClientDataReceived += messageHandler;
+            OnClientDataReceived += handler;
             SendToClient(client, "getWorldState");
         }
 
         public void SendSetWorldState(Client client, string worldState, Action<Message> callback)
         {
-            void messageHandler(object sender, Message message)
+            void handler(Message message)
             {
-                if (message.Client.Id == client.Id && message.Name == "worldStateLoaded")
-                {
-                    callback(message);
-                    ClientDataReceived -= messageHandler;
-                }
+                MessageHandler(client, callback, "worldStateLoaded", message, handler);
             }
-            ClientDataReceived += messageHandler;
+            OnClientDataReceived += handler;
             SendToClient(client, "setWorldState", worldState);
+        }
+
+        public void SendPause(Client client, Action<Message> callback)
+        {
+            void handler(Message message)
+            {
+                MessageHandler(client, callback, "pauseState", message, handler);
+            }
+            OnClientDataReceived += handler;
+            SendToClient(client, "pause");
+        }
+
+        public void SendIsPaused(Client client, Action<Message> callback)
+        {
+            void handler(Message message)
+            {
+                MessageHandler(client, callback, "pauseState", message, handler);
+            }
+            OnClientDataReceived += handler;
+            SendToClient(client, "isPaused");
+        }
+
+        public void SendStep(Client client)
+        {
+            SendToClient(client, "step");
+        }
+
+        public void SendResume()
+        {
+            SendToClients("resume");
+        }
+
+        public void SendResume(Client client)
+        {
+            SendToClient(client, "resume");
         }
     }
 }

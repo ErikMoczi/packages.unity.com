@@ -1,0 +1,35 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "7a64f25fd6f92f09b2a6efa8f146d83c",
+    "Name": "AssetReferenceAnimationClip",
+    "ExportFlags": 16,
+    "Unlisted": true,
+    "Visibility": 1,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "467c192b055812f13098df8dccc1ffe0",
+        "Name": "guid",
+        "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "2c0091aab0de2277be635b1cbf51d337",
+        "Name": "fileId",
+        "FieldType": { "Id": "37695933217a49f68ce15db33f63cdf9", "Name": "Int64" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "15a9fe9198878b0142b9ea1a24f434fb",
+        "Name": "type",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "7a64f25fd6f92f09b2a6efa8f146d83c", "Name": "AssetReferenceAnimationClip" },
+        "Properties": {
+            "fileId": 0,
+            "type": 0
+        }
+    }
+}]

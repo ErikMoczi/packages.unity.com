@@ -26,6 +26,7 @@ namespace Unity.Tiny
         }
         
         private static bool s_DeletionDetected;
+        private static readonly HashSet<string> s_CreatedAssetPaths = new HashSet<string>();
         private static readonly HashSet<string> s_ChangedAssetPaths = new HashSet<string>();
         private static readonly HashSet<string> s_MovedAssetPaths = new HashSet<string>();
 
@@ -76,7 +77,7 @@ namespace Unity.Tiny
         {
             var result = new Changes
             {
-                changesDetected = s_DeletionDetected || s_ChangedAssetPaths.Count > 0 || s_MovedAssetPaths.Count > 0
+                changesDetected = s_DeletionDetected || s_ChangedAssetPaths.Count > 0 || s_MovedAssetPaths.Count > 0 || s_CreatedAssetPaths.Count > 0
             };
             
             if (!result.changesDetected)
@@ -133,6 +134,12 @@ namespace Unity.Tiny
                 }
             }
 
+            foreach (var path in s_CreatedAssetPaths)
+            {
+                var guid = AssetDatabase.AssetPathToGUID(path);
+                createdSources.Add(guid);
+            }
+
             foreach (var path in s_MovedAssetPaths)
             {
                 var guid = AssetDatabase.AssetPathToGUID(path);
@@ -160,6 +167,7 @@ namespace Unity.Tiny
             s_DeletionDetected = false;
             s_ChangedAssetPaths.Clear();
             s_MovedAssetPaths.Clear();
+            s_CreatedAssetPaths.Clear();
         }
 
         /// <summary>
@@ -168,6 +176,15 @@ namespace Unity.Tiny
         public static void RemoveChanged(string path)
         {
             s_ChangedAssetPaths.Remove(path);
+        }
+
+        /// <summary>
+        /// Marks this asset as being created
+        /// </summary>
+        /// <param name="path"></param>
+        public static void MarkCreated(string path)
+        {
+            s_CreatedAssetPaths.Add(path);
         }
     }
 }

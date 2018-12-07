@@ -4,6 +4,7 @@
     "Name": "RayCastResult",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Struct",
     "DefaultValue": {
         "Type": { "Id": "ef2e90bfc8b339fe2cd3d8f14d96759c", "Name": "RayCastResult" }

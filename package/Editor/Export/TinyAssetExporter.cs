@@ -2,11 +2,16 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Unity.Tiny.Runtime.Audio;
+using Unity.Tiny.Runtime.Core2D;
+using Unity.Tiny.Runtime.Tilemap2D;
 using UnityEditor;
 using UnityEditor.U2D;
 using UnityEngine;
 using UnityEngine.U2D;
 using UnityEngine.Tilemaps;
+using Unity.Tiny.Serialization;
+using Unity.Tiny.Runtime.EditorExtensions;
 using Object = UnityEngine.Object;
 
 namespace Unity.Tiny
@@ -42,8 +47,10 @@ namespace Unity.Tiny
 
         public static float GetTexturePixelsPerUnit(Texture2D texture)
         {
-            float pixelsPerUnit = 1.0f;
-            s_TexturePixelsPerUnit.TryGetValue(texture, out pixelsPerUnit);
+            if (!s_TexturePixelsPerUnit.TryGetValue(texture, out var pixelsPerUnit))
+            {
+                pixelsPerUnit = 1;
+            }
             return pixelsPerUnit;
         }
 
@@ -272,11 +279,12 @@ namespace Unity.Tiny
 
             if (obj is Sprite)
             {
-                var atlas = TinyEditorBridge.GetSpriteActiveAtlas((Sprite)obj);
+                var atlas = TinyEditorBridge.GetSpriteActiveAtlas((Sprite) obj);
                 if (atlas != null)
                 {
                     return $"assets/sprites/{atlas.name}/";
                 }
+
                 return "assets/sprites/";
             }
 
@@ -290,7 +298,7 @@ namespace Unity.Tiny
                 return "assets/tiles/";
             }
 
-            if (obj is Font)
+            if (obj is TMPro.TMP_FontAsset)
             {
                 return "assets/fonts/";
             }
@@ -322,7 +330,8 @@ namespace Unity.Tiny
             }
         }
 
-        private static TinyEntity GetOrCreateEntityForAsset(IRegistry registry, TinyProject project, TinyEntityGroup entityGroup, TinyAssetInfo assetInfo)
+        private static TinyEntity GetOrCreateEntityForAsset(IRegistry registry, TinyProject project,
+            TinyEntityGroup entityGroup, TinyAssetInfo assetInfo)
         {
             var @object = assetInfo.Object;
 
@@ -334,150 +343,43 @@ namespace Unity.Tiny
 
             var entityPathName = $"{GetAssetEntityPath(@object)}{assetInfo.Name}";
 
-            if (@object is Texture2D)
+            var baseInfo = new EntityExporterInfo
             {
-                entity = registry.CreateEntity(TinyId.New(), entityPathName);
-                var texture = @object as Texture2D;
+                AssetInfo = assetInfo,
+                Group = entityGroup,
+                PathName = entityPathName,
+                Project = project,
+                Registry = registry,
+            };
 
-                var image2dFile = entity.AddComponent(TypeRefs.Core2D.Image2DLoadFromFile);
-                image2dFile.AssignIfDifferent("imageFile", $"ut-asset:{assetInfo.Name}");
-
-                var settings = TinyUtility.GetAssetExportSettings(project, @object) as TinyTextureSettings;
-                if (settings != null && settings.FormatType == TextureFormatType.JPG && TinyAssetExporter.TextureExporter.ReallyHasAlpha(texture))
-                {
-                    image2dFile.AssignIfDifferent("maskFile", $"ut-asset:{assetInfo.Name}_a");
-                }
-                
-                var image2d = entity.AddComponent(TypeRefs.Core2D.Image2D);
-                image2d.AssignIfDifferent("disableSmoothing", texture.filterMode == FilterMode.Point);
-                image2d.AssignIfDifferent("pixelsToWorldUnits", 1.0f / AssetIterator.GetTexturePixelsPerUnit(texture));
-            }
-            else if (@object is Sprite)
+            if (@object is Texture2D t)
             {
-                entity = registry.CreateEntity(TinyId.New(), entityPathName);
-                var sprite = (Sprite)@object;
-                
-                var sprite2d = entity.AddComponent(TypeRefs.Core2D.Sprite2D);
-                
-                if (TinyEditorBridge.GetSpriteActiveAtlasTexture(sprite) == null)
-                {
-                    // Standalone sprite (not part of an atlas)
-                    
-                    var rect = sprite.rect;
-                    var texture = sprite.texture;
-
-                    var region = new Rect(
-                        rect.x / texture.width,
-                        rect.y / texture.height,
-                        rect.width / texture.width,
-                        rect.height / texture.height);
-                    
-                    var pivot = new Vector2(sprite.pivot.x / sprite.rect.width, sprite.pivot.y / sprite.rect.height);
-
-                    sprite2d.AssignIfDifferent("image", texture);
-                    sprite2d.AssignIfDifferent("imageRegion", region);
-                    sprite2d.AssignIfDifferent("pivot", pivot);
-                }
-                else
-                {
-                    // This sprite is part of an atlas
-                    
-                    var atlasTexture = TinyEditorBridge.GetSpriteActiveAtlasTexture(sprite);
-                    var atlasRect = TinyEditorBridge.GetSpriteActiveAtlasTextureRect(sprite);
-
-                    var region = new Rect(
-                        atlasRect.x / atlasTexture.width,
-                        atlasRect.y / atlasTexture.height,
-                        atlasRect.width / atlasTexture.width,
-                        atlasRect.height / atlasTexture.height);
-
-                    // The original pivot is based on the full rect
-                    // Here we are computing the new pivot based on the `textureRectOffset` field to account for `tight` packing
-                    var pivot = new Vector2((sprite.pivot.x - sprite.textureRectOffset.x) / atlasRect.width, (sprite.pivot.y - sprite.textureRectOffset.y) / atlasRect.height);
-                    
-                    sprite2d.AssignIfDifferent("image", atlasTexture);
-                    sprite2d.AssignIfDifferent("imageRegion", region);
-                    sprite2d.AssignIfDifferent("pivot", pivot);
-                }
-
-                if (sprite.border != Vector4.zero)
-                {
-                    var border = entity.AddComponent(TypeRefs.Core2D.Sprite2DBorder);
-                    border.AssignIfDifferent("bottomLeft", new Vector2(sprite.border.x / sprite.rect.width, sprite.border.y / sprite.rect.height));
-                    border.AssignIfDifferent("topRight", new Vector2((sprite.rect.width - sprite.border.z) / sprite.rect.width, (sprite.rect.height - sprite.border.w) / sprite.rect.height));
-                }
+                ExportEntity(baseInfo, t);
             }
-            else if (@object is SpriteAtlas)
-            {   
-                entity = registry.CreateEntity(TinyId.New(), entityPathName);
-                var spriteAtlas = (SpriteAtlas)@object;
-
-                var settings = spriteAtlas.GetPackingSettings();
-
-                if (settings.enableRotation)
-                {
-                    Debug.LogError($"{TinyConstants.ApplicationName}: SpriteAtlas.enableRotation is not supported!");
-                }
-                
-                if (settings.enableTightPacking)
-                {
-                    Debug.LogError($"{TinyConstants.ApplicationName}: SpriteAtlas.enableTightPacking is not supported!");
-                }
-                
-                var atlas = entity.AddComponent(TypeRefs.Core2D.SpriteAtlas);
-                atlas["sprites"] = new TinyList(registry, (TinyType.Reference)TinyType.SpriteEntity);
-                var spriteList = atlas["sprites"] as TinyList;
-
-                var sprites = TinyEditorBridge.GetAtlasPackedSprites(spriteAtlas);
-                foreach (var sprite in sprites)
-                {
-                    var spriteAssetInfo = AssetIterator.GetAssetInfo(sprite);
-                    if (spriteAssetInfo != null)
-                    {
-                        var spriteEntity = GetOrCreateEntityForAsset(registry, project, entityGroup, spriteAssetInfo);
-                        spriteList.Add((TinyEntity.Reference)spriteEntity);
-                    }
-                }
-            }
-            else if (@object is Tile)
+            else if (@object is Sprite s)
             {
-                entity = registry.CreateEntity(TinyId.New(), entityPathName);
-                var tile = (Tile)@object;
-
-                var tinyTile = entity.AddComponent(TypeRefs.Tilemap2D.Tile);
-                tinyTile.AssignIfDifferent("color", tile.color);
-                tinyTile.AssignIfDifferent("sprite", tile.sprite);
-                tinyTile.AssignIfDifferent("colliderType", tile.colliderType);
+                ExportEntity(baseInfo, s);
             }
-            else if (@object is AudioClip)
+            else if (@object is SpriteAtlas atlas)
             {
-                entity = registry.CreateEntity(TinyId.New(), entityPathName);
-                
-                var audioFile = entity.AddComponent(TypeRefs.Audio.AudioClipLoadFromFile);
-                audioFile.AssignIfDifferent("fileName", $"ut-asset:{assetInfo.Name}");
-
-                entity.AddComponent(TypeRefs.Audio.AudioClip);
+                ExportEntity(baseInfo, atlas);
             }
-            else if (@object is AnimationClip clip)
+            else if (@object is Tile tile)
             {
-                entity = registry.CreateEntity(TinyId.New(), entityPathName);
-
-                TinyAnimationExportUtilities.PopulateAnimationClipEntity(entityGroup, ObjectToEntityMap, entity, clip);
+                ExportEntity(baseInfo, tile);
             }
-            else if (@object is Font)
+            else if (@object is AudioClip audio)
             {
-                entity = registry.CreateEntity(TinyId.New(), entityPathName);
-
-                var fontAsset = entity.AddComponent(TypeRefs.TextJS.Font);
-                fontAsset.AssignIfDifferent("file", $"ut-asset:{assetInfo.Name}");
+                ExportEntity(baseInfo, audio);
             }
-
-            if (null != entity)
+            else if (@object is AnimationClip animationClip)
             {
-                entityGroup.AddEntityReference((TinyEntity.Reference)entity);
+                ExportEntity(baseInfo, animationClip);
             }
-
-            ObjectToEntityMap.Add(@object, entity);
+            else if (@object is TMPro.TMP_FontAsset font)
+            {
+                ExportEntity(baseInfo, font);
+            }
 
             foreach (var child in assetInfo.Children)
             {
@@ -486,8 +388,241 @@ namespace Unity.Tiny
 
             return entity;
         }
-    }
 
+        private struct EntityExporterInfo
+        {
+            public string PathName;
+            public IRegistry Registry;
+            public TinyAssetInfo AssetInfo;
+            public TinyProject Project;
+            public TinyEntityGroup Group;
+
+            public TinyEntity CreateEntity()
+            {
+                var entity = Registry.CreateEntity(TinyId.New(), PathName);
+                Group.AddEntityReference(entity.Ref);
+                return entity;
+
+            }
+        }
+
+        private static TinyEntity ExportEntity(EntityExporterInfo info, Texture2D texture)
+        {
+            var entity = info.CreateEntity();
+            var image2DFile = entity.AddComponent<Runtime.Core2D.TinyImage2DLoadFromFile>();
+            image2DFile.imageFile = $"ut-asset:{info.AssetInfo.Name}";
+
+            var settings = TinyUtility.GetAssetExportSettings(info.Project, texture) as TinyTextureSettings;
+            if (settings != null && settings.FormatType == TextureFormatType.JPG &&
+                TinyAssetExporter.TextureExporter.ReallyHasAlpha(texture))
+            {
+                image2DFile.maskFile = $"ut-asset:{info.AssetInfo.Name}_a";
+            }
+
+            var image2D = entity.AddComponent<Runtime.Core2D.TinyImage2D>();
+            image2D.disableSmoothing = texture.filterMode == FilterMode.Point;
+            image2D.pixelsToWorldUnits = 1.0f / AssetIterator.GetTexturePixelsPerUnit(texture);
+
+            AddAssetReferenceComponent(entity, texture);
+            ObjectToEntityMap.Add(texture, entity);
+            return entity;
+        }
+
+        private static TinyEntity ExportEntity(EntityExporterInfo info, Sprite sprite)
+        {
+            var entity = info.CreateEntity();
+            var sprite2d = entity.AddComponent(TypeRefs.Core2D.Sprite2D);
+
+            if (TinyEditorBridge.GetSpriteActiveAtlasTexture(sprite) == null)
+            {
+                // Standalone sprite (not part of an atlas)
+
+                var rect = sprite.rect;
+                var texture = sprite.texture;
+
+                var region = new Rect(
+                    rect.x / texture.width,
+                    rect.y / texture.height,
+                    rect.width / texture.width,
+                    rect.height / texture.height);
+
+                var pivot = new Vector2(sprite.pivot.x / sprite.rect.width, sprite.pivot.y / sprite.rect.height);
+
+                sprite2d.AssignIfDifferent("image", texture);
+                sprite2d.AssignIfDifferent("imageRegion", region);
+                sprite2d.AssignIfDifferent("pivot", pivot);
+            }
+            else
+            {
+                // This sprite is part of an atlas
+
+                var atlasTexture = TinyEditorBridge.GetSpriteActiveAtlasTexture(sprite);
+                var atlasRect = TinyEditorBridge.GetSpriteActiveAtlasTextureRect(sprite);
+
+                var region = new Rect(
+                    atlasRect.x / atlasTexture.width,
+                    atlasRect.y / atlasTexture.height,
+                    atlasRect.width / atlasTexture.width,
+                    atlasRect.height / atlasTexture.height);
+
+                // The original pivot is based on the full rect
+                // Here we are computing the new pivot based on the `textureRectOffset` field to account for `tight` packing
+                var pivot = new Vector2((sprite.pivot.x - sprite.textureRectOffset.x) / atlasRect.width,
+                    (sprite.pivot.y - sprite.textureRectOffset.y) / atlasRect.height);
+
+                sprite2d.AssignIfDifferent("image", atlasTexture);
+                sprite2d.AssignIfDifferent("imageRegion", region);
+                sprite2d.AssignIfDifferent("pivot", pivot);
+            }
+
+            if (sprite.border != Vector4.zero)
+            {
+                var border = entity.AddComponent(TypeRefs.Core2D.Sprite2DBorder);
+                border.AssignIfDifferent("bottomLeft",
+                    new Vector2(sprite.border.x / sprite.rect.width, sprite.border.y / sprite.rect.height));
+                border.AssignIfDifferent("topRight",
+                    new Vector2((sprite.rect.width - sprite.border.z) / sprite.rect.width,
+                        (sprite.rect.height - sprite.border.w) / sprite.rect.height));
+            }
+
+            AddAssetReferenceComponent(entity, sprite);
+            ObjectToEntityMap.Add(sprite, entity);
+            return entity;
+        }
+
+        private static TinyEntity ExportEntity(EntityExporterInfo info, SpriteAtlas spriteAtlas)
+        {
+            var entity = info.CreateEntity();
+
+            var settings = spriteAtlas.GetPackingSettings();
+
+            if (settings.enableRotation)
+            {
+                Debug.LogError($"{TinyConstants.ApplicationName}: SpriteAtlas.enableRotation is not supported!");
+            }
+
+            if (settings.enableTightPacking)
+            {
+                Debug.LogError(
+                    $"{TinyConstants.ApplicationName}: SpriteAtlas.enableTightPacking is not supported!");
+            }
+
+            var atlas = entity.AddComponent(TypeRefs.Core2D.SpriteAtlas);
+            atlas["sprites"] = new TinyList(info.Registry, (TinyType.Reference)TinyType.SpriteEntity);
+            var spriteList = atlas["sprites"] as TinyList;
+
+            var sprites = TinyEditorBridge.GetAtlasPackedSprites(spriteAtlas);
+            foreach (var sprite in sprites)
+            {
+                var spriteAssetInfo = AssetIterator.GetAssetInfo(sprite);
+                if (spriteAssetInfo != null)
+                {
+                    var spriteEntity = GetOrCreateEntityForAsset(info.Registry, info.Project, info.Group, spriteAssetInfo);
+                    spriteList.Add((TinyEntity.Reference)spriteEntity);
+                }
+            }
+
+			AddAssetReferenceComponent(entity, spriteAtlas);
+            ObjectToEntityMap.Add(spriteAtlas, entity);
+            return entity;
+        }
+
+        private static TinyEntity ExportEntity(EntityExporterInfo info, Tile tile)
+        {
+            var entity = info.CreateEntity();
+
+            var tinyTile = entity.AddComponent<TinyTile>();
+            tinyTile.color = tile.color;
+            tinyTile.sprite = tile.sprite;
+            tinyTile.colliderType = tile.colliderType;
+
+            AddAssetReferenceComponent(entity, tile);
+            ObjectToEntityMap.Add(tile, entity);
+            return entity;
+        }
+
+        private static TinyEntity ExportEntity(EntityExporterInfo info, AudioClip audioClip)
+        {
+            var entity = info.CreateEntity();
+
+            var audioFile = entity.AddComponent<TinyAudioClipLoadFromFile>();
+            audioFile.fileName = $"ut-asset:{info.AssetInfo.Name}";
+
+            entity.AddComponent<TinyAudioClip>();
+
+            AddAssetReferenceComponent(entity, audioClip);
+            ObjectToEntityMap.Add(audioClip, entity);
+            return entity;
+        }
+
+        private static TinyEntity ExportEntity(EntityExporterInfo info, AnimationClip animationClip)
+        {
+            var entity = info.CreateEntity();
+
+            TinyAnimationExportUtilities.PopulateAnimationClipEntity(info.Group, ObjectToEntityMap, entity,
+                animationClip);
+
+            AddAssetReferenceComponent(entity, animationClip);
+            ObjectToEntityMap.Add(animationClip, entity);
+            return entity;
+        }
+
+        private static void AddAssetReferenceComponent<TValue>(TinyEntity entity, TValue @object)
+            where TValue : Object
+        {
+            var objHandle = UnityObjectSerializer.ToObjectHandle(@object);
+            if (string.IsNullOrEmpty(objHandle.Guid))
+            {
+                return;
+            }
+
+            var assetReferenceType = TinyAssetReference.GetType<TValue>();
+            var assetReference = entity.AddComponent(assetReferenceType);
+            assetReference.AssignIfDifferent("guid", objHandle.Guid);
+            assetReference.AssignIfDifferent("fileId", objHandle.FileId);
+            assetReference.AssignIfDifferent("type", objHandle.Type);
+        }
+
+        private static TinyEntity ExportEntity(EntityExporterInfo info, TMPro.TMP_FontAsset font)
+        {
+            var textureInfo = info;
+            textureInfo.PathName = textureInfo.PathName.Replace("assets/fonts", "assets/font-textures");
+            var texture = font.material.mainTexture as Texture2D;
+            var textureEntity = ExportEntity(textureInfo, texture);
+
+            var entity = info.CreateEntity();
+            var bitmapFont = entity.AddComponent<Runtime.Text.TinyBitmapFont>();
+            bitmapFont.ascent = font.fontInfo.Ascender;
+            bitmapFont.descent = font.fontInfo.Descender;
+            bitmapFont.size = font.creationSettings.pointSize;
+            bitmapFont.textureAtlas = textureEntity.Ref;
+            var data = bitmapFont.data;
+            foreach (var kvp in font.characterDictionary)
+            {
+                var ci = kvp.Value;
+                var tinyCI = new Runtime.Text.TinyCharacterInfo(entity.Registry);
+                tinyCI.value = (uint) ci.id;
+                
+                tinyCI.advance = ci.xAdvance;
+                
+                tinyCI.bearingX = ci.xOffset;
+                tinyCI.bearingY = ci.yOffset;
+                tinyCI.width = ci.width;
+                tinyCI.height = ci.height;
+
+                
+                var min = new Vector2(ci.x / font.atlas.width, (font.atlas.height - ci.y - ci.height) / font.atlas.height);
+                var off = new Vector2(ci.width/ font.atlas.width, ci.height/ font.atlas.height);
+                tinyCI.characterRegion = new Rect(min.x, min.y, off.x, off.y);
+                data.Add(tinyCI.Tiny);
+            }
+
+            ObjectToEntityMap.Add(font, entity);
+            AddAssetReferenceComponent(entity, font);
+            return entity;
+        }
+    }
+    
     internal static class TinyAssetExporter
     {
         public static string GetAssetName(TinyProject project, Object @object)
@@ -549,7 +684,7 @@ namespace Unity.Tiny
                 return export;
             }
 
-            var font = assetInfo.Object as Font;
+            var font = assetInfo.Object as TMPro.TMP_FontAsset;
             if (font != null)
             {
                 FontExporter.Export(path, assetName, font, export.ExportedFiles);
@@ -631,6 +766,20 @@ namespace Unity.Tiny
 
                 output.Add(new FileInfo(dstFile));
             }
+            
+            internal static void ExportFontAtlas(string path, string name, Texture2D texture, ICollection<FileInfo> output)
+            {
+                var outputTexture = CopyAlphaTexture(texture, TextureFormat.RGBA32);
+                var bytes = outputTexture.EncodeToPNG();
+                var dstFile = $"{Path.Combine(path, name)}.png";
+
+                using (var stream = new FileStream(dstFile, FileMode.Create))
+                {
+                    stream.Write(bytes, 0, bytes.Length);
+                }
+
+                output.Add(new FileInfo(dstFile));
+            }            
 
             private static void ExportJpg(string path, string name, Texture2D texture, int quality, ICollection<FileInfo> output)
             {
@@ -757,7 +906,7 @@ namespace Unity.Tiny
             }
 
 
-            private static void ExportWebP(string path, string name, Texture2D texture, int quality, ICollection<FileInfo> output)
+            internal static void ExportWebP(string path, string name, Texture2D texture, int quality, ICollection<FileInfo> output)
             {
                 var hasAlpha = ReallyHasAlpha(texture);
                 var outputTexture = CopyTexture(texture, hasAlpha ? TextureFormat.RGBA32 : TextureFormat.RGB24);
@@ -855,6 +1004,52 @@ namespace Unity.Tiny
 
                 return result;
             }
+            
+            private static Texture2D CopyAlphaTexture(Texture2D texture, TextureFormat format)
+            {
+                // Create a temporary RenderTexture of the same size as the texture
+                var tmp = RenderTexture.GetTemporary(
+                    texture.width,
+                    texture.height,
+                    0,
+                    RenderTextureFormat.Default,
+                    RenderTextureReadWrite.sRGB);
+
+                // Blit the pixels on texture to the RenderTexture
+                Graphics.Blit(texture, tmp);
+
+                // Backup the currently set RenderTexture
+                var previous = RenderTexture.active;
+
+                // Set the current RenderTexture to the temporary one we created
+                RenderTexture.active = tmp;
+
+                // Create a new readable Texture2D to copy the pixels to it
+                var result = new Texture2D(texture.width, texture.height, format, false);
+                
+                // Copy the pixels from the RenderTexture to the new Texture
+                result.ReadPixels(new Rect(0, 0, tmp.width, tmp.height), 0, 0);
+                result.Apply();
+                var pixels = result.GetPixels();
+                for (var i = 0; i < pixels.Length; ++i)
+                {
+                    var color = pixels[i];
+                    color.r = color.a;
+                    color.g = color.a;
+                    color.b = color.a;
+                    pixels[i] = color;
+                }
+                result.SetPixels(pixels);
+                result.Apply();
+
+                // Reset the active RenderTexture
+                RenderTexture.active = previous;
+
+                // Release the temporary RenderTexture
+                RenderTexture.ReleaseTemporary(tmp);
+
+                return result;
+            }
         }
 
         private static class FontExporter
@@ -867,19 +1062,24 @@ namespace Unity.Tiny
                 "Arial",
             };
 
-            private static bool IncludedByTargetPlatform(Font font)
+            private static bool IncludedByTargetPlatform(TMPro.TMP_FontAsset font)
             {
-                return s_WebFonts.Intersect(font.fontNames).Any();
+                return s_WebFonts.Intersect(font.name.AsEnumerable()).Any();
             }
 
-            public static void Export(string path, string name, Font font, ICollection<FileInfo> output)
+            public static void Export(string path, string name, TMPro.TMP_FontAsset font, ICollection<FileInfo> output)
             {
+                TextureExporter.ExportFontAtlas(path, name, font.atlas, output);
+                
+                
+                
+                
                 if (IncludedByTargetPlatform(font))
                 {
                     return;
                 }
 
-                FileExporter.Export(path, name, font, output);
+                //FileExporter.Export(path, name, font, output);
             }
         }
     }

@@ -104,9 +104,20 @@ namespace Unity.Tiny
                 ObjectChangeTracker.RemoveHandler(ObjectChangedHandler);
             }
 
+            if (!view || null == view)
+            {
+                return;
+            }
+
+            if (null == view.Registry)
+            {
+                return;
+            }
+
             // From this point, we know that the entity view is being destroyed. What we do not know is if the view is
             // being destroyed because we are unloading the scene or if the user deleted the entity through the hierarchy
             // or the scene view.
+            
             var entity = view.EntityRef.Dereference(Registry);
             if (entity?.EntityGroup == null)
             {
@@ -183,7 +194,7 @@ namespace Unity.Tiny
 
                 foreach (var pair in pairs)
                 {
-                    pair.View.Context.GetManager<BindingsManager>().Transfer(pair.View.EntityRef.Dereference(pair.View.Registry));
+                    pair.View.Context.GetManager<IBindingsManager>().Transfer(pair.View.EntityRef.Dereference(pair.View.Registry));
                 }
             }
             finally

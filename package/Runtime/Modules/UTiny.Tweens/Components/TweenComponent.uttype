@@ -4,6 +4,7 @@
     "Name": "TweenComponent",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "b7f49171d4250a85c9a0997695218d60",

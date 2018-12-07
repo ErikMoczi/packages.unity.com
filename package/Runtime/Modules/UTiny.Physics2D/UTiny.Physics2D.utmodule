@@ -15,22 +15,5 @@
         { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" },
         { "Id": "30097418841f56d73400bf82ee859ac9", "Name": "UTiny.Core2D" },
         { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" }
-    ],
-    "Configurations": [
-        { "Id": "38283a6cef9faa790b5c9936163d59e3", "Name": "Physics2DConfig" }
-    ],
-    "Components": [
-        { "Id": "4949f090b99e534bfc09271dda0efa1f", "Name": "NewColliderContacts" },
-        { "Id": "4eb2060bab60f5bab6e889be1cdad8ed", "Name": "ColliderContacts" },
-        { "Id": "3b69b55ae4346477176219d5526c2c34", "Name": "EndedColliderContacts" },
-        { "Id": "dad15a16473d1a6264af416ae1e47833", "Name": "RigidBody2D" },
-        { "Id": "efb8f1bb8e61304f4854daecbaeb2747", "Name": "CircleCollider2D" },
-        { "Id": "162ab289c4e402ee5358f3df0a331fa3", "Name": "BoxCollider2D" },
-        { "Id": "4877aebd4079748a17f940cbbee5d2e6", "Name": "Velocity2D" },
-        { "Id": "7954f10492706c7007454a4a78203495", "Name": "SetVelocity2D" },
-        { "Id": "71325fd2b661ef42bd95ab77e9b5b873", "Name": "AddImpulse2D" }
-    ],
-    "Enums": [
-        { "Id": "a4afdb83c635db286370870d059ac493", "Name": "BodyType" }
     ]
 }]

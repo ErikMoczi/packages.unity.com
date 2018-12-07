@@ -1,6 +1,4 @@
-﻿
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -9,7 +7,11 @@ using UnityEditor;
 
 using Unity.Properties;
 using UnityEngine.Events;
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
+#else
 using UnityEngine.Experimental.UIElements;
+#endif
 using Object = UnityEngine.Object;
 
 namespace Unity.Tiny
@@ -66,7 +68,7 @@ namespace Unity.Tiny
             }
         }
         #endregion
-        
+
         /// <summary>
         /// These are the currently inspected targets. They might be of different types.
         /// </summary>
@@ -113,7 +115,7 @@ namespace Unity.Tiny
 
         public VisualElement GetRoot()
         {
-                return Root;
+            return Root;
         }
 
         private bool InOverrideMode { get; set; } = false;
@@ -127,11 +129,11 @@ namespace Unity.Tiny
             m_Tracker = GetTracker();
             m_LockedStateChanged = GetLockedStateChanged();
             m_LockedStateChanged.AddListener(LockStateChanged);
-            
+
             Repaint();
-            
-            Context.GetManager<TinyUndoManager>().OnUndoPerformed += OnUndoRedoPerformed;
-            Context.GetManager<TinyUndoManager>().OnRedoPerformed += OnUndoRedoPerformed;
+
+            Context.GetManager<IUndoManager>().OnUndoPerformed += OnUndoRedoPerformed;
+            Context.GetManager<IUndoManager>().OnRedoPerformed += OnUndoRedoPerformed;
         }
 
         public override void OnDisable()
@@ -140,9 +142,9 @@ namespace Unity.Tiny
 
             m_LockedStateChanged.RemoveListener(LockStateChanged);
             s_ActiveWindows.Remove(this);
-            
-            Context.GetManager<TinyUndoManager>().OnUndoPerformed -= OnUndoRedoPerformed;
-            Context.GetManager<TinyUndoManager>().OnRedoPerformed -= OnUndoRedoPerformed;
+
+            Context.GetManager<IUndoManager>().OnUndoPerformed -= OnUndoRedoPerformed;
+            Context.GetManager<IUndoManager>().OnRedoPerformed -= OnUndoRedoPerformed;
         }
 
         private void OnUndoRedoPerformed(HashSet<Change> changes)
@@ -151,7 +153,7 @@ namespace Unity.Tiny
         }
 
         public override void OnBecameVisible()
-        { 
+        {
             OnSelectionChanged();
         }
 
@@ -169,7 +171,7 @@ namespace Unity.Tiny
                 Backend.Targets = m_Targets;
                 Backend.Mode = m_Mode;
                 Backend.ShowFamilies = m_IncludeComponentFamilies;
-                
+
                 Backend.OnGUI();
 
                 m_Targets = Backend.Targets;
@@ -201,14 +203,14 @@ namespace Unity.Tiny
 
                 var validObjects = targets.Where(Valid).ToList();
                 m_Targets.Clear();
-                
+
                 m_Targets.AddRange(validObjects
                         .OfType<GameObject>()
                         .Select(go => go.GetComponent<TinyEntityView>())
                         .Where(view => null != view && view && null != view.Registry)
                         .Select(view => view.EntityRef.Dereference(view.Registry))
                     );
-               
+
                 m_Targets.AddRange(validObjects.OfType<IPropertyContainer>());
             }
             finally
@@ -230,12 +232,12 @@ namespace Unity.Tiny
             switch (type)
             {
                 case InspectorBackendType.IMGUI:
-                {
-                    backend = new IMGUIBackend(this, Context);
-                    var imgui = new IMGUIContainer(OnGUI);
-                    Root.Add(imgui);
-                    imgui.StretchToParentSize();
-                }
+                    {
+                        backend = new IMGUIBackend(this, Context);
+                        var imgui = new IMGUIContainer(OnGUI);
+                        Root.Add(imgui);
+                        imgui.StretchToParentSize();
+                    }
                     break;
                 case InspectorBackendType.UIElements:
                     backend = new UIElementsBackend(this);
@@ -265,7 +267,7 @@ namespace Unity.Tiny
                 m_IncludeComponentFamilies,
                 () => m_IncludeComponentFamilies = !m_IncludeComponentFamilies);
             menu.AddSeparator("");
-            
+
         }
 
         public void SwitchToBackend(InspectorBackendType type, bool force = false)
@@ -296,13 +298,13 @@ namespace Unity.Tiny
 
         private ActiveEditorTracker GetTracker()
         {
-            return (ActiveEditorTracker) Window.GetType().GetMethod("get_tracker", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(Window, null);
+            return (ActiveEditorTracker)Window.GetType().GetMethod("get_tracker", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(Window, null);
         }
 
         private InspectorMode GetInspectorMode()
         {
             var fieldInfo = Window.GetType().GetField("m_InspectorMode", BindingFlags.Instance | BindingFlags.NonPublic);
-            return (InspectorMode) fieldInfo.GetValue(Window);
+            return (InspectorMode)fieldInfo.GetValue(Window);
         }
 
         private UnityEvent<bool> GetLockedStateChanged()
@@ -321,6 +323,7 @@ namespace Unity.Tiny
             {
                 InvokeOnGUIEnabled = !m_Targets.Any() && !containsGameObject;
                 Root.visible = !InvokeOnGUIEnabled;
+                DefaultRoot.visible = InvokeOnGUIEnabled;
             }
         }
 

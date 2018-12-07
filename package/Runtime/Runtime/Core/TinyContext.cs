@@ -16,6 +16,7 @@ namespace Unity.Tiny
 		public TinyRegistry Registry { get; }
 		public TinyCaretaker Caretaker { get; }
 		public TinyVersionStorage VersionStorage { get; }
+        public ContextUsage Usage { get; }
 
 		private readonly Dictionary<Type, IContextManager> m_ContextManagers = new Dictionary<Type, IContextManager>();
 		private readonly Dictionary<Type, Type> m_TypeToRegisteredManagerType = new Dictionary<Type, Type>();
@@ -23,7 +24,8 @@ namespace Unity.Tiny
 		
 		public TinyContext(ContextUsage usage)
 		{
-			VersionStorage = new TinyVersionStorage();
+            Usage = usage;
+			VersionStorage = new TinyVersionStorage(trackChanges: !usage.HasFlag(ContextUsage.LiveLink));
 			Registry = new TinyRegistry(this, VersionStorage);
 			Caretaker = new TinyCaretaker(VersionStorage);
 			TinyDomain.LoadDomain();

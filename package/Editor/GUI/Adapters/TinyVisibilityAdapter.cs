@@ -7,6 +7,7 @@ namespace Unity.Tiny
         ,IGenericExcludeAdapter
         ,IExcludeAdapter<TinyObject>
         ,IExcludeAdapter<TinyObject.PropertiesContainer>
+        ,IExcludeAdapter<TinyEntity, TinyObject>
     {
         public TinyVisibilityAdapter(TinyContext tinyContext)
             : base(tinyContext) { }
@@ -42,6 +43,26 @@ namespace Unity.Tiny
         }
 
         #endregion // IExcludeContainerUIAdapter<TinyObject.PropertiesContainer>
+
+        #region IExcludeContainerUIAdapter<TinyEntity>
+
+        public bool ExcludeVisit(ref TinyEntity container, ref UIVisitContext<TinyObject> context)
+        {
+            var type = context.Value.Type.Dereference(TinyContext.Registry);
+
+            if (null == type)
+            {
+                return false;
+            }
+            
+            if (type.IsComponent)
+            {
+                return type.Visibility == TinyVisibility.HideInInspector;
+            }
+            return false;
+        }
+
+        #endregion // IExcludeContainerUIAdapter<TinyObject>
 
         #region Implementation
 

@@ -4,6 +4,7 @@
     "Name": "AnimationPlayerDescVector2",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Struct",
     "Fields": [{
         "Id": "bb5d385eb2adc3eb49373fca35771071",

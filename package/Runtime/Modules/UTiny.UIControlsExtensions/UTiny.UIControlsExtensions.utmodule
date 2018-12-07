@@ -8,13 +8,5 @@
     "Options": 1,
     "Dependencies": [
         { "Id": "494f9eba840c1f117459611e605884b0", "Name": "UTiny.Core2DTypes" }
-    ],
-    "Structs": [
-        { "Id": "7fb267354eaa3938a25c3a9513db8724", "Name": "ColorTint" },
-        { "Id": "632be16e8661e612dee9666b277d45fd", "Name": "SpriteSwap" },
-        { "Id": "65e6144818520fd56fba1f04bf8fb271", "Name": "TransitionEntity" }
-    ],
-    "Enums": [
-        { "Id": "a31fda38cf6841570b96c7b25da89695", "Name": "TransitionType" }
     ]
 }]

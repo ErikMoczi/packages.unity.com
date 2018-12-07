@@ -4,6 +4,7 @@
     "Name": "TweenFloat",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "f68fb09c64c584385dde41a474be50ed",

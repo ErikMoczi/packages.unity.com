@@ -15,17 +15,5 @@
         { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" },
         { "Id": "49644c1065ebcfd98885bfe5e77c8fc1", "Name": "UTiny.Image2D" },
         { "Id": "eae58004250dcd15a6c834b07677ca28", "Name": "UTiny.HTML" }
-    ],
-    "Components": [
-        { "Id": "bfaba92347219714d5784f79def27ae1", "Name": "Sprite2D" },
-        { "Id": "5973907fe65fd639173bb80a06bf2c55", "Name": "SpriteAtlas" },
-        { "Id": "1c504a8a7963db0d32e89b527b90e057", "Name": "Sprite2DRenderer" },
-        { "Id": "be2f221c9af74ec5c0a4495a2d6769a3", "Name": "Sprite2DRendererOptions" },
-        { "Id": "f0155b591121baf9dff767e8e86c086f", "Name": "Sprite2DBorder" },
-        { "Id": "95eba163dce5bfff5420a5a8c2845523", "Name": "Sprite2DSequence" },
-        { "Id": "d2cfd18aa4facc33b1da7ae05205691b", "Name": "Sprite2DSequencePlayer" }
-    ],
-    "Enums": [
-        { "Id": "a7ae2ef1f120627af99607cbecca330e", "Name": "DrawMode" }
     ]
 }]

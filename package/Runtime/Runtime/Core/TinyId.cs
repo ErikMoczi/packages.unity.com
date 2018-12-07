@@ -29,7 +29,7 @@ namespace Unity.Tiny
 		{
 			using (var provider = System.Security.Cryptography.MD5.Create())
 			{
-				var hash = provider.ComputeHash(System.Text.Encoding.Default.GetBytes(name));
+				var hash = provider.ComputeHash(System.Text.Encoding.UTF8.GetBytes(name));
 				var guid = new Guid(hash);
 				return new TinyId(guid);
 			}

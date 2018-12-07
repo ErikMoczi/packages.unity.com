@@ -340,7 +340,6 @@ namespace Unity.Tiny
 
                 heap_size = project.Settings.MemorySize,
                 opt_auto_resize = project.Settings.CanvasAutoResize,
-                opt_ws_client = project.Settings.IncludeWSClient,
                 opt_webp_decompressor = project.Settings.IncludeWebPDecompressor,
                 opt_ecma5 = project.Settings.RunBabel,
                 opt_single_file_output = project.Settings.SingleFileHtml,

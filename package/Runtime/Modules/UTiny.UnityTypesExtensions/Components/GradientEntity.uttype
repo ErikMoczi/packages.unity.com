@@ -4,6 +4,7 @@
     "Name": "GradientEntity",
     "ExportFlags": 4,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Struct",
     "Fields": [{
         "Id": "c62071cd5581845c91a9df761c8b2afb",

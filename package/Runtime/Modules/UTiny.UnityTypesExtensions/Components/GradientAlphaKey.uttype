@@ -4,6 +4,7 @@
     "Name": "GradientAlphaKey",
     "ExportFlags": 4,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Struct",
     "Fields": [{
         "Id": "ada48de4d5424261ae2445f3e3f3304b",

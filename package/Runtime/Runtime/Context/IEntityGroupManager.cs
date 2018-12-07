@@ -12,7 +12,6 @@ namespace Unity.Tiny
         void LoadEntityGroup(TinyEntityGroup.Reference entityGroupRef);
         void LoadEntityGroupAtIndex(TinyEntityGroup.Reference entityGroupRef, int index);
         void UnloadEntityGroup(TinyEntityGroup.Reference entityGroupRef);
-        
-        // void EntityGroupGraph GetSceneGraph(TinyEntityGroup.Reference entityGroupRef);
+        void UnloadAllEntityGroups();
     }
 }

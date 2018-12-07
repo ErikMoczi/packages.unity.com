@@ -1,0 +1,35 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "4236cd8d8bb4346f3cfa21b247cda664",
+    "Name": "AssetReferenceSpriteAtlas",
+    "ExportFlags": 16,
+    "Unlisted": true,
+    "Visibility": 1,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "e36448f1f58f7731ac4c841d879b7d1e",
+        "Name": "guid",
+        "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "709e7de06dd9ca74fb4a0f524aa188cc",
+        "Name": "fileId",
+        "FieldType": { "Id": "37695933217a49f68ce15db33f63cdf9", "Name": "Int64" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "6828fe7e2dd2de5a4c9c551db0f0728c",
+        "Name": "type",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "4236cd8d8bb4346f3cfa21b247cda664", "Name": "AssetReferenceSpriteAtlas" },
+        "Properties": {
+            "fileId": 0,
+            "type": 0
+        }
+    }
+}]

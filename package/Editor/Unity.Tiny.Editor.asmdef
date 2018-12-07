@@ -1,14 +1,20 @@
 {
     "name": "Unity.Tiny.Editor",
     "references": [
-      "Unity.Tiny",
-      "Unity.Properties",
-      "Unity.InternalAPIEngineBridge.002",
-      "Unity.InternalAPIEditorBridge.002"
+        "Unity.Tiny",
+        "Unity.Properties",
+        "Unity.InternalAPIEngineBridge.002",
+        "Unity.InternalAPIEditorBridge.002",
+        "Unity.TextMeshPro"
     ],
+    "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
     ],
     "excludePlatforms": [],
-    "allowUnsafeCode": true
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
 }

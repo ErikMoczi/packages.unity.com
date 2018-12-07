@@ -262,9 +262,9 @@ namespace Unity.Tiny
                     foreach (var field in type.Fields)
                     {
                         var idlName = string.Empty;
+                        var fieldType = field.FieldType.Dereference(type.Registry);
                         
-                        if (field.FieldType.Dereference(type.Registry).ExportFlags
-                            .HasFlag(TinyExportFlags.EditorExtension))
+                        if (fieldType.ExportFlags.HasFlag(TinyExportFlags.EditorExtension))
                         {
                             idlName = TinyEditorExtensionsGenerator.GetFieldTypeToIDL(type.Registry, field);
                         }

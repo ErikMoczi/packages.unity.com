@@ -29,6 +29,12 @@ namespace Unity.Tiny
         /// It will not be exported as-is and will not have bindings in TypeScript.
         /// </summary>
         EditorExtension = 1 << 2,
+
+        /// <summary>
+        /// This object is only for development.
+        /// It will not be exported in Release configuration.
+        /// </summary>
+        Development = 1 << 4
     }
 }
 

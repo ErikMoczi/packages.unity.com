@@ -79,7 +79,7 @@ namespace Unity.Tiny.Serialization.Binary
             ICustomVisit<Tilemap>,
             ICustomVisit<AudioClip>,
             ICustomVisit<AnimationClip>,
-            ICustomVisit<Font>,
+            ICustomVisit<TMPro.TMP_FontAsset>,
             IExcludeVisit<TinyObject>,
             IExcludeVisit<TinyObject.PropertiesContainer>,
             IExcludeVisit<Object>
@@ -175,7 +175,7 @@ namespace Unity.Tiny.Serialization.Binary
                 VisitObject(value);
             }
 
-            void ICustomVisit<Font>.CustomVisit(Font value)
+            void ICustomVisit<TMPro.TMP_FontAsset>.CustomVisit(TMPro.TMP_FontAsset value)
             {
                 VisitObject(value);
             }

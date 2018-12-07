@@ -4,6 +4,7 @@
     "Name": "LifetimeVelocity",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "99370a1cec1e8e26eb58d17ea6cb21fb",

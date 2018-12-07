@@ -300,9 +300,9 @@ namespace Unity.Tiny
                         return CreateSimpleListProperty<AnimationClip>();
                     }
 
-                    if (typeof(Font).IsAssignableFrom(type))
+                    if (typeof(TMPro.TMP_FontAsset).IsAssignableFrom(type))
                     {
-                        return CreateSimpleListProperty<Font>();
+                        return CreateSimpleListProperty<TMPro.TMP_FontAsset>();
                     }
 
                     if (typeof(Object).IsAssignableFrom(type))
@@ -387,7 +387,7 @@ namespace Unity.Tiny
                     }
                     else if (type.Id == TinyType.FontEntity.Id)
                     {
-                        return CreateSimpleListProperty<Font>();
+                        return CreateSimpleListProperty<TMPro.TMP_FontAsset>();
                     }
                     else
                     {

@@ -4,6 +4,7 @@
     "Name": "SpriteSwap",
     "ExportFlags": 4,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Struct",
     "Fields": [{
         "Id": "ce6d0d2b8949def88804db909df2326f",

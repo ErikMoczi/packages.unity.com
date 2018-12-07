@@ -1,48 +1,60 @@
-﻿
-
-using UnityEditor;
+﻿using UnityEditor;
 
 namespace Unity.Tiny
 {
     internal static class ExportOnPlay
     {
-        [TinyInitializeOnLoad]
+        private static bool m_EnteredPlayMode;
+
+        [InitializeOnLoadMethod]
         public static void Init()
         {
-#if UNITY_2017_2_OR_NEWER
             EditorApplication.playModeStateChanged += HandlePlayStateChanged;
-#else
-            EditorApplication.playmodeStateChanged += HandlePlayStateChanged;
-#endif
         }
 
-#if UNITY_2017_2_OR_NEWER
         private static void HandlePlayStateChanged(PlayModeStateChange change)
         {
-            if (change == PlayModeStateChange.ExitingEditMode)
+            switch (change)
             {
-                Export();
-            }
-        }
-#else
-        private static void HandlePlayStateChanged()
-        {
-            if (EditorApplication.isPlayingOrWillChangePlaymode && !EditorApplication.isPlaying)
-            {
-                Export();
-            }
-        }
-#endif
+                case PlayModeStateChange.EnteredEditMode:
+                    if (m_EnteredPlayMode)
+                    {
+                        m_EnteredPlayMode = false;
+                        EditorApplication.delayCall += () => TinyEditorApplication.LoadTemp(ContextUsage.Edit);
+                    }
+                    break;
 
-        private static void Export()
-        {
-            var project = TinyEditorApplication.Project;
-            if (null != project)
-            {
-                EditorApplication.isPlaying = false;
-                TinyBuildPipeline.BuildAndLaunch();
+                case PlayModeStateChange.ExitingEditMode:
+                    if (TinyEditorApplication.Project != null)
+                    {
+                        TinyBuildPipeline.BuildAndLaunch();
+                        if (!PreferencesMenuItems.PlayModeEnabled ||
+                            TinyBuildPipeline.WorkspaceBuildOptions.Configuration == TinyBuildConfiguration.Release)
+                        {
+                            EditorApplication.isPlaying = false;
+                        }
+                    }
+                    break;
+
+                case PlayModeStateChange.EnteredPlayMode:
+                    if (!m_EnteredPlayMode)
+                    {
+                        m_EnteredPlayMode = true;
+                        EditorApplication.delayCall += () => TinyEditorApplication.LoadTemp(ContextUsage.LiveLink);
+                    }
+                    break;
+
+                case PlayModeStateChange.ExitingPlayMode:
+                    WebSocketServer.Instance?.SendResume();
+                    if (m_EnteredPlayMode)
+                    {
+                        TinyEditorApplication.Close(false);
+                    }
+                    break;
+
+                default:
+                    break;
             }
         }
     }
 }
-

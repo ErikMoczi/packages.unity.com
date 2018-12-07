@@ -219,7 +219,14 @@ namespace Unity.Tiny
             var registry = module.Registry;
             foreach (var field in fields)
             {
-                if (field.FieldType.Dereference(registry).ExportFlags.HasFlag(TinyExportFlags.EditorExtension))
+                var fieldType = field.FieldType.Dereference(registry);
+
+                if (null == fieldType)
+                {
+                    continue;
+                }
+            
+                if (fieldType.ExportFlags.HasFlag(TinyExportFlags.EditorExtension))
                 {
                     var exportedFieldType = TinyEditorExtensionsGenerator.GetExportedFieldType(field, module);
                     if (!string.IsNullOrEmpty(exportedFieldType))
@@ -229,8 +236,8 @@ namespace Unity.Tiny
 
                     continue;
                 }
-                var fieldType = GetFieldType(field, module);
-                definitionFile.AppendLine($"{indent}{indent}{field.Name}: {fieldType};");
+                var tsFieldTypeName = GetFieldType(field, module);
+                definitionFile.AppendLine($"{indent}{indent}{field.Name}: {tsFieldTypeName};");
             }
         }
         private static string GetFieldType(TinyField field, TinyModule module)
@@ -318,16 +325,12 @@ namespace Unity.Tiny
 
             foreach (var m in module.EnumerateDependencies())
             {
-                var scriptRootPath = AssetDatabase.GUIDToAssetPath(m.ScriptRootDirectory);
-                if (string.IsNullOrEmpty(scriptRootPath))
-                    continue;
-
-                configGen.include.Add(Path.Combine(typescriptRelativeRoot, scriptRootPath).ToForwardSlash());
+                configGen.include.Add(m.GetDirectoryPath().ToForwardSlash() + "/**/*.ts");
             }
 
             var generatedTsConfig = new MigrationContainer(configGen);
 
-            var customTsConfigDir = AssetDatabase.GUIDToAssetPath(module.ScriptRootDirectory);
+            var customTsConfigDir = module.GetDirectoryPath();
             if (false == string.IsNullOrEmpty(customTsConfigDir))
             {
                 if (File.Exists(Path.Combine(customTsConfigDir, s_TSConfigName)))
@@ -404,14 +407,6 @@ namespace Unity.Tiny
             {
                 var outJson = File.ReadAllText(outMetadataFile.FullName, Encoding.UTF8);
                 metadata = JsonSerializer.Deserialize<ScriptMetadata>(outJson);
-
-                if (TinyEditorApplication.EditorContext != null &&
-                    TinyEditorApplication.EditorContext.Workspace.ClearConsoleAfterCompilation)
-                {
-                    // TODO: make sticky compilation errors
-                    TinyEditorBridge.ClearConsole();
-                }
-
                 metadata.LogDiagnostics();
             }
 
@@ -430,22 +425,9 @@ namespace Unity.Tiny
 
         public static bool CompileScripts(TinyBuildOptions buildOptions)
         {
-            using (new TinyEditorUtility.ProgressBarScope(TinyConstants.ApplicationName, "Compiling scripts..."))
-            {
-                RegenerateTSDefinitionFiles(buildOptions);
-                var tsconfig = RegenerateTsConfig(buildOptions);
-                var tsmeta = new FileInfo(TinyScriptUtility.MakeTsOutMetaPath(buildOptions.BuildFolder));
-                var metadata = CompileTypeScript(tsconfig, tsmeta);
-                if (metadata == null)
-                {
-                    return false;
-                }
-
-                var context = buildOptions.Context;
-                var manager = context.GetManager<TinyScriptingManager>();
-                var mainModule = buildOptions.Project.Module.Dereference(buildOptions.Registry);
-                return manager.Apply(metadata, context, mainModule);
-            }
+            var context = buildOptions.Context;
+            var manager = context.GetManager<IScriptingManager>();
+            return manager.CompileScripts(buildOptions);
         }
 
         #endregion

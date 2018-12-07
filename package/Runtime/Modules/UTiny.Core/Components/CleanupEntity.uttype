@@ -4,6 +4,7 @@
     "Name": "CleanupEntity",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "DefaultValue": {
         "Type": { "Id": "9214ce48c62a2d523a4ea979e58a6199", "Name": "CleanupEntity" }

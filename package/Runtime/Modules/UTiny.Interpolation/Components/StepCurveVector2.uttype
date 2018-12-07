@@ -4,6 +4,7 @@
     "Name": "StepCurveVector2",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "f8b410266ba3dd3fa20e433ec55cc711",

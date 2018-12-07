@@ -4,6 +4,7 @@
     "Name": "ParticleEmitter",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "a4edf64869ad2f3870e0e3df039d42f6",

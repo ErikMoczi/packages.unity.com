@@ -7,25 +7,23 @@ using UnityEngine;
 
 namespace Unity.Tiny
 {
-    internal class TinyQRCode
+    internal class QRCode
     {
-        private string m_Data;
-
-        public TinyQRCode(string data)
+        public static Texture2D Generate(Uri url)
         {
-            m_Data = data;
-        }
+            if (url == null)
+            {
+                return null;
+            }
 
-        public Texture2D GetGraphic(int pixelsPerModule)
-        {
             var tempFile = new FileInfo(Path.Combine(Application.temporaryCachePath, Guid.NewGuid() + ".png"));
             var inputFile = new FileInfo(Path.Combine(Application.temporaryCachePath, Guid.NewGuid() + ".png"));
-
             try
             {
-                var obj = new ObjectContainer(new Dictionary<string, object>{
-                    ["data"] = m_Data,
-                    ["pixelsPerModule"] = pixelsPerModule,
+                var obj = new ObjectContainer(new Dictionary<string, object>
+                {
+                    ["data"] = url.AbsoluteUri,
+                    ["pixelsPerModule"] = 20,
                 });
 
                 File.WriteAllText(inputFile.FullName, JsonSerializer.Serialize(obj));
@@ -42,6 +40,7 @@ namespace Unity.Tiny
                             Texture2D texture = new Texture2D(2, 2);
                             if (texture.LoadImage(fileData))
                             {
+                                texture.filterMode = FilterMode.Point;
                                 return texture;
                             }
                         }
@@ -56,7 +55,6 @@ namespace Unity.Tiny
             {
                 inputFile.Delete();
             }
-
             return null;
         }
     }

@@ -12,10 +12,18 @@ namespace Unity.Tiny
         {
             var obj = EditorUtility.InstanceIDToObject(instanceId);
             
-            if (obj is UTModule)
+            if (obj is UTModule && !EditorApplication.isPlayingOrWillChangePlaymode)
             {
-                TinyEditorApplication.SaveChanges();
-                TinyEditorApplication.LoadModule(AssetDatabase.GetAssetPath(obj));
+                if (TinyEditorApplication.SaveChanges())
+                {
+                    TinyEditorApplication.Close();
+                    if (!obj)
+                    {
+                        // Fix for saving a renamed project when trying to re-opening it.
+                        obj = EditorUtility.InstanceIDToObject(instanceId);
+                    }
+                    TinyEditorApplication.LoadModule(AssetDatabase.GetAssetPath(obj));
+                }
                 return true;
             }
             return false;

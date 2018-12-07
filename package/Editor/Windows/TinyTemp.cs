@@ -14,7 +14,7 @@ namespace Unity.Tiny
     [TinyInitializeOnLoad]
     internal static class TinyTemp
     {
-        private const int KTempVersion = 5;
+        private const int KTempVersion = 6;
         private const string KTempFileName = "project";
         private static readonly FileInfo s_TempFileInfo;
 
@@ -107,6 +107,7 @@ namespace Unity.Tiny
                     }
                     
                     writer.Write(sourceIdentifier);
+                    writer.Write(Persistence.IsPersistentObjectChanged(obj));
                     BinaryBackEnd.Persist(stream, obj.EnumerateContainers());
                 }
             }
@@ -165,8 +166,7 @@ namespace Unity.Tiny
             Persistence.LoadAllModules(registry);
 
             persistenceId = null;
-            
-            using (var command = new MemoryStream())
+
             using (var stream = File.OpenRead(GetTempLocation().FullName))
             using (var reader = new BinaryReader(stream))
             {
@@ -181,57 +181,70 @@ namespace Unity.Tiny
                 var type = (SaveType) reader.ReadByte();
                 int count;
 
-                switch (type)
-                {
-                    case SaveType.PersistentUnchanged:
-                        persistenceId = reader.ReadString();
-                        return false;
-                    case SaveType.PersistentChanged:
-                        count = reader.ReadInt32();
-                        var changed = false;
-                        for (var i = 0; i < count; i++)
-                        {
-                            var id = reader.ReadString();
-                            var hash = reader.ReadString();
-                            
-                            if (!string.IsNullOrEmpty(hash) && !string.Equals(hash, TinyCryptography.ComputeHash(File.ReadAllText(AssetDatabase.GUIDToAssetPath(id)))))
-                            {
-                                changed = true;
-                            }
-                        }
-                        
-                        // Ask the user if they want to keep their changes or reload from disc
-                        if (changed && EditorUtility.DisplayDialog($"{TinyConstants.ApplicationName} assets changed", 
-                            $"{TinyConstants.ApplicationName} assets have changed on disk, would you like to reload the current project?", 
-                            "Yes", 
-                            "No"))
-                        {
-                            return false;
-                        }
-                        break;
-                    case SaveType.Temporary:
-                        count = reader.ReadInt32();
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                var persistenceIds = ListPool<string>.Get();
 
-                // This is to handle module editing.
-                // We want to unregister it from its current source and re-register it with the persistenceId as the scope
-                if (!string.IsNullOrEmpty(persistenceId))
+                try
                 {
-                    registry.UnregisterAllBySource(persistenceId);
-                }
-
-                using (var transaction = new Persistence.LoadTransaction())
-                {
-                    for (var i = 0; i < count; i++)
+                    switch (type)
                     {
-                        var sourceIdentifier = reader.ReadString();
-                        transaction.LoadBinary(stream, sourceIdentifier, persistenceId);
+                        case SaveType.PersistentUnchanged:
+                            persistenceId = reader.ReadString();
+                            return false;
+                        case SaveType.PersistentChanged:
+                            count = reader.ReadInt32();
+                            var changed = false;
+                            for (var i = 0; i < count; i++)
+                            {
+                                var id = reader.ReadString();
+                                var hash = reader.ReadString();
+
+                                persistenceIds.Add(id);
+
+                                if (!string.IsNullOrEmpty(hash) && !string.Equals(hash, TinyCryptography.ComputeHash(File.ReadAllText(AssetDatabase.GUIDToAssetPath(id)))))
+                                {
+                                    changed = true;
+                                }
+                            }
+
+                            // Ask the user if they want to keep their changes or reload from disc
+                            if (changed && EditorUtility.DisplayDialog($"{TinyConstants.ApplicationName} assets changed",
+                                    $"{TinyConstants.ApplicationName} assets have changed on disk, would you like to reload the current project?",
+                                    "Yes",
+                                    "No"))
+                            {
+                                return false;
+                            }
+
+                            break;
+                        case SaveType.Temporary:
+                            count = reader.ReadInt32();
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
                     }
 
-                    transaction.Commit(registry);
+                    // This is to handle module editing.
+                    // We want to unregister it from its current source and re-register it with the persistenceId as the scope
+                    if (!string.IsNullOrEmpty(persistenceId))
+                    {
+                        registry.UnregisterAllBySource(persistenceId);
+                    }
+
+                    using (var transaction = new Persistence.LoadTransaction())
+                    {
+                        for (var i = 0; i < count; i++)
+                        {
+                            var sourceIdentifier = reader.ReadString();
+                            var changed = reader.ReadBoolean();
+                            transaction.LoadBinary(stream, sourceIdentifier, persistenceIds[i], changed);
+                        }
+
+                        transaction.Commit(registry);
+                    }
+                }
+                finally
+                {
+                    ListPool<string>.Release(persistenceIds);
                 }
             }
 

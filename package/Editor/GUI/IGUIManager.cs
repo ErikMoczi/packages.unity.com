@@ -17,7 +17,7 @@ namespace Unity.Tiny
 
     }
 
-    [ContextManager(ContextUsage.Edit), UsedImplicitly]
+    [ContextManager(ContextUsage.Edit | ContextUsage.LiveLink), UsedImplicitly]
     internal class GUIManager : ContextManager, IGUIManagerInternal
     {
         private struct ModeTypePair : IEquatable<ModeTypePair>

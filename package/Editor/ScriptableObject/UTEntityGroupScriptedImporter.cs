@@ -13,7 +13,7 @@ namespace Unity.Tiny
 
         protected override Texture2D GetThumbnailForAsset(AssetImportContext ctx, UTEntityGroup asset)
         {
-            return TinyIcons.ScriptableObjects.EntityGroup;
+            return TinyIcons.EntityGroup;
         }
     }
 }

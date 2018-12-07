@@ -4,6 +4,7 @@
     "Name": "Tile",
     "ExportFlags": 1,
     "Unlisted": true,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "f742fb1edd48f57c9a61c85f686ab849",

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using JetBrains.Annotations;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -16,20 +17,23 @@ namespace Unity.Tiny
         [InitializeOnLoadMethod]
         internal static void InstallOnLoad()
         {
-#if UNITY_TINY_INTERNAL
-            // need to delay this one until the MenuItem is created by the application
-            EditorApplication.delayCall += () =>
+            if (!EditorApplication.isPlayingOrWillChangePlaymode)
             {
-                var enabled = AutoBuildEnabled;
-                Menu.SetChecked(k_ToggleAutoBuildMenuItem, enabled);
-                if (enabled)
+#if UNITY_TINY_INTERNAL
+                // need to delay this one until the MenuItem is created by the application
+                EditorApplication.delayCall += () =>
                 {
-                    BuildDevRuntimeHtml5();
-                }
-            };
+                    var enabled = AutoBuildEnabled;
+                    Menu.SetChecked(k_ToggleAutoBuildMenuItem, enabled);
+                    if (enabled)
+                    {
+                        BuildDevRuntimeHtml5DevOnly();
+                    }
+                };
 #else
-            Install(force: false, silent: true);
+                Install(force: false, silent: true);
 #endif
+            }
         }
 
 #if UNITY_TINY_INTERNAL
@@ -49,14 +53,16 @@ namespace Unity.Tiny
             
             Generic = 1,
             
-            Docs = 2,
+            Docs = 2, // DEPRECATED - Runtime API docs are now derived from the distributed package
             
             Html5Debug = 4,
             Html5Development = 8,
             Html5Release = 16,
             Html5 = Html5Debug | Html5Development | Html5Release,
             
-            Distribution = Docs | Html5
+            Clean = 32,
+            
+            Distribution = Clean | Html5
         }
 
         private const string k_ToggleAutoBuildMenuItem = "Tiny/INTERNAL/Build Runtime/Build On Domain Reload";
@@ -68,17 +74,24 @@ namespace Unity.Tiny
             AutoBuildEnabled = enabled;
             Menu.SetChecked(k_ToggleAutoBuildMenuItem, enabled);
         }
+        
+        [MenuItem("Tiny/INTERNAL/Build Runtime/HTML5 Incremental")]
+        internal static void BuildDevRuntimeHtml5()
+        {
+            // used by CI - do not rename this method
+            BuildRuntime(BuildRuntimeFlags.Html5);
+        }
+        
+        [MenuItem("Tiny/INTERNAL/Build Runtime/HTML5 Incremental - Development Only")]
+        internal static void BuildDevRuntimeHtml5DevOnly()
+        {
+            BuildRuntime(BuildRuntimeFlags.Html5Development);
+        }
     
         [MenuItem("Tiny/INTERNAL/Build Runtime/For Distribution")]
         internal static void BuildRuntimeDistribution()
         {
             BuildRuntime(BuildRuntimeFlags.Distribution);
-        }
-        
-        [MenuItem("Tiny/INTERNAL/Build Runtime/HTML5 Only")]
-        private static void BuildDevRuntimeHtml5()
-        {
-            BuildRuntime(BuildRuntimeFlags.Html5);
         }
         
         [MenuItem("Tiny/INTERNAL/Build Runtime/Package Only")]
@@ -87,19 +100,13 @@ namespace Unity.Tiny
             BuildRuntime(BuildRuntimeFlags.Generic);
         }
         
-        [MenuItem("Tiny/INTERNAL/Build Runtime/Docs Only")]
-        private static void BuildRuntimeDocs()
-        {
-            BuildRuntime(BuildRuntimeFlags.Docs);
-        }
-        
         private static void BuildRuntime(BuildRuntimeFlags buildFlags)
         {
             // gather build targets
             var beeTargets = new List<string>();
 
             var isHtml5 = (buildFlags & BuildRuntimeFlags.Html5) != 0;
-            var isDistribution = buildFlags == BuildRuntimeFlags.Distribution;
+            var isClean = (buildFlags & BuildRuntimeFlags.Clean) != 0;
             
             if (isHtml5 || buildFlags.HasFlag(BuildRuntimeFlags.Generic))
             {
@@ -123,6 +130,7 @@ namespace Unity.Tiny
             {
                 beeTargets.Add("build/asmjs-release/runtime/RuntimeFull.js");
                 beeTargets.Add("build/asmjs-release/runtime/RuntimeStripped.js");
+                beeTargets.Add("webgl-runtime-modularized");
             }
 
             if (beeTargets.Count == 0)
@@ -143,18 +151,18 @@ namespace Unity.Tiny
             };
             using (var progress = new TinyEditorUtility.ProgressBarScope("Building Runtime...", "..."))
             {
+#if UNITY_EDITOR_WIN
+                    var beeProgram = "bee.exe";
+#else
+                    var beeProgram = "mono bee.exe";
+#endif
+
                 for (var i = 0; i < beeTargets.Count; ++i)
                 {
                     var target = beeTargets[i];
                     progress.Update(target, (float)i / beeTargets.Count);
 
-#if UNITY_EDITOR_WIN
-                    var program = "bee.exe";
-#else
-                    var program = "mono bee.exe";
-#endif
-
-                    var output = TinyShell.RunInShell($"{program} {target}", new ShellProcessArgs()
+                    var output = TinyShell.RunInShell($"{beeProgram} --no-colors {target}", new ShellProcessArgs()
                     {
                         WorkingDirectory = new DirectoryInfo(runtimeFolder),
                         ExtraPaths = extraPaths,
@@ -164,14 +172,14 @@ namespace Unity.Tiny
                     if (false == output.Succeeded)
                     {
                         throw new Exception(
-                            $"Failed to build runtime target: {target}. See Editor.log for details. Some steps may require a VPN connection.\n{output.ErrorOutput}");
+                            $"Failed to build runtime target: {target}. See Editor.log for details. Some steps may require a VPN connection.\n{output.FullOutput}");
                     }
                 }
 
                 var buildFolder = runtimeFolder + "build/";
                 var distFolder = "./Tiny/Dist/";
 
-                if (isDistribution)
+                if (isClean)
                 {
                     TinyBuildUtilities.PurgeDirectory(new DirectoryInfo(distFolder));
                 }
@@ -207,7 +215,7 @@ namespace Unity.Tiny
                     TinyBuildUtilities.CopyDirectory(buildFolder + "RuntimePackage/Tools", distFolder + "bindgem", purge: true);
                     TinyBuildUtilities.CopyDirectory(buildFolder + "runtimedll", distFolder + "runtimedll", purge: true);
                     
-                    foreach (var file in new DirectoryInfo(distFolder + "runtimedll").GetFiles("*.pbd", SearchOption.TopDirectoryOnly))
+                    foreach (var file in new DirectoryInfo(distFolder + "runtimedll").GetFiles("*.pdb", SearchOption.TopDirectoryOnly))
                     {
                         file.Delete();
                     }
@@ -216,7 +224,7 @@ namespace Unity.Tiny
                     TinyBuildUtilities.CopyDirectory(buildFolder + "RuntimePackage/DataDefinitions", distFolder + "datadefinitions", purge: true);
                     
                     dataDefs.Refresh();
-                    foreach (var file in dataDefs.GetFiles("*.pbd", SearchOption.TopDirectoryOnly))
+                    foreach (var file in dataDefs.GetFiles("*.pdb", SearchOption.TopDirectoryOnly))
                     {
                         file.Delete();
                     }
@@ -236,7 +244,7 @@ namespace Unity.Tiny
                 });
             }
             
-            BuildTools(clean: isDistribution);
+            BuildTools(clean: isClean);
         }
 
         [MenuItem("Tiny/INTERNAL/Build Tools/Distribution")]
@@ -296,7 +304,7 @@ namespace Unity.Tiny
                 });
                 if (!output.Succeeded)
                 {
-                    throw new Exception($"Failed to build tools:\n{output.ErrorOutput}");
+                    throw new Exception($"Failed to build tools:\n{output.FullOutput}");
                 }
             }
         }
@@ -349,6 +357,13 @@ namespace Unity.Tiny
                         ExtraPaths = "/bin".AsEnumerable(), // adding this folder just in case, but should be already in $PATH
                         ThrowOnError = false
                     });
+                TinyBuildUtilities.RunInShell("chmod +x TinyToolsManager-macos",
+                    new ShellProcessArgs()
+                    {
+                        WorkingDirectory = new DirectoryInfo(GetToolDirectory("manager")),
+                        ExtraPaths = "/bin".AsEnumerable(), // adding this folder just in case, but should be already in $PATH
+                        ThrowOnError = false
+                    });
 #endif
 
                 Debug.Log($"Installed {TinyConstants.ApplicationName} runtime at: {installLocation.FullName}");
@@ -368,23 +383,11 @@ namespace Unity.Tiny
             Install(force: true, silent: false);
         }
 #endif
-        [MenuItem(TinyConstants.ApplicationName + "/Help/User Manual...", false, 10000)]
-        private static void OpenUserManual()
-        {
-            Application.OpenURL("https://docs.google.com/document/d/1vysig_03W22jfB7Aa50g7CI5i7yv0bqhk11LBlfESgU/preview");
-        }
 
         [MenuItem(TinyConstants.ApplicationName + "/Help/Forums...", false, 10000)]
         private static void OpenUserForums()
         {
-            Application.OpenURL("https://forum.unity.com/forums/unity-for-small-things.151/");
-        }
-
-        [MenuItem(TinyConstants.ApplicationName + "/Help/Scripting Reference...", false, 10000)]
-        private static void OpenScriptingReference()
-        {
-            var index = new Uri(Path.GetFullPath("./Tiny/Dist/apidocs/docfx_api.pdf"));
-            Application.OpenURL(index.AbsoluteUri);
+            Application.OpenURL("https://forum.unity.com/forums/project-tiny.151/");
         }
 
         internal static void InstallSamples(bool interactive)
@@ -460,8 +463,7 @@ namespace Unity.Tiny
 
         internal static string GetJsRuntimeVariant(TinyBuildOptions options)
         {
-            return IncludesModule(options.Project, k_BuiltInPhysicsModule) ?
-                    RuntimeVariantFull : RuntimeVariantStripped;
+            return options.Configuration == TinyBuildConfiguration.Release || IncludesModule(options.Project, k_BuiltInPhysicsModule) ? RuntimeVariantFull : RuntimeVariantStripped;
         }
     } 
 

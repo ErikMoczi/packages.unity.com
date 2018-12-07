@@ -1,1 +1,1 @@
-Tiny Mode enables you to create lightweight Web games using the Unity Editor.
+Tiny Mode enables you to create lightweight Web-based games using the Unity Editor.

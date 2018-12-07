@@ -36,12 +36,12 @@ namespace Unity.Tiny
             s_Context = context;
             m_TreeView = new RegistryTreeView(project.Registry, new RegistryTreeView.State());
             m_Toolbar = CreateToolbar();
-            var undo = context.GetManager<TinyUndoManager>();
+            var undo = context.GetManager<IUndoManager>();
             undo.OnUndoPerformed += changes => m_TreeView.Reload();
             undo.OnRedoPerformed += changes => m_TreeView.Reload();
             context.Caretaker.OnBeginUpdate += OnBeginUpdate;
             context.Caretaker.OnBeginUpdate += OnEndUpdate;
-            var scripting = context.GetManager<TinyScriptingManager>();
+            var scripting = context.GetManager<IScriptingManager>();
             scripting.OnMetadataLoaded += (manager) => m_TreeView.Reload();
             m_TreeView.Reload();
         }

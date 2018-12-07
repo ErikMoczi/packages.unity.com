@@ -6,6 +6,7 @@ using Unity.Properties;
 using Unity.Properties.Serialization;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using Unity.Tiny.Runtime.EditorExtensions;
 
 namespace Unity.Tiny
 {
@@ -36,6 +37,8 @@ namespace Unity.Tiny
     
     internal class EntityGroupSetupVisitor : TinyProject.Visitor, IDisposable
     {
+        private static readonly int k_UnityDefaultLayer = LayerMask.NameToLayer("Default");
+
         private static void AbortIfUnknownType(object type, TinyEntity.Reference value)
         {
             if (type == null)
@@ -210,7 +213,7 @@ namespace Unity.Tiny
                 case TinyTypeCode.Component:
                 case TinyTypeCode.Struct:
                 case TinyTypeCode.Configuration:
-                    return $"new {TinyHtml5Builder.GetJsTypeName(type)}";
+                    return $"new {TinyScriptUtility.GetJsTypeName(type)}";
                 case TinyTypeCode.EntityReference:
                 case TinyTypeCode.UnityObject:
                     return "ut.Entity.NONE";
@@ -229,7 +232,7 @@ namespace Unity.Tiny
             {
                 var type = component.Type.Dereference(entity.Registry);
                 AbortIfUnknownType(type, component);
-                list.Add(TinyHtml5Builder.GetJsTypeName(type));
+                list.Add(TinyScriptUtility.GetJsTypeName(type));
             }
 
             list.Sort();
@@ -240,19 +243,42 @@ namespace Unity.Tiny
         public override void VisitEntityGroup(TinyEntityGroup entityGroup)
         {
             // Export-time components
-            foreach (var entity in entityGroup.Entities.Select(e => e.Dereference(entityGroup.Registry)))
+            using (entityGroup.Registry.DontTrackChanges())
             {
-                // If entity has Tilemap, make sure it also has TilemapRechunk
-                if (entity.GetComponent(TypeRefs.Tilemap2D.Tilemap) != null)
+                var changed = Persistence.IsPersistentObjectChanged(entityGroup);
+                
+                foreach (var entity in entityGroup.Entities.Select(e => e.Dereference(entityGroup.Registry)))
                 {
-                    entity.GetOrAddComponent(TypeRefs.Tilemap2D.TilemapRechunk);
+                    // Store entity layer in component
+                    if (entity.Layer != k_UnityDefaultLayer)
+                    {
+                        var entityLayer = entity.GetOrAddComponent<TinyEntityLayer>();
+                        entityLayer.layer = entity.Layer;
+                    }
+
+                    // Hack: Store camera culling mask since we can't restore from the component list
+                    if (entity.HasComponent(TypeRefs.Core2D.Camera2D))
+                    {
+                        var cameraCullingMask = entity.GetOrAddComponent<TinyCameraCullingMask>();
+                        cameraCullingMask.mask = entity.GetComponent<Runtime.Core2D.TinyCamera2D>().layerMask;
+                    }
+
+                    // If entity has Tilemap, make sure it also has TilemapRechunk
+                    if (entity.HasComponent(TypeRefs.Tilemap2D.Tilemap))
+                    {
+                        entity.GetOrAddComponent(TypeRefs.Tilemap2D.TilemapRechunk);
+                    }
+                }
+
+                if (!changed)
+                {
+                    Persistence.RegisterVersions(entityGroup);
                 }
             }
 
             var begin = Writer.Length;
 
             Module = TinyUtility.GetModules(entityGroup).FirstOrDefault();
-
             Writer.Line($"{TinyHtml5Builder.KEntityGroupNamespace}.{Module.Namespace}.{entityGroup.Name}.name = {EscapeJsString(entityGroup.Name)};");
             Writer.WriteRaw($"{TinyHtml5Builder.KEntityGroupNamespace}.{Module.Namespace}.{entityGroup.Name}.load = ");
             WriteEntityGroupSetupFunction(Writer, Project, entityGroup, Options);
@@ -366,6 +392,13 @@ namespace Unity.Tiny
             {
                 context.Component = component;
                 var type = component.Type.Dereference(context.Registry);
+
+                // Skip exporting 'development' components in release configuration
+                if (TinyBuildPipeline.WorkspaceBuildOptions.Configuration == TinyBuildConfiguration.Release && type.ExportFlags.HasFlag(TinyExportFlags.Development))
+                {
+                    continue;
+                }
+
                 if (type.ExportFlags.HasFlag(TinyExportFlags.EditorExtension))
                 {
                     // TODO: whenever we'll add a editor-only component, we should create and implement this method.
@@ -404,7 +437,7 @@ namespace Unity.Tiny
             var type = component.Type.Dereference(component.Registry);
             AbortIfUnknownType(type, component, entity, entityGroup);
 
-            writer.Line($"var c{componentIndex} = new {TinyHtml5Builder.GetJsTypeName(type)}();");
+            writer.Line($"var c{componentIndex} = new {TinyScriptUtility.GetJsTypeName(type)}();");
             component.Properties.Visit(new ComponentVisitor
             {
                 VisitorContext = context,
@@ -449,7 +482,7 @@ namespace Unity.Tiny
             ICustomVisit<Tilemap>,
             ICustomVisit<AudioClip>,
             ICustomVisit<AnimationClip>,
-            ICustomVisit<Font>
+            ICustomVisit<TMPro.TMP_FontAsset>
         {
             public VisitorContext VisitorContext { private get; set; }
             public string Path { private get; set; }
@@ -488,12 +521,12 @@ namespace Unity.Tiny
                 if (type.ExportFlags.HasFlag(TinyExportFlags.EditorExtension))
                 {
                     var exportedName = TinyEditorExtensionsGenerator.GetExportedAssetName(value);
-                    VisitorContext.Writer.Line($"{PropertySetter(Property.Name)} = ut.EntityLookupCache.getByName('{exportedName}');");
+                    VisitorContext.Writer.Line($"{PropertySetter(Property.Name)} = ut.EntityLookupCache.getByName(world, '{exportedName}');");
                 }
                 else
                 {
                     var index = VisitorContext.StructIndexMap.GetOrAddValue(value);
-                    VisitorContext.Writer.Line($"var s{index} = new {TinyHtml5Builder.GetJsTypeName(type)}();");
+                    VisitorContext.Writer.Line($"var s{index} = new {TinyScriptUtility.GetJsTypeName(type)}();");
                     m_StructVisitor.VisitorContext = VisitorContext;
                     m_StructVisitor.Path = $"s{index}";
                     value.Properties.Visit(m_StructVisitor);
@@ -530,7 +563,7 @@ namespace Unity.Tiny
             {
                 var type = value.Type.Dereference(VisitorContext.Registry);
                 AbortIfUnknownType(type, value, Property);
-                var normalized = ExportEnumAsValue ? (type.DefaultValue as TinyObject)?[value.Name] : $"{TinyHtml5Builder.GetJsTypeName(type)}.{value.Name}";
+                var normalized = ExportEnumAsValue ? (type.DefaultValue as TinyObject)?[value.Name] : $"{TinyScriptUtility.GetJsTypeName(type)}.{value.Name}";
                 VisitorContext.Writer.Line($"{PropertySetter(Property.Name)} = {normalized};");
             }
 
@@ -681,7 +714,7 @@ namespace Unity.Tiny
                 VisitObjectEntity(value);
             }
 
-            void ICustomVisit<Font>.CustomVisit(Font value)
+            void ICustomVisit<TMPro.TMP_FontAsset>.CustomVisit(TMPro.TMP_FontAsset value)
             {
                 VisitObjectEntity(value);
             }
@@ -697,7 +730,7 @@ namespace Unity.Tiny
                 }
                 else
                 {
-                    VisitorContext.Writer.Line($"{PropertySetter(Property.Name)} = ut.EntityLookupCache.getByName('{TinyAssetEntityGroupGenerator.GetAssetEntityPath(value)}{assetName}');");
+                    VisitorContext.Writer.Line($"{PropertySetter(Property.Name)} = ut.EntityLookupCache.getByName(world, '{TinyAssetEntityGroupGenerator.GetAssetEntityPath(value)}{assetName}');");
                 }
             }
         }
@@ -724,7 +757,7 @@ namespace Unity.Tiny
             ICustomVisit<Tilemap>,
             ICustomVisit<AudioClip>,
             ICustomVisit<AnimationClip>,
-            ICustomVisit<Font>
+            ICustomVisit<TMPro.TMP_FontAsset>
         {
             public VisitorContext VisitorContext { private get; set; }
             public string Path { private get; set; }
@@ -776,7 +809,7 @@ namespace Unity.Tiny
             {
                 var type = value.Type.Dereference(VisitorContext.Registry);
                 AbortIfUnknownType(type, value, Property);
-                var normalized = ExportEnumAsValue ? (type.DefaultValue as TinyObject)?[value.Name] : $"{TinyHtml5Builder.GetJsTypeName(type)}.{value.Name}";
+                var normalized = ExportEnumAsValue ? (type.DefaultValue as TinyObject)?[value.Name] : $"{TinyScriptUtility.GetJsTypeName(type)}.{value.Name}";
                 VisitorContext.Writer.Line($"{Path}.{Property.Name} = {normalized};");
             }
 
@@ -859,7 +892,7 @@ namespace Unity.Tiny
                 VisitObjectEntity(value);
             }
 
-            void ICustomVisit<Font>.CustomVisit(Font value)
+            void ICustomVisit<TMPro.TMP_FontAsset>.CustomVisit(TMPro.TMP_FontAsset value)
             {
                 VisitObjectEntity(value);
             }
@@ -875,7 +908,7 @@ namespace Unity.Tiny
                 }
                 else
                 {
-                    VisitorContext.Writer.Line($"{Path}.{Property.Name} = ut.EntityLookupCache.getByName('{TinyAssetEntityGroupGenerator.GetAssetEntityPath(value)}{assetName}');");
+                    VisitorContext.Writer.Line($"{Path}.{Property.Name} = ut.EntityLookupCache.getByName(world, '{TinyAssetEntityGroupGenerator.GetAssetEntityPath(value)}{assetName}');");
                 }
             }
         }
@@ -905,7 +938,7 @@ namespace Unity.Tiny
             ICustomVisit<Tilemap>,
             ICustomVisit<AudioClip>,
             ICustomVisit<AnimationClip>,
-            ICustomVisit<Font>
+            ICustomVisit<TMPro.TMP_FontAsset>
         {
             public VisitorContext VisitorContext { private get; set; }
             public string Path { private get; set; }
@@ -943,12 +976,12 @@ namespace Unity.Tiny
                 {
                     var exportedName = TinyEditorExtensionsGenerator.GetExportedAssetName(value);
                     VisitorContext.Writer.Line(
-                        $"{Path}[{ListIndex}] = ut.EntityLookupCache.getByName('{exportedName}');");
+                        $"{Path}[{ListIndex}] = ut.EntityLookupCache.getByName(world, '{exportedName}');");
                 }
                 else
                 {
                     var index = VisitorContext.StructIndexMap.GetOrAddValue(value);
-                    VisitorContext.Writer.Line($"var s{index} = new {TinyHtml5Builder.GetJsTypeName(type)}();");
+                    VisitorContext.Writer.Line($"var s{index} = new {TinyScriptUtility.GetJsTypeName(type)}();");
                     value.Properties.Visit(new StructVisitor { VisitorContext = VisitorContext, Path = $"s{index}" });
                     VisitorContext.Writer.Line($"{Path}[{ListIndex}] = s{index};");
                 }
@@ -982,7 +1015,7 @@ namespace Unity.Tiny
                 AbortIfUnknownType(type, value, Property);
                 var normalized = ExportEnumAsValue
                     ? (type.DefaultValue as TinyObject)?[value.Name]
-                    : $"{TinyHtml5Builder.GetJsTypeName(type)}.{value.Name}";
+                    : $"{TinyScriptUtility.GetJsTypeName(type)}.{value.Name}";
                 VisitorContext.Writer.Line($"{Path}[{ListIndex}] = {normalized};");
             }
 
@@ -1116,7 +1149,7 @@ namespace Unity.Tiny
                 VisitObjectEntity(value);
             }
 
-            void ICustomVisit<Font>.CustomVisit(Font value)
+            void ICustomVisit<TMPro.TMP_FontAsset>.CustomVisit(TMPro.TMP_FontAsset value)
             {
                 VisitObjectEntity(value);
             }
@@ -1132,7 +1165,7 @@ namespace Unity.Tiny
                 }
                 else
                 {
-                    VisitorContext.Writer.Line($"{Path}[{ListIndex}] = ut.EntityLookupCache.getByName('{TinyAssetEntityGroupGenerator.GetAssetEntityPath(value)}{assetName}');");
+                    VisitorContext.Writer.Line($"{Path}[{ListIndex}] = ut.EntityLookupCache.getByName(world, '{TinyAssetEntityGroupGenerator.GetAssetEntityPath(value)}{assetName}');");
                 }
             }
         }

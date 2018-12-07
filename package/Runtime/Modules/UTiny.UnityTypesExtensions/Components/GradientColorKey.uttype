@@ -4,6 +4,7 @@
     "Name": "GradientColorKey",
     "ExportFlags": 4,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Struct",
     "Fields": [{
         "Id": "47aa86da587e587cb03b5446daea68bd",

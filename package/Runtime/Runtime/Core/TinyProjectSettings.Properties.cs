@@ -1,4 +1,3 @@
-#if (NET_4_6 || NET_STANDARD_2_0)
 using System;
 using System.Collections.Generic;
 using Unity.Properties;
@@ -56,10 +55,6 @@ namespace Unity.Tiny
         /// </summary>
         public static ValueClassProperty<TinyProjectSettings, int> MemorySizeProperty { get; private set; }
         /// <summary>
-        /// <see cref="TinyProjectSettings.IncludeWSClient" /> property.
-        /// </summary>
-        public static ValueClassProperty<TinyProjectSettings, bool> IncludeWSClientProperty { get; private set; }
-        /// <summary>
         /// <see cref="TinyProjectSettings.IncludeWebPDecompressor" /> property.
         /// </summary>
         public static ValueClassProperty<TinyProjectSettings, bool> IncludeWebPDecompressorProperty { get; private set; }
@@ -75,6 +70,10 @@ namespace Unity.Tiny
         /// <see cref="TinyProjectSettings.LinkToSource" /> property.
         /// </summary>
         public static ValueClassProperty<TinyProjectSettings, bool> LinkToSourceProperty { get; private set; }
+        /// <summary>
+        /// <see cref="TinyProjectSettings.SymbolsInReleaseBuild" /> property.
+        /// </summary>
+        public static ValueClassProperty<TinyProjectSettings, bool> SymbolsInReleaseBuildProperty { get; private set; }
 
         private static ClassPropertyBag<TinyProjectSettings> s_PropertyBag { get; set; }
 
@@ -119,12 +118,6 @@ namespace Unity.Tiny
                 ,(c, v) => c.m_SingleFileHtml = v
             );
 
-            IncludeWSClientProperty = new ValueClassProperty<TinyProjectSettings, bool>(
-                "IncludeWSClient"
-                ,c => c.m_IncludeWSClient
-                ,(c, v) => c.m_IncludeWSClient = v
-            );
-
             IncludeWebPDecompressorProperty = new ValueClassProperty<TinyProjectSettings, bool>(
                 "IncludeWebPDecompressor"
                 ,c => c.m_IncludeWebPDecompressor
@@ -148,6 +141,12 @@ namespace Unity.Tiny
                 ,c => c.m_LinkToSource
                 ,(c, v) => c.m_LinkToSource = v
             );
+
+            SymbolsInReleaseBuildProperty = new ValueClassProperty<TinyProjectSettings, bool>(
+                "SymbolsInReleaseBuild"
+                ,c => c.m_SymbolsInReleaseBuild
+                ,(c, v) => c.m_SymbolsInReleaseBuild = v
+            );
         }
 
         static partial void InitializeCustomProperties();
@@ -167,11 +166,11 @@ namespace Unity.Tiny
                 LocalHTTPServerPortProperty,
                 SingleFileHtmlProperty,
                 MemorySizeProperty,
-                IncludeWSClientProperty,
                 IncludeWebPDecompressorProperty,
                 RunBabelProperty,
                 MinifyJavaScriptProperty,
-                LinkToSourceProperty
+                LinkToSourceProperty,
+                SymbolsInReleaseBuildProperty
             );
         }
 
@@ -194,11 +193,11 @@ namespace Unity.Tiny
         private int m_LocalHTTPServerPort = DefaultLocalHTTPServerPort;
         private bool m_SingleFileHtml;
         private int m_MemorySize = DefaultMemorySize;
-        private bool m_IncludeWSClient;
         private bool m_IncludeWebPDecompressor;
         private bool m_RunBabel;
         private bool m_MinifyJavaScript = true;
         private bool m_LinkToSource = true;
+        private bool m_SymbolsInReleaseBuild = false;
 
         /// <summary>
         /// Rendered output width, in pixels.
@@ -309,15 +308,6 @@ namespace Unity.Tiny
         }
 
         /// <summary>
-        /// Include the WebSocket client code in the build, enabling a connection with the Unity Editor. Development configurations only.
-        /// </summary>
-        public bool IncludeWSClient
-        {
-            get { return IncludeWSClientProperty.GetValue(this); }
-            set { IncludeWSClientProperty.SetValue(this, value); }
-        }
-
-        /// <summary>
         /// Ensure that WebP textures can be decompressed on any platform. This impacts code size.
         /// </summary>
         public bool IncludeWebPDecompressor
@@ -352,6 +342,14 @@ namespace Unity.Tiny
             get { return LinkToSourceProperty.GetValue(this); }
             set { LinkToSourceProperty.SetValue(this, value); }
         }
+
+        /// <summary>
+        /// Whether release builds should include symbols or not.  If they do not, they will also be stripped.
+        /// </summary>
+        public bool SymbolsInReleaseBuild
+        {
+            get { return SymbolsInReleaseBuildProperty.GetValue(this); }
+            set { SymbolsInReleaseBuildProperty.SetValue(this, value); }
+        }
     }
 }
-#endif // (NET_4_6 || NET_STANDARD_2_0)

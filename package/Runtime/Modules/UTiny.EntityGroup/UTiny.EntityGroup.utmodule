@@ -1,0 +1,12 @@
+﻿[{
+    "$TypeId": 2,
+    "Id": "29e5e02a3a0442beb9e6828c78a7ff91",
+    "Name": "UTiny.EntityGroup",
+    "SerializedVersion": 1,
+    "ExportFlags": 0,
+    "Namespace": "ut",
+    "Options": 3,
+    "Dependencies": [
+        { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" }
+    ]
+}]

@@ -4,6 +4,7 @@
     "Name": "RectInt",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Struct",
     "Fields": [{
         "Id": "ff76aad4c0a9d6b2b4b86375b2cbab46",

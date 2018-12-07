@@ -3,7 +3,8 @@
     "Id": "23e4cd197eb46093e4e3f8833289135c",
     "Name": "BitmapFont",
     "ExportFlags": 1,
-    "Unlisted": false,
+    "Unlisted": true,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "b65dac372bb8de884845025b48643de0",
@@ -26,13 +27,13 @@
     }, {
         "Id": "8d3e4dd34ce42c76c4f8aac399b537f5",
         "Name": "ascent",
-        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
         "Array": false,
         "Visibility": 0
     }, {
         "Id": "060421aa179ef8d874bb1ae9e07d70e7",
         "Name": "descent",
-        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
         "Array": false,
         "Visibility": 0
     }],

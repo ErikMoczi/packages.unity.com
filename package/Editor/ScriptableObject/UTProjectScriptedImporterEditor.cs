@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -9,7 +8,6 @@ namespace Unity.Tiny
     [CustomEditor(typeof(UTProjectScriptedImporter))]
     internal class UTProjectScriptedImporterEditor : TinyScriptedImporterEditorBase<UTProjectScriptedImporter, TinyProject>
     {
-        private Vector2 m_ScrollPosition;
         private ModuleReferencesTreeView m_TreeView;
         private ModuleReferencesTreeView.ReferencedState State;
         private GUIVisitor m_ConfigurationVisitor;
@@ -78,38 +76,41 @@ namespace Unity.Tiny
 
         protected override void OnHeader(TinyProject project)
         {
-            using (new EditorGUILayout.HorizontalScope())
+            using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
             {
-                GUILayout.FlexibleSpace();
-                if (null == project)
+                using (new EditorGUILayout.HorizontalScope())
                 {
-                    var size = GUI.skin.button.CalcSize(new GUIContent("Open"));
-                    if (GUILayout.Button("Open", GUILayout.Width(size.x)))
+                    GUILayout.FlexibleSpace();
+                    if (null == project)
                     {
-                        var ids = TinyGUIDs;
-                        if (ids.Length > 0)
+                        var size = GUI.skin.button.CalcSize(new GUIContent("Open"));
+                        if (GUILayout.Button("Open", GUILayout.Width(size.x)))
                         {
-                            if (null != TinyEditorApplication.Project)
+                            var ids = TinyGUIDs;
+                            if (ids.Length > 0)
                             {
-                                TinyEditorApplication.SaveChanges();
-                                TinyEditorApplication.Close();
-                            }
+                                if (null != TinyEditorApplication.Project)
+                                {
+                                    TinyEditorApplication.SaveChanges();
+                                    TinyEditorApplication.Close();
+                                }
 
-                            TinyEditorApplication.LoadProject(AssetPath);
-                            GUIUtility.ExitGUI();
+                                TinyEditorApplication.LoadProject(AssetPath);
+                                GUIUtility.ExitGUI();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var size = GUI.skin.button.CalcSize(new GUIContent("Open Settings"));
+                        if (GUILayout.Button("Open Settings", GUILayout.Width(size.x)))
+                        {
+                            UnifiedSettingsBridge.OpenAndFocusTinySettings();
                         }
                     }
                 }
-                else
-                {
-                    var size = GUI.skin.button.CalcSize(new GUIContent("Open Settings"));
-                    if (GUILayout.Button("Open Settings", GUILayout.Width(size.x)))
-                    {
-                        UnifiedSettingsBridge.OpenAndFocusTinySettings();
-                    }
-                }
+                GUILayout.Space(2);
             }
-            GUILayout.Space(2);
         }
 
         protected override void Reload()
@@ -129,7 +130,7 @@ namespace Unity.Tiny
                 new IMGUIPrimitivesAdapter(),
                 new IMGUIAdapter());
         }
-        
+
         protected override void OnInspect(TinyProject module)
         {
             if (TinyEditorApplication.EditorContext == null)
@@ -137,131 +138,83 @@ namespace Unity.Tiny
                 return;
             }
 
-            m_ScrollPosition = EditorGUILayout.BeginScrollView(m_ScrollPosition);
+            EditorGUI.BeginDisabledGroup(EditorApplication.isPlayingOrWillChangePlaymode);
+
+            var workspace = TinyEditorApplication.EditorContext.Workspace;
+            EditorGUILayout.Space();
+            workspace.BuildConfiguration =
+                (TinyBuildConfiguration) EditorGUILayout.EnumPopup("Build Configuration", workspace.BuildConfiguration);
+            EditorGUILayout.BeginHorizontal();
             try
             {
-                var workspace = TinyEditorApplication.EditorContext.Workspace;
-                EditorGUILayout.Space();
-                workspace.BuildConfiguration = (TinyBuildConfiguration)EditorGUILayout.EnumPopup("Build Configuration", workspace.BuildConfiguration);
-                EditorGUILayout.BeginHorizontal();
-                try
-                {
-                    GUILayout.FlexibleSpace();
-                    if (GUILayout.Button("Build", GUILayout.MinWidth(150)))
-                    {
-                        TinyBuildPipeline.BuildAndLaunch();
-                        GUIUtility.ExitGUI();
-                    }
-                }
-                finally
-                {
-                    EditorGUILayout.EndHorizontal();
-
-                }
-                ShowQRCode();
-
-                EditorGUILayout.Space();
-                DrawSeparator();
-                EditorGUILayout.Space();
-                
-                var showModulesRect = GUILayoutUtility.GetRect(0, EditorGUIUtility.singleLineHeight);
-                showModulesRect.x += 15.0f;
-                ShowModules = EditorGUI.Foldout(showModulesRect, ShowModules, "Modules");
-                if (ShowModules)
-                {
-                    var treeViewRect = GUILayoutUtility.GetRect(0, TreeView.totalHeight);
-                    treeViewRect.x += 15.0f;
-                    TreeView.OnGUI(treeViewRect);
-                }
-                EditorGUILayout.Space();
-                DrawSeparator();
-                EditorGUILayout.Space();
-
-                if (HaveConfiguration(MainTarget))
-                {
-                    var showConfigurationsRect = GUILayoutUtility.GetRect(0, EditorGUIUtility.singleLineHeight);
-                    showConfigurationsRect.x += 15.0f;
-                    ShowConfigurations =
-                        EditorGUI.Foldout(showConfigurationsRect, ShowConfigurations, "Configurations");
-                    if (ShowConfigurations)
-                    {
-                        m_ConfigurationVisitor.SetTargets(new List<Wrapper<TinyEntity>>
-                            {Wrapper.Make(MainTarget.Configuration.Dereference(MainTarget.Registry))});
-                        m_ConfigurationVisitor.VisitTargets();
-                    }
-    
-                    EditorGUILayout.Space();
-                    DrawSeparator();
-                    EditorGUILayout.Space();
-                }
-
-                EditorGUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
-
-                var content = new GUIContent($"Close {module.Name}");
-
-                Rect rect = GUILayoutUtility.GetRect(content, TinyStyles.AddComponentStyle);
-                if (EditorGUI.DropdownButton(rect, content, FocusType.Passive, TinyStyles.AddComponentStyle))
+                if (GUILayout.Button("Build", GUILayout.MinWidth(150)))
                 {
-                    TinyEditorApplication.SaveChanges();
-                    TinyEditorApplication.Close();
+                    TinyBuildPipeline.BuildAndLaunch();
                     GUIUtility.ExitGUI();
                 }
-
-                GUILayout.FlexibleSpace();
-                EditorGUILayout.EndHorizontal();
             }
             finally
             {
-                EditorGUILayout.EndScrollView();
+                EditorGUILayout.EndHorizontal();
+
             }
-        }
 
-        private void ShowQRCode()
-        {
-            var server = HTTPServer.Instance;
-            if (server.Listening)
+            EditorGUILayout.Space();
+            DrawSeparator();
+            EditorGUILayout.Space();
+
+            var showModulesRect = GUILayoutUtility.GetRect(0, EditorGUIUtility.singleLineHeight);
+            showModulesRect.x += 15.0f;
+            ShowModules = EditorGUI.Foldout(showModulesRect, ShowModules, "Modules");
+            if (ShowModules)
             {
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    GUILayout.FlexibleSpace();
-                    var ipAddress = server.IPAddress;
-
-                    if (GUILayout.Button(new GUIContent(TinyIcons.TinyQR, "Toggle QR code"), GUILayout.Width(24), GUILayout.Height(24)))
-                    {
-                        if (TinyQRCodeWindow.IsWindowOpen())
-                        {
-                            EditorWindow.GetWindow(typeof(TinyQRCodeWindow)).Close();
-                        }
-                        else
-                        {
-                            var qrLink = new UriBuilder($"http://{ipAddress}").Uri.AbsoluteUri;
-                            var qrCode = new TinyQRCode(qrLink);
-                            TinyQRCodeWindow.QrCode = qrCode.GetGraphic(20);
-                            TinyQRCodeWindow.ContentUrl = qrLink;
-
-                            // Create a floating window containing the QR Code
-                            var qrWindow = EditorWindow.GetWindow(typeof(TinyQRCodeWindow), true, "QR Code", true);
-                            qrWindow.minSize = new Vector2(150, 170);
-                            qrWindow.maxSize = new Vector2(500, 520);
-                            qrWindow.Show();
-                        }
-                    }
-
-                    if (GUILayout.Button(ipAddress, GUILayout.Width(150), GUILayout.Height(24)))
-                    {
-                        Application.OpenURL(server.ContentURL);
-                    }
-                }
+                var treeViewRect = GUILayoutUtility.GetRect(0, TreeView.totalHeight);
+                treeViewRect.x += 15.0f;
+                TreeView.OnGUI(treeViewRect);
             }
-            else
+
+            EditorGUILayout.Space();
+            DrawSeparator();
+            EditorGUILayout.Space();
+
+            if (HaveConfiguration(MainTarget))
             {
-                if (TinyQRCodeWindow.IsWindowOpen())
+                var showConfigurationsRect = GUILayoutUtility.GetRect(0, EditorGUIUtility.singleLineHeight);
+                showConfigurationsRect.x += 15.0f;
+                ShowConfigurations =
+                    EditorGUI.Foldout(showConfigurationsRect, ShowConfigurations, "Configurations");
+                if (ShowConfigurations)
                 {
-                    EditorWindow.GetWindow(typeof(TinyQRCodeWindow)).Close();
+                    m_ConfigurationVisitor.SetTargets(new List<Wrapper<TinyEntity>>
+                        {Wrapper.Make(MainTarget.Configuration.Dereference(MainTarget.Registry))});
+                    m_ConfigurationVisitor.VisitTargets();
                 }
 
+                EditorGUILayout.Space();
+                DrawSeparator();
+                EditorGUILayout.Space();
             }
+
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+
+            var content = new GUIContent($"Close {module.Name}");
+
+            Rect rect = GUILayoutUtility.GetRect(content, TinyStyles.AddComponentStyle);
+            if (EditorGUI.DropdownButton(rect, content, FocusType.Passive, TinyStyles.AddComponentStyle))
+            {
+                if (TinyEditorApplication.SaveChanges())
+                {
+                    TinyEditorApplication.Close();
+                    GUIUtility.ExitGUI();
+                }
+            }
+
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUI.EndDisabledGroup();
         }
 
         private bool HaveConfiguration(TinyProject project)

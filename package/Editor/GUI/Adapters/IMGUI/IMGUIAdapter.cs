@@ -128,7 +128,7 @@ namespace Unity.Tiny
             if (context.IsListItem)
             {
                 EditorGUILayout.EndVertical();
-                if (GUILayout.Button(TinyIcons.X_Icon_16, GUILayout.Width(16.0f), GUILayout.Height(16.0f)))
+                if (GUILayout.Button(TinyIcons.Remove, GUILayout.Width(16.0f), GUILayout.Height(16.0f)))
                 {
                     context.Visitor.RemoveAtIndex = context.Index;
                 }

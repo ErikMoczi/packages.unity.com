@@ -4,6 +4,7 @@
     "Name": "EmitterInitialVelocity",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "9f4c5b6d73b3e52c9664a65572df4365",

@@ -15,6 +15,13 @@ namespace Unity.Tiny
 {
     internal class HierarchyTree : TreeView
     {
+        [Serializable]
+        internal class State : TreeViewState
+        {
+            public string CurrentSearchFilter;
+            public List<string> ExpandedGuids = new List<string>();
+        }
+        
         private class DragDropObject : ScriptableObject
         {
             public List<ISceneGraphNode> Nodes { get; } = new List<ISceneGraphNode>();
@@ -28,7 +35,7 @@ namespace Unity.Tiny
         private readonly Dictionary<System.Type, DropOnItemAction> m_DroppedOnMethod;
         private readonly Dictionary<System.Type, DropBetweenAction> m_DroppedBetweenMethod;
 
-        private static readonly Texture2D s_GameObjectIcon;
+        private static readonly Texture2D s_EntityIcon;
         private static readonly Texture2D s_PrefabIcon;
         private static readonly Texture2D s_PrefabOverlayAddedIcon;
         
@@ -42,6 +49,8 @@ namespace Unity.Tiny
         internal IEntityGroupManagerInternal EntityGroupManager { get; }
         private TinyEntityGroup.Reference ActiveScene => EntityGroupManager?.ActiveEntityGroup ?? TinyEntityGroup.Reference.None;
 
+        private HierarchyFilter m_HierarchyFilter = FilterUtility.CreateFilter(string.Empty);
+        
         public string FilterString
         {
             get
@@ -53,6 +62,7 @@ namespace Unity.Tiny
                 if (m_FilterString != value)
                 {
                     m_FilterString = value;
+                    m_HierarchyFilter = FilterUtility.CreateFilter(m_FilterString);
                     Invalidate();
                 }
             }
@@ -66,8 +76,8 @@ namespace Unity.Tiny
 
         static HierarchyTree()
         {
-            s_GameObjectIcon = TinyIcons.ScriptableObjects.Prefab;
-            s_PrefabIcon = EditorGUIUtility.IconContent("Prefab Icon").image as Texture2D;
+            s_EntityIcon = TinyIcons.Entity;
+            s_PrefabIcon = TinyIcons.Prefab;
             s_PrefabOverlayAddedIcon = EditorGUIUtility.IconContent("PrefabOverlayAdded Icon").image as Texture2D;
         }
 
@@ -103,6 +113,71 @@ namespace Unity.Tiny
                 .Select(e => e.View.transform.parent)
                 .Where(p => p && null != p)
                 .Select(p => p.gameObject.GetInstanceID()).ToArray();
+        }
+
+        internal IEnumerable<HierarchyTreeItemBase> GetExpandedItems()
+        {
+            return GetExpanded()
+                .Select(FindItem)
+                .OfType<HierarchyTreeItemBase>();
+        }
+
+        internal void TransferExpandedState(IEnumerable<TinyId> ids)
+        {
+            foreach (var id in ids)
+            {
+                var baseObject = Registry.FindById(id);
+                if (null == baseObject)
+                {
+                    continue;
+                }
+                switch (baseObject)
+                {
+                    case TinyPrefabInstance prefab:
+                    {
+                        var parent = prefab.Parent.Dereference(Registry);
+                        if (null == parent)
+                        {
+                            break;
+                        }
+
+                        var view = parent.View;
+                        if (null == view)
+                        {
+                            break;
+                        }
+
+                        SetExpanded(view.gameObject.GetInstanceID(), true);
+                        break;
+                    }
+                    case TinyEntity entity:
+                    {
+                        var view = entity.View;
+                        if (null == view)
+                        {
+                            break;
+                        }
+
+                        SetExpanded(view.gameObject.GetInstanceID(), true);
+                        break;
+                    }
+                    case TinyEntityGroup group:
+                    {
+                        var path = Persistence.GetAssetPath(group);
+                        if (string.IsNullOrEmpty(path))
+                        {
+                            break;
+                        }
+                        var utGroup = AssetDatabase.LoadAssetAtPath<UTEntityGroup>(path);
+                        if (null == utGroup)
+                        {
+                            break;
+                        }
+                        SetExpanded(utGroup.GetInstanceID(), true);
+                        break;
+                    }
+                }
+            }
         }
 
         public void AddEntityGroup(TinyEntityGroup.Reference entityGroupRef)
@@ -257,6 +332,11 @@ namespace Unity.Tiny
                 }
             }
 
+            if (state is State s && s.expandedIDs.Count > 0)
+            {
+                TransferExpandedState(s.ExpandedGuids.Select(id => new TinyId(id)));
+                s.ExpandedGuids.Clear();
+            }
             ShouldReload = false;
             return root;
         }
@@ -448,7 +528,7 @@ namespace Unity.Tiny
             {
                 return DragAndDropVisualMode.Link;
             }                
-            if (HandleSingleObjectDrop<Font>(args, HandleResourceDropped) == DragAndDropVisualMode.Link)
+            if (HandleSingleObjectDrop<TMPro.TMP_FontAsset>(args, HandleResourceDropped) == DragAndDropVisualMode.Link)
             {
                 return DragAndDropVisualMode.Link;
             }
@@ -544,7 +624,7 @@ namespace Unity.Tiny
             var iconRect = rect;
             iconRect.width = 20;
 
-            var image = ActiveScene.Equals(item.Value.EntityGroupRef) ? TinyIcons.ActiveEntityGroup : TinyIcons.EntityGroup;
+            var image = ActiveScene.Equals(item.Value.EntityGroupRef) ? TinyIcons.EntityGroupActive : TinyIcons.EntityGroup;
             EditorGUI.LabelField(iconRect, new GUIContent { image = image });
 
             rect.x += 20;
@@ -639,20 +719,33 @@ namespace Unity.Tiny
                         Value = entityNode,
                         Registry = entity.Registry,
                         depth = parentItem.depth + 1,
-                        icon = entityNode is PrefabInstanceNode  ? s_PrefabIcon  : s_GameObjectIcon
+                        icon = entityNode is PrefabInstanceNode  ? s_PrefabIcon  : s_EntityIcon
                     };
                     
                     if (entity.IsAddedEntityOverride())
                     {
                         hierarchyEntity.OverlayIcon = s_PrefabOverlayAddedIcon;
                     }
-                    
-                    if (entity.Name.IndexOf(FilterString, StringComparison.OrdinalIgnoreCase) >= 0)
+
+                    if (m_HierarchyFilter.Keep(entity))
                     {
                         parentItem.AddChild(hierarchyEntity);
                     }
 
                     item = hierarchyEntity;
+                }
+                break;
+
+                case FolderNode folderNode:
+                {
+                    var hierarchyFolder = new FolderTreeItem
+                    {
+                        Value = folderNode,
+                        depth = parentItem.depth + 1,
+                        icon = s_EntityIcon
+                    };
+                    parentItem.AddChild(hierarchyFolder);
+                    item = hierarchyFolder;
                 }
                 break;
             }
@@ -878,7 +971,8 @@ namespace Unity.Tiny
                 return DragAndDropVisualMode.Rejected;
             }
 
-            var instance = m_Context.GetManager<IPrefabManager>().Instantiate(group);
+            var prefabManager = m_Context.GetManager<IPrefabManager>();
+            var instance = prefabManager.Instantiate(group);
             var start = graph.Roots.GetDescendants().OfType<EntityNode>().ToList().IndexOf(node as EntityNode);
 
             for (var i = 0; i < instance.Entities.Count; i++)
@@ -904,6 +998,7 @@ namespace Unity.Tiny
                     if (node is EntityNode parentEntityNode)
                     {
                         entity.SetParent(parentEntityNode.EntityRef);
+                        prefabManager.RecordEntityInstanceModifications(entity);
                     }
                 }
             }
@@ -960,9 +1055,9 @@ namespace Unity.Tiny
             {
                 return AddAnimationClipToEntity(entity, obj as AnimationClip);
             }
-            else if (obj is Font)
+            else if (obj is TMPro.TMP_FontAsset)
             {
-                return AddFontToEntity(entity, obj as Font);
+                return AddFontToEntity(entity, obj as TMPro.TMP_FontAsset);
             }
             return false;
         }
@@ -1008,7 +1103,7 @@ namespace Unity.Tiny
             return true;
         }
         
-        private bool AddFontToEntity(TinyEntity.Reference entityRef, Font font)
+        private bool AddFontToEntity(TinyEntity.Reference entityRef, TMPro.TMP_FontAsset font)
         {
             var entity = entityRef.Dereference(m_Context.Registry);
             entity.Name = font.name;

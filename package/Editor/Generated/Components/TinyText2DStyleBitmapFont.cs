@@ -34,9 +34,9 @@ namespace Unity.Tiny.Runtime.Text
         public bool IsValid => null != Tiny;
 
         #region Properties
-        public Unity.Tiny.TinyEntity.Reference @font
+        public TMPro.TMP_FontAsset @font
         {
-            get => Tiny.GetProperty<Unity.Tiny.TinyEntity.Reference>(nameof(@font));
+            get => Tiny.GetProperty<TMPro.TMP_FontAsset>(nameof(@font));
             set => Tiny.AssignIfDifferent(nameof(@font), value);
         }
 

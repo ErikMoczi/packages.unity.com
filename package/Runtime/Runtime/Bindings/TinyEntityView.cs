@@ -19,6 +19,7 @@ namespace Unity.Tiny
         public TinyEntity.Reference EntityRef { get; set; }
         public IRegistry Registry { get; set; }
         public TinyContext Context { get; set; }
+        public bool ForceRelink { get; set; }
         public bool Disposed { get; set; }
 
         private static Action<TinyTrackerRegistration, TinyEntityView> Dispatch =>

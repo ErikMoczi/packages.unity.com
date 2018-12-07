@@ -84,6 +84,22 @@ namespace Unity.Tiny
             menu.AddSeparator("");
 
             PopulateEntityTemplate(menu, tree.GetRegistryObjectSelection());
+            
+            menu.AddSeparator(string.Empty);
+            
+            menu.AddItem(new GUIContent("Select Asset"), false, () =>
+            {
+                var context = tree.Context;
+                if (null == context)
+                {
+                    return;
+                }
+                var registry = context.Registry;
+                var path = Persistence.GetAssetPath(entityGroupRef.Dereference(registry));
+                var asset = AssetDatabase.LoadAssetAtPath<UTEntityGroup>(path);
+                EditorGUIUtility.PingObject(asset);
+                Selection.activeObject = asset;
+            });
 
             menu.ShowAsContext();
         }

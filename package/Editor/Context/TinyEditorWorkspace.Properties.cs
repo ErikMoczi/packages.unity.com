@@ -13,11 +13,12 @@ namespace Unity.Tiny
         public static ValueClassProperty<TinyEditorWorkspace, bool> PreviewProperty { get; private set; }
         public static ValueClassProperty<TinyEditorWorkspace, bool> AutoConnectProfilerProperty { get; private set; }
         public static ValueClassProperty<TinyEditorWorkspace, TinyPlatform> PlatformProperty { get; private set; }
-        public static ValueClassProperty<TinyEditorWorkspace, bool> ClearConsoleAfterCompilationProperty { get; private set; }
 
         private static ClassPropertyBag<TinyEditorWorkspace> s_PropertyBag { get; set; }
 
+        /// <inheritdoc cref="Unity.Properties.IPropertyContainer.PropertyBag" />
         public IPropertyBag PropertyBag => s_PropertyBag;
+        /// <inheritdoc cref="Unity.Properties.IPropertyContainer.VersionStorage" />
         public IVersionStorage VersionStorage => null;
 
         private static void InitializeProperties()
@@ -56,17 +57,8 @@ namespace Unity.Tiny
                 ,c => c.m_Platform
                 ,(c, v) => c.m_Platform = v
             );
-
-            ClearConsoleAfterCompilationProperty = new ValueClassProperty<TinyEditorWorkspace, bool>(
-                "ClearConsoleAfterCompilation"
-                ,c => c.m_ClearConsoleAfterCompilation
-                ,(c, v) => c.m_ClearConsoleAfterCompilation = v
-            );
         }
 
-        /// <summary>
-        /// Implement this partial method to initialize custom properties
-        /// </summary>
         static partial void InitializeCustomProperties();
 
         private static void InitializePropertyBag()
@@ -77,8 +69,7 @@ namespace Unity.Tiny
                 BuildConfigurationProperty,
                 PreviewProperty,
                 AutoConnectProfilerProperty,
-                PlatformProperty,
-                ClearConsoleAfterCompilationProperty
+                PlatformProperty
             );
         }
 
@@ -95,7 +86,6 @@ namespace Unity.Tiny
         private bool m_Preview = true;
         private bool m_AutoConnectProfiler = true;
         private TinyPlatform m_Platform = TinyPlatform.Html5;
-        private bool m_ClearConsoleAfterCompilation = true;
 
         public PropertyList<TinyEditorWorkspace, TinyEntityGroup.Reference> OpenedEntityGroups => new PropertyList<TinyEditorWorkspace, TinyEntityGroup.Reference>(OpenedEntityGroupsProperty, this);
 
@@ -127,12 +117,6 @@ namespace Unity.Tiny
         {
             get { return PlatformProperty.GetValue(this); }
             set { PlatformProperty.SetValue(this, value); }
-        }
-
-        public bool ClearConsoleAfterCompilation
-        {
-            get { return ClearConsoleAfterCompilationProperty.GetValue(this); }
-            set { ClearConsoleAfterCompilationProperty.SetValue(this, value); }
         }
     }
 }

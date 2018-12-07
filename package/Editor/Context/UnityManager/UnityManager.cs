@@ -2,7 +2,7 @@ using JetBrains.Annotations;
 
 namespace Unity.Tiny
 {
-    [ContextManager(ContextUsage.Edit), UsedImplicitly]
+    [ContextManager(ContextUsage.Edit | ContextUsage.LiveLink), UsedImplicitly]
     internal class UnityManager : ContextManager, IUnityManagerInternal
     {
         private TinyProject Project { get; set; }

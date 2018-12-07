@@ -4,6 +4,7 @@
     "Name": "BezierCurveVector3",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "95c1cb94b3468198e02a3979dbc91ba8",

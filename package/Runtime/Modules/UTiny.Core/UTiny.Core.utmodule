@@ -12,16 +12,5 @@
     "Dependencies": [
         { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" },
         { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" }
-    ],
-    "Components": [
-        { "Id": "408a267a6f025de08e8a00094bda2bb2", "Name": "Disabled" },
-        { "Id": "9214ce48c62a2d523a4ea979e58a6199", "Name": "CleanupEntity" },
-        { "Id": "761e436fae2c81a83cd11c56f9a9013d", "Name": "EntityInformation" }
-    ],
-    "Structs": [
-        { "Id": "ae5d29904647032d17171016c7bb8ff4", "Name": "ComponentSpec" }
-    ],
-    "Enums": [
-        { "Id": "ba105830a6a40bf6ac4c2b8f1deec9bf", "Name": "AccessMode" }
     ]
 }]

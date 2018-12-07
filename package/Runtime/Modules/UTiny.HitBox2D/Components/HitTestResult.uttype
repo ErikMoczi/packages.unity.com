@@ -4,6 +4,7 @@
     "Name": "HitTestResult",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Struct",
     "DefaultValue": {
         "Type": { "Id": "c526d2181ca14153cd401551a1ce0c1d", "Name": "HitTestResult" }

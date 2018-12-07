@@ -1,7 +1,11 @@
 ﻿using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
+#else
 using UnityEngine.Experimental.UIElements;
+#endif
 
 namespace Unity.Tiny
 {
@@ -15,7 +19,11 @@ namespace Unity.Tiny
         private EditorContextType Context { get; }
         
         protected IncludedInBuildSettingsProvider(string localPath, RegistryTreeView.Filters filter, EditorContextType context)
-            : base("Project/Tiny/" + localPath)
+            : base("Project/Tiny/" + localPath
+#if UNITY_2019_1_OR_NEWER
+                , SettingsScope.Project
+#endif
+                )
         {
             label = localPath;
             Filter = filter;
@@ -23,6 +31,7 @@ namespace Unity.Tiny
         }
         
         [TinyInitializeOnLoad]
+        [UsedImplicitly]
         private static void ResetState()
         {
             TinyEditorApplication.OnLoadProject += SetUpTree;
@@ -34,7 +43,7 @@ namespace Unity.Tiny
             s_Context = context;
             m_TreeView = new IncludedInBuildTreeView(project.Registry, new RegistryTreeView.State());
             m_TreeView.AlternatingBackground = true;
-            var undo = context.GetManager<TinyUndoManager>();
+            var undo = context.GetManager<IUndoManager>();
             undo.OnUndoPerformed += (changes) => m_TreeView.Reload();
             undo.OnRedoPerformed += (changes) => m_TreeView.Reload();
             context.Caretaker.OnBeginUpdate += OnBeginUpdate;

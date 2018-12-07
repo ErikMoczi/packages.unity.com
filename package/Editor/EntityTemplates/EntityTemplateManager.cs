@@ -2,7 +2,7 @@
 
 namespace Unity.Tiny
 {
-    [ContextManager(ContextUsage.Edit)]
+    [ContextManager(ContextUsage.Edit | ContextUsage.LiveLink)]
     internal class EntityTemplateManager : ContextManager
     {
         private IEntityGroupManager EntityGroupManager { get; set; }

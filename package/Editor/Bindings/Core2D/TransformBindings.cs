@@ -27,9 +27,7 @@ namespace Unity.Tiny
         public override void Transfer(TinyEntity entity)
         {
             var transform = GetComponent<Transform>(entity);
-            transform.localPosition = entity.HasComponent(TypeRefs.Core2D.TransformLocalPosition) 
-                ? entity.GetComponent<TinyTransformLocalPosition>().position 
-                : Vector3.zero;
+            transform.localPosition = entity.GetComponent<TinyTransformLocalPosition>().position;
         }
     }
 

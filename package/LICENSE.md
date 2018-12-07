@@ -1,4 +1,4 @@
-Tiny Editor copyright © 2018 Unity Technologies ApS
+Tiny Mode copyright © 2018 Unity Technologies ApS
 
 Licensed under the Unity Companion License for Unity-dependent projects--see [Unity Companion License](http://www.unity3d.com/legal/licenses/Unity_Companion_License). 
 

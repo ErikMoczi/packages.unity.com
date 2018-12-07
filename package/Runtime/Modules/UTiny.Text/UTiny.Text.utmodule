@@ -15,20 +15,5 @@
         { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" },
         { "Id": "e6d4e4660e226bf8de8d111b4ef61f3d", "Name": "UTiny.TextHTML" },
         { "Id": "0b0e260844fa6632977aa15579b42291", "Name": "UTiny.Text" }
-    ],
-    "Components": [
-        { "Id": "23e4cd197eb46093e4e3f8833289135c", "Name": "BitmapFont" },
-        { "Id": "6f5ed9937f81d1780663edc21a6f0da2", "Name": "NativeFont" },
-        { "Id": "ebf6e4be1bc00e559ef91e165189cb3e", "Name": "Text2DStyleNativeFont" },
-        { "Id": "0481d22c456081a992e7c7ee42da6c19", "Name": "Text2DStyleBitmapFont" },
-        { "Id": "ced0260f12f72499bae7fea4e1df92b7", "Name": "Text2DStyle" },
-        { "Id": "617fd26299c944d58b61164e0c9c9353", "Name": "Text2DRenderer" },
-        { "Id": "38350ed8ebd08cfd6dd9137832ed6391", "Name": "Text2DAutoFit" }
-    ],
-    "Structs": [
-        { "Id": "b4277883180e04e85427b787c72975e6", "Name": "CharacterInfo" }
-    ],
-    "Enums": [
-        { "Id": "8482cf27d187bfe09e2f868508c4456f", "Name": "FontName" }
     ]
 }]

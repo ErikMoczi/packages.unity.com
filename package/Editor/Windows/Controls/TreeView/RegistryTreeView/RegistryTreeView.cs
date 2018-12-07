@@ -192,14 +192,16 @@ namespace Unity.Tiny
             {
                 return;
             }
-            var scripting = TinyEditorApplication.EditorContext.Context.GetManager<TinyScriptingManager>();
+            var scripting = TinyEditorApplication.EditorContext.Context.GetManager<IScriptingManager>();
             var meta = scripting.Metadata;
-         
-            foreach (var scriptObject in meta.AllObjects)
+            if (meta != null)
             {
-                if (factory.MatchesFilter(scriptObject, m_Filter) && factory.ShouldCreateRootOfType(scriptObject))
+                foreach (var scriptObject in meta.AllObjects)
                 {
-                    root.AddChild(factory.Create(scriptObject, this));
+                    if (factory.MatchesFilter(scriptObject, m_Filter) && factory.ShouldCreateRootOfType(scriptObject))
+                    {
+                        root.AddChild(factory.Create(scriptObject, this));
+                    }
                 }
             }
         }

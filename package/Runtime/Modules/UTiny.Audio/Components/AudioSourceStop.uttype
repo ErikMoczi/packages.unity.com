@@ -4,6 +4,7 @@
     "Name": "AudioSourceStop",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "DefaultValue": {
         "Type": { "Id": "7e8da1847b7abee1bcfb53b82c7f7c2a", "Name": "AudioSourceStop" }

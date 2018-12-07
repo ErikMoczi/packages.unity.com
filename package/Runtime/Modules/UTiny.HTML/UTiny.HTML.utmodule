@@ -13,6 +13,8 @@
     "Dependencies": [
         { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" },
         { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" },
+        { "Id": "bffbeb6ab1bfb1542e42f88a0d31138d", "Name": "UTiny.RendererCanvas" },
+        { "Id": "b7273344f6eb7e70dc84d5f56305c360", "Name": "UTiny.RendererGLWebGL" },
         { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" }
     ]
 }]

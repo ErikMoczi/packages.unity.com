@@ -4,6 +4,7 @@
     "Name": "VideoPlayer",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "cc864b941fb3c0b664376738ea58bc66",

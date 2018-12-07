@@ -4,6 +4,7 @@
     "Name": "AudioConfig",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Configuration",
     "Fields": [{
         "Id": "ea291937b6d15ae8106606457db45cfe",

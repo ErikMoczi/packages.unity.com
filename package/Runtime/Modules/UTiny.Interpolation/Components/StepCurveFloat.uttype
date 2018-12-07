@@ -4,6 +4,7 @@
     "Name": "StepCurveFloat",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "38d006d96a2d76e8cf4f080f819bb00b",

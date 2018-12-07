@@ -13,13 +13,5 @@
         { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" },
         { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" },
         { "Id": "4ae56f767bc87e1c32e79caa0f3b736a", "Name": "UTiny.UIControlsExtensions" }
-    ],
-    "Components": [
-        { "Id": "0efd2ae60c7796b3a911cb3247c89bd9", "Name": "MouseInteraction" },
-        { "Id": "95ff57ed0598446933927bc634433a47", "Name": "Button" },
-        { "Id": "39dfc9b63ce698e64a529371349884f9", "Name": "Toggle" },
-        { "Id": "e0b67b4e4bf5d05c57407f40e52f8129", "Name": "SpriteTransition" },
-        { "Id": "3fc9adcd79c74a9f15ae439f85706879", "Name": "ColorTintTransition" },
-        { "Id": "de2dbf0474b193ec4be991f4889179f5", "Name": "InactiveUIControl" }
     ]
 }]

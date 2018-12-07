@@ -1,14 +1,12 @@
-﻿
-
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Unity.Tiny
 {
@@ -172,7 +170,7 @@ namespace Unity.Tiny
                 string[] movedFromAssetPaths)
             {
                 // early exit when no Tiny context is loaded
-                if (null == TinyEditorApplication.Module)
+                if (null == TinyEditorApplication.Module || string.IsNullOrEmpty(TinyEditorApplication.Module.GetDirectoryPath()))
                 {
                     return;
                 }
@@ -337,6 +335,56 @@ namespace Unity.Tiny
                         break;
                 }
             }
+        }
+
+        public static string GetJsTypeName(TinyRegistryObjectBase @object)
+        {
+            Assert.IsNotNull(@object);
+            return GetJsTypeName(TinyUtility.GetModules(@object).FirstOrDefault(), @object);
+        }
+
+        private static string GetJsTypeName(TinyModule module, TinyRegistryObjectBase @object)
+        {
+            var name = @object.Name;
+            if (!string.IsNullOrEmpty(module?.Namespace))
+            {
+                name = module.Namespace + "." + name;
+            }
+
+            var type = @object as TinyType;
+            if (type != null)
+            {
+                switch (type.TypeCode)
+                {
+                    case TinyTypeCode.Unknown:
+                        break;
+                    case TinyTypeCode.Int8:
+                    case TinyTypeCode.Int16:
+                    case TinyTypeCode.Int32:
+                    case TinyTypeCode.Int64:
+                    case TinyTypeCode.UInt8:
+                    case TinyTypeCode.UInt16:
+                    case TinyTypeCode.UInt32:
+                    case TinyTypeCode.UInt64:
+                    case TinyTypeCode.Float32:
+                    case TinyTypeCode.Float64:
+                    case TinyTypeCode.Boolean:
+                    case TinyTypeCode.String:
+                        return name.ToLower();
+                    case TinyTypeCode.EntityReference:
+                        // @TODO remove the magic value
+                        return "ut.Entity";
+                    case TinyTypeCode.Configuration:
+                    case TinyTypeCode.Component:
+                    case TinyTypeCode.Struct:
+                    case TinyTypeCode.Enum:
+                    case TinyTypeCode.UnityObject:
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+            return name;
         }
     }
 }

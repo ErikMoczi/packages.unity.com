@@ -4,6 +4,7 @@
     "Name": "Toggle",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "b33e0b1330445a2c9b6134c78ac1ccb9",

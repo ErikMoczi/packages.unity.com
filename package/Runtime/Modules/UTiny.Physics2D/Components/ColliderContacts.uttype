@@ -4,6 +4,7 @@
     "Name": "ColliderContacts",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "9baec20b586bcae706cf08806f4eda37",

@@ -4,6 +4,7 @@
     "Name": "ColorTint",
     "ExportFlags": 4,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Struct",
     "Fields": [{
         "Id": "a4e50689f96b1cf7785acbbfd2fbfafe",

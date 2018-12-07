@@ -69,16 +69,24 @@ namespace Unity.Tiny
             );
 
             EntityGroupsProperty
-                .WithAttribute(SerializationAttributes.Transient);
+                .WithAttribute(SerializationAttributes.Transient)
+                .WithAttribute(SerializationAttributes.NonSerializedForPersistence);
             
             ComponentsProperty
-                .WithAttribute(SerializationAttributes.Transient);
+                .WithAttribute(SerializationAttributes.Transient)
+                .WithAttribute(SerializationAttributes.NonSerializedForPersistence);
             
             StructsProperty
-                .WithAttribute(SerializationAttributes.Transient);
+                .WithAttribute(SerializationAttributes.Transient)
+                .WithAttribute(SerializationAttributes.NonSerializedForPersistence);
             
             ConfigurationsProperty
-                .WithAttribute(SerializationAttributes.Transient);
+                .WithAttribute(SerializationAttributes.Transient)
+                .WithAttribute(SerializationAttributes.NonSerializedForPersistence);
+            
+            EnumsProperty
+                .WithAttribute(SerializationAttributes.Transient)
+                .WithAttribute(SerializationAttributes.NonSerializedForPersistence);
         }
 
         public override IPropertyBag PropertyBag => s_PropertyBag;
@@ -173,16 +181,16 @@ namespace Unity.Tiny
         /// Enumerates root persistent objects that may reside in separate files
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<TinyId> EnumeratePersistentDependencies()
+        public IEnumerable<IPersistentObject> EnumeratePersistentDependencies()
         {
             foreach (var r in Types)
             {
-                yield return r.Id;
+                yield return r.Dereference(Registry);
             }
             
             foreach (var r in EntityGroups)
             {
-                yield return r.Id;
+                yield return r.Dereference(Registry);
             }
         }
 
@@ -286,6 +294,83 @@ namespace Unity.Tiny
         public void AddEnumReference(TinyType.Reference type)
         {
             EnumsProperty.Add(this, type);
+        }
+
+        /// <summary>
+        /// Adds a reference to this registry object in the acceleration structure (if it is not referenced already)
+        /// </summary>
+        public void TryAddObjectReference(IRegistryObject obj)
+        {
+            switch (obj)
+            {
+                case TinyType type:
+                {
+                    if (!Types.Contains(type.Ref))
+                    {
+                        AddTypeReference(type);
+                    }
+                }
+                    break;
+
+                case TinyEntityGroup group:
+                {
+                    if (!EntityGroups.Contains(group.Ref))
+                    {
+                        AddEntityGroupReference(group.Ref);
+                    }
+                }
+                break;
+            }
+        }
+        
+        /// <summary>
+        /// Removes a reference to this registry object (if it is referenced already)
+        /// </summary>
+        public void TryRemoveObjectReference(IRegistryObject obj)
+        {
+            switch (obj)
+            {
+                case TinyType type:
+                {
+                    if (Types.Contains(type.Ref))
+                    {
+                        RemoveTypeReference(type.Ref);
+                    }
+                }
+                    break;
+
+                case TinyEntityGroup group:
+                {
+                    if (EntityGroups.Contains(group.Ref))
+                    {
+                        RemoveEntityGroupReference(group.Ref);
+                    }
+                }
+                break;
+            }
+        }
+
+        /// <summary>
+        /// Adds a reference to this type for the project
+        /// </summary>
+        /// <param name="type"></param>
+        private void AddTypeReference(TinyType type)
+        {
+            switch (type.TypeCode)
+            {
+                case TinyTypeCode.Configuration:
+                    ConfigurationsProperty.Add(this, type.Ref);
+                    break;
+                case TinyTypeCode.Component:
+                    ComponentsProperty.Add(this, type.Ref);
+                    break;
+                case TinyTypeCode.Struct:
+                    StructsProperty.Add(this, type.Ref);
+                    break;
+                case TinyTypeCode.Enum:
+                    EnumsProperty.Add(this, type.Ref);
+                    break;
+            }
         }
 
         public void RemoveTypeReference(TinyType.Reference type)

@@ -4,6 +4,7 @@
     "Name": "SpriteAtlas",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "b7ee836fdd02828f3d1d5ba64b31de7d",

@@ -408,7 +408,7 @@ namespace Unity.Tiny
         {
             Roots.Clear();
 
-            var entityCache = new Dictionary<TinyEntity, EntityNode>();
+            var entityCache = DictionaryPool<TinyEntity, EntityNode>.Get();
             var orderedEntities = ListPool<TinyEntity>.Get();
 
             var entityGroup = EntityGroup;
@@ -474,6 +474,7 @@ namespace Unity.Tiny
             }
             finally
             {
+                DictionaryPool<TinyEntity, EntityNode>.Release(entityCache);
                 ListPool<TinyEntity>.Release(orderedEntities);
             }
 
@@ -486,8 +487,14 @@ namespace Unity.Tiny
 
         public void CommitChanges()
         {
+            if (!Changed)
+            {
+                return;
+            }
+            
             CommitToTiny();
             CommitToUnity();
+            ClearChanged();
         }
 
         private void CommitToTiny()
@@ -624,12 +631,20 @@ namespace Unity.Tiny
         {
             var entityRef = (TinyEntity.Reference)entity;
             var view = entity.View;
-
+            
             if ((null == view || !view) && !TryFindView(entityRef, out view))
             {
                 // Could not find any suitable views, create one
                 var go = new GameObject(entity.Name);
                 entity.View = view = go.AddComponent<TinyEntityView>();
+            }
+            else
+            {
+                if (view.ForceRelink)
+                {
+                    DeleteLink(entity);
+                    return CreateLink(entity);
+                }
             }
 
             Assert.IsNotNull(view);

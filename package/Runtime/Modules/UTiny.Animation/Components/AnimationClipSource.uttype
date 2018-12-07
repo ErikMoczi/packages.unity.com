@@ -4,6 +4,7 @@
     "Name": "AnimationClipSource",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "8978266fb8e007ba8d92f7870732c523",

@@ -135,7 +135,7 @@ namespace Unity.Tiny
                 var initialModules = new[]
                 {
                     "UTiny.Core2D",
-                    "Tiny.Streaming",
+                    "UTiny.EntityGroup",
                     "UTiny.Core2DTypes",
                     "UTiny.HTML",
                     "UTiny.Image2D",

@@ -4,6 +4,7 @@
     "Name": "LifetimeScale",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "5d56da19950e35819ea2c3ce379ae8dd",

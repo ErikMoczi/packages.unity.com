@@ -27,8 +27,8 @@ namespace Unity.Tiny
             var boxRect = emitterBoxSource.rect;
             var boxScale = shape.scale;
             boxScale.x = 0.0f;
-            boxScale.y = boxRect.width;
-            boxScale.z = boxRect.height;
+            boxScale.y = boxRect.height;
+            boxScale.z = boxRect.width;
             
             shape.scale = boxScale;
 

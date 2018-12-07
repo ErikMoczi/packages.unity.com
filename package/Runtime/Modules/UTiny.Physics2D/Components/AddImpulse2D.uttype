@@ -4,6 +4,7 @@
     "Name": "AddImpulse2D",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "a610772f31b2cf4e434128a3aca42a61",

@@ -1,19 +1,16 @@
-﻿
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEditor;
 using UnityEditor.SceneManagement;
-
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Assertions;
 
 namespace Unity.Tiny
 {
-    [ContextManager(ContextUsage.Edit), UsedImplicitly]
+    [ContextManager(ContextUsage.Edit | ContextUsage.LiveLink), UsedImplicitly]
     internal class TinyEntityGroupManager : ContextManager, IEntityGroupManagerInternal
     {
         #region Fields
@@ -53,7 +50,7 @@ namespace Unity.Tiny
             }
         }
 
-        private TinyUndoManager Undo { get; set; }
+        private IUndoManager Undo { get; set; }
         #endregion
 
         #region API
@@ -76,6 +73,16 @@ namespace Unity.Tiny
         public void UnloadEntityGroup(TinyEntityGroup.Reference entityGroupRef)
         {
             UnloadEntityGroup(entityGroupRef, true);
+        }
+
+        public void UnloadAllEntityGroups()
+        {
+            var entityGroups = LoadedEntityGroups.ToArray();
+            foreach (var entityGroup in entityGroups)
+            {
+                UnloadEntityGroup(entityGroup, false);
+            }
+            RebuildWorkspace();
         }
 
         public void LoadSingleEntityGroup(TinyEntityGroup.Reference entityGroupRef)
@@ -205,7 +212,10 @@ namespace Unity.Tiny
         {
             TinyEditorApplication.OnLoadProject += (project, context) =>
             {
-                context.GetManager<IEntityGroupManagerInternal>().InitialGroupLoading();
+                if (context.Usage != ContextUsage.LiveLink)
+                {
+                    context.GetManager<IEntityGroupManagerInternal>().InitialGroupLoading();
+                }
             };
         }
 
@@ -245,6 +255,11 @@ namespace Unity.Tiny
             {
                 SetActiveEntityGroup(LoadedEntityGroups.FirstOrDefault(), false);
             }
+            
+            foreach (var kvp in m_EntityGroupToGraph)
+            {
+                kvp.Value.ClearChanged();
+            }
 
             RebuildWorkspace();
 
@@ -257,7 +272,7 @@ namespace Unity.Tiny
         public override  void Load()
         {
             m_Scene = UnityScratchPad;
-            Undo = Context.GetManager<TinyUndoManager>();
+            Undo = Context.GetManager<IUndoManager>();
         }
 
         private static void HandleSceneCreated(Scene scene, NewSceneSetup setup, NewSceneMode mode)
@@ -288,8 +303,11 @@ namespace Unity.Tiny
                 UnityEngine.Object.DestroyImmediate(go, false);
             }
 
-            EditorSceneManager.SaveScene(scene);
-            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            if (!EditorApplication.isPlaying)
+            {
+                EditorSceneManager.SaveScene(scene);
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            }
         }
         #endregion
 
@@ -363,6 +381,12 @@ namespace Unity.Tiny
                     return;
                 }
 
+                if (!TinyEditorApplication.ShowSaveEntityGroupPrompt(entityGroupRef))
+                {
+                    // The user has canceled the operation; bail out.
+                    return;
+                }
+
                 if (m_EntityGroupToGraph.ContainsKey(entityGroupRef))
                 {
                     SafeCallbacks.Invoke(OnWillUnloadEntityGroup, entityGroupRef);
@@ -375,8 +399,8 @@ namespace Unity.Tiny
                 var entityGroup = entityGroupRef.Dereference(Registry);
                 if (null != entityGroup)
                 {
-                    Undo.FlushChanges(entityGroup);
-                    Undo.FlushChanges(entityGroup.Entities.Deref(entityGroup.Registry));
+                    Undo.SetAsBaseline(entityGroup);
+                    Undo.SetAsBaseline(entityGroup.Entities.Deref(entityGroup.Registry));
                 }
 
                 if (m_LoadedEntityGroups.Count == 0)
@@ -481,4 +505,3 @@ namespace Unity.Tiny
         #endregion
     }
 }
-

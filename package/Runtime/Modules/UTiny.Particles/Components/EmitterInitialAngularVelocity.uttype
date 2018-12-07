@@ -4,6 +4,7 @@
     "Name": "EmitterInitialAngularVelocity",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "7fae7d498b729e2cf9aeab4ef364186e",

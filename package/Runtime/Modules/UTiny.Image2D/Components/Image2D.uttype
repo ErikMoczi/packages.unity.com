@@ -4,6 +4,7 @@
     "Name": "Image2D",
     "ExportFlags": 1,
     "Unlisted": true,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "c2e8afcbaec995556dcdd5c339285be0",

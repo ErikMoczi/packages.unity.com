@@ -4,6 +4,7 @@
     "Name": "Text2DStyleNativeFont",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "02b7927b6e408109858c86668fe141f8",

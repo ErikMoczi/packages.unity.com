@@ -4,6 +4,7 @@
     "Name": "Sprite2DSequence",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "c38eadbd5726a38a5729956952ca4e2b",

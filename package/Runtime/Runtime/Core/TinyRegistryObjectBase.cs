@@ -1,9 +1,5 @@
-﻿
-
-using System.IO;
+﻿using System.IO;
 using Unity.Properties;
-using Unity.Tiny.Attributes;
-using UnityEngine.Assertions;
 
 namespace Unity.Tiny
 {

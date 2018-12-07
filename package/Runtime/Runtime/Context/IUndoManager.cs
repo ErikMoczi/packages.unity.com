@@ -26,5 +26,7 @@ namespace Unity.Tiny
         event RedoPerformed OnRedoPerformed;
 
         void Update();
+        void SetAsBaseline(params IOriginator[] originators);
+        void SetAsBaseline(IEnumerable<IOriginator> originators);
     }
 }

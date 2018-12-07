@@ -4,6 +4,7 @@
     "Name": "Vector4",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Struct",
     "Fields": [{
         "Id": "3a8674afb1befbadbf338857a6fb9d83",

@@ -111,7 +111,7 @@ namespace Unity.Tiny
                     }
                     else if (fieldType == TinyType.FontEntity)
                     {
-                        visitor.VisitValueClassProperty<TinyObject.PropertiesContainer, Font>(
+                        visitor.VisitValueClassProperty<TinyObject.PropertiesContainer, TMPro.TMP_FontAsset>(
                             tiny.Properties, name);
                     }
                     else if (fieldType == TinyType.AudioClipEntity)

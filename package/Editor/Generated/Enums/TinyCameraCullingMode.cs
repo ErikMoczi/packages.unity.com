@@ -9,6 +9,7 @@ namespace Unity.Tiny.Runtime.Core2D
         None = 0,
         All = 1,
         Any = 2,
+        Exclude = 3,
     }
 
     internal class TinyCameraCullingModeConverter : EnumTypeConverter<TinyCameraCullingMode>

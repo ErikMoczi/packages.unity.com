@@ -4,6 +4,7 @@
     "Name": "SpriteTransition",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "53c8d816d4930ed84bff3105ff5fc154",

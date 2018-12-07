@@ -4,6 +4,7 @@
     "Name": "TransitionEntity",
     "ExportFlags": 4,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Struct",
     "Fields": [{
         "Id": "e9f690f87bbdf53c5575519706d6bce6",

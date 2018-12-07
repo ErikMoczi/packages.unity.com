@@ -12,6 +12,7 @@ namespace Unity.Tiny
         public static ValueClassProperty<TinyType, string> NameProperty { get; private set; }
         public static ValueClassProperty<TinyType, int> SerializedVersionProperty { get; private set; }
         public static ValueClassProperty<TinyType, bool> UnlistedProperty { get; private set; }
+        public static ValueClassProperty<TinyType, TinyVisibility> VisibilityProperty { get; private set; }
         public static ValueClassProperty<TinyType, TinyTypeCode> TypeCodeProperty { get; private set; }
         public static StructValueClassProperty<TinyType, Reference> BaseTypeProperty { get; private set; }
         public static ClassListClassProperty<TinyType, TinyField> FieldsProperty { get; private set; }
@@ -44,6 +45,12 @@ namespace Unity.Tiny
                 ,(c, v) => c.m_Unlisted = v
             );
 
+            VisibilityProperty = new ValueClassProperty<TinyType, TinyVisibility>(
+                "Visibility"
+                ,c => c.m_Visibility
+                ,(c, v) => c.m_Visibility = v
+            );
+
             TypeCodeProperty = new ValueClassProperty<TinyType, TinyTypeCode>(
                 "TypeCode"
                 ,c => c.m_TypeCode
@@ -58,9 +65,6 @@ namespace Unity.Tiny
             );
         }
 
-        /// <summary>
-        /// Implement this partial method to initialize custom properties
-        /// </summary>
         static partial void InitializeCustomProperties();
 
         private static void InitializePropertyBag()
@@ -73,6 +77,7 @@ namespace Unity.Tiny
                 SerializedVersionProperty,
                 ExportFlagsProperty,
                 UnlistedProperty,
+                VisibilityProperty,
                 DocumentationProperty,
                 TypeCodeProperty,
                 BaseTypeProperty,
@@ -84,6 +89,7 @@ namespace Unity.Tiny
         private string m_Name;
         private int m_SerializedVersion;
         private bool m_Unlisted = false;
+        private TinyVisibility m_Visibility = TinyVisibility.Normal;
         private TinyTypeCode m_TypeCode;
         private Reference m_BaseType;
         private readonly List<TinyField> m_Fields = new List<TinyField>();
@@ -104,6 +110,12 @@ namespace Unity.Tiny
         {
             get { return UnlistedProperty.GetValue(this); }
             set { UnlistedProperty.SetValue(this, value); }
+        }
+
+        public TinyVisibility Visibility
+        {
+            get { return VisibilityProperty.GetValue(this); }
+            set { VisibilityProperty.SetValue(this, value); }
         }
 
         public TinyTypeCode TypeCode
@@ -128,7 +140,9 @@ namespace Unity.Tiny
 
             private static StructPropertyBag<Reference> s_PropertyBag { get; set; }
 
+            /// <inheritdoc cref="Unity.Properties.IPropertyContainer.PropertyBag" />
             public IPropertyBag PropertyBag => s_PropertyBag;
+            /// <inheritdoc cref="Unity.Properties.IPropertyContainer.VersionStorage" />
             public IVersionStorage VersionStorage => null;
 
             private static void InitializeProperties()
@@ -146,9 +160,6 @@ namespace Unity.Tiny
                 );
             }
 
-            /// <summary>
-            /// Implement this partial method to initialize custom properties
-            /// </summary>
             static partial void InitializeCustomProperties();
 
             private static void InitializePropertyBag()
@@ -182,11 +193,22 @@ namespace Unity.Tiny
             }
 
 
+            /// <summary>
+            /// Pass this object as a reference to the given handler.
+            /// </summary>
+            /// <param name="byRef">Handler to invoke.</param>
+            /// <param name="context">Context argument passed to the handler.</param>
             public void MakeRef<TContext>(ByRef<Reference, TContext> byRef, TContext context)
             {
                 byRef(ref this, context);
             }
 
+            /// <summary>
+            /// Pass this object as a reference to the given handler, and return the result.
+            /// </summary>
+            /// <param name="byRef">Handler to invoke.</param>
+            /// <param name="context">Context argument passed to the handler.</param>
+            /// <returns>The handler's return value.</returns>
             public TReturn MakeRef<TContext, TReturn>(ByRef<Reference, TContext, TReturn> byRef, TContext context)
             {
                 return byRef(ref this, context);

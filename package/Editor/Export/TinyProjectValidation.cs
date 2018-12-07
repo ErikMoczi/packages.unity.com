@@ -24,6 +24,17 @@ namespace Unity.Tiny
                     Valid = false;
                     Debug.LogError($"[{TinyConstants.ApplicationName}] TypeName=[{type.Name}] is a reserved keyword");
                 }
+
+                foreach (var field in type.Fields)
+                {
+                    var fieldType = field.FieldType.Dereference(type.Registry);
+
+                    if (null == fieldType)
+                    {
+                        Valid = false;
+                        Debug.LogError($"[{TinyConstants.ApplicationName}] MissingFieldType FieldType=[{field.FieldType.Name}] Field=[{type.Name}.{field.Name}]");
+                    }
+                }
             }
         }
     }

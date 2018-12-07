@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 2,
+    "Id": "bffbeb6ab1bfb1542e42f88a0d31138d",
+    "Name": "UTiny.RendererCanvas",
+    "SerializedVersion": 1,
+    "ExportFlags": 1,
+    "Namespace": "ut.Rendering",
+    "MetadataFileGUID": "8ca397c0adbdd9e4da2c3bf3e31d5aa8",
+    "Options": 1,
+    "Dependencies": [
+        { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" },
+        { "Id": "3adde452d1e45743b5697504bb5e99b2", "Name": "UTiny.Renderer" },
+        { "Id": "30097418841f56d73400bf82ee859ac9", "Name": "UTiny.Core2D" },
+        { "Id": "8f3245ba92302e53e51e43514424d568", "Name": "UTiny.ImageLoadingHTML" },
+        { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" },
+        { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" }
+    ]
+}]

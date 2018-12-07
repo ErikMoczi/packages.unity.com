@@ -4,6 +4,7 @@
     "Name": "LifetimeColor",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "57a26f544fee4e76c43855ce539acbd0",

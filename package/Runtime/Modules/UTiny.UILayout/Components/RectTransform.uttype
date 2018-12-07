@@ -4,6 +4,7 @@
     "Name": "RectTransform",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "a686ff372a465c2f2794d5b88fee5610",

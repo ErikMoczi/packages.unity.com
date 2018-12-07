@@ -4,6 +4,7 @@
     "Name": "LifetimeSpeedMultiplier",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "0f03ba4ef08de95e318df94833df9d49",

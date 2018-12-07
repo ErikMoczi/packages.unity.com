@@ -4,6 +4,7 @@
     "Name": "AnimationClipPlayer",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "8e970084570a388fab26c67417079d34",

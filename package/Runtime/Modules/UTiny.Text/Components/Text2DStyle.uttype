@@ -4,6 +4,7 @@
     "Name": "Text2DStyle",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "6d5de0b1f9698feb4b6a79fe71f949b8",

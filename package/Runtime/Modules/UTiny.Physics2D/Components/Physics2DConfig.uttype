@@ -4,6 +4,7 @@
     "Name": "Physics2DConfig",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Configuration",
     "Fields": [{
         "Id": "e828656d0238a457db3ae07f84fd6294",

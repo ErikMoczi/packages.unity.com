@@ -4,6 +4,7 @@
     "Name": "NativeFont",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "bbea1760dc9cd9b243ba4c5028989cf2",
@@ -16,7 +17,7 @@
         "Name": "worldUnitsToPt",
         "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 1
     }],
     "DefaultValue": {
         "Type": { "Id": "6f5ed9937f81d1780663edc21a6f0da2", "Name": "NativeFont" },

@@ -4,6 +4,7 @@
     "Name": "Sprite2DRendererOptions",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "aeeac38909c0aa723c146e9e11e54da5",

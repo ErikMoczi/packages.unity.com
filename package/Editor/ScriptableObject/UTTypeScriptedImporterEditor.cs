@@ -68,70 +68,73 @@ namespace Unity.Tiny
 
         protected override void OnInspect(TinyType type)
         {
-            GUILayout.Space(k_Spacing);
-            DrawDocumentation(type);
-            DrawUnlistedField(type);
-            GUILayout.Space(k_Spacing);
-            DrawSeparator();
-            GUILayout.Space(k_Spacing);
-
-            var defaultValue = type.DefaultValue as TinyObject;
-            m_DefaultValueVisitor.SetTargets(new List<IPropertyContainer> {defaultValue});
-
-            var mainModule = TinyEditorApplication.Module;
-            var dependencies = new HashSet<TinyModule>(mainModule.EnumerateDependencies());
-            
-            foreach (var field in type.Fields)
+            using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
             {
-                var showProperties = DrawField(type, field);
+                GUILayout.Space(k_Spacing);
+                DrawDocumentation(type);
+                DrawUnlistedField(type);
+                GUILayout.Space(k_Spacing);
+                DrawSeparator();
+                GUILayout.Space(k_Spacing);
 
-                try
+                var defaultValue = type.DefaultValue as TinyObject;
+                m_DefaultValueVisitor.SetTargets(new List<IPropertyContainer> { defaultValue });
+
+                var mainModule = TinyEditorApplication.Module;
+                var dependencies = new HashSet<TinyModule>(mainModule.EnumerateDependencies());
+
+                foreach (var field in type.Fields)
                 {
-                    if (!showProperties)
-                    {
-                        continue;
-                    }
+                    var showProperties = DrawField(type, field);
 
-                    GUILayout.Space(k_Spacing);
-                    ++EditorGUI.indentLevel;
-
-                    using (new EditorGUILayout.HorizontalScope())
+                    try
                     {
-                        using (new EditorGUILayout.VerticalScope())
+                        if (!showProperties)
                         {
-                            if (EditorPrefs.GetBool(k_DocumentationPrefix + field.Id, false))
+                            continue;
+                        }
+
+                        GUILayout.Space(k_Spacing);
+                        ++EditorGUI.indentLevel;
+
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            using (new EditorGUILayout.VerticalScope())
                             {
-                                using (new EditorGUILayout.HorizontalScope())
+                                if (EditorPrefs.GetBool(k_DocumentationPrefix + field.Id, false))
                                 {
-                                    DrawDocumentation(field);
+                                    using (new EditorGUILayout.HorizontalScope())
+                                    {
+                                        DrawDocumentation(field);
+                                    }
+                                }
+
+                                var module = Registry.CacheManager.GetModuleOf(field.FieldType);
+                                if (TinyType.BuiltInTypes.Contains(field.FieldType.Dereference(Registry)) || dependencies.Contains(module))
+                                {
+                                    VisitFieldDefaultValue(defaultValue, field.Name,
+                                        field.FieldType.Dereference(defaultValue.Registry), m_DefaultValueVisitor,
+                                        field.Array);
+                                }
+                                else
+                                {
+                                    ShowModuleMissing(mainModule, module, field);
                                 }
                             }
 
-                            var module = Registry.CacheManager.GetModuleOf(field.FieldType);
-                            if (TinyType.BuiltInTypes.Contains(field.FieldType.Dereference(Registry)) || dependencies.Contains(module))
-                            {
-                                VisitFieldDefaultValue(defaultValue, field.Name,
-                                    field.FieldType.Dereference(defaultValue.Registry), m_DefaultValueVisitor,
-                                    field.Array);
-                            }
-                            else
-                            {
-                                ShowModuleMissing(mainModule, module, field);
-                            }
+                            GUILayout.Space(IconSpace(type));
                         }
 
-                        GUILayout.Space(IconSpace(type));
+                        --EditorGUI.indentLevel;
                     }
+                    finally
+                    {
+                        GUILayout.Space(k_DoubleSpacing);
+                    }
+                }
 
-                    --EditorGUI.indentLevel;
-                }
-                finally
-                {
-                    GUILayout.Space(k_DoubleSpacing);
-                }
+                DrawAddNewField(type);
             }
-
-            DrawAddNewField(type);
         }
 
         protected override bool IsPartOfModule(TinyModule module, TinyId mainAssetId)
@@ -146,6 +149,7 @@ namespace Unity.Tiny
             if (type.IsComponent)
             {
                 type.Unlisted = EditorGUILayout.Toggle("Unlisted", type.Unlisted);
+                type.Visibility = (TinyVisibility) EditorGUILayout.EnumPopup("Hide Flags", type.Visibility);
             }
         }
 
@@ -307,7 +311,7 @@ namespace Unity.Tiny
             {
                 if (GUI.Button(rect, content, TinyStyles.AddComponentStyle))
                 {
-                    var field = type.CreateField(TinyUtility.GetUniqueName(type.Fields, "NewElement"), type.BaseType);
+                    var field = type.CreateField(TinyId.New(), TinyUtility.GetUniqueName(type.Fields, "NewElement"), type.BaseType);
                     
                     // @HACK
                     if (type.Fields.Count > 1)
@@ -339,7 +343,7 @@ namespace Unity.Tiny
 
         private void DuplicateField(TinyType type, TinyField field)
         {
-            var newField = type.CreateField(TinyUtility.GetUniqueName(type.Fields, field.Name), field.FieldType,
+            var newField = type.CreateField(TinyId.New(), TinyUtility.GetUniqueName(type.Fields, field.Name), field.FieldType,
                 field.Array);
             type.Refresh();
             newField.Documentation.Summary = field.Documentation.Summary;
@@ -460,7 +464,7 @@ namespace Unity.Tiny
                         }
                         else if (fieldType == TinyType.FontEntity)
                         {
-                            visitor.VisitValueClassProperty<TinyObject.PropertiesContainer, Font>(
+                            visitor.VisitValueClassProperty<TinyObject.PropertiesContainer, TMPro.TMP_FontAsset>(
                                 defaultValue.Properties, name);
                         }
                         else if (fieldType == TinyType.AudioClipEntity)

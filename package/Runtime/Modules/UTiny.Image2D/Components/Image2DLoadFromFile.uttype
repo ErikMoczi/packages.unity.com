@@ -4,6 +4,7 @@
     "Name": "Image2DLoadFromFile",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "df8d8e49fb7dfb3a3c7b57e9234a0da1",

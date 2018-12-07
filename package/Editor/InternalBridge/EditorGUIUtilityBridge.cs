@@ -10,5 +10,6 @@ namespace Unity.Tiny
 
         public static GUIContent TrTextContent(string text) => EditorGUIUtility.TrTextContent(text);
         public static GUIContent TrTextContent(string text, string tooltip) => EditorGUIUtility.TrTextContent(text, tooltip);
+        public static Texture2D LoadIcon(string name) => EditorGUIUtility.LoadIcon(name);
     }
 }

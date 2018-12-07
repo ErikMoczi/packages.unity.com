@@ -4,6 +4,7 @@
     "Name": "RangeInt",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Struct",
     "Fields": [{
         "Id": "c857f797a66cecdd5f6536285178a6c4",

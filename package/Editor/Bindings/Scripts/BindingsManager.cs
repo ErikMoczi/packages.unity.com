@@ -12,7 +12,7 @@ namespace Unity.Tiny
 {
     using EntityRef = TinyEntity.Reference;
 
-    [ContextManager(~ContextUsage.Edit)]
+    [ContextManager(~(ContextUsage.Edit | ContextUsage.LiveLink))]
     [UsedImplicitly]
     internal class NullBindingsManager : ContextManager, IBindingsManager
     {
@@ -25,7 +25,7 @@ namespace Unity.Tiny
         public void TransferAll() {}
     }
 
-    [ContextManager(ContextUsage.Edit)]
+    [ContextManager(ContextUsage.Edit | ContextUsage.LiveLink)]
     [UsedImplicitly]
     internal class BindingsManager : ContextManager, IBindingsManager
     {
@@ -142,51 +142,59 @@ namespace Unity.Tiny
                 return;
             }
 
-            var entityRef = (TinyEntity.Reference)entity;
-
-            var current = GetBindingConfiguration(entity);
-            var configuration = current;
-
-            if (null == configuration || DirtyConfigurations.Contains(entityRef))
+            try
             {
-                configuration = GenerateBindingConfiguration(entity);
-                DirtyConfigurations.Remove(entityRef);
-            }
+                var entityRef = (TinyEntity.Reference) entity;
 
-            if (null != current && !configuration.Equals(current))
-            {
-                foreach (var profile in current.ReversedOrderBindings.Except((configuration.ReversedOrderBindings)))
+                var current = GetBindingConfiguration(entity);
+                var configuration = current;
+
+                if (null == configuration || DirtyConfigurations.Contains(entityRef))
                 {
-                    profile.UnloadBindings(entity);
+                    configuration = GenerateBindingConfiguration(entity);
+                    DirtyConfigurations.Remove(entityRef);
                 }
-            }
 
-            EntityToBindingConfiguration[entityRef] = configuration;
-
-            foreach (var component in entity.Components)
-            {
-                component.Refresh();
-            }
-
-            foreach (var profile in configuration.Bindings)
-            {
-                profile.LoadBindings(entity);
-            }
-
-            foreach (var profile in configuration.Bindings)
-            {
-                profile.Transfer(entity);
-            }
-
-            if (TransferDependencies.TryGetValue(entityRef, out var next))
-            {
-                foreach (var e in next.ToList().Deref(Registry))
+                if (null != current && !configuration.Equals(current))
                 {
-                    Transfer(e);
+                    foreach (var profile in current.ReversedOrderBindings.Except((configuration.ReversedOrderBindings)))
+                    {
+                        profile.UnloadBindings(entity);
+                    }
                 }
-            }
 
-            Reentrance.Remove(entity);
+                EntityToBindingConfiguration[entityRef] = configuration;
+
+                foreach (var component in entity.Components)
+                {
+                    component.Refresh();
+                }
+
+                foreach (var profile in configuration.Bindings)
+                {
+                    profile.LoadBindings(entity);
+                }
+
+                foreach (var profile in configuration.Bindings)
+                {
+                    profile.Transfer(entity);
+                }
+
+                if (TransferDependencies.TryGetValue(entityRef, out var next))
+                {
+                    foreach (var e in next.ToList().Deref(Registry))
+                    {
+                        Transfer(e);
+                    }
+                }
+
+                Reentrance.Remove(entity);
+            }
+            finally
+            {
+                UnityEditor.SceneView.RepaintAll();
+                Unity.Tiny.Bridge.GameView.RepaintAll();
+            }
         }
 
         #endregion // API

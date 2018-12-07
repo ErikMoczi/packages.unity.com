@@ -90,6 +90,12 @@ namespace Unity.Tiny.Runtime.Tilemap2D
         public static void CompressTilemaps(TinyEntityGroup.Reference entityGroupRef)
         {
             var entityGroup = entityGroupRef.Dereference(TinyEditorApplication.Registry);
+
+            if (null == entityGroup)
+            {
+                return;
+            }
+            
             foreach (var entity in entityGroup.Entities.Select(e => e.Dereference(entityGroup.Registry)).Where(e => e.HasComponent<TinyTilemap>()))
             {
                 var tilemap = entity.View.GetComponent<Tilemap>();
@@ -114,9 +120,15 @@ namespace Unity.Tiny.Runtime.Tilemap2D
                     continue;
                 }
 
+                var tile = tilemap.GetTile<Tile>(position);
+                if (tile == null)
+                {
+                    continue;
+                }
+
                 var tileData = new TinyTileData(Tiny.Registry);
                 tileData.position = new Vector2(position.x, position.y);
-                tileData.tile = tilemap.GetTile<Tile>(position);
+                tileData.tile = tile;
                 tiles.Add(tileData.Tiny);
             }
 
@@ -146,6 +158,11 @@ namespace Unity.Tiny.Runtime.Tilemap2D
             // Assign sync tile data to tiny tilemap tile data
             foreach (var syncTile in syncTiles)
             {
+                if (syncTile.Tile == null)
+                {
+                    continue;
+                }
+
                 var tinyTileDataIndex = cache.GetTileDataIndex(syncTile.Position);
                 if (tinyTileDataIndex != -1)
                 {

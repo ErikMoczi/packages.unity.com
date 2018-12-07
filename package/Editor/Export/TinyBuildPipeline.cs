@@ -244,10 +244,13 @@ namespace Unity.Tiny
 
                 if (results.Success && workspace.Preview)
                 {
-                    progress.Update($"{TinyConstants.ApplicationName} Preview", "Starting local HTTP server...");
-                    HTTPServer.Instance.ReloadOrOpen(results.BinaryFolder, options.Project.Settings.LocalHTTPServerPort);
+                    HTTPServer.Instance.ReloadOrOpen(results.BinaryFolder.FullName, options.Project.Settings.LocalHTTPServerPort);
                 }
-
+                else if (EditorApplication.isPlayingOrWillChangePlaymode)
+                {
+                    // Don't enter playmode if build failed or preview is not enabled
+                    EditorApplication.isPlaying = false;
+                }
                 return results;
             }
         }

@@ -6,7 +6,7 @@ using JetBrains.Annotations;
 
 namespace Unity.Tiny
 {
-    [ContextManager(ContextUsage.Edit)]
+    [ContextManager(ContextUsage.Edit | ContextUsage.LiveLink)]
     internal class ComponentRequirementsManager : ContextManager
     {
         #region Static

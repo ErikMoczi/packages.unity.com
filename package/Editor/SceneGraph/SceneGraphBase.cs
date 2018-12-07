@@ -8,6 +8,8 @@ namespace Unity.Tiny
     {
         public List<ISceneGraphNode> Roots { get; } = new List<ISceneGraphNode>();
 
+        public bool Changed { get; private set; }
+
         /// <summary>
         /// Implement this method to handle duplication of a single node
         ///
@@ -124,6 +126,7 @@ namespace Unity.Tiny
 
             // Handle any custom operations in this callback
             OnInsertNode(node, parent);
+            Changed = true;
         }
         
         public bool Delete(ISceneGraphNode node)
@@ -154,6 +157,7 @@ namespace Unity.Tiny
             if (inspect.Remove(node))
             {
                 OnRemoveNode(node);
+                Changed = true;
                 return true;
             }
 
@@ -197,7 +201,7 @@ namespace Unity.Tiny
 
             return target;
         }
-
+        
         /// <summary>
         /// Clones
         /// </summary>
@@ -232,6 +236,14 @@ namespace Unity.Tiny
             {
                 list.Insert(index, item);
             }
+        }
+
+        /// <summary>
+        /// Clears the internal changed flag on the graph
+        /// </summary>
+        public void ClearChanged()
+        {
+            Changed = false;
         }
     }
 }

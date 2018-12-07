@@ -7,8 +7,6 @@ namespace Unity.Tiny
          {
              CoreGuids.Text.Text2DRenderer,
              CoreGuids.Text.Text2DStyle,
-             CoreGuids.Text.Text2DStyleNativeFont,
-             CoreGuids.Text.NativeFont,
              CoreGuids.Core2D.RectTransformFinalSize
          },
          optionalGuids: new[]

@@ -12,7 +12,7 @@ namespace Unity.Tiny
         ,IVisitValueAdapter<Tilemap>
         ,IVisitValueAdapter<AudioClip>
         ,IVisitValueAdapter<AnimationClip>
-        ,IVisitValueAdapter<Font>
+        ,IVisitValueAdapter<TMPro.TMP_FontAsset>
     {
         public bool CustomClassVisit<TContainer>(ref TContainer container, ref UIVisitContext<Texture2D> context)
             where TContainer : class, IPropertyContainer
@@ -61,11 +61,11 @@ namespace Unity.Tiny
             where TContainer : struct, IPropertyContainer
             => IMGUIVisitorHelper.AsLeafItem(ref container, ref context, IMGUIVisitorHelper.PropertyField);
 
-        public bool CustomClassVisit<TContainer>(ref TContainer container, ref UIVisitContext<Font> context)
+        public bool CustomClassVisit<TContainer>(ref TContainer container, ref UIVisitContext<TMPro.TMP_FontAsset> context)
             where TContainer : class, IPropertyContainer
             => IMGUIVisitorHelper.AsLeafItem(ref container, ref context, IMGUIVisitorHelper.PropertyField);
 
-        public bool CustomStructVisit<TContainer>(ref TContainer container, ref UIVisitContext<Font> context)
+        public bool CustomStructVisit<TContainer>(ref TContainer container, ref UIVisitContext<TMPro.TMP_FontAsset> context)
             where TContainer : struct, IPropertyContainer
             => IMGUIVisitorHelper.AsLeafItem(ref container, ref context, IMGUIVisitorHelper.PropertyField);
     }

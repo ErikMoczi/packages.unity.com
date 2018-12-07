@@ -1,6 +1,7 @@
 ﻿
 
 using System;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
 
@@ -94,6 +95,47 @@ namespace Unity.Tiny
             if (pivot == UpperRight)
             {
                 return TextAnchor.UpperRight;
+            }
+            throw new ArgumentOutOfRangeException(nameof(pivot), pivot, null);
+        }
+        
+        public static TextAlignmentOptions GetTextAlignmentFromPivot(Vector2 pivot)
+        {
+            if (pivot == LowerLeft)
+            {
+                return TextAlignmentOptions.BottomLeft;
+            }
+            if (pivot == LowerCenter)
+            {
+                return TextAlignmentOptions.Bottom;
+            }
+            if (pivot == LowerRight)
+            {
+                return TextAlignmentOptions.BottomRight;
+            }
+            if (pivot == MiddleLeft)
+            {
+                return TextAlignmentOptions.Left;
+            }
+            if (pivot == MiddleCenter)
+            {
+                return TextAlignmentOptions.Center;
+            }
+            if (pivot == MiddleRight)
+            {
+                return TextAlignmentOptions.Right;
+            }
+            if (pivot == UpperLeft)
+            {
+                return TextAlignmentOptions.TopLeft;
+            }
+            if (pivot == UpperCenter)
+            {
+                return TextAlignmentOptions.Top;
+            }
+            if (pivot == UpperRight)
+            {
+                return TextAlignmentOptions.TopRight;
             }
             throw new ArgumentOutOfRangeException(nameof(pivot), pivot, null);
         }

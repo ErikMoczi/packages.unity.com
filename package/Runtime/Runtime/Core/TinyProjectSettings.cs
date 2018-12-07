@@ -61,6 +61,12 @@ namespace Unity.Tiny
                 }
             );
             
+            SymbolsInReleaseBuildProperty = new ValueClassProperty<TinyProjectSettings, bool>(
+                "SymbolsInReleaseBuild",
+                c => c.m_SymbolsInReleaseBuild,
+                (c, v) => c.m_SymbolsInReleaseBuild = v
+            );
+
             LocalWSServerPortProperty = new ValueClassProperty<TinyProjectSettings, int>(
                 "LocalWSServerPort",
                 c => c.m_LocalWSServerPort,

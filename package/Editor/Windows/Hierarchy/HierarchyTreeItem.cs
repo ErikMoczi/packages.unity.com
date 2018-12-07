@@ -30,12 +30,12 @@ namespace Unity.Tiny
             get
             {
                 var name = Value.EntityGroup.Name;
-                var suffix = Persistence.IsPersistentObjectChanged(Value.EntityGroup) ? "*" : "";
+                var suffix = Value.EntityGroup.PersistenceId != null && Persistence.IsPersistentObjectChanged(Value.EntityGroup) ? "*" : "";
                 return $"{name}{suffix}";
             }
         }
 
-        public override int id => AssetDatabase.LoadAssetAtPath<UTEntityGroup>(AssetDatabase.GUIDToAssetPath(Persistence.GetAssetGuidFromTinyGuid(Value.EntityGroup.Id))).GetInstanceID();
+        public override int id => Value.EntityGroupRef.Id.GetHashCode();
     }
 
     internal class EntityTreeItem : HierarchyTreeItem<EntityNode>, ISceneGraphNodeTreeItem
@@ -83,5 +83,13 @@ namespace Unity.Tiny
         public Texture2D OverlayIcon { get; set; }
         public override string displayName { get; set; }
         public override int id => Value.PrefabInstanceRef.Id.GetHashCode();
+    }
+
+    internal class FolderTreeItem : HierarchyTreeItem<FolderNode>, ISceneGraphNodeTreeItem
+    {
+        public ISceneGraph Graph => Value.Graph;
+        public ISceneGraphNode Node => Value;
+        public override string displayName => (Node as FolderNode)?.Name;
+        public override int id => displayName.GetHashCode();
     }
 }

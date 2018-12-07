@@ -13,19 +13,5 @@
         { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" },
         { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" },
         { "Id": "30097418841f56d73400bf82ee859ac9", "Name": "UTiny.Core2D" }
-    ],
-    "Components": [
-        { "Id": "42abdada0c6e61ba944dd27d73f6b491", "Name": "TweenComponent" },
-        { "Id": "dcd0888429933e48bcaa80abfb0e5064", "Name": "TweenFloat" },
-        { "Id": "7f5c997c86251762d0d852f98bed37fb", "Name": "TweenVector2" },
-        { "Id": "cf71ec39754e13f67bb9fcca3f1ac035", "Name": "TweenVector3" },
-        { "Id": "ce2e9d47d54e3ca401004a9131b3e24c", "Name": "TweenQuaternion" },
-        { "Id": "6fe3a60b41e2766f154d792617f56380", "Name": "TweenColor" }
-    ],
-    "Structs": [
-        { "Id": "aae3c30b7832f31b9cd61639238cfeec", "Name": "TweenDesc" }
-    ],
-    "Enums": [
-        { "Id": "a0abdfa0125a70d08cef584f283024b1", "Name": "TweenFunc" }
     ]
 }]

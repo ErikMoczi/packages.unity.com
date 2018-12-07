@@ -1,6 +1,3 @@
-#if UNITY_2018_3_OR_NEWER
-#if (NET_4_6 || NET_STANDARD_2_0)
-
 using System.Collections.Generic;
 using Unity.Properties;
 
@@ -85,6 +82,3 @@ namespace Unity.Tiny
         }
     }
 }
-
-#endif // (NET_4_6 || NET_STANDARD_2_0)
-#endif // UNITY_2018_3_OR_NEWER

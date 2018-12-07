@@ -3,6 +3,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Properties;
 
 namespace Unity.Tiny
@@ -269,7 +270,7 @@ namespace Unity.Tiny
                 return AnimationClipEntity;
             }
 
-            if (typeof(UnityEngine.Font).IsAssignableFrom(type))
+            if (typeof(TMPro.TMP_FontAsset).IsAssignableFrom(type))
             {
                 return FontEntity;
             }
@@ -313,6 +314,10 @@ namespace Unity.Tiny
                     return default(bool);
                 case TinyTypeCode.String:
                     return string.Empty;
+                case TinyTypeCode.Enum:
+                    return new TinyEnum.Reference(type, type.Fields.FirstOrDefault()?.Id ?? TinyId.Empty);
+                case TinyTypeCode.EntityReference:
+                    return TinyEntity.Reference.None;
                 default:
                     return null;
             }
@@ -383,7 +388,7 @@ namespace Unity.Tiny
                     }
                     else if (type.Id == FontEntity.Id)
                     {
-                        return new List<UnityEngine.Font>();
+                        return new List<TMPro.TMP_FontAsset>();
                     }
                     else
                     {

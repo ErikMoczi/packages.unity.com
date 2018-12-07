@@ -4,6 +4,7 @@
     "Name": "StepCurveColor",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "14c670ca670c89ce56481372c3b74db7",

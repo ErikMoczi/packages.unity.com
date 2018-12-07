@@ -1,0 +1,12 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "b7ca7d4f902bd4ffad3750c88ad2b1a1",
+    "Name": "Image2DRenderToTexture",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "Visibility": 0,
+    "TypeCode": "Component",
+    "DefaultValue": {
+        "Type": { "Id": "b7ca7d4f902bd4ffad3750c88ad2b1a1", "Name": "Image2DRenderToTexture" }
+    }
+}]

@@ -4,6 +4,7 @@
     "Name": "CurveEntity",
     "ExportFlags": 4,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Struct",
     "Fields": [{
         "Id": "de7cdda876a080c8683aa584dd636599",

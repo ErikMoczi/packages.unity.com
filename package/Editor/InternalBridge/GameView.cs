@@ -89,6 +89,11 @@ namespace Unity.Tiny.Bridge
             RemoveTinySize();
             SetSize(k_FreeAspect);
         }
+
+        public static void RepaintAll()
+        {
+            UnityEditor.GameView.RepaintAll();
+        }
         #endregion
 
         #region Implementation

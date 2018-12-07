@@ -1,5 +1,5 @@
-﻿
-using System;
+﻿using System;
+using System.IO;
 using UnityEditor;
 
 namespace Unity.Tiny
@@ -19,12 +19,17 @@ namespace Unity.Tiny
         private const string k_CreateTypeScriptSystemItem = "TypeScript System";
         private const string k_CreateTypeScriptBehaviourItem = "TypeScript Behaviour";
 
+        private static bool ValidateIsEditMode()
+        {
+            return !EditorApplication.isPlayingOrWillChangePlaymode;
+        }
+
         [MenuItem(k_TinyMenuItemPrefix + k_EntityGroup, isValidateFunction: true)]
         [MenuItem(k_AssetsMenuItemPrefix + k_EntityGroup, isValidateFunction: true)]
         private static bool ValidateProjectIsOpened()
         {
             // We should NOT allow root modules to create entity group.
-            return TinyEditorApplication.ContextType == EditorContextType.Project;
+            return ValidateIsEditMode() && TinyEditorApplication.ContextType == EditorContextType.Project;
         }
 
         [MenuItem(k_AssetsMenuItemPrefix + k_CreateComponentItem, isValidateFunction: true)]
@@ -42,7 +47,7 @@ namespace Unity.Tiny
         [MenuItem(k_AssetsMenuItemPrefix + k_CreateTypeScriptBehaviourItem, isValidateFunction: true)]
         private static bool ValidateContextNotNull()
         {
-            return TinyEditorApplication.ContextType != EditorContextType.None;
+            return ValidateIsEditMode() && TinyEditorApplication.ContextType != EditorContextType.None;
         }
 
         [MenuItem(k_TinyMenuItemPrefix + k_EntityGroup, priority = k_BasePriority + k_TinyOffset)]
@@ -85,13 +90,12 @@ namespace Unity.Tiny
         public static void CreateTypeScriptSystemAsset()
         {
             var module = TinyEditorApplication.Module;
-            var scripting = TinyEditorApplication.EditorContext.Context.GetManager<TinyScriptingManager>().Metadata;
-            var systemName = TinyUtility.GetUniqueName(scripting.Systems, "NewSystem");
+            var scripting = TinyEditorApplication.EditorContext.Context.GetManager<IScriptingManager>().Metadata;
+            var name = TinyUtility.GetUniqueName(scripting.Systems, "NewSystem");
+            var fullPath = Path.Combine(GetDefaultScriptingDirectory(module), $"{name}{TinyScriptUtility.TypeScriptExtension}");
+            var assetPath = Persistence.GetPathRelativeToProjectPath(fullPath);
             
-            var systemPath = AssetDatabase.GUIDToAssetPath(module.ScriptRootDirectory) + "/" + systemName +
-                TinyScriptUtility.TypeScriptExtension;
-            
-            TinyAction.CreateScript(systemPath, (userFileName) =>
+            TinyAction.CreateScript(assetPath, (userFileName) =>
             {
                 userFileName = userFileName.Replace(" ", string.Empty);
                 userFileName = TinyUtility.GetUniqueName(scripting.Systems, userFileName);
@@ -115,13 +119,12 @@ namespace {module.Namespace} {{
         public static void CreateTypeScriptBehaviourAsset()
         {
             var module = TinyEditorApplication.Module;
-            var scripting = TinyEditorApplication.EditorContext.Context.GetManager<TinyScriptingManager>().Metadata;
-            var behaviourName = TinyUtility.GetUniqueName(scripting.Behaviours, "NewBehaviour");
+            var scripting = TinyEditorApplication.EditorContext.Context.GetManager<IScriptingManager>().Metadata;
+            var name = TinyUtility.GetUniqueName(scripting.Behaviours, "NewBehaviour");
+            var fullPath = Path.Combine(GetDefaultScriptingDirectory(module), $"{name}{TinyScriptUtility.TypeScriptExtension}");
+            var assetPath = Persistence.GetPathRelativeToProjectPath(fullPath);
 
-            var behaviourPath = AssetDatabase.GUIDToAssetPath(module.ScriptRootDirectory) + "/" + behaviourName +
-                TinyScriptUtility.TypeScriptExtension;
-
-            TinyAction.CreateScript(behaviourPath, (userFileName) =>
+            TinyAction.CreateScript(assetPath, (userFileName) =>
             {
                 userFileName = userFileName.Replace(" ", string.Empty);
                 userFileName = TinyUtility.GetUniqueName(scripting.Systems, userFileName);
@@ -175,6 +178,11 @@ namespace {module.Namespace} {{
                 var path = Persistence.GetAssetPath(obj);
                 Selection.activeInstanceID = AssetDatabase.LoadAssetAtPath<TinyScriptableObject>(path).GetInstanceID();
             });
+        }
+
+        private static string GetDefaultScriptingDirectory(TinyModule module)
+        {
+            return Path.Combine(module.GetDirectoryPath(), "Scripts");
         }
     }
 }

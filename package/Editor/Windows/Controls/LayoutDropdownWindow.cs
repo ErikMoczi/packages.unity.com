@@ -435,7 +435,7 @@ namespace Unity.Tiny
 
                         if (Entity.Registry.Context.Caretaker.HasObjectChanged(Entity))
                         {
-                            Entity.Registry.Context.GetManager<BindingsManager>().Transfer(Entity);
+                            Entity.Registry.Context.GetManager<IBindingsManager>().Transfer(Entity);
                             TransformInvertedBindings.SyncTransform(Entity.View.transform, Entity.View);
                         }
 

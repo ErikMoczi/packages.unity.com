@@ -10,6 +10,7 @@ namespace Unity.Tiny
     {
         private struct MenuItemContext
         {
+            public IPrefabManager PrefabManager;
             public TinyEntity Entity;
             public IList<IPropertyModification> Modifications;
         }
@@ -37,22 +38,24 @@ namespace Unity.Tiny
                             continue;
                         }
                 
-                        if (!IMGUIPrefabUtility.IsModified(modification.GetFullPath(), component, context.Property, context.Index))
+                        if (!PrefabManager.IsModified(modification.GetFullPath(), component, context.Property, context.Index))
                         {
                             continue;
                         }
 
                         modifications.Add(modification);
                     }
+
+                    var prefabManager = entity.Registry.Context.GetManager<IPrefabManager>();
                     
                     menu.AddItem(new GUIContent("Apply to Prefab"), false, o =>
                     {
                         var menuItemContext = (MenuItemContext) o;
-                        var prefabManager = menuItemContext.Entity.Registry.Context.GetManager<IPrefabManager>();
-                        prefabManager.ApplyComponentModificationsToPrefab(menuItemContext.Modifications, menuItemContext.Entity);
+                        menuItemContext.PrefabManager.ApplyComponentModificationsToPrefab(menuItemContext.Modifications, menuItemContext.Entity);
                         TinyEventDispatcher<ChangeSource>.Dispatch(ChangeSource.DataModel);
                     }, new MenuItemContext
                     {
+                        PrefabManager = prefabManager,
                         Entity = entity,
                         Modifications = modifications
                     });
@@ -60,11 +63,11 @@ namespace Unity.Tiny
                     menu.AddItem(new GUIContent("Revert"), false, o =>
                     {
                         var menuItemContext = (MenuItemContext) o;
-                        var prefabManager = menuItemContext.Entity.Registry.Context.GetManager<IPrefabManager>();
-                        prefabManager.RevertComponentModificationsForInstance(menuItemContext.Modifications, menuItemContext.Entity);
+                        menuItemContext.PrefabManager.RevertComponentModificationsForInstance(menuItemContext.Modifications, menuItemContext.Entity);
                         TinyEventDispatcher<ChangeSource>.Dispatch(ChangeSource.DataModel);
                     }, new MenuItemContext
                     {
+                        PrefabManager = prefabManager,
                         Entity = entity,
                         Modifications = modifications
                     });

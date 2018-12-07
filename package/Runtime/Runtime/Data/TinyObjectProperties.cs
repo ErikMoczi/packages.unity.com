@@ -650,9 +650,9 @@ namespace Unity.Tiny
                             }
                             else if (type.Id == TinyType.FontEntity.Id)
                             {
-                                property = property is FieldProperty<Font> && property.Name.Equals(name)
+                                property = property is FieldProperty<TMPro.TMP_FontAsset> && property.Name.Equals(name)
                                     ? property
-                                    : new FieldProperty<Font>(index, name);
+                                    : new FieldProperty<TMPro.TMP_FontAsset>(index, name);
                             }
                             else
                             {
@@ -930,7 +930,7 @@ namespace Unity.Tiny
                     // The default value for this field
                     var fieldDefaultValue = null != defaultValue ? defaultValue[fieldName] : TinyType.CreateInstance(fieldType);
 
-                    if (!fieldValue.Overridden && fieldType.IsPrimitive && !field.Array)
+                    if (!fieldValue.Overridden && (fieldType.IsPrimitive || fieldType.IsEnum) && !field.Array)
                     {
                         fieldValue.Value = fieldDefaultValue;
                     }

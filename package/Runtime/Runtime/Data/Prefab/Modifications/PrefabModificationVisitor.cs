@@ -166,17 +166,7 @@ namespace Unity.Tiny
             
             if (!ValuesAreEqual(targetValue, sourceValue))
             {
-                var value = default(TValue);
-
-                try
-                {
-                    value = null != targetValue ? TypeConversion.Convert<TValue>(targetValue) : default;
-                }
-                catch (Exception)
-                {
-                    // Silently catch this and fallback to the default value
-                }
-                
+                TypeConversion.TryConvert<TValue>(targetValue, out var value);
                 m_Instance.SetModification(m_Type, PrefabManager.CompressPropertyPath(m_Path), value);
             }
             
@@ -185,12 +175,7 @@ namespace Unity.Tiny
         
         private static bool ValuesAreEqual(object a, object b)
         {
-            if (a == null && b == null)
-            {
-                return true;
-            }
-            
-            return a?.Equals(b) ?? false;
+            return a?.Equals(b) ?? b == null;
         }
     }
 }

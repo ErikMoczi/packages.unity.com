@@ -28,7 +28,7 @@ namespace Unity.Tiny
 			caretaker.OnBeginUpdate   += HandleBeginUpdate;
 			caretaker.OnEndUpdate     += HandleEndUpdate;
 
-			var undo = context.GetManager<TinyUndoManager>();
+			var undo = context.GetManager<IUndoManager>();
 			undo.OnUndoPerformed += changes => RepaintAll();
 			undo.OnRedoPerformed += changes => RepaintAll();
 		}

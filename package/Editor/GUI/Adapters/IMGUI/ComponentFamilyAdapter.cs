@@ -13,14 +13,14 @@ namespace Unity.Tiny
         ,ICollectionAdapter<ComponentFamily, TinyObject>
     {
         private IRegistry Registry { get; }
-        private BindingsManager Bindings { get; }
+        private IBindingsManager Bindings { get; }
         private ICustomEditorManagerInternal CustomEditors { get; }
 
         public ComponentFamilyAdapter(TinyContext tinyContext)
             : base(tinyContext)
         {
             Registry = TinyContext.Registry;
-            Bindings = TinyContext.GetManager<BindingsManager>();
+            Bindings = TinyContext.GetManager<IBindingsManager>();
             CustomEditors = TinyContext.GetManager<ICustomEditorManagerInternal>();
         }
 
@@ -162,7 +162,6 @@ namespace Unity.Tiny
                 HashSetPool<TinyType.Reference>.Release(visited);
             }
 
-            // context.Value.Visit(context.Visitor);
             return context.Visitor.StopVisit;
         }
 
@@ -220,7 +219,7 @@ namespace Unity.Tiny
             }
 
             var prefabScope = new IMGUIPrefabComponentScope<TinyObject>(ref context);
-
+    
             var rect = EditorGUILayout.BeginVertical();
             GUILayout.Space(2);
             EditorGUILayout.BeginHorizontal();
@@ -293,7 +292,7 @@ namespace Unity.Tiny
         {
             var rect = EditorGUILayout.GetControlRect(false, GUILayout.Width(16.0f));
 
-            if (GUI.Button(rect, EditorGUIUtility.IconContent("Avatar Icon"), TinyStyles.MiddleCenteredLabel))
+            if (GUI.Button(rect, TinyIcons.Component, TinyStyles.MiddleCenteredLabel))
             {
                 var sections = new List<SelectorSection>();
                 var section = new SelectorSection {Header = "Components in family"};

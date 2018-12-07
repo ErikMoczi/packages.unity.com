@@ -351,7 +351,7 @@ namespace Unity.Tiny
                     foreach (var typeRef in module.Types)
                     {
                         var type = typeRef.Dereference(registry);
-                        if (type.Name == typeName)
+                        if (type != null && type.Name == typeName)
                         {
                             return type as T;
                         }

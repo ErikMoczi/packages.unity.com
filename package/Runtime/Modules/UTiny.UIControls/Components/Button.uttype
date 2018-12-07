@@ -4,6 +4,7 @@
     "Name": "Button",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "d79fd6ccc0ee6669808c0abe23ad4b6b",

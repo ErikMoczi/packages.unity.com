@@ -1,8 +1,4 @@
-﻿
-
-using System.Collections;
-using System.Collections.Generic;
-using Unity.Experimental.EditorMode;
+﻿using Unity.Experimental.EditorMode;
 using UnityEngine;
 
 namespace Unity.Tiny

@@ -10,8 +10,9 @@ namespace Unity.Tiny
     [Flags]
     public enum PrefabScopeOptions
     {
-        DrawOverride,
-        ContextMenu,
+        None = 0,
+        DrawOverride = 1,
+        ContextMenu = 2,
             
         Default = DrawOverride | ContextMenu
     }
@@ -42,7 +43,7 @@ namespace Unity.Tiny
 
             var instance = entity.Instance;
 
-            if ((int) instance.EntityModificationFlags == 0)
+            if (instance.EntityModificationFlags == EntityModificationFlags.None)
             {
                 return;
             }
@@ -65,26 +66,23 @@ namespace Unity.Tiny
         {
             var menu = new GenericMenu();
 
-            foreach (var flag in EntityModificationFlags.All.EnumerateFlags())
+            foreach (var flag in entity.Instance.EntityModificationFlags.EnumerateFlags())
             {
-                if (entity.Instance.EntityModificationFlags.HasFlag(flag))
-                {    
-                    menu.AddItem(new GUIContent($"{flag.ToString()}/Apply to Prefab"), false, o =>
-                    {
-                        var e = (TinyEntity) o;
-                        var manager = e.Registry.Context.GetManager<IPrefabManager>();
-                        manager.ApplyEntityModificationsToPrefab(flag, e);
-                        TinyEventDispatcher<ChangeSource>.Dispatch(ChangeSource.DataModel);
-                    }, entity);
-                    
-                    menu.AddItem(new GUIContent($"{flag.ToString()}/Revert"), false, o =>
-                    {
-                        var e = (TinyEntity) o;
-                        var manager = e.Registry.Context.GetManager<IPrefabManager>();
-                        manager.RevertEntityModificationsForInstance(flag, e);
-                        TinyEventDispatcher<ChangeSource>.Dispatch(ChangeSource.DataModel);
-                    }, entity);
-                } 
+                menu.AddItem(new GUIContent($"{flag.ToString()}/Apply to Prefab"), false, o =>
+                {
+                    var e = (TinyEntity) o;
+                    var manager = e.Registry.Context.GetManager<IPrefabManager>();
+                    manager.ApplyEntityModificationsToPrefab(flag, e);
+                    TinyEventDispatcher<ChangeSource>.Dispatch(ChangeSource.DataModel);
+                }, entity);
+                
+                menu.AddItem(new GUIContent($"{flag.ToString()}/Revert"), false, o =>
+                {
+                    var e = (TinyEntity) o;
+                    var manager = e.Registry.Context.GetManager<IPrefabManager>();
+                    manager.RevertEntityModificationsForInstance(flag, e);
+                    TinyEventDispatcher<ChangeSource>.Dispatch(ChangeSource.DataModel);
+                }, entity);
             }  
   
             menu.ShowAsContext();
@@ -120,7 +118,7 @@ namespace Unity.Tiny
             
             var entity = context.MainTarget<TinyEntity>();
 
-            if (!entity.HasEntityInstanceComponent())
+            if (null == entity || !entity.HasEntityInstanceComponent())
             {
                 // Not a prefab instance OR the prefab instance is missing in some way
                 return;
@@ -135,7 +133,7 @@ namespace Unity.Tiny
                 return;
             }
             
-            var instance = entity?.Instance;
+            var instance = entity.Instance;
             
             if (instance.Source.Dereference(entity.Registry).HasComponent(component.Type))
             {
@@ -182,7 +180,7 @@ namespace Unity.Tiny
 
             var entity = context.MainTarget<TinyEntity>();
 
-            if (!entity.HasEntityInstanceComponent())
+            if (null == entity || !entity.HasEntityInstanceComponent())
             {
                 // Not a prefab instance
                 return;
@@ -197,7 +195,7 @@ namespace Unity.Tiny
                 return;
             }
 
-            var instance = entity?.Instance;
+            var instance = entity.Instance;
             if (!instance.Source.Dereference(entity.Registry).HasComponent(component.Type))
             {
                 // This is not a prefab component...
@@ -216,7 +214,7 @@ namespace Unity.Tiny
                     }
                 
                     // Does this property path match the currently visited container/property/index?
-                    if (!IMGUIPrefabUtility.IsModified(modification.GetFullPath(), component, context.Property, context.Index))
+                    if (!PrefabManager.IsModified(modification.GetFullPath(), component, context.Property, context.Index))
                     {
                         continue;
                     }

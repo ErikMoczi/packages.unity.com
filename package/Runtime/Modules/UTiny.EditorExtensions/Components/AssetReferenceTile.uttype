@@ -1,0 +1,35 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "ac0c7c900d3aef33623160d9180182e8",
+    "Name": "AssetReferenceTile",
+    "ExportFlags": 16,
+    "Unlisted": true,
+    "Visibility": 1,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "1ea5cc05cc6b56f8b9c7887720f65a1f",
+        "Name": "guid",
+        "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "6769fa0093615a33304d278ba0c3fe27",
+        "Name": "fileId",
+        "FieldType": { "Id": "37695933217a49f68ce15db33f63cdf9", "Name": "Int64" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "bfda02e63293d3972dc4770004d5f9ce",
+        "Name": "type",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "ac0c7c900d3aef33623160d9180182e8", "Name": "AssetReferenceTile" },
+        "Properties": {
+            "fileId": 0,
+            "type": 0
+        }
+    }
+}]

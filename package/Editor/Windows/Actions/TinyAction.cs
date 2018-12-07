@@ -38,7 +38,7 @@ namespace Unity.Tiny
                 0,
                 create,
                 path, 
-                TinyIcons.ScriptableObjects.EntityGroup,
+                TinyIcons.EntityGroup,
                 null);
         }
         
@@ -66,7 +66,7 @@ namespace Unity.Tiny
                 0,
                 create,
                 path, 
-                TinyIcons.ScriptableObjects.Prefab,
+                TinyIcons.Prefab,
                 null);
         }
 
@@ -78,37 +78,35 @@ namespace Unity.Tiny
             // Initialize the "create asset request"
             create.NameToContents = nameToContents;
 
+            CreatePath(defaultPath);
+            
             // This will prompt the user in the `Asset` window to name the asset using a 'Unity' like flow
             ProjectWindowUtil.StartNameEditingIfProjectWindowExists(
                 0,
                 create,
                 defaultPath, 
-                TinyIcons.ScriptableObjects.TypeScript,
+                TinyIcons.TypeScript,
                 null);
         }
         
         public static void CreateComponentType(IRegistry registry, TinyModule.Reference moduleReference, Action<TinyType> onComplete = null)
         {
-            CreateType(registry, moduleReference, "NewComponent", TinyTypeCode.Component, onComplete);
+            CreateType(registry, moduleReference, "NewComponent", TinyTypeCode.Component, TinyType.Reference.None, onComplete);
         }
         
         public static void CreateStructType(IRegistry registry, TinyModule.Reference moduleReference, Action<TinyType> onComplete = null)
         {
-            CreateType(registry, moduleReference, "NewStruct", TinyTypeCode.Struct, onComplete);
+            CreateType(registry, moduleReference, "NewStruct", TinyTypeCode.Struct, TinyType.Reference.None, onComplete);
         }
         
         public static void CreateEnumType(IRegistry registry, TinyModule.Reference moduleReference, Action<TinyType> onComplete = null)
         {
-            CreateType(registry, moduleReference, "NewEnum", TinyTypeCode.Enum, type =>
-            {
-                type.BaseType = TinyType.Int32.Ref;
-                onComplete?.Invoke(type);
-            });
+            CreateType(registry, moduleReference, "NewEnum", TinyTypeCode.Enum, TinyType.Int32.Ref, onComplete);
         }
         
         public static void CreateConfigurationType(IRegistry registry, TinyModule.Reference moduleReference, Action<TinyType> onComplete = null)
         {
-            CreateType(registry, moduleReference, "NewConfiguration", TinyTypeCode.Configuration, onComplete);
+            CreateType(registry, moduleReference, "NewConfiguration", TinyTypeCode.Configuration, TinyType.Reference.None, onComplete);
         }
 
         private static void CreateType(
@@ -116,6 +114,7 @@ namespace Unity.Tiny
             TinyModule.Reference moduleReference, 
             string name, 
             TinyTypeCode typeCode, 
+            TinyType.Reference baseType,
             Action<TinyType> onComplete)
         {
             // Ensure we have a unique name
@@ -130,6 +129,7 @@ namespace Unity.Tiny
             create.MainModule = moduleReference;
             create.OnComplete = onComplete;
             create.TypeCode = typeCode;
+            create.BaseType = baseType;
             
             var path = GetPathName<TinyType>(name);
             
@@ -141,7 +141,7 @@ namespace Unity.Tiny
                 0,
                 create,
                 path, 
-                TinyIcons.ScriptableObjects.GetIconForTypeCode(typeCode),
+                TinyIcons.GetIconForTypeCode(typeCode),
                 null);
         }
         
@@ -247,6 +247,7 @@ namespace Unity.Tiny
             }
             
             module.IncrementVersion(null, module);
+            Registry.Context.GetManager<IUndoManager>().SetAsBaseline(group);
             OnComplete?.Invoke(group);
         }
     }
@@ -290,6 +291,7 @@ namespace Unity.Tiny
     internal class DoCreateType : TinyCreateAssetRequest<TinyType>
     {
         public TinyTypeCode TypeCode { protected get; set; }
+        public TinyType.Reference BaseType { protected get; set; }
         
         /// <summary>
         /// Invoked when the user has chosen a unique name for the new asset
@@ -318,6 +320,7 @@ namespace Unity.Tiny
                 using (Registry.SourceIdentifierScope(TinyRegistry.TempSourceIdentifier))
                 {
                     type = Registry.CreateType(TinyId.New(), name, TypeCode);
+                    type.BaseType = BaseType;
                 }
                 
                 Persistence.PersistObject(type, pathName + Persistence.TypeFileExtension);

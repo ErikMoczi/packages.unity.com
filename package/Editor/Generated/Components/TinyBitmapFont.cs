@@ -51,15 +51,15 @@ namespace Unity.Tiny.Runtime.Text
             set => Tiny.AssignIfDifferent(nameof(@size), value);
         }
 
-        public int @ascent
+        public float @ascent
         {
-            get => Tiny.GetProperty<int>(nameof(@ascent));
+            get => Tiny.GetProperty<float>(nameof(@ascent));
             set => Tiny.AssignIfDifferent(nameof(@ascent), value);
         }
 
-        public int @descent
+        public float @descent
         {
-            get => Tiny.GetProperty<int>(nameof(@descent));
+            get => Tiny.GetProperty<float>(nameof(@descent));
             set => Tiny.AssignIfDifferent(nameof(@descent), value);
         }
 

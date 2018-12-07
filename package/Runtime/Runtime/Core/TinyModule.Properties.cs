@@ -20,7 +20,6 @@ namespace Unity.Tiny
         public static StructListClassProperty<TinyModule, TinyType.Reference> StructsProperty { get; private set; }
         public static StructListClassProperty<TinyModule, TinyType.Reference> EnumsProperty { get; private set; }
         public static StructListClassProperty<TinyModule, TinyEntityGroup.Reference> EntityGroupsProperty { get; private set; }
-        public static ValueClassProperty<TinyModule, string> ScriptRootDirectoryProperty { get; private set; }
         public static ClassListClassProperty<TinyModule, TinyAsset> AssetsProperty { get; private set; }
         public static StructValueClassProperty<TinyModule, TinyEntityGroup.Reference> StartupEntityGroupProperty { get; private set; }
 
@@ -93,13 +92,7 @@ namespace Unity.Tiny
                 "EntityGroups"
                 ,c => c.m_EntityGroups
             );
-
-            ScriptRootDirectoryProperty = new ValueClassProperty<TinyModule, string>(
-                "ScriptRootDirectory"
-                ,c => c.m_ScriptRootDirectory
-                ,(c, v) => c.m_ScriptRootDirectory = v
-            );
-
+            
             StartupEntityGroupProperty = new StructValueClassProperty<TinyModule, TinyEntityGroup.Reference>(
                 "StartupEntityGroup"
                 ,c => c.m_StartupEntityGroup
@@ -132,7 +125,6 @@ namespace Unity.Tiny
                 StructsProperty,
                 EnumsProperty,
                 EntityGroupsProperty,
-                ScriptRootDirectoryProperty,
                 AssetsProperty,
                 StartupEntityGroupProperty
             );
@@ -157,7 +149,6 @@ namespace Unity.Tiny
         private readonly List<TinyType.Reference> m_Structs = new List<TinyType.Reference>();
         private readonly List<TinyType.Reference> m_Enums = new List<TinyType.Reference>();
         private readonly List<TinyEntityGroup.Reference> m_EntityGroups = new List<TinyEntityGroup.Reference>();
-        private string m_ScriptRootDirectory;
         private readonly List<TinyAsset> m_Assets = new List<TinyAsset>();
         private TinyEntityGroup.Reference m_StartupEntityGroup;
 
@@ -190,13 +181,6 @@ namespace Unity.Tiny
             get { return OptionsProperty.GetValue(this); }
             set { OptionsProperty.SetValue(this, value); }
         }
-
-        public string ScriptRootDirectory
-        {
-            get { return ScriptRootDirectoryProperty.GetValue(this); }
-            set { ScriptRootDirectoryProperty.SetValue(this, value); }
-        }
-
 
         public partial struct Reference : IStructPropertyContainer<Reference>
         {

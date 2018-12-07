@@ -120,9 +120,9 @@ namespace Unity.Tiny
         [TinyCachable] public static void Register(ICacheManager cacheManager) => cacheManager.RegisterConverter<Tilemap>(TinyType.TilemapEntity.Ref);
     }
 
-    internal class FontConverter : BuiltinTypeConverter<Font>
+    internal class FontConverter : BuiltinTypeConverter<TMPro.TMP_FontAsset>
     {
-        [TinyCachable] public static void Register(ICacheManager cacheManager) => cacheManager.RegisterConverter<Font>(TinyType.FontEntity.Ref);
+        [TinyCachable] public static void Register(ICacheManager cacheManager) => cacheManager.RegisterConverter<TMPro.TMP_FontAsset>(TinyType.FontEntity.Ref);
     }
 
     internal class EntityRefConverter : BuiltinTypeConverter<TinyEntity.Reference>

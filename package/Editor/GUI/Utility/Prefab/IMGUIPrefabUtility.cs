@@ -8,56 +8,7 @@ namespace Unity.Tiny
 {
     internal static class IMGUIPrefabUtility
     {
-        /// <summary>
-        /// Returns true if the currently visited (property, index) is contained in the given (path, root) 
-        /// </summary>
-        /// <param name="path">Expanded property path</param>
-        /// <param name="root">Start point for the search (typically the component)</param>
-        /// <param name="targetProperty"></param>
-        /// <param name="targetListIndex"></param>
-        /// <returns>True if the currently visited (container, property, index) is contained in the given (path, root)(</returns>
-        internal static bool IsModified(PropertyPath path, IPropertyContainer root, IProperty targetProperty, int targetListIndex = -1)
-        {
-            var currentContainer = root;
-            
-            for (var i = 0; i < path.PartsCount; i++)
-            {
-                var part = path[i];
-                
-                var currentProperty = currentContainer?.PropertyBag.FindProperty(part.propertyName);
-                
-                if (currentProperty == null)
-                {
-                    break;
-                }
-
-                if (part.listIndex >= 0)
-                {
-                    if (!(currentProperty is IListClassProperty listProperty) || listProperty.Count(currentContainer) <= part.listIndex)
-                    {
-                        break;
-                    }
-                    
-                    if (ReferenceEquals(currentProperty, targetProperty) && (targetListIndex == -1 || part.listIndex == targetListIndex))
-                    {
-                        return true;
-                    }
-                    
-                    currentContainer = listProperty.GetObjectAt(currentContainer, part.listIndex) as IPropertyContainer;
-                }
-                else
-                {
-                    if (ReferenceEquals(currentProperty, targetProperty))
-                    {
-                        return true;
-                    }
-
-                    currentContainer = (currentProperty as IValueProperty)?.GetObjectValue(currentContainer) as IPropertyContainer;
-                }
-            }
-
-            return false;
-        }
+        
 
         private struct MenuItemContext
         {
@@ -152,7 +103,7 @@ namespace Unity.Tiny
             });
         }
 
-        internal static void ShowEntityPrefabHeader(IEnumerable<TinyEntity> entities)
+        internal static void ShowEntityPrefabHeader(IRegistry registry, IEnumerable<TinyEntity> entities)
         {
             if (!entities.All(PrefabTransformUtility.IsPrefabInstanceRootTransform))
             {
@@ -161,6 +112,8 @@ namespace Unity.Tiny
             
             using (new EditorGUILayout.HorizontalScope())
             {
+                var prefabManager = registry.Context.GetManager<IPrefabManager>();
+
                 var multiple = entities.Count() > 1;
                 
                 EditorGUILayout.LabelField(multiple ? "Multiple" : "Prefab", GUILayout.Width(50));
@@ -172,12 +125,10 @@ namespace Unity.Tiny
                 {
                     foreach (var entity in entities)
                     {
-                        var manager = entity.Registry.Context.GetManager<IPrefabManager>();
                         var prefabInstance = entity.Instance.PrefabInstance.Dereference(entity.Registry);
-                        
-                        manager.ApplyInstanceToPrefab(entity.Instance.PrefabInstance.Dereference(entity.Registry));
-                        
-                        TinyEditorApplication.SaveObject(prefabInstance.PrefabEntityGroup.Dereference(entity.Registry), Persistence.PrefabFileExtension);
+                        prefabManager.ApplyInstanceToPrefab(entity.Instance.PrefabInstance.Dereference(entity.Registry));
+                        var group = prefabInstance.PrefabEntityGroup.Dereference(entity.Registry);
+                        Persistence.SaveObjectsAs(entity.Registry, group.AsEnumerable(), Persistence.GetAssetPath(group));
                     }
                             
                     TinyEventDispatcher<ChangeSource>.Dispatch(ChangeSource.DataModel);
@@ -189,8 +140,7 @@ namespace Unity.Tiny
                 {
                     foreach (var entity in entities)
                     {
-                        var manager = entity.Registry.Context.GetManager<IPrefabManager>();
-                        manager.RevertInstanceToPrefab(entity.Instance.PrefabInstance.Dereference(entity.Registry));
+                        prefabManager.RevertInstanceToPrefab(entity.Instance.PrefabInstance.Dereference(entity.Registry));
                     }
                             
                     TinyEventDispatcher<ChangeSource>.Dispatch(ChangeSource.DataModel);

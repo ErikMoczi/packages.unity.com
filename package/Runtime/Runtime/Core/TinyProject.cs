@@ -64,6 +64,16 @@ namespace Unity.Tiny
             return migration;
         }
 
+        public IEnumerable<IPersistentObject> EnumeratePersistentDependencies()
+        {
+            var module = Module.Dereference(Registry);
+
+            foreach (var obj in module.EnumeratePersistentDependencies())
+            {
+                yield return obj;
+            }
+        }
+
         public IEnumerable<IPropertyContainer> EnumerateContainers()
         {
             yield return this;

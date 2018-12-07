@@ -89,5 +89,37 @@ namespace Unity.Tiny
             EditorUtility.SetDirty(canvas);
         }
     }
+    
+    [WithComponent(
+        CoreGuids.Text.Text2DRenderer,
+        CoreGuids.Core2D.LayerSorting,
+        CoreGuids.Core2D.TransformNode,
+        CoreGuids.UILayout.RectTransform)]
+    [WithoutComponent(
+        CoreGuids.Core2D.SortingGroup,
+        CoreGuids.Tilemap2D.TilemapRenderer)]
+    [UsedImplicitly]
+    internal class LayerSortingWithTextRectTransformBindings : BindingProfile
+    {
+        public override void LoadBindings(TinyEntity entity)
+        {
+            AddMissingComponent<Canvas>(entity);
+        }
+
+        public override void UnloadBindings(TinyEntity entity)
+        {
+            RemoveComponent<Canvas>(entity);
+        }
+
+        public override void Transfer(TinyEntity entity)
+        {
+            var canvas = GetComponent<Canvas>(entity);
+            var tinyLayer = entity.GetComponent<Runtime.Core2D.TinyLayerSorting>();
+            canvas.overrideSorting = true;
+            canvas.sortingLayerID = tinyLayer.layer;
+            canvas.sortingOrder = tinyLayer.order;
+            EditorUtility.SetDirty(canvas);
+        }
+    }
 }
 

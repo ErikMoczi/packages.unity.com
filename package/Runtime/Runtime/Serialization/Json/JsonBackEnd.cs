@@ -157,7 +157,7 @@ namespace Unity.Tiny.Serialization.Json
             ICustomVisit<Tilemap>,
             ICustomVisit<AudioClip>,
             ICustomVisit<AnimationClip>,
-            ICustomVisit<Font>,
+            ICustomVisit<TMPro.TMP_FontAsset>,
             IExcludeVisit<TinyObject>,
             IExcludeVisit<TinyObject.PropertiesContainer>,
             IExcludeVisit<TinyDocumentation>,
@@ -349,7 +349,7 @@ namespace Unity.Tiny.Serialization.Json
                 VisitObject(value);
             }
 
-            void ICustomVisit<Font>.CustomVisit(Font value)
+            void ICustomVisit<TMPro.TMP_FontAsset>.CustomVisit(TMPro.TMP_FontAsset value)
             {
                 VisitObject(value);
             }
@@ -404,7 +404,15 @@ namespace Unity.Tiny.Serialization.Json
 
             bool IExcludeVisit<TinyObject>.ExcludeVisit(TinyObject value)
             {
-                return false;
+                if (value.IsDefaultValue)
+                {
+                    // default values should never be skipped
+                    return false;
+                }
+
+                var type = value.Type.Dereference(value.Registry);
+                var isExcluded = null != type && type.ExportFlags.HasFlag(TinyExportFlags.Development);
+                return isExcluded;
             }
 
             bool IExcludeVisit<TinyObject.PropertiesContainer>.ExcludeVisit(TinyObject.PropertiesContainer value)

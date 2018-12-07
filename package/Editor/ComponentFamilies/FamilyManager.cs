@@ -19,7 +19,7 @@ namespace Unity.Tiny
         void GetFamilies(TinyEntity entity, List<ComponentFamily> families);
     }
 
-    [ContextManager(ContextUsage.Edit), UsedImplicitly]
+    [ContextManager(ContextUsage.Edit | ContextUsage.LiveLink), UsedImplicitly]
     internal class FamilyManager : ContextManager, IFamilyManagerInternal
     {
         private readonly List<ComponentFamily> m_AllFamilies = new List<ComponentFamily>();

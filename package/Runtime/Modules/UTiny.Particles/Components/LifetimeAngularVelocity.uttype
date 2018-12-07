@@ -4,6 +4,7 @@
     "Name": "LifetimeAngularVelocity",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "79e389279fd772d6017c6ad965259dd4",

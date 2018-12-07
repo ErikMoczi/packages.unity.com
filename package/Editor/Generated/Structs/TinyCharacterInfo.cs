@@ -32,33 +32,33 @@ namespace Unity.Tiny.Runtime.Text
             set => Tiny.AssignIfDifferent(nameof(@value), value);
         }
 
-        public uint @advance
+        public float @advance
         {
-            get => Tiny.GetProperty<uint>(nameof(@advance));
+            get => Tiny.GetProperty<float>(nameof(@advance));
             set => Tiny.AssignIfDifferent(nameof(@advance), value);
         }
 
-        public uint @bearingX
+        public float @bearingX
         {
-            get => Tiny.GetProperty<uint>(nameof(@bearingX));
+            get => Tiny.GetProperty<float>(nameof(@bearingX));
             set => Tiny.AssignIfDifferent(nameof(@bearingX), value);
         }
 
-        public uint @bearingY
+        public float @bearingY
         {
-            get => Tiny.GetProperty<uint>(nameof(@bearingY));
+            get => Tiny.GetProperty<float>(nameof(@bearingY));
             set => Tiny.AssignIfDifferent(nameof(@bearingY), value);
         }
 
-        public uint @width
+        public float @width
         {
-            get => Tiny.GetProperty<uint>(nameof(@width));
+            get => Tiny.GetProperty<float>(nameof(@width));
             set => Tiny.AssignIfDifferent(nameof(@width), value);
         }
 
-        public uint @height
+        public float @height
         {
-            get => Tiny.GetProperty<uint>(nameof(@height));
+            get => Tiny.GetProperty<float>(nameof(@height));
             set => Tiny.AssignIfDifferent(nameof(@height), value);
         }
 

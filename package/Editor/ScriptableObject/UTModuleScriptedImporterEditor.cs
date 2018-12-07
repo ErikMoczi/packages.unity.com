@@ -6,10 +6,8 @@ namespace Unity.Tiny
     [CustomEditor(typeof(UTModuleScriptedImporter))]
     internal class UTModuleScriptedImporterEditor : TinyScriptedImporterEditorBase<UTModuleScriptedImporter, TinyModule>
     {
-        private Vector2 m_ScrollPosition;
         private ModuleReferencesTreeView m_TreeView;
-        [SerializeField]
-        private ModuleReferencesTreeView.ReferencedState State;
+        [SerializeField] private ModuleReferencesTreeView.ReferencedState State;
 
         private bool ShowModules
         {
@@ -26,7 +24,7 @@ namespace Unity.Tiny
                 }
             }
         }
-        
+
         private ModuleReferencesTreeView TreeView
         {
             get
@@ -100,56 +98,49 @@ namespace Unity.Tiny
             {
                 m_TreeView = new ModuleReferencesTreeView(MainTarget, ContextType, State);
             }
+
             m_TreeView?.Reload();
         }
 
         protected override void OnInspect(TinyModule module)
         {
             GUI.enabled = true;
-            m_ScrollPosition = EditorGUILayout.BeginScrollView(m_ScrollPosition);
-            try
+            EditorGUILayout.Space();
+
+            var showModulesRect = GUILayoutUtility.GetRect(0, EditorGUIUtility.singleLineHeight);
+            showModulesRect.x += 15.0f;
+            ShowModules = EditorGUI.Foldout(showModulesRect, ShowModules, "Modules");
+            if (ShowModules)
             {
-                EditorGUILayout.Space();
-                
-                var showModulesRect = GUILayoutUtility.GetRect(0, EditorGUIUtility.singleLineHeight);
-                showModulesRect.x += 15.0f;
-                ShowModules = EditorGUI.Foldout(showModulesRect, ShowModules, "Modules");
-                if (ShowModules)
-                {
-                    var treeViewRect = GUILayoutUtility.GetRect(0, TreeView.totalHeight);
-                    treeViewRect.x += 15.0f;
-                    TreeView.OnGUI(treeViewRect);
-                }
-
-                EditorGUILayout.Space();
-                DrawSeparator();
-                EditorGUILayout.Space();
-
-                if (ContextType == EditorContextType.Project || TinyEditorApplication.Module != module)
-                {
-                    return;
-                }
-
-                EditorGUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
-
-                var content = new GUIContent($"Close {module.Name}");
-
-                Rect rect = GUILayoutUtility.GetRect(content, TinyStyles.AddComponentStyle);
-                if (EditorGUI.DropdownButton(rect, content, FocusType.Passive, TinyStyles.AddComponentStyle))
-                {
-                    TinyEditorApplication.SaveChanges();
-                    TinyEditorApplication.Close();
-                    GUIUtility.ExitGUI();
-                }
-
-                GUILayout.FlexibleSpace();
-                EditorGUILayout.EndHorizontal();
+                var treeViewRect = GUILayoutUtility.GetRect(0, TreeView.totalHeight);
+                treeViewRect.x += 15.0f;
+                TreeView.OnGUI(treeViewRect);
             }
-            finally
+
+            EditorGUILayout.Space();
+            DrawSeparator();
+            EditorGUILayout.Space();
+
+            if (ContextType == EditorContextType.Project || TinyEditorApplication.Module != module)
             {
-                EditorGUILayout.EndScrollView();
+                return;
             }
+
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+
+            var content = new GUIContent($"Close {module.Name}");
+
+            Rect rect = GUILayoutUtility.GetRect(content, TinyStyles.AddComponentStyle);
+            if (EditorGUI.DropdownButton(rect, content, FocusType.Passive, TinyStyles.AddComponentStyle))
+            {
+                TinyEditorApplication.SaveChanges();
+                TinyEditorApplication.Close();
+                GUIUtility.ExitGUI();
+            }
+
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
         }
     }
 }

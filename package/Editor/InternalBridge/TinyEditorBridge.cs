@@ -38,11 +38,6 @@ namespace Unity.Tiny
             }
         }
 
-        internal static void ClearConsole()
-        {
-            UnityEditor.LogEntries.Clear();
-        }
-
         internal static void RepaintGameViews()
         {
             foreach (var view in Resources.FindObjectsOfTypeAll<GameView>())

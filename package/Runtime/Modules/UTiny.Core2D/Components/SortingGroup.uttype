@@ -4,6 +4,7 @@
     "Name": "SortingGroup",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "DefaultValue": {
         "Type": { "Id": "288a861a8ca311346faecf4c20a2da76", "Name": "SortingGroup" }

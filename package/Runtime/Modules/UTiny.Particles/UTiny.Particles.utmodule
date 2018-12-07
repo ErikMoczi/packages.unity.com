@@ -13,25 +13,5 @@
         { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" },
         { "Id": "30097418841f56d73400bf82ee859ac9", "Name": "UTiny.Core2D" },
         { "Id": "ca702d06498caa58a8babcfb0c9760ef", "Name": "UTiny.UnityTypesExtensions" }
-    ],
-    "Components": [
-        { "Id": "c8371d148850d1a696b747b09999a478", "Name": "ParticleEmitter" },
-        { "Id": "821d318d8d12611a0128b1f68eed9489", "Name": "EmitterBoxSource" },
-        { "Id": "2c2ce40ef1d988c70e8606df819899af", "Name": "EmitterConeSource" },
-        { "Id": "785c1d627066f74bdd2cd6f67dc46586", "Name": "EmitterCircleSource" },
-        { "Id": "97965e0b55ef0d896b686b4dd4ee330d", "Name": "EmitterInitialScale" },
-        { "Id": "95bc12996b73a0a56dc927d7646aa0f7", "Name": "EmitterInitialVelocity" },
-        { "Id": "5b3dc8e5f243676c125024480ebbe8b0", "Name": "EmitterInitialRotation" },
-        { "Id": "e866135321023b24c4dd1d5769536277", "Name": "EmitterInitialAngularVelocity" },
-        { "Id": "5c37a8d5a8f2d1543db7390d477b6ffa", "Name": "EmitterInitialColor" },
-        { "Id": "79f839cbe194578f85eb58c8c7b53e89", "Name": "LifetimeColor" },
-        { "Id": "eb8a89020902b70571b96db92e8ea046", "Name": "LifetimeScale" },
-        { "Id": "c468a14161c539041addfa096f4a0aa0", "Name": "LifetimeAngularVelocity" },
-        { "Id": "8e728c1655262fe61666df6d06df2ade", "Name": "LifetimeVelocity" },
-        { "Id": "06f290d134c66a4151208fb73e91a187", "Name": "LifetimeSpeedMultiplier" },
-        { "Id": "154b94993492d3ea71f7049ab36776c0", "Name": "BurstEmission" }
-    ],
-    "Structs": [
-        { "Id": "fc12a3e7fb50851c6363eb0879c14f6d", "Name": "Particle" }
     ]
 }]

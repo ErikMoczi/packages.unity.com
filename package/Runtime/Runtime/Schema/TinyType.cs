@@ -96,6 +96,7 @@ namespace Unity.Tiny
             NameProperty,
             ExportFlagsProperty,
             UnlistedProperty,
+            VisibilityProperty,
             DocumentationProperty,
             // end - inherited
             TypeCodeProperty,
@@ -286,6 +287,11 @@ namespace Unity.Tiny
 
         public override void IncrementVersion<TContainer>(IProperty property, TContainer container)
         {
+            if (property?.HasAttribute<TransientAttribute>() ?? false)
+            {
+                return;
+            }
+            
             Version++;
 
             if (property == TypeCodeProperty)

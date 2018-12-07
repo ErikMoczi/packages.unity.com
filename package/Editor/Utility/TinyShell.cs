@@ -52,7 +52,7 @@ namespace Unity.Tiny
 #endif
         #endregion
 
-        private static string ToolsManagerNativeName()
+        public static string ToolsManagerNativeName()
         {
             var toolsManager = "TinyToolsManager";
 #if UNITY_EDITOR_WIN
@@ -164,15 +164,15 @@ namespace Unity.Tiny
                 DataReceivedEventHandler outputReceived = (sender, e) =>
                 {
                     LogProcessData(e.Data, output);
-                    logOutput.Append(e.Data);
+                    logOutput.AppendLine(e.Data);
                 };
                 DataReceivedEventHandler errorReceived = (sender, e) =>
                 {
                     LogProcessData(e.Data, output);
-                    errorOutput.Append(e.Data);
-                    logOutput.Append(e.Data);
+                    logOutput.AppendLine(e.Data);
                     if (!string.IsNullOrEmpty(e.Data))
                     {
+                        errorOutput.AppendLine(e.Data);
                         hasErrors = true;
                     }
                 };

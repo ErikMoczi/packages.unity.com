@@ -121,9 +121,9 @@ namespace Unity.Tiny
                         throw new ArgumentOutOfRangeException();
                 }
             }
-
             return name;
         }
+
         /// <summary>
         /// Packages settings to `settings.js`
         /// </summary>
@@ -137,6 +137,13 @@ namespace Unity.Tiny
 
             writer.Line($"var Module = {{TOTAL_MEMORY: {settings.MemorySize * 1024 * 1024}}};")
                   .Line();
+
+            if (options.Configuration != TinyBuildConfiguration.Release)
+            {
+                writer.Line($"Module.WSServerURL = {WebSocketServer.Instance.URL.AbsoluteUri.DoubleQuoted()};");
+                writer.Line($"Module.ProfilerServerURL = {ProfilerServer.URL.AbsoluteUri.DoubleQuoted()};");
+                writer.Line();
+            }
 
             // <HACK>
             // Workaround for issue `UTINY-1091`
@@ -190,9 +197,26 @@ namespace Unity.Tiny
         {
             var runtimeVariant = TinyRuntimeInstaller.GetJsRuntimeVariant(options);
             var runtimePath = TinyRuntimeInstaller.GetRuntimeDirectory(options.Platform, options.Configuration);
-            var runtimeFiles = new DirectoryInfo(runtimePath).GetFiles(runtimeVariant + "*", SearchOption.TopDirectoryOnly);
-
             var reportRuntime = results.BuildReport.AddChild(TinyBuildReport.RuntimeNode);
+
+            // special case the modularizable build for release builds with symbols disabled
+            if (options.Configuration == TinyBuildConfiguration.Release &&
+                options.Platform == TinyPlatform.Html5 &&
+                options.ProjectSettings.SymbolsInReleaseBuild == false)
+            {
+                var runtimeFile = Path.Combine(runtimePath, "RuntimeGemini.js");
+                var destPath = Path.Combine(results.BinaryFolder.FullName, "runtime.js");
+
+                var dependencies = options.Project.Module.Dereference(options.Project.Registry).EnumerateDependencies();
+                var regex = new System.Text.RegularExpressions.Regex(@"\/\*if\(([\s\S]*?)\)\*\/([\s\S]*?)\/\*endif\(([\s\S]*?)\)\*\/");
+                var runtime = File.ReadAllText(runtimeFile);
+                runtime = regex.Replace(runtime, match => match.Groups[match.Groups[1].Value.Split('|').Any(module => dependencies.WithName("UTiny." + module).Any() || module == "RendererGLWebGL") ? 2 : 3].Value);
+                File.WriteAllText(destPath, runtime);
+                reportRuntime.AddChild(new FileInfo(destPath));
+                return;
+            }
+
+            var runtimeFiles = new DirectoryInfo(runtimePath).GetFiles(runtimeVariant + "*", SearchOption.TopDirectoryOnly);
             foreach (var runtimeFile in runtimeFiles)
             {
                 if (runtimeFile.Name.EndsWith(".js.symbols") || runtimeFile.Name.EndsWith(".js.map") || runtimeFile.Name.EndsWith(".dll"))
@@ -508,53 +532,12 @@ namespace Unity.Tiny
                 WriteComponentBehaviourCode(scripting, writer);
 
                 // Create and setup the world
+                writer.Line("// Singleton world");
                 writer.Line("var world = new ut.World();");
-                writer.Line("var options = WorldSetup(world);");
-
-                // Store world handle in wsclient in debug/development configs
-                if (options.Configuration != TinyBuildConfiguration.Release)
-                {
-                    writer.Line("ut._wsclient = ut._wsclient || {};");
-                    writer.Line("ut._wsclient.world = world;");
-                }
-
-                // Write configurations
-                var context = new EntityGroupSetupVisitor.VisitorContext
-                {
-                    Project = project,
-                    Module = project.Module.Dereference(project.Registry),
-                    Registry = project.Registry,
-                    Writer = writer
-                };
-
-                var configuration = project.Configuration.Dereference(registry);
-                foreach (var component in configuration.Components)
-                {
-                    var moduleContainingType = registry.FindAllByType<TinyModule>().FirstOrDefault(m => m.Types.Contains(component.Type));
-                    if (null == moduleContainingType)
-                    {
-                        continue;
-                    }
-
-                    if (!module.EnumerateDependencies().Contains(moduleContainingType))
-                    {
-                        // Silently ignore components if the module is not included.
-                        // This is by design to preserve user data
-                        continue;
-                    }
-
-                    var type = component.Type.Dereference(component.Registry);
-                    var componentIndex = context.ComponentIndexMap.GetOrAddValue(component);
-                    writer.Line($"var c{componentIndex} = world.getConfigData({GetJsTypeName(type)});");
-                    component.Properties.Visit(new EntityGroupSetupVisitor.ComponentVisitor
-                    {
-                        VisitorContext = context,
-                        Path = $"c{componentIndex}",
-                    });
-                    writer.Line($"world.setConfigData(c{componentIndex});");
-                }
-
-                // Setup the scheduler
+                
+                // Setup the scheduler                
+                writer.Line();
+                writer.Line("// Schedule all systems");
                 writer.Line("var scheduler = world.scheduler();");
 
                 // Schedule all systems
@@ -586,59 +569,85 @@ namespace Unity.Tiny
                         systemName += "JS";
                     }
                     writer.LineFormat("scheduler.schedule({0});", systemName);
-                }
+                }                
+                
+                writer.Line();
+                writer.Line("// Initialize all configuration data");
 
-                writer.Line("try { ut.Runtime.Service.run(world); } catch (e) { if (e !== 'SimulateInfiniteLoop') throw e; }");
-
-                if (exportedModules.Contains(registry.FindByName<TinyModule>("UTiny.Profiler")) &&
-                    options.Configuration != TinyBuildConfiguration.Release &&
-                    options.AutoConnectProfiler)
+                // Write configurations
+                var context = new EntityGroupSetupVisitor.VisitorContext
                 {
-                    writer.Line("ut.Profiler.startProfiling(world);");
-                }
-            }
+                    Project = project,
+                    Module = project.Module.Dereference(project.Registry),
+                    Registry = project.Registry,
+                    Writer = writer
+                };
 
-            writer.Line();
+                var configuration = project.Configuration.Dereference(registry);
+                foreach (var component in configuration.Components)
+                {
+                    var moduleContainingType = registry.FindAllByType<TinyModule>().FirstOrDefault(m => m.Types.Contains(component.Type));
+                    if (null == moduleContainingType)
+                    {
+                        continue;
+                    }
 
-            using (writer.Scope("function WorldSetup(world)"))
-            {
-                writer.Line("ut.EntityLookupCache.initialize(world);");
+                    if (!module.EnumerateDependencies().Contains(moduleContainingType))
+                    {
+                        // Silently ignore components if the module is not included.
+                        // This is by design to preserve user data
+                        continue;
+                    }
+
+                    var type = component.Type.Dereference(component.Registry);
+                    var componentIndex = context.ComponentIndexMap.GetOrAddValue(component);
+                    writer.Line($"var c{componentIndex} = world.getConfigData({TinyScriptUtility.GetJsTypeName(type)});");
+                    component.Properties.Visit(new EntityGroupSetupVisitor.ComponentVisitor
+                    {
+                        VisitorContext = context,
+                        Path = $"c{componentIndex}",
+                    });
+                    writer.Line($"world.setConfigData(c{componentIndex});");
+                }                
+                
+                writer.Line();
+                writer.Line("// Create and initialize all resource entities");
                 writer.LineFormat("UT_ASSETS_SETUP(world);");
-
+                
                 var startupEntityGroup = module.StartupEntityGroup.Dereference(module.Registry);
 
                 if (null != startupEntityGroup)
                 {
-                    // @HACK 
-                    const string kStreamingModuleId = "29e5e02a3a0442beb9e6828c78a7ff91";
-                    if (module.EnumerateRefDependencies().Contains(new TinyModule.Reference(new TinyId(kStreamingModuleId), "Tiny.Streaming")))
-                    {
-                        writer.Line($"ut.Streaming.StreamingService.instantiate(world, \"{module.Namespace}.{module.StartupEntityGroup.Dereference(module.Registry).Name}\");");
-                    }
-                    else
-                    {
-                        writer.Line($"{KEntityGroupNamespace}.{module.Namespace}[\"{module.StartupEntityGroup.Dereference(module.Registry).Name}\"].load(world);");
-                    }
+                    // The streaming service is always included
+                    writer.Line();
+                    writer.Line("// Create and initialize all startup entities");
+                    writer.Line($"ut.EntityGroup.instantiate(world, \"{module.Namespace}.{module.StartupEntityGroup.Dereference(module.Registry).Name}\");");
                 }
                 else
                 {
                     Debug.LogError($"{TinyConstants.ApplicationName}: BuildError - No startup group has been set");
                 }
 
-                using (writer.Scope("return"))
+                // Store world handle in wsclient in debug/development configs
+                if (options.Configuration != TinyBuildConfiguration.Release)
                 {
-                    writer
-                        .LineFormat("canvasWidth: {0},", project.Settings.CanvasWidth)
-                        .LineFormat("canvasHeight: {0},", project.Settings.CanvasHeight)
-                        .LineFormat("canvasAutoResize: {0},", project.Settings.CanvasAutoResize ? "true" : "false");
+                    writer.Line();
+                    writer.Line("// Set up the WebSocket client");
+                    writer.Line("ut._wsclient = ut._wsclient || {};");
+                    writer.Line("ut._wsclient.world = world;");
                 }
+                
+                writer.Line();
+                writer.Line("// Start the player loop");
+                writer.Line("try { ut.Runtime.Service.run(world); } catch (e) { if (e !== 'SimulateInfiniteLoop') throw e; }");
 
-#if UNITY_EDITOR_WIN
-                writer.Length -= 2;
-#else
-                writer.Length -= 1;
-#endif
-                writer.WriteRaw(";").Line();
+                if (exportedModules.Contains(registry.FindByName<TinyModule>("UTiny.Profiler")) &&
+                    options.Configuration != TinyBuildConfiguration.Release &&
+                    options.AutoConnectProfiler)
+                {                
+                    writer.Line();
+                    writer.Line("ut.Profiler.startProfiling(world);");
+                }
             }
 
             File.WriteAllText(file.FullName, writer.ToString(), Encoding.UTF8);
@@ -772,20 +781,19 @@ namespace Unity.Tiny
         /// </summary>
         private static void GenerateWebSocketClient(TinyBuildOptions options, TinyBuildResults results)
         {
-            if (!options.Project.Settings.IncludeWSClient || options.Configuration == TinyBuildConfiguration.Release)
+            if (options.Configuration == TinyBuildConfiguration.Release)
             {
                 return;
             }
 
-            // Put local http server address into the wsclient script
-            var content = File.ReadAllText(Path.Combine(TinyRuntimeInstaller.GetToolDirectory("wsclient"), KWebSocketClientFileName));
-            content = content.Replace("{{IPADDRESS}}", WebSocketServer.Instance.IPAddress);
-
             // Write wsclient to binary dir
-            var file = new FileInfo(Path.Combine(results.BinaryFolder.FullName, KWebSocketClientFileName));
-            File.WriteAllText(file.FullName, content, Encoding.UTF8);
-
-            results.BuildReport.GetOrAddChild(TinyBuildReport.CodeNode).AddChild(file);
+            var source = new FileInfo(Path.Combine(TinyRuntimeInstaller.GetToolDirectory("wsclient"), KWebSocketClientFileName));
+            if (source.Exists)
+            {
+                var destination = new FileInfo(Path.Combine(results.BinaryFolder.FullName, KWebSocketClientFileName));
+                source.CopyTo(destination.FullName, true);
+                results.BuildReport.GetOrAddChild(TinyBuildReport.CodeNode).AddChild(destination);
+            }
         }
 
         /// <summary>
@@ -867,6 +875,7 @@ namespace Unity.Tiny
                 using (writer.Scope("<head>"))
                 {
                     writer.Line("<meta charset=\"UTF-8\">");
+                    writer.Line("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");  
                     if (UsesAdSupport(project))
                     {
                         writer.Line("<script src=\"mraid.js\"></script>");

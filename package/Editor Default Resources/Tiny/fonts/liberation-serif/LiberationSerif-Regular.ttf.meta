@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 37970b5f23f5a83439584b047c4619c2
+guid: 21e34fa09336ce242839b3c0334429e2
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -11,7 +11,11 @@ TrueTypeFontImporter:
   fontName: Liberation Serif
   fontNames:
   - Liberation Serif
-  fallbackFontReferences: []
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: a87ad0e5c591c4f4dbb80521021184ba, type: 3}
+  - {fileID: 12800000, guid: be394a274a9e674409be18e7b4662f4a, type: 3}
+  - {fileID: 12800000, guid: 7c48264843c045b4592e21d4d6105ef6, type: 3}
+  - {fileID: 12800000, guid: 37970b5f23f5a83439584b047c4619c2, type: 3}
   customCharacters: 
   fontRenderingMode: 0
   ascentCalculationMode: 1

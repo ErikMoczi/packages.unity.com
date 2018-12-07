@@ -15,6 +15,11 @@ namespace Unity.Tiny
                 return false;
             }
 
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                return true;
+            }
+
             var obj = Selection.activeObject;
 
             if (obj is UTEntityGroup && AssetDatabase.TryGetGUIDAndLocalFileIdentifier(obj, out var guid, out long id))

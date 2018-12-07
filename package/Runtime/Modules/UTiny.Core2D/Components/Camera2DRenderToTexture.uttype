@@ -1,0 +1,37 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "74fd16cc3979901abf3cd4ff3f2a5265",
+    "Name": "Camera2DRenderToTexture",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "Visibility": 0,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "34be3d989af7173c9123925ca12f1812",
+        "Name": "width",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "0aedde79629dfaa95abfa8b163c79e32",
+        "Name": "height",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "ebf91b0e1150f7ddca36191385ca49b1",
+        "Name": "freeze",
+        "FieldType": { "Id": "2b477f505af74487b7092b5617d88d3f", "Name": "Boolean" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "0cd57ebf1c4b0c9de27345d0f8d8bfb9",
+        "Name": "target",
+        "FieldType": { "Id": "5a182d9d039d4dfd8fa96132d05f9ee7", "Name": "EntityReference" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "74fd16cc3979901abf3cd4ff3f2a5265", "Name": "Camera2DRenderToTexture" }
+    }
+}]

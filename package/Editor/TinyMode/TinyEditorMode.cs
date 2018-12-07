@@ -51,7 +51,8 @@ namespace Unity.Tiny
 			// Overrides for Unity Types
 			context.RegisterOverride<TinyInspector>(TinyEditorBridge.CoreWindowTypes.Inspector);
 			context.RegisterOverride<TinyHierarchyWindow>(TinyEditorBridge.CoreWindowTypes.Hierarchy);
-		}
+            context.RegisterOverride<TinyGameView>(TinyEditorBridge.CoreWindowTypes.GameView);
+        }
 
 		public override void OnExitMode()
 		{

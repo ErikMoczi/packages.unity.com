@@ -4,6 +4,7 @@
     "Name": "WeightedMode",
     "ExportFlags": 4,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Enum",
     "Fields": [{
         "Id": "a7ebaccd0f1f2e0cef2584c6799fe88f",

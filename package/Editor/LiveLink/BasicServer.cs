@@ -18,38 +18,58 @@ namespace Unity.Tiny
             // Restore process if its already running
             try
             {
-                var pid = EditorPrefs.GetInt(SettingPID, 0);
-                ServerProcess = pid > 0 ? Process.GetProcessById(pid) : null;
+                ServerProcess = BackupPID > 0 ? Process.GetProcessById(BackupPID) : null;
             }
             catch (ArgumentException)
             {
                 ServerProcess = null;
             }
 
-            if (ServerProcess != null && !ServerProcess.HasExited)
+            if (ServerProcess == null || ServerProcess.HasExited || ServerProcess.ProcessName != TinyShell.ToolsManagerNativeName())
             {
-                Port = EditorPrefs.GetInt(SettingPort, 0);
-                IPCPort = EditorPrefs.GetInt(SettingIPC, 0);
+                BackupPID = 0;
+                BackupPort = 0;
+                BackupIPCPort = 0;
+            }
+            else
+            {
+                Port = BackupPort;
+                IPCPort = BackupIPCPort;
                 Listening = SetupIPC();
             }
         }
 
         protected enum ServerEvent { Connected, DataReceived, Disconnected, Broadcast, Reconnect };
         private Process ServerProcess { get; set; }
-        private string SettingPID => $"unity.tiny.{Name}.pid";
-        private string SettingPort => $"unity.tiny.{Name}.port";
-        private string SettingIPC => $"unity.tiny.{Name}.ipc";
         protected string Name { get; set; }
         protected abstract string[] ShellArgs { get; }
         public bool Listening { get; private set; }
         public int Port { get; private set; }
-        public string IPAddress => $"{LocalIP}:{Port}";
+        public abstract Uri URL { get; }
 
         protected bool UseIPC { get; private set; }
         protected IPCStream IPCStream { get; private set; }
         private int IPCPort { get; set; }
 
-        private string LocalIP
+        private int BackupPID
+        {
+            get => EditorPrefs.GetInt($"Unity.Tiny.{Name}.PID", 0);
+            set => EditorPrefs.SetInt($"Unity.Tiny.{Name}.PID", value);
+        }
+
+        private int BackupPort
+        {
+            get => EditorPrefs.GetInt($"Unity.Tiny.{Name}.Port", 0);
+            set => EditorPrefs.SetInt($"Unity.Tiny.{Name}.Port", value);
+        }
+
+        private int BackupIPCPort
+        {
+            get => EditorPrefs.GetInt($"Unity.Tiny.{Name}.IPCPort", 0);
+            set => EditorPrefs.SetInt($"Unity.Tiny.{Name}.IPCPort", value);
+        }
+
+        public static string LocalIP
         {
             get
             {
@@ -183,8 +203,8 @@ namespace Unity.Tiny
                     Close();
                     return false;
                 }
-                IPCStream.DataReceived += OnIPCDataReceived;
-                IPCStream.Closed += OnIPCClosed;
+                IPCStream.OnDataReceived += OnIPCDataReceived;
+                IPCStream.OnClosed += OnIPCClosed;
                 IPCStream.StartReadAsync();
             }
             return true;
@@ -207,9 +227,9 @@ namespace Unity.Tiny
                 return false;
             }
 
-            EditorPrefs.SetInt(SettingPID, ServerProcess.Id);
-            EditorPrefs.SetInt(SettingPort, Port);
-            EditorPrefs.SetInt(SettingIPC, IPCPort);
+            BackupPID = ServerProcess?.Id ?? 0;
+            BackupPort = Port;
+            BackupIPCPort = IPCPort;
             Listening = true;
             return true;
         }
@@ -222,14 +242,14 @@ namespace Unity.Tiny
             }
 
             Listening = false;
-            EditorPrefs.SetInt(SettingIPC, 0);
-            EditorPrefs.SetInt(SettingPort, 0);
-            EditorPrefs.SetInt(SettingPID, 0);
+            BackupIPCPort = 0;
+            BackupPort = 0;
+            BackupPID = 0;
 
             if (IPCStream != null)
             {
-                IPCStream.DataReceived -= OnIPCDataReceived;
-                IPCStream.Closed -= OnIPCClosed;
+                IPCStream.OnDataReceived -= OnIPCDataReceived;
+                IPCStream.OnClosed -= OnIPCClosed;
                 IPCStream.Close();
                 IPCStream = null;
             }

@@ -1,12 +1,10 @@
-﻿
-
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.Compilation;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEditor.Compilation;
 
 namespace Unity.Tiny
 {
@@ -64,7 +62,7 @@ namespace Unity.Tiny
             {
                 // We only want to trigger a save if the project has some changes to it
                 // @NOTE The change check is only performed in this path (e.g. NOT when explicitly clicking the save button from tiny)
-                if (IsChanged && !s_DontSave)
+                if (!s_DontSave)
                 {
                     Save();
                 }
@@ -89,13 +87,7 @@ namespace Unity.Tiny
         public static TinyModule Module => EditorContext?.Module;
         
         internal static EditorContextType ContextType => EditorContext?.ContextType ?? EditorContextType.None;
-
-        /// <summary>
-        /// Returns true if the current project has any modifications
-        /// </summary>
-        public static bool IsChanged { get; private set; }
         
-        public static event Action OnChangesDetected;
         public static event ProjectEventHandler OnLoadProject;
         public static event ProjectEventHandler OnWillSaveProject;
         public static event ProjectEventHandler OnSaveProject;
@@ -145,7 +137,7 @@ namespace Unity.Tiny
 
                     try
                     {
-                        LoadTemp();
+                        LoadTemp(ContextUsage.Edit);
                     }
                     finally
                     {
@@ -162,6 +154,7 @@ namespace Unity.Tiny
                 return;
             }
 
+            var context = EditorContext.Context;
             var registry = EditorContext.Registry;
             var rootPersistentObject = EditorContext.GetPersistentObjects().First();
 
@@ -177,7 +170,54 @@ namespace Unity.Tiny
 
             if (changes.changesDetected)
             {
-                // Get all opened persistent objects
+                var persistenceId = EditorContext.GetPersistentObjects().First().PersistenceId;
+                
+                // Perform asset link/unlink 
+                // This is to handle any assets that have been dragged in to the project from the file system or asset browser
+                foreach (var moved in changes.movedSources.Concat(changes.createdSources).Distinct())
+                {
+                    var objects = Persistence.GetRegistryObjectIdsForAssetGuid(moved);
+
+                    if (objects.Length < 1)
+                    {
+                        continue;
+                    }
+
+                    var obj = Registry.FindById(new TinyId(objects[0]));
+
+                    if (persistenceId == Persistence.GetMainAssetGuid(moved))
+                    {
+                        // This object has been moved as a child of our project
+                        // Load and add it as a reference if needed
+                        
+                        if (null == obj)
+                        {
+                            Persistence.ReloadObject(registry, moved);
+                        }
+
+                        Module.TryAddObjectReference(obj);
+                    }
+                    else if (null != obj)
+                    {
+                        // This loaded object was moved and is NOT a child of our project
+                        // Unload the object if needed
+                        
+                        if (obj is TinyEntityGroup group)
+                        {
+                            var groupManager = context.GetManager<IEntityGroupManager>();
+                            if (groupManager.LoadedEntityGroups.Contains(group.Ref))
+                            {
+                                groupManager.UnloadEntityGroup(group.Ref);
+                            }
+                        }
+                        
+                        Module.TryRemoveObjectReference(obj);
+                        registry.UnregisterAllBySource(moved);
+                    }
+                }
+                
+                // Get all opened persistent objects 
+                // @NOTE This includes newly `moved in` assets from above
                 var persistentObjects = EditorContext.GetPersistentObjects().ToList();
 
                 foreach (var change in changes.changedSources)
@@ -192,11 +232,8 @@ namespace Unity.Tiny
                             "Yes", 
                             "No"))
                         {
-                            LoadPersistenceId(change);
-                        }
-                        else
-                        {
-                            SetDirty();
+                            LoadPersistenceId(change, new TinyContext(ContextUsage.Edit));
+                            return;
                         }
                     }
                     else
@@ -222,24 +259,32 @@ namespace Unity.Tiny
                             return;
                         }
                         
-                        SetDirty();
                         rootPersistentObject.PersistenceId = string.Empty;
                     }
                     else
                     {
                         foreach (var obj in registry.FindAllBySource(deletion))
                         {
-                            var entityGroup = obj as TinyEntityGroup;
-                            if (null != entityGroup)
+                            if (obj is IPersistentObject persistentObject)
+                            {
+                                persistentObject.PersistenceId = string.Empty;
+                            }
+                            
+                            if (obj is TinyEntityGroup entityGroup)
                             {
                                 using (entityGroup.Registry.DontTrackChanges())
                                 {
                                     EditorContext.Module.RemoveEntityGroupReference((TinyEntityGroup.Reference) entityGroup);
                                 }
+                                
+                                var groupManager = context.GetManager<IEntityGroupManager>();
+                                if (groupManager.LoadedEntityGroups.Contains(entityGroup.Ref))
+                                {
+                                    groupManager.UnloadEntityGroup(entityGroup.Ref);
+                                }
                             }
-                            
-                            var type = obj as TinyType;
-                            if (null != type)
+
+                            if (obj is TinyType type)
                             {
                                 EditorContext.Module.RemoveTypeReference((TinyType.Reference) type);
                             }
@@ -271,7 +316,6 @@ namespace Unity.Tiny
                 }
 
                 TinyEventDispatcher<ChangeSource>.Dispatch(ChangeSource.DataModel);
-                OnChangesDetected?.Invoke();
             }
            
             // Poll for module or project changes
@@ -285,24 +329,6 @@ namespace Unity.Tiny
                 s_ProjectVersion = EditorContext.Project.Version;
                 s_ModuleVersion = EditorContext.Module.Version;
             }
-        }
-        
-        /// <summary>
-        /// Flags the current project/workspace as being changed
-        ///
-        /// @NOTE This will show the user a small * to show the project is "dirty"
-        /// </summary>
-        private static void SetDirty()
-        {
-            IsChanged = true;
-        }
-
-        /// <summary>
-        /// Clears the changed flag on the current project/workspace
-        /// </summary>
-        private static void ClearDirty()
-        {
-            IsChanged = false;
         }
 
         /// <summary>
@@ -333,6 +359,7 @@ namespace Unity.Tiny
             camera["clearFlags"] = new TinyEnum.Reference(TypeRefs.Core2D.CameraClearFlags.Dereference(registry), 1);
             camera.AssignPropertyFrom("backgroundColor", Color.black);
             camera["depth"] = -1.0f;
+            cameraEntity.EntityGroup = entityGroup;
             entityGroup.AddEntityReference((TinyEntity.Reference) cameraEntity);
 
             // Setup initial state for the project
@@ -344,10 +371,10 @@ namespace Unity.Tiny
 
             project.Module = (TinyModule.Reference) module;
             project.Settings.EmbedAssets = true;
+            project.Settings.SymbolsInReleaseBuild = false;
             project.Settings.RunBabel = true;
             project.Settings.LinkToSource = true;
             project.Settings.CanvasAutoResize = true;
-            project.Settings.IncludeWSClient = true;
             project.Settings.CanvasWidth = 1920;
             project.Settings.CanvasHeight = 1080;
             project.Settings.RenderMode = RenderingMode.Auto;
@@ -355,7 +382,7 @@ namespace Unity.Tiny
             var initialModules = new[]
             {
                 "UTiny.Core2D", 
-                "Tiny.Streaming", 
+                "UTiny.EntityGroup", 
                 "UTiny.Core2DTypes",
                 "UTiny.HTML", 
                 "UTiny.Image2D", 
@@ -393,7 +420,9 @@ namespace Unity.Tiny
             
             var editorContext = new TinyEditorContext((TinyProject.Reference) project, EditorContextType.Project, context, workspace);
 
+            // Create the initial project structure
             new DirectoryInfo(Path.Combine(path, "Components")).Create();
+            new DirectoryInfo(Path.Combine(path, "Scripts")).Create();
             
             SavePersistentObjectsAs(editorContext, Path.Combine(path, Persistence.GetFileName(project)));
 
@@ -457,9 +486,17 @@ namespace Unity.Tiny
         /// <param name="projectFile">Relative path to the .utproject file</param>
         public static TinyProject LoadProject(string projectFile)
         {
-            Assert.IsFalse(EditorApplication.isPlayingOrWillChangePlaymode);
-
             var context = new TinyContext(ContextUsage.Edit);
+            return LoadProject(projectFile, context);
+        }
+
+        /// <summary>
+        /// Loads the utproject at the given file path, using the specified context
+        /// </summary>
+        /// <param name="projectFile">Relative path to the .utproject file</param>
+        /// <param name="context">Context to use when loading the project</param>
+        private static TinyProject LoadProject(string projectFile, TinyContext context)
+        {
             var registry = context.Registry;
             
             Persistence.LoadProject(projectFile, registry);
@@ -509,9 +546,19 @@ namespace Unity.Tiny
         /// <param name="moduleFile">Relative path to the .utmodule file</param>
         public static TinyModule LoadModule(string moduleFile)
         {
+            var context = new TinyContext(ContextUsage.Edit);
+            return LoadModule(moduleFile, context);
+        }
+
+        /// <summary>
+        /// Loads the utmodule at the given file path, using the specified context
+        /// </summary>
+        /// <param name="moduleFile">Relative path to the .utmodule file</param>
+        /// <param name="context">Context to use when loading the module</param>
+        private static TinyModule LoadModule(string moduleFile, TinyContext context)
+        {
             Assert.IsFalse(EditorApplication.isPlayingOrWillChangePlaymode);
 
-            var context = new TinyContext(ContextUsage.Edit);
             var registry = context.Registry;
 
             Persistence.LoadModule(moduleFile, registry);
@@ -533,8 +580,9 @@ namespace Unity.Tiny
         /// <summary>
         /// Loads the given asset by its guid
         /// </summary>
-        /// <param name="persistenceId"></param>
-        public static void LoadPersistenceId(string persistenceId)
+        /// <param name="persistenceId">Asset guid</param>
+        /// <param name="context">Context to use when loading the asset</param>
+        private static void LoadPersistenceId(string persistenceId, TinyContext context)
         {
             if (string.IsNullOrEmpty(persistenceId))
             {
@@ -550,15 +598,15 @@ namespace Unity.Tiny
 
             if (Path.GetExtension(assetPath).Equals(Persistence.ProjectFileExtension))
             {
-                LoadProject(assetPath);
+                LoadProject(assetPath, context);
             }
             else if (Path.GetExtension(assetPath).Equals(Persistence.ModuleFileExtension))
             {
-                LoadModule(assetPath);
+                LoadModule(assetPath, context);
             }
             else
             {
-                Persistence.ReloadObject(Registry, persistenceId);
+                Persistence.ReloadObject(context.Registry, persistenceId);
                 TinyEventDispatcher<ChangeSource>.Dispatch(ChangeSource.DataModel);
             }
         }
@@ -570,6 +618,11 @@ namespace Unity.Tiny
         /// </summary>
         public static bool Save()
         {
+            if (null == EditorContext)
+            {
+                return true;
+            }
+            
             var persistentObject = EditorContext.GetPersistentObjects().First();
 
             if (string.IsNullOrEmpty(persistentObject.PersistenceId))
@@ -596,68 +649,9 @@ namespace Unity.Tiny
             return true;
         }
         
-        /// <summary>
-        /// Save a standalone object to the project
-        /// </summary>
-        /// <param name="persistentObject"></param>
-        /// <param name="extension"></param>
-        public static void SaveObject(IPersistentObject persistentObject, string extension = null)
-        {
-            var name = persistentObject.Name;
-            
-            using (var transaction = new Persistence.PersistTransaction())
-            {
-                if (!string.IsNullOrEmpty(persistentObject.PersistenceId))
-                {
-                    var path = Persistence.GetAssetPath(persistentObject);
-                    transaction.PersistObjectAs(persistentObject, path);
-                }
-                else
-                {
-                    var root = EditorContext.GetPersistentObjects().First();
-                    var rootPath = Persistence.GetAssetPath(root);
-                    var rootDirectory = new FileInfo(rootPath).Directory;
-                
-                    Assert.IsNotNull(rootDirectory);
-                
-                    var fileInfo = new FileInfo(Path.Combine(rootDirectory.FullName, Persistence.GetRelativePathForSubAsset(persistentObject)));
-                
-                    // Make sure the directory exists
-                    fileInfo.Directory?.Create();
-
-                    var path = fileInfo.FullName; 
-                
-                    if (null != extension)
-                    {
-                        path = Path.ChangeExtension(path, extension);
-                    }
-                
-                    transaction.PersistObjectAs(persistentObject, path);
-                }
-            }
-            
-            // Fix to get prefab naming to follow when applying
-            if (Path.GetFileName(Persistence.GetAssetPath(persistentObject)) != name)
-            {
-                var result = AssetDatabase.RenameAsset(Persistence.GetAssetPath(persistentObject), name);
-
-                if (!string.IsNullOrEmpty(result))
-                {
-                    Debug.LogWarning(result);
-                }
-            }
-            
-            foreach (var obj in persistentObject.EnumerateContainers().OfType<IRegistryObject>())
-            {
-                // Re-register this object under to the `SourceIdentifier`
-                Registry.ChangeSource(obj.Id, persistentObject.PersistenceId);
-            }
-        }
-
-        private static void SavePersistentObjectsAs(TinyEditorContext context, string path)
+        private static void SavePersistentObjectsAs(TinyEditorContext context, string path, bool saveSubAssets = true)
         {
             var persistentObject = context.GetPersistentObjects().First();
-            var subPersistentObjects = context.GetPersistentObjects().Skip(1).ToList();
             
             using (context.Registry.DontTrackChanges())
             using (SaveModificationProcessor.DontSaveScope())
@@ -666,64 +660,11 @@ namespace Unity.Tiny
 
                 var projectDirectory = new FileInfo(path).Directory;
                 Assert.IsNotNull(projectDirectory);
-
-                // @TEMP Generate the scripts directory for the user
-                var scriptsPath = AssetDatabase.GUIDToAssetPath(context.Module.ScriptRootDirectory);
-                var scriptsDirExisted = Directory.Exists(scriptsPath);
-                if (string.IsNullOrEmpty(context.Module.ScriptRootDirectory) || false == scriptsDirExisted)
-                {
-                    var scriptsDirectory = new DirectoryInfo(Path.Combine(projectDirectory.FullName, "Scripts"));
-
-                    scriptsDirectory.Create();
-
-                    var scriptsAssetPath = Persistence.GetPathRelativeToProjectPath(scriptsDirectory.FullName);
-                    AssetDatabase.ImportAsset(scriptsAssetPath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUncompressedImport);
-                    context.Module.ScriptRootDirectory = AssetDatabase.AssetPathToGUID(scriptsAssetPath);
-
-                    if (scriptsDirExisted)
-                    {
-                        Registry.Context.GetManager<TinyScriptingManager>().Refresh();
-                    }
-                }
-
-                using (var transaction = new Persistence.PersistTransaction())
-                {
-                    // Save the root persistent object to the project directory
-                    // @TODO This is a forced save to disc (ignoring the version check optimization)
-                    //       This is a workaround since changes to the module are not propagated to the project
-                    transaction.PersistObjectAs(persistentObject, path);
                 
-                    foreach (var obj in subPersistentObjects)
-                    {
-                        if (!string.IsNullOrEmpty(obj.PersistenceId))
-                        {
-                            // This asset has been saved before, save in place using the asset database to resolve the path
-                            transaction.PersistObjectAs(obj, Persistence.GetAssetPath(obj));
-                        }
-                        else
-                        {
-                            var fileInfo = new FileInfo(Path.Combine(projectDirectory.FullName, Persistence.GetRelativePathForSubAsset(obj)));
-                            Assert.IsNotNull(fileInfo.Directory);
-                        
-                            // Make sure the directory exists
-                            fileInfo.Directory.Create();
-
-                            // This is the first time saving this sub-asset (place it in the default directory)
-                            transaction.PersistObjectAs(obj, fileInfo.FullName);
-                        }
-                    }
-                }
-
-                // This must be done AFTER the transaction is completed and assets are imported
-                foreach (var obj in subPersistentObjects)
-                {
-                    // Re-register this object under to the `SourceIdentifier`
-                    context.Registry.ChangeSource(obj.Id, obj.PersistenceId);
-                }
+                Persistence.SaveObjectsAs(context.Registry, saveSubAssets ? context.GetPersistentObjects() : context.GetPersistentObjects().First().AsEnumerable(), path);
                 
                 TinyEditorPrefs.SaveWorkspace(context.Workspace, persistentObject.PersistenceId);
                 OnSaveProject?.Invoke(context.Project, context.Context);
-                ClearDirty();
                 TinyAssetWatcher.ClearChanges();
             }
         }
@@ -744,8 +685,15 @@ namespace Unity.Tiny
             {
                 return true;
             }
+
+            // If we are NOT in a user edit context (i.e. Tests or LiveLink) no auto saving will be done
+            // Saving is still possible in theses contexts by calling `Save` directly
+            if (EditorContext.Context.Usage != ContextUsage.Edit)
+            {
+                return true;
+            }
             
-            if (IsChanged)
+            if (EditorContext.GetPersistentObjects().Any(Persistence.IsPersistentObjectChanged))
             {
                 var dialogResult = EditorUtility.DisplayDialogComplex(
                     $"Save {ContextType}",
@@ -809,8 +757,6 @@ namespace Unity.Tiny
                 {
                     TinyTemp.Delete();
                 }
-
-                ClearDirty();
             }
 
             Selection.instanceIDs = selection;
@@ -821,7 +767,7 @@ namespace Unity.Tiny
         /// </summary>
         private static void SaveTemp()
         {
-            if (null == EditorContext)
+            if (null == EditorContext || EditorApplication.isPlaying)
             {
                 return;
             }
@@ -840,7 +786,7 @@ namespace Unity.Tiny
                 }
                 else
                 {
-                    if (IsChanged || persistentObjects.Any(o => string.IsNullOrEmpty(o.PersistenceId)))
+                    if (persistentObjects.Any(Persistence.IsPersistentObjectChanged))
                     {
                         // This is a persistent asset but the user has made some changes
                         // Save the full object state WITH the persistent Id
@@ -858,29 +804,27 @@ namespace Unity.Tiny
         }
 
         /// <summary>
-        /// Trys to loads the last saved temp file
+        /// Tries to loads the last saved temp file
         /// </summary>
-        public static void LoadTemp()
+        public static void LoadTemp(ContextUsage usage)
         {
             if (UnityEditorInternal.InternalEditorUtility.inBatchMode)
             {
                 return;
             }
 
-            Assert.IsFalse(EditorApplication.isPlayingOrWillChangePlaymode);
-
             if (!TinyTemp.Exists())
             {
                 return;
             }
 
-            var context = new TinyContext(ContextUsage.Edit);
+            var context = new TinyContext(usage);
             var registry = context.Registry;
 
             string persistenceId;
             if (!TinyTemp.Accept(registry, out persistenceId))
             {
-                LoadPersistenceId(persistenceId);
+                LoadPersistenceId(persistenceId, context);
                 return;
             }
 
@@ -909,7 +853,7 @@ namespace Unity.Tiny
             }
 
             Assert.IsNotNull(project);
-            LoadContext(editorContext, true);
+            LoadContext(editorContext, isChanged: true);
         }
         
         /// <summary>
@@ -957,8 +901,6 @@ namespace Unity.Tiny
         {
             Assert.IsNotNull(context);
 
-            ClearDirty();
-
             // @NOTE Loading a project can cause a Unity scene to change or be loaded during this operation we dont want to trigger a save 
             using (SaveModificationProcessor.DontSaveScope())
             {
@@ -981,42 +923,63 @@ namespace Unity.Tiny
                 OnLoadProject?.Invoke(context.Project, EditorContext.Context);
 
                 // Flush the Undo stack
-                var undo = EditorContext.Context.GetManager<TinyUndoManager>();
+                var undo = EditorContext.Context.GetManager<IUndoManager>();
                 undo.Update();
-
-                // Listen for ANY changes and flag the project as changed (*)
-                context.Caretaker.OnGenerateMemento += (originator, memento) => { SetDirty(); };
-                undo.OnUndoPerformed += changes => SetDirty();
-                undo.OnRedoPerformed += changes => SetDirty();
 
                 // Regenerate the TypeScript definition files whenever something changes related to modules and layers
                 context.Caretaker.OnGenerateMemento += OnTypeScriptDefinitionChanged;
-                context.Context.GetManager<TinyEntityGroupManager>().OnWillUnloadEntityGroup += HandleOnWillUnloadEntityGroup;
-            }
-
-            if (isChanged)
-            {
-                SetDirty();
             }
             
             TinyBuildUtilities.CompileScripts();
         }
 
-        private static void HandleOnWillUnloadEntityGroup(TinyEntityGroup.Reference entityGroupRef)
+        /// <summary>
+        /// Prompts the user to save the given entity group
+        /// </summary>
+        /// <param name="entityGroupRef"></param>
+        /// <returns>True if the group was saved or reloaded. False if the operation was canceled</returns>
+        internal static bool ShowSaveEntityGroupPrompt(TinyEntityGroup.Reference entityGroupRef)
         {
+            if (EditorContext.Context.Usage != ContextUsage.Edit)
+            {
+                return true;
+            }
+            
             var group = entityGroupRef.Dereference(EditorContext.Registry);
 
-            if (Persistence.IsPersistentObjectChanged(group))
+            if (null != group && !string.IsNullOrEmpty(group.PersistenceId) && Persistence.IsPersistentObjectChanged(group))
             {
-                if (EditorUtility.DisplayDialog(
-                    $"Entity group has changes", 
-                    $"'{group.Name}' has unsaved changes. Would you like to save before unloading?", 
-                    "Yes", 
-                    "No"))
+                var result = EditorUtility.DisplayDialogComplex(
+                    $"Entity group has changes",
+                    $"'{group.Name}' has unsaved changes. Would you like to save before unloading?",
+                    "Yes",
+                    "No",
+                    "Cancel");
+                
+                switch (result)
                 {
-                    Persistence.PersistObject(group, Persistence.GetAssetPath(group));
+                    // Yes
+                    case 0:
+                        Persistence.PersistObject(group, Persistence.GetAssetPath(group));
+                        return true;
+                        
+                    // No
+                    case 1:
+                        // Reload the object from disc since everything lives in memory
+                        if (null != group.PersistenceId)
+                        {
+                            Persistence.ReloadObject(Registry, group.PersistenceId);
+                        }
+                        return true;
+                        
+                    // Cancel
+                    case 2:
+                        // @TODO Cancel the unload operation and leave the group
+                        return false;
                 }
             }
+            
+            return true;
         }
 
         private static void OnTypeScriptDefinitionChanged(IOriginator originator, IMemento memento)
@@ -1068,4 +1031,3 @@ namespace Unity.Tiny
         }
     }
 }
-

@@ -1,0 +1,20 @@
+{
+    "Success": true,
+    "Diagnostics": [],
+    "Systems": [{
+        "Name": "RendererGLWebGL",
+        "QualifiedName": "ut.Rendering.RendererGLWebGL",
+        "Description": "Created from the 'UTiny.RendererGLWebGL' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.PlatformRenderingFence"
+        ],
+        "ExecuteBefore": [],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }],
+    "Filters": [],
+    "Behaviours": []
+}

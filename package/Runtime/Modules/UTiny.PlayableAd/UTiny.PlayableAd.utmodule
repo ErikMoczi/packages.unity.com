@@ -10,14 +10,5 @@
         { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" },
         { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" },
         { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" }
-    ],
-    "Configurations": [
-        { "Id": "cdbe32251f64fe02b9238ac74fb5dca6", "Name": "PlayableAdInfo" }
-    ],
-    "Structs": [
-        { "Id": "5389968863be40237e8edec2aece188b", "Name": "OrientationProperties" }
-    ],
-    "Enums": [
-        { "Id": "23c7418fdf39b495d4e0cb4cbe9c5381", "Name": "AdState" }
     ]
 }]

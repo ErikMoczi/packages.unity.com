@@ -4,6 +4,7 @@
     "Name": "ColorTintTransition",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "a736e7145055808790002c792400a961",

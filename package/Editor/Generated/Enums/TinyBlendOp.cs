@@ -9,6 +9,7 @@ namespace Unity.Tiny.Runtime.Core2D
         Alpha = 0,
         Add = 1,
         Multiply = 2,
+        MultiplyAlpha = 3,
     }
 
     internal class TinyBlendOpConverter : EnumTypeConverter<TinyBlendOp>

@@ -19,7 +19,15 @@ namespace Unity.Tiny
         /// Creates a baseline entity to track modifications against
         /// </summary>
         void CreateBaseline(TinyEntity instance);
+
+        /// <summary>
+        /// Immediately records modifications for an entity instance
+        /// </summary>
+        void RecordEntityInstanceModifications(TinyEntity entity);
         
+        /// <summary>
+        /// Applies the correct prefab attributes to any reflected components
+        /// </summary>
         void ApplyPrefabAttributesToInstance(TinyEntity prefab, TinyEntity instance);
         
         /// <summary>
@@ -299,7 +307,7 @@ namespace Unity.Tiny
             }
         }
 
-        private void RecordEntityInstanceModifications(TinyEntity entity)
+        public void RecordEntityInstanceModifications(TinyEntity entity)
         {
             RegisterTypesForEntity(entity);
 
@@ -1617,6 +1625,35 @@ namespace Unity.Tiny
 
             return true;
         }
+        
+        /// <summary>
+        /// Returns all `PrefabInstances` that have been spawned of the given EntityGroup
+        /// </summary>
+        /// <param name="prefab"></param>
+        /// <returns></returns>
+        private IEnumerable<TinyPrefabInstance> GetPrefabInstances(TinyEntityGroup.Reference prefab)
+        {
+            return Registry.FindAllByType<TinyPrefabInstance>().Where(instance => instance.PrefabEntityGroup.Equals(prefab));
+        }
+
+        /// <summary>
+        /// Returns the `EntityGroup` that the given reference is a part of
+        /// </summary>
+        /// <param name="entityRef"></param>
+        /// <returns></returns>
+        private TinyEntityGroup GetEntityGroupForEntity(TinyEntity.Reference entityRef)
+        {
+            // @TODO [PREFAB] Use acceleration structure!
+            foreach (var group in Registry.FindAllByType<TinyEntityGroup>())
+            {
+                if (group.Entities.Contains(entityRef))
+                {
+                    return group;
+                }
+            }
+
+            return null;
+        }
 
         /// <summary>
         /// Compresses a property path to remove the `Properties` and `Items` elements
@@ -1704,32 +1741,54 @@ namespace Unity.Tiny
         }
         
         /// <summary>
-        /// Returns all `PrefabInstances` that have been spawned of the given EntityGroup
+        /// Returns true if the currently visited (property, index) is contained in the given (path, root) 
         /// </summary>
-        /// <param name="prefab"></param>
-        /// <returns></returns>
-        private IEnumerable<TinyPrefabInstance> GetPrefabInstances(TinyEntityGroup.Reference prefab)
+        /// <param name="path">Expanded property path</param>
+        /// <param name="root">Start point for the search (typically the component)</param>
+        /// <param name="targetProperty"></param>
+        /// <param name="targetListIndex"></param>
+        /// <returns>True if the currently visited (container, property, index) is contained in the given (path, root)(</returns>
+        internal static bool IsModified(PropertyPath path, IPropertyContainer root, IProperty targetProperty, int targetListIndex = -1)
         {
-            return Registry.FindAllByType<TinyPrefabInstance>().Where(instance => instance.PrefabEntityGroup.Equals(prefab));
-        }
-
-        /// <summary>
-        /// Returns the `EntityGroup` that the given reference is a part of
-        /// </summary>
-        /// <param name="entityRef"></param>
-        /// <returns></returns>
-        private TinyEntityGroup GetEntityGroupForEntity(TinyEntity.Reference entityRef)
-        {
-            // @TODO [PREFAB] Use acceleration structure!
-            foreach (var group in Registry.FindAllByType<TinyEntityGroup>())
+            var currentContainer = root;
+            
+            for (var i = 0; i < path.PartsCount; i++)
             {
-                if (group.Entities.Contains(entityRef))
+                var part = path[i];
+                
+                var currentProperty = currentContainer?.PropertyBag.FindProperty(part.propertyName);
+                
+                if (currentProperty == null)
                 {
-                    return group;
+                    break;
+                }
+
+                if (part.listIndex >= 0)
+                {
+                    if (!(currentProperty is IListClassProperty listProperty) || listProperty.Count(currentContainer) <= part.listIndex)
+                    {
+                        break;
+                    }
+                    
+                    if (ReferenceEquals(currentProperty, targetProperty) && (targetListIndex == -1 || part.listIndex == targetListIndex))
+                    {
+                        return true;
+                    }
+                    
+                    currentContainer = listProperty.GetObjectAt(currentContainer, part.listIndex) as IPropertyContainer;
+                }
+                else
+                {
+                    if (ReferenceEquals(currentProperty, targetProperty))
+                    {
+                        return true;
+                    }
+
+                    currentContainer = (currentProperty as IValueProperty)?.GetObjectValue(currentContainer) as IPropertyContainer;
                 }
             }
 
-            return null;
+            return false;
         }
     }
 }

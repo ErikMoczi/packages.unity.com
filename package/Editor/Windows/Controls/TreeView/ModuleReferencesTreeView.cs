@@ -28,7 +28,7 @@ namespace Unity.Tiny
             {
                 if (module.Dependencies.Count > 0)
                 {
-                    var dependency = new LabelItem("Depencencies", treeView);
+                    var dependency = new LabelItem("Dependencies", treeView);
                     AddChild(dependency);
                     foreach (var d in module.Dependencies.Deref(Registry).OrderBy(m => m.Name))
                     {

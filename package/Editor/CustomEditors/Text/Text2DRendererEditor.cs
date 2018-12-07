@@ -23,23 +23,15 @@ namespace Unity.Tiny
                 EditorGUILayout.HelpBox("A Text2DStyle component is needed with the Text2DRenderer.", MessageType.Warning);
                 AddComponentToTargetButton(context, TypeRefs.Text.Text2DStyle);
             }
-            
-            if (!mainTarget.HasComponent<Runtime.Text.TinyText2DStyleNativeFont>())
+
+            var hasBitmapFont = mainTarget.HasComponent<Runtime.Text.TinyText2DStyleBitmapFont>();
+            var hasNativeFont = mainTarget.HasComponent<Runtime.Text.TinyText2DStyleNativeFont>();
+
+            if (!hasBitmapFont && !hasNativeFont)
             {
-                EditorGUILayout.HelpBox("A Text2DStyleNativeFont component is needed with the Text2DRenderer.", MessageType.Warning);
+                EditorGUILayout.HelpBox("A Text2DStyleBitmapFont or Text2DStyleNativeFont component is needed with the Text2DRenderer.", MessageType.Warning);
+                AddComponentToTargetButton(context, TypeRefs.Text.Text2DStyleBitmapFont);
                 AddComponentToTargetButton(context, TypeRefs.Text.Text2DStyleNativeFont);
-            }
-            
-            if (!mainTarget.HasComponent<Runtime.Text.TinyNativeFont>())
-            {
-                EditorGUILayout.HelpBox("A NativeFont component is needed with the Text2DRenderer.", MessageType.Warning);
-                AddComponentToTargetButton(context, TypeRefs.Text.NativeFont);
-            }
-            
-            if (!mainTarget.HasComponent<Runtime.Text.TinyText2DStyle>())
-            {
-                EditorGUILayout.HelpBox("A Text2DStyle component is needed with the Text2DRenderer.", MessageType.Warning);
-                AddComponentToTargetButton(context, TypeRefs.Text.Text2DStyle);
             }
             
             if (mainTarget.HasComponent<Runtime.UILayout.TinyRectTransform>() &&

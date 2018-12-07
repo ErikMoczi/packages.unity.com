@@ -24,7 +24,7 @@ namespace Unity.Tiny
             OnTilemapSyncTileEvent?.Invoke(tilemap, syncTiles.Select(t => new TilemapSyncTile
             {
                 Position = new Vector2Int(t.m_Position.x, t.m_Position.y),
-                Tile = (Tile)t.m_Tile
+                Tile = t.m_Tile as Tile
             }).ToArray());
         }
 

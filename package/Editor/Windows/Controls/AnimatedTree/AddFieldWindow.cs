@@ -46,7 +46,7 @@ namespace Unity.Tiny
         {
             if (null == Field)
             {
-                Field = Type.CreateField(TinyUtility.GetUniqueName(Type.Fields, "NewField"), value.Ref, false);
+                Field = Type.CreateField(TinyId.New(), TinyUtility.GetUniqueName(Type.Fields, "NewField"), value.Ref, false);
                 OnCreateField?.Invoke(Field);
             }
             else

@@ -1,0 +1,20 @@
+{
+    "Success": true,
+    "Diagnostics": [],
+    "Systems": [{
+        "Name": "RendererCanvas",
+        "QualifiedName": "ut.Rendering.RendererCanvas",
+        "Description": "Created from the 'UTiny.RendererCanvas' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.PlatformRenderingFence"
+        ],
+        "ExecuteBefore": [],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }],
+    "Filters": [],
+    "Behaviours": []
+}

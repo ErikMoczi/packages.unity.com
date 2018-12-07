@@ -4,15 +4,14 @@ using UnityEngine;
 
 namespace Unity.Tiny
 {
-    public static class EntityAdapterUtility
+    internal static class EntityAdapterUtility
     {
         internal static void DrawEntityHeader(ref UIVisitContext<TinyEntity> context)
         {
-            var entities = context.Targets.Cast<TinyEntity>().ToList();
+            var entities = context.Targets.OfType<TinyEntity>().ToList();
             var firstEntity = entities.FirstOrDefault();
             
             var prefabSelected = entities.All(e => e.HasEntityInstanceComponent());
-            var multiEdit = entities.Count > 1;
 
             var height = 18 + 2 * TinyGUIUtility.SingleLineAndSpaceHeight;
 
@@ -26,10 +25,7 @@ namespace Unity.Tiny
             using (new IMGUIPrefabEntityScope(entities))
             {    
                 GUILayout.Space(10);
-                if (null == firstEntity)
-                {
-                    return;
-                }
+                
                 var name = firstEntity.Name;
                 var isStatic = firstEntity.Static;
                 var enabled = firstEntity.Enabled;
@@ -90,7 +86,6 @@ namespace Unity.Tiny
                 var sameLayer = entities.All(tiny => tiny.Layer == layer);
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    // GUILayout.Space(50);
                     EditorGUILayout.LabelField("Layer", GUILayout.Width(50));
                     EditorGUI.BeginChangeCheck();
                     var mixed = EditorGUI.showMixedValue;
@@ -108,7 +103,7 @@ namespace Unity.Tiny
                     EditorGUI.showMixedValue = mixed;
                 }
 
-                IMGUIPrefabUtility.ShowEntityPrefabHeader(entities);
+                IMGUIPrefabUtility.ShowEntityPrefabHeader(context.Value.Registry, entities);
                 
                 GUILayout.Space(5);
             } 

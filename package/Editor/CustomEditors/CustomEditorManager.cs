@@ -17,7 +17,7 @@ namespace Unity.Tiny
         InspectorMode Mode { get; set; }
     }
 
-    [ContextManager(ContextUsage.Edit), UsedImplicitly]
+    [ContextManager(ContextUsage.Edit | ContextUsage.LiveLink), UsedImplicitly]
     internal class CustomEditorManager : ContextManager, ICustomEditorManagerInternal
     {
         private readonly Dictionary<TinyId, IComponentEditor> m_CustomEditors = new Dictionary<TinyId, IComponentEditor>();

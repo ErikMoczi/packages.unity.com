@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 255fafe3e49265545b618520f74afb40
+guid: 1c6ac8fb0e8aade4b8f9523765f2b71a
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -11,7 +11,11 @@ TrueTypeFontImporter:
   fontName: Liberation Sans
   fontNames:
   - Liberation Sans
-  fallbackFontReferences: []
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 255fafe3e49265545b618520f74afb40, type: 3}
+  - {fileID: 12800000, guid: 26993058efe02484ebd1c938a0d12af8, type: 3}
+  - {fileID: 12800000, guid: 31f4d3886ee3097429b1c8ceb8d3776e, type: 3}
+  - {fileID: 12800000, guid: b868b4ac75210ba4e8a186cc30975420, type: 3}
   customCharacters: 
   fontRenderingMode: 0
   ascentCalculationMode: 1

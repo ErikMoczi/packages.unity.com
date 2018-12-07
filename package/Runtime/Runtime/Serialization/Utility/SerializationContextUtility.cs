@@ -1,9 +1,6 @@
 ﻿using Unity.Properties;
 using Unity.Tiny.Serialization;
 
-#if UNITY_2018_3_OR_NEWER
-#if (NET_4_6 || NET_STANDARD_2_0)
-
 namespace Unity.Tiny.Attributes
 {
     public static class SerializationContextUtility
@@ -23,6 +20,3 @@ namespace Unity.Tiny.Attributes
         }
     }
 }
-
-#endif // (NET_4_6 || NET_STANDARD_2_0)
-#endif // UNITY_2018_3_OR_NEWER

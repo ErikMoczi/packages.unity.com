@@ -1,14 +1,32 @@
-﻿
-
+﻿using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using System.Linq;
 using Object = UnityEngine.Object;
 
 namespace Unity.Tiny
 {
+    [UsedImplicitly]
+    [ContextManager(~ContextUsage.Edit)]
+    internal class NullUndoManager : ContextManager, IUndoManager
+    {
+#pragma warning disable CS0067 // The event is never used
+        public event Action OnBeginUndo;
+        public event Action OnEndUndo;
+        public event Action OnBeginRedo;
+        public event Action OnEndRedo;
+        public event UndoPerformed OnUndoPerformed;
+        public event RedoPerformed OnRedoPerformed;
+#pragma warning restore CS0067
+
+        public NullUndoManager(TinyContext context) : base(context) { }
+        public void Update() { }
+        public void SetAsBaseline(params IOriginator[] originators) { }
+        public void SetAsBaseline(IEnumerable<IOriginator> originators) { }
+    }
+
     [ContextManager(ContextUsage.Edit)]
     internal class TinyUndoManager : ContextManager, IUndoManager
     {
@@ -98,6 +116,7 @@ namespace Unity.Tiny
         private readonly TinyUndoObject m_Undo;
         private readonly TinyCaretaker m_Caretaker;
         private IBindingsManager m_Bindings { get; set; }
+        private HashSet<Change> Baseline => m_UndoableChanges[0];
         private int m_CurrentIndex;
 
         public TinyUndoManager(TinyContext context)
@@ -379,12 +398,12 @@ namespace Unity.Tiny
         /// When flushing an originator, we will push the current state at the index 0 (pretty much the initial state) and then remove it from
         /// the undo/redo stack.
         /// </summary>
-        public void FlushChanges(params IOriginator[] originators)
+        public void SetAsBaseline(params IOriginator[] originators)
         {
-            FlushChanges((IEnumerable <IOriginator>) originators);
+            SetAsBaseline((IEnumerable <IOriginator>) originators);
         }
 
-        public void FlushChanges(IEnumerable<IOriginator> originators)
+        public void SetAsBaseline(IEnumerable<IOriginator> originators)
         {
             if (null == m_Undo)
             {
@@ -395,7 +414,8 @@ namespace Unity.Tiny
             {
                 using (Serialization.SerializationContext.Scope(Serialization.SerializationContext.UndoRedo))
                 {
-                    m_UndoableChanges[0].Add(new Change { Id = originator.Id, Version = m_Undo.Version, RegistryObject = originator as IRegistryObject, NextVersion = originator.Save(), PreviousVersion = null });
+                    Baseline.RemoveWhere(c => c.Id == originator.Id);
+                    Baseline.Add(new Change { Id = originator.Id, Version = m_Undo.Version, RegistryObject = originator as IRegistryObject, NextVersion = originator.Save(), PreviousVersion = null });
                 }
 
                 foreach(var changeSet in m_RedoableChanges)
@@ -448,4 +468,3 @@ namespace Unity.Tiny
         }
     }
 }
-

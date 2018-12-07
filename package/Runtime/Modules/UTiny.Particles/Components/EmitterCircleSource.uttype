@@ -4,6 +4,7 @@
     "Name": "EmitterCircleSource",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "7db49ae05bb2f8fefeb719e8e635d954",

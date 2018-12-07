@@ -1,0 +1,22 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "09e72db86387b48e184be0f9d847d0e8",
+    "Name": "EntityLayer",
+    "ExportFlags": 16,
+    "Unlisted": true,
+    "Visibility": 1,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "4039fc91a1bff881773498c83e9ddf35",
+        "Name": "layer",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "09e72db86387b48e184be0f9d847d0e8", "Name": "EntityLayer" },
+        "Properties": {
+            "layer": 0
+        }
+    }
+}]

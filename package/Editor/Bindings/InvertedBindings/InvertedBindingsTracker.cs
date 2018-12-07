@@ -14,7 +14,8 @@ namespace Unity.Tiny
         private static TinyContext Context { get; set; }
         private static IRegistry Registry { get; set; }
         private static IEntityGroupManagerInternal EntityGroupManager { get; set; }
-        private static TinyUndoManager Undo { get; set; }
+        private static IUndoManager Undo { get; set; }
+        private static readonly List<TinyEntity> Current = new List<TinyEntity>();
         
         [TinyInitializeOnLoad]
         [UsedImplicitly]
@@ -30,7 +31,7 @@ namespace Unity.Tiny
             Context = context;
             Registry = Context.Registry;
             EntityGroupManager = Context.GetManager<IEntityGroupManagerInternal>();
-            Undo = Context.GetManager<TinyUndoManager>();
+            Undo = Context.GetManager<IUndoManager>();
             Undo.OnRedoPerformed += changes => HierarchyChanged();
         }
         
@@ -96,8 +97,13 @@ namespace Unity.Tiny
 
             if (changed)
             {
-                TinyInspector.ForceRefreshSelection();
-                TinyEventDispatcher<ChangeSource>.Dispatch(ChangeSource.SceneGraph);
+                EditorApplication.delayCall += () =>
+                {
+                    TinyInspector.ForceRefreshSelection();
+                    TinyEventDispatcher<ChangeSource>.Dispatch(ChangeSource.SceneGraph);
+                    TinyHierarchyWindow.SelectOnNextPaint(Current);
+                    Current.Clear();
+                };
             }
         }
 
@@ -119,6 +125,10 @@ namespace Unity.Tiny
                 else
                 {
                     var view = t.gameObject.AddComponent<TinyEntityView>();
+                    EditorApplication.delayCall += () =>
+                    {
+                        view.ForceRelink = true;
+                    };
                     view.Registry = Registry;
                     view.Context = Context;
 
@@ -151,8 +161,9 @@ namespace Unity.Tiny
                             {
                                 invertedBindings[index].Create(view, componentList[index]);
                             }
+                            var entity = view.EntityRef.Dereference(Registry);
+                            Current.Add(entity);
 
-                            Context.GetManager<BindingsManager>().Transfer(view.EntityRef.Dereference(Registry));
                             changed = true;
                         }
                     }
@@ -163,7 +174,7 @@ namespace Unity.Tiny
                     }
                 }
             }
-
+            
             return changed;
         }
     }

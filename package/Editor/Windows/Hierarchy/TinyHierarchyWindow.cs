@@ -1,20 +1,23 @@
-﻿
-
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEditor;
-using UnityEditor.Experimental.UIElements;
 using UnityEditor.IMGUI.Controls;
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
+#else
 using UnityEngine.Experimental.UIElements;
+using UnityEditor.Experimental.UIElements;
+#endif
 
 namespace Unity.Tiny
 {
     [AutoRepaintOnTypeChange(typeof(TinyEntity))]
     [AutoRepaintOnTypeChange(typeof(TinyEntityGroup))]
+    [AutoRepaintOnTypeChange(typeof(TinyProject))]
     internal class TinyHierarchyWindow : TinyEditorWindowOverride<EditorWindow>
     {
         #region Static
@@ -49,13 +52,12 @@ namespace Unity.Tiny
         private static ReadOnlyCollection<TinyEntityGroup.Reference> LoadedEntityGroups => EntityGroupManager?.LoadedEntityGroups ?? new List<TinyEntityGroup.Reference>().AsReadOnly();
         private static TinyEntityGroup.Reference ActiveScene => EntityGroupManager?.ActiveEntityGroup ?? TinyEntityGroup.Reference.None;
         private static int LoadedEntityGroupCount => EntityGroupManager?.LoadedEntityGroupCount ?? 0;
-        private static TinyUndoManager Undo { get; set; }
+        private static IUndoManager Undo { get; set; }
         private Rect position => Window.position;
         #endregion
 
         #region Fields
-        [SerializeField]
-        private TreeViewState m_TreeState = new TreeViewState();
+        private HierarchyTree.State m_TreeState;
 
         private HierarchyTree m_TreeView;
         private Vector2 m_ScrollPosition;
@@ -64,6 +66,11 @@ namespace Unity.Tiny
         #endregion
 
         #region Menu Items
+        private static bool ValidateIsEditMode()
+        {
+            return !EditorApplication.isPlayingOrWillChangePlaymode;
+        }
+
         [MenuItem(TinyConstants.MenuItemNames.DuplicateSelection, priority = 250)]
         public static void DuplicateSelection()
         {
@@ -73,7 +80,7 @@ namespace Unity.Tiny
         [MenuItem(TinyConstants.MenuItemNames.DuplicateSelection, validate = true)]
         public static bool ValidateDuplicateSelection()
         {
-            return s_ActiveWindows.Count > 0 && AnyTree?.GetEntitySelection().Count > 0;
+            return ValidateIsEditMode() && s_ActiveWindows.Count > 0 && AnyTree?.GetEntitySelection().Count > 0;
         }
 
         [MenuItem(TinyConstants.MenuItemNames.DeleteSelection, priority = 251)]
@@ -85,7 +92,7 @@ namespace Unity.Tiny
         [MenuItem(TinyConstants.MenuItemNames.DeleteSelection, validate = true)]
         public static bool ValidateDeleteSelection()
         {
-            return s_ActiveWindows.Count > 0 && AnyTree?.GetEntitySelection().Count > 0;
+            return ValidateIsEditMode() && s_ActiveWindows.Count > 0 && AnyTree?.GetEntitySelection().Count > 0;
         }
         #endregion
 
@@ -111,6 +118,43 @@ namespace Unity.Tiny
 
         #region Unity
 
+        public HierarchyTree.State LoadHierarchyState()
+        {
+            if (null == m_TreeState)
+            {
+                var stateSave = TinyEditorPrefs.GetHierarchyState(Project);
+                return (m_TreeState = string.IsNullOrEmpty(stateSave) ? new HierarchyTree.State() : JsonUtility.FromJson<HierarchyTree.State>(stateSave));
+            }
+
+            return m_TreeState;
+        }
+
+        public void SaveHierarchyState()
+        {
+            if (null == m_TreeView)
+            {
+                return;
+            }
+            m_TreeState.ExpandedGuids.AddRange(
+                m_TreeView.GetExpandedItems().Select(item =>
+                {
+                    switch (item)
+                    {
+                        case EntityGroupTreeItem group:
+                            return group.Value.EntityGroupRef.Id;
+                        case PrefabInstanceTreeItem prefab:
+                            return prefab.Value.PrefabInstanceRef.Id;
+                        case EntityTreeItem entity:
+                            return entity.Value.EntityRef.Id;
+                    }
+
+                    return TinyId.Empty;
+                })
+                .Select(id => id.ToString()));
+            var saveState = JsonUtility.ToJson(m_TreeState);
+            TinyEditorPrefs.SetHierarchyState(Project, saveState);
+        }
+        
         public override void OnEnable()
         {
             WindowName = Window.titleContent.text;
@@ -120,6 +164,8 @@ namespace Unity.Tiny
             TinyEditorApplication.OnCloseProject += HandleProjectClosed;
             HandleProjectLoaded(TinyEditorApplication.Project, TinyEditorApplication.EditorContext.Context);
 
+            m_TreeState = LoadHierarchyState();
+            
             if (null == m_TreeView)
             {
                 m_TreeView = new HierarchyTree(Context, m_TreeState);
@@ -131,13 +177,18 @@ namespace Unity.Tiny
             Root.Add(imgui);
             imgui.StretchToParentSize();
             InvokeOnGUIEnabled = false;
+#if UNITY_2019_1_OR_NEWER
+            Window.rootVisualElement.visible = false;
+#else
             Window.GetRootVisualContainer().visible = false;
+#endif
         }
 
         public override  void OnDisable()
         {
             if (null != m_TreeView)
             {
+                SaveHierarchyState();
                 foreach (var entityGroup in LoadedEntityGroups)
                 {
                     m_TreeView.RemoveEntityGroup(entityGroup);
@@ -147,47 +198,62 @@ namespace Unity.Tiny
 
             TinyEditorApplication.OnLoadProject -= HandleProjectLoaded;
             TinyEditorApplication.OnCloseProject -= HandleProjectClosed;
-        }
+        } 
 
-        private void OnGUI()
+        private void OnGUI() 
         {
             if (null == Context)
             {
                 EditorGUILayout.LabelField("No project loaded.");
                 return;
             }
-
+            
             try
             {
+                Window.titleContent.text = $"Hierarchy - {Project.Ref.Dereference(Registry).Name}";
                 VerifyEntityGroups();
 
                 using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar, GUILayout.ExpandWidth(true)))
                 {
-                    if (GUILayout.Button("Create", EditorStyles.toolbarDropDown, GUILayout.Width(75)))
+                    if (EditorApplication.isPlayingOrWillChangePlaymode)
                     {
-                        var menu = new GenericMenu();
-                        menu.AddItem(new GUIContent("Create EntityGroup"), false, () =>
+                        var title = "";
+                        var server = WebSocketServer.Instance;
+                        var liveLinkManager = TinyEditorApplication.EditorContext.Context.GetManager<ILiveLinkManager>();
+                        if (server != null && server.ActiveClient != null && liveLinkManager != null && liveLinkManager.WorldState != null)
                         {
-                            EntityGroupManager.CreateNewEntityGroup();
-                        });
-
-                        menu.AddSeparator("");
-
-                        if (LoadedEntityGroups.Count > 0)
+                            title = server.ActiveClient.Label;
+                        }
+                        GUILayout.Label(new GUIContent(title));
+                    }
+                    else
+                    {
+                        if (GUILayout.Button("Create", EditorStyles.toolbarDropDown, GUILayout.Width(75)))
                         {
-                            HierarchyContextMenus.PopulateEntityTemplate(menu, m_TreeView.GetRegistryObjectSelection());
+                            var menu = new GenericMenu();
+                            menu.AddItem(new GUIContent("Create EntityGroup"), false, () =>
+                            {
+                                EntityGroupManager.CreateNewEntityGroup();
+                            });
+
+                            menu.AddSeparator("");
+
+                            if (LoadedEntityGroups.Count > 0)
+                            {
+                                HierarchyContextMenus.PopulateEntityTemplate(menu, m_TreeView.GetRegistryObjectSelection());
+                            }
+
+                            menu.ShowAsContext();
                         }
 
-                        menu.ShowAsContext();
-                    }
+                        if (GUILayout.Button("Load", EditorStyles.toolbarDropDown, GUILayout.Width(75)))
+                        {
+                            EntityGroupManager.ShowOpenEntityGroupMenu();
+                        }
 
-                    if (GUILayout.Button("Load", EditorStyles.toolbarDropDown, GUILayout.Width(75)))
-                    {
-                        EntityGroupManager.ShowOpenEntityGroupMenu();
+                        // HACK For some reason flexible space does not work here...
+                        GUILayout.Space(position.width - 50);
                     }
-
-                    // HACK For some reason flexible space does not work here...
-                    GUILayout.Space(position.width - 50);
                 }
 
                 var searchRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
@@ -295,7 +361,7 @@ namespace Unity.Tiny
                 graph.CommitChanges();
             }
 
-            Context.GetManager<BindingsManager>().TransferAll();
+            Context.GetManager<IBindingsManager>().TransferAll();
 
             foreach (var window in s_ActiveWindows)
             {
@@ -401,16 +467,16 @@ namespace Unity.Tiny
                 return;
             }
 
-            Window.titleContent.text = $"Hierarchy - {project.Name}";
             Context = context;
             Project = project;
             Registry = Context.Registry;
             EntityGroupManager = Context.GetManager<IEntityGroupManagerInternal>();
-            Undo = Context.GetManager<TinyUndoManager>();
+            Undo = Context.GetManager<IUndoManager>();
 
             EntityGroupManager.OnEntityGroupLoaded += AddToTrees;
             EntityGroupManager.OnEntityGroupUnloaded += RemoveFromTrees;
             EntityGroupManager.OnEntityGroupsReordered += ReorderTrees;
+            m_TreeState = LoadHierarchyState();
             m_TreeView = new HierarchyTree(Context, m_TreeState);
 
             foreach (var entityGroup in LoadedEntityGroups)
@@ -428,6 +494,7 @@ namespace Unity.Tiny
 
         private void HandleProjectClosed(TinyProject project, TinyContext context)
         {
+            SaveHierarchyState();
             Window.titleContent.text = WindowName;
             m_TreeView.ClearScenes();
         }

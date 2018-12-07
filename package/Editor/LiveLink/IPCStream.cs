@@ -1,8 +1,7 @@
-﻿
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading.Tasks;
+using UnityEditor;
 
 namespace Unity.Tiny
 {
@@ -12,27 +11,42 @@ namespace Unity.Tiny
         private NetworkStream m_Stream;
 
         public bool IsConnected => m_Client != null && m_Stream != null && m_Client.Connected;
-        public event EventHandler<byte[]> DataReceived;
-        public event EventHandler<EventArgs> Closed;
+        public event EventHandler<byte[]> OnDataReceived;
+        public event EventHandler<EventArgs> OnClosed;
+
+        public IPCStream()
+        {
+            AssemblyReloadEvents.beforeAssemblyReload += () => Close();
+            EditorApplication.quitting += () => Close();
+        }
 
         public bool Connect(int port)
         {
-            m_Client = new TcpClient();
-            m_Client.Connect("localhost", port);
-            m_Stream = m_Client.Connected ? m_Client.GetStream() : null;
+            if (m_Client == null)
+            {
+                m_Client = new TcpClient();
+                m_Client.Connect("localhost", port);
+                m_Stream = m_Client.Connected ? m_Client.GetStream() : null;
+            }
             return IsConnected;
         }
 
         public void Close()
         {
-            m_Client.Close();
-            m_Client.Dispose();
-            m_Client = null;
+            if (m_Client != null)
+            {
+                m_Client.Close();
+                m_Client.Dispose();
+                m_Client = null;
+            }
 
             // Closing the TcpClient instance does not close the network stream
-            m_Stream.Close();
-            m_Stream.Dispose();
-            m_Stream = null;
+            if (m_Stream != null)
+            {
+                m_Stream.Close();
+                m_Stream.Dispose();
+                m_Stream = null;
+            }
         }
 
         public void StartReadAsync()
@@ -50,7 +64,7 @@ namespace Unity.Tiny
                         }
                         else
                         {
-                            DataReceived?.Invoke(this, data);
+                            OnDataReceived?.Invoke(this, data);
                         }
                     }
                     StartReadAsync();
@@ -72,7 +86,7 @@ namespace Unity.Tiny
                 {
                     if (task.Result == 0)
                     {
-                        Closed?.Invoke(this, EventArgs.Empty);
+                        OnClosed?.Invoke(this, EventArgs.Empty);
                     }
                     else
                     {
@@ -82,7 +96,7 @@ namespace Unity.Tiny
             }
             else
             {
-                Closed?.Invoke(this, EventArgs.Empty);
+                OnClosed?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -99,7 +113,7 @@ namespace Unity.Tiny
             }
             else
             {
-                Closed?.Invoke(this, EventArgs.Empty);
+                OnClosed?.Invoke(this, EventArgs.Empty);
             }
         }
     }

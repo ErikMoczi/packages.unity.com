@@ -18,13 +18,28 @@ namespace Unity.Tiny
         private const string k_Save = "Save";
         private const string k_Close = "Close";
         private const string k_Build = "Build";
+        private const string k_ImportSampleProjects = "Import Sample Projects";
 
+        [MenuItem(k_TinyMenuPrefix + k_NewProject, true)]
+        [MenuItem(k_FileMenuPrefix + k_NewProject, true)]
+        [MenuItem(k_TinyMenuPrefix + k_OpenProject, true)]
+        [MenuItem(k_FileMenuPrefix + k_OpenProject, true)]
+        [MenuItem(k_TinyMenuPrefix + k_NewModule, true)]
+        [MenuItem(k_FileMenuPrefix + k_NewModule, true)]
+        [MenuItem(k_TinyMenuPrefix + k_OpenModule, true)]
+        [MenuItem(k_FileMenuPrefix + k_OpenModule, true)]
+        [MenuItem(k_TinyMenuPrefix + k_ImportSampleProjects, true)]
+        [MenuItem(k_FileMenuPrefix + k_ImportSampleProjects, true)]
+        public static bool ValidateIsEditMode()
+        {
+            return !EditorApplication.isPlayingOrWillChangePlaymode;
+        }
 
         [MenuItem(k_TinyMenuPrefix + k_Build, true)]
         [MenuItem(k_FileMenuPrefix + k_Build, true)]
         private static bool ValidateProjectIsOpened()
         {
-            return TinyEditorApplication.ContextType == EditorContextType.Project;
+            return ValidateIsEditMode() && TinyEditorApplication.ContextType == EditorContextType.Project;
         }
 
         [MenuItem(k_TinyMenuPrefix + k_Save, true)]
@@ -33,7 +48,7 @@ namespace Unity.Tiny
         [MenuItem(k_FileMenuPrefix + k_Close, true)]
         private static bool ValidateContextIsOpened()
         {
-            return TinyEditorApplication.ContextType != EditorContextType.None;
+            return ValidateIsEditMode() && TinyEditorApplication.ContextType != EditorContextType.None;
         }
 
         [MenuItem(k_TinyMenuPrefix + k_NewProject, priority = k_BasePriority)]
@@ -88,8 +103,8 @@ namespace Unity.Tiny
             TinyBuildPipeline.BuildAndLaunch();
         }
 
-        [MenuItem(k_TinyMenuPrefix + "Import Sample Projects", priority = k_BasePriority + 300)]
-        [MenuItem(k_FileMenuPrefix + "Import Sample Projects", priority = k_BasePriority + 300)]
+        [MenuItem(k_TinyMenuPrefix + k_ImportSampleProjects, priority = k_BasePriority + 300)]
+        [MenuItem(k_FileMenuPrefix + k_ImportSampleProjects, priority = k_BasePriority + 300)]
         public static void ImportSampleProjects()
         {
             TinyRuntimeInstaller.InstallSamples(true);

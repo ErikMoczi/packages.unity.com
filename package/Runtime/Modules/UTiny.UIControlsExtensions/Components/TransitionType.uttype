@@ -4,6 +4,7 @@
     "Name": "TransitionType",
     "ExportFlags": 4,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Enum",
     "Fields": [{
         "Id": "ff0222c231942ca39168f895a317b19f",

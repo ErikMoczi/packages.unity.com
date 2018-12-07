@@ -4,6 +4,7 @@
     "Name": "AudioClipLoadFromFile",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "e37a655e68beeaf933667135f474c748",

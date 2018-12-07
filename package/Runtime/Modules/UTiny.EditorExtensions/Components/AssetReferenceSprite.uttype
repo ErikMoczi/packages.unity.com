@@ -1,0 +1,35 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "1e0590432ee8352acd7622770a2ca37d",
+    "Name": "AssetReferenceSprite",
+    "ExportFlags": 16,
+    "Unlisted": true,
+    "Visibility": 1,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "78b545486b24d834892110f922f8d26e",
+        "Name": "guid",
+        "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "9a2793b7deee8136b3a17fa31e49dab1",
+        "Name": "fileId",
+        "FieldType": { "Id": "37695933217a49f68ce15db33f63cdf9", "Name": "Int64" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "99071e356ebba648f86ac2c2c964732d",
+        "Name": "type",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "1e0590432ee8352acd7622770a2ca37d", "Name": "AssetReferenceSprite" },
+        "Properties": {
+            "fileId": 0,
+            "type": 0
+        }
+    }
+}]

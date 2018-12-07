@@ -4,6 +4,7 @@
     "Name": "BezierCurveFloat",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "d1f5d729a6d3c269e020e3a2bf1a585c",

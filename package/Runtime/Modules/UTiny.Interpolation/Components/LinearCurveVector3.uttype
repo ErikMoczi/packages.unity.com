@@ -4,6 +4,7 @@
     "Name": "LinearCurveVector3",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "73130d812a92b36bfa222b4e2a0835f5",

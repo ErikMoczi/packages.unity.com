@@ -13,14 +13,14 @@ namespace Unity.Tiny
     {
         private IRegistry Registry { get; }
         private TinyModule.Reference MainModule { get; }
-        private BindingsManager Bindings { get; }
+        private IBindingsManager Bindings { get; }
         private ICustomEditorManagerInternal CustomEditors { get; }
 
         public EntityAdapter(TinyContext tinyContext)
             :base(tinyContext)
         {
             Registry = TinyContext.Registry;
-            Bindings = TinyContext.GetManager<BindingsManager>();
+            Bindings = TinyContext.GetManager<IBindingsManager>();
             CustomEditors = TinyContext.GetManager<ICustomEditorManagerInternal>();
         }
 
@@ -402,7 +402,7 @@ namespace Unity.Tiny
                 if (GUILayout.Button($"Add '{moduleContainingType.Name}' module"))
                 {
                     mainModule.AddExplicitModuleDependency((TinyModule.Reference)moduleContainingType);
-                    mainModule.Registry.Context.GetManager<TinyScriptingManager>().Refresh();
+                    mainModule.Registry.Context.GetManager<IScriptingManager>().Refresh();
                 }
                 GUILayout.FlexibleSpace();
             }

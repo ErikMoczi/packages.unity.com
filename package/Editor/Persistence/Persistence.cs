@@ -49,6 +49,40 @@ namespace Unity.Tiny
                 string[] movedAssets,
                 string[] movedFromAssetPaths)
             {
+                Dictionary<string, string> remap = null;
+                
+                foreach (var path in importedAssets)
+                {
+                    if (!EndsWithTinyExtension(path))
+                    {
+                        continue;
+                    }
+                    
+                    var obj = AssetDatabase.LoadMainAssetAtPath(path) as TinyScriptableObject;
+
+                    if (!obj)
+                    {
+                        continue;
+                    }
+                    
+                    // Check for any already registered Ids
+                    // This is a case that can happen if a file was duplicated
+                    var duplicateIds = obj.Objects.Where(s_ObjectToAssetGuidMap.ContainsKey).ToArray();
+
+                    if (duplicateIds.Length > 0)
+                    {
+                        if (null == remap)
+                        {
+                            remap = new Dictionary<string, string>();
+                        }
+
+                        foreach (var id in duplicateIds)
+                        {
+                            remap.Add(new TinyId(id).ToString(), TinyId.New().ToString());
+                        }
+                    }
+                }
+                
                 foreach (var path in importedAssets)
                 {
                     if (!EndsWithTinyExtension(path))
@@ -56,10 +90,15 @@ namespace Unity.Tiny
                         continue;
                     }
 
+                    if (null != remap)
+                    {
+                        RegistryObjectRemap.Remap(AsEnumerable(path), remap);
+                        continue;
+                    }
+
                     var guid = AssetDatabase.AssetPathToGUID(path);
 
-                    string hash;
-                    if (s_AssetGuidToContentHashMap.TryGetValue(guid, out hash))
+                    if (s_AssetGuidToContentHashMap.TryGetValue(guid, out var hash))
                     {
                         var obj = AssetDatabase.LoadMainAssetAtPath(path) as TinyScriptableObject;
 
@@ -115,6 +154,9 @@ namespace Unity.Tiny
             // ReSharper disable once MemberHidesStaticFromOuterClass
             public void PersistObjectAs(IPersistentObject obj, string path)
             {
+                // Defer asset patching until after the assets are re-imported
+                m_Objects.Add(obj, path);
+                
                 if (!IsPersistentObjectChanged(obj))
                 {
                     // Version match, this object is unchanged skip write to disc
@@ -122,9 +164,6 @@ namespace Unity.Tiny
                 }
         
                 PersistContainersAs(obj.EnumerateContainers(), path);
-            
-                // Defer asset patching until after the assets are re-imported
-                m_Objects.Add(obj, path);
                 
                 // Invoke the pre import hook for the persist operation
                 PersistObjectPreImport(obj, path);
@@ -153,6 +192,7 @@ namespace Unity.Tiny
                 public string MainObjectId;
                 public string PersistenceId;
                 public string Name;
+                public bool Changed;
             }
             
             private readonly MemoryStream m_CommandStream = new MemoryStream();
@@ -178,7 +218,7 @@ namespace Unity.Tiny
                 RemapPersistenceId(persistenceId, path);
             }
 
-            public void LoadBinary(Stream stream, string sourceIdentifier, string persistenceId)
+            public void LoadBinary(Stream stream, string sourceIdentifier, string persistenceId, bool changed = false)
             {
                 using (var writer = new Serialization.CommandStream.CommandStreamWriter(m_CommandStream, true))
                 {
@@ -187,10 +227,10 @@ namespace Unity.Tiny
                     writer.PopSourceIdentiferScope();
                 }
 
-                RemapPersistenceId(persistenceId, null);
+                RemapPersistenceId(persistenceId, null, changed);
             }
 
-            private void RemapPersistenceId(string persistenceId, string path)
+            private void RemapPersistenceId(string persistenceId, string path, bool changed = false)
             {
                 if (string.IsNullOrEmpty(persistenceId))
                 {
@@ -208,7 +248,8 @@ namespace Unity.Tiny
                 {
                     MainObjectId = mainObjectId,
                     PersistenceId = persistenceId,
-                    Name = !string.IsNullOrEmpty(path) ? Path.GetFileNameWithoutExtension(path) : string.Empty
+                    Name = !string.IsNullOrEmpty(path) ? Path.GetFileNameWithoutExtension(path) : string.Empty,
+                    Changed = changed
                 });
             }
 
@@ -222,6 +263,11 @@ namespace Unity.Tiny
                 m_CommandStream.Position = 0;
                 Serialization.CommandStream.CommandFrontEnd.Accept(m_CommandStream, registry);
 
+                foreach (var type in registry.FindAllByType<TinyType>())
+                {
+                    type.Refresh();
+                }
+                
                 foreach (var remap in m_PersistenceIdRemap)
                 {
                     var mainObject = registry.FindById(new TinyId(remap.MainObjectId)) as IPersistentObject;
@@ -233,7 +279,11 @@ namespace Unity.Tiny
                     
                     mainObject.PersistenceId = remap.PersistenceId;
                     mainObject.Name = !string.IsNullOrEmpty(remap.Name) ? remap.Name : mainObject.Name;
-                    RegisterVersions(mainObject);
+
+                    if (!remap.Changed)
+                    {
+                        RegisterVersions(mainObject);
+                    }
                 }
             }
 
@@ -309,6 +359,12 @@ namespace Unity.Tiny
         /// </summary>
         private static readonly Dictionary<string, string> s_AssetGuidToContentHashMap = new Dictionary<string, string>();
 
+        /// <summary>
+        /// Mapping of root directory guid to main tiny object guid (e.g. Project OR Module)
+        /// </summary>
+        /// <returns></returns>
+        private static readonly Dictionary<string, string> s_DirectoryGuidToMainAssetGuidMap = new Dictionary<string, string>();
+
         [InitializeOnLoadMethod]
         private static void Initialize()
         {
@@ -368,28 +424,6 @@ namespace Unity.Tiny
             {
                 return;
             }
-
-            // Check for any already registered Ids
-            // This is a case that can happen if a file was duplicated
-            var duplicateIds = obj.Objects.Where(s_ObjectToAssetGuidMap.ContainsKey).ToArray();
-            
-            if (duplicateIds.Length > 0)
-            {
-                var idsToRemap = new HashSet<TinyId>();
-
-                foreach (var id in duplicateIds)
-                {
-                    idsToRemap.Add(new TinyId(id));
-                }
-                
-                Debug.LogWarning($"Persistence found one or more duplicate guids for File '{path}'. Performing automatic remapping (This is most likely due to duplication of an asset which is not fully supported yet!)");
-                
-                // Perform automatic remapping of all invalid guids
-                // @NOTE This only works for single monolithic files
-                //       This does NOT work for the multi-file approach
-                RegistryObjectRemap.Remap(AsEnumerable(path), idsToRemap);
-                return;
-            }
             
             s_AssetGuidToContentHashMap.Add(guid, obj.Hash);
             
@@ -406,6 +440,29 @@ namespace Unity.Tiny
             }
             
             s_AssetGuidToObjectsMap.Add(guid, obj.Objects);
+
+            if (obj is UTProject || obj is UTModule)
+            {
+                // This asset is a top level asset
+                // Track its directory as a 'magic' folder where to facilitate adding and removing objects easily
+                
+                // Get the asset guid for the directory this asset lives in
+                var directory = new FileInfo(path).Directory;
+                var directoryPath = directory.FullName;
+                var directoryAssetPath = GetPathRelativeToProjectPath(directoryPath);
+                var directoryGuid = AssetDatabase.AssetPathToGUID(directoryAssetPath);
+                
+                if (!s_DirectoryGuidToMainAssetGuidMap.ContainsKey(directoryGuid))
+                {
+                    s_DirectoryGuidToMainAssetGuidMap.Add(directoryGuid, guid);
+                }
+                else
+                {
+                    // First registered asset wins in this case
+                    // The user is expected to delete or move one of the assets
+                    Debug.LogError($"[{TinyConstants.ApplicationName}] Multiple projects reside in the same directory, this is not supported FileName=[{obj.name}]");
+                }
+            }
         }
         
         /// <summary>
@@ -428,6 +485,88 @@ namespace Unity.Tiny
 
             s_AssetGuidToContentHashMap.Remove(guid);
             s_AssetGuidToObjectsMap.Remove(guid);
+
+            // Get the guid of the directory this asset lives in
+            var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+            var fileInfo = new FileInfo(assetPath);
+            var directory = fileInfo.Directory;
+            var directoryPath = directory.FullName;
+            var directoryAssetPath = GetPathRelativeToProjectPath(directoryPath);
+            var directoryGuid = AssetDatabase.AssetPathToGUID(directoryAssetPath);
+            
+            s_DirectoryGuidToMainAssetGuidMap.Remove(directoryGuid);
+        }
+        
+        /// <summary>
+        /// High level save operation on a set of persistent objects
+        /// </summary>
+        /// <param name="registry"></param>
+        /// <param name="objects"></param>
+        /// <param name="path"></param>
+        public static void SaveObjectsAs(IRegistry registry, IEnumerable<IPersistentObject> objects, string path)
+        {
+            var fileInfo = new FileInfo(path);
+            var directory = fileInfo.Directory;
+            
+            Assert.IsNotNull(directory);
+            
+            directory.Create();
+            
+            var rootObject = objects.First();
+            var subObjects = objects.Skip(1).ToList();
+
+            using (var transaction = new PersistTransaction())
+            {
+                // Save the root persistent object to the project directory
+                // @TODO This is a forced save to disc (ignoring the version check optimization)
+                //       This is a workaround since changes to the module are not propagated to the project
+                transaction.PersistObjectAs(rootObject, path);
+
+                foreach (var obj in subObjects)
+                {
+                    if (!string.IsNullOrEmpty(obj.PersistenceId))
+                    {
+                        // This asset has been saved before, save in place using the asset database to resolve the path
+                        transaction.PersistObjectAs(obj, GetAssetPath(obj));
+                    }
+                    else
+                    {
+                        fileInfo = new FileInfo(Path.Combine(directory.FullName, GetRelativePathForSubAsset(obj)));
+                        Assert.IsNotNull(fileInfo.Directory);
+
+                        // Make sure the directory exists
+                        fileInfo.Directory.Create();
+
+                        // This is the first time saving this sub-asset (place it in the default directory)
+                        transaction.PersistObjectAs(obj, fileInfo.FullName);
+                    }
+                }
+            }
+
+            // Fix-up names after the asset database has finished importing
+            foreach (var obj in objects)
+            {
+                var assetPath = GetAssetPath(obj);
+                
+                // Fix to get prefab naming to follow when applying
+                if (Path.GetFileName(assetPath) == obj.Name)
+                {
+                    continue;
+                }
+                
+                var result = AssetDatabase.RenameAsset(assetPath, obj.Name);
+
+                if (!string.IsNullOrEmpty(result))
+                {
+                    Debug.LogWarning(result);
+                }
+            }
+
+            foreach (var obj in subObjects)
+            {
+                // Re-register this object under to the `SourceIdentifier`
+                registry.ChangeSource(obj.Id, obj.PersistenceId);
+            }
         }
 
         ///  <summary>
@@ -438,10 +577,11 @@ namespace Unity.Tiny
         ///  </summary>
         ///  <param name="obj">The object to save</param>
         ///  <param name="path">Full path to save to</param>
+        /// <param name="forced">Force the save even if the object in unchanged.</param>
         /// <returns>Asset database path</returns>
-        public static void PersistObject(IPersistentObject obj, string path)
+        public static void PersistObject(IPersistentObject obj, string path, bool forced = false)
         {
-            if (!IsPersistentObjectChanged(obj))
+            if (!forced && !IsPersistentObjectChanged(obj))
             {
                 // Version match, this object is unchanged skip write to disc
                 return;
@@ -490,6 +630,12 @@ namespace Unity.Tiny
                 
             // Clear this asset from the changed list
             TinyAssetWatcher.RemoveChanged(assetPath);
+            
+            if (string.IsNullOrEmpty(obj.PersistenceId))
+            {
+                // Add this asset to the newly created list for tracking
+                TinyAssetWatcher.MarkCreated(assetPath);
+            }
             
             // Fixup the persistenceId for this object
             obj.PersistenceId = AssetDatabase.AssetPathToGUID(assetPath);
@@ -590,7 +736,8 @@ namespace Unity.Tiny
         /// <param name="registry"></param>
         public static void LoadAllModules(IRegistry registry)
         {
-            var guids = FindAllAssetsGuidsOfType(typeof(UTModule)).ToList();
+            var guids = FindAllAssetsGuidsOfType(typeof(UTModule)).Distinct().ToList();
+            var subAssetGuidsByModule = new Dictionary<string, List<string>>();
 
             // Load all modules as a single operation
             using (var transaction = new LoadTransaction())
@@ -602,55 +749,40 @@ namespace Unity.Tiny
                     // Push all modules to the transaction
                     // Modules are loaded using thier guid as the source identifier
                     transaction.LoadJson(path, guid, guid);
+                    subAssetGuidsByModule.Add(guid, new List<string>());
                 }
                 
                 transaction.Commit(registry);
             }
-            
+
             // Load all dependencies as a single operation
             using (var transaction = new LoadTransaction())
             {
-                var dependencies = new HashSet<string>();
-                
                 foreach (var guid in guids)
                 {
                     // Fetch the module
                     var module = registry.FindAllBySource(guid).OfType<TinyModule>().First();
+                    var directory = new DirectoryInfo(module.GetDirectoryPath());
 
-                    // Dependant on how we separate the file
-                    foreach (var id in module.EnumeratePersistentDependencies())
-                    {                        
-                        string assetGuid;
-
-                        // Using the `Tiny` registry object guid, lookup the containing asset and add it to the hashset
-                        if (s_ObjectToAssetGuidMap.TryGetValue(id.ToString(), out assetGuid))
-                        {
-                            dependencies.Add(assetGuid);
-                        }
-                    }
-                }
-
-                foreach (var guid in guids)
-                {
-                    // Handle embedded assets
-                    // We don't want to reload the main module file again!
-                    dependencies.Remove(guid);
-                }
-
-                foreach (var guid in dependencies)
-                {
-                    var path = AssetDatabase.GUIDToAssetPath(guid);
-
-                    if (string.IsNullOrEmpty(path))
+                    // Load all sub assets
+                    foreach (var filePath in EnumerateAssetFilesRecursive(directory))
                     {
-                        continue;
+                        var assetPath = GetPathRelativeToProjectPath(filePath.FullName);
+                        var assetGuid = AssetDatabase.AssetPathToGUID(assetPath);
+                        transaction.LoadJson(assetPath, assetGuid, assetGuid);
+                        subAssetGuidsByModule[guid].Add(assetGuid);
                     }
-                
-                    transaction.LoadJson(path, guid, guid);
                 }
                 
                 // Commit the transaction as a single operation
                 transaction.Commit(registry);
+            }
+
+            // Re-link all references
+            foreach (var kvp in subAssetGuidsByModule)
+            {
+                var module = registry.FindAllBySource(kvp.Key).OfType<TinyModule>().First();
+                RebuildModuleReferences(registry, module, kvp.Value);
             }
         }
         
@@ -663,8 +795,7 @@ namespace Unity.Tiny
         /// </summary>
         public static TinyProject LoadProject(string projectPath, IRegistry registry)
         {
-            LoadMainAsset(projectPath, registry);
-            var project = registry.FindAllByType<TinyProject>().FirstOrDefault();
+            var project = LoadMainAsset(projectPath, registry) as TinyProject;
             TinyUpdater.UpdateProject(project);
             return project;
         }
@@ -676,9 +807,9 @@ namespace Unity.Tiny
         ///
         /// @NOTE This will trigger a `LoadAllModules`
         /// </summary>
-        public static void LoadModule(string modulePath, IRegistry registry)
+        public static TinyModule LoadModule(string modulePath, IRegistry registry)
         {
-            LoadMainAsset(modulePath, registry);
+            return LoadMainAsset(modulePath, registry) as TinyModule;
         }
 
         internal static void ShallowLoad(string mainAssetPath, IRegistry registry)
@@ -697,7 +828,7 @@ namespace Unity.Tiny
             }
         }
 
-        private static void LoadMainAsset(string mainAssetPath, IRegistry registry)
+        private static IPersistentObject LoadMainAsset(string mainAssetPath, IRegistry registry)
         {
             mainAssetPath = GetPathRelativeToProjectPath(mainAssetPath);
             var mainAssetGuid = AssetDatabase.AssetPathToGUID(mainAssetPath);
@@ -719,39 +850,25 @@ namespace Unity.Tiny
                 transaction.LoadJson(mainAssetPath, TinyRegistry.DefaultSourceIdentifier, mainAssetGuid);
                 transaction.Commit(registry);
             }
+
+            TinyModule module;
+            var subAssetGuids = new List<string>();
             
             // Load all dependencies as a single operation
             using (var transaction = new LoadTransaction())
             {
                 // Fetch the main module
-                var module = registry.FindAllBySource(TinyRegistry.DefaultSourceIdentifier).OfType<TinyModule>().First();
-                var dependencies = new HashSet<string>();
-            
-                // Dependant on how we separate the file
-                foreach (var id in module.EnumeratePersistentDependencies())
+                module = registry.FindAllBySource(TinyRegistry.DefaultSourceIdentifier).OfType<TinyModule>().First();
+    
+                var directory = new DirectoryInfo(module.GetDirectoryPath());
+    
+                // Load all sub assets
+                foreach (var filePath in EnumerateAssetFilesRecursive(directory))
                 {
-                    string assetGuid;
-                
-                    // Using the `Tiny` registry object guid, lookup the containing asset and add it to the hashset
-                    if (s_ObjectToAssetGuidMap.TryGetValue(id.ToString(), out assetGuid))
-                    {
-                        dependencies.Add(assetGuid);
-                    }
-                }
-
-                // Handle embedded assets
-                // We don't want to reload the main project file again!
-                dependencies.Remove(mainAssetGuid);
-            
-                foreach (var guid in dependencies)
-                {
-                    var path = AssetDatabase.GUIDToAssetPath(guid);
-                    if (string.IsNullOrEmpty(path))
-                    {
-                        continue;
-                    }
-                
-                    transaction.LoadJson(path, guid, guid);
+                    var assetPath = GetPathRelativeToProjectPath(filePath.FullName);
+                    var assetGuid = AssetDatabase.AssetPathToGUID(assetPath);
+                    transaction.LoadJson(assetPath, assetGuid, assetGuid);
+                    subAssetGuids.Add(assetGuid);
                 }
                 
                 // Commit the transaction as a single operation
@@ -767,6 +884,70 @@ namespace Unity.Tiny
                 transaction.LoadJson(mainAssetPath, TinyRegistry.DefaultSourceIdentifier, mainAssetGuid);
                 transaction.Commit(registry);
             }
+
+            if (!s_AssetGuidToObjectsMap.TryGetValue(mainAssetGuid, out var tinyGuids))
+            {
+                return null;
+            }
+
+            module = registry.FindAllBySource(TinyRegistry.DefaultSourceIdentifier).OfType<TinyModule>().First();
+            RebuildModuleReferences(registry, module, subAssetGuids);
+
+            return registry.FindById(new TinyId(tinyGuids[0])) as IPersistentObject;
+        }
+
+        private static void RebuildModuleReferences(IRegistry registry, TinyModule module, IEnumerable<string> subAssetGuids)
+        {
+            // Purge the current state if ANY
+            // @NOTE This is required to ensure backwards compatibility with older projects
+            module.EntityGroups.Clear();
+            module.Configurations.Clear();
+            module.Components.Clear();
+            module.Structs.Clear();
+            module.Enums.Clear();
+
+            // Re-link all sub assets in our acceleration structures
+            foreach (var assetGuid in subAssetGuids)
+            {
+                if (!s_AssetGuidToObjectsMap.TryGetValue(assetGuid, out var guids))
+                {
+                    Debug.LogError($"Failed to resolve AssetGuid=[{assetGuid}]");
+                    continue;
+                }
+
+                var obj = registry.FindById(new TinyId(guids[0]));
+
+                if (null == obj)
+                {
+                    Debug.LogError($"Failed to resolve TinyId=[{guids[0]}]");
+                    continue;
+                }
+                
+                if (obj is TinyType type)
+                {
+                    switch (type.TypeCode)
+                    {
+                        case TinyTypeCode.Configuration:
+                            module.Configurations.Add(type.Ref);
+                            break;
+                        case TinyTypeCode.Component:
+                            module.Components.Add(type.Ref);
+                            break;
+                        case TinyTypeCode.Struct:
+                            module.Structs.Add(type.Ref);
+                            break;
+                        case TinyTypeCode.Enum:
+                            module.Enums.Add(type.Ref);
+                            break;
+                    }
+                }
+                else if (obj is TinyEntityGroup group)
+                {
+                    module.EntityGroups.Add(group.Ref);
+                }
+            }
+
+            RegisterVersions(module);
         }
 
         /// <summary>
@@ -797,9 +978,9 @@ namespace Unity.Tiny
         }
 
         /// <summary>
-        /// Updates the version information for the given persisten object
+        /// Updates the version information for the given persistent object
         /// </summary>
-        private static void RegisterVersions(IPersistentObject persistentObject)
+        public static void RegisterVersions(IPersistentObject persistentObject)
         {
             s_VersionMap[persistentObject.Id] = persistentObject.Version;
             
@@ -977,16 +1158,124 @@ namespace Unity.Tiny
             }
         }
 
-        internal static string GetPathRelativeToProjectPath(string path)
+        /// <summary>
+        /// Given an on assetGuid (e.g. UTType or UTEntityGroup) this will return the assetGuid of the MainAsset (e.g. UTProject or UTModule)
+        /// </summary>
+        /// <param name="subAssetGuid"></param>
+        /// <returns></returns>
+        internal static string GetMainAssetGuid(string subAssetGuid)
         {
-            var projectPath = new DirectoryInfo(Application.dataPath).Parent.FullName.ToForwardSlash() + "/";
-            var assetPath = Path.GetFullPath(path).ToForwardSlash();
-            return assetPath.Replace(projectPath, string.Empty);
+            var assetPath = AssetDatabase.GUIDToAssetPath(subAssetGuid);
+            var fileInfo = new FileInfo(assetPath);
+            var directory = fileInfo.Directory;
+
+            // Recurse up the file system to find the first project path
+            while (null != directory)
+            {
+                var directoryGuid = GetGuidRelativeToProjectPath(directory.FullName);
+                if (s_DirectoryGuidToMainAssetGuidMap.TryGetValue(directoryGuid, out var mainAssetGuid))
+                {
+                    return mainAssetGuid;
+                }
+                        
+                directory = directory?.Parent;
+            }
+
+            return null;
         }
 
+        /// <summary>
+        /// Returns the `Unity` asset path for the given full path
+        ///
+        /// E.g. C:/Projects/MyProject/Assets/Foo.png -> Assets/Foo.png
+        /// </summary>
+        internal static string GetPathRelativeToProjectPath(string path)
+        {
+            var assetPath = Path.GetFullPath(path).ToForwardSlash();
+            
+            // check if the given path is a package path (relative or installed)
+            // assumption: true if the path contains the package name
+            var packagePartIndex = assetPath.LastIndexOf(TinyConstants.PackageName, StringComparison.Ordinal);
+            if (packagePartIndex >= 0)
+            {
+                var localPath = TinyConstants.PackagePath + assetPath.Substring(assetPath.IndexOf('/', packagePartIndex));
+                return localPath;
+            }
+            
+            // otherwise, we assume it can be any path, and attempt normalization
+            var projectPath = new DirectoryInfo(".").FullName.ToForwardSlash() + "/";
+            assetPath = assetPath.Replace(projectPath, string.Empty);
+            return assetPath;
+        }
+        
+        /// <summary>
+        /// Returns the `Unity` asset guid for the given full path
+        /// </summary>
+        internal static string GetGuidRelativeToProjectPath(string path)
+        {
+            var assetPath = GetPathRelativeToProjectPath(path);
+            var assetGuid = AssetDatabase.AssetPathToGUID(assetPath);
+            return assetGuid;
+        }
+        
         private static IEnumerable<T> AsEnumerable<T>(T o)
         {
             yield return o;
+        }
+        
+        /// <summary>
+        /// Enumerates all sub assets of the given directory
+        ///
+        /// @NOTE This method will skip any nested modules or projects
+        /// </summary>
+        /// <param name="directory"></param>
+        /// <returns></returns>
+        private static IEnumerable<FileInfo> EnumerateAssetFilesRecursive(DirectoryInfo directory)
+        {
+            foreach (var file in EnumerateAssetFiles(directory))
+            {
+                yield return file;
+            }
+            
+            foreach (var subDirectory in directory.EnumerateDirectories("*", SearchOption.AllDirectories))
+            {
+                var subDirectoryGuid = GetGuidRelativeToProjectPath(subDirectory.FullName);
+                
+                // This directory hosts a sub-project or module; skip
+                if (s_DirectoryGuidToMainAssetGuidMap.ContainsKey(subDirectoryGuid))
+                {
+                    continue;
+                }
+
+                // All files of this directory should be considered as sub assets
+                foreach (var file in EnumerateAssetFiles(subDirectory))
+                {
+                    yield return file;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Enumerates all `Tiny` files types in the given directory 
+        /// </summary>
+        /// <param name="directory"></param>
+        /// <returns></returns>
+        private static IEnumerable<FileInfo> EnumerateAssetFiles(DirectoryInfo directory)
+        {
+            foreach (var filePath in directory.EnumerateFiles($"*{TypeFileExtension}", SearchOption.TopDirectoryOnly))
+            {
+                yield return filePath;
+            }
+            
+            foreach (var filePath in directory.EnumerateFiles($"*{EntityGroupFileExtension}", SearchOption.TopDirectoryOnly))
+            {
+                yield return filePath;
+            }
+            
+            foreach (var filePath in directory.EnumerateFiles($"*{PrefabFileExtension}", SearchOption.TopDirectoryOnly))
+            {
+                yield return filePath;
+            }
         }
     }
 }

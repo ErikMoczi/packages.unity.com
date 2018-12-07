@@ -4,6 +4,7 @@
     "Name": "LinearCurveColor",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "208b85e5af48b01eef6e5333987a8b0b",

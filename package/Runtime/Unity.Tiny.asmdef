@@ -1,10 +1,16 @@
 {
     "name": "Unity.Tiny",
     "references": [
-      "Unity.Properties",
-      "Unity.InternalAPIEngineBridge.002"
+        "Unity.Properties",
+        "Unity.InternalAPIEngineBridge.002",
+        "Unity.TextMeshPro"
     ],
+    "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": true
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
 }

@@ -120,7 +120,7 @@ namespace Unity.Tiny
                             target.Components.Remove(added);
                             target.Components.Insert(index, added);
                         }
-                        context.MainTarget<TinyEntity>().Registry.Context.GetManager<BindingsManager>().Transfer(target);
+                        context.MainTarget<TinyEntity>().Registry.Context.GetManager<IBindingsManager>().Transfer(target);
                     }
                     TinyEventDispatcher<ChangeSource>.Dispatch(ChangeSource.DataModel);
                 }

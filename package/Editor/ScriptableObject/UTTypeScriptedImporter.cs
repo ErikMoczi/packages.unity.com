@@ -24,7 +24,7 @@ namespace Unity.Tiny
             }
 
             var typeCode = registry.FindById<TinyType>(new TinyId(asset.Objects.FirstOrDefault()))?.TypeCode;
-            return TinyIcons.ScriptableObjects.GetIconForTypeCode(typeCode ?? TinyTypeCode.Unknown);
+            return TinyIcons.GetIconForTypeCode(typeCode ?? TinyTypeCode.Unknown);
         }
     }
 }

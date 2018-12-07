@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Unity.Properties;
 
 namespace Unity.Tiny
@@ -7,38 +8,13 @@ namespace Unity.Tiny
     [Flags]
     internal enum EntityModificationFlags
     {
+        None = 0,
         Enabled = 1,
         Name = 2,
         Layer = 4,
         Static = 8,
         
         All = Enabled | Name | Layer | Static
-    }
-
-    internal static class EntityModificationFlagExtensions
-    {
-        public static IEnumerable<EntityModificationFlags> EnumerateFlags(this EntityModificationFlags flags)
-        {
-            if (flags.HasFlag(EntityModificationFlags.Enabled))
-            {
-                yield return EntityModificationFlags.Enabled;
-            }
-            
-            if (flags.HasFlag(EntityModificationFlags.Name))
-            {
-                yield return EntityModificationFlags.Name;
-            }
-            
-            if (flags.HasFlag(EntityModificationFlags.Layer))
-            {
-                yield return EntityModificationFlags.Layer;
-            }
-            
-            if (flags.HasFlag(EntityModificationFlags.Static))
-            {
-                yield return EntityModificationFlags.Static;
-            }
-        }
     }
 
     /// <summary>

@@ -4,6 +4,7 @@
     "Name": "Text2DRenderer",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "eac4a78d7974f8473da8aa34ea7a233e",

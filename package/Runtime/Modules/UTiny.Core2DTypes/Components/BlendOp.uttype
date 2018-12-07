@@ -4,6 +4,7 @@
     "Name": "BlendOp",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Enum",
     "BaseType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
     "Fields": [{
@@ -24,13 +25,20 @@
         "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
         "Array": false,
         "Visibility": 0
+    }, {
+        "Id": "2dcfb4578dab71a5bdc92db2824cfe21",
+        "Name": "MultiplyAlpha",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
     }],
     "DefaultValue": {
         "Type": { "Id": "78fe1548d31b94b79668981ae1d3279d", "Name": "BlendOp" },
         "Properties": {
             "Alpha": 0,
             "Add": 1,
-            "Multiply": 2
+            "Multiply": 2,
+            "MultiplyAlpha": 3
         }
     }
 }]

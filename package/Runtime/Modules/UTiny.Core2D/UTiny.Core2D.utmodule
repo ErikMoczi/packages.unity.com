@@ -12,31 +12,5 @@
         { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" },
         { "Id": "494f9eba840c1f117459611e605884b0", "Name": "UTiny.Core2DTypes" },
         { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" }
-    ],
-    "Configurations": [
-        { "Id": "575fe161bc06950c954480d04c70c9ab", "Name": "DisplayInfo" }
-    ],
-    "Components": [
-        { "Id": "12692383f3fef3bb74c209888c5b0939", "Name": "Camera2D" },
-        { "Id": "301b45e5168992b0907ceeaec4764727", "Name": "Camera2DAxisSort" },
-        { "Id": "2f068244ef06623a84e20a71cb133480", "Name": "Camera2DClippingPlanes" },
-        { "Id": "c895dbe72eb46ecb10d589d320151758", "Name": "TransformNode" },
-        { "Id": "70449d66178e0d9f66795c24f0fbbdfc", "Name": "TransformLocalPosition" },
-        { "Id": "2266a95f5d16ca1ddde710d7c047ba69", "Name": "TransformLocalRotation" },
-        { "Id": "f11fe490eefc969bbc3fde5eab5ccd1e", "Name": "TransformLocalScale" },
-        { "Id": "288a861a8ca311346faecf4c20a2da76", "Name": "SortingGroup" },
-        { "Id": "f8d0d84284606cc2536da3efdd9122fc", "Name": "TransformStatic" },
-        { "Id": "b1e5348389156b7a260d6ed393754fba", "Name": "LayerSorting" }
-    ],
-    "Structs": [
-        { "Id": "bbf7e113f62f37d6f2d26126e404920a", "Name": "Touch" }
-    ],
-    "Enums": [
-        { "Id": "ae81459364cae2c8925096902099c5be", "Name": "DisplayOrientation" },
-        { "Id": "c592d331c582f4083ec19af9e2d06b6d", "Name": "RenderMode" },
-        { "Id": "67b95f60da58fcea0d31f9e50232dcd6", "Name": "KeyCode" },
-        { "Id": "76a06ddd38e99125d930e77c6a287872", "Name": "CameraClearFlags" },
-        { "Id": "6d80accc7f2baf705a0b778f20476ff5", "Name": "CameraCullingMode" },
-        { "Id": "7c93ed01a62324edc6fab76efa37258b", "Name": "TouchState" }
     ]
 }]

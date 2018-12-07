@@ -4,6 +4,7 @@
     "Name": "BurstEmission",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "3d4b35a53ec652779bfaa8a40975ae60",

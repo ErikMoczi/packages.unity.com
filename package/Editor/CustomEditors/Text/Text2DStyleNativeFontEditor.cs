@@ -14,6 +14,14 @@ namespace Unity.Tiny
         
         public override bool Visit(ref UIVisitContext<TinyObject> context)
         {
+            var mainTarget = context.MainTarget<TinyEntity>();
+            
+            if (!mainTarget.HasComponent<Runtime.Text.TinyNativeFont>())
+            {
+                EditorGUILayout.HelpBox("A NativeFont component is needed with the Text2DRenderer.", MessageType.Warning);
+                AddComponentToTargetButton(context, TypeRefs.Text.NativeFont);
+            }
+            
             VisitField(ref context, nameof(Runtime.Text.TinyText2DStyleNativeFont.italic));
             DrawWeight(ref context);
             return context.Visitor.StopVisit;

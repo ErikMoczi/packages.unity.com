@@ -4,6 +4,7 @@
     "Name": "EmitterBoxSource",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "ca80b0243a3b5585516c2f5119dee106",

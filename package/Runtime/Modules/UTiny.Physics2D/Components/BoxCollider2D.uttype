@@ -4,6 +4,7 @@
     "Name": "BoxCollider2D",
     "ExportFlags": 1,
     "Unlisted": false,
+    "Visibility": 0,
     "TypeCode": "Component",
     "Fields": [{
         "Id": "68345ca7cb38b0428e069aba5aded8c4",

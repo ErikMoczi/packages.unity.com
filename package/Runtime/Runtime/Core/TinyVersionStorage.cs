@@ -20,27 +20,33 @@ namespace Unity.Tiny
             public DontTrackChange(TinyVersionStorage storage)
             {
                 m_Storage = storage;
-                m_Value = m_Storage.m_DontTrackChange;
-                m_Storage.m_DontTrackChange = true;
+                m_Value = m_Storage.m_DontTrackChangesScope;
+                m_Storage.m_DontTrackChangesScope = true;
             }
 
             public void Dispose()
             {
-                m_Storage.m_DontTrackChange = m_Value;
+                m_Storage.m_DontTrackChangesScope = m_Value;
             }
         }
         
-        private bool m_DontTrackChange;
-        
+        private bool m_DontTrackChangesScope;
+
+        private readonly bool m_TrackChanges;
         private readonly HashSet<IPropertyContainer> m_ChangeSet = new HashSet<IPropertyContainer>();
         private readonly List<IPropertyContainer> m_ChangeList = new List<IPropertyContainer>();
 
         public IReadOnlyList<IPropertyContainer> Changed => m_ChangeList.AsReadOnly();
 
+        public TinyVersionStorage(bool trackChanges = true)
+        {
+            m_TrackChanges = trackChanges;
+        }
+
         public void IncrementVersion<TContainer>(IProperty property, TContainer container) 
             where TContainer : IPropertyContainer
         {
-            if (m_DontTrackChange)
+            if (!m_TrackChanges || m_DontTrackChangesScope)
             {
                 return;
             }
@@ -55,7 +61,7 @@ namespace Unity.Tiny
 
         public void MarkAsChanged(IPropertyContainer container)
         {
-            if (m_DontTrackChange)
+            if (!m_TrackChanges || m_DontTrackChangesScope)
             {
                 return;
             }
