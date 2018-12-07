@@ -60,7 +60,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
             if (root == null)
                 return;
 
-            var showValidationUI = packageInfo != null && packageInfo.status == PackageStatus.Available && SourceSupported(packageInfo.source);
+            var isAvailable = packageInfo.status == PackageStatus.Available || packageInfo.status == PackageStatus.Error;
+            var showValidationUI = packageInfo != null && isAvailable && SourceSupported(packageInfo.source);
             UIUtils.SetElementDisplay(this, showValidationUI);
             if (!showValidationUI)
                 return;

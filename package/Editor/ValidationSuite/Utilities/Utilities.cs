@@ -116,6 +116,8 @@ namespace UnityEditor.PackageManager.ValidationSuite
             }
             catch (ApplicationException exception)
             {
+                if (exception.Message.Contains("npm ERR! code E404") && exception.Message.Contains("is not in the npm registry."))
+                    return false;
                 exception.Data["code"] = "fetchFailed";
                 throw exception;
             }

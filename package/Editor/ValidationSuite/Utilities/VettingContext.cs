@@ -28,6 +28,21 @@ public class PackageDependencyInfo
     public bool ParentIsPreview { get; set; }
 }
 
+public class RelatedPackage
+{
+    public string Name;
+    public string Version;
+    public string Path;
+
+    public RelatedPackage(string name, string version, string path)
+    {
+        Name = name;
+        Version = version;
+        Path = path;
+    }
+}
+
+
 /// <summary>
 /// Class containing package data required for vetting.
 /// </summary>
@@ -88,6 +103,7 @@ internal class VettingContext
     public string PreviousPackageBinaryDirectory { get; set; }
     public ValidationType ValidationType { get; set; }
     public const string PreviousVersionBinaryPath = "Temp/ApiValidationBinaries";
+    public List<RelatedPackage> relatedPackages = new List<RelatedPackage>();
 
     public static VettingContext CreatePackmanContext(string packageId, ValidationType validationType)
     {
@@ -121,7 +137,24 @@ internal class VettingContext
             context.PublishPackageInfo = context.ProjectPackageInfo;
         }
 
-        GetRelatedPackages(context);
+#if UNITY_2019_1_OR_NEWER
+        foreach (var relatedPackage in context.PublishPackageInfo.relatedPackages)
+        {
+            // Check to see if the package is available locally
+            // We are only focusing on local packages to avoid validation suite failures in CI
+            // when the situation arises where network connection is impaired
+            var foundRelatedPackage = Utilities.UpmListOffline().Where(p => p.name.Equals(relatedPackage.Key));
+            var relatedPackageInfo = foundRelatedPackage.ToList();
+            if (!relatedPackageInfo.Any())
+            {
+                Debug.Log(String.Format("Cannot find the relatedPackage {0} ", relatedPackage.Key));
+                continue;
+            }
+            context.relatedPackages.Add(new RelatedPackage(relatedPackage.Key, relatedPackage.Value,
+                relatedPackageInfo.First().resolvedPath));
+        }
+#endif
+
 
 #if UNITY_2018_1_OR_NEWER
         // No need to compare against the previous version of the package if we're testing out the verified set.
@@ -238,37 +271,6 @@ internal class VettingContext
         var packageName = Utilities.CreatePackage(projectPackagePath, tempPath);
         var publishPackagePath = Path.Combine(tempPath, "publish-" + context.ProjectPackageInfo.Id);
         return Utilities.ExtractPackage(packageName, tempPath, publishPackagePath, context.ProjectPackageInfo.name);
-    }
-
-    private static void GetRelatedPackages(VettingContext context)
-    {
-#if UNITY_2018_1_OR_NEWER
-
-        foreach (var relatedPackage in context.ProjectPackageInfo.relatedPackages)
-        {
-            var relatedPackagePath = "";
-            var offlineFoundPackages = Utilities.UpmListOffline(relatedPackage.Key);
-            if (offlineFoundPackages.Any())
-            {
-                relatedPackagePath = offlineFoundPackages[0].resolvedPath;
-                
-            }
-            
-            if (Utilities.PackageExistsOnProduction(relatedPackage.Key))
-            {
-                var tempPath = Path.GetTempPath();
-                var packageFileName = Utilities.DownloadPackage(relatedPackage.Key, tempPath);
-                var packagesPath = Path.Combine(Directory.GetParent(context.ProjectPackageInfo.path).ToString(), relatedPackage.Key);
-                relatedPackagePath = Utilities.ExtractPackage(packageFileName, tempPath, packagesPath, relatedPackage.Key);
-            }
-
-            if (relatedPackagePath.Equals(""))
-            {
-                Debug.Log("Cannot find the relatedPackage " + relatedPackage.Key + " locally or remotely");
-            }
-        }
-#endif      
-        
     }
 
     private static string GetPreviousPackage(ManifestData projectPackageInfo)

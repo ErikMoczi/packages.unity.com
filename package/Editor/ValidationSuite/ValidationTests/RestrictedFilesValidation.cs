@@ -42,7 +42,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 if (matchingFiles.Any())
                 {
                     foreach (var file in matchingFiles)
-                        Warning(file + " should not be included in packages.");
+                        Warning(file + " should not be included in packages unless absolutely necessary.  " + 
+                                "Please confirm that it's inclusion is deliberate and intentional.");
                 }
             }
 
@@ -66,6 +67,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             "*.unitypackage",
             "*.zip",
             "*.rar",
+            "*.lib",
+            "*.dll"
         };
     }
 }

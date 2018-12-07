@@ -29,7 +29,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 return;
 
             var testDir = Path.Combine(Context.PublishPackageInfo.path, "Tests");
-            if (!Directory.Exists(testDir) && !Context.ProjectPackageInfo.relatedPackages.Any())
+            if (!Directory.Exists(testDir) && !Context.relatedPackages.Any())
             {
                 AddMissingTestsErrors();
                 return;
@@ -38,34 +38,39 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             // let's look for files in the "test" directory.
             matchingFiles.Clear();
             DirectorySearch(testDir, "*.cs", matchingFiles);
-            if (!matchingFiles.Any() && !Context.ProjectPackageInfo.relatedPackages.Any())
+            if (!matchingFiles.Any() && !Context.relatedPackages.Any())
             {
                 AddMissingTestsErrors();
                 return;
             }
 
             //Check if there are relatedPackages that may contain the tests
-            foreach (var relatedPackage in Context.ProjectPackageInfo.relatedPackages)
+            foreach (var relatedPackage in Context.relatedPackages)
             {
-                var relatedPackagePath = Path.Combine(Directory.GetParent(Context.ProjectPackageInfo.path).ToString(), relatedPackage.Key);
-
-                var relatedPackageTestDir = Path.Combine(relatedPackagePath, "Tests");
-                if (!Directory.Exists(relatedPackageTestDir))
+                if (!Directory.Exists(relatedPackage.Path))
                 {
-                    AddMissingTestsErrors();
+                    if (Context.ValidationType == ValidationType.Publishing || 
+                              Context.ValidationType == ValidationType.VerifiedSet)
+                    {
+                        AddMissingTestsErrors();
+                    }
+                    else
+                    {
+                        Warning(string.Format("Related Package is missing in {0}", relatedPackage.Path));
+                    }
                     return;
                 }
+
+                var relatedPackageTestDir = Path.Combine(relatedPackage.Path, "Tests");
             
                 // let's look for files in the "test" directory.
                 matchingFiles.Clear();
                 DirectorySearch(relatedPackageTestDir, "*.cs", matchingFiles);
                 if (!matchingFiles.Any())
                 {
-                    AddMissingTestsErrors();
+                    Error("Related Packages must include test for automated testing.");
                     return;
                 }
-                
-                
             }
 
             // TODO: Go through files, make sure they have actual tests.

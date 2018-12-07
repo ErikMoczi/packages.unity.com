@@ -282,56 +282,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         }
 
         [Test]
-        public void When_FolderRuntimeAndTests_And_AssemblyDefs_ArePresent_But_AddingEditorInIncludePlatform_Validation_Fails()
-        {
-            CreatePackageJsonFile(name);
-
-            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
-            assemblyDefinition.name = name + ".Runtime";
-            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
-
-            CreateFolderAndAssembly(name, assemblyDefinition, false, false);
-
-            assemblyDefinition = new AssemblyDefinition();
-            assemblyDefinition.name = name + ".RuntimeTests";
-            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
-
-            CreateFolderAndAssembly(name, assemblyDefinition, false, true);
-            
-            var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
-            assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
-            assemblyDefinitionValidation.RunTest();
-
-            Assert.AreEqual(TestState.Failed, assemblyDefinitionValidation.TestState);
-            Assert.Greater(assemblyDefinitionValidation.TestOutput.Count, 0);
-        }
-
-        [Test]
-        public void When_FolderRuntimeAndTests_And_AssemblyDefs_ArePresent_But_AddingEditorInIncludePlatformTest_Validation_Fails()
-        {
-            CreatePackageJsonFile(name);
-
-            AssemblyDefinition assemblyDefinition = new AssemblyDefinition();
-            assemblyDefinition.name = name + ".Runtime";
-
-            CreateFolderAndAssembly(name, assemblyDefinition, false, false);
-
-            assemblyDefinition = new AssemblyDefinition();
-            assemblyDefinition.name = name + ".RuntimeTests";
-            assemblyDefinition.optionalUnityReferences = new string [1] {"TestAssemblies"};
-            assemblyDefinition.includePlatforms = new string [1] {"Editor"};
-
-            CreateFolderAndAssembly(name, assemblyDefinition, false, true);
-            
-            var assemblyDefinitionValidation = new AssemblyDefinitionValidation();
-            assemblyDefinitionValidation.Context = PrepareVettingContext(testDirectory);
-            assemblyDefinitionValidation.RunTest();
-
-            Assert.AreEqual(TestState.Failed, assemblyDefinitionValidation.TestState);
-            Assert.Greater(assemblyDefinitionValidation.TestOutput.Count, 0);
-        }
-
-        [Test]
         public void When_FolderEditorAndTests_And_AssemblyDefs_ArePresent_But_WrongName_Validation_Succeeds()
         {
             CreatePackageJsonFile(name);
