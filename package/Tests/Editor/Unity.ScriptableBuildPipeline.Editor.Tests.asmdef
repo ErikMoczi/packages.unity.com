@@ -1,12 +1,15 @@
-﻿{
+{
     "name": "Unity.ScriptableBuildPipeline.Editor.Tests",
     "references": [
-        "Unity.ScriptableBuildPipeline.Editor"
+        "Unity.ScriptableBuildPipeline.Editor",
+        "Unity.ScriptableBuildPipeline"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
     ],
     "includePlatforms": [
         "Editor"
     ],
-    "optionalUnityReferences": [
-        "TestAssemblies"
-    ]
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
 }

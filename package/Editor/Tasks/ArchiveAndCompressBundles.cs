@@ -6,6 +6,7 @@ using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Build.Pipeline.Utilities;
 using UnityEngine;
+using UnityEngine.Build.Pipeline;
 
 #if UNITY_2018_3_OR_NEWER
 using BuildCompression = UnityEngine.BuildCompression;

@@ -1,7 +1,8 @@
 {
     "name": "Unity.ScriptableBuildPipeline.Editor",
     "references": [
-        "Unity.CacheServer.Client.Editor"
+        "Unity.CacheServer.Client.Editor",
+        "Unity.ScriptableBuildPipeline"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [
