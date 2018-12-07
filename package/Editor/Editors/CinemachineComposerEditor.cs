@@ -56,7 +56,7 @@ namespace Cinemachine.Editor
                 return;
 
             CinemachineBrain brain = CinemachineCore.Instance.FindPotentialTargetBrain(Target.VirtualCamera);
-            if (brain == null || (brain.OutputCamera.activeTexture != null && CinemachineCore.Instance.BrainCount > 1))
+            if (brain == null || brain.OutputCamera.activeTexture != null)
                 return;
 
             bool isLive = CinemachineCore.Instance.IsLive(Target.VirtualCamera);
