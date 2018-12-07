@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.49] - 2018-12-4
+
+### Revert changes to profiler and GC
+
 ## [0.1.48] - 2018-11-22
 
 ### Doc updates and ignore GC api in editor due to api issues

@@ -12,7 +12,7 @@ namespace Unity.PerformanceTesting
 
         public PerformanceSettingsAttribute(bool enableGc)
         {
-            enableGC = enableGc;
+            this.enableGC = enableGc;
         }
     }
 }

@@ -48,17 +48,6 @@ namespace Unity.PerformanceTesting
             };
 
             Active.StartTime = Utils.DateToInt(DateTime.Now);
-            StartProfile(Utils.RemoveIllegalCharacters(currentTest.FullName));
-#if UNITY_2019_1_OR_NEWER
-            if(Application.isEditor)
-                return;
-            var settings = currentTest.Method.GetCustomAttributes<PerformanceSettingsAttribute>(false);
-            if (settings.Length == 1) 
-                if(settings[0].enableGC)
-                    return;
-
-            UnityEngine.Scripting.GarbageCollector.GCMode = UnityEngine.Scripting.GarbageCollector.Mode.Disabled;
-#endif
         }
 
         private static string GetVersion(ITest currentTest)
@@ -67,7 +56,7 @@ namespace Unity.PerformanceTesting
             var methodVersions = currentTest.Method.GetCustomAttributes<VersionAttribute>(false);
             var classVersion = currentTest.TypeInfo.Type.GetCustomAttributes(typeof(VersionAttribute), true);
 
-            if (classVersion.Length > 0) 
+            if (classVersion.Length > 0)
                 version = ((VersionAttribute) classVersion[0]).Version+".";
             if (methodVersions.Length > 0)
                 version += methodVersions[0].Version;
@@ -79,17 +68,8 @@ namespace Unity.PerformanceTesting
 
         internal static void EndTest(Test test)
         {
-#if UNITY_2019_1_OR_NEWER
-            if(Application.isEditor)
-            {
-                UnityEngine.Scripting.GarbageCollector.GCMode = UnityEngine.Scripting.GarbageCollector.Mode.Enabled;
-            }
-#endif
-            
             if (test.IsSuite) return;
             if (test.FullName != Active.TestName) return;
-
-            EndProfile(Utils.RemoveIllegalCharacters(test.FullName));
 
             DisposeMeasurements();
             Active.CalculateStatisticalValues();
@@ -100,24 +80,6 @@ namespace Unity.PerformanceTesting
             TestContext.Out.WriteLine("##performancetestresult:" + JsonUtility.ToJson(Active));
             Active = null;
             GC.Collect();
-        }
-
-        private static void StartProfile(string profileName)
-        {
-#if UNITY_2018_2_OR_NEWER
-            Profiler.enabled = false;
-            var filePath = Path.Combine(Application.persistentDataPath, profileName + ".raw");
-            Profiler.logFile = filePath;
-            Profiler.enableBinaryLog = true;
-            Profiler.enabled = true;
-#endif
-        }
-
-        private static void EndProfile(string profileName)
-        {
-#if UNITY_2018_2_OR_NEWER
-            Profiler.enableBinaryLog = false;
-#endif
         }
         
         private static void DisposeMeasurements()
