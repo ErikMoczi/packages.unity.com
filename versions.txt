@@ -63,3 +63,4 @@
 0.2.4-preview.36
 0.2.4-preview.37
 0.2.4-preview.38
+0.2.4-preview.39

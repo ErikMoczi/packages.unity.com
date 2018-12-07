@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.4-preview.39
+
+- Add preview support for readonly static arrays typically used for LUT
+- Fix an issue with generics incorrectly being resolved in certain situations
+- Fix ARM32/ARM64 compilation issues for some instructions
+- Fix ARM compilation issues on UWP
+- Fix issue with math.compress
+- Add support for `ldnull` for storing a managed null reference to a ref field (e.g for DisposeSentinel)
+
 ## 0.2.4-preview.38
 
 - Fix issue when converting an unsigned integer constant to a larger unsigned integer (e.g (ulong)uint.MaxValue)
