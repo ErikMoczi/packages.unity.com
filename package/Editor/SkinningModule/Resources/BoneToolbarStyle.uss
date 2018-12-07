@@ -1,0 +1,63 @@
+/**********************************************************************************************************************/
+/* BoneToolbar                                                                                                         */
+/**********************************************************************************************************************/
+
+#EditPoseImage {
+    image: resource("Icons/SpriteIconsLight/SpriteEditor/Edit_Pose");
+}
+
+#EditJointsImage {
+    image: resource("Icons/SpriteIconsLight/SpriteEditor/Edit_Joints");
+}
+
+#CreateBoneImage {
+    image: resource("Icons/SpriteIconsLight/SpriteEditor/Create Bones");
+}
+
+#SplitBoneImage {
+    image: resource("Icons/SpriteIconsLight/SpriteEditor/Split Bones");
+}
+
+#BoneReparentImage {
+    image: resource("Icons/SpriteIconsLight/SpriteEditor/Parent_Bone");
+}
+
+.Dark #EditPoseImage {
+    image: resource("Icons/SpriteIconsDark/SpriteEditor/d_Edit_Pose");
+}
+
+.Dark #EditJointsImage {
+    image: resource("Icons/SpriteIconsDark/SpriteEditor/d_Edit_Joints");
+}
+
+.Dark #CreateBoneImage {
+    image: resource("Icons/SpriteIconsDark/SpriteEditor/d_Create Bones");
+}
+
+.Dark #SplitBoneImage {
+    image: resource("Icons/SpriteIconsDark/SpriteEditor/d_Split Bones");
+}
+
+.Dark #BoneReparentImage {
+    image: resource("Icons/SpriteIconsDark/SpriteEditor/d_Parent_Bone");
+}
+
+.Checked #EditPoseImage{
+    image: resource("Icons/SpriteIconsSelected/SpriteEditor/Edit_Pose");
+}
+
+.Checked #EditJointsImage {
+    image: resource("Icons/SpriteIconsSelected/SpriteEditor/Edit_Joints");
+}
+
+.Checked #CreateBoneImage {
+    image: resource("Icons/SpriteIconsSelected/SpriteEditor/Create Bones");
+}
+
+.Checked #SplitBoneImage {
+    image: resource("Icons/SpriteIconsSelected/SpriteEditor/Split Bones");
+}
+
+.Checked #BoneReparentImage {
+    image: resource("Icons/SpriteIconsSelected/SpriteEditor/Parent_Bone");
+}

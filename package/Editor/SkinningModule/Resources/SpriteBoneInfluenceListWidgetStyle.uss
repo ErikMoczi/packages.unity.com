@@ -1,0 +1,166 @@
+#HeaderImage
+{
+    background-image: resource("Builtin Skins/LightSkin/Images/rol-header.png");
+    slice-left: 4;
+    slice-right: 4;
+    slice-top: 3;
+    slice-bottom: 2;
+
+    /* GUIStyle.clipping */
+    -unity-clipping: clip;
+
+    /* GUIStyle.contentOffset */
+    -unity-content-offset: 0 -1;
+
+    /* GUIStyle.fixedHeight */
+    height: 18;
+}
+
+.Dark . #HeaderImage
+{
+    background-image: resource("Builtin Skins/DarkSkin/Images/d_rol-header.png");
+}
+
+
+#HeaderText
+{
+    text-alignment: middle-center;
+}
+
+#ListView
+{
+    background-image: resource("Builtin Skins/LightSkin/Images/rol-body.png");
+    slice-left: 6;
+    slice-right: 3;
+    slice-bottom: 6;
+    height : 230;
+    border-bottom : 5;
+}
+
+
+.Dark . #ListView
+{
+    background-image: resource("Builtin Skins/DarkSkin/Images/d_rol-body.png");
+}
+
+#ListRow
+{
+    text-alignment : middle-center;
+}
+
+.ListRowOddColor
+{
+    background-color: #DFDFDF;
+}
+
+.ListRowEvenColor
+{
+    background-color: #D8D8D8;
+}
+
+.Dark . .ListRowOddColor
+{
+    background-color: #373737;
+}
+
+.Dark .ListRowEvenColor
+{
+    background-color: #3C3C3C;
+}
+
+SelectListView :selected
+{
+    background-image: resource("Builtin Skins/LightSkin/Images/ro_selected_l.png");
+    slice-left: 2;
+    slice-right: 2;
+    slice-bottom: 3;
+}
+
+.Dark . SelectListView :selected
+{
+    background-image: resource("Builtin Skins/DarkSkin/Images/ro_selected_d.png");
+}
+
+ScrollView
+{
+    flex :1;
+}
+
+.Dark . #ContentBackgroundImage
+{
+     background-image: resource("Builtin Skins/DarkSkin/Images/d_rol-body.png");
+}
+
+#ButtonsContainer
+{
+    flex-direction : row;
+    align-self : flex-end;
+    background-image: resource("Builtin Skins/LightSkin/Images/rol-tab.png");
+    slice-left: 4;
+    slice-right: 4;
+    slice-top: 3;
+    slice-bottom: 4;
+    height: 17;
+    position-top : -2;
+}
+
+.Dark . #ButtonsContainer
+{
+    background-image: resource("Builtin Skins/DarkSkin/Images/d_rol-tab.png");
+}
+
+#AddButton
+{
+    background-image: resource("Icons/Toolbar Plus.png");
+    height : 16;
+    width : 16;
+    align-self: center;
+    background-size : 1;
+    background-color: rgb(221, 221, 221);
+}
+
+#AddButton:hover {
+    /* GUIState.textColor */
+    background-color: rgb(255, 255, 255);
+}
+
+.Dark #AddButton:hover {
+    /* GUIState.textColor */
+    background-color: rgb(128, 128, 128);
+}
+.Dark . #AddButton
+{
+    background-image: resource("Icons/d_Toolbar Plus.png");
+    background-color: rgba(255, 255, 255,0);
+}
+
+#RemoveButton
+{
+    background-image: resource("Icons/Toolbar Minus.png");
+    height : 16;
+    width : 16;
+    align-self: center;
+    background-size : 1;
+    background-color: rgb(221, 221, 221);
+}
+
+.Dark . #RemoveButton
+{
+    background-image: resource("Icons/d_Toolbar Minus.png");
+    background-color: rgba(255, 255, 255, 0);
+}
+
+#RemoveButton:hover {
+    /* GUIState.textColor */
+    background-color: rgb(255, 255, 255);
+}
+
+.Dark #RemoveButton:hover {
+    /* GUIState.textColor */
+    background-color: rgb(128, 128, 128);
+}
+
+
+Button:disabled {
+    opacity: 0.5;
+}

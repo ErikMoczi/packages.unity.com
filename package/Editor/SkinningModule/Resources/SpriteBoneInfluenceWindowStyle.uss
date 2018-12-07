@@ -1,0 +1,15 @@
+
+SpriteBoneInfluenceWindow
+{
+    height: 300;
+}
+
+SpriteBoneInfluenceWindowListWidget
+{
+    flex: 1;
+}
+
+SpriteBoneInfluenceWindowTreeViewWidget
+{
+    flex: 1;
+}

@@ -83,25 +83,4 @@ namespace UnityEngine.Experimental.U2D.Animation
                 bones[bone3].MultiplyPoint3x4(vertices[i]) * influences[i].weight3;
         }
     }
-
-    public struct AABBJob : IJob
-    {
-        [ReadOnly]
-        public NativeArray<Vector3> vertices;
-
-        public NativeArray<Vector3> minMax;
-
-        public void Execute()
-        {
-            Debug.Assert(minMax.Length == 2);
-            Debug.Assert(vertices.Length > 0);
-
-            minMax[0] = minMax[1] = vertices[0];
-            for (var i = 1; i < vertices.Length; i++)
-            {
-                minMax[0] = Vector3.Min(minMax[0], vertices[i]);
-                minMax[1] = Vector3.Max(minMax[1], vertices[i]);
-            }
-        }
-    }
 }

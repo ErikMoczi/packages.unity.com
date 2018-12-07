@@ -1,0 +1,66 @@
+/**********************************************************************************************************************/
+/* Toolbar                                                                                                         */
+/**********************************************************************************************************************/
+
+.Toolbar {
+     flex:1;
+}
+
+Button {
+    align-items: center;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    flex-direction : row;
+}
+
+Button > Image {
+    margin-left: -5;
+    width: 16;
+    height: 16;
+}
+
+.Collapse Button > Image {
+    width: 16;
+    height: 16;
+}
+
+Button > Label {
+    margin-left: 2;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.Collapse Button > Label {
+    visibility : hidden;
+}
+
+Button.Checked > Label {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+PopupWindow{
+    margin-left :-4;
+    border-left :2;
+    border-right :2;
+    margin-top : -4;
+    margin-bottom : -4;
+    background-image: resource("Builtin Skins/LightSkin/Images/PopupWindowOff.png");
+}
+
+.Dark PopupWindow{
+    background-image: resource("Builtin Skins/DarkSkin/Images/PopupWindowOff.png");
+}
+
+.Collapse PopupWindow
+{
+    margin-bottom : -25;
+    text-color: rgba(255, 255, 255, 0);
+    background-image:none;
+}

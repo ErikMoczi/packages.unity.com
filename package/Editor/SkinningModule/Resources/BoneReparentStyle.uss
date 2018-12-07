@@ -1,0 +1,7 @@
+BoneReparentToolWindow {
+    height: 300;
+}
+
+BoneReparentToolView{
+    flex : 1;
+}

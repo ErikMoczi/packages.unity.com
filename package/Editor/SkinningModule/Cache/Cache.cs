@@ -1,0 +1,118 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace UnityEditor.Experimental.U2D.Animation
+{
+    internal class Cache : BaseObject, ICacheUndo
+    {
+        public static T Create<T>() where T : Cache
+        {
+            var cache = CreateInstance<T>();
+            cache.hideFlags = HideFlags.DontSave;
+            return cache;
+        }
+
+        public static void Destroy(Cache cache)
+        {
+            cache.undoOverride = null;
+            cache.Clear();
+            DestroyImmediate(cache);
+        }
+
+        [SerializeField]
+        private List<CacheObject> m_CacheObjects = new List<CacheObject>();
+        private string m_UndoOperationName = null;
+        private IUndo m_DefaultUndo = new UnityEngineUndo();
+        private IUndo m_UndoOverride = null;
+
+        private IUndo undo
+        {
+            get
+            {
+                if (undoOverride != null)
+                    return undoOverride;
+
+                return m_DefaultUndo;
+            }
+        }
+
+        public IUndo undoOverride
+        {
+            get { return m_UndoOverride; }
+            set { m_UndoOverride = value; }
+        }
+
+        public bool isUndoOperationSet
+        {
+            get { return string.IsNullOrEmpty(m_UndoOperationName) == false; }
+        }
+
+        public void IncrementCurrentGroup()
+        {
+            undo.IncrementCurrentGroup();
+        }
+
+        public void BeginUndoOperation(string operationName)
+        {
+            if (isUndoOperationSet == false)
+            {
+                Debug.Assert(!m_CacheObjects.Contains(null));
+
+                m_UndoOperationName = operationName;
+                undo.RegisterCompleteObjectUndo(this, m_UndoOperationName);
+                undo.RegisterCompleteObjectUndo(m_CacheObjects.ToArray(), m_UndoOperationName);
+            }
+        }
+
+        public void EndUndoOperation()
+        {
+            m_UndoOperationName = null;
+        }
+
+        public T CreateCache<T>() where T : CacheObject
+        {
+            var cacheObject = CacheObject.Create<T>(this);
+            
+            m_CacheObjects.Add(cacheObject);
+
+            if (isUndoOperationSet)
+                undo.RegisterCreatedObjectUndo(cacheObject, m_UndoOperationName);
+
+            cacheObject.OnCreate();
+            
+            return cacheObject;
+        }
+
+        public void Destroy(CacheObject cacheObject)
+        {
+            Debug.Assert(cacheObject != null);
+            Debug.Assert(cacheObject.owner == this);
+            Debug.Assert(m_CacheObjects.Contains(cacheObject));
+
+            m_CacheObjects.Remove(cacheObject);
+
+            if (isUndoOperationSet)
+                undo.DestroyObjectImmediate(cacheObject);
+            else
+                DestroyImmediate(cacheObject);
+        }
+
+        public void Clear()
+        {
+            Debug.Assert(!m_CacheObjects.Contains(null));
+
+            EndUndoOperation();
+
+            undo.ClearUndo(this);
+
+            var cacheObjects = m_CacheObjects.ToArray();
+
+            foreach (var cacheObject in cacheObjects)
+                Destroy(cacheObject);
+
+            m_CacheObjects.Clear();
+        }
+    }
+}

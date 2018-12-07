@@ -22,32 +22,6 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
         private SpriteSkin m_SpriteSkin;
         private Sprite riggedSprite;
 
-        private static string kTestAssetsFolder = "Packages/com.unity.2d.animation/Tests/Editor/SpriteSkin/Assets/";
-        private static string kTestTempFolder = "Assets/Temp/";
-
-        [OneTimeTearDown]
-        public void FullTeardown()
-        {
-            // Delete cloned sprites
-            AssetDatabase.DeleteAsset(Path.GetDirectoryName(kTestTempFolder));
-        }
-
-        [OneTimeSetUp]
-        public void OneTimeSetup()
-        {
-            CloneSpriteForTest("bird.png");
-        }
-
-        private static void CloneSpriteForTest(string filename)
-        {
-            ValidateDirectory(kTestTempFolder);
-
-            File.Copy(kTestAssetsFolder + filename, kTestTempFolder + filename);
-            File.Copy(kTestAssetsFolder + filename + ".meta", kTestTempFolder + filename + ".meta");
-
-            AssetDatabase.Refresh();
-        }
-
         private static void ValidateDirectory(string path)
         {
             var dirPath = Path.GetDirectoryName(path);
@@ -98,7 +72,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
             s_SceneView.Focus();
 
             var go = new GameObject("TestObject");
-            riggedSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Temp/bird.png");
+            riggedSprite = Resources.Load<Sprite>("bird");
             m_SpriteSkin = go.AddComponent<SpriteSkin>();
             m_SpriteSkin.spriteRenderer.sprite = riggedSprite;
             m_SpriteSkin.CreateBoneHierarchy();
@@ -166,7 +140,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
         {
             m_SpriteSkin.transform.position = testCase.position;
             Selection.activeGameObject = m_SpriteSkin.gameObject;
-            Tools.current = Tool.None;
+            UnityEditor.Tools.current = Tool.None;
 
             // Get Mouse Position based on actual SceneView state by using SceneView delegate
             bool doingTest = false;
@@ -200,7 +174,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
 
             Assert.AreNotEqual(m_SpriteSkin.gameObject, selection);
             Assert.AreEqual(selectedGO, selection);
-            Assert.AreEqual(Tool.None, Tools.current);
+            Assert.AreEqual(Tool.None, UnityEditor.Tools.current);
         }
 
         [UnityTest]
@@ -208,7 +182,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
         {
             m_SpriteSkin.transform.position = testCase.position;
             Selection.activeGameObject = m_SpriteSkin.gameObject;
-            Tools.current = Tool.None;
+            UnityEditor.Tools.current = Tool.None;
 
             foreach (var transform in m_SpriteSkin.boneTransforms)
                 transform.parent = null;
@@ -245,7 +219,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
 
             Assert.AreNotEqual(m_SpriteSkin.gameObject, selection);
             Assert.AreEqual(selectedGO, selection);
-            Assert.AreEqual(Tool.None, Tools.current);
+            Assert.AreEqual(Tool.None, UnityEditor.Tools.current);
         }
     }
 }

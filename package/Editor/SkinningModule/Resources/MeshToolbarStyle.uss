@@ -1,0 +1,63 @@
+/**********************************************************************************************************************/
+/* MeshToolbar                                                                                                         */
+/**********************************************************************************************************************/
+
+#SelectGeometryImage {
+    image: resource("Icons/SpriteIconsLight/SpriteEditor/Edit_Geometry");
+}
+
+#CreateVertexImage {
+    image: resource("Icons/SpriteIconsLight/SpriteEditor/Create_Vertex");
+}
+
+#CreateEdgeImage {
+    image: resource("Icons/SpriteIconsLight/SpriteEditor/Create_Edge");
+}
+
+#SplitEdgeImage {
+    image: resource("Icons/SpriteIconsLight/SpriteEditor/Split_Edge");
+}
+
+#GenerateGeometryImage {
+    image: resource("Icons/SpriteIconsLight/SpriteEditor/Generate_Geometry");
+}
+
+.Dark #SelectGeometryImage {
+    image: resource("Icons/SpriteIconsDark/SpriteEditor/d_Edit_Geometry");
+}
+
+.Dark #CreateVertexImage {
+    image: resource("Icons/SpriteIconsDark/SpriteEditor/d_Create_Vertex");
+}
+
+.Dark #CreateEdgeImage {
+    image: resource("Icons/SpriteIconsDark/SpriteEditor/d_Create_Edge");
+}
+
+.Dark #SplitEdgeImage {
+    image: resource("Icons/SpriteIconsDark/SpriteEditor/d_Split_Edge");
+}
+
+.Dark #GenerateGeometryImage {
+    image: resource("Icons/SpriteIconsDark/SpriteEditor/d_Generate_Geometry");
+}
+
+.Checked #SelectGeometryImage {
+    image: resource("Icons/SpriteIconsSelected/SpriteEditor/Edit_Geometry");
+}
+
+.Checked #CreateVertexImage {
+    image: resource("Icons/SpriteIconsSelected/SpriteEditor/Create_Vertex");
+}
+
+.Checked #CreateEdgeImage {
+    image: resource("Icons/SpriteIconsSelected/SpriteEditor/Create_Edge");
+}
+
+.Checked #SplitEdgeImage {
+    image: resource("Icons/SpriteIconsSelected/SpriteEditor/Split_Edge");
+}
+
+.Checked #GenerateGeometryImage {
+    image: resource("Icons/SpriteIconsSelected/SpriteEditor/Generate_Geometry");
+}

@@ -133,34 +133,6 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Skinning
         private Vector3Compare vec3Compare = new Vector3Compare();
         private QuaternionCompare quatCompare = new QuaternionCompare();
 
-        private static string kTestAssetsFolder = "Packages/com.unity.2d.animation/Tests/Editor/SpriteSkin/Assets/";
-        private static string kTestTempFolder = "Assets/Temp/";
-
-        [OneTimeTearDown]
-        public void FullTeardown()
-        {
-            // Delete cloned sprites
-            AssetDatabase.DeleteAsset(Path.GetDirectoryName(kTestTempFolder));
-        }
-
-        [OneTimeSetUp]
-        public void OneTimeSetup()
-        {
-            CloneSpriteForTest("bird.png");
-            CloneSpriteForTest("star.png");
-        }
-
-        private static void CloneSpriteForTest(string filename)
-        {
-            ValidateDirectory(kTestTempFolder);
-            // var filename = Path.GetFileName(path);
-
-            File.Copy(kTestAssetsFolder + filename, kTestTempFolder + filename);
-            File.Copy(kTestAssetsFolder + filename + ".meta", kTestTempFolder + filename + ".meta");
-
-            AssetDatabase.Refresh();
-        }
-
         private static void ValidateDirectory(string path)
         {
             var dirPath = Path.GetDirectoryName(path);
@@ -172,8 +144,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Skinning
         [SetUp]
         public void Setup()
         {
-            riggedSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Temp/bird.png");
-            staticSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Temp/star.png");
+            riggedSprite = Resources.Load<Sprite>("bird");
+            staticSprite = Resources.Load<Sprite>("star");
 
             m_SpriteSkin = new GameObject("TestObject1").AddComponent<SpriteSkin>();
             m_SpriteSkin.spriteRenderer.sprite = riggedSprite;
@@ -311,21 +283,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Skinning
             return SpriteSkinUtility.Deform(sprite.GetVertexAttribute<Vector3>(VertexAttribute.Position), boneWeights, spriteSkin.transform.worldToLocalMatrix, bindPoses, transformMatrices, deformedVertices);
         }
 
-        private void AssertDeformAABB(SpriteSkin spriteSkin, Bounds expectedBounds)
+        private void AssertAABB(Bounds bounds, Bounds expectedBounds)
         {
-            var deformedVertices = new NativeArray<Vector3>(spriteSkin.spriteRenderer.sprite.GetVertexCount(), Allocator.Persistent);
-            var minMax = new NativeArray<Vector3>(2, Allocator.Persistent);
-
-            SpriteSkinUtility.CalculateBounds(deformedVertices, minMax, DeformJob(spriteSkin, deformedVertices)).Complete();
-
-            var newBounds = new Bounds();
-            newBounds.SetMinMax(minMax[0], minMax[1]);
-
-            Assert.That(newBounds.center, Is.EqualTo(expectedBounds.center).Using(vec3Compare));
-            Assert.That(newBounds.extents, Is.EqualTo(expectedBounds.extents).Using(vec3Compare));
-
-            deformedVertices.Dispose();
-            minMax.Dispose();
+            Assert.That(bounds.center, Is.EqualTo(expectedBounds.center).Using(vec3Compare));
+            Assert.That(bounds.extents, Is.EqualTo(expectedBounds.extents).Using(vec3Compare));
         }
 
         private void AssertDeformation(SpriteSkin spriteSkin, Vector3[] expectedVertices)
@@ -356,70 +317,32 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Skinning
         }
 
         [Test]
-        public void RotateTransform_ChangesHash()
-        {
-            int hash = m_SpriteSkin.CalculateTransformHash();
-            m_SpriteSkin.boneTransforms[1].Rotate(new Vector3(0, 0, 90.0f));
-            Assert.That(hash, !Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
-            m_SpriteSkin.ResetBindPose();
-            Assert.That(hash, Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
-            m_SpriteSkin.transform.Rotate(new Vector3(0, 0, 90.0f));
-            Assert.That(hash, !Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
-        }
-
-        [Test]
-        public void MoveTransform_ChangesHash()
-        {
-            int hash = m_SpriteSkin.CalculateTransformHash();
-            m_SpriteSkin.boneTransforms[1].position += Vector3.one;
-            Assert.That(hash, !Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
-            m_SpriteSkin.ResetBindPose();
-            Assert.That(hash, Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
-            m_SpriteSkin.transform.position += Vector3.one;
-            Assert.That(hash, !Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
-        }
-
-        [Test]
-        public void ScaleTransform_ChangesHash()
-        {
-            int hash = m_SpriteSkin.CalculateTransformHash();
-            m_SpriteSkin.boneTransforms[1].localScale = Vector3.one * 2f;
-            Assert.That(hash, !Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
-            m_SpriteSkin.ResetBindPose();
-            Assert.That(hash, Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
-            m_SpriteSkin.transform.localScale = Vector3.one * 2f;
-            Assert.That(hash, !Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
-        }
-
-        [Test]
-        public void BoundsJob_CalculatesBoundsFromDeformedVertices()
-        {
-            var bounds = m_SpriteSkin.spriteRenderer.bounds;
-
-            var newBounds = new Bounds(new Vector3(0f, 0.135f, 0f), new Vector3(1.28f, 0.65f, 0f) * 2f);
-
-            Assert.That(bounds.center, !Is.EqualTo(newBounds.center).Using(vec3Compare));
-            Assert.That(bounds.extents, !Is.EqualTo(newBounds.extents).Using(vec3Compare));
-
-            AssertDeformAABB(m_SpriteSkin, newBounds);
-        }
-
-        [Test]
         public void DisableSpriteSkin_RestoresSpriteBounds()
         {
-            var bounds = m_SpriteSkin.spriteRenderer.bounds;
+            var bounds = m_SpriteSkin.bounds;
 
-            var newBounds = new Bounds(new Vector3(0f, 0.135f, 0f), new Vector3(1.28f, 0.65f, 0f) * 2f);
+            var expectedBounds = new Bounds();
 
-            AssertDeformAABB(m_SpriteSkin, newBounds);
+            AssertAABB(bounds, expectedBounds);
 
             m_SpriteSkin.enabled = false;
 
             var spriteRendererBounds = m_SpriteSkin.spriteRenderer.bounds;
             var spriteBounds = m_SpriteSkin.spriteRenderer.sprite.bounds;
 
-            Assert.That(spriteRendererBounds.center, Is.EqualTo(spriteBounds.center).Using(vec3Compare));
-            Assert.That(spriteRendererBounds.extents, Is.EqualTo(spriteBounds.extents).Using(vec3Compare));
+            AssertAABB(spriteRendererBounds, spriteBounds);
+        }
+
+        [Test]
+        public void CalculateBounds()
+        {
+            var expectedBounds = new Bounds();
+            expectedBounds.center = new Vector3(1.139787f, 0.3959408f, 0f);
+            expectedBounds.extents = new Vector3(1.552842f, 0.9320881f, 0f);
+
+            m_SpriteSkin.CalculateBounds();
+
+            AssertAABB(m_SpriteSkin.bounds, expectedBounds);
         }
 
         [Test]

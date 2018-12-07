@@ -1,0 +1,217 @@
+VisibilityToolWindow {
+    flex: 1;
+}
+
+BoneVisibilityToolView{
+    flex : 1;
+}
+
+SpriteVisibilityToolView{
+    flex : 1;
+}
+
+MeshVisibilityToolView{
+    flex : 1;
+}
+
+#VisibilityToolSelection{
+    height : 20;
+    flex-direction : row;
+}
+
+#VisibilityToolContainer{
+    flex : 1;
+}
+
+#VisibilityToolSelection > Label{
+    flex : 1;
+    flex-grow : 1;
+}
+
+#HierarchyToolButtonImage{
+    image: resource("Icons/HierarchyTool");
+}
+
+#VisibilityToolSelection > Button{
+    margin-top: 0;
+    margin-left: 0;
+    margin-bottom: 0;
+    margin-right: 0;
+    padding-top: 0;
+    padding-left: 0;
+    padding-bottom: 0;
+    padding-right: 0;
+    border-left-width: 0;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    cursor : link;
+}
+
+
+.visibilityToolTab {
+    background-image: none;
+    text-color: #505050;
+    slice-left: 6;
+    slice-top: 4;
+    slice-right: 6;
+    slice-bottom: 4;
+    flex :1;
+    margin-top: 0;
+    margin-left: 0;
+    margin-bottom: 0;
+    margin-right: 0;
+    padding-top: 0;
+    padding-left: 0;
+    padding-bottom: 0;
+    padding-right: 0;
+    border-left-width: 0;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+}
+
+.visibilityToolTabDark{
+    text-color: #B4B4B4;
+}
+
+.visibilityToolTab:checked{
+    background-image: resource("Builtin Skins/LightSkin/Images/tabbar on f.png");
+    text-color: #505050;
+    flex :1;
+    slice-left: 6;
+    slice-top: 4;
+    slice-right: 6;
+    slice-bottom: 4;
+    flex :1;
+    margin-top: 0;
+    margin-left: 0;
+    margin-bottom: 0;
+    margin-right: 0;
+    padding-top: 0;
+    padding-left: 0;
+    padding-bottom: 0;
+    padding-right: 0;
+    border-left-width: 0;
+    border-top-width: 0;
+    border-right-width: 0;
+
+}
+
+.visibilityToolTabDark:checked{
+    background-image: resource("Builtin Skins/DarkSkin/Images/tabbar on f.png");
+    text-color: #B4B4B4;
+}
+
+.visibilityToolTab:hover:active:checked{
+    background-image: resource("Builtin Skins/LightSkin/Images/tabbar on.png");
+    flex :1;
+    slice-left: 6;
+    slice-top: 4;
+    slice-right: 6;
+    slice-bottom: 4;
+    flex :1;
+    margin-top: 0;
+    margin-left: 0;
+    margin-bottom: 0;
+    margin-right: 0;
+    padding-top: 0;
+    padding-left: 0;
+    padding-bottom: 0;
+    padding-right: 0;
+    border-left-width: 0;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+}
+
+.visibilityToolTabDark:hover:active:checked{
+    background-image: resource("Builtin Skins/DarkSkin/Images/tabbar on.png");
+}
+
+.visibilityToolTab:hover:active{
+    background-image: resource("Builtin Skins/LightSkin/Images/tabbar on.png");
+    text-color: #505050;
+    flex :1;
+    slice-left: 6;
+    slice-top: 4;
+    slice-right: 6;
+    slice-bottom: 4;
+    flex :1;
+    margin-top: 0;
+    margin-left: 0;
+    margin-bottom: 0;
+    margin-right: 0;
+    padding-top: 0;
+    padding-left: 0;
+    padding-bottom: 0;
+    padding-right: 0;
+    border-left-width: 0;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+}
+
+.visibilityToolTabDark:hover:active{
+    background-image: resource("Builtin Skins/DarkSkin/Images/tabbar on.png");
+}
+
+#OpacitySliderGroup
+{
+    margin-bottom : 5;
+    flex-direction:row;
+
+}
+
+#BoneOpacitySliderGroup
+{
+    flex-direction:row;
+    height : 16;
+    flex :1;
+}
+
+#MeshOpacitySliderGroup
+{
+    flex-direction:row;
+    height : 16;
+    flex :1;
+}
+
+#MeshOpacitySlider
+{
+    align-self : center;
+}
+
+#BoneOpacitySlider
+{
+    align-self : center;
+}
+
+
+#BoneOpacitySliderIcon
+{
+    image: resource("Icons/SpriteIconsLight/SpriteEditor/Bone");
+    width : 16;
+    height : 16;
+}
+
+#MeshOpacitySliderIcon
+{
+    image: resource("Icons/SpriteIconsLight/SpriteEditor/Mesh");
+    width : 16;
+    height : 16;
+}
+
+.Dark #BoneOpacitySliderIcon
+{
+    image: resource("Icons/SpriteIconsDark/SpriteEditor/d_Bone");
+    width : 16;
+    height : 16;
+}
+
+.Dark  #MeshOpacitySliderIcon
+{
+    image: resource("Icons/SpriteIconsDark/SpriteEditor/d_Mesh");
+    width : 16;
+    height : 16;
+}

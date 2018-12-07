@@ -23,12 +23,10 @@ namespace UnityEngine.Experimental.U2D.Animation
         private Transform m_RootBone;
         [SerializeField]
         private Transform[] m_BoneTransforms;
+        [SerializeField]
+        private Bounds m_Bounds;
         private SpriteRenderer m_SpriteRenderer;
         private Sprite m_CurrentSprite;
-        private int m_TransformHash = 0;
-        private JobHandle m_BoundsHandle;
-        private NativeArray<Vector3> m_MinMax;
-        private bool m_NeedsUpdateBounds;
 
 #if UNITY_EDITOR
         private SpriteBone[] m_SpriteBones;
@@ -70,6 +68,16 @@ namespace UnityEngine.Experimental.U2D.Animation
             set { m_RootBone = value; }
         }
 
+        internal Bounds bounds
+        {
+            get { return m_Bounds; }
+            set
+            {
+                m_Bounds = value;
+                UpdateBounds();
+            }
+        }
+
         internal bool isValid
         {
             get { return this.Validate() == SpriteSkinValidationResult.Ready; }
@@ -100,59 +108,36 @@ namespace UnityEngine.Experimental.U2D.Animation
 #endif
         private void OnEnable()
         {
-            CreatePersistentNativeArrays();
-
-            var min = transform.InverseTransformPoint(spriteRenderer.bounds.min);
-            var max = transform.InverseTransformPoint(spriteRenderer.bounds.max);
-
-            UpdateBounds(min, max);
+            UpdateBounds();
         }
 
         private void OnDisable()
         {
-            DisposePersistentNativeArrays();
             DeactivateSkinning();
         }
 
-        private void OnApplicationQuit()
+        internal void UpdateBounds()
         {
-            DisposePersistentNativeArrays();
-        }
+            if (!isValid)
+                return;
 
-        private void CreatePersistentNativeArrays()
-        {
-            m_MinMax = new NativeArray<Vector3>(2, Allocator.Persistent);
-        }
-
-        private void DisposePersistentNativeArrays()
-        {
-            m_BoundsHandle.Complete();
-            m_BoundsHandle = default(JobHandle);
-            if (m_MinMax.IsCreated)
-                m_MinMax.Dispose();
-        }
-
-        private void UpdateBounds(Vector3 min, Vector3 max)
-        {
+            var matrix = transform.worldToLocalMatrix * m_RootBone.localToWorldMatrix;
+            var extents = m_Bounds.extents;
+            var p0 = matrix.MultiplyPoint3x4(m_Bounds.center + new Vector3(-extents.x, -extents.y, extents.z));
+            var p1 = matrix.MultiplyPoint3x4(m_Bounds.center + new Vector3(-extents.x, extents.y, extents.z));
+            var p2 = matrix.MultiplyPoint3x4(m_Bounds.center + extents);
+            var p3 = matrix.MultiplyPoint3x4(m_Bounds.center + new Vector3(extents.x, -extents.y, extents.z));
             var bounds = new Bounds();
-            bounds.SetMinMax(min, max);
+            bounds.min = p0;
+            bounds.max = p0;
+            bounds.Encapsulate(p1);
+            bounds.Encapsulate(p2);
+            bounds.Encapsulate(p3);
             InternalEngineBridge.SetLocalAABB(spriteRenderer, bounds);
-        }
-
-        private void UpdateBoundsIfNeeded()
-        {
-            if (m_NeedsUpdateBounds)
-            {
-                m_BoundsHandle.Complete();
-                m_BoundsHandle = default(JobHandle);
-                UpdateBounds(m_MinMax[0], m_MinMax[1]);
-                m_NeedsUpdateBounds = false;
-            }
         }
 
         private void DeactivateSkinning()
         {
-            m_TransformHash = 0;
             SpriteRendererDataAccessExtensions.DeactivateDeformableBuffer(spriteRenderer);
 
             if (spriteRenderer.sprite != null)
@@ -185,11 +170,7 @@ namespace UnityEngine.Experimental.U2D.Animation
                 return;
             }
 
-            UpdateBoundsIfNeeded();
-
-            int hashCode = this.CalculateTransformHash();
-            if (hashCode == m_TransformHash)
-                return;
+            UpdateBounds();
 
             var bindPoses = m_CurrentSprite.GetBindPoses();
             var boneWeights = m_CurrentSprite.GetBoneWeights();
@@ -201,11 +182,7 @@ namespace UnityEngine.Experimental.U2D.Animation
 
             var deformJobHandle = SpriteSkinUtility.Deform(m_CurrentSprite.GetVertexAttribute<Vector3>(VertexAttribute.Position), boneWeights, transform.worldToLocalMatrix, bindPoses, transformMatrices, outputVertices);
 
-            m_BoundsHandle = SpriteSkinUtility.CalculateBounds(outputVertices, m_MinMax, deformJobHandle);
-            spriteRenderer.UpdateDeformableBuffer(m_BoundsHandle);
-
-            m_TransformHash = hashCode;
-            m_NeedsUpdateBounds = true;
+            spriteRenderer.UpdateDeformableBuffer(deformJobHandle);
 
 #if UNITY_EDITOR
             if (m_SpriteBones != null && m_SpriteBones.Length != bindPoses.Length)

@@ -1,0 +1,63 @@
+/**********************************************************************************************************************/
+/* WeightPainterPanel                                                                                                 */
+/**********************************************************************************************************************/
+
+#WeightPainterPanel.BrushMode {
+  height: 165;
+}
+
+#WeightPainterPanel.SliderMode {
+  height: 230;
+}
+
+#WeightPainterPanel.BrushMode #Amount.form-row {
+  visibility: hidden;
+  height : 0;
+}
+
+#WeightPainterPanel.SliderMode #Size.form-row,
+#WeightPainterPanel.SliderMode #Hardness.form-row,
+#WeightPainterPanel.SliderMode #Step.form-row {
+  visibility: hidden;
+  height : 0;
+}
+
+#WeightsInspector{
+    flex : 1;
+    margin-left : 4;
+    margin-right : 4;
+}
+
+
+.BrushMode #WeightsInspector{
+    height : 0;
+    margin-left : 0;
+    margin-right : 0;
+    visibility : hidden;
+    flex : 0;
+}
+
+
+ #divider{
+    height : 2;
+    margin-top:5;
+    margin-bottom:5;
+    background-color: rgba(127,127,127,0.8);
+    border-color: rgba(35,35,35,0.8);
+}
+
+ .Dark #divider{
+   background-color: rgba(85,85,85,0.8);
+   border-color: rgba(35,35,35,0.8);
+}
+
+.SliderMode #divider{
+    height : 2
+}
+
+.BrushMode #divider{
+    visibility : hidden;
+    height : 0;
+    margin-top:0;
+    margin-bottom:0;
+}

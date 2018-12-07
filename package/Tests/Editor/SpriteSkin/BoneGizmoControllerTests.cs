@@ -51,67 +51,49 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
         private QuaternionCompare quatCompare = new QuaternionCompare();
         private Vector3Compare vec3Compare = new Vector3Compare();
 
-        private IBoneGizmoView m_BoneGizmoView;
+        private ISkeletonView m_SkeletonView;
         private IBoneGizmoToggle m_BoneGizmoToggle;
-        private IUndoObject m_UndoObject;
+        private IUndo m_Undo;
         private BoneGizmoController m_BoneGizmoController;
         private Sprite m_SkinnedSprite;
         private SpriteSkin m_SpriteSkin;
-
-        private static string kTestAssetsFolder = "Packages/com.unity.2d.animation/Tests/Editor/SpriteSkin/Assets/";
-        private static string kTestTempFolder = "Assets/Temp/";
-
-        [OneTimeTearDown]
-        public void FullTeardown()
-        {
-            // Delete cloned sprites
-            AssetDatabase.DeleteAsset(Path.GetDirectoryName(kTestTempFolder));
-        }
-
-        [OneTimeSetUp]
-        public void OneTimeSetup()
-        {
-            CloneSpriteForTest("bird.png");
-        }
-
-        private static void CloneSpriteForTest(string filename)
-        {
-            ValidateDirectory(kTestTempFolder);
-
-            File.Copy(kTestAssetsFolder + filename, kTestTempFolder + filename);
-            File.Copy(kTestAssetsFolder + filename + ".meta", kTestTempFolder + filename + ".meta");
-
-            AssetDatabase.Refresh();
-        }
-
-        private static void ValidateDirectory(string path)
-        {
-            var dirPath = Path.GetDirectoryName(path);
-
-            if (Directory.Exists(dirPath) == false)
-                Directory.CreateDirectory(dirPath);
-        }
-
+        private SkeletonAction m_HotAction;
+        private int m_HotBoneID;
+        private int m_HoveredBoneID;
+        private int m_HoveredBodyID;
+        private int m_HoveredJointID;
+        private int m_HoveredTailID;
 
         [SetUp]
         public void Setup()
         {
             var go = new GameObject("TestObject");
-            m_SkinnedSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Temp/bird.png");
+            m_SkinnedSprite = Resources.Load<Sprite>("bird");
             m_SpriteSkin = go.AddComponent<SpriteSkin>();
             m_SpriteSkin.spriteRenderer.sprite = m_SkinnedSprite;
             m_SpriteSkin.CreateBoneHierarchy();
 
-            m_BoneGizmoView = Substitute.For<IBoneGizmoView>();
-            m_BoneGizmoView.IsBoneVisible(Arg.Any<Transform>(), Arg.Any<float>(), Arg.Any<float>()).Returns(x => { return true; });
-            m_BoneGizmoView.IsActionHot(BoneGizmoAction.None).Returns(x => { return true; });
-            m_BoneGizmoView.CanLayout().Returns(x => { return true; });
+            m_SkeletonView = Substitute.For<ISkeletonView>();
+            m_SkeletonView.hotBoneID.Returns( x => m_HotBoneID );
+            m_SkeletonView.hoveredBoneID.Returns( x => m_HoveredBoneID );
+            m_SkeletonView.hoveredBodyID.Returns( x => m_HoveredBodyID );
+            m_SkeletonView.hoveredJointID.Returns( x => m_HoveredJointID );
+            m_SkeletonView.hoveredTailID.Returns( x => m_HoveredTailID );
+            m_SkeletonView.IsActionHot(Arg.Any<SkeletonAction>()).Returns(x => m_HotAction == (SkeletonAction)x[0]);
+            m_SkeletonView.CanLayout().Returns(x => true);
 
-            m_UndoObject = Substitute.For<IUndoObject>();
+            m_Undo = Substitute.For<IUndo>();
             m_BoneGizmoToggle = Substitute.For<IBoneGizmoToggle>();
-            m_BoneGizmoToggle.enableGizmos.Returns(x => { return true; });
+            m_BoneGizmoToggle.enableGizmos.Returns(x => true);
 
-            m_BoneGizmoController = new BoneGizmoController(m_BoneGizmoView, m_UndoObject, m_BoneGizmoToggle);
+            m_BoneGizmoController = new BoneGizmoController(m_SkeletonView, m_Undo, m_BoneGizmoToggle);
+
+            m_HotBoneID = 0;
+            m_HoveredBodyID = 0;
+            m_HoveredBoneID = 0;
+            m_HoveredJointID = 0;
+            m_HoveredTailID = 0;
+            m_HotAction = SkeletonAction.None;
         }
 
         [TearDown]
@@ -131,10 +113,13 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
         [Test]
         public void RotateBone_SingleSelection()
         {
+            m_HotAction = SkeletonAction.RotateBone;
+            m_HotBoneID = m_SpriteSkin.boneTransforms[0].GetInstanceID();
+
             float deltaAngle;
-            m_BoneGizmoView.DoBoneRotation(m_SpriteSkin.boneTransforms[0], out deltaAngle).Returns(x =>
+            m_SkeletonView.DoRotateBone(Arg.Any<Vector3>(), Arg.Any<Vector3>(), out deltaAngle).Returns(x =>
                 {
-                    x[1] = 90f;
+                    x[2] = 90f;
                     return true; 
                 });
             
@@ -148,12 +133,15 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
         [Test]
         public void RotateBone_MultipleSelection()
         {
+            m_HotAction = SkeletonAction.RotateBone;
+            m_HotBoneID = m_SpriteSkin.boneTransforms[0].GetInstanceID();
+
             float deltaAngle;
-            m_BoneGizmoView.DoBoneRotation(m_SpriteSkin.boneTransforms[1], out deltaAngle).Returns(x =>
-            {
-                x[1] = 90f;
-                return true;
-            });
+            m_SkeletonView.DoRotateBone(Arg.Any<Vector3>(), Arg.Any<Vector3>(), out deltaAngle).Returns(x =>
+                {
+                    x[2] = 90f;
+                    return true; 
+                });
 
             var objectList = new List<Object>();
 
@@ -174,12 +162,15 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
         {
             m_SpriteSkin.boneTransforms[1].Rotate(Vector3.up, 45f);
 
+            m_HotAction = SkeletonAction.RotateBone;
+            m_HotBoneID = m_SpriteSkin.boneTransforms[0].GetInstanceID();
+
             float deltaAngle;
-            m_BoneGizmoView.DoBoneRotation(m_SpriteSkin.boneTransforms[1], out deltaAngle).Returns(x =>
-            {
-                x[1] = 90f;
-                return true;
-            });
+            m_SkeletonView.DoRotateBone(Arg.Any<Vector3>(), Arg.Any<Vector3>(), out deltaAngle).Returns(x =>
+                {
+                    x[2] = 90f;
+                    return true; 
+                });
 
             var objectList = new List<Object>();
 
@@ -199,9 +190,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
         public void MoveBone_SingleSelection()
         {
             Vector3 deltaPosition;
-            m_BoneGizmoView.DoBonePosition(m_SpriteSkin.boneTransforms[0], out deltaPosition).Returns(x =>
+            m_SkeletonView.DoMoveBone(out deltaPosition).Returns(x =>
             {
-                x[1] = Vector3.up * 3f;
+                x[0] = Vector3.up * 3f;
                 return true;
             });
 
@@ -216,9 +207,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
         public void MoveBone_MultipleSelection()
         {
             Vector3 deltaPosition;
-            m_BoneGizmoView.DoBonePosition(m_SpriteSkin.boneTransforms[0], out deltaPosition).Returns(x =>
+            m_SkeletonView.DoMoveBone(out deltaPosition).Returns(x =>
             {
-                x[1] = Vector3.up * 3f;
+                x[0] = Vector3.up * 3f;
                 return true;
             });
 
@@ -240,17 +231,16 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
 
         [Test]
         public void SelectBone_SingleSelection()
-        {
-            BoneGizmoSelectionMode selectionMode;
-            m_BoneGizmoView.DoSelection(m_SpriteSkin.boneTransforms[0], out selectionMode).Returns(x =>
+        {            
+            m_HoveredBoneID = m_SpriteSkin.boneTransforms[0].GetInstanceID();
+
+            int id;
+            bool additive;
+            m_SkeletonView.DoSelectBone(out id, out additive).Returns(x =>
             {
-                x[1] = BoneGizmoSelectionMode.Single;
+                x[0] = m_HoveredBoneID;
+                x[1] = false;
                 return true;
-            });
-            m_BoneGizmoView.DoSelection(m_SpriteSkin.boneTransforms[1], out selectionMode).Returns(x =>
-            {
-                x[1] = BoneGizmoSelectionMode.Single;
-                return false;
             });
 
             m_BoneGizmoController.OnSelectionChanged();
@@ -259,16 +249,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
             Assert.IsTrue(Selection.Contains(m_SpriteSkin.boneTransforms[0].gameObject));
             Assert.IsFalse(Selection.Contains(m_SpriteSkin.boneTransforms[1].gameObject));
 
-            m_BoneGizmoView.DoSelection(m_SpriteSkin.boneTransforms[0], out selectionMode).Returns(x =>
-            {
-                x[1] = BoneGizmoSelectionMode.Single;
-                return false;
-            });
-            m_BoneGizmoView.DoSelection(m_SpriteSkin.boneTransforms[1], out selectionMode).Returns(x =>
-            {
-                x[1] = BoneGizmoSelectionMode.Single;
-                return true;
-            });
+            m_HoveredBoneID = m_SpriteSkin.boneTransforms[1].GetInstanceID();
 
             m_BoneGizmoController.OnSelectionChanged();
             m_BoneGizmoController.OnGUI();
@@ -280,10 +261,14 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
         [Test]
         public void SelectBone_ToggleSelection()
         {
-            BoneGizmoSelectionMode selectionMode;
-            m_BoneGizmoView.DoSelection(m_SpriteSkin.boneTransforms[0], out selectionMode).Returns(x =>
+            m_HoveredBoneID = m_SpriteSkin.boneTransforms[0].GetInstanceID();
+
+            int id;
+            bool additive;
+            m_SkeletonView.DoSelectBone(out id, out additive).Returns(x =>
             {
-                x[1] = BoneGizmoSelectionMode.Toggle;
+                x[0] = m_HoveredBoneID;
+                x[1] = true;
                 return true;
             });
 

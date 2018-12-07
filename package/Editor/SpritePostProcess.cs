@@ -6,9 +6,15 @@ using Unity.Collections;
 using System.Linq;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
+using UnityEngine.Scripting;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
+    public interface IAnimationAssetPostProcess
+    {
+        bool OnAfterPostProcess();
+    }
+
     internal class SpritePostProcess : AssetPostprocessor
     {
         private static List<object> m_AssetList;
@@ -28,6 +34,8 @@ namespace UnityEditor.Experimental.U2D.Animation
                     bool dataChanged = false;
                     dataChanged = PostProcessBoneData(ai,  sprites);
                     dataChanged |= PostProcessSpriteMeshData(ai, sprites);
+                    if (ai is IAnimationAssetPostProcess)
+                        dataChanged |= ((IAnimationAssetPostProcess)ai).OnAfterPostProcess();
                     if (dataChanged)
                     {
                         assetPathModified.Add(importedAsset);
@@ -46,6 +54,50 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
+        static void CalculateLocaltoWorldMatrix(int i, SpriteRect spriteRect, float definitionScale, float pixelsPerUnit, List<SpriteBone> spriteBone, ref SpriteBone?[] outpriteBone, ref NativeArray<Matrix4x4> bindPose)
+        {
+            if (outpriteBone[i] != null)
+                return;
+            SpriteBone sp = spriteBone[i];
+            var isRoot = sp.parentId == -1;
+            var position = isRoot ? (spriteBone[i].position - Vector3.Scale(spriteRect.rect.size, spriteRect.pivot)) : spriteBone[i].position;
+            position.z = 0f;
+            sp.position = position * definitionScale / pixelsPerUnit;
+            sp.length = spriteBone[i].length * definitionScale / pixelsPerUnit;
+            outpriteBone[i] = sp;
+
+            // Calculate bind poses
+            var worldPosition = Vector3.zero;
+            var worldRotation = Quaternion.identity;
+
+            if (sp.parentId == -1)
+            {
+                worldPosition = sp.position;
+                worldRotation = sp.rotation;
+            }
+            else
+            {
+                if (outpriteBone[sp.parentId] == null)
+                {
+                    CalculateLocaltoWorldMatrix(sp.parentId, spriteRect, definitionScale, pixelsPerUnit, spriteBone, ref outpriteBone, ref bindPose);
+                }
+                var parentBindPose = bindPose[sp.parentId];
+                var invParentBindPose = Matrix4x4.Inverse(parentBindPose);
+
+                worldPosition = invParentBindPose.MultiplyPoint(sp.position);
+                worldRotation = sp.rotation * invParentBindPose.rotation;
+            }
+
+            // Practically Matrix4x4.SetTRInverse
+            var rot = Quaternion.Inverse(worldRotation);
+            Matrix4x4 mat = Matrix4x4.identity;
+            mat = Matrix4x4.Rotate(rot);
+            mat = mat * Matrix4x4.Translate(-worldPosition);
+
+
+            bindPose[i] = mat;
+        }
+
         static bool PostProcessBoneData(ISpriteEditorDataProvider spriteDataProvider, Sprite[] sprites)
         {
             var boneDataProvider = spriteDataProvider.GetDataProvider<ISpriteBoneDataProvider>();
@@ -57,7 +109,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             bool dataChanged = false;
 
             float definitionScale = CalculateDefinitionScale(textureDataProvider);
-            
+
             foreach (var sprite in sprites)
             {
                 var guid = sprite.GetSpriteID();
@@ -68,49 +120,14 @@ namespace UnityEditor.Experimental.U2D.Animation
                         continue;
 
                     var spriteBoneCount = spriteBone.Count;
-                    var pivotPointInPixels = sprite.pivot;
                     var bindPose = new NativeArray<Matrix4x4>(spriteBoneCount, Allocator.Temp);
-                    var outputSpriteBones = new SpriteBone[spriteBoneCount];// NativeArray<SpriteBone>(spriteBone.Count, Allocator.Temp);
+                    var outputSpriteBones = new SpriteBone ? [spriteBoneCount];// NativeArray<SpriteBone>(spriteBone.Count, Allocator.Temp);
                     for (int i = 0; i < spriteBoneCount; ++i)
                     {
-                        // Convert position to world unit.
-                        SpriteBone sp = spriteBone[i];
-                        var isRoot = sp.parentId == -1;
-                        var position = isRoot ? (spriteBone[i].position - Vector3.Scale(spriteRect.rect.size, spriteRect.pivot)) : spriteBone[i].position;
-                        position.z = 0f;
-                        sp.position =  position * definitionScale / sprite.pixelsPerUnit;
-                        sp.length = spriteBone[i].length * definitionScale / sprite.pixelsPerUnit;
-                        outputSpriteBones[i] = sp;
-
-                        // Calculate bind poses
-                        var worldPosition = Vector3.zero;
-                        var worldRotation = Quaternion.identity;
-
-                        if (sp.parentId == -1)
-                        {
-                            worldPosition = sp.position;
-                            worldRotation = sp.rotation;
-                        }
-                        else
-                        {
-                            var parentBindPose = bindPose[sp.parentId];
-                            var invParentBindPose = Matrix4x4.Inverse(parentBindPose);
-
-                            worldPosition = invParentBindPose.MultiplyPoint(sp.position);
-                            worldRotation = sp.rotation * invParentBindPose.rotation;
-                        }
-
-                        // Practically Matrix4x4.SetTRInverse
-                        var rot = Quaternion.Inverse(worldRotation);
-                        Matrix4x4 mat = Matrix4x4.identity;
-                        mat = Matrix4x4.Rotate(rot);
-                        mat = mat * Matrix4x4.Translate(-worldPosition);
-
-
-                        bindPose[i] = mat;
+                        CalculateLocaltoWorldMatrix(i, spriteRect, definitionScale, sprite.pixelsPerUnit, spriteBone, ref outputSpriteBones, ref bindPose);
                     }
                     sprite.SetBindPoses(bindPose);
-                    sprite.SetBones(outputSpriteBones);
+                    sprite.SetBones(outputSpriteBones.Select(x => x.Value).ToArray());
                     bindPose.Dispose();
 
                     dataChanged = true;
@@ -136,7 +153,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 var guid = sprite.GetSpriteID();
                 var spriteRect = spriteDataProvider.GetSpriteRects().First(s => { return s.spriteID == guid; });
                 var spriteBone = boneDataProvider.GetBones(guid);
-                
+
                 var hasBones = spriteBone != null && spriteBone.Count > 0;
                 var hasInvalidWeights = false;
 
@@ -155,7 +172,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                         vertexArray[i] = (Vector3)(vertices[i].position - Vector2.Scale(spriteRect.rect.size, spriteRect.pivot)) * definitionScale / sprite.pixelsPerUnit;
                         boneWeightArray[i] = boneWeight;
 
-                        if(hasBones && !hasInvalidWeights)
+                        if (hasBones && !hasInvalidWeights)
                         {
                             var sum = boneWeight.weight0 + boneWeight.weight1 + boneWeight.weight2 + boneWeight.weight3;
                             hasInvalidWeights = sum < 0.999f;
@@ -177,7 +194,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                     dataChanged = true;
 
-                    if(hasBones && hasInvalidWeights)
+                    if (hasBones && hasInvalidWeights)
                         Debug.LogWarning("Sprite \"" + spriteRect.name + "\" contains bone weights which sum zero or are not normalized. To avoid visual artifacts please consider fixing them.");
                 }
             }

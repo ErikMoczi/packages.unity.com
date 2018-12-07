@@ -6,6 +6,7 @@ using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Experimental.U2D;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.U2D.Animation
 {
@@ -13,6 +14,7 @@ namespace UnityEngine.Experimental.U2D.Animation
     {
         SpriteNotFound,
         SpriteHasNoSkinningInformation,
+        SpriteHasNoWeights,
         RootTransformNotFound,
         InvalidTransformArray,
         InvalidTransformArrayLength,
@@ -26,13 +28,17 @@ namespace UnityEngine.Experimental.U2D.Animation
     {
         internal static SpriteSkinValidationResult Validate(this SpriteSkin spriteSkin)
         {
-            if (spriteSkin.spriteRenderer.sprite == null)
+            var sprite = spriteSkin.spriteRenderer.sprite; 
+            if (sprite == null)
                 return SpriteSkinValidationResult.SpriteNotFound;
 
-            var bindPoses = spriteSkin.spriteRenderer.sprite.GetBindPoses();
+            var bindPoses = sprite.GetBindPoses();
 
             if (bindPoses.Length == 0)
                 return SpriteSkinValidationResult.SpriteHasNoSkinningInformation;
+
+            if (sprite.GetBoneWeights().Length == 0)
+                return SpriteSkinValidationResult.SpriteHasNoWeights;
 
             if (spriteSkin.rootBone == null)
                 return SpriteSkinValidationResult.RootTransformNotFound;
@@ -65,38 +71,39 @@ namespace UnityEngine.Experimental.U2D.Animation
                 throw new InvalidOperationException("SpriteRenderer has no Sprite set");
 
             var spriteBones = spriteSkin.spriteRenderer.sprite.GetBones();
-            var transforms = new List<Transform>();
+            var transforms = new Transform[spriteBones.Length];
             Transform root = null;
 
-            //TODO: This code expects sprite bones to be in hierarchical order. Fix so it can generate from any order.
-            foreach (var bone in spriteBones)
+            for (int i = 0; i < spriteBones.Length; ++i)
             {
-                var parent = spriteSkin.transform;
-
-                if (bone.parentId >= 0)
-                    parent = transforms[bone.parentId].transform;
-
-                var newGameObject = CreateGameObject(bone.name, parent, bone.position, bone.rotation);
-
-                transforms.Add(newGameObject.transform);
-
-                if (bone.parentId < 0 && root == null)
-                    root = newGameObject.transform;
+                CreateGameObject(i, spriteBones, transforms, spriteSkin.transform);
+                if (spriteBones[i].parentId < 0 && root == null)
+                    root = transforms[i];
             }
 
             spriteSkin.rootBone = root;
-            spriteSkin.boneTransforms = transforms.ToArray();
+            spriteSkin.boneTransforms = transforms;
         }
 
-        private static GameObject CreateGameObject(string name, Transform parent, Vector3 position, Quaternion rotation)
+        private static void CreateGameObject(int index, SpriteBone[] spriteBones, Transform[] transforms, Transform root)
         {
-            var go = new GameObject(name);
-            var transform = go.transform;
-            transform.SetParent(parent);
-            transform.localPosition = position;
-            transform.localRotation = rotation;
-            transform.localScale = Vector3.one;
-            return go;
+            if (transforms[index] == null)
+            {
+                var spriteBone = spriteBones[index];
+                if (spriteBone.parentId >= 0)
+                    CreateGameObject(spriteBone.parentId, spriteBones, transforms, root);
+
+                var go = new GameObject(spriteBone.name);
+                var transform = go.transform;
+                if (spriteBone.parentId >= 0)
+                    transform.SetParent(transforms[spriteBone.parentId]);
+                else
+                    transform.SetParent(root);
+                transform.localPosition = spriteBone.position;
+                transform.localRotation = spriteBone.rotation;
+                transform.localScale = Vector3.one;
+                transforms[index] = transform;
+            }
         }
 
         internal static void ResetBindPose(this SpriteSkin spriteSkin)
@@ -164,31 +171,6 @@ namespace UnityEngine.Experimental.U2D.Animation
             return path;
         }
 
-        internal static int CalculateTransformHash(this SpriteSkin spriteSkin)
-        {
-            int bits = 0;
-            int boneTransformHash = spriteSkin.transform.localToWorldMatrix.GetHashCode() >> bits;
-            bits++;
-            foreach (var transform in spriteSkin.boneTransforms)
-            {
-                boneTransformHash ^= (transform.localToWorldMatrix.GetHashCode() >> bits);
-                bits = (bits + 1) % 8;
-            }
-            return boneTransformHash;
-        }
-
-        internal static JobHandle CalculateBounds(NativeArray<Vector3> vertices, NativeArray<Vector3> minMax, JobHandle parentJob)
-        {
-            var boundsJob = new AABBJob()
-            {
-                vertices = vertices,
-                minMax = minMax
-            };
-
-            JobHandle boundsFence = boundsJob.Schedule(parentJob);
-            return boundsFence;
-        }
-
         internal static JobHandle Deform(NativeSlice<Vector3> inputVertices, NativeArray<BoneWeight> boneWeights, Matrix4x4 worldToLocalMatrix,
             NativeArray<Matrix4x4> bindPoses, NativeArray<Matrix4x4> transformMatrices, NativeArray<Vector3> outputVertices)
         {
@@ -219,6 +201,55 @@ namespace UnityEngine.Experimental.U2D.Animation
             };
 
             return skinJob.Schedule(boneJob.Schedule());
+        }
+
+        internal static Vector3[] Bake(this SpriteSkin spriteSkin)
+        {
+            if (!spriteSkin.isValid)
+                throw new Exception("Bake error: invalid SpriteSkin");
+
+            var sprite = spriteSkin.spriteRenderer.sprite;
+            var boneTransforms = spriteSkin.boneTransforms;
+            var bindPoses = sprite.GetBindPoses();
+            var boneWeights = sprite.GetBoneWeights();
+            var outputVertices = new NativeArray<Vector3>(sprite.GetVertexCount(), Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+            var transformMatrices = new NativeArray<Matrix4x4>(boneTransforms.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+            var vertices = sprite.GetVertexAttribute<Vector3>(VertexAttribute.Position);
+            if (vertices.Length == 0 || transformMatrices.Length == 0 || boneWeights.Length == 0 || outputVertices.Length == 0)
+                return new Vector3[0];
+            for (int i = 0; i < boneTransforms.Length; ++i)
+                transformMatrices[i] = boneTransforms[i].localToWorldMatrix;
+
+            var jobHandle = SpriteSkinUtility.Deform(vertices, boneWeights, Matrix4x4.identity, bindPoses, transformMatrices, outputVertices);
+            jobHandle.Complete();
+
+            var result = outputVertices.ToArray();
+
+            outputVertices.Dispose();
+
+            return result;
+        }
+
+        internal static void CalculateBounds(this SpriteSkin spriteSkin)
+        {
+            Debug.Assert(spriteSkin.isValid);
+
+            var rootBone = spriteSkin.rootBone;
+            var deformedVertices = spriteSkin.Bake();
+            var bounds = new Bounds();
+
+            if (deformedVertices.Length > 0)
+            {
+                bounds.min = rootBone.InverseTransformPoint(deformedVertices[0]);
+                bounds.max = bounds.min;
+            }
+
+            foreach(var v in deformedVertices)
+                bounds.Encapsulate(rootBone.InverseTransformPoint(v));
+
+            bounds.extents = Vector3.Scale(bounds.extents, new Vector3(1.25f, 1.25f, 1f)); 
+            
+            spriteSkin.bounds = bounds;
         }
     }
 }

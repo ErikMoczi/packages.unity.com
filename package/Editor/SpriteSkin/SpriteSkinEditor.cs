@@ -5,6 +5,7 @@ using UnityEditorInternal;
 using UnityEngine.U2D;
 using UnityEngine.Experimental.U2D;
 using UnityEngine.Experimental.U2D.Animation;
+using UnityEditor.IMGUI.Controls;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -16,26 +17,50 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             public static readonly string listHeaderLabel = "Bones";
             public static readonly GUIContent spriteNotFound = new GUIContent("Sprite not found in SpriteRenderer");
-            public static readonly GUIContent spriteHaseNoSkinningInformation = new GUIContent("Sprite has no Bind Poses");
+            public static readonly GUIContent spriteHasNoSkinningInformation = new GUIContent("Sprite has no Bind Poses");
+            public static readonly GUIContent spriteHasNoWeights = new GUIContent("Sprite has no weights");
             public static readonly GUIContent rootTransformNotFound = new GUIContent("Root Bone not set");
             public static readonly GUIContent rootTransformNotFoundInArray = new GUIContent("Bone list doesn't contain a reference to the Root Bone");
             public static readonly GUIContent InvalidTransformArray = new GUIContent("Bone list is invalid");
             public static readonly GUIContent transformArrayContainsNull = new GUIContent("Bone list contains unassigned references");
             public static readonly GUIContent InvalidTransformArrayLength = new GUIContent("The number of Sprite's Bind Poses and the number of Transforms should match");
+            public static readonly GUIContent spriteBoundsLabel = new GUIContent("Bounds");
         }
+
+        private static Color s_BoundingBoxHandleColor = new Color(255, 255, 255, 150) / 255;
 
         private SerializedProperty m_RootBoneProperty;
         private SerializedProperty m_BoneTransformsProperty;
+        private SerializedProperty m_BoundsProperty;
         private SpriteSkin m_SpriteSkin;
         private ReorderableList m_ReorderableList;
         private Sprite m_CurrentSprite;
+        private BoxBoundsHandle m_BoundsHandle = new BoxBoundsHandle();
         private bool m_NeedsRebind = false;
 
-        void OnEnable()
+        private void OnEnable()
         {
             m_SpriteSkin = (SpriteSkin)target;
             m_RootBoneProperty = serializedObject.FindProperty("m_RootBone");
             m_BoneTransformsProperty = serializedObject.FindProperty("m_BoneTransforms");
+            m_BoundsProperty = serializedObject.FindProperty("m_Bounds");
+            m_CurrentSprite = m_SpriteSkin.spriteRenderer.sprite;
+            m_BoundsHandle.axes = BoxBoundsHandle.Axes.X | BoxBoundsHandle.Axes.Y;
+            m_BoundsHandle.SetColor(s_BoundingBoxHandleColor);
+
+            SetupReorderableList();
+
+            Undo.undoRedoPerformed += UndoRedoPerformed;
+        }
+
+        private void OnDestroy()
+        {
+            Undo.undoRedoPerformed -= UndoRedoPerformed;
+        }
+
+        private void UndoRedoPerformed()
+        {
+            m_CurrentSprite = m_SpriteSkin.spriteRenderer.sprite;
         }
 
         private void SetupReorderableList()
@@ -91,7 +116,9 @@ namespace UnityEditor.Experimental.U2D.Animation
             serializedObject.Update();
 
             var sprite = m_SpriteSkin.spriteRenderer.sprite;
-            if (m_ReorderableList == null || m_CurrentSprite != sprite)
+            var spriteChanged = m_CurrentSprite != sprite;
+
+            if (m_ReorderableList == null || spriteChanged)
             {
                 m_CurrentSprite = sprite;
                 InitializeBoneTransformArray();
@@ -112,10 +139,17 @@ namespace UnityEditor.Experimental.U2D.Animation
                 EditorGUI.EndDisabledGroup();
             }
 
+            EditorGUILayout.PropertyField(m_BoundsProperty, Contents.spriteBoundsLabel);
+
+            EditorGUILayout.Space();
+
             serializedObject.ApplyModifiedProperties();
 
             if (m_NeedsRebind)
                 Rebind();
+
+            if (spriteChanged)
+                ResetBounds(Undo.GetCurrentGroupName());                
 
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
@@ -128,10 +162,39 @@ namespace UnityEditor.Experimental.U2D.Animation
             DoResetBindPoseButton();
             EditorGUI.EndDisabledGroup();
 
+            EditorGUI.BeginDisabledGroup(!EnableResetBoundsButton());
+            DoResetBoundsButton();
+            EditorGUI.EndDisabledGroup();
+
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
 
             DoValidationWarnings();
+        }
+
+        private void OnSceneGUI()
+        {
+            var spriteSkin = target as SpriteSkin;
+
+            if (!spriteSkin.isValid)
+                return;
+
+            var rootBone = spriteSkin.rootBone;
+
+            using (new Handles.DrawingScope(rootBone.localToWorldMatrix))
+            {
+                var bounds = spriteSkin.bounds;
+                m_BoundsHandle.center = bounds.center;
+                m_BoundsHandle.size = bounds.size;
+
+                EditorGUI.BeginChangeCheck();
+                m_BoundsHandle.DrawHandle();
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(spriteSkin, "Resize Bounds");
+                    spriteSkin.bounds = new Bounds(m_BoundsHandle.center, m_BoundsHandle.size);
+                }
+            }
         }
 
         private void Rebind()
@@ -144,9 +207,32 @@ namespace UnityEditor.Experimental.U2D.Animation
                     continue;
 
                 spriteSkin.Rebind();
+                ResetBoundsIfNeeded(spriteSkin);
             }
 
             m_NeedsRebind = false;
+        }
+
+        private void ResetBounds(string undoName = "Reset Bounds")
+        {
+            foreach (var t in targets)
+            {
+                var spriteSkin = t as SpriteSkin;
+
+                if (!spriteSkin.isValid)
+                    continue;
+
+                Undo.RegisterCompleteObjectUndo(spriteSkin, undoName);
+                spriteSkin.CalculateBounds();
+
+                EditorUtility.SetDirty(spriteSkin);
+            }
+        }
+
+        private void ResetBoundsIfNeeded(SpriteSkin spriteSkin)
+        {
+            if (spriteSkin.isValid && spriteSkin.bounds == new Bounds())
+                spriteSkin.CalculateBounds();
         }
 
         private bool EnableCreateBones()
@@ -163,6 +249,16 @@ namespace UnityEditor.Experimental.U2D.Animation
         }
 
         private bool EnableSetBindPose()
+        {
+            return IsAnyTargetValid();
+        }
+
+        private bool EnableResetBoundsButton()
+        {
+            return IsAnyTargetValid();
+        }
+
+        private bool IsAnyTargetValid()
         {
             foreach (var t in targets)
             {
@@ -193,6 +289,8 @@ namespace UnityEditor.Experimental.U2D.Animation
                     foreach (var transform in spriteSkin.boneTransforms)
                         Undo.RegisterCreatedObjectUndo(transform.gameObject, "Create Bones");
 
+                    ResetBoundsIfNeeded(spriteSkin);
+
                     EditorUtility.SetDirty(spriteSkin);
                 }
             }
@@ -213,6 +311,14 @@ namespace UnityEditor.Experimental.U2D.Animation
                     spriteSkin.ResetBindPose();
                 }
             }
+        }
+
+        private void DoResetBoundsButton()
+        {
+            if (GUILayout.Button("Reset Bounds", GUILayout.MaxWidth(125f)))
+                ResetBounds();
+
+            SceneView.RepaintAll();
         }
 
         private void DoValidationWarnings()
@@ -238,7 +344,10 @@ namespace UnityEditor.Experimental.U2D.Animation
                         content = Contents.spriteNotFound;
                         break;
                     case SpriteSkinValidationResult.SpriteHasNoSkinningInformation:
-                        content = Contents.spriteHaseNoSkinningInformation;
+                        content = Contents.spriteHasNoSkinningInformation;
+                        break;
+                    case SpriteSkinValidationResult.SpriteHasNoWeights:
+                        content = Contents.spriteHasNoWeights;
                         break;
                     case SpriteSkinValidationResult.RootTransformNotFound:
                         content = Contents.rootTransformNotFound;
