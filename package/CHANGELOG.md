@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2018-xx-xx
+
+### Fixed
+- Optimized volume texture blending.
+- Switch compilation issues with 2019.1+.
+
+### Changed
+- Chromatic aberration is now forced to "fast mode" when running on GLES2.0 platforms due to compatibility issues.
+
 ## [2.1.0] - 2018-11-26
 
 ### Changed
