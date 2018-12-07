@@ -1,13 +1,13 @@
 ﻿namespace UnityEngine.Animations.Rigging
 {
     [System.Serializable]
-    public class DampedTransformData : IAnimationJobData, IDampedTransformData, IRigReferenceSync
+    public struct DampedTransformData : IAnimationJobData, IDampedTransformData, IRigReferenceSync
     {
         [SerializeField] JobTransform m_ConstrainedObject;
         [SerializeField] JobTransform m_Source;
-        [SerializeField, Range(0f, 1f)] float m_DampPosition = 0.25f;
-        [SerializeField, Range(0f, 1f)] float m_DampRotation = 0.25f;
-        [SerializeField] bool m_MaintainAim = true;
+        [SerializeField, Range(0f, 1f)] float m_DampPosition;
+        [SerializeField, Range(0f, 1f)] float m_DampRotation;
+        [SerializeField] bool m_MaintainAim;
 
         public JobTransform constrainedObject { get => m_ConstrainedObject; set => m_ConstrainedObject = value; }
         public JobTransform sourceObject { get => m_Source; set => m_Source = value; }
@@ -19,13 +19,25 @@
         Transform IDampedTransformData.source => m_Source.transform;
 
         bool IAnimationJobData.IsValid() => !(m_ConstrainedObject.transform == null || m_Source.transform == null);
-        IAnimationJobBinder IAnimationJobData.binder { get; } = new DampedTransformJobBinder<DampedTransformData>();
+
+        void IAnimationJobData.SetDefaultValues()
+        {
+            m_ConstrainedObject = JobTransform.defaultNoSync;
+            m_Source = JobTransform.defaultNoSync;
+            m_DampPosition = 0.5f;
+            m_DampRotation = 0.5f;
+            m_MaintainAim = true;
+        }
 
         JobTransform[] IRigReferenceSync.allReferences => new JobTransform[] { m_ConstrainedObject, m_Source };
     }
 
-    [AddComponentMenu("Runtime Rigging/Damped Transform")]
-    public class DampedTransform : RuntimeRigConstraint<DampedTransformData>
+    [AddComponentMenu("Animation Rigging/Damped Transform")]
+    public class DampedTransform : RuntimeRigConstraint<
+        DampedTransformJob,
+        DampedTransformData,
+        DampedTransformJobBinder<DampedTransformData>
+        >
     {
     #if UNITY_EDITOR
     #pragma warning disable 0414

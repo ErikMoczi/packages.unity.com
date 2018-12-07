@@ -11,6 +11,7 @@
         void DestroyJob(IAnimationJob job);
 
         IAnimationJobData data { get; }
+        IAnimationJobBinder binder { get; }
         float weight { get; set; }
     }
 }

@@ -11,9 +11,9 @@ namespace UnityEngine.Animations.Rigging
         public Vector3 axisMask;
     
         public NativeArray<TransformHandle> twistNodes;
-        public NativeArray<AnimationJobCache.Index> twistWeights;
+        public CacheIndex twistWeightStartIdx;
 
-        public AnimationJobCache.Cache cache;
+        public AnimationJobCache cache;
 
         public void ProcessRootMotion(AnimationStream stream) { }
 
@@ -29,10 +29,15 @@ namespace UnityEngine.Animations.Rigging
                 Quaternion invTwistRot = Quaternion.Inverse(twistRot);
                 for (int i = 0; i < twistNodes.Length; ++i)
                 {
-                    var w = cache.GetFloat(twistWeights[i]) * 2f - 1f;
-                    Quaternion rot = Quaternion.Lerp(Quaternion.identity, Mathf.Sign(w) > 0f ? twistRot : invTwistRot, Mathf.Abs(w));
+                    var w = cache.GetRaw(twistWeightStartIdx, i) * 2f - 1f;
+                    Quaternion rot = Quaternion.Lerp(Quaternion.identity, Mathf.Sign(w) < 0f ? invTwistRot : twistRot, Mathf.Abs(w));
                     twistNodes[i].SetLocalRotation(stream, Quaternion.Lerp(twistNodes[i].GetLocalRotation(stream), rot, jobWeight));
                 }
+            }
+            else
+            {
+                for (int i = 0; i < twistNodes.Length; ++i)
+                    AnimationRuntimeUtils.PassThrough(stream, twistNodes[i]);
             }
         }
 
@@ -51,12 +56,12 @@ namespace UnityEngine.Animations.Rigging
     }
 
     public class TwistCorrectionJobBinder<T> : AnimationJobBinder<TwistCorrectionJob, T>
-        where T : IAnimationJobData, ITwistCorrectionData
+        where T : struct, IAnimationJobData, ITwistCorrectionData
     {
-        public override TwistCorrectionJob Create(Animator animator, T data)
+        public override TwistCorrectionJob Create(Animator animator, ref T data)
         {
             var job = new TwistCorrectionJob();
-            var cacheBuilder = new AnimationJobCache.CacheBuilder();
+            var cacheBuilder = new AnimationJobCacheBuilder();
 
             job.source = TransformHandle.Bind(animator, data.source);
             job.sourceInverseBindRotation = Quaternion.Inverse(data.source.localRotation);
@@ -65,14 +70,14 @@ namespace UnityEngine.Animations.Rigging
             var twistNodes = data.twistNodes;
             var twistNodeWeights = data.twistNodeWeights;
             job.twistNodes = new NativeArray<TransformHandle>(twistNodes.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            job.twistWeights = new NativeArray<AnimationJobCache.Index>(twistNodes.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            job.twistWeightStartIdx = cacheBuilder.AllocateChunk(twistNodes.Length);
 
             for (int i = 0; i < twistNodes.Length; ++i)
             {
                 job.twistNodes[i] = TransformHandle.Bind(animator, twistNodes[i]);
-                job.twistWeights[i] = cacheBuilder.Add(twistNodeWeights[i]);
+                cacheBuilder.SetValue(job.twistWeightStartIdx, i, twistNodeWeights[i]);
             }
-            job.cache = cacheBuilder.Create();
+            job.cache = cacheBuilder.Build();
 
             return job;
         }
@@ -80,13 +85,12 @@ namespace UnityEngine.Animations.Rigging
         public override void Destroy(TwistCorrectionJob job)
         {
             job.twistNodes.Dispose();
-            job.twistWeights.Dispose();
             job.cache.Dispose();
         }
 
-        public override void Update(T data, TwistCorrectionJob job)
+        public override void Update(TwistCorrectionJob job, ref T data)
         {
-            job.cache.SetArray(job.twistWeights.ToArray(), data.twistNodeWeights);
+            job.cache.SetArray(data.twistNodeWeights, job.twistWeightStartIdx);
         }
     }
 }

@@ -6,19 +6,19 @@ namespace UnityEngine.Animations.Rigging
 
     public struct MultiRotationConstraintJob : IAnimationJob
     {
-        static readonly float k_Epsilon = 1e-5f;
+        const float k_Epsilon = 1e-5f;
 
         public TransformHandle driven;
         public TransformHandle drivenParent;
-        public AnimationJobCache.Index drivenOffset;
+        public CacheIndex drivenOffsetIdx;
 
         public NativeArray<TransformHandle> sources;
-        public NativeArray<AnimationJobCache.Index> sourceWeights;
         public NativeArray<Quaternion> sourceOffsets;
+        public CacheIndex sourceWeightStartIdx;
 
         public Vector3 axesMask;
 
-        public AnimationJobCache.Cache cache;
+        public AnimationJobCache cache;
 
         public void ProcessRootMotion(AnimationStream stream) { }
 
@@ -27,7 +27,7 @@ namespace UnityEngine.Animations.Rigging
             float jobWeight = stream.GetInputWeight(0);
             if (jobWeight > 0f)
             {
-                float sumWeights = AnimationRuntimeUtils.Sum(cache, sourceWeights);
+                float sumWeights = AnimationRuntimeUtils.Sum(cache, sourceWeightStartIdx, sources.Length);
                 if (sumWeights < k_Epsilon)
                     return;
 
@@ -37,7 +37,7 @@ namespace UnityEngine.Animations.Rigging
                 Quaternion accumRot = currentWRot;
                 for (int i = 0; i < sources.Length; ++i)
                 {
-                    var normalizedWeight = cache.GetFloat(sourceWeights[i]) * weightScale;
+                    var normalizedWeight = cache.GetRaw(sourceWeightStartIdx, i) * weightScale;
                     if (normalizedWeight < k_Epsilon)
                         continue;
 
@@ -52,12 +52,14 @@ namespace UnityEngine.Animations.Rigging
                 if (Vector3.Dot(axesMask, axesMask) < 3f)
                     accumRot = Quaternion.Euler(AnimationRuntimeUtils.Lerp(currentLRot.eulerAngles, accumRot.eulerAngles, axesMask));
 
-                var offset = cache.GetVector3(drivenOffset);
+                var offset = cache.Get<Vector3>(drivenOffsetIdx);
                 if (Vector3.Dot(offset, offset) > 0f)
                     accumRot *= Quaternion.Euler(offset);
 
                 driven.SetLocalRotation(stream, Quaternion.Lerp(currentLRot, accumRot, jobWeight));
             }
+            else
+                AnimationRuntimeUtils.PassThrough(stream, driven);
         }
     }
 
@@ -75,28 +77,28 @@ namespace UnityEngine.Animations.Rigging
     }
 
     public class MultiRotationConstraintJobBinder<T> : AnimationJobBinder<MultiRotationConstraintJob, T>
-        where T : IAnimationJobData, IMultiRotationConstraintData
+        where T : struct, IAnimationJobData, IMultiRotationConstraintData
     {
-        public override MultiRotationConstraintJob Create(Animator animator, T data)
+        public override MultiRotationConstraintJob Create(Animator animator, ref T data)
         {
             var job = new MultiRotationConstraintJob();
-            var cacheBuilder = new AnimationJobCache.CacheBuilder();
+            var cacheBuilder = new AnimationJobCacheBuilder();
 
             job.driven = TransformHandle.Bind(animator, data.constrainedObject);
             job.drivenParent = TransformHandle.Bind(animator, data.constrainedObject.parent);
-            job.drivenOffset = cacheBuilder.Add(data.offset);
+            job.drivenOffsetIdx = cacheBuilder.Add(data.offset);
 
             var src = data.sourceObjects;
             var srcWeights = data.sourceWeights;
             job.sources = new NativeArray<TransformHandle>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            job.sourceWeights = new NativeArray<AnimationJobCache.Index>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             job.sourceOffsets = new NativeArray<Quaternion>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            job.sourceWeightStartIdx = cacheBuilder.AllocateChunk(srcWeights.Length);
 
             Quaternion drivenRot = data.constrainedObject.rotation;
             for (int i = 0; i < src.Length; ++i)
             {
                 job.sources[i] = TransformHandle.Bind(animator, src[i]);
-                job.sourceWeights[i] = cacheBuilder.Add(srcWeights[i]);
+                cacheBuilder.SetValue(job.sourceWeightStartIdx, i, srcWeights[i]);
                 job.sourceOffsets[i] = data.maintainOffset ?
                     (Quaternion.Inverse(src[i].rotation) * drivenRot) : Quaternion.identity;
             }
@@ -106,7 +108,7 @@ namespace UnityEngine.Animations.Rigging
                 System.Convert.ToSingle(data.constrainedYAxis),
                 System.Convert.ToSingle(data.constrainedZAxis)
                 );
-            job.cache = cacheBuilder.Create();
+            job.cache = cacheBuilder.Build();
 
             return job;
         }
@@ -115,14 +117,13 @@ namespace UnityEngine.Animations.Rigging
         {
             job.sources.Dispose();
             job.sourceOffsets.Dispose();
-            job.sourceWeights.Dispose();
             job.cache.Dispose();
         }
 
-        public override void Update(T data, MultiRotationConstraintJob job)
+        public override void Update(MultiRotationConstraintJob job, ref T data)
         {
-            job.cache.SetVector3(job.drivenOffset, data.offset);
-            job.cache.SetArray(job.sourceWeights.ToArray(), data.sourceWeights);
+            job.cache.Set(data.offset, job.drivenOffsetIdx);
+            job.cache.SetArray(data.sourceWeights, job.sourceWeightStartIdx);
         }
     }
 }

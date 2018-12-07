@@ -6,21 +6,21 @@ namespace UnityEngine.Animations.Rigging
 
     public struct MultiAimConstraintJob : IAnimationJob
     {
-        static readonly float k_Epsilon = 1e-5f;
+        const float k_Epsilon = 1e-5f;
 
         public TransformHandle driven;
         public TransformHandle drivenParent;
-        public AnimationJobCache.Index drivenOffset;
+        public CacheIndex drivenOffset;
 
         public NativeArray<TransformHandle> sources;
-        public NativeArray<AnimationJobCache.Index> sourceWeights;
         public NativeArray<Quaternion> sourceOffsets;
+        public CacheIndex sourceWeightStartIdx;
 
         public Vector3 aimAxis;
         public Vector3 axesMask;
-        public AnimationJobCache.Index limits;
+        public CacheIndex limitsIdx;
 
-        public AnimationJobCache.Cache cache;
+        public AnimationJobCache cache;
 
         public void ProcessRootMotion(AnimationStream stream) { }
 
@@ -29,20 +29,20 @@ namespace UnityEngine.Animations.Rigging
             float jobWeight = stream.GetInputWeight(0);
             if (jobWeight > 0f)
             {
-                float sumWeights = AnimationRuntimeUtils.Sum(cache, sourceWeights);
+                float sumWeights = AnimationRuntimeUtils.Sum(cache, sourceWeightStartIdx, sources.Length);
                 if (sumWeights < k_Epsilon)
                     return;
 
                 float weightScale = sumWeights > 1f ? 1f / sumWeights : 1f;
 
-                Vector2 minMaxAngles = cache.GetVector2(limits); 
+                Vector2 minMaxAngles = cache.Get<Vector2>(limitsIdx);
                 Vector3 currentWPos = driven.GetPosition(stream);
                 Quaternion currentWRot = driven.GetRotation(stream);
                 Vector3 currentDir = currentWRot * aimAxis;
                 Quaternion accumDeltaRot = Quaternion.identity;
                 for (int i = 0; i < sources.Length; ++i)
                 {
-                    var normalizedWeight = cache.GetFloat(sourceWeights[i]) * weightScale;
+                    var normalizedWeight = cache.GetRaw(sourceWeightStartIdx, i) * weightScale;
                     if (normalizedWeight < k_Epsilon)
                         continue;
 
@@ -64,12 +64,14 @@ namespace UnityEngine.Animations.Rigging
                 if (Vector3.Dot(axesMask, axesMask) < 3f)
                     newRot = Quaternion.Euler(AnimationRuntimeUtils.Lerp(currentLRot.eulerAngles, newRot.eulerAngles, axesMask));
 
-                var offset = cache.GetVector3(drivenOffset);
+                var offset = cache.Get<Vector3>(drivenOffset);
                 if (Vector3.Dot(offset, offset) > 0f)
                     newRot *= Quaternion.Euler(offset);
 
                 driven.SetLocalRotation(stream, Quaternion.Lerp(currentLRot, newRot, jobWeight));
             }
+            else
+                AnimationRuntimeUtils.PassThrough(stream, driven);
         }
     }
 
@@ -89,33 +91,33 @@ namespace UnityEngine.Animations.Rigging
     }
 
     public class MultiAimConstraintJobBinder<T> : AnimationJobBinder<MultiAimConstraintJob, T>
-        where T : IAnimationJobData, IMultiAimConstraintData
+        where T : struct, IAnimationJobData, IMultiAimConstraintData
     {
-        public override MultiAimConstraintJob Create(Animator animator, T data)
+        public override MultiAimConstraintJob Create(Animator animator, ref T data)
         {
             var job = new MultiAimConstraintJob();
-            var cacheBuilder = new AnimationJobCache.CacheBuilder();
+            var cacheBuilder = new AnimationJobCacheBuilder();
 
             job.driven = TransformHandle.Bind(animator, data.constrainedObject);
             job.drivenParent = TransformHandle.Bind(animator, data.constrainedObject.parent);
             job.drivenOffset = cacheBuilder.Add(data.offset);
-            job.limits = cacheBuilder.Add(data.limits);
+            job.limitsIdx = cacheBuilder.Add(data.limits);
             job.aimAxis = data.aimAxis;
 
             var src = data.sourceObjects;
             var srcWeights = data.sourceWeights;
             job.sources = new NativeArray<TransformHandle>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            job.sourceWeights = new NativeArray<AnimationJobCache.Index>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             job.sourceOffsets = new NativeArray<Quaternion>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            job.sourceWeightStartIdx = cacheBuilder.AllocateChunk(src.Length);
 
             for (int i = 0; i < src.Length; ++i)
             {
                 job.sources[i] = TransformHandle.Bind(animator, src[i]);
-                job.sourceWeights[i] = cacheBuilder.Add(srcWeights[i]);
+                cacheBuilder.SetValue(job.sourceWeightStartIdx, i, srcWeights[i]);
                 if (data.maintainOffset)
                 {
                     var constrainedAim = data.constrainedObject.rotation * data.aimAxis;
-                    job.sourceOffsets[i] = Quaternion.FromToRotation(
+                    job.sourceOffsets[i] = QuaternionExt.FromToRotation(
                         src[i].position - data.constrainedObject.position,
                         constrainedAim
                         );
@@ -129,7 +131,7 @@ namespace UnityEngine.Animations.Rigging
                 System.Convert.ToSingle(data.constrainedYAxis),
                 System.Convert.ToSingle(data.constrainedZAxis)
                 );
-            job.cache = cacheBuilder.Create();
+            job.cache = cacheBuilder.Build();
 
             return job;
         }
@@ -137,16 +139,15 @@ namespace UnityEngine.Animations.Rigging
         public override void Destroy(MultiAimConstraintJob job)
         {
             job.sources.Dispose();
-            job.sourceWeights.Dispose();
             job.sourceOffsets.Dispose();
             job.cache.Dispose();
         }
 
-        public override void Update(T data, MultiAimConstraintJob job)
+        public override void Update(MultiAimConstraintJob job, ref T data)
         {
-            job.cache.SetVector3(job.drivenOffset, data.offset);
-            job.cache.SetArray(job.sourceWeights.ToArray(), data.sourceWeights);
-            job.cache.SetVector2(job.limits, data.limits);
+            job.cache.Set(data.offset, job.drivenOffset);
+            job.cache.SetArray(data.sourceWeights, job.sourceWeightStartIdx);
+            job.cache.Set(data.limits, job.limitsIdx);
         }
     }
 }

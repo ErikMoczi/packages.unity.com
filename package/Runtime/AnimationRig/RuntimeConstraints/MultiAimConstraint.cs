@@ -5,7 +5,7 @@ namespace UnityEngine.Animations.Rigging
     using RuntimeConstraints;
 
     [System.Serializable]
-    public class MultiAimConstraintData : IAnimationJobData, IMultiAimConstraintData, IRigReferenceSync
+    public struct MultiAimConstraintData : IAnimationJobData, IMultiAimConstraintData, IRigReferenceSync
     {
         public enum Axis { X, X_NEG, Y, Y_NEG, Z, Z_NEG }
 
@@ -15,18 +15,12 @@ namespace UnityEngine.Animations.Rigging
         [SerializeField] bool m_MaintainOffset;
         [SerializeField] Vector3 m_Offset;
         [SerializeField] Vector3Bool m_ConstrainedAxes;
-        [SerializeField, Range(-180f, 180f)] float m_MinLimit = -180f;
-        [SerializeField, Range(-180f, 180f)] float m_MaxLimit =  180f;
+        [SerializeField, Range(-180f, 180f)] float m_MinLimit;
+        [SerializeField, Range(-180f, 180f)] float m_MaxLimit;
     
         // Since source weights can be updated at runtime keep a local cache instead of
         // extracting these constantly
         private WeightCache m_SrcWeightCache;
-
-        public MultiAimConstraintData()
-        {
-            m_MaintainOffset = true;
-            m_ConstrainedAxes = new Vector3Bool(true);
-        }
 
         public JobTransform constrainedObject { get => m_ConstrainedObject; set => m_ConstrainedObject = value; }
 
@@ -84,7 +78,17 @@ namespace UnityEngine.Animations.Rigging
             return true;
         }
 
-        IAnimationJobBinder IAnimationJobData.binder { get; } = new MultiAimConstraintJobBinder<MultiAimConstraintData>();
+        void IAnimationJobData.SetDefaultValues()
+        {
+            m_ConstrainedObject = JobTransform.defaultNoSync;
+            m_AimAxis = Axis.X;
+            m_SourceObjects = new List<WeightedJobTransform>();
+            m_MaintainOffset = true;
+            m_Offset = Vector3.zero;
+            m_ConstrainedAxes = new Vector3Bool(true);
+            m_MinLimit = -180f;
+            m_MaxLimit = 180f;
+        }
 
         static Vector3 Convert(Axis axis)
         {
@@ -123,8 +127,12 @@ namespace UnityEngine.Animations.Rigging
         public void MarkSourceWeightsDirty() => m_SrcWeightCache.MarkDirty();
     }
 
-    [AddComponentMenu("Runtime Rigging/Multi-Aim Constraint")]
-    public class MultiAimConstraint : RuntimeRigConstraint<MultiAimConstraintData>
+    [AddComponentMenu("Animation Rigging/Multi-Aim Constraint")]
+    public class MultiAimConstraint : RuntimeRigConstraint<
+        MultiAimConstraintJob,
+        MultiAimConstraintData,
+        MultiAimConstraintJobBinder<MultiAimConstraintData>
+        >
     {
     #if UNITY_EDITOR
     #pragma warning disable 0414
@@ -134,8 +142,7 @@ namespace UnityEngine.Animations.Rigging
 
         void OnValidate()
         {
-            if (m_Data != null)
-                m_Data.MarkSourceWeightsDirty();
+            m_Data.MarkSourceWeightsDirty();
         }
     }
 }

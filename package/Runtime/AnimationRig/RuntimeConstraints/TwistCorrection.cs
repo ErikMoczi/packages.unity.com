@@ -5,7 +5,7 @@ namespace UnityEngine.Animations.Rigging
     using RuntimeConstraints;
 
     [System.Serializable]
-    public class TwistCorrectionData : IAnimationJobData, ITwistCorrectionData, IRigReferenceSync
+    public struct TwistCorrectionData : IAnimationJobData, ITwistCorrectionData, IRigReferenceSync
     {
         public enum Axis { X, Y ,Z }
 
@@ -66,7 +66,12 @@ namespace UnityEngine.Animations.Rigging
             return true;
         }
 
-        IAnimationJobBinder IAnimationJobData.binder { get; } = new TwistCorrectionJobBinder<TwistCorrectionData>();
+        void IAnimationJobData.SetDefaultValues()
+        {
+            m_Source = JobTransform.defaultNoSync;
+            m_TwistAxis = Axis.X;
+            m_TwistNodes = new List<WeightedJobTransform>();
+        }
 
         JobTransform[] IRigReferenceSync.allReferences
         {
@@ -84,8 +89,12 @@ namespace UnityEngine.Animations.Rigging
         public void MarkTwistNodeWeightsDirty() => m_TwistNodeWeightCache.MarkDirty();
     }
 
-    [AddComponentMenu("Runtime Rigging/Twist Correction")]
-    public class TwistCorrection : RuntimeRigConstraint<TwistCorrectionData>
+    [AddComponentMenu("Animation Rigging/Twist Correction")]
+    public class TwistCorrection : RuntimeRigConstraint<
+        TwistCorrectionJob,
+        TwistCorrectionData,
+        TwistCorrectionJobBinder<TwistCorrectionData>
+        >
     {
     #if UNITY_EDITOR
     #pragma warning disable 0414
@@ -94,8 +103,7 @@ namespace UnityEngine.Animations.Rigging
 
         void OnValidate()
         {
-            if (m_Data != null)
-                m_Data.MarkTwistNodeWeightsDirty();
+            m_Data.MarkTwistNodeWeightsDirty();
         }
     }
 }

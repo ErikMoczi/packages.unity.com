@@ -1,7 +1,7 @@
 ﻿namespace UnityEngine.Animations.Rigging
 {
     [System.Serializable]
-    public class OverrideTransformData : IAnimationJobData, IOverrideTransformData, IRigReferenceSync
+    public struct OverrideTransformData : IAnimationJobData, IOverrideTransformData, IRigReferenceSync
     {
         [System.Serializable]
         public enum Space
@@ -15,9 +15,9 @@
         [SerializeField] JobTransform m_OverrideSource;
         [SerializeField] Vector3 m_OverridePosition;
         [SerializeField] Vector3 m_OverrideRotation;
-        [SerializeField] Space m_Space = Space.Pivot;
-        [SerializeField, Range(0f, 1f)] float m_PositionWeight = 1f;
-        [SerializeField, Range(0f, 1f)] float m_RotationWeight = 1f;
+        [SerializeField] Space m_Space;
+        [SerializeField, Range(0f, 1f)] float m_PositionWeight;
+        [SerializeField, Range(0f, 1f)] float m_RotationWeight;
 
         public JobTransform constrainedObject { get => m_ConstrainedObject; set => m_ConstrainedObject = value; }
         public JobTransform sourceObject { get => m_OverrideSource; set => m_OverrideSource = value; }
@@ -32,7 +32,17 @@
         int IOverrideTransformData.space => (int)m_Space;
 
         bool IAnimationJobData.IsValid() => m_ConstrainedObject.transform != null;
-        IAnimationJobBinder IAnimationJobData.binder { get; } = new OverrideTransformJobBinder<OverrideTransformData>();
+
+        void IAnimationJobData.SetDefaultValues()
+        {
+            m_ConstrainedObject = JobTransform.defaultNoSync;
+            m_OverrideSource = JobTransform.defaultNoSync;
+            m_OverridePosition = Vector3.zero;
+            m_OverrideRotation = Vector3.zero;
+            m_Space = Space.Pivot;
+            m_PositionWeight = 1f;
+            m_RotationWeight = 1f;
+        }
 
         JobTransform[] IRigReferenceSync.allReferences
         {
@@ -46,8 +56,12 @@
         }
     }
 
-    [AddComponentMenu("Runtime Rigging/Override Transform")]
-    public class OverrideTransform : RuntimeRigConstraint<OverrideTransformData>
+    [AddComponentMenu("Animation Rigging/Override Transform")]
+    public class OverrideTransform : RuntimeRigConstraint<
+        OverrideTransformJob,
+        OverrideTransformData,
+        OverrideTransformJobBinder<OverrideTransformData>
+        >
     {
     #if UNITY_EDITOR
     #pragma warning disable 0414

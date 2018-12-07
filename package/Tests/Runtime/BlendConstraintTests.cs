@@ -25,23 +25,23 @@ class BlendConstraintTests
 
         var blendConstraintGO = new GameObject("blendConstraint");
         var blendConstraint = blendConstraintGO.AddComponent<BlendConstraint>();
-        var blendConstraintData = blendConstraint.data;
+        blendConstraint.Reset();
+
         blendConstraintGO.transform.parent = data.rigData.rigGO.transform;
 
-        Assert.IsNotNull(blendConstraintData);
         var leftForeArm = data.rigData.hipsGO.transform.Find("Chest/LeftArm/LeftForeArm");
         var leftHand = leftForeArm.Find("LeftHand");
 
-        blendConstraintData.sourceObjectA = new JobTransform(leftForeArm, true);
-        blendConstraintData.sourceObjectB = new JobTransform(leftHand, true);
+        blendConstraint.data.sourceObjectA = new JobTransform(leftForeArm, true);
+        blendConstraint.data.sourceObjectB = new JobTransform(leftHand, true);
 
         var constrainedObject = new GameObject("constrainedBlendObj");
         constrainedObject.transform.parent = blendConstraintGO.transform;
-        blendConstraintData.constrainedObject = new JobTransform(constrainedObject.transform, false);
+        blendConstraint.data.constrainedObject = new JobTransform(constrainedObject.transform, false);
         data.restPose = new AffineTransform(constrainedObject.transform.position, constrainedObject.transform.rotation);
 
-        blendConstraintData.positionWeight = blendConstraintData.rotationWeight = 0.5f;
-        blendConstraintData.blendPosition = blendConstraintData.blendRotation = true;
+        blendConstraint.data.positionWeight = blendConstraint.data.rotationWeight = 0.5f;
+        blendConstraint.data.blendPosition = blendConstraint.data.blendRotation = true;
 
         data.rigData.rootGO.GetComponent<RigBuilder>().Build();
         data.constraint = blendConstraint;
@@ -49,40 +49,41 @@ class BlendConstraintTests
         return data;
     }
 
+
     [UnityTest]
     public IEnumerator BlendConstraint_FollowsSourceObjects()
     {
         var data = SetupConstraintRig();
-        var constraintData = data.constraint.data;
-        var srcObjA = constraintData.sourceObjectA;
-        var srcObjB = constraintData.sourceObjectB;
-        var constrainedObj = constraintData.constrainedObject;
+        var constraint = data.constraint;
+        var srcObjA = constraint.data.sourceObjectA;
+        var srcObjB = constraint.data.sourceObjectB;
+        var constrainedObj = constraint.data.constrainedObject;
 
         // Apply rotation on sourceB
         srcObjB.transform.rotation *= Quaternion.AngleAxis(90, Vector3.right);
         yield return null;
 
         // SourceA has full influence
-        constraintData.positionWeight = 0f;
-        constraintData.rotationWeight = 0f;
-        yield return null;
-        yield return null;
+        constraint.data.positionWeight = 0f;
+        constraint.data.rotationWeight = 0f;
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+
         Assert.AreEqual(constrainedObj.transform.position, srcObjA.transform.position);
         RotationsAreEqual(constrainedObj.transform.rotation, srcObjA.transform.rotation);
 
         // SourceB has full influence
-        constraintData.positionWeight = 1f;
-        constraintData.rotationWeight = 1f;
-        yield return null;
-        yield return null;
+        constraint.data.positionWeight = 1f;
+        constraint.data.rotationWeight = 1f;
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+
         Assert.AreEqual(constrainedObj.transform.position, srcObjB.transform.position);
         RotationsAreEqual(constrainedObj.transform.rotation, srcObjB.transform.rotation);
 
         // Translation/Rotation blending between sources is disabled
-        constraintData.blendPosition = false;
-        constraintData.blendRotation = false;
-        yield return null;
-        yield return null;
+        constraint.data.blendPosition = false;
+        constraint.data.blendRotation = false;
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+ 
         Assert.AreEqual(constrainedObj.transform.position, data.restPose.translation);
         RotationsAreEqual(constrainedObj.transform.rotation, data.restPose.rotation);
     }
@@ -91,13 +92,13 @@ class BlendConstraintTests
     public IEnumerator BlendConstraint_ApplyWeight()
     {
         var data = SetupConstraintRig();
-        var constraintData = data.constraint.data;
-        var srcObjB = constraintData.sourceObjectB;
-        var constrainedObj = constraintData.constrainedObject;
+        var constraint = data.constraint;
+        var srcObjB = constraint.data.sourceObjectB;
+        var constrainedObj = constraint.data.constrainedObject;
 
         // SourceB has full influence
-        constraintData.positionWeight = 1f;
-        constraintData.rotationWeight = 1f;
+        constraint.data.positionWeight = 1f;
+        constraint.data.rotationWeight = 1f;
         srcObjB.transform.rotation *= Quaternion.AngleAxis(90, Vector3.right);
         yield return null;
 
@@ -106,8 +107,7 @@ class BlendConstraintTests
             float w = i / 5.0f;
 
             data.constraint.weight = w;
-            yield return null;
-            yield return null;
+            yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
             var weightedPos = Vector3.Lerp(data.restPose.translation, srcObjB.transform.position, w);
             var weightedRot = Quaternion.Lerp(data.restPose.rotation, srcObjB.transform.rotation, w);

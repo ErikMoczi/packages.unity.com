@@ -1,7 +1,7 @@
 ﻿namespace UnityEngine.Animations.Rigging
 {
     [System.Serializable]
-    public class TwoBoneIKConstraintData : IAnimationJobData, ITwoBoneIKConstraintData, IRigReferenceSync
+    public struct TwoBoneIKConstraintData : IAnimationJobData, ITwoBoneIKConstraintData, IRigReferenceSync
     {
         [SerializeField] JobTransform m_Root;
         [SerializeField] JobTransform m_Mid;
@@ -9,15 +9,9 @@
         [SerializeField] JobTransform m_Target;
         [SerializeField] JobTransform m_Hint;
 
-        [SerializeField, Range(0f, 1f)] float m_TargetPositionWeight = 1f;
-        [SerializeField, Range(0f, 1f)] float m_TargetRotationWeight = 1f;
-        [SerializeField, Range(0f, 1f)] float m_HintWeight           = 1f;
-
-        public TwoBoneIKConstraintData()
-        {
-            m_Target = JobTransform.defaultSync;
-            m_Hint = JobTransform.defaultSync;
-        }
+        [SerializeField, Range(0f, 1f)] float m_TargetPositionWeight;
+        [SerializeField, Range(0f, 1f)] float m_TargetRotationWeight;
+        [SerializeField, Range(0f, 1f)] float m_HintWeight;
 
         public JobTransform root { get => m_Root; set => m_Root = value; }
         public JobTransform mid { get => m_Mid; set => m_Mid = value; }
@@ -36,7 +30,18 @@
         Transform ITwoBoneIKConstraintData.hint => m_Hint.transform;
 
         bool IAnimationJobData.IsValid() => !(m_Tip.transform == null || m_Mid.transform == null || m_Root.transform == null || m_Target.transform == null);
-        IAnimationJobBinder IAnimationJobData.binder { get; } = new TwoBoneIKConstraintJobBinder<TwoBoneIKConstraintData>();
+
+        void IAnimationJobData.SetDefaultValues()
+        {
+            m_Root = JobTransform.defaultNoSync;
+            m_Mid = JobTransform.defaultNoSync;
+            m_Tip = JobTransform.defaultNoSync;
+            m_Target = JobTransform.defaultSync;
+            m_Hint = JobTransform.defaultSync;
+            m_TargetPositionWeight = 1f;
+            m_TargetRotationWeight = 1f;
+            m_HintWeight = 1f;
+        }
 
         JobTransform[] IRigReferenceSync.allReferences
         {
@@ -50,8 +55,12 @@
         }
     }
 
-    [AddComponentMenu("Runtime Rigging/Two Bone IK Constraint")]
-    public class TwoBoneIKConstraint : RuntimeRigConstraint<TwoBoneIKConstraintData>
+    [AddComponentMenu("Animation Rigging/Two Bone IK Constraint")]
+    public class TwoBoneIKConstraint : RuntimeRigConstraint<
+        TwoBoneIKConstraintJob,
+        TwoBoneIKConstraintData,
+        TwoBoneIKConstraintJobBinder<TwoBoneIKConstraintData>
+        >
     {
     #if UNITY_EDITOR
     #pragma warning disable 0414

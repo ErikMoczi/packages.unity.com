@@ -6,6 +6,8 @@ namespace UnityEngine.Animations.Rigging
 
     public static class AnimationRuntimeUtils
     {
+        const float k_SqrEpsilon = 1e-8f;
+
         public static void SolveTwoBoneIK(
             AnimationStream stream,
             TransformHandle root,
@@ -24,6 +26,7 @@ namespace UnityEngine.Animations.Rigging
             Vector3 cPosition = tip.GetPosition(stream);
             Vector3 tPosition = Vector3.Lerp(cPosition, target.GetPosition(stream), posWeight);
             Quaternion tRotation = Quaternion.Lerp(tip.GetRotation(stream), target.GetRotation(stream), rotWeight);
+            bool hasHint = hint.IsValid(stream) && hintWeight > 0f;
 
             Vector3 ab = bPosition - aPosition;
             Vector3 bc = cPosition - bPosition;
@@ -33,9 +36,18 @@ namespace UnityEngine.Animations.Rigging
             float oldAbcAngle = TriangleAngle(ac.magnitude, limbLengths[0], limbLengths[1]);
             float newAbcAngle = TriangleAngle(at.magnitude, limbLengths[0], limbLengths[1]);
 
-            Vector3 axis = Vector3.Cross(ab, bc).normalized;
-            if (Vector3.Dot(axis, axis) < Vector3.kEpsilon)
-                axis = Vector3.up;
+            // Bend normal strategy is to take whatever has been provided in the animation
+            // stream to minimize configuration changes, however if this is collinear
+            // try computing a bend normal given the desired target position.
+            // If this also fails, try resolving axis using hint if provided.
+            Vector3 axis = Vector3.Cross(ab, bc);
+            if (axis.sqrMagnitude < k_SqrEpsilon)
+            {
+                axis = Vector3.Cross(at, bc);
+                if (axis.sqrMagnitude < k_SqrEpsilon)
+                    axis = hasHint ? Vector3.Cross(hint.GetPosition(stream) - aPosition, bc) : Vector3.up;
+            }
+            axis = Vector3.Normalize(axis);
 
             float a = 0.5f * (oldAbcAngle - newAbcAngle);
             float sin = Mathf.Sin(a);
@@ -45,9 +57,9 @@ namespace UnityEngine.Animations.Rigging
 
             cPosition = tip.GetPosition(stream);
             ac = cPosition - aPosition;
-            root.SetRotation(stream, Quaternion.FromToRotation(ac, at) * root.GetRotation(stream));
+            root.SetRotation(stream, QuaternionExt.FromToRotation(ac, at) * root.GetRotation(stream));
 
-            if (hint.IsValid(stream) && hintWeight > 0f)
+            if (hasHint)
             {
                 float acSqrMag = ac.sqrMagnitude;
                 if (acSqrMag > 0f)
@@ -65,7 +77,7 @@ namespace UnityEngine.Animations.Rigging
                     float maxReach = limbLengths[0] + limbLengths[1];
                     if (abProj.sqrMagnitude > (maxReach * maxReach * 0.001f) && ahProj.sqrMagnitude > 0f)
                     {
-                        Quaternion hintR = Quaternion.FromToRotation(abProj, ahProj);
+                        Quaternion hintR = QuaternionExt.FromToRotation(abProj, ahProj);
                         hintR.x *= hintWeight;
                         hintR.y *= hintWeight;
                         hintR.z *= hintWeight;
@@ -81,27 +93,6 @@ namespace UnityEngine.Animations.Rigging
         {
             float c = Mathf.Clamp((aLen1 * aLen1 + aLen2 * aLen2 - aLen * aLen) / (aLen1 * aLen2) / 2.0f, -1.0f, 1.0f);
             return Mathf.Acos(c);
-        }
-
-        public static void SolveLookAt(
-            Vector3 jointPosition,
-            Quaternion jointRotation,
-            Vector3 target,
-            Quaternion offset,
-            Vector3 lookAtAxis,
-            Vector2 limits,
-            out Quaternion outRotation
-            )
-        {
-            var fromDir = jointRotation * lookAtAxis;
-            var toDir = offset * (target - jointPosition);
-
-            var axis = Vector3.Cross(fromDir, toDir).normalized;
-            var angle = Vector3.Angle(fromDir, toDir);
-            angle = Mathf.Clamp(angle, limits.x, limits.y);
-            var boneToTargetRotation = Quaternion.AngleAxis(angle, axis);
-        
-            outRotation = boneToTargetRotation * jointRotation;
         }
 
         // Implementation of unconstrained FABRIK solver : Forward and Backward Reaching Inverse Kinematic
@@ -168,16 +159,23 @@ namespace UnityEngine.Animations.Rigging
             return Vector3.Scale(a, Vector3.one - t) + Vector3.Scale(b, t);
         }
 
-        public static float Sum(AnimationJobCache.Cache cache, NativeArray<AnimationJobCache.Index> indices)
+        public static float Sum(AnimationJobCache cache, CacheIndex index, int count)
         {
-            if (!indices.IsCreated || indices.Length == 0)
+            if (count == 0)
                 return 0f;
 
             float sum = 0f;
-            for (int i = 0; i < indices.Length; ++i)
-                sum += cache.GetFloat(indices[i]);
+            for (int i = 0; i < count; ++i)
+                sum += cache.GetRaw(index, i);
 
             return sum;
+        }
+
+        public static void PassThrough(AnimationStream stream, TransformHandle handle)
+        {
+            handle.SetLocalPosition(stream, handle.GetLocalPosition(stream));
+            handle.SetLocalRotation(stream, handle.GetLocalRotation(stream));
+            handle.SetLocalScale(stream, handle.GetLocalScale(stream));
         }
     }
 }

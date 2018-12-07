@@ -17,7 +17,6 @@ class ChainIKConstraintTests {
     {
         public RigTestData rigData;
         public ChainIKConstraint constraint;
-        public ChainIKConstraintData constraintData;
     }
 
     private ConstraintTestData SetupConstraintRig()
@@ -28,28 +27,25 @@ class ChainIKConstraintTests {
 
         var chainIKGO = new GameObject("chainIK");
         var chainIK = chainIKGO.AddComponent<ChainIKConstraint>();
-        var chainIKData = chainIK.data;
+        chainIK.Reset();
 
         chainIKGO.transform.parent = data.rigData.rigGO.transform;
 
-        Assert.IsNotNull(chainIKData);
+        chainIK.data.root = new JobTransform(data.rigData.hipsGO.transform.Find("Chest"), false);
+        Assert.IsNotNull(chainIK.data.root.transform, "Could not find root transform");
 
-        chainIKData.root = new JobTransform(data.rigData.hipsGO.transform.Find("Chest"), false);
-        Assert.IsNotNull(chainIKData.root.transform, "Could not find root transform");
-
-        chainIKData.tip = new JobTransform(chainIKData.root.transform.Find("LeftArm/LeftForeArm/LeftHand"), false);
-        Assert.IsNotNull(chainIKData.tip.transform, "Could not find tip transform");
+        chainIK.data.tip = new JobTransform(chainIK.data.root.transform.Find("LeftArm/LeftForeArm/LeftHand"), false);
+        Assert.IsNotNull(chainIK.data.tip.transform, "Could not find tip transform");
 
         var targetGO = new GameObject ("target");
         targetGO.transform.parent = chainIKGO.transform;
 
-        chainIKData.target = new JobTransform(targetGO.transform, true);
+        chainIK.data.target = new JobTransform(targetGO.transform, true);
 
         data.rigData.rootGO.GetComponent<RigBuilder>().Build();
-        targetGO.transform.position = chainIKData.tip.transform.position;
+        targetGO.transform.position = chainIK.data.tip.transform.position;
 
         data.constraint = chainIK;
-        data.constraintData = chainIKData;
 
         return data;
     }
@@ -59,10 +55,11 @@ class ChainIKConstraintTests {
     public IEnumerator ChainIKConstraint_FollowsTarget()
     {
         var data = SetupConstraintRig();
+        var constraint = data.constraint;
 
-        var target = data.constraintData.target.transform;
-        var tip = data.constraintData.target.transform;
-        var root = data.constraintData.root.transform;
+        var target = constraint.data.target.transform;
+        var tip = constraint.data.target.transform;
+        var root = constraint.data.root.transform;
 
         for (int i = 0; i < 5; ++i)
         {
@@ -82,21 +79,22 @@ class ChainIKConstraintTests {
     public IEnumerator ChainIKConstraint_ApplyWeight()
     {
         var data = SetupConstraintRig();
+        var constraint = data.constraint;
 
         List<Transform> chain = new List<Transform>();
-        Transform tmp = data.constraintData.tip.transform;
-        while (tmp != data.constraintData.root.transform)
+        Transform tmp = constraint.data.tip.transform;
+        while (tmp != constraint.data.root.transform)
         {
             chain.Add(tmp);
             tmp = tmp.parent;
         }
-        chain.Add(data.constraintData.root.transform);
+        chain.Add(constraint.data.root.transform);
         chain.Reverse();
 
         // Chain with no constraint.
         Vector3[] bindPoseChain = chain.Select(transform => transform.position).ToArray();
 
-        var target = data.constraintData.target.transform;
+        var target = constraint.data.target.transform;
         target.position += new Vector3(0f, 0.5f, 0f);
 
         yield return null;
@@ -111,8 +109,7 @@ class ChainIKConstraintTests {
             float w = i / 5.0f;
 
             data.constraint.weight = w;
-            yield return null;
-            yield return null;
+            yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
             inBetweenChains.Add(chain.Select(transform => transform.position).ToArray());
         }

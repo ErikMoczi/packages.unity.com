@@ -4,18 +4,18 @@
 
     public struct DampedTransformJob : IAnimationJob
     {
-        static readonly float k_DampFactor = 30f;
+        const float k_DampFactor = 40f;
 
         public TransformHandle driven;
         public TransformHandle source;
         public AffineTransform localBindTx;
-        public AnimationJobCache.Index dampPosition;
-        public AnimationJobCache.Index dampRotation;
-        public Vector3 aimBindAxis;
 
+        public Vector3 aimBindAxis;
         public AffineTransform prevDrivenTx;
 
-        public AnimationJobCache.Cache cache;
+        public CacheIndex dampPositionIdx;
+        public CacheIndex dampRotationIdx;
+        public AnimationJobCache cache;
 
         public void ProcessRootMotion(AnimationStream stream) { }
 
@@ -24,28 +24,33 @@
             float jobWeight = stream.GetInputWeight(0);
             if (jobWeight > 0f)
             {
-                AffineTransform sourceTx = new AffineTransform(source.GetPosition(stream), source.GetRotation(stream));
-                AffineTransform targetTx = sourceTx * localBindTx;
+                var sourceTx = new AffineTransform(source.GetPosition(stream), source.GetRotation(stream));
+                var targetTx = sourceTx * localBindTx;
 
-                Vector3 pos = Vector3.Lerp(prevDrivenTx.translation, targetTx.translation, k_DampFactor * cache.GetFloat(dampPosition) * stream.deltaTime);
-                pos = Vector3.Lerp(driven.GetPosition(stream), pos, jobWeight);
+                var drivenPos = driven.GetPosition(stream);
+                targetTx.translation = Vector3.Lerp(drivenPos, targetTx.translation, jobWeight);
+                var factorDeltaTime = k_DampFactor * stream.deltaTime;
+                var dampPosW = 1f - cache.GetRaw(dampPositionIdx);
+                var finalPos = Vector3.Lerp(prevDrivenTx.translation, targetTx.translation, dampPosW * dampPosW * factorDeltaTime);
 
-                Quaternion drivenRot = driven.GetRotation(stream);
+                var drivenRot = driven.GetRotation(stream);
                 if (Vector3.Dot(aimBindAxis, aimBindAxis) > 0f)
                 {
                     var fromDir = drivenRot * aimBindAxis;
-                    var toDir = sourceTx.translation - pos;
+                    var toDir = sourceTx.translation - finalPos;
                     targetTx.rotation = Quaternion.AngleAxis(Vector3.Angle(fromDir, toDir), Vector3.Cross(fromDir, toDir).normalized) * drivenRot;
                 }
+                targetTx.rotation = Quaternion.Lerp(drivenRot, targetTx.rotation, jobWeight);
+                var dampRotW = 1f - cache.GetRaw(dampRotationIdx);
+                var finalRot = Quaternion.Lerp(prevDrivenTx.rotation, targetTx.rotation, dampRotW * dampRotW * factorDeltaTime);
 
-                Quaternion rot = Quaternion.Lerp(prevDrivenTx.rotation, targetTx.rotation, k_DampFactor * cache.GetFloat(dampRotation) * stream.deltaTime);
-                rot = Quaternion.Lerp(drivenRot, rot, jobWeight);
-
-                driven.SetPosition(stream, pos);
-                driven.SetRotation(stream, rot);
-                prevDrivenTx.translation = pos;
-                prevDrivenTx.rotation = rot;
+                driven.SetPosition(stream, finalPos);
+                driven.SetRotation(stream, finalRot);
+                prevDrivenTx.translation = finalPos;
+                prevDrivenTx.rotation = finalRot;
             }
+            else
+                AnimationRuntimeUtils.PassThrough(stream, driven);
         }
     }
 
@@ -59,12 +64,12 @@
     }
 
     public class DampedTransformJobBinder<T> : AnimationJobBinder<DampedTransformJob, T>
-        where T : IAnimationJobData, IDampedTransformData
+        where T : struct, IAnimationJobData, IDampedTransformData
     {
-        public override DampedTransformJob Create(Animator animator, T data)
+        public override DampedTransformJob Create(Animator animator, ref T data)
         {
             var job = new DampedTransformJob();
-            var cacheBuilder = new AnimationJobCache.CacheBuilder();
+            var cacheBuilder = new AnimationJobCacheBuilder();
 
             job.driven = TransformHandle.Bind(animator, data.constrainedObject);
             job.source = TransformHandle.Bind(animator, data.source);
@@ -74,15 +79,15 @@
 
             job.localBindTx = sourceTx.InverseMul(drivenTx);
             job.prevDrivenTx = drivenTx;
-            job.dampPosition = cacheBuilder.Add(data.dampPosition);
-            job.dampRotation = cacheBuilder.Add(data.dampRotation);
+            job.dampPositionIdx = cacheBuilder.Add(data.dampPosition);
+            job.dampRotationIdx = cacheBuilder.Add(data.dampRotation);
 
             if (data.maintainAim && AnimationRuntimeUtils.SqrDistance(data.constrainedObject.position, data.source.position) > 0f)
                 job.aimBindAxis = Quaternion.Inverse(data.constrainedObject.rotation) * (sourceTx.translation - drivenTx.translation).normalized;
             else
                 job.aimBindAxis = Vector3.zero;
 
-            job.cache = cacheBuilder.Create();
+            job.cache = cacheBuilder.Build();
             return job;
         }
 
@@ -91,10 +96,10 @@
             job.cache.Dispose();
         }
 
-        public override void Update(T data, DampedTransformJob job)
+        public override void Update(DampedTransformJob job, ref T data)
         {
-            job.cache.SetFloat(job.dampPosition, data.dampPosition);
-            job.cache.SetFloat(job.dampRotation, data.dampRotation);
+            job.cache.SetRaw(data.dampPosition, job.dampPositionIdx);
+            job.cache.SetRaw(data.dampRotation, job.dampRotationIdx);
         }
     }
 }

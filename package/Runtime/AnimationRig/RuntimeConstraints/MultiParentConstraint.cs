@@ -5,7 +5,7 @@ namespace UnityEngine.Animations.Rigging
     using RuntimeConstraints;
 
     [System.Serializable]
-    public class MultiParentConstraintData : IAnimationJobData, IMultiParentConstraintData, IRigReferenceSync
+    public struct MultiParentConstraintData : IAnimationJobData, IMultiParentConstraintData, IRigReferenceSync
     {
         [SerializeField] JobTransform m_ConstrainedObject;
         [SerializeField] Vector3Bool m_ConstrainedPositionAxes;
@@ -16,13 +16,6 @@ namespace UnityEngine.Animations.Rigging
         // Since source weights can be updated at runtime keep a local cache instead of
         // extracting these constantly
         private WeightCache m_SrcWeightCache;
-
-        public MultiParentConstraintData()
-        {
-            m_MaintainOffset = true;
-            m_ConstrainedPositionAxes = new Vector3Bool(true);
-            m_ConstrainedRotationAxes = new Vector3Bool(true);
-        }
 
         public JobTransform constrainedObject { get => m_ConstrainedObject; set => m_ConstrainedObject = value; }
 
@@ -68,7 +61,14 @@ namespace UnityEngine.Animations.Rigging
             return true;
         }
 
-        IAnimationJobBinder IAnimationJobData.binder { get; } = new MultiParentConstraintJobBinder<MultiParentConstraintData>();
+        void IAnimationJobData.SetDefaultValues()
+        {
+            m_ConstrainedObject = JobTransform.defaultNoSync;
+            m_ConstrainedPositionAxes = new Vector3Bool(true);
+            m_ConstrainedRotationAxes = new Vector3Bool(true);
+            m_SourceObjects = new List<WeightedJobTransform>();
+            m_MaintainOffset = true;
+        }
 
         JobTransform[] IRigReferenceSync.allReferences
         {
@@ -86,8 +86,12 @@ namespace UnityEngine.Animations.Rigging
         public void MarkSourceWeightsDirty() => m_SrcWeightCache.MarkDirty();
     }
 
-    [AddComponentMenu("Runtime Rigging/Multi-Parent Constraint")]
-    public class MultiParentConstraint : RuntimeRigConstraint<MultiParentConstraintData>
+    [AddComponentMenu("Animation Rigging/Multi-Parent Constraint")]
+    public class MultiParentConstraint : RuntimeRigConstraint<
+        MultiParentConstraintJob,
+        MultiParentConstraintData,
+        MultiParentConstraintJobBinder<MultiParentConstraintData>
+        >
     {
     #if UNITY_EDITOR
     #pragma warning disable 0414
@@ -97,8 +101,7 @@ namespace UnityEngine.Animations.Rigging
 
         void OnValidate()
         {
-            if (m_Data != null)
-                m_Data.MarkSourceWeightsDirty();
+            m_Data.MarkSourceWeightsDirty();
         }
     }
 }

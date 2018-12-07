@@ -3,11 +3,11 @@ using System.Collections.Generic;
 namespace UnityEngine.Animations.Rigging
 {
     [ExecuteInEditMode]
-    [AddComponentMenu("Runtime Rigging/Setup/Bone Renderer")]
+    [AddComponentMenu("Animation Rigging/Setup/Bone Renderer")]
     public class BoneRenderer : MonoBehaviour
     {
     #if UNITY_EDITOR
-        public enum Shape
+        public enum BoneShape
         {
             Line,
             Pyramid,
@@ -20,15 +20,18 @@ namespace UnityEngine.Animations.Rigging
             public Transform second;
         };
 
-        public Shape shape = Shape.Pyramid;
+        public BoneShape boneShape = BoneShape.Pyramid;
 
-        public bool drawSkeleton = true;
+        public bool drawBones = true;
         public bool drawTripods = false;
 
         [Range(0.01f, 5.0f)]
         public float boneSize = 1.0f;
 
-        public Color skeletonColor = new Color(0f, 1.0f, 0f, 0.5f);
+        [Range(0.01f, 5.0f)]
+        public float tripodSize = 1.0f;
+
+        public Color boneColor = new Color(0f, 1.0f, 0f, 0.5f);
 
         [SerializeField]
         private Transform[] m_Transforms;
@@ -62,12 +65,22 @@ namespace UnityEngine.Animations.Rigging
             BoneRendererUtil.OnBoneRendererDisabled(this);
         }
 
+        void Reset()
+        {
+            ClearBones();
+        }
+
+        void ClearBones()
+        {
+            m_Bones = null;
+            m_Tips = null;
+        }
+
         public void ExtractBones()
         {
             if (m_Transforms == null || m_Transforms.Length == 0)
             {
-                m_Bones = null;
-                m_Tips = null;
+                ClearBones();
                 return;
             }
 

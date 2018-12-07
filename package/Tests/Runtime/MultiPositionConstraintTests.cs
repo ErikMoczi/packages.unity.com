@@ -16,7 +16,6 @@ class MultiPositionConstraintTests
     {
         public RigTestData rigData;
         public MultiPositionConstraint constraint;
-        public MultiPositionConstraintData constraintData;
 
         public Vector3 constrainedObjectRestPosition;
     }
@@ -29,12 +28,12 @@ class MultiPositionConstraintTests
 
         var multiPositionGO = new GameObject("multiPosition");
         var multiPosition = multiPositionGO.AddComponent<MultiPositionConstraint>();
-        var multiPositionData = multiPosition.data;
+        multiPosition.Reset();
+
         multiPositionGO.transform.parent = data.rigData.rigGO.transform;
 
-        Assert.IsNotNull(multiPositionData);
-        multiPositionData.constrainedObject = new JobTransform(data.rigData.hipsGO.transform, false);
-        data.constrainedObjectRestPosition = multiPositionData.constrainedObject.transform.position;
+        multiPosition.data.constrainedObject = new JobTransform(data.rigData.hipsGO.transform, false);
+        data.constrainedObjectRestPosition = multiPosition.data.constrainedObject.transform.position;
 
         List<WeightedJobTransform> sources = new List<WeightedJobTransform>(2);
         var src0GO = new GameObject("source0");
@@ -43,7 +42,7 @@ class MultiPositionConstraintTests
         src1GO.transform.parent = multiPositionGO.transform;
         sources.Add(new WeightedJobTransform(src0GO.transform, true, 0f));
         sources.Add(new WeightedJobTransform(src1GO.transform, true, 0f));
-        multiPositionData.sourceObjects = sources;
+        multiPosition.data.sourceObjects = sources;
 
         src0GO.transform.position = data.rigData.hipsGO.transform.position;
         src1GO.transform.position = data.rigData.hipsGO.transform.position;
@@ -51,7 +50,6 @@ class MultiPositionConstraintTests
         data.rigData.rootGO.GetComponent<RigBuilder>().Build();
 
         data.constraint = multiPosition;
-        data.constraintData = multiPositionData;
 
         return data;
     }
@@ -60,15 +58,16 @@ class MultiPositionConstraintTests
     public IEnumerator MultiPositionConstraint_FollowSourceObjects()
     {
         var data = SetupConstraintRig();
-        var constraintData = data.constraintData;
-        var constrainedObject = constraintData.constrainedObject;
-        var sources = constraintData.sourceObjects;
+        var constraint = data.constraint;
+        
+        var constrainedObject = constraint.data.constrainedObject;
+        var sources = constraint.data.sourceObjects;
 
         // src0.w = 0, src1.w = 0
         Assert.Zero(sources[0].weight);
         Assert.Zero(sources[1].weight);
-        yield return null;
-        yield return null;
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+
         Assert.AreEqual(constrainedObject.transform.position, data.constrainedObjectRestPosition);
 
         // Add displacement to source objects
@@ -77,25 +76,25 @@ class MultiPositionConstraintTests
 
         // src0.w = 1, src1.w = 0
         sources[0].weight = 1f;
-        constraintData.MarkSourceWeightsDirty();
-        yield return null;
-        yield return null;
+        constraint.data.MarkSourceWeightsDirty();
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+
         Assert.AreEqual(constrainedObject.transform.position, sources[0].transform.position);
 
         // src0.w = 0, src1.w = 1
         sources[0].weight = 0f;
         sources[1].weight = 1f;
-        constraintData.MarkSourceWeightsDirty();
-        yield return null;
-        yield return null;
+        constraint.data.MarkSourceWeightsDirty();
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+
         Assert.AreEqual(constrainedObject.transform.position, sources[1].transform.position);
 
         // src0.w = 1, src1.w = 1
         // since source object positions are mirrored, we should simply evaluate to the original rest pos.
         sources[0].weight = 1f;
-        constraintData.MarkSourceWeightsDirty();
-        yield return null;
-        yield return null;
+        constraint.data.MarkSourceWeightsDirty();
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+
         Assert.AreEqual(constrainedObject.transform.position, data.constrainedObjectRestPosition);
     }
 
@@ -103,21 +102,21 @@ class MultiPositionConstraintTests
     public IEnumerator MultiPositionConstraint_ApplyWeight()
     {
         var data = SetupConstraintRig();
-        var constraintData = data.constraintData;
-        var constrainedObject = constraintData.constrainedObject;
-        var sources = constraintData.sourceObjects;
+        var constraint = data.constraint;
+        
+        var constrainedObject = constraint.data.constrainedObject;
+        var sources = constraint.data.sourceObjects;
 
         sources[0].transform.position += Vector3.forward;
         sources[0].weight = 1f;
-        constraintData.MarkSourceWeightsDirty();
+        constraint.data.MarkSourceWeightsDirty();
 
         for (int i = 0; i <= 5; ++i)
         {
             float w = i / 5.0f;
 
             data.constraint.weight = w;
-            yield return null;
-            yield return null;
+            yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
             Vector3 weightedPos = Vector3.Lerp(data.constrainedObjectRestPosition, sources[0].transform.position, w);
             Assert.AreEqual(

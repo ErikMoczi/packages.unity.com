@@ -5,8 +5,8 @@ namespace UnityEditor.Animations.Rigging
 {
     public static class ReorderableListHelper
     {
-        static readonly int k_NoHeaderHeight = 2;
-        static readonly int k_ElementHeightPadding = 2;
+        const int k_NoHeaderHeight = 2;
+        const int k_ElementHeightPadding = 2;
 
         public static ReorderableList Create(SerializedObject obj, SerializedProperty property, bool draggable = true, bool displayHeader = false)
         {

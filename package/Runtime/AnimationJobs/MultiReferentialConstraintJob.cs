@@ -6,12 +6,12 @@ namespace UnityEngine.Animations.Rigging
 
     public struct MultiReferentialConstraintJob : IAnimationJob
     {
-        public AnimationJobCache.Index driver;
+        public CacheIndex driverIdx;
         public NativeArray<TransformHandle> sources;
         public NativeArray<AffineTransform> sourceBindTx;
         public NativeArray<AffineTransform> offsetTx;
 
-        public AnimationJobCache.Cache cache;
+        public AnimationJobCache cache;
 
         public void ProcessRootMotion(AnimationStream stream) { }
 
@@ -20,16 +20,16 @@ namespace UnityEngine.Animations.Rigging
             float jobWeight = stream.GetInputWeight(0);
             if (jobWeight > 0f)
             {
-                int driverIdx = cache.GetInt(driver);
+                int driver = (int)cache.GetRaw(driverIdx);
                 var driverTx = new AffineTransform(
-                    sources[driverIdx].GetPosition(stream),
-                    sources[driverIdx].GetRotation(stream)
+                    sources[driver].GetPosition(stream),
+                    sources[driver].GetRotation(stream)
                     );
 
                 int offset = 0;
                 for (int i = 0; i < sources.Length; ++i)
                 {
-                    if (i == driverIdx)
+                    if (i == driver)
                         continue;
 
                     var tx = driverTx * offsetTx[offset];
@@ -38,16 +38,21 @@ namespace UnityEngine.Animations.Rigging
                     offset++;
                 }
             }
+            else
+            {
+                for (int i = 0; i < sources.Length; ++i)
+                    AnimationRuntimeUtils.PassThrough(stream, sources[i]);
+            }
         }
 
         public void UpdateOffsets()
         {
             int offset = 0;
-            int driverIdx = cache.GetInt(driver);
-            var invDriverTx = sourceBindTx[driverIdx].Inverse();
+            int driver = (int)cache.GetRaw(driverIdx);
+            var invDriverTx = sourceBindTx[driver].Inverse();
             for (int i = 0; i < sourceBindTx.Length; ++i)
             {
-                if (i == driverIdx)
+                if (i == driver)
                     continue;
 
                 offsetTx[offset] = invDriverTx * sourceBindTx[i];
@@ -63,14 +68,14 @@ namespace UnityEngine.Animations.Rigging
     }
 
     public class MultiReferentialConstraintJobBinder<T> : AnimationJobBinder<MultiReferentialConstraintJob, T>
-        where T : IAnimationJobData, IMultiReferentialConstraintData
+        where T : struct, IAnimationJobData, IMultiReferentialConstraintData
     {
-        public override MultiReferentialConstraintJob Create(Animator animator, T data)
+        public override MultiReferentialConstraintJob Create(Animator animator, ref T data)
         {
             var job = new MultiReferentialConstraintJob();
-            var cacheBuilder = new AnimationJobCache.CacheBuilder();
+            var cacheBuilder = new AnimationJobCacheBuilder();
 
-            job.driver = cacheBuilder.Add(data.driver);
+            job.driverIdx = cacheBuilder.Add(data.driver);
 
             var sources = data.sourceObjects;
             job.sources = new NativeArray<TransformHandle>(sources.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
@@ -82,7 +87,7 @@ namespace UnityEngine.Animations.Rigging
                 job.sources[i] = TransformHandle.Bind(animator, sources[i].transform);
                 job.sourceBindTx[i] = new AffineTransform(sources[i].position, sources[i].rotation);
             }
-            job.cache = cacheBuilder.Create();
+            job.cache = cacheBuilder.Build();
             job.UpdateOffsets();
 
             return job;
@@ -96,11 +101,11 @@ namespace UnityEngine.Animations.Rigging
             job.cache.Dispose();
         }
 
-        public override void Update(T data, MultiReferentialConstraintJob job)
+        public override void Update(MultiReferentialConstraintJob job, ref T data)
         {
-            if (data.driver != job.cache.GetInt(job.driver))
+            if (data.driver != (int)job.cache.GetRaw(job.driverIdx))
             {
-                job.cache.SetInt(job.driver, data.driver);
+                job.cache.SetRaw(data.driver, job.driverIdx);
                 job.UpdateOffsets();
             }
         }

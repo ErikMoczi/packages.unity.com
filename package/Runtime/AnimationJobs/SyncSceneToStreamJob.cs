@@ -16,14 +16,14 @@ namespace UnityEngine.Animations.Rigging
         {
             for (int i = 0; i < sceneHandles.Length; ++i)
             {
-                if (!syncSceneToStream[i])
-                    continue;
-
-                var streamHandle = streamHandles[i];
                 var sceneHandle = sceneHandles[i];
-                streamHandle.SetLocalPosition(stream, sceneHandle.GetLocalPosition(stream));
-                streamHandle.SetLocalRotation(stream, sceneHandle.GetLocalRotation(stream));
-                streamHandle.SetLocalScale(stream, sceneHandle.GetLocalScale(stream));
+                if (syncSceneToStream[i] && sceneHandle.IsValid(stream))
+                {
+                    var streamHandle = streamHandles[i];
+                    streamHandle.SetLocalPosition(stream, sceneHandle.GetLocalPosition(stream));
+                    streamHandle.SetLocalRotation(stream, sceneHandle.GetLocalRotation(stream));
+                    streamHandle.SetLocalScale(stream, sceneHandle.GetLocalScale(stream));
+                }
             }
         }
     }
@@ -35,9 +35,9 @@ namespace UnityEngine.Animations.Rigging
     }
 
     public class SyncSceneToStreamJobBinder<T> : AnimationJobBinder<SyncSceneToStreamJob, T>
-        where T : IAnimationJobData, ISyncSceneToStreamData
+        where T : struct, IAnimationJobData, ISyncSceneToStreamData
     {
-        public override SyncSceneToStreamJob Create(Animator animator, T data)
+        public override SyncSceneToStreamJob Create(Animator animator, ref T data)
         {
             var job = new SyncSceneToStreamJob();
 

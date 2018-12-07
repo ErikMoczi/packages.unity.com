@@ -16,7 +16,6 @@ class MultiReferentialConstraintTests
     {
         public RigTestData rigData;
         public MultiReferentialConstraint constraint;
-        public MultiReferentialConstraintData constraintData;
 
         public AffineTransform restPose;
     }
@@ -29,10 +28,10 @@ class MultiReferentialConstraintTests
 
         var multiRefGO = new GameObject("multiReferential");
         var multiRef = multiRefGO.AddComponent<MultiReferentialConstraint>();
-        var multiRefData = multiRef.data;
+        multiRef.Reset();
+        
         multiRefGO.transform.parent = data.rigData.rigGO.transform;
 
-        Assert.IsNotNull(multiRefData);
         List<JobTransform> sources = new List<JobTransform>(3);
         var src0GO = new GameObject("source0");
         var src1GO = new GameObject("source1");
@@ -41,8 +40,8 @@ class MultiReferentialConstraintTests
         sources.Add(new JobTransform(data.rigData.hipsGO.transform, false));
         sources.Add(new JobTransform(src0GO.transform, true));
         sources.Add(new JobTransform(src1GO.transform, true));
-        multiRefData.sourceObjects = sources;
-        multiRefData.driver = 0;
+        multiRef.data.sourceObjects = sources;
+        multiRef.data.driver = 0;
 
         var pos = data.rigData.hipsGO.transform.position;
         var rot = data.rigData.hipsGO.transform.rotation;
@@ -53,7 +52,6 @@ class MultiReferentialConstraintTests
         data.rigData.rootGO.GetComponent<RigBuilder>().Build();
 
         data.constraint = multiRef;
-        data.constraintData = multiRefData;
 
         return data;
     }
@@ -62,10 +60,11 @@ class MultiReferentialConstraintTests
     public IEnumerator MultiReferentialConstraint_FollowSourceObjects()
     {
         var data = SetupConstraintRig();
-        var constraintData = data.constraintData;
-        var sources = constraintData.sourceObjects;
+        var constraint = data.constraint;
+        
+        var sources = constraint.data.sourceObjects;
 
-        constraintData.driver = 0;
+        constraint.data.driver = 0;
         var driver = sources[0];
         driver.transform.position += Vector3.forward;
         driver.transform.rotation *= Quaternion.AngleAxis(90, Vector3.up);
@@ -75,7 +74,7 @@ class MultiReferentialConstraintTests
         Assert.AreEqual(driver.transform.position, sources[2].transform.position);
         Assert.AreEqual(driver.transform.rotation, sources[2].transform.rotation);
 
-        constraintData.driver = 1;
+        constraint.data.driver = 1;
         driver = sources[1];
         driver.transform.position += Vector3.back;
         driver.transform.rotation *= Quaternion.AngleAxis(-90, Vector3.up);
@@ -85,7 +84,7 @@ class MultiReferentialConstraintTests
         Assert.AreEqual(driver.transform.position, sources[2].transform.position);
         Assert.AreEqual(driver.transform.rotation, sources[2].transform.rotation);
 
-        constraintData.driver = 2;
+        constraint.data.driver = 2;
         driver = sources[2];
         driver.transform.position += Vector3.up;
         driver.transform.rotation *= Quaternion.AngleAxis(90, Vector3.left);
@@ -100,10 +99,11 @@ class MultiReferentialConstraintTests
     public IEnumerator MultiReferentialConstraint_ApplyWeight()
     {
         var data = SetupConstraintRig();
-        var constraintData = data.constraintData;
-        var sources = constraintData.sourceObjects;
+        var constraint = data.constraint;
 
-        constraintData.driver = 1;
+        var sources = constraint.data.sourceObjects;
+
+        constraint.data.driver = 1;
         sources[1].transform.position += Vector3.right;
         sources[1].transform.rotation *= Quaternion.AngleAxis(-90, Vector3.up);
 
@@ -112,8 +112,7 @@ class MultiReferentialConstraintTests
             float w = i / 5.0f;
 
             data.constraint.weight = w;
-            yield return null;
-            yield return null;
+            yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
             var weightedPos = Vector3.Lerp(data.restPose.translation, sources[1].transform.position, w);
             Assert.AreEqual(

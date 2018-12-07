@@ -8,7 +8,8 @@ namespace UnityEditor.Animations.Rigging
     {
         static readonly GUIContent k_SourceObjectsLabel = new GUIContent("Source Objects");
         static readonly GUIContent k_SettingsLabel = new GUIContent("Settings");
-        static readonly GUIContent k_SrcASrcBBlend = new GUIContent("A | B Blend");
+        static readonly GUIContent k_BlendPosLabel = new GUIContent("Blend A | B Position");
+        static readonly GUIContent k_BlendRotLabel = new GUIContent("Blend A | B Rotation");
 
         SerializedProperty m_Weight;
         SerializedProperty m_ConstrainedObject;
@@ -59,18 +60,18 @@ namespace UnityEditor.Animations.Rigging
             {
                 EditorGUI.indentLevel++;
 
-                EditorGUILayout.PropertyField(m_BlendPosition);
-                EditorGUI.indentLevel++;
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.PropertyField(m_BlendPosition, k_BlendPosLabel);
                 using (new EditorGUI.DisabledScope(!m_BlendPosition.boolValue))
-                    EditorGUILayout.PropertyField(m_PositionWeight, k_SrcASrcBBlend);
-                EditorGUI.indentLevel--;
+                    EditorGUILayout.PropertyField(m_PositionWeight, GUIContent.none);
+                EditorGUILayout.EndHorizontal();
 
-                EditorGUILayout.PropertyField(m_BlendRotation);
-                EditorGUI.indentLevel++;
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.PropertyField(m_BlendRotation, k_BlendRotLabel);
                 using (new EditorGUI.DisabledScope(!m_BlendRotation.boolValue))
-                    EditorGUILayout.PropertyField(m_RotationWeight, k_SrcASrcBBlend);
-                EditorGUI.indentLevel--;
-
+                    EditorGUILayout.PropertyField(m_RotationWeight, GUIContent.none);
+                EditorGUILayout.EndHorizontal();
+            
                 EditorGUI.indentLevel--;
             }
 

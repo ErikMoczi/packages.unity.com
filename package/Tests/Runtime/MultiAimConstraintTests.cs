@@ -26,12 +26,12 @@ class MultiAimConstraintTests
 
         var multiAimGO = new GameObject("multiAim");
         var multiAim = multiAimGO.AddComponent<MultiAimConstraint>();
-        var multiAimData = multiAim.data;
+        multiAim.Reset();
+
         multiAimGO.transform.parent = data.rigData.rigGO.transform;
 
-        Assert.IsNotNull(multiAimData);
         var head = data.rigData.hipsGO.transform.Find("Chest/Head");
-        multiAimData.constrainedObject = new JobTransform(head, false);
+        multiAim.data.constrainedObject = new JobTransform(head, false);
 
         List<WeightedJobTransform> sources = new List<WeightedJobTransform>(2);
         var src0GO = new GameObject("source0");
@@ -40,8 +40,8 @@ class MultiAimConstraintTests
         src1GO.transform.parent = multiAimGO.transform;
         sources.Add(new WeightedJobTransform(src0GO.transform, true, 0f));
         sources.Add(new WeightedJobTransform(src1GO.transform, true, 0f));
-        multiAimData.sourceObjects = sources;
-        multiAimData.aimAxis = MultiAimConstraintData.Axis.Z;
+        multiAim.data.sourceObjects = sources;
+        multiAim.data.aimAxis = MultiAimConstraintData.Axis.Z;
 
         data.constrainedObjectRestTx = new AffineTransform(head.position, head.rotation);
         src0GO.transform.SetPositionAndRotation(data.constrainedObjectRestTx.translation + Vector3.forward, data.constrainedObjectRestTx.rotation);
@@ -57,9 +57,10 @@ class MultiAimConstraintTests
     public IEnumerator MultiAimConstraint_FollowSourceObjects()
     {
         var data = SetupConstraintRig();
-        var constraintData = data.constraint.data;
-        var constrainedObject = constraintData.constrainedObject;
-        var sources = constraintData.sourceObjects;
+        var constraint = data.constraint;
+
+        var constrainedObject = constraint.data.constrainedObject;
+        var sources = constraint.data.sourceObjects;
 
         // Add displacement to source objects
         sources[0].transform.position += Vector3.left;
@@ -68,16 +69,16 @@ class MultiAimConstraintTests
         // src0.w = 0, src1.w = 0
         Assert.Zero(sources[0].weight);
         Assert.Zero(sources[1].weight);
-        yield return null;
-        yield return null;
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+
         Assert.AreEqual(constrainedObject.transform.position, data.constrainedObjectRestTx.translation);
         Assert.AreEqual(constrainedObject.transform.rotation, data.constrainedObjectRestTx.rotation);
 
         // src0.w = 1, src1.w = 0
         sources[0].weight = 1f;
-        constraintData.MarkSourceWeightsDirty();
-        yield return null;
-        yield return null;
+        constraint.data.MarkSourceWeightsDirty();
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+
         Vector3 currAim = constrainedObject.transform.rotation * Vector3.forward;
         Vector3 src0Dir = (sources[0].transform.position - constrainedObject.transform.position).normalized;
         Vector3 src1Dir = (sources[1].transform.position - constrainedObject.transform.position).normalized;
@@ -87,9 +88,9 @@ class MultiAimConstraintTests
         // src0.w = 0, src1.w = 1
         sources[0].weight = 0f;
         sources[1].weight = 1f;
-        constraintData.MarkSourceWeightsDirty();
-        yield return null;
-        yield return null;
+        constraint.data.MarkSourceWeightsDirty();
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+
         currAim = constrainedObject.transform.rotation * Vector3.forward;
         src0Dir = (sources[0].transform.position - constrainedObject.transform.position).normalized;
         src1Dir = (sources[1].transform.position - constrainedObject.transform.position).normalized;
@@ -101,16 +102,17 @@ class MultiAimConstraintTests
     public IEnumerator MultiAimConstraint_ApplyWeight()
     {
         var data = SetupConstraintRig();
-        var constraintData = data.constraint.data;
-        var constrainedObject = constraintData.constrainedObject;
-        var sources = constraintData.sourceObjects;
+        var constraint = data.constraint;
+        
+        var constrainedObject = constraint.data.constrainedObject;
+        var sources = constraint.data.sourceObjects;
 
         Assert.Zero(sources[0].weight);
         Assert.Zero(sources[1].weight);
 
         sources[0].transform.position += Vector3.left;
         sources[0].weight = 1f;
-        constraintData.MarkSourceWeightsDirty();
+        constraint.data.MarkSourceWeightsDirty();
 
         var src0Pos = sources[0].transform.position;
 
@@ -120,8 +122,7 @@ class MultiAimConstraintTests
             float w = i / 5.0f;
 
             data.constraint.weight = w;
-            yield return null;
-            yield return null;
+            yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
             var currAim = constrainedObject.transform.rotation * Vector3.forward;
             var src0Dir = (src0Pos - constrainedObject.transform.position).normalized;

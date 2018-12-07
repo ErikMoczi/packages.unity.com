@@ -15,7 +15,6 @@ class TwoBoneIKConstraintTests {
     {
         public RigTestData rigData;
         public TwoBoneIKConstraint constraint;
-        public TwoBoneIKConstraintData constraintData;
     }
 
     private ConstraintTestData SetupConstraintRig()
@@ -26,20 +25,18 @@ class TwoBoneIKConstraintTests {
 
         var twoBoneIKGO = new GameObject("twoBoneIK");
         var twoBoneIK = twoBoneIKGO.AddComponent<TwoBoneIKConstraint>();
-        var twoBoneIKData = twoBoneIK.data;
+        twoBoneIK.Reset();
 
         twoBoneIKGO.transform.parent = data.rigData.rigGO.transform;
 
-        Assert.IsNotNull(twoBoneIKData);
+        twoBoneIK.data.root = new JobTransform(data.rigData.hipsGO.transform.Find("Chest/LeftArm"), false);
+        Assert.IsNotNull(twoBoneIK.data.root.transform, "Could not find root transform");
 
-        twoBoneIKData.root = new JobTransform(data.rigData.hipsGO.transform.Find("Chest/LeftArm"), false);
-        Assert.IsNotNull(twoBoneIKData.root.transform, "Could not find root transform");
+        twoBoneIK.data.mid = new JobTransform(twoBoneIK.data.root.transform.Find("LeftForeArm"), false);
+        Assert.IsNotNull(twoBoneIK.data.mid.transform, "Could not find mid transform");
 
-        twoBoneIKData.mid = new JobTransform(twoBoneIKData.root.transform.Find("LeftForeArm"), false);
-        Assert.IsNotNull(twoBoneIKData.mid.transform, "Could not find mid transform");
-
-        twoBoneIKData.tip = new JobTransform(twoBoneIKData.mid.transform.Find("LeftHand"), false);
-        Assert.IsNotNull(twoBoneIKData.tip.transform, "Could not find tip transform");
+        twoBoneIK.data.tip = new JobTransform(twoBoneIK.data.mid.transform.Find("LeftHand"), false);
+        Assert.IsNotNull(twoBoneIK.data.tip.transform, "Could not find tip transform");
 
         var targetGO = new GameObject ("target");
         targetGO.transform.parent = twoBoneIKGO.transform;
@@ -47,15 +44,14 @@ class TwoBoneIKConstraintTests {
         var hintGO = new GameObject ("hint");
         hintGO.transform.parent = twoBoneIKGO.transform;
 
-        twoBoneIKData.target = new JobTransform(targetGO.transform, true);
-        twoBoneIKData.hint = new JobTransform(hintGO.transform, true);
+        twoBoneIK.data.target = new JobTransform(targetGO.transform, true);
+        twoBoneIK.data.hint = new JobTransform(hintGO.transform, true);
 
         data.rigData.rootGO.GetComponent<RigBuilder>().Build();
 
-        targetGO.transform.position = twoBoneIKData.tip.transform.position;
+        targetGO.transform.position = twoBoneIK.data.tip.transform.position;
 
         data.constraint = twoBoneIK;
-        data.constraintData = twoBoneIKData;
 
         return data;
     }
@@ -65,10 +61,11 @@ class TwoBoneIKConstraintTests {
     public IEnumerator TwoBoneIKConstraint_FollowsTarget()
     {
         var data = SetupConstraintRig();
+        var constraint = data.constraint;
 
-        var target = data.constraintData.target.transform;
-        var tip = data.constraintData.target.transform;
-        var root = data.constraintData.root.transform;
+        var target = constraint.data.target.transform;
+        var tip = constraint.data.target.transform;
+        var root = constraint.data.root.transform;
 
         for (int i = 0; i < 5; ++i)
         {
@@ -88,10 +85,11 @@ class TwoBoneIKConstraintTests {
     public IEnumerator TwoBoneIKConstraint_UsesHint()
     {
         var data = SetupConstraintRig();
+        var constraint = data.constraint;
 
-        var target = data.constraintData.target.transform;
-        var hint = data.constraintData.hint.transform;
-        var mid = data.constraintData.mid.transform;
+        var target = constraint.data.target.transform;
+        var hint = constraint.data.hint.transform;
+        var mid = constraint.data.mid.transform;
 
         Vector3 midPos1 = mid.position;
 
@@ -131,8 +129,10 @@ class TwoBoneIKConstraintTests {
     public IEnumerator TwoBoneIKConstraint_ApplyWeight()
     {
         var data = SetupConstraintRig();
-        var tip = data.constraintData.tip.transform;
-        var target = data.constraintData.target.transform;
+        var constraint = data.constraint;
+
+        var tip = constraint.data.tip.transform;
+        var target = constraint.data.target.transform;
 
         Vector3 tipPos1 = tip.position;
 
@@ -146,8 +146,7 @@ class TwoBoneIKConstraintTests {
             float w = i / 5.0f;
 
             data.constraint.weight = w;
-            yield return null;
-            yield return null;
+            yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
             Vector3 weightedTipPos = Vector3.Lerp(tipPos1, tipPos2, w);
             Vector3 tipPos = tip.position;

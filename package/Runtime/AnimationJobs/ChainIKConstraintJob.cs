@@ -13,16 +13,13 @@ namespace UnityEngine.Animations.Rigging
         public NativeArray<float> linkLengths;
         public NativeArray<Vector3> linkPositions;
 
-        public AnimationJobCache.Index chainRotationWeight;
-        public AnimationJobCache.Index tipRotationWeight;
-        public AnimationJobCache.Index tolerance;
-        public AnimationJobCache.Index maxIterations;
-
-        public AnimationJobCache.Cache cache;
+        public CacheIndex chainRotationWeightIdx;
+        public CacheIndex tipRotationWeightIdx;
+        public CacheIndex toleranceIdx;
+        public CacheIndex maxIterationsIdx;
+        public AnimationJobCache cache;
 
         public float maxReach;
-
-        internal static readonly float k_Epsilon = 1e-6f;
 
         public void ProcessRootMotion(AnimationStream stream) { }
 
@@ -36,26 +33,25 @@ namespace UnityEngine.Animations.Rigging
 
                 int tipIndex = chain.Length - 1;
                 if (AnimationRuntimeUtils.SolveFABRIK(linkPositions, linkLengths, target.GetPosition(stream),
-                    cache.GetFloat(tolerance), maxReach, cache.GetInt(maxIterations)))
+                    cache.GetRaw(toleranceIdx), maxReach, (int)cache.GetRaw(maxIterationsIdx)))
                 {
-                    var chainRWeight = cache.GetFloat(chainRotationWeight) * jobWeight;
+                    var chainRWeight = cache.GetRaw(chainRotationWeightIdx) * jobWeight;
                     for (int i = 0; i < tipIndex; ++i)
                     {
                         var prevDir = chain[i + 1].GetPosition(stream) - chain[i].GetPosition(stream);
                         var newDir = linkPositions[i + 1] - linkPositions[i];
-                        var angle = Vector3.Angle(prevDir, Vector3.Lerp(prevDir, newDir, chainRWeight));
-
-                        if (angle > k_Epsilon)
-                        {
-                            var axis = Vector3.Cross(prevDir, newDir).normalized;
-                            chain[i].SetRotation(stream, Quaternion.AngleAxis(angle, axis) * chain[i].GetRotation(stream));
-                        }
+                        chain[i].SetRotation(stream, QuaternionExt.FromToRotation(prevDir, newDir) * chain[i].GetRotation(stream));
                     }
                 }
 
                 chain[tipIndex].SetRotation(
-                    stream, Quaternion.Lerp(chain[tipIndex].GetRotation(stream), target.GetRotation(stream), cache.GetFloat(tipRotationWeight) * jobWeight)
+                    stream, Quaternion.Lerp(chain[tipIndex].GetRotation(stream), target.GetRotation(stream), cache.GetRaw(tipRotationWeightIdx) * jobWeight)
                     );
+            }
+            else
+            {
+                for (int i = 0; i < chain.Length; ++i)
+                    AnimationRuntimeUtils.PassThrough(stream, chain[i]);
             }
         }
     }
@@ -72,9 +68,9 @@ namespace UnityEngine.Animations.Rigging
     }
 
     public class ChainIKConstraintJobBinder<T> : AnimationJobBinder<ChainIKConstraintJob, T>
-        where T : IAnimationJobData, IChainIKConstraintData
+        where T : struct, IAnimationJobData, IChainIKConstraintData
     {
-        public override ChainIKConstraintJob Create(Animator animator, T data)
+        public override ChainIKConstraintJob Create(Animator animator, ref T data)
         {
             List<Transform> chain = new List<Transform>();
             Transform tmp = data.tip;
@@ -102,12 +98,12 @@ namespace UnityEngine.Animations.Rigging
 
             job.target = TransformHandle.Bind(animator, data.target);
 
-            var cacheBuilder = new AnimationJobCache.CacheBuilder();
-            job.chainRotationWeight = cacheBuilder.Add(data.chainRotationWeight);
-            job.tipRotationWeight = cacheBuilder.Add(data.tipRotationWeight);
-            job.maxIterations = cacheBuilder.Add(data.maxIterations);
-            job.tolerance = cacheBuilder.Add(data.tolerance);
-            job.cache = cacheBuilder.Create();
+            var cacheBuilder = new AnimationJobCacheBuilder();
+            job.chainRotationWeightIdx = cacheBuilder.Add(data.chainRotationWeight);
+            job.tipRotationWeightIdx = cacheBuilder.Add(data.tipRotationWeight);
+            job.maxIterationsIdx = cacheBuilder.Add(data.maxIterations);
+            job.toleranceIdx = cacheBuilder.Add(data.tolerance);
+            job.cache = cacheBuilder.Build();
 
             return job;
         }
@@ -120,12 +116,12 @@ namespace UnityEngine.Animations.Rigging
             job.cache.Dispose();
         }
 
-        public override void Update(T data, ChainIKConstraintJob job)
+        public override void Update(ChainIKConstraintJob job, ref T data)
         {
-            job.cache.SetFloat(job.chainRotationWeight, data.chainRotationWeight);
-            job.cache.SetFloat(job.tipRotationWeight, data.tipRotationWeight);
-            job.cache.SetInt(job.maxIterations, data.maxIterations);
-            job.cache.SetFloat(job.tolerance, data.tolerance);
+            job.cache.SetRaw(data.chainRotationWeight, job.chainRotationWeightIdx);
+            job.cache.SetRaw(data.tipRotationWeight, job.tipRotationWeightIdx);
+            job.cache.SetRaw(data.maxIterations, job.maxIterationsIdx);
+            job.cache.SetRaw(data.tolerance, job.toleranceIdx);
         }
     }
 }

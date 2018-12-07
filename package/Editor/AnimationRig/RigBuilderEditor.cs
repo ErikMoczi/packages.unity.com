@@ -21,7 +21,7 @@ namespace UnityEditor.Animations.Rigging
 
             m_ReorderableList.onAddCallback = (ReorderableList list) =>
             {
-                ((RigBuilder)(serializedObject.targetObject)).rigLayers.Add(new RigBuilder.RigLayer(null, true));
+                ((RigBuilder)(serializedObject.targetObject)).layers.Add(new RigBuilder.RigLayer(null, true));
             };
         }
 

@@ -3,6 +3,6 @@
     public interface IAnimationJobData
     {
         bool IsValid();
-        IAnimationJobBinder binder { get; }
+        void SetDefaultValues();
     }
 }

@@ -8,7 +8,7 @@ namespace UnityEngine.Animations.Rigging
 {
     using Rendering;
 
-    using Shape = BoneRenderer.Shape;
+    using BoneShape = BoneRenderer.BoneShape;
     using UnityObject = UnityEngine.Object;
 
     [InitializeOnLoad]
@@ -275,30 +275,37 @@ namespace UnityEngine.Animations.Rigging
                 if (boneRenderer.bones == null)
                     continue;
 
-                var size = boneRenderer.boneSize * 0.025f;
 
-                if (boneRenderer.drawSkeleton)
+                if (boneRenderer.drawBones)
                 {
-                    var shape = boneRenderer.shape;
-                    var color = boneRenderer.skeletonColor;
+                    var size = boneRenderer.boneSize * 0.025f;
+                    var shape = boneRenderer.boneShape;
+                    var color = boneRenderer.boneColor;
                     var nubColor = new Color(color.r, color.g, color.b, color.a);
                     var selectionColor = Color.white;
 
                     for (var j = 0; j < boneRenderer.bones.Length; j++)
                     {
                         var bone = boneRenderer.bones[j];
+                        if (bone.first == null || bone.second == null)
+                            continue;
+
                         DoBoneRender(bone.first, bone.second, shape, color, size);
                     }
 
                     for (var k = 0; k < boneRenderer.tips.Length; k++)
                     {
                         var tip = boneRenderer.tips[k];
+                        if (tip == null)
+                            continue;
+
                         DoBoneRender(tip, null, shape, color, size);
                     }
                 }
 
                 if (boneRenderer.drawTripods)
                 {
+                    var size = boneRenderer.tripodSize * 0.025f;
                     for (var j = 0; j < boneRenderer.transforms.Length; j++)
                     {
                         var tripodSize = 1f;
@@ -328,7 +335,7 @@ namespace UnityEngine.Animations.Rigging
          }
 
 
-        private static void DoBoneRender(Transform transform, Transform childTransform, Shape shape, Color color, float size)
+        private static void DoBoneRender(Transform transform, Transform childTransform, BoneShape shape, Color color, float size)
         {
             Vector3 start = transform.position;
             Vector3 end = childTransform != null ? childTransform.position : start;
@@ -435,16 +442,16 @@ namespace UnityEngine.Animations.Rigging
                             Handles.color = color;
                             Handles.SphereHandleCap(0, start, Quaternion.identity, k_BoneTipSize * size, EventType.Repaint);
                         }
-                        else if (shape == Shape.Line)
+                        else if (shape == BoneShape.Line)
                         {
                             Handles.color = color;
                             Handles.DrawLine(start, end);
                         }
                         else
                         {
-                            if (shape == Shape.Pyramid)
+                            if (shape == BoneShape.Pyramid)
                                 pyramidMeshRenderer.AddInstance(ComputeBoneMatrix(start, end, length, size), color);
-                            else // if (shape == Shape.Box)
+                            else // if (shape == BoneShape.Box)
                                 boxMeshRenderer.AddInstance(ComputeBoneMatrix(start, end, length, size), color);
                         }
 
@@ -463,5 +470,5 @@ namespace UnityEngine.Animations.Rigging
             s_BoneRendererComponents.Remove(obj);
         }
     }
-    #endif // UNITY_EDITOR
 }
+#endif // UNITY_EDITOR

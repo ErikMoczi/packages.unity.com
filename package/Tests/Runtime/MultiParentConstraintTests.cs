@@ -16,7 +16,6 @@ class MultiParentConstraintTests
     {
         public RigTestData rigData;
         public MultiParentConstraint constraint;
-        public MultiParentConstraintData constraintData;
 
         public AffineTransform constrainedObjectRestTx;
     }
@@ -29,14 +28,14 @@ class MultiParentConstraintTests
 
         var multiParentGO = new GameObject("multiParent");
         var multiParent = multiParentGO.AddComponent<MultiParentConstraint>();
-        var multiParentData = multiParent.data;
+        multiParent.Reset();
+
         multiParentGO.transform.parent = data.rigData.rigGO.transform;
 
-        Assert.IsNotNull(multiParentData);
-        multiParentData.constrainedObject = new JobTransform(data.rigData.hipsGO.transform, false);
+        multiParent.data.constrainedObject = new JobTransform(data.rigData.hipsGO.transform, false);
         data.constrainedObjectRestTx = new AffineTransform(
-            multiParentData.constrainedObject.transform.position,
-            multiParentData.constrainedObject.transform.rotation
+            multiParent.data.constrainedObject.transform.position,
+            multiParent.data.constrainedObject.transform.rotation
             );
 
         List<WeightedJobTransform> sources = new List<WeightedJobTransform>(2);
@@ -46,7 +45,7 @@ class MultiParentConstraintTests
         src1GO.transform.parent = multiParentGO.transform;
         sources.Add(new WeightedJobTransform(src0GO.transform, true, 0f));
         sources.Add(new WeightedJobTransform(src1GO.transform, true, 0f));
-        multiParentData.sourceObjects = sources;
+        multiParent.data.sourceObjects = sources;
 
         var pos = data.rigData.hipsGO.transform.position;
         var rot = data.rigData.hipsGO.transform.rotation;
@@ -56,7 +55,6 @@ class MultiParentConstraintTests
         data.rigData.rootGO.GetComponent<RigBuilder>().Build();
 
         data.constraint = multiParent;
-        data.constraintData = multiParentData;
 
         return data;
     }
@@ -65,15 +63,16 @@ class MultiParentConstraintTests
     public IEnumerator MultiParentConstraint_FollowSourceObjects()
     {
         var data = SetupConstraintRig();
-        var constraintData = data.constraintData;
-        var constrainedObject = constraintData.constrainedObject;
-        var sources = constraintData.sourceObjects;
+        var constraint = data.constraint;
+        
+        var constrainedObject = constraint.data.constrainedObject;
+        var sources = constraint.data.sourceObjects;
 
         // src0.w = 0, src1.w = 0
         Assert.Zero(sources[0].weight);
         Assert.Zero(sources[1].weight);
-        yield return null;
-        yield return null;
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+
         Assert.AreEqual(constrainedObject.transform.position, data.constrainedObjectRestTx.translation);
         Assert.AreEqual(constrainedObject.transform.rotation, data.constrainedObjectRestTx.rotation);
 
@@ -85,18 +84,18 @@ class MultiParentConstraintTests
 
         // src0.w = 1, src1.w = 0
         sources[0].weight = 1f;
-        constraintData.MarkSourceWeightsDirty();
-        yield return null;
-        yield return null;
+        constraint.data.MarkSourceWeightsDirty();
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+
         Assert.AreEqual(constrainedObject.transform.position, sources[0].transform.position);
         Assert.AreEqual(constrainedObject.transform.rotation, sources[0].transform.rotation);
 
         // src0.w = 0, src1.w = 1
         sources[0].weight = 0f;
         sources[1].weight = 1f;
-        constraintData.MarkSourceWeightsDirty();
-        yield return null;
-        yield return null;
+        constraint.data.MarkSourceWeightsDirty();
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+
         Assert.AreEqual(constrainedObject.transform.position, sources[1].transform.position);
         Assert.AreEqual(constrainedObject.transform.rotation, sources[1].transform.rotation);
     }
@@ -105,22 +104,23 @@ class MultiParentConstraintTests
     public IEnumerator MultiParentConstraint_ApplyWeight()
     {
         var data = SetupConstraintRig();
-        var constraintData = data.constraintData;
-        var constrainedObject = constraintData.constrainedObject;
-        var sources = constraintData.sourceObjects;
+        var constraint = data.constraint;
+
+        var constrainedObject = constraint.data.constrainedObject;
+        var sources = constraint.data.sourceObjects;
 
         sources[0].transform.position += Vector3.right;
         sources[0].transform.rotation *= Quaternion.AngleAxis(-90, Vector3.up);
         sources[0].weight = 1f;
-        constraintData.MarkSourceWeightsDirty();
+        constraint.data.MarkSourceWeightsDirty();
 
         for (int i = 0; i <= 5; ++i)
         {
             float w = i / 5.0f;
 
             data.constraint.weight = w;
-            yield return null;
-            yield return null;
+            yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+
 
             var weightedPos = Vector3.Lerp(data.constrainedObjectRestTx.translation, sources[0].transform.position, w);
             Assert.AreEqual(

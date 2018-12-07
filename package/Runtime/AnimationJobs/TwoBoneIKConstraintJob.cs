@@ -9,15 +9,15 @@
         public TransformHandle tip;
 
         public TransformHandle hint;
-        public AnimationJobCache.Index hintWeight;
+        public CacheIndex hintWeightIdx;
 
         public TransformHandle target;
-        public AnimationJobCache.Index targetPositionWeight;
-        public AnimationJobCache.Index targetRotationWeight;
+        public CacheIndex targetPositionWeightIdx;
+        public CacheIndex targetRotationWeightIdx;
 
         public Vector2 linkLengths;
 
-        public AnimationJobCache.Cache cache;
+        public AnimationJobCache cache;
 
         public void ProcessRootMotion(AnimationStream stream) { }
 
@@ -28,11 +28,17 @@
             {
                 AnimationRuntimeUtils.SolveTwoBoneIK(
                     stream, root, mid, tip, target, hint,
-                    cache.GetFloat(targetPositionWeight) * jobWeight,
-                    cache.GetFloat(targetRotationWeight) * jobWeight,
-                    cache.GetFloat(hintWeight) * jobWeight,
+                    cache.GetRaw(targetPositionWeightIdx) * jobWeight,
+                    cache.GetRaw(targetRotationWeightIdx) * jobWeight,
+                    cache.GetRaw(hintWeightIdx) * jobWeight,
                     linkLengths
                     );
+            }
+            else
+            {
+                AnimationRuntimeUtils.PassThrough(stream, root);
+                AnimationRuntimeUtils.PassThrough(stream, mid);
+                AnimationRuntimeUtils.PassThrough(stream, tip);
             }
         }
     }
@@ -51,12 +57,12 @@
     }
 
     public class TwoBoneIKConstraintJobBinder<T> : AnimationJobBinder<TwoBoneIKConstraintJob, T>
-        where T : IAnimationJobData, ITwoBoneIKConstraintData
+        where T : struct, IAnimationJobData, ITwoBoneIKConstraintData
     {
-        public override TwoBoneIKConstraintJob Create(Animator animator, T data)
+        public override TwoBoneIKConstraintJob Create(Animator animator, ref T data)
         {
             var job = new TwoBoneIKConstraintJob();
-            var cacheBuilder = new AnimationJobCache.CacheBuilder();
+            var cacheBuilder = new AnimationJobCacheBuilder();
 
             job.root = TransformHandle.Bind(animator, data.root);
             job.mid = TransformHandle.Bind(animator, data.mid);
@@ -69,10 +75,10 @@
             job.linkLengths[0] = Vector3.Distance(data.root.position, data.mid.position);
             job.linkLengths[1] = Vector3.Distance(data.mid.position, data.tip.position);
         
-            job.targetPositionWeight = cacheBuilder.Add(data.targetPositionWeight);
-            job.targetRotationWeight = cacheBuilder.Add(data.targetRotationWeight);
-            job.hintWeight = cacheBuilder.Add(data.hintWeight);
-            job.cache = cacheBuilder.Create();
+            job.targetPositionWeightIdx = cacheBuilder.Add(data.targetPositionWeight);
+            job.targetRotationWeightIdx = cacheBuilder.Add(data.targetRotationWeight);
+            job.hintWeightIdx = cacheBuilder.Add(data.hintWeight);
+            job.cache = cacheBuilder.Build();
 
             return job;
         }
@@ -82,11 +88,11 @@
             job.cache.Dispose();
         }
 
-        public override void Update(T data, TwoBoneIKConstraintJob job)
+        public override void Update(TwoBoneIKConstraintJob job, ref T data)
         {
-            job.cache.SetFloat(job.targetPositionWeight, data.targetPositionWeight);
-            job.cache.SetFloat(job.targetRotationWeight, data.targetRotationWeight);
-            job.cache.SetFloat(job.hintWeight, data.hintWeight);
+            job.cache.SetRaw(data.targetPositionWeight, job.targetPositionWeightIdx);
+            job.cache.SetRaw(data.targetRotationWeight, job.targetRotationWeightIdx);
+            job.cache.SetRaw(data.hintWeight, job.hintWeightIdx);
         }
     }
 }

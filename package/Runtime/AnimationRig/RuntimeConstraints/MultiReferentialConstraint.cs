@@ -5,7 +5,7 @@ namespace UnityEngine.Animations.Rigging
     using RuntimeConstraints;
 
     [System.Serializable]
-    public class MultiReferentialConstraintData : IAnimationJobData, IMultiReferentialConstraintData, IRigReferenceSync
+    public struct MultiReferentialConstraintData : IAnimationJobData, IMultiReferentialConstraintData, IRigReferenceSync
     {
         [SerializeField] int m_Driver;
         [SerializeField] List<JobTransform> m_SourceObjects;
@@ -47,16 +47,24 @@ namespace UnityEngine.Animations.Rigging
             return true;
         }
 
-        IAnimationJobBinder IAnimationJobData.binder { get; } = new MultiReferentialConstraintJobBinder<MultiReferentialConstraintData>();
+        void IAnimationJobData.SetDefaultValues()
+        {
+            m_Driver = 0;
+            m_SourceObjects = new List<JobTransform>();
+        }
 
         JobTransform[] IRigReferenceSync.allReferences => m_SourceObjects.ToArray();
 
-        public void OnValidate() =>
-            m_Driver = Mathf.Clamp(m_Driver, 0, m_SourceObjects.Count - 1);
+        public void UpdateDriver() =>
+            m_Driver = Mathf.Clamp(m_Driver, 0, m_SourceObjects != null ? m_SourceObjects.Count - 1 : 0);
     }
 
-    [AddComponentMenu("Runtime Rigging/Multi-Referential Constraint")]
-    public class MultiReferentialConstraint : RuntimeRigConstraint<MultiReferentialConstraintData>
+    [AddComponentMenu("Animation Rigging/Multi-Referential Constraint")]
+    public class MultiReferentialConstraint : RuntimeRigConstraint<
+        MultiReferentialConstraintJob,
+        MultiReferentialConstraintData,
+        MultiReferentialConstraintJobBinder<MultiReferentialConstraintData>
+        >
     {
     #if UNITY_EDITOR
     #pragma warning disable 0414
@@ -65,8 +73,7 @@ namespace UnityEngine.Animations.Rigging
 
         private void OnValidate()
         {
-            if (m_Data != null)
-                m_Data.OnValidate();
+            m_Data.UpdateDriver();
         }
     }
 }

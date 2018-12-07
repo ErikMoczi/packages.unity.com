@@ -15,7 +15,6 @@ class OverrideTransformTests
     {
         public RigTestData rigData;
         public OverrideTransform constraint;
-        public OverrideTransformData constraintData;
     }
 
     private ConstraintTestData SetupConstraintRig()
@@ -26,23 +25,19 @@ class OverrideTransformTests
 
         var overrideTransformGO = new GameObject("overrideTransform");
         var overrideTransform = overrideTransformGO.AddComponent<OverrideTransform>();
-        var overrideTransformData = overrideTransform.data;
+        overrideTransform.Reset();
 
         overrideTransformGO.transform.parent = data.rigData.rigGO.transform;
-
-        Assert.IsNotNull(overrideTransformData);
-
-        overrideTransformData.constrainedObject = new JobTransform(data.rigData.hipsGO.transform.Find("Chest"), false);
+        overrideTransform.data.constrainedObject = new JobTransform(data.rigData.hipsGO.transform.Find("Chest"), false);
 
         var overrideSourceGO = new GameObject ("source");
         overrideSourceGO.transform.parent = overrideTransformGO.transform;
 
-        overrideTransformData.sourceObject = new JobTransform(overrideSourceGO.transform, true);
+        overrideTransform.data.sourceObject = new JobTransform(overrideSourceGO.transform, true);
 
         data.rigData.rootGO.GetComponent<RigBuilder>().Build();
 
         data.constraint = overrideTransform;
-        data.constraintData = overrideTransformData;
 
         return data;
     }
@@ -51,12 +46,13 @@ class OverrideTransformTests
     public IEnumerator OverrideTransform_FollowsSource_WorldSpace()
     {
         var data = SetupConstraintRig();
+        var constraint = data.constraint;
 
-        data.constraintData.space = OverrideTransformData.Space.World;
+        constraint.data.space = OverrideTransformData.Space.World;
         yield return null;
 
-        var constrainedTransform = data.constraintData.constrainedObject.transform;
-        var sourceTransform = data.constraintData.sourceObject.transform;
+        var constrainedTransform = constraint.data.constrainedObject.transform;
+        var sourceTransform = constraint.data.sourceObject.transform;
 
         for (int i = 0; i < 5; ++i)
         {
@@ -76,13 +72,14 @@ class OverrideTransformTests
     public IEnumerator OverrideTransform_FollowsSource_PivotSpace()
     {
         var data = SetupConstraintRig();
+        var constraint = data.constraint;
 
-        var constrainedTransform = data.constraintData.constrainedObject.transform;
-        var sourceTransform = data.constraintData.sourceObject.transform;
+        var constrainedTransform = constraint.data.constrainedObject.transform;
+        var sourceTransform = constraint.data.sourceObject.transform;
 
         Vector3 originalPosition = constrainedTransform.position;
 
-        data.constraintData.space = OverrideTransformData.Space.Pivot;
+        constraint.data.space = OverrideTransformData.Space.Pivot;
         yield return null;
 
         for (int i = 0; i < 5; ++i)
@@ -104,13 +101,14 @@ class OverrideTransformTests
     public IEnumerator OverrideTransform_FollowsSource_LocalSpace()
     {
         var data = SetupConstraintRig();
+        var constraint = data.constraint;
 
-        var constrainedTransform = data.constraintData.constrainedObject.transform;
-        var sourceTransform = data.constraintData.sourceObject.transform;
+        var constrainedTransform = constraint.data.constrainedObject.transform;
+        var sourceTransform = constraint.data.sourceObject.transform;
 
         Vector3 parentPosition = constrainedTransform.parent.position;
 
-        data.constraintData.space = OverrideTransformData.Space.Local;
+        constraint.data.space = OverrideTransformData.Space.Local;
         yield return null;
 
         for (int i = 0; i < 5; ++i)
@@ -132,13 +130,14 @@ class OverrideTransformTests
     public IEnumerator OverrideTransform_ApplyWeight()
     {
         var data = SetupConstraintRig();
+        var constraint = data.constraint;
 
-        var constrainedTransform = data.constraintData.constrainedObject.transform;
-        var sourceTransform = data.constraintData.sourceObject.transform;
+        var constrainedTransform = constraint.data.constrainedObject.transform;
+        var sourceTransform = constraint.data.sourceObject.transform;
 
         Vector3 constrainedPos1 = constrainedTransform.position;
 
-        data.constraintData.space = OverrideTransformData.Space.World;
+        constraint.data.space = OverrideTransformData.Space.World;
         yield return null;
 
         sourceTransform.position = new Vector3(0f, 0.5f, 0f);
@@ -151,8 +150,8 @@ class OverrideTransformTests
             float w = i / 5.0f;
 
             data.constraint.weight = w;
-            yield return null;
-            yield return null;
+
+            yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
             Vector3 weightedConstrainedPos = Vector3.Lerp(constrainedPos1, constrainedPos2, w);
             Vector3 constrainedPos = constrainedTransform.position;

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 using UnityEditor;
+using System.Collections;
 using NUnit.Framework;
 using System.IO;
 using System;
@@ -54,7 +55,7 @@ public class RuntimeRiggingTestFixture
         data.animator.avatar = null;
 
         var rigBuilder = data.rootGO.AddComponent<RigBuilder>();
-        rigBuilder.rigLayers.Add(new RigBuilder.RigLayer(rig));
+        rigBuilder.layers.Add(new RigBuilder.RigLayer(rig));
 
         return data;
     }
@@ -69,5 +70,13 @@ public class RuntimeRiggingTestFixture
         }
 
         return null;
+    }
+
+    public static IEnumerator YieldTwoFrames()
+    {
+        // this is necessary when we changed the constraint weight in a test, 
+        // because test are executed like coroutine so they are called right after all MonoBehaviour.Update thus missing the RigBuilder.Update
+        yield return null;
+        yield return null;
     }
 }

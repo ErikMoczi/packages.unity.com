@@ -19,14 +19,14 @@
         public Quaternion sourceToLocalRot;
         public Quaternion sourceToPivotRot;
 
-        public AnimationJobCache.Index space;
-        public AnimationJobCache.Index sourceToCurrSpaceRot;
-        public AnimationJobCache.Index position;
-        public AnimationJobCache.Index rotation;
-        public AnimationJobCache.Index positionWeight;
-        public AnimationJobCache.Index rotationWeight;
+        public CacheIndex spaceIdx;
+        public CacheIndex sourceToCurrSpaceRotIdx;
+        public CacheIndex positionIdx;
+        public CacheIndex rotationIdx;
+        public CacheIndex positionWeightIdx;
+        public CacheIndex rotationWeightIdx;
 
-        public AnimationJobCache.Cache cache;
+        public AnimationJobCache cache;
 
         public void ProcessRootMotion(AnimationStream stream) { }
 
@@ -39,22 +39,22 @@
                 if (source.IsValid(stream))
                 {
                     var sourceLocalTx = new AffineTransform(source.GetLocalPosition(stream), source.GetLocalRotation(stream));
-                    var sourceToSpaceRot = cache.GetQuaternion(sourceToCurrSpaceRot);
+                    var sourceToSpaceRot = cache.Get<Quaternion>(sourceToCurrSpaceRotIdx);
                     overrideTx = Quaternion.Inverse(sourceToSpaceRot) * (sourceInvLocalBindTx * sourceLocalTx) * sourceToSpaceRot;
                 }
                 else
-                    overrideTx = new AffineTransform(cache.GetVector3(position), Quaternion.Euler(cache.GetVector3(rotation)));
+                    overrideTx = new AffineTransform(cache.Get<Vector3>(positionIdx), Quaternion.Euler(cache.Get<Vector3>(rotationIdx)));
 
-                Space overrideSpace = (Space)cache.GetInt(space);
-                var posW = cache.GetFloat(positionWeight) * jobWeight;
-                var rotW = cache.GetFloat(rotationWeight) * jobWeight;
+                Space overrideSpace = (Space)cache.GetRaw(spaceIdx);
+                var posW = cache.GetRaw(positionWeightIdx) * jobWeight;
+                var rotW = cache.GetRaw(rotationWeightIdx) * jobWeight;
                 switch (overrideSpace)
                 {
                     case Space.World:
                         driven.SetPosition(stream, Vector3.Lerp(driven.GetPosition(stream), overrideTx.translation, posW));
                         driven.SetRotation(stream, Quaternion.Lerp(driven.GetRotation(stream), overrideTx.rotation, rotW));
                         break;
-                   case Space.Local:
+                    case Space.Local:
                         driven.SetLocalPosition(stream, Vector3.Lerp(driven.GetLocalPosition(stream), overrideTx.translation, posW));
                         driven.SetLocalRotation(stream, Quaternion.Lerp(driven.GetLocalRotation(stream), overrideTx.rotation, rotW));
                         break;
@@ -68,22 +68,24 @@
                         break;
                 }
             }
+            else
+                AnimationRuntimeUtils.PassThrough(stream, driven);
         }
 
-        public void UpdateSpace(int newSpace)
+        public void UpdateSpace(int space)
         {
-            if (cache.GetInt(space) == newSpace)
+            if ((int)cache.GetRaw(spaceIdx) == space)
                 return;
 
-            cache.SetInt(space, newSpace);
+            cache.SetRaw(space, spaceIdx);
 
-            Space currSpace = (Space)newSpace;
+            Space currSpace = (Space)space;
             if (currSpace == Space.Pivot)
-                cache.SetQuaternion(sourceToCurrSpaceRot, sourceToPivotRot);
+                cache.Set(sourceToPivotRot, sourceToCurrSpaceRotIdx);
             else if (currSpace == Space.Local)
-                cache.SetQuaternion(sourceToCurrSpaceRot, sourceToLocalRot);
+                cache.Set(sourceToLocalRot, sourceToCurrSpaceRotIdx);
             else
-                cache.SetQuaternion(sourceToCurrSpaceRot, sourceToWorldRot);
+                cache.Set(sourceToWorldRot, sourceToCurrSpaceRotIdx);
         }
     }
 
@@ -99,12 +101,12 @@
     }
 
     public class OverrideTransformJobBinder<T> : AnimationJobBinder<OverrideTransformJob, T>
-        where T : IAnimationJobData, IOverrideTransformData
+        where T : struct, IAnimationJobData, IOverrideTransformData
     {
-        public override OverrideTransformJob Create(Animator animator, T data)
+        public override OverrideTransformJob Create(Animator animator, ref T data)
         {
             var job = new OverrideTransformJob();
-            var cacheBuilder = new AnimationJobCache.CacheBuilder();
+            var cacheBuilder = new AnimationJobCacheBuilder();
 
             job.driven = TransformHandle.Bind(animator, data.constrainedObject);
 
@@ -132,19 +134,19 @@
                     job.sourceToLocalRot = job.sourceToPivotRot;
             }
 
-            job.space = cacheBuilder.Add(data.space);
+            job.spaceIdx = cacheBuilder.Add(data.space);
             if (data.space == (int)OverrideTransformJob.Space.Pivot)
-                job.sourceToCurrSpaceRot = cacheBuilder.Add(job.sourceToPivotRot);
+                job.sourceToCurrSpaceRotIdx = cacheBuilder.Add(job.sourceToPivotRot);
             else if (data.space == (int)OverrideTransformJob.Space.Local)
-                job.sourceToCurrSpaceRot = cacheBuilder.Add(job.sourceToLocalRot);
+                job.sourceToCurrSpaceRotIdx = cacheBuilder.Add(job.sourceToLocalRot);
             else
-                job.sourceToCurrSpaceRot = cacheBuilder.Add(job.sourceToWorldRot);
+                job.sourceToCurrSpaceRotIdx = cacheBuilder.Add(job.sourceToWorldRot);
 
-            job.position = cacheBuilder.Add(data.position);
-            job.rotation = cacheBuilder.Add(data.rotation);
-            job.positionWeight = cacheBuilder.Add(data.positionWeight);
-            job.rotationWeight = cacheBuilder.Add(data.rotationWeight);
-            job.cache = cacheBuilder.Create();
+            job.positionIdx = cacheBuilder.Add(data.position);
+            job.rotationIdx = cacheBuilder.Add(data.rotation);
+            job.positionWeightIdx = cacheBuilder.Add(data.positionWeight);
+            job.rotationWeightIdx = cacheBuilder.Add(data.rotationWeight);
+            job.cache = cacheBuilder.Build();
 
             return job;
         }
@@ -154,13 +156,13 @@
             job.cache.Dispose();
         }
 
-        public override void Update(T data, OverrideTransformJob job)
+        public override void Update(OverrideTransformJob job, ref T data)
         {
             job.UpdateSpace(data.space);
-            job.cache.SetVector3(job.position, data.position);
-            job.cache.SetVector3(job.rotation, data.rotation);
-            job.cache.SetFloat(job.positionWeight, data.positionWeight);
-            job.cache.SetFloat(job.rotationWeight, data.rotationWeight);
+            job.cache.Set(data.position, job.positionIdx);
+            job.cache.Set(data.rotation, job.rotationIdx);
+            job.cache.SetRaw(data.positionWeight, job.positionWeightIdx);
+            job.cache.SetRaw(data.rotationWeight, job.rotationWeightIdx);
         }
     }
 }

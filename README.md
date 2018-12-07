@@ -1,1 +1,1 @@
-Animation Rigging Constraints using Animation C# Jobs
+Animation Rigging using Animation C# Jobs and Playables

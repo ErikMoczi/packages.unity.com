@@ -1,21 +1,16 @@
 ﻿namespace UnityEngine.Animations.Rigging
 {
     [System.Serializable]
-    public class ChainIKConstraintData : IAnimationJobData, IChainIKConstraintData, IRigReferenceSync
+    public struct ChainIKConstraintData : IAnimationJobData, IChainIKConstraintData, IRigReferenceSync
     {
         [SerializeField] JobTransform m_Root;
         [SerializeField] JobTransform m_Tip;
         [SerializeField] JobTransform m_Target;
 
-        [SerializeField, Range(0f, 1f)] float m_ChainRotationWeight = 1f;
-        [SerializeField, Range(0f, 1f)] float m_TipRotationWeight = 1f;
-        [SerializeField, Range(1, 50)] int m_MaxIterations = 15;
-        [SerializeField, Range(0f, 0.01f)] float m_Tolerance = 0.001f;
-
-        public ChainIKConstraintData()
-        {
-            m_Target = JobTransform.defaultSync;
-        }
+        [SerializeField, Range(0f, 1f)] float m_ChainRotationWeight;
+        [SerializeField, Range(0f, 1f)] float m_TipRotationWeight;
+        [SerializeField, Range(1, 50)] int m_MaxIterations;
+        [SerializeField, Range(0f, 0.01f)] float m_Tolerance;
 
         public JobTransform root { get => m_Root; set => m_Root = value; }
         public JobTransform tip { get => m_Tip; set => m_Tip = value; }
@@ -45,13 +40,26 @@
             return (tmp.transform == m_Root.transform && count > 2);
         }
 
-        IAnimationJobBinder IAnimationJobData.binder { get; } = new ChainIKConstraintJobBinder<ChainIKConstraintData>();
+        void IAnimationJobData.SetDefaultValues()
+        {
+            m_Root = JobTransform.defaultNoSync;
+            m_Tip = JobTransform.defaultNoSync;
+            m_Target = JobTransform.defaultSync;
+            m_ChainRotationWeight = 1f;
+            m_TipRotationWeight = 1f;
+            m_MaxIterations = 15;
+            m_Tolerance = 0.0001f;
+        }
 
         JobTransform[] IRigReferenceSync.allReferences => new JobTransform[] { m_Root, m_Tip, m_Target };
     }
 
-    [AddComponentMenu("Runtime Rigging/Chain IK Constraint")]
-    public class ChainIKConstraint : RuntimeRigConstraint<ChainIKConstraintData>
+    [AddComponentMenu("Animation Rigging/Chain IK Constraint")]
+    public class ChainIKConstraint : RuntimeRigConstraint<
+        ChainIKConstraintJob,
+        ChainIKConstraintData,
+        ChainIKConstraintJobBinder<ChainIKConstraintData>
+        >
     {
     #if UNITY_EDITOR
     #pragma warning disable 0414

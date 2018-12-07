@@ -10,11 +10,11 @@
         public TransformHandle driven;
         public TransformHandle sourceA;
         public TransformHandle sourceB;
-        public AnimationJobCache.Index options;
-        public AnimationJobCache.Index positionWeight;
-        public AnimationJobCache.Index rotationWeight;
 
-        public AnimationJobCache.Cache cache;
+        public CacheIndex optionsIdx;
+        public CacheIndex positionWeightIdx;
+        public CacheIndex rotationWeightIdx;
+        public AnimationJobCache cache;
 
         public void ProcessRootMotion(AnimationStream stream) { }
 
@@ -23,19 +23,25 @@
             float jobWeight = stream.GetInputWeight(0);
             if (jobWeight > 0f)
             {
-                var flags = cache.GetInt(options);
+                var flags = (int)cache.GetRaw(optionsIdx);
                 if ((flags & k_BlendTranslationMask) != 0)
                 {
-                    Vector3 posBlend = Vector3.Lerp(sourceA.GetPosition(stream), sourceB.GetPosition(stream), cache.GetFloat(positionWeight));
+                    Vector3 posBlend = Vector3.Lerp(sourceA.GetPosition(stream), sourceB.GetPosition(stream), cache.GetRaw(positionWeightIdx));
                     driven.SetPosition(stream, Vector3.Lerp(driven.GetPosition(stream), posBlend, jobWeight));
                 }
+                else
+                    driven.SetLocalPosition(stream, driven.GetLocalPosition(stream));
 
                 if ((flags & k_BlendRotationMask) != 0)
                 {
-                    Quaternion rotBlend = Quaternion.Lerp(sourceA.GetRotation(stream), sourceB.GetRotation(stream), cache.GetFloat(rotationWeight));
+                    Quaternion rotBlend = Quaternion.Lerp(sourceA.GetRotation(stream), sourceB.GetRotation(stream), cache.GetRaw(rotationWeightIdx));
                     driven.SetRotation(stream, Quaternion.Lerp(driven.GetRotation(stream), rotBlend, jobWeight));
                 }
+                else
+                    driven.SetLocalRotation(stream, driven.GetLocalRotation(stream));
             }
+            else
+                AnimationRuntimeUtils.PassThrough(stream, driven);
         }
 
         public static int PackFlags(bool blendT, bool blendR)
@@ -56,21 +62,21 @@
     }
 
     public class BlendConstraintJobBinder<T> : AnimationJobBinder<BlendConstraintJob, T>
-        where T : IAnimationJobData, IBlendConstraintData
+        where T : struct, IAnimationJobData, IBlendConstraintData
     {
-        public override BlendConstraintJob Create(Animator animator, T data)
+        public override BlendConstraintJob Create(Animator animator, ref T data)
         {
             var job = new BlendConstraintJob();
-            var cacheBuilder = new AnimationJobCache.CacheBuilder();
+            var cacheBuilder = new AnimationJobCacheBuilder();
 
             job.driven = TransformHandle.Bind(animator, data.constrainedObject);
             job.sourceA = TransformHandle.Bind(animator, data.sourceA);
             job.sourceB = TransformHandle.Bind(animator, data.sourceB);
-            job.options = cacheBuilder.Add(BlendConstraintJob.PackFlags(data.blendPosition, data.blendRotation));
+            job.optionsIdx = cacheBuilder.Add(BlendConstraintJob.PackFlags(data.blendPosition, data.blendRotation));
 
-            job.positionWeight = cacheBuilder.Add(data.positionWeight);
-            job.rotationWeight = cacheBuilder.Add(data.rotationWeight);
-            job.cache = cacheBuilder.Create();
+            job.positionWeightIdx = cacheBuilder.Add(data.positionWeight);
+            job.rotationWeightIdx = cacheBuilder.Add(data.rotationWeight);
+            job.cache = cacheBuilder.Build();
 
             return job;
         }
@@ -80,11 +86,11 @@
             job.cache.Dispose();
         }
 
-        public override void Update(T data, BlendConstraintJob job)
+        public override void Update(BlendConstraintJob job, ref T data)
         {
-            job.cache.SetFloat(job.positionWeight, data.positionWeight);
-            job.cache.SetFloat(job.rotationWeight, data.rotationWeight);
-            job.cache.SetInt(job.options, BlendConstraintJob.PackFlags(data.blendPosition, data.blendRotation));
+            job.cache.SetRaw(data.positionWeight, job.positionWeightIdx);
+            job.cache.SetRaw(data.rotationWeight, job.rotationWeightIdx);
+            job.cache.SetRaw(BlendConstraintJob.PackFlags(data.blendPosition, data.blendRotation), job.optionsIdx);
         }
     }
 }

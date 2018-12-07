@@ -4,8 +4,8 @@ namespace UnityEngine.Animations.Rigging
 {
     public struct BitArray : System.IDisposable
     {
-        private static readonly float k_BitsPerByte = 8f;
-        private static readonly int k_BitMask = 0x7;
+        const float k_BitsPerByte = 8f;
+        const int k_BitMask = 0x7;
 
         private NativeArray<byte> m_Data;
 

@@ -16,7 +16,6 @@ class MultiRotationConstraintTests
     {
         public RigTestData rigData;
         public MultiRotationConstraint constraint;
-        public MultiRotationConstraintData constraintData;
 
         public Quaternion constrainedObjectRestRotation;
     }
@@ -29,12 +28,12 @@ class MultiRotationConstraintTests
 
         var multiRotationGO = new GameObject("multiPosition");
         var multiRotation = multiRotationGO.AddComponent<MultiRotationConstraint>();
-        var multiRotationData = multiRotation.data;
+        multiRotation.Reset();
+
         multiRotationGO.transform.parent = data.rigData.rigGO.transform;
 
-        Assert.IsNotNull(multiRotationData);
-        multiRotationData.constrainedObject = new JobTransform(data.rigData.hipsGO.transform, false);
-        data.constrainedObjectRestRotation = multiRotationData.constrainedObject.transform.rotation;
+        multiRotation.data.constrainedObject = new JobTransform(data.rigData.hipsGO.transform, false);
+        data.constrainedObjectRestRotation = multiRotation.data.constrainedObject.transform.rotation;
 
         List<WeightedJobTransform> sources = new List<WeightedJobTransform>(2);
         var src0GO = new GameObject("source0");
@@ -43,7 +42,7 @@ class MultiRotationConstraintTests
         src1GO.transform.parent = multiRotationGO.transform;
         sources.Add(new WeightedJobTransform(src0GO.transform, true, 0f));
         sources.Add(new WeightedJobTransform(src1GO.transform, true, 0f));
-        multiRotationData.sourceObjects = sources;
+        multiRotation.data.sourceObjects = sources;
 
         src0GO.transform.rotation = data.rigData.hipsGO.transform.rotation;
         src1GO.transform.rotation = data.rigData.hipsGO.transform.rotation;
@@ -51,7 +50,6 @@ class MultiRotationConstraintTests
         data.rigData.rootGO.GetComponent<RigBuilder>().Build();
 
         data.constraint = multiRotation;
-        data.constraintData = multiRotationData;
 
         return data;
     }
@@ -60,15 +58,16 @@ class MultiRotationConstraintTests
     public IEnumerator MultiRotationConstraint_FollowSourceObjects()
     {
         var data = SetupConstraintRig();
-        var constraintData = data.constraintData;
-        var constrainedObject = constraintData.constrainedObject;
-        var sources = constraintData.sourceObjects;
+        var constraint = data.constraint;
+
+        var constrainedObject = constraint.data.constrainedObject;
+        var sources = constraint.data.sourceObjects;
 
         // src0.w = 0, src1.w = 0
         Assert.Zero(sources[0].weight);
         Assert.Zero(sources[1].weight);
-        yield return null;
-        yield return null;
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+
         Assert.AreEqual(constrainedObject.transform.rotation, data.constrainedObjectRestRotation);
 
         // Add rotation to source objects
@@ -77,17 +76,17 @@ class MultiRotationConstraintTests
 
         // src0.w = 1, src1.w = 0
         sources[0].weight = 1f;
-        constraintData.MarkSourceWeightsDirty();
-        yield return null;
-        yield return null;
+        constraint.data.MarkSourceWeightsDirty();
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+
         Assert.AreEqual(constrainedObject.transform.rotation, sources[0].transform.rotation);
 
         // src0.w = 0, src1.w = 1
         sources[0].weight = 0f;
         sources[1].weight = 1f;
-        constraintData.MarkSourceWeightsDirty();
-        yield return null;
-        yield return null;
+        constraint.data.MarkSourceWeightsDirty();
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+
         Assert.AreEqual(constrainedObject.transform.rotation, sources[1].transform.rotation);
     }
 
@@ -95,21 +94,21 @@ class MultiRotationConstraintTests
     public IEnumerator MultiRotationConstraint_ApplyWeight()
     {
         var data = SetupConstraintRig();
-        var constraintData = data.constraintData;
-        var constrainedObject = constraintData.constrainedObject;
-        var sources = constraintData.sourceObjects;
+        var constraint = data.constraint;
+        
+        var constrainedObject = constraint.data.constrainedObject;
+        var sources = constraint.data.sourceObjects;
 
         sources[0].transform.rotation *= Quaternion.AngleAxis(90, Vector3.up);
         sources[0].weight = 1f;
-        constraintData.MarkSourceWeightsDirty();
+        constraint.data.MarkSourceWeightsDirty();
 
         for (int i = 0; i <= 5; ++i)
         {
             float w = i / 5.0f;
 
             data.constraint.weight = w;
-            yield return null;
-            yield return null;
+            yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
             Quaternion weightedRot = Quaternion.Lerp(data.constrainedObjectRestRotation, sources[0].transform.rotation, w);
             Assert.AreEqual(
