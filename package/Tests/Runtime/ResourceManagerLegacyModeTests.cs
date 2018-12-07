@@ -1,17 +1,20 @@
+using System;
 using System.Collections.Generic;
-using UnityEngine.ResourceManagement;
 using UnityEngine;
+using UnityEngine.ResourceManagement;
 #if UNITY_EDITOR
-using UnityEditor;
+
 #endif
 
+#if UNITY_EDITOR
 public class ResourceManagerTestsLegacy : ResourceManagerBaseTests
 {
-    protected override void CreateLocations(List<IResourceLocation> k_locations)
+    protected override void CreateLocations(List<IResourceLocation> locations)
     {
         ResourceManager.InstanceProvider = new InstanceProvider();
         ResourceManager.ResourceProviders.Add(new LegacyResourcesProvider());
         for (int i = 0; i < 20; i++)
-            k_locations.Add(CreateTestAsset("Resources/", "asset" + i, "asset" + i, typeof(LegacyResourcesProvider)));
+            locations.Add(CreateTestAsset("Resources/", "asset" + i, "asset" + i, typeof(LegacyResourcesProvider)));
     }
 }
+#endif

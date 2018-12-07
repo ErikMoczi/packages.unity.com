@@ -1,5 +1,6 @@
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+// ReSharper disable DelegateSubtraction
 
 namespace UnityEngine.ResourceManagement
 {
@@ -8,15 +9,36 @@ namespace UnityEngine.ResourceManagement
     /// </summary>
     public abstract class AsyncOperationBase<TObject> : IAsyncOperation<TObject>
     {
-        protected TObject m_result;
-        protected AsyncOperationStatus m_status;
-        protected Exception m_error;
-        protected object m_context;
-        protected object m_key;
-        protected bool m_releaseToCacheOnCompletion = false;
-        Action<IAsyncOperation> m_completedAction;
-        List<Action<IAsyncOperation<TObject>>> m_completedActionT;
+        /// <summary>
+        /// The result value of the operation.
+        /// </summary>
+        protected TObject m_Result;
+        /// <summary>
+        /// The status of the operation.
+        /// </summary>
+        protected AsyncOperationStatus m_Status;
+        /// <summary>
+        /// If and error is encountered, an exception is saved in this member.
+        /// </summary>
+        protected Exception m_Error;
+        /// <summary>
+        /// Context object.  This is usually set to the IResourceLocation used to start this operation.
+        /// </summary>
+        protected object m_Context;
+        /// <summary>
+        /// The key used to start the operation.  This is usually the address.
+        /// </summary>
+        protected object m_Key;
+        /// <summary>
+        /// If true, this operation is released to a cache for re-use.  Otherwise, it will be garbage collected.
+        /// </summary>
+        protected bool m_ReleaseToCacheOnCompletion;
+        Action<IAsyncOperation> m_CompletedAction;
+        List<Action<IAsyncOperation<TObject>>> m_CompletedActionT;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
         protected AsyncOperationBase()
         {
             IsValid = true;
@@ -27,35 +49,35 @@ namespace UnityEngine.ResourceManagement
         public override string ToString()
         {
             var instId = "";
-            var or = m_result as Object;
+            var or = m_Result as Object;
             if (or != null)
-                instId = "(" + or.GetInstanceID().ToString() + ")";
-            return base.ToString() + " result = " + m_result + instId + ", status = " + m_status + ", valid = " + IsValid + ", canRelease = " + m_releaseToCacheOnCompletion;
+                instId = "(" + or.GetInstanceID() + ")";
+            return string.Format("{0}, result='{1}', status='{2}', valid={3}, location={4}.",  base.ToString(), (m_Result + instId), m_Status, IsValid, m_Context);
         }
         /// <inheritdoc />
         public virtual void Release()
         {
             Validate();
-            m_releaseToCacheOnCompletion = true;
-            if (!m_insideCompletionEvent && IsDone)
+            m_ReleaseToCacheOnCompletion = true;
+            if (!m_InsideCompletionEvent && IsDone)
                 AsyncOperationCache.Instance.Release(this);
         }
         /// <inheritdoc />
         public IAsyncOperation<TObject> Retain()
         {
             Validate();
-            m_releaseToCacheOnCompletion = false;
+            m_ReleaseToCacheOnCompletion = false;
             return this;
         }
         /// <inheritdoc />
         public virtual void ResetStatus()
         {
-            m_releaseToCacheOnCompletion = true;
-            m_status = AsyncOperationStatus.None;
-            m_error = null;
-            m_result = default(TObject);
-            m_context = null;
-            m_key = null;
+            m_ReleaseToCacheOnCompletion = true;
+            m_Status = AsyncOperationStatus.None;
+            m_Error = null;
+            m_Result = default(TObject);
+            m_Context = null;
+            m_Key = null;
         }
         /// <inheritdoc />
         public bool Validate()
@@ -79,15 +101,15 @@ namespace UnityEngine.ResourceManagement
                 }
                 else
                 {
-                    if (m_completedActionT == null)
-                        m_completedActionT = new List<Action<IAsyncOperation<TObject>>>(2);
-                    m_completedActionT.Add(value);
+                    if (m_CompletedActionT == null)
+                        m_CompletedActionT = new List<Action<IAsyncOperation<TObject>>>(2);
+                    m_CompletedActionT.Add(value);
                 }
             }
 
             remove
             {
-                m_completedActionT.Remove(value);
+                m_CompletedActionT.Remove(value);
             }
         }
         /// <inheritdoc />
@@ -99,12 +121,12 @@ namespace UnityEngine.ResourceManagement
                 if (IsDone)
                     DelayedActionManager.AddAction(value, 0, this);
                 else
-                    m_completedAction += value;
+                    m_CompletedAction += value;
             }
 
             remove
             {
-                m_completedAction -= value;
+                m_CompletedAction -= value;
             }
         }
 
@@ -113,7 +135,7 @@ namespace UnityEngine.ResourceManagement
             get
             {
                 Validate();
-                return m_result;
+                return m_Result;
             }
         }
         /// <inheritdoc />
@@ -122,12 +144,12 @@ namespace UnityEngine.ResourceManagement
             get
             {
                 Validate();
-                return m_status;
+                return m_Status;
             }
             protected set
             {
                 Validate();
-                m_status = value;
+                m_Status = value;
             }
         }
         /// <inheritdoc />
@@ -136,12 +158,12 @@ namespace UnityEngine.ResourceManagement
             get
             {
                 Validate();
-                return m_error;
+                return m_Error;
             }
             protected set
             {
-                m_error = value;
-                if (m_error != null && ResourceManager.ExceptionHandler != null)
+                m_Error = value;
+                if (m_Error != null && ResourceManager.ExceptionHandler != null)
                     ResourceManager.ExceptionHandler(this, value);
             }
         }
@@ -170,7 +192,7 @@ namespace UnityEngine.ResourceManagement
             get
             {
                 Validate();
-                return m_result;
+                return m_Result;
             }
         }
         /// <inheritdoc />
@@ -197,12 +219,12 @@ namespace UnityEngine.ResourceManagement
             get
             {
                 Validate();
-                return m_context;
+                return m_Context;
             }
             protected set
             {
                 Validate();
-                m_context = value;
+                m_Context = value;
             }
         }
         /// <inheritdoc />
@@ -211,63 +233,68 @@ namespace UnityEngine.ResourceManagement
             get
             {
                 Validate();
-                return m_key;
+                return m_Key;
             }
             set
             {
                 Validate();
-                m_key = value;
+                m_Key = value;
             }
         }
 
-        bool m_insideCompletionEvent = false;
-        /// <inheritdoc />
+        bool m_InsideCompletionEvent;
+        /// <summary>
+        /// Call the event handlers for this operation.
+        /// </summary>
         public void InvokeCompletionEvent()
         {
             Validate();
-            m_insideCompletionEvent = true;
+            m_InsideCompletionEvent = true;
 
-            if (m_completedAction != null)
+            if (m_CompletedAction != null)
             {
-                var tmpEvent = m_completedAction;
-                m_completedAction = null;
+                var tmpEvent = m_CompletedAction;
+                m_CompletedAction = null;
                 try
                 {
                     tmpEvent(this);
                 }
                 catch (Exception e)
                 {
-                    m_status = AsyncOperationStatus.Failed;
+                    m_Status = AsyncOperationStatus.Failed;
                     OperationException = e;
                 }
             }
 
-            if (m_completedActionT != null)
+            if (m_CompletedActionT != null)
             {
-                for (int i = 0; i < m_completedActionT.Count; i++)
+                for (int i = 0; i < m_CompletedActionT.Count; i++)
                 {
                     try
                     {
-                        m_completedActionT[i](this);
+                        m_CompletedActionT[i](this);
                     }
                     catch (Exception e)
                     {
-                        m_status = AsyncOperationStatus.Failed;
+                        m_Status = AsyncOperationStatus.Failed;
                         OperationException = e;
                     }
                 }
-                m_completedActionT.Clear();
+                m_CompletedActionT.Clear();
             }
-            m_insideCompletionEvent = false;
-            if (m_releaseToCacheOnCompletion)
+            m_InsideCompletionEvent = false;
+            if (m_ReleaseToCacheOnCompletion)
                 AsyncOperationCache.Instance.Release(this);
         }
-        /// <inheritdoc />
+        /// <summary>
+        /// Set the result object.  Status will be set to AsyncOperationStatus.Succeeded if the value is non-null, otherwise it is set to AsyncOperationStatus.Failed.
+        /// </summary>
+        /// <param name="result">The value to set result to.</param>
         public virtual void SetResult(TObject result)
         {
             Validate();
-            m_result = result;
-            m_status = (m_result == null) ? AsyncOperationStatus.Failed : AsyncOperationStatus.Succeeded;
+            m_Result = result;
+            m_Status = (m_Result == null) ? AsyncOperationStatus.Failed : AsyncOperationStatus.Succeeded;
         }
 
     }
@@ -292,7 +319,7 @@ namespace UnityEngine.ResourceManagement
             Key = key;
             SetResult(val);
             Retain();
-            DelayedActionManager.AddAction((Action)InvokeCompletionEvent, 0);
+            DelayedActionManager.AddAction((Action)InvokeCompletionEvent);
             return this;
         }
     }
@@ -304,9 +331,9 @@ namespace UnityEngine.ResourceManagement
     /// <typeparam name="TObjectDependency">The type parameter of the dependency IAsyncOperation.</typeparam>
     public class ChainOperation<TObject, TObjectDependency> : AsyncOperationBase<TObject>
     {
-        Func<TObjectDependency, IAsyncOperation<TObject>> m_func;
-        IAsyncOperation m_dependencyOperation;
-        IAsyncOperation m_dependentOperation;
+        Func<TObjectDependency, IAsyncOperation<TObject>> m_Func;
+        IAsyncOperation m_DependencyOperation;
+        IAsyncOperation m_DependentOperation;
         /// <summary>
         /// Start the operation.
         /// </summary>
@@ -317,11 +344,11 @@ namespace UnityEngine.ResourceManagement
         /// <returns></returns>
         public virtual IAsyncOperation<TObject> Start(object context, object key, IAsyncOperation<TObjectDependency> dependency, Func<TObjectDependency, IAsyncOperation<TObject>> func)
         {
-            m_func = func;
+            m_Func = func;
             Context = context;
             Key = key;
-            m_dependencyOperation = dependency;
-            m_dependentOperation = null;
+            m_DependencyOperation = dependency;
+            m_DependentOperation = null;
             dependency.Completed += OnDependencyCompleted;
             return this;
         }
@@ -330,30 +357,30 @@ namespace UnityEngine.ResourceManagement
         {
             get
             {
-                if (m_dependentOperation == null)
+                if (m_DependentOperation == null)
                 {
-                    if (m_dependencyOperation == null)
+                    if (m_DependencyOperation == null)
                         return 0;
                             
-                    return m_dependencyOperation.PercentComplete * .5f;
+                    return m_DependencyOperation.PercentComplete * .5f;
                 }
                     
-                return m_dependentOperation.PercentComplete * .5f + .5f;
+                return m_DependentOperation.PercentComplete * .5f + .5f;
             }
         }
 
-        private void OnDependencyCompleted(IAsyncOperation<TObjectDependency> op)
+        void OnDependencyCompleted(IAsyncOperation<TObjectDependency> op)
         {
-            m_dependencyOperation = null;
-            var funcOp = m_func(op.Result);
-            m_dependentOperation = funcOp;
+            m_DependencyOperation = null;
+            var funcOp = m_Func(op.Result);
+            m_DependentOperation = funcOp;
             Context = funcOp.Context;
             funcOp.Key = Key;
             op.Release();
             funcOp.Completed += OnFuncCompleted;
         }
 
-        private void OnFuncCompleted(IAsyncOperation<TObject> op)
+        void OnFuncCompleted(IAsyncOperation<TObject> op)
         {
             SetResult(op.Result);
             InvokeCompletionEvent();
@@ -364,14 +391,14 @@ namespace UnityEngine.ResourceManagement
             get
             {
                 Validate();
-                return m_key;
+                return m_Key;
             }
             set
             {
                 Validate();
-                m_key = value;
-                if (m_dependencyOperation != null)
-                    m_dependencyOperation.Key = Key;
+                m_Key = value;
+                if (m_DependencyOperation != null)
+                    m_DependencyOperation.Key = Key;
             }
         }
     }
@@ -381,17 +408,17 @@ namespace UnityEngine.ResourceManagement
     /// <typeparam name="TObject"></typeparam>
     public class GroupOperation<TObject> : AsyncOperationBase<IList<TObject>> where TObject : class
     {
-        Action<IAsyncOperation<TObject>> m_callback;
-        Action<IAsyncOperation<TObject>> m_internalOnComplete;
-        List<IAsyncOperation<TObject>> m_operations;
-        int m_loadedCount;
+        Action<IAsyncOperation<TObject>> m_Callback;
+        Action<IAsyncOperation<TObject>> m_InternalOnComplete;
+        List<IAsyncOperation<TObject>> m_Operations;
+        int m_LoadedCount;
         /// <summary>
         /// Construct a new GroupOperation.
         /// </summary>
         public GroupOperation()
         {
-            m_internalOnComplete = OnOperationCompleted;
-            m_result = new List<TObject>();
+            m_InternalOnComplete = OnOperationCompleted;
+            m_Result = new List<TObject>();
         }
         /// <inheritdoc />
         public override void SetResult(IList<TObject> result)
@@ -401,13 +428,13 @@ namespace UnityEngine.ResourceManagement
         /// <inheritdoc />
         public override void ResetStatus()
         {
-            m_releaseToCacheOnCompletion = true;
-            m_status = AsyncOperationStatus.None;
-            m_error = null;
-            m_context = null;
+            m_ReleaseToCacheOnCompletion = true;
+            m_Status = AsyncOperationStatus.None;
+            m_Error = null;
+            m_Context = null;
 
             Result.Clear();
-            m_operations = null;
+            m_Operations = null;
         }
         /// <inheritdoc />
         public override object Key
@@ -415,15 +442,15 @@ namespace UnityEngine.ResourceManagement
             get
             {
                 Validate();
-                return m_key;
+                return m_Key;
             }
             set
             {
                 Validate();
-                m_key = value;
-                if (m_operations != null)
+                m_Key = value;
+                if (m_Operations != null)
                 {
-                    foreach (var op in m_operations)
+                    foreach (var op in m_Operations)
                         op.Key = Key;
                 }
             }
@@ -437,17 +464,17 @@ namespace UnityEngine.ResourceManagement
         /// <returns>This object with the results being set to the results of the sub operations.  The result will match the size and order of the locations list.</returns>
         public virtual IAsyncOperation<IList<TObject>> Start(IList<IResourceLocation> locations, Action<IAsyncOperation<TObject>> callback, Func<IResourceLocation, IAsyncOperation<TObject>> func)
         {
-            m_context = locations;
-            m_callback = callback;
-            m_loadedCount = 0;
-            m_operations = new List<IAsyncOperation<TObject>>(locations.Count);
+            m_Context = locations;
+            m_Callback = callback;
+            m_LoadedCount = 0;
+            m_Operations = new List<IAsyncOperation<TObject>>(locations.Count);
             foreach (var o in locations)
             {
                 Result.Add(default(TObject));
                 var op = func(o);
                 op.Key = Key;
-                m_operations.Add(op);
-                op.Completed += m_internalOnComplete;
+                m_Operations.Add(op);
+                op.Completed += m_InternalOnComplete;
             }
             return this;
         }
@@ -458,20 +485,21 @@ namespace UnityEngine.ResourceManagement
         /// <param name="locations">The list of locations.</param>
         /// <param name="callback">Callback methods that will be called when each sub operation is complete.  Order is not guaranteed.</param>
         /// <param name="func">Function to generated each sub operation from the locations.  This variation allows for a parameter to be passed to this method of type TParam.</param>
+        /// <param name="funcParams">The parameter objec to pass to the func.</param>
         /// <returns>This object with the results being set to the results of the sub operations.  The result will match the size and order of the locations list.</returns>
         public virtual IAsyncOperation<IList<TObject>> Start<TParam>(IList<IResourceLocation> locations, Action<IAsyncOperation<TObject>> callback, Func<IResourceLocation, TParam, IAsyncOperation<TObject>> func, TParam funcParams)
         {
-            m_context = locations;
-            m_callback = callback;
-            m_loadedCount = 0;
-            m_operations = new List<IAsyncOperation<TObject>>(locations.Count);
+            m_Context = locations;
+            m_Callback = callback;
+            m_LoadedCount = 0;
+            m_Operations = new List<IAsyncOperation<TObject>>(locations.Count);
             foreach (var o in locations)
             {
                 Result.Add(default(TObject));
                 var op = func(o, funcParams);
                 op.Key = Key;
-                m_operations.Add(op);
-                op.Completed += m_internalOnComplete;
+                m_Operations.Add(op);
+                op.Completed += m_InternalOnComplete;
             }
             return this;
         }
@@ -485,16 +513,16 @@ namespace UnityEngine.ResourceManagement
         /// <returns></returns>
         public virtual IAsyncOperation<IList<TObject>> Start(object context, object key, List<IAsyncOperation<TObject>> operations)
         {
-            m_context = context;
-            m_loadedCount = 0;
-            m_operations = operations;
-            foreach (var op in m_operations)
+            m_Context = context;
+            m_LoadedCount = 0;
+            m_Operations = operations;
+            foreach (var op in m_Operations)
             {
                 Result.Add(default(TObject));
                 op.Key = key;
-                op.Completed += m_internalOnComplete;
+                op.Completed += m_InternalOnComplete;
             }
-            if (m_operations.Count == 0)
+            if (m_Operations.Count == 0)
                 InvokeCompletionEvent();
             return this;
         }
@@ -506,7 +534,7 @@ namespace UnityEngine.ResourceManagement
             get
             {
                 Validate();
-                return Result.Count == m_loadedCount;
+                return Result.Count == m_LoadedCount;
             }
         }
         /// <inheritdoc />
@@ -514,32 +542,32 @@ namespace UnityEngine.ResourceManagement
         {
             get
             {
-                if (IsDone || m_operations.Count < 1)
+                if (IsDone || m_Operations.Count < 1)
                     return 1f;
                 float total = 0;
-                for (int i = 0; i < m_operations.Count; i++)
-                    total += m_operations[i].PercentComplete;
-                return total / m_operations.Count;
+                for (int i = 0; i < m_Operations.Count; i++)
+                    total += m_Operations[i].PercentComplete;
+                return total / m_Operations.Count;
             }
         }
 
-        private void OnOperationCompleted(IAsyncOperation<TObject> op)
+        void OnOperationCompleted(IAsyncOperation<TObject> op)
         {
-            if (m_callback != null)
+            if (m_Callback != null)
             {
                 op.Retain();
-                m_callback(op);
+                m_Callback(op);
             }
-            m_loadedCount++;
-            for (int i = 0; i < m_operations.Count; i++)
+            m_LoadedCount++;
+            for (int i = 0; i < m_Operations.Count; i++)
             {
-                if (m_operations[i] == op)
+                if (m_Operations[i] == op)
                 {
                     Result[i] = op.Result;
                     if (op.Status != AsyncOperationStatus.Succeeded)
                     {
                         Status = op.Status;
-                        OperationException = op.OperationException;
+                        m_Error = op.OperationException;
                     }
                     break;
                 }

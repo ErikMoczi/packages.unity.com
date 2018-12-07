@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement
@@ -7,21 +8,21 @@ namespace UnityEngine.ResourceManagement
     /// </summary>
     public struct LegacyResourcesLocation : IResourceLocation
     {
-        string m_key;
+        string m_Key;
         /// <summary>
         /// Construct a new LegacyResourcesLocation with a specified key.
         /// </summary>
         /// <param name="key">The key of the location.  This should be set to the path relative to the resources folder it is contained within.</param>
-        public LegacyResourcesLocation(string key) { m_key = key; }
+        public LegacyResourcesLocation(string key) { m_Key = key; }
 
         /// <summary>
         /// Returns the path of the asset.
         /// </summary>
-        public string Key { get { return m_key; } }
+        public string Key { get { return m_Key; } }
         /// <summary>
         /// Returns the same value as Key.  
         /// </summary>
-        public string InternalId { get { return m_key; } }
+        public string InternalId { get { return m_Key; } }
         /// <summary>
         /// returns typeof(LegacyResourcesProvider).FullName.
         /// </summary>

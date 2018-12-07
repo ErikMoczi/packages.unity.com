@@ -2,8 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using UnityEngine.ResourceManagement.Diagnostics;
-
 
 namespace UnityEngine.ResourceManagement
 {
@@ -16,7 +14,7 @@ namespace UnityEngine.ResourceManagement
         /// The singleton AsyncOperationCache instance.
         /// </summary>
         public static readonly AsyncOperationCache Instance = new AsyncOperationCache();
-        readonly Dictionary<Type, Stack<IAsyncOperation>> m_cache = new Dictionary<Type, Stack<IAsyncOperation>>();
+        readonly Dictionary<Type, Stack<IAsyncOperation>> m_Cache = new Dictionary<Type, Stack<IAsyncOperation>>();
 #if POST_ASYNCOPERATIONCACHE__EVENTS
         class Stats
         {
@@ -38,8 +36,8 @@ namespace UnityEngine.ResourceManagement
             operation.Validate();
 
             Stack<IAsyncOperation> operationStack;
-            if (!m_cache.TryGetValue(operation.GetType(), out operationStack))
-                m_cache.Add(operation.GetType(), operationStack = new Stack<IAsyncOperation>(5));
+            if (!m_Cache.TryGetValue(operation.GetType(), out operationStack))
+                m_Cache.Add(operation.GetType(), operationStack = new Stack<IAsyncOperation>(5));
             operationStack.Push(operation);
 
 #if POST_ASYNCOPERATIONCACHE__EVENTS
@@ -58,7 +56,7 @@ namespace UnityEngine.ResourceManagement
         public TAsyncOperation Acquire<TAsyncOperation>()
             where TAsyncOperation : IAsyncOperation, new()
         {
-            Debug.Assert(m_cache != null, "AsyncOperationCache.Acquire - m_cache == null.");
+            Debug.Assert(m_Cache != null, "AsyncOperationCache.Acquire - m_cache == null.");
 
             Stack<IAsyncOperation> operationStack;
 #if POST_ASYNCOPERATIONCACHE__EVENTS
@@ -66,7 +64,7 @@ namespace UnityEngine.ResourceManagement
             if (!m_stats.TryGetValue(typeof(TAsyncOperation), out stat))
                 m_stats.Add(typeof(TAsyncOperation), stat = new Stats() { m_name = string.Format("AsyncOperationCache[{0}]", typeof(TAsyncOperation).Name) });
 #endif
-            if (m_cache.TryGetValue(typeof(TAsyncOperation), out operationStack) && operationStack.Count > 0)
+            if (m_Cache.TryGetValue(typeof(TAsyncOperation), out operationStack) && operationStack.Count > 0)
             {
                 var op = (TAsyncOperation)operationStack.Pop();
                 op.IsValid = true;
@@ -92,8 +90,8 @@ namespace UnityEngine.ResourceManagement
         /// </summary>
         public void Clear()
         {
-            Debug.Assert(m_cache != null, "AsyncOperationCache.Clear - m_cache == null.");
-            m_cache.Clear();
+            Debug.Assert(m_Cache != null, "AsyncOperationCache.Clear - m_cache == null.");
+            m_Cache.Clear();
         }
     }
 }

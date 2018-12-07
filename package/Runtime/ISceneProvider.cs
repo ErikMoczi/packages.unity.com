@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 
@@ -15,10 +16,11 @@ namespace UnityEngine.ResourceManagement
         IAsyncOperation<Scene> ProvideSceneAsync(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, LoadSceneMode loadMode);
 
         /// <summary>
-        /// Release any resources associated with the scene at the given <typeparamref name="loc"/>
+        /// Release any resources associated with the scene at the given location
         /// </summary>
         /// <returns>An async operation for the scene, completed when the scene is unloaded.</returns>
         /// <param name="location">Location to unload.</param>
+        /// <param name="scene">Reference to scene to be unloaded.</param>
         IAsyncOperation<Scene> ReleaseSceneAsync(IResourceLocation location, Scene scene);
     }
 }

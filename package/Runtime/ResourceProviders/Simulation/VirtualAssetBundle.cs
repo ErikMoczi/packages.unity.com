@@ -1,6 +1,8 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine.Serialization;
 
 namespace UnityEngine.ResourceManagement
 {
@@ -10,18 +12,20 @@ namespace UnityEngine.ResourceManagement
     [Serializable]
     public class VirtualAssetBundleEntry
     {
+        [FormerlySerializedAs("m_name")]
         [SerializeField]
-        string m_name;
+        string m_Name;
         /// <summary>
         /// The name of the asset.
         /// </summary>
-        public string Name { get { return m_name; } }
+        public string Name { get { return m_Name; } }
+        [FormerlySerializedAs("m_size")]
         [SerializeField]
-        long m_size;
+        long m_Size;
         /// <summary>
         /// The file size of the asset, in bytes.
         /// </summary>
-        public long Size { get { return m_size; } }
+        public long Size { get { return m_Size; } }
 
         /// <summary>
         /// Construct a new VirtualAssetBundleEntry
@@ -34,8 +38,8 @@ namespace UnityEngine.ResourceManagement
         /// <param name="size">The size of the asset, in bytes.</param>
         public VirtualAssetBundleEntry(string name, long size)
         {
-            m_name = name;
-            m_size = size;
+            m_Name = name;
+            m_Size = size;
         }
     }
 
@@ -45,34 +49,40 @@ namespace UnityEngine.ResourceManagement
     [Serializable]
     public class VirtualAssetBundle : ISerializationCallbackReceiver
     {
+        [FormerlySerializedAs("m_name")]
         [SerializeField]
-        string m_name;
+        string m_Name;
+        [FormerlySerializedAs("m_isLocal")]
         [SerializeField]
-        bool m_isLocal;
+        bool m_IsLocal;
+        [FormerlySerializedAs("m_dataSize")]
         [SerializeField]
-        long m_dataSize;
+        long m_DataSize;
+        [FormerlySerializedAs("m_headerSize")]
         [SerializeField]
-        long m_headerSize;
+        long m_HeaderSize;
+        [FormerlySerializedAs("m_latency")]
         [SerializeField]
-        float m_latency;
+        float m_Latency;
 
+        [FormerlySerializedAs("m_serializedAssets")]
         [SerializeField]
-        List<VirtualAssetBundleEntry> m_serializedAssets = new List<VirtualAssetBundleEntry>();
+        List<VirtualAssetBundleEntry> m_SerializedAssets = new List<VirtualAssetBundleEntry>();
 
-        long m_headerBytesLoaded;
-        long m_dataBytesLoaded;
+        long m_HeaderBytesLoaded;
+        long m_DataBytesLoaded;
 
-        LoadAssetBundleOp m_bundleLoadOperation;
-        List<IVirtualLoadable> m_assetLoadOperations = new List<IVirtualLoadable>();
-        Dictionary<string, VirtualAssetBundleEntry> m_assetMap;
+        LoadAssetBundleOp m_BundleLoadOperation;
+        List<IVirtualLoadable> m_AssetLoadOperations = new List<IVirtualLoadable>();
+        Dictionary<string, VirtualAssetBundleEntry> m_AssetMap;
         /// <summary>
         /// The name of the bundle.
         /// </summary>
-        public string Name { get { return m_name; } }
+        public string Name { get { return m_Name; } }
         /// <summary>
         /// The assets contained in the bundle.
         /// </summary>
-        public List<VirtualAssetBundleEntry> Assets { get { return m_serializedAssets; } }
+        public List<VirtualAssetBundleEntry> Assets { get { return m_SerializedAssets; } }
 
         /// <summary>
         /// Construct a new VirtualAssetBundle object.
@@ -88,7 +98,7 @@ namespace UnityEngine.ResourceManagement
         {
             get
             {
-                return (float)(m_headerBytesLoaded + m_dataBytesLoaded) / (m_headerSize + m_dataSize);
+                return (float)(m_HeaderBytesLoaded + m_DataBytesLoaded) / (m_HeaderSize + m_DataSize);
             }
         }
 
@@ -99,11 +109,11 @@ namespace UnityEngine.ResourceManagement
         /// <param name="local">Is the bundle local or remote.  This is used to determine which bandwidth value to use when simulating loading.</param>
         public VirtualAssetBundle(string name, bool local)
         {
-            m_latency = .1f;
-            m_name = name;
-            m_isLocal = local;
-            m_headerBytesLoaded = 0;
-            m_dataBytesLoaded = 0;
+            m_Latency = .1f;
+            m_Name = name;
+            m_IsLocal = local;
+            m_HeaderBytesLoaded = 0;
+            m_DataBytesLoaded = 0;
         }
 
         /// <summary>
@@ -113,8 +123,8 @@ namespace UnityEngine.ResourceManagement
         /// <param name="headerSize">The size of the header.</param>
         public void SetSize(long dataSize, long headerSize)
         {
-            m_headerSize = headerSize;
-            m_dataSize = dataSize;
+            m_HeaderSize = headerSize;
+            m_DataSize = dataSize;
         }
 
         /// <summary>
@@ -129,21 +139,21 @@ namespace UnityEngine.ResourceManagement
         /// </summary>
         public void OnAfterDeserialize()
         {
-            m_assetMap = new Dictionary<string, VirtualAssetBundleEntry>();
-            foreach (var a in m_serializedAssets)
-                m_assetMap.Add(a.Name, a);
+            m_AssetMap = new Dictionary<string, VirtualAssetBundleEntry>();
+            foreach (var a in m_SerializedAssets)
+                m_AssetMap.Add(a.Name, a);
         }
 
         class LoadAssetBundleOp : AsyncOperationBase<VirtualAssetBundle>
         {
-            VirtualAssetBundle m_bundle;
-            float m_lastUpdateTime = 0;
+            VirtualAssetBundle m_Bundle;
+            float m_LastUpdateTime;
             public LoadAssetBundleOp(IResourceLocation location, VirtualAssetBundle bundle)
             {
                 Context = location;
                 Retain();
-                m_bundle = bundle;
-                m_lastUpdateTime = Time.unscaledTime + bundle.m_latency;
+                m_Bundle = bundle;
+                m_LastUpdateTime = Time.unscaledTime + bundle.m_Latency;
             }
 
             public override float PercentComplete
@@ -152,22 +162,22 @@ namespace UnityEngine.ResourceManagement
                 {
                     if (IsDone)
                         return 1f;
-                    return m_bundle.PercentComplete;
+                    return m_Bundle.PercentComplete;
                 }
             }
             public bool Update(long localBandwidth, long remoteBandwidth)
             {
                 Validate();
 
-                if (Time.unscaledTime > m_lastUpdateTime + .1f)
+                if (Time.unscaledTime > m_LastUpdateTime + .1f)
                 {
-                    long localBytes = (long)Math.Ceiling((Time.unscaledTime - m_lastUpdateTime) * localBandwidth);
-                    long remoteBytes = (long)Math.Ceiling((Time.unscaledTime - m_lastUpdateTime) * remoteBandwidth);
-                    m_lastUpdateTime = Time.unscaledDeltaTime;
+                    long localBytes = (long)Math.Ceiling((Time.unscaledTime - m_LastUpdateTime) * localBandwidth);
+                    long remoteBytes = (long)Math.Ceiling((Time.unscaledTime - m_LastUpdateTime) * remoteBandwidth);
+                    m_LastUpdateTime = Time.unscaledDeltaTime;
 
-                    if (m_bundle.LoadData(localBytes, remoteBytes))
+                    if (m_Bundle.LoadData(localBytes, remoteBytes))
                     {
-                        SetResult(m_bundle);
+                        SetResult(m_Bundle);
                         InvokeCompletionEvent();
                     }
                 }
@@ -175,44 +185,44 @@ namespace UnityEngine.ResourceManagement
             }
         }
 
-        private bool LoadData(long localBytes, long remoteBytes)
+        bool LoadData(long localBytes, long remoteBytes)
         {
-            if (m_isLocal)
+            if (m_IsLocal)
             {
-                m_headerBytesLoaded += localBytes;
-                return m_headerBytesLoaded > m_headerSize;
+                m_HeaderBytesLoaded += localBytes;
+                return m_HeaderBytesLoaded > m_HeaderSize;
             }
 
-            m_dataBytesLoaded += remoteBytes;
-            if (m_dataBytesLoaded >= m_dataSize)
+            m_DataBytesLoaded += remoteBytes;
+            if (m_DataBytesLoaded >= m_DataSize)
             {
-                m_isLocal = true;
-                m_headerBytesLoaded = 0;
+                m_IsLocal = true;
+                m_HeaderBytesLoaded = 0;
             }
             return false;
         }
 
         internal bool Unload()
         {
-            if (m_bundleLoadOperation == null)
-                Debug.LogWarningFormat("Simulated assetbundle {0} is already unloaded.", m_name);
-            m_headerBytesLoaded = 0;
-            m_bundleLoadOperation = null;
+            if (m_BundleLoadOperation == null)
+                Debug.LogWarningFormat("Simulated assetbundle {0} is already unloaded.", m_Name);
+            m_HeaderBytesLoaded = 0;
+            m_BundleLoadOperation = null;
             return true;
         }
 
         internal IAsyncOperation<VirtualAssetBundle> StartLoad(IResourceLocation location)
         {
-            if (m_bundleLoadOperation != null)
+            if (m_BundleLoadOperation != null)
             {
-                if (m_bundleLoadOperation.IsDone)
-                    Debug.LogWarningFormat("Simulated assetbundle {0} is already loaded.", m_name);
+                if (m_BundleLoadOperation.IsDone)
+                    Debug.LogWarningFormat("Simulated assetbundle {0} is already loaded.", m_Name);
                 else
-                    Debug.LogWarningFormat("Simulated assetbundle {0} is already loading.", m_name);
-                return m_bundleLoadOperation;
+                    Debug.LogWarningFormat("Simulated assetbundle {0} is already loading.", m_Name);
+                return m_BundleLoadOperation;
             }
-            m_headerBytesLoaded = 0;
-            return (m_bundleLoadOperation = new LoadAssetBundleOp(location, this));
+            m_HeaderBytesLoaded = 0;
+            return (m_BundleLoadOperation = new LoadAssetBundleOp(location, this));
         }
 
         /// <summary>
@@ -225,30 +235,30 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new ArgumentException("IResourceLocation location cannot be null.");
-            if (m_bundleLoadOperation == null)
-                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new ResourceManagerException("LoadAssetAsync called on unloaded bundle " + m_name));
+            if (m_BundleLoadOperation == null)
+                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new ResourceManagerException("LoadAssetAsync called on unloaded bundle " + m_Name));
 
-            if (!m_bundleLoadOperation.IsDone)
-                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new ResourceManagerException("LoadAssetAsync called on loading bundle " + m_name));
+            if (!m_BundleLoadOperation.IsDone)
+                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new ResourceManagerException("LoadAssetAsync called on loading bundle " + m_Name));
 
             VirtualAssetBundleEntry assetInfo;
-            if (!m_assetMap.TryGetValue(location.InternalId, out assetInfo))
+            if (!m_AssetMap.TryGetValue(location.InternalId, out assetInfo))
                 return new CompletedOperation<TObject>().Start(location, location, default(TObject), new ResourceManagerException(string.Format("Unable to load asset {0} from simulated bundle {1}.", location.InternalId, Name)));
 
             LoadAssetOp<TObject> op = new LoadAssetOp<TObject>(location, assetInfo);
-            m_assetLoadOperations.Add(op);
+            m_AssetLoadOperations.Add(op);
             return op;
         }
 
         internal void CountBandwidthUsage(ref long localCount, ref long remoteCount)
         {
-            if (m_bundleLoadOperation != null && m_bundleLoadOperation.IsDone)
+            if (m_BundleLoadOperation != null && m_BundleLoadOperation.IsDone)
             {
-                localCount += (long)m_assetLoadOperations.Count;
+                localCount += m_AssetLoadOperations.Count;
                 return;
             }
 
-            if (m_isLocal)
+            if (m_IsLocal)
                 localCount++;
             else
                 remoteCount++;
@@ -261,28 +271,36 @@ namespace UnityEngine.ResourceManagement
 
         class LoadAssetOp<TObject> : AsyncOperationBase<TObject>, IVirtualLoadable where TObject : class
         {
-            long m_bytesLoaded;
-            float m_lastUpdateTime;
-            VirtualAssetBundleEntry m_assetInfo;
+            long m_BytesLoaded;
+            float m_LastUpdateTime;
+            VirtualAssetBundleEntry m_AssetInfo;
             public LoadAssetOp(IResourceLocation location, VirtualAssetBundleEntry assetInfo)
             {
                 Context = location;
-                m_assetInfo = assetInfo;
-                m_lastUpdateTime = Time.realtimeSinceStartup;
+                m_AssetInfo = assetInfo;
+                m_LastUpdateTime = Time.realtimeSinceStartup;
             }
 
-            public override float PercentComplete { get { return Mathf.Clamp01((float)(m_bytesLoaded / m_assetInfo.Size)); } }
+            public override float PercentComplete { get { return Mathf.Clamp01(m_BytesLoaded / (float)m_AssetInfo.Size); } }
             public bool Load(long localBandwidth, long remoteBandwidth)
             {
-                if (Time.unscaledTime > m_lastUpdateTime)
+                if (Time.unscaledTime > m_LastUpdateTime)
                 {
-                    m_bytesLoaded += (long)Math.Ceiling((Time.unscaledTime - m_lastUpdateTime) * localBandwidth);
-                    m_lastUpdateTime = Time.unscaledDeltaTime;
+                    m_BytesLoaded += (long)Math.Ceiling((Time.unscaledTime - m_LastUpdateTime) * localBandwidth);
+                    m_LastUpdateTime = Time.unscaledDeltaTime;
                 }
-                if (m_bytesLoaded < m_assetInfo.Size)
+                if (m_BytesLoaded < m_AssetInfo.Size)
                     return true;
+                if (!(Context is IResourceLocation))
+                    return false;
                 var assetPath = (Context as IResourceLocation).InternalId;
-                SetResult(UnityEditor.AssetDatabase.LoadAssetAtPath(assetPath, typeof(TObject)) as TObject);
+                var t = typeof(TObject);
+                if (t.IsArray)
+                    SetResult(ResourceManagerConfig.CreateArrayResult<TObject>(AssetDatabase.LoadAllAssetRepresentationsAtPath(assetPath)));
+                else if (t.IsGenericType && typeof(IList<>) == t.GetGenericTypeDefinition())
+                    SetResult(ResourceManagerConfig.CreateListResult<TObject>(AssetDatabase.LoadAllAssetRepresentationsAtPath(assetPath)));
+                else
+                    SetResult(AssetDatabase.LoadAssetAtPath(assetPath, typeof(TObject)) as TObject);
                 InvokeCompletionEvent();
                 return false;
             }
@@ -291,21 +309,21 @@ namespace UnityEngine.ResourceManagement
         //return true until complete
         public bool UpdateAsyncOperations(long localBandwidth, long remoteBandwidth)
         {
-            if (m_bundleLoadOperation == null)
+            if (m_BundleLoadOperation == null)
                 return false;
 
-            if (!m_bundleLoadOperation.IsDone)
-                return m_bundleLoadOperation.Update(localBandwidth, remoteBandwidth);
+            if (!m_BundleLoadOperation.IsDone)
+                return m_BundleLoadOperation.Update(localBandwidth, remoteBandwidth);
 
-            foreach (var o in m_assetLoadOperations)
+            foreach (var o in m_AssetLoadOperations)
             {
                 if (!o.Load(localBandwidth, remoteBandwidth))
                 {
-                    m_assetLoadOperations.Remove(o);
+                    m_AssetLoadOperations.Remove(o);
                     break;
                 }
             }
-            return m_assetLoadOperations.Count > 0;
+            return m_AssetLoadOperations.Count > 0;
         }
 
     }

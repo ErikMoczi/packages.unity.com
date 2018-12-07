@@ -9,9 +9,9 @@ namespace UnityEngine.ResourceManagement
     /// </summary>
     public class PooledInstanceProvider : IInstanceProvider
     {
-        internal Dictionary<IResourceLocation, InstancePool> m_pools = new Dictionary<IResourceLocation, InstancePool>();
+        Dictionary<IResourceLocation, InstancePool> m_Pools = new Dictionary<IResourceLocation, InstancePool>();
 
-        float m_releaseTime;
+        float m_ReleaseTime;
         /// <summary>
         /// Construct a new PooledInstanceProvider.
         /// </summary>
@@ -19,7 +19,7 @@ namespace UnityEngine.ResourceManagement
         /// <param name="releaseTime">Controls how long object stay in the pool.  The pool will reduce faster the larger it is.  This value roughly represents how many seconds it will take for a pool to completely empty once it contains only 1 item.</param>
         public PooledInstanceProvider(string name, float releaseTime)
         {
-            m_releaseTime = releaseTime;
+            m_ReleaseTime = releaseTime;
             var go = new GameObject(name, typeof(PooledInstanceProviderBehavior));
             go.GetComponent<PooledInstanceProviderBehavior>().Init(this);
             go.hideFlags = HideFlags.HideAndDontSave;
@@ -35,14 +35,14 @@ namespace UnityEngine.ResourceManagement
         public IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, InstantiationParameters instantiateParameters) where TObject : Object
         {
             if (location == null)
-                throw new System.ArgumentNullException("location");
+                throw new ArgumentNullException("location");
             if (loadProvider == null)
                 throw new ArgumentNullException("loadProvider");
             InstancePool pool;
-            if (!m_pools.TryGetValue(location, out pool))
-                m_pools.Add(location, pool = new InstancePool(loadProvider, location));
+            if (!m_Pools.TryGetValue(location, out pool))
+                m_Pools.Add(location, pool = new InstancePool(loadProvider, location));
 
-            pool.m_holdCount++;
+            pool.holdCount++;
             return pool.ProvideInstanceAsync<TObject>(loadProvider, loadDependencyOperation, instantiateParameters);
         }
 
@@ -50,20 +50,20 @@ namespace UnityEngine.ResourceManagement
         public bool ReleaseInstance(IResourceProvider loadProvider, IResourceLocation location, Object instance)
         {
             InstancePool pool;
-            if (!m_pools.TryGetValue(location, out pool))
-                m_pools.Add(location, pool = new InstancePool(loadProvider, location));
-            pool.m_holdCount--;
+            if (!m_Pools.TryGetValue(location, out pool))
+                m_Pools.Add(location, pool = new InstancePool(loadProvider, location));
+            pool.holdCount--;
             pool.Put(instance);
             return false;
         }
 
         internal void Update()
         {
-            foreach (var p in m_pools)
+            foreach (var p in m_Pools)
             {
-                if (!p.Value.Update(m_releaseTime))
+                if (!p.Value.Update(m_ReleaseTime))
                 {
-                    m_pools.Remove(p.Key);
+                    m_Pools.Remove(p.Key);
                     break;
                 }
             }
@@ -72,44 +72,44 @@ namespace UnityEngine.ResourceManagement
         void HoldPool(IResourceProvider provider, IResourceLocation location)
         {
             InstancePool pool;
-            if (!m_pools.TryGetValue(location, out pool))
-                m_pools.Add(location, pool = new InstancePool(provider, location));
-            pool.m_holdCount++;
+            if (!m_Pools.TryGetValue(location, out pool))
+                m_Pools.Add(location, pool = new InstancePool(provider, location));
+            pool.holdCount++;
         }
 
         void ReleasePool(IResourceProvider provider, IResourceLocation location)
         {
             InstancePool pool;
-            if (!m_pools.TryGetValue(location, out pool))
-                m_pools.Add(location, pool = new InstancePool(provider, location));
-            pool.m_holdCount--;
+            if (!m_Pools.TryGetValue(location, out pool))
+                m_Pools.Add(location, pool = new InstancePool(provider, location));
+            pool.holdCount--;
         }
 
         internal class InternalOp<TObject> : AsyncOperationBase<TObject> where TObject : Object
         {
-            TObject prefabResult;
-            int m_startFrame;
-            Action<IAsyncOperation<TObject>> m_onLoadOperationCompleteAction;
-            Action<TObject> m_onValidResultCompleteAction;
-            InstantiationParameters m_instParams;
+            TObject m_PrefabResult;
+            int m_StartFrame;
+            Action<IAsyncOperation<TObject>> m_OnLoadOperationCompleteAction;
+            Action<TObject> m_OnValidResultCompleteAction;
+            InstantiationParameters m_InstParams;
             public InternalOp()
             {
-                m_onLoadOperationCompleteAction = OnLoadComplete;
-                m_onValidResultCompleteAction = OnInstantComplete;
+                m_OnLoadOperationCompleteAction = OnLoadComplete;
+                m_OnValidResultCompleteAction = OnInstantComplete;
             }
 
             public InternalOp<TObject> Start(IAsyncOperation<TObject> loadOperation, IResourceLocation location, TObject value, InstantiationParameters instantiateParameters)
             {
                 Validate();
-                prefabResult = null;
-                m_instParams = instantiateParameters;
+                m_PrefabResult = null;
+                m_InstParams = instantiateParameters;
                 SetResult(value);
                 Context = location;
-                m_startFrame = Time.frameCount;
+                m_StartFrame = Time.frameCount;
                 if (loadOperation != null)
-                    loadOperation.Completed += m_onLoadOperationCompleteAction;
+                    loadOperation.Completed += m_OnLoadOperationCompleteAction;
                 else
-                    DelayedActionManager.AddAction(m_onValidResultCompleteAction, 0, Result);
+                    DelayedActionManager.AddAction(m_OnValidResultCompleteAction, 0, Result);
 
                 return this;
             }
@@ -121,65 +121,65 @@ namespace UnityEngine.ResourceManagement
                 var go = Result as GameObject;
                 if (go != null)
                 {
-                    if (m_instParams.Parent != null)
-                        go.transform.SetParent(m_instParams.Parent);
-                    if (m_instParams.SetPositionRotation)
+                    if (m_InstParams.Parent != null)
+                        go.transform.SetParent(m_InstParams.Parent);
+                    if (m_InstParams.SetPositionRotation)
                     {
-                        if (m_instParams.InstantiateInWorldPosition)
+                        if (m_InstParams.InstantiateInWorldPosition)
                         {
-                            go.transform.position = m_instParams.Position;
-                            go.transform.rotation = m_instParams.Rotation;
+                            go.transform.position = m_InstParams.Position;
+                            go.transform.rotation = m_InstParams.Rotation;
                         }
                         else
                         {
-                            go.transform.SetPositionAndRotation(m_instParams.Position, m_instParams.Rotation);
+                            go.transform.SetPositionAndRotation(m_InstParams.Position, m_InstParams.Rotation);
                         }
                     }
                 }
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, Context, Time.frameCount - m_startFrame);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, Context, Time.frameCount - m_StartFrame);
                 InvokeCompletionEvent();
             }
 
             void OnLoadComplete(IAsyncOperation<TObject> operation)
             {
                 Validate();
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, Context, Time.frameCount - m_startFrame);
-                prefabResult = operation.Result;
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, Context, Time.frameCount - m_StartFrame);
+                m_PrefabResult = operation.Result;
 
-                if (prefabResult == null)
+                if (m_PrefabResult == null)
                 {
                     Debug.LogWarning("NULL prefab on instantiate: " + Context);
                 }
                 else if (Result == null)
                 {
-                    SetResult(m_instParams.Instantiate(prefabResult));
+                    SetResult(m_InstParams.Instantiate(m_PrefabResult));
                 }
 
                 InvokeCompletionEvent();
             }
         }
 
-        internal class InstancePool
+        class InstancePool
         {
-            public IResourceLocation m_location;
-            public float m_lastRefTime = 0;
-            float m_lastReleaseTime;
-            public int m_holdCount = 0;
-            public Stack<Object> m_instances = new Stack<Object>();
-            public bool Empty { get { return m_instances.Count == 0; } }
-            IResourceProvider m_loadProvider;
+            IResourceLocation m_Location;
+            float m_LastRefTime;
+            float m_LastReleaseTime;
+            public int holdCount;
+            Stack<Object> m_Instances = new Stack<Object>();
+            public bool Empty { get { return m_Instances.Count == 0; } }
+            IResourceProvider m_LoadProvider;
             public InstancePool(IResourceProvider provider, IResourceLocation location)
             {
-                m_location = location;
-                m_loadProvider = provider;
-                m_lastRefTime = Time.unscaledTime;
+                m_Location = location;
+                m_LoadProvider = provider;
+                m_LastRefTime = Time.unscaledTime;
             }
 
             public T Get<T>() where T : class
             {
-                m_lastRefTime = Time.unscaledTime;
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.PoolCount, m_location, m_instances.Count - 1);
-                var o = m_instances.Pop() as T;
+                m_LastRefTime = Time.unscaledTime;
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.PoolCount, m_Location, m_Instances.Count - 1);
+                var o = m_Instances.Pop() as T;
                 (o as GameObject).SetActive(true);
                 return o;
             }
@@ -187,8 +187,8 @@ namespace UnityEngine.ResourceManagement
             public void Put(Object gameObject)
             {
                 (gameObject as GameObject).SetActive(false);
-                m_instances.Push(gameObject);
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.PoolCount, m_location, m_instances.Count);
+                m_Instances.Push(gameObject);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.PoolCount, m_Location, m_Instances.Count);
             }
 
             void ReleaseInternal(IResourceProvider provider, IResourceLocation location)
@@ -201,16 +201,16 @@ namespace UnityEngine.ResourceManagement
 
             internal bool Update(float releaseTime)
             {
-                if (m_instances.Count > 0)
+                if (m_Instances.Count > 0)
                 {
-                    if ((m_instances.Count > 1 && Time.unscaledTime - m_lastReleaseTime > releaseTime) || Time.unscaledTime - m_lastRefTime > (1f / m_instances.Count) * releaseTime)  //the last item will take releaseTime seconds to drop...
+                    if ((m_Instances.Count > 1 && Time.unscaledTime - m_LastReleaseTime > releaseTime) || Time.unscaledTime - m_LastRefTime > (1f / m_Instances.Count) * releaseTime)  //the last item will take releaseTime seconds to drop...
                     {
-                        m_lastReleaseTime = m_lastRefTime = Time.unscaledTime;
-                        var inst = m_instances.Pop();
-                        ReleaseInternal(m_loadProvider, m_location);
-                        GameObject.Destroy(inst);
-                        ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.PoolCount, m_location, m_instances.Count);
-                        if (m_instances.Count == 0 && m_holdCount == 0)
+                        m_LastReleaseTime = m_LastRefTime = Time.unscaledTime;
+                        var inst = m_Instances.Pop();
+                        ReleaseInternal(m_LoadProvider, m_Location);
+                        Object.Destroy(inst);
+                        ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.PoolCount, m_Location, m_Instances.Count);
+                        if (m_Instances.Count == 0 && holdCount == 0)
                             return false;
                     }
                 }
@@ -219,17 +219,17 @@ namespace UnityEngine.ResourceManagement
 
             internal IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IAsyncOperation<IList<object>> loadDependencyOperation, InstantiationParameters instantiateParameters) where TObject : Object
             {
-                if (m_instances.Count > 0)
+                if (m_Instances.Count > 0)
                 {
                     //this accounts for the dependency load which is not needed since the asset is cached.
-                    for (int i = 0; m_location.Dependencies != null && i < m_location.Dependencies.Count; i++)
-                        ReleaseInternal(ResourceManager.GetResourceProvider<object>(m_location.Dependencies[i]), m_location.Dependencies[i]);
+                    for (int i = 0; m_Location.Dependencies != null && i < m_Location.Dependencies.Count; i++)
+                        ReleaseInternal(ResourceManager.GetResourceProvider<object>(m_Location.Dependencies[i]), m_Location.Dependencies[i]);
 
-                    return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>().Start(null, m_location, Get<TObject>(), instantiateParameters);
+                    return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>().Start(null, m_Location, Get<TObject>(), instantiateParameters);
                 }
 
-                var depOp = loadProvider.Provide<TObject>(m_location, loadDependencyOperation);
-                return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>().Start(depOp, m_location, null, instantiateParameters);
+                var depOp = loadProvider.Provide<TObject>(m_Location, loadDependencyOperation);
+                return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>().Start(depOp, m_Location, null, instantiateParameters);
             }
         }
     }

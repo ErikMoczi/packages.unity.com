@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using UnityEngine.Networking;
 
 namespace UnityEngine.ResourceManagement
@@ -8,31 +10,45 @@ namespace UnityEngine.ResourceManagement
     /// </summary>
     public abstract class RawDataProvider : ResourceProviderBase
     {
-        internal class InternalOp<TObject> : InternalProviderOperation<TObject> where TObject : class
+        class InternalOp<TObject> : InternalProviderOperation<TObject> where TObject : class
         {
-            System.Action<IAsyncOperation<IList<object>>> action;
-            System.Func<DownloadHandler, TObject> m_convertFunc;
-            IAsyncOperation m_dependencyOperation;
-            UnityWebRequestAsyncOperation m_requestOperation;
+            Action<IAsyncOperation<IList<object>>> m_Action;
+            Func<string, TObject> m_ConvertFunc;
+            IAsyncOperation m_DependencyOperation;
+            UnityWebRequestAsyncOperation m_RequestOperation;
             public InternalOp()
             {
-                action = (op) =>
+                m_Action = op =>
                 {
-                    if (op == null || op.Status == AsyncOperationStatus.Succeeded)
+                    if ( (op == null || op.Status == AsyncOperationStatus.Succeeded) && Context is IResourceLocation)
                     {
-                        var path = (Context as IResourceLocation).InternalId;
-                        //this is necessary because this provider can only load via UnityWebRequest
-                        if (!path.Contains("://"))
-                            path = "file://" + path;
-                        m_requestOperation = new UnityWebRequest(path, UnityWebRequest.kHttpVerbGET, new DownloadHandlerBuffer(), null).SendWebRequest();
-                        if (m_requestOperation.isDone)
-                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, m_requestOperation);
+                        var loc = Context as IResourceLocation;
+                        var path = loc.InternalId;
+                        if (File.Exists(path))
+                        {
+                            var text = File.ReadAllText(path);
+                            SetResult(m_ConvertFunc(text));
+                            DelayedActionManager.AddAction((Action)OnComplete);
+                        }
+                        else if (path.Contains("://"))
+                        {
+                            m_RequestOperation = new UnityWebRequest(path, UnityWebRequest.kHttpVerbGET, new DownloadHandlerBuffer(), null).SendWebRequest();
+                            if (m_RequestOperation.isDone)
+                                DelayedActionManager.AddAction((Action<AsyncOperation>)OnComplete, 0, m_RequestOperation);
+                            else
+                                m_RequestOperation.completed += OnComplete;
+                        }
                         else
-                            m_requestOperation.completed += OnComplete;
+                        {
+                            OperationException = new Exception(string.Format("Invalid path in RawDataProvider: '{0}'.", path));
+                            SetResult(default(TObject));
+                            OnComplete();
+                        }
                     }
                     else
                     {
-                        OperationException = op.OperationException;
+                        if(op != null)
+                            m_Error = op.OperationException;
                         SetResult(default(TObject));
                         OnComplete();
                     }
@@ -47,35 +63,45 @@ namespace UnityEngine.ResourceManagement
                         return 1;
 
                     float reqPer = 0;
-                    if (m_requestOperation != null)
-                        reqPer = m_requestOperation.progress;
+                    if (m_RequestOperation != null)
+                        reqPer = m_RequestOperation.progress;
 
-                    if (m_dependencyOperation == null)
+                    if (m_DependencyOperation == null)
                         return reqPer;
 
-                    return reqPer * .25f + m_dependencyOperation.PercentComplete * .75f;
+                    return reqPer * .25f + m_DependencyOperation.PercentComplete * .75f;
                 }
             }
-            public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, System.Func<DownloadHandler, TObject> convertFunc)
+            public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, Func<string, TObject> convertFunc)
             {
-                m_result = null;
-                m_convertFunc = convertFunc;
+                m_Result = null;
+                m_ConvertFunc = convertFunc;
                 Context = location;
-                m_dependencyOperation = loadDependencyOperation;
+                m_DependencyOperation = loadDependencyOperation;
                 if (loadDependencyOperation == null)
-                    action(null);
+                    m_Action(null);
                 else
-                    loadDependencyOperation.Completed += action;
+                    loadDependencyOperation.Completed += m_Action;
                 return base.Start(location);
             }
 
             internal override TObject ConvertResult(AsyncOperation op)
             {
-                var webReq = (op as UnityWebRequestAsyncOperation).webRequest;
-                if (string.IsNullOrEmpty(webReq.error))
-                    return m_convertFunc(webReq.downloadHandler);
-                OperationException = new System.Exception(string.Format("RawDataProvider unable to load from url {0}, result='{1}'.", webReq.url, webReq.error));
+                var webOp = op as UnityWebRequestAsyncOperation;
+                if (webOp != null)
+                {
+                    var webReq = webOp.webRequest;
+                    if (string.IsNullOrEmpty(webReq.error))
+                        return m_ConvertFunc(webReq.downloadHandler.text);
+                    
+                    OperationException = new Exception(string.Format("RawDataProvider unable to load from url {0}, result='{1}'.", webReq.url, webReq.error));
+                }
+                else
+                {
+                    OperationException = new Exception("RawDataProvider unable to load from unknown url.");
+                }
                 return default(TObject);
+
             }
         }
 
@@ -85,7 +111,12 @@ namespace UnityEngine.ResourceManagement
         /// <typeparam name="TObject">The object type to convert the text to.</typeparam>
         /// <param name="text">The text to be converted.</param>
         /// <returns>The converted object.</returns>
-        public abstract TObject Convert<TObject>(DownloadHandler handler) where TObject : class;
+        public abstract TObject Convert<TObject>(string text) where TObject : class;
+
+        /// <summary>
+        /// If true, the data is loaded as text for the handler
+        /// </summary>
+        public virtual bool LoadAsText { get { return true; } }
 
         /// <summary>
         /// Provides raw text data from the location.
@@ -97,7 +128,7 @@ namespace UnityEngine.ResourceManagement
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             if (location == null)
-                throw new System.ArgumentNullException("location");
+                throw new ArgumentNullException("location");
             var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
             return operation.Start(location, loadDependencyOperation, Convert<TObject>);
         }

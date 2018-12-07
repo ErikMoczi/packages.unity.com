@@ -1,50 +1,59 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine.Networking;
+using UnityEngine.Serialization;
 
 namespace UnityEngine.ResourceManagement
 {
     /// <summary>
     /// Contains cache information to be used by the AssetBundleProvider
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class AssetBundleRequestOptions
     {
+        [FormerlySerializedAs("m_hash")]
         [SerializeField]
-        string m_hash = "";
+        string m_Hash = "";
         /// <summary>
         /// Hash value of the asset bundle.
         /// </summary>
-        public string Hash { get { return m_hash; } set { m_hash = value; } }
+        public string Hash { get { return m_Hash; } set { m_Hash = value; } }
+        [FormerlySerializedAs("m_crc")]
         [SerializeField]
-        uint m_crc = 0;
+        uint m_Crc;
         /// <summary>
         /// CRC value of the bundle.
         /// </summary>
-        public uint Crc { get { return m_crc; } set { m_crc = value; } }
+        public uint Crc { get { return m_Crc; } set { m_Crc = value; } }
+        [FormerlySerializedAs("m_timeout")]
         [SerializeField]
-        int m_timeout = 0;
+        int m_Timeout;
         /// <summary>
         /// Sets UnityWebRequest to attempt to abort after the number of seconds in timeout have passed.
         /// </summary>
-        public int Timeout { get { return m_timeout; } set { m_timeout = value; } }
+        public int Timeout { get { return m_Timeout; } set { m_Timeout = value; } }
+        [FormerlySerializedAs("m_chunkedTransfer")]
         [SerializeField]
-        bool m_chunkedTransfer = false;
+        bool m_ChunkedTransfer;
         /// <summary>
         /// Indicates whether the UnityWebRequest system should employ the HTTP/1.1 chunked-transfer encoding method.
         /// </summary>
-        public bool ChunkedTransfer { get { return m_chunkedTransfer; } set { m_chunkedTransfer = value; } }
+        public bool ChunkedTransfer { get { return m_ChunkedTransfer; } set { m_ChunkedTransfer = value; } }
+        [FormerlySerializedAs("m_redirectLimit")]
         [SerializeField]
-        int m_redirectLimit = -1;
+        int m_RedirectLimit = -1;
         /// <summary>
-        /// Indicates the number of redirects which this UnityWebRequest will follow before halting with a ìRedirect Limit Exceededî system error.
+        /// Indicates the number of redirects which this UnityWebRequest will follow before halting with a ‚ÄúRedirect Limit Exceeded‚Äù system error.
         /// </summary>
-        public int RedirectLimit { get { return m_redirectLimit; } set { m_redirectLimit = value; } }
+        public int RedirectLimit { get { return m_RedirectLimit; } set { m_RedirectLimit = value; } }
+        [FormerlySerializedAs("m_retryCount")]
         [SerializeField]
-        int m_retryCount = 0;
+        int m_RetryCount;
         /// <summary>
         /// Indicates the number of times the request will be retried.  
         /// </summary>
-        public int RetryCount { get { return m_retryCount; } set { m_retryCount = value; } }
+        public int RetryCount { get { return m_RetryCount; } set { m_RetryCount = value; } }
     }
 
     /// <summary>
@@ -55,31 +64,46 @@ namespace UnityEngine.ResourceManagement
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
-            System.Action<IAsyncOperation<IList<object>>> m_dependencyLoadAction;
-            IAsyncOperation<IList<object>> m_dependencyOperation;
-            AsyncOperation m_requestOperation;
-            int m_retries = 0;
-            int m_maxRetries = 0;
+            Action<IAsyncOperation<IList<object>>> m_DependencyLoadAction;
+            IAsyncOperation<IList<object>> m_DependencyOperation;
+            AsyncOperation m_RequestOperation;
+            int m_Retries;
+            int m_MaxRetries;
             public InternalOp()
             {
-                m_dependencyLoadAction = (op) =>
+                m_DependencyLoadAction = op =>
                 {
-                    if (op == null || op.Status == AsyncOperationStatus.Succeeded)
+                    if ((op == null || op.Status == AsyncOperationStatus.Succeeded) && Context is IResourceLocation)
                     {
                         var loc = Context as IResourceLocation;
-                        if (loc.InternalId.Contains("://"))
-                            m_requestOperation = CreateWebRequest(loc).SendWebRequest();
+                        var path = loc.InternalId;
+                        if (File.Exists(path))
+                        {
+                            var options = loc.Data as AssetBundleRequestOptions;
+                            m_RequestOperation = AssetBundle.LoadFromFileAsync(path, options == null ? 0 : options.Crc);
+                        }
+                        else if (path.Contains("://"))
+                        {
+                            m_RequestOperation = CreateWebRequest(loc).SendWebRequest();
+                        }
                         else
-                            m_requestOperation = AssetBundle.LoadFromFileAsync(loc.InternalId);
-
-                        if (m_requestOperation.isDone)
-                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, m_requestOperation);
-                        else
-                            m_requestOperation.completed += OnComplete;
+                        {
+                            m_RequestOperation = null;
+                            OperationException = new Exception(string.Format("Invalid path in AssetBundleProvider: '{0}'.", path));
+                            SetResult(default(TObject));
+                            OnComplete();
+                        }
+                        if (m_RequestOperation != null)
+                        {
+                            if (m_RequestOperation.isDone)
+                                DelayedActionManager.AddAction((Action<AsyncOperation>)OnComplete, 0, m_RequestOperation);
+                            else
+                                m_RequestOperation.completed += OnComplete;
+                        }
                     }
                     else
                     {
-                        OperationException = op.OperationException;
+                        m_Error = op == null ? null : op.OperationException;
                         SetResult(default(TObject));
                         OnComplete();
                     }
@@ -105,26 +129,27 @@ namespace UnityEngine.ResourceManagement
                             var webReq = remoteReq.webRequest;
                             if (string.IsNullOrEmpty(webReq.error))
                             {
-                                res = (webReq.downloadHandler as DownloadHandlerAssetBundle).assetBundle as TObject;
+                                if (typeof(TObject) == typeof(AssetBundle) && webReq.downloadHandler is DownloadHandlerAssetBundle)
+                                    res = (webReq.downloadHandler as DownloadHandlerAssetBundle).assetBundle as TObject;
+                                else
+                                    res = webReq.downloadHandler as TObject;
                             }
                             else
                             {
-                                if (m_retries < m_maxRetries)
+                                if (m_Retries < m_MaxRetries)
                                 {
-                                    m_retries++;
-                                    Debug.Log("Web Request failed, retrying...");
-                                    m_dependencyLoadAction(m_dependencyOperation);
+                                    m_Retries++;
+                                    Debug.LogFormat("Web request failed, retrying ({0}/{1})...", m_Retries, m_MaxRetries);
+                                    m_DependencyLoadAction(m_DependencyOperation);
                                     return;
                                 }
-                                else
-                                {
-                                    OperationException = new System.Exception(string.Format("RemoteAssetBundleProvider unable to load from url {0}, result='{1}'.", webReq.url, webReq.error));
-                                }
+
+                                OperationException = new Exception(string.Format("RemoteAssetBundleProvider unable to load from url {0}, result='{1}'.", webReq.url, webReq.error));
                             }
                         }
                     }
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
                     OperationException = ex;
                 }
@@ -138,16 +163,16 @@ namespace UnityEngine.ResourceManagement
                 if (options == null)
                     return UnityWebRequestAssetBundle.GetAssetBundle(loc.InternalId);
 
-                var webRequest = (!string.IsNullOrEmpty(options.Hash) && options.Crc != 0) ? 
-                    UnityWebRequestAssetBundle.GetAssetBundle(loc.InternalId, Hash128.Parse(options.Hash), options.Crc) :
-                    UnityWebRequestAssetBundle.GetAssetBundle(loc.InternalId);
+                var webRequest = !string.IsNullOrEmpty(options.Hash) ? 
+                    UnityWebRequestAssetBundle.GetAssetBundle(loc.InternalId, Hash128.Parse(options.Hash), options.Crc) : 
+                    UnityWebRequestAssetBundle.GetAssetBundle(loc.InternalId, options.Crc);
 
                 if(options.Timeout > 0)
                     webRequest.timeout = options.Timeout;
                 if (options.RedirectLimit > 0)
                     webRequest.redirectLimit = options.RedirectLimit;
                 webRequest.chunkedTransfer = options.ChunkedTransfer;
-                m_maxRetries = options.RetryCount;
+                m_MaxRetries = options.RetryCount;
                 return webRequest;
             }
 
@@ -159,24 +184,24 @@ namespace UnityEngine.ResourceManagement
                     if (IsDone)
                         return 1;
 
-                    float reqPer = m_requestOperation == null ? 0 : m_requestOperation.progress;
-                    if (m_dependencyOperation == null)
+                    float reqPer = m_RequestOperation == null ? 0 : m_RequestOperation.progress;
+                    if (m_DependencyOperation == null)
                         return reqPer;
 
-                    return reqPer * .25f + m_dependencyOperation.PercentComplete * .75f;
+                    return reqPer * .25f + m_DependencyOperation.PercentComplete * .75f;
                 }
             }
 
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
                 Context = location;
-                m_result = null;
-                m_requestOperation = null;
-                m_dependencyOperation = loadDependencyOperation;
+                m_Result = null;
+                m_RequestOperation = null;
+                m_DependencyOperation = loadDependencyOperation;
                 if (loadDependencyOperation == null)
-                    m_dependencyLoadAction(null);
+                    m_DependencyLoadAction(null);
                 else
-                    loadDependencyOperation.Completed += m_dependencyLoadAction;
+                    loadDependencyOperation.Completed += m_DependencyLoadAction;
 
                 return base.Start(location);
             }
@@ -185,7 +210,7 @@ namespace UnityEngine.ResourceManagement
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             if (location == null)
-                throw new System.ArgumentNullException("location");
+                throw new ArgumentNullException("location");
             var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
             return operation.Start(location, loadDependencyOperation);
         }
@@ -199,16 +224,24 @@ namespace UnityEngine.ResourceManagement
         public override bool Release(IResourceLocation location, object asset)
         {
             if (location == null)
-                throw new System.ArgumentNullException("location");
+                throw new ArgumentNullException("location");
             if (asset == null)
-                throw new System.ArgumentNullException("asset");
+            {
+                Debug.LogWarningFormat("Releasing null asset bundle from location {0}.  This is an indication that the bundle failed to load.", location);
+                return false;
+            }
             var bundle = asset as AssetBundle;
             if (bundle != null)
             {
                 bundle.Unload(true);
                 return true;
             }
-
+            var dhHandler = asset as DownloadHandlerAssetBundle;
+            if (dhHandler != null)
+            {
+                dhHandler.Dispose();
+                return true;
+            }
             return false;
         }
     }

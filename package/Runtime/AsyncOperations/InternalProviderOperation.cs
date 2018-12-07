@@ -1,19 +1,19 @@
-using UnityEngine.ResourceManagement.Diagnostics;
 using System;
+using UnityEngine.ResourceManagement.Diagnostics;
 
 namespace UnityEngine.ResourceManagement
 {
-    internal abstract class InternalProviderOperation<TObject> : AsyncOperationBase<TObject>
+    abstract class InternalProviderOperation<TObject> : AsyncOperationBase<TObject>
         where TObject : class
     {
-        int startFrame;
+        int m_StartFrame;
 
         internal virtual InternalProviderOperation<TObject> Start(IResourceLocation location)
         {
             Validate();
             if (location == null)
                 OperationException = new ArgumentNullException("location");
-            startFrame = Time.frameCount;
+            m_StartFrame = Time.frameCount;
             Context = location;
             return this;
         }
@@ -22,7 +22,7 @@ namespace UnityEngine.ResourceManagement
         {
             Validate();
             if (op.Status != AsyncOperationStatus.Succeeded)
-                OperationException = op.OperationException;
+                m_Error = op.OperationException;
 
             SetResult(op.Result);
             OnComplete();
@@ -47,7 +47,7 @@ namespace UnityEngine.ResourceManagement
         protected virtual void OnComplete()
         {
             Validate();
-            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncCompletion, Context, Time.frameCount - startFrame);
+            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadAsyncCompletion, Context, Time.frameCount - m_StartFrame);
             InvokeCompletionEvent();
         }
 

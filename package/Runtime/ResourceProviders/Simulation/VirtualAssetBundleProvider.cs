@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement
@@ -8,13 +9,13 @@ namespace UnityEngine.ResourceManagement
     /// </summary>
     public class VirtualAssetBundleProvider : ResourceProviderBase
     {
-        VirtualAssetBundleManager m_manager;
+        VirtualAssetBundleManager m_Manager;
         /// <summary>
         /// Construct a new VirtualAssetBundleProvider object;
         /// </summary>
         public VirtualAssetBundleProvider()
         {
-            m_providerId = typeof(AssetBundleProvider).FullName;
+            m_ProviderId = typeof(AssetBundleProvider).FullName;
         }
 
         /// <summary>
@@ -24,24 +25,24 @@ namespace UnityEngine.ResourceManagement
         /// <param name="providerId">The provider id.</param>
         public VirtualAssetBundleProvider(VirtualAssetBundleManager mgr, string providerId)
         {
-            m_providerId = providerId;
-            m_manager = mgr;
+            m_ProviderId = providerId;
+            m_Manager = mgr;
         }
 
-        internal class InternalOp<TObject> : InternalProviderOperation<TObject>
+        class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
-            System.Action<IAsyncOperation<IList<object>>> action;
-            IAsyncOperation m_dependencyOperation;
-            IAsyncOperation<VirtualAssetBundle> m_requestOperation;
-            VirtualAssetBundleManager m_manager;
+            Action<IAsyncOperation<IList<object>>> m_Action;
+            IAsyncOperation m_DependencyOperation;
+            IAsyncOperation<VirtualAssetBundle> m_RequestOperation;
+            VirtualAssetBundleManager m_Manager;
             public InternalOp()
             {
-                action = (op) =>
+                m_Action = op =>
                 {
                     if (op == null || op.Status == AsyncOperationStatus.Succeeded)
                     {
-                        (m_requestOperation = m_manager.LoadAsync(Context as IResourceLocation)).Completed += (bundleOp) =>
+                        (m_RequestOperation = m_Manager.LoadAsync(Context as IResourceLocation)).Completed += bundleOp =>
                         {
                             SetResult(bundleOp.Result as TObject);
                             OnComplete();
@@ -49,7 +50,7 @@ namespace UnityEngine.ResourceManagement
                     }
                     else
                     {
-                        OperationException = op.OperationException;
+                        m_Error = op.OperationException;
                         SetResult(default(TObject));
                         OnComplete();
                     }
@@ -64,24 +65,24 @@ namespace UnityEngine.ResourceManagement
                     if (IsDone)
                         return 1;
 
-                    float reqPer = m_requestOperation == null ? 0 : m_requestOperation.PercentComplete;
-                    if (m_dependencyOperation == null)
+                    float reqPer = m_RequestOperation == null ? 0 : m_RequestOperation.PercentComplete;
+                    if (m_DependencyOperation == null)
                         return reqPer;
-                    return reqPer * .25f + m_dependencyOperation.PercentComplete * .75f;
+                    return reqPer * .25f + m_DependencyOperation.PercentComplete * .75f;
                 }
             }
 
             public InternalProviderOperation<TObject> Start(VirtualAssetBundleManager mgr, IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
                 Context = location;
-                m_manager = mgr;
-                m_result = null;
-                m_requestOperation = null;
-                m_dependencyOperation = loadDependencyOperation;
+                m_Manager = mgr;
+                m_Result = null;
+                m_RequestOperation = null;
+                m_DependencyOperation = loadDependencyOperation;
                 if (loadDependencyOperation == null)
-                    action(null);
+                    m_Action(null);
                 else
-                    loadDependencyOperation.Completed += action;
+                    loadDependencyOperation.Completed += m_Action;
                 return base.Start(location);
             }
 
@@ -90,16 +91,16 @@ namespace UnityEngine.ResourceManagement
 
         VirtualAssetBundleManager GetManager()
         {
-            if (m_manager == null)
-                m_manager = VirtualAssetBundleManager.CreateManager(ResourceManager.OnResolveInternalId);
-            return m_manager;
+            if (m_Manager == null)
+                m_Manager = VirtualAssetBundleManager.CreateManager(ResourceManager.OnResolveInternalId);
+            return m_Manager;
         }
 
         /// <inheritdoc/>
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             if (location == null)
-                throw new System.ArgumentNullException("location");
+                throw new ArgumentNullException("location");
             var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
             return operation.Start(GetManager(), location, loadDependencyOperation);
         }
@@ -108,9 +109,12 @@ namespace UnityEngine.ResourceManagement
         public override bool Release(IResourceLocation location, object asset)
         {
             if (location == null)
-                throw new System.ArgumentNullException("location");
+                throw new ArgumentNullException("location");
             if (asset == null)
-                throw new System.ArgumentNullException("asset");
+            {
+                Debug.LogWarningFormat("Releasing null asset bundle from location {0}.  This is an indication that the bundle failed to load.", location);
+                return false;
+            }
             return GetManager().Unload(location);
         }
     }

@@ -1,20 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
-using NUnit.Framework;
-using UnityEngine.ResourceManagement;
-using UnityEngine;
-using UnityEngine.TestTools;
-using System.IO;
-using System.Linq;
-using UnityEngine.SceneManagement;
 using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.ResourceManagement;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
+#if UNITY_EDITOR
 public class ResourceManagerVirtualModeTests : ResourceManagerBaseTests
 {
-    protected override void CreateLocations(List<IResourceLocation> k_locations)
+    protected override void CreateLocations(List<IResourceLocation> locations)
     {
         ResourceManager.InstanceProvider = new InstanceProvider();
         ResourceManager.SceneProvider = new SceneProvider();
@@ -42,19 +39,20 @@ public class ResourceManagerVirtualModeTests : ResourceManagerBaseTests
                 GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 go.name = name;
                 PrefabUtility.CreatePrefab(path, go);
-                UnityEngine.Object.Destroy(go);
+                Object.DestroyImmediate(go, false);
 
-                var asset = new VirtualAssetBundleEntry(path, UnityEngine.Random.Range(1024, 1024 * 1024));
+                var asset = new VirtualAssetBundleEntry(path, Random.Range(1024, 1024 * 1024));
                 b.Assets.Add(asset);
-                k_locations.Add(new ResourceLocationBase(name, path, typeof(BundledAssetProvider).FullName, bundleLocation, sharedBundleLocations[UnityEngine.Random.Range(0, sharedBundleLocations.Count)], sharedBundleLocations[UnityEngine.Random.Range(0, sharedBundleLocations.Count)]));
+                locations.Add(new ResourceLocationBase(name, path, typeof(BundledAssetProvider).FullName, bundleLocation, sharedBundleLocations[Random.Range(0, sharedBundleLocations.Count)], sharedBundleLocations[Random.Range(0, sharedBundleLocations.Count)]));
             }
             b.OnAfterDeserialize();
             virtualBundleData.AssetBundles.Add(b);
         }
 
         var abManager = new GameObject("AssetBundleSimulator", typeof(VirtualAssetBundleManager)).GetComponent<VirtualAssetBundleManager>();
-        abManager.Initialize(virtualBundleData, (s) => s);
-        ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(abManager, typeof(AssetBundleProvider).FullName), 0, 0));
-        ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualBundledAssetProvider(), 0, 0));
+        abManager.Initialize(virtualBundleData, s => s);
+        ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualAssetBundleProvider(abManager, typeof(AssetBundleProvider).FullName)));
+        ResourceManager.ResourceProviders.Insert(0, new CachedProvider(new VirtualBundledAssetProvider()));
     }
 }
+#endif

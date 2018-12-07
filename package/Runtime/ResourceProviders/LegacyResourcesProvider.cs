@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement
@@ -10,15 +11,16 @@ namespace UnityEngine.ResourceManagement
         internal class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
-            AsyncOperation m_requestOperation;
+            AsyncOperation m_RequestOperation;
             public InternalProviderOperation<TObject> StartOp(IResourceLocation location)
             {
-                m_result = null;
-                m_requestOperation = Resources.LoadAsync<Object>(location.InternalId);
-                if (m_requestOperation.isDone)
-                    DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, m_requestOperation);
+                m_Result = null;
+                m_RequestOperation = Resources.LoadAsync<Object>(location.InternalId);
+
+                if (m_RequestOperation.isDone)
+                    DelayedActionManager.AddAction((Action<AsyncOperation>)OnComplete, 0, m_RequestOperation);
                 else
-                    m_requestOperation.completed += OnComplete;
+                    m_RequestOperation.completed += OnComplete;
                 return base.Start(location);
             }
             public override float PercentComplete
@@ -27,12 +29,13 @@ namespace UnityEngine.ResourceManagement
                 {
                     if (IsDone)
                         return 1;
-                    return m_requestOperation.progress;
+                    return m_RequestOperation.progress;
                 }
             }
             internal override TObject ConvertResult(AsyncOperation op)
             {
-                return (op as ResourceRequest).asset as TObject;
+                var request = op as ResourceRequest;
+                return request == null ? null : request.asset as TObject;
             }
         }
 
@@ -40,7 +43,13 @@ namespace UnityEngine.ResourceManagement
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             if (location == null)
-                throw new System.ArgumentNullException("location");
+                throw new ArgumentNullException("location");
+
+            var t = typeof(TObject);
+            if (t.IsArray)
+                return new CompletedOperation<TObject>().Start(location, location.InternalId, ResourceManagerConfig.CreateArrayResult<TObject>(Resources.LoadAll(location.InternalId, t.GetElementType())));
+            if (t.IsGenericType && typeof(IList<>) == t.GetGenericTypeDefinition())
+                return new CompletedOperation<TObject>().Start(location, location.InternalId, ResourceManagerConfig.CreateListResult<TObject>(Resources.LoadAll(location.InternalId, t.GetGenericArguments()[0])));
             return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>().StartOp(location);
         }
 
@@ -48,7 +57,7 @@ namespace UnityEngine.ResourceManagement
         public override bool Release(IResourceLocation location, object asset)
         {
             if (location == null)
-                throw new System.ArgumentNullException("location");
+                throw new ArgumentNullException("location");
             var go = asset as GameObject;
             if (go != null)
             {

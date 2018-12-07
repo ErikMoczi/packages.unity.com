@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+// ReSharper disable DelegateSubtraction
+
 #if !UNITY_EDITOR
 using UnityEngine.Networking.PlayerConnection;
 #endif
@@ -16,18 +18,18 @@ namespace UnityEngine.ResourceManagement.Diagnostics
         /// The message id used to register this class with the EditorConnection
         /// </summary>
         /// <value>Guid of message id</value>
-        static public Guid EditorConnectionMessageId { get { return new Guid(1, 2, 3, new byte[] { 20, 1, 32, 32, 4, 9, 6, 44 }); } }
+        public static Guid EditorConnectionMessageId { get { return new Guid(1, 2, 3, new byte[] { 20, 1, 32, 32, 4, 9, 6, 44 }); } }
         /// <summary>
         /// Get or set whether ResourceManager events are enabled
         /// </summary>
         /// <value>Enabled state of profiler events</value>
-        static public bool ResourceManagerProfilerEventsEnabled { get; set; }
+        public static bool ResourceManagerProfilerEventsEnabled { get; set; }
 
-        static readonly List<DiagnosticEvent> s_unhandledEvents = new List<DiagnosticEvent>();
-        static Action<DiagnosticEvent> s_eventHandlers;
-        static bool s_initialized = false;
-        static int s_startFrame = -1;
-        static List<int> s_frameEventCounts = new List<int>();
+        static readonly List<DiagnosticEvent> k_UnhandledEvents = new List<DiagnosticEvent>();
+        static Action<DiagnosticEvent> s_EventHandlers;
+        static bool s_Initialized;
+        static int s_StartFrame = -1;
+        static List<int> s_FrameEventCounts = new List<int>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         internal static void SendFirstFrameEvent()
@@ -47,7 +49,7 @@ namespace UnityEngine.ResourceManagement.Diagnostics
                     go.hideFlags = HideFlags.HideAndDontSave;
                 }
             }
-            s_initialized = true;
+            s_Initialized = true;
         }
 
         /// <summary>
@@ -56,13 +58,13 @@ namespace UnityEngine.ResourceManagement.Diagnostics
         /// <param name="handler">Method or delegate that will handle the events</param>
         public static void RegisterEventHandler(Action<DiagnosticEvent> handler)
         {
-            Debug.Assert(s_unhandledEvents != null, "DiagnosticEventCollector.RegisterEventHandler - s_unhandledEvents == null.");
+            Debug.Assert(k_UnhandledEvents != null, "DiagnosticEventCollector.RegisterEventHandler - s_unhandledEvents == null.");
             if (handler == null)
                 throw new ArgumentNullException("handler");
-            s_eventHandlers += handler;
-            foreach (var e in s_unhandledEvents)
+            s_EventHandlers += handler;
+            foreach (var e in k_UnhandledEvents)
                 handler(e);
-            s_unhandledEvents.Clear();
+            k_UnhandledEvents.Clear();
         }
 
         /// <summary>
@@ -73,44 +75,44 @@ namespace UnityEngine.ResourceManagement.Diagnostics
         {
             if (handler == null)
                 throw new ArgumentNullException("handler");
-            s_eventHandlers -= handler;
+            s_EventHandlers -= handler;
         }
 
         static void CountFrameEvent(int frame)
         {
-            Debug.Assert(s_frameEventCounts != null, "DiagnosticEventCollector.CountFrameEvent - s_frameEventCounts == null.");
-            if (frame < s_startFrame)
+            Debug.Assert(s_FrameEventCounts != null, "DiagnosticEventCollector.CountFrameEvent - s_frameEventCounts == null.");
+            if (frame < s_StartFrame)
                 return;
-            var index = frame - s_startFrame;
-            while (index >= s_frameEventCounts.Count)
-                s_frameEventCounts.Add(0);
-            s_frameEventCounts[index]++;
+            var index = frame - s_StartFrame;
+            while (index >= s_FrameEventCounts.Count)
+                s_FrameEventCounts.Add(0);
+            s_FrameEventCounts[index]++;
         }
 
         /// <summary>
-        /// Send a <cref="DiagnosticEvent"/> event to all registered handlers
+        /// Send a <see cref="DiagnosticEvent"/> event to all registered handlers
         /// </summary>
         /// <param name="diagnosticEvent">The event to send</param>
         public static void PostEvent(DiagnosticEvent diagnosticEvent)
         {
-            if (!s_initialized)
+            if (!s_Initialized)
                 Initialize();
 
             if (!ResourceManagerProfilerEventsEnabled)
                 return;
 
-            Debug.Assert(s_unhandledEvents != null, "DiagnosticEventCollector.PostEvent - s_unhandledEvents == null.");
+            Debug.Assert(k_UnhandledEvents != null, "DiagnosticEventCollector.PostEvent - s_unhandledEvents == null.");
 
-            if (s_eventHandlers != null)
-                s_eventHandlers(diagnosticEvent);
+            if (s_EventHandlers != null)
+                s_EventHandlers(diagnosticEvent);
             else
-                s_unhandledEvents.Add(diagnosticEvent);
+                k_UnhandledEvents.Add(diagnosticEvent);
 
             if (diagnosticEvent.EventId != "EventCount")
                 CountFrameEvent(diagnosticEvent.Frame);
         }
 
-        private void Awake()
+        void Awake()
         {
 #if !UNITY_EDITOR
             RegisterEventHandler((DiagnosticEvent diagnosticEvent) => {PlayerConnection.instance.Send(EditorConnectionMessageId, diagnosticEvent.Serialize()); });
@@ -122,19 +124,19 @@ namespace UnityEngine.ResourceManagement.Diagnostics
 
         void SendEventCounts()
         {
-            Debug.Assert(s_frameEventCounts != null, "DiagnosticEventCollector.SendEventCounts - s_frameEventCounts == null.");
+            Debug.Assert(s_FrameEventCounts != null, "DiagnosticEventCollector.SendEventCounts - s_frameEventCounts == null.");
 
             int latestFrame = Time.frameCount;
 
-            if (s_startFrame >= 0)
+            if (s_StartFrame >= 0)
             {
-                while (s_frameEventCounts.Count < latestFrame - s_startFrame)
-                    s_frameEventCounts.Add(0);
-                for (int i = 0; i < s_frameEventCounts.Count; i++)
-                    PostEvent(new DiagnosticEvent("EventCount", "", "Events", 0, s_startFrame + i, s_frameEventCounts[i], null));
+                while (s_FrameEventCounts.Count < latestFrame - s_StartFrame)
+                    s_FrameEventCounts.Add(0);
+                for (int i = 0; i < s_FrameEventCounts.Count; i++)
+                    PostEvent(new DiagnosticEvent("EventCount", "", "Events", 0, s_StartFrame + i, s_FrameEventCounts[i], null));
             }
-            s_startFrame = latestFrame;
-            s_frameEventCounts.Clear();
+            s_StartFrame = latestFrame;
+            s_FrameEventCounts.Clear();
         }
     }
 }

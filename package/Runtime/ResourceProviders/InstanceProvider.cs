@@ -12,25 +12,25 @@ namespace UnityEngine.ResourceManagement
         internal class InternalOp<TObject> : AsyncOperationBase<TObject>
             where TObject : Object
         {
-            TObject prefabResult;
-            int m_startFrame;
-            Action<IAsyncOperation<TObject>> m_completeAction;
-            InstantiationParameters m_instParams;
+            TObject m_PrefabResult;
+            int m_StartFrame;
+            Action<IAsyncOperation<TObject>> m_CompleteAction;
+            InstantiationParameters m_InstParams;
 
             public InternalOp()
             {
-                m_completeAction = OnComplete;
+                m_CompleteAction = OnComplete;
             }
 
             public InternalOp<TObject> Start(IAsyncOperation<TObject> loadOperation, IResourceLocation location, InstantiationParameters instantiateParameters)
             {
                 Validate();
-                prefabResult = null;
-                m_result = null;
+                m_PrefabResult = null;
+                m_Result = null;
                 Context = location;
-                m_instParams = instantiateParameters;
-                m_startFrame = Time.frameCount;
-                loadOperation.Completed += m_completeAction;
+                m_InstParams = instantiateParameters;
+                m_StartFrame = Time.frameCount;
+                loadOperation.Completed += m_CompleteAction;
                 return this;
             }
 
@@ -38,15 +38,16 @@ namespace UnityEngine.ResourceManagement
             {
                 Validate();
                 Debug.Assert(operation != null);
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, Context, Time.frameCount - m_startFrame);
-                prefabResult = operation.Result;
-                if (prefabResult == null)
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.InstantiateAsyncCompletion, Context, Time.frameCount - m_StartFrame);
+                m_PrefabResult = operation.Result;
+                if (m_PrefabResult == null)
                 {
-                    Debug.LogWarningFormat("Unable to load asset to instantiate from location {0}", Context);
+                    OperationException = new Exception(string.Format("Unable to load asset to instantiate from location {0}", Context));
+                    SetResult(null);
                 }
                 else if (Result == null)
                 {
-                    SetResult(m_instParams.Instantiate(prefabResult));
+                    SetResult(m_InstParams.Instantiate(m_PrefabResult));
                 }
                 InvokeCompletionEvent();
             }
@@ -66,7 +67,7 @@ namespace UnityEngine.ResourceManagement
             where TObject : Object
         {
             if (location == null)
-                throw new System.ArgumentNullException("location");
+                throw new ArgumentNullException("location");
 
             if (loadProvider == null)
                 throw new ArgumentNullException("loadProvider");

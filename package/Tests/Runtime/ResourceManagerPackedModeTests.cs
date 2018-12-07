@@ -1,4 +1,6 @@
-﻿public class ResourceManagerPackedModeTests
+﻿using System;
+
+public class ResourceManagerPackedModeTests
 {
     //TODO: implement tests that create bundles
 }

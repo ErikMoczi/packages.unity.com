@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement
 {
@@ -8,26 +8,26 @@ namespace UnityEngine.ResourceManagement
     /// </summary>
     public class ResourceLocationBase : IResourceLocation
     {
-        string m_name;
-        string m_id;
-        string m_providerId;
-        List<IResourceLocation> m_dependencies;
+        string m_Name;
+        string m_Id;
+        string m_ProviderId;
+        List<IResourceLocation> m_Dependencies;
         /// <summary>
         /// Internal id.
         /// </summary>
-        public string InternalId { get { return m_id; } }
+        public string InternalId { get { return m_Id; } }
         /// <summary>
         /// Provider Id.  This is usually set to the FullName property of the type of the provider class.
         /// </summary>
-        public string ProviderId { get { return m_providerId; } }
+        public string ProviderId { get { return m_ProviderId; } }
         /// <summary>
         /// List of dependencies that must be loaded before this location.  This value may be null.
         /// </summary>
-        public IList<IResourceLocation> Dependencies { get { return m_dependencies; } }
+        public IList<IResourceLocation> Dependencies { get { return m_Dependencies; } }
         /// <summary>
         /// Convenience method to see if there are any dependencies.
         /// </summary>
-        public bool HasDependencies { get { return m_dependencies != null && m_dependencies.Count > 0; } }
+        public bool HasDependencies { get { return m_Dependencies != null && m_Dependencies.Count > 0; } }
         /// <summary>
         /// Data that is intended for the provider.  Objects can be serialized during the build process to be used by the provider.  An example of usage is cache usage data for AssetBundleProvider.
         /// </summary>
@@ -38,7 +38,7 @@ namespace UnityEngine.ResourceManagement
         /// <returns></returns>
         public override string ToString()
         {
-            return m_name;
+            return m_Name;
         }
         /// <summary>
         /// Construct a new ResourceLocationBase.
@@ -53,10 +53,10 @@ namespace UnityEngine.ResourceManagement
                 throw new ArgumentNullException(id);
             if (string.IsNullOrEmpty(providerId))
                 throw new ArgumentNullException(providerId);
-            m_name = name;
-            m_id = id;
-            m_providerId = providerId;
-            m_dependencies = new List<IResourceLocation>(dependencies);
+            m_Name = name;
+            m_Id = id;
+            m_ProviderId = providerId;
+            m_Dependencies = new List<IResourceLocation>(dependencies);
         }
     }
 

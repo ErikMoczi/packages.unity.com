@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using UnityEngine.Networking;
 
 namespace UnityEngine.ResourceManagement
 {
@@ -13,13 +11,13 @@ namespace UnityEngine.ResourceManagement
         /// Converts raw text into requested object type via JSONUtility.FromJson.
         /// </summary>
         /// <typeparam name="TObject">Object type.</typeparam>
-        /// <param name="handler">The handler with the text to convert.</param>
+        /// <param name="text">The text to convert.</param>
         /// <returns>Converted object of type TObject.</returns>
-        public override TObject Convert<TObject>(DownloadHandler handler)
+        public override TObject Convert<TObject>(string text)
         {
             try
             {
-                return JsonUtility.FromJson<TObject>(handler.text);
+                return JsonUtility.FromJson<TObject>(text);
             }
             catch (Exception e)
             {

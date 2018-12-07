@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using UnityEngine.Serialization;
 
 namespace UnityEngine.ResourceManagement
 {
@@ -44,21 +46,23 @@ namespace UnityEngine.ResourceManagement
     [Serializable]
     public struct SerializedType
     {
+        [FormerlySerializedAs("m_assemblyName")]
         [SerializeField]
-        string m_assemblyName;
+        string m_AssemblyName;
         /// <summary>
         /// The assembly name of the type.
         /// </summary>
-        public string AssemblyName { get { return m_assemblyName; } }
+        public string AssemblyName { get { return m_AssemblyName; } }
 
+        [FormerlySerializedAs("m_className")]
         [SerializeField]
-        string m_className;
+        string m_ClassName;
         /// <summary>
         /// The name of the type.
         /// </summary>
-        public string ClassName { get { return m_className; } }
+        public string ClassName { get { return m_ClassName; } }
 
-        Type _cachedType;
+        Type m_CachedType;
 
         /// <inheritdoc/>
         public override string ToString()
@@ -73,27 +77,27 @@ namespace UnityEngine.ResourceManagement
         {
             get
             {
-                if (string.IsNullOrEmpty(m_assemblyName) || string.IsNullOrEmpty(m_className))
+                if (string.IsNullOrEmpty(m_AssemblyName) || string.IsNullOrEmpty(m_ClassName))
                     return null;
 
-                if (_cachedType == null)
+                if (m_CachedType == null)
                 {
-                    var assembly = Assembly.Load(m_assemblyName);
+                    var assembly = Assembly.Load(m_AssemblyName);
                     if(assembly != null)
-                        _cachedType = assembly.GetType(m_className);
+                        m_CachedType = assembly.GetType(m_ClassName);
                 }
-                return _cachedType;
+                return m_CachedType;
             }
             set
             {
                 if (value != null)
                 {
-                    m_assemblyName = value.Assembly.FullName;
-                    m_className = value.FullName;
+                    m_AssemblyName = value.Assembly.FullName;
+                    m_ClassName = value.FullName;
                 }
                 else
                 {
-                    m_assemblyName = m_className = null;
+                    m_AssemblyName = m_ClassName = null;
                 }
             }
         }
@@ -105,31 +109,34 @@ namespace UnityEngine.ResourceManagement
     [Serializable]
     public struct ObjectInitializationData
     {
+        [FormerlySerializedAs("m_id")]
         [SerializeField]
-        string m_id;
+        string m_Id;
         /// <summary>
         /// The object id.
         /// </summary>
-        public string Id { get { return m_id; } }
+        public string Id { get { return m_Id; } }
 
+        [FormerlySerializedAs("m_objectType")]
         [SerializeField]
-        SerializedType m_objectType;
+        SerializedType m_ObjectType;
         /// <summary>
         /// The object type that will be created.
         /// </summary>
-        public SerializedType ObjectType { get { return m_objectType; } }
+        public SerializedType ObjectType { get { return m_ObjectType; } }
 
+        [FormerlySerializedAs("m_data")]
         [SerializeField]
-        string m_data;
+        string m_Data;
         /// <summary>
         /// String representation of the data that will be passed to the IInitializableObject.Initialize method of the created object.  This is usually a JSON string of the serialized data object.
         /// </summary>
-        public string Data { get { return m_data; } }
+        public string Data { get { return m_Data; } }
 
         /// <inheritdoc/>
         public override string ToString()
         {
-            return string.Format("ObjectInitializationData: id={0}, type={1}", m_id, m_objectType);
+            return string.Format("ObjectInitializationData: id={0}, type={1}", m_Id, m_ObjectType);
         }
 
         /// <summary>
@@ -140,11 +147,11 @@ namespace UnityEngine.ResourceManagement
         {
             try
             {
-                var obj = Activator.CreateInstance(m_objectType.Value);
+                var obj = Activator.CreateInstance(m_ObjectType.Value);
                 var serObj = obj as IInitializableObject;
                 if (serObj != null)
                 {
-                    if (!serObj.Initialize(m_id, m_data))
+                    if (!serObj.Initialize(m_Id, m_Data))
                         return default(TObject);
                 }
                 return (TObject)obj;
@@ -157,7 +164,7 @@ namespace UnityEngine.ResourceManagement
         }
 
 #if UNITY_EDITOR
-        Type[] m_runtimeTypes;
+        Type[] m_RuntimeTypes;
         /// <summary>
         /// Construct a serialized data for the object.
         /// </summary>
@@ -167,12 +174,12 @@ namespace UnityEngine.ResourceManagement
         /// <returns>Contains data used to construct and initialize an object at runtime.</returns>
         public static ObjectInitializationData CreateSerializedInitializationData(Type objectType, string id = null, object dataObject = null)
         {
-            return new ObjectInitializationData()
+            return new ObjectInitializationData
             {
-                m_objectType = new SerializedType() { Value = objectType },
-                m_id = string.IsNullOrEmpty(id) ? objectType.FullName : id,
-                m_data = dataObject == null ? null : JsonUtility.ToJson(dataObject),
-                m_runtimeTypes = dataObject == null ? null : new Type[] { dataObject.GetType() }
+                m_ObjectType = new SerializedType { Value = objectType },
+                m_Id = string.IsNullOrEmpty(id) ? objectType.FullName : id,
+                m_Data = dataObject == null ? null : JsonUtility.ToJson(dataObject),
+                m_RuntimeTypes = dataObject == null ? null : new[] { dataObject.GetType() }
             };
         }
 
@@ -180,6 +187,7 @@ namespace UnityEngine.ResourceManagement
         /// Construct a serialized data for the object.
         /// </summary>
         /// <typeparam name="T">The type of object to create.</typeparam>
+        /// <param name="id">The ID for the object</param>
         /// <param name="dataObject">The serializable object that will be saved into the Data string via the JSONUtility.ToJson method.</param>
         /// <returns>Contains data used to construct and initialize an object at runtime.</returns>
         public static ObjectInitializationData CreateSerializedInitializationData<T>(string id = null, object dataObject = null)
@@ -193,13 +201,37 @@ namespace UnityEngine.ResourceManagement
         /// <returns></returns>
         public Type[] GetRuntimeTypes()
         {
-            return m_runtimeTypes;
+            return m_RuntimeTypes;
         }
 #endif
     }
 
-    internal static class ResourceManagerConfig
+    static class ResourceManagerConfig
     {
+        public static TObject CreateArrayResult<TObject>(Object[] allAssets) where TObject : class
+        {
+            var t = typeof(TObject);
+            var elementType = t.GetElementType();
+            if (elementType  == null)
+                return null;
+            var array = Array.CreateInstance(elementType, allAssets.Length);
+            for (int i = 0; i < allAssets.Length; i++)
+                array.SetValue(allAssets[i], i);
+            return array as TObject;
+        }
+
+        public static TObject CreateListResult<TObject>(Object[] allAssets) where TObject : class
+        {
+            var t = typeof(TObject);
+            var listType = typeof(List<>).MakeGenericType(t.GetGenericArguments());
+            var list = Activator.CreateInstance(listType) as IList;
+            if (list == null)
+                return null;
+            foreach (var a in allAssets)
+                list.Add(a);
+            return list as TObject;
+        }
+
         public static bool IsInstance<T1, T2>()
         {
             var tA = typeof(T1);

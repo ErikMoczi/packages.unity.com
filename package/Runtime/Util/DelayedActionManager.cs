@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using UnityEditor;
 
 namespace UnityEngine.ResourceManagement
 {
@@ -11,41 +13,39 @@ namespace UnityEngine.ResourceManagement
 
         struct DelegateInfo
         {
-            static int s_id = 0;
-            int m_id;
-            Delegate m_delegate;
-            float m_invocationTime;
-            object[] m_target;
+            static int s_Id;
+            int m_Id;
+            Delegate m_Delegate;
+            float m_InvocationTime;
+            object[] m_Target;
             public DelegateInfo(Delegate d, float invocationTime, params object[] p)
             {
-                m_delegate = d;
-                m_id = s_id++;
-                m_target = p;
-                m_invocationTime = invocationTime;
-                if (m_delegate.Method == null)
-                    Debug.LogErrorFormat("NULL delegate.Method");
+                m_Delegate = d;
+                m_Id = s_Id++;
+                m_Target = p;
+                m_InvocationTime = invocationTime;
             }
 
-            public float InvocationTime { get { return m_invocationTime; } }
+            public float InvocationTime { get { return m_InvocationTime; } }
             public override string ToString()
             {
-                if (m_delegate == null)
-                    return "Null m_delegate for " + m_id;
-                var n = m_id + " (target=" + m_delegate.Target + ") " + m_delegate.Method.DeclaringType.Name + "." + (m_delegate.Method == null ? "null" : m_delegate.Method.Name) + "(";
+                if (m_Delegate == null || m_Delegate.Method.DeclaringType == null)
+                    return "Null m_delegate for " + m_Id;
+                var n = m_Id + " (target=" + m_Delegate.Target + ") " + m_Delegate.Method.DeclaringType.Name + "." +  m_Delegate.Method.Name + "(";
                 var sep = "";
-                foreach (var o in m_target)
+                foreach (var o in m_Target)
                 {
                     n += sep + o;
                     sep = ", ";
                 }
-                return n + ") @" + m_invocationTime;
+                return n + ") @" + m_InvocationTime;
             }
 
             public void Invoke()
             {
                 try
                 {
-                    m_delegate.DynamicInvoke(m_target);
+                    m_Delegate.DynamicInvoke(m_Target);
                 }
                 catch (Exception e)
                 {
@@ -53,17 +53,17 @@ namespace UnityEngine.ResourceManagement
                 }
             }
         }
-        List<DelegateInfo>[] m_actions = new List<DelegateInfo>[] { new List<DelegateInfo>(), new List<DelegateInfo>() };
-        LinkedList<DelegateInfo> m_delayedActions = new LinkedList<DelegateInfo>();
-        Stack<LinkedListNode<DelegateInfo>> m_nodeCache = new Stack<LinkedListNode<DelegateInfo>>(10);
-        int m_collectionIndex = 0;
-        static DelayedActionManager m_instance;
-        bool m_destroyOnCompletion = false;
+        List<DelegateInfo>[] m_Actions = { new List<DelegateInfo>(), new List<DelegateInfo>() };
+        LinkedList<DelegateInfo> m_DelayedActions = new LinkedList<DelegateInfo>();
+        Stack<LinkedListNode<DelegateInfo>> m_NodeCache = new Stack<LinkedListNode<DelegateInfo>>(10);
+        int m_CollectionIndex;
+        static DelayedActionManager s_Instance;
+        bool m_DestroyOnCompletion;
         LinkedListNode<DelegateInfo> GetNode(ref DelegateInfo del)
         {
-            if (m_nodeCache.Count > 0)
+            if (m_NodeCache.Count > 0)
             {
-                var node = m_nodeCache.Pop();
+                var node = m_NodeCache.Pop();
                 node.Value = del;
                 return node;
             }
@@ -74,14 +74,14 @@ namespace UnityEngine.ResourceManagement
         /// </summary>
         public static void Clear()
         {
-            if (m_instance != null)
-                m_instance.DestroyWhenComplete();
-            m_instance = null;
+            if (s_Instance != null)
+                s_Instance.DestroyWhenComplete();
+            s_Instance = null;
         }
 
-        private void DestroyWhenComplete()
+        void DestroyWhenComplete()
         {
-            m_destroyOnCompletion = true;
+            m_DestroyOnCompletion = true;
         }
 
         /// <summary>
@@ -92,19 +92,19 @@ namespace UnityEngine.ResourceManagement
         /// <param name="parameters">The parameters to be passed to the action when invoked.</param>
         public static void AddAction(Delegate action, float delay = 0, params object[] parameters)
         {
-            if (m_instance == null)
+            if (s_Instance == null)
             { 
-                m_instance = new GameObject("DelayedActionManager", typeof(DelayedActionManager)).GetComponent<DelayedActionManager>();
-                m_instance.gameObject.hideFlags = HideFlags.HideAndDontSave;
+                s_Instance = new GameObject("DelayedActionManager", typeof(DelayedActionManager)).GetComponent<DelayedActionManager>();
+                s_Instance.gameObject.hideFlags = HideFlags.HideAndDontSave;
 #if UNITY_EDITOR
                 if (!Application.isPlaying)
                 {
 //                    Debug.Log("DelayedActionManager called outside of play mode, registering with EditorApplication.update.");
-                    UnityEditor.EditorApplication.update += m_instance.LateUpdate;
+                    EditorApplication.update += s_Instance.LateUpdate;
                 }
 #endif
             }
-            m_instance.AddActionInternal(action, delay, parameters);
+            s_Instance.AddActionInternal(action, delay, parameters);
         }
 
         void AddActionInternal(Delegate action, float delay, params object[] parameters)
@@ -112,24 +112,24 @@ namespace UnityEngine.ResourceManagement
             var del = new DelegateInfo(action, Time.unscaledTime + delay, parameters);
             if (delay > 0)
             {
-                if (m_delayedActions.Count == 0)
+                if (m_DelayedActions.Count == 0)
                 {
-                    m_delayedActions.AddFirst(GetNode(ref del));
+                    m_DelayedActions.AddFirst(GetNode(ref del));
                 }
                 else
                 {
 
-                    var n = m_delayedActions.Last;
+                    var n = m_DelayedActions.Last;
                     while (n != null && n.Value.InvocationTime > del.InvocationTime)
                         n = n.Previous;
                     if (n == null)
-                        m_delayedActions.AddFirst(GetNode(ref del));
+                        m_DelayedActions.AddFirst(GetNode(ref del));
                     else
-                        m_delayedActions.AddBefore(n, GetNode(ref del));
+                        m_DelayedActions.AddBefore(n, GetNode(ref del));
                 }
             }
             else
-                m_actions[m_collectionIndex].Add(del);
+                m_Actions[m_CollectionIndex].Add(del);
         }
 
         void Awake()
@@ -145,12 +145,12 @@ namespace UnityEngine.ResourceManagement
         {
             get
             {
-                if (m_instance == null)
+                if (s_Instance == null)
                     return false;
-                if (m_instance.m_delayedActions.Count > 0)
+                if (s_Instance.m_DelayedActions.Count > 0)
                     return true;
-                for (int i = 0; i < m_instance.m_actions.Length; i++)
-                    if (m_instance.m_actions[i].Count > 0)
+                for (int i = 0; i < s_Instance.m_Actions.Length; i++)
+                    if (s_Instance.m_Actions[i].Count > 0)
                         return true;
                 return false;
             }
@@ -166,11 +166,11 @@ namespace UnityEngine.ResourceManagement
             if (!IsActive)
                 return true;
 
-            var timer = new System.Diagnostics.Stopwatch();
+            var timer = new Stopwatch();
             timer.Start();
             do
             {
-                m_instance.LateUpdate();
+                s_Instance.LateUpdate();
 
             } while (IsActive && (timeout <= 0 || timer.Elapsed.TotalSeconds < timeout));
             return !IsActive;
@@ -180,18 +180,18 @@ namespace UnityEngine.ResourceManagement
         {
             int iterationCount = 0;
             var t = Time.unscaledTime;
-            while (m_delayedActions.Count > 0 && m_delayedActions.First.Value.InvocationTime <= t)
+            while (m_DelayedActions.Count > 0 && m_DelayedActions.First.Value.InvocationTime <= t)
             {
-                m_actions[m_collectionIndex].Add(m_delayedActions.First.Value);
-                m_nodeCache.Push(m_delayedActions.First);
-                m_delayedActions.RemoveFirst();
+                m_Actions[m_CollectionIndex].Add(m_DelayedActions.First.Value);
+                m_NodeCache.Push(m_DelayedActions.First);
+                m_DelayedActions.RemoveFirst();
             }
 
             do
             {
-                int invokeIndex = m_collectionIndex;
-                m_collectionIndex = (m_collectionIndex + 1) % 2;
-                var list = m_actions[invokeIndex];
+                int invokeIndex = m_CollectionIndex;
+                m_CollectionIndex = (m_CollectionIndex + 1) % 2;
+                var list = m_Actions[invokeIndex];
                 if (list.Count > 0)
                 {
                     for (int i = 0; i < list.Count; i++)
@@ -200,9 +200,9 @@ namespace UnityEngine.ResourceManagement
                 }
                 iterationCount++;
                 Debug.Assert(iterationCount < 100);
-            } while (m_actions[m_collectionIndex].Count > 0);
+            } while (m_Actions[m_CollectionIndex].Count > 0);
 
-            if (m_destroyOnCompletion && !IsActive)
+            if (m_DestroyOnCompletion && !IsActive)
                 Destroy(gameObject);
         }
     }

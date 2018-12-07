@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement
@@ -7,32 +8,32 @@ namespace UnityEngine.ResourceManagement
     /// </summary>
     public class InstantiationParameters
     {
-        private Vector3 m_position;
-        private Quaternion m_rotation;
-        private Transform m_parent;
-        private bool m_instantiateInWorldPosition;
-        private bool m_setPositionRotation;
+        Vector3 m_Position;
+        Quaternion m_Rotation;
+        Transform m_Parent;
+        bool m_InstantiateInWorldPosition;
+        bool m_SetPositionRotation;
 
         /// <summary>
         /// Position in world space to instantiate object.
         /// </summary>
-        public Vector3 Position { get { return m_position; } }
+        public Vector3 Position { get { return m_Position; } }
         /// <summary>
         /// Rotation in world space to instantiate object.
         /// </summary>
-        public Quaternion Rotation { get { return m_rotation; } }
+        public Quaternion Rotation { get { return m_Rotation; } }
         /// <summary>
         /// Transform to set as the parent of the instantiated object.
         /// </summary>
-        public Transform Parent { get { return m_parent; } }
+        public Transform Parent { get { return m_Parent; } }
         /// <summary>
         /// When setting the parent Transform, this sets whether to preserve instance transform relative to world space or relative to the parent.
         /// </summary>
-        public bool InstantiateInWorldPosition { get { return m_instantiateInWorldPosition; } }
+        public bool InstantiateInWorldPosition { get { return m_InstantiateInWorldPosition; } }
         /// <summary>
         /// Flag to tell the IInstanceProvider whether to set the position and rotation on new instances.
         /// </summary>
-        public bool SetPositionRotation { get { return m_setPositionRotation; } }
+        public bool SetPositionRotation { get { return m_SetPositionRotation; } }
         /// <summary>
         /// Create a new InstantationParameters class that will set the parent transform and use the prefab transform.
         /// <param name="parent">Transform to set as the parent of the instantiated object.</param>
@@ -40,11 +41,11 @@ namespace UnityEngine.ResourceManagement
         /// </summary>
         public InstantiationParameters(Transform parent, bool instantiateInWorldSpace)
         {
-            m_position = Vector3.zero;
-            m_rotation = Quaternion.identity;
-            m_parent = parent;
-            m_instantiateInWorldPosition = instantiateInWorldSpace;
-            m_setPositionRotation = false;
+            m_Position = Vector3.zero;
+            m_Rotation = Quaternion.identity;
+            m_Parent = parent;
+            m_InstantiateInWorldPosition = instantiateInWorldSpace;
+            m_SetPositionRotation = false;
         }
         /// <summary>
         /// Create a new InstantationParameters class that will set the position, rotation, and Transform parent of the instance.
@@ -54,11 +55,11 @@ namespace UnityEngine.ResourceManagement
         /// </summary>
         public InstantiationParameters(Vector3 position, Quaternion rotation, Transform parent)
         {
-            m_position = position;
-            m_rotation = rotation;
-            m_parent = parent;
-            m_instantiateInWorldPosition = false;
-            m_setPositionRotation = true;
+            m_Position = position;
+            m_Rotation = rotation;
+            m_Parent = parent;
+            m_InstantiateInWorldPosition = false;
+            m_SetPositionRotation = true;
         }
 
         /// <summary>
@@ -67,22 +68,22 @@ namespace UnityEngine.ResourceManagement
         /// <returns>Instantiated object.</returns>
         /// <typeparam name="TObject">Object type. This type must be of type UnityEngine.Object.</typeparam>
         /// </summary>
-        virtual public TObject Instantiate<TObject>(TObject source) where TObject : Object
+        public virtual TObject Instantiate<TObject>(TObject source) where TObject : Object
         {
             TObject result;
-            if (m_parent == null)
+            if (m_Parent == null)
             {
-                if (m_setPositionRotation)
-                    result = Object.Instantiate(source, m_position, m_rotation);
+                if (m_SetPositionRotation)
+                    result = Object.Instantiate(source, m_Position, m_Rotation);
                 else
                     result = Object.Instantiate(source);
             }
             else
             {
-                if (m_setPositionRotation)
-                    result = Object.Instantiate(source, m_position, m_rotation, m_parent);
+                if (m_SetPositionRotation)
+                    result = Object.Instantiate(source, m_Position, m_Rotation, m_Parent);
                 else
-                    result = Object.Instantiate(source, m_parent, m_instantiateInWorldPosition);
+                    result = Object.Instantiate(source, m_Parent, m_InstantiateInWorldPosition);
             }
             return result;
         }
@@ -94,14 +95,14 @@ namespace UnityEngine.ResourceManagement
     public interface IInstanceProvider
     {
         /// <summary>
-        /// Determind whether or not this provider can provide for the given <paramref name="loadProvider"/> and <paramref name="location"/>
+        /// Determine whether or not this provider can provide for the given <paramref name="loadProvider"/> and <paramref name="location"/>
         /// </summary>
         /// <returns><c>true</c>, if provide instance was caned, <c>false</c> otherwise.</returns>
         /// <param name="loadProvider">Provider used to load the object prefab.</param>
         /// <param name="location">Location to instantiate.</param>
         /// <typeparam name="TObject">Object type.</typeparam>
         bool CanProvideInstance<TObject>(IResourceProvider loadProvider, IResourceLocation location)
-        where TObject : UnityEngine.Object;
+        where TObject : Object;
 
         /// <summary>
         /// Asynchronously instantiate the given <paramref name="location"/>
@@ -110,9 +111,10 @@ namespace UnityEngine.ResourceManagement
         /// <param name="loadProvider">Provider used to load the object prefab.</param>
         /// <param name="location">Location to instantiate.</param>
         /// <param name="loadDependencyOperation">Async operation for dependency loading.</param>
+        /// <param name="instantiateParameters">Parameters to be used by Unity's GameObject.Instantiate method</param>
         /// <typeparam name="TObject">Instantiated object type.</typeparam>
         IAsyncOperation<TObject> ProvideInstanceAsync<TObject>(IResourceProvider loadProvider, IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation, InstantiationParameters instantiateParameters)
-        where TObject : UnityEngine.Object;
+        where TObject : Object;
 
         /// <summary>
         /// Releases the instance.
@@ -121,6 +123,6 @@ namespace UnityEngine.ResourceManagement
         /// <param name="loadProvider">Provider used to load the object prefab.</param>
         /// <param name="location">Location to release.</param>
         /// <param name="instance">Object instance to release.</param>
-        bool ReleaseInstance(IResourceProvider loadProvider, IResourceLocation location, UnityEngine.Object instance);
+        bool ReleaseInstance(IResourceProvider loadProvider, IResourceLocation location, Object instance);
     }
 }

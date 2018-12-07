@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine.SceneManagement;
 using UnityEngine.ResourceManagement.Diagnostics;
+using UnityEngine.SceneManagement;
 
 namespace UnityEngine.ResourceManagement
 {
     /// <summary>
     /// Entry point for ResourceManager API
     /// </summary>
-    public static partial class ResourceManager
+    public static class ResourceManager
     {
-        static List<IResourceProvider> s_resourceProviders = new List<IResourceProvider>();
+        static List<IResourceProvider> s_ResourceProviders = new List<IResourceProvider>();
 
         /// <summary>
         /// Gets or sets the <see cref="IInstanceProvider"/>. The instance provider handles instatiating and releasing prefabs.
@@ -37,8 +37,8 @@ namespace UnityEngine.ResourceManagement
         {
             get
             {
-                Debug.Assert(s_resourceProviders != null);
-                return s_resourceProviders;
+                Debug.Assert(s_ResourceProviders != null);
+                return s_ResourceProviders;
             }
         }
 
@@ -86,7 +86,7 @@ namespace UnityEngine.ResourceManagement
             where TObject : class
         {
             if (location == null)
-                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new ArgumentNullException("location"));
+                return new CompletedOperation<TObject>().Start(null, null, default(TObject), new ArgumentNullException("location"));
 
             var provider = GetResourceProvider<TObject>(location);
             if (provider == null)
@@ -95,13 +95,12 @@ namespace UnityEngine.ResourceManagement
         }
 
         /// <summary>
-        /// Asynchronously load all objects in the given collection of <paramref name="keys"/>.
+        /// Asynchronously load all objects in the given collection of <paramref name="locations"/>.
         /// </summary>
         /// <returns>An async operation that will complete when all individual async load operations are complete.</returns>
         /// <param name="locations">locations to load.</param>
         /// <param name="callback">This callback will be invoked once for each object that is loaded.</param>
         /// <typeparam name="TObject">Object type to load.</typeparam>
-        /// <typeparam name="TKey">key type.</typeparam>
         public static IAsyncOperation<IList<TObject>> ProvideResources<TObject>(IList<IResourceLocation> locations, Action<IAsyncOperation<TObject>> callback)
             where TObject : class
         {
@@ -111,9 +110,10 @@ namespace UnityEngine.ResourceManagement
         }
 
         /// <summary>
-        /// Release resources belonging to the <paramref name="asset"/> at the specified <paramref name="key"/>.
+        /// Release resources belonging to the <paramref name="asset"/> at the specified <paramref name="location"/>.
         /// </summary>
         /// <param name="asset">Object to release.</param>
+        /// <param name="location">The location of the resource to release.</param>
         /// <typeparam name="TObject">Object type.</typeparam>
         public static void ReleaseResource<TObject>(TObject asset, IResourceLocation location)
             where TObject : class
@@ -133,12 +133,12 @@ namespace UnityEngine.ResourceManagement
         }
 
         /// <summary>
-        /// Asynchronouslly instantiate a prefab (GameObject) at the specified <paramref name="key"/>.
+        /// Asynchronouslly instantiate a prefab (GameObject) at the specified <paramref name="location"/>.
         /// </summary>
         /// <returns>Async operation that will complete when the prefab is instantiated.</returns>
-        /// <param name="key">key of the prefab.</param>
+        /// <param name="location">location of the prefab.</param>
+        /// <param name="instantiateParameters">A struct containing the parameters to pass the the Instantiation call.</param>
         /// <typeparam name="TObject">Instantiated object type.</typeparam>
-        /// <typeparam name="TKey">key type.</typeparam>
         public static IAsyncOperation<TObject> ProvideInstance<TObject>(IResourceLocation location, InstantiationParameters instantiateParameters)
             where TObject : Object
         {
@@ -146,7 +146,7 @@ namespace UnityEngine.ResourceManagement
                 throw new NullReferenceException("ResourceManager.InstanceProvider is null.  Assign a valid IInstanceProvider object before using.");
 
             if (location == null)
-                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new ArgumentNullException("location"));
+                return new CompletedOperation<TObject>().Start(null, null, default(TObject), new ArgumentNullException("location"));
             var provider = GetResourceProvider<TObject>(location);
             if (provider == null)
                 return new CompletedOperation<TObject>().Start(location, location, default(TObject), new UnknownResourceProviderException(location));
@@ -158,10 +158,12 @@ namespace UnityEngine.ResourceManagement
         }
 
         /// <summary>
-        /// Asynchronouslly instantiate mullitple prefab (GameObject) at the specified <paramref name="key"/>.
+        /// Asynchronously instantiate multiple prefabs (GameObjects) at the specified <paramref name="locations"/>.
         /// </summary>
         /// <returns>Async operation that will complete when the prefab is instantiated.</returns>
         /// <param name="locations">locations of prefab asset</param>
+        /// <param name="callback">This is called for each instantiated object.</param>
+        /// <param name="instantiateParameters">A struct containing the parameters to pass the the Instantiation call.</param>
         /// <typeparam name="TObject">Instantiated object type.</typeparam>
         public static IAsyncOperation<IList<TObject>> ProvideInstances<TObject>(IList<IResourceLocation> locations, Action<IAsyncOperation<TObject>> callback, InstantiationParameters instantiateParameters)
             where TObject : Object
@@ -179,7 +181,7 @@ namespace UnityEngine.ResourceManagement
         /// Releases resources belonging to the prefab instance.
         /// </summary>
         /// <param name="instance">Instance to release.</param>
-        /// <typeparam name="TObject">Instantiated object type.</typeparam>
+        /// <param name="location">The location of the instance.</param>
         public static void ReleaseInstance(Object instance, IResourceLocation location)
         {
             if (InstanceProvider == null)
@@ -193,18 +195,17 @@ namespace UnityEngine.ResourceManagement
         }
 
         /// <summary>
-        /// Asynchronously loads the scene a the given <paramref name="key"/>.
+        /// Asynchronously loads the scene a the given <paramref name="location"/>.
         /// </summary>
         /// <returns>Async operation for the scene.</returns>
-        /// <param name="key">key of the scene to load.</param>
+        /// <param name="location">location of the scene to load.</param>
         /// <param name="loadMode">Scene Load mode.</param>
-        /// <typeparam name="TKey">key type.</typeparam>
         public static IAsyncOperation<Scene> ProvideScene(IResourceLocation location, LoadSceneMode loadMode = LoadSceneMode.Single)
         {
             if (SceneProvider == null)
                 throw new NullReferenceException("ResourceManager.SceneProvider is null.  Assign a valid ISceneProvider object before using.");
             if (location == null)
-                return new CompletedOperation<Scene>().Start(location, location, default(Scene), new ArgumentNullException("location"));
+                return new CompletedOperation<Scene>().Start(null, null, default(Scene), new ArgumentNullException("location"));
 
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.LoadSceneAsyncRequest, location, 1);
             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, location, 0);
@@ -223,7 +224,7 @@ namespace UnityEngine.ResourceManagement
             if (SceneProvider == null)
                 throw new NullReferenceException("ResourceManager.SceneProvider is null.  Assign a valid ISceneProvider object before using.");
             if (location == null)
-                return new CompletedOperation<Scene>().Start(location, location, default(Scene), new ArgumentNullException("location"));
+                return new CompletedOperation<Scene>().Start(null, null, default(Scene), new ArgumentNullException("location"));
             return SceneProvider.ReleaseSceneAsync(location, scene).Retain();
         }
 

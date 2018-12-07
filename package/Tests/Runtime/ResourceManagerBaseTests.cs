@@ -1,34 +1,43 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using NUnit.Framework;
-using UnityEngine.ResourceManagement;
-using UnityEngine;
-using UnityEngine.TestTools;
 using System.IO;
-using System.Linq;
+using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.ResourceManagement;
 using UnityEngine.SceneManagement;
-using System;
+using UnityEngine.TestTools;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 
-public abstract class ResourceManagerBaseTests : IPrebuildSetup
+public abstract class ResourceManagerBaseTests : IPrebuildSetup//, IPostBuildCleanup
 {
     protected string RootFolder { get { return string.Format("Assets/{0}_AssetsToDelete", GetType().Name); } }
 
-    private List<IResourceLocation> k_locations = new List<IResourceLocation>();
+    List<IResourceLocation> m_Locations = new List<IResourceLocation>();
 
     public void Setup()
     {
+#if UNITY_EDITOR
         if (!Directory.Exists(RootFolder))
             Directory.CreateDirectory(RootFolder);
+
+        AssetDatabase.StartAssetEditing();
+        CreateLocations(m_Locations);
+        AssetDatabase.StopAssetEditing();
+#endif
     }
 
     [OneTimeTearDown]
     public void Cleanup()
     {
+#if UNITY_EDITOR
         AssetDatabase.DeleteAsset(RootFolder);
+#endif
     }
 
     [OneTimeSetUp]
@@ -39,11 +48,11 @@ public abstract class ResourceManagerBaseTests : IPrebuildSetup
         ResourceManager.SceneProvider = null;
         AsyncOperationCache.Instance.Clear();
         DelayedActionManager.Clear();
-        AssetDatabase.StartAssetEditing();
-        CreateLocations(k_locations);
-        AssetDatabase.StopAssetEditing();
+
+        CreateLocations(m_Locations);
     }
 
+#if UNITY_EDITOR
     internal IResourceLocation CreateTestAsset(string assetPrefix, string objectName, string loadPath, Type provider)
     {
         var assetPath = RootFolder + "/" + assetPrefix + objectName + ".prefab";
@@ -53,17 +62,19 @@ public abstract class ResourceManagerBaseTests : IPrebuildSetup
         GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
         go.name = objectName;
         PrefabUtility.CreatePrefab(assetPath, go);
-        UnityEngine.Object.Destroy(go);
+        Object.DestroyImmediate(go, false);
         return new ResourceLocationBase(objectName, loadPath, provider.FullName);
     }
+#endif
 
-    protected abstract void CreateLocations(List<IResourceLocation> k_locations);
+
+    protected abstract void CreateLocations(List<IResourceLocation> locations);
 
 
     [UnityTest]
     public IEnumerator CanProvideWithCallback()
     {
-        ResourceManager.ProvideResource<GameObject>(k_locations[0]).Completed += (op) => Assert.IsNotNull(op.Result);
+        ResourceManager.ProvideResource<GameObject>(m_Locations[0]).Completed += op => Assert.IsNotNull(op.Result);
         yield return null;
     }
 
@@ -71,14 +82,14 @@ public abstract class ResourceManagerBaseTests : IPrebuildSetup
     [UnityTest]
     public IEnumerator VerifyKey()
     {
-        ResourceManager.ProvideResource<GameObject>(k_locations[0]).Completed += (op) => Assert.IsNotNull(op.Key == k_locations[0]);
+        ResourceManager.ProvideResource<GameObject>(m_Locations[0]).Completed += op => Assert.IsNotNull(op.Key == m_Locations[0]);
         yield return null;
     }
 
     [UnityTest]
     public IEnumerator CanProvideWithYield()
     {
-        var op = ResourceManager.ProvideResource<GameObject>(k_locations[0]);
+        var op = ResourceManager.ProvideResource<GameObject>(m_Locations[0]);
         yield return op;
         Assert.IsNotNull(op.Result);
         op.Release();
@@ -87,10 +98,10 @@ public abstract class ResourceManagerBaseTests : IPrebuildSetup
     [UnityTest]
     public IEnumerator CanProvideMultipleResources()
     {
-        ResourceManager.ProvideResources<GameObject>(k_locations, (perOp) => Assert.IsNotNull(perOp.Result)).Completed += (op) =>
+        ResourceManager.ProvideResources<GameObject>(m_Locations, perOp => Assert.IsNotNull(perOp.Result)).Completed += op =>
         {
             Assert.IsNotNull(op.Result);
-            Assert.AreEqual(op.Result.Count, k_locations.Count);
+            Assert.AreEqual(op.Result.Count, m_Locations.Count);
         };
         yield return null;
     }
@@ -98,35 +109,35 @@ public abstract class ResourceManagerBaseTests : IPrebuildSetup
     [UnityTest]
     public IEnumerator CanProvideInstance()
     {
-        var loadOp = ResourceManager.ProvideInstance<GameObject>(k_locations[0], new InstantiationParameters(null, true));
-        loadOp.Completed += (op) =>
+        var loadOp = ResourceManager.ProvideInstance<GameObject>(m_Locations[0], new InstantiationParameters(null, true));
+        loadOp.Completed += op =>
         {
             Assert.IsNotNull(op.Result);
-            Assert.IsNotNull(GameObject.Find(k_locations[0] + "(Clone)"));
+            Assert.IsNotNull(GameObject.Find(m_Locations[0] + "(Clone)"));
         };
 
         yield return loadOp;
-        ResourceManager.ReleaseInstance(loadOp.Result, k_locations[0]);
+        ResourceManager.ReleaseInstance(loadOp.Result, m_Locations[0]);
         yield return null;
-        Assert.IsNull(GameObject.Find(k_locations[0] + "(Clone)"));
+        Assert.IsNull(GameObject.Find(m_Locations[0] + "(Clone)"));
     }
 
     [UnityTest]
     public IEnumerator CanProvideMultipleInstances()
     {
-        var loadOp = ResourceManager.ProvideInstances<GameObject>(k_locations, (perOp) => Assert.IsNotNull(perOp.Result), new InstantiationParameters(null, true));
-        loadOp.Completed += (op) =>
+        var loadOp = ResourceManager.ProvideInstances<GameObject>(m_Locations, perOp => Assert.IsNotNull(perOp.Result), new InstantiationParameters(null, true));
+        loadOp.Completed += op =>
         {
             Assert.IsNotNull(op.Result);
-            for (int i = 0; i < k_locations.Count; i++)
-                Assert.IsNotNull(GameObject.Find(k_locations[i] + "(Clone)"));
+            for (int i = 0; i < m_Locations.Count; i++)
+                Assert.IsNotNull(GameObject.Find(m_Locations[i] + "(Clone)"));
         };
         yield return loadOp;
         for (int i = 0; i < loadOp.Result.Count; i++)
-            ResourceManager.ReleaseInstance(loadOp.Result[i], k_locations[i]);
+            ResourceManager.ReleaseInstance(loadOp.Result[i], m_Locations[i]);
         yield return null;
-        for (int i = 0; i < k_locations.Count; i++)
-            Assert.IsNull(GameObject.Find(k_locations[i] + "(Clone)"));
+        for (int i = 0; i < m_Locations.Count; i++)
+            Assert.IsNull(GameObject.Find(m_Locations[i] + "(Clone)"));
     }
 
     [UnityTest]
@@ -134,14 +145,14 @@ public abstract class ResourceManagerBaseTests : IPrebuildSetup
     {
         for (int i = 0; i < 100; i++)
         {
-            var loc = k_locations[UnityEngine.Random.Range(0, k_locations.Count)];
-            ResourceManager.ProvideInstance<GameObject>(loc, new InstantiationParameters(null, true)).Completed += (op) =>
+            var loc = m_Locations[Random.Range(0, m_Locations.Count)];
+            ResourceManager.ProvideInstance<GameObject>(loc, new InstantiationParameters(null, true)).Completed += op =>
             {
                 Assert.IsNotNull(op.Result);
-                DelayedActionManager.AddAction((Action<UnityEngine.Object, IResourceLocation>)ResourceManager.ReleaseInstance, UnityEngine.Random.Range(.25f, .5f), op.Result, loc);
+                DelayedActionManager.AddAction((Action<Object, IResourceLocation>)ResourceManager.ReleaseInstance, Random.Range(.25f, .5f), op.Result, loc);
             };
 
-            if (UnityEngine.Random.Range(0, 100) > 20)
+            if (Random.Range(0, 100) > 20)
                 yield return null;
         }
 

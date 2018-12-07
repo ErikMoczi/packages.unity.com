@@ -1,7 +1,8 @@
 #if UNITY_EDITOR
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using UnityEngine.Serialization;
 
 namespace UnityEngine.ResourceManagement
 {
@@ -11,24 +12,27 @@ namespace UnityEngine.ResourceManagement
     [Serializable]
     public class VirtualAssetBundleRuntimeData
     {
+        [FormerlySerializedAs("m_simulatedAssetBundles")]
         [SerializeField]
-        List<VirtualAssetBundle> m_simulatedAssetBundles = new List<VirtualAssetBundle>();
+        List<VirtualAssetBundle> m_SimulatedAssetBundles = new List<VirtualAssetBundle>();
+        [FormerlySerializedAs("m_remoteLoadSpeed")]
         [SerializeField]
-        long m_remoteLoadSpeed = 1024 * 100;
+        long m_RemoteLoadSpeed = 1024 * 100;
+        [FormerlySerializedAs("m_localLoadSpeed")]
         [SerializeField]
-        long m_localLoadSpeed = 1024 * 1024 * 10;
+        long m_LocalLoadSpeed = 1024 * 1024 * 10;
         /// <summary>
         /// The list of asset bundles to simulate.
         /// </summary>
-        public List<VirtualAssetBundle> AssetBundles { get { return m_simulatedAssetBundles; } }
+        public List<VirtualAssetBundle> AssetBundles { get { return m_SimulatedAssetBundles; } }
         /// <summary>
         /// Bandwidth value (in bytes per second) to simulate loading from a remote location.
         /// </summary>
-        public long RemoteLoadSpeed { get { return m_remoteLoadSpeed; } }
+        public long RemoteLoadSpeed { get { return m_RemoteLoadSpeed; } }
         /// <summary>
         /// Bandwidth value (in bytes per second) to simulate loading from a local location.
         /// </summary>
-        public long LocalLoadSpeed { get { return m_localLoadSpeed; } }
+        public long LocalLoadSpeed { get { return m_LocalLoadSpeed; } }
 
         /// <summary>
         /// Construct a new VirtualAssetBundleRuntimeData object.
@@ -41,11 +45,11 @@ namespace UnityEngine.ResourceManagement
         /// <param name="remoteSpeed">Bandwidth value (in bytes per second) to simulate loading from a remote location.</param>
         public VirtualAssetBundleRuntimeData(long localSpeed, long remoteSpeed)
         {
-            m_localLoadSpeed = localSpeed;
-            m_remoteLoadSpeed = remoteSpeed;
+            m_LocalLoadSpeed = localSpeed;
+            m_RemoteLoadSpeed = remoteSpeed;
         }
 
-        const string LibraryLocation = "Library/com.unity.addressables/VirtualAssetBundleData.json";
+        const string k_LibraryLocation = "Library/com.unity.addressables/VirtualAssetBundleData.json";
         /// <summary>
         /// Load the runtime data for the virtual bundles.  This is loaded from Library/com.unity.addressables/VirtualAssetBundleData.json.
         /// </summary>
@@ -54,13 +58,15 @@ namespace UnityEngine.ResourceManagement
         {
             try
             {
-                if (!File.Exists(LibraryLocation))
+                if (!File.Exists(k_LibraryLocation))
                     return null;
-                return JsonUtility.FromJson<VirtualAssetBundleRuntimeData>(File.ReadAllText(LibraryLocation));
+                return JsonUtility.FromJson<VirtualAssetBundleRuntimeData>(File.ReadAllText(k_LibraryLocation));
             }
             catch (Exception)
             {
+                // ignored
             }
+
             return null;
         }
 
@@ -70,9 +76,10 @@ namespace UnityEngine.ResourceManagement
         public void Save()
         {
             var data = JsonUtility.ToJson(this);
-            if (!Directory.Exists(Path.GetDirectoryName(LibraryLocation)))
-                Directory.CreateDirectory(Path.GetDirectoryName(LibraryLocation));
-            File.WriteAllText(LibraryLocation, data);
+            var dirName = Path.GetDirectoryName(k_LibraryLocation);
+            if (!string.IsNullOrEmpty(dirName) && !Directory.Exists(dirName))
+                Directory.CreateDirectory(dirName);
+            File.WriteAllText(k_LibraryLocation, data);
         }
 
         /// <summary>
@@ -82,8 +89,8 @@ namespace UnityEngine.ResourceManagement
         {
             try
             {
-                if (File.Exists(LibraryLocation))
-                    File.Delete(LibraryLocation);
+                if (File.Exists(k_LibraryLocation))
+                    File.Delete(k_LibraryLocation);
             }
             catch (Exception e)
             {

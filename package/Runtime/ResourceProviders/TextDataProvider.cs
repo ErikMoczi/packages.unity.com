@@ -1,4 +1,4 @@
-﻿using UnityEngine.Networking;
+﻿using System;
 
 namespace UnityEngine.ResourceManagement
 {
@@ -11,11 +11,11 @@ namespace UnityEngine.ResourceManagement
         /// Method to convert the text into the object type requested.  Usually the text contains a JSON formatted serialized object.
         /// </summary>
         /// <typeparam name="TObject">The object type to convert the text to.</typeparam>
-        /// <param name="handler">The handler object with the text to be converted.</param>
+        /// <param name="text">The text to be converted.</param>
         /// <returns>The text string is returned without conversion.</returns>
-        public override TObject Convert<TObject>(DownloadHandler handler)
+        public override TObject Convert<TObject>(string text)
         {
-            return handler.text as TObject;
+            return text as TObject;
         }
     }
 }

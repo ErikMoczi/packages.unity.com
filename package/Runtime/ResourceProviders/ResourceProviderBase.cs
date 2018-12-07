@@ -8,26 +8,25 @@ namespace UnityEngine.ResourceManagement
     /// </summary>
     public abstract class ResourceProviderBase : IResourceProvider
     {
-        protected string m_providerId;
+        protected string m_ProviderId;
 
-        protected ResourceProviderBase() { }
         /// <inheritdoc/>
         public virtual string ProviderId
         {
             get
             {
-                if(string.IsNullOrEmpty(m_providerId))
-                    m_providerId = GetType().FullName;
+                if(string.IsNullOrEmpty(m_ProviderId))
+                    m_ProviderId = GetType().FullName;
 
-                return m_providerId;
+                return m_ProviderId;
             }
         }
 
         /// <inheritdoc/>
         public virtual bool Initialize(string id, string data)
         {
-            m_providerId = id;
-            return !string.IsNullOrEmpty(m_providerId);
+            m_ProviderId = id;
+            return !string.IsNullOrEmpty(m_ProviderId);
         }
 
         /// <inheritdoc/>
@@ -36,7 +35,7 @@ namespace UnityEngine.ResourceManagement
         {
             if (location == null)
                 throw new ArgumentException("IResourceLocation location cannot be null.");
-            return ProviderId.Equals(location.ProviderId, System.StringComparison.Ordinal);
+            return ProviderId.Equals(location.ProviderId, StringComparison.Ordinal);
         }
 
         /// <inheritdoc/>
@@ -52,7 +51,7 @@ namespace UnityEngine.ResourceManagement
         public virtual bool Release(IResourceLocation location, object asset)
         {
             if (location == null)
-                throw new System.ArgumentNullException("location");
+                throw new ArgumentNullException("location");
             return true;
         }
     }

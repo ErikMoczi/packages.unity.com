@@ -2,7 +2,7 @@ using System;
 
 namespace UnityEngine.ResourceManagement
 {
-    internal class CompletionUpdater : MonoBehaviour
+    class CompletionUpdater : MonoBehaviour
     {
         public Func<bool> operation;
         void Update()

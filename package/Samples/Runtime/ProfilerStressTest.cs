@@ -1,4 +1,6 @@
-﻿#if RM_SAMPLES
+﻿using System;
+
+#if RM_SAMPLES
 
 using UnityEngine;
 using EditorDiagnostics;

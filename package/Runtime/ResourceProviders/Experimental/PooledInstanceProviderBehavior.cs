@@ -1,4 +1,6 @@
-﻿namespace UnityEngine.ResourceManagement
+﻿using System;
+
+namespace UnityEngine.ResourceManagement
 {
     class PooledInstanceProviderBehavior : MonoBehaviour
     {
@@ -9,7 +11,7 @@
             DontDestroyOnLoad(gameObject);
         }
 
-        private void Update()
+        void Update()
         {
             m_Provider.Update();
         }

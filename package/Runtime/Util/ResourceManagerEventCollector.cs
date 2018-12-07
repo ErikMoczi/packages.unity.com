@@ -1,4 +1,7 @@
 
+using System;
+using System.Text;
+
 namespace UnityEngine.ResourceManagement.Diagnostics
 {
     /// <summary>
@@ -32,9 +35,9 @@ namespace UnityEngine.ResourceManagement.Diagnostics
             CacheEntryLoadPercent,
             PoolCount,
             DiagnosticEvents,
-            CacheLRUCount,
+            CacheLruCount,
             AsyncOpCacheHitRatio,
-            AsyncOpCacheCount,
+            AsyncOpCacheCount
         }
 
         
@@ -69,7 +72,7 @@ namespace UnityEngine.ResourceManagement.Diagnostics
             if (loc != null)
             {
                 id = PrettyPath(loc.InternalId, false);
-                var sb = new System.Text.StringBuilder(256);
+                var sb = new StringBuilder(256);
                 sb.Append(loc.ProviderId.Substring(loc.ProviderId.LastIndexOf('.') + 1));
                 sb.Append('!');
                 sb.Append(loc.InternalId);
@@ -83,7 +86,7 @@ namespace UnityEngine.ResourceManagement.Diagnostics
                         sb.Append(',');
                     }
                 }
-                data = System.Text.Encoding.ASCII.GetBytes(sb.ToString());
+                data = Encoding.ASCII.GetBytes(sb.ToString());
             }
             var category = type >= EventType.DiagnosticEvents ? type.ToString() : EventCategory;
             DiagnosticEventCollector.PostEvent(new DiagnosticEvent(category, parent, id, (int)type, Time.frameCount, eventValue, data));

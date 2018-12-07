@@ -1,3 +1,5 @@
+using System;
+
 #if RM_SAMPLES
 
 using System.Collections.Generic;

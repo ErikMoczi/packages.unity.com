@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using UnityEditor;
 
 namespace UnityEngine.ResourceManagement
 {
@@ -9,30 +10,44 @@ namespace UnityEngine.ResourceManagement
     /// </summary>
     public class AssetDatabaseProvider : ResourceProviderBase
     {
-        float m_loadDelay = .1f;
+        float m_LoadDelay = .1f;
 
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
         public AssetDatabaseProvider() { }
 
+        /// <summary>
+        /// Constructor that allows for a sepcified delay for all requests.
+        /// </summary>
+        /// <param name="delay">Time in seconds for each delay call.</param>
         public AssetDatabaseProvider(float delay = .25f)
         {
-            m_loadDelay = delay;
+            m_LoadDelay = delay;
         }
 
-        internal class InternalOp<TObject> : InternalProviderOperation<TObject>
+        class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
             public InternalProviderOperation<TObject> Start(IResourceLocation location, float loadDelay)
             {
-                m_result = null;
+                m_Result = null;
                 Context = location;
                 DelayedActionManager.AddAction((Action)CompleteLoad, loadDelay);
                 return base.Start(location);
             }
 
             void CompleteLoad()
-            {
-                var res = UnityEditor.AssetDatabase.LoadAssetAtPath((Context as IResourceLocation).InternalId, typeof(TObject));
-                SetResult(res as TObject);
+            { 
+                var location = Context as IResourceLocation;
+                var assetPath = location == null ? string.Empty : location.InternalId;
+                var t = typeof(TObject);
+                if (t.IsArray)
+                    SetResult(ResourceManagerConfig.CreateArrayResult<TObject>(AssetDatabase.LoadAllAssetRepresentationsAtPath(assetPath)));
+                else if (t.IsGenericType && typeof(IList<>) == t.GetGenericTypeDefinition())
+                    SetResult(ResourceManagerConfig.CreateListResult<TObject>(AssetDatabase.LoadAllAssetRepresentationsAtPath(assetPath)));
+                else
+                    SetResult(AssetDatabase.LoadAssetAtPath(assetPath, typeof(TObject)) as TObject);
                 OnComplete();
             }
 
@@ -46,22 +61,22 @@ namespace UnityEngine.ResourceManagement
             if (!base.CanProvide<TObject>(location))
                 return false;
             var t = typeof(TObject);
-            return t == typeof(object) || typeof(UnityEngine.Object).IsAssignableFrom(t);
+            return t == typeof(object) || typeof(Object).IsAssignableFrom(t);
         }
 
         /// <inheritdoc/>
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             if (location == null)
-                throw new System.ArgumentNullException("location");
-            return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>().Start(location, m_loadDelay);
+                throw new ArgumentNullException("location");
+            return AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>().Start(location, m_LoadDelay);
         }
 
         /// <inheritdoc/>
         public override bool Release(IResourceLocation location, object asset)
         {
             if (location == null)
-                throw new System.ArgumentNullException("location");
+                throw new ArgumentNullException("location");
             var obj = asset as Object;
 
             if (obj != null)

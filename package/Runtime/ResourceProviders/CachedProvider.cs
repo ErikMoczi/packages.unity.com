@@ -1,25 +1,26 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine.ResourceManagement.Diagnostics;
+using UnityEngine.Serialization;
 
 namespace UnityEngine.ResourceManagement
 {
     /// <summary>
-    /// Provider that can wrap other IResourceProvders and add caching and reference counting of objects.
+    /// Provider that can wrap other IResourceProviders and add caching and reference counting of objects.
     /// </summary>
-    public class CachedProvider : IResourceProvider, IInitializableObject
+    public class CachedProvider : IResourceProvider
     {
         internal abstract class CacheEntry
         {
-            protected object m_result;
-            protected CacheList m_cacheList;
-            protected AsyncOperationStatus m_status;
-            protected Exception m_error;
-            abstract internal bool CanProvide<TObject>(IResourceLocation location) where TObject : class;
+            protected object m_Result;
+            protected CacheList m_CacheList;
+            protected AsyncOperationStatus m_Status;
+            protected Exception m_Error;
+            internal abstract bool CanProvide<TObject>(IResourceLocation location) where TObject : class;
 
             public abstract bool IsDone { get; }
             public abstract float PercentComplete { get; }
-            public object Result { get { return m_result; } }
+            public object Result { get { return m_Result; } }
             public abstract void ReleaseInternalOperation();
 
             public void Reset() { }
@@ -33,14 +34,14 @@ namespace UnityEngine.ResourceManagement
         internal class CacheEntry<TObject> : CacheEntry, IAsyncOperation<TObject>
             where TObject : class
         {
-            IAsyncOperation<TObject> m_operation;
+            IAsyncOperation<TObject> m_Operation;
 
             public AsyncOperationStatus Status
             {
                 get
                 {
                     Validate();
-                    return m_status > AsyncOperationStatus.None ? m_status : m_operation.Status;
+                    return m_Status > AsyncOperationStatus.None ? m_Status : m_Operation.Status;
                 }
             }
 
@@ -49,22 +50,22 @@ namespace UnityEngine.ResourceManagement
                 get
                 {
                     Validate();
-                    return m_error != null ? m_error : m_operation.OperationException;
+                    return m_Error != null ? m_Error : m_Operation.OperationException;
                 }
                 protected set
                 {
-                    m_error = value;
-                    if (m_error != null && ResourceManager.ExceptionHandler != null)
+                    m_Error = value;
+                    if (m_Error != null && ResourceManager.ExceptionHandler != null)
                         ResourceManager.ExceptionHandler(this, value);
                 }
             }
 
-            new public TObject Result
+            public new TObject Result
             {
                 get
                 {
                     Validate();
-                    return m_result as TObject;
+                    return m_Result as TObject;
                 }
             }
 
@@ -82,14 +83,14 @@ namespace UnityEngine.ResourceManagement
                 get
                 {
                     Validate();
-                    return m_result;
+                    return m_Result;
                 }
             }
 
             public bool MoveNext()
             {
                 Validate();
-                return m_result == null;
+                return m_Result == null;
             }
 
             public object Context
@@ -97,7 +98,7 @@ namespace UnityEngine.ResourceManagement
                 get
                 {
                     Validate();
-                    return m_operation.Context;
+                    return m_Operation.Context;
                 }
             }
 
@@ -106,22 +107,22 @@ namespace UnityEngine.ResourceManagement
                 get
                 {
                     Validate();
-                    return m_operation.Key;
+                    return m_Operation.Key;
                 }
                 set
                 {
-                    m_operation.Key = value;
+                    m_Operation.Key = value;
                 }
             }
 
 
-            public bool IsValid { get { return m_operation != null && m_operation.IsValid; } set { } }
+            public bool IsValid { get { return m_Operation != null && m_Operation.IsValid; } set { } }
 
 
             public override void ReleaseInternalOperation()
             {
-                m_operation.Release();
-                m_operation = null;
+                m_Operation.Release();
+                m_Operation = null;
             }
 
             public override float PercentComplete
@@ -129,11 +130,11 @@ namespace UnityEngine.ResourceManagement
                 get
                 {
                     Validate();
-                    return IsDone ? 1f : m_operation.PercentComplete;
+                    return IsDone ? 1f : m_Operation.PercentComplete;
                 }
             }
-            List<Action<IAsyncOperation<TObject>>> m_completedActionT;
-            protected event Action<IAsyncOperation> m_completedAction;
+            List<Action<IAsyncOperation<TObject>>> m_CompletedActionT;
+            protected event Action<IAsyncOperation> completedAction;
             public event Action<IAsyncOperation<TObject>> Completed
             {
                 add
@@ -145,15 +146,15 @@ namespace UnityEngine.ResourceManagement
                     }
                     else
                     {
-                        if (m_completedActionT == null)
-                            m_completedActionT = new List<Action<IAsyncOperation<TObject>>>(2);
-                        m_completedActionT.Add(value);
+                        if (m_CompletedActionT == null)
+                            m_CompletedActionT = new List<Action<IAsyncOperation<TObject>>>(2);
+                        m_CompletedActionT.Add(value);
                     }
                 }
 
                 remove
                 {
-                    m_completedActionT.Remove(value);
+                    m_CompletedActionT.Remove(value);
                 }
             }
 
@@ -165,19 +166,19 @@ namespace UnityEngine.ResourceManagement
                     if (IsDone)
                         DelayedActionManager.AddAction(value, 0, this);
                     else
-                        m_completedAction += value;
+                        completedAction += value;
                 }
 
                 remove
                 {
-                    m_completedAction -= value;
+                    completedAction -= value;
                 }
             }
 
             public CacheEntry(CacheList cacheList, IAsyncOperation<TObject> operation)
             {
-                m_cacheList = cacheList;
-                m_operation = operation.Retain();
+                m_CacheList = cacheList;
+                m_Operation = operation.Retain();
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, Context, 0);
                 operation.Completed += OnComplete;
             }
@@ -185,38 +186,38 @@ namespace UnityEngine.ResourceManagement
             void OnComplete(IAsyncOperation<TObject> operation)
             {
                 Validate();
-                m_result = operation.Result;
+                m_Result = operation.Result;
                 ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, Context, 100);
-                if (m_completedAction != null)
+                if (completedAction != null)
                 {
-                    var tmpEvent = m_completedAction;
-                    m_completedAction = null;
+                    var tmpEvent = completedAction;
+                    completedAction = null;
                     try
                     {
                         tmpEvent(this);
                     }
                     catch (Exception e)
                     {
-                        m_status = AsyncOperationStatus.Failed;
+                        m_Status = AsyncOperationStatus.Failed;
                         OperationException = e;
                     }
                 }
 
-                if (m_completedActionT != null)
+                if (m_CompletedActionT != null)
                 {
-                    for (int i = 0; i < m_completedActionT.Count; i++)
+                    for (int i = 0; i < m_CompletedActionT.Count; i++)
                     {
                         try
                         {
-                            m_completedActionT[i](this);
+                            m_CompletedActionT[i](this);
                         }
                         catch (Exception e)
                         {
-                            m_status = AsyncOperationStatus.Failed;
+                            m_Status = AsyncOperationStatus.Failed;
                             OperationException = e;
                         }
                     }
-                    m_completedActionT.Clear();
+                    m_CompletedActionT.Clear();
                 }
 
             }
@@ -250,22 +251,22 @@ namespace UnityEngine.ResourceManagement
 
         internal class CacheList
         {
-            public int m_refCount;
-            public float m_lastAccessTime;
-            public IResourceLocation m_location;
+            public int refCount;
+            public float lastAccessTime;
+            public IResourceLocation location;
             public List<CacheEntry> entries = new List<CacheEntry>();
-            public CacheList(IResourceLocation location) { m_location = location; }
+            public CacheList(IResourceLocation location) { this.location = location; }
             public int RefCount
             {
                 get
                 {
-                    return m_refCount;
+                    return refCount;
                 }
             }
 
             public override int GetHashCode()
             {
-                return m_location.GetHashCode();
+                return location.GetHashCode();
             }
 
             public bool IsDone
@@ -292,13 +293,13 @@ namespace UnityEngine.ResourceManagement
                 }
             }
 
-            public CacheEntry<TObject> FindEntry<TObject>(IResourceLocation location)
+            public CacheEntry<TObject> FindEntry<TObject>(IResourceLocation resLocation)
                  where TObject : class
             {
                 for (int i = 0; i < entries.Count; i++)
                 {
                     var e = entries[i];
-                    if (e.CanProvide<TObject>(location))
+                    if (e.CanProvide<TObject>(resLocation))
                         return e as CacheEntry<TObject>;
                 }
                 return null;
@@ -315,25 +316,25 @@ namespace UnityEngine.ResourceManagement
 
             internal void Retain()
             {
-                m_lastAccessTime = Time.unscaledTime;
-                m_refCount++;
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryRefCount, m_location, m_refCount);
+                lastAccessTime = Time.unscaledTime;
+                refCount++;
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryRefCount, location, refCount);
             }
 
             internal bool Release()
             {
-                m_refCount--;
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryRefCount, m_location, m_refCount);
-                return m_refCount == 0;
+                refCount--;
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryRefCount, location, refCount);
+                return refCount == 0;
             }
 
             internal void ReleaseAssets(IResourceProvider provider)
             {
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, m_location, 0);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, location, 0);
                 foreach (var e in entries)
                 {
                     Debug.Assert(e.IsDone);
-                    provider.Release(m_location, e.Result);
+                    provider.Release(location, e.Result);
                     e.ReleaseInternalOperation();
                 }
             }
@@ -348,18 +349,18 @@ namespace UnityEngine.ResourceManagement
                 DontDestroyOnLoad(gameObject);
             }
 
-            private void Update()
+            void Update()
             {
-                m_Provider.UpdateLRU();
+                m_Provider.UpdateLru();
             }
         }
 
-        Dictionary<int, CacheList> m_cache = new Dictionary<int, CacheList>();
-        IResourceProvider m_internalProvider;
-        LinkedList<CacheList> m_lru;
-        string m_providerId;
-        internal int m_maxLRUCount;
-        internal float m_maxLRUAge;
+        Dictionary<int, CacheList> m_Cache = new Dictionary<int, CacheList>();
+        IResourceProvider m_InternalProvider;
+        LinkedList<CacheList> m_Lru;
+        string m_ProviderId;
+        internal int maxLruCount;
+        internal float maxLruAge;
 
         /// <summary>
         /// Settings object used to initialize the cache provider.
@@ -367,24 +368,27 @@ namespace UnityEngine.ResourceManagement
         [Serializable]
         public class Settings
         {
+            [FormerlySerializedAs("m_maxLRUCount")]
             [SerializeField]
-            int m_maxLRUCount;
+            int m_MaxLruCount;
             /// <summary>
             /// The maximum number of items to hold in the LRU.  If set to 0, the LRU is not used and items will be released as soon as the reference count drops to 0.
             /// </summary>
-            public int MaxLRUCount { get { return m_maxLRUCount; } set { m_maxLRUCount = value; } }
+            public int maxLruCount { get { return m_MaxLruCount; } set { m_MaxLruCount = value; } }
+            [FormerlySerializedAs("m_maxLRUAge")]
             [SerializeField]
-            float m_maxLRUAge;
+            float m_MaxLruAge;
             /// <summary>
             /// The time, in seconds, to hold on to items in the cache.  This value scales inversely to how full the LRU is.  The last item will take this long to be removed.  If set to 0, items are not automatically removed.
             /// </summary>
-            public float MaxLRUAge { get { return m_maxLRUAge; } set { m_maxLRUAge = value; } }
+            public float maxLruAge { get { return m_MaxLruAge; } set { m_MaxLruAge = value; } }
+            [FormerlySerializedAs("m_internalProvider")]
             [SerializeField]
-            ObjectInitializationData m_internalProvider;
+            ObjectInitializationData m_InternalProvider;
             /// <summary>
             /// The initialization data for the internal provider.
             /// </summary>
-            public ObjectInitializationData InternalProviderData { get { return m_internalProvider; } set { m_internalProvider = value; } }
+            public ObjectInitializationData InternalProviderData { get { return m_InternalProvider; } set { m_InternalProvider = value; } }
         }
 
         /// <summary>
@@ -413,7 +417,7 @@ namespace UnityEngine.ResourceManagement
             var settings = JsonUtility.FromJson<Settings>(data);
             if (settings == null)
                 return false;
-            return InitInternal(settings.InternalProviderData.CreateInstance<IResourceProvider>(), id, settings.MaxLRUCount, settings.MaxLRUAge);
+            return InitInternal(settings.InternalProviderData.CreateInstance<IResourceProvider>(), id, settings.maxLruCount, settings.maxLruAge);
         }
 
         internal bool InitInternal(IResourceProvider provider, string providerId, int maxCacheItemCount, float maxCacheItemAge)
@@ -421,52 +425,52 @@ namespace UnityEngine.ResourceManagement
             if (provider == null || string.IsNullOrEmpty(providerId))
                 return false;
 
-            m_internalProvider = provider;
-            m_providerId = providerId;
-            m_maxLRUCount = maxCacheItemCount;
-            if (m_maxLRUCount > 0)
+            m_InternalProvider = provider;
+            m_ProviderId = providerId;
+            maxLruCount = maxCacheItemCount;
+            if (maxLruCount > 0)
             {
-                m_lru = new LinkedList<CacheList>();
-                m_maxLRUAge = maxCacheItemAge;
+                m_Lru = new LinkedList<CacheList>();
+                maxLruAge = maxCacheItemAge;
                 if (maxCacheItemAge > 0)
                 {
                     var go = new GameObject("CachedProviderUpdater", typeof(CachedProviderUpdater));
                     go.GetComponent<CachedProviderUpdater>().Init(this);
                     go.hideFlags = HideFlags.HideAndDontSave;
                 }
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheLRUCount, ProviderId, m_lru.Count);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheLruCount, ProviderId, m_Lru.Count);
             }
             return true;
         }
-        
-        private void UpdateLRU()
+
+        void UpdateLru()
         {
-            if (m_lru != null)
+            if (m_Lru != null)
             {
                 float time = Time.unscaledTime;
-                while (m_lru.Last != null && (m_lru.Last.Value.m_lastAccessTime - time) > m_maxLRUAge && m_lru.Last.Value.IsDone)
+                while (m_Lru.Last != null && (m_Lru.Last.Value.lastAccessTime - time) > maxLruAge && m_Lru.Last.Value.IsDone)
                 {
-                    m_lru.Last.Value.ReleaseAssets(m_internalProvider);
-                    m_lru.RemoveLast();
+                    m_Lru.Last.Value.ReleaseAssets(m_InternalProvider);
+                    m_Lru.RemoveLast();
                 }
-                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheLRUCount, ProviderId, m_lru.Count);
+                ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheLruCount, ProviderId, m_Lru.Count);
             }
         }
 
 
         /// <inheritdoc/>
-        public override string ToString() { return "CachedProvider[" + m_internalProvider + "]"; }
+        public override string ToString() { return "CachedProvider[" + m_InternalProvider + "]"; }
         /// <inheritdoc/>
-        public string ProviderId { get { return m_providerId; } }
+        public string ProviderId { get { return m_ProviderId; } }
 
         /// <inheritdoc/>
         public bool CanProvide<TObject>(IResourceLocation location)
             where TObject : class
         {
-            return m_internalProvider.CanProvide<TObject>(location);
+            return m_InternalProvider.CanProvide<TObject>(location);
         }
 
-        Action<CacheList> m_retryReleaseEntryAction;
+        Action<CacheList> m_RetryReleaseEntryAction;
         /// <summary>
         /// Releasing an object to a CachedProvider will decrease it reference count, which may result in the object getting actually released.  Released objects are added to an in memory cache.
         /// </summary>
@@ -475,8 +479,8 @@ namespace UnityEngine.ResourceManagement
         /// <returns>True if the reference count reaches 0 and the asset is released.</returns>
         public bool Release(IResourceLocation location, object asset)
         {
-            CacheList entryList = null;
-            if (location == null || !m_cache.TryGetValue(location.GetHashCode(), out entryList))
+            CacheList entryList;
+            if (location == null || !m_Cache.TryGetValue(location.GetHashCode(), out entryList))
                 return false;
 
             return ReleaseCache(entryList);
@@ -488,32 +492,30 @@ namespace UnityEngine.ResourceManagement
             {
                 if (!entryList.IsDone)
                 {
-                    if (m_retryReleaseEntryAction == null)
-                        m_retryReleaseEntryAction = RetryEntryRelease;
+                    if (m_RetryReleaseEntryAction == null)
+                        m_RetryReleaseEntryAction = RetryEntryRelease;
                     entryList.Retain(); //hold on since this will be retried...
-                    DelayedActionManager.AddAction(m_retryReleaseEntryAction, .2f, entryList);
+                    DelayedActionManager.AddAction(m_RetryReleaseEntryAction, .2f, entryList);
                     return false;
+                }
+
+                if (m_Lru != null)
+                {
+                    m_Lru.AddFirst(entryList);
+                    while (m_Lru.Count > maxLruCount && m_Lru.Last.Value.IsDone)
+                    {
+                        m_Lru.Last.Value.ReleaseAssets(m_InternalProvider);
+                        m_Lru.RemoveLast();
+                    }
+                    ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheLruCount, ProviderId + " LRU", m_Lru.Count);
                 }
                 else
                 {
-                    if (m_lru != null)
-                    {
-                        m_lru.AddFirst(entryList);
-                        while (m_lru.Count > m_maxLRUCount && m_lru.Last.Value.IsDone)
-                        {
-                            m_lru.Last.Value.ReleaseAssets(m_internalProvider);
-                            m_lru.RemoveLast();
-                        }
-                        ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheLRUCount, ProviderId + " LRU", m_lru.Count);
-                    }
-                    else
-                    {
-                        entryList.ReleaseAssets(m_internalProvider);
-                    }
-
-                    if (!m_cache.Remove(entryList.GetHashCode()))
-                        Debug.LogWarningFormat("Unable to find entryList {0} in cache.", entryList.m_location);
+                    entryList.ReleaseAssets(m_InternalProvider);
                 }
+
+                if (!m_Cache.Remove(entryList.GetHashCode()))
+                    Debug.LogWarningFormat("Unable to find entryList {0} in cache.", entryList.location);
                 return true;
             }
             return false;
@@ -536,22 +538,22 @@ namespace UnityEngine.ResourceManagement
             where TObject : class
         {
             if (location == null)
-                throw new System.ArgumentNullException("location");
+                throw new ArgumentNullException("location");
 
-            CacheList entryList = null;
-            if (!m_cache.TryGetValue(location.GetHashCode(), out entryList))
+            CacheList entryList;
+            if (!m_Cache.TryGetValue(location.GetHashCode(), out entryList))
             {
-                if (m_lru != null && m_lru.Count > 0)
+                if (m_Lru != null && m_Lru.Count > 0)
                 {
-                    var node = m_lru.First;
+                    var node = m_Lru.First;
                     while (node != null)
                     {
-                        if (node.Value.m_location.GetHashCode() == location.GetHashCode())
+                        if (node.Value.location.GetHashCode() == location.GetHashCode())
                         {
                             ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheEntryLoadPercent, location, 1);
                             entryList = node.Value;
-                            m_lru.Remove(node);
-                            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheLRUCount, ProviderId, m_lru.Count);
+                            m_Lru.Remove(node);
+                            ResourceManagerEventCollector.PostEvent(ResourceManagerEventCollector.EventType.CacheLruCount, ProviderId, m_Lru.Count);
                             break;
                         }
                         node = node.Next;
@@ -560,14 +562,25 @@ namespace UnityEngine.ResourceManagement
                 if (entryList == null)
                     entryList = new CacheList(location);
 
-                m_cache.Add(location.GetHashCode(), entryList);
+                m_Cache.Add(location.GetHashCode(), entryList);
             }
 
             entryList.Retain();
             var entry = entryList.FindEntry<TObject>(location);
             if (entry != null)
-                return entry;
-            return entryList.CreateEntry(m_internalProvider.Provide<TObject>(location, loadDependencyOperation));
+            {
+                if (entry.Status == AsyncOperationStatus.Failed)
+                {
+                    m_InternalProvider.Release(location, entry.Result);
+                    entry.ReleaseInternalOperation();
+                    entryList.entries.Remove(entry);
+                }
+                else
+                {
+                    return entry;
+                }
+            }
+            return entryList.CreateEntry(m_InternalProvider.Provide<TObject>(location, loadDependencyOperation));
         }
 
     }

@@ -9,13 +9,13 @@ namespace UnityEngine.ResourceManagement
     /// </summary>
     public class VirtualAssetBundleManager : MonoBehaviour
     {
-        Dictionary<string, VirtualAssetBundle> m_allBundles = new Dictionary<string, VirtualAssetBundle>();
-        Dictionary<string, VirtualAssetBundle> m_activeBundles = new Dictionary<string, VirtualAssetBundle>();
+        Dictionary<string, VirtualAssetBundle> m_AllBundles = new Dictionary<string, VirtualAssetBundle>();
+        Dictionary<string, VirtualAssetBundle> m_ActiveBundles = new Dictionary<string, VirtualAssetBundle>();
 
-        long m_remoteLoadSpeed = 1024 * 100; //100 KB per second
-        long m_localLoadSpeed = 1024 * 1024 * 10; //10 MB per second
+        long m_RemoteLoadSpeed = 1024 * 100; //100 KB per second
+        long m_LocalLoadSpeed = 1024 * 1024 * 10; //10 MB per second
 
-        private void Awake()
+        void Awake()
         {
             DontDestroyOnLoad(gameObject);
         }
@@ -44,10 +44,10 @@ namespace UnityEngine.ResourceManagement
         public void Initialize(VirtualAssetBundleRuntimeData virtualBundleData, Func<string, string> bundleNameConverter)
         {
             Debug.Assert(virtualBundleData != null);
-            m_localLoadSpeed = virtualBundleData.LocalLoadSpeed;
-            m_remoteLoadSpeed = virtualBundleData.RemoteLoadSpeed;
+            m_LocalLoadSpeed = virtualBundleData.LocalLoadSpeed;
+            m_RemoteLoadSpeed = virtualBundleData.RemoteLoadSpeed;
             foreach (var b in virtualBundleData.AssetBundles)
-                m_allBundles.Add(bundleNameConverter(b.Name), b);
+                m_AllBundles.Add(bundleNameConverter(b.Name), b);
         }
 
         internal bool Unload(IResourceLocation location)
@@ -55,16 +55,16 @@ namespace UnityEngine.ResourceManagement
             if (location == null)
                 throw new ArgumentException("IResourceLocation location cannot be null.");
 
-            VirtualAssetBundle bundle = null;
-            if (!m_allBundles.TryGetValue(location.InternalId, out bundle))
+            VirtualAssetBundle bundle;
+            if (!m_AllBundles.TryGetValue(location.InternalId, out bundle))
             {
                 Debug.LogWarningFormat("Unable to unload virtual bundle {0}.", location);
                 return false;
             }
-            if (updatingActiveBundles)
-                m_pendingOperations.Add(location.InternalId, null);
+            if (m_UpdatingActiveBundles)
+                m_PendingOperations.Add(location.InternalId, null);
             else
-                m_activeBundles.Remove(location.InternalId);
+                m_ActiveBundles.Remove(location.InternalId);
             return bundle.Unload();
         }
 
@@ -73,41 +73,41 @@ namespace UnityEngine.ResourceManagement
             if (location == null)
                 throw new ArgumentException("IResourceLocation location cannot be null.");
             VirtualAssetBundle bundle;
-            if (!m_allBundles.TryGetValue(location.InternalId, out bundle))
+            if (!m_AllBundles.TryGetValue(location.InternalId, out bundle))
                 return new CompletedOperation<VirtualAssetBundle>().Start(location, location, default(VirtualAssetBundle), new ResourceManagerException(string.Format("Unable to unload virtual bundle {0}.", location)));
 
-            if (updatingActiveBundles)
-                m_pendingOperations.Add(location.InternalId, bundle);
+            if (m_UpdatingActiveBundles)
+                m_PendingOperations.Add(location.InternalId, bundle);
             else
-                m_activeBundles.Add(location.InternalId, bundle);
+                m_ActiveBundles.Add(location.InternalId, bundle);
             return bundle.StartLoad(location);
         }
 
-        bool updatingActiveBundles = false;
-        Dictionary<string, VirtualAssetBundle> m_pendingOperations = new Dictionary<string, VirtualAssetBundle>();
+        bool m_UpdatingActiveBundles;
+        Dictionary<string, VirtualAssetBundle> m_PendingOperations = new Dictionary<string, VirtualAssetBundle>();
         internal void Update()
         {
             long localCount = 0;
             long remoteCount = 0;
-            foreach (var b in m_activeBundles)
+            foreach (var b in m_ActiveBundles)
                 b.Value.CountBandwidthUsage(ref localCount, ref remoteCount);
 
-            long localBW = localCount > 1 ? (m_localLoadSpeed / localCount) : m_localLoadSpeed;
-            long remoteBW = remoteCount > 1 ? (m_remoteLoadSpeed / remoteCount) : m_remoteLoadSpeed;
-            updatingActiveBundles = true;
-            foreach (var b in m_activeBundles)
-                b.Value.UpdateAsyncOperations(localBW, remoteBW);
-            updatingActiveBundles = false;
-            if (m_pendingOperations.Count > 0)
+            long localBw = localCount > 1 ? (m_LocalLoadSpeed / localCount) : m_LocalLoadSpeed;
+            long remoteBw = remoteCount > 1 ? (m_RemoteLoadSpeed / remoteCount) : m_RemoteLoadSpeed;
+            m_UpdatingActiveBundles = true;
+            foreach (var b in m_ActiveBundles)
+                b.Value.UpdateAsyncOperations(localBw, remoteBw);
+            m_UpdatingActiveBundles = false;
+            if (m_PendingOperations.Count > 0)
             {
-                foreach (var o in m_pendingOperations)
+                foreach (var o in m_PendingOperations)
                 {
                     if (o.Value == null)
-                        m_activeBundles.Remove(o.Key);
+                        m_ActiveBundles.Remove(o.Key);
                     else
-                        m_activeBundles.Add(o.Key, o.Value);
+                        m_ActiveBundles.Add(o.Key, o.Value);
                 }
-                m_pendingOperations.Clear();
+                m_PendingOperations.Clear();
             }
         }
     }

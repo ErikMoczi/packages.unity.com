@@ -1,35 +1,42 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 
 namespace UnityEngine.ResourceManagement
 {
+    /// <summary>
+    /// Provides assets from virtual asset bundles.  Actual loads are done through the AssetDatabase API.
+    /// </summary>
     public class VirtualBundledAssetProvider : ResourceProviderBase
     {
+        /// <summary>
+        /// Default copnstructor.
+        /// </summary>
         public VirtualBundledAssetProvider()
         {
-            m_providerId = typeof(BundledAssetProvider).FullName; 
+            m_ProviderId = typeof(BundledAssetProvider).FullName; 
         }
 
-        internal class InternalOp<TObject> : InternalProviderOperation<TObject>
+        class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
-            System.Action<IAsyncOperation<TObject>> onCompleteAction;
-            IAsyncOperation m_dependencyOperation;
-            IAsyncOperation<TObject> m_requestOperation;
+            Action<IAsyncOperation<TObject>> m_OnCompleteAction;
+            IAsyncOperation m_DependencyOperation;
+            IAsyncOperation<TObject> m_RequestOperation;
 
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
-                m_result = null;
-                if (onCompleteAction == null)
-                    onCompleteAction = OnComplete;
-                m_requestOperation = null;
-                m_dependencyOperation = loadDependencyOperation;
-                loadDependencyOperation.Completed += (obj) =>
+                m_Result = null;
+                if (m_OnCompleteAction == null)
+                    m_OnCompleteAction = OnComplete;
+                m_RequestOperation = null;
+                m_DependencyOperation = loadDependencyOperation;
+                loadDependencyOperation.Completed += obj =>
                 {
                     VirtualAssetBundle bundle;
                     if (obj.Result != null && obj.Result.Count > 0 && (bundle = obj.Result[0] as VirtualAssetBundle) != null)
                     {
-                        (m_requestOperation = bundle.LoadAssetAsync<TObject>(location)).Completed += onCompleteAction;
+                        (m_RequestOperation = bundle.LoadAssetAsync<TObject>(location)).Completed += m_OnCompleteAction;
                     }
                     else
                         OnComplete();
@@ -45,10 +52,10 @@ namespace UnityEngine.ResourceManagement
                     if (IsDone)
                         return 1;
 
-                    float reqPer = m_requestOperation == null ? 0 : m_requestOperation.PercentComplete;
-                    if (m_dependencyOperation == null)
+                    float reqPer = m_RequestOperation == null ? 0 : m_RequestOperation.PercentComplete;
+                    if (m_DependencyOperation == null)
                         return reqPer;
-                    return reqPer * .25f + m_dependencyOperation.PercentComplete * .75f;
+                    return reqPer * .25f + m_DependencyOperation.PercentComplete * .75f;
                 }
             }
             internal override TObject ConvertResult(AsyncOperation operation) { return null; }
@@ -58,9 +65,9 @@ namespace UnityEngine.ResourceManagement
         public override IAsyncOperation<TObject> Provide<TObject>(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
         {
             if (location == null)
-                throw new System.ArgumentNullException("location");
+                throw new ArgumentNullException("location");
             if (loadDependencyOperation == null)
-                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new System.ArgumentNullException("IAsyncOperation<IList<object>> loadDependencyOperation"));
+                return new CompletedOperation<TObject>().Start(location, location, default(TObject), new ArgumentNullException("IAsyncOperation<IList<object>> loadDependencyOperation"));
             var operation = AsyncOperationCache.Instance.Acquire<InternalOp<TObject>>();
             return operation.Start(location, loadDependencyOperation);
         }
@@ -69,7 +76,7 @@ namespace UnityEngine.ResourceManagement
         public override bool Release(IResourceLocation location, object asset)
         {
             if (location == null)
-                throw new System.ArgumentNullException("location");
+                throw new ArgumentNullException("location");
             return true;
 
         }

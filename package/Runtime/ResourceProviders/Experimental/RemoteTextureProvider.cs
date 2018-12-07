@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine.Networking;
 
@@ -14,25 +15,26 @@ namespace UnityEngine.ResourceManagement
             return base.CanProvide<TObject>(location) && ResourceManagerConfig.IsInstance<TObject, Texture2D>();
         }
 
-        internal class InternalOp<TObject> : InternalProviderOperation<TObject>
+        class InternalOp<TObject> : InternalProviderOperation<TObject>
             where TObject : class
         {
-            IAsyncOperation m_dependencyOperation;
-            AsyncOperation m_requestOperation;
+            IAsyncOperation m_DependencyOperation;
+            AsyncOperation m_RequestOperation;
             public InternalProviderOperation<TObject> Start(IResourceLocation location, IAsyncOperation<IList<object>> loadDependencyOperation)
             {
-                m_result = null;
-                m_dependencyOperation = loadDependencyOperation;
-                m_requestOperation = null;
+                m_Result = null;
+                m_DependencyOperation = loadDependencyOperation;
+                m_RequestOperation = null;
                 if (loadDependencyOperation != null && location != null)
                 {
-                    loadDependencyOperation.Completed += (obj) =>
+                    loadDependencyOperation.Completed += obj =>
                     {
-                        m_requestOperation = UnityWebRequestTexture.GetTexture(location.InternalId).SendWebRequest();
-                        if (m_requestOperation.isDone)
-                            DelayedActionManager.AddAction((System.Action<AsyncOperation>)OnComplete, 0, m_requestOperation);
+
+                        m_RequestOperation = UnityWebRequestTexture.GetTexture(location.InternalId).SendWebRequest();
+                        if (m_RequestOperation.isDone)
+                            DelayedActionManager.AddAction((Action<AsyncOperation>)OnComplete, 0, m_RequestOperation);
                         else
-                            m_requestOperation.completed += OnComplete;
+                            m_RequestOperation.completed += OnComplete;
                     };
                 }
                 return base.Start(location);
@@ -44,16 +46,23 @@ namespace UnityEngine.ResourceManagement
                     if (IsDone)
                         return 1;
 
-                    float reqPer = m_requestOperation == null ? 0 : m_requestOperation.progress;
-                    if (m_dependencyOperation == null)
+                    float reqPer = m_RequestOperation == null ? 0 : m_RequestOperation.progress;
+                    if (m_DependencyOperation == null)
                         return reqPer;
 
-                    return reqPer * .25f + m_dependencyOperation.PercentComplete * .75f;
+                    return reqPer * .25f + m_DependencyOperation.PercentComplete * .75f;
                 }
             }
             internal override TObject ConvertResult(AsyncOperation op)
             {
-                return ((op as UnityWebRequestAsyncOperation).webRequest.downloadHandler as DownloadHandlerTexture).texture as TObject;
+                if (op is UnityWebRequestAsyncOperation)
+                {
+                    var textureHandler = ((op as UnityWebRequestAsyncOperation).webRequest.downloadHandler as DownloadHandlerTexture);
+                    if(textureHandler != null)
+                        return textureHandler.texture as TObject;
+                }
+
+                return null;
             }
         }
 
@@ -68,7 +77,7 @@ namespace UnityEngine.ResourceManagement
         public override bool Release(IResourceLocation location, object asset)
         {
             if (location == null)
-                throw new System.ArgumentNullException("location");
+                throw new ArgumentNullException("location");
             return true;
         }
     }

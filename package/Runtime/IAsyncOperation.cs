@@ -11,7 +11,7 @@ namespace UnityEngine.ResourceManagement
         None,
         Succeeded,
         Failed
-    };
+    }
 
     /// <summary>
     /// Base interface of all async ops
