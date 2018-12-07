@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -12,40 +13,37 @@ namespace Unity.Tiny
 {
     internal class TinyGameView : TinyEditorWindowOverride<EditorWindow>
     {
+        private static readonly List<TinyGameView> s_ActiveWindows = new List<TinyGameView>();
+        
         private Uri QRCodeURL { get; set; }
         private Texture2D QRCodeTexture { get; set; }
 
         public override void OnEnable()
         {
             base.OnEnable();
+            s_ActiveWindows.Add(this);
 
             var imgui = new IMGUIContainer(OnGUI);
             Root.Add(imgui);
             imgui.StretchToParentSize();
-            Root.visible = EditorApplication.isPlayingOrWillChangePlaymode;
-            EditorApplication.playModeStateChanged += HandlePlayModeStateChanged;
         }
 
         public override void OnDisable()
         {
-            EditorApplication.playModeStateChanged -= HandlePlayModeStateChanged;
+            base.OnDisable();
+            s_ActiveWindows.Remove(this);
         }
-        
-        private void HandlePlayModeStateChanged(PlayModeStateChange state)
+
+        [InitializeOnLoadMethod]
+        private static void Initialize()
         {
-            switch (state)
+            EditorApplication.update += () =>
             {
-                case PlayModeStateChange.ExitingEditMode:
-                case PlayModeStateChange.EnteredPlayMode:
-                    Root.visible = true;
-                    break;
-                case PlayModeStateChange.EnteredEditMode:
-                case PlayModeStateChange.ExitingPlayMode:
-                    Root.visible = false;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(state), state, null);
-            }
+                foreach (var window in s_ActiveWindows)
+                {
+                    window.Root.visible = EditorApplication.isPlayingOrWillChangePlaymode;
+                }
+            };
         }
 
         private void OnGUI()

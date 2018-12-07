@@ -17,19 +17,20 @@ namespace Unity.Tiny
 
         private RegistryTreeView.Filters Filter { get; }
         private EditorContextType Context { get; }
-        
-        protected IncludedInBuildSettingsProvider(string localPath, RegistryTreeView.Filters filter, EditorContextType context)
+
+        protected IncludedInBuildSettingsProvider(string localPath, RegistryTreeView.Filters filter,
+            EditorContextType context)
             : base("Project/Tiny/" + localPath
 #if UNITY_2019_1_OR_NEWER
                 , SettingsScope.Project
 #endif
-                )
+            )
         {
             label = localPath;
             Filter = filter;
             Context = context;
         }
-        
+
         [TinyInitializeOnLoad]
         [UsedImplicitly]
         private static void ResetState()
@@ -76,11 +77,10 @@ namespace Unity.Tiny
 
         public override void OnGUI(string searchContext)
         {
+
             if (TinyEditorApplication.ContextType == EditorContextType.None)
             {
-                ++EditorGUI.indentLevel;
                 EditorGUILayout.LabelField("No Tiny context is currently opened.");
-                --EditorGUI.indentLevel;
             }
             else if (Context.HasFlag(TinyEditorApplication.ContextType))
             {
@@ -109,9 +109,7 @@ namespace Unity.Tiny
             }
             else
             {
-                ++EditorGUI.indentLevel;
                 EditorGUILayout.LabelField($"No Tiny {TinyEditorApplication.ContextType} is currently opened.");
-                --EditorGUI.indentLevel;
             }
         }
     }

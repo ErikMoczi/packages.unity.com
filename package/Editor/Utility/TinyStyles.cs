@@ -37,16 +37,9 @@ namespace Unity.Tiny
             focused = {background = null}
         };
 
-        public static GUIStyle Header1 { get; } = new GUIStyle(EditorStyles.largeLabel)
+        public static GUIStyle SettingsSection { get; } = new GUIStyle(EditorStyles.label)
         {
             fontStyle = FontStyle.Bold,
-            fontSize = 18
-        };
-
-        public static GUIStyle Header2 { get; } = new GUIStyle(EditorStyles.largeLabel)
-        {
-            fontStyle = FontStyle.Bold,
-            fontSize = 15
         };
 
         public static GUIStyle TypeMissingStyle { get; } = new GUIStyle

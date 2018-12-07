@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
@@ -14,7 +13,7 @@ namespace Unity.Tiny
 #if UNITY_2019_1_OR_NEWER
                 , SettingsScope.Project
 #endif
-                )
+            )
         {
         }
 
@@ -22,49 +21,48 @@ namespace Unity.Tiny
         [UsedImplicitly]
         public static SettingsProvider Provider()
         {
-            return new TinySettingsProvider(){ label = "Tiny" };
+            return new TinySettingsProvider() {label = "Tiny"};
         }
 
         #region Unity
-        private Vector2 m_ScrollPosition = Vector2.zero;
 
         public override void OnGUI(string searchContext)
         {
-            m_ScrollPosition = EditorGUILayout.BeginScrollView(m_ScrollPosition);
+            EditorGUILayout.BeginHorizontal();
             try
             {
+                GUILayout.Space(5.0f);
                 using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
                 {
                     if (TinyEditorApplication.ContextType == EditorContextType.Project)
                     {
                         var project = TinyEditorApplication.Project;
-                        GUILayout.Label(project.Name, TinyStyles.Header1);
+                        label = project.Name;
                         DrawProjectSettings(project);
                     }
                     else if (TinyEditorApplication.ContextType == EditorContextType.Module)
                     {
                         var module = TinyEditorApplication.Module;
-                        GUILayout.Label(module.Name, TinyStyles.Header1);
+                        label = module.Name;
                         DrawModuleSettings(module);
                     }
                     else
                     {
-                        ++EditorGUI.indentLevel;
-                        GUILayout.Label("Tiny Settings", TinyStyles.Header1);
+                        label = "Tiny Settings";
                         EditorGUILayout.LabelField("No Tiny context is currently opened.");
-                        --EditorGUI.indentLevel;
                     }
                 }
             }
             finally
             {
-                EditorGUILayout.EndScrollView();
+                EditorGUILayout.EndHorizontal();
             }
         }
 
         #endregion
 
         #region Project Settings
+
         private static TinyContext s_Context;
         private static Vector2 m_PreviousCanvasSize = -Vector2.one;
 
@@ -91,28 +89,31 @@ namespace Unity.Tiny
             try
             {
                 EditorGUILayout.Space();
-                GUILayout.Label("Project Settings", TinyStyles.Header2);
+                GUILayout.Label("Project Settings", TinyStyles.SettingsSection);
                 EditorGUILayout.Space();
 
-                ++EditorGUI.indentLevel;
-
-                project.Settings.CanvasAutoResize = EditorGUILayout.Toggle("Auto-Resize Canvas", project.Settings.CanvasAutoResize);
+                project.Settings.CanvasAutoResize =
+                    EditorGUILayout.Toggle("Auto-Resize Canvas", project.Settings.CanvasAutoResize);
                 if (!project.Settings.CanvasAutoResize)
                 {
                     ++EditorGUI.indentLevel;
-                    project.Settings.CanvasWidth = EditorGUILayout.DelayedIntField("Width", project.Settings.CanvasWidth);
-                    project.Settings.CanvasHeight = EditorGUILayout.DelayedIntField("Height", project.Settings.CanvasHeight);
+                    project.Settings.CanvasWidth =
+                        EditorGUILayout.DelayedIntField("Width", project.Settings.CanvasWidth);
+                    project.Settings.CanvasHeight =
+                        EditorGUILayout.DelayedIntField("Height", project.Settings.CanvasHeight);
                     --EditorGUI.indentLevel;
                 }
 
-                project.Settings.RenderMode = (RenderingMode)EditorGUILayout.EnumPopup("Render Mode", project.Settings.RenderMode);
-                project.Settings.EmbedAssets = EditorGUILayout.Toggle(new GUIContent("Embedded Assets", "Assets are embedded as base64 (this will increase asset size by approx 34%)."), project.Settings.EmbedAssets);
+                project.Settings.RenderMode =
+                    (RenderingMode) EditorGUILayout.EnumPopup("Render Mode", project.Settings.RenderMode);
+                project.Settings.EmbedAssets = EditorGUILayout.Toggle(
+                    new GUIContent("Embedded Assets",
+                        "Assets are embedded as base64 (this will increase asset size by approx 34%)."),
+                    project.Settings.EmbedAssets);
 
                 TextureSettingsField(project.Settings.DefaultTextureSettings);
 
                 DrawCodeSettings(module);
-
-                --EditorGUI.indentLevel;
 
                 DrawLiveLinkSettings(project, workspace, isRelease);
                 DrawBuildSettings(project, workspace, isRelease);
@@ -126,8 +127,8 @@ namespace Unity.Tiny
                 var rect = GUILayoutUtility.GetRect(content, TinyStyles.AddComponentStyle);
                 if (EditorGUI.DropdownButton(rect, content, FocusType.Passive, TinyStyles.AddComponentStyle))
                 {
-                   TinyBuildPipeline.BuildAndLaunch();
-                   GUIUtility.ExitGUI();
+                    TinyBuildPipeline.BuildAndLaunch();
+                    GUIUtility.ExitGUI();
                 }
 
                 GUILayout.FlexibleSpace();
@@ -141,15 +142,18 @@ namespace Unity.Tiny
 
         private static void TextureSettingsField(TinyTextureSettings textureSettings)
         {
-            textureSettings.FormatType = (TextureFormatType) EditorGUILayout.EnumPopup("Default Texture Format", textureSettings.FormatType);
+            textureSettings.FormatType =
+                (TextureFormatType) EditorGUILayout.EnumPopup("Default Texture Format", textureSettings.FormatType);
 
             switch (textureSettings.FormatType)
             {
                 case TextureFormatType.JPG:
-                    textureSettings.JpgCompressionQuality = EditorGUILayout.IntSlider("Compression Quality", textureSettings.JpgCompressionQuality, 1, 100);
+                    textureSettings.JpgCompressionQuality = EditorGUILayout.IntSlider("Compression Quality",
+                        textureSettings.JpgCompressionQuality, 1, 100);
                     break;
                 case TextureFormatType.WebP:
-                    textureSettings.WebPCompressionQuality = EditorGUILayout.IntSlider("Compression Quality", textureSettings.WebPCompressionQuality, 1, 100);
+                    textureSettings.WebPCompressionQuality = EditorGUILayout.IntSlider("Compression Quality",
+                        textureSettings.WebPCompressionQuality, 1, 100);
                     break;
                 case TextureFormatType.Source:
                     break;
@@ -163,26 +167,38 @@ namespace Unity.Tiny
         private static void DrawBuildSettings(TinyProject project, TinyEditorWorkspace workspace, bool isRelease)
         {
             EditorGUILayout.Space();
-            GUILayout.Label("Build Settings", TinyStyles.Header2);
+            GUILayout.Label("Build Settings", TinyStyles.SettingsSection);
             EditorGUILayout.Space();
 
-            ++EditorGUI.indentLevel;
+            workspace.BuildConfiguration =
+                (TinyBuildConfiguration) EditorGUILayout.EnumPopup("Build Configuration", workspace.BuildConfiguration);
+            workspace.Platform = (TinyPlatform) EditorGUILayout.EnumPopup("Build Target", workspace.Platform);
 
-            workspace.BuildConfiguration = (TinyBuildConfiguration)EditorGUILayout.EnumPopup("Build Configuration", workspace.BuildConfiguration);
-            workspace.Platform = (TinyPlatform)EditorGUILayout.EnumPopup("Build Target", workspace.Platform);
-
-            project.Settings.IncludeWebPDecompressor = EditorGUILayout.Toggle(new GUIContent("Include WebP Decompressor", "Include WebP decompressor code in build. Required for browsers that does not support WebP image format."), project.Settings.IncludeWebPDecompressor);
-            project.Settings.RunBabel = EditorGUILayout.Toggle(new GUIContent("Transpile to ECMAScript 5", "Transpile user code to ECMAScript 5 for greater compatibility across browsers."), project.Settings.RunBabel);
-            project.Settings.MemorySize = EditorGUILayout.DelayedIntField(new GUIContent("Memory Size", "Total memory size pre-allocated for the entire project."), project.Settings.MemorySize);
-            project.Settings.SymbolsInReleaseBuild = EditorGUILayout.Toggle(new GUIContent("Symbols In Release Build", "Include full symbols in release build (this will increase runtime size, only enable for profiling and testing.)"), project.Settings.SymbolsInReleaseBuild);
+            project.Settings.IncludeWebPDecompressor = EditorGUILayout.Toggle(
+                new GUIContent("Include WebP Decompressor",
+                    "Include WebP decompressor code in build. Required for browsers that does not support WebP image format."),
+                project.Settings.IncludeWebPDecompressor);
+            project.Settings.RunBabel = EditorGUILayout.Toggle(
+                new GUIContent("Transpile to ECMAScript 5",
+                    "Transpile user code to ECMAScript 5 for greater compatibility across browsers."),
+                project.Settings.RunBabel);
+            project.Settings.MemorySize = EditorGUILayout.DelayedIntField(
+                new GUIContent("Memory Size", "Total memory size pre-allocated for the entire project."),
+                project.Settings.MemorySize);
+            project.Settings.SymbolsInReleaseBuild = EditorGUILayout.Toggle(
+                new GUIContent("Symbols In Release Build",
+                    "Include full symbols in release build (this will increase runtime size, only enable for profiling and testing.)"),
+                project.Settings.SymbolsInReleaseBuild);
 
             using (new EditorGUI.DisabledScope(!isRelease))
             {
                 var minify = new GUIContent("Minify JavaScript", "Minify JavaScript game code. Release builds only.");
-                var single = new GUIContent("Single File Output", "Embed JavaScript code in index.html. Release builds only.");
+                var single = new GUIContent("Single File Output",
+                    "Embed JavaScript code in index.html. Release builds only.");
                 if (isRelease)
                 {
-                    project.Settings.MinifyJavaScript = EditorGUILayout.Toggle(minify, project.Settings.MinifyJavaScript);
+                    project.Settings.MinifyJavaScript =
+                        EditorGUILayout.Toggle(minify, project.Settings.MinifyJavaScript);
                     project.Settings.SingleFileHtml = EditorGUILayout.Toggle(single, project.Settings.SingleFileHtml);
                 }
                 else
@@ -194,7 +210,8 @@ namespace Unity.Tiny
 
             using (new EditorGUI.DisabledScope(isRelease))
             {
-                var link = new GUIContent("Link To Source", "Link code files directly from your Unity project - no export required. Debug or Development builds only.");
+                var link = new GUIContent("Link To Source",
+                    "Link code files directly from your Unity project - no export required. Debug or Development builds only.");
                 if (!isRelease)
                 {
                     project.Settings.LinkToSource = EditorGUILayout.Toggle(link, project.Settings.LinkToSource);
@@ -204,24 +221,26 @@ namespace Unity.Tiny
                     EditorGUILayout.Toggle(link, false);
                 }
             }
-
-            --EditorGUI.indentLevel;
         }
 
         private static void DrawLiveLinkSettings(TinyProject project, TinyEditorWorkspace workspace, bool isRelease)
         {
             EditorGUILayout.Space();
-            GUILayout.Label("LiveLink Settings", TinyStyles.Header2);
+            GUILayout.Label("LiveLink Settings", TinyStyles.SettingsSection);
             EditorGUILayout.Space();
 
-            ++EditorGUI.indentLevel;
-
-            project.Settings.LocalWSServerPort = EditorGUILayout.DelayedIntField(new GUIContent("Local WS Server Port", "Port used by the local WebSocket server for live-link connection."), project.Settings.LocalWSServerPort);
-            project.Settings.LocalHTTPServerPort = EditorGUILayout.DelayedIntField(new GUIContent("Local HTTP Server Port", "Port used by the local HTTP server for hosting project."), project.Settings.LocalHTTPServerPort);
+            project.Settings.LocalWSServerPort = EditorGUILayout.DelayedIntField(
+                new GUIContent("Local WS Server Port",
+                    "Port used by the local WebSocket server for live-link connection."),
+                project.Settings.LocalWSServerPort);
+            project.Settings.LocalHTTPServerPort = EditorGUILayout.DelayedIntField(
+                new GUIContent("Local HTTP Server Port", "Port used by the local HTTP server for hosting project."),
+                project.Settings.LocalHTTPServerPort);
 
             using (new EditorGUI.DisabledScope(isRelease))
             {
-                var profiler = new GUIContent("Auto-Connect Profiler", "Automatically connect to the Unity Profiler at launch. Debug or Development builds only.");
+                var profiler = new GUIContent("Auto-Connect Profiler",
+                    "Automatically connect to the Unity Profiler at launch. Debug or Development builds only.");
                 if (!isRelease)
                 {
                     workspace.AutoConnectProfiler = EditorGUILayout.Toggle(profiler, workspace.AutoConnectProfiler);
@@ -231,49 +250,47 @@ namespace Unity.Tiny
                     EditorGUILayout.Toggle(profiler, false);
                 }
             }
-
-            --EditorGUI.indentLevel;
         }
 
         #endregion
 
         #region Module Settings
+
         private static void DrawModuleSettings(TinyModule module)
         {
             EditorGUIUtility.labelWidth = 225;
             EditorGUILayout.BeginVertical();
             try
             {
-                GUILayout.Label("Module Settings", TinyStyles.Header2);
+                GUILayout.Label("Module Settings", TinyStyles.SettingsSection);
                 EditorGUILayout.Space();
-                ++EditorGUI.indentLevel;
                 DrawCodeSettings(module);
-                --EditorGUI.indentLevel;
             }
             finally
             {
                 EditorGUILayout.EndVertical();
             }
         }
+
         #endregion
 
         #region Common
+
         private static void DrawCodeSettings(TinyModule module)
         {
             var version = module.Version;
             EditorGUI.BeginChangeCheck();
-            
+
             module.Namespace = NamespaceField("Default Namespace", module.Namespace);
             if (EditorGUI.EndChangeCheck() && version != module.Version)
             {
                 module.Registry.Context.GetManager<IScriptingManager>().Refresh();
             }
-            
+
             EditorGUILayout.LabelField("Description");
             ++EditorGUI.indentLevel;
             module.Documentation.Summary = DescriptionField(module.Documentation.Summary);
             --EditorGUI.indentLevel;
-
         }
 
         private static string NamespaceField(string label, string @namespace)
@@ -310,7 +327,7 @@ namespace Unity.Tiny
             summary = EditorGUILayout.TextArea(summary, wrapStyle);
             return summary;
         }
-        #endregion
 
+        #endregion
     }
 }

@@ -49,6 +49,7 @@ namespace Unity.Tiny
                 string[] movedAssets,
                 string[] movedFromAssetPaths)
             {
+                var tinyPathsToRegister = new List<string>();
                 Dictionary<string, string> remap = null;
                 
                 foreach (var path in importedAssets)
@@ -57,7 +58,8 @@ namespace Unity.Tiny
                     {
                         continue;
                     }
-                    
+
+                    var guid = AssetDatabase.AssetPathToGUID(path);
                     var obj = AssetDatabase.LoadMainAssetAtPath(path) as TinyScriptableObject;
 
                     if (!obj)
@@ -65,56 +67,63 @@ namespace Unity.Tiny
                         continue;
                     }
                     
-                    // Check for any already registered Ids
-                    // This is a case that can happen if a file was duplicated
-                    var duplicateIds = obj.Objects.Where(s_ObjectToAssetGuidMap.ContainsKey).ToArray();
+                    if (s_AssetGuidToContentHashMap.TryGetValue(guid, out var hash))
+                    {
+                        if (hash == obj.Hash)
+                        {
+                            // This object has not changed in any way. No need to process it
+                            continue;
+                        }
+                    }
 
-                    if (duplicateIds.Length > 0)
+                    // Always unregister the asset before checking duplicates or re-registering it
+                    UnregisterAsset(guid);
+                    
+                    // Check for any already registered Ids
+                    
+                    // Query the current active database to see if any of these guids already registered
+                    var duplicateIds = obj.Objects.Where(s_ObjectToAssetGuidMap.ContainsKey).ToList();
+                    
+                    if (duplicateIds.Count > 0)
                     {
                         if (null == remap)
                         {
                             remap = new Dictionary<string, string>();
                         }
-
+                        
                         foreach (var id in duplicateIds)
                         {
-                            remap.Add(new TinyId(id).ToString(), TinyId.New().ToString());
+                            if (!remap.ContainsKey(id))
+                            {
+                                remap.Add(id, TinyId.New().ToString());
+                            }
                         }
+                    }
+                    
+                    tinyPathsToRegister.Add(path);
+                }
+
+                if (null != remap)
+                {
+                    foreach (var path in tinyPathsToRegister)
+                    {
+                        RegistryObjectRemap.Remap(AsEnumerable(path), remap);
+                    }
+                }
+                else
+                {
+                    // Register assets
+                    foreach (var path in tinyPathsToRegister)
+                    {
+                        var guid = AssetDatabase.AssetPathToGUID(path);
+                    
+                        RegisterAsset(guid);
+                    
+                        // Change detection
+                        TinyAssetWatcher.MarkChanged(path);
                     }
                 }
                 
-                foreach (var path in importedAssets)
-                {
-                    if (!EndsWithTinyExtension(path))
-                    {
-                        continue;
-                    }
-
-                    if (null != remap)
-                    {
-                        RegistryObjectRemap.Remap(AsEnumerable(path), remap);
-                        continue;
-                    }
-
-                    var guid = AssetDatabase.AssetPathToGUID(path);
-
-                    if (s_AssetGuidToContentHashMap.TryGetValue(guid, out var hash))
-                    {
-                        var obj = AssetDatabase.LoadMainAssetAtPath(path) as TinyScriptableObject;
-
-                        if (obj && hash == obj.Hash)
-                        {
-                            continue;
-                        }
-                    }
-                    
-                    UnregisterAsset(guid);
-                    RegisterAsset(guid);
-                    
-                    // Change detection
-                    TinyAssetWatcher.MarkChanged(path);
-                }
-
                 foreach (var path in deletedAssets)
                 {
                     if (!EndsWithTinyExtension(path))
@@ -422,6 +431,26 @@ namespace Unity.Tiny
 
             if (null == obj.Objects)
             {
+                return;
+            }
+            
+            // Check for any already registered Ids
+            // This is a case that can happen if a file was duplicated
+            var duplicateIds = obj.Objects.Where(s_ObjectToAssetGuidMap.ContainsKey).ToArray();
+            
+            if (duplicateIds.Length > 0)
+            {
+                var remap = new Dictionary<string, string>();
+
+                foreach (var id in duplicateIds)
+                {
+                    remap.Add(id, TinyId.New().ToString());
+                }
+                
+                // Perform automatic remapping of all invalid guids
+                // @NOTE This only works for single monolithic files
+                //       This does NOT work for the multi-file approach
+                RegistryObjectRemap.Remap(AsEnumerable(path), remap);
                 return;
             }
             

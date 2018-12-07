@@ -203,6 +203,7 @@ namespace Unity.Tiny
             content.tooltip = string.Empty;
             if (GUI.Button(iconRect, content, TinyStyles.PaneOptionStyle))
             {
+                
                 var index = type.Fields.IndexOf(field);
                 var menu = new GenericMenu();
                 menu.AddItem(new GUIContent($"Remove"), false, () => RemoveField(type, field));
@@ -226,6 +227,7 @@ namespace Unity.Tiny
                     }
                 });
                 menu.ShowAsContext();
+                EndRename(null);
             }
         }
 
@@ -520,26 +522,28 @@ namespace Unity.Tiny
                         GUIUtility.ExitGUI();
                     }
                 };
-                label.OnRenamedStarted += rl =>
-                {
-                    foreach (var other in Labels.Values)
-                    {
-                        if (other == rl)
-                        {
-                            continue;
-                        }
-
-                        if (!other.IsRenaming)
-                        {
-                            continue;
-                        }
-                        
-                        other.EndRename(true);
-                    }
-                };
+                label.OnRenamedStarted += EndRename;
             }
 
             return label;
+        }
+
+        private void EndRename(RenamableLabel rl)
+        {
+            foreach (var other in Labels.Values)
+            {
+                if (other == rl)
+                {
+                    continue;
+                }
+
+                if (!other.IsRenaming)
+                {
+                    continue;
+                }
+                        
+                other.EndRename(true);
+            }
         }
         
         private void ShowModuleMissing(TinyModule mainModule, TinyModule moduleContainingType, TinyField field)

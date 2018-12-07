@@ -52,35 +52,44 @@ namespace Unity.Tiny
 
         public override void OnGUI(string searchContext)
         {
-            if (null == s_Context)
-            {
-                EditorGUILayout.LabelField("No Tiny context is currently opened.");
-                return;
-            }
-
-            if (null == m_BuildReportPanel)
-            {
-                CreateBuildReport();
-            }
-
-            var oldEnabled = GUI.enabled;
-            GUI.enabled = !EditorApplication.isCompiling && !EditorApplication.isPlayingOrWillChangePlaymode;
+            EditorGUILayout.BeginHorizontal();
             try
             {
-                m_BuildReportPanel?.DrawLayout();
-            }
-            catch (ExitGUIException)
-            {
-                throw;
-            }
-            catch (Exception e)
-            {
-                TinyEditorAnalytics.SendExceptionOnce("Editor.OnGUI", e);
-                throw;
+                GUILayout.Space(5.0f);
+                if (null == s_Context)
+                {
+                    EditorGUILayout.LabelField("No Tiny context is currently opened.");
+                    return;
+                }
+
+                if (null == m_BuildReportPanel)
+                {
+                    CreateBuildReport();
+                }
+
+                var oldEnabled = GUI.enabled;
+                GUI.enabled = !EditorApplication.isCompiling && !EditorApplication.isPlayingOrWillChangePlaymode;
+                try
+                {
+                    m_BuildReportPanel?.DrawLayout();
+                }
+                catch (ExitGUIException)
+                {
+                    throw;
+                }
+                catch (Exception e)
+                {
+                    TinyEditorAnalytics.SendExceptionOnce("Editor.OnGUI", e);
+                    throw;
+                }
+                finally
+                {
+                    GUI.enabled = oldEnabled;
+                }
             }
             finally
             {
-                GUI.enabled = oldEnabled;
+                EditorGUILayout.EndHorizontal();
             }
         }
 

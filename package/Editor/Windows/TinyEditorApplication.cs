@@ -194,7 +194,10 @@ namespace Unity.Tiny
                         {
                             Persistence.ReloadObject(registry, moved);
                         }
-
+                        
+                        // Pick the object out after it has been loaded
+                        obj = Registry.FindById(new TinyId(objects[0]));
+                        
                         Module.TryAddObjectReference(obj);
                     }
                     else if (null != obj)
