@@ -1,6 +1,6 @@
 Pass
 {		
-	Tags { "LightMode"="${VFXHDRPForwardPassName}"}
+	Tags { "LightMode"="Forward" }
 			
 	HLSLPROGRAM
 	#pragma target 4.5

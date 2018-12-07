@@ -35,12 +35,12 @@ Pass
 	${VFXInclude("Shaders/ParticleMeshes/Pass.template")}	
 		
 	#pragma fragment frag
-	float4 frag(ps_input i) : SV_TARGET
+	float frag(ps_input i) : SV_TARGET
 	{
 		float alpha = VFXGetFragmentColor(i).a;
 		alpha *= VFXGetTextureColor(VFX_SAMPLER(mainTexture),i).a;		
 		VFXClipFragmentColor(alpha,i);
-		return (float4)0;
+		return 0;
 	}
 	ENDHLSL
 }

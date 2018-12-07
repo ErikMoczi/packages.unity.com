@@ -374,31 +374,6 @@ namespace UnityEditor.VFX
             return null;
         }
 
-        public static void UnlinkModel(VFXModel model, bool notify = true)
-        {
-            if (model is IVFXSlotContainer)
-            {
-                var slotContainer = (IVFXSlotContainer)model;
-                VFXSlot slotToClean = null;
-                do
-                {
-                    slotToClean = slotContainer.inputSlots.Concat(slotContainer.outputSlots).FirstOrDefault(o => o.HasLink(true));
-                    if (slotToClean)
-                        slotToClean.UnlinkAll(true, notify);
-                }
-                while (slotToClean != null);
-            }
-        }
-
-        public static void RemoveModel(VFXModel model, bool notify = true)
-        {
-            VFXGraph graph = model.GetGraph();
-            if (graph != null)        
-                graph.UIInfos.Sanitize(graph); // Remove reference from groupInfos
-            UnlinkModel(model);
-            model.Detach(notify);
-        }
-
         public static void ReplaceModel(VFXModel dst, VFXModel src, bool notify = true)
         {
             // UI
@@ -426,7 +401,20 @@ namespace UnityEditor.VFX
             }
 
             // Unlink everything
-            UnlinkModel(src);
+            if (src is IVFXSlotContainer)
+            {
+                var slotContainer = src as IVFXSlotContainer;
+                VFXSlot slotToClean = null;
+                do
+                {
+                    slotToClean = slotContainer.inputSlots.Concat(slotContainer.outputSlots).FirstOrDefault(o => o.HasLink(true));
+                    if (slotToClean)
+                    {
+                        slotToClean.UnlinkAll(true, true);
+                    }
+                }
+                while (slotToClean != null);
+            }
 
             // Replace model
             var parent = src.GetParent();

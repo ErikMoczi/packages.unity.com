@@ -24,17 +24,17 @@
 
     #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoopDef.hlsl"
 
-    #ifdef HDRP_MATERIAL_TYPE_SIMPLE
+    #if HDRP_MATERIAL_TYPE_SIMPLE
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/SimpleLit.hlsl"
-        #define _DISABLE_SSR
+        #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/SimpleLightLoop.hlsl"
     #else
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
-    #endif
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoop.hlsl"
+    #endif
 
 #else // (SHADERPASS == SHADERPASS_FORWARD)
 
-    #ifdef HDRP_MATERIAL_TYPE_SIMPLE
+    #if HDRP_MATERIAL_TYPE_SIMPLE
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/SimpleLit.hlsl"
     #else
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"

@@ -65,12 +65,12 @@ namespace UnityEditor.VFX.Operator
                 IEnumerable<VFXPropertyWithValue> properties = null;
 
                 if (dimensions == DimensionCount.Two)
-                    properties = PropertiesFromType("InputProperties2D");
+                    properties = PropertiesFromType(nameof(InputProperties2D));
                 else
-                    properties = PropertiesFromType("InputProperties3D");
+                    properties = PropertiesFromType(nameof(InputProperties3D));
 
-                properties = properties.Concat(PropertiesFromType("InputPropertiesCommon"));
-                properties = properties.Concat(PropertiesFromType("InputPropertiesAmplitude"));
+                properties = properties.Concat(PropertiesFromType(nameof(InputPropertiesCommon)));
+                properties = properties.Concat(PropertiesFromType(nameof(InputPropertiesAmplitude)));
 
                 return properties;
             }
@@ -81,9 +81,9 @@ namespace UnityEditor.VFX.Operator
             get
             {
                 if (dimensions == DimensionCount.Two)
-                    return PropertiesFromType("OutputProperties2D");
+                    return PropertiesFromType(nameof(OutputProperties2D));
                 else
-                    return PropertiesFromType("OutputProperties3D");
+                    return PropertiesFromType(nameof(OutputProperties3D));
             }
         }
 

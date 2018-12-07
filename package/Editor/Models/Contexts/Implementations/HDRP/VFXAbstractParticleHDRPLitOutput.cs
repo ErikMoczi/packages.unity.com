@@ -323,9 +323,6 @@ namespace UnityEditor.VFX
 
                 if (onlyAmbientLighting && !isBlendModeOpaque)
                     yield return "USE_ONLY_AMBIENT_LIGHTING";
-
-                if (isBlendModeOpaque && materialType != MaterialType.SimpleLit && materialType != MaterialType.SimpleLitTranslucent)
-                    yield return "IS_OPAQUE_NOT_SIMPLE_LIT_PARTICLE";
             }
         }
 
@@ -406,9 +403,6 @@ namespace UnityEditor.VFX
                     forwardDefines.WriteLine("#define _SURFACE_TYPE_TRANSPARENT");
 
                 yield return new KeyValuePair<string, VFXShaderWriter>("${VFXHDRPForwardDefines}", forwardDefines);
-                var forwardPassName = new VFXShaderWriter();
-                forwardPassName.Write(materialType == MaterialType.SimpleLit || materialType == MaterialType.SimpleLitTranslucent ? "ForwardOnly" : "Forward");
-                yield return new KeyValuePair<string, VFXShaderWriter>("${VFXHDRPForwardPassName}", forwardPassName);
             }
         }
     }

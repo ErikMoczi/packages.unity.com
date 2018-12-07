@@ -324,15 +324,12 @@ namespace UnityEditor.VFX.Utils
                 uint mid = max >> 1;
                 while (max >= min)
                 {
-                    if (mid > m_accumulatedAreaTriangles.Length)
-                        throw new InvalidOperationException("Cannot Find FindIndexOfArea");
-
                     if (m_accumulatedAreaTriangles[mid] >= area &&
-                        (mid == 0 || (m_accumulatedAreaTriangles[mid-1] < area)))
+                        (mid == m_accumulatedAreaTriangles.Length - 1 || area < m_accumulatedAreaTriangles[mid + 1]))
                     {
                         return mid;
                     }
-                    else if (area < m_accumulatedAreaTriangles[mid])
+                    else if (m_accumulatedAreaTriangles[mid] > area)
                     {
                         max = mid - 1;
                     }
@@ -350,8 +347,13 @@ namespace UnityEditor.VFX.Utils
                 var areaPosition = m_Rand.NextDouble() * m_accumulatedAreaTriangles.Last();
                 uint areaIndex = FindIndexOfArea(areaPosition);
 
+                var triangle = 0;
+                for (; triangle < m_cacheData.triangles.Length; ++triangle)
+                    if (m_accumulatedAreaTriangles[triangle] >= areaPosition)
+                        break;
+
                 var rand = new Vector2(GetNextRandFloat(), GetNextRandFloat());
-                return Interpolate(m_cacheData.triangles[areaIndex], rand);
+                return Interpolate(m_cacheData.triangles[triangle], rand);
             }
         }
 
