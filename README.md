@@ -1,1 +1,1 @@
-# tracking unity packages
+This package is mandatory for all In-Editor Tutorials.

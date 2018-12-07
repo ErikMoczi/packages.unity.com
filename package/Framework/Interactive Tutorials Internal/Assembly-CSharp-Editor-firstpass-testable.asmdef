@@ -1,0 +1,19 @@
+{
+    "name": "Assembly-CSharp-Editor-firstpass-testable",
+    "references": [
+        "UnityEditor.InteractiveTutorials.Runtime",
+        "UnityEditor.InteractiveTutorialsFramework"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}
