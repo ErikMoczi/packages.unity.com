@@ -386,6 +386,9 @@ namespace Unity.Tiny
                     // The user has canceled the operation; bail out.
                     return;
                 }
+                
+                // QUICK and dirty hack to support discarding changes
+                ForceRelinkViews();
 
                 if (m_EntityGroupToGraph.ContainsKey(entityGroupRef))
                 {
@@ -421,6 +424,28 @@ namespace Unity.Tiny
                 }
 
                 SafeCallbacks.Invoke(OnEntityGroupUnloaded, entityGroupRef);
+            }
+        }
+
+        private void ForceRelinkViews()
+        {
+            if (!m_Scene.IsValid())
+            {
+                return;
+            }
+            
+            foreach (var obj in m_Scene.GetRootGameObjects())
+            {
+                var views = obj.GetComponentsInChildren<TinyEntityView>();
+
+                foreach (var view in views)
+                {
+                    var entity = view.EntityRef.Dereference(Registry);
+                    if (null != entity)
+                    {
+                        entity.View = view;
+                    }
+                }
             }
         }
 

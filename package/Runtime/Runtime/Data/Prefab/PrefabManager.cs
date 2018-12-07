@@ -418,6 +418,11 @@ namespace Unity.Tiny
             // Load the group from the main registry
             var instanceGroup = prefabInstance.EntityGroup.Dereference(Registry);
             var prefabGroup = prefabInstance.PrefabEntityGroup.Dereference(Registry);
+
+            if (null == instanceGroup || null == prefabGroup)
+            {
+                return false;
+            }
             
             var createdEntities = HashSetPool<TinyEntity.Reference>.Get();
             var entityReferenceRemap = DictionaryPool<TinyEntity.Reference, TinyEntity.Reference>.Get();
