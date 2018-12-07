@@ -32,6 +32,7 @@ namespace Unity.InteractiveTutorials.Tests
         [Test]
         public void WhenObjectReferencesIsEmpty_IsCompleted()
         {
+            Selection.objects = Enumerable.Empty<UnityEngine.Object>().ToArray();
             m_Criterion.SetObjectReferences(Enumerable.Empty<ObjectReference>());
 
             Assert.IsTrue(m_Criterion.completed);

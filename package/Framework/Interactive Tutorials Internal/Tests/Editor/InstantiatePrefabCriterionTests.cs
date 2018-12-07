@@ -26,10 +26,10 @@ namespace Unity.InteractiveTutorials.Tests
             m_TempFolderPath = AssetDatabase.GUIDToAssetPath(tempFolderGUID);
 
             var prefab1Path = m_TempFolderPath + "/Prefab1.prefab";
-            m_Prefab1 = PrefabUtility.CreatePrefab(prefab1Path, new GameObject("Prefab1"));
+            m_Prefab1 = PrefabUtility.SaveAsPrefabAsset(new GameObject("Prefab1"), prefab1Path);
 
             var prefab2Path = m_TempFolderPath + "/Prefab2.prefab";
-            m_Prefab2 = PrefabUtility.CreatePrefab(prefab2Path, new GameObject("Prefab2"));
+            m_Prefab2 = PrefabUtility.SaveAsPrefabAsset(new GameObject("Prefab2"), prefab2Path);
 
             var root = new GameObject("Root");
             var child = new GameObject("Child");
@@ -37,7 +37,7 @@ namespace Unity.InteractiveTutorials.Tests
             child.transform.parent = root.transform;
             grandchild.transform.parent = child.transform;
             var prefabWithGrandchildPath = m_TempFolderPath + "/PrefabWithGrandchild.prefab";
-            m_PrefabWithGrandchild = PrefabUtility.CreatePrefab(prefabWithGrandchildPath, root);
+            m_PrefabWithGrandchild = PrefabUtility.SaveAsPrefabAsset(root, prefabWithGrandchildPath);
         }
 
         [OneTimeTearDown]
@@ -120,7 +120,7 @@ namespace Unity.InteractiveTutorials.Tests
             var tempFolderGUID = AssetDatabase.CreateFolder("Assets", "Temp");
             var tempFolderPath = AssetDatabase.GUIDToAssetPath(tempFolderGUID);
             var prefabPath = tempFolderPath + "/Prefab.prefab";
-            var prefab = PrefabUtility.CreatePrefab(prefabPath, new GameObject("Prefab"));
+            var prefab = PrefabUtility.SaveAsPrefabAsset(new GameObject("Prefab"), prefabPath);
 
             m_Criterion.prefabParent = prefab;
 

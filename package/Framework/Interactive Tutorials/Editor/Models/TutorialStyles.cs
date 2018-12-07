@@ -16,6 +16,8 @@ namespace Unity.InteractiveTutorials
             sectionTitleLabel = GUI.skin.FindStyle(s_SectionTitleLabelStyle);
             theInBetweenText = GUI.skin.FindStyle(s_TheInBetweenTextStyle);
             narrativeStyle = GUI.skin.FindStyle(s_Narrative);
+            imageStyle = GUI.skin.FindStyle(s_ImageStyle);
+            videoStyle = GUI.skin.FindStyle(s_VideoStyle);
 
             sectionTitleBackground = GUI.skin.FindStyle(s_SectionTitleBackground);
             topBarBackground = GUI.skin.FindStyle(s_TopBarBackground);
@@ -38,12 +40,15 @@ namespace Unity.InteractiveTutorials
             iconButtonBack = GUI.skin.FindStyle(s_IconButtonBack);
             iconButtonReset = GUI.skin.FindStyle(s_IconButtonReset);
             iconButtonHome = GUI.skin.FindStyle(s_IconButtonHome);
+            iconButtonClose = GUI.skin.FindStyle(s_IconButtonClose);
             instructionLabelIconCompleted = GUI.skin.FindStyle(s_InstructionLabelIconStyleCompleted);
             instructionLabelIconNotCompleted = GUI.skin.FindStyle(s_InstructionLabelIconStyleNotCompleted);
         }
 
         private static readonly string s_InstructionLabelStyleName = "Instruction Label";
         private static readonly string s_Narrative = "NarrativeStyle";
+        private static readonly string s_ImageStyle = "ImageStyle";
+        private static readonly string s_VideoStyle = "VideoStyle";
         private static readonly string s_HeaderStyleName = "Header";
         private static readonly string s_LineStyleName = "Line";
         private static readonly string s_ListStyleName = "List";
@@ -75,9 +80,12 @@ namespace Unity.InteractiveTutorials
         private static readonly string s_IconButtonBack = "IconButtonBack";
         private static readonly string s_IconButtonReset = "IconButtonReset";
         private static readonly string s_IconButtonHome = "IconButtonHome";
+        private static readonly string s_IconButtonClose = "IconButtonClose";
 
 
         public static GUIStyle narrativeStyle;
+        public static GUIStyle imageStyle;
+        public static GUIStyle videoStyle;
         public static GUIStyle theInBetweenText;
         public static GUIStyle headerLabel;
         public static GUIStyle instructionLabel;
@@ -110,6 +118,7 @@ namespace Unity.InteractiveTutorials
         public static GUIStyle iconButtonBack;
         public static GUIStyle iconButtonReset;
         public static GUIStyle iconButtonHome;
+        public static GUIStyle iconButtonClose;
     }
 
     class TutorialStyles : ScriptableObject
@@ -127,7 +136,7 @@ namespace Unity.InteractiveTutorials
 
         public GUISkin skin { get { return m_Skin; } }
         [SerializeField]
-        GUISkin m_Skin;
+        GUISkin m_Skin = null;
 
         public string orderedListDelimiter { get { return m_OrderedListDelimiter; } }
         [SerializeField]
@@ -146,6 +155,11 @@ namespace Unity.InteractiveTutorials
         private Color m_HighlightColor = new Color32(0, 198, 223, 255);
 
         public float highlightThickness { get { return m_HighlightThickness; } }
+
+        public Color blockedInteractionColor { get { return m_BlockedInteractionColor; } }
+        [SerializeField]
+        private Color m_BlockedInteractionColor = new Color(1, 1, 1, 0.5f);
+
         [SerializeField, Range(0f, 10f)]
         private float m_HighlightThickness = 3f;
 

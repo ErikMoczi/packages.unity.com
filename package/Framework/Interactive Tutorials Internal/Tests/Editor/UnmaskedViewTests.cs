@@ -50,7 +50,7 @@ namespace Unity.InteractiveTutorials.Tests
 
             var viewsAndRects = UnmaskedView.GetViewsAndRects(unmaskedViews).m_MaskData;
             Assert.AreEqual(1, viewsAndRects.Count, "Did not find one view for the Toolbar");
-            var rects = viewsAndRects.Values.First();
+            var rects = viewsAndRects.Values.First().rects;
             Assert.AreEqual(10, rects.Count, "Did not find all of the expected named controls in the Toolbar");
         }
 
@@ -73,7 +73,7 @@ namespace Unity.InteractiveTutorials.Tests
                 };
                 var viewsAndRects = UnmaskedView.GetViewsAndRects(unmaskedViews).m_MaskData;
                 Assert.AreEqual(1, viewsAndRects.Count, "Did not find one view for the Inspector");
-                var rects = viewsAndRects.Values.First();
+                var rects = viewsAndRects.Values.First().rects;
                 Assert.AreEqual(1, rects.Count, "Did not find exactly one control for the SerializedProperty m_LocalPosition for a Transform");
             }
             finally
@@ -105,7 +105,7 @@ namespace Unity.InteractiveTutorials.Tests
                 };
                 var viewsAndRects = UnmaskedView.GetViewsAndRects(unmaskedViews).m_MaskData;
                 Assert.AreEqual(1, viewsAndRects.Count, "Did not find one view for the Inspector");
-                var rects = viewsAndRects.Values.First();
+                var rects = viewsAndRects.Values.First().rects;
                 Assert.AreEqual(1, rects.Count, "Did not find exactly one control for the SerializedProperty m_Color for a SpriteRenderer");
             }
             finally

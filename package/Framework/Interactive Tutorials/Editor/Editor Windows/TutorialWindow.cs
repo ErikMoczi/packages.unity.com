@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.AnimatedValues;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityObject = UnityEngine.Object;
@@ -75,7 +75,7 @@ namespace Unity.InteractiveTutorials
         private bool m_MaskingEnabled = true;
 
         [SerializeField]
-        private TutorialStyles m_Styles;
+        private TutorialStyles m_Styles = null;
         [SerializeField]
         private Vector2 m_ScrollPosition;
 
@@ -84,6 +84,11 @@ namespace Unity.InteractiveTutorials
 
         [SerializeField]
         private bool m_PlayModeChanging;
+
+        public const string k_OriginalLayoutPath = "Temp/OriginalLayout.dwlt";
+
+        VideoPlaybackManager m_VideoPlaybackManager = new VideoPlaybackManager();
+        public VideoPlaybackManager videoPlaybackManager { get { return m_VideoPlaybackManager; } }
 
         void TrackPlayModeChanging(PlayModeStateChange change)
         {
@@ -105,17 +110,12 @@ namespace Unity.InteractiveTutorials
             window = this;
             window.minSize = new Vector2(300f, 380f);
             if (m_CurrentTutorial == null)
-            {
-                string[] guids = AssetDatabase.FindAssets("t:Tutorial");
-                if (guids.Length > 0)
-                {
-                    var tutorial = AssetDatabase.LoadAssetAtPath<Tutorial>(AssetDatabase.GUIDToAssetPath(guids[0]));
-                    m_CurrentTutorial = tutorial;
-                }
-            }
+                m_CurrentTutorial = TutorialProjectSettings.instance.startupTutorial;
             this.titleContent.text = "Tutorials";
 
             m_AuthoringMode = ProjectMode.IsAuthoringMode();
+
+            m_VideoPlaybackManager.OnEnable();
 
             GUIViewProxy.positionChanged += OnGUIViewPositionChanged;
             HostViewProxy.actualViewChanged += OnHostViewActualViewChanged;
@@ -177,7 +177,73 @@ namespace Unity.InteractiveTutorials
             GUIViewProxy.positionChanged -= OnGUIViewPositionChanged;
             HostViewProxy.actualViewChanged -= OnHostViewActualViewChanged;
 
+            m_VideoPlaybackManager.OnDisable();
+
             ApplyMaskingSettings(false);
+        }
+
+        void SkipTutorial()
+        {
+            switch (m_CurrentTutorial.skipTutorialBehavior)
+            {
+                case Tutorial.SkipTutorialBehavior.SameAsExitBehavior:
+                    ExitTutorial(false);
+                    break;
+
+                case Tutorial.SkipTutorialBehavior.SkipToLastPage:
+                    m_CurrentTutorial.SkipToLastPage();
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        public static void SaveOriginalWindowLayout()
+        {
+            if (Resources.FindObjectsOfTypeAll<TutorialWindow>().Length == 0)
+            {
+                // Save current layout so we can restore it later
+                WindowLayoutProxy.SaveWindowLayout(TutorialWindow.k_OriginalLayoutPath);
+            }
+        }
+
+        static void RestoreOriginalWindowLayout()
+        {
+            // Restore original layout if it exists
+            if (File.Exists(k_OriginalLayoutPath))
+            {
+                EditorUtility.LoadWindowLayout(k_OriginalLayoutPath);
+                File.Delete(k_OriginalLayoutPath);
+            }
+        }
+
+        void ExitTutorial(bool completed)
+        {
+            RestoreOriginalWindowLayout();
+
+            if (m_CurrentTutorial.assetSelectedOnExit != null)
+                Selection.activeObject = m_CurrentTutorial.assetSelectedOnExit;
+
+            switch (m_CurrentTutorial.exitBehavior)
+            {
+                case Tutorial.ExitBehavior.ShowHomeWindow:
+                    if (completed)
+                        HomeWindowProxy.ShowTutorials();
+                    else if (EditorUtility.DisplayDialog(s_HomePromptTitle.text, s_HomePromptText.text, s_HomePromptYes.text, s_HomePromptNo.text))
+                    {
+                        HomeWindowProxy.ShowTutorials();
+                        GUIUtility.ExitGUI();
+                    }
+                    break;
+
+                case Tutorial.ExitBehavior.CloseWindow:
+                    Close();
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
 
         private void OnTutorialInitiated()
@@ -192,8 +258,7 @@ namespace Unity.InteractiveTutorials
             AnalyticsHelper.TutorialEnded(TutorialConclusion.Completed);
             GenesisHelper.LogTutorialEnded(m_CurrentTutorial.LessonId);
 
-            // Open Hub and show tutorials
-            HomeWindowProxy.ShowTutorials();
+            ExitTutorial(true);
         }
 
         public void CreateTutorialViews()
@@ -331,6 +396,8 @@ namespace Unity.InteractiveTutorials
             if (this == null || m_CurrentTutorial == null || m_CurrentTutorial.currentPage == null)
                 return;
 
+            titleContent.text = m_CurrentTutorial.windowTitle;
+
             if (m_CurrentTutorial.currentPage != null)
                 m_CurrentTutorial.currentPage.Initiate();
 
@@ -410,7 +477,7 @@ namespace Unity.InteractiveTutorials
                     }
 
                     var previousTaskState = true;
-                    using (var scrollView = new EditorGUILayout.ScrollViewScope(m_ScrollPosition, GUI.skin.verticalScrollbar, GUIStyle.none))
+                    using (var scrollView = new EditorGUILayout.ScrollViewScope(m_ScrollPosition, GUIStyle.none, GUI.skin.verticalScrollbar))
                     {
                         using (new EditorGUI.DisabledScope(pageCompleted))
                         {
@@ -472,13 +539,16 @@ namespace Unity.InteractiveTutorials
             {
                 if (m_CurrentTutorial.currentPageIndex > 0)
                 {
-                    if (GUILayout.Button(GUIContent.none, AllTutorialStyles.iconButtonBack))
+                    using (new EditorGUI.DisabledScope(m_CurrentTutorial.skipped))
                     {
-                        m_CurrentTutorial.GoToPreviousPage();
+                        if (GUILayout.Button(GUIContent.none, AllTutorialStyles.iconButtonBack))
+                        {
+                            m_CurrentTutorial.GoToPreviousPage();
 
-                        // Masking could potentially change when pressing this button which causes an immediate repaint
-                        // Exit GUI here to avoid re-entrant GUI errors
-                        GUIUtility.ExitGUI();
+                            // Masking could potentially change when pressing this button which causes an immediate repaint
+                            // Exit GUI here to avoid re-entrant GUI errors
+                            GUIUtility.ExitGUI();
+                        }
                     }
                 }
                 else
@@ -502,11 +572,12 @@ namespace Unity.InteractiveTutorials
                     }
                 }
                 //Exit tutorial
-                if (GUILayout.Button(GUIContent.none, AllTutorialStyles.iconButtonHome))
+                var icon = m_CurrentTutorial.exitBehavior == Tutorial.ExitBehavior.ShowHomeWindow ? AllTutorialStyles.iconButtonHome : AllTutorialStyles.iconButtonClose;
+                using (new EditorGUI.DisabledScope(m_CurrentTutorial.skipped))
                 {
-                    if (EditorUtility.DisplayDialog(s_HomePromptTitle.text, s_HomePromptText.text, s_HomePromptYes.text, s_HomePromptNo.text))
+                    if (GUILayout.Button(GUIContent.none, icon))
                     {
-                        HomeWindowProxy.ShowTutorials();
+                        SkipTutorial();
                         GUIUtility.ExitGUI();
                     }
                 }
@@ -615,6 +686,8 @@ namespace Unity.InteractiveTutorials
 
             AnalyticsHelper.PageShown(page, index);
             PrepareNewPage();
+
+            m_VideoPlaybackManager.ClearCache();
         }
 
         void OnGUIViewPositionChanged(UnityObject sender)
@@ -658,7 +731,7 @@ namespace Unity.InteractiveTutorials
                     else if (canMoveToNextPage)
                     {
                         highlightedViews = new UnmaskedView.MaskData();
-                        highlightedViews.AddParent(this);
+                        highlightedViews.AddParentFullyUnmasked(this);
                     }
                     // otherwise, highlight manually specified control rects if there are any
                     else
@@ -674,7 +747,7 @@ namespace Unity.InteractiveTutorials
                     }
 
                     // ensure tutorial window's HostView and tooltips are not masked
-                    unmaskedViews.AddParent(this);
+                    unmaskedViews.AddParentFullyUnmasked(this);
                     unmaskedViews.AddTooltipViews();
 
                     // tooltip views should not be highlighted
@@ -685,6 +758,7 @@ namespace Unity.InteractiveTutorials
                         m_Styles == null ? Color.magenta * new Color(1f, 1f, 1f, 0.8f) : m_Styles.maskingColor,
                         highlightedViews,
                         m_Styles == null ? Color.cyan * new Color(1f, 1f, 1f, 0.8f) : m_Styles.highlightColor,
+                        m_Styles == null ? new Color(1,1,1, 0.5f) : m_Styles.blockedInteractionColor,
                         m_Styles == null ? 3f : m_Styles.highlightThickness
                         );
                 }

@@ -9,7 +9,7 @@ namespace Unity.InteractiveTutorials
     class TutorialModalWindow : EditorWindow
     {
         [SerializeField]
-        private TutorialStyles m_Styles;
+        private TutorialStyles m_Styles = null;
         [SerializeField]
         private TutorialWelcomePage m_WelcomePage;
         private static bool m_IsShowing;

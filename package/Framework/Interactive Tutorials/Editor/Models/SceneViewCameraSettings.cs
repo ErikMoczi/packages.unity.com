@@ -12,35 +12,35 @@ namespace Unity.InteractiveTutorials
     {
         public SceneViewCameraMode cameraMode { get { return m_CameraMode; } }
         [SerializeField]
-        SceneViewCameraMode m_CameraMode;
+        SceneViewCameraMode m_CameraMode = SceneViewCameraMode.SceneView2D;
 
         public SceneViewFocusMode focusMode { get { return m_FocusMode; } }
         [SerializeField]
-        SceneViewFocusMode m_FocusMode;
+        SceneViewFocusMode m_FocusMode = SceneViewFocusMode.Manual;
 
         public bool orthographic { get { return m_Orthographic; } }
         [SerializeField]
-        bool m_Orthographic;
+        bool m_Orthographic = false;
 
         public float size { get { return m_Size; } }
         [SerializeField]
-        float m_Size;
+        float m_Size = default;
 
         public Vector3 pivot { get { return m_Pivot; } }
         [SerializeField]
-        Vector3 m_Pivot;
+        Vector3 m_Pivot = default ;
 
         public Quaternion rotation { get { return m_Rotation; } }
         [SerializeField]
-        Quaternion m_Rotation;
+        Quaternion m_Rotation = default;
 
         public SceneObjectReference frameObject { get { return m_FrameObject; } }
         [SerializeField]
-        SceneObjectReference m_FrameObject;
+        SceneObjectReference m_FrameObject = null;
 
         public bool enabled { get { return m_Enabled; } }
         [SerializeField]
-        bool m_Enabled;
+        bool m_Enabled = false;
 
         public void Apply()
         {

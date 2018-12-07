@@ -89,7 +89,7 @@ namespace Unity.InteractiveTutorials.Tests
             var go = CreateGameObject();
             var tempPath = AssetDatabase.GUIDToAssetPath(AssetDatabase.CreateFolder("Assets", "Temp"));
             var testPrefabPath = tempPath + "/TestPrefab.prefab";
-            var prefab = PrefabUtility.CreatePrefab(testPrefabPath, go);
+            var prefab = PrefabUtility.SaveAsPrefabAsset(go, testPrefabPath);
 
             reference.Update(prefab);
 
@@ -109,7 +109,7 @@ namespace Unity.InteractiveTutorials.Tests
             var go = CreateGameObject();
             var tempPath = AssetDatabase.GUIDToAssetPath(AssetDatabase.CreateFolder("Assets", "Temp"));
             var testPrefabPath = tempPath + "/TestPrefab.prefab";
-            var prefab = PrefabUtility.CreatePrefab(testPrefabPath, go);
+            var prefab = PrefabUtility.SaveAsPrefabAsset(go, testPrefabPath);
             var prefabInstance = PrefabUtility.InstantiatePrefab(prefab);
 
             reference.Update(prefabInstance);
@@ -122,6 +122,38 @@ namespace Unity.InteractiveTutorials.Tests
             Assert.AreEqual(prefabInstance, reference.ReferencedObjectAsGameObject);
 
             AssetDatabase.DeleteAsset(tempPath);
+        }
+
+        [Test]
+        public void ReferencePrefab_WhenReferencingPrefabVariant_returnsThePrefabAsset()
+        {
+            string tempPath = "";
+            string testPrefabVariantPath = "";
+            try
+            {
+                var go = CreateGameObject();
+                tempPath = AssetDatabase.GUIDToAssetPath(AssetDatabase.CreateFolder("Assets", "Temp"));
+                var testPrefabPath = tempPath + "/TestPrefab.prefab";
+                var prefab = PrefabUtility.SaveAsPrefabAssetAndConnect(go, testPrefabPath, InteractionMode.AutomatedAction);
+                testPrefabVariantPath = tempPath + "/TestPrefabVariant.prefab";
+                var prefabInstance = PrefabUtility.GetOutermostPrefabInstanceRoot(go);
+                var prefabAssetVariant = PrefabUtility.SaveAsPrefabAsset(prefabInstance, testPrefabVariantPath);
+
+                reference.Update(prefabAssetVariant);
+
+                Assert.IsTrue(reference.ReferenceResolved);
+                Assert.IsTrue(reference.IsPrefabReference);
+                Assert.IsNotNull(reference.ReferencedObject);
+                Assert.IsNotNull(reference.ReferencedObjectAsGameObject);
+                Assert.AreEqual(prefabAssetVariant, reference.ReferencedObject);
+                Assert.AreEqual(prefabAssetVariant, reference.ReferencedObjectAsGameObject);
+            }
+            finally
+            {
+
+                AssetDatabase.DeleteAsset(tempPath);
+                AssetDatabase.DeleteAsset(testPrefabVariantPath);
+            }
         }
 
         [Test]
@@ -172,7 +204,7 @@ namespace Unity.InteractiveTutorials.Tests
             var go = CreateGameObject();
             var goPrefab = CreateGameObject();
             var testPrefabPath = "Assets/TestPrefab.prefab";
-            var prefab = PrefabUtility.CreatePrefab(testPrefabPath, goPrefab);
+            var prefab = PrefabUtility.SaveAsPrefabAsset(goPrefab, testPrefabPath);
             var prefabInstance = PrefabUtility.InstantiatePrefab(prefab);
             var component = go.transform;
             var so = ScriptableObject.CreateInstance<TestAsset>();
@@ -259,7 +291,4 @@ namespace Unity.InteractiveTutorials.Tests
         }
     }
 
-    class TestAsset : ScriptableObject
-    {
-    }
 }

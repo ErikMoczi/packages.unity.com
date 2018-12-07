@@ -7,11 +7,11 @@ namespace Unity.InteractiveTutorials
     {
         public Texture icon { get { return m_Icon; } }
         [SerializeField]
-        private Texture m_Icon;
+        private Texture m_Icon = null;
 
         public string title { get { return m_Title; } }
         [SerializeField]
-        private string m_Title;
+        private string m_Title = null;
 
         public IEnumerable<TutorialParagraph> paragraphs { get { return m_Paragraphs; } }
         [SerializeField]

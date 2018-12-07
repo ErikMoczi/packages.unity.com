@@ -64,8 +64,12 @@ namespace Unity.InteractiveTutorials
 
         public static event Action<Tutorial> tutorialPagesChanged;
 
-        public string tutorialTitle { get { return m_TutorialTitle; } }
+        public string windowTitle { get { return m_WindowTitle; } }
         [Header("Content")]
+        [SerializeField]
+        string m_WindowTitle = "Tutorials";
+
+        public string tutorialTitle { get { return m_TutorialTitle; } }
         [SerializeField]
         string m_TutorialTitle = "";
 
@@ -78,17 +82,42 @@ namespace Unity.InteractiveTutorials
 
         [Header("Scene Data")]
         [SerializeField]
-        UnityEditor.SceneAsset m_Scene;
+        UnityEditor.SceneAsset m_Scene = null;
         [SerializeField]
-        SceneViewCameraSettings m_DefaultSceneCameraSettings;
+        SceneViewCameraSettings m_DefaultSceneCameraSettings = null;
+
+        public enum ExitBehavior
+        {
+            ShowHomeWindow,
+            CloseWindow,
+        }
+
+        public ExitBehavior exitBehavior { get { return m_ExitBehavior; } }
+        [Header("Exit Behavior")]
+        [SerializeField]
+        ExitBehavior m_ExitBehavior = ExitBehavior.ShowHomeWindow;
+
+        public enum SkipTutorialBehavior
+        {
+            SameAsExitBehavior,
+            SkipToLastPage,
+        }
+
+        public SkipTutorialBehavior skipTutorialBehavior { get { return m_SkipTutorialBehavior; } }
+        [SerializeField]
+        SkipTutorialBehavior m_SkipTutorialBehavior = SkipTutorialBehavior.SameAsExitBehavior;
+
+        public UnityEngine.Object assetSelectedOnExit { get { return m_AssetSelectedOnExit; } }
+        [SerializeField]
+        UnityEngine.Object m_AssetSelectedOnExit;
 
         public TutorialWelcomePage welcomePage { get { return m_WelcomePage; } }
         [Header("Pages"), SerializeField]
-        private TutorialWelcomePage m_WelcomePage;
+        private TutorialWelcomePage m_WelcomePage = null;
         [SerializeField]
         public TutorialWelcomePage completedPage { get { return m_CompletedPage; } }
         [SerializeField]
-        private TutorialWelcomePage m_CompletedPage;
+        private TutorialWelcomePage m_CompletedPage = null;
 
         [SerializeField]
         internal bool IsWelcomingPageShowing = true;
@@ -96,6 +125,9 @@ namespace Unity.InteractiveTutorials
         internal bool IsCompletedPageShowing = false;
 
         AutoCompletion m_AutoCompletion;
+
+        public bool skipped { get { return m_Skipped; } }
+        bool m_Skipped;
 
         public event Action tutorialInitiated;
         public event Action<TutorialPage, int> pageInitiated;
@@ -123,7 +155,6 @@ namespace Unity.InteractiveTutorials
         public IEnumerable<TutorialPage> pages { get { return m_Pages; } }
 
         public int currentPageIndex { get { return m_CurrentPageIndex; } }
-        [SerializeField, HideInInspector]
         int m_CurrentPageIndex = 0;
 
         public TutorialPage currentPage
@@ -143,7 +174,7 @@ namespace Unity.InteractiveTutorials
              "Windows: %APPDATA%/Unity/<version>/Preferences/Layouts\n" +
              "macOS: ~/Library/Preferences/Unity/<version>/Layouts\n" +
              "Linux: ~/.config/Preferences/Unity/<version>/Layouts")]
-        UnityObject m_WindowLayout;
+        UnityObject m_WindowLayout = null;
 
         public bool isAutoCompleting { get { return m_AutoCompletion.running; } }
         public string LessonId { get { return m_LessonId; } }
@@ -224,6 +255,9 @@ namespace Unity.InteractiveTutorials
 
         void LoadTutorialDefaultsIntoAssetsFolder()
         {
+            if (!TutorialProjectSettings.instance.restoreDefaultAssetsOnTutorialReload)
+                return;
+
             AssetDatabase.SaveAssets();
             string defaultsPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, k_DefaultsFolder);
             var dirtyMetaFiles = new HashSet<string>();
@@ -236,6 +270,9 @@ namespace Unity.InteractiveTutorials
 
         public void WriteAssetsToTutorialDefaultsFolder()
         {
+            if (!TutorialProjectSettings.instance.restoreDefaultAssetsOnTutorialReload)
+                return;
+
             string defaultsPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, k_DefaultsFolder);
             DirectoryInfo defaultsDirectory = new DirectoryInfo(defaultsPath);
             if (defaultsDirectory.Exists)
@@ -259,6 +296,8 @@ namespace Unity.InteractiveTutorials
 
         public void ReloadTutorial()
         {
+            TutorialWindow.SaveOriginalWindowLayout();
+
             LoadWindowLayout();
             ResetProgress();
 
@@ -277,6 +316,7 @@ namespace Unity.InteractiveTutorials
             m_CurrentPageIndex = 0;
             IsWelcomingPageShowing = true;
             IsCompletedPageShowing = false;
+            m_Skipped = false;
             LoadScene();
         }
 
@@ -308,6 +348,13 @@ namespace Unity.InteractiveTutorials
 
             if (goingBack != null)
                 goingBack(page);
+        }
+
+        public void SkipToLastPage()
+        {
+            m_Skipped = true;
+            m_CurrentPageIndex = pageCount - 1;
+            OnPageInitiated(currentPage, m_CurrentPageIndex);
         }
     }
 }

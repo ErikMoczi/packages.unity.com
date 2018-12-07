@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.AnimatedValues;
 using UnityEngine;
+using UnityEngine.Video;
 
 namespace Unity.InteractiveTutorials
 {
@@ -12,7 +13,9 @@ namespace Unity.InteractiveTutorials
         Instruction,
         UnorderedList,
         OrderedList,
-        Icons
+        Icons,
+        Image,
+        Video,
     }
 
     enum CompletionType
@@ -47,6 +50,14 @@ namespace Unity.InteractiveTutorials
         [SerializeField]
         InlineIconCollection m_Icons = new InlineIconCollection();
         readonly List<InlineIcon> m_IconBuffer = new List<InlineIcon>();
+
+        public Texture2D image { get { return m_Image; } }
+        [SerializeField]
+        Texture2D m_Image;
+
+        public VideoClip video { get { return m_Video; } }
+        [SerializeField]
+        VideoClip m_Video;
 
         [SerializeField]
         internal CompletionType m_CriteriaCompletion = CompletionType.CompletedWhenAllAreTrue;

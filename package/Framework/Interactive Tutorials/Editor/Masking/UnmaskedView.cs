@@ -1,31 +1,59 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
 namespace Unity.InteractiveTutorials
 {
+    internal enum MaskType
+    {
+        FullyUnmasked = 0,
+        BlockInteractions
+    }
+
+    internal enum MaskSizeModifier
+    {
+        NoModifications = 0,
+        ExpandWidthToWholeWindow
+    }
+
+    internal struct MaskViewData
+    {
+        internal MaskType maskType;
+        internal List<Rect> rects;
+        internal MaskSizeModifier maskSizeModifier;
+
+        internal static MaskViewData CreateEmpty(MaskType type)
+        {
+            return new MaskViewData()
+            {
+                maskType = type,
+                rects = null,
+            };
+        }
+    }
+
     [Serializable]
     public class UnmaskedView
     {
+        
         public class MaskData : ICloneable
         {
-            internal Dictionary<GUIViewProxy, List<Rect>> m_MaskData;
+            internal Dictionary<GUIViewProxy, MaskViewData> m_MaskData;
 
             public MaskData() : this(null) {}
 
             public int Count { get { return m_MaskData.Count; } }
 
-            internal MaskData(Dictionary<GUIViewProxy, List<Rect>> maskData)
+            internal MaskData(Dictionary<GUIViewProxy, MaskViewData> maskData)
             {
-                m_MaskData = maskData ?? new Dictionary<GUIViewProxy, List<Rect>>();
+                m_MaskData = maskData ?? new Dictionary<GUIViewProxy, MaskViewData>();
             }
 
-            public void AddParent(EditorWindow window)
+            public void AddParentFullyUnmasked(EditorWindow window)
             {
-                m_MaskData[window.GetParent()] = null;
+                m_MaskData[window.GetParent()] = MaskViewData.CreateEmpty(MaskType.FullyUnmasked);
             }
 
             public void RemoveParent(EditorWindow window)
@@ -39,7 +67,7 @@ namespace Unity.InteractiveTutorials
                 GUIViewDebuggerHelperProxy.GetViews(allViews);
 
                 foreach (var tooltipView in allViews.Where(v => v.IsGUIViewAssignableTo(GUIViewProxy.tooltipViewType)))
-                    m_MaskData[tooltipView] = null;
+                    m_MaskData[tooltipView] = MaskViewData.CreateEmpty(MaskType.FullyUnmasked);
             }
 
             public void RemoveTooltipViews()
@@ -63,16 +91,18 @@ namespace Unity.InteractiveTutorials
             GUIViewDebuggerHelperProxy.GetViews(allViews);
 
             // initialize result
-            var result = new Dictionary<GUIViewProxy, List<Rect>>();
+            var result = new Dictionary<GUIViewProxy, MaskViewData>();
             var unmaskedControls = new Dictionary<GUIViewProxy, List<GUIControlSelector>>();
             var viewsWithWindows = new Dictionary<GUIViewProxy, HashSet<EditorWindow>>();
             foreach (var unmaskedView in unmaskedViews)
             {
                 foreach (var view in GetMatchingViews(unmaskedView, allViews, viewsWithWindows))
                 {
-                    List<Rect> rects;
-                    if (!result.TryGetValue(view, out rects))
-                        result[view] = new List<Rect>(8);
+                    MaskViewData maskViewData;
+                    if (!result.TryGetValue(view, out maskViewData))
+                    {
+                        result[view] = new MaskViewData() { rects = new List<Rect>(8), maskType = unmaskedView.m_MaskType, maskSizeModifier = unmaskedView.m_MaskSizeModifier};
+                    }
 
                     List<GUIControlSelector> controls;
                     if (!unmaskedControls.TryGetValue(view, out controls))
@@ -127,6 +157,8 @@ namespace Unity.InteractiveTutorials
 
                 foreach (var controlSelector in unmaskedControls[viewRects.Key])
                 {
+                    Rect regionRect = Rect.zero;
+                    bool regionFound = false;
                     switch (controlSelector.selectorMode)
                     {
                         case GUIControlSelector.Mode.GUIContent:
@@ -134,14 +166,20 @@ namespace Unity.InteractiveTutorials
                             foreach (var instruction in drawInstructions)
                             {
                                 if (AreEquivalent(instruction.usedGUIContent, selectorContent))
-                                    viewRects.Value.Add(instruction.rect);
+                                {
+                                    regionFound = true;
+                                    regionRect = instruction.rect;
+                                }
                             }
                             break;
                         case GUIControlSelector.Mode.NamedControl:
                             foreach (var instruction in namedControlInstructions)
                             {
                                 if (instruction.name == controlSelector.controlName)
-                                    viewRects.Value.Add(instruction.rect);
+                                {
+                                    regionFound = true;
+                                    regionRect = instruction.rect;
+                                }
                             }
                             break;
                         case GUIControlSelector.Mode.Property:
@@ -153,8 +191,11 @@ namespace Unity.InteractiveTutorials
                                 if (
                                     instruction.targetTypeName == targetTypeName &&
                                     instruction.path == controlSelector.propertyPath
-                                    )
-                                    viewRects.Value.Add(instruction.rect);
+                                )
+                                {
+                                    regionFound = true;
+                                    regionRect = instruction.rect;
+                                }
                             }
                             break;
                         default:
@@ -164,6 +205,18 @@ namespace Unity.InteractiveTutorials
                             );
                             break;
                     }
+
+                    if (regionFound)
+                    {
+                        if (viewRects.Value.maskSizeModifier == MaskSizeModifier.ExpandWidthToWholeWindow)
+                        {
+                            const int padding = 5;
+                            regionRect.x = padding;
+                            regionRect.width = viewRects.Key.position.width - padding *2;
+                        }
+                        viewRects.Value.rects.Add(regionRect);
+                    }
+                    
                 }
 
                 GUIViewDebuggerHelperProxy.StopDebugging();
@@ -278,6 +331,12 @@ namespace Unity.InteractiveTutorials
         [SerializedTypeFilter(typeof(EditorWindow))]
         [SerializeField]
         private SerializedType m_EditorWindowType = new SerializedType(null);
+
+        [SerializeField]
+        private MaskType m_MaskType = MaskType.FullyUnmasked; 
+
+        [SerializeField]
+        private MaskSizeModifier m_MaskSizeModifier = MaskSizeModifier.NoModifications;
 
         [SerializeField]
         private List<GUIControlSelector> m_UnmaskedControls = new List<GUIControlSelector>();

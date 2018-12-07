@@ -10,7 +10,7 @@ namespace Unity.InteractiveTutorials
         SceneObjectReference m_SceneObjectReference;
 
         [SerializeField]
-        FutureObjectReference m_FutureObjectReference;
+        FutureObjectReference m_FutureObjectReference = null;
 
         public bool future { get { return m_FutureObjectReference != null; } }
 

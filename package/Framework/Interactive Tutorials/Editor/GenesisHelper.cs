@@ -215,7 +215,7 @@ namespace Unity.InteractiveTutorials
             [Serializable]
             class Wrapper
             {
-                public List<TutorialProgressStatus> statuses;
+                public List<TutorialProgressStatus> statuses = null;
             }
 
             public static List<TutorialProgressStatus> ParseResponses(string respText)

@@ -54,7 +54,7 @@ namespace Unity.InteractiveTutorials
 
         [Header("Initial Camera Settings")]
         [SerializeField]
-        SceneViewCameraSettings m_CameraSettings;
+        SceneViewCameraSettings m_CameraSettings = new SceneViewCameraSettings();
 
         [Header("Button Labels")]
         [SerializeField]
@@ -96,7 +96,7 @@ namespace Unity.InteractiveTutorials
 
         [Header("Sounds")]
         [SerializeField]
-        AudioClip m_CompletedSound;
+        AudioClip m_CompletedSound = null;
 
         public bool autoAdvanceOnComplete { get { return m_autoAdvance; } set { m_autoAdvance = value; }}
         [Header("Auto advance on complete?")]

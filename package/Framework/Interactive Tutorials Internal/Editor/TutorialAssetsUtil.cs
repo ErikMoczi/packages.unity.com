@@ -1,6 +1,4 @@
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using Unity.InteractiveTutorials;
 using UnityEditor;
 using UnityEngine;
@@ -39,7 +37,16 @@ public static class TutorialAssetsUtil
         CreateAsset(assetName, tutorial);
     }
 
-    private static void CreateAsset(string assetName, Object asset)
+    [MenuItem("Assets/Create/Tutorial Project Settings")]
+    public static void CreateAssetTutorialProjectSettings()
+    {
+        const string assetName = "Tutorial Project Settings.asset";
+        var tutorialProjectSettings = ScriptableObject.CreateInstance<TutorialProjectSettings>();
+        CreateAsset(assetName, tutorialProjectSettings);
+        TutorialProjectSettings.ReloadInstance();
+    }
+
+    static void CreateAsset(string assetName, UnityEngine.Object asset)
     {
         //GetActiveFolderPath always returns path with forward slashes
         var path = ProjectWindowUtil.GetActiveFolderPath() + "/" + assetName;

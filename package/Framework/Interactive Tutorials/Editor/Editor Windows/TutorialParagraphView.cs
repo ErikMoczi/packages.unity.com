@@ -28,8 +28,10 @@ namespace Unity.InteractiveTutorials
             hasChangedOnCompletion = false;
         }
 
-        public void SetWindow(EditorWindow window)
+        public void SetWindow(TutorialWindow window)
         {
+            m_TutorialWindow = window;
+
             if (m_FadeGroupAnim == null)
                 m_FadeGroupAnim = new AnimBool(false);
             m_FadeGroupAnim.valueChanged.AddListener(window.Repaint);
@@ -46,6 +48,8 @@ namespace Unity.InteractiveTutorials
         private string orderedListDelimiter, unorderedListBullet;
 
         private int m_InstructionIndex;
+
+        TutorialWindow m_TutorialWindow;
 
         public void Draw(ref bool previousTaskState, bool pageCompleted)
         {
@@ -157,6 +161,32 @@ namespace Unity.InteractiveTutorials
                         GUILayout.EndHorizontal();
                     }
                     EditorGUILayout.EndVertical();
+                    break;
+                case ParagraphType.Image:
+                    using (new EditorGUILayout.HorizontalScope(AllTutorialStyles.imageStyle))
+                    {
+                        GUILayout.FlexibleSpace();
+                        GUILayout.Label(paragraph.image, GUIStyle.none);
+                        GUILayout.FlexibleSpace();
+                    }
+                    break;
+                case ParagraphType.Video:
+                    {
+                        if (paragraph.video == null)
+                            break;
+
+                        var texture = m_TutorialWindow.videoPlaybackManager.GetTextureForVideoClip(paragraph.video);
+
+                        using (new EditorGUILayout.HorizontalScope(AllTutorialStyles.videoStyle))
+                        {
+                            GUILayout.FlexibleSpace();
+                            var position = GUILayoutUtility.GetRect(texture.width, texture.height, GUILayout.ExpandWidth(false), GUILayout.ExpandHeight(false));
+                            GUI.DrawTexture(position, texture);
+                            GUILayout.FlexibleSpace();
+                        }
+
+                        m_TutorialWindow.Repaint();
+                    }
                     break;
             }
         }

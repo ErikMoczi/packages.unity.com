@@ -13,13 +13,13 @@ namespace Unity.InteractiveTutorials
         internal static bool IsMasked(GUIViewProxy view, List<Rect> rects)
         {
             rects.Clear();
-            List<Rect> rectList;
 
             var unmaskedViewsKeys = s_UnmaskedViews.Keys.ToList();
             Debug.Log(unmaskedViewsKeys.Count);
-
-            if (s_UnmaskedViews.TryGetValue(view, out rectList))
+            MaskViewData maskViewData;
+            if (s_UnmaskedViews.TryGetValue(view, out maskViewData))
             {
+                var rectList = maskViewData.rects;
                 rects.AddRange(rectList);
                 return false;
             }
@@ -29,17 +29,19 @@ namespace Unity.InteractiveTutorials
         internal static bool IsHighlighted(GUIViewProxy view, List<Rect> rects)
         {
             rects.Clear();
-            List<Rect> rectList;
-            if (!s_HighlightedViews.TryGetValue(view, out rectList))
+            MaskViewData maskViewData;
+
+            if (!s_HighlightedViews.TryGetValue(view, out maskViewData))
                 return false;
+            var rectList = maskViewData.rects;
             rects.AddRange(rectList);
             return true;
         }
 
         static GUIViewProxyComparer s_GUIViewProxyComparer = new GUIViewProxyComparer();
 
-        private static readonly Dictionary<GUIViewProxy, List<Rect>> s_UnmaskedViews = new Dictionary<GUIViewProxy, List<Rect>>(s_GUIViewProxyComparer);
-        private static readonly Dictionary<GUIViewProxy, List<Rect>> s_HighlightedViews = new Dictionary<GUIViewProxy, List<Rect>>(s_GUIViewProxyComparer);
+        private static readonly Dictionary<GUIViewProxy, MaskViewData> s_UnmaskedViews = new Dictionary<GUIViewProxy, MaskViewData>(s_GUIViewProxyComparer);
+        private static readonly Dictionary<GUIViewProxy, MaskViewData> s_HighlightedViews = new Dictionary<GUIViewProxy, MaskViewData>(s_GUIViewProxyComparer);
 
         private static readonly List<VisualElement> s_Masks = new List<VisualElement>();
         private static readonly List<VisualElement> s_Highlighters = new List<VisualElement>();
@@ -92,23 +94,24 @@ namespace Unity.InteractiveTutorials
             s_Highlighters.Clear();
         }
 
-        private static void CopyMaskData(UnmaskedView.MaskData maskData, Dictionary<GUIViewProxy, List<Rect>> viewsAndResources)
+        private static void CopyMaskData(UnmaskedView.MaskData maskData, Dictionary<GUIViewProxy, MaskViewData> viewsAndResources)
         {
             viewsAndResources.Clear();
             foreach (var unmaskedView in maskData.m_MaskData)
             {
                 if (unmaskedView.Key == null)
                     continue;
-                var unmaskedRegions = unmaskedView.Value == null ? new List<Rect>(1) : unmaskedView.Value.ToList();
+                var maskViewData = unmaskedView.Value;
+                var unmaskedRegions = maskViewData.rects == null ? new List<Rect>(1) : maskViewData.rects.ToList();
                 if (unmaskedRegions.Count == 0)
                     unmaskedRegions.Add(new Rect(0f, 0f, unmaskedView.Key.position.width, unmaskedView.Key.position.height));
-                viewsAndResources[unmaskedView.Key] = unmaskedRegions;
+                viewsAndResources[unmaskedView.Key] = new MaskViewData() { maskType = maskViewData.maskType, rects = unmaskedRegions };
             }
         }
 
         public static void Mask(
             UnmaskedView.MaskData unmaskedViewsAndRegionsMaskData, Color maskColor,
-            UnmaskedView.MaskData highlightedRegionsMaskData, Color highlightColor, float highlightThickness
+            UnmaskedView.MaskData highlightedRegionsMaskData, Color highlightColor, Color blockedInteractionsColor, float highlightThickness
             )
         {
             Unmask();
@@ -124,13 +127,14 @@ namespace Unity.InteractiveTutorials
                 if (!view.isValid)
                     continue;
 
-                List<Rect> rects;
+                MaskViewData maskViewData;
 
                 var viewRect =  new Rect(0, 0, view.position.width, view.position.height);
 
                 // mask everything except the unmasked view rects
-                if (s_UnmaskedViews.TryGetValue(view, out rects))
+                if (s_UnmaskedViews.TryGetValue(view, out maskViewData))
                 {
+                    List<Rect> rects = maskViewData.rects;
                     var maskedRects = GetNegativeSpaceRects(viewRect, rects);
                     foreach (var rect in maskedRects)
                     {
@@ -139,6 +143,18 @@ namespace Unity.InteractiveTutorials
                         mask.layout = rect;
                         UIElementsHelper.Add(UIElementsHelper.GetVisualTree(view), mask);
                         s_Masks.Add(mask);
+                    }
+
+                    if (maskViewData.maskType == MaskType.BlockInteractions)
+                    {
+                        foreach (var rect in rects)
+                        {
+                            var mask = new VisualElement();
+                            mask.style.backgroundColor = blockedInteractionsColor;
+                            mask.layout = rect;
+                            UIElementsHelper.Add(UIElementsHelper.GetVisualTree(view), mask);
+                            s_Masks.Add(mask);
+                        }
                     }
                 }
                 // mask the whole view
@@ -151,8 +167,9 @@ namespace Unity.InteractiveTutorials
                     s_Masks.Add(mask);
                 }
 
-                if (s_HighlightedViews.TryGetValue(view, out rects))
+                if (s_HighlightedViews.TryGetValue(view, out maskViewData))
                 {
+                    var rects = maskViewData.rects;
                     // unclip highlight to apply as "outer stroke" if it is being applied to some control(s) in the view
                     var unclip = rects.Count > 1 || rects[0] != viewRect;
                     foreach (var rect in rects)

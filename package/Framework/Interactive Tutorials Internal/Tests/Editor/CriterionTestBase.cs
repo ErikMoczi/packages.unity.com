@@ -1,18 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 using UnityObject = UnityEngine.Object;
 
 namespace Unity.InteractiveTutorials.Tests
 {
-    public class CriterionTestBase<T> where T : Criterion
+    public class CriterionTestBase<T> : TestBase where T : Criterion
     {
         const string k_TempScenePath = "Assets/TempScene.unity";
         const string k_TempTutorialPagePath = "Assets/TempTutorialPage.asset";
@@ -52,11 +50,6 @@ namespace Unity.InteractiveTutorials.Tests
         {
             var scene = EditorSceneManager.GetActiveScene();
             EditorSceneManager.SaveScene(scene, k_TempScenePath);
-        }
-
-        protected string GetTestAssetPath(string relativeAssetPath)
-        {
-            return Path.Combine("Assets/Framework/Interactive Tutorials Internal/Tests/Editor", relativeAssetPath);
         }
 
         protected IEnumerable<FutureObjectReference> futureReferences

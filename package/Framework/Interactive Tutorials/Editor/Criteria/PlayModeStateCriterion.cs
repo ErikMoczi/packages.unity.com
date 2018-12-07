@@ -13,7 +13,7 @@ namespace Unity.InteractiveTutorials
         }
 
         [SerializeField]
-        PlayModeState m_RequiredPlayModeState;
+        PlayModeState m_RequiredPlayModeState = PlayModeState.Playing;
 
         public override void StartTesting()
         {

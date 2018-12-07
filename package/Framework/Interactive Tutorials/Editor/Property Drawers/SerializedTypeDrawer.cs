@@ -78,7 +78,7 @@ namespace Unity.InteractiveTutorials
             Options options;
             if (!m_PropertyPathToOptions.TryGetValue(property.propertyPath, out options))
             {
-                var filterAttribute = Attribute.GetCustomAttribute(fieldInfo, typeof(SerializedTypeFilterAttribute)) as SerializedTypeFilterAttribute;
+                var filterAttribute = Attribute.GetCustomAttribute(fieldInfo, typeof(SerializedTypeFilterAttributeBase), true) as SerializedTypeFilterAttributeBase;
                 options = new Options(filterAttribute.baseType);
                 m_PropertyPathToOptions[property.propertyPath] = options;
             }

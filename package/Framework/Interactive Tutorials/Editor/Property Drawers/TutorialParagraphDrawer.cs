@@ -12,6 +12,8 @@ namespace Unity.InteractiveTutorials
         const string k_CriteriaPath = "m_Criteria";
         const string k_SummaryPath = "m_Summary";
         const string k_CompletionPath = "m_CriteriaCompletion";
+        const string k_ImagePath = "m_Image";
+        const string k_VideoPath = "m_Video";
 
         protected override void DisplayChildProperty(
             Rect position, SerializedProperty parentProperty, SerializedProperty childProperty, GUIContent label
@@ -21,7 +23,7 @@ namespace Unity.InteractiveTutorials
             switch (childProperty.name)
             {
                 case k_TextPath:
-                    if (type == ParagraphType.Icons)
+                    if (type == ParagraphType.Icons || type == ParagraphType.Image || type == ParagraphType.Video)
                         return;
                     break;
                 case k_IconsPath:
@@ -37,6 +39,14 @@ namespace Unity.InteractiveTutorials
                     if (type != ParagraphType.Instruction)
                         return;
                     break;
+                case k_ImagePath:
+                    if (type != ParagraphType.Image)
+                        return;
+                    break;
+                case k_VideoPath:
+                    if (type != ParagraphType.Video)
+                        return;
+                    break;
             }
             base.DisplayChildProperty(position, parentProperty, childProperty, label);
         }
@@ -47,7 +57,7 @@ namespace Unity.InteractiveTutorials
             switch (childProperty.name)
             {
                 case k_TextPath:
-                    if (type == ParagraphType.Icons)
+                    if (type == ParagraphType.Icons || type == ParagraphType.Image || type == ParagraphType.Video)
                         return -EditorGUIUtility.standardVerticalSpacing;
                     break;
                 case k_IconsPath:
@@ -60,6 +70,14 @@ namespace Unity.InteractiveTutorials
                     break;
                 case k_SummaryPath:
                     if (type != ParagraphType.Instruction)
+                        return -EditorGUIUtility.standardVerticalSpacing;
+                    break;
+                case k_ImagePath:
+                    if (type != ParagraphType.Image)
+                        return -EditorGUIUtility.standardVerticalSpacing;
+                    break;
+                case k_VideoPath:
+                    if (type != ParagraphType.Video)
                         return -EditorGUIUtility.standardVerticalSpacing;
                     break;
             }

@@ -3,9 +3,15 @@ using System;
 namespace Unity.InteractiveTutorials
 {
     [AttributeUsage(AttributeTargets.Field)]
-    public class SerializedTypeFilterAttribute : Attribute
+    public abstract class SerializedTypeFilterAttributeBase : Attribute
     {
-        public Type baseType { get; private set; }
+        public Type baseType { get; protected set; }
+
+    }
+
+    [AttributeUsage(AttributeTargets.Field)]
+    public class SerializedTypeFilterAttribute : SerializedTypeFilterAttributeBase
+    {
 
         public SerializedTypeFilterAttribute(Type baseType)
         {
@@ -14,9 +20,8 @@ namespace Unity.InteractiveTutorials
     }
 
     [AttributeUsage(AttributeTargets.Field)]
-    public class SerializedTypeGUIViewFilterAttribute : Attribute
+    public class SerializedTypeGUIViewFilterAttribute : SerializedTypeFilterAttributeBase
     {
-        public Type baseType { get; private set; }
 
         public SerializedTypeGUIViewFilterAttribute()
         {

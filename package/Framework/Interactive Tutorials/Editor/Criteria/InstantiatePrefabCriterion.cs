@@ -47,10 +47,10 @@ namespace Unity.InteractiveTutorials
                 return;
 
             // Ensure prefab parent is infact a prefab parent
-            if (PrefabUtility.GetPrefabType(m_PrefabParent) == PrefabType.Prefab)
+            if (PrefabUtility.GetPrefabAssetType(m_PrefabParent) != PrefabAssetType.NotAPrefab)
             {
                 // Ensure prefab parent is the prefab root
-                var prefabRoot = PrefabUtility.FindPrefabRoot(m_PrefabParent);
+                var prefabRoot = m_PrefabParent.transform.root.gameObject;
                 if (m_PrefabParent != prefabRoot)
                     m_PrefabParent = prefabRoot;
             }
@@ -90,14 +90,14 @@ namespace Unity.InteractiveTutorials
                     }
                 }
 
-                if (prefabParent == null)
+                if (prefabParent == null) 
                     continue;
 
                 // Ensure future prefab parent is infact a prefab parent
-                if (PrefabUtility.GetPrefabType(prefabParent) == PrefabType.Prefab)
+                if (PrefabUtility.GetPrefabAssetType(prefabParent) != PrefabAssetType.NotAPrefab)
                 {
                     // Ensure prefab parent and future prefab parent have the same prefab object
-                    if (PrefabUtility.GetPrefabObject(prefabParent) == PrefabUtility.GetPrefabObject(m_PrefabParent))
+                    if (prefabParent == m_PrefabParent)
                     {
                         // Create new future reference if it doesn't exist yet
                         if (futurePrefabInstance.futureReference == null)
@@ -133,7 +133,7 @@ namespace Unity.InteractiveTutorials
             {
                 if (PrefabUtilityShim.GetCorrespondingObjectFromSource(gameObject) != null)
                 {
-                    var prefabInstanceRoot = PrefabUtility.FindPrefabRoot(gameObject);
+                    var prefabInstanceRoot = PrefabUtility.GetOutermostPrefabInstanceRoot(gameObject);
                     m_ExistingPrefabInstances.Add(prefabInstanceRoot.GetInstanceID());
                 }
             }
@@ -163,7 +163,7 @@ namespace Unity.InteractiveTutorials
             {
                 if (PrefabUtilityShim.GetCorrespondingObjectFromSource(gameObject) != null)
                 {
-                    var prefabInstanceRoot = PrefabUtility.FindPrefabRoot(gameObject);
+                    var prefabInstanceRoot = PrefabUtility.GetOutermostPrefabInstanceRoot(gameObject);
                     if (prefabInstanceRoot == gameObject && m_ExistingPrefabInstances.Add(prefabInstanceRoot.GetInstanceID()))
                         OnPrefabInstantiated(prefabInstanceRoot);
                 }

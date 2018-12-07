@@ -9,11 +9,11 @@ namespace Unity.InteractiveTutorials
     class InlineIcon
     {
         [SerializeField]
-        UnityObject m_Asset;
+        UnityObject m_Asset = null;
         [SerializeField]
-        string m_IconContentName;
+        string m_IconContentName = null;
         [SerializeField]
-        string m_IconStyleName;
+        string m_IconStyleName = null;
 
         public Texture GetTexture()
         {

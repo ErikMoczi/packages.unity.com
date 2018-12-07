@@ -33,7 +33,7 @@ namespace Unity.InteractiveTutorials
                 if (EditorGUI.EndChangeCheck())
                 {
                     // Replace prefab instance with its prefab parent
-                    if (newObj != null && PrefabUtility.GetPrefabType(newObj) == PrefabType.PrefabInstance)
+                    if (newObj != null && PrefabUtility.GetPrefabInstanceStatus(newObj) != PrefabInstanceStatus.NotAPrefab)
                         newObj = PrefabUtilityShim.GetCorrespondingObjectFromSource(newObj);
 
                     prefabParentProperty.objectReferenceValue = newObj;

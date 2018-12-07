@@ -212,7 +212,7 @@ public class SceneObjectReference
         else if (newObject is GameObject)
         {
             go = newObject as GameObject;
-            if (PrefabUtility.GetPrefabObject(go) != null && PrefabUtilityShim.GetCorrespondingObjectFromSource(go) == null)
+            if (PrefabUtility.IsPartOfPrefabAsset(go))
             {
                 m_Prefab = go;
                 SaveProperties();
