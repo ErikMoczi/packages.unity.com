@@ -4,9 +4,7 @@
     "optionalUnityReferences": [],
   "includePlatforms": [
     "Editor",
-    "WSA",
-    "WindowsStandalone32",
-    "WindowsStandalone64"
+    "WSA"
   ],
     "excludePlatforms": [],
     "allowUnsafeCode": false
