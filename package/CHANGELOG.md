@@ -4,6 +4,19 @@ All notable changes to this project template will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2018-11-30
+- LW version update to 5.2.1
+
+## [1.2.0] - 2018 - 11 - 27
+- Updating lw package to 5.2.0
+- Update new project templates to use 4.x scripting runtime
+
+## [1.1.1] - 2018-11-08
+- Physics.reuseCollisionCallbacks property now defaults to true.
+- Physics2D.reuseCollisionCallbacks property now defaults to true.
+- Physics.autoSyncTransforms property now defaults to false.
+- Physics2D.autoSyncTransforms property now defaults to false.
+
 ## [1.1.0] - 2018-09-24
 
 ### Changed
