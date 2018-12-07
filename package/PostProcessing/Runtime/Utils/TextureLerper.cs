@@ -108,10 +108,6 @@ namespace UnityEngine.Rendering.PostProcessing
             if (from == to)
                 return from;
 
-            // Don't need to lerp boundary conditions
-            if (t <= 0f) return from;
-            if (t >= 1f) return to;
-
             bool is3D = from is Texture3D
                     || (from is RenderTexture && ((RenderTexture)from).volumeDepth > 1);
 
@@ -133,12 +129,8 @@ namespace UnityEngine.Rendering.PostProcessing
                 m_Command.SetComputeTextureParam(compute, kernel, "_From", from);
                 m_Command.SetComputeTextureParam(compute, kernel, "_To", to);
 
-                uint tgsX, tgsY, tgsZ;
-                compute.GetKernelThreadGroupSizes(kernel, out tgsX, out tgsY, out tgsZ);
-                Assert.AreEqual(tgsX, tgsY);
-                int groupSizeXY = Mathf.CeilToInt(size / (float)tgsX);
-                int groupSizeZ = Mathf.CeilToInt(size / (float)tgsZ);
-
+                int groupSizeXY = Mathf.CeilToInt(size / 8f);
+                int groupSizeZ = Mathf.CeilToInt(size / 8f);
                 m_Command.DispatchCompute(compute, kernel, groupSizeXY, groupSizeXY, groupSizeZ);
                 return rt;
             }

@@ -6,10 +6,7 @@ using UnityEngine.Rendering.PostProcessing;
 
 namespace UnityEditor.Rendering.PostProcessing
 {
-    /// <summary>
-    /// An utility class to help the creation of new post-processing profile assets.
-    /// </summary>
-    public sealed class ProfileFactory
+    internal sealed class ProfileFactory
     {
         [MenuItem("Assets/Create/Post-processing Profile", priority = 201)]
         static void CreatePostProcessProfile()
@@ -18,11 +15,6 @@ namespace UnityEditor.Rendering.PostProcessing
             ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, ScriptableObject.CreateInstance<DoCreatePostProcessProfile>(), "New Post-processing Profile.asset", null, null);
         }
 
-        /// <summary>
-        /// Creates a post-processing profile asset at the given location.
-        /// </summary>
-        /// <param name="path">The path to use relative to the project folder</param>
-        /// <returns>The newly created profile</returns>
         public static PostProcessProfile CreatePostProcessProfileAtPath(string path)
         {
             var profile = ScriptableObject.CreateInstance<PostProcessProfile>();
@@ -33,13 +25,6 @@ namespace UnityEditor.Rendering.PostProcessing
             return profile;
         }
 
-        /// <summary>
-        /// Creates a post-processing profile asset and automatically put it in a sub folder next
-        /// to the given scene.
-        /// </summary>
-        /// <param name="scene">A scene</param>
-        /// <param name="targetName">A name for the new profile</param>
-        /// <returns>The newly created profile</returns>
         public static PostProcessProfile CreatePostProcessProfile(Scene scene, string targetName)
         {
             var path = string.Empty;
