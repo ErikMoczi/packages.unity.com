@@ -1,17 +1,14 @@
-using NUnit.Framework.Interfaces;
-using UnityEngine;
-using UnityEngine.TestTools.TestRunner;
-using UnityEngine.TestTools.TestRunner.GUI;
+using UnityEditor.TestTools.TestRunner.Api;
 
 namespace UnityEditor.TestTools.TestRunner.GUI
 {
-    internal class WindowResultUpdater : ScriptableObject, ITestRunnerListener
+    internal class WindowResultUpdater : ICallbacks
     {
-        public void RunStarted(ITest testsToRun)
+        public void RunStarted(ITestAdaptor testsToRun)
         {
         }
 
-        public void RunFinished(ITestResult testResults)
+        public void RunFinished(ITestResultAdaptor testResults)
         {
             if (TestRunnerWindow.s_Instance != null)
             {
@@ -19,11 +16,11 @@ namespace UnityEditor.TestTools.TestRunner.GUI
             }
         }
 
-        public void TestStarted(ITest testName)
+        public void TestStarted(ITestAdaptor testName)
         {
         }
 
-        public void TestFinished(ITestResult test)
+        public void TestFinished(ITestResultAdaptor test)
         {
             if (TestRunnerWindow.s_Instance == null)
                 return;

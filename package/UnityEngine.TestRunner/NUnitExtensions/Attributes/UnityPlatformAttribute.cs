@@ -29,7 +29,7 @@ namespace UnityEngine.TestTools
 
         public void ApplyToTest(Test test)
         {
-            if (test.RunState == RunState.NotRunnable || test.RunState == RunState.Ignored || IsPlatformSupported())
+            if (test.RunState == RunState.NotRunnable || test.RunState == RunState.Ignored || IsPlatformSupported(Application.platform))
             {
                 return;
             }
@@ -37,15 +37,15 @@ namespace UnityEngine.TestTools
             test.Properties.Add("_SKIPREASON", m_skippedReason);
         }
 
-        private bool IsPlatformSupported()
+        internal bool IsPlatformSupported(RuntimePlatform testTargetPlatform)
         {
-            if (include.Any() && !include.Any(x => x == Application.platform))
+            if (include.Any() && !include.Any(x => x == testTargetPlatform))
             {
                 m_skippedReason = string.Format("Only supported on {0}", string.Join(", ", include.Select(x => x.ToString()).ToArray()));
                 return false;
             }
 
-            if (exclude.Any(x => x == Application.platform))
+            if (exclude.Any(x => x == testTargetPlatform))
             {
                 m_skippedReason = string.Format("Not supported on  {0}", string.Join(", ", include.Select(x => x.ToString()).ToArray()));
                 return false;

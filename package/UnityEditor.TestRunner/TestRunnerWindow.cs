@@ -1,5 +1,6 @@
 using System;
 using UnityEditor.Callbacks;
+using UnityEditor.TestTools.TestRunner.Api;
 using UnityEditor.TestTools.TestRunner.GUI;
 using UnityEngine;
 
@@ -34,7 +35,8 @@ namespace UnityEditor.TestTools.TestRunner
 
         internal static TestRunnerWindow s_Instance;
         private bool m_IsBuilding;
-
+        [NonSerialized]
+        private bool m_Enabled;
         public TestFilterSettings filterSettings;
 
         private readonly SplitterState m_Spl = new SplitterState(new float[] { 75, 25 }, new[] { 32, 32 }, null);
@@ -54,6 +56,10 @@ namespace UnityEditor.TestTools.TestRunner
         private EditModeTestListGUI m_EditModeTestListGUI;
 
         internal TestListGUI m_SelectedTestTypes;
+
+        private ITestRunnerApi m_testRunnerApi;
+
+        private WindowResultUpdater m_WindowResultUpdater;
 
         [MenuItem("Window/General/Test Runner", false, 201, false)]
         public static void ShowPlaymodeTestsRunnerWindowCodeBased()
@@ -94,13 +100,25 @@ namespace UnityEditor.TestTools.TestRunner
         public void OnDestroy()
         {
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            if (m_testRunnerApi != null)
+            {
+                m_testRunnerApi.UnregisterCallbacks(m_WindowResultUpdater);
+            }
         }
 
-        public void OnEnable()
+        private void OnEnable()
         {
             s_Instance = this;
+            SelectTestListGUI(m_TestTypeToolbarIndex);
 
-            m_Settings = new TestRunnerWindowSettings("UnityEdior.PlaymodeTestsRunnerWindow");
+            m_testRunnerApi = ScriptableObject.CreateInstance<TestRunnerApi>();
+            m_WindowResultUpdater = new WindowResultUpdater();
+            m_testRunnerApi.RegisterCallbacks(m_WindowResultUpdater);
+        }
+
+        private void Enable()
+        {
+            m_Settings = new TestRunnerWindowSettings("UnityEditor.PlaymodeTestsRunnerWindow");
             filterSettings = new TestFilterSettings("UnityTest.IntegrationTestsRunnerWindow");
 
             if (m_SelectedTestTypes == null)
@@ -108,7 +126,9 @@ namespace UnityEditor.TestTools.TestRunner
                 SelectTestListGUI(m_TestTypeToolbarIndex);
             }
 
+            StartRetrieveTestList();
             m_SelectedTestTypes.Reload();
+            m_Enabled = true;
         }
 
         private void SelectTestListGUI(int testTypeToolbarIndex)
@@ -129,11 +149,27 @@ namespace UnityEditor.TestTools.TestRunner
                 }
                 m_SelectedTestTypes = m_EditModeTestListGUI;
             }
-            m_SelectedTestTypes.Init(this);
+        }
+
+        private void StartRetrieveTestList()
+        {
+            if (!m_SelectedTestTypes.HasTreeData())
+            {
+                m_testRunnerApi.RetrieveTestList(new ExecutionSettings() { filter = new Filter() { testMode = m_SelectedTestTypes.TestMode } }, (rootTest) =>
+                {
+                    m_SelectedTestTypes.Init(this, rootTest);
+                    m_SelectedTestTypes.Reload();
+                });
+            }
         }
 
         public void OnGUI()
         {
+            if (!m_Enabled)
+            {
+                Enable();
+            }
+
             if (BuildPipeline.isBuildingPlayer)
             {
                 m_IsBuilding = true;
@@ -154,7 +190,7 @@ namespace UnityEditor.TestTools.TestRunner
             if (selectedIndex != m_TestTypeToolbarIndex)
             {
                 SelectTestListGUI(m_TestTypeToolbarIndex);
-                m_SelectedTestTypes.Reload();
+                StartRetrieveTestList();
             }
 
             EditorGUILayout.BeginVertical();

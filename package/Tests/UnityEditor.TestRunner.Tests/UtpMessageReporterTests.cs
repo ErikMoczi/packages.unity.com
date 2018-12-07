@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
+using UnityEditor.TestTools.TestRunner.Api;
 using UnityEditor.TestTools.TestRunner.UnityTestProtocol;
-using ITest = UnityEditor.TestTools.TestRunner.Api.ITest;
-using ITestResult = UnityEditor.TestTools.TestRunner.Api.ITestResult;
+using RunState = UnityEditor.TestTools.TestRunner.Api.RunState;
 using TestStatus = UnityEditor.TestTools.TestRunner.Api.TestStatus;
 
 namespace Assets.UtilTests
@@ -25,7 +25,7 @@ namespace Assets.UtilTests
         [Test]
         public void TestStarted_ReportsCorrectUtpMessage()
         {
-            var test = new Test { FullName = "testName" };
+            var test = new TestAdaptorMock { FullName = "testName" };
 
             var msg = Call(x => x.ReportTestStarted(test));
             Assert.That(msg, Is.TypeOf(typeof(TestStartedMessage)));
@@ -40,7 +40,7 @@ namespace Assets.UtilTests
         [Test]
         public void TestFinished_ReportsCorrectUtpMessage_WhenTestPassed()
         {
-            var result = new TestResult("testName")
+            var result = new TestResultAdaptorMock("testName")
             {
                 Duration = 1,
                 Message = "testMsg",
@@ -64,7 +64,7 @@ namespace Assets.UtilTests
         [Test]
         public void TestFinished_ReportsTestStateAsFailure_WhenTestStatusEqualsFailed()
         {
-            var testResult = new TestResult { TestStatus = TestStatus.Failed };
+            var testResult = new TestResultAdaptorMock { TestStatus = TestStatus.Failed };
 
             var testFinishedMessage = (TestFinishedMessage)Call(x => x.ReportTestFinished(testResult));
 
@@ -74,7 +74,7 @@ namespace Assets.UtilTests
         [Test]
         public void TestFinished_ReportsNothing_WhenResultIsSuite()
         {
-            var testResult = new TestResult(isSuite: true);
+            var testResult = new TestResultAdaptorMock(isSuite: true);
 
             m_UtpMessageReporter.ReportTestFinished(testResult);
 
@@ -84,7 +84,7 @@ namespace Assets.UtilTests
         [Test]
         public void RunStarted_ReportsCorrectTestPlanMessage_ForOneTest()
         {
-            var test = new Test { FullName = "testName", IsSuite = false };
+            var test = new TestAdaptorMock { FullName = "testName", IsSuite = false };
 
             var message = Call(x => x.ReportTestRunStarted(test));
 
@@ -99,21 +99,21 @@ namespace Assets.UtilTests
         [Test]
         public void RunStarted_ReportsCorrectTestPlanMessage_ForSuiteWithChildTests()
         {
-            var test = new Test
+            var test = new TestAdaptorMock
             {
                 FullName = "suite0",
                 IsSuite = true,
-                Children = new List<ITest>
+                Children = new List<ITestAdaptor>
                 {
-                    new Test {FullName = "test0"},
-                    new Test
+                    new TestAdaptorMock {FullName = "test0"},
+                    new TestAdaptorMock
                     {
                         FullName = "suite1", IsSuite = true,
-                        Children = new List<ITest> {new Test {FullName = "test1"}, new Test {FullName = "test2"}}},
-                    new Test
+                        Children = new List<ITestAdaptor> {new TestAdaptorMock {FullName = "test1"}, new TestAdaptorMock {FullName = "test2"}}},
+                    new TestAdaptorMock
                     {
                         FullName = "test3", IsSuite = false,
-                        Children = new List<ITest> {new Test {FullName = "test4"}}}
+                        Children = new List<ITestAdaptor> {new TestAdaptorMock {FullName = "test4"}}}
                 }
             };
 
@@ -129,7 +129,7 @@ namespace Assets.UtilTests
         [Test]
         public void RunStarted_ReportsCorrectTestPlanMessage_ForSuiteWithZeroTests()
         {
-            var emptySuite = new Test { IsSuite = true, Children = new List<ITest>() };
+            var emptySuite = new TestAdaptorMock { IsSuite = true, Children = new List<ITestAdaptor>() };
 
             var message = Call(x => x.ReportTestRunStarted(emptySuite));
 
@@ -142,7 +142,7 @@ namespace Assets.UtilTests
         [Test]
         public void RunStarted_ReportsCorrectTestPlanMessage_ForSuiteWithNullTests()
         {
-            var emptySuite = new Test { IsSuite = true };
+            var emptySuite = new TestAdaptorMock { IsSuite = true };
 
             var message = Call(x => x.ReportTestRunStarted(emptySuite));
 
@@ -155,7 +155,7 @@ namespace Assets.UtilTests
         [Test]
         public void TestFinished_ReportsTestStateAsInclonclusive_WhenResultStateEqualsInconclusive()
         {
-            var testResult = new TestResult { TestStatus = TestStatus.Failed, ResultState = "Inconclusive" };
+            var testResult = new TestResultAdaptorMock { TestStatus = TestStatus.Failed, ResultState = "Inconclusive" };
 
             var testFinishedMessage = (TestFinishedMessage)Call(x => x.ReportTestFinished(testResult));
 
@@ -165,7 +165,7 @@ namespace Assets.UtilTests
         [Test]
         public void TestFinished_ReportsTestStateAsError_WhenResultStateEndsWithCancelled()
         {
-            var testResult = new TestResult { TestStatus = TestStatus.Failed, ResultState = "Failed:Cancelled" };
+            var testResult = new TestResultAdaptorMock { TestStatus = TestStatus.Failed, ResultState = "Failed:Cancelled" };
 
             var testFinishedMessage = (TestFinishedMessage)Call(x => x.ReportTestFinished(testResult));
 
@@ -175,7 +175,7 @@ namespace Assets.UtilTests
         [Test]
         public void TestFinished_ReportsTestStateAsError_WhenResultStateEndsWithError()
         {
-            var testResult = new TestResult { TestStatus = TestStatus.Failed, ResultState = "Failed:Error" };
+            var testResult = new TestResultAdaptorMock { TestStatus = TestStatus.Failed, ResultState = "Failed:Error" };
 
             var testFinishedMessage = (TestFinishedMessage)Call(x => x.ReportTestFinished(testResult));
 
@@ -185,7 +185,7 @@ namespace Assets.UtilTests
         [Test]
         public void TestFinished_ReportsTestStateAsSkipped_WhenTestStatusEqualsPassedAndNunitXmlRunstateEqualsExplicit()
         {
-            var testResult = new TestResult(isExplicit: true) { TestStatus = TestStatus.Passed };
+            var testResult = new TestResultAdaptorMock(isExplicit: true) { TestStatus = TestStatus.Passed };
 
             var testFinishedMessage = (TestFinishedMessage)Call(x => x.ReportTestFinished(testResult));
 
@@ -195,7 +195,7 @@ namespace Assets.UtilTests
         [Test]
         public void TestFinished_ReportsTestStateAsSkipped_WhenTestStatusEqualsSkipped()
         {
-            var testResult = new TestResult { TestStatus = TestStatus.Skipped };
+            var testResult = new TestResultAdaptorMock { TestStatus = TestStatus.Skipped };
 
             var testFinishedMessage = (TestFinishedMessage)Call(x => x.ReportTestFinished(testResult));
 
@@ -205,7 +205,7 @@ namespace Assets.UtilTests
         [Test]
         public void TestFinished_ReportsTestStateAsIgnored_WhenTestStatusEqualsSkippedAndResultStateEndsWithIgnored()
         {
-            var testResult = new TestResult { TestStatus = TestStatus.Skipped, ResultState = "Skipped:Ignored" };
+            var testResult = new TestResultAdaptorMock { TestStatus = TestStatus.Skipped, ResultState = "Skipped:Ignored" };
 
             var testFinishedMessage = (TestFinishedMessage)Call(x => x.ReportTestFinished(testResult));
 
@@ -220,7 +220,7 @@ namespace Assets.UtilTests
             return m_Spy.messages.First();
         }
 
-        class Test : ITest
+        private class TestAdaptorMock : ITestAdaptor
         {
             public string Id { get; set; }
             public string Name { get; set; }
@@ -228,18 +228,28 @@ namespace Assets.UtilTests
             public int TestCaseCount { get; set; }
             public bool HasChildren { get; set; }
             public bool IsSuite { get; set; }
-            public IEnumerable<ITest> Children { get; set; }
+            public IEnumerable<ITestAdaptor> Children { get; set; }
             public int TestCaseTimeout { get; set; }
+            public ITypeInfo TypeInfo { get; }
+            public IMethodInfo Method { get; }
+            public string[] Categories { get; }
+            public bool IsTestAssembly { get; }
+            public RunState RunState { get; }
+            public string Description { get; }
+            public string SkipReason { get; }
+            public string ParentId { get; }
+            public string UniqueName { get; }
+            public string ParentUniqueName { get; }
         }
 
-        class TestResult : ITestResult
+        private class TestResultAdaptorMock : ITestResultAdaptor
         {
             readonly bool m_IsExplicit;
 
-            public TestResult(string testName = "test", bool isSuite = false, bool isExplicit = false)
+            public TestResultAdaptorMock(string testName = "test", bool isSuite = false, bool isExplicit = false)
             {
                 m_IsExplicit = isExplicit;
-                Test = new Test { FullName = testName, IsSuite = isSuite };
+                Test = new TestAdaptorMock { FullName = testName, IsSuite = isSuite };
                 ResultState = string.Empty;
             }
 
@@ -250,7 +260,7 @@ namespace Assets.UtilTests
                 return node;
             }
 
-            public ITest Test { get; set; }
+            public ITestAdaptor Test { get; set; }
             public string Name { get; set; }
             public string FullName { get; set; }
             public string ResultState { get; set; }
@@ -266,7 +276,7 @@ namespace Assets.UtilTests
             public int SkipCount { get; set; }
             public int InconclusiveCount { get; set; }
             public bool HasChildren { get; set; }
-            public IEnumerable<ITestResult> Children { get; set; }
+            public IEnumerable<ITestResultAdaptor> Children { get; set; }
             public string Output { get; set; }
         }
 

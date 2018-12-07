@@ -28,7 +28,7 @@ namespace UnityEngine.TestRunner.TestLaunchers
         public string xml;
         public string[] childrenIds;
 
-        private RemoteTestResultData(ITestResult result)
+        internal RemoteTestResultData(ITestResult result)
         {
             testId = result.Test.Id;
             name = result.Name;
@@ -49,14 +49,6 @@ namespace UnityEngine.TestRunner.TestLaunchers
             output = result.Output;
             xml = result.ToXml(true).OuterXml;
             childrenIds = result.Children.Select(child => child.Test.Id).ToArray();
-        }
-
-        internal static RemoteTestResultData[] GetTestResultDataList(ITestResult result)
-        {
-            var list = new List<RemoteTestResultData>();
-            list.Add(new RemoteTestResultData(result));
-            list.AddRange(result.Children.SelectMany(GetTestResultDataList));
-            return list.ToArray();
         }
     }
 }

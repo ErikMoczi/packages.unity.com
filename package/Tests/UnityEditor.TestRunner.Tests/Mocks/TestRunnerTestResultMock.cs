@@ -5,7 +5,7 @@ using TNode = NUnit.Framework.Interfaces.TNode;
 
 namespace FrameworkTests
 {
-    internal class TestRunnerTestResultMock : ITestResult
+    internal class TestRunnerTestResultMock : ITestResultAdaptor
     {
         public TNode ToXml()
         {
@@ -29,8 +29,8 @@ namespace FrameworkTests
         public int SkipCount { get; set; }
         public int InconclusiveCount { get; set; }
         public bool HasChildren { get; set; }
-        public IEnumerable<ITestResult> Children { get; set; }
-        public ITest Test { get; set; }
+        public IEnumerable<ITestResultAdaptor> Children { get; set; }
+        public ITestAdaptor Test { get; set; }
         public string Output { get; set; }
     }
 }

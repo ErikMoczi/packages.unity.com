@@ -6,8 +6,7 @@ namespace UnityEditor.TestTools.TestRunner
     {
         public ScriptAssembly[] GetAllEditorScriptAssemblies()
         {
-            var options = EditorCompilationInterface.GetAdditionalEditorScriptCompilationOptions();
-            return EditorCompilationInterface.Instance.GetAllEditorScriptAssemblies(options);
+            return EditorCompilationInterface.Instance.GetAllEditorScriptAssemblies(EditorCompilationInterface.GetAdditionalEditorScriptCompilationOptions());
         }
 
         public PrecompiledAssembly[] GetAllPrecompiledAssemblies()

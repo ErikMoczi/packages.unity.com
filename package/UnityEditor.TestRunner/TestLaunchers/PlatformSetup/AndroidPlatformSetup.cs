@@ -18,6 +18,7 @@ namespace UnityEditor.TestTools.TestRunner
 
             m_oldDeviceSocketAddress = EditorUserBuildSettings.androidDeviceSocketAddress;
             var androidDeviceConnection = Environment.GetEnvironmentVariable("ANDROID_DEVICE_CONNECTION");
+            EditorUserBuildSettings.waitForPlayerConnection = true;
             if (androidDeviceConnection != null)
             {
                 EditorUserBuildSettings.androidDeviceSocketAddress = androidDeviceConnection;

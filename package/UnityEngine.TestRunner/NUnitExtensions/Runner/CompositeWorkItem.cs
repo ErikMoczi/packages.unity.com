@@ -213,7 +213,7 @@ namespace UnityEngine.TestRunner.NUnitExtensions.Runner
 
             foreach (ITest test in testSuite.Tests)
             {
-                if (_childFilter.Pass(test) && test.RunState != RunState.NotRunnable)
+                if (_childFilter.Pass(test))
                 {
                     var child = m_Factory.Create(test, _childFilter);
 

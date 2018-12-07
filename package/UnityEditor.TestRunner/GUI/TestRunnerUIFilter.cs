@@ -125,9 +125,19 @@ namespace UnityEditor.TestTools.TestRunner.GUI
             }
 
             EditorGUI.BeginChangeCheck();
-            PassedHidden = !GUILayout.Toggle(!PassedHidden, m_SucceededBtn, EditorStyles.toolbarButton, GUILayout.MaxWidth(GetMaxWidth(PassedCount)));
-            FailedHidden = !GUILayout.Toggle(!FailedHidden, m_FailedBtn, EditorStyles.toolbarButton, GUILayout.MaxWidth(GetMaxWidth(FailedCount)));
-            NotRunHidden = !GUILayout.Toggle(!NotRunHidden, m_NotRunBtn, EditorStyles.toolbarButton, GUILayout.MaxWidth(GetMaxWidth(NotRunCount)));
+            if (m_SucceededBtn != null)
+            {
+                PassedHidden = !GUILayout.Toggle(!PassedHidden, m_SucceededBtn, EditorStyles.toolbarButton, GUILayout.MaxWidth(GetMaxWidth(PassedCount)));
+            }
+            if (m_FailedBtn != null)
+            {
+                FailedHidden = !GUILayout.Toggle(!FailedHidden, m_FailedBtn, EditorStyles.toolbarButton, GUILayout.MaxWidth(GetMaxWidth(FailedCount)));
+            }
+            if (m_NotRunBtn != null)
+            {
+                NotRunHidden = !GUILayout.Toggle(!NotRunHidden, m_NotRunBtn, EditorStyles.toolbarButton, GUILayout.MaxWidth(GetMaxWidth(NotRunCount)));
+            }
+
             if (EditorGUI.EndChangeCheck())
             {
                 RebuildTestList();

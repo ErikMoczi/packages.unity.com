@@ -118,32 +118,31 @@ namespace UnityEngine.TestTools.TestRunner.GUI
             return false;
         }
 
-        private static void ClearAncestors(IEnumerable<TestRunnerResult> newResultList, string parentID)
+        private static void ClearAncestors(IEnumerable<IClearableResult> newResultList, string parentID)
         {
             if (string.IsNullOrEmpty(parentID))
                 return;
-
             foreach (var result in newResultList)
             {
-                if (result.id == parentID)
+                if (result.Id == parentID)
                 {
                     result.Clear();
-                    ClearAncestors(newResultList, result.parentID);
+                    ClearAncestors(newResultList, result.ParentId);
                     break;
                 }
             }
         }
 
-        public void ClearResults(List<TestRunnerResult> newResultList)
+        public void ClearResults(List<IClearableResult> newResultList)
         {
             foreach (var result in newResultList)
             {
-                if (!result.isSuite && CategoryMatches(result.categories))
+                if (!result.IsSuite && CategoryMatches(result.Categories))
                 {
-                    if (IDMatchesAssembly(result.id) || NameMatches(result.fullName) || NameMatchesExactly(result.fullName))
+                    if (IDMatchesAssembly(result.Id) || NameMatches(result.FullName) || NameMatchesExactly(result.FullName))
                     {
                         result.Clear();
-                        ClearAncestors(newResultList, result.parentID);
+                        ClearAncestors(newResultList, result.ParentId);
                     }
                 }
             }
@@ -193,6 +192,16 @@ namespace UnityEngine.TestTools.TestRunner.GUI
             }
 
             return filter;
+        }
+
+        internal interface IClearableResult
+        {
+            string Id { get; }
+            string FullName { get; }
+            string ParentId { get; }
+            bool IsSuite { get; }
+            List<string> Categories { get; }
+            void Clear();
         }
     }
 }

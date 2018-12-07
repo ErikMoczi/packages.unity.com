@@ -9,25 +9,41 @@ namespace UnityEditor.TestTools.TestRunner
     {
         public abstract void Run();
 
-        protected static bool ExecutePreBuildSetupMethods(ITest tests, ITestFilter testRunnerFilter)
+        protected virtual RuntimePlatform? TestTargetPlatform
+        {
+            get { return Application.platform; }
+        }
+
+        protected bool ExecutePreBuildSetupMethods(ITest tests, ITestFilter testRunnerFilter)
         {
             var attributeFinder = new PrebuildSetupAttributeFinder();
             var logString = "Executing setup for: {0}";
-            return ExecuteMethods<IPrebuildSetup>(tests, testRunnerFilter, attributeFinder, logString, targetClass => targetClass.Setup());
+            return ExecuteMethods<IPrebuildSetup>(tests, testRunnerFilter, attributeFinder, logString, targetClass => targetClass.Setup(), TestTargetPlatform);
         }
 
-        public static void ExecutePostBuildCleanupMethods(ITest tests, ITestFilter testRunnerFilter)
+        public void ExecutePostBuildCleanupMethods(ITest tests, ITestFilter testRunnerFilter)
+        {
+            ExecutePostBuildCleanupMethods(tests, testRunnerFilter, TestTargetPlatform);
+        }
+
+        public static void ExecutePostBuildCleanupMethods(ITest tests, ITestFilter testRunnerFilter, RuntimePlatform? testTargetPlatform)
         {
             var attributeFinder = new PostbuildCleanupAttributeFinder();
             var logString = "Executing cleanup for: {0}";
-            ExecuteMethods<IPostBuildCleanup>(tests, testRunnerFilter, attributeFinder, logString, targetClass => targetClass.Cleanup());
+            ExecuteMethods<IPostBuildCleanup>(tests, testRunnerFilter, attributeFinder, logString, targetClass => targetClass.Cleanup(), testTargetPlatform);
         }
 
-        private static bool ExecuteMethods<T>(ITest tests, ITestFilter testRunnerFilter, AttributeFinderBase attributeFinder, string logString, Action<T> action)
+        private static bool ExecuteMethods<T>(ITest tests, ITestFilter testRunnerFilter, AttributeFinderBase attributeFinder, string logString, Action<T> action, RuntimePlatform? testTargetPlatform)
         {
             var exceptionsThrown = false;
 
-            foreach (var targetClassType in attributeFinder.Search(tests, testRunnerFilter))
+            if (testTargetPlatform == null)
+            {
+                Debug.LogError("Could not determine test target platform from build target " + EditorUserBuildSettings.activeBuildTarget);
+                return true;
+            }
+
+            foreach (var targetClassType in attributeFinder.Search(tests, testRunnerFilter, testTargetPlatform.Value))
             {
                 try
                 {

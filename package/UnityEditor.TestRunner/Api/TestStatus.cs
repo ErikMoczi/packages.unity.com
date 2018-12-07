@@ -5,5 +5,6 @@ namespace UnityEditor.TestTools.TestRunner.Api
         Skipped,
         Passed,
         Failed,
+        Inconclusive
     }
 }

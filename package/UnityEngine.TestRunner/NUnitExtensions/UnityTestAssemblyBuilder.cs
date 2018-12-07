@@ -10,9 +10,25 @@ namespace UnityEngine.TestTools.NUnitExtensions
 {
     internal class UnityTestAssemblyBuilder : DefaultTestAssemblyBuilder
     {
+        private readonly string m_ProductName;
+        public UnityTestAssemblyBuilder()
+        {
+            m_ProductName = Application.productName;
+        }
+
         public ITest Build(Assembly[] assemblies, IDictionary<string, object> options)
         {
-            var productName = string.Join("_", Application.productName.Split(Path.GetInvalidFileNameChars()));
+            var test = BuildAsync(assemblies, options);
+            while (test.MoveNext())
+            {
+            }
+
+            return test.Current;
+        }
+
+        public IEnumerator<ITest> BuildAsync(Assembly[] assemblies, IDictionary<string, object> options)
+        {
+            var productName = string.Join("_", m_ProductName.Split(Path.GetInvalidFileNameChars()));
             var suite = new TestSuite(productName);
             foreach (var assembly in assemblies)
             {
@@ -21,14 +37,9 @@ namespace UnityEngine.TestTools.NUnitExtensions
                 {
                     suite.Add(assemblySuite);
                 }
+                yield return null;
             }
-            return suite;
-        }
-
-        public static UnityTestAssemblyBuilder GetNUnitTestBuilder(TestPlatform testPlatform)
-        {
-            var builder = new UnityTestAssemblyBuilder();
-            return builder;
+            yield return suite;
         }
 
         public static Dictionary<string, object> GetNUnitTestBuilderSettings(TestPlatform testPlatform)

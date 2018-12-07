@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UnityEditor;
 using UnityEditor.TestRunner.TestLaunchers;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools.TestRunner;
 using UnityEngine.TestTools.TestRunner.Callbacks;
-using Object = UnityEngine.Object;
 
 namespace UnityEditor.TestTools.TestRunner
 {
@@ -31,6 +31,11 @@ namespace UnityEditor.TestTools.TestRunner
             m_Settings = settings;
             m_TargetPlatform = targetPlatform ?? EditorUserBuildSettings.activeBuildTarget;
             m_OverloadTestRunSettings = overloadTestRunSettings;
+        }
+
+        protected override RuntimePlatform? TestTargetPlatform
+        {
+            get { return BuildTargetConverter.TryConvertToRuntimePlatform(m_TargetPlatform); }
         }
 
         public override void Run()
@@ -97,6 +102,12 @@ namespace UnityEditor.TestTools.TestRunner
                 buildOptions.BuildPlayerOptions.options &= ~BuildOptions.ConnectToHost;
             }
 
+            // For now, so does Lumin
+            if (buildOptions.BuildPlayerOptions.target == BuildTarget.Lumin)
+            {
+                buildOptions.BuildPlayerOptions.options &= ~BuildOptions.ConnectToHost;
+            }
+
             var result = BuildPipeline.BuildPlayer(buildOptions.BuildPlayerOptions);
             if (result.summary.result != Build.Reporting.BuildResult.Succeeded)
                 Debug.LogError(result.SummarizeErrors());
@@ -122,14 +133,17 @@ namespace UnityEditor.TestTools.TestRunner
             buildOptions.options |= BuildOptions.AutoRunPlayer | BuildOptions.Development | BuildOptions.ConnectToHost | BuildOptions.IncludeTestAssemblies | BuildOptions.StrictMode;
             buildOptions.target = m_TargetPlatform;
 
+            if (EditorUserBuildSettings.waitForPlayerConnection)
+                buildOptions.options |= BuildOptions.WaitForPlayerConnection;
+
             var buildTargetGroup = EditorUserBuildSettings.activeBuildTargetGroup;
             var uniqueTempPathInProject = FileUtil.GetUniqueTempPathInProject();
 
             if (reduceBuildLocationPathLength)
             {
-                var guid = Guid.NewGuid();
-                var guidString = guid.ToString("N");
-                uniqueTempPathInProject = string.Format(@"Temp/{0}", guidString.Substring(0, 5));
+                uniqueTempPathInProject = Path.GetTempFileName();
+                File.Delete(uniqueTempPathInProject);
+                Directory.CreateDirectory(uniqueTempPathInProject);
             }
 
             //Check if Lz4 is supported for the current buildtargetgroup and enable it if need be

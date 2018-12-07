@@ -24,7 +24,7 @@ namespace UnityEditor.TestTools.TestRunner
     {
         public IUnityTestAssemblyRunner Create(TestPlatform testPlatform, WorkItemFactory factory)
         {
-            return new UnityTestAssemblyRunner(UnityTestAssemblyBuilder.GetNUnitTestBuilder(testPlatform), factory);
+            return new UnityTestAssemblyRunner(new UnityTestAssemblyBuilder(), factory);
         }
     }
 
@@ -186,6 +186,8 @@ namespace UnityEditor.TestTools.TestRunner
 
             if (RunningTests)
             {
+                Debug.LogError("TestRunner: Unexpected assembly reload happened while running tests");
+
                 EditorUtility.ClearProgressBar();
 
                 if (m_Runner.GetCurrentContext() != null && m_Runner.GetCurrentContext().CurrentResult != null)
@@ -257,7 +259,7 @@ namespace UnityEditor.TestTools.TestRunner
         private void CompleteTestRun()
         {
             EditorApplication.update -= TestConsumer;
-            TestLauncherBase.ExecutePostBuildCleanupMethods(this.GetLoadedTests(), this.GetFilter());
+            TestLauncherBase.ExecutePostBuildCleanupMethods(this.GetLoadedTests(), this.GetFilter(), Application.platform);
             m_CleanupVerifier.VerifyNoNewFilesAdded();
             m_RunFinishedEvent.Invoke(m_Runner.Result);
 
@@ -299,7 +301,7 @@ namespace UnityEditor.TestTools.TestRunner
                 {
                     m_TestRunnerStateSerializer.RestoreContext();
                 }
-                
+
                 return;
             }
 

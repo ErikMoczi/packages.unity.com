@@ -70,5 +70,55 @@ namespace UnityEngine.TestRunner.NUnitExtensions
             var index = test.Properties["childIndex"];
             return index.Count > 0;
         }
+
+        public static string GetUniqueName(this ITest test)
+        {
+            var id = GetFullName(test);
+            if (test.HasChildIndex())
+            {
+                var index = test.GetChildIndex();
+                if (index >= 0)
+                    id += index;
+            }
+            if (test.IsSuite)
+            {
+                id += "[suite]";
+            }
+            return id;
+        }
+
+        public static string GetFullName(ITest test)
+        {
+            if (test.TypeInfo == null && (test.Parent == null || test.Parent.TypeInfo == null))
+            {
+                return "[" + test.FullName + "]";
+            }
+            var assemblyId = test.TypeInfo == null ? test.Parent.TypeInfo.Assembly.GetName().Name : test.TypeInfo.Assembly.GetName().Name;
+            return string.Format("[{0}][{1}]", assemblyId, test.FullName);
+        }
+
+        public static string GetSkipReason(this ITest test)
+        {
+            if (test.Properties.ContainsKey(PropertyNames.SkipReason))
+                return (string)test.Properties.Get(PropertyNames.SkipReason);
+
+            return null;
+        }
+
+        public static string GetParentId(this ITest test)
+        {
+            if (test.Parent != null)
+                return test.Parent.Id;
+
+            return null;
+        }
+
+        public static string GetParentUniqueName(this ITest test)
+        {
+            if (test.Parent != null)
+                return GetUniqueName(test.Parent);
+
+            return null;
+        }
     }
 }

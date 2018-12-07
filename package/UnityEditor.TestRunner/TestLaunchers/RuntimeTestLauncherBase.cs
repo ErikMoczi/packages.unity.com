@@ -44,7 +44,7 @@ namespace UnityEditor.TestTools.TestRunner
             var editorLoadedTestAssemblyProvider = new EditorLoadedTestAssemblyProvider(new EditorCompilationInterfaceProxy(), new EditorAssembliesProxy());
             var assembliesWithTests = editorLoadedTestAssemblyProvider.GetAssembliesGroupedByType(TestPlatform.PlayMode).Select(x => x.Assembly.GetName().Name).ToList();
 
-            var nUnitTestAssemblyRunner = new UnityTestAssemblyRunner(UnityTestAssemblyBuilder.GetNUnitTestBuilder(TestPlatform.EditMode), null);
+            var nUnitTestAssemblyRunner = new UnityTestAssemblyRunner(new UnityTestAssemblyBuilder(), null);
             var assemblyProvider = new PlayerTestAssemblyProvider(new AssemblyLoadProxy(), assembliesWithTests);
             nUnitTestAssemblyRunner.Load(assemblyProvider.GetUserAssemblies().Select(a => a.Assembly).ToArray(), UnityTestAssemblyBuilder.GetNUnitTestBuilderSettings(TestPlatform.PlayMode));
             return nUnitTestAssemblyRunner;

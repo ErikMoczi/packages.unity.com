@@ -27,14 +27,14 @@ namespace UnityEditor.TestTools.TestRunner.UnityTestProtocol
             Logger.Log(compilationErrorMessage);
         }
 
-        public void ReportTestRunStarted(ITest testsToRun)
+        public void ReportTestRunStarted(ITestAdaptor testsToRun)
         {
             var msg = TestRunnerApiMapper.MapTestToTestPlanMessage(testsToRun);
 
             Logger.Log(msg);
         }
 
-        public void ReportTestStarted(ITest test)
+        public void ReportTestStarted(ITestAdaptor test)
         {
             if (test.IsSuite)
                 return;
@@ -44,7 +44,7 @@ namespace UnityEditor.TestTools.TestRunner.UnityTestProtocol
             Logger.Log(msg);
         }
 
-        public void ReportTestFinished(ITestResult result)
+        public void ReportTestFinished(ITestResultAdaptor result)
         {
             if (result.Test.IsSuite)
                 return;

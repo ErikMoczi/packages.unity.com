@@ -17,11 +17,11 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             this.m_ResultFilePath = GetDefaultResultFilePath();
         }
 
-        public void RunStarted(ITest testsToRun)
+        public void RunStarted(ITestAdaptor testsToRun)
         {
         }
 
-        public virtual void RunFinished(ITestResult testResults)
+        public virtual void RunFinished(ITestResultAdaptor testResults)
         {
             if (string.IsNullOrEmpty(m_ResultFilePath))
             {
@@ -32,11 +32,11 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             resultWriter.WriteResultToFile(testResults, m_ResultFilePath);
         }
 
-        public void TestStarted(ITest test)
+        public void TestStarted(ITestAdaptor test)
         {
         }
 
-        public void TestFinished(ITestResult result)
+        public void TestFinished(ITestResultAdaptor result)
         {
         }
 

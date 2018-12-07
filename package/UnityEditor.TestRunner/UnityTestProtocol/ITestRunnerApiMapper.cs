@@ -5,11 +5,11 @@ namespace UnityEditor.TestTools.TestRunner.UnityTestProtocol
 {
     interface ITestRunnerApiMapper
     {
-        string GetRunStateFromResultNunitXml(ITestResult result);
-        TestState GetTestStateFromResult(ITestResult result);
-        List<string> FlattenTestNames(ITest testsToRun);
-        TestPlanMessage MapTestToTestPlanMessage(ITest testsToRun);
-        TestStartedMessage MapTestToTestStartedMessage(ITest test);
-        TestFinishedMessage TestResultToTestFinishedMessage(ITestResult result);
+        string GetRunStateFromResultNunitXml(ITestResultAdaptor result);
+        TestState GetTestStateFromResult(ITestResultAdaptor result);
+        List<string> FlattenTestNames(ITestAdaptor testsToRun);
+        TestPlanMessage MapTestToTestPlanMessage(ITestAdaptor testsToRun);
+        TestStartedMessage MapTestToTestStartedMessage(ITestAdaptor test);
+        TestFinishedMessage TestResultToTestFinishedMessage(ITestResultAdaptor result);
     }
 }

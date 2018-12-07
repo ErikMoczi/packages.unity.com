@@ -11,7 +11,7 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
         private bool m_RunFailed;
 
 
-        public void RunFinished(ITestResult testResults)
+        public void RunFinished(ITestResultAdaptor testResults)
         {
             if (!m_AnyTestsExecuted)
             {
@@ -20,7 +20,7 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             EditorApplication.Exit(m_RunFailed ? (int)Executer.ReturnCodes.Failed : (int)Executer.ReturnCodes.Ok);
         }
 
-        public void TestStarted(ITest test)
+        public void TestStarted(ITestAdaptor test)
         {
             if (!test.IsSuite)
             {
@@ -28,7 +28,7 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             }
         }
 
-        public void TestFinished(ITestResult result)
+        public void TestFinished(ITestResultAdaptor result)
         {
             if (!result.Test.IsSuite && (result.TestStatus == TestStatus.Failed))
             {
@@ -36,7 +36,7 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             }
         }
 
-        public void RunStarted(ITest testsToRun)
+        public void RunStarted(ITestAdaptor testsToRun)
         {
         }
     }

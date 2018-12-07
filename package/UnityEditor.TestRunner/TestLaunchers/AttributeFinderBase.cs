@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework.Interfaces;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace UnityEditor.TestTools.TestRunner
 {
     internal abstract class AttributeFinderBase
     {
-        public abstract IEnumerable<Type> Search(ITest tests, ITestFilter filter);
+        public abstract IEnumerable<Type> Search(ITest tests, ITestFilter filter, RuntimePlatform testTargetPlatform);
     }
 
     internal abstract class AttributeFinderBase<T1, T2> : AttributeFinderBase where T2 : Attribute
@@ -18,32 +20,58 @@ namespace UnityEditor.TestTools.TestRunner
             m_TypeSelector = typeSelector;
         }
 
-        public override IEnumerable<Type> Search(ITest tests, ITestFilter filter)
+        public override IEnumerable<Type> Search(ITest tests, ITestFilter filter, RuntimePlatform testTargetPlatform)
         {
             var selectedTests = new List<ITest>();
-            GetMatchingTests(tests, filter, ref selectedTests);
+            GetMatchingTests(tests, filter, ref selectedTests, testTargetPlatform);
 
             var result = new List<Type>();
             result.AddRange(GetTypesFromPrebuildAttributes(selectedTests));
-            result.AddRange(GetTypesFromInterface(selectedTests));
+            result.AddRange(GetTypesFromInterface(selectedTests, testTargetPlatform));
 
             return result.Distinct();
         }
 
-        private static void GetMatchingTests(ITest tests, ITestFilter filter, ref List<ITest> resultList)
+        private static void GetMatchingTests(ITest tests, ITestFilter filter, ref List<ITest> resultList, RuntimePlatform testTargetPlatform)
         {
             foreach (var test in tests.Tests)
             {
-                if (test.IsSuite)
+                if (IsTestEnabledOnPlatform(test, testTargetPlatform))
                 {
-                    GetMatchingTests(test, filter, ref resultList);
-                }
-                else
-                {
-                    if (filter.Pass(test))
-                        resultList.Add(test);
+                    if (test.IsSuite)
+                    {
+                        GetMatchingTests(test, filter, ref resultList, testTargetPlatform);
+                    }
+                    else
+                    {
+                        if (filter.Pass(test))
+                            resultList.Add(test);
+                    }
                 }
             }
+        }
+
+        private static bool IsTestEnabledOnPlatform(ITest test, RuntimePlatform testTargetPlatform)
+        {
+            if (test.Method == null)
+            {
+                return true;
+            }
+
+            var attributesFromMethods = test.Method.GetCustomAttributes<UnityPlatformAttribute>(true).Select(attribute => attribute);
+            var attributesFromTypes = test.Method.TypeInfo.GetCustomAttributes<UnityPlatformAttribute>(true).Select(attribute => attribute);
+
+            if (!attributesFromMethods.All(a => a.IsPlatformSupported(testTargetPlatform)))
+            {
+                return false;
+            }
+
+            if (!attributesFromTypes.All(a => a.IsPlatformSupported(testTargetPlatform)))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         private IEnumerable<Type> GetTypesFromPrebuildAttributes(IEnumerable<ITest> tests)
@@ -58,9 +86,9 @@ namespace UnityEditor.TestTools.TestRunner
             return result.Select(m_TypeSelector).Where(type => type != null);
         }
 
-        private static IEnumerable<Type> GetTypesFromInterface(IEnumerable<ITest> selectedTests)
+        private static IEnumerable<Type> GetTypesFromInterface(IEnumerable<ITest> selectedTests, RuntimePlatform testTargetPlatform)
         {
-            var typesWithInterfaces = selectedTests.Where(t => typeof(T1).IsAssignableFrom(t.Method.TypeInfo.Type));
+            var typesWithInterfaces = selectedTests.Where(t => typeof(T1).IsAssignableFrom(t.Method.TypeInfo.Type) && IsTestEnabledOnPlatform(t, testTargetPlatform));
             return typesWithInterfaces.Select(t => t.Method.TypeInfo.Type);
         }
     }

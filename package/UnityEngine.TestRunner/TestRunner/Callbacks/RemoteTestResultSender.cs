@@ -1,16 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
-using NUnit.Framework;
 using NUnit.Framework.Interfaces;
-using NUnit.Framework.Internal;
 using UnityEngine.Networking.PlayerConnection;
-using UnityEngine.TestRunner.NUnitExtensions.Runner;
 using UnityEngine.TestRunner.TestLaunchers;
-using UnityEngine.TestTools.TestRunner.GUI;
 
 namespace UnityEngine.TestTools.TestRunner.Callbacks
 {
@@ -25,6 +20,7 @@ namespace UnityEngine.TestTools.TestRunner.Callbacks
 
         private readonly Queue<QueueData> m_SendQueue = new Queue<QueueData>();
         private readonly object m_LockQueue = new object();
+        private readonly IRemoteTestResultDataFactory m_TestResultDataFactory = new RemoteTestResultDataFactory();
 
         public void Start()
         {
@@ -57,7 +53,7 @@ namespace UnityEngine.TestTools.TestRunner.Callbacks
 
         public void RunStarted(ITest testsToRun)
         {
-            var data = SerializeObject(RemoteTestResultDataWithTestData.FromTest(testsToRun));
+            var data = SerializeObject(m_TestResultDataFactory.CreateFromTest(testsToRun));
             lock (m_LockQueue)
             {
                 m_SendQueue.Enqueue(new QueueData
@@ -70,7 +66,7 @@ namespace UnityEngine.TestTools.TestRunner.Callbacks
 
         public void RunFinished(ITestResult testResults)
         {
-            var data = SerializeObject(RemoteTestResultDataWithTestData.FromTestResult(testResults));
+            var data = SerializeObject(m_TestResultDataFactory.CreateFromTestResult(testResults));
             lock (m_LockQueue)
             {
                 m_SendQueue.Enqueue(new QueueData { id = PlayerConnectionMessageIds.runFinishedMessageId, data = data, });
@@ -79,7 +75,7 @@ namespace UnityEngine.TestTools.TestRunner.Callbacks
 
         public void TestStarted(ITest test)
         {
-            var data = SerializeObject(RemoteTestResultDataWithTestData.FromTest(test));
+            var data = SerializeObject(m_TestResultDataFactory.CreateFromTest(test));
             lock (m_LockQueue)
             {
                 m_SendQueue.Enqueue(new QueueData
@@ -92,15 +88,7 @@ namespace UnityEngine.TestTools.TestRunner.Callbacks
 
         public void TestFinished(ITestResult result)
         {
-            var testRunnerResult = new TestRunnerResult(result);
-            byte[] data = SerializeObject(testRunnerResult);
-            lock (m_LockQueue)
-            {
-                // This is needed until the UI starts using the TestRunnerApi.
-                m_SendQueue.Enqueue(new QueueData { id = PlayerConnectionMessageIds.testResultMessageId, data = data });
-            }
-
-            var testRunnerResultForApi = RemoteTestResultDataWithTestData.FromTestResult(result);
+            var testRunnerResultForApi = m_TestResultDataFactory.CreateFromTestResult(result);
             var resultData = SerializeObject(testRunnerResultForApi);
             lock (m_LockQueue)
             {

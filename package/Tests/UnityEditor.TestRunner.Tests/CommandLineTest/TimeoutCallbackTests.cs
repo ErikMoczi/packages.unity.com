@@ -41,7 +41,7 @@ public class TimeoutCallbackTests
     [Test]
     public void TimeoutCallbacksSetsUpANewTimeoutOnRunStarted()
     {
-        callBackUnderTest.RunStarted(new TestRunnerTestMock(0));
+        callBackUnderTest.RunStarted(new TestAdaptorMock(0));
 
         Assert.AreEqual(1, callBackMocks.Count);
         var delayedCallback = callBackMocks.First();
@@ -53,7 +53,7 @@ public class TimeoutCallbackTests
     [Test]
     public void TimeoutCallbacksSetsUpANewTimeoutOnTestStartedWithDefaultValue()
     {
-        callBackUnderTest.TestStarted(new TestRunnerTestMock(0));
+        callBackUnderTest.TestStarted(new TestAdaptorMock(0));
 
         Assert.AreEqual(1, callBackMocks.Count);
         var delayedCallback = callBackMocks.First();
@@ -63,7 +63,7 @@ public class TimeoutCallbackTests
     [Test]
     public void TimeoutCallbacksSetsUpANewTimeoutOnTestStartedWithDelayValueFromTestCaseTimeout()
     {
-        callBackUnderTest.TestStarted(new TestRunnerTestMock(2000)); // 2000 ms delay
+        callBackUnderTest.TestStarted(new TestAdaptorMock(2000)); // 2000 ms delay
 
         Assert.AreEqual(1, callBackMocks.Count);
         var delayedCallback = callBackMocks.First();
@@ -73,8 +73,8 @@ public class TimeoutCallbackTests
     [Test]
     public void TimeoutCallbacksResetsCallbackOnNewTestStarted()
     {
-        callBackUnderTest.TestStarted(new TestRunnerTestMock(0));
-        callBackUnderTest.TestStarted(new TestRunnerTestMock(0));
+        callBackUnderTest.TestStarted(new TestAdaptorMock(0));
+        callBackUnderTest.TestStarted(new TestAdaptorMock(0));
 
         Assert.AreEqual(1, callBackMocks.Count);
         var delayedCallback = callBackMocks.First();
@@ -86,8 +86,8 @@ public class TimeoutCallbackTests
     [Test]
     public void TimeoutCallbacksSetsupNewCallbackOnNewTestStartedWithDifferentDelay()
     {
-        callBackUnderTest.TestStarted(new TestRunnerTestMock(0));
-        callBackUnderTest.TestStarted(new TestRunnerTestMock(4000));
+        callBackUnderTest.TestStarted(new TestAdaptorMock(0));
+        callBackUnderTest.TestStarted(new TestAdaptorMock(4000));
 
         Assert.AreEqual(2, callBackMocks.Count);
         var firstDelayedCallback = callBackMocks[0];
@@ -104,7 +104,7 @@ public class TimeoutCallbackTests
     [Test]
     public void TimeoutCallbacksResetsCallbackOnTestFinished()
     {
-        callBackUnderTest.TestStarted(new TestRunnerTestMock(0));
+        callBackUnderTest.TestStarted(new TestAdaptorMock(0));
         callBackUnderTest.TestFinished(new TestRunnerTestResultMock());
 
         Assert.AreEqual(1, callBackMocks.Count);
@@ -117,7 +117,7 @@ public class TimeoutCallbackTests
     [Test]
     public void TimeoutCallbacksLogsErrorWhenTimeoutIsReached()
     {
-        callBackUnderTest.RunStarted(new TestRunnerTestMock(0));
+        callBackUnderTest.RunStarted(new TestAdaptorMock(0));
 
         callBackMocks.First().Action();
 
@@ -128,7 +128,7 @@ public class TimeoutCallbackTests
     [Test]
     public void TimeoutCallbacksExitsApplicationWhenTimeoutIsReached()
     {
-        callBackUnderTest.RunStarted(new TestRunnerTestMock(0));
+        callBackUnderTest.RunStarted(new TestAdaptorMock(0));
 
         callBackMocks.First().Action();
 

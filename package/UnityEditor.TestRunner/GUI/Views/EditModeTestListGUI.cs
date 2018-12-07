@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using NUnit.Framework.Interfaces;
+using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.TestTools.TestRunner.GUI;
@@ -10,6 +10,11 @@ namespace UnityEditor.TestTools.TestRunner.GUI
     [Serializable]
     internal class EditModeTestListGUI : TestListGUI
     {
+        public override TestMode TestMode
+        {
+            get { return TestMode.EditMode; }
+        }
+
         public override void RenderNoTestsInfo()
         {
             if (!TestListGUIHelper.SelectedFolderContainsTestAssembly())
@@ -56,18 +61,25 @@ namespace UnityEditor.TestTools.TestRunner.GUI
                 return;
             }
 
-            filter.ClearResults(newResultList);
+            filter.ClearResults(newResultList.OfType<TestRunnerFilter.IClearableResult>().ToList());
 
-            var testExecutor = new EditModeLauncher(filter, TestPlatform.EditMode);
-            testExecutor.AddEventHandler<WindowResultUpdater>();
-            testExecutor.Run();
+            var testRunnerApi = ScriptableObject.CreateInstance<TestRunnerApi>();
+            testRunnerApi.Execute(new ExecutionSettings()
+            {
+                filter = new Filter()
+                {
+                    categoryNames = filter.categoryNames,
+                    groupNames =  filter.groupNames,
+                    testMode = TestMode,
+                    testNames = filter.testNames
+                }
+            });
         }
 
         public override TestPlatform TestPlatform { get { return TestPlatform.EditMode; } }
-
         protected override bool IsBusy()
         {
-            return EditModeLauncher.IsRunning || EditorApplication.isCompiling;
+            return EditModeLauncher.IsRunning || EditorApplication.isCompiling || EditorApplication.isPlaying;
         }
     }
 }

@@ -2,6 +2,7 @@ using System;
 using NUnit.Framework.Interfaces;
 using System.Collections.Generic;
 using NUnit.Framework;
+using NUnit.Framework.Internal;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -93,7 +94,7 @@ public class TestRunnerApiCallbacksWrapperTests
         public int TestFinishedInvoked;
         public bool ThrowException;
 
-        public void RunStarted(UnityEditor.TestTools.TestRunner.Api.ITest testsToRun)
+        public void RunStarted(ITestAdaptor testsToRun)
         {
             RunStartedInvoked++;
             if (ThrowException)
@@ -102,17 +103,17 @@ public class TestRunnerApiCallbacksWrapperTests
             }
         }
 
-        public void RunFinished(UnityEditor.TestTools.TestRunner.Api.ITestResult result)
+        public void RunFinished(ITestResultAdaptor result)
         {
             RunFinishedInvoked++;
         }
 
-        public void TestStarted(UnityEditor.TestTools.TestRunner.Api.ITest test)
+        public void TestStarted(ITestAdaptor test)
         {
             TestStartedInvoked++;
         }
 
-        public void TestFinished(UnityEditor.TestTools.TestRunner.Api.ITestResult result)
+        public void TestFinished(ITestResultAdaptor result)
         {
             TestFinishedInvoked++;
         }
@@ -123,7 +124,7 @@ public class TestRunnerApiCallbacksWrapperTests
         public bool First;
         static bool Called;
 
-        public void RunStarted(UnityEditor.TestTools.TestRunner.Api.ITest testsToRun)
+        public void RunStarted(ITestAdaptor testsToRun)
         {
             if (!Called)
             {
@@ -132,15 +133,15 @@ public class TestRunnerApiCallbacksWrapperTests
             }
         }
 
-        public void RunFinished(UnityEditor.TestTools.TestRunner.Api.ITestResult result)
+        public void RunFinished(ITestResultAdaptor result)
         {
         }
 
-        public void TestStarted(UnityEditor.TestTools.TestRunner.Api.ITest test)
+        public void TestStarted(ITestAdaptor test)
         {
         }
 
-        public void TestFinished(UnityEditor.TestTools.TestRunner.Api.ITestResult result)
+        public void TestFinished(ITestResultAdaptor result)
         {
         }
     }
@@ -150,16 +151,18 @@ public class TestRunnerApiCallbacksWrapperTests
         public TestMock()
         {
             Tests = new List<ITest>();
+            Properties = new PropertyBag();
+            Properties[PropertyNames.Category] = new string[0];
         }
 
         public TNode ToXml(bool recursive)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public TNode AddToXml(TNode parentNode, bool recursive)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public string Id { get; private set; }
@@ -169,7 +172,7 @@ public class TestRunnerApiCallbacksWrapperTests
         public string MethodName { get; private set; }
         public ITypeInfo TypeInfo { get; private set; }
         public IMethodInfo Method { get; private set; }
-        public RunState RunState { get; private set; }
+        public NUnit.Framework.Interfaces.RunState RunState { get; private set; }
         public int TestCaseCount { get; private set; }
         public IPropertyBag Properties { get; private set; }
         public ITest Parent { get; private set; }

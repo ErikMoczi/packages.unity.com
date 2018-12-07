@@ -8,7 +8,7 @@ namespace UnityEditor.TestTools.TestRunner.UnityTestProtocol
 {
     internal class TestRunnerApiMapper : ITestRunnerApiMapper
     {
-        public TestPlanMessage MapTestToTestPlanMessage(ITest testsToRun)
+        public TestPlanMessage MapTestToTestPlanMessage(ITestAdaptor testsToRun)
         {
             var testsNames = testsToRun != null ? FlattenTestNames(testsToRun) : new List<string>();
 
@@ -20,7 +20,7 @@ namespace UnityEditor.TestTools.TestRunner.UnityTestProtocol
             return msg;
         }
 
-        public TestStartedMessage MapTestToTestStartedMessage(ITest test)
+        public TestStartedMessage MapTestToTestStartedMessage(ITestAdaptor test)
         {
             return new TestStartedMessage
             {
@@ -28,7 +28,7 @@ namespace UnityEditor.TestTools.TestRunner.UnityTestProtocol
             };
         }
 
-        public TestFinishedMessage TestResultToTestFinishedMessage(ITestResult result)
+        public TestFinishedMessage TestResultToTestFinishedMessage(ITestResultAdaptor result)
         {
             return new TestFinishedMessage
             {
@@ -40,14 +40,14 @@ namespace UnityEditor.TestTools.TestRunner.UnityTestProtocol
             };
         }
 
-        public string GetRunStateFromResultNunitXml(ITestResult result)
+        public string GetRunStateFromResultNunitXml(ITestResultAdaptor result)
         {
             var doc = new XmlDocument();
             doc.LoadXml(result.ToXml().OuterXml);
             return doc.FirstChild.Attributes["runstate"].Value;
         }
 
-        public TestState GetTestStateFromResult(ITestResult result)
+        public TestState GetTestStateFromResult(ITestResultAdaptor result)
         {
             var state = TestState.Failure;
 
@@ -81,7 +81,7 @@ namespace UnityEditor.TestTools.TestRunner.UnityTestProtocol
             return state;
         }
 
-        public List<string> FlattenTestNames(ITest test)
+        public List<string> FlattenTestNames(ITestAdaptor test)
         {
             var results = new List<string>();
 

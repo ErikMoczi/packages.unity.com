@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
-using NUnit.Framework.Interfaces;
 using UnityEditor.SceneManagement;
+using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.SceneManagement;
@@ -13,6 +13,10 @@ namespace UnityEditor.TestTools.TestRunner.GUI
     [Serializable]
     internal class PlayModeTestListGUI : TestListGUI
     {
+        public override TestMode TestMode
+        {
+            get { return TestMode.PlayMode; }
+        }
         public override void PrintHeadPanel()
         {
             EditorGUILayout.BeginHorizontal(GUILayout.ExpandHeight(false));
@@ -67,23 +71,19 @@ namespace UnityEditor.TestTools.TestRunner.GUI
             if (cancelled)
                 return;
 
-            filter.ClearResults(newResultList);
+            filter.ClearResults(newResultList.OfType<TestRunnerFilter.IClearableResult>().ToList());
 
-            if (PlayerSettings.runPlayModeTestAsEditModeTest)
+            var testRunnerApi = ScriptableObject.CreateInstance<TestRunnerApi>();
+            testRunnerApi.Execute(new ExecutionSettings()
             {
-                var editModeTestExecutor = new EditModeLauncher(filter, TestPlatform.PlayMode);
-                editModeTestExecutor.AddEventHandler<WindowResultUpdater>();
-                editModeTestExecutor.Run();
-                return;
-            }
-
-            var settings = PlaymodeTestsControllerSettings.CreateRunnerSettings(filter);
-            settings.bootstrapScene = SceneManager.GetActiveScene().path;
-            settings.originalScene = SceneManager.GetActiveScene().path;
-
-            var testExecutor = new PlaymodeLauncher(settings);
-            testExecutor.AddEventHandler<WindowResultUpdater>();
-            testExecutor.Run();
+                filter = new Filter()
+                {
+                    categoryNames = filter.categoryNames,
+                    groupNames =  filter.groupNames,
+                    testMode = TestMode,
+                    testNames = filter.testNames
+                }
+            });
         }
 
         protected void RunTestsInPlayer(TestRunnerFilter filter)
@@ -96,10 +96,9 @@ namespace UnityEditor.TestTools.TestRunner.GUI
         }
 
         public override TestPlatform TestPlatform { get { return TestPlatform.PlayMode; } }
-
         protected override bool IsBusy()
         {
-            return PlaymodeLauncher.IsRunning  || EditorApplication.isCompiling;
+            return PlaymodeLauncher.IsRunning  || EditorApplication.isCompiling || EditorApplication.isPlaying;
         }
     }
 }

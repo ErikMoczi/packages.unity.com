@@ -11,6 +11,11 @@ namespace UnityEditor.TestTools.TestRunner.Api
             m_Callbacks.Add(new CallbackWithPriority(callback, priority));
         }
 
+        public void Remove(ICallbacks callback)
+        {
+            m_Callbacks.RemoveAll(callbackWithPriority => callbackWithPriority.Callback == callback);
+        }
+
         public ICallbacks[] GetAll()
         {
             return m_Callbacks.OrderByDescending(callback => callback.Priority).Select(callback => callback.Callback).ToArray();

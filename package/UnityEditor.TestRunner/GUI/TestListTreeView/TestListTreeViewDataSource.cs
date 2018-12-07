@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEditor.IMGUI.Controls;
+using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools.TestRunner;
 using UnityEngine.TestTools.TestRunner.GUI;
@@ -10,12 +11,14 @@ namespace UnityEditor.TestTools.TestRunner.GUI
     {
         private bool m_ExpandTreeOnCreation;
         private readonly TestListGUI m_TestListGUI;
+        private ITestAdaptor m_RootTest;
 
-        public TestListTreeViewDataSource(TreeViewController testListTree, TestListGUI testListGUI) : base(testListTree)
+        public TestListTreeViewDataSource(TreeViewController testListTree, TestListGUI testListGUI, ITestAdaptor rootTest) : base(testListTree)
         {
             showRootItem = false;
             rootIsCollapsable = false;
             m_TestListGUI = testListGUI;
+            m_RootTest = rootTest;
         }
 
         public override void FetchData()
@@ -24,7 +27,7 @@ namespace UnityEditor.TestTools.TestRunner.GUI
             if (sceneName.StartsWith("InitTestScene"))
                 sceneName = PlaymodeTestsController.GetController().settings.originalScene;
 
-            var testListBuilder = new TestTreeViewBuilder(m_TestListGUI.GetTestListNUnit(), m_TestListGUI.newResultList, m_TestListGUI.m_TestRunnerUIFilter);
+            var testListBuilder = new TestTreeViewBuilder(m_RootTest, m_TestListGUI.newResultList, m_TestListGUI.m_TestRunnerUIFilter);
 
             m_RootItem = testListBuilder.BuildTreeView(null, false, sceneName);
             SetExpanded(m_RootItem, true);

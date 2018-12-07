@@ -1,18 +1,21 @@
 using System;
+using System.Linq;
+using System.Threading;
 using UnityEngine;
+using UnityEngine.TestRunner.TestLaunchers;
+using UnityEngine.TestTools;
+using UnityEngine.TestTools.NUnitExtensions;
 
 namespace UnityEditor.TestTools.TestRunner.Api
 {
     internal class TestRunnerApi : ScriptableObject, ITestRunnerApi
     {
-        public void Execute(ExecutionSettings executionSettings = null)
+        public void Execute(ExecutionSettings executionSettings)
         {
             if (executionSettings == null)
             {
                 throw new ArgumentException("Filter for execution is undefined.");
             }
-
-            Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "Executing tests with settings: {0}", ExecutionSettingsToString(executionSettings));
 
             var launcherFactory = new TestLauncherFactory();
             var data = TestRunData.instance;
@@ -32,19 +35,47 @@ namespace UnityEditor.TestTools.TestRunner.Api
             CallbacksHolder.instance.Add(testCallbacks, priority);
         }
 
-        private static string ExecutionSettingsToString(ExecutionSettings executionSettings)
+        public void UnregisterCallbacks<T>(T testCallbacks) where T : ICallbacks
+        {
+            if (testCallbacks == null)
+            {
+                throw new ArgumentException("TestCallbacks for execution is undefined.");
+            }
+
+            CallbacksHolder.instance.Remove(testCallbacks);
+        }
+
+        public void RetrieveTestList(ExecutionSettings executionSettings, Action<ITestAdaptor> callback)
         {
             if (executionSettings == null)
             {
-                return "none";
+                throw new ArgumentException("Filter for execution is undefined.");
             }
 
-            if (executionSettings.filter == null)
+            if (callback == null)
             {
-                return "no filter";
+                throw new ArgumentException("Callback is undefined.");
             }
 
-            return "test mode = " + executionSettings.filter.testMode;
+            var platform = ParseTestMode(executionSettings.filter.testMode);
+            var testAssemblyProvider = new EditorLoadedTestAssemblyProvider(new EditorCompilationInterfaceProxy(), new EditorAssembliesProxy());
+            var testAdaptorFactory = new TestAdaptorFactory();
+            var testListCache = new TestListCache(testAdaptorFactory, new RemoteTestResultDataFactory(), TestListCacheData.instance);
+            var testListProvider = new TestListProvider(testAssemblyProvider, new UnityTestAssemblyBuilder());
+            var cachedTestListProvider = new CachingTestListProvider(testListProvider, testListCache, testAdaptorFactory);
+
+            var job = new TestListJob(cachedTestListProvider, platform, callback);
+            job.Start();
+        }
+
+        private static TestPlatform ParseTestMode(TestMode testmode)
+        {
+            if (testmode == TestMode.EditMode)
+            {
+                return TestPlatform.EditMode;
+            }
+
+            return TestPlatform.PlayMode;
         }
     }
 }

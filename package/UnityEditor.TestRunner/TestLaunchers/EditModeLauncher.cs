@@ -7,8 +7,6 @@ using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.TestTools.TestRunner;
 using UnityEngine.TestTools.TestRunner.GUI;
-using ITest = NUnit.Framework.Interfaces.ITest;
-using ITestResult = NUnit.Framework.Interfaces.ITestResult;
 
 namespace UnityEditor.TestTools.TestRunner
 {

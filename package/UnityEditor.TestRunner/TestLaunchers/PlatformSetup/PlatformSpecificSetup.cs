@@ -15,9 +15,14 @@ namespace UnityEditor.TestTools.TestRunner
         private XboxOnePlatformSetup m_XboxOnePlatformSetup = new XboxOnePlatformSetup();
         [SerializeField]
         private AndroidPlatformSetup m_AndroidPlatformSetup = new AndroidPlatformSetup();
+        [SerializeField]
+        private SwitchPlatformSetup m_SwitchPlatformSetup = new SwitchPlatformSetup();
 
         [SerializeField]
         private UwpPlatformSetup m_UwpPlatformSetup = new UwpPlatformSetup();
+
+        [SerializeField]
+        private LuminPlatformSetup m_LuminPlatformSetup = new LuminPlatformSetup();
 
 
         private IDictionary<BuildTarget, IPlatformSetup> m_SetupTypes;
@@ -90,7 +95,9 @@ namespace UnityEditor.TestTools.TestRunner
                 {BuildTarget.tvOS, m_AppleTvOSPlatformSetup},
                 {BuildTarget.XboxOne, m_XboxOnePlatformSetup},
                 {BuildTarget.Android, m_AndroidPlatformSetup},
-                {BuildTarget.WSAPlayer, m_UwpPlatformSetup}
+                {BuildTarget.WSAPlayer, m_UwpPlatformSetup},
+                {BuildTarget.Lumin, m_LuminPlatformSetup},
+                {BuildTarget.Switch, m_SwitchPlatformSetup}
             };
             return m_SetupTypes;
         }

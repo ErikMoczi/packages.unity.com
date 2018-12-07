@@ -22,7 +22,7 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             m_ExitApplication = exitApplication;
         }
 
-        public void RunFinished(ITestResult result)
+        public void RunFinished(ITestResultAdaptor result)
         {
             if (m_TimeoutCallback != null)
             {
@@ -30,17 +30,17 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             }
         }
 
-        public void RunStarted(ITest testsToRun)
+        public void RunStarted(ITestAdaptor testsToRun)
         {
             ResetToTimeout(k_DefaultTimeout);
         }
 
-        public void TestFinished(ITestResult result)
+        public void TestFinished(ITestResultAdaptor result)
         {
             ResetToTimeout(k_DefaultTimeout);
         }
 
-        public void TestStarted(ITest test)
+        public void TestStarted(ITestAdaptor test)
         {
             ResetToTimeout(k_DefaultTimeout + test.TestCaseTimeout / 1000);
         }

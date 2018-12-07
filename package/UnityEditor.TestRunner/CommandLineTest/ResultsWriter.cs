@@ -4,7 +4,6 @@ using System.Xml;
 using NUnit.Framework.Interfaces;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
-using ITestResult = UnityEditor.TestTools.TestRunner.Api.ITestResult;
 
 namespace UnityEditor.TestTools.TestRunner.CommandLineTest
 {
@@ -30,7 +29,7 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
 
         private const string k_TimeFormat = "u";
 
-        public void WriteResultToFile(ITestResult result, string filePath)
+        public void WriteResultToFile(ITestResultAdaptor result, string filePath)
         {
             Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "Saving results to: {0}", filePath);
 
@@ -58,7 +57,7 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             Directory.CreateDirectory(Path.GetDirectoryName(filePath));
         }
 
-        public void WriteResultToStream(ITestResult result, StreamWriter streamWriter, XmlWriterSettings settings = null)
+        public void WriteResultToStream(ITestResultAdaptor result, StreamWriter streamWriter, XmlWriterSettings settings = null)
         {
             settings = settings ?? new XmlWriterSettings();
             settings.Indent = true;
@@ -70,7 +69,7 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             }
         }
 
-        void WriteResultsToXml(ITestResult result, XmlWriter xmlWriter)
+        void WriteResultsToXml(ITestResultAdaptor result, XmlWriter xmlWriter)
         {
             // XML format as specified at https://github.com/nunit/docs/wiki/Test-Result-XML-Format
 

@@ -12,22 +12,22 @@ namespace UnityEditor.TestTools.TestRunner.UnityTestProtocol
             m_UtpMessageReporter = new UtpMessageReporter(new UtpDebugLogger());
         }
 
-        public void RunStarted(ITest testsToRun)
+        public void RunStarted(ITestAdaptor testsToRun)
         {
             m_UtpMessageReporter.ReportTestRunStarted(testsToRun);
         }
 
-        public void RunFinished(ITestResult testResults)
+        public void RunFinished(ITestResultAdaptor testResults)
         {
             // Apparently does nothing :)
         }
 
-        public void TestStarted(ITest test)
+        public void TestStarted(ITestAdaptor test)
         {
             m_UtpMessageReporter.ReportTestStarted(test);
         }
 
-        public void TestFinished(ITestResult result)
+        public void TestFinished(ITestResultAdaptor result)
         {
             m_UtpMessageReporter.ReportTestFinished(result);
         }

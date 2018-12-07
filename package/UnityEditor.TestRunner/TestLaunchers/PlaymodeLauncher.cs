@@ -105,7 +105,7 @@ namespace UnityEditor.TestTools.TestRunner
                 if (state == PlayModeStateChange.ExitingPlayMode)
                 {
                     AssetDatabase.DeleteAsset(runner.settings.bootstrapScene);
-                    ExecutePostBuildCleanupMethods(runner.m_Runner.LoadedTest, runner.settings.filter.BuildNUnitFilter());
+                    ExecutePostBuildCleanupMethods(runner.m_Runner.LoadedTest, runner.settings.filter.BuildNUnitFilter(), Application.platform);
                     IsRunning = false;
                 }
                 else if (state == PlayModeStateChange.EnteredEditMode)

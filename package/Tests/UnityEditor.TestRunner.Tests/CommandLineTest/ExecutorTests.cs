@@ -139,6 +139,16 @@ public class ExecutorTests
         {
             registeredCallbacks.Add(testCallbacks);
         }
+
+        public void UnregisterCallbacks<T>(T testCallbacks) where T : ICallbacks
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RetrieveTestList(ApiExecutionSettings executionSettings, Action<ITestAdaptor> callback)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     private class ApiSettingsBuilder : ISettingsBuilder

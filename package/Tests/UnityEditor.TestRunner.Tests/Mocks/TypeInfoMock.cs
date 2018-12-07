@@ -6,6 +6,15 @@ namespace FrameworkTests
 {
     public class TypeInfoMock : ITypeInfo
     {
+        public TypeInfoMock(Assembly assembly)
+        {
+            Assembly = assembly;
+        }
+
+        public TypeInfoMock()
+        {
+        }
+
         public T[] GetCustomAttributes<T>(bool inherit) where T : class
         {
             return new T[] {};
