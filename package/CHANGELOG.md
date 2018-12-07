@@ -1,8 +1,18 @@
 # Changelog
 All notable changes to this package will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.1.6] - 2018-12-06
+### Fixed
+- Fix AudioClip import errors.
+- Fix compilation errors at build time due to incorrectly configured Assembly Definition asset.
+- Fix inconsistent line endings.
+- Fix CS0649 warnings.
+- Fix Help > Template Walkthroughs menu item not finding Readme asset.
 
 ## [0.1.5] - 2018-12-04
 ### Fixed
@@ -22,7 +32,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Ability for Tutorials to reference each other
 - "Home/Skip" button have 2 modes. Legacy will open the Hub, and CloseWindow will close the Tutorial window
 - Ability to choose the name of the Tutorial Window
-
 
 ### Fixed
 - Updated usages of obsolete APIs

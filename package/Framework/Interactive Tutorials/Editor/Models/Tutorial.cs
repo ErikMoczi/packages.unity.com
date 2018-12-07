@@ -72,7 +72,7 @@ namespace Unity.InteractiveTutorials
 
         public UnityEngine.Object assetSelectedOnExit { get { return m_AssetSelectedOnExit; } }
         [SerializeField]
-        UnityEngine.Object m_AssetSelectedOnExit;
+        UnityEngine.Object m_AssetSelectedOnExit = null;
 
         public TutorialWelcomePage welcomePage { get { return m_WelcomePage; } }
         [Header("Pages"), SerializeField]

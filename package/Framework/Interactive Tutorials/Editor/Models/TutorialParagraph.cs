@@ -59,11 +59,11 @@ namespace Unity.InteractiveTutorials
 
         public Texture2D image { get { return m_Image; } }
         [SerializeField]
-        Texture2D m_Image;
+        Texture2D m_Image = null;
 
         public VideoClip video { get { return m_Video; } }
         [SerializeField]
-        VideoClip m_Video;
+        VideoClip m_Video = null;
 
         [SerializeField]
         internal CompletionType m_CriteriaCompletion = CompletionType.CompletedWhenAllAreTrue;

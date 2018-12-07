@@ -45,7 +45,7 @@ public class ReadmeEditor : Editor {
 	[MenuItem("Help/Template Walkthroughs")]
 	static Readme SelectReadme() 
 	{
-		var ids = AssetDatabase.FindAssets("Readme t:Readme");
+		var ids = AssetDatabase.FindAssets("t:Readme");
 		if (ids.Length == 1)
 		{
 			var readmeObject = AssetDatabase.LoadMainAssetAtPath(AssetDatabase.GUIDToAssetPath(ids[0]));

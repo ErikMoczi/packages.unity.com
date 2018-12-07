@@ -45,7 +45,7 @@ namespace Unity.InteractiveTutorials
         bool m_UseLegacyStartupBehavior = true;
 
         [SerializeField]
-        Tutorial m_StartupTutorial;
+        Tutorial m_StartupTutorial = null;
 
         public Tutorial startupTutorial
         {
