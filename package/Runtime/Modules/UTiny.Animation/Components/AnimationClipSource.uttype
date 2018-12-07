@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "81d61455a9c0de7e848742038c4b3de3",
+    "Name": "AnimationClipSource",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "8978266fb8e007ba8d92f7870732c523",
+        "Name": "file",
+        "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "81d61455a9c0de7e848742038c4b3de3", "Name": "AnimationClipSource" }
+    }
+}]

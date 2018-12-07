@@ -1,0 +1,36 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "3fc9adcd79c74a9f15ae439f85706879",
+    "Name": "ColorTintTransition",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "a736e7145055808790002c792400a961",
+        "Name": "normal",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "88624fde9e1d01f9bc7e1aaacf906bbd",
+        "Name": "hover",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "d948b8afa2f1719cd76ba6cdb2e7c870",
+        "Name": "pressed",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "a89b0a2a5b681e34e1bca128aef51a2b",
+        "Name": "disabled",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "3fc9adcd79c74a9f15ae439f85706879", "Name": "ColorTintTransition" }
+    }
+}]

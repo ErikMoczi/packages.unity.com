@@ -1,0 +1,39 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "dc7e11e5d517ed01fd5d084a6c9fd64d",
+    "Name": "Quaternion",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "9089c7c2ff8f99229fe49e46f022eb74",
+        "Name": "x",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "dff0fabfa3f44921f90c7150e7ebbb06",
+        "Name": "y",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "d6a3236731fbc216c0d8f74f86f514b7",
+        "Name": "z",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "1026a8e1d845fb159eb433779fa05601",
+        "Name": "w",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "dc7e11e5d517ed01fd5d084a6c9fd64d", "Name": "Quaternion" },
+        "Properties": {
+            "w": 1
+        }
+    }
+}]

@@ -1,0 +1,43 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "23c7418fdf39b495d4e0cb4cbe9c5381",
+    "Name": "AdState",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Enum",
+    "BaseType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+    "Fields": [{
+        "Id": "d6a3119bb3b1a99e5c115787ba8a52b2",
+        "Name": "Hidden",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "7ec8e1c7a9e4f953a555f165e8c80357",
+        "Name": "Default",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "09d91b349661d91c70ee03c206c74634",
+        "Name": "Loading",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "d0306f8212f0903e3f9bf95c218340e8",
+        "Name": "Expanded",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "23c7418fdf39b495d4e0cb4cbe9c5381", "Name": "AdState" },
+        "Properties": {
+            "Hidden": 0,
+            "Default": 1,
+            "Loading": 2,
+            "Expanded": 3
+        }
+    }
+}]

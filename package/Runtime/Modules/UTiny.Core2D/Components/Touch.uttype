@@ -1,0 +1,48 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "bbf7e113f62f37d6f2d26126e404920a",
+    "Name": "Touch",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "bb66fd71aea9ef39974fbb78ff6cc288",
+        "Name": "deltaX",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "6a5ccaa96461310a438c643f0ee57a49",
+        "Name": "deltaY",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "fb7fc2344150354c5a124950005ec49f",
+        "Name": "fingerId",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "9fe24b989ca0625beb98f400a3646655",
+        "Name": "phase",
+        "FieldType": { "Id": "7c93ed01a62324edc6fab76efa37258b", "Name": "TouchState" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "5deffadfd954bc02afb532e701e2a134",
+        "Name": "x",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "718878507e4f668566bd4ad5ab909fb5",
+        "Name": "y",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "bbf7e113f62f37d6f2d26126e404920a", "Name": "Touch" }
+    }
+}]

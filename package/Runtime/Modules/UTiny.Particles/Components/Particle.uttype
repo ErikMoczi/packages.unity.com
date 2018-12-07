@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "fc12a3e7fb50851c6363eb0879c14f6d",
+    "Name": "Particle",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "8f24665ff39dcde7455e066cf8216071",
+        "Name": "time",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "3018f288140070eaa74c61e1c49dc38b",
+        "Name": "lifetime",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "fc12a3e7fb50851c6363eb0879c14f6d", "Name": "Particle" }
+    }
+}]

@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "25bbb3d104b32f5e95c3bde67d45bb19",
+    "Name": "AnimationPlayerDescQuaternion",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "91094f5a0bf2f162d4797814fdd1a6d1",
+        "Name": "desc",
+        "FieldType": { "Id": "cce48c26c62d56691b4daa1112d2b0c5", "Name": "AnimationPlayerDesc" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "25bbb3d104b32f5e95c3bde67d45bb19", "Name": "AnimationPlayerDescQuaternion" }
+    }
+}]

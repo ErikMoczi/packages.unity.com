@@ -1,0 +1,11 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "f8d0d84284606cc2536da3efdd9122fc",
+    "Name": "TransformStatic",
+    "ExportFlags": 1,
+    "Unlisted": true,
+    "TypeCode": "Component",
+    "DefaultValue": {
+        "Type": { "Id": "f8d0d84284606cc2536da3efdd9122fc", "Name": "TransformStatic" }
+    }
+}]

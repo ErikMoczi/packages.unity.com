@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "06f290d134c66a4151208fb73e91a187",
+    "Name": "LifetimeSpeedMultiplier",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "0f03ba4ef08de95e318df94833df9d49",
+        "Name": "curve",
+        "FieldType": { "Id": "280b143c739160ffb69b3cf552f375bb", "Name": "CurveEntity" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "06f290d134c66a4151208fb73e91a187", "Name": "LifetimeSpeedMultiplier" }
+    }
+}]

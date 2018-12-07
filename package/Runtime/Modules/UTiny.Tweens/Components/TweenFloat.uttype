@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "dcd0888429933e48bcaa80abfb0e5064",
+    "Name": "TweenFloat",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "f68fb09c64c584385dde41a474be50ed",
+        "Name": "start",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "6fff56e50ba2fdaace67e46be22b7494",
+        "Name": "end",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "dcd0888429933e48bcaa80abfb0e5064", "Name": "TweenFloat" }
+    }
+}]

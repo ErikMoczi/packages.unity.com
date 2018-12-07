@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 2,
+    "Id": "494f9eba840c1f117459611e605884b0",
+    "Name": "UTiny.Core2DTypes",
+    "SerializedVersion": 1,
+    "ExportFlags": 1,
+    "Namespace": "ut.Core2D",
+    "Options": 1,
+    "Dependencies": [
+        { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" },
+        { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" },
+        { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" }
+    ],
+    "Components": [
+        { "Id": "00d6bc791188d69186aa19bf8f6652a8", "Name": "RectTransformFinalSize" }
+    ],
+    "Structs": [
+        { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" }
+    ],
+    "Enums": [
+        { "Id": "78fe1548d31b94b79668981ae1d3279d", "Name": "BlendOp" },
+        { "Id": "ea25cda1bca15e4c9fb023eca636eb06", "Name": "LoopMode" }
+    ]
+}]

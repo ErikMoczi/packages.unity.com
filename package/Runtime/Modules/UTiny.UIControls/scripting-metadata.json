@@ -1,0 +1,82 @@
+{
+    "Success": true,
+    "Diagnostics": [],
+    "Systems": [{
+        "Name": "MouseInteractionSystem",
+        "QualifiedName": "ut.UIControls.MouseInteractionSystem",
+        "Description": "Created from the 'UTiny.UIControls' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.InputFence"
+        ],
+        "ExecuteBefore": [
+            "ut.Shared.UserCodeStart"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "ToggleCheckedSystem",
+        "QualifiedName": "ut.UIControls.ToggleCheckedSystem",
+        "Description": "Created from the 'UTiny.UIControls' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.UIControls.MouseInteractionSystem"
+        ],
+        "ExecuteBefore": [
+            "ut.Shared.UserCodeStart"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "UIControlsSystem",
+        "QualifiedName": "ut.UIControls.UIControlsSystem",
+        "Description": "Created from the 'UTiny.UIControls' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.UserCodeEnd"
+        ],
+        "ExecuteBefore": [
+            "ut.Shared.RenderingFence"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "ButtonSystem",
+        "QualifiedName": "ut.UIControls.ButtonSystem",
+        "Description": "Created from the 'UTiny.UIControls' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.UserCodeEnd"
+        ],
+        "ExecuteBefore": [
+            "ut.Shared.RenderingFence"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "ToggleSystem",
+        "QualifiedName": "ut.UIControls.ToggleSystem",
+        "Description": "Created from the 'UTiny.UIControls' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.UserCodeEnd"
+        ],
+        "ExecuteBefore": [
+            "ut.Shared.RenderingFence"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }],
+    "Filters": [],
+    "Behaviours": []
+}

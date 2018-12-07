@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "e94efa04f839b02e4519a31e6c819389",
+    "Name": "LinearCurveVector3",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "73130d812a92b36bfa222b4e2a0835f5",
+        "Name": "times",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": true,
+        "Visibility": 0
+    }, {
+        "Id": "adbe1372623db86cf54bf86da3117d86",
+        "Name": "values",
+        "FieldType": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
+        "Array": true,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "e94efa04f839b02e4519a31e6c819389", "Name": "LinearCurveVector3" }
+    }
+}]

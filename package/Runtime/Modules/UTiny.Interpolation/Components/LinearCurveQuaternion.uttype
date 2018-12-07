@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "204407210447b46ccbf4e20ffa4521bc",
+    "Name": "LinearCurveQuaternion",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "5af4a63bcc8b3f0b50d7acf7f59ec4eb",
+        "Name": "times",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": true,
+        "Visibility": 0
+    }, {
+        "Id": "9357a6bd4489363a9f32920b919b5bb4",
+        "Name": "values",
+        "FieldType": { "Id": "dc7e11e5d517ed01fd5d084a6c9fd64d", "Name": "Quaternion" },
+        "Array": true,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "204407210447b46ccbf4e20ffa4521bc", "Name": "LinearCurveQuaternion" }
+    }
+}]

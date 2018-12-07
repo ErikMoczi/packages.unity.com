@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "ae5d29904647032d17171016c7bb8ff4",
+    "Name": "ComponentSpec",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "6270b93ea56ab44f0995dda94528b233",
+        "Name": "access",
+        "FieldType": { "Id": "ba105830a6a40bf6ac4c2b8f1deec9bf", "Name": "AccessMode" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "ae5d29904647032d17171016c7bb8ff4", "Name": "ComponentSpec" }
+    }
+}]

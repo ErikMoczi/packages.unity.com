@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "95ff57ed0598446933927bc634433a47",
+    "Name": "Button",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "d79fd6ccc0ee6669808c0abe23ad4b6b",
+        "Name": "sprite2DRenderer",
+        "FieldType": { "Id": "5a182d9d039d4dfd8fa96132d05f9ee7", "Name": "EntityReference" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "7afa88232cb151304071709c12f0acd3",
+        "Name": "transition",
+        "FieldType": { "Id": "65e6144818520fd56fba1f04bf8fb271", "Name": "TransitionEntity" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "95ff57ed0598446933927bc634433a47", "Name": "Button" }
+    }
+}]

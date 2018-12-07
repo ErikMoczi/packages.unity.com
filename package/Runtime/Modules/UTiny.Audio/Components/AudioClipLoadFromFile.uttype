@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "8a98c537af2529ff3129223be034eab3",
+    "Name": "AudioClipLoadFromFile",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "e37a655e68beeaf933667135f474c748",
+        "Name": "fileName",
+        "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "8a98c537af2529ff3129223be034eab3", "Name": "AudioClipLoadFromFile" }
+    }
+}]

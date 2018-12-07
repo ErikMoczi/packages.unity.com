@@ -1,0 +1,14 @@
+﻿[{
+    "$TypeId": 2,
+    "Id": "29e5e02a3a0442beb9e6828c78a7ff91",
+    "Name": "Tiny.Streaming",
+    "SerializedVersion": 1,
+    "ExportFlags": 0,
+    "Namespace": "ut.Streaming",
+    "Options": 3,
+    "Dependencies": [],
+    "Components": [
+        { "Id": "14a3c63954b94a90a8702c2f65b4a843", "Name": "EntityGroupInstance" }
+    ],
+    "ScriptRootDirectory": "062e35803292c034e8c3076cfeb37499"
+}]

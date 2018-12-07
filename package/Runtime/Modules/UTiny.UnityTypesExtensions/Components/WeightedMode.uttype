@@ -1,0 +1,38 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "563a5e15340525520839fb3a23de5ac4",
+    "Name": "WeightedMode",
+    "ExportFlags": 4,
+    "Unlisted": false,
+    "TypeCode": "Enum",
+    "Fields": [{
+        "Id": "a7ebaccd0f1f2e0cef2584c6799fe88f",
+        "Name": "None",
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "2ac9604f4ec1669d2cf08d2a93e36abb",
+        "Name": "In",
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "8e41c297ba36a0fb2cba8c470ac85a9e",
+        "Name": "Out",
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "80400296bdeb7f6e2040aea8e5543bd4",
+        "Name": "Both",
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "563a5e15340525520839fb3a23de5ac4", "Name": "WeightedMode" },
+        "Properties": {
+            "None": 0,
+            "In": 1,
+            "Out": 2,
+            "Both": 3
+        }
+    }
+}]

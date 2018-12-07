@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "70449d66178e0d9f66795c24f0fbbdfc",
+    "Name": "TransformLocalPosition",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "35872160f3cf379e3252a3ce1d624360",
+        "Name": "position",
+        "FieldType": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "70449d66178e0d9f66795c24f0fbbdfc", "Name": "TransformLocalPosition" }
+    }
+}]

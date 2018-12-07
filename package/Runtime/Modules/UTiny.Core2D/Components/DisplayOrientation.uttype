@@ -1,0 +1,29 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "ae81459364cae2c8925096902099c5be",
+    "Name": "DisplayOrientation",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Enum",
+    "BaseType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+    "Fields": [{
+        "Id": "0ccbb2244135b8b953e5f9bb89e3d0f8",
+        "Name": "Horizontal",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "bed0d9fcf1ddd9754426a4660700f426",
+        "Name": "Vertical",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "ae81459364cae2c8925096902099c5be", "Name": "DisplayOrientation" },
+        "Properties": {
+            "Horizontal": 0,
+            "Vertical": 1
+        }
+    }
+}]

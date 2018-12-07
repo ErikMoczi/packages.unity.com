@@ -1,0 +1,40 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "be2f221c9af74ec5c0a4495a2d6769a3",
+    "Name": "Sprite2DRendererOptions",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "aeeac38909c0aa723c146e9e11e54da5",
+        "Name": "size",
+        "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "31d029559087b91a31b48fe02c9db0c7",
+        "Name": "drawMode",
+        "FieldType": { "Id": "a7ae2ef1f120627af99607cbecca330e", "Name": "DrawMode" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "be2f221c9af74ec5c0a4495a2d6769a3", "Name": "Sprite2DRendererOptions" },
+        "Properties": {
+            "size": {
+                "Type": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+                "Properties": {
+                    "x": 1,
+                    "y": 1
+                }
+            },
+            "drawMode": {
+                "$TypeId": 8,
+                "Type": { "Id": "a7ae2ef1f120627af99607cbecca330e", "Name": "DrawMode" },
+                "Id": "b5e836cf58569b764113a97c4cf32af6",
+                "Name": "Stretch",
+                "Value": 2
+            }
+        }
+    }
+}]

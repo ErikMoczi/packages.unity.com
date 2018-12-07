@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "eda7479674093afc47e937fe249e16a4",
+    "Name": "AnimationPlayerDescVector2",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "bb5d385eb2adc3eb49373fca35771071",
+        "Name": "desc",
+        "FieldType": { "Id": "cce48c26c62d56691b4daa1112d2b0c5", "Name": "AnimationPlayerDesc" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "eda7479674093afc47e937fe249e16a4", "Name": "AnimationPlayerDescVector2" }
+    }
+}]

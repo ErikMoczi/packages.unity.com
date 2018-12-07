@@ -1,0 +1,10 @@
+{
+    "name": "Unity.Tiny",
+    "references": [
+      "Unity.Properties",
+      "Unity.InternalAPIEngineBridge.002"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true
+}

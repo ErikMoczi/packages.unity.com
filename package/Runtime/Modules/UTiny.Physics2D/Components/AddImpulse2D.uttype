@@ -1,0 +1,30 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "71325fd2b661ef42bd95ab77e9b5b873",
+    "Name": "AddImpulse2D",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "a610772f31b2cf4e434128a3aca42a61",
+        "Name": "point",
+        "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "9641c06a2deb0549c3fdb9d6fcdefca2",
+        "Name": "impulse",
+        "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "6a1894b14104cd5e2e4ab926671965e9",
+        "Name": "scaleImpulse",
+        "FieldType": { "Id": "2b477f505af74487b7092b5617d88d3f", "Name": "Boolean" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "71325fd2b661ef42bd95ab77e9b5b873", "Name": "AddImpulse2D" }
+    }
+}]

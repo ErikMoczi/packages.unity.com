@@ -1,0 +1,20 @@
+{
+    "Success": true,
+    "Diagnostics": [],
+    "Systems": [{
+        "Name": "AudioSystem",
+        "QualifiedName": "ut.Audio.AudioSystem",
+        "Description": "Created from the 'UTiny.Audio' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.RenderingFence"
+        ],
+        "ExecuteBefore": [],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }],
+    "Filters": [],
+    "Behaviours": []
+}

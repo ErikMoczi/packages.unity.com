@@ -1,0 +1,20 @@
+{
+    "Success": true,
+    "Diagnostics": [],
+    "Systems": [{
+        "Name": "Shape2DInitSystem",
+        "QualifiedName": "ut.Core2D.Shape2DInitSystem",
+        "Description": "Created from the 'UTiny.Shape2D' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [],
+        "ExecuteBefore": [
+            "ut.Core2D.DisplayList"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }],
+    "Filters": [],
+    "Behaviours": []
+}

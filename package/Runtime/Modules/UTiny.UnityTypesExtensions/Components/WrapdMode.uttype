@@ -1,0 +1,44 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "ad4ebed15ce9359e8f4ad4aba9d2077e",
+    "Name": "WrapdMode",
+    "ExportFlags": 4,
+    "Unlisted": false,
+    "TypeCode": "Enum",
+    "Fields": [{
+        "Id": "107d2fd21b6748cbbdde70bea7df6bab",
+        "Name": "Default",
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "53fec7d49f9e43c9878dcce95692c50c",
+        "Name": "Once",
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "50ab478251184245a892fa1421d6f60b",
+        "Name": "Loop",
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "cfa4b5c38a994615b2663aad66c968b5",
+        "Name": "PingPong",
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "82df3267b94248afac714ed1d1ee0b4f",
+        "Name": "ClampForever",
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "ad4ebed15ce9359e8f4ad4aba9d2077e", "Name": "WrapdMode" },
+        "Properties": {
+            "Default": 0,
+            "Once": 1,
+            "Loop": 2,
+            "PingPong": 4,
+            "ClampForever": 8
+        }
+    }
+}]

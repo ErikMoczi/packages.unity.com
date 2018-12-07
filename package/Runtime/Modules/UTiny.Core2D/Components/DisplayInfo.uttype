@@ -1,0 +1,48 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "575fe161bc06950c954480d04c70c9ab",
+    "Name": "DisplayInfo",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Configuration",
+    "Fields": [{
+        "Id": "4f02d09475a408341926793ced0125c9",
+        "Name": "width",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "587e68797e6c8e5a45999df033c5042c",
+        "Name": "height",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "5dfedd6517d65022b5ef7c9e9438670f",
+        "Name": "autoSizeToFrame",
+        "FieldType": { "Id": "2b477f505af74487b7092b5617d88d3f", "Name": "Boolean" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "240247880b850ea65c84b196f55ec200",
+        "Name": "renderMode",
+        "FieldType": { "Id": "c592d331c582f4083ec19af9e2d06b6d", "Name": "RenderMode" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "bc29ca0be6252e350f71939a3ffb247a",
+        "Name": "focused",
+        "FieldType": { "Id": "2b477f505af74487b7092b5617d88d3f", "Name": "Boolean" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "52eec7884f15e591cd1abf743c5b23ed",
+        "Name": "visible",
+        "FieldType": { "Id": "2b477f505af74487b7092b5617d88d3f", "Name": "Boolean" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "575fe161bc06950c954480d04c70c9ab", "Name": "DisplayInfo" }
+    }
+}]

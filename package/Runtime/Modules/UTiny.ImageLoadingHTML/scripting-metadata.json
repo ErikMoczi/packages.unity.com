@@ -1,0 +1,21 @@
+{
+    "Success": true,
+    "Diagnostics": [],
+    "Systems": [{
+        "Name": "AssetLoader",
+        "QualifiedName": "ut.HTML.AssetLoader",
+        "Description": "Created from the 'UTiny.ImageLoadingHTML' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [],
+        "ExecuteBefore": [
+            "ut.Shared.RenderingFence",
+            "ut.Shared.InputFence"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }],
+    "Filters": [],
+    "Behaviours": []
+}

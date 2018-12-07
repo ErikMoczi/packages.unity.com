@@ -1,0 +1,187 @@
+
+((function (ut) {
+
+    var ComponentSystem = /** @class */ (function () {
+        
+        function ComponentSystem() {}
+
+        ComponentSystem.prototype._MakeSystemFn = function () {
+            var _this = this;
+            return function (scheduler, world) {
+                _this.scheduler = scheduler;
+                _this.world = world;
+                _this.OnUpdate();
+            };
+        };
+        return ComponentSystem;
+    }());
+    ut.ComponentSystem = ComponentSystem;
+
+    function executeAfter() { }
+    ut.executeAfter = executeAfter;
+
+    function executeBefore() { }
+    ut.executeBefore = executeBefore;
+
+    function requiredComponents() { }
+    ut.requiredComponents = requiredComponents;
+
+    function optionalComponents() { }
+    ut.optionalComponents = optionalComponents;
+
+    var EntityFilter = /** @class */ (function () {
+        function EntityFilter() {}
+        EntityFilter.prototype.Read = function (world, entity) {};
+        EntityFilter.prototype.Reset = function () {};
+        EntityFilter.prototype.ForEach = function (world, callback) {
+            var _this = this;
+            world.forEach(this.constructor._Components, function(entity) {
+                _this.Read(world, entity);
+                callback(entity);
+                if (world.exists(entity)) {
+                    _this.Write(world, entity);
+                }
+            });
+        };
+        return EntityFilter;
+    }());
+    ut.EntityFilter = EntityFilter;
+
+    function usingFilters() { }
+    ut.usingFilters = usingFilters;
+
+    var ComponentBehaviour = /** @class */ (function () {
+        function ComponentBehaviour() { }
+        ComponentBehaviour.prototype.IsEnabled = function (world, entity) {
+            var stateType = this.constructor._StateType;
+            return world.hasComponent(entity, stateType) && world.getComponentData(entity, stateType).enabled;
+        };
+        ComponentBehaviour.prototype.Enable = function (world, entity) {
+            var stateType = this.constructor._StateType;
+            var hasState = world.hasComponent(entity, stateType);
+            var state = hasState ? world.getComponentData(entity, stateType) : new stateType;
+            if (!state.enabled) {
+                state.enabled = true;
+                state.onEnableCalled = false;
+                state.onDisableCalled = false;
+                if (hasState) {
+                    world.setComponentData(entity, state);
+                } else {
+                    world.addComponentData(entity, state);
+                }
+            }
+        };
+        ComponentBehaviour.prototype.Disable = function (world, entity) {
+            var stateType = this.constructor._StateType;
+            var hasState = world.hasComponent(entity, stateType);
+            var state = hasState ? world.getComponentData(entity, stateType) : new stateType;
+            if (state.enabled) {
+                state.enabled = false;
+                state.onEnableCalled = false;
+                state.onDisableCalled = false;
+                if (hasState) {
+                    world.setComponentData(entity, state);
+                } else {
+                    world.addComponentData(entity, state);
+                }
+            }
+        };
+        ComponentBehaviour.prototype._MakeOnEntityEnable = function () {
+            var _this = this;
+            var _stateType = this.constructor._StateType;
+            return function (scheduler, world) {
+                var _filter = _this._GetFilter();
+                _this.scheduler = scheduler;
+                _this.world = world;
+                _filter.ForEach(_this.world, function(entity) {
+                    var hasState = _this.world.hasComponent(entity, _stateType);
+                    var state = hasState ? _this.world.getComponentData(entity, _stateType) : new _stateType;
+                    if (!hasState || !state.initialized) {
+                        state.enabled = true;
+                        state.initialized = true;
+                    }
+                    try {
+                        if (!state.onEnableCalled && state.enabled) {
+                            state.onEnableCalled = true;
+                            _this.entity = entity;
+                            _this.OnEntityEnable();
+                        }
+                    } finally {
+                        if (_this.world.exists(entity)) {
+                            if (hasState) {
+                                _this.world.setComponentData(entity, state);
+                            } else {
+                                _this.world.addComponentData(entity, state);
+                            }
+                        }
+                    }
+                });
+                _filter.Reset();
+            };
+        };
+        ComponentBehaviour.prototype._MakeOnEntityUpdate = function () {
+            var _this = this;
+            var _stateType = this.constructor._StateType;
+            return function (scheduler, world) {
+                var _filter = _this._GetFilter();
+                _this.scheduler = scheduler;
+                _this.world = world;
+                _filter.ForEach(_this.world, function(entity) {
+                    var hasState = _this.world.hasComponent(entity, _stateType);
+                    var state = hasState ? _this.world.getComponentData(entity, _stateType) : new _stateType;
+                    if (!hasState || !state.initialized) {
+                        state.enabled = true;
+                        state.initialized = true;
+                        if (hasState) {
+                            _this.world.setComponentData(entity, state);
+                        } else {
+                            _this.world.addComponentData(entity, state);
+                        }
+                    }
+                    if (state.enabled) {
+                        _this.entity = entity;
+                        _this.OnEntityUpdate();
+                    }
+                });
+                _filter.Reset();
+            };
+        };
+        ComponentBehaviour.prototype._MakeOnEntityDisable = function () {
+            var _this = this;
+            var _stateType = this.constructor._StateType;
+            return function (scheduler, world) {
+                var _filter = _this._GetFilter();
+                _this.scheduler = scheduler;
+                _this.world = world;
+                _filter.ForEach(_this.world, function(entity) {
+                    var hasState = _this.world.hasComponent(entity, _stateType);
+                    var state = hasState ? _this.world.getComponentData(entity, _stateType) : new _stateType;
+                    if (!hasState || !state.initialized) {
+                        state.enabled = true;
+                        state.initialized = true;
+                    }
+                    try {
+                        if (!state.onDisableCalled && !state.enabled) {
+                            state.onDisableCalled = true;
+                            _this.entity = entity;
+                            _this.OnEntityDisable();
+                        }
+                    } finally {
+                        if (_this.world.exists(entity)) {
+                            if (hasState) {
+                                _this.world.setComponentData(entity, state);
+                            } else {
+                                _this.world.addComponentData(entity, state);
+                            }
+                        }
+                    }
+                });
+                _filter.Reset();
+            };
+        };
+        return ComponentBehaviour;
+    }());
+    ut.ComponentBehaviour = ComponentBehaviour;
+
+
+})(ut || (ut = {})));

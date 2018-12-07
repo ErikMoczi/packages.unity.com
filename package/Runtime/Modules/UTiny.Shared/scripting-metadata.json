@@ -1,0 +1,70 @@
+{
+    "Success": true,
+    "Diagnostics": [],
+    "Systems": [{
+        "Name": "InputFence",
+        "QualifiedName": "ut.Shared.InputFence",
+        "Description": "Created from the 'UTiny.Shared' runtime module",
+        "IsFence": true,
+        "Filters": [],
+        "ExecuteAfter": [],
+        "ExecuteBefore": [],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "RenderingFence",
+        "QualifiedName": "ut.Shared.RenderingFence",
+        "Description": "Created from the 'UTiny.Shared' runtime module",
+        "IsFence": true,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.UserCodeEnd"
+        ],
+        "ExecuteBefore": [],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "PlatformRenderingFence",
+        "QualifiedName": "ut.Shared.PlatformRenderingFence",
+        "Description": "Created from the 'UTiny.Shared' runtime module",
+        "IsFence": true,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.RenderingFence"
+        ],
+        "ExecuteBefore": [],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "UserCodeStart",
+        "QualifiedName": "ut.Shared.UserCodeStart",
+        "Description": "Created from the 'UTiny.Shared' runtime module",
+        "IsFence": true,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.InputFence"
+        ],
+        "ExecuteBefore": [],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "UserCodeEnd",
+        "QualifiedName": "ut.Shared.UserCodeEnd",
+        "Description": "Created from the 'UTiny.Shared' runtime module",
+        "IsFence": true,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.UserCodeStart"
+        ],
+        "ExecuteBefore": [],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }],
+    "Filters": [],
+    "Behaviours": []
+}

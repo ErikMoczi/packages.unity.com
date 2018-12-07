@@ -1,0 +1,26 @@
+﻿[{
+    "$TypeId": 2,
+    "Id": "36f73ad23c8a63c53fa510f0621474f5",
+    "Name": "UTiny.HitBox2D",
+    "SerializedVersion": 1,
+    "ExportFlags": 1,
+    "Namespace": "ut.HitBox2D",
+    "MetadataFileGUID": "8905c64aed729e84c8fc542527cef9bc",
+    "Options": 1,
+    "Dependencies": [
+        { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" },
+        { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" },
+        { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" }
+    ],
+    "Components": [
+        { "Id": "a015bc52c7befa4d7484891d74d2b574", "Name": "RectHitBox2D" },
+        { "Id": "5a68c59783d93e60c704f63111bcb0ad", "Name": "Sprite2DRendererHitBox2D" },
+        { "Id": "44ad5544b1b1c11651e308e1f949fd69", "Name": "HitBoxOverlapResults" }
+    ],
+    "Structs": [
+        { "Id": "ccb700dda656de657dd05de3a74c1eca", "Name": "HitBoxOverlap" },
+        { "Id": "c526d2181ca14153cd401551a1ce0c1d", "Name": "HitTestResult" },
+        { "Id": "ef2e90bfc8b339fe2cd3d8f14d96759c", "Name": "RayCastResult" },
+        { "Id": "f6e97f5cb3f8cbac67ac85536dde8416", "Name": "DetailedHitBoxOverlap" }
+    ]
+}]

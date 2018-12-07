@@ -1,0 +1,11 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "d499c9b7a27c63edba34d6e61bf86837",
+    "Name": "TilemapRechunk",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "DefaultValue": {
+        "Type": { "Id": "d499c9b7a27c63edba34d6e61bf86837", "Name": "TilemapRechunk" }
+    }
+}]

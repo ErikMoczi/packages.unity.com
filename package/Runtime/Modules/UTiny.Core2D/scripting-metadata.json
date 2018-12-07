@@ -1,0 +1,53 @@
+{
+    "Success": true,
+    "Diagnostics": [],
+    "Systems": [{
+        "Name": "DisplayList",
+        "QualifiedName": "ut.Core2D.DisplayList",
+        "Description": "Created from the 'UTiny.Core2D' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.RenderingFence",
+            "ut.Shared.InputFence"
+        ],
+        "ExecuteBefore": [
+            "ut.Shared.PlatformRenderingFence"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "UpdateLocalTransformSystem",
+        "QualifiedName": "ut.Core2D.UpdateLocalTransformSystem",
+        "Description": "Created from the 'UTiny.Core2D' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.RenderingFence"
+        ],
+        "ExecuteBefore": [
+            "ut.Core2D.UpdateWorldTransformSystem"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "UpdateWorldTransformSystem",
+        "QualifiedName": "ut.Core2D.UpdateWorldTransformSystem",
+        "Description": "Created from the 'UTiny.Core2D' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.RenderingFence"
+        ],
+        "ExecuteBefore": [
+            "ut.Core2D.DisplayList"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }],
+    "Filters": [],
+    "Behaviours": []
+}

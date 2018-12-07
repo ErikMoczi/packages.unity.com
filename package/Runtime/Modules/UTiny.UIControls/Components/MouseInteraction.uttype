@@ -1,0 +1,11 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "0efd2ae60c7796b3a911cb3247c89bd9",
+    "Name": "MouseInteraction",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "DefaultValue": {
+        "Type": { "Id": "0efd2ae60c7796b3a911cb3247c89bd9", "Name": "MouseInteraction" }
+    }
+}]

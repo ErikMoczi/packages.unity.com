@@ -1,0 +1,36 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "39dfc9b63ce698e64a529371349884f9",
+    "Name": "Toggle",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "b33e0b1330445a2c9b6134c78ac1ccb9",
+        "Name": "isOn",
+        "FieldType": { "Id": "2b477f505af74487b7092b5617d88d3f", "Name": "Boolean" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "e613a237fa83c0c285f4cd9caa0c242e",
+        "Name": "sprite2DRenderer",
+        "FieldType": { "Id": "5a182d9d039d4dfd8fa96132d05f9ee7", "Name": "EntityReference" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "5517657f1bc6da7e97ac0f7294fc884e",
+        "Name": "transition",
+        "FieldType": { "Id": "65e6144818520fd56fba1f04bf8fb271", "Name": "TransitionEntity" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "f9326590901ced9ae6ac1e1cc20eb2a4",
+        "Name": "transitionChecked",
+        "FieldType": { "Id": "65e6144818520fd56fba1f04bf8fb271", "Name": "TransitionEntity" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "39dfc9b63ce698e64a529371349884f9", "Name": "Toggle" }
+    }
+}]

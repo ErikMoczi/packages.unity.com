@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "aff14956d13273d7f93c085bb59123a7",
+    "Name": "GradientColorKey",
+    "ExportFlags": 4,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "47aa86da587e587cb03b5446daea68bd",
+        "Name": "color",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "7ca0bbbc60e6af6423c39e7146d1b7ea",
+        "Name": "time",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "aff14956d13273d7f93c085bb59123a7", "Name": "GradientColorKey" }
+    }
+}]

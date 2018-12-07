@@ -1,0 +1,17 @@
+﻿[{
+    "$TypeId": 2,
+    "Id": "e6d4e4660e226bf8de8d111b4ef61f3d",
+    "Name": "UTiny.TextHTML",
+    "SerializedVersion": 1,
+    "ExportFlags": 1,
+    "Namespace": "ut.HTML",
+    "MetadataFileGUID": "87ba8d8012de5964296a9a302dfdef09",
+    "Options": 1,
+    "Dependencies": [
+        { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" },
+        { "Id": "e46c24fb4d9a01e79b109bbcf6d24260", "Name": "UTiny.UILayout" },
+        { "Id": "0b0e260844fa6632977aa15579b42291", "Name": "UTiny.Text" },
+        { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" },
+        { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" }
+    ]
+}]

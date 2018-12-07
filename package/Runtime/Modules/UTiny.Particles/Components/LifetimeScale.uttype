@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "eb8a89020902b70571b96db92e8ea046",
+    "Name": "LifetimeScale",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "5d56da19950e35819ea2c3ce379ae8dd",
+        "Name": "curve",
+        "FieldType": { "Id": "280b143c739160ffb69b3cf552f375bb", "Name": "CurveEntity" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "eb8a89020902b70571b96db92e8ea046", "Name": "LifetimeScale" }
+    }
+}]

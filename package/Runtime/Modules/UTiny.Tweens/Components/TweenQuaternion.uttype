@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "ce2e9d47d54e3ca401004a9131b3e24c",
+    "Name": "TweenQuaternion",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "a431657824448c1545780dff0f9eef35",
+        "Name": "start",
+        "FieldType": { "Id": "dc7e11e5d517ed01fd5d084a6c9fd64d", "Name": "Quaternion" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "770b85beec6021289a6a41ee5397e576",
+        "Name": "end",
+        "FieldType": { "Id": "dc7e11e5d517ed01fd5d084a6c9fd64d", "Name": "Quaternion" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "ce2e9d47d54e3ca401004a9131b3e24c", "Name": "TweenQuaternion" }
+    }
+}]

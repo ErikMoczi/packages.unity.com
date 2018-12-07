@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "28542cedaf766a0fefbfb558a6c3a717",
+    "Name": "Image2DLoadFromFile",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "df8d8e49fb7dfb3a3c7b57e9234a0da1",
+        "Name": "imageFile",
+        "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "d46965f0f790bdee41562e0d1a7a820d",
+        "Name": "maskFile",
+        "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "28542cedaf766a0fefbfb558a6c3a717", "Name": "Image2DLoadFromFile" }
+    }
+}]

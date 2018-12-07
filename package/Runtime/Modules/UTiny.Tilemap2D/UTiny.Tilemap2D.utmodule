@@ -1,0 +1,31 @@
+﻿[{
+    "$TypeId": 2,
+    "Id": "8c6be6e8b11c20a446e356fb3e17ffb1",
+    "Name": "UTiny.Tilemap2D",
+    "SerializedVersion": 1,
+    "ExportFlags": 1,
+    "Namespace": "ut.Tilemap2D",
+    "MetadataFileGUID": "c121ee75d4efc0d4eb3bc33f1c775d02",
+    "Options": 1,
+    "Dependencies": [
+        { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" },
+        { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" },
+        { "Id": "494f9eba840c1f117459611e605884b0", "Name": "UTiny.Core2DTypes" },
+        { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" },
+        { "Id": "49644c1065ebcfd98885bfe5e77c8fc1", "Name": "UTiny.Image2D" },
+        { "Id": "229e8d5fce9cf6b511ca82c89f1b58eb", "Name": "UTiny.Sprite2D" },
+        { "Id": "30097418841f56d73400bf82ee859ac9", "Name": "UTiny.Core2D" }
+    ],
+    "Components": [
+        { "Id": "0d28ae8f9a388c9ed18b5c48668c08ab", "Name": "Tilemap" },
+        { "Id": "20d1f1e4d094f6765a692302f36f09a3", "Name": "Tile" },
+        { "Id": "e370f277f1ee85049c5156a2a1858b78", "Name": "TilemapRenderer" },
+        { "Id": "d499c9b7a27c63edba34d6e61bf86837", "Name": "TilemapRechunk" }
+    ],
+    "Structs": [
+        { "Id": "38cddb9154a8669901635780ed05188b", "Name": "TileData" }
+    ],
+    "Enums": [
+        { "Id": "e0d9472237aa48632dd3b57962899ffd", "Name": "TileColliderType" }
+    ]
+}]

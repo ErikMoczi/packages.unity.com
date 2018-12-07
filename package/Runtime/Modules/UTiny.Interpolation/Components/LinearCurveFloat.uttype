@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "2c2a94792cbc6f9389c5a44466c8ec02",
+    "Name": "LinearCurveFloat",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "db172a3e75732bfc394691ddf0a42fbd",
+        "Name": "times",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": true,
+        "Visibility": 0
+    }, {
+        "Id": "c7092693ace15d238ea9dfdcb1501535",
+        "Name": "values",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": true,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "2c2a94792cbc6f9389c5a44466c8ec02", "Name": "LinearCurveFloat" }
+    }
+}]

@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "0617b7f4431866888bfdb077d683c2ce",
+    "Name": "Range",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "47075d97cbfb40bdadbc97caca87f198",
+        "Name": "start",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "b7fe1a12c0eee962ef1375803d44503f",
+        "Name": "end",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "0617b7f4431866888bfdb077d683c2ce", "Name": "Range" }
+    }
+}]

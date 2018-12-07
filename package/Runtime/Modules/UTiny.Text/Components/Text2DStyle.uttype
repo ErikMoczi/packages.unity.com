@@ -1,0 +1,30 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "ced0260f12f72499bae7fea4e1df92b7",
+    "Name": "Text2DStyle",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "6d5de0b1f9698feb4b6a79fe71f949b8",
+        "Name": "color",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "ac6ff8b2d8602cd872b34fd587fa7dcb",
+        "Name": "size",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "ced0260f12f72499bae7fea4e1df92b7", "Name": "Text2DStyle" },
+        "Properties": {
+            "color": {
+                "Type": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" }
+            },
+            "size": 2
+        }
+    }
+}]

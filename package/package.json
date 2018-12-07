@@ -1,0 +1,11 @@
+{
+	"name": "com.unity.tiny",
+	"displayName":"Tiny Mode",
+	"version": "0.12.0-preview",
+	"unity": "2018.3",
+	"description": "Tiny Mode enables you to create lightweight Web games using the Unity Editor.",
+	"keywords": ["tiny", "instant", "playables", "html5", "canvas"],
+	"dependencies": {
+		"com.unity.properties": "0.4.0-preview"
+	}
+}

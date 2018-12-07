@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "7f5c997c86251762d0d852f98bed37fb",
+    "Name": "TweenVector2",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "5aa80c0a2a3dee81b876d97336527f24",
+        "Name": "start",
+        "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "cb6f606d6fd2783ce6649effa0145d0a",
+        "Name": "end",
+        "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "7f5c997c86251762d0d852f98bed37fb", "Name": "TweenVector2" }
+    }
+}]

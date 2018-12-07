@@ -1,0 +1,48 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "aae3c30b7832f31b9cd61639238cfeec",
+    "Name": "TweenDesc",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "0a4cf2e29c74418d692c558cb80b55c3",
+        "Name": "offset",
+        "FieldType": { "Id": "1da58c8ba95a4c85a2b5920bd0663f70", "Name": "UInt32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "16c98dbceb7ebc777768317c39a59c01",
+        "Name": "duration",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "46466b08555b6912ce9d264bed623d54",
+        "Name": "func",
+        "FieldType": { "Id": "a0abdfa0125a70d08cef584f283024b1", "Name": "TweenFunc" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "771a0c27f21851bacc50903130eb65d1",
+        "Name": "loop",
+        "FieldType": { "Id": "ea25cda1bca15e4c9fb023eca636eb06", "Name": "LoopMode" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "1a4578529532607b81ace7504c788d91",
+        "Name": "destroyWhenDone",
+        "FieldType": { "Id": "2b477f505af74487b7092b5617d88d3f", "Name": "Boolean" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "aa0a010cd143d2a13cb86968525c338b",
+        "Name": "t",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "aae3c30b7832f31b9cd61639238cfeec", "Name": "TweenDesc" }
+    }
+}]

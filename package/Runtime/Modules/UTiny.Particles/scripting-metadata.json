@@ -1,0 +1,22 @@
+{
+    "Success": true,
+    "Diagnostics": [],
+    "Systems": [{
+        "Name": "ParticleSystem",
+        "QualifiedName": "ut.Particles.ParticleSystem",
+        "Description": "Created from the 'UTiny.Particles' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.UserCodeStart"
+        ],
+        "ExecuteBefore": [
+            "ut.Shared.RenderingFence"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }],
+    "Filters": [],
+    "Behaviours": []
+}

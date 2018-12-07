@@ -1,0 +1,25 @@
+fileFormatVersion: 2
+guid: be394a274a9e674409be18e7b4662f4a
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Liberation Serif
+  fontNames:
+  - Liberation Serif
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: a87ad0e5c591c4f4dbb80521021184ba, type: 3}
+  - {fileID: 12800000, guid: 7c48264843c045b4592e21d4d6105ef6, type: 3}
+  - {fileID: 12800000, guid: 37970b5f23f5a83439584b047c4619c2, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

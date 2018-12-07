@@ -1,0 +1,36 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "a7ae2ef1f120627af99607cbecca330e",
+    "Name": "DrawMode",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Enum",
+    "BaseType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+    "Fields": [{
+        "Id": "0334e5a91225cf998b678224025cf40c",
+        "Name": "ContinuousTiling",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "736a505985208d0e69380c4e4b633483",
+        "Name": "AdaptiveTiling",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "b5e836cf58569b764113a97c4cf32af6",
+        "Name": "Stretch",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "a7ae2ef1f120627af99607cbecca330e", "Name": "DrawMode" },
+        "Properties": {
+            "ContinuousTiling": 0,
+            "AdaptiveTiling": 1,
+            "Stretch": 2
+        }
+    }
+}]

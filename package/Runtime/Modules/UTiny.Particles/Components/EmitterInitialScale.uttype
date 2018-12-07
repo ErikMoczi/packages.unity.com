@@ -1,0 +1,27 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "97965e0b55ef0d896b686b4dd4ee330d",
+    "Name": "EmitterInitialScale",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "40b32a4ee322ca02737c2dfa68a9cd1d",
+        "Name": "scale",
+        "FieldType": { "Id": "0617b7f4431866888bfdb077d683c2ce", "Name": "Range" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "97965e0b55ef0d896b686b4dd4ee330d", "Name": "EmitterInitialScale" },
+        "Properties": {
+            "scale": {
+                "Type": { "Id": "0617b7f4431866888bfdb077d683c2ce", "Name": "Range" },
+                "Properties": {
+                    "start": 1,
+                    "end": 1
+                }
+            }
+        }
+    }
+}]

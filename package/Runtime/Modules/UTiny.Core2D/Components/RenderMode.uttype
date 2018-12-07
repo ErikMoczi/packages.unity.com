@@ -1,0 +1,36 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "c592d331c582f4083ec19af9e2d06b6d",
+    "Name": "RenderMode",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Enum",
+    "BaseType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+    "Fields": [{
+        "Id": "394cd0b708f434b512deffcde5e42a57",
+        "Name": "Auto",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "28a2eb67a0b8c9846aca4711b541ab6e",
+        "Name": "Canvas",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "68e0af13e30ed11cbb89a62b98bcadf1",
+        "Name": "WebGL",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "c592d331c582f4083ec19af9e2d06b6d", "Name": "RenderMode" },
+        "Properties": {
+            "Auto": 0,
+            "Canvas": 1,
+            "WebGL": 2
+        }
+    }
+}]

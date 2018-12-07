@@ -1,0 +1,27 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "6f5ed9937f81d1780663edc21a6f0da2",
+    "Name": "NativeFont",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "bbea1760dc9cd9b243ba4c5028989cf2",
+        "Name": "name",
+        "FieldType": { "Id": "8482cf27d187bfe09e2f868508c4456f", "Name": "FontName" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "5a6126a605a61067d5257ef90688578e",
+        "Name": "worldUnitsToPt",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "6f5ed9937f81d1780663edc21a6f0da2", "Name": "NativeFont" },
+        "Properties": {
+            "worldUnitsToPt": 1
+        }
+    }
+}]

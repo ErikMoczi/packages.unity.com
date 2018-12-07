@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "c895dbe72eb46ecb10d589d320151758",
+    "Name": "TransformNode",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "04ee73fcf12bc361723df40eadb5f244",
+        "Name": "parent",
+        "FieldType": { "Id": "5a182d9d039d4dfd8fa96132d05f9ee7", "Name": "EntityReference" },
+        "Array": false,
+        "Visibility": 1
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "c895dbe72eb46ecb10d589d320151758", "Name": "TransformNode" }
+    }
+}]

@@ -1,0 +1,74 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "7fb267354eaa3938a25c3a9513db8724",
+    "Name": "ColorTint",
+    "ExportFlags": 4,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "a4e50689f96b1cf7785acbbfd2fbfafe",
+        "Name": "normal",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "2ea1ca2d493012761204d19f3efc6e69",
+        "Name": "hover",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "248730849921ef796101c16408964423",
+        "Name": "pressed",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "8dc21c32451abd7d90ccc9ec5ad91018",
+        "Name": "disabled",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "7fb267354eaa3938a25c3a9513db8724", "Name": "ColorTint" },
+        "Properties": {
+            "normal": {
+                "Type": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+                "Properties": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                }
+            },
+            "hover": {
+                "Type": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+                "Properties": {
+                    "r": 0.9607843,
+                    "g": 0.9607843,
+                    "b": 0.9607843,
+                    "a": 1
+                }
+            },
+            "pressed": {
+                "Type": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+                "Properties": {
+                    "r": 0.7843137,
+                    "g": 0.7843137,
+                    "b": 0.7843137,
+                    "a": 1
+                }
+            },
+            "disabled": {
+                "Type": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+                "Properties": {
+                    "r": 0.7843137,
+                    "g": 0.7843137,
+                    "b": 0.7843137,
+                    "a": 0.5019608
+                }
+            }
+        }
+    }
+}]

@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "436f81ee9d7aba683c17155a6f9fa13d",
+    "Name": "StepCurveVector2",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "f8b410266ba3dd3fa20e433ec55cc711",
+        "Name": "times",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": true,
+        "Visibility": 0
+    }, {
+        "Id": "217120a4fcd3f79a949d663799dbbe40",
+        "Name": "values",
+        "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+        "Array": true,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "436f81ee9d7aba683c17155a6f9fa13d", "Name": "StepCurveVector2" }
+    }
+}]

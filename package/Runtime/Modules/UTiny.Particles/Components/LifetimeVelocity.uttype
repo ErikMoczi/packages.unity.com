@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "8e728c1655262fe61666df6d06df2ade",
+    "Name": "LifetimeVelocity",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "99370a1cec1e8e26eb58d17ea6cb21fb",
+        "Name": "curve",
+        "FieldType": { "Id": "691cc0faec1fbaaa056088bba092a0d3", "Name": "Curve3Entity" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "8e728c1655262fe61666df6d06df2ade", "Name": "LifetimeVelocity" }
+    }
+}]

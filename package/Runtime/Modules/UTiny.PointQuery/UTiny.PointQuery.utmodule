@@ -1,0 +1,14 @@
+﻿[{
+    "$TypeId": 2,
+    "Id": "2fc27c46d313fa1eb01804cb912a386f",
+    "Name": "UTiny.PointQuery",
+    "SerializedVersion": 1,
+    "ExportFlags": 1,
+    "Namespace": "ut.PointQuery",
+    "Options": 1,
+    "Dependencies": [
+        { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" },
+        { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" },
+        { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" }
+    ]
+}]

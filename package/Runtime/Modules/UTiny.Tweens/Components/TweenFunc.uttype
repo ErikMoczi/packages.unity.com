@@ -1,0 +1,218 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "a0abdfa0125a70d08cef584f283024b1",
+    "Name": "TweenFunc",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Enum",
+    "BaseType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+    "Fields": [{
+        "Id": "ed297032ae3d4c9b5e8610bbd750cfe7",
+        "Name": "External",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "d659b24d8a75af6d1c3ea826d02a3db3",
+        "Name": "Linear",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "66fba6573328c349e1cb78417d7fbcbe",
+        "Name": "Hardstep",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "3f4f6e66bc70f6085fa02580c2656bc8",
+        "Name": "Smoothstep",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "b263f3390d0e97fe536497eff915ef5e",
+        "Name": "Cosine",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "7492abfcbdfd3b9b14f269b0738cf3ce",
+        "Name": "InQuad",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "1b5a326579bc3cfa69085bd73c2760a8",
+        "Name": "OutQuad",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "15d1a6d7fad1fcff5d15959171db9d8c",
+        "Name": "InOutQuad",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "3e98c211299b8f72c0dfed4b6ca8ae55",
+        "Name": "InCubic",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "dba04620f3dcad109c41d196c9b07e58",
+        "Name": "OutCubic",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "5f5690169ea3ff5f2f52eb6d6e94bdb7",
+        "Name": "InOutCubic",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "fc760d2182f9a9fe7ecaf499d568210e",
+        "Name": "InQuart",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "42dd590721c7ff137fb5ce21e5a3579a",
+        "Name": "OutQuart",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "33af17a8851b4caae4bbc3202e6d13c3",
+        "Name": "InOutQuart",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "2bc61eea2983ec7b113354e5b182e408",
+        "Name": "InQuint",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "79646be45004810a6bddc3b9cf1a4c2c",
+        "Name": "OutQuint",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "f77e7a3647fc11c2ee27ce42dd06c45f",
+        "Name": "InOutQuint",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "a5f7de91894c1e99c0faf4b5fa19f459",
+        "Name": "InBack",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "9846de1bab365d42a16587015a2e0637",
+        "Name": "OutBack",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "4927d89098e6f0e7ee02853d44853b6c",
+        "Name": "InOutBack",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "6430b94305db3dc7bf3c63997a4f42d7",
+        "Name": "InBounce",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "52f83e46e89efdc01b70cf1e6561fdea",
+        "Name": "OutBounce",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "9d18ddbd781434081a6ebf4d26b5f330",
+        "Name": "InOutBounce",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "b7ee4ba53813cd4a02ed0117a6b9104a",
+        "Name": "InCircle",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "41b211d5b976f06b9e487e74abb32f5f",
+        "Name": "OutCircle",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "d19ab0c3d6f15655d06c93a17a732acb",
+        "Name": "InOutCircle",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "f8baf9c820dd03c10d2ca2fac539c7a6",
+        "Name": "InExponential",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "9d3a699c35e7d9128d1a5d44735fb057",
+        "Name": "OutExponential",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "56adfbdd624415d83ed899d289ca3a68",
+        "Name": "InOutExponential",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "a0abdfa0125a70d08cef584f283024b1", "Name": "TweenFunc" },
+        "Properties": {
+            "External": 0,
+            "Linear": 1,
+            "Hardstep": 2,
+            "Smoothstep": 3,
+            "Cosine": 4,
+            "InQuad": 5,
+            "OutQuad": 6,
+            "InOutQuad": 7,
+            "InCubic": 8,
+            "OutCubic": 9,
+            "InOutCubic": 10,
+            "InQuart": 11,
+            "OutQuart": 12,
+            "InOutQuart": 13,
+            "InQuint": 14,
+            "OutQuint": 15,
+            "InOutQuint": 16,
+            "InBack": 17,
+            "OutBack": 18,
+            "InOutBack": 19,
+            "InBounce": 20,
+            "OutBounce": 21,
+            "InOutBounce": 22,
+            "InCircle": 23,
+            "OutCircle": 24,
+            "InOutCircle": 25,
+            "InExponential": 26,
+            "OutExponential": 27,
+            "InOutExponential": 28
+        }
+    }
+}]

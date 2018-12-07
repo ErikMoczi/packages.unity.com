@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "5389968863be40237e8edec2aece188b",
+    "Name": "OrientationProperties",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "6adf919fa5c898344db042b78e17e435",
+        "Name": "allowOrientationChange",
+        "FieldType": { "Id": "2b477f505af74487b7092b5617d88d3f", "Name": "Boolean" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "7c82153fc1c375b68da7080d4152df3d",
+        "Name": "forceOrientation",
+        "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "5389968863be40237e8edec2aece188b", "Name": "OrientationProperties" }
+    }
+}]

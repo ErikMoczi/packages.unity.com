@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "33758113fda0523d7d758b50cdc4ac88",
+    "Name": "LinearCurveColor",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "208b85e5af48b01eef6e5333987a8b0b",
+        "Name": "times",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": true,
+        "Visibility": 0
+    }, {
+        "Id": "cfb575f5dbad75acc6b463172de733a1",
+        "Name": "values",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": true,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "33758113fda0523d7d758b50cdc4ac88", "Name": "LinearCurveColor" }
+    }
+}]

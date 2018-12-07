@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "5973907fe65fd639173bb80a06bf2c55",
+    "Name": "SpriteAtlas",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "b7ee836fdd02828f3d1d5ba64b31de7d",
+        "Name": "sprites",
+        "FieldType": { "Id": "5a182d9d039d4dfd8fa96132d05f9ee7", "Name": "EntityReference" },
+        "Array": true,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "5973907fe65fd639173bb80a06bf2c55", "Name": "SpriteAtlas" }
+    }
+}]

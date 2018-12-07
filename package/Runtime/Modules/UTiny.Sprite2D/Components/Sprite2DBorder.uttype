@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "f0155b591121baf9dff767e8e86c086f",
+    "Name": "Sprite2DBorder",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "1af05e91f552a4a535b7863b7379b249",
+        "Name": "bottomLeft",
+        "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "63e19172d6dc6bb23b53fff9c2e78bfc",
+        "Name": "topRight",
+        "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "f0155b591121baf9dff767e8e86c086f", "Name": "Sprite2DBorder" }
+    }
+}]

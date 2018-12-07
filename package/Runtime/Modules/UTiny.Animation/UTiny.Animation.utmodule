@@ -1,0 +1,32 @@
+﻿[{
+    "$TypeId": 2,
+    "Id": "91f1133fa9293ef9b61da0f1e6cbceeb",
+    "Name": "UTiny.Animation",
+    "SerializedVersion": 1,
+    "ExportFlags": 1,
+    "Namespace": "ut.Animation",
+    "MetadataFileGUID": "bf4d2d08f12433f408780e6c83f9188c",
+    "Options": 1,
+    "Dependencies": [
+        { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" },
+        { "Id": "494f9eba840c1f117459611e605884b0", "Name": "UTiny.Core2DTypes" },
+        { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" },
+        { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" },
+        { "Id": "30097418841f56d73400bf82ee859ac9", "Name": "UTiny.Core2D" }
+    ],
+    "Components": [
+        { "Id": "81d61455a9c0de7e848742038c4b3de3", "Name": "AnimationClipSource" },
+        { "Id": "b49d48ae37f4fdec8562c1395ad65b67", "Name": "AnimationClip" },
+        { "Id": "a6f62442d4a27998e8b33785de6c8cfb", "Name": "AnimationClipPlayer" },
+        { "Id": "955536d02afbfc09e6bab422854c8c55", "Name": "AnimationTarget" }
+    ],
+    "Structs": [
+        { "Id": "cce48c26c62d56691b4daa1112d2b0c5", "Name": "AnimationPlayerDesc" },
+        { "Id": "0918c3b86ffd241827750de60d6c0eed", "Name": "AnimationPlayerDescFloat" },
+        { "Id": "eda7479674093afc47e937fe249e16a4", "Name": "AnimationPlayerDescVector2" },
+        { "Id": "dd4e06515bfb16f3b1f3c3c5ae2528f7", "Name": "AnimationPlayerDescVector3" },
+        { "Id": "25bbb3d104b32f5e95c3bde67d45bb19", "Name": "AnimationPlayerDescQuaternion" },
+        { "Id": "bbab7c8035f42c1cab57660021eafa27", "Name": "AnimationPlayerDescColor" },
+        { "Id": "a7e0cb3353e069a5186c4ed82264195b", "Name": "AnimationClipInfo" }
+    ]
+}]

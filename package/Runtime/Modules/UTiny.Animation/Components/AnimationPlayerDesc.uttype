@@ -1,0 +1,30 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "cce48c26c62d56691b4daa1112d2b0c5",
+    "Name": "AnimationPlayerDesc",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "31622db3605e256f8ad428dc19171c7a",
+        "Name": "propertyOffset",
+        "FieldType": { "Id": "1da58c8ba95a4c85a2b5920bd0663f70", "Name": "UInt32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "319c0e80178518740197eaf21c90778a",
+        "Name": "curve",
+        "FieldType": { "Id": "5a182d9d039d4dfd8fa96132d05f9ee7", "Name": "EntityReference" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "c749f372e406252e093cf5aa734d46f9",
+        "Name": "entityPath",
+        "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "cce48c26c62d56691b4daa1112d2b0c5", "Name": "AnimationPlayerDesc" }
+    }
+}]

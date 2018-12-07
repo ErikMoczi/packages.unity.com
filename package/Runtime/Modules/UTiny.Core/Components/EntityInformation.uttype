@@ -1,0 +1,11 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "761e436fae2c81a83cd11c56f9a9013d",
+    "Name": "EntityInformation",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "DefaultValue": {
+        "Type": { "Id": "761e436fae2c81a83cd11c56f9a9013d", "Name": "EntityInformation" }
+    }
+}]

@@ -1,0 +1,71 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "dd50796f201dc95331552ad2e74482a1",
+    "Name": "Matrix3x3",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "4b5af123e9d76f39f29a318185a93af5",
+        "Name": "m00",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "c34c9a6ac9e822f6cf9852111f517683",
+        "Name": "m01",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "4b80a04516d7f2cd47b1283e6267a8f5",
+        "Name": "m02",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "9ac3d7dfd1f0cd71f8ed4be5d636c93e",
+        "Name": "m10",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "2c4afa778f203fe77838e2ece6f85d69",
+        "Name": "m11",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "45c90c09ffe67e6d97fc0c0398a3d2ca",
+        "Name": "m12",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "a00bd5a00ed926e1813cdad25f98fdc2",
+        "Name": "m20",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "a0f6cc59d2d1c5d6245e3dfcb3f22fd8",
+        "Name": "m21",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "57dce88e196f1f22fbd4166dfa48acea",
+        "Name": "m22",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "dd50796f201dc95331552ad2e74482a1", "Name": "Matrix3x3" },
+        "Properties": {
+            "m00": 1,
+            "m11": 1,
+            "m22": 1
+        }
+    }
+}]

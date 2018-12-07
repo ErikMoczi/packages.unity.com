@@ -1,0 +1,30 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "20d1f1e4d094f6765a692302f36f09a3",
+    "Name": "Tile",
+    "ExportFlags": 1,
+    "Unlisted": true,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "f742fb1edd48f57c9a61c85f686ab849",
+        "Name": "color",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "6810a66fdab82ef482597fa85babc10b",
+        "Name": "sprite",
+        "FieldType": { "Id": "cf54a635a25248ab87f2563bb840ed5b", "Name": "SpriteEntity" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "09d0ba96bd92ce32cd04ef0da02db305",
+        "Name": "colliderType",
+        "FieldType": { "Id": "e0d9472237aa48632dd3b57962899ffd", "Name": "TileColliderType" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "20d1f1e4d094f6765a692302f36f09a3", "Name": "Tile" }
+    }
+}]

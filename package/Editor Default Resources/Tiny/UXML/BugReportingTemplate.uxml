@@ -1,0 +1,47 @@
+﻿<UXML xmlns="UnityEngine.Experimental.UIElements" id="BugReport">
+	<VisualElement name="root_bug_report" style="margin-left:10px; margin-right:10px">
+		<!--The input_occurrence slot will contain an enum field as a child. -->
+		<VisualElement class ="row">
+			<Label class="prefix-label" text="How often does it happen"/>
+			<VisualElement slot-name="input_occurrence"/>
+		</VisualElement>
+
+		<!-- The input_platform slot will contain an enum field as a child. -->
+		<VisualElement class ="row">
+			<Label class="prefix-label" text="Platforms affected"/>
+			<VisualElement slot-name="input_platform"/>
+		</VisualElement>
+
+		<!-- Email address field -->
+		<VisualElement class ="row">
+			<Label class="prefix-label" text="Your email address"/>
+			<TextField name="input_email"/>
+		</VisualElement>
+
+		<Label text="Title"/>
+		<TextField name="input_title"/>
+
+		<!-- The input_detail slot will contain a TextField as a child. -->
+		<Label text="Detail"/>
+		<ScrollView class="scrollable" slot-name="input_detail"/>
+		
+		<!-- The input_repro-steps slot will contain a TextField as a child. -->
+		<Label text="Steps to reproduce"/>
+		<ScrollView class="scrollable" slot-name="input_repro_steps"/>
+
+		<!-- The container_attached_files slot will contain a list of Visual Elements as children. -->
+		<Label text="Attached Files"/>
+		<ScrollView class="scrollable" slot-name="container_attached_files"/>
+
+		<VisualElement class="row prefix-label">
+			<Button name="button_add_file" text="Add File" class="button"/>
+			<Button name="button_add_folder" text="Add Folder" class="button"/>
+		</VisualElement>
+
+		<VisualElement class="row right">
+			<Button name="button_cancel" text="Cancel" class="button"/>
+			<Button name="button_send" text="Send" class="button"/>
+		</VisualElement>
+	</VisualElement>
+</UXML>
+

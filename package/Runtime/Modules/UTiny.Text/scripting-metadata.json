@@ -1,0 +1,20 @@
+{
+    "Success": true,
+    "Diagnostics": [],
+    "Systems": [{
+        "Name": "Text2DInitSystem",
+        "QualifiedName": "ut.Text.Text2DInitSystem",
+        "Description": "Created from the 'UTiny.Text' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [],
+        "ExecuteBefore": [
+            "ut.Core2D.DisplayList"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }],
+    "Filters": [],
+    "Behaviours": []
+}

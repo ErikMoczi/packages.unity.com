@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "95bc12996b73a0a56dc927d7646aa0f7",
+    "Name": "EmitterInitialVelocity",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "9f4c5b6d73b3e52c9664a65572df4365",
+        "Name": "velocity",
+        "FieldType": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "95bc12996b73a0a56dc927d7646aa0f7", "Name": "EmitterInitialVelocity" }
+    }
+}]

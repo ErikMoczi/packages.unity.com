@@ -1,0 +1,36 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "b11bd7bebb0b8bcdb7a27133328b8b7d",
+    "Name": "BezierCurveVector2",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "4fee2e5c37bde5659e249c75a3de1830",
+        "Name": "times",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": true,
+        "Visibility": 0
+    }, {
+        "Id": "0a9dace16462978bfcd81a86aa6cf861",
+        "Name": "values",
+        "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+        "Array": true,
+        "Visibility": 0
+    }, {
+        "Id": "387b70b306954f90751b5dd987405e4d",
+        "Name": "outValues",
+        "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+        "Array": true,
+        "Visibility": 0
+    }, {
+        "Id": "f96b572dd35748c4c72fb739b7c93140",
+        "Name": "inValues",
+        "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+        "Array": true,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "b11bd7bebb0b8bcdb7a27133328b8b7d", "Name": "BezierCurveVector2" }
+    }
+}]

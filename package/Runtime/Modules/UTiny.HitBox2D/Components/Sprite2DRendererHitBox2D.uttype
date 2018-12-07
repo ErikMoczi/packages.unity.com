@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "5a68c59783d93e60c704f63111bcb0ad",
+    "Name": "Sprite2DRendererHitBox2D",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "4e9eb21ee35dcb5e34dcec92d0ac2e73",
+        "Name": "pixelAccurate",
+        "FieldType": { "Id": "2b477f505af74487b7092b5617d88d3f", "Name": "Boolean" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "5a68c59783d93e60c704f63111bcb0ad", "Name": "Sprite2DRendererHitBox2D" }
+    }
+}]

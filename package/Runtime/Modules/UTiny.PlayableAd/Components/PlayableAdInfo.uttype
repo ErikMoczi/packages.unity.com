@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "cdbe32251f64fe02b9238ac74fb5dca6",
+    "Name": "PlayableAdInfo",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Configuration",
+    "Fields": [{
+        "Id": "41cfb00f47baf315c0357d4a28ef4d7f",
+        "Name": "googlePlayStoreUrl",
+        "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "9e96215957826ab6aa304cd053dfcc0b",
+        "Name": "appStoreUrl",
+        "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "cdbe32251f64fe02b9238ac74fb5dca6", "Name": "PlayableAdInfo" }
+    }
+}]

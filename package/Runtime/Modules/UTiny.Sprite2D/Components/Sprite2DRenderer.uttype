@@ -1,0 +1,30 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "1c504a8a7963db0d32e89b527b90e057",
+    "Name": "Sprite2DRenderer",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "28a1a49b50434a17cd4a67db451f6c4d",
+        "Name": "sprite",
+        "FieldType": { "Id": "cf54a635a25248ab87f2563bb840ed5b", "Name": "SpriteEntity" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "45d7ce8235651e1e0bb30db5053416df",
+        "Name": "color",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "827ed1191cd5321f3683d72dc39e3ad1",
+        "Name": "blending",
+        "FieldType": { "Id": "78fe1548d31b94b79668981ae1d3279d", "Name": "BlendOp" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "1c504a8a7963db0d32e89b527b90e057", "Name": "Sprite2DRenderer" }
+    }
+}]

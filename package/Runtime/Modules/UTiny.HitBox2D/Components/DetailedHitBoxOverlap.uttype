@@ -1,0 +1,11 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "f6e97f5cb3f8cbac67ac85536dde8416",
+    "Name": "DetailedHitBoxOverlap",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "DefaultValue": {
+        "Type": { "Id": "f6e97f5cb3f8cbac67ac85536dde8416", "Name": "DetailedHitBoxOverlap" }
+    }
+}]

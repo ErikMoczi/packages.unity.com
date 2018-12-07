@@ -1,0 +1,11 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "de2dbf0474b193ec4be991f4889179f5",
+    "Name": "InactiveUIControl",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "DefaultValue": {
+        "Type": { "Id": "de2dbf0474b193ec4be991f4889179f5", "Name": "InactiveUIControl" }
+    }
+}]

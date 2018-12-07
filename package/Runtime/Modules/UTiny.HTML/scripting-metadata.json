@@ -1,0 +1,33 @@
+{
+    "Success": true,
+    "Diagnostics": [],
+    "Systems": [{
+        "Name": "InputHandler",
+        "QualifiedName": "ut.HTML.InputHandler",
+        "Description": "Created from the 'UTiny.HTML' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [],
+        "ExecuteBefore": [
+            "ut.Shared.InputFence"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "RendererHTMLSwitchable",
+        "QualifiedName": "ut.HTML.RendererHTMLSwitchable",
+        "Description": "Created from the 'UTiny.HTML' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.PlatformRenderingFence"
+        ],
+        "ExecuteBefore": [],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }],
+    "Filters": [],
+    "Behaviours": []
+}

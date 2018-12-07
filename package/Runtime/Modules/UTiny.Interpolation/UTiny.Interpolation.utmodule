@@ -1,0 +1,33 @@
+﻿[{
+    "$TypeId": 2,
+    "Id": "fb3737c9a63f1f11bd510d36b765b8ee",
+    "Name": "UTiny.Interpolation",
+    "SerializedVersion": 1,
+    "ExportFlags": 1,
+    "Namespace": "ut.Interpolation",
+    "Options": 1,
+    "Dependencies": [
+        { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" },
+        { "Id": "494f9eba840c1f117459611e605884b0", "Name": "UTiny.Core2DTypes" },
+        { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" },
+        { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" }
+    ],
+    "Components": [
+        { "Id": "30fde07c43b498be6f1cab02c402d442", "Name": "BezierCurveFloat" },
+        { "Id": "b11bd7bebb0b8bcdb7a27133328b8b7d", "Name": "BezierCurveVector2" },
+        { "Id": "2d6ae8b241a3c87458f045c390b04894", "Name": "BezierCurveVector3" },
+        { "Id": "02f57e29aa95e9643eae83fcadc6389c", "Name": "BezierCurveQuaternion" },
+        { "Id": "1b141cd4932816b1e1f037614e08c442", "Name": "BezierCurveColor" },
+        { "Id": "2c2a94792cbc6f9389c5a44466c8ec02", "Name": "LinearCurveFloat" },
+        { "Id": "3591deb589ad2171575ee365356969f5", "Name": "LinearCurveVector2" },
+        { "Id": "e94efa04f839b02e4519a31e6c819389", "Name": "LinearCurveVector3" },
+        { "Id": "204407210447b46ccbf4e20ffa4521bc", "Name": "LinearCurveQuaternion" },
+        { "Id": "33758113fda0523d7d758b50cdc4ac88", "Name": "LinearCurveColor" },
+        { "Id": "f1cbba6c20b19f0f4706fca96ca56e58", "Name": "StepCurveFloat" },
+        { "Id": "436f81ee9d7aba683c17155a6f9fa13d", "Name": "StepCurveVector2" },
+        { "Id": "7be50b5cf9387f068bb27b22405c0809", "Name": "StepCurveVector3" },
+        { "Id": "644f5002bed751140a67e85403f7af7a", "Name": "StepCurveQuaternion" },
+        { "Id": "3faffd3bb154b88dadec13d4ef7a601f", "Name": "StepCurveColor" },
+        { "Id": "b8f3e501df83bb578f06523ce3943d76", "Name": "CurveTimeLoopMode" }
+    ]
+}]

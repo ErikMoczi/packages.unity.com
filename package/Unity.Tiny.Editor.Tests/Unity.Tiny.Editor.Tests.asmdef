@@ -1,0 +1,15 @@
+{
+    "name": "Unity.Tiny.Editor.Tests",
+    "references": [
+        "Unity.Tiny",
+        "Unity.Tiny.Editor",
+        "Unity.Properties"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

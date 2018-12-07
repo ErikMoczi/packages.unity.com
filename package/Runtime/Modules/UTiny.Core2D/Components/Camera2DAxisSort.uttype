@@ -1,0 +1,28 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "301b45e5168992b0907ceeaec4764727",
+    "Name": "Camera2DAxisSort",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "09c3aeacbd99aef62a5e8d5dbeff8b94",
+        "Name": "axis",
+        "FieldType": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "301b45e5168992b0907ceeaec4764727", "Name": "Camera2DAxisSort" },
+        "Properties": {
+            "axis": {
+                "Type": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
+                "Properties": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                }
+            }
+        }
+    }
+}]

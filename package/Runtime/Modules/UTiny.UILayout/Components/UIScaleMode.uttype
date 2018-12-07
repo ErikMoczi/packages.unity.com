@@ -1,0 +1,29 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "0accc10de1131b44701da611a92a0f65",
+    "Name": "UIScaleMode",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Enum",
+    "BaseType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+    "Fields": [{
+        "Id": "e3f32cef5e3dfb03e4327663f6a6889e",
+        "Name": "ConstantPixelSize",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "9d7c7416dafcd189680613e618163ec5",
+        "Name": "ScaleWithScreenSize",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "0accc10de1131b44701da611a92a0f65", "Name": "UIScaleMode" },
+        "Properties": {
+            "ConstantPixelSize": 0,
+            "ScaleWithScreenSize": 1
+        }
+    }
+}]

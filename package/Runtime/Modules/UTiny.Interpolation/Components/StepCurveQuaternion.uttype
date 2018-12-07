@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "644f5002bed751140a67e85403f7af7a",
+    "Name": "StepCurveQuaternion",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "4605a5dc0a9817ed8b88b40f26341b43",
+        "Name": "times",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": true,
+        "Visibility": 0
+    }, {
+        "Id": "a2d0ce230ed0cec9afc06790ea357cdc",
+        "Name": "values",
+        "FieldType": { "Id": "dc7e11e5d517ed01fd5d084a6c9fd64d", "Name": "Quaternion" },
+        "Array": true,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "644f5002bed751140a67e85403f7af7a", "Name": "StepCurveQuaternion" }
+    }
+}]

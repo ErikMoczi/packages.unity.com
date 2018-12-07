@@ -1,0 +1,23 @@
+{
+    "Success": true,
+    "Diagnostics": [],
+    "Systems": [{
+        "Name": "TextMeasurement",
+        "QualifiedName": "ut.HTML.TextMeasurement",
+        "Description": "Created from the 'UTiny.TextHTML' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.UserCodeEnd",
+            "ut.UILayout.SetRectTransformSizeSystem"
+        ],
+        "ExecuteBefore": [
+            "ut.Shared.RenderingFence"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }],
+    "Filters": [],
+    "Behaviours": []
+}

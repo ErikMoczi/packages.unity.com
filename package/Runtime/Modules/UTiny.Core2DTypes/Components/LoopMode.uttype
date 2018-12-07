@@ -1,0 +1,50 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "ea25cda1bca15e4c9fb023eca636eb06",
+    "Name": "LoopMode",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Enum",
+    "BaseType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+    "Fields": [{
+        "Id": "0c549dc25ff2fbdeef0c76d502957f5f",
+        "Name": "Loop",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "a303ed357829c321e2c87f68f4bb436f",
+        "Name": "Once",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "22c5bb55d215c1f95f4a4e5938017b82",
+        "Name": "PingPong",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "05038b6323b318afbae1896df9705061",
+        "Name": "PingPongOnce",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "d24c1a8a15be9b7e8c161382e4091c4f",
+        "Name": "ClampForever",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "ea25cda1bca15e4c9fb023eca636eb06", "Name": "LoopMode" },
+        "Properties": {
+            "Loop": 0,
+            "Once": 1,
+            "PingPong": 2,
+            "PingPongOnce": 3,
+            "ClampForever": 4
+        }
+    }
+}]

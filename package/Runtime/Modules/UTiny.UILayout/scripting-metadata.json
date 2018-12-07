@@ -1,0 +1,68 @@
+{
+    "Success": true,
+    "Diagnostics": [],
+    "Systems": [{
+        "Name": "UICanvasSystem",
+        "QualifiedName": "ut.UILayout.UICanvasSystem",
+        "Description": "Created from the 'UTiny.UILayout' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.InputFence",
+            "ut.Shared.UserCodeEnd"
+        ],
+        "ExecuteBefore": [
+            "ut.Shared.RenderingFence"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "UILayoutSystem",
+        "QualifiedName": "ut.UILayout.UILayoutSystem",
+        "Description": "Created from the 'UTiny.UILayout' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.UILayout.UICanvasSystem"
+        ],
+        "ExecuteBefore": [
+            "ut.Shared.RenderingFence"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "SetSprite2DSizeSystem",
+        "QualifiedName": "ut.UILayout.SetSprite2DSizeSystem",
+        "Description": "Created from the 'UTiny.UILayout' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.UILayout.UILayoutSystem"
+        ],
+        "ExecuteBefore": [
+            "ut.Shared.RenderingFence"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "SetRectTransformSizeSystem",
+        "QualifiedName": "ut.UILayout.SetRectTransformSizeSystem",
+        "Description": "Created from the 'UTiny.UILayout' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.UILayout.UILayoutSystem"
+        ],
+        "ExecuteBefore": [
+            "ut.Shared.RenderingFence"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }],
+    "Filters": [],
+    "Behaviours": []
+}

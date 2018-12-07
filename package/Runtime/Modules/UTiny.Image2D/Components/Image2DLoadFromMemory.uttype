@@ -1,0 +1,30 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "015a089b45ec7c75ac67b51f7bcf9a9e",
+    "Name": "Image2DLoadFromMemory",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "982d6bc3c73844f43c6b64ea3f8fe1b1",
+        "Name": "width",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "4e1e0417d0ab5376381edbb200060725",
+        "Name": "height",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "838d1fca9165fb502d5c4759cd744d42",
+        "Name": "pixelData",
+        "FieldType": { "Id": "7112767112f747e2a340404a5ceb31b5", "Name": "UInt8" },
+        "Array": true,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "015a089b45ec7c75ac67b51f7bcf9a9e", "Name": "Image2DLoadFromMemory" }
+    }
+}]

@@ -1,0 +1,43 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "58e36e8a05b78a75e485fb0c898cf550",
+    "Name": "VideoClipLoadingStatus",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Enum",
+    "BaseType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+    "Fields": [{
+        "Id": "34426af7da5bb0ca2916a429eaf8e912",
+        "Name": "Unloaded",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "e85f45b409e0cec7ab9c9e9861659818",
+        "Name": "Loading",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "f1148a6684dc015be4574296531541dd",
+        "Name": "Loaded",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "3d104133bb8f9ad1ec8f3a2c17d5f58f",
+        "Name": "LoadError",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "58e36e8a05b78a75e485fb0c898cf550", "Name": "VideoClipLoadingStatus" },
+        "Properties": {
+            "Unloaded": 0,
+            "Loading": 1,
+            "Loaded": 2,
+            "LoadError": 3
+        }
+    }
+}]

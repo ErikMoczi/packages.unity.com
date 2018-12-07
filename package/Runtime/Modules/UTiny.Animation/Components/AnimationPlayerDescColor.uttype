@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "bbab7c8035f42c1cab57660021eafa27",
+    "Name": "AnimationPlayerDescColor",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "7993ab839ed81a1d2cdf4cf0146cd5ef",
+        "Name": "desc",
+        "FieldType": { "Id": "cce48c26c62d56691b4daa1112d2b0c5", "Name": "AnimationPlayerDesc" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "bbab7c8035f42c1cab57660021eafa27", "Name": "AnimationPlayerDescColor" }
+    }
+}]

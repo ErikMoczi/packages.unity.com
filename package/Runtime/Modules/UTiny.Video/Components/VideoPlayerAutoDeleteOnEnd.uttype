@@ -1,0 +1,11 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "0b9c1f9b0f7ae41df31b8fb0b723767c",
+    "Name": "VideoPlayerAutoDeleteOnEnd",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "DefaultValue": {
+        "Type": { "Id": "0b9c1f9b0f7ae41df31b8fb0b723767c", "Name": "VideoPlayerAutoDeleteOnEnd" }
+    }
+}]

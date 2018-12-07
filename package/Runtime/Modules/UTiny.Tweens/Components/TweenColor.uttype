@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "6fe3a60b41e2766f154d792617f56380",
+    "Name": "TweenColor",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "c679146e762accd8b3d9cd6ce0702907",
+        "Name": "start",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "d4359ecf3f59cd346aefb5c3824e94ae",
+        "Name": "end",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "6fe3a60b41e2766f154d792617f56380", "Name": "TweenColor" }
+    }
+}]

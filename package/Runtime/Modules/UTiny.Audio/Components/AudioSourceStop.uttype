@@ -1,0 +1,11 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "7e8da1847b7abee1bcfb53b82c7f7c2a",
+    "Name": "AudioSourceStop",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "DefaultValue": {
+        "Type": { "Id": "7e8da1847b7abee1bcfb53b82c7f7c2a", "Name": "AudioSourceStop" }
+    }
+}]

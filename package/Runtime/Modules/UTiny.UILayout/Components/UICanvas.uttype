@@ -1,0 +1,36 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "757a06c4ae1ec5fccccd28eb89a6dc54",
+    "Name": "UICanvas",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "80b32735134cedcca78a5796e0516385",
+        "Name": "camera",
+        "FieldType": { "Id": "5a182d9d039d4dfd8fa96132d05f9ee7", "Name": "EntityReference" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "1c18d312e3866c86971e271b59b30024",
+        "Name": "uiScaleMode",
+        "FieldType": { "Id": "0accc10de1131b44701da611a92a0f65", "Name": "UIScaleMode" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "0d843cb91e4d4243f6c74a3f56c09859",
+        "Name": "referenceResolution",
+        "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "6824b34f95abca8f74f1a3520eeb17e9",
+        "Name": "matchWidthOrHeight",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "757a06c4ae1ec5fccccd28eb89a6dc54", "Name": "UICanvas" }
+    }
+}]

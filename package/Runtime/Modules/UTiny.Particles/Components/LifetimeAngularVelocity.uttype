@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "c468a14161c539041addfa096f4a0aa0",
+    "Name": "LifetimeAngularVelocity",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "79e389279fd772d6017c6ad965259dd4",
+        "Name": "curve",
+        "FieldType": { "Id": "280b143c739160ffb69b3cf552f375bb", "Name": "CurveEntity" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "c468a14161c539041addfa096f4a0aa0", "Name": "LifetimeAngularVelocity" }
+    }
+}]

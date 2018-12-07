@@ -1,0 +1,42 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "2a90a1633d6dc16cd37cdfaca7b93cea",
+    "Name": "Color",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "da74b1665223c2f240eb5b4147b720c3",
+        "Name": "r",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "a104df28b7786b4a56f2ca04f63c1b23",
+        "Name": "g",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "5d7cde59e2ce56947e8d8da4584e24c3",
+        "Name": "b",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "173b37381eb67dde21bb2a890970a16f",
+        "Name": "a",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Properties": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+        }
+    }
+}]

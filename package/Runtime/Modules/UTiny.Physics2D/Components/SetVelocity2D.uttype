@@ -1,0 +1,11 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "7954f10492706c7007454a4a78203495",
+    "Name": "SetVelocity2D",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "DefaultValue": {
+        "Type": { "Id": "7954f10492706c7007454a4a78203495", "Name": "SetVelocity2D" }
+    }
+}]

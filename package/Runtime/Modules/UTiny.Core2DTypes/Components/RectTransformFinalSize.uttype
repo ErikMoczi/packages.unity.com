@@ -1,0 +1,11 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "00d6bc791188d69186aa19bf8f6652a8",
+    "Name": "RectTransformFinalSize",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "DefaultValue": {
+        "Type": { "Id": "00d6bc791188d69186aa19bf8f6652a8", "Name": "RectTransformFinalSize" }
+    }
+}]

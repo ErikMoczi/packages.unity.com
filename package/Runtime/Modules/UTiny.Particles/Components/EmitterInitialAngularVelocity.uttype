@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "e866135321023b24c4dd1d5769536277",
+    "Name": "EmitterInitialAngularVelocity",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "7fae7d498b729e2cf9aeab4ef364186e",
+        "Name": "angularVelocity",
+        "FieldType": { "Id": "0617b7f4431866888bfdb077d683c2ce", "Name": "Range" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "e866135321023b24c4dd1d5769536277", "Name": "EmitterInitialAngularVelocity" }
+    }
+}]

@@ -1,0 +1,14 @@
+{
+    "name": "Unity.Tiny.Editor",
+    "references": [
+      "Unity.Tiny",
+      "Unity.Properties",
+      "Unity.InternalAPIEngineBridge.002",
+      "Unity.InternalAPIEditorBridge.002"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true
+}

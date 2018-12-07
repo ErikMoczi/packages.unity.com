@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 2,
+    "Id": "eae58004250dcd15a6c834b07677ca28",
+    "Name": "UTiny.HTML",
+    "SerializedVersion": 1,
+    "ExportFlags": 1,
+    "Documentation": {
+        "Summary": "HTML module provides input and rendering functionality for HTML5."
+    },
+    "Namespace": "ut.HTML",
+    "MetadataFileGUID": "44e54ed6f0f0a914da9511a387f059bb",
+    "Options": 1,
+    "Dependencies": [
+        { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" },
+        { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" },
+        { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" }
+    ]
+}]

@@ -1,0 +1,45 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "a6f62442d4a27998e8b33785de6c8cfb",
+    "Name": "AnimationClipPlayer",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "8e970084570a388fab26c67417079d34",
+        "Name": "animationClip",
+        "FieldType": { "Id": "631f4285c8ca41eeb480f7fbff0756bb", "Name": "AnimationClipEntity" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "88a741a20c9f34745e07155f2ba604c9",
+        "Name": "time",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "e78a1ec9b72bc7b4e79480dca14ab255",
+        "Name": "speed",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "0bb771cd40f8078c9d9b2bfbda004577",
+        "Name": "paused",
+        "FieldType": { "Id": "2b477f505af74487b7092b5617d88d3f", "Name": "Boolean" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "cdaae12091cb3c3474e4e31a4bfe764d",
+        "Name": "loopMode",
+        "FieldType": { "Id": "ea25cda1bca15e4c9fb023eca636eb06", "Name": "LoopMode" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "a6f62442d4a27998e8b33785de6c8cfb", "Name": "AnimationClipPlayer" },
+        "Properties": {
+            "speed": 1
+        }
+    }
+}]

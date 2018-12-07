@@ -1,0 +1,28 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "2f068244ef06623a84e20a71cb133480",
+    "Name": "Camera2DClippingPlanes",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "b1b22b0d7d59db900432b2e02833cc70",
+        "Name": "near",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "73fa37e1d08c998efce77f27de1b556b",
+        "Name": "far",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "2f068244ef06623a84e20a71cb133480", "Name": "Camera2DClippingPlanes" },
+        "Properties": {
+            "near": 0,
+            "far": 1000
+        }
+    }
+}]

@@ -1,0 +1,43 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "1a0a4a5051e408f545b064c5a6a0bc3b",
+    "Name": "AudioClipStatus",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Enum",
+    "BaseType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+    "Fields": [{
+        "Id": "0d99a26916bf21ac48a8839584b13876",
+        "Name": "Unloaded",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "6f53d4e4d6acb9ac006518cf1de2acdc",
+        "Name": "Loading",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "2455b7317be444a3e95ff586d16a14d1",
+        "Name": "Loaded",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "2e4bebda88a12703e56a3a0259c09e7e",
+        "Name": "LoadError",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "1a0a4a5051e408f545b064c5a6a0bc3b", "Name": "AudioClipStatus" },
+        "Properties": {
+            "Unloaded": 0,
+            "Loading": 1,
+            "Loaded": 2,
+            "LoadError": 3
+        }
+    }
+}]

@@ -1,0 +1,62 @@
+{
+    "Success": true,
+    "Diagnostics": [],
+    "Systems": [{
+        "Name": "AnimationClipSourceSystem",
+        "QualifiedName": "ut.Animation.AnimationClipSourceSystem",
+        "Description": "Created from the 'UTiny.Animation' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.InputFence",
+            "ut.Shared.UserCodeEnd"
+        ],
+        "ExecuteBefore": [],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "AnimationClipPlayerSystem",
+        "QualifiedName": "ut.Animation.AnimationClipPlayerSystem",
+        "Description": "Created from the 'UTiny.Animation' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Animation.AnimationClipSourceSystem"
+        ],
+        "ExecuteBefore": [],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "AnimationBlenderSystem",
+        "QualifiedName": "ut.Animation.AnimationBlenderSystem",
+        "Description": "Created from the 'UTiny.Animation' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Animation.AnimationClipPlayerSystem"
+        ],
+        "ExecuteBefore": [],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }, {
+        "Name": "AnimationResultApplierSystem",
+        "QualifiedName": "ut.Animation.AnimationResultApplierSystem",
+        "Description": "Created from the 'UTiny.Animation' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Animation.AnimationBlenderSystem"
+        ],
+        "ExecuteBefore": [
+            "ut.Shared.RenderingFence"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }],
+    "Filters": [],
+    "Behaviours": []
+}

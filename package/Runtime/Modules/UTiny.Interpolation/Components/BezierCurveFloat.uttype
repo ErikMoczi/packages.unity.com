@@ -1,0 +1,36 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "30fde07c43b498be6f1cab02c402d442",
+    "Name": "BezierCurveFloat",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "d1f5d729a6d3c269e020e3a2bf1a585c",
+        "Name": "times",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": true,
+        "Visibility": 0
+    }, {
+        "Id": "f80a5de4db53fb59dcf84170bc831425",
+        "Name": "values",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": true,
+        "Visibility": 0
+    }, {
+        "Id": "c78c9b02be0240b0c60a1c155bb1018a",
+        "Name": "outValues",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": true,
+        "Visibility": 0
+    }, {
+        "Id": "2533cd709148a819ff604114f5b09db9",
+        "Name": "inValues",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": true,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "30fde07c43b498be6f1cab02c402d442", "Name": "BezierCurveFloat" }
+    }
+}]

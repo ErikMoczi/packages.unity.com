@@ -1,0 +1,21 @@
+{
+    "Success": true,
+    "Diagnostics": [],
+    "Systems": [{
+        "Name": "HitBox2DSystem",
+        "QualifiedName": "ut.HitBox2D.HitBox2DSystem",
+        "Description": "Created from the 'UTiny.HitBox2D' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [],
+        "ExecuteBefore": [
+            "ut.Shared.RenderingFence",
+            "ut.Shared.InputFence"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }],
+    "Filters": [],
+    "Behaviours": []
+}

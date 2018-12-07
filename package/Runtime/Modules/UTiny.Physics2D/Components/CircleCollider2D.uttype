@@ -1,0 +1,34 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "efb8f1bb8e61304f4854daecbaeb2747",
+    "Name": "CircleCollider2D",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "6adfbdfa31be7d0ac29b5e749a89c764",
+        "Name": "radius",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "20b603d7b4bb692e835f7cfd6990e9bc",
+        "Name": "pivot",
+        "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "efb8f1bb8e61304f4854daecbaeb2747", "Name": "CircleCollider2D" },
+        "Properties": {
+            "radius": 1,
+            "pivot": {
+                "Type": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+                "Properties": {
+                    "x": 0.5,
+                    "y": 0.5
+                }
+            }
+        }
+    }
+}]

@@ -1,0 +1,23 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "14a3c63954b94a90a8702c2f65b4a843",
+    "Name": "EntityGroupInstance",
+    "ExportFlags": 0,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "5430390d5bc341c99236c6b184932ad4",
+        "Name": "name",
+        "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "a9eddeaaeae04e2d82ebb76a7b3e870f",
+        "Name": "entities",
+        "FieldType": { "Id": "5a182d9d039d4dfd8fa96132d05f9ee7", "Name": "EntityReference" },
+        "Array": true,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "14a3c63954b94a90a8702c2f65b4a843", "Name": "EntityGroupInstance" }
+    }
+}]

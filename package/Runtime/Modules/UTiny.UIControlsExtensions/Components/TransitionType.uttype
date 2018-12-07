@@ -1,0 +1,26 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "a31fda38cf6841570b96c7b25da89695",
+    "Name": "TransitionType",
+    "ExportFlags": 4,
+    "Unlisted": false,
+    "TypeCode": "Enum",
+    "Fields": [{
+        "Id": "ff0222c231942ca39168f895a317b19f",
+        "Name": "ColorTint",
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "fd4998ff094f9e0fe7df3e18b53a584c",
+        "Name": "Sprite",
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "a31fda38cf6841570b96c7b25da89695", "Name": "TransitionType" },
+        "Properties": {
+            "ColorTint": 0,
+            "Sprite": 1
+        }
+    }
+}]

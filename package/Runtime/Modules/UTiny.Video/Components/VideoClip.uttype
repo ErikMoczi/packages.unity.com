@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "f42f4035efa3ddba0108b7cd47b2b5d1",
+    "Name": "VideoClip",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "84904d08f773f8fcc1002d414a853b28",
+        "Name": "src",
+        "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "7d649a1dcaa573a41e73aa81b7af015c",
+        "Name": "status",
+        "FieldType": { "Id": "58e36e8a05b78a75e485fb0c898cf550", "Name": "VideoClipLoadingStatus" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "f42f4035efa3ddba0108b7cd47b2b5d1", "Name": "VideoClip" }
+    }
+}]

@@ -1,0 +1,14 @@
+﻿{
+    "GettingStarted": {
+        "title": "Getting Started",
+        "order": 1,
+        "children": {
+            "Documentation": {
+                "title": "Documentation",
+            },
+            "SimpleInput": {
+                "title": "Demo - SimpleInput",
+            }
+        }
+     }
+ }

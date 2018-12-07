@@ -1,0 +1,27 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "821d318d8d12611a0128b1f68eed9489",
+    "Name": "EmitterBoxSource",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "ca80b0243a3b5585516c2f5119dee106",
+        "Name": "rect",
+        "FieldType": { "Id": "f216da154c4054842adb590807e977ba", "Name": "Rect" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "821d318d8d12611a0128b1f68eed9489", "Name": "EmitterBoxSource" },
+        "Properties": {
+            "rect": {
+                "Type": { "Id": "f216da154c4054842adb590807e977ba", "Name": "Rect" },
+                "Properties": {
+                    "width": 50,
+                    "height": 50
+                }
+            }
+        }
+    }
+}]

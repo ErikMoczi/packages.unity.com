@@ -1,0 +1,29 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "76a06ddd38e99125d930e77c6a287872",
+    "Name": "CameraClearFlags",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Enum",
+    "BaseType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+    "Fields": [{
+        "Id": "fbd267d0780374b1af81278eb2b5a77d",
+        "Name": "Nothing",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "9faedc246f34513076701ef66b5ad74f",
+        "Name": "SolidColor",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "76a06ddd38e99125d930e77c6a287872", "Name": "CameraClearFlags" },
+        "Properties": {
+            "Nothing": 0,
+            "SolidColor": 1
+        }
+    }
+}]

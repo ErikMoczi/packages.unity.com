@@ -1,0 +1,22 @@
+{
+    "Success": true,
+    "Diagnostics": [],
+    "Systems": [{
+        "Name": "TilemapChunkingSystem",
+        "QualifiedName": "ut.Tilemap2D.TilemapChunkingSystem",
+        "Description": "Created from the 'UTiny.Tilemap2D' runtime module",
+        "IsFence": false,
+        "Filters": [],
+        "ExecuteAfter": [
+            "ut.Shared.UserCodeEnd"
+        ],
+        "ExecuteBefore": [
+            "ut.Shared.RenderingFence"
+        ],
+        "RequiredComponents": [],
+        "OptionalComponents": [],
+        "Source": {}
+    }],
+    "Filters": [],
+    "Behaviours": []
+}

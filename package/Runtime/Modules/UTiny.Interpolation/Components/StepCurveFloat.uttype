@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "f1cbba6c20b19f0f4706fca96ca56e58",
+    "Name": "StepCurveFloat",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "38d006d96a2d76e8cf4f080f819bb00b",
+        "Name": "times",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": true,
+        "Visibility": 0
+    }, {
+        "Id": "d1074be7c9601b968dbb86a946bad615",
+        "Name": "values",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": true,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "f1cbba6c20b19f0f4706fca96ca56e58", "Name": "StepCurveFloat" }
+    }
+}]

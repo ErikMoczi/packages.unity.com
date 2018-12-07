@@ -1,0 +1,31 @@
+﻿[{
+    "$TypeId": 2,
+    "Id": "a1b50987659c653138795a8f4079fc10",
+    "Name": "UTiny.Math",
+    "SerializedVersion": 1,
+    "ExportFlags": 1,
+    "Documentation": {
+        "Summary": "Math module provides basic geometric types."
+    },
+    "Namespace": "ut.Math",
+    "Options": 3,
+    "Dependencies": [
+        { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" },
+        { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" }
+    ],
+    "Structs": [
+        { "Id": "f216da154c4054842adb590807e977ba", "Name": "Rect" },
+        { "Id": "b240677e897e91900828c714b14de819", "Name": "RectInt" },
+        { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+        { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
+        { "Id": "ab9074756b77ee15b6b7f762b5dfb8a7", "Name": "Vector4" },
+        { "Id": "dc7e11e5d517ed01fd5d084a6c9fd64d", "Name": "Quaternion" },
+        { "Id": "dd50796f201dc95331552ad2e74482a1", "Name": "Matrix3x3" },
+        { "Id": "d6e1c2cc517e0e1efa253889f20abedb", "Name": "Matrix4x4" },
+        { "Id": "0617b7f4431866888bfdb077d683c2ce", "Name": "Range" },
+        { "Id": "54779ffb6892017b68062aaf8eed243d", "Name": "RangeInt" }
+    ],
+    "Enums": [
+        { "Id": "5f12673ca88e126d8f47e976dfee2963", "Name": "RotationOrder" }
+    ]
+}]

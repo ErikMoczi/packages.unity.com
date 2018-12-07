@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "a015bc52c7befa4d7484891d74d2b574",
+    "Name": "RectHitBox2D",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "6610c1384b1e04ad886b287ed914f35a",
+        "Name": "box",
+        "FieldType": { "Id": "f216da154c4054842adb590807e977ba", "Name": "Rect" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "a015bc52c7befa4d7484891d74d2b574", "Name": "RectHitBox2D" }
+    }
+}]

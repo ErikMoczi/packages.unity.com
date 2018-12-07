@@ -1,0 +1,1002 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "67b95f60da58fcea0d31f9e50232dcd6",
+    "Name": "KeyCode",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Enum",
+    "BaseType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+    "Fields": [{
+        "Id": "7ae122dbd3a629e4f76a952dd76a79b5",
+        "Name": "None",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "ccab7ad7c2bc80caf8b17d8e14d27c14",
+        "Name": "Backspace",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "bbe54ccce24e3260968f8e7fe6a6980c",
+        "Name": "Tab",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "f32ac3719c181683261ae3e6fae5f1e1",
+        "Name": "Clear",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "b37944d6a63f55d2711f7cc4e97cde17",
+        "Name": "Return",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "c49162bbd643a9cebe2fbf1ff8817c81",
+        "Name": "Pause",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "4b40b7f20f52043efc87b233e5c9d238",
+        "Name": "Escape",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "69fca39b09c4acd90106a580b3a58d8c",
+        "Name": "Space",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "908a45682e96b23e1d9054c8ac782859",
+        "Name": "Exclaim",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "fa261bb8391a977fb084162935188a9a",
+        "Name": "DoubleQuote",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "be7ce0778ed6fa5b06aebfb36f01d6f4",
+        "Name": "Hash",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "16992c622073a673b96b57710d6781b6",
+        "Name": "Dollar",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "db3272c10a6ce0357760ea60df6197f7",
+        "Name": "Ampersand",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "60448bd15b3c7a989b1de4573daaf237",
+        "Name": "Quote",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "4802b5273a89dd48ce73da3b97dfaded",
+        "Name": "LeftParen",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "44ef2ef504e38925fd6bfa2df83fd7d1",
+        "Name": "RightParen",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "2dc2ab7435521f53911d52ed6866155e",
+        "Name": "Asterisk",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "ee5e64e3c4590050bbb8f4c625c6024a",
+        "Name": "Plus",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "6c016dfeb051fc5876d178c476aa0c08",
+        "Name": "Comma",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "6e3ce5533bcbef0fb957d0dd79a999af",
+        "Name": "Minus",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "d490453cb838b0f809cc39208f895045",
+        "Name": "Period",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "0d6643625e2e985367006422c02926d9",
+        "Name": "Slash",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "aaf9428eded5a1171dc34018b3f9ca79",
+        "Name": "Alpha0",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "4c61d5a6bf29f3a9bcf590d29ecbe251",
+        "Name": "Alpha1",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "3ffe8c5a96a6a6ca54cd15d47eec4ad4",
+        "Name": "Alpha2",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "1245f72334c2b6e51a8a54aae5dc2886",
+        "Name": "Alpha3",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "f37354b9d42617d41298029742d6a2cf",
+        "Name": "Alpha4",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "1d5c524452973b505538b4a27dfbb6ab",
+        "Name": "Alpha5",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "63aefb45c78b1597d6e9af8592344db9",
+        "Name": "Alpha6",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "7ef700a9212c2afae44e68849667eb86",
+        "Name": "Alpha7",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "678f5b2fc81d2510bbc6c6756dfcd7f1",
+        "Name": "Alpha8",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "97864cf05211385c391e24ad9f4c7ef1",
+        "Name": "Alpha9",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "ab6a25db6d67a46f2408fc46571bcfd6",
+        "Name": "Colon",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "0b8fdcbcb8486a2beff3e07573baa805",
+        "Name": "Semicolon",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "78f3881ed545e7c31e5c131f14b961be",
+        "Name": "Less",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "3343256798b80e81c919935dc9092770",
+        "Name": "Equals",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "ca861f39e03a33ad559454113e997e1a",
+        "Name": "Greater",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "6e17069797a9cc375b4380df5bce047f",
+        "Name": "Question",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "8997490ac784eb5118fffac9653702c0",
+        "Name": "At",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "433f59f7d097c84c8d4ea4c80cd4eeb5",
+        "Name": "LeftBracket",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "4d58b480fbf5e5870c7acef1ea3dd016",
+        "Name": "Backslash",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "8102883ffca58552afc4e96680f97bf7",
+        "Name": "RightBracket",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "3b381455706a7c6640eee2c47100c222",
+        "Name": "Caret",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "78725c0bca4825a113117496b9285b80",
+        "Name": "Underscore",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "4075d931e296c5f86d58897316fbc539",
+        "Name": "BackQuote",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "d4d65f072304996f27f7cf4e1f3c5471",
+        "Name": "A",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "ce54c98cc9aa629dee3c853cf2360642",
+        "Name": "B",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "c7d2260525a184e4a28a1137bd714333",
+        "Name": "C",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "c8e097b889c04daffcf2e6a44158970a",
+        "Name": "D",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "5d276224acb4905408ef155efadb3168",
+        "Name": "E",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "a73857ad7de24a2c99ce9cea63030518",
+        "Name": "F",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "de7e84317e0881739a223f52dcb51df6",
+        "Name": "G",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "d171c2fbe1322e7624b05826ca7fb834",
+        "Name": "H",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "7b76351d4c26b23dd4c9879eaf5d1cd4",
+        "Name": "I",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "e0a7c41edaf77e69d2bec3efbb09c2be",
+        "Name": "J",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "2581684cd07460545980ff24997bb473",
+        "Name": "K",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "b17ffcd9430825af0d3e541b3cee7906",
+        "Name": "L",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "837f6c545f049725b366d279afcfa30d",
+        "Name": "M",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "e99804d238f6b101c86ba210202323d9",
+        "Name": "N",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "662818884d0529df06e55ed17a94353e",
+        "Name": "O",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "8f6fc0c16c1b00e456c29e905abbc315",
+        "Name": "P",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "39c7b820d2d0d465012297f99b07dd2c",
+        "Name": "Q",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "cb47738aac24e7ae285f7472eb3ea67d",
+        "Name": "R",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "5cd34248aad555dbd4f859c82fa1972c",
+        "Name": "S",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "96a732bdc63c9d4ab0c975c47d600936",
+        "Name": "T",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "86112305904dce45d306bcb321845ffe",
+        "Name": "U",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "e5170aa27744a052e73ae7f96b418f0c",
+        "Name": "V",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "5127c6111752352e11953b1f99925660",
+        "Name": "W",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "ae9283e4e0a50e2a5f01ad055b9ab582",
+        "Name": "X",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "dccedf92e064883153e723b18e3b7b45",
+        "Name": "Y",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "8c51073d98e1db1c0a19c8175bdfcfc2",
+        "Name": "Z",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "de68e4ead0f246c178f60a5bb31f481e",
+        "Name": "Delete",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "5214f801215839bb47c86ec0f5491fe1",
+        "Name": "Keypad0",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "667670c401def61938ce1aaf1e91841d",
+        "Name": "Keypad1",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "e42d19ff1e58e43262d4dc750f199f45",
+        "Name": "Keypad2",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "ed1b3a71413c84b4fb442e6684a631d0",
+        "Name": "Keypad3",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "3b3f5fa51ef402953fc5e2deaf492386",
+        "Name": "Keypad4",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "e0f5bfbc50505c6660198490382746c2",
+        "Name": "Keypad5",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "5977e186a1b2b087db9da064c366c5ca",
+        "Name": "Keypad6",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "0f176199db3d87d8efdff2c23bc60255",
+        "Name": "Keypad7",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "a924255eb5ece95be3aa228b4b98ea5b",
+        "Name": "Keypad8",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "c3ffbdec6aef9c92014218723b568aa1",
+        "Name": "Keypad9",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "6010e2ab48ba54ca09e93f9b565f5b4a",
+        "Name": "KeypadPeriod",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "00f78107a9caae2216b13f90cd4be2a3",
+        "Name": "KeypadDivide",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "ccf56efbce2a068b44d34686ef8e24dc",
+        "Name": "KeypadMultiply",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "acedc3f806892f15dc1bafe4ad2763b5",
+        "Name": "KeypadMinus",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "6b3000b3a7978c629b6e4e178b61bb77",
+        "Name": "KeypadPlus",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "8651110aa0379501b70079a2c94f8c27",
+        "Name": "KeypadEnter",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "a7b48ffc828fa6bdfeac5c4abe4e73b1",
+        "Name": "KeypadEquals",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "9b1fa4d7373629070361369b418b696f",
+        "Name": "UpArrow",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "7a96088cd8d934e226e6568e8442668b",
+        "Name": "DownArrow",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "6d5f15311334bfb134144858c24f41bb",
+        "Name": "RightArrow",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "afc39c5965ba1cb14a5ff780efd0c6b0",
+        "Name": "LeftArrow",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "2be1da9cf648a04ebb5e6cb4356c4978",
+        "Name": "Insert",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "1e7fdbbb5183c0aadbf7ff15f905d0fa",
+        "Name": "Home",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "3957c48138a0fd4e4ec8984e0fec2966",
+        "Name": "End",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "2431d559e60a0f6ff78d62561eadbb53",
+        "Name": "PageUp",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "eaae74b3cfb39eb742c5be7db3c8e951",
+        "Name": "PageDown",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "03e073369fa883ae25bcb317722870a4",
+        "Name": "F1",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "77c9b23d414fd93f163c7a07621e12e9",
+        "Name": "F2",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "fab29dc25aafde1c7bda95c7a42e3336",
+        "Name": "F3",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "fc0026efc13275e4055326464a2f815d",
+        "Name": "F4",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "45bbafc47913664774966687015810f1",
+        "Name": "F5",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "9bd8a22add8f993f867017830f9d953b",
+        "Name": "F6",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "13db0c3d4356a76caec8f84619d9f7d1",
+        "Name": "F7",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "41adc258f4bbf4340d6a20231885c9bb",
+        "Name": "F8",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "5d4b7af9de21b863cb8d0a087e61440e",
+        "Name": "F9",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "1174a2184b5e4a8143f1cdc087a06448",
+        "Name": "F10",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "f58a7d358f41725ee271c3405195426e",
+        "Name": "F11",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "4e01ef03055e8cfaa5a2800382e516e6",
+        "Name": "F12",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "0289317d77e23f15ffa11f8e522531e5",
+        "Name": "F13",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "a502414da0705b9dcf87c2b794d229dc",
+        "Name": "F14",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "67a132057d616307cfb2c9b38cc0c8ef",
+        "Name": "F15",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "b4de2faa1b89c58beb9f7a9067b81553",
+        "Name": "Numlock",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "2d657ff3a83313ee26fd342f0f6dd9b5",
+        "Name": "CapsLock",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "4aee0232284e5b723a1188d50f8b8a56",
+        "Name": "ScrollLock",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "91d51346c6f368b802febcd6b697b697",
+        "Name": "RightShift",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "754e7d7ea2bf589a74aee144ee4afbac",
+        "Name": "LeftShift",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "fea4e4a317df1ab7cdf221b3a78adc55",
+        "Name": "RightControl",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "c8a31d91e72d998ac0fce034e58ee66c",
+        "Name": "LeftControl",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "a58ae79a58e8b7586f111cd954b8e1a7",
+        "Name": "RightAlt",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "230af9103a266d5447feb027703ffe93",
+        "Name": "LeftAlt",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "5b849c6063be67fcf9dca984fb6496c2",
+        "Name": "RightCommand",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "1d2ba8c3c369a2e80c13c238596cd01a",
+        "Name": "RightApple",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "20333524884c2eecafe0a2fa0f95ae17",
+        "Name": "LeftCommand",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "5a6fbf81f93c38b9da531ea49d4dc3d8",
+        "Name": "LeftApple",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "be4316578b50a1653ed9834a815f7466",
+        "Name": "LeftWindows",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "d84351b4ad00d03842be2acc235da2ba",
+        "Name": "RightWindows",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "d511ef956e79e9f63deefa1ddc1de620",
+        "Name": "AltGr",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "f763ce8e1594a56efb2fe6cc84634a49",
+        "Name": "Help",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "c15bca0b891291a65df82aa7d0bb07ae",
+        "Name": "Print",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "c1847f94b80f54a0ff3362d8b9c9c547",
+        "Name": "SysReq",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "512aba0adb112bc7e8915bcdf3477fae",
+        "Name": "Break",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "7548eead9a8ddcc0956c2e7e477a21bb",
+        "Name": "Menu",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "762d9c0cff345ad5b959ae1f3c556e5c",
+        "Name": "Mouse0",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "1ed88fdfb283c361e72586875bb830b8",
+        "Name": "Mouse1",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "863e12e8514bf1e5b0e6cfe6491a53f3",
+        "Name": "Mouse2",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "32b0a5de5c96d7f649d1d675b65f21fa",
+        "Name": "Mouse3",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "962d76d41a585e0a439c3b14be719ffc",
+        "Name": "Mouse4",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "c1c8791a9239124d8540e490a6889254",
+        "Name": "Mouse5",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "07c1412844f9b251636c507272cdc52f",
+        "Name": "Mouse6",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "67b95f60da58fcea0d31f9e50232dcd6", "Name": "KeyCode" },
+        "Properties": {
+            "None": 0,
+            "Backspace": 8,
+            "Tab": 9,
+            "Clear": 12,
+            "Return": 13,
+            "Pause": 19,
+            "Escape": 27,
+            "Space": 32,
+            "Exclaim": 33,
+            "DoubleQuote": 34,
+            "Hash": 35,
+            "Dollar": 36,
+            "Ampersand": 38,
+            "Quote": 39,
+            "LeftParen": 40,
+            "RightParen": 41,
+            "Asterisk": 42,
+            "Plus": 43,
+            "Comma": 44,
+            "Minus": 45,
+            "Period": 46,
+            "Slash": 47,
+            "Alpha0": 48,
+            "Alpha1": 49,
+            "Alpha2": 50,
+            "Alpha3": 51,
+            "Alpha4": 52,
+            "Alpha5": 53,
+            "Alpha6": 54,
+            "Alpha7": 55,
+            "Alpha8": 56,
+            "Alpha9": 57,
+            "Colon": 58,
+            "Semicolon": 59,
+            "Less": 60,
+            "Equals": 61,
+            "Greater": 62,
+            "Question": 63,
+            "At": 64,
+            "LeftBracket": 91,
+            "Backslash": 92,
+            "RightBracket": 93,
+            "Caret": 94,
+            "Underscore": 95,
+            "BackQuote": 96,
+            "A": 97,
+            "B": 98,
+            "C": 99,
+            "D": 100,
+            "E": 101,
+            "F": 102,
+            "G": 103,
+            "H": 104,
+            "I": 105,
+            "J": 106,
+            "K": 107,
+            "L": 108,
+            "M": 109,
+            "N": 110,
+            "O": 111,
+            "P": 112,
+            "Q": 113,
+            "R": 114,
+            "S": 115,
+            "T": 116,
+            "U": 117,
+            "V": 118,
+            "W": 119,
+            "X": 120,
+            "Y": 121,
+            "Z": 122,
+            "Delete": 127,
+            "Keypad0": 256,
+            "Keypad1": 257,
+            "Keypad2": 258,
+            "Keypad3": 259,
+            "Keypad4": 260,
+            "Keypad5": 261,
+            "Keypad6": 262,
+            "Keypad7": 263,
+            "Keypad8": 264,
+            "Keypad9": 265,
+            "KeypadPeriod": 266,
+            "KeypadDivide": 267,
+            "KeypadMultiply": 268,
+            "KeypadMinus": 269,
+            "KeypadPlus": 270,
+            "KeypadEnter": 271,
+            "KeypadEquals": 272,
+            "UpArrow": 273,
+            "DownArrow": 274,
+            "RightArrow": 275,
+            "LeftArrow": 276,
+            "Insert": 277,
+            "Home": 278,
+            "End": 279,
+            "PageUp": 280,
+            "PageDown": 281,
+            "F1": 282,
+            "F2": 283,
+            "F3": 284,
+            "F4": 285,
+            "F5": 286,
+            "F6": 287,
+            "F7": 288,
+            "F8": 289,
+            "F9": 290,
+            "F10": 291,
+            "F11": 292,
+            "F12": 293,
+            "F13": 294,
+            "F14": 295,
+            "F15": 296,
+            "Numlock": 300,
+            "CapsLock": 301,
+            "ScrollLock": 302,
+            "RightShift": 303,
+            "LeftShift": 304,
+            "RightControl": 305,
+            "LeftControl": 306,
+            "RightAlt": 307,
+            "LeftAlt": 308,
+            "RightCommand": 309,
+            "RightApple": 309,
+            "LeftCommand": 310,
+            "LeftApple": 310,
+            "LeftWindows": 311,
+            "RightWindows": 312,
+            "AltGr": 313,
+            "Help": 315,
+            "Print": 316,
+            "SysReq": 317,
+            "Break": 318,
+            "Menu": 319,
+            "Mouse0": 323,
+            "Mouse1": 324,
+            "Mouse2": 325,
+            "Mouse3": 326,
+            "Mouse4": 327,
+            "Mouse5": 328,
+            "Mouse6": 329
+        }
+    }
+}]

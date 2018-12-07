@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "2266a95f5d16ca1ddde710d7c047ba69",
+    "Name": "TransformLocalRotation",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "970887e97378764a5a13a2f0945e8125",
+        "Name": "rotation",
+        "FieldType": { "Id": "dc7e11e5d517ed01fd5d084a6c9fd64d", "Name": "Quaternion" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "2266a95f5d16ca1ddde710d7c047ba69", "Name": "TransformLocalRotation" }
+    }
+}]

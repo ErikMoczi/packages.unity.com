@@ -1,0 +1,54 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "5b6ff13fbf23066d1d6b6515f1fedfbd",
+    "Name": "KeyFrame",
+    "ExportFlags": 4,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "4b12af53864ebb3c83bb9eefec5452d8",
+        "Name": "inTangent",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "9f81b6822bc00a82d570f1baad7f386e",
+        "Name": "inWeight",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "42c8f9c579f5c98514bf416adf6fa24f",
+        "Name": "outTangent",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "639cb26830037051cc04af5a486e285c",
+        "Name": "outWeight",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "14674e5df037b759e4c60beb0b2d792a",
+        "Name": "time",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "23261fe1675eec2a0b1b5edddd89e022",
+        "Name": "value",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "dcf4a614612a799fa99d80e82c04e4f4",
+        "Name": "weightedMode",
+        "FieldType": { "Id": "563a5e15340525520839fb3a23de5ac4", "Name": "WeightedMode" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "5b6ff13fbf23066d1d6b6515f1fedfbd", "Name": "KeyFrame" }
+    }
+}]

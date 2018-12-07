@@ -1,0 +1,36 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "6d80accc7f2baf705a0b778f20476ff5",
+    "Name": "CameraCullingMode",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Enum",
+    "BaseType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+    "Fields": [{
+        "Id": "352eb51d4f3547b25cc3e459e6faf7b5",
+        "Name": "None",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "7d0cac09ce16d3626b33755f6b63a67f",
+        "Name": "All",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "59bc7325f7c373230b14d1c1495721ff",
+        "Name": "Any",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "6d80accc7f2baf705a0b778f20476ff5", "Name": "CameraCullingMode" },
+        "Properties": {
+            "None": 0,
+            "All": 1,
+            "Any": 2
+        }
+    }
+}]

@@ -1,0 +1,33 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "ebf6e4be1bc00e559ef91e165189cb3e",
+    "Name": "Text2DStyleNativeFont",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "02b7927b6e408109858c86668fe141f8",
+        "Name": "font",
+        "FieldType": { "Id": "5a182d9d039d4dfd8fa96132d05f9ee7", "Name": "EntityReference" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "162373bcac63217de72856459bfc8a6d",
+        "Name": "italic",
+        "FieldType": { "Id": "2b477f505af74487b7092b5617d88d3f", "Name": "Boolean" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "b3857a7bc05d0a70cc93ef175e4e8318",
+        "Name": "weight",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "ebf6e4be1bc00e559ef91e165189cb3e", "Name": "Text2DStyleNativeFont" },
+        "Properties": {
+            "weight": 400
+        }
+    }
+}]

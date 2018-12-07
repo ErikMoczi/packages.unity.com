@@ -1,0 +1,28 @@
+﻿[{
+    "$TypeId": 2,
+    "Id": "ca702d06498caa58a8babcfb0c9760ef",
+    "Name": "UTiny.UnityTypesExtensions",
+    "SerializedVersion": 1,
+    "ExportFlags": 4,
+    "Namespace": "ut.TinyEditorExtensions",
+    "Options": 1,
+    "Dependencies": [
+        { "Id": "30097418841f56d73400bf82ee859ac9", "Name": "UTiny.Core2D" },
+        { "Id": "494f9eba840c1f117459611e605884b0", "Name": "UTiny.Core2DTypes" },
+        { "Id": "fb3737c9a63f1f11bd510d36b765b8ee", "Name": "UTiny.Interpolation" },
+        { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" }
+    ],
+    "Structs": [
+        { "Id": "aff14956d13273d7f93c085bb59123a7", "Name": "GradientColorKey" },
+        { "Id": "acf579b84157e0c99f879655683973fc", "Name": "GradientAlphaKey" },
+        { "Id": "9a741db252864c027362942ab5c07953", "Name": "GradientEntity" },
+        { "Id": "5b6ff13fbf23066d1d6b6515f1fedfbd", "Name": "KeyFrame" },
+        { "Id": "280b143c739160ffb69b3cf552f375bb", "Name": "CurveEntity" },
+        { "Id": "691cc0faec1fbaaa056088bba092a0d3", "Name": "Curve3Entity" }
+    ],
+    "Enums": [
+        { "Id": "f9320dd44c46ef5fdedb1b23aa698d33", "Name": "GradientMode" },
+        { "Id": "563a5e15340525520839fb3a23de5ac4", "Name": "WeightedMode" },
+        { "Id": "440cf56acc9270b677b8a90e4477735d", "Name": "WrapMode" }
+    ]
+}]

@@ -1,0 +1,24 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "3abb69286ddfc2d1c617a173c1eeb35d",
+    "Name": "Vector2",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "91107fce648b84ecb35c4fd437c9454d",
+        "Name": "x",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "9852ffe5bf577dbc3b5151abda906fc8",
+        "Name": "y",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" }
+    }
+}]

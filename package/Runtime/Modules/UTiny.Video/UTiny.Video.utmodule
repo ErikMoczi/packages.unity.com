@@ -1,0 +1,23 @@
+﻿[{
+    "$TypeId": 2,
+    "Id": "5e48b999335625d27a5110d9abf698b1",
+    "Name": "UTiny.Video",
+    "SerializedVersion": 1,
+    "ExportFlags": 1,
+    "Namespace": "ut.Video",
+    "MetadataFileGUID": "0cc94993e5794d349935ecc3393afca4",
+    "Options": 1,
+    "Dependencies": [
+        { "Id": "2af0cd3b47a732bf738688ceab312689", "Name": "UTiny.Core" },
+        { "Id": "ce3f1bd7050540b70d450a606e226ea2", "Name": "UTiny.Shared" },
+        { "Id": "a1b50987659c653138795a8f4079fc10", "Name": "UTiny.Math" }
+    ],
+    "Components": [
+        { "Id": "f42f4035efa3ddba0108b7cd47b2b5d1", "Name": "VideoClip" },
+        { "Id": "bb3ac302b573b252dfb8e684ea95cd6a", "Name": "VideoPlayer" },
+        { "Id": "0b9c1f9b0f7ae41df31b8fb0b723767c", "Name": "VideoPlayerAutoDeleteOnEnd" }
+    ],
+    "Enums": [
+        { "Id": "58e36e8a05b78a75e485fb0c898cf550", "Name": "VideoClipLoadingStatus" }
+    ]
+}]

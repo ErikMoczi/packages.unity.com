@@ -1,0 +1,27 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "38283a6cef9faa790b5c9936163d59e3",
+    "Name": "Physics2DConfig",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Configuration",
+    "Fields": [{
+        "Id": "e828656d0238a457db3ae07f84fd6294",
+        "Name": "gravity",
+        "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "38283a6cef9faa790b5c9936163d59e3", "Name": "Physics2DConfig" },
+        "Properties": {
+            "gravity": {
+                "Type": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+                "Properties": {
+                    "x": 0,
+                    "y": -10
+                }
+            }
+        }
+    }
+}]

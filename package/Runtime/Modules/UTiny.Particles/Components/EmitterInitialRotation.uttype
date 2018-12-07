@@ -1,0 +1,18 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "5b3dc8e5f243676c125024480ebbe8b0",
+    "Name": "EmitterInitialRotation",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "26d9e97ee6d31f0fe334490ef7a226ea",
+        "Name": "angle",
+        "FieldType": { "Id": "0617b7f4431866888bfdb077d683c2ce", "Name": "Range" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "5b3dc8e5f243676c125024480ebbe8b0", "Name": "EmitterInitialRotation" }
+    }
+}]

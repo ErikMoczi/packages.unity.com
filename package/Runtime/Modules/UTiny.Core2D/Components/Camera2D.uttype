@@ -1,0 +1,76 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "12692383f3fef3bb74c209888c5b0939",
+    "Name": "Camera2D",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "885ed73aa2c83b0d1c9f3d87eed8cba5",
+        "Name": "halfVerticalSize",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "cca9fd0746b49091c1799543102fbe86",
+        "Name": "rect",
+        "FieldType": { "Id": "f216da154c4054842adb590807e977ba", "Name": "Rect" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "ab5ca2a73f0d5ee6af4ba81f89adeda1",
+        "Name": "backgroundColor",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "39f5d8d3b478fb05de03519f62249773",
+        "Name": "clearFlags",
+        "FieldType": { "Id": "76a06ddd38e99125d930e77c6a287872", "Name": "CameraClearFlags" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "36c11f76e8dc990df1e57d97b6157cba",
+        "Name": "depth",
+        "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "8aebcdedc12b82876a9a0ffa113745f1",
+        "Name": "cullingMask",
+        "FieldType": { "Id": "1da58c8ba95a4c85a2b5920bd0663f70", "Name": "UInt32" },
+        "Array": true,
+        "Visibility": 0
+    }, {
+        "Id": "dd10e59cd047daa1017eee915b1af7ae",
+        "Name": "layerMask",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "12692383f3fef3bb74c209888c5b0939", "Name": "Camera2D" },
+        "Properties": {
+            "halfVerticalSize": 5,
+            "rect": {
+                "Type": { "Id": "f216da154c4054842adb590807e977ba", "Name": "Rect" },
+                "Properties": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 1,
+                    "height": 1
+                }
+            },
+            "backgroundColor": {
+                "Type": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+                "Properties": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                }
+            },
+            "layerMask": -1
+        }
+    }
+}]

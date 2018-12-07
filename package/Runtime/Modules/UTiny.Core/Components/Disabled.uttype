@@ -1,0 +1,11 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "408a267a6f025de08e8a00094bda2bb2",
+    "Name": "Disabled",
+    "ExportFlags": 1,
+    "Unlisted": true,
+    "TypeCode": "Component",
+    "DefaultValue": {
+        "Type": { "Id": "408a267a6f025de08e8a00094bda2bb2", "Name": "Disabled" }
+    }
+}]

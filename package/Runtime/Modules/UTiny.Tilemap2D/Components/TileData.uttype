@@ -1,0 +1,29 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "38cddb9154a8669901635780ed05188b",
+    "Name": "TileData",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Struct",
+    "Fields": [{
+        "Id": "ae2e4042d9e388b88c7d3ada8e7e8be7",
+        "Name": "position",
+        "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "69e52621929b9cbe7d7988850720b0ab",
+        "Name": "tile",
+        "FieldType": { "Id": "ba863be1346c460f80e3e371b0cf255b", "Name": "TileEntity" },
+        "Array": false,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "38cddb9154a8669901635780ed05188b", "Name": "TileData" },
+        "Properties": {
+            "position": {
+                "Type": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" }
+            }
+        }
+    }
+}]

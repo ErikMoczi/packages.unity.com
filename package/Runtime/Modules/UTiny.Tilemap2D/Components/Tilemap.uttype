@@ -1,0 +1,89 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "0d28ae8f9a388c9ed18b5c48668c08ab",
+    "Name": "Tilemap",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "d4630a1f68ad32f795c10e17a4a3f5bd",
+        "Name": "anchor",
+        "FieldType": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "5665ab72c7fdaacc7bb51f6a29f80d80",
+        "Name": "position",
+        "FieldType": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "335efd23d2fd8d44db7a36ca21407d84",
+        "Name": "rotation",
+        "FieldType": { "Id": "dc7e11e5d517ed01fd5d084a6c9fd64d", "Name": "Quaternion" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "43a1c2fbce70fb60d384490479e9ca48",
+        "Name": "scale",
+        "FieldType": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "1e0ee8cba1b0621fce558260b25cd8ad",
+        "Name": "cellSize",
+        "FieldType": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "6e4b947806bf440f1d855ea9699c52ad",
+        "Name": "cellGap",
+        "FieldType": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
+        "Array": false,
+        "Visibility": 0
+    }, {
+        "Id": "f760917f9a2a9625a3a8e3732d8501e3",
+        "Name": "tiles",
+        "FieldType": { "Id": "38cddb9154a8669901635780ed05188b", "Name": "TileData" },
+        "Array": true,
+        "Visibility": 0
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "0d28ae8f9a388c9ed18b5c48668c08ab", "Name": "Tilemap" },
+        "Properties": {
+            "anchor": {
+                "Type": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
+                "Properties": {
+                    "x": 0.5,
+                    "y": 0.5,
+                    "z": 0
+                }
+            },
+            "position": {
+                "Type": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" }
+            },
+            "rotation": {
+                "Type": { "Id": "dc7e11e5d517ed01fd5d084a6c9fd64d", "Name": "Quaternion" }
+            },
+            "scale": {
+                "Type": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
+                "Properties": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                }
+            },
+            "cellSize": {
+                "Type": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
+                "Properties": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 0
+                }
+            },
+            "cellGap": {
+                "Type": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" }
+            }
+        }
+    }
+}]
