@@ -14,7 +14,7 @@ namespace Unity.Tiny
                 return string.Empty;
             }
 
-            using (var stream = new FileStream(path, FileMode.Open))
+            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read))
             {
                 return ComputeHash(stream);
             }

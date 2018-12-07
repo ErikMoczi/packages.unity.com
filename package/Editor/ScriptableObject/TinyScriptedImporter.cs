@@ -16,7 +16,7 @@ namespace Unity.Tiny
             var asset = ScriptableObject.CreateInstance<T>();
             asset.hideFlags |= HideFlags.NotEditable;
 
-            using (var stream = new FileStream(ctx.assetPath, FileMode.Open))
+            using (var stream = new FileStream(ctx.assetPath, FileMode.Open, FileAccess.Read))
             {
                 asset.Objects = GetRegistryObjectIds(stream);
                 stream.Position = 0;

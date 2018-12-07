@@ -19,7 +19,7 @@ namespace Unity.Tiny.Serialization.Json
         /// <param name="output">Command stream to write to</param>
         public static void Accept(string path, Stream output)
         {
-            using (var input = new FileStream(path, FileMode.Open))
+            using (var input = new FileStream(path, FileMode.Open, FileAccess.Read))
             {
                 Accept(input, output);
             }
