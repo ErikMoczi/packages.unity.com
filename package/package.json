@@ -1,12 +1,13 @@
 {
-    "description": "Visual Effect Graph : Node-Based, GPU-Accelerated, Next-Generation Visual Effects solution", 
-    "displayName": "Visual Effects Graph", 
-    "gitHead": "fc353aa8874574ebf9de4d6d458a44c1c58e40eb", 
+    "description": "The Visual Effect Graph is a node based visual effect editor. It enables artists to author next generation visual effects simulated directly on GPU", 
+    "displayName": "Visual Effect Graph", 
+    "gitHead": "677b6ae9908f648fdee27573fb05a78c7a6cc7b4", 
     "keywords": [
         "vfx", 
         "visualeffect", 
         "graph", 
-        "effect"
+        "effect", 
+        "particles"
     ], 
     "name": "com.unity.visualeffectgraph", 
     "repoPackagePath": "com.unity.visualeffectgraph", 
@@ -15,5 +16,5 @@
         "url": "ssh://git@github.com/Unity-Technologies/ScriptableRenderLoop.git"
     }, 
     "unity": "2018.3", 
-    "version": "4.2.0-preview"
+    "version": "4.3.0-preview"
 }
