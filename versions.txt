@@ -8,3 +8,4 @@
 4.6.0-preview
 5.2.0-preview
 5.2.1-preview
+5.2.2-preview
