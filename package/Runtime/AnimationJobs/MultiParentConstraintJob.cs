@@ -1,0 +1,147 @@
+﻿using Unity.Collections;
+
+namespace UnityEngine.Animations.Rigging
+{
+    using Experimental.Animations;
+
+    public struct MultiParentConstraintJob : IAnimationJob
+    {
+        static readonly float k_Epsilon = 1e-5f;
+
+        public TransformHandle driven;
+        public TransformHandle drivenParent;
+
+        public NativeArray<TransformHandle> sources;
+        public NativeArray<AnimationJobCache.Index> sourceWeights;
+        public NativeArray<AffineTransform> sourceOffsets;
+
+        public Vector3 positionAxesMask;
+        public Vector3 rotationAxesMask;
+
+        public AnimationJobCache.Cache cache;
+
+        public void ProcessRootMotion(AnimationStream stream) { }
+
+        public void ProcessAnimation(AnimationStream stream)
+        {
+            float jobWeight = stream.GetInputWeight(0);
+            if (jobWeight > 0f)
+            {
+                float sumWeights = AnimationRuntimeUtils.Sum(cache, sourceWeights);
+                if (sumWeights < k_Epsilon)
+                    return;
+
+                float weightScale = sumWeights > 1f ? 1f / sumWeights : 1f;
+
+                Vector3 currentWPos = driven.GetPosition(stream);
+                Quaternion currentWRot = driven.GetRotation(stream);
+                var accumTx = new AffineTransform(currentWPos, currentWRot);
+                for (int i = 0; i < sources.Length; ++i)
+                {
+                    var normalizedWeight = cache.GetFloat(sourceWeights[i]) * weightScale;
+                    if (normalizedWeight < k_Epsilon)
+                        continue;
+
+                    var sourceTx = new AffineTransform(sources[i].GetPosition(stream), sources[i].GetRotation(stream));
+                    sourceTx *= sourceOffsets[i];
+ 
+                    accumTx.rotation = Quaternion.Lerp(accumTx.rotation, sourceTx.rotation, normalizedWeight);
+                    accumTx.translation += (sourceTx.translation - currentWPos) * normalizedWeight;
+                }
+
+                // Convert accumTx to local space
+                if (drivenParent.IsValid(stream))
+                {
+                    var parentTx = new AffineTransform(drivenParent.GetPosition(stream), drivenParent.GetRotation(stream));
+                    accumTx = parentTx.InverseMul(accumTx);
+                }
+
+                Vector3 currentLPos = driven.GetLocalPosition(stream);
+                Quaternion currentLRot = driven.GetLocalRotation(stream);
+                if (Vector3.Dot(positionAxesMask, positionAxesMask) < 3f)
+                    accumTx.translation = AnimationRuntimeUtils.Lerp(currentLPos, accumTx.translation, positionAxesMask);
+                if (Vector3.Dot(rotationAxesMask, rotationAxesMask) < 3f)
+                    accumTx.rotation = Quaternion.Euler(AnimationRuntimeUtils.Lerp(currentLRot.eulerAngles, accumTx.rotation.eulerAngles, rotationAxesMask));
+
+                driven.SetLocalPosition(stream, Vector3.Lerp(currentLPos, accumTx.translation, jobWeight));
+                driven.SetLocalRotation(stream, Quaternion.Lerp(currentLRot, accumTx.rotation, jobWeight));
+            }
+        }
+    }
+
+    public interface IMultiParentConstraintData
+    {
+        Transform constrainedObject { get; }
+        Transform[] sourceObjects { get; }
+        float[] sourceWeights { get; }
+        bool maintainOffset { get; }
+
+        bool constrainedPositionXAxis { get; }
+        bool constrainedPositionYAxis { get; }
+        bool constrainedPositionZAxis { get; }
+        bool constrainedRotationXAxis { get; }
+        bool constrainedRotationYAxis { get; }
+        bool constrainedRotationZAxis { get; }
+    }
+
+    public class MultiParentConstraintJobBinder<T> : AnimationJobBinder<MultiParentConstraintJob, T>
+        where T : IAnimationJobData, IMultiParentConstraintData
+    {
+        public override MultiParentConstraintJob Create(Animator animator, T data)
+        {
+            var job = new MultiParentConstraintJob();
+            var cacheBuilder = new AnimationJobCache.CacheBuilder();
+
+            job.driven = TransformHandle.Bind(animator, data.constrainedObject);
+            job.drivenParent = TransformHandle.Bind(animator, data.constrainedObject.parent);
+
+            var src = data.sourceObjects;
+            var srcWeights = data.sourceWeights;
+            job.sources = new NativeArray<TransformHandle>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            job.sourceWeights = new NativeArray<AnimationJobCache.Index>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            job.sourceOffsets = new NativeArray<AffineTransform>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+
+            var drivenTx = new AffineTransform(data.constrainedObject.position, data.constrainedObject.rotation);
+            for (int i = 0; i < src.Length; ++i)
+            {
+                job.sources[i] = TransformHandle.Bind(animator, src[i]);
+                job.sourceWeights[i] = cacheBuilder.Add(srcWeights[i]);
+
+                if (data.maintainOffset)
+                {
+                    var srcTx = new AffineTransform(src[i].position, src[i].rotation);
+                    job.sourceOffsets[i] = srcTx.InverseMul(drivenTx);
+                }
+                else
+                    job.sourceOffsets[i] = AffineTransform.identity;
+            }
+
+            job.positionAxesMask = new Vector3(
+                System.Convert.ToSingle(data.constrainedPositionXAxis),
+                System.Convert.ToSingle(data.constrainedPositionYAxis),
+                System.Convert.ToSingle(data.constrainedPositionZAxis)
+                );
+            job.rotationAxesMask = new Vector3(
+                System.Convert.ToSingle(data.constrainedRotationXAxis),
+                System.Convert.ToSingle(data.constrainedRotationYAxis),
+                System.Convert.ToSingle(data.constrainedRotationZAxis)
+                );
+            job.cache = cacheBuilder.Create();
+
+            return job;
+        }
+
+        public override void Destroy(MultiParentConstraintJob job)
+        {
+            job.sources.Dispose();
+            job.sourceWeights.Dispose();
+            job.sourceOffsets.Dispose();
+            job.cache.Dispose();
+        }
+
+        public override void Update(T data, MultiParentConstraintJob job)
+        {
+            job.cache.SetArray(job.sourceWeights.ToArray(), data.sourceWeights);
+        }
+    }
+}

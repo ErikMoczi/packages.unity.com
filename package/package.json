@@ -1,0 +1,20 @@
+{
+  "name": "com.unity.animation.rigging",
+  "displayName": "Animation Rigging",
+  "version": "0.1.0-preview",
+  "unity": "2019.1",
+  "description": "Animation Rigging Constraints using Animation C# Jobs",
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/animation/com.unity.animation.rigging.git",
+    "revision": "b73eade6993bf7c68eb591cc0227f7107d2f7d35"
+  },
+  "samples": [
+    {
+      "displayName": "Example Sample",
+      "description": "Replace this string with your own description of the sample. Delete the Samples folder if not needed.",
+      "path": "Samples~/Example"
+    }
+  ]
+}
