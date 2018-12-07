@@ -1,0 +1,18 @@
+{
+    "description": "Visual Effect Graph : Node-Based, GPU-Accelerated, Next-Generation Visual Effects solution", 
+    "displayName": "Visual Effects Graph", 
+    "gitHead": "9714971d2eefc5ed9a0a7435f2a0591f66da30d7", 
+    "keywords": [
+        "vfx", 
+        "visualeffect", 
+        "graph", 
+        "effect"
+    ], 
+    "name": "com.unity.visualeffectgraph", 
+    "repoPackagePath": "com.unity.visualeffectgraph", 
+    "repository": {
+        "type": "git", 
+        "url": "ssh://git@github.com/Unity-Technologies/ScriptableRenderLoop.git"
+    }, 
+    "version": "0.1.0"
+}
