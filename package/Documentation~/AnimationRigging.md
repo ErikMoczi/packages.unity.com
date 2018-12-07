@@ -11,10 +11,10 @@ World interaction rigs (IK, Aim, etc.) for interactive adjustments, targeting, a
 
 # Workflow
 
-The following sections present required components and steps to take in order to define an Animation Rig. This [**video**](https://www.youtube.com/watch?v=zlsvO04_Kyo&feature=youtu.be) also demonstrates package component usage to create a custom Animation Rig.
+The following sections present required components and steps to take in order to define an Animation Rig. This [**video**](https://youtu.be/gTPdInHbJkM) also demonstrates package component usage to create a custom Animation Rig.
 
 <figure class="video_container">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/zlsvO04_Kyo" frameborder="0" allowfullscreen></iframe>
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/gTPdInHbJkM" frameborder="0" allowfullscreen></iframe>
 </figure>
 
 ### Rig Builder Component
@@ -95,17 +95,17 @@ a **Two Bone IK Constraint** component which is at the same time the parent of b
 
 The Animation Rigging package contains a few predefined constraints that you can use to define your rigs.
 
-- [Blend Constraint](./constraints/BlendConstraint)
-- [Chain IK Constraint](./constraints/ChainIKConstraint)
-- [Damped Transform](./constraints/DampedTransform)
-- [Multi-Aim Constraint](./constraints/MultiAimConstraint)
-- [Multi-Parent Constraint](./constraints/MultiParentConstraint)
-- [Multi-Position Constraint](./constraints/MultiPositionConstraint)
-- [Multi-Referential Constraint](./constraints/MultiReferentialConstraint)
-- [Multi-Rotation Constraint](./constraints/MultiRotationConstraint)
-- [Override Transform](./constraints/OverrideTransform)
-- [Twist Correction](./constraints/TwistCorrection)
-- [Two Bone IK Constraint](./constraints/TwoBoneIKConstraint)
+- [Blend Constraint](./constraints/BlendConstraint.md)
+- [Chain IK Constraint](./constraints/ChainIKConstraint.md)
+- [Damped Transform](./constraints/DampedTransform.md)
+- [Multi-Aim Constraint](./constraints/MultiAimConstraint.md)
+- [Multi-Parent Constraint](./constraints/MultiParentConstraint.md)
+- [Multi-Position Constraint](./constraints/MultiPositionConstraint.md)
+- [Multi-Referential Constraint](./constraints/MultiReferentialConstraint.md)
+- [Multi-Rotation Constraint](./constraints/MultiRotationConstraint.md)
+- [Override Transform](./constraints/OverrideTransform.md)
+- [Twist Correction](./constraints/TwistCorrection.md)
+- [Two Bone IK Constraint](./constraints/TwoBoneIKConstraint.md)
 
 ## Scene Synchronisation to the Animation Stream
 
@@ -121,7 +121,7 @@ Note however that if animation was present for these transforms and the sync ope
 
 This version of Animation Rigging is compatible with the following versions of the Unity Editor:
 
-* 2019.1 and later
+* 2019.1 and later with .Net 4.x scripting runtime
 
 ## Known limitations
 

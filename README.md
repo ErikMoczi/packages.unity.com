@@ -1,1 +1,1 @@
-Animation Rigging using Animation C# Jobs and Playables
+Animation Rigging toolkit using Unity's Animation C# Jobs

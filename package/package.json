@@ -1,20 +1,26 @@
 {
   "name": "com.unity.animation.rigging",
   "displayName": "Animation Rigging",
-  "version": "0.1.1-preview",
+  "version": "0.1.2-preview",
   "unity": "2019.1",
-  "description": "Animation Rigging using Animation C# Jobs and Playables",
+  "description": "Animation Rigging toolkit using Unity's Animation C# Jobs",
+  "keywords": [
+    "Animation",
+    "Rigging",
+    "Constraints"
+  ],
+  "category": "Animation",
   "dependencies": {},
   "repository": {
     "type": "git",
     "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/animation/com.unity.animation.rigging.git",
-    "revision": "4ed515e24c32222a61b633cef97e4b0fad7e3e75"
+    "revision": "d3655604a32bf33fd9e60ac9203e3069a1fbbe69"
   },
   "samples": [
     {
-      "displayName": "Example Sample",
-      "description": "Replace this string with your own description of the sample. Delete the Samples folder if not needed.",
-      "path": "Samples~/Example"
+      "displayName": "Animation Rigging Constraint Examples",
+      "description": "Import AnimationRiggingExamples.unitypackage to see basic setup and usage of animation rigging constraints.",
+      "path": "Samples~/ConstraintExamples"
     }
   ]
 }

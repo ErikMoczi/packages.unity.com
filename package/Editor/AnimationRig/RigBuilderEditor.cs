@@ -16,6 +16,8 @@ namespace UnityEditor.Animations.Rigging
         {
             m_Rigs = serializedObject.FindProperty("m_RigLayers");
             m_ReorderableList = ReorderableListHelper.Create(serializedObject, m_Rigs, true, true);
+            if (m_ReorderableList.count == 0)
+                ((RigBuilder)serializedObject.targetObject).layers.Add(new RigBuilder.RigLayer(null));
 
             m_ReorderableList.drawHeaderCallback = (Rect rect) => EditorGUI.LabelField(rect, k_RigLabel);
 

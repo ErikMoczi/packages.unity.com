@@ -2,8 +2,16 @@
 All notable changes to this package will be documented in this file.
 
 <!--
-## [0.1.2] - 2018-12-XX
+## [0.1.3] - 2018-12-XX
+### Patch Update of *Unity Package Animation Rigging*.
 -->
+
+## [0.1.2] - 2018-11-29
+
+### Patch Update of *Unity Package Animation Rigging*.
+- Added constraint examples to Sample folder (Samples/ConstraintExamples/AnimationRiggingExamples.unitypackage)
+- Fixed links in documentation
+- Updated package description
 
 ## [0.1.1] - 2018-11-26
 

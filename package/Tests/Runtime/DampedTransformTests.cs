@@ -90,9 +90,9 @@ class DampedTransformTests
         var data = SetupConstraintRig();
         var constraint = data.constraint;
 
-        // no damping...
-        constraint.data.dampPosition = 1f;
-        constraint.data.dampRotation = 0f;
+        // no position damping, full rotation damp
+        constraint.data.dampPosition = 0f;
+        constraint.data.dampRotation = 1f;
 
         data.constraint.weight = 0f;
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
