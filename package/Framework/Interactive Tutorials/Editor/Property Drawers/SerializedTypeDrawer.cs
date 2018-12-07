@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -39,10 +40,19 @@ namespace Unity.InteractiveTutorials
                 var allowedTypes = new HashSet<Type>();
                 foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
                 {
-                    foreach (var type in assembly.GetTypes())
+                    if (assembly == null)
+                        continue;
+
+                    try
                     {
-                        if (baseType.IsAssignableFrom(type))
-                            allowedTypes.Add(type);
+                        foreach (var type in assembly.GetTypes())
+                        {
+                            if (baseType.IsAssignableFrom(type))
+                                allowedTypes.Add(type);
+                        }
+                    }
+                    catch (ReflectionTypeLoadException)
+                    {
                     }
                 }
 
