@@ -16,3 +16,4 @@
 0.0.16-preview
 0.0.17-preview
 0.0.18-preview
+0.0.19-preview
