@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.2.0-preview.9] 2018-11-27
+* Fixed some issues with boot time and general setting.
+
 ## [0.2.0-preview.8] 2018-10-29
 * Fix an API breaking change to UnifiedSettings api
 * Fix a NRE in XRGeneralSettings if the user has set an XRManager Component on a scene game object and didn't setup general settings.

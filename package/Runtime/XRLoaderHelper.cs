@@ -96,7 +96,7 @@ namespace UnityEngine.XR.Management
             {
                 foreach (var descriptor in descriptors)
                 {
-                    if (descriptor.id == id)
+                    if (String.Compare(descriptor.id, id, true) == 0)
                     {
                         IntegratedSubsystem s = descriptor.Create();
                         if (s != null)

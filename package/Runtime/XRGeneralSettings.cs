@@ -184,6 +184,8 @@ namespace UnityEngine.XR.Management
                 return;
             }
 
+            m_XRManager.automaticLoading = false;
+            m_XRManager.automaticRunning = false;
             m_XRManager.InitializeLoaderSync();
         }
 
