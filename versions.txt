@@ -4,3 +4,4 @@
 4.4.0-preview
 4.4.1-preview
 4.4.1-preview.1
+4.5.0-preview
