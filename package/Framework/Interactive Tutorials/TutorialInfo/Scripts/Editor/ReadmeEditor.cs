@@ -111,7 +111,7 @@ public class ReadmeEditor : Editor {
 	        {
 	            if (Button(new GUIContent(section.buttonText)))
 	            {
-	                section.ReloadTutorial();
+	                section.StartTutorial();
 	            }
 	        }
 

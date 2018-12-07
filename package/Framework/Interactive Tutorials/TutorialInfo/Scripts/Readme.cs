@@ -43,9 +43,9 @@ public class Readme : ScriptableObject
         [SerializeField]
         Tutorial tutorial = null;
 
-        public void ReloadTutorial()
+        public void StartTutorial()
         {
-            tutorial.ReloadTutorial();
+            TutorialManager.instance.StartTutorial(tutorial);
         }
     }
 

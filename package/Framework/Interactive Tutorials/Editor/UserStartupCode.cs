@@ -10,15 +10,10 @@ namespace Unity.InteractiveTutorials
     {
         internal static void RunStartupCode()
         {
-            if (TutorialProjectSettings.instance.startupTutorial != null)
-            {
-                TutorialWindow.SaveOriginalWindowLayout();
+            TutorialManager.WriteAssetsToTutorialDefaultsFolder();
 
-                // Put you init code here
-                // It will only be executed for the end user
-                var w = TutorialWindow.CreateWindow();
-                w.ResetTutorialAndWriteDefaults();
-            }
+            if (TutorialProjectSettings.instance.startupTutorial != null)
+                TutorialManager.instance.StartTutorial(TutorialProjectSettings.instance.startupTutorial);
 
             // Ensure Editor is in predictable state
             EditorPrefs.SetString("ComponentSearchString", string.Empty);

@@ -142,7 +142,7 @@ namespace Unity.InteractiveTutorials
                 case ParagraphType.SwitchTutorial:
                     if (GUILayout.Button(paragraph.m_TutorialButtonText, new GUILayoutOption[] { GUILayout.ExpandWidth(false), GUILayout.MinWidth(250) }))
                     {
-                        paragraph.m_Tutorial.ReloadTutorial();
+                        TutorialManager.instance.StartTutorial(paragraph.m_Tutorial);
                     }
                     break;
                 case ParagraphType.OrderedList:

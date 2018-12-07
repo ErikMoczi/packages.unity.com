@@ -1,8 +1,8 @@
 {
   "name": "com.unity.learn.iet-framework",
-  "displayName": "Framework for In-Editor Tutorials",
-  "version": "0.1.3",
-  "unity": "2018.2",
+  "displayName": "Interactive Tutorial Core",
+  "version": "0.1.4-preview",
+  "unity": "2018.3",
   "description": "This package is mandatory for all In-Editor Tutorials.",
   "keywords": [
     "tutorials"
@@ -11,6 +11,6 @@
   "repository": {
     "type": "git",
     "url": "git@github.com:UnityTech/iet-package.git",
-    "revision": "5618eb91bf80761ccb82bc55290d7be620a8dceb"
+    "revision": "ee4362ed1161ff91d99a78a4cd6b93e060d4026b"
   }
 }

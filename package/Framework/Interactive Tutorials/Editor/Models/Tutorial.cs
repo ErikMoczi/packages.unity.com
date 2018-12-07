@@ -25,43 +25,6 @@ namespace Unity.InteractiveTutorials
             }
         }
 
-        static void DirectoryCopy(string sourceDirectory, string destinationDirectory, HashSet<string> dirtyMetaFiles)
-        {
-            // Get the subdirectories for the specified directory.
-            DirectoryInfo dir = new DirectoryInfo(sourceDirectory);
-
-            // Abort if source directory doesn't exist
-            if (!dir.Exists)
-                return;
-
-            DirectoryInfo[] dirs = dir.GetDirectories();
-            // If the destination directory doesn't exist, create it.
-            if (!Directory.Exists(destinationDirectory))
-            {
-                Directory.CreateDirectory(destinationDirectory);
-            }
-
-            // Get the files in the directory and copy them to the new location.
-            FileInfo[] files = dir.GetFiles();
-            foreach (FileInfo file in files)
-            {
-                string tempPath = Path.Combine(destinationDirectory, file.Name);
-                if (dirtyMetaFiles != null && string.Equals(Path.GetExtension(tempPath), ".meta", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (!File.Exists(tempPath) || !File.ReadAllBytes(tempPath).SequenceEqual(File.ReadAllBytes(file.FullName)))
-                        dirtyMetaFiles.Add(tempPath);
-                }
-                file.CopyTo(tempPath, true);
-            }
-
-            // copy sub directories and their contents to new location.
-            foreach (DirectoryInfo subdir in dirs)
-            {
-                string tempPath = Path.Combine(destinationDirectory, subdir.Name);
-                DirectoryCopy(subdir.FullName, tempPath, dirtyMetaFiles);
-            }
-        }
-
         public static event Action<Tutorial> tutorialPagesChanged;
 
         public string windowTitle { get { return m_WindowTitle; } }
@@ -235,7 +198,7 @@ namespace Unity.InteractiveTutorials
                 tutorialPagesChanged(this);
         }
 
-        private void LoadScene()
+        void LoadScene()
         {
             // load scene
             if (m_Scene != null)
@@ -251,62 +214,16 @@ namespace Unity.InteractiveTutorials
                 OnPageInitiated(currentPage, m_CurrentPageIndex);
         }
 
-        const string k_DefaultsFolder = "Tutorial Defaults";
-
-        void LoadTutorialDefaultsIntoAssetsFolder()
-        {
-            if (!TutorialProjectSettings.instance.restoreDefaultAssetsOnTutorialReload)
-                return;
-
-            AssetDatabase.SaveAssets();
-            string defaultsPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, k_DefaultsFolder);
-            var dirtyMetaFiles = new HashSet<string>();
-            DirectoryCopy(defaultsPath, Application.dataPath, dirtyMetaFiles);
-            AssetDatabase.Refresh();
-            int startIndex = Application.dataPath.Length - "Assets".Length;
-            foreach (var dirtyMetaFile in dirtyMetaFiles)
-                AssetDatabase.ImportAsset(Path.ChangeExtension(dirtyMetaFile.Substring(startIndex), null));
-        }
-
-        public void WriteAssetsToTutorialDefaultsFolder()
-        {
-            if (!TutorialProjectSettings.instance.restoreDefaultAssetsOnTutorialReload)
-                return;
-
-            string defaultsPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, k_DefaultsFolder);
-            DirectoryInfo defaultsDirectory = new DirectoryInfo(defaultsPath);
-            if (defaultsDirectory.Exists)
-            {
-                foreach (var file in defaultsDirectory.GetFiles())
-                    file.Delete();
-                foreach (var directory in defaultsDirectory.GetDirectories())
-                    directory.Delete(true);
-            }
-            DirectoryCopy(Application.dataPath, defaultsPath, null);
-        }
-
-        void LoadWindowLayout()
+        internal void LoadWindowLayout()
         {
             if (m_WindowLayout == null)
                 return;
 
             var layoutPath = AssetDatabase.GetAssetPath(m_WindowLayout);
-            TutorialWindow.LoadWindowLayoutAndSetUpTutorial(layoutPath, this);
+            EditorUtility.LoadWindowLayout(layoutPath);
         }
 
-        public void ReloadTutorial()
-        {
-            TutorialWindow.SaveOriginalWindowLayout();
-
-            LoadWindowLayout();
-            ResetProgress();
-
-            // Do not overwrite workspace in authoring mode, use version control instead.
-            if (!ProjectMode.IsAuthoringMode())
-                LoadTutorialDefaultsIntoAssetsFolder();
-        }
-
-        public void ResetProgress()
+        internal void ResetProgress()
         {
             foreach (var page in m_Pages)
             {

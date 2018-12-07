@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
+
 using UnityObject = UnityEngine.Object;
 
 namespace Unity.InteractiveTutorials
@@ -87,8 +87,6 @@ namespace Unity.InteractiveTutorials
 
         [SerializeField]
         private bool m_PlayModeChanging;
-
-        public const string k_OriginalLayoutPath = "Temp/OriginalLayout.dwlt";
 
         VideoPlaybackManager m_VideoPlaybackManager = new VideoPlaybackManager();
         public VideoPlaybackManager videoPlaybackManager { get { return m_VideoPlaybackManager; } }
@@ -185,6 +183,14 @@ namespace Unity.InteractiveTutorials
             ApplyMaskingSettings(false);
         }
 
+        void OnDestroy()
+        {
+            EditorApplication.delayCall += () =>
+            {
+                TutorialManager.instance.TutorialWindowDestroyed();
+            };
+        }
+
         void SkipTutorial()
         {
             switch (m_CurrentTutorial.skipTutorialBehavior)
@@ -202,32 +208,8 @@ namespace Unity.InteractiveTutorials
             }
         }
 
-        public static void SaveOriginalWindowLayout()
-        {
-            if (Resources.FindObjectsOfTypeAll<TutorialWindow>().Length == 0)
-            {
-                // Save current layout so we can restore it later
-                WindowLayoutProxy.SaveWindowLayout(TutorialWindow.k_OriginalLayoutPath);
-            }
-        }
-
-        static void RestoreOriginalWindowLayout()
-        {
-            // Restore original layout if it exists
-            if (File.Exists(k_OriginalLayoutPath))
-            {
-                EditorUtility.LoadWindowLayout(k_OriginalLayoutPath);
-                File.Delete(k_OriginalLayoutPath);
-            }
-        }
-
         void ExitTutorial(bool completed)
         {
-            RestoreOriginalWindowLayout();
-
-            if (m_CurrentTutorial.assetSelectedOnExit != null)
-                Selection.activeObject = m_CurrentTutorial.assetSelectedOnExit;
-
             switch (m_CurrentTutorial.exitBehavior)
             {
                 case Tutorial.ExitBehavior.ShowHomeWindow:
@@ -238,7 +220,9 @@ namespace Unity.InteractiveTutorials
                         HomeWindowProxy.ShowTutorials();
                         GUIUtility.ExitGUI();
                     }
-                    break;
+
+                    // Return to avoid selecting asset on exit
+                    return;
 
                 case Tutorial.ExitBehavior.CloseWindow:
                     Close();
@@ -247,6 +231,9 @@ namespace Unity.InteractiveTutorials
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+
+            if (m_CurrentTutorial.assetSelectedOnExit != null)
+                Selection.activeObject = m_CurrentTutorial.assetSelectedOnExit;
         }
 
         private void OnTutorialInitiated()
@@ -332,7 +319,7 @@ namespace Unity.InteractiveTutorials
             if (!string.IsNullOrEmpty(assetPath))
             {
                 assetPath = string.Format("Assets{0}", assetPath.Substring(Application.dataPath.Length));
-                SetTutorial(AssetDatabase.LoadAssetAtPath<Tutorial>(assetPath));
+                TutorialManager.instance.StartTutorial(AssetDatabase.LoadAssetAtPath<Tutorial>(assetPath));
                 GUIUtility.ExitGUI();
             }
         }
@@ -386,7 +373,7 @@ namespace Unity.InteractiveTutorials
             if (m_CurrentTutorial != null)
             {
                 if (reload)
-                    m_CurrentTutorial.ReloadTutorial();
+                    m_CurrentTutorial.ResetProgress();
                 m_AllParagraphs.Clear();
                 m_Paragraphs.Clear();
             }
@@ -801,28 +788,8 @@ namespace Unity.InteractiveTutorials
             else if (!EditorApplication.isPlaying)
             {
                 m_FarthestPageCompleted = -1;
-                if (m_CurrentTutorial != null)
-                    m_CurrentTutorial.ReloadTutorial();
+                TutorialManager.instance.ResetTutorial();
             }
-        }
-
-        public void ResetTutorialAndWriteDefaults()
-        {
-            if (EditorApplication.isPlaying)
-            {
-                Debug.LogError("Defaults cannot be written during play mode");
-                return;
-            }
-
-            ResetTutorial();
-            m_CurrentTutorial.WriteAssetsToTutorialDefaultsFolder();
-        }
-
-        static public void LoadWindowLayoutAndSetUpTutorial(string layoutPath, Tutorial tutorial)
-        {
-            EditorUtility.LoadWindowLayout(layoutPath);
-            var tutorialWindow = EditorWindow.GetWindow<TutorialWindow>();
-            tutorialWindow.SetTutorial(tutorial, reload: false);
         }
     }
 }
