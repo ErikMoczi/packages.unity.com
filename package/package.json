@@ -1,7 +1,7 @@
 {
   "name": "com.unity.learn.iet-framework",
   "displayName": "Framework for In-Editor Tutorials",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "unity": "2018.2",
   "description": "This package is mandatory for all In-Editor Tutorials.",
   "keywords": [
@@ -11,6 +11,6 @@
   "repository": {
     "type": "git",
     "url": "git@github.com:UnityTech/iet-package.git",
-    "revision": "46a942a7044846bac1bf6f790186c854ce98a21e"
+    "revision": "04c808e4c100f7f713178437016b1145f5ef908a"
   }
 }

@@ -14,7 +14,7 @@ namespace Unity.InteractiveTutorials.Tests
         [Test]
         public void TestGetViewsAndRects_ThrowsArgumentException_WhenTryingToGetRectsFromTwoEditorWindowsInTheSameDockArea()
         {
-            EditorUtility.LoadWindowLayout("Assets/Framework/Interactive Tutorials Internal/Tests/Editor/UnmaskedViewTestLayout.dwlt");
+            EditorUtility.LoadWindowLayout("Packages/com.unity.learn.iet-framework/Framework/Interactive Tutorials Internal/Tests/Editor/UnmaskedViewTestLayout.dwlt");
 
             // these two windows are docked together in the test layout
             var unmaskedViews = new[] {

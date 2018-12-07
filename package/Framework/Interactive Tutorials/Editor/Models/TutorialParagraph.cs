@@ -11,6 +11,7 @@ namespace Unity.InteractiveTutorials
     {
         Narrative,
         Instruction,
+        SwitchTutorial,
         UnorderedList,
         OrderedList,
         Icons,
@@ -38,6 +39,11 @@ namespace Unity.InteractiveTutorials
         public string text { get { return m_Text; } set { m_Text = value; } }
         [SerializeField, TextArea(1, 5)]
         string m_Text = "";
+
+        [SerializeField]
+        internal string m_TutorialButtonText = "";
+        [SerializeField]
+        internal Tutorial m_Tutorial;
 
         public IEnumerable<InlineIcon> icons
         {

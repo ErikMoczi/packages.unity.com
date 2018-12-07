@@ -14,8 +14,8 @@ namespace Unity.InteractiveTutorials
 {
     public static class TutorialExporter
     {
-        const string k_FrameworkPath = "Assets/Framework/Interactive Tutorials";
-        const string k_FrameworkInternalPath = "Assets/Framework/Interactive Tutorials Internal";
+        const string k_FrameworkPath = "Packages/com.unity.learn.iet-framework/Framework/Interactive Tutorials";
+        const string k_FrameworkInternalPath = "Packages/com.unity.learn.iet-framework/Framework/Interactive Tutorials Internal";
         const string k_AssemblyName = "UnityEditor.InteractiveTutorialsFramework.dll";
 
         internal static string assemblyName { get { return k_AssemblyName; } }

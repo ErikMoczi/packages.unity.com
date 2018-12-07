@@ -92,6 +92,21 @@ namespace Unity.InteractiveTutorials.Tests
         }
 
         [UnityTest]
+        public IEnumerator PropertyCannotBeFound_DoesNotThrow()
+        {
+            m_GameObject.transform.position = Vector3.zero;
+            m_Criterion.target.Update(m_GameObject);
+            m_Criterion.propertyPath = "wrongProperty";
+            m_Criterion.targetValueMode = PropertyModificationCriterion.TargetValueMode.DifferentThanInitial;
+            m_Criterion.StopTesting();
+            Assert.DoesNotThrow(() => m_Criterion.StartTesting());
+
+
+            yield return null;
+
+        }
+
+        [UnityTest]
         public IEnumerator WhenTargetPropertyIsModified_IsCompleted()
         {
             m_GameObject.transform.position = Vector3.zero;

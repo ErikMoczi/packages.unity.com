@@ -139,6 +139,12 @@ namespace Unity.InteractiveTutorials
                     GUILayout.Label(paragraph.text, AllTutorialStyles.narrativeStyle);
                     EditorGUILayout.EndHorizontal();
                     break;
+                case ParagraphType.SwitchTutorial:
+                    if (GUILayout.Button(paragraph.m_TutorialButtonText, new GUILayoutOption[] { GUILayout.ExpandWidth(false), GUILayout.MinWidth(250) }))
+                    {
+                        paragraph.m_Tutorial.ReloadTutorial();
+                    }
+                    break;
                 case ParagraphType.OrderedList:
                     EditorGUILayout.BeginVertical(AllTutorialStyles.listBGStyle, GUILayout.ExpandWidth(true));
                     string[] listItems = paragraph.text.Split('\n');

@@ -96,8 +96,21 @@ namespace Unity.InteractiveTutorials
                 // Ensure future prefab parent is infact a prefab parent
                 if (PrefabUtility.GetPrefabAssetType(prefabParent) != PrefabAssetType.NotAPrefab)
                 {
-                    // Ensure prefab parent and future prefab parent have the same prefab object
-                    if (prefabParent == m_PrefabParent)
+                    // Find root game object of future prefab parent
+                    GameObject futurePrefabParentRoot = null;
+                    if (prefabParent is GameObject)
+                    {
+                        var gameObject = (GameObject)prefabParent;
+                        futurePrefabParentRoot = gameObject.transform.root.gameObject;
+                    }
+                    else if (prefabParent is Component)
+                    {
+                        var component = (Component)prefabParent;
+                        futurePrefabParentRoot = component.transform.root.gameObject;
+                    }
+
+                    // Ensure prefab parent and future prefab parent belong to the same prefab
+                    if (futurePrefabParentRoot == m_PrefabParent)
                     {
                         // Create new future reference if it doesn't exist yet
                         if (futurePrefabInstance.futureReference == null)

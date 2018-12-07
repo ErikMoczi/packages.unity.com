@@ -16,6 +16,7 @@ namespace Unity.InteractiveTutorials
             sectionTitleLabel = GUI.skin.FindStyle(s_SectionTitleLabelStyle);
             theInBetweenText = GUI.skin.FindStyle(s_TheInBetweenTextStyle);
             narrativeStyle = GUI.skin.FindStyle(s_Narrative);
+            switchTutorialStyle = GUI.skin.FindStyle(s_SwitchTutorialStyleName);
             imageStyle = GUI.skin.FindStyle(s_ImageStyle);
             videoStyle = GUI.skin.FindStyle(s_VideoStyle);
 
@@ -47,6 +48,7 @@ namespace Unity.InteractiveTutorials
 
         private static readonly string s_InstructionLabelStyleName = "Instruction Label";
         private static readonly string s_Narrative = "NarrativeStyle";
+        private static readonly string s_SwitchTutorialStyleName = "SwitchTutorialStyle";
         private static readonly string s_ImageStyle = "ImageStyle";
         private static readonly string s_VideoStyle = "VideoStyle";
         private static readonly string s_HeaderStyleName = "Header";
@@ -84,6 +86,7 @@ namespace Unity.InteractiveTutorials
 
 
         public static GUIStyle narrativeStyle;
+        public static GUIStyle switchTutorialStyle;
         public static GUIStyle imageStyle;
         public static GUIStyle videoStyle;
         public static GUIStyle theInBetweenText;

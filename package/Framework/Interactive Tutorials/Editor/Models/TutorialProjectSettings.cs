@@ -66,5 +66,19 @@ namespace Unity.InteractiveTutorials
                 return m_StartupTutorial;
             }
         }
+
+        [SerializeField]
+        TutorialStyles m_TutorialStyle;
+        public TutorialStyles TutorialStyle
+        {
+            get
+            {
+                if(!m_TutorialStyle)
+                {
+                    m_TutorialStyle = AssetDatabase.LoadAssetAtPath<TutorialStyles>("Packages/com.unity.learn.iet-framework/Framework/Interactive Tutorials/GUI/Tutorial Styles.asset");
+                }
+                return m_TutorialStyle;
+            }
+        }
     }
 }

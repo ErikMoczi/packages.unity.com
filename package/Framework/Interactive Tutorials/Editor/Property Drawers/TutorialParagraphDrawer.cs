@@ -12,6 +12,8 @@ namespace Unity.InteractiveTutorials
         const string k_CriteriaPath = "m_Criteria";
         const string k_SummaryPath = "m_Summary";
         const string k_CompletionPath = "m_CriteriaCompletion";
+        const string k_TutorialPath = "m_Tutorial";
+        const string k_TutorialButtonTextPath = "m_TutorialButtonText";
         const string k_ImagePath = "m_Image";
         const string k_VideoPath = "m_Video";
 
@@ -23,11 +25,16 @@ namespace Unity.InteractiveTutorials
             switch (childProperty.name)
             {
                 case k_TextPath:
-                    if (type == ParagraphType.Icons || type == ParagraphType.Image || type == ParagraphType.Video)
+                    if (type == ParagraphType.Icons || type == ParagraphType.SwitchTutorial || type == ParagraphType.Image || type == ParagraphType.Video)
                         return;
                     break;
                 case k_IconsPath:
                     if (type != ParagraphType.Icons)
+                        return;
+                    break;
+                case k_TutorialButtonTextPath:
+                case k_TutorialPath:
+                    if (type != ParagraphType.SwitchTutorial)
                         return;
                     break;
                 case k_CriteriaPath:

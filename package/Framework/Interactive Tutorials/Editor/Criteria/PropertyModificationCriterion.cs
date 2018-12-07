@@ -73,7 +73,11 @@ namespace Unity.InteractiveTutorials
             {
                 var so = new SerializedObject(target);
                 var sp = so.FindProperty(propertyPath);
-                m_InitialValue = GetPropertyValueAsString(sp);
+
+                if (sp == null)
+                    Debug.LogWarningFormat("PropertyModificationCriterion: Cannot find property \"{0}\" on \"{1}\"", propertyPath, target);
+                else
+                    m_InitialValue = GetPropertyValueAsString(sp);
             }
 
             Undo.postprocessModifications += PostprocessModifications;

@@ -74,8 +74,11 @@ namespace Unity.InteractiveTutorials
         [SerializeField]
         private bool m_MaskingEnabled = true;
 
-        [SerializeField]
-        private TutorialStyles m_Styles = null;
+        TutorialStyles styles
+        {
+            get { return TutorialProjectSettings.instance.TutorialStyle; }
+        }
+
         [SerializeField]
         private Vector2 m_ScrollPosition;
 
@@ -278,7 +281,7 @@ namespace Unity.InteractiveTutorials
                 {
                     if (paragraph.type == ParagraphType.Instruction)
                         ++instructionIndex;
-                    m_AllParagraphs.Add(new TutorialParagraphView(paragraph, window, m_Styles.orderedListDelimiter, m_Styles.unorderedListBullet, instructionIndex));
+                    m_AllParagraphs.Add(new TutorialParagraphView(paragraph, window, styles.orderedListDelimiter, styles.unorderedListBullet, instructionIndex));
                 }
             }
         }
@@ -428,12 +431,12 @@ namespace Unity.InteractiveTutorials
             GUI.color = Color.white;
 
             GUISkin oldSkin = GUI.skin;
-            GUI.skin = m_Styles.skin;
+            GUI.skin = styles.skin;
 
             if (m_AuthoringMode)
                 ToolbarGUI();
 
-            if (m_Styles == null)
+            if (styles == null)
             {
                 TutorialStyles.DisplayErrorMessage("TutorialWindow.cs");
                 return;
@@ -755,11 +758,11 @@ namespace Unity.InteractiveTutorials
 
                     MaskingManager.Mask(
                         unmaskedViews,
-                        m_Styles == null ? Color.magenta * new Color(1f, 1f, 1f, 0.8f) : m_Styles.maskingColor,
+                        styles == null ? Color.magenta * new Color(1f, 1f, 1f, 0.8f) : styles.maskingColor,
                         highlightedViews,
-                        m_Styles == null ? Color.cyan * new Color(1f, 1f, 1f, 0.8f) : m_Styles.highlightColor,
-                        m_Styles == null ? new Color(1,1,1, 0.5f) : m_Styles.blockedInteractionColor,
-                        m_Styles == null ? 3f : m_Styles.highlightThickness
+                        styles == null ? Color.cyan * new Color(1f, 1f, 1f, 0.8f) : styles.highlightColor,
+                        styles == null ? new Color(1,1,1, 0.5f) : styles.blockedInteractionColor,
+                        styles == null ? 3f : styles.highlightThickness
                         );
                 }
             }

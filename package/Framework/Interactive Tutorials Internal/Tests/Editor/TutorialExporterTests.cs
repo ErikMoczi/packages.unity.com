@@ -15,7 +15,7 @@ namespace Unity.InteractiveTutorials.InternalToolsTests
         [SetUp]
         public void SetUp()
         {
-            k_TempFolderGUID = AssetDatabase.CreateFolder("Assets/Framework/Interactive Tutorials Internal/Tests/Editor", "Temp");
+            k_TempFolderGUID = AssetDatabase.CreateFolder("Packages/com.unity.learn.iet-framework/Framework/Interactive Tutorials Internal/Tests/Editor", "Temp");
         }
 
         [TearDown]
