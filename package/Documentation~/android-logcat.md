@@ -33,8 +33,8 @@ Android Logcat Package is a utility for displaying log messages coming from Andr
 To install Android Logcat package, follow the instructions in the [Package Manager documentation](https://docs.unity3d.com/Packages/com.unity.package-manager-ui@latest/index.html). 
 
 You can access Android Logcat window in Unity Editor via
-- Menu **Window \> Analysis \> Android Logcat**
-- Shortcut **Alt+6**.
+- Menu: **Window \> Analysis \> Android Logcat**
+- Shortcut: **Alt+6** on Windows, **Option+6** on macOS.
 
 ![Android Logcat Window](images/android_logcat_window.png)
 
@@ -53,7 +53,7 @@ The devices connected through USB will be added to the device list automatically
 Go to the devices list and click **\<Enter IP>** as below.  
 ![Connect via Wifi](images/connect_via_wifi.png)
 
-And a window to enter an ip address will be popped up as below. Only IPv4 is supported for now.  
+And a window to enter an ip address will be popped up as below.  
 ![Enter IP](images/enter_ip_window.png)
 
 **Device Selection**  
@@ -118,4 +118,6 @@ To use this feature, you need to
 ## **Document Revision History**
 |Date|Reason|
 |---|---|
+|Nov 16, 2018|Document Updated. Matches package version 0.1.3.|
+|Oct 30, 2018|Document Updated. Matches package version 0.1.2.|
 |Oct 23, 2018|Document created. Matches package version 0.1.1.|

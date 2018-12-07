@@ -19,7 +19,11 @@ namespace Unity.Android.Logcat
         public static void Show(string imagePath)
         {
             AndroidLogcatScreenCaptureWindow win = EditorWindow.GetWindow<AndroidLogcatScreenCaptureWindow>("Device Screen Capture");
-            win.m_ImagePath = imagePath;
+            if (win.m_ImagePath != imagePath)
+            {
+                win.m_ImagePath = imagePath;
+                win.didLoad = false;
+            }
         }
 
         void OnGUI()
@@ -35,18 +39,18 @@ namespace Unity.Android.Logcat
 
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Save", GUILayout.Width(saveButtonWidth)))
+            if (GUILayout.Button("Save...", GUILayout.Width(saveButtonWidth)))
             {
                 var path = EditorUtility.SaveFilePanel("Save Screen Capture", "", Path.GetFileName(m_ImagePath), "png");
                 if (!string.IsNullOrEmpty(path))
                 {
                     try
                     {
-                        File.Copy(m_ImagePath, path);
+                        File.Copy(m_ImagePath, path, true);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        Debug.LogError($"Failed to save to '{path}'.");
+                        Debug.LogError($"Failed to save to '{path}' as '{ex.Message}'.");
                     }
                 }
             }
