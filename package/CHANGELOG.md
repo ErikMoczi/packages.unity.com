@@ -6,6 +6,10 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8] - 2018-12-11
+## Fixed
+ - Fixed build script
+
 ## [0.1.7] - 2018-12-10
 ### Fixed
 - Fixed authoring of scene object references.

@@ -7,3 +7,4 @@
 0.1.5-preview
 0.1.6-preview
 0.1.7-preview
+0.1.8-preview
