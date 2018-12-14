@@ -56,7 +56,7 @@ namespace UnityEngine.Experimental.U2D.TriangleNet
         internal int insegments;     // Number of input segments.
         internal int undeads;        // Number of input vertices that don't appear in the mesh.
         internal int mesh_dim;       // Dimension (ought to be 2).
-        internal int nextras;        // Number of attributes per vertex.
+        internal int nextras = 0;        // Number of attributes per vertex.
         //internal int eextras;        // Number of attributes per triangle.
         internal int hullsize;       // Number of edges in convex hull.
         internal int steinerleft;    // Number of Steiner points not yet used.

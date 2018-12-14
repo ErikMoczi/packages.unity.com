@@ -28,7 +28,7 @@ namespace UnityEngine.Experimental.U2D.TriangleNet
         #endregion
 
         internal int id;
-        internal int mark;
+        internal int mark = 0;
 
         internal Point generator;
 
