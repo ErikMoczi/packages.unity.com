@@ -20,3 +20,4 @@
 1.1.1-preview
 1.1.1-preview20181108-nightly
 1.2.0-preview
+1.2.1-preview

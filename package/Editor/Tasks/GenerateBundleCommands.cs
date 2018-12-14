@@ -95,6 +95,9 @@ namespace UnityEditor.Build.Pipeline.Tasks
 #if !UNITY_2019_1_OR_NEWER
         static int GetSortIndex(Type type)
         {
+            // ContentBuildInterface.GetTypeForObjects returns null for some MonoBehaviours, this will fix it until the API is fixed.
+            if (type == null)
+                return Int32.MaxValue - 3;
             if (type == typeof(MonoScript))
                 return Int32.MinValue;
             if (typeof(ScriptableObject).IsAssignableFrom(type))
