@@ -209,6 +209,9 @@ The following table summarizes the other parameters:
 | `trackableTypeMask` | The type(s) of trackable(s) to hit test against. This is a flag, so multiple types can be bitwise OR'd together, e.g., `TrackableType.PlaneWithinPolygon` &#124; `FeaturePoint` |
 | `pointCloudRaycastAngleInDegrees` | Because feature points have no volume, a cone is used when casting against feature points instead of an infinitely thin ray. This parameter controls the width of the cone. |
 
+## Face Tracking
+
+See [Face Tracking Documentation](face-tracking.md).
 
 # Technical details
 ## Requirements
@@ -227,6 +230,7 @@ AR Foundation includes the following known limitations:
 
 |Date|Reason|
 |---|---|
+|November 15, 2018|Face Tracking added.|
 |July 25, 2018|Update `ARCameraBackground` image and description following refactor.<br/>Add howto section for blitting the camera image to a render texture.|
 |July 16, 2018|Additional explanation for `ARSessionOrigin`|
 |June 14, 2018|Update `ARSessionOrigin` photos|
