@@ -1,0 +1,22 @@
+{
+  "name": "com.unity.2d.psdimporter",
+  "version": "1.0.0-preview.1",
+  "unity": "2018.3",
+  "displayName": "2D PSD Importer",
+  "description": "A ScriptedImporter for importing Adobe Photoshop file format. The ScriptedImporter is currently targeted for users who wants to create multi Sprite character animation using 2D Animation v2.",
+  "keywords": [
+    "2d",
+    "psdimporter",
+    "assetimporter"
+  ],
+  "category": "2D",
+  "dependencies": {
+    "com.unity.2d.common": "1.0.11-preview.1",
+    "com.unity.2d.animation": "2.0.0-preview.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/2D/com.unity.2d.psdimporter.git",
+    "revision": "c83c993f53d4edcca09d1f8e6bb5710cd2956a19"
+  }
+}
