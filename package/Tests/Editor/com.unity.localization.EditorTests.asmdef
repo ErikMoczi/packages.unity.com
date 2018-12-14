@@ -1,0 +1,13 @@
+{
+    "name": "com.unity.localization.EditorTests",
+    "references": [
+        "com.unity.localization.Runtime"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

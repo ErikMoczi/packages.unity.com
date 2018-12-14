@@ -1,0 +1,9 @@
+{
+    "name": "com.unity.localization.Samples",
+    "references": [
+        "com.unity.localization.Runtime"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": []
+}

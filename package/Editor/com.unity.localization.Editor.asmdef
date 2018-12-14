@@ -1,0 +1,11 @@
+{
+    "name": "com.unity.localization.Editor",
+    "references": [
+        "com.unity.localization.Runtime"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
