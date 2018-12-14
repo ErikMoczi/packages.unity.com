@@ -6,13 +6,6 @@
     "Unlisted": false,
     "Visibility": 0,
     "TypeCode": "Component",
-    "Fields": [{
-        "Id": "a993633dc2b1b3122d7345fcfc2c935e",
-        "Name": "velocity",
-        "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
-        "Array": false,
-        "Visibility": 0
-    }],
     "DefaultValue": {
         "Type": { "Id": "4877aebd4079748a17f940cbbee5d2e6", "Name": "Velocity2D" }
     }

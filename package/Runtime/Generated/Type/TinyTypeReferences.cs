@@ -85,9 +85,9 @@ namespace Unity.Tiny
             public static readonly TinyType.Reference AssetReferenceAudioClip = new TinyType.Reference(CoreIds.EditorExtensions.AssetReferenceAudioClip, "AssetReferenceAudioClip");
             public static readonly TinyType.Reference AssetReferenceSprite = new TinyType.Reference(CoreIds.EditorExtensions.AssetReferenceSprite, "AssetReferenceSprite");
             public static readonly TinyType.Reference AssetReferenceSpriteAtlas = new TinyType.Reference(CoreIds.EditorExtensions.AssetReferenceSpriteAtlas, "AssetReferenceSpriteAtlas");
-            public static readonly TinyType.Reference AssetReferenceTMP_FontAsset = new TinyType.Reference(CoreIds.EditorExtensions.AssetReferenceTMP_FontAsset, "AssetReferenceTMP_FontAsset");
             public static readonly TinyType.Reference AssetReferenceTexture2D = new TinyType.Reference(CoreIds.EditorExtensions.AssetReferenceTexture2D, "AssetReferenceTexture2D");
             public static readonly TinyType.Reference AssetReferenceTile = new TinyType.Reference(CoreIds.EditorExtensions.AssetReferenceTile, "AssetReferenceTile");
+            public static readonly TinyType.Reference AssetReferenceTMP_FontAsset = new TinyType.Reference(CoreIds.EditorExtensions.AssetReferenceTMP_FontAsset, "AssetReferenceTMP_FontAsset");
             public static readonly TinyType.Reference CameraCullingMask = new TinyType.Reference(CoreIds.EditorExtensions.CameraCullingMask, "CameraCullingMask");
             public static readonly TinyType.Reference EntityLayer = new TinyType.Reference(CoreIds.EditorExtensions.EntityLayer, "EntityLayer");
         }

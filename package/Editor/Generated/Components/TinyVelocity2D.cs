@@ -33,18 +33,9 @@ namespace Unity.Tiny.Runtime.Physics2D
 
         public bool IsValid => null != Tiny;
 
-        #region Properties
-        public UnityEngine.Vector2 @velocity
-        {
-            get => Tiny.GetProperty<UnityEngine.Vector2>(nameof(@velocity));
-            set => Tiny.AssignIfDifferent(nameof(@velocity), value);
-        }
-
-        #endregion // Properties
 
         public void CopyFrom(TinyVelocity2D other)
         {
-            @velocity = other.@velocity;
         }
     }
 }

@@ -1,36 +1,23 @@
 # Installing the package
 
+## Package Manager
 
-## Set the Latest Scripting Runtime Version
+Follow these steps:
 
-Tiny Editor requires your project to use the latest scripting runtime version. You can update this setting by opening **Edit / Project Settings / Player > Other Settings**, and setting **Scripting Runtime Version** to **.Net 4.x Equivalent**.
+1. From the menu, choose **Window > Package Manager** to open the package manager.
+2. In the package manager, check the **Advanced** dropdown and make sure **Show Preview Packages** is enabled.
+3. From the package list in the left-hand pane, choose **Tiny Mode**.
+4. In the right-hand pane, click the **Install** button.
 
+> We recommend to avoid using Tiny Mode with other *preview* packages.
 
-## Adding This Package
+## Prerequisites
 
-Change your project manifest.json file, located in the [Project Folder]/Packages/ directory, to the following:
+Tiny mode works when installed in a new Unity 2018.3 project. If you install it in an existing project, you may have to manually change some project settings to ensure compatibility.
 
-```
-{ \
-  "dependencies": { \
-      ... \
-      <list of pre-populated packages> \
-      ... \
-  }, \
-  "registry": "https://staging-packages.unity.com" \
-}
-```
+### .Net 4.x
 
-Your directory structure should resemble the following:
+Tiny Mode requires that your project use the latest version of the scripting runtime. You can update this setting by doing the following:
 
-The package in the directory structure **_must_** be named **com.unity.tiny.editor**.
-```
-├── Assets \
-├── Packages \
-│   ├── manifest.json \
-│   └── com.unity.tiny.editor \
-│       └── [package contents]
-```
-
-Once you have updated the **manifest.json** file, and you have downloaded and extracted the **"com.unity.tiny.editor"** package into the Packages folder, open or return to Unity so that it recognizes your changes.
-
+1. From the menu, choose **Edit > Project Settings...** to open the Project Settings window.
+2. In the **Player** section, set the **Configuration > Scripting Runtime Version** to **.Net 4.x Equivalent**.

@@ -90,9 +90,9 @@ namespace Unity.Tiny
             public static readonly TinyId AssetReferenceAudioClip = new TinyId(CoreGuids.EditorExtensions.AssetReferenceAudioClip);
             public static readonly TinyId AssetReferenceSprite = new TinyId(CoreGuids.EditorExtensions.AssetReferenceSprite);
             public static readonly TinyId AssetReferenceSpriteAtlas = new TinyId(CoreGuids.EditorExtensions.AssetReferenceSpriteAtlas);
-            public static readonly TinyId AssetReferenceTMP_FontAsset = new TinyId(CoreGuids.EditorExtensions.AssetReferenceTMP_FontAsset);
             public static readonly TinyId AssetReferenceTexture2D = new TinyId(CoreGuids.EditorExtensions.AssetReferenceTexture2D);
             public static readonly TinyId AssetReferenceTile = new TinyId(CoreGuids.EditorExtensions.AssetReferenceTile);
+            public static readonly TinyId AssetReferenceTMP_FontAsset = new TinyId(CoreGuids.EditorExtensions.AssetReferenceTMP_FontAsset);
             public static readonly TinyId CameraCullingMask = new TinyId(CoreGuids.EditorExtensions.CameraCullingMask);
             public static readonly TinyId EntityLayer = new TinyId(CoreGuids.EditorExtensions.EntityLayer);
         }
