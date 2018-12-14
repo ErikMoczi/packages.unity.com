@@ -23,9 +23,9 @@ namespace UnityEditor.XR.ARCore
 
             EnsureMultithreadedRenderingDisabled(report);
             EnsureARCoreSupportedIsNotChecked();
+            EnsureGoogleARCoreIsNotPresent();
             EnsureMinSdkVersion();
             EnsureOnlyOpenGLES3IsUsed();
-            EnsureTargetArchitecturesAreSupported();
             EnsureGradleIsUsed();
 
             if (LinkerUtility.AssemblyStrippingEnabled(report.summary.platformGroup))
@@ -36,15 +36,6 @@ namespace UnityEditor.XR.ARCore
         {
             if (EditorUserBuildSettings.androidBuildSystem != AndroidBuildSystem.Gradle)
                 throw new BuildFailedException("ARCore XR Plugin requires the Gradle build system. See File > Build Settings... > Android");
-        }
-
-        void EnsureTargetArchitecturesAreSupported()
-        {
-            if ((PlayerSettings.Android.targetArchitectures & AndroidArchitecture.ARM64) != AndroidArchitecture.None)
-                throw new BuildFailedException("ARCore XR Plugin does not currently support 64-bit ARM. See Player Settings > Other Settings > Target Architectures.");
-
-            if ((PlayerSettings.Android.targetArchitectures & AndroidArchitecture.X86) != AndroidArchitecture.None)
-                throw new BuildFailedException("ARCore XR Plugin does not support x86. See Player Settings > Other Settings > Target Architectures.");
         }
 
         void EnsureMinSdkVersion()
@@ -63,29 +54,25 @@ namespace UnityEditor.XR.ARCore
 
         void EnsureARCoreSupportedIsNotChecked()
         {
-            bool arcoreEnabled = false;
-#if UNITY_2018_1
-            var t = typeof(PlayerSettings.Android);
-            var property = t.GetProperty("androidTangoEnabled", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-            if (property != null)
-            {
-                var value = property.GetValue(null, null);
-                if (value != null)
-                    arcoreEnabled = (bool)value;
-            }
-#elif UNITY_2018_2_OR_NEWER
-            arcoreEnabled = PlayerSettings.Android.ARCoreEnabled;
-#endif
-
-            if (arcoreEnabled)
+            if (PlayerSettings.Android.ARCoreEnabled)
                 throw new BuildFailedException("\"ARCore Supported\" (Player Settings > XR Settings) refers to the built-in ARCore support in Unity and conflicts with the \"ARCore XR Plugin\" package.");
+        }
+
+        void EnsureGoogleARCoreIsNotPresent()
+        {
+            var googleARAssetPath = AssetDatabase.GUIDToAssetPath("afb3e05691ff94d2cbad20643e5c5879");
+            if (!string.IsNullOrEmpty(googleARAssetPath))
+                throw new BuildFailedException("GoogleARCore detected. Google's \"ARCore SDK for Unity\" and Unity's \"ARCore XR Plugin\" package cannot be used together.");
         }
 
         void EnsureMultithreadedRenderingDisabled(BuildReport report)
         {
-            var multithreadedRenderingEnabled = PlayerSettings.GetMobileMTRendering(report.summary.platformGroup);
+            var multithreadedRenderingEnabled =
+                PlayerSettings.GetMobileMTRendering(report.summary.platformGroup) ||
+                PlayerSettings.graphicsJobs;
+
             if (multithreadedRenderingEnabled)
-                throw new BuildFailedException("Multithreaded Rendering (Player Settings > Other Settings) is not supported for ARCore.");
+                throw new BuildFailedException("Multithreaded Rendering and Graphics Jobs (Player Settings > Other Settings) are not supported for ARCore.");
         }
 
         void EnsureOnlyOpenGLES3IsUsed()

@@ -128,6 +128,24 @@ namespace UnityEngine.XR.ARCore
             ARPRESTO_APK_INSTALL_ERROR_USER_DECLINED = 203,
         }
 
+        public enum SetCameraConfigurationResult
+        {
+            /// <summary>
+            /// The given <see cref="CameraConfiguration"/> is not supported.
+            /// </summary>
+            ErrorInvalidConfiguration,
+
+            /// <summary>
+            /// Not all <see cref="CameraImage"/>s have been disposed prior to calling <see cref="ICameraImageApi.TrySetConfiguration(CameraConfiguration)"/>.
+            /// </summary>
+            ErrorCameraImagesNotDisposed,
+
+            /// <summary>
+            /// The <see cref="CameraConfiguration"/> was set successfully.
+            /// </summary>
+            Success
+        }
+
         internal delegate void CameraPermissionRequestProvider(CameraPermissionsResultCallback resultCallback, IntPtr context);
 
         internal delegate void CameraPermissionsResultCallback(bool granted, IntPtr context);
@@ -215,7 +233,66 @@ namespace UnityEngine.XR.ARCore
         static internal extern bool UnityARCore_cameraImage_tryGetAsyncRequestData(
             int requestHandle, out IntPtr dataPtr, out int dataLength);
 
+        [DllImport("UnityARCore")]
+        static internal extern bool UnityARCore_trySetFocusMode(
+            CameraFocusMode mode);
+
+        [DllImport("UnityARCore")]
+        static internal extern bool UnityARCore_trySetPlaneDetectionFlags(PlaneDetectionFlags flags);
+
+        [DllImport("UnityARCore")]
+        static internal extern int UnityARCore_cameraImage_getConfigurationCount();
+
+        [DllImport("UnityARCore")]
+        static internal extern bool UnityARCore_cameraImage_tryGetConfiguration(
+            int index,
+            out CameraConfiguration configuration);
+
+        [DllImport("UnityARCore")]
+        static internal extern bool UnityARCore_cameraImage_tryGetCurrentConfiguration(
+            out CameraConfiguration configuration);
+
+        [DllImport("UnityARCore")]
+        static internal extern SetCameraConfigurationResult UnityARCore_cameraImage_trySetConfiguration(
+            CameraConfiguration configuration);
 #else
+        static internal bool UnityARCore_cameraImage_tryGetCurrentConfiguration(
+            out CameraConfiguration configuration)
+        {
+            configuration = default(CameraConfiguration);
+            return false;
+        }
+
+        static internal int UnityARCore_cameraImage_getConfigurationCount()
+        {
+            return 0;
+        }
+
+        static internal bool UnityARCore_cameraImage_tryGetConfiguration(
+            int index,
+            out CameraConfiguration configuration)
+        {
+            configuration = default(CameraConfiguration);
+            return false;
+        }
+
+        static internal SetCameraConfigurationResult UnityARCore_cameraImage_trySetConfiguration(
+            CameraConfiguration configuration)
+        {
+            return SetCameraConfigurationResult.ErrorInvalidConfiguration;
+        }
+
+        static internal bool UnityARCore_trySetFocusMode(
+            CameraFocusMode mode)
+        {
+            return false;
+        }
+
+        static internal bool UnityARCore_trySetPlaneDetectionFlags(PlaneDetectionFlags flags)
+        {
+            return false;
+        }
+
         static internal bool UnityARCore_cameraImage_tryAcquireLatestImage(
             out int nativeHandle, out Vector2Int dimensions, out int planeCount, out double timestamp, out CameraImageFormat format)
         {

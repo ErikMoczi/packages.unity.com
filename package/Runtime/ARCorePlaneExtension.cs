@@ -14,6 +14,12 @@ namespace UnityEngine.XR.ARCore
         {
             XRPlaneExtensions.RegisterGetTrackingStateHandler(k_SubsystemId, GetTrackingState);
             XRPlaneExtensions.RegisterGetNativePtrHandler(k_SubsystemId, GetNativePtr);
+            XRPlaneExtensions.RegisterTrySetPlaneDetectionFlagsHandler(k_SubsystemId, TrySetPlaneDetectionFlags);
+        }
+
+        static bool TrySetPlaneDetectionFlags(XRPlaneSubsystem planeSubsystem, PlaneDetectionFlags flags)
+        {
+            return Api.UnityARCore_trySetPlaneDetectionFlags(flags);
         }
 
         static TrackingState GetTrackingState(XRPlaneSubsystem planeSubsystem, TrackableId planeId)

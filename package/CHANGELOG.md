@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-preview.24] - 2018-12-13
+### Improvements
+- Support x86, ARMv7, and ARM64 Android architetures (previously was limited to ARMv7).
+- Plane detection modes: Add ability to selectively enable detection for horizontal, vertical, or both types of planes.
+- Add a build check for the "Graphcis Jobs (Experimental)" player setting, which forces multithreaded rendering and causes ARCore to fail.
+- Add a build check for the presence of Google's ARCore SDK for Unity, which cannot be used with this package.
+- Add support for setting the camera focus mode.
+- Add C header file necessary to interpret native pointers. See `Includes~/UnityXRNativePtrs.h`
+- Implement `CameraConfiguration` support, allowing you to enumerate and set the resolution used by the hardware camera.
+- Update to ARCore v1.6.0
+
+### Fixes
+- Updated background shader to workaround a bug which can cause green and blue color values to appear swapped on some devices when HDR is enabled.
+
+### Changes
+- Remove 2018.1 and 2018.2 compatibility.
+
 ## [1.0.0-preview.23] - 2018-10-07
 ### Changes
 - Re-add `using` directive needed for 2018.1.

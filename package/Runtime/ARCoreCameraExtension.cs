@@ -19,12 +19,15 @@ namespace UnityEngine.XR.ARCore
             XRCameraExtensions.RegisterIsPermissionGrantedHandler(k_SubsystemId, IsPermissionGranted);
             XRCameraExtensions.RegisterTryGetColorCorrectionHandler(k_SubsystemId, TryGetColorCorrection);
             XRCameraExtensions.RegisterGetNativePtrHandler(k_SubsystemId, GetNativePtr);
-            XRCameraExtensions.RegisterCameraImageApi(k_SubsystemId, s_AsyncCameraImageApi);
+            XRCameraExtensions.RegisterCameraImageApi(k_SubsystemId, s_CameraImageApi);
+            XRCameraExtensions.RegisterCameraConfigApi(k_SubsystemId, s_CameraConfigApi);
+            XRCameraExtensions.RegisterTrySetFocusModeHandler(k_SubsystemId, TrySetFocusMode);
         }
 
         static ARCoreCameraExtension()
         {
-            s_AsyncCameraImageApi = new ARCoreCameraImageApi();
+            s_CameraImageApi = new ARCoreCameraImageApi();
+            s_CameraConfigApi = new ARCoreCameraConfigApi();
         }
 
         static bool IsPermissionGranted(XRCameraSubsystem cameraSubsystem)
@@ -52,6 +55,11 @@ namespace UnityEngine.XR.ARCore
             return Api.UnityARCore_getNativeFramePtr();
         }
 
+        static bool TrySetFocusMode(XRCameraSubsystem cameraSubsystem, CameraFocusMode mode)
+        {
+            return Api.UnityARCore_trySetFocusMode(mode);
+        }
+
         [MonoPInvokeCallback(typeof(Api.CameraPermissionRequestProvider))]
         static void CameraPermissionRequestProvider(Api.CameraPermissionsResultCallback callback, IntPtr context)
         {
@@ -63,6 +71,8 @@ namespace UnityEngine.XR.ARCore
 
         static readonly string k_SubsystemId = "ARCore-Camera";
 
-        static readonly ARCoreCameraImageApi s_AsyncCameraImageApi;
+        static readonly ARCoreCameraImageApi s_CameraImageApi;
+
+        static readonly ARCoreCameraConfigApi s_CameraConfigApi;
     }
 }
