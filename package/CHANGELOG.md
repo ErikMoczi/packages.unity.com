@@ -6,6 +6,12 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7] - 2018-12-10
+### Fixed
+- Fixed authoring of scene object references.
+### Removed
+- Remove Window > Tutorials menu item.
+
 ## [0.1.6] - 2018-12-06
 ### Fixed
 - Fix AudioClip import errors.

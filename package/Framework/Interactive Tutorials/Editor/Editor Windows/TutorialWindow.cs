@@ -13,7 +13,6 @@ namespace Unity.InteractiveTutorials
     {
         private static TutorialWindow window;
 
-        [MenuItem("Window/Tutorials")]
         public static TutorialWindow CreateWindow()
         {
             window = GetWindow<TutorialWindow>();

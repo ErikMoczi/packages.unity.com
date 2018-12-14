@@ -4,7 +4,7 @@ namespace Unity.InteractiveTutorials.Tests
 {
     public class TestBase
     {
-        protected string GetTestAssetPath(string relativeAssetPath)
+        protected static string GetTestAssetPath(string relativeAssetPath)
         {
             return Path.Combine("Packages/com.unity.learn.iet-framework/Tests/Editor", relativeAssetPath);
         }

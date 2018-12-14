@@ -2,7 +2,8 @@
     "name": "Assembly-CSharp-Editor-firstpass-testable",
     "references": [
         "Unity.InteractiveTutorials.Core",
-        "UnityEditor.InteractiveTutorialsFramework"
+        "UnityEditor.InteractiveTutorialsFramework",
+        "Unity.InteractiveTutorials.Core.Scripts"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

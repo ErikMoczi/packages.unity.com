@@ -1,5 +1,4 @@
 using System;
-using UnityEditor;
 using UnityEngine;
 using System.Linq;
 
@@ -22,14 +21,14 @@ public class SceneObjectGUIDComponent : MonoBehaviour
             Destroy(this);
         if (string.IsNullOrEmpty(m_Id))
         {
-            m_Id = GUID.Generate().ToString();
+            m_Id = Guid.NewGuid().ToString();
         }
         else
         {
             var components = UnityEngine.Object.FindObjectsOfType<SceneObjectGUIDComponent>();
             if (components.Any(c => c.m_Id == m_Id && c != this))
             {
-                m_Id = GUID.Generate().ToString();
+                m_Id = Guid.NewGuid().ToString();
             }
         }
         hideFlags |= HideFlags.HideInInspector;

@@ -1,7 +1,8 @@
 {
     "name": "Unity.InteractiveTutorials.Core",
     "references": [
-        "UnityEditor.InteractiveTutorialsFramework"
+        "UnityEditor.InteractiveTutorialsFramework",
+        "Unity.InteractiveTutorials.Core.Scripts"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [
