@@ -1,3 +1,5 @@
+//#define PACKING_DEBUG
+
 using System;
 using UnityEngine;
 using Unity.Collections;
@@ -7,8 +9,6 @@ namespace UnityEditor.Experimental.U2D.Common
 {
     public static class ImagePacker
     {
-        const int k_MaxTextureSize = 8196;
-
         /// <summary>
         /// Given an array of rects, the method returns an array of rects arranged within outPackedWidth and outPackedHeight
         /// </summary>
@@ -24,9 +24,17 @@ namespace UnityEditor.Experimental.U2D.Common
             outPackedHeight = packNode.rect.height;
             var visitor = new CollectPackNodePositionVisitor();
             packNode.AcceptVisitor(visitor);
+
             outPackedRects = new RectInt[rects.Length];
             for (int i = 0; i < rects.Length; ++i)
-                outPackedRects[i] = new RectInt(visitor.positions[i].x + padding, visitor.positions[i].y, rects[i].width, rects[i].height);
+                outPackedRects[i] = new RectInt(visitor.positions[i].x + padding, visitor.positions[i].y + padding, rects[i].width, rects[i].height);
+#if PACKING_DEBUG
+            var emptyNodeCollector = new CollectEmptyNodePositionVisitor();
+            packNode.AcceptVisitor(emptyNodeCollector);
+            Array.Resize(ref outPackedRects, rects.Length + emptyNodeCollector.emptyAreas.Count);
+            for (int i = rects.Length; i < outPackedRects.Length; ++i)
+                outPackedRects[i] = emptyNodeCollector.emptyAreas[i - rects.Length];
+#endif
         }
 
         /// <summary>
@@ -56,6 +64,7 @@ namespace UnityEditor.Experimental.U2D.Common
                     outUVTransform[i] = new Vector2Int(outPackedRect[i].x - tightRects[i].x, outPackedRect[i].y - tightRects[i].y);
                 }
                 outPackedBuffer = new NativeArray<Color32>(outPackedBufferWidth * outPackedBufferHeight, Allocator.Temp);
+
                 Blit(outPackedBuffer, outPackedRect, outPackedBufferWidth, buffers, tightRects, width, padding);
             }
             catch (Exception ex)
@@ -72,6 +81,8 @@ namespace UnityEditor.Experimental.U2D.Common
 
         static ImagePackNode InternalPack(RectInt[] rects, int padding)
         {
+            if (rects == null || rects.Length == 0)
+                return new ImagePackNode() { rect = new RectInt(0, 0, 0, 0)};
             var sortedRects = new ImagePackRect[rects.Length];
             for (int i = 0; i < rects.Length; ++i)
             {
@@ -81,33 +92,30 @@ namespace UnityEditor.Experimental.U2D.Common
             }
             Array.Sort<ImagePackRect>(sortedRects);
             var root = new ImagePackNode();
-            root.rect = new RectInt(0, 0, 32, 32);
+            root.rect = new RectInt(0, 0, (int)NextPowerOfTwo((ulong)rects[0].width), (int)NextPowerOfTwo((ulong)rects[0].height));
 
             for (int i = 0; i < rects.Length; ++i)
             {
                 if (!root.Insert(sortedRects[i], padding)) // we can't fit
                 {
-                    int newWidth = 0, newHeight = 0;
+                    int newWidth = root.rect.width , newHeight = root.rect.height;
                     if (root.rect.width < root.rect.height)
                         newWidth = (int)NextPowerOfTwo((ulong)root.rect.width + 1);
                     else
                         newHeight = (int)NextPowerOfTwo((ulong)root.rect.height + 1);
-                    if (newWidth > k_MaxTextureSize || newHeight > k_MaxTextureSize)
-                    {
-                        Debug.LogAssertion("unable to pack, reached max texture size");
-                        break;
-                    }
-
-                    root.AdjustSize(newWidth, newHeight);
-                    --i;
+                    // Reset all packing and try again
+                    root = new ImagePackNode();
+                    root.rect = new RectInt(0, 0, newWidth, newHeight);
+                    i = -1;
                 }
             }
             return root;
         }
 
-        static unsafe void Blit(NativeArray<Color32> buffer, RectInt[] blitToArea, int bufferbytesPerRow, NativeArray<Color32>[] originalBuffer, RectInt[] blitFromArea, int bytesPerRow, int padding)
+        public static unsafe void Blit(NativeArray<Color32> buffer, RectInt[] blitToArea, int bufferbytesPerRow, NativeArray<Color32>[] originalBuffer, RectInt[] blitFromArea, int bytesPerRow, int padding)
         {
             UnityEngine.Profiling.Profiler.BeginSample("Blit");
+
             var c = (Color32*)buffer.GetUnsafePtr();
             for (int bufferIndex = 0; bufferIndex < blitToArea.Length && bufferIndex < originalBuffer.Length && bufferIndex < blitFromArea.Length; ++bufferIndex)
             {
@@ -123,6 +131,31 @@ namespace UnityEditor.Experimental.U2D.Common
                     }
                 }
             }
+
+#if PACKING_DEBUG
+            var emptyColors = new Color32[]
+            {
+                new Color32((byte)255, (byte)0, (byte)0, (byte)255),
+                new Color32((byte)255, (byte)255, (byte)0, (byte)255),
+                new Color32((byte)255, (byte)0, (byte)255, (byte)255),
+                new Color32((byte)255, (byte)255, (byte)255, (byte)255),
+                new Color32((byte)0, (byte)255, (byte)0, (byte)255),
+                new Color32((byte)0, (byte)0, (byte)255, (byte)255)
+            };
+
+            for (int k = originalBuffer.Length; k < blitToArea.Length; ++k)
+            {
+                var rectFrom = blitToArea[k];
+                for (int i = 0; i < rectFrom.height; ++i)
+                {
+                    for (int j = 0; j < rectFrom.width; ++j)
+                    {
+                        c[((rectFrom.y + i) * bufferbytesPerRow) + rectFrom.x + j] =
+                            emptyColors[k % emptyColors.Length];
+                    }
+                }
+            }
+#endif
             UnityEngine.Profiling.Profiler.EndSample();
         }
 

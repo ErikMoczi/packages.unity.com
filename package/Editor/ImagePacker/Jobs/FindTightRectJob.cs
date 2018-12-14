@@ -46,7 +46,7 @@ namespace UnityEditor.Experimental.U2D.Common
             job.m_Buffers = new NativeArray<IntPtr>(buffers.Length, Allocator.TempJob);
             for (int i = 0; i < buffers.Length; ++i)
                 job.m_Buffers[i] = new IntPtr(buffers[i].GetUnsafeReadOnlyPtr());
-            job.m_Output = new NativeArray<RectInt>(buffers.Length, Allocator.Temp);
+            job.m_Output = new NativeArray<RectInt>(buffers.Length, Allocator.TempJob);
             job.m_Width = width;
             job.m_Height = height;
             // Ensure all jobs are completed before we return since we don't own the buffers

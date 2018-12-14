@@ -1,3 +1,5 @@
+using UnityEngine.Experimental.UIElements;
+
 namespace UnityEngine.Experimental.U2D.Common
 {
     internal static class InternalEngineBridge
@@ -26,6 +28,23 @@ namespace UnityEngine.Experimental.U2D.Common
         public static void SetLocalEulerHint(Transform t)
         {
             t.SetLocalEulerHint(t.GetLocalEulerAngles(t.rotationOrder));
+        }
+
+        public static bool IsChecked(this VisualElement element)
+        {
+            return (element.pseudoStates & PseudoStates.Checked) == PseudoStates.Checked;
+        }
+        
+        public static void SetChecked(this VisualElement element, bool isChecked)
+        {
+            if (isChecked)
+            {
+                element.pseudoStates |= PseudoStates.Checked;
+            }
+            else
+            {
+                element.pseudoStates &= ~PseudoStates.Checked;
+            }
         }
 #endif
     }

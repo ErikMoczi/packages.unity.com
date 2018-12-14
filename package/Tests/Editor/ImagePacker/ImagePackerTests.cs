@@ -28,49 +28,51 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
         {
             yield return new TestCaseData(new[] { new Vector2Int(64, 64) }, 0,
                 new[]
-            {
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 0} ,
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 1} ,
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 2} ,
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 3} ,
-            },
+                {
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 0} ,
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 1} ,
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 2} ,
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 3} ,
+                },
                 4, 0
-                );
+            );
 
             yield return new TestCaseData(new[] { new Vector2Int(64, 64) }, 0,
                 new[]
-            {
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 0} ,
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 1} ,
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 2} ,
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 3} ,
-            },
+                {
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 0} ,
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 1} ,
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 2} ,
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 3} ,
+                },
                 4, 0
-                );
+            );
 
             yield return new TestCaseData(new[] { new Vector2Int(64, 64), new Vector2Int(128, 64) }, 0,
                 new[]
-            {
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 64, 64), index = 0} ,
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 1} ,
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 2} ,
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 3} ,
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 4} ,
-            },
+                {
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 64, 64), index = 0} ,
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 1} ,
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 2} ,
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 3} ,
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 4} ,
+                },
                 5, 1
-                );
+            );
 
             yield return new TestCaseData(new[] { new Vector2Int(64, 64), new Vector2Int(128, 64) }, 0,
                 new[]
-            {
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 0, 0), index = 0} ,
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 1} ,
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 2} ,
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 3} ,
-                new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 4} ,
-            },
+                {
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 0, 0), index = 0} ,
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 1} ,
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 16, 16), index = 2} ,
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 3} ,
+                    new ImagePacker.ImagePackRect() {rect = new RectInt(0, 0, 32, 32), index = 4} ,
+                },
                 5, 0
-                );
+            );
+            
+            yield return new TestCaseData(new Vector2Int[0] {}, 0,new ImagePacker.ImagePackRect[0],5, 0);
         }
 
         [Test, TestCaseSource("PackSpriteTestCases")]
@@ -89,6 +91,8 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
         public void RectPackTests(Vector2Int[] atlasSize, int padding,
             ImagePacker.ImagePackRect[] packRect, int expectedPass, int expectedFail)
         {
+            if (atlasSize.Length == 0)
+                return;
             Array.Sort(packRect);
             var root = new ImagePackNode();
             root.rect = new RectInt(0, 0, atlasSize[0].x, atlasSize[0].y);
@@ -105,7 +109,8 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
                     ++failed;
                     if (atlasSizeIndex < atlasSize.Length)
                     {
-                        root.AdjustSize(atlasSize[atlasSizeIndex].x, atlasSize[atlasSizeIndex].y);
+                        int a, b;
+                        root.AdjustSize(root.rect.width, root.rect.height, atlasSize[atlasSizeIndex].x, atlasSize[atlasSizeIndex].y, out a , out b);
                         ++atlasSizeIndex;
                         --i;
                     }
@@ -115,7 +120,7 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
             Assert.AreEqual(expectedFail, failed);
         }
 
-        private static IEnumerable<TestCaseData> PackWithNoBufferMosiacTestCases()
+        private static IEnumerable<TestCaseData> PackWithNoBufferMosaicTestCases()
         {
             var testRects = new[]
             {
@@ -132,10 +137,11 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
             yield return new TestCaseData(testRects, 0, new Vector2Int(64, 64));
             yield return new TestCaseData(testRects, 2, new Vector2Int(64, 128));
             yield return new TestCaseData(testRects, 4, new Vector2Int(64, 128));
+            yield return new TestCaseData(new RectInt[0], 0, new Vector2Int(0, 0));
         }
 
-        [Test, TestCaseSource("PackWithNoBufferMosiacTestCases")]
-        public void PackWithNoBufferMosiacTests(RectInt[] rects, int padding, Vector2Int expectedSize)
+        [Test, TestCaseSource("PackWithNoBufferMosaicTestCases")]
+        public void PackWithNoBufferMosaicTests(RectInt[] rects, int padding, Vector2Int expectedSize)
         {
             RectInt[] packedRect;
             int packedWidth, packedHeight;
@@ -153,9 +159,9 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
                 {
                     RectInt other = packedRect[k];
                     var contains = !((other.xMax + padding <= testRect.xMin ||
-                                      other.yMax + padding <= testRect.yMin) ||
-                                     (other.xMin >= testRect.xMax + padding ||
-                                      other.yMin >= testRect.yMax + padding));
+                        other.yMax + padding <= testRect.yMin) ||
+                        (other.xMin >= testRect.xMax + padding ||
+                            other.yMin >= testRect.yMax + padding));
                     Assert.IsFalse(contains);
                 }
 
@@ -165,8 +171,8 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
             }
         }
 
-        [Test, TestCaseSource("PackWithNoBufferMosiacTestCases")]
-        public void PackWithBufferMosiacTests(RectInt[] rects, int padding, Vector2Int expectedSize)
+        [Test, TestCaseSource("PackWithNoBufferMosaicTestCases")]
+        public void PackWithBufferMosaicTests(RectInt[] rects, int padding, Vector2Int expectedSize)
         {
             RectInt[] packedRect;
             int packedWidth, packedHeight;
@@ -192,10 +198,10 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
                     {
                         int bufferIndex = (j * maxWidth  + k);
                         if (k >= rects[i].width || j >= rects[i].height)
-                            buffers[i][bufferIndex] = new Color32(0,0,0,0);
+                            buffers[i][bufferIndex] = new Color32(0, 0, 0, 0);
                         else
                         {
-                            buffers[i][bufferIndex] = new Color32((byte)i ,(byte)i , (byte)i, 255);
+                            buffers[i][bufferIndex] = new Color32((byte)i , (byte)i , (byte)i, 255);
                         }
                     }
                 }
@@ -218,9 +224,9 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
                 {
                     RectInt other = packedRect[k];
                     var contains = !((other.xMax + padding <= testRect.xMin ||
-                                      other.yMax + padding <= testRect.yMin) ||
-                                     (other.xMin >= testRect.xMax + padding ||
-                                      other.yMin >= testRect.yMax + padding));
+                        other.yMax + padding <= testRect.yMin) ||
+                        (other.xMin >= testRect.xMax + padding ||
+                            other.yMin >= testRect.yMax + padding));
                     Assert.IsFalse(contains);
                 }
 
@@ -249,7 +255,7 @@ namespace UnityEditor.Experimental.U2D.Common.Tests
             return buffer[y * bytesPerRow + x * bytesPerPixel].r == expected.r &&
                 buffer[y * bytesPerRow + x * bytesPerPixel].g == expected.g &&
                 buffer[y * bytesPerRow + x * bytesPerPixel].b == expected.b &&
-            buffer[y * bytesPerRow + x * bytesPerPixel].a == expected.a;
+                buffer[y * bytesPerRow + x * bytesPerPixel].a == expected.a;
         }
     }
 }
