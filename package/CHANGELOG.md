@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this package will be documented in this file.
 
+## [0.2.1] - 2018-12-14
+-Removed stray file `README - External.md`
+
 ## [0.2.0] - 2018-12-11
 
 ### This is the first release of *Unity Package Localization*.
