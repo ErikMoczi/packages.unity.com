@@ -38,7 +38,12 @@ public class ResourceManagerVirtualModeTests : ResourceManagerBaseTests
                 var path = RootFolder + "/" + name + ".prefab";
                 GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 go.name = name;
+                
+#if UNITY_2018_3_OR_NEWER
+                PrefabUtility.SaveAsPrefabAsset(go, path);
+#else
                 PrefabUtility.CreatePrefab(path, go);
+#endif
                 Object.DestroyImmediate(go, false);
 
                 var asset = new VirtualAssetBundleEntry(path, Random.Range(1024, 1024 * 1024));

@@ -61,7 +61,12 @@ public abstract class ResourceManagerBaseTests : IPrebuildSetup//, IPostBuildCle
 
         GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
         go.name = objectName;
+        
+#if UNITY_2018_3_OR_NEWER
+        PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+#else
         PrefabUtility.CreatePrefab(assetPath, go);
+#endif
         Object.DestroyImmediate(go, false);
         return new ResourceLocationBase(objectName, loadPath, provider.FullName);
     }
