@@ -129,7 +129,49 @@ namespace UnityEngine.XR.ARKit
 
         [DllImport("__Internal")]
         static internal extern IntPtr UnityARKit_getNativeFramePtr();
+
+        [DllImport("__Internal")]
+        static internal extern int UnityARKit_cameraImage_getConfigurationCount();
+
+        [DllImport("__Internal")]
+        static internal extern bool UnityARKit_cameraImage_tryGetConfiguration(
+            int index,
+            out CameraConfiguration configuration);
+
+        [DllImport("__Internal")]
+        static internal extern bool UnityARKit_cameraImage_trySetConfiguration(
+            CameraConfiguration configuration);
+
+        [DllImport("__Internal")]
+        static internal extern bool UnityARKit_cameraImage_tryGetCurrentConfiguration(
+            out CameraConfiguration configuration);
 #else
+        static internal bool UnityARKit_cameraImage_tryGetCurrentConfiguration(
+            out CameraConfiguration configuration)
+        {
+            configuration = default(CameraConfiguration);
+            return false;
+        }
+
+        static internal bool UnityARKit_cameraImage_trySetConfiguration(
+            CameraConfiguration configuration)
+        {
+            return false;
+        }
+
+        static internal bool UnityARKit_cameraImage_tryGetConfiguration(
+            int index,
+            out CameraConfiguration configuration)
+        {
+            configuration = default(CameraConfiguration);
+            return false;
+        }
+
+        static internal int UnityARKit_cameraImage_getConfigurationCount()
+        {
+            return 0;
+        }
+
         internal static bool UnityARKit_worldMapSupported()
         {
             return false;

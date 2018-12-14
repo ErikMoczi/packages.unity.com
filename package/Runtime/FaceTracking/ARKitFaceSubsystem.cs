@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine.Experimental.XR;
 using System.Runtime.InteropServices;
 using System;
@@ -17,6 +17,7 @@ namespace UnityEngine.XR.ARKit
         /// <summary>
         /// calls available to native code, linked via extern C symbols
         /// </summary>
+#if UNITY_IOS && !UNITY_EDITOR
         [DllImport("__Internal")]
         static extern void UnityARKit_FaceProvider_Initialize();
 
@@ -45,10 +46,73 @@ namespace UnityEngine.XR.ARKit
         static extern bool UnityARKit_FaceProvider_TryGetFaceMeshIndices(TrackableId faceId, out IntPtr ptrIndexData, out int numArrayIndices);
 
         [DllImport("__Internal")]
+        static extern bool UnityARKit_FaceProvider_TryGetFaceBlendCoefficients(TrackableId faceId, out IntPtr ptrBlendCoefficientData, out int numArrayBlendCoefficients);
+
+        [DllImport("__Internal")]
         static extern bool UnityARKit_FaceProvider_TryGetAllFaces(out IntPtr ptrArrayUnityXrFace, out int numArrayFaces);
 
         [DllImport("__Internal")]
         static extern bool UnityARKit_FaceProvider_TryRemoveFace(TrackableId faceId);
+#else
+        static void UnityARKit_FaceProvider_Initialize()
+        { }
+
+        static void UnityARKit_FaceProvider_Shutdown()
+        { }
+
+        static void UnityARKit_FaceProvider_Start()
+        { }
+
+        static void UnityARKit_FaceProvider_Stop()
+        { }
+
+        static void UnityARKit_FaceProvider_SetFaceAnchorCallbacks(
+            DelegateXrFaceAnchorAdded faceAnchorAddedCallback,
+            DelegateXrFaceAnchorUpdated faceAnchorUpdatedCallback,
+            DelegateXrFaceAnchorRemoved faceAnchorRemovedCallback,
+            DelegateXrFaceSessionBeginFrame faceSessionBeginFrameCallback)
+        { }
+
+        static bool UnityARKit_FaceProvider_TryGetFaceMeshVertices(TrackableId faceId, out IntPtr ptrVertexData, out int numArrayVertices)
+        {
+            ptrVertexData = IntPtr.Zero;
+            numArrayVertices = 0;
+            return false;
+        }
+
+        static bool UnityARKit_FaceProvider_TryGetFaceMeshUVs(TrackableId faceId, out IntPtr ptrUvData, out int numArrayUVs)
+        {
+            ptrUvData = IntPtr.Zero;
+            numArrayUVs = 0;
+            return false;
+        }
+
+        static bool UnityARKit_FaceProvider_TryGetFaceMeshIndices(TrackableId faceId, out IntPtr ptrIndexData, out int numArrayIndices)
+        {
+            ptrIndexData = IntPtr.Zero;
+            numArrayIndices = 0;
+            return false;
+        }
+
+        static bool UnityARKit_FaceProvider_TryGetFaceBlendCoefficients(TrackableId faceId, out IntPtr ptrBlendCoefficientData, out int numArrayBlendCoefficients)
+        {
+            ptrBlendCoefficientData = IntPtr.Zero;
+            numArrayBlendCoefficients = 0;
+            return false;
+        }
+
+        static bool UnityARKit_FaceProvider_TryGetAllFaces(out IntPtr ptrArrayUnityXrFace, out int numArrayFaces)
+        {
+            ptrArrayUnityXrFace = IntPtr.Zero;
+            numArrayFaces = 0;
+            return false;
+        }
+
+        static bool UnityARKit_FaceProvider_TryRemoveFace(TrackableId faceId)
+        {
+            return false;
+        }
+#endif
 
         /// <summary>
         /// Definition of callback delegates to get face data from provider into this XRFaceSubsystem implementation
@@ -192,6 +256,21 @@ namespace UnityEngine.XR.ARKit
             return TryGetNativeFaceMeshIndices(faceId, indicesOut);
         }
 
+        /// <summary>
+        /// Platform specific API method that this provider uses to provide a list of <see cref="XRFaceArkitBlendShapeCoefficient"/> that can be used to render facial expressions using blend shapes.
+        /// </summary>
+        /// <param name="faceId">The <see cref="TrackableId"/> of the face you are interested in.</param>
+        /// <param name="coefficientsOut">Replaces the content with the list of <see cref="XRFaceArkitBlendShapeCoefficient"/> that will contain pairs of <see cref="XRArkitBlendShapeLocation"/> and floats that describe the current facial expression on the face.</param>
+        /// <exception cref="ArgumentNullException">Throws an exception if the coefficientsOut parameter is not a valid list.</exception>
+        /// <returns>True if face blend shape coefficients were successfully populated.</returns>
+        public bool TryGetFaceARKitBlendShapeCoefficients (TrackableId faceId, List<XRFaceArkitBlendShapeCoefficient> coefficientsOut)
+        {
+            if (coefficientsOut == null)
+                throw new ArgumentException("coefficientsOut");
+
+            return TryGetNativeFaceBlendCoefficients (faceId, coefficientsOut);
+        }
+
         // this method is run on startup of the app to register this provider with XR Subsystem Manager
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void RegisterDescriptor()
@@ -234,11 +313,7 @@ namespace UnityEngine.XR.ARKit
                 facesOut.Capacity = facesCount;
             }
 
-            for (var i = 0; i < facesCount; i++)
-            {
-                var xrFace = nativeFacesArray[i];
-                facesOut.Add(xrFace);
-            }
+            facesOut.AddRange(nativeFacesArray);
 
             return true;
         }
@@ -272,11 +347,7 @@ namespace UnityEngine.XR.ARKit
             var nativeVertexArray = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<Vector3>(
                 (void*)ptrNativeVerticesArray, vertexCount, Allocator.None);
 
-            for (var i = 0; i < vertexCount; i++)
-            {
-                var vertex = nativeVertexArray[i];
-                verticesOut.Add(vertex);
-            }
+            verticesOut.AddRange(nativeVertexArray);
 
             return true;
         }
@@ -307,11 +378,7 @@ namespace UnityEngine.XR.ARKit
             var nativeUvArray = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<Vector2>(
                 (void*)ptrNativeUVsArray, uvCount, Allocator.None);
 
-            for (var i = 0; i < uvCount; i++)
-            {
-                var uv = nativeUvArray[i];
-                uvsOut.Add(uv);
-            }
+            uvsOut.AddRange(nativeUvArray);
 
             return true;
         }
@@ -342,13 +409,41 @@ namespace UnityEngine.XR.ARKit
             var nativeIndicesArray = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<int>(
                 (void*)ptrNativeIndicesArray, indicesCount, Allocator.None);
 
-            for (var i = 0; i < indicesCount; i++)
+            indicesOut.AddRange(nativeIndicesArray);
+
+            return true;
+        }
+
+        static unsafe bool TryGetNativeFaceBlendCoefficients(TrackableId faceId, List<XRFaceArkitBlendShapeCoefficient> coefficientsOut)
+        {
+            coefficientsOut.Clear();
+
+            IntPtr ptrNativeCoefficientsArray;
+            int coefficientsCount;
+            if (!UnityARKit_FaceProvider_TryGetFaceBlendCoefficients(faceId, out ptrNativeCoefficientsArray,
+                out coefficientsCount))
             {
-                var index = nativeIndicesArray[i];
-                indicesOut.Add(index);
+                return false;
             }
+
+            if (coefficientsCount <= 0)
+            {
+                return false;
+            }
+
+            if (coefficientsCount > coefficientsOut.Capacity)
+            {
+                coefficientsOut.Capacity = coefficientsCount;
+            }
+
+            // Points directly to the native memory
+            var nativeCoefficientsArray = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<XRFaceArkitBlendShapeCoefficient>(
+                (void*)ptrNativeCoefficientsArray, coefficientsCount, Allocator.None);
+
+            coefficientsOut.AddRange(nativeCoefficientsArray);
 
             return true;
         }
     }
 }
+

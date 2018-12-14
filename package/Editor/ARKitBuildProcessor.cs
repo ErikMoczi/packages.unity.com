@@ -76,6 +76,11 @@ namespace UnityEditor.XR.ARKit
 
         internal class ARKitPreprocessBuild : IPreprocessBuildWithReport
         {
+            // Magic value according to
+            // https://docs.unity3d.com/ScriptReference/PlayerSettings.GetArchitecture.html
+            // "0 - None, 1 - ARM64, 2 - Universal."
+            const int k_TargetArchitectureArm64 = 1;
+
             public void OnPreprocessBuild(BuildReport report)
             {
                 if (report.summary.platform != BuildTarget.iOS)
@@ -85,11 +90,7 @@ namespace UnityEditor.XR.ARKit
                     throw new BuildFailedException("ARKit requires a Camera Usage Description (Player Settings > iOS > Other Settings > Camera Usage Description)");
 
                 EnsureOnlyMetalIsUsed();
-
-#if !UNITY_2018_3_OR_NEWER
-                if ((report.summary.options & BuildOptions.SymlinkLibraries) != BuildOptions.None)
-                    throw new BuildFailedException("The \"ARKit XR Plugin\" package cannot be symlinked. Go to File > Build Settings... and uncheck \"Symlink Unity libraries\".");
-#endif
+                EnsureTargetArchitecturesAreSupported(report.summary.platformGroup);
 
                 if (LinkerUtility.AssemblyStrippingEnabled(report.summary.platformGroup))
                 {
@@ -100,6 +101,12 @@ namespace UnityEditor.XR.ARKit
                         LinkerUtility.EnsureLinkXmlExistsFor("ARKit.FaceTracking");
                     }
                 }
+            }
+
+            void EnsureTargetArchitecturesAreSupported(BuildTargetGroup buildTargetGroup)
+            {
+                if (PlayerSettings.GetArchitecture(buildTargetGroup) != k_TargetArchitectureArm64)
+                    throw new BuildFailedException("ARKit XR Plugin only supports the ARM64 architecture. See Player Settings > Other Settings > Architecture.");
             }
 
             void EnsureOnlyMetalIsUsed()
