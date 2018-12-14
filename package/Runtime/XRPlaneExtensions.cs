@@ -10,7 +10,8 @@ namespace UnityEngine.XR.ARExtensions
     public static class XRPlaneExtensions
     {
         /// <summary>
-        /// For internal use. Allows a plane provider to register for the GetTrackingState extension
+        /// For internal use. Allows a plane provider to register for the
+        /// <see cref="GetTrackingState(XRPlaneSubsystem, TrackableId)"/> extension.
         /// </summary>
         /// <param name="subsystemId">The string name associated with the plane provider to extend.</param>
         /// <param name="handler">A method that returns the <c>TrackingState</c> of the given <c>TrackableId</c>.</param>
@@ -20,13 +21,28 @@ namespace UnityEngine.XR.ARExtensions
         }
 
         /// <summary>
-        /// For internal use. Allows a plane provider to register for the <see cref="GetNativePtr(XRPlaneSubsystem, TrackableId)"/>.
+        /// For internal use. Allows a plane provider to register for the
+        /// <see cref="GetNativePtr(XRPlaneSubsystem, TrackableId)"/> extension.
         /// </summary>
         /// <param name="subsystemId">The string name associated with the plane provider to extend.</param>
         /// <param name="handler">A method that returns the <c>IntPtr</c> associated with a given <c>TrackableId</c>.</param>
         public static void RegisterGetNativePtrHandler(string subsystemId, Func<XRPlaneSubsystem, TrackableId, IntPtr> handler)
         {
             s_GetNativePtrDelegates[subsystemId] = handler;
+        }
+
+        /// <summary>
+        /// For internal use. Allows a plane provider to register for the
+        /// <see cref="TrySetPlaneDetectionFlags(XRPlaneSubsystem, PlaneDetectionFlags)"/> extension.
+        /// </summary>
+        /// <param name="subsystemId">The string name associated with the plane provider to extend.</param>
+        /// <param name="handler">A method that attempts to set the plane detection flags and returns <c>true</c>
+        /// if successful, or <c>false</c> otherwise.</param>
+        public static void RegisterTrySetPlaneDetectionFlagsHandler(
+            string subsystemId,
+            Func<XRPlaneSubsystem, PlaneDetectionFlags, bool> handler)
+        {
+            s_TrySetPlaneDetectionFlagsDelegates[subsystemId] = handler;
         }
 
         /// <summary>
@@ -64,6 +80,26 @@ namespace UnityEngine.XR.ARExtensions
             return s_GetNativePtrDelegate(planeSubsystem, planeId);
         }
 
+        /// <summary>
+        /// Attempt to set the <see cref="PlaneDetectionFlags"/>.
+        /// </summary>
+        /// <param name="planeSubsystem">The <c>XRPlaneSubsystem</c> being extended.</param>
+        /// <param name="flags">The plane detection mode(s) to enable.</param>
+        /// <returns><c>true</c> if the flags were successfully set, <c>false</c> otherwise.</returns>
+        public static bool TrySetPlaneDetectionFlags(this XRPlaneSubsystem planeSubsystem, PlaneDetectionFlags flags)
+        {
+            if (planeSubsystem == null)
+                throw new ArgumentNullException("planeSubsystem");
+
+            return s_TrySetPlaneDetectionFlagsDelegate(planeSubsystem, flags);
+        }
+
+        static bool DefaultTrySetPlaneDetectionFlags(
+            XRPlaneSubsystem planeSubsystem, PlaneDetectionFlags flags)
+        {
+            return false;
+        }
+
         static IntPtr DefaultGetNativePtr(XRPlaneSubsystem referencePointSubsystem,
             TrackableId trackableId)
         {
@@ -85,6 +121,7 @@ namespace UnityEngine.XR.ARExtensions
                 var id = planeSubsystem.SubsystemDescriptor.id;
                 s_GetNativePtrDelegate = RegistrationHelper.GetValueOrDefault(s_GetNativePtrDelegates, id, DefaultGetNativePtr);
                 s_GetTrackingStateDelegate = RegistrationHelper.GetValueOrDefault(s_GetTrackingStateDelegates, id, DefaultGetTrackingState);
+                s_TrySetPlaneDetectionFlagsDelegate = RegistrationHelper.GetValueOrDefault(s_TrySetPlaneDetectionFlagsDelegates, id, DefaultTrySetPlaneDetectionFlags);
             }
         }
 
@@ -92,6 +129,7 @@ namespace UnityEngine.XR.ARExtensions
         {
             s_GetNativePtrDelegate = DefaultGetNativePtr;
             s_GetTrackingStateDelegate = DefaultGetTrackingState;
+            s_TrySetPlaneDetectionFlagsDelegate = DefaultTrySetPlaneDetectionFlags;
         }
 
         static XRPlaneExtensions()
@@ -103,10 +141,15 @@ namespace UnityEngine.XR.ARExtensions
 
         static Func<XRPlaneSubsystem, TrackableId, TrackingState> s_GetTrackingStateDelegate;
 
+        static Func<XRPlaneSubsystem, PlaneDetectionFlags, bool> s_TrySetPlaneDetectionFlagsDelegate;
+
         static Dictionary<string, Func<XRPlaneSubsystem, TrackableId, IntPtr>> s_GetNativePtrDelegates =
             new Dictionary<string, Func<XRPlaneSubsystem, TrackableId, IntPtr>>();
 
         static Dictionary<string, Func<XRPlaneSubsystem, TrackableId, TrackingState>> s_GetTrackingStateDelegates =
             new Dictionary<string, Func<XRPlaneSubsystem, TrackableId, TrackingState>>();
+
+        static Dictionary<string, Func<XRPlaneSubsystem, PlaneDetectionFlags, bool>> s_TrySetPlaneDetectionFlagsDelegates =
+            new Dictionary<string, Func<XRPlaneSubsystem, PlaneDetectionFlags, bool>>();
     }
 }

@@ -4,7 +4,18 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.0.0-preview.6] - 2018-10-06
+## [1.0.0-preview.7] - 2018-12-13
+### Improvements
+- Add support for x86 and ARM64 Android architectures.
+- Plane detection modes: Add ability to selectively enable detection for horizontal, vertical, or both types of planes.
+- Add support for setting the camera focus mode.
+- Add support for enumerating and setting a camera image configuration, which affects the resolution and possibly framerate of the hardware camera used for AR.
+- Add Android x86_64 support.
+
+### Fixes
+- Remove use of deprecated `PlayerSettings.strippingLevel` API which threw a warning in 2018.3.
+
+## [1.0.0-preview.6] - 2018-11-06
 ### Fixes
 - Fix crash when repeatedly enabling and disabling AR
 

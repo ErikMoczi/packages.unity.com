@@ -1,4 +1,5 @@
 using System;
+using Unity.Collections;
 
 namespace UnityEngine.XR.ARExtensions
 {

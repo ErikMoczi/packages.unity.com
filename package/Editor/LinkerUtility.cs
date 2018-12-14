@@ -23,7 +23,11 @@ namespace UnityEditor.XR.ARExtensions
         {
             return
                 (PlayerSettings.GetScriptingBackend(targetGroup) == ScriptingImplementation.IL2CPP) ||
+#if UNITY_2018_3_OR_NEWER
+                (PlayerSettings.GetManagedStrippingLevel(targetGroup) != ManagedStrippingLevel.Disabled);
+#else
                 (PlayerSettings.strippingLevel != StrippingLevel.Disabled);
+#endif
         }
 
         /// <summary>
