@@ -1,1 +1,1 @@
-# tracking unity packages
+Face Subsystem Definition. The generic API definition of a standalone face subsystem.  Client applications can use this API to access AR Face Tracking data in a generic way from providers. Face tracking providers will depend on this package and implement a subset of these APIs. Providers will specify which features they support by populating the face subsystem descriptor appropriately.
