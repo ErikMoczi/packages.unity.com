@@ -10,20 +10,22 @@ namespace UnityEditor.Experimental.U2D.IK
         private static class Contents
         {
             public static readonly GUIContent constrainRotationLabel = new GUIContent("Constrain Rotation", "Set Effector's rotation to Target");
-            public static readonly GUIContent restoreDefaultPoseLabel = new GUIContent("Restore Default Pose", "Restore transform's rotation to default value before solving the IK");
+            public static readonly GUIContent solveFromDefaultPoseLabel = new GUIContent("Solve from Default Pose", "Restore transform's rotation to default value before solving the IK");
             public static readonly GUIContent weightLabel = new GUIContent("Weight", "Blend between Forward and Inverse Kinematics");
+            public static readonly string restoreDefaultPoseString = "Restore Default Pose";
+            public static readonly string createTargetString = "Create Target";
         }
 
         private SerializedProperty m_ConstrainRotationProperty;
-        private SerializedProperty m_RestoreDefaultPoseProperty;
+        private SerializedProperty m_SolveFromDefaultPoseProperty;
         private SerializedProperty m_WeightProperty;
 
         private void SetupProperties()
         {
-            if(m_ConstrainRotationProperty == null || m_RestoreDefaultPoseProperty == null || m_WeightProperty == null)
+            if(m_ConstrainRotationProperty == null || m_SolveFromDefaultPoseProperty == null || m_WeightProperty == null)
             {
                 m_ConstrainRotationProperty = serializedObject.FindProperty("m_ConstrainRotation");
-                m_RestoreDefaultPoseProperty = serializedObject.FindProperty("m_RestoreDefaultPose");
+                m_SolveFromDefaultPoseProperty = serializedObject.FindProperty("m_SolveFromDefaultPose");
                 m_WeightProperty = serializedObject.FindProperty("m_Weight");
             }
         }
@@ -33,7 +35,7 @@ namespace UnityEditor.Experimental.U2D.IK
             SetupProperties();
 
             EditorGUILayout.PropertyField(m_ConstrainRotationProperty, Contents.constrainRotationLabel);
-            EditorGUILayout.PropertyField(m_RestoreDefaultPoseProperty, Contents.restoreDefaultPoseLabel);
+            EditorGUILayout.PropertyField(m_SolveFromDefaultPoseProperty, Contents.solveFromDefaultPoseLabel);
             EditorGUILayout.PropertyField(m_WeightProperty, Contents.weightLabel);
 
             EditorGUILayout.Space();
@@ -93,7 +95,7 @@ namespace UnityEditor.Experimental.U2D.IK
 
         private void DoRestoreDefaultPoseButton()
         {
-            if (GUILayout.Button("Restore Default Pose", GUILayout.MaxWidth(150f)))
+            if (GUILayout.Button(Contents.restoreDefaultPoseString, GUILayout.MaxWidth(150f)))
             {
                 foreach (var l_target in targets)
                 {
@@ -102,7 +104,7 @@ namespace UnityEditor.Experimental.U2D.IK
                     if (!solver.isValid)
                         continue;
 
-                    IKEditorManager.instance.Record(solver, "Restore Default Pose");
+                    IKEditorManager.instance.Record(solver, Contents.restoreDefaultPoseString);
 
                     for(int i = 0; i < solver.chainCount; ++i)
                     {
@@ -123,7 +125,7 @@ namespace UnityEditor.Experimental.U2D.IK
 
         private void DoCreateTargetButton()
         {
-            if (GUILayout.Button("Create Target", GUILayout.MaxWidth(125f)))
+            if (GUILayout.Button(Contents.createTargetString, GUILayout.MaxWidth(125f)))
             {
                 foreach (var l_target in targets)
                 {
@@ -138,14 +140,14 @@ namespace UnityEditor.Experimental.U2D.IK
                         
                         if(chain.target == null)
                         {
-                            Undo.RegisterCompleteObjectUndo(solver, "Create Target");
-                            
-                            chain.target = new GameObject(solver.name + "_Target").transform;
+                            Undo.RegisterCompleteObjectUndo(solver, Contents.createTargetString);
+
+                            chain.target = new GameObject(GameObjectUtility.GetUniqueNameForSibling(solver.transform, solver.name + "_Target")).transform;
                             chain.target.SetParent(solver.transform);
                             chain.target.position = chain.effector.position;
                             chain.target.rotation = chain.effector.rotation;
 
-                            Undo.RegisterCreatedObjectUndo(chain.target.gameObject, "Create Target");
+                            Undo.RegisterCreatedObjectUndo(chain.target.gameObject, Contents.createTargetString);
                         }
                     }
                 }

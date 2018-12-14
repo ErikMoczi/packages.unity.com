@@ -1,5 +1,6 @@
 using System.Collections.Generic;
-
+using System.Linq;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Experimental.U2D.Common;
 using UnityEngine.Experimental.U2D.IK;
@@ -89,7 +90,9 @@ namespace UnityEditor.Experimental.U2D.IK
             m_DirtyManagers.Clear();
             m_ChainPositionOverrides.Clear();
 
-            m_IKManagers.AddRange(GameObject.FindObjectsOfType<IKManager2D>());
+            var currentStage = StageUtility.GetCurrentStageHandle();
+            var managers =  currentStage.FindComponentsOfType<IKManager2D>().Where(x => x.gameObject.scene.isLoaded).ToArray();
+            m_IKManagers.AddRange(managers);
 
             foreach (IKManager2D manager in m_IKManagers)
             {

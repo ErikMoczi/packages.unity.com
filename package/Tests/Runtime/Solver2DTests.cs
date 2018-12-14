@@ -89,7 +89,7 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
         public void NewSolver_DefaultsAreSet()
         {
             Assert.AreEqual(true, solver.constrainRotation);
-            Assert.AreEqual(true, solver.restoreDefaultPose);
+            Assert.AreEqual(true, solver.solveFromDefaultPose);
             Assert.AreEqual(1f, solver.weight);
         }
 
@@ -284,7 +284,7 @@ namespace UnityEngine.Experimental.U2D.IK.Tests.Solver2DTests
         {
             var fabrik = solver as FabrikSolver2D;
             fabrik.iterations = 1;
-            solver.restoreDefaultPose = false;
+            solver.solveFromDefaultPose = false;
 
             var targetPosition = new Vector3(9.0f, 1.0f, 0.0f);
 

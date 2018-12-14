@@ -17,6 +17,8 @@ namespace UnityEditor.Experimental.U2D.IK
             public static readonly GUIContent findAllSolversLabel = new GUIContent("Find Solvers", "Find all applicable solvers handled by this manager");
             public static readonly GUIContent weightLabel = new GUIContent("Weight", "Blend between Forward and Inverse Kinematics");
             public static readonly string listHeaderLabel = "IK Solvers";
+            public static readonly string createSolverString = "Create Solver";
+            public static readonly string restoreDefaultPoseString = "Restore Default Pose";
         }
 
         private ReorderableList m_ReorderableList;
@@ -100,7 +102,7 @@ namespace UnityEditor.Experimental.U2D.IK
         {
             Type solverType = param as Type;
 
-            GameObject solverGO = new GameObject("New " + solverType.Name);
+            GameObject solverGO = new GameObject(GameObjectUtility.GetUniqueNameForSibling(m_Manager.transform, "New " + solverType.Name));
             solverGO.transform.SetParent(m_Manager.transform);
             solverGO.transform.localPosition = Vector3.zero;
             solverGO.transform.rotation = Quaternion.identity;
@@ -108,8 +110,8 @@ namespace UnityEditor.Experimental.U2D.IK
 
             Solver2D solver = solverGO.AddComponent(solverType) as Solver2D;
 
-            Undo.RegisterCreatedObjectUndo(solverGO, "Create Solver");
-            Undo.RegisterCompleteObjectUndo(m_Manager, "Create Solver");
+            Undo.RegisterCreatedObjectUndo(solverGO, Contents.createSolverString);
+            Undo.RegisterCompleteObjectUndo(m_Manager, Contents.createSolverString);
             m_Manager.AddSolver(solver);
             EditorUtility.SetDirty(m_Manager);
 
@@ -141,13 +143,13 @@ namespace UnityEditor.Experimental.U2D.IK
 
         private void DoRestoreDefaultPoseButton()
         {
-            if (GUILayout.Button("Restore Default Pose", GUILayout.MaxWidth(150f)))
+            if (GUILayout.Button(Contents.restoreDefaultPoseString, GUILayout.MaxWidth(150f)))
             {
                 foreach (var l_target in targets)
                 {
                     var manager = l_target as IKManager2D;
 
-                    IKEditorManager.instance.Record(manager, "Restore Default Pose");
+                    IKEditorManager.instance.Record(manager, Contents.restoreDefaultPoseString);
 
                     foreach(var solver in manager.solvers)
                     {

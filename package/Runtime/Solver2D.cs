@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using UnityEngine.Serialization;
 
 namespace UnityEngine.Experimental.U2D.IK
 {
@@ -6,8 +8,9 @@ namespace UnityEngine.Experimental.U2D.IK
     {
         [SerializeField]
         private bool m_ConstrainRotation = true;
+        [FormerlySerializedAs("m_RestoreDefaultPose")]
         [SerializeField]
-        private bool m_RestoreDefaultPose = true;
+        private bool m_SolveFromDefaultPose = true;
         [SerializeField][Range(0f, 1f)]
         private float m_Weight = 1f;
 
@@ -25,10 +28,17 @@ namespace UnityEngine.Experimental.U2D.IK
             set { m_ConstrainRotation = value; }
         }
 
+        [Obsolete("restoreDefaultPose has been deprecated. Use solveFromDefaultPose instead (UnityUpgradable) -> solveFromDefaultPose")]
         public bool restoreDefaultPose
         {
-            get { return m_RestoreDefaultPose; }
-            set { m_RestoreDefaultPose = value; }
+            get { return m_SolveFromDefaultPose; }
+            set { m_SolveFromDefaultPose = value; }
+        }
+
+        public bool solveFromDefaultPose
+        {
+            get { return m_SolveFromDefaultPose; }
+            set { m_SolveFromDefaultPose = value; }
         }
 
         public bool isValid
@@ -104,7 +114,7 @@ namespace UnityEngine.Experimental.U2D.IK
                 var chain = GetChain(i);
                 var constrainTargetRotation = constrainRotation && chain.target != null;
 
-                if (m_RestoreDefaultPose)
+                if (m_SolveFromDefaultPose)
                     chain.RestoreDefaultPose(constrainTargetRotation);
             }
 

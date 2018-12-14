@@ -35,7 +35,7 @@ The following are properties which are common to all solvers:
 
 - Constrain Rotation
 - This constrains the rotation of the target to the rotation of the effector.
-- Restore Default Pose
+- Solve from Default Pose
 This restores the original positions of the Transforms to its initial state before the IK solution is applied.
 - Weight
 The weight is used to blend between the results of the IK solver positions and the original positions of the Transforms affected. A value of 0 means that the IK solution is ignored while a value of 1 means that the IK solution is fully applied. This is multiplied with the manager's weight.

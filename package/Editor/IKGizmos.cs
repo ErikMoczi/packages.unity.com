@@ -113,12 +113,13 @@ namespace UnityEditor.Experimental.U2D.IK
             IKManager2D manager = IKEditorManager.instance.FindManager(solver);
             foreach (Solver2D l_solver in manager.solvers)
             {
-                if(l_solver.allChainsHaveTargets)
+                if(l_solver == null || l_solver.allChainsHaveTargets)
                     continue;
                     
                 for (int i = 0; i < l_solver.chainCount; ++i)
                 {
                     var chain = l_solver.GetChain(i);
+                    if (chain.effector != null)
                         m_ChainPositionOverrides[chain] = chain.effector.position;
                 }
             }
