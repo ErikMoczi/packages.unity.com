@@ -90,7 +90,7 @@ namespace Unity.EditorCoroutines.Editor.Tests
 
             while (targetTime > EditorApplication.timeSinceStartup)
             {
-                if(EditorApplication.timeSinceStartup > targetTime - (waitTime * 0.5f) && obj != null)
+                if (EditorApplication.timeSinceStartup > targetTime - (waitTime * 0.5f) && obj != null)
                 {
                     obj = null;
                     GC.Collect(); //Halfway through the wait, collect the owner object

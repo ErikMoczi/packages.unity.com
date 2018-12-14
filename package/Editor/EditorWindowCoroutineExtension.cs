@@ -6,7 +6,7 @@ namespace Unity.EditorCoroutines.Editor
     public static class EditorWindowCoroutineExtension
     {
         /// <summary>
-        /// Start a editor coroutine, owned by the calling EditorWindow object.
+        /// Start an editor coroutine, owned by the calling EditorWindow object.
         /// </summary>
         /// <param name="routine"></param>
         /// <returns></returns>
@@ -16,7 +16,7 @@ namespace Unity.EditorCoroutines.Editor
         }
 
         /// <summary>
-        /// Stop a editor coroutine.
+        /// Stop an editor coroutine.
         /// </summary>
         /// <param name="coroutine"></param>
         public static void StopCoroutine(this EditorWindow window, EditorCoroutine coroutine)
