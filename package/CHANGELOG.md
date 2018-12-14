@@ -1,6 +1,7 @@
 # Changelog
+All notable changes to this package will be documented in this file.
 
-## [0.1.0-experimental] - 2018-01-19
+## [0.2.0] - 2018-12-11
 
 ### This is the first release of *Unity Package Localization*.
-This release contains the Locale framework used for defining what languages an application will support.
+-Contains preview of asset and string localization support.

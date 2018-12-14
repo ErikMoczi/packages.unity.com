@@ -2,49 +2,45 @@ using System.Linq;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
-using UnityEngine.Experimental.Localization;
+using UnityEngine.Localization;
 
-namespace UnityEditor.Experimental.Localization
+namespace UnityEditor.Localization
 {
-    class LocalizationBuildPlayer : IPreprocessBuild, IPostprocessBuild
+    class LocalizationBuildPlayer : IPreprocessBuildWithReport, IPostprocessBuildWithReport
     {
         LocalizationSettings m_Settings;
 
         Object[] m_OriginalPreloadedAssets;
 
+        bool m_RemoveFromPreloadedAssets;
+
         public int callbackOrder { get { return 0; } }
 
         public void OnPreprocessBuild(BuildReport report)
         {
-            m_Settings = LocalizationPlayerSettings.activeLocalizationSettings;
+            m_RemoveFromPreloadedAssets = false;
+            m_Settings = LocalizationPlayerSettings.ActiveLocalizationSettings;
             if (m_Settings == null)
                 return;
 
-            AddToPreloadedAssets(m_Settings);
+            // Add the localization settings to the preloaded assets.
+            m_OriginalPreloadedAssets = PlayerSettings.GetPreloadedAssets();
+            if (!m_OriginalPreloadedAssets.Contains(m_Settings))
+            {
+                var preloadedAssets = m_OriginalPreloadedAssets.ToList();
+                preloadedAssets.Add(m_Settings);
+                PlayerSettings.SetPreloadedAssets(preloadedAssets.ToArray());
+
+                // If we have to add the settings then we should also remove them.
+                m_RemoveFromPreloadedAssets = true;
+            }
         }
 
         public void OnPostprocessBuild(BuildReport report)
         {
-            if (m_Settings == null)
+            if (m_Settings == null || !m_RemoveFromPreloadedAssets)
                 return;
 
-            RemoveFromPreloadedAssets(m_Settings);
-        }
-
-        void AddToPreloadedAssets(LocalizationSettings ls)
-        {
-            m_OriginalPreloadedAssets = PlayerSettings.GetPreloadedAssets();
-
-            if (!m_OriginalPreloadedAssets.Contains(ls))
-            {
-                var preloadedAssets = m_OriginalPreloadedAssets.ToList();
-                preloadedAssets.Add(ls);
-                PlayerSettings.SetPreloadedAssets(preloadedAssets.ToArray());
-            }
-        }
-
-        void RemoveFromPreloadedAssets(LocalizationSettings ls)
-        {
             // Revert back to original state
             PlayerSettings.SetPreloadedAssets(m_OriginalPreloadedAssets);
         }

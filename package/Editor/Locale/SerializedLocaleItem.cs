@@ -1,50 +1,53 @@
 using UnityEditor.IMGUI.Controls;
-using UnityEngine.Experimental.Localization;
+using UnityEngine.Localization;
 
-namespace UnityEditor.Experimental.Localization
+namespace UnityEditor.Localization
 {
     class SerializedLocaleItem : TreeViewItem
     {
         SerializedObject m_SerializedObject;
 
-       
-        public SerializedObject serializedObject
+        public SerializedObject SerializedObject
         {
             get
             {
-                if(m_SerializedObject == null && reference != null)
+                if(m_SerializedObject == null && Reference != null)
                 {
-                    m_SerializedObject = new SerializedObject(reference);
+                    m_SerializedObject = new SerializedObject(Reference);
                 }
                 return m_SerializedObject;
             }
         }
 
-        public SerializedProperty property { get; set; }
-        public SerializedProperty nameProp { get { return GetProperty(k_NamePropertyName); } }
-        public SerializedProperty identifierIdProp { get { return GetProperty(k_IdPropertyName); } }
-        public SerializedProperty identifierCodeProp { get { return GetProperty(k_CodePropertyName); } }
-        public SerializedProperty fallbackProp { get { return GetProperty(k_FallbackPropertyName); } }
+        public SerializedProperty Property { get; set; }
+        public SerializedProperty NameProp { get { return GetProperty(k_NamePropertyName); } }
+        public SerializedProperty IdentifierIdProp { get { return GetProperty(k_IdPropertyName); } }
+        public SerializedProperty IdentifierCodeProp { get { return GetProperty(k_CodePropertyName); } }
+        public SerializedProperty FallbackProp { get { return GetProperty(k_FallbackPropertyName); } }
 
         SerializedProperty GetProperty(string propName)
         {
-            if (serializedObject == null)
+            if (SerializedObject == null)
                 return null;
-            return serializedObject.FindProperty(propName);
+            return SerializedObject.FindProperty(propName);
         }
 
-        public Locale reference
+        public Locale Reference
         {
             get
             {
-                return property.objectReferenceValue as Locale;
+                return Property.objectReferenceValue as Locale;
             }
             set
             {
-                if (property.objectReferenceValue == value)
-                    return;
-                
-                property.objectReferenceValue = value;
+                if (Property != null)
+                {
+                    if (Property.objectReferenceValue == value)
+                        return;
+
+                    Property.objectReferenceValue = value;
+                }
+
                 m_SerializedObject = null;
             }
         }
@@ -54,52 +57,60 @@ namespace UnityEditor.Experimental.Localization
         const string k_CodePropertyName = "m_Identifier.m_Code";
         const string k_FallbackPropertyName = "m_Fallback";
 
-        public override string displayName { get { return name + " " + identifierCode + " " + id; } }
+        public override string displayName { get { return Name + " " + IdentifierCode + " " + id; } }
 
-        public int identifierId
+        public int IdentifierId
         {
-            get { return identifierIdProp != null ? identifierIdProp.intValue : 0; }
+            get { return IdentifierIdProp != null ? IdentifierIdProp.intValue : 0; }
             set
             {
-                if (identifierIdProp != null)
-                    identifierIdProp.intValue = value;
+                if (IdentifierIdProp != null)
+                    IdentifierIdProp.intValue = value;
             }
         }
 
-        public string name
+        public string Name
         {
-            get { return nameProp != null ? nameProp.stringValue : string.Empty; }
+            get { return NameProp != null ? NameProp.stringValue : string.Empty; }
             set
             {
-                if(nameProp != null)
-                    nameProp.stringValue = value;
+                if(NameProp != null)
+                    NameProp.stringValue = value;
             }
         }
 
-        public string identifierCode
+        public string IdentifierCode
         {
-            get { return identifierCodeProp != null ? identifierCodeProp.stringValue : string.Empty; }
+            get { return IdentifierCodeProp != null ? IdentifierCodeProp.stringValue : string.Empty; }
             set
             {
-                if(identifierCodeProp != null)
-                    identifierCodeProp.stringValue = value;
+                if(IdentifierCodeProp != null)
+                    IdentifierCodeProp.stringValue = value;
             }
         }
 
-        public Locale fallback
+        public Locale Fallback
         {
-            get { return fallbackProp != null ? fallbackProp.objectReferenceValue as Locale : null;  }
+            get { return FallbackProp != null ? FallbackProp.objectReferenceValue as Locale : null;  }
             set
             {
-                if (fallbackProp != null)
-                    fallbackProp.objectReferenceValue = value;
+                if (FallbackProp != null)
+                    FallbackProp.objectReferenceValue = value;
             }
         }
 
         public SerializedLocaleItem(SerializedProperty prop)
         {
-            property = prop;
-            reference = prop.objectReferenceValue as Locale;
+            if (prop != null)
+            {
+                Property = prop;
+                Reference = prop.objectReferenceValue as Locale;
+            }
+        }
+
+        public SerializedLocaleItem(Locale locale)
+        {
+            m_SerializedObject = new SerializedObject(locale);
         }
     }
 }

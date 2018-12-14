@@ -1,79 +1,162 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using UnityEngine.Events;
 
-namespace UnityEngine.Experimental.Localization
+namespace UnityEngine.Localization
 {
+    public enum PreloadBehavior
+    {
+        Preload,
+        OnDemand
+    }
+
     /// <summary>
     /// The localization settings is the core component to the localization system.
     /// It provides the entry point to all player based localization features.
     /// </summary>
-    [CreateAssetMenu(menuName = "Localization/Empty Localization Settings", order = 0)]
     public class LocalizationSettings : ScriptableObject
     {
-        #if UNITY_EDITOR
         /// <summary>
-        /// In the editor the active localization settings asset is tracked by using the CustomObject API using this key.
+        /// The name to use when retrieving the LocalizationSettings from CustomObject API.
         /// </summary>
-        public const string ConfigName = "LocalizationSettings";
-        #endif
+        public const string ConfigName = "com.unity.localization.settings";
+
+        /// <summary>
+        /// Label used when searching Addressable assets for Locales.
+        /// </summary>
+        public const string LocaleLabel = "Locale";
 
         [SerializeField]
-        LocaleEvent m_SelectedLocaleChanged = new LocaleEvent();
+        PreloadBehavior m_PreloadBehavior = PreloadBehavior.OnDemand;
 
         [SerializeField]
         StartupLocaleSelector m_LocaleSelector;
 
         [SerializeField]
-        AvailableLocales m_AvailableLocales;
+        LocalesProvider m_AvailableLocales;
+
+        [SerializeField]
+        LocalizedAssetDatabase m_AssetDatabase;
+
+        [SerializeField]
+        LocalizedStringDatabase m_StringDatabase;
+
+        InitializationOperation m_InitializingOperation;
 
         Locale m_SelectedLocale;
+
+        public event Action<Locale> OnSelectedLocaleChanged;
 
         static LocalizationSettings s_Instance;
 
         /// <summary>
+        /// Indicates if there is a LocalizationSettings present. If one is not found will attempt to find one however
+        /// unlike <see cref="Instance"/> it will not create a default, if one can not be found.
+        /// </summary>
+        /// <value><c>true</c> if has settings; otherwise, <c>false</c>.</value>
+        public static bool HasSettings
+        {
+            get
+            {
+                if (s_Instance == null)
+                    s_Instance = GetInstanceDontCreateDefault();
+                return s_Instance != null;
+            }
+        }
+
+        /// <summary>
+        /// The localization system may not be immediately ready. Loading Locales, preloading assets etc.
+        /// This operation can be used to check when the system is ready. You can yield on this in a coroutine to wait.
+        /// </summary>
+        public static InitializationOperation InitializationOperation
+        {
+            get { return Instance.GetInitializationOperation(); }
+        }
+
+        /// <summary>
+        /// Does the LocalizationSettings exist and contain a string database?
+        /// </summary>
+        /// <value><c>true</c> if has string database; otherwise, <c>false</c>.</value>
+        public static bool HasStringDatabase
+        {
+            get { return HasSettings && s_Instance.m_StringDatabase != null; }
+        }
+
+        /// <summary>
         /// Singleton instance for the Localization Settings.
         /// </summary>
-        public static LocalizationSettings instance
+        public static LocalizationSettings Instance
         {
-            get { return s_Instance ?? (s_Instance = GetOrCreateSettings()); }
-            set{ s_Instance = value; }
+            get
+            {
+                if (s_Instance == null)
+                    s_Instance = GetOrCreateSettings();
+                return s_Instance;
+            }
+            set { s_Instance = value; }
+        }
+
+        /// <summary>
+        /// TODO: DOC
+        /// </summary>
+        public PreloadBehavior PreloadBehavior
+        {
+            get { return Instance.GetPreloadBehavior(); }
+            set { Instance.SetPreloadBehavior(value); }
         }
 
         /// <summary>
         /// <inheritdoc cref="StartupLocaleSelector"/>
         /// </summary>
-        public static StartupLocaleSelector startupLocaleSelector
+        public static StartupLocaleSelector StartupLocaleSelector
         {
-            get { return instance.GetStartupLocaleSelector(); }
-            set { instance.SetStartupLocaleSelector(value); }
+            get { return Instance.GetStartupLocaleSelector(); }
+            set { Instance.SetStartupLocaleSelector(value); }
         }
 
         /// <summary>
         /// <inheritdoc cref="AvailableLocales"/>
         /// </summary>
-        public static AvailableLocales availableLocales
+        public static LocalesProvider AvailableLocales
         {
-            get { return instance.GetAvailableLocales(); }
-            set { instance.SetAvailableLocales(value); }
+            get { return Instance.GetAvailableLocales(); }
+            set { Instance.SetAvailableLocales(value); }
+        }
+
+        /// <summary>
+        /// The asset database is responsible for providing localized assets.
+        /// </summary>
+        public static LocalizedAssetDatabase AssetDatabase
+        {
+            get { return Instance.GetAssetDatabase(); }
+            set { Instance.SetAssetDatabase(value); }
+        }
+
+        /// <summary>
+        /// The string database is responsible for providing localized string assets.
+        /// </summary>
+        public static LocalizedStringDatabase StringDatabase
+        {
+            get { return Instance.GetStringDatabase(); }
+            set { Instance.SetStringDatabase(value); }
         }
 
         /// <summary>
         /// The current selected locale. This is the locale that will be used when localizing assets.
         /// </summary>
-        public static Locale selectedLocale
+        public static Locale SelectedLocale
         {
-            get { return instance.GetSelectedLocale(); }
-            set { instance.SetSelectedLocale(value); }
+            get { return Instance.GetSelectedLocale(); }
+            set { Instance.SetSelectedLocale(value); }
         }
 
         /// <summary>
-        /// Event that is sent when the <see cref="selectedLocale"/> is changed.
+        /// Event that is sent when the <see cref="SelectedLocale"/> is changed.
         /// </summary>
-        public static LocaleEvent selectedLocaleChanged
+        public static event Action<Locale> SelectedLocaleChanged
         {
-            get { return instance.GetSelectedLocaleChangedEvent(); }
-            set { instance.SetSelectedLocaleChangedEvent(value); }
+            add { Instance.OnSelectedLocaleChanged += value; }
+            remove { Instance.OnSelectedLocaleChanged -= value; }
         }
 
         void OnEnable()
@@ -82,10 +165,60 @@ namespace UnityEngine.Experimental.Localization
             {
                 s_Instance = this;
             }
+
+            #if UNITY_EDITOR
+            // Properties may persist during runs in the editor, so we reset them here to keep each play consistent.
+            m_SelectedLocale = null;
+            m_InitializingOperation = null;
+            #endif
+
+            if (Application.isPlaying && m_AvailableLocales != null && m_LocaleSelector != null)
+                GetInitializationOperation();
+        }
+
+        #if UNITY_EDITOR
+        void OnDisable()
+        {
+            // Properties may persist during runs in the editor, so we reset them here to keep each play consistent.
+            m_SelectedLocale = null;
+            m_InitializingOperation = null;
+        }
+        #endif
+
+        /// <summary>
+        /// TODO: DOC
+        /// </summary>
+        /// <returns></returns>
+        public PreloadBehavior GetPreloadBehavior()
+        {
+            return m_PreloadBehavior;
         }
 
         /// <summary>
-        /// <inheritdoc cref="startupLocaleSelector"/>
+        /// TODO: DOC
+        /// </summary>
+        /// <param name="behavior"></param>
+        public void SetPreloadBehavior(PreloadBehavior behavior)
+        {
+            m_PreloadBehavior = behavior;
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="InitializationOperation"/>
+        /// </summary>
+        public InitializationOperation GetInitializationOperation()
+        {
+            if (m_InitializingOperation == null)
+            {
+                m_InitializingOperation = new InitializationOperation();
+                m_InitializingOperation.Start(this);
+            }
+
+            return m_InitializingOperation;
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="StartupLocaleSelector"/>
         /// </summary>
         public void SetStartupLocaleSelector(StartupLocaleSelector selector)
         {
@@ -93,7 +226,7 @@ namespace UnityEngine.Experimental.Localization
         }
 
         /// <summary>
-        /// <inheritdoc cref="startupLocaleSelector"/>
+        /// <inheritdoc cref="StartupLocaleSelector"/>
         /// </summary>
         public StartupLocaleSelector GetStartupLocaleSelector()
         {
@@ -101,65 +234,121 @@ namespace UnityEngine.Experimental.Localization
         }
 
         /// <summary>
-        /// <inheritdoc cref="availableLocales"/>
+        /// <inheritdoc cref="AvailableLocales"/>
         /// </summary>
-        public void SetAvailableLocales(AvailableLocales available)
+        public void SetAvailableLocales(LocalesProvider available)
         {
             m_AvailableLocales = available;
         }
 
         /// <summary>
-        /// <inheritdoc cref="availableLocales"/>
+        /// <inheritdoc cref="AvailableLocales"/>
         /// </summary>
-        public AvailableLocales GetAvailableLocales()
+        public LocalesProvider GetAvailableLocales()
         {
             return m_AvailableLocales;
         }
 
         /// <summary>
-        /// <inheritdoc cref="selectedLocale"/>
+        /// <inheritdoc cref="AssetDatabase"/>
+        /// </summary>
+        /// <param name="database"></param>
+        public void SetAssetDatabase(LocalizedAssetDatabase database)
+        {
+            m_AssetDatabase = database;
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="AssetDatabase"/>
+        /// </summary>
+        /// <returns></returns>
+        public LocalizedAssetDatabase GetAssetDatabase()
+        {
+            return m_AssetDatabase;
+        }
+
+        /// <summary>
+        /// Sets the string database to be used for localizing all strings.
+        /// </summary>
+        public void SetStringDatabase(LocalizedStringDatabase database)
+        {
+            m_StringDatabase = database;
+        }
+
+        /// <summary>
+        /// Returns the string database being used to localize all strings.
+        /// </summary>
+        /// <returns>The string database.</returns>
+        public LocalizedStringDatabase GetStringDatabase()
+        {
+            return m_StringDatabase;
+        }
+
+        /// <summary>
+        /// Sends out notifications when the locale has changed. Ensures the the events are sent in the correct order.
+        /// </summary>
+        /// <param name="locale">The new locale.</param>
+        void SendLocaleChangedEvents(Locale locale)
+        {
+            if (m_StringDatabase != null)
+                m_StringDatabase.OnLocaleChanged(locale);
+
+            if (m_AssetDatabase != null)
+                m_AssetDatabase.OnLocaleChanged(locale);
+
+            if (m_PreloadBehavior == PreloadBehavior.Preload)
+            {
+                var initOp = GetInitializationOperation();
+
+                initOp.ResetStatus();
+                initOp.Start(this);
+
+                initOp.Completed += (o) =>
+                {
+                    // Don't send the change event until preloading is completed.
+                    if (OnSelectedLocaleChanged != null)
+                        OnSelectedLocaleChanged(locale);
+                };
+            }
+            else if (OnSelectedLocaleChanged != null)
+            {
+                OnSelectedLocaleChanged(locale);
+            }
+        }
+
+        /// <summary>
+        /// Uses the Startup locale selector to select the most appropriate locale.
+        /// Does not send the locale changed event.
+        /// </summary>
+        internal void InitializeSelectedLocale()
+        {
+            Debug.Assert(m_AvailableLocales != null, "Available locales is null, can not pick a locale.");
+            m_SelectedLocale = StartupLocaleSelector.GetStartupLocale(m_AvailableLocales);
+            Debug.Assert(m_SelectedLocale != null, "No locale could be selected. Please check available locales and startup selector.");
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="SelectedLocale"/>
         /// </summary>
         public void SetSelectedLocale(Locale locale)
         {
             if (!ReferenceEquals(m_SelectedLocale, locale))
             {
                 m_SelectedLocale = locale;
-                m_SelectedLocaleChanged.Invoke(locale);
+                SendLocaleChangedEvents(locale);
             }
         }
 
         /// <summary>
-        /// <inheritdoc cref="selectedLocale"/>
+        /// <inheritdoc cref="SelectedLocale"/>
         /// </summary>
         public Locale GetSelectedLocale()
         {
-            if (m_SelectedLocale == null)
-            {
-                Debug.Assert(m_AvailableLocales != null, "Available locales is null, can not pick a selected locale.");
-                m_SelectedLocale = startupLocaleSelector.GetStartupLocale(m_AvailableLocales) ?? m_AvailableLocales.defaultLocale;
-            }
             return m_SelectedLocale;
-        }
-
-        /// <summary>
-        /// <inheritdoc cref="selectedLocaleChanged"/>
-        /// </summary>
-        public LocaleEvent GetSelectedLocaleChangedEvent()
-        {
-            return m_SelectedLocaleChanged;
-        }
-
-        /// <summary>
-        /// <inheritdoc cref="selectedLocaleChanged"/>
-        /// </summary>
-        public void SetSelectedLocaleChangedEvent(LocaleEvent localeEvent)
-        {
-            m_SelectedLocaleChanged = localeEvent;
         }
 
         public void OnLocaleRemoved(Locale locale)
         {
-            Debug.Log("Locale removed");
             if (locale == GetSelectedLocale())
                 SetSelectedLocale(null);
         }
@@ -170,7 +359,7 @@ namespace UnityEngine.Experimental.Localization
         /// <returns></returns>
         public static LocalizationSettings GetInstanceDontCreateDefault()
         {
-            if(s_Instance != null)
+            if (s_Instance != null)
                 return s_Instance;
 
             LocalizationSettings settings;
@@ -213,20 +402,32 @@ namespace UnityEngine.Experimental.Localization
             commandLine.name = "Command Line Locale Selector";
             var systemLocale = CreateInstance<SystemLocaleSelector>();
             systemLocale.name = "System Locale Selector";
-            var defaultLocale = CreateInstance<DefaultLocaleSelector>();
+            var defaultLocale = CreateInstance<SpecificLocaleSelector>();
             defaultLocale.name = "Default Locale Selector";
-            localeSelectorCollection.startupSelectors = new List<StartupLocaleSelector>{ commandLine, systemLocale, defaultLocale };
+            localeSelectorCollection.StartupSelectors = new List<StartupLocaleSelector> { commandLine, systemLocale, defaultLocale };
 
             // Locales
-            var localesCollection = CreateInstance<LocalesCollection>();
-            localesCollection.name = "Available Locales";
+            var localesCollection = CreateInstance<AddressableLocalesProvider>();
+            localesCollection.name = "Locales Provider";
             localizationSettings.m_AvailableLocales = localesCollection;
+
+            // Asset Database
+            var assetDb = CreateInstance<LocalizedAssetDatabase>();
+            assetDb.name = "Asset Database";
+            localizationSettings.m_AssetDatabase = assetDb;
+
+            // String Database
+            var resourcesStringDatabase = CreateInstance<LocalizedStringDatabase>();
+            resourcesStringDatabase.name = "String Database";
+            localizationSettings.m_StringDatabase = resourcesStringDatabase;
 
             if (createdDependencies != null)
             {
                 createdDependencies.Add(localeSelectorCollection);
                 createdDependencies.Add(localesCollection);
-                createdDependencies.AddRange(localeSelectorCollection.startupSelectors.Cast<ScriptableObject>());
+                createdDependencies.Add(assetDb);
+                createdDependencies.Add(resourcesStringDatabase);
+                createdDependencies.AddRange(localeSelectorCollection.StartupSelectors.Cast<ScriptableObject>());
             }
             return localizationSettings;
         }

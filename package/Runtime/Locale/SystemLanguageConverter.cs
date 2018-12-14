@@ -1,12 +1,12 @@
-namespace UnityEngine.Experimental.Localization
+namespace UnityEngine.Localization
 {
     public static class SystemLanguageConverter
     {
         /// <summary>
-        /// Converts a SystemLanguage enum into a CultureInfo code.
+        /// Converts a SystemLanguage enum into a CultureInfo Code.
         /// </summary>
-        /// <param name="lang">The SystemLanguage enum to convert into a code.</param>
-        /// <returns>The language code or an empty string if the value could not be converted.</returns>
+        /// <param name="lang">The SystemLanguage enum to convert into a Code.</param>
+        /// <returns>The language Code or an empty string if the value could not be converted.</returns>
         public static string GetSystemLanguageCultureCode(SystemLanguage lang)
         {
             switch (lang)

@@ -1,12 +1,12 @@
 ﻿using System.Globalization;
 using UnityEngine;
 
-namespace UnityEngine.Experimental.Localization
+namespace UnityEngine.Localization
 {
-    [CreateAssetMenu(menuName = "Localization/Startup Locale Selectors/System Locale Selector")]
+    [CreateAssetMenu(menuName = "Localization/Locale Selectors/System Locale Selector")]
     public class SystemLocaleSelector : StartupLocaleSelector
     {
-        public override Locale GetStartupLocale(AvailableLocales availableLocales)
+        public override Locale GetStartupLocale(LocalesProvider availableLocales)
         {
             Locale locale = null;
             if (Application.systemLanguage != SystemLanguage.Unknown)
@@ -17,19 +17,19 @@ namespace UnityEngine.Experimental.Localization
             if (locale == null)
             {
                 var cultureInfo = CultureInfo.CurrentUICulture;
-                locale = availableLocales.GetLocale(cultureInfo.LCID);
+                locale = availableLocales.GetLocale(cultureInfo);
                 if (locale == null)
                 {
                     // Attempt to use CultureInfo fallbacks to find the closest locale
                     while (!Equals(cultureInfo, CultureInfo.InvariantCulture) && locale == null)
                     {
-                        locale = availableLocales.GetLocale(cultureInfo.LCID);
+                        locale = availableLocales.GetLocale(cultureInfo);
                         cultureInfo = cultureInfo.Parent;
                     }
 
                     if (locale != null)
                     {
-                        Debug.Log(string.Format("Locale '{0}' is not supported, however the parent locale '{1}' is.", CultureInfo.CurrentUICulture, locale.identifier.cultureInfo));
+                        Debug.Log(string.Format("Locale '{0}' is not supported, however the parent locale '{1}' is.", CultureInfo.CurrentUICulture, locale.Identifier.CultureInfo));
                     }
                 }
             }

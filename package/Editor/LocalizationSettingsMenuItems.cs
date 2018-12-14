@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.Localization;
+using UnityEngine.Localization;
 
-namespace UnityEditor.Experimental.Localization
+namespace UnityEditor.Localization
 {
     class LocalizationSettingsMenuItems
     {
@@ -18,7 +18,7 @@ namespace UnityEditor.Experimental.Localization
                 "Yes",
                 "No"))
             {
-                LocalizationPlayerSettings.activeLocalizationSettings = ls;
+                LocalizationPlayerSettings.ActiveLocalizationSettings = ls;
             }
         }
 

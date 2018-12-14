@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 using NUnit.Framework;
-using UnityEngine.Experimental.Localization;
+using UnityEngine.Localization;
 
-namespace UnityEditor.Experimental.Localization.Tests
+namespace UnityEditor.Localization.Tests
 {
     [Category("Localization")]
     public class LocaleIdentifierVerification
@@ -11,13 +11,13 @@ namespace UnityEditor.Experimental.Localization.Tests
         public void SystemLanguageUnknownMapsToUndefined()
         {
             var localeId = new LocaleIdentifier(SystemLanguage.Unknown);
-            Assert.AreEqual(LocaleIdentifier.undefined, localeId);
+            Assert.AreEqual(LocaleIdentifier.Undefined, localeId);
         }
 
         [Test]
         public void UndefinedCultureInfoIsNull()
         {
-            Assert.IsNull(LocaleIdentifier.undefined.cultureInfo, "Expected undefined to have no CultureInfo.");
+            Assert.IsNull(LocaleIdentifier.Undefined.CultureInfo, "Expected undefined to have no CultureInfo.");
         }
     }
 }

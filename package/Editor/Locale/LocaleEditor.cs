@@ -1,6 +1,6 @@
-﻿using UnityEngine.Experimental.Localization;
+﻿using UnityEngine.Localization;
 
-namespace UnityEditor.Experimental.Localization
+namespace UnityEditor.Localization
 {
     [CustomEditor(typeof(Locale))]
     class LocaleEditor : Editor

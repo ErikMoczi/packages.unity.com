@@ -1,3 +1,5 @@
-# Localization
+# Localization 
 
-*This is an experimental release. Feedback can be provided through the forum here <URL>.*
+Experimental player localization system. Provides tools for localizing your built application.
+
+Further documentation is [here](Documentation~/localization.md)

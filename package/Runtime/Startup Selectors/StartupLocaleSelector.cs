@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace UnityEngine.Experimental.Localization
+namespace UnityEngine.Localization
 {
     /// <summary>
     /// Determines what locale should be used when the application starts or does not currently have an active locale.
@@ -12,6 +12,6 @@ namespace UnityEngine.Experimental.Localization
         /// </summary>
         /// <param name="availableLocales">The available locales to select from.</param>
         /// <returns>The selected locale or null.</returns>
-        public abstract Locale GetStartupLocale(AvailableLocales availableLocales);
+        public abstract Locale GetStartupLocale(LocalesProvider availableLocales);
     }
 }

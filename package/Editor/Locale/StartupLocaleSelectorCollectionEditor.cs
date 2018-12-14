@@ -1,8 +1,9 @@
-﻿using UnityEngine;
-using UnityEngine.Experimental.Localization;
+﻿using System;
+using UnityEngine;
+using UnityEngine.Localization;
 using UnityEditorInternal;
 
-namespace UnityEditor.Experimental.Localization
+namespace UnityEditor.Localization
 {
     [CustomEditor(typeof(StartupLocaleSelectorCollection))]
     class StartupLocaleSelectorCollectionEditor : Editor
@@ -10,6 +11,7 @@ namespace UnityEditor.Experimental.Localization
         SerializedProperty m_StartupSelectors;
 
         ReorderableList m_List;
+        Editor m_SelectedSelectorEditor;
 
         class Texts
         {
@@ -31,12 +33,39 @@ namespace UnityEditor.Experimental.Localization
             m_List = new ReorderableList(serializedObject, m_StartupSelectors);
             m_List.drawElementCallback = DrawListItem;
             m_List.drawHeaderCallback = DrawHeaderCallback;
+            m_List.onSelectCallback = OnSelectCallback;
+        }
+
+        void OnSelectCallback(ReorderableList list)
+        {
+            if (list.index != -1 && list.index <= m_StartupSelectors.arraySize)
+            {
+                var item = m_StartupSelectors.GetArrayElementAtIndex(list.index);
+                if (m_SelectedSelectorEditor == null || m_SelectedSelectorEditor.target != item.objectReferenceValue)
+                {
+                    CreateCachedEditor(item.objectReferenceValue, null, ref m_SelectedSelectorEditor);
+                }
+            }
+            else
+            {
+                m_SelectedSelectorEditor = null;
+            }
         }
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
             m_List.DoLayoutList();
+
+            if (m_SelectedSelectorEditor != null)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                m_SelectedSelectorEditor.OnInspectorGUI();
+                EditorGUILayout.EndVertical();
+                EditorGUI.indentLevel--;
+            }
+
             serializedObject.ApplyModifiedProperties();
         }
 

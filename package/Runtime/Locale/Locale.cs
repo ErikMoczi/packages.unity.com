@@ -1,32 +1,21 @@
 ﻿using System;
 using System.Globalization;
-using UnityEngine.Events;
-using UnityEngine;
 
-namespace UnityEngine.Experimental.Localization
+namespace UnityEngine.Localization
 {
-    [Serializable]
-    public class LocaleEvent : UnityEvent<Locale> {};
-
     /// <summary>
     /// The identifier containing the identification information for a language or regional variant.
     /// </summary>
     [Serializable]
     public struct LocaleIdentifier
     {
-        [SerializeField] int m_Id;
         [SerializeField] string m_Code;
         CultureInfo m_CultureInfo;
 
         /// <summary>
         /// Represents an undefined Local Identifier. One that does not define any language or region.
         /// </summary>
-        public static LocaleIdentifier undefined { get { return new LocaleIdentifier(-1, "undefined"); } }
-
-        /// <summary>
-        /// A unique number representing the Locale. When possible, this value is taken from the <see cref="cultureInfo"/> LCID property.
-        /// </summary>
-        public int id { get { return m_Id; } }
+        public static LocaleIdentifier Undefined { get { return new LocaleIdentifier("undefined"); } }
 
         /// <summary>
         /// The culture name in the format [language]-[region].
@@ -34,15 +23,15 @@ namespace UnityEngine.Experimental.Localization
         /// <remarks>
         /// For example, Language English would be 'en', Regional English(UK) would be 'en-GB' and Regional English(US) would be 'en-US'.
         /// </remarks>
-        public string code { get { return m_Code; } }
+        public string Code { get { return m_Code; } }
 
         /// <summary>
-        /// A <see cref="System.Globalization.CultureInfo"/> representation of the Locale.
+        /// A <see cref="CultureInfo"/> representation of the Locale.
         /// </summary>
         /// <remarks>
-        /// The id is used to query for a <see cref="System.Globalization.CultureInfo"/> unless its value is 0, in which case the <see cref="code"/> will be used.
+        /// The id is used to query for a <see cref="CultureInfo"/> unless its value is 0, in which case the <see cref="Code"/> will be used.
         /// </remarks>
-        public CultureInfo cultureInfo
+        public CultureInfo CultureInfo
         {
             get
             {
@@ -50,7 +39,7 @@ namespace UnityEngine.Experimental.Localization
                 {
                     try
                     {
-                        m_CultureInfo = m_Id != 0 ? CultureInfo.GetCultureInfo(m_Id) : CultureInfo.GetCultureInfo(m_Code);
+                        m_CultureInfo = CultureInfo.GetCultureInfo(m_Code);
                     }
                     catch (Exception)
                     {
@@ -61,35 +50,16 @@ namespace UnityEngine.Experimental.Localization
             }
         }
 
-        public LocaleIdentifier(int id, string code)
-        {
-            m_Id = id;
-            m_Code = code;
-            m_CultureInfo = null;
-        }
-
-        public LocaleIdentifier(int id)
-        {
-            m_Id = id;
-            m_Code = string.Empty;
-            m_CultureInfo = null;
-            if (cultureInfo != null)
-                m_Code = cultureInfo.Name;
-        }
-
         public LocaleIdentifier(string code)
         {
             if (string.IsNullOrEmpty(code))
             {
-                this = undefined;
+                this = Undefined;
                 return;
             }
 
-            m_Id = 0;
             m_Code = code;
             m_CultureInfo = null;
-            if (cultureInfo != null)
-                m_Id = cultureInfo.LCID;
         }
 
         public LocaleIdentifier(CultureInfo culture)
@@ -97,7 +67,6 @@ namespace UnityEngine.Experimental.Localization
             if (culture == null)
                 throw new ArgumentNullException("culture");
 
-            m_Id = culture.LCID;
             m_Code = culture.Name;
             m_CultureInfo = culture;
         }
@@ -105,11 +74,6 @@ namespace UnityEngine.Experimental.Localization
         public LocaleIdentifier(SystemLanguage systemLanguage)
             : this(SystemLanguageConverter.GetSystemLanguageCultureCode(systemLanguage))
         {
-        }
-
-        public static implicit operator LocaleIdentifier(int id)
-        {
-            return new LocaleIdentifier(id);
         }
 
         public static implicit operator LocaleIdentifier(string code)
@@ -129,7 +93,7 @@ namespace UnityEngine.Experimental.Localization
 
         public override string ToString()
         {
-            return string.Format("[{0}:{1}]", id, code);
+            return string.Format("{0}({1})", CultureInfo != null ? CultureInfo.EnglishName : "Custom" , Code);
         }
 
         public override bool Equals(object obj)
@@ -140,18 +104,14 @@ namespace UnityEngine.Experimental.Localization
 
         public bool Equals(LocaleIdentifier other)
         {
-            return id == other.id && code == other.code;
+            return Code == other.Code;
         }
 
         public override int GetHashCode()
         {
-            if (cultureInfo != null)
-                return cultureInfo.GetHashCode();
-
-            if (string.IsNullOrEmpty(code))
-                return code.GetHashCode();
-
-            return id;
+            if (CultureInfo != null)
+                return CultureInfo.GetHashCode();
+            return !string.IsNullOrEmpty(Code) ? Code.GetHashCode() : base.GetHashCode();
         }
 
         public static bool operator==(LocaleIdentifier l1, LocaleIdentifier l2)
@@ -168,16 +128,15 @@ namespace UnityEngine.Experimental.Localization
     /// <summary>
     /// A Locale represents a language. It supports regional variations and can be configured with an optional fallback locale.
     /// </summary>
-    [CreateAssetMenu(menuName = "Localization/Empty Locale")]
-    public class Locale : ScriptableObject, ISerializationCallbackReceiver
+    public class Locale : ScriptableObject
     {
         [SerializeField] LocaleIdentifier m_Identifier;
         [SerializeField] Locale m_Fallback;
 
         /// <summary>
-        /// The identifier contains the identifying information such as the id and culture code for this Locale.
+        /// The identifier contains the identifying information such as the id and culture Code for this Locale.
         /// </summary>
-        public LocaleIdentifier identifier
+        public LocaleIdentifier Identifier
         {
             get { return m_Identifier; }
             set { m_Identifier = value; }
@@ -192,7 +151,7 @@ namespace UnityEngine.Experimental.Localization
         /// then the word Color could be localized to ‘Colour’ however other words would fall back from English(UK) to English(US).
         /// Note: The fallback locale must be added to the active LocalizationSettings or it will not be possible to retrieve it.
         /// </remarks>
-        public Locale fallbackLocale
+        public Locale FallbackLocale
         {
             get
             {
@@ -205,16 +164,14 @@ namespace UnityEngine.Experimental.Localization
             }
         }
 
-        void ISerializationCallbackReceiver.OnBeforeSerialize()
+        protected virtual void OnEnable()
         {
             ValidateFallback();
         }
 
-        void ISerializationCallbackReceiver.OnAfterDeserialize()
-        {
-            ValidateFallback();
-        }
- 
+        /// <summary>
+        /// Check we don't have a fallback locale chain that leads back to this locale and an infinite loop.
+        /// </summary>
         void ValidateFallback()
         {
             Locale parent = m_Fallback;
@@ -225,7 +182,7 @@ namespace UnityEngine.Experimental.Localization
                     Debug.LogWarning("Cyclic fallback linking detected. Can not set fallback locale as it would create an infinite loop.", this);
                     m_Fallback = null;
                 }
-                parent = parent.fallbackLocale;
+                parent = parent.FallbackLocale;
             }
         }
 
@@ -233,9 +190,9 @@ namespace UnityEngine.Experimental.Localization
         {
             var locale = CreateInstance<Locale>();
             locale.m_Identifier = new LocaleIdentifier(code);
-            if (locale.m_Identifier.cultureInfo != null)
+            if (locale.m_Identifier.CultureInfo != null)
             {
-                locale.name = locale.m_Identifier.cultureInfo.EnglishName;
+                locale.name = locale.m_Identifier.CultureInfo.EnglishName;
             }
             return locale;
         }
@@ -244,9 +201,9 @@ namespace UnityEngine.Experimental.Localization
         {
             var locale = CreateInstance<Locale>();
             locale.m_Identifier = identifier;
-            if (locale.m_Identifier.cultureInfo != null)
+            if (locale.m_Identifier.CultureInfo != null)
             {
-                locale.name = locale.m_Identifier.cultureInfo.EnglishName;
+                locale.name = locale.m_Identifier.CultureInfo.EnglishName;
             }
             return locale;
         }
@@ -263,7 +220,7 @@ namespace UnityEngine.Experimental.Localization
 
         public override string ToString()
         {
-            return m_Identifier + " " + name;
+            return name;
         }
     }
 }
