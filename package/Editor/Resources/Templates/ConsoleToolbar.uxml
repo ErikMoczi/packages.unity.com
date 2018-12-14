@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML
+        xmlns:engine="UnityEngine.Experimental.UIElements"
+        xmlns:imw="UnityEditor.ImmediateWindow.UI"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:egnine="UnityEngine.Experimental.UIElements"
+        xsi:schemaLocation="UnityEngine.Experimental.UIElements UIElementsSchema/UnityEngine.Experimental.UIElements.xsd
+                            UnityEditor.PackageManager.UI UIElementsSchema/UnityEditor.ImmediateWindow.UI.xsd">
+    <engine:VisualElement name="toolbarView">
+        <engine:VisualElement name="toolbarLeft">
+            <engine:Label name="templates" class="toolbarButton space pulldown" text="Templates ▾" tooltip="Quick code templates to get started with."/>
+            <engine:Label class="toolbarButton"/>
+        </engine:VisualElement>
+        <engine:VisualElement name="toolbarRight">
+            <!-- <engine:Label name="toolbarAdvancedButton" class="toolbarButton pulldown" text="Advanced ▾"/> -->
+            <!-- imw:SearchToolbar name="toolbarSearch"/ -->
+            <engine:Button name="reset" text="Reset" tooltip="Reset execution context (will erase objects you'v created in this session)."/>
+            <engine:Label name="run" class="icon play" tooltip="Execute script"/>
+
+            <egnine:VisualElement name="toggleContainer" tooltip="View private members when inspecting objects.">
+                <engine:Label text="View Private" class="label"/>
+                <engine:Toggle name="viewPrivate" value="true" class="toggle"/>
+            </egnine:VisualElement>
+            <engine:Label name="context" class="icon context" tooltip="Show context explorer to browse namespaces, assemblies and objects."/>
+            <engine:Label name="multiline" class="icon popup" tooltip="Full script mode."/>
+            <engine:Label name="clear" class="icon cancel" tooltip="Clear console output."/>
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

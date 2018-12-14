@@ -1,0 +1,659 @@
+/***************************************************************************************************
+
+														*** Auto-Generated - Do not modify .uss File ***
+
+																		Only Modify Main.scss
+
+***************************************************************************************************/
+.display-none {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 0;
+  width: 0;
+  height: 0;
+  min-height: 0;
+  max-height: 0;
+  min-width: 0;
+  max-width: 0;
+  border-top-width: 0;
+  border-left-width: 0;
+  border-bottom-width: 0;
+  border-right-width: 0;
+  border-top-width: 0;
+  border-left-width: 0;
+  border-bottom-width: 0;
+  border-right-width: 0;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+}
+
+.row, .quickInspector .expandable .viewModes, .quickInspector .expandable .viewModes TypeViewSelection, .quickInspector .expandable ExpandedMethodGroup Method .parameter {
+  flex: 0 0 auto;
+  flex-direction: row;
+}
+
+.column, #immediateWindow .scrollView {
+  flex: 1 0 0;
+  flex-direction: column;
+}
+
+.tag {
+  border-top-width: 1;
+  border-left-width: 1;
+  border-bottom-width: 1;
+  border-right-width: 1;
+  padding-top: 1;
+  padding-left: 3;
+  padding-bottom: 1;
+  padding-right: 3;
+  font-size: 9;
+  border-radius: 5;
+  -unity-text-align: middle-center;
+  border-color: #000000;
+  color: #000000;
+}
+
+#immediateWindow {
+  flex: 1 0 0;
+}
+#immediateWindow .root {
+  flex: 1 0 0;
+}
+#immediateWindow #windowContent {
+  flex: 1 0 0;
+  flex-direction: row;
+}
+#immediateWindow .scrollView #VerticalScroller {
+  bottom: 0;
+}
+#immediateWindow .scrollView #HorizontalScroller {
+  height: 0;
+}
+#immediateWindow .scrollView #ContentViewport {
+  bottom: 0;
+}
+#immediateWindow .scrollView #ContentViewport #ContentView {
+  right: 0;
+  left: 0;
+}
+#immediateWindow .no-background, #immediateWindow .span {
+  background: rgba(0, 0, 0, 0);
+  background-image: none;
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+}
+#immediateWindow .alert {
+  background-color: rgba(200, 0, 0, 0.8);
+  border-color: #FF0000;
+  flex-direction: row;
+  -unity-word-wrap: true;
+  border-top-width: 1;
+  border-left-width: 1;
+  border-bottom-width: 1;
+  border-right-width: 1;
+  padding-top: 5;
+  padding-left: 10;
+  padding-bottom: 5;
+  padding-right: 10;
+}
+#immediateWindow .alert #alertMessage {
+  flex: 1 0 0;
+  color: #f4f4f4;
+  -unity-word-wrap: true;
+  overflow: hidden;
+}
+#immediateWindow .alert #close {
+  flex: 0 0 auto;
+  max-height: 30;
+  left: 5;
+  flex: 0 0 auto;
+  padding-top: 3;
+  padding-left: 3;
+  padding-bottom: 4;
+  padding-right: 3;
+  -unity-slice-top: 4;
+  -unity-slice-left: 6;
+  -unity-slice-bottom: 4;
+  -unity-slice-right: 6;
+}
+#immediateWindow .alert #close.display-none {
+  position: absolute;
+  border-radius: 0;
+  width: 0;
+  height: 0;
+  min-height: 0;
+  max-height: 0;
+  min-width: 0;
+  max-width: 0;
+  border-top-width: 0;
+  border-left-width: 0;
+  border-bottom-width: 0;
+  border-right-width: 0;
+  min-width: 0;
+  border-top-width: 0;
+  border-left-width: 0;
+  border-bottom-width: 0;
+  border-right-width: 0;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+  -unity-slice-top: 0;
+  -unity-slice-left: 0;
+  -unity-slice-bottom: 0;
+  -unity-slice-right: 0;
+  visibility: hidden;
+}
+#immediateWindow .alert #close:hover {
+  color: #000000;
+}
+#immediateWindow Button.compact {
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+}
+#immediateWindow .spinner {
+  flex: 0 0 auto;
+  top: -7;
+  left: -7;
+  min-width: 14;
+  min-height: 14;
+  max-width: 14;
+  max-height: 14;
+  background-image: resource("Images/Light/loading");
+}
+#immediateWindow .largeSpinner {
+  flex: 0 0 auto;
+  top: -16;
+  left: -16;
+  min-width: 32;
+  min-height: 32;
+  max-width: 32;
+  max-height: 32;
+  background-image: resource("Images/Light/loading");
+}
+#immediateWindow #console {
+  flex: 1 0 0;
+}
+#immediateWindow #console .console-log {
+  -unity-word-wrap: true;
+}
+#immediateWindow #console #console-mode-singleline {
+  flex: 1 0 0;
+}
+#immediateWindow #console #console-mode-multiline {
+  flex: 1 0 0;
+}
+#immediateWindow #console #console-output {
+  flex: 1 0 0;
+}
+#immediateWindow #console #console-output #output-content {
+  flex: 1 0 0;
+}
+#immediateWindow #console #console-output .content-view {
+  flex: 0 0 auto;
+}
+#immediateWindow #console #console-output .output-item {
+  flex: 0 0 auto;
+  margin-top: 2;
+  margin-left: 4;
+  margin-bottom: 2;
+  margin-right: 4;
+  padding-top: 1;
+  padding-left: 2;
+  padding-bottom: 2;
+  padding-right: 2;
+  border-top-width: 0;
+  border-left-width: 0;
+  border-bottom-width: 1;
+  border-right-width: 0;
+  border-color: rgba(0, 0, 0, 0.05);
+}
+#immediateWindow #console #console-input {
+  bottom: 0;
+}
+#immediateWindow #console #console-input-multiline {
+  bottom: 0;
+  height: 250;
+}
+#immediateWindow #sideview {
+  flex: 0.5 0 0;
+  border-left-width: 1;
+  border-color: rgba(0, 0, 0, 0.25);
+}
+#immediateWindow #context {
+  flex: 1 0 0;
+}
+#immediateWindow #context #contextInspector {
+  flex: 1 0 0;
+}
+#immediateWindow #context #contextInspector .context-inspector-scrollview {
+  flex: 1 0 0;
+}
+#immediateWindow #context .context-inspector {
+  flex: 1 0 0;
+}
+#immediateWindow #context .context-inspector .assembly-label {
+  flex: 1 0 0;
+  -unity-font-style: bold;
+  -unity-word-wrap: true;
+}
+#immediateWindow #context .context-inspector .namespace {
+  margin-left: 10;
+}
+#immediateWindow #context .context-inspector .namespace .namespace-label {
+  flex: 1 0 0;
+  -unity-font-style: italic;
+  -unity-word-wrap: true;
+}
+#immediateWindow #context .context-inspector .namespace .object-container {
+  flex: 1 0 0;
+}
+#immediateWindow #context .context-inspector .namespace .object-container .type {
+  margin-left: 15;
+}
+#immediateWindow #context .context-inspector .namespace .object-container .typeProperties {
+  margin-left: 15;
+}
+#immediateWindow #context .context-inspector .namespace .object-container .typename {
+  color: #8e2296;
+}
+#immediateWindow #context .context-inspector .namespace .object-container .propertyLabel {
+  color: #1c01d2;
+}
+
+#toggleContainer {
+  flex: 0 0 auto;
+  flex-direction: row;
+}
+#toggleContainer .label {
+  margin-right: 0;
+}
+#toggleContainer .toggle {
+  margin-left: 0;
+}
+
+.icon.context {
+  max-width: 14;
+  max-height: 14;
+  background-image: resource("Builtin Skins/LightSkin/Images/ShurikenModuleActive.png");
+}
+.icon.context.pressed {
+  background-image: resource("Builtin Skins/LightSkin/Images/ShurikenEmitterActive.png");
+}
+.icon.node0 {
+  width: 14;
+  height: 14;
+  background-image: resource("Builtin Skins/LightSkin/Images/node0 hex.png");
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+}
+.icon.node0.pressed {
+  background-image: resource("Builtin Skins/LightSkin/Images/node0 hex on.png");
+}
+.icon.node1 {
+  width: 14;
+  height: 14;
+  background-image: resource("Builtin Skins/LightSkin/Images/node1 hex.png");
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+}
+.icon.node1.pressed {
+  background-image: resource("Builtin Skins/LightSkin/Images/node1 hex on.png");
+}
+.icon.node2 {
+  width: 14;
+  height: 14;
+  background-image: resource("Builtin Skins/LightSkin/Images/node2 hex.png");
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+}
+.icon.node2.pressed {
+  background-image: resource("Builtin Skins/LightSkin/Images/node2 hex on.png");
+}
+.icon.popup {
+  width: 14;
+  height: 14;
+  background-image: resource("Builtin Skins/LightSkin/Images/popup.png");
+}
+.icon.popup.pressed {
+  background-image: resource("Builtin Skins/LightSkin/Images/popup act.png");
+}
+.icon.play {
+  width: 14;
+  height: 14;
+  background-image: resource("Builtin Skins/LightSkin/Images/IN foldout act.png");
+}
+.icon.play.pressed {
+  background-image: resource("Builtin Skins/LightSkin/Images/IN foldout.png");
+}
+.icon.cancel {
+  width: 14;
+  height: 14;
+  background-image: resource("Builtin Skins/LightSkin/Images/ol minus.png");
+}
+.icon.cancel.pressed {
+  background-image: resource("Builtin Skins/LightSkin/Images/ol minus act.png");
+}
+
+#toolbarContainer {
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: flex-start;
+  height: 18;
+}
+#toolbarContainer #toolbarView {
+  flex: 1 0 0;
+  flex-direction: row;
+  align-items: flex-start;
+  background-image: resource("Builtin Skins/LightSkin/Images/Toolbar.png");
+  margin-top: -1;
+  -unity-slice-top: 1;
+  -unity-slice-left: 1;
+  -unity-slice-bottom: 1;
+  -unity-slice-right: 1;
+}
+#toolbarContainer #toolbarView .toolbarButton {
+  flex: 1 0 0;
+  font-size: 9;
+  -unity-text-align: middle-center;
+  background-image: resource("Builtin Skins/LightSkin/Images/toolbar button.png");
+  flex: 0 0 auto;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+  -unity-slice-top: 4;
+  -unity-slice-left: 6;
+  -unity-slice-bottom: 4;
+  -unity-slice-right: 6;
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: -1;
+  padding-top: 0;
+  padding-left: 5;
+  padding-bottom: 0;
+  padding-right: 5;
+  height: 19;
+}
+#toolbarContainer #toolbarView .toolbarButton.display-none {
+  position: absolute;
+  border-radius: 0;
+  width: 0;
+  height: 0;
+  min-height: 0;
+  max-height: 0;
+  min-width: 0;
+  max-width: 0;
+  border-top-width: 0;
+  border-left-width: 0;
+  border-bottom-width: 0;
+  border-right-width: 0;
+  min-width: 0;
+  border-top-width: 0;
+  border-left-width: 0;
+  border-bottom-width: 0;
+  border-right-width: 0;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+  -unity-slice-top: 0;
+  -unity-slice-left: 0;
+  -unity-slice-bottom: 0;
+  -unity-slice-right: 0;
+  visibility: hidden;
+}
+#toolbarContainer #toolbarView .toolbarButton:hover {
+  color: #000000;
+}
+#toolbarContainer #toolbarView .toolbarButton.space {
+  margin-left: 7;
+}
+#toolbarContainer #toolbarView .toolbarButton.active {
+  background-image: resource("Builtin Skins/LightSkin/Images/toolbar button act.png");
+}
+#toolbarContainer #toolbarView .toolbarButton.pulldown:active {
+  background-image: resource("Builtin Skins/LightSkin/Images/toolbar button.png");
+}
+#toolbarContainer #toolbarView #toolbarLeft {
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: flex-start;
+}
+#toolbarContainer #toolbarView #toolbarRight {
+  flex: 1 0 0;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+#toolbarContainer #toolbarView #toolbarRight #toolbarSearch {
+  flex: 1 0 0;
+  height: 18;
+  max-width: 500;
+  flex-direction: row;
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: 5;
+}
+
+.arrow {
+  font-size: 8;
+  padding-top: 3;
+  margin-right: 2;
+}
+
+.quickInspector {
+  flex: 0 0 auto;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.quickInspector .value {
+  flex-direction: column;
+  justify-content: center;
+}
+.quickInspector .propertyLabelGroup {
+  flex-direction: row;
+  align-items: center;
+}
+.quickInspector .typename {
+  -unity-font-style: italic;
+  opacity: 0.5;
+  -unity-word-wrap: false;
+}
+.quickInspector .propertyValueGroup {
+  flex-direction: row;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+}
+.quickInspector .propertyValueGroup.private .propertyLabel {
+  color: #b95600;
+}
+.quickInspector .typeInspector {
+  flex: 1 0 0;
+  flex-wrap: wrap;
+}
+.quickInspector .row, .quickInspector .expandable .viewModes, .quickInspector .expandable .viewModes TypeViewSelection, .quickInspector .expandable ExpandedMethodGroup Method .parameter {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.quickInspector .isNumber {
+  color: #1c01d2;
+}
+.quickInspector .isNull {
+  -unity-font-style: italic;
+  color: #1c01d2;
+  padding-right: 2;
+}
+.quickInspector .isString {
+  color: #c51916;
+}
+.quickInspector .propertyLabel {
+  color: #8e2296;
+  -unity-word-wrap: false;
+  flex: 0 0 auto;
+}
+.quickInspector .enumerable .propertyLabel {
+  color: rgba(0, 0, 0, 0.5);
+  -unity-font-style: italic;
+}
+.quickInspector .empty {
+  opacity: 0.25;
+  -unity-font-style: italic;
+  -unity-word-wrap: true;
+}
+.quickInspector .span#pinned-symbol {
+  margin-left: 75;
+  -unity-font-style: italic;
+  opacity: 0.25;
+}
+.quickInspector .collapsedPropertyGroup, .quickInspector .collapsedArrayGroup {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  flex: 0 1 auto;
+  margin-left: 4;
+  margin-right: 4;
+}
+.quickInspector .collapsedPropertyGroup .typeInspector, .quickInspector .collapsedArrayGroup .typeInspector {
+  flex: 1 0 auto;
+  flex-wrap: wrap;
+}
+.quickInspector .expandedPropertyGroup, .quickInspector .expandedArrayGroup {
+  flex-direction: column;
+  justify-content: center;
+}
+.quickInspector .expandable .viewModes {
+  flex-wrap: wrap;
+}
+.quickInspector .expandable .viewModes TypeViewSelection {
+  flex-wrap: wrap;
+}
+.quickInspector .expandable .viewModes TypeViewSelection TypeViewMenu Label {
+  color: #d25a00;
+  -unity-font-style: italic;
+}
+.quickInspector .expandable ExpandedClassType .expandedClassLabel {
+  color: rgba(0, 0, 0, 0.5);
+}
+.quickInspector .expandable ExpandedInterfaceGroup Interface {
+  flex: 1 0 auto;
+  flex-direction: row;
+}
+.quickInspector .expandable ExpandedMethodGroup Method {
+  flex: 1 0 auto;
+  flex-direction: row;
+}
+.quickInspector .expandable ExpandedMethodGroup Method .name {
+  color: #B12697;
+}
+.quickInspector .expandable ExpandedMethodGroup Method .return {
+  margin-right: 4;
+  color: #6C6C6C;
+}
+.quickInspector .expandable ExpandedMethodGroup Method .parameter .parameterType {
+  color: #1c01d2;
+  margin-right: 4;
+}
+.quickInspector .expandable ExpandedMethodGroup Method .parameters {
+  flex: 0 1 auto;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.expandable {
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+}
+.expandable .expandedGroup {
+  margin-left: 10;
+}
+.expandable .collapseRow {
+  flex: 1 0 0;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.expandable .collapsedGroup {
+  flex: 1 1 auto;
+  flex-direction: row;
+}
+.expandable .collapseView {
+  flex: 0 1 auto;
+}
+.expandable .tools {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  align-self: flex-start;
+}
+.expandable .tools Button.compact {
+  height: 16;
+}
+
+.span {
+  color: #000000;
+  margin-top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+  padding-top: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  padding-right: 0;
+}
+.span.disabled {
+  opacity: 0.5;
+}
+.span.faded {
+  opacity: 0.75;
+}
+
+.text {
+  min-height: 9;
+}
