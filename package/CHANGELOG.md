@@ -7,3 +7,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [1.0.0-preview.3] - 2018-10-03
 Renamed to be more generic
 Published to staging
+
+## [1.0.0-preview.4] - 2018-11-21
+Changed assembly name to 'Unity.Subsystem.Registration'
