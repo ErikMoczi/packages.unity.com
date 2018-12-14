@@ -52,8 +52,8 @@ namespace UnityEditor.ProBuilder
         [UserSetting]
         static Pref<float> s_VertexPointSize = new Pref<float>("graphics.vertexPointSize", 3f, SettingsScope.User);
 
-        [UserSetting("Graphics", "Handle Z Test", "The compare function to use when drawing mesh handles.")]
-        static Pref<CompareFunction> s_HandleCompareFunction = new Pref<CompareFunction>("graphics.handleZTest", CompareFunction.Always, SettingsScope.User);
+        [UserSetting]
+        static Pref<CompareFunction> s_HandleCompareFunction = new Pref<CompareFunction>("graphics.handleZTest", CompareFunction.LessEqual, SettingsScope.User);
 
         [UserSettingBlock("Graphics")]
         static void HandleColorPreferences(string searchContext)
@@ -74,6 +74,15 @@ namespace UnityEditor.ProBuilder
                     s_SelectedVertexColorPref.value = SettingsGUILayout.SettingsColorField("Selected Vertex Color", s_SelectedVertexColorPref, searchContext);
                 }
             }
+
+            var depthTestSelectionHighlight = s_HandleCompareFunction != CompareFunction.Always;
+            EditorGUI.BeginChangeCheck();
+            depthTestSelectionHighlight = SettingsGUILayout.SearchableToggle("Depth Test", depthTestSelectionHighlight, searchContext);
+            SettingsGUILayout.DoResetContextMenuForLastRect(s_HandleCompareFunction);
+            if (EditorGUI.EndChangeCheck())
+                s_HandleCompareFunction.SetValue(depthTestSelectionHighlight
+                    ? CompareFunction.LessEqual
+                    : CompareFunction.Always, true);
 
             s_VertexPointSize.value = SettingsGUILayout.SettingsSlider("Vertex Size", s_VertexPointSize, 1f, 10f, searchContext);
 

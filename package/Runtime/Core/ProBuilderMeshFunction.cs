@@ -69,8 +69,9 @@ namespace UnityEngine.ProBuilder
             }
 
             GameObject go = new GameObject();
-            ProBuilderMesh pb = go.AddComponent<ProBuilderMesh>();
             go.name = "ProBuilder Mesh";
+            ProBuilderMesh pb = go.AddComponent<ProBuilderMesh>();
+            pb.m_MeshFormatVersion = k_MeshFormatVersion;
             pb.GeometryWithPoints(positions);
 
             return pb;
@@ -80,6 +81,7 @@ namespace UnityEngine.ProBuilder
         {
             var go = new GameObject();
             var pb = go.AddComponent<ProBuilderMesh>();
+            pb.m_MeshFormatVersion = k_MeshFormatVersion;
             pb.Clear();
             return pb;
         }
@@ -95,6 +97,7 @@ namespace UnityEngine.ProBuilder
             GameObject go = new GameObject();
             ProBuilderMesh pb = go.AddComponent<ProBuilderMesh>();
             go.name = "ProBuilder Mesh";
+            pb.m_MeshFormatVersion = k_MeshFormatVersion;
             pb.RebuildWithPositionsAndFaces(positions, faces);
             return pb;
         }
@@ -114,8 +117,9 @@ namespace UnityEngine.ProBuilder
             IList<SharedVertex> sharedTextures = null)
         {
             var go = new GameObject();
-            var mesh = go.AddComponent<ProBuilderMesh>();
             go.name = "ProBuilder Mesh";
+            var mesh = go.AddComponent<ProBuilderMesh>();
+            mesh.m_MeshFormatVersion = k_MeshFormatVersion;
             mesh.SetVertices(vertices);
             mesh.faces = faces;
             mesh.sharedVertices = sharedVertices;
@@ -174,12 +178,7 @@ namespace UnityEngine.ProBuilder
             Refresh();
         }
 
-        /// <summary>
-        /// Wraps ToMesh and Refresh in a single call.
-        /// </summary>
-        /// <seealso cref="ToMesh"/>
-        /// <seealso cref="Refresh"/>
-        public void Rebuild()
+        internal void Rebuild()
         {
             ToMesh();
             Refresh();
@@ -211,6 +210,8 @@ namespace UnityEngine.ProBuilder
 
                 m_MeshFormatVersion = k_MeshFormatVersion;
             }
+
+            m_MeshFormatVersion = k_MeshFormatVersion;
 
             int materialCount = MeshUtility.GetMaterialCount(renderer);
 
@@ -409,6 +410,58 @@ namespace UnityEngine.ProBuilder
                 m_Colors[i] = color;
         }
 
+        /// <summary>
+        /// Set the material for a collection of faces.
+        /// </summary>
+        /// <remarks>
+        /// To apply the changes to the UnityEngine.Mesh, make sure to call ToMesh and Refresh.
+        /// </remarks>
+        /// <param name="faces">The faces to apply the material to.</param>
+        /// <param name="material">The material to apply.</param>
+        public void SetMaterial(IEnumerable<Face> faces, Material material)
+        {
+            var materials = renderer.sharedMaterials;
+            var submeshCount = materials.Length;
+            var index = -1;
+
+            for (int i = 0; i < submeshCount && index < 0; i++)
+            {
+                if (materials[i] == material)
+                    index = i;
+            }
+
+            if (index < 0)
+            {
+                // Material doesn't exist in MeshRenderer.sharedMaterials, now check if there is an unused
+                // submeshIndex that we can replace with this value instead of creating a new entry.
+                var submeshIndexes = new bool[submeshCount];
+
+                foreach (var face in m_Faces)
+                    submeshIndexes[Math.Clamp(face.submeshIndex, 0, submeshCount - 1)] = true;
+
+                index = Array.IndexOf(submeshIndexes, false);
+
+                // Found an unused submeshIndex, replace it with the material.
+                if (index > -1)
+                {
+                    materials[index] = material;
+                    renderer.sharedMaterials = materials;
+                }
+                else
+                {
+                    // There were no unused submesh indices, append another submesh and material.
+                    index = materials.Length;
+                    var copy = new Material[index + 1];
+                    Array.Copy(materials, copy, index);
+                    copy[index] = material;
+                    renderer.sharedMaterials = copy;
+                }
+            }
+
+            foreach (var face in faces)
+                face.submeshIndex = index;
+        }
+
         void RefreshNormals()
         {
             Normals.CalculateNormals(this);
@@ -499,6 +552,48 @@ namespace UnityEngine.ProBuilder
                         for (int i = 0, c = indices.Count; i < c; i++)
                             coincident.Add(indices[i]);
                     }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Populate a list of vertices that are coincident to any of the vertices in the passed vertices parameter.
+        /// </summary>
+        /// <param name="edges">A collection of edges to gather vertices from.</param>
+        /// <param name="coincident">A list to be cleared and populated with any vertices that are coincident.</param>
+        /// <exception cref="ArgumentNullException">The vertices and coincident parameters may not be null.</exception>
+        public void GetCoincidentVertices(IEnumerable<Edge> edges, List<int> coincident)
+        {
+            if (faces == null)
+                throw new ArgumentNullException("edges");
+
+            if (coincident == null)
+                throw new ArgumentNullException("coincident");
+
+            coincident.Clear();
+            s_CachedHashSet.Clear();
+            var lookup = sharedVertexLookup;
+
+            foreach (var edge in edges)
+            {
+                var common = lookup[edge.a];
+
+                if (s_CachedHashSet.Add(common))
+                {
+                    var indices = m_SharedVertices[common];
+
+                    for (int i = 0, c = indices.Count; i < c; i++)
+                        coincident.Add(indices[i]);
+                }
+
+                common = lookup[edge.b];
+
+                if (s_CachedHashSet.Add(common))
+                {
+                    var indices = m_SharedVertices[common];
+
+                    for (int i = 0, c = indices.Count; i < c; i++)
+                        coincident.Add(indices[i]);
                 }
             }
         }

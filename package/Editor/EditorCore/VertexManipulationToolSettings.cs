@@ -1,25 +1,26 @@
 using UnityEngine;
-using UnityEngine.ProBuilder;
 
 namespace UnityEditor.ProBuilder
 {
     [InitializeOnLoad]
     static class VertexManipulationToolSettings
     {
-#if PROBUILDER_ENABLE_HANDLE_OVERRIDE
-        const bool k_EnableHandleSettingInput = false;
-#else
         const bool k_EnableHandleSettingInput = true;
-#endif
 
         static VertexManipulationToolSettings()
         {
+#if UNITY_2019_1_OR_NEWER
+            SceneView.duringSceneGui += OnSceneGUI;
+#else
             SceneView.onSceneGUIDelegate += OnSceneGUI;
+#endif
         }
 
         static void OnSceneGUI(SceneView view)
         {
-            if (view != SceneView.lastActiveSceneView)
+            if (!EditorUtility.IsDeveloperMode()
+                || !VertexManipulationTool.showHandleSettingsInScene
+                || view != SceneView.lastActiveSceneView)
                 return;
 
             DoHandleSettings(new Rect(
@@ -39,16 +40,9 @@ namespace UnityEditor.ProBuilder
 
                 GUILayout.BeginHorizontal();
                 EditorGUIUtility.labelWidth = 80;
-#if PROBUILDER_ENABLE_HANDLE_OVERRIDE
-                VertexManipulationTool.pivotPoint =
-                    (PivotPoint)EditorGUILayout.EnumPopup("Pivot Point", VertexManipulationTool.pivotPoint);
-                VertexManipulationTool.handleOrientation =
-                    (HandleOrientation)EditorGUILayout.EnumPopup("Orientation",
-                        VertexManipulationTool.handleOrientation);
-#else
+
                 EditorGUILayout.EnumPopup("Pivot Point", VertexManipulationTool.pivotPoint);
                 EditorGUILayout.EnumPopup("Orientation", VertexManipulationTool.handleOrientation);
-#endif
 
                 EditorGUIUtility.labelWidth = 0;
                 GUILayout.EndHorizontal();
