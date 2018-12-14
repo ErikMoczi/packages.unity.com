@@ -111,7 +111,7 @@ namespace UnityEditor.AddressableAssets.GraphBuild
         {
             SearchWindow.Open(new SearchWindowContext(iContext.screenMousePosition), this);
         }
- 
+
         public List<SearchTreeEntry> CreateSearchTree(SearchWindowContext iContext)
         {
             var tree = new List<SearchTreeEntry>();
@@ -122,7 +122,7 @@ namespace UnityEditor.AddressableAssets.GraphBuild
 
             return tree;
         }
-        
+
         public bool OnSelectEntry(SearchTreeEntry entry, SearchWindowContext iContext)
         {
             if (entry is SearchTreeGroupEntry)
@@ -258,14 +258,14 @@ namespace UnityEditor.AddressableAssets.GraphBuild
                     inputPort.portName = i.name;
                     inputContainer.Add(inputPort);
                 }
-                
+
 
                 if (node.OutputType != null)
                 {
                     var outputPort = Port.Create<Edge>(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, node.OutputType);
                     outputPort.name = "Output";
                     outputPort.portName = "Output";
-                    
+
                     outputContainer.Add(outputPort);
                 }
             }
@@ -276,7 +276,7 @@ namespace UnityEditor.AddressableAssets.GraphBuild
                 {
                     var node = m_GraphWindow.graphData.GetNode((Hash128)(evt.target as BuildGraphViewNode).userData);
 #if UNITY_2018_3_OR_NEWER
-                    evt.menu.AppendAction("Evaluate", a => Debug.LogFormat("Result {0}", graphWindow.graphData.EvaluateNode(node.id, graphWindow.context)), a=> DropdownMenu.MenuAction.StatusFlags.Normal);
+                    evt.menu.AppendAction("Evaluate", a => Debug.LogFormat("Result {0}", m_GraphWindow.graphData.EvaluateNode(node.id, m_GraphWindow.context)), a=> DropdownMenu.MenuAction.StatusFlags.Normal);
 #else
                     evt.menu.AppendAction("Evaluate", a => Debug.LogFormat("Result {0}", m_GraphWindow.graphData.EvaluateNode(node.id, m_GraphWindow.context)),
                         ContextualMenu.MenuAction.AlwaysEnabled);

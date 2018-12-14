@@ -13,8 +13,6 @@ using Random = UnityEngine.Random;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
-using UnityEditor.AddressableAssets;
-using UnityEditor.SceneManagement;
 #endif
 
 public abstract class AddressablesBaseTests : IPrebuildSetup//, IPostBuildCleanup
@@ -74,7 +72,11 @@ public abstract class AddressablesBaseTests : IPrebuildSetup//, IPostBuildCleanu
             Directory.CreateDirectory(Path.GetDirectoryName(assetPath));
 
         GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+#if UNITY_2018_3_OR_NEWER
+        PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+#else
         PrefabUtility.CreatePrefab(assetPath, go);
+#endif
         go.name = objectName;
         Object.DestroyImmediate(go, false);
 #endif

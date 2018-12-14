@@ -5,6 +5,6 @@ namespace UnityEditor.AddressableAssets.Tests
 {
     class CustomTestSchema : AddressableAssetGroupSchema
     {
-        public string customField;
+        public string customField = null;
     }
 }

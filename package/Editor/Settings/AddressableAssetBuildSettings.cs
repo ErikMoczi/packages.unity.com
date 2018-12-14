@@ -33,7 +33,7 @@ namespace UnityEditor.AddressableAssets
         [FormerlySerializedAs("m_compression")]
         [SerializeField]
 #if UNITY_2018_3_OR_NEWER
-        private BuildCompression m_compression = BuildCompression.LZ4;
+        BuildCompression m_Compression = BuildCompression.LZ4;
 #else
         BuildCompression m_Compression = BuildCompression.DefaultLZ4;
 #endif

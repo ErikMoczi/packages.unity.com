@@ -346,8 +346,10 @@ namespace UnityEditor.AddressableAssets
             {
                 var info = buildResult.BundleInfos[bundleName];
                 ContentCatalogDataEntry dataEntry = locations.First(s => bundleName == (string)s.Keys[0]);
+                bool isLocalBundle = true;
                 if (dataEntry != null)
                 {
+                    isLocalBundle = IsInternalIdLocal(dataEntry.InternalId);
                     var requestOptions = new AssetBundleRequestOptions
                     {
                         Crc =  schema.UseAssetBundleCrc ? info.Crc : 0,
@@ -358,14 +360,15 @@ namespace UnityEditor.AddressableAssets
                         Timeout = schema.Timeout
                     };
                     dataEntry.Data = requestOptions;
-                    dataEntry.InternalId = dataEntry.InternalId.Replace(".bundle", "_" + info.Hash + ".bundle");
+                    if(!isLocalBundle)
+                        dataEntry.InternalId = dataEntry.InternalId.Replace(".bundle", "_" + info.Hash + ".bundle");
                 }
                 else
                 {
                     Debug.LogWarningFormat("Unable to find ContentCatalogDataEntry for bundle {0}.", bundleName);
                 }
 
-                var targetPath = Path.Combine(path, IsInternalIdLocal(dataEntry.InternalId) ? bundleName : bundleName.Replace(".bundle", "_" + info.Hash + ".bundle"));
+                var targetPath = Path.Combine(path, isLocalBundle ? bundleName : bundleName.Replace(".bundle", "_" + info.Hash + ".bundle"));
                 if (!Directory.Exists(Path.GetDirectoryName(targetPath)))
                     Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
                 File.Copy(Path.Combine(assetGroup.Settings.buildSettings.bundleBuildPath, bundleName), targetPath, true);

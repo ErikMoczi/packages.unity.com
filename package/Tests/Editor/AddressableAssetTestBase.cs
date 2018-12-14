@@ -15,7 +15,7 @@ namespace UnityEditor.AddressableAssets.Tests
         [OneTimeSetUp]
         public void Init()
         {
-            
+
             if (Directory.Exists(k_TestConfigFolder))
                 AssetDatabase.DeleteAsset(k_TestConfigFolder);
             if (!Directory.Exists(k_TestConfigFolder))
@@ -23,12 +23,12 @@ namespace UnityEditor.AddressableAssets.Tests
                 Directory.CreateDirectory(k_TestConfigFolder);
                 AssetDatabase.Refresh();
             }
-            
+
             m_Settings = AddressableAssetSettings.Create(k_TestConfigFolder, k_TestConfigName, true, PersistSettings);
             m_Settings.labelTable.labelNames.Clear();
             GameObject testObject = new GameObject("TestObject");
 #if UNITY_2018_3_OR_NEWER
-            PrefabUtility.SaveAsPrefabAsset(testObject, TestConfigFolder + "/test.prefab");
+            PrefabUtility.SaveAsPrefabAsset(testObject, k_TestConfigFolder + "/test.prefab");
 #else
             PrefabUtility.CreatePrefab(k_TestConfigFolder + "/test.prefab", testObject);
 #endif
