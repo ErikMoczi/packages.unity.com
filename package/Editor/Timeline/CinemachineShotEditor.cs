@@ -1,5 +1,3 @@
-#if true || CINEMACHINE_TIMELINE
-
 using UnityEditor;
 using UnityEngine;
 using Cinemachine.Editor;
@@ -133,4 +131,3 @@ namespace Cinemachine.Timeline
         }
     }
 }
-#endif

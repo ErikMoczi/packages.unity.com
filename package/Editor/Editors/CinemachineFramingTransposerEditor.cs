@@ -121,7 +121,7 @@ namespace Cinemachine.Editor
                 return;
 
             CinemachineBrain brain = CinemachineCore.Instance.FindPotentialTargetBrain(Target.VirtualCamera);
-            if (brain == null || brain.OutputCamera.activeTexture != null)
+            if (brain == null || (brain.OutputCamera.activeTexture != null && CinemachineCore.Instance.BrainCount > 1))
                 return;
 
             bool isLive = CinemachineCore.Instance.IsLive(Target.VirtualCamera);
@@ -158,7 +158,8 @@ namespace Cinemachine.Editor
         private static void DrawGroupComposerGizmos(CinemachineFramingTransposer target, GizmoType selectionType)
         {
             // Show the group bounding box, as viewed from the camera position
-            if (target.FollowTargetGroup != null)
+            if (target.FollowTargetGroup != null 
+                && target.m_GroupFramingMode != CinemachineFramingTransposer.FramingMode.None)
             {
                 Matrix4x4 m = Gizmos.matrix;
                 Bounds b = target.LastBounds;
@@ -171,7 +172,7 @@ namespace Cinemachine.Editor
                     float z = b.center.z;
                     Vector3 e = b.extents;
                     Gizmos.DrawFrustum(
-                        new Vector3(0, 0, z - e.z), 
+                        Vector3.zero,
                         Mathf.Atan2(e.y, z) * Mathf.Rad2Deg * 2, 
                         z + e.z, z - e.z, e.x / e.y);
                 }

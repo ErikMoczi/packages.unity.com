@@ -1,22 +1,7 @@
 {
     "name": "Cinemachine",
-    "references": [
-        "GUID:f06555f75b070af458a003d92f9efb00",
-        "GUID:d60799ab2a985554ea1a39cd38695018"
-    ],
+    "references": [],
     "optionalUnityReferences": [],
     "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "com.unity.postprocessing",
-            "expression": "2.1.0",
-            "define": "CINEMACHINE_POST_PROCESSING_V2"
-        }
-    ]
+    "excludePlatforms": []
 }
