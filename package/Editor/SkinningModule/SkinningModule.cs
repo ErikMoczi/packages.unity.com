@@ -76,7 +76,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 if (skinningCache.hasCharacter)
                 {
                     m_WeightToolbar.EnableBoneInfluenceWidget();
-                    (skinningCache.GetTool(Tools.SwitchMode) as SwitchModeTool).SetActive(true);
+                    skinningCache.GetTool(Tools.SwitchMode).Deactivate();
                     // Do not select any sprite by default in character mode
                     skinningCache.events.selectedSpriteChanged.Invoke(null);
                 }
@@ -85,7 +85,13 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                 m_HorizontalToggleTools = new HorizontalToggleTools(skinningCache)
                 {
-                    onActivateTool = (b) => ActivateTool(b)
+                    onActivateTool = (b) =>
+                    {
+                        using (skinningCache.UndoScope(TextContent.setTool))
+                        {
+                            ActivateTool(b);
+                        }
+                    }
                 };
 
                 var ai = spriteEditor.GetDataProvider<ISpriteEditorDataProvider>() as AssetImporter;
@@ -253,7 +259,6 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             DoViewGUI();
 
-
             if (!spriteEditor.editingDisabled)
                 skinningCache.selectionTool.DoGUI();
 
@@ -346,9 +351,12 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         private void UndoRedoPerformed()
         {
-            UpdateToggleState();
-            skinningCache.UndoRedoPerformed();
-            SetupSpriteEditor();
+            using (new DisableUndoScope(skinningCache))
+            {
+                UpdateToggleState();
+                skinningCache.UndoRedoPerformed();
+                SetupSpriteEditor();
+            }
         }
 
         #region CharacterConsistency

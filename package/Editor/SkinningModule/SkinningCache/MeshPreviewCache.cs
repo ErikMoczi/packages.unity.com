@@ -112,7 +112,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_DefaultMesh = CreateMesh();
         }
 
-        protected override void OnDestroy()
+        internal override void OnDestroy()
         {
             DestroyImmediate(m_Mesh);
             DestroyImmediate(m_DefaultMesh);

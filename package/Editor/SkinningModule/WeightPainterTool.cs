@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor.Experimental.U2D.Layout;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -67,9 +68,6 @@ namespace UnityEditor.Experimental.U2D.Animation
                     hardness *= -1f;
 
                 EditWeights(hardness, false);
-
-                if (m_WeightEditor.spriteMeshData != null)
-                    m_WeightEditor.OnEditEnd();
             };
             m_Brush.onStrokeEnd += (brush) =>
             {
@@ -220,8 +218,34 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_WeightPainterPanel.title = title;
         }
 
+        private void AssociateSelectedBoneToCharacterPart()
+        {
+            if (skinningCache.hasCharacter 
+                && skinningCache.mode == SkinningMode.Character
+                && m_WeightPainterPanel.boneIndex != -1 
+                && meshTool.mesh != null)
+            {
+                var skeleton = skinningCache.GetEffectiveSkeleton(meshTool.mesh.sprite);
+                if (skeleton != null)
+                {
+                    var bone = skeleton.GetBone(m_WeightPainterPanel.boneIndex).ToCharacterIfNeeded();
+                    var bonesInMesh = meshTool.mesh.bones.ToSpriteSheetIfNeeded();
+                    if (!bonesInMesh.Contains(bone))
+                    {
+                        var characterPart = skinningCache.selectedSprite.GetCharacterPart();
+                        var characterBones = characterPart.bones.ToList();
+                        characterBones.Add(bone);
+                        characterPart.bones = characterBones.ToArray();
+                        skinningCache.events.characterPartChanged.Invoke(characterPart);
+                    }
+                }
+            }
+        }
+        
         private void EditStart(ISelection<int> selection, bool relative)
         {
+            AssociateSelectedBoneToCharacterPart();
+
             SetupWeightEditor(selection);
 
             if (m_WeightEditor.spriteMeshData != null)

@@ -98,10 +98,11 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             var characterBone = bone.ToCharacterIfNeeded();
             characterBone.depth = depth;
+            
             if (characterBone != bone || skinningCache.mode == SkinningMode.Character)
-            {
                 skinningCache.SyncSpriteSheetSkeletons();
-            }
+
+            skinningCache.events.boneDepthChanged.Invoke(bone);
         }
 
         public void SetName(BoneCache bone, string name)

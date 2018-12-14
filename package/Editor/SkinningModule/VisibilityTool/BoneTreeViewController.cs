@@ -33,6 +33,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_SkinningEvents.boneSelectionChanged.RemoveListener(OnBoneSelectionChanged);
             m_SkinningEvents.boneNameChanged.RemoveListener(OnBoneNameChanged);
             m_SkinningEvents.skeletonTopologyChanged.RemoveListener(SkeletonTopologyChanged);
+            if (m_Model.view != null)
+                m_Model.view.Deactivate();
         }
 
         private void OnSelectionChange(SpriteCache sprite)
@@ -204,6 +206,10 @@ namespace UnityEditor.Experimental.U2D.Animation
         public void TreeViewItemRename(IList<TreeViewItem> rows, int itemID, string newName)
         {
             var item = rows.FirstOrDefault(x => x.id == itemID) as TreeViewItemBase<BoneCache>;
+
+            if (item == null)
+                return;
+
             item.displayName = newName;
             if (item.customData != null && item.customData.name != newName)
             {

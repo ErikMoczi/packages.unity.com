@@ -6,24 +6,19 @@ namespace UnityEditor.Experimental.U2D.Animation
     {
         protected override void OnActivate()
         {
-            skinningCache.mode = SkinningMode.Character;
-            skinningCache.events.skinningModeChanged.Invoke(skinningCache.mode);
+            if (skinningCache.mode != SkinningMode.SpriteSheet)
+            {
+                skinningCache.mode = SkinningMode.SpriteSheet;
+                skinningCache.events.skinningModeChanged.Invoke(SkinningMode.SpriteSheet);
+            }
         }
 
         protected override void OnDeactivate()
         {
-            skinningCache.mode = SkinningMode.SpriteSheet;
-            skinningCache.events.skinningModeChanged.Invoke(skinningCache.mode);
-        }
-
-        public void SetActive(bool active)
-        {
-            using (skinningCache.UndoScope(TextContent.setMode))
+            if (skinningCache.mode != SkinningMode.Character)
             {
-                if (isActive)
-                    Deactivate();
-                else
-                    Activate();
+                skinningCache.mode = SkinningMode.Character;
+                skinningCache.events.skinningModeChanged.Invoke(SkinningMode.Character);
             }
         }
     }

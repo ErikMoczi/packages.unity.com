@@ -187,11 +187,17 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             var copyBuffer = EditorGUIUtility.systemCopyBuffer;
             if (!SkinningCopyUtility.CanDeserializeStringToSkinningCopyData(copyBuffer))
+            {
+                Debug.LogError(TextContent.copyError1);
                 return;
+            }
 
             var skinningCopyData = SkinningCopyUtility.DeserializeStringToSkinningCopyData(copyBuffer);
             if (skinningCopyData == null || skinningCopyData.copyData.Count == 0)
+            {
+                Debug.LogError(TextContent.copyError2);
                 return;
+            }
 
             var scale = 1f;
             if (skinningCopyData.pixelsPerUnit > 0f)
@@ -199,8 +205,11 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             var sprites = skinningCache.GetSprites();
             var copyMultiple = skinningCopyData.copyData.Count > 1;
-            if (copyMultiple && skinningCopyData.copyData.Count != sprites.Length)
+            if (copyMultiple && skinningCopyData.copyData.Count != sprites.Length && mesh)
+            {
+                Debug.LogError(String.Format(TextContent.copyError3, sprites.Length, skinningCopyData.copyData.Count));
                 return;
+            }
 
             using (skinningCache.UndoScope(TextContent.pasteData))
             {

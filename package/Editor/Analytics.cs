@@ -586,18 +586,18 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         static UnityAnalyticsStorage()
         {
-            EditorAnalytics.RegisterEventWithLimit("2dAnimationToolUsage", AnalyticConstant.k_MaxEventsPerHour, AnalyticConstant.k_MaxNumberOfElements, k_VendorKey, k_Version);
-            EditorAnalytics.RegisterEventWithLimit("2dAnimationToolApply", AnalyticConstant.k_MaxEventsPerHour, AnalyticConstant.k_MaxNumberOfElements, k_VendorKey, k_Version);
+            EditorAnalytics.RegisterEventWithLimit("u2dAnimationToolUsage", AnalyticConstant.k_MaxEventsPerHour, AnalyticConstant.k_MaxNumberOfElements, k_VendorKey, k_Version);
+            EditorAnalytics.RegisterEventWithLimit("u2dAnimationToolApply", AnalyticConstant.k_MaxEventsPerHour, AnalyticConstant.k_MaxNumberOfElements, k_VendorKey, k_Version);
         }
 
         public AnalyticsResult SendUsageEvent(AnimationToolUsageEvent evt)
         {
-            return EditorAnalytics.SendEventWithLimit("2dAnimationToolUsage", evt, k_Version);
+            return EditorAnalytics.SendEventWithLimit("u2dAnimationToolUsage", evt, k_Version);
         }
 
         public AnalyticsResult SendApplyEvent(AnimationToolApplyEvent evt)
         {
-            return EditorAnalytics.SendEventWithLimit("2dAnimationToolApply", evt, k_Version);
+            return EditorAnalytics.SendEventWithLimit("u2dAnimationToolApply", evt, k_Version);
         }
 
         public void Dispose() {}

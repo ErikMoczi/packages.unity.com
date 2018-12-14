@@ -16,13 +16,14 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public static void Destroy(Cache cache)
         {
-            cache.undoOverride = null;
-            cache.Clear();
+            cache.Destroy();
             DestroyImmediate(cache);
         }
 
         [SerializeField]
         private List<CacheObject> m_CacheObjects = new List<CacheObject>();
+        [SerializeField]
+        private List<CacheObject> m_RemovedCacheObjects = new List<CacheObject>();
         private string m_UndoOperationName = null;
         private IUndo m_DefaultUndo = new UnityEngineUndo();
         private IUndo m_UndoOverride = null;
@@ -71,14 +72,16 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_UndoOperationName = null;
         }
 
+        public bool IsRemoved(CacheObject cacheObject)
+        {
+            return m_RemovedCacheObjects.Contains(cacheObject);
+        }
+
         public T CreateCache<T>() where T : CacheObject
         {
             var cacheObject = CacheObject.Create<T>(this);
             
             m_CacheObjects.Add(cacheObject);
-
-            if (isUndoOperationSet)
-                undo.RegisterCreatedObjectUndo(cacheObject, m_UndoOperationName);
 
             cacheObject.OnCreate();
             
@@ -92,14 +95,12 @@ namespace UnityEditor.Experimental.U2D.Animation
             Debug.Assert(m_CacheObjects.Contains(cacheObject));
 
             m_CacheObjects.Remove(cacheObject);
+            m_RemovedCacheObjects.Add(cacheObject);
 
-            if (isUndoOperationSet)
-                undo.DestroyObjectImmediate(cacheObject);
-            else
-                DestroyImmediate(cacheObject);
+            cacheObject.OnDestroy();
         }
 
-        public void Clear()
+        public void Destroy()
         {
             Debug.Assert(!m_CacheObjects.Contains(null));
 
@@ -110,9 +111,15 @@ namespace UnityEditor.Experimental.U2D.Animation
             var cacheObjects = m_CacheObjects.ToArray();
 
             foreach (var cacheObject in cacheObjects)
-                Destroy(cacheObject);
+                DestroyImmediate(cacheObject);
+
+            cacheObjects = m_RemovedCacheObjects.ToArray();
+
+            foreach (var cacheObject in cacheObjects)
+                DestroyImmediate(cacheObject);
 
             m_CacheObjects.Clear();
+            m_RemovedCacheObjects.Clear();
         }
     }
 }

@@ -36,7 +36,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             get { return null; }
         }
 
-        protected override void OnDestroy()
+        internal override void OnDestroy()
         {
             Deactivate();
         }

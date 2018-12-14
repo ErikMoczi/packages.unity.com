@@ -94,8 +94,15 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             if (smoothIterations > 0)
             {
-                var smoother = new SimpleSmoother();
-                smoother.Smooth(mesh, smoothIterations);
+                try
+                {
+                    var smoother = new SimpleSmoother();
+                    smoother.Smooth(mesh, smoothIterations);
+                }
+                catch (System.Exception)
+                {
+                    Debug.Log(TextContent.smoothMeshError);
+                }
             }
 
             vertices.Clear();

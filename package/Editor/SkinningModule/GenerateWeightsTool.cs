@@ -90,7 +90,10 @@ namespace UnityEditor.Experimental.U2D.Animation
                     var sprites = skinningCache.GetSprites();
 
                     foreach (var sprite in sprites)
-                        HandleWeightsForSprite(sprite, action);
+                    {
+                        if (sprite.IsVisible())
+                            HandleWeightsForSprite(sprite, action);
+                    }
                 }
             }
         }
@@ -128,9 +131,6 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             m_SpriteMeshDataController.spriteMeshData = sprite.GetMesh();
             m_SpriteMeshDataController.ClearWeights(skinningCache.vertexSelection);
-
-            if (m_GenerateWeightsPanel.associateBones)
-                sprite.DeassociateAllBones();
         }
 
         protected override void OnGUI()
@@ -143,7 +143,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             skeletonTool.skeletonStyle = SkeletonStyles.WeightMap;
 
             DoSkeletonGUI();
-            //DoMeshGUI();
+            DoMeshGUI();
         }
     }
 }

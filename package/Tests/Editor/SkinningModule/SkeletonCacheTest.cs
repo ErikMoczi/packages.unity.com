@@ -120,7 +120,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Skeleton
 
             m_Skeleton.DestroyBone(first);
 
-            Assert.IsTrue(first == null, "Object not destoyed");
+            Assert.IsTrue(m_SkinningCache.IsRemoved(first), "Object not destoyed");
             Assert.AreEqual(2, m_Skeleton.BoneCount, "Incorrect BoneCount");
             Assert.IsNull(child.parentBone, "Invalid parent bone");
         }
@@ -135,9 +135,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Skeleton
             m_Skeleton.DestroyBones(bones);
 
             Assert.AreEqual(0, m_Skeleton.BoneCount, "Incorrect BoneCount");
-            Assert.IsTrue(bones[0] == null, "Object not destoyed");
-            Assert.IsTrue(bones[1] == null, "Object not destoyed");
-            Assert.IsTrue(bones[2] == null, "Object not destoyed");
+            Assert.IsTrue(m_SkinningCache.IsRemoved(bones[0]), "Object not destoyed");
+            Assert.IsTrue(m_SkinningCache.IsRemoved(bones[1]), "Object not destoyed");
+            Assert.IsTrue(m_SkinningCache.IsRemoved(bones[2]), "Object not destoyed");
         }
 
         [Test]
@@ -150,9 +150,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Skeleton
             m_Skeleton.Clear();
 
             Assert.AreEqual(0, m_Skeleton.BoneCount, "Incorrect BoneCount");
-            Assert.IsTrue(bones[0] == null, "Object not destoyed");
-            Assert.IsTrue(bones[1] == null, "Object not destoyed");
-            Assert.IsTrue(bones[2] == null, "Object not destoyed");
+            Assert.IsTrue(m_SkinningCache.IsRemoved(bones[0]), "Object not destoyed");
+            Assert.IsTrue(m_SkinningCache.IsRemoved(bones[1]), "Object not destoyed");
+            Assert.IsTrue(m_SkinningCache.IsRemoved(bones[2]), "Object not destoyed");
         }
 
         [Test]

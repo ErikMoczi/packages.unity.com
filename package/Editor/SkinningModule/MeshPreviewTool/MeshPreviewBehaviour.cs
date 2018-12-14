@@ -24,8 +24,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public bool OverlayWireframe(SpriteCache sprite)
         {
-            var skinningCache = sprite.skinningCache;
-            return skinningCache.selectedSprite == sprite;
+            return sprite.IsVisible() && sprite.skinningCache.selectedSprite == sprite;
         }
     }
 
@@ -41,8 +40,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             if (showWeightMap)
             {
-                if (skinningCache.selectedSprite == sprite ||
-                    (skinningCache.selectedSprite == null && skinningCache.mode == SkinningMode.Character))
+                if (skinningCache.selectedSprite == sprite || skinningCache.selectedSprite == null)
                     return VisibilityToolSettings.meshOpacity;
             }
 
@@ -54,7 +52,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             var skinningCache = sprite.skinningCache;
 
             if (drawWireframe)
-                return  (skinningCache.selectedSprite == null && skinningCache.mode == SkinningMode.Character);
+                return skinningCache.selectedSprite == null;
 
             return false;
         }
@@ -71,9 +69,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public bool OverlayWireframe(SpriteCache sprite)
         {
-            var skinningCache = sprite.skinningCache;
-
-            return skinningCache.selectedSprite == sprite;
+            return sprite.IsVisible() && sprite.skinningCache.selectedSprite == sprite;
         }
     }
 }

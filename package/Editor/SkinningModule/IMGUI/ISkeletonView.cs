@@ -72,6 +72,6 @@ namespace UnityEditor.Experimental.U2D.Animation
         void DrawBone(Vector3 position, Vector3 right, Vector3 forward, float length, Color color, bool isChained, bool isSelected, bool isJointHovered, bool isTailHovered, bool isHot);
         void DrawBoneParentLink(Vector3 parentPosition, Vector3 position, Vector3 forward, Color color);
         void DrawBoneOutline(Vector3 position, Vector3 right, Vector3 forward, float length, Color color, float outlineScale);
-        void DrawCursors();
+        void DrawCursors(bool canBeActive);
     }
 }

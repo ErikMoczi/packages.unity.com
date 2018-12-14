@@ -103,7 +103,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         }
 
         protected virtual void OnEnable() {}
-        protected virtual void OnDestroy() {}
+        internal virtual void OnDestroy() {}
     }
 #endif
 }

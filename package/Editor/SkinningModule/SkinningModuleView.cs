@@ -24,7 +24,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             return sc.context as SkinningModule;
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Collapse ToolBar", typeof(InternalEditorBridge.ShortcutContext), "#`")]
+        [InternalEditorBridge.WrappedShortcut("2D/Animation/Toggle Tool Text", typeof(InternalEditorBridge.ShortcutContext), "#`")]
         private static void CollapseToolbar(InternalEditorBridge.WrappedShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
@@ -41,7 +41,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled && sm.skinningCache.GetEffectiveSkeleton(sm.skinningCache.selectedSprite).isPosePreview)
             {
-                using (sm.skinningCache.UndoScope("Restore Pose"))
+                using (sm.skinningCache.UndoScope(TextContent.restorePose))
                 {
                     sm.skinningCache.RestoreBindPose();
                     sm.skinningCache.events.shortcut.Invoke("#1");
@@ -55,8 +55,16 @@ namespace UnityEditor.Experimental.U2D.Animation
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled && sm.skinningCache.hasCharacter)
             {
-                var switchModeTool = sm.skinningCache.GetTool(Tools.SwitchMode) as SwitchModeTool;
-                switchModeTool.SetActive(!switchModeTool.isActive);
+                var tool = sm.skinningCache.GetTool(Tools.SwitchMode);
+
+                using (sm.skinningCache.UndoScope(TextContent.setMode))
+                {
+                    if (tool.isActive)
+                        tool.Deactivate();
+                    else
+                        tool.Activate();
+                }
+                
                 sm.skinningCache.events.shortcut.Invoke("#2");
             }
         }
@@ -72,7 +80,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Edit Pose", typeof(InternalEditorBridge.ShortcutContext), "#w")]
+        [InternalEditorBridge.WrappedShortcut("2D/Animation/Edit Joints", typeof(InternalEditorBridge.ShortcutContext), "#w")]
         private static void EditJointsKey(InternalEditorBridge.WrappedShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
@@ -116,7 +124,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Generate Geometry", typeof(InternalEditorBridge.ShortcutContext), "#a")]
+        [InternalEditorBridge.WrappedShortcut("2D/Animation/Auto Geometry", typeof(InternalEditorBridge.ShortcutContext), "#a")]
         private static void GenerateGeometryKey(InternalEditorBridge.WrappedShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
@@ -171,7 +179,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Generate Weights", typeof(InternalEditorBridge.ShortcutContext), "#z")]
+        [InternalEditorBridge.WrappedShortcut("2D/Animation/Auto Weights", typeof(InternalEditorBridge.ShortcutContext), "#z")]
         private static void GenerateWeightsKey(InternalEditorBridge.WrappedShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
@@ -254,8 +262,15 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_ShortcutContext = InternalEditorBridge.CreateShortcutContext(isFocused);
             m_ShortcutContext.context = this;
             InternalEditorBridge.RegisterShortcutContext(m_ShortcutContext);
+            InternalEditorBridge.AddEditorApplicationProjectLoadedCallback(OnProjectLoaded);
         }
 
+        private void OnProjectLoaded()
+        {
+            if (m_ShortcutContext != null)
+                InternalEditorBridge.RegisterShortcutContext(m_ShortcutContext);
+        }
+        
         private void DoViewGUI()
         {
             if (spriteEditor.editingDisabled == m_BoneToolbar.enabledSelf)
@@ -297,26 +312,48 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_WeightToolbar.SetWeightTool += SetWeightTool;
         }
 
-        private void SetSkeletonTool(Tools tool)
+        private void SetSkeletonTool(Tools toolType)
         {
-            var skeletonTool = skinningCache.GetTool(tool) as SkeletonToolWrapper;
+            var tool = skinningCache.GetTool(toolType) as SkeletonToolWrapper;
 
-            ActivateTool(skeletonTool);
+            if (currentTool == tool)
+                return;
 
-            if (skeletonTool.editBindPose)
+            using (skinningCache.UndoScope(TextContent.setTool))
+            {
+                ActivateTool(tool);
+
+                if (tool.editBindPose)
+                    skinningCache.RestoreBindPose();
+            }
+        }
+
+        private void SetMeshTool(Tools toolType)
+        {
+            var tool  = skinningCache.GetTool(toolType);
+
+            if (currentTool == tool)
+                return;
+
+            using (skinningCache.UndoScope(TextContent.setTool))
+            {
+                ActivateTool(tool);
                 skinningCache.RestoreBindPose();
+                UnselectBones();
+            }
         }
 
-        private void SetMeshTool(Tools tool)
+        private void SetWeightTool(Tools toolType)
         {
-            ActivateTool(skinningCache.GetTool(tool));
-            skinningCache.RestoreBindPose();
-            UnselectBones();
-        }
+            var tool = skinningCache.GetTool(toolType);
 
-        private void SetWeightTool(Tools tool)
-        {
-            ActivateTool(skinningCache.GetTool(tool));
+            if (currentTool == tool)
+                return;
+
+            using (skinningCache.UndoScope(TextContent.setTool))
+            {
+                ActivateTool(tool);
+            }
         }
 
         private void ActivateTool(BaseTool tool)
@@ -324,17 +361,14 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (currentTool == tool)
                 return;
 
-            using (skinningCache.UndoScope(TextContent.setTool))
-            {
-                if (currentTool != null)
-                    currentTool.Deactivate();
+            if (currentTool != null)
+                currentTool.Deactivate();
 
-                currentTool = tool;
-                currentTool.Activate();
+            currentTool = tool;
+            currentTool.Activate();
 
-                UpdateToggleState();
-                skinningCache.events.toolChanged.Invoke(currentTool);
-            }
+            UpdateToggleState();
+            skinningCache.events.toolChanged.Invoke(currentTool);
         }
 
         private void UnselectBones()
@@ -356,6 +390,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         private void RemoveMainUI(VisualElement mainView)
         {
+            InternalEditorBridge.RemoveEditorApplicationProjectLoadedCallback(OnProjectLoaded);
             InternalEditorBridge.UnregisterShortcutContext(m_ShortcutContext);
         }
     }

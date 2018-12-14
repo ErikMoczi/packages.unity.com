@@ -566,7 +566,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (!view.IsRepainting())
                 return;
 
-            view.DrawCursors();
+            view.DrawCursors(!skinningCache.IsOnVisualElement());
         }
 
         public static string AutoBoneName(BoneCache parent, IEnumerable<BoneCache> bones)

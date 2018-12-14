@@ -190,9 +190,9 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_ToolMap.Add(Tools.SwitchMode, switchModeTool);
         }
 
-        new public void Clear()
+        public void Clear()
         {
-            base.Clear();
+            Destroy();
             m_Tools.Clear();
             m_SpriteMap.Clear();
             m_MeshMap.Clear();
@@ -298,7 +298,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             var characterPartBones = characterPart.bones;
             var newBones = new List<BoneCache>(characterPartBones);
             var hasNullBones = newBones.Contains(null);
-            newBones.RemoveAll(b => b == null);
+            newBones.RemoveAll(b => IsRemoved(b));
 
             characterPartBones = newBones.ToArray();
             characterPart.bones = characterPartBones;

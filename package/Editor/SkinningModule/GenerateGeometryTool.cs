@@ -75,6 +75,9 @@ namespace UnityEditor.Experimental.U2D.Animation
                     for (var i = 0; i < sprites.Length; ++i)
                     {
                         var sprite = sprites[i];
+                        
+                        if (!sprite.IsVisible())
+                            continue;
 
                         EditorUtility.DisplayProgressBar(TextContent.generateGeometry, sprite.name, i * 2f / (sprites.Length * 2f));
 
@@ -167,9 +170,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             using (new DefaultPoseScope(skinningCache.GetEffectiveSkeleton(sprite)))
             {
-                var characterPart = sprite.GetCharacterPart();
-
-                if (characterPart != null && characterPart.BoneCount == 0)
+                if (NeedsAssociateBones(sprite.GetCharacterPart()))
                 {
                     using (new AssociateBonesScope(sprite))
                     {
@@ -179,6 +180,17 @@ namespace UnityEditor.Experimental.U2D.Animation
                 else
                     GenerateWeights(mesh);
             }
+        }
+
+        private bool NeedsAssociateBones(CharacterPartCache characterPart)
+        {
+            if (characterPart == null)
+                return false;
+
+            var skeleton = characterPart.skinningCache.character.skeleton;
+
+            return characterPart.BoneCount == 0 ||
+                    (characterPart.BoneCount == 1 && characterPart.GetBone(0) == skeleton.GetBone(0));
         }
 
         private void GenerateWeights(MeshCache mesh)

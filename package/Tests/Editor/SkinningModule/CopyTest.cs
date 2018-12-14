@@ -50,6 +50,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
         [Test]
         public void NothingCopied_PasteActivated_NothingIsPasted()
         {
+            UnityEngine.TestTools.LogAssert.Expect(LogType.Error, TextContent.copyError2);
             Assert.IsTrue(String.IsNullOrEmpty(EditorGUIUtility.systemCopyBuffer));
             m_CopyTool.OnPasteActivated(true, true, false, false);
             m_CopyTool.OnCopyActivated();

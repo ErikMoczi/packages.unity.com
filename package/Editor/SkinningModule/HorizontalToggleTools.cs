@@ -91,11 +91,16 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (skinningCache.hasCharacter)
             {
                 EditorGUI.BeginChangeCheck();
-                bool toolActive = skinningCache.GetTool(Tools.SwitchMode).isActive;
-                GUILayout.Toggle(!toolActive , spriteSheetIcon, EditorStyles.toolbarButton);
+                var isActive = GUILayout.Toggle(switchmodeTool.isActive , spriteSheetIcon, EditorStyles.toolbarButton);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    switchmodeTool.SetActive(!toolActive);
+                    using (skinningCache.UndoScope(TextContent.setMode))
+                    {
+                        if (isActive)
+                            switchmodeTool.Activate();
+                        else
+                            switchmodeTool.Deactivate();
+                    }
                 }
             }
         }

@@ -75,15 +75,6 @@ namespace UnityEditor.Experimental.U2D.Animation
             var columns = new MultiColumnHeaderState.Column[2];
             columns[0] = new MultiColumnHeaderState.Column
             {
-                headerContent = EditorGUIUtility.TrTextContent(TextContent.bone),
-                headerTextAlignment = TextAlignment.Center,
-                width = 200,
-                minWidth = 130,
-                autoResize = true,
-                allowToggleVisibility = false
-            };
-            columns[1] = new MultiColumnHeaderState.Column
-            {
                 headerContent = VisibilityTreeViewBase.VisibilityIconStyle.visibilityOnIcon,
                 headerTextAlignment = TextAlignment.Center,
                 width = 32,
@@ -92,6 +83,15 @@ namespace UnityEditor.Experimental.U2D.Animation
                 autoResize = false,
                 allowToggleVisibility = true
             };
+            columns[1] = new MultiColumnHeaderState.Column
+            {
+                headerContent = EditorGUIUtility.TrTextContent(TextContent.bone),
+                headerTextAlignment = TextAlignment.Center,
+                width = 200,
+                minWidth = 130,
+                autoResize = true,
+                allowToggleVisibility = false
+            };
             var multiColumnHeaderState = new MultiColumnHeaderState(columns);
             return new VisibilityToolColumnHeader(multiColumnHeaderState)
             {
@@ -99,7 +99,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 SetAllVisibility = SetAllVisibility,
                 canSort = false,
                 height = 20,
-                visibilityColumn = 1
+                visibilityColumn = 0
             };
         }
 
@@ -132,6 +132,12 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             ((BoneTreeView)m_TreeView).OnBoneNameChanged(bone);
         }
+
+        public void Deactivate()
+        {
+            if(m_TreeView.HasSelection())
+                m_TreeView.EndRename();
+        }
     }
 
     class BoneTreeView : VisibilityTreeViewBase
@@ -141,6 +147,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         public BoneTreeView(TreeViewState treeViewState, MultiColumnHeader columnHeader)
             : base(treeViewState, columnHeader)
         {
+            columnIndexForTreeFoldouts = 1;
             Reload();
         }
 
@@ -183,10 +190,10 @@ namespace UnityEditor.Experimental.U2D.Animation
             switch (column)
             {
                 case 0:
-                    DrawNameCell(cellRect, item, ref args);
+                    DrawVisibilityCell(cellRect, item);
                     break;
                 case 1:
-                    DrawVisibilityCell(cellRect, item);
+                    DrawNameCell(cellRect, item, ref args);
                     break;
                 case 2:
                     DrawDepthCell(cellRect, item);

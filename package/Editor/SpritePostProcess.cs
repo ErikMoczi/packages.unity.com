@@ -121,7 +121,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                     var spriteBoneCount = spriteBone.Count;
                     var bindPose = new NativeArray<Matrix4x4>(spriteBoneCount, Allocator.Temp);
-                    var outputSpriteBones = new SpriteBone ? [spriteBoneCount];// NativeArray<SpriteBone>(spriteBone.Count, Allocator.Temp);
+                    var outputSpriteBones = new SpriteBone ? [spriteBoneCount];
                     for (int i = 0; i < spriteBoneCount; ++i)
                     {
                         CalculateLocaltoWorldMatrix(i, spriteRect, definitionScale, sprite.pixelsPerUnit, spriteBone, ref outputSpriteBones, ref bindPose);

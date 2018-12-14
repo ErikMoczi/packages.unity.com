@@ -92,7 +92,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             var mesh = sprite.GetMesh();
 
-            if (m_Mesh != mesh)
+            if (m_Mesh != mesh && selection.Count > 0)
                 selection.Clear();
 
             m_Mesh = mesh;

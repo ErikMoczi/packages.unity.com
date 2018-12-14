@@ -78,9 +78,13 @@ namespace UnityEditor.Experimental.U2D.Animation
         public static string addBoneInfluence = "Add Bone Influence";
         public static string removeBoneInfluence = "Remove Bone Influence";
         public static string noSpriteSelected = "No sprite selected";
-        public static string weightSlider = "Weight Slider Painter";
-        public static string weightBrush = "Weight Brush Painter";
+        public static string weightSlider = "Weight Slider";
+        public static string weightBrush = "Weight Brush";
         public static string generateAll = "Generate All";
         public static string generate = "Generate";
+        public static string smoothMeshError = "Generated mesh could not be smoothed. Please try using different parameters";
+        public static string copyError1 = "Unable to convert copied data to Skinning Module paste data.";
+        public static string copyError2 = "There is no copied data to paste.";
+        public static string copyError3 = "Target has a different number of Sprites ({0}) compared to copied source ({1}) for Mesh copy.";
     }
 }

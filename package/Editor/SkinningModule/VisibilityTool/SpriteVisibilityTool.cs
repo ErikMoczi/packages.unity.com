@@ -82,7 +82,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         void OnViewModeChanged(SkinningMode mode)
         {
             OnAvailabilityChangeListeners();
-            if (isAvailable)
+            if (isAvailable && m_Model.previousVisibility != m_Model.allVisibility)
                 SetAllCharacterSpriteVisibility();
         }
 
@@ -288,15 +288,6 @@ namespace UnityEditor.Experimental.U2D.Animation
             var columns = new MultiColumnHeaderState.Column[2];
             columns[0] = new MultiColumnHeaderState.Column
             {
-                headerContent = EditorGUIUtility.TrTextContent(TextContent.name),
-                headerTextAlignment = TextAlignment.Center,
-                width = 200,
-                minWidth = 130,
-                autoResize = true,
-                allowToggleVisibility = false
-            };
-            columns[1] = new MultiColumnHeaderState.Column
-            {
                 headerContent = VisibilityTreeViewBase.VisibilityIconStyle.visibilityOnIcon,
                 headerTextAlignment = TextAlignment.Center,
                 width = 32,
@@ -305,6 +296,15 @@ namespace UnityEditor.Experimental.U2D.Animation
                 autoResize = false,
                 allowToggleVisibility = true
             };
+            columns[1] = new MultiColumnHeaderState.Column
+            {
+                headerContent = EditorGUIUtility.TrTextContent(TextContent.name),
+                headerTextAlignment = TextAlignment.Center,
+                width = 200,
+                minWidth = 130,
+                autoResize = true,
+                allowToggleVisibility = false
+            };
             var multiColumnHeaderState = new MultiColumnHeaderState(columns);
             var multiColumnHeader = new VisibilityToolColumnHeader(multiColumnHeaderState)
             {
@@ -312,7 +312,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 SetAllVisibility = InternalSetAllVisibility,
                 canSort = false,
                 height = 20,
-                visibilityColumn = 1
+                visibilityColumn = 0
             };
 
             m_TreeView = new SpriteTreeView(m_TreeViewState, multiColumnHeader)
@@ -367,10 +367,10 @@ namespace UnityEditor.Experimental.U2D.Animation
             switch (column)
             {
                 case 0:
-                    DrawNameCell(cellRect, item, ref args);
+                    DrawVisibilityCell(cellRect, item);
                     break;
                 case 1:
-                    DrawVisibilityCell(cellRect, item);
+                    DrawNameCell(cellRect, item, ref args);
                     break;
             }
         }

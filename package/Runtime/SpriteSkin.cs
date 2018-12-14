@@ -153,6 +153,7 @@ namespace UnityEngine.Experimental.U2D.Animation
                 if (m_AssetTimeStamp != assetTimeStamp)
                 {
                     m_AssetTimeStamp = assetTimeStamp;
+                    m_SpriteBones = null;
                     DeactivateSkinning();
                 }
             }
@@ -162,6 +163,9 @@ namespace UnityEngine.Experimental.U2D.Animation
             {
                 m_CurrentSprite = spriteRenderer.sprite;
                 DeactivateSkinning();
+#if UNITY_EDITOR
+                m_SpriteBones = null;
+#endif
             }
 
             if (!spriteRenderer.enabled || !isValid)

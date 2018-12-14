@@ -30,7 +30,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_Material.hideFlags = HideFlags.DontSave;
         }
 
-        protected override void OnDestroy()
+        internal override void OnDestroy()
         {
             base.OnDestroy();
 

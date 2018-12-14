@@ -3,7 +3,7 @@
   <aui:WeightPainterPanel name="WeightPainterPanel" text="Weight Painter" picking-mode="Ignore">
     <ui:PopupWindow text="Weight Painter">
       <ui:VisualElement class="form-row">
-        <ui:Label name="ModeLabel" text="Mode" tooltip ="Weight Slider Mode"/>
+        <ui:Label name="ModeLabel" text="Mode" tooltip ="Different operation mode for weight adjustment"/>
         <ui:VisualElement class="form-editor" name="Mode" />
         <!-- No support for Enums outside of UnityEditor -->
         <!-- <eui:EnumField name="ModeField" type="WeightEditorMode" /> -->

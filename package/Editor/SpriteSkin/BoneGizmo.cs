@@ -409,7 +409,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (!view.IsRepainting())
                 return;
 
-            view.DrawCursors();
+            view.DrawCursors(true);
         }
 
         private bool HasParentBone(Transform transform)

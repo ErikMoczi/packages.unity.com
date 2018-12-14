@@ -159,6 +159,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             skeletonTool.skeletonStyle = SkeletonStyles.WeightMap;
             skeletonTool.mode = SkeletonMode.EditPose;
+            skeletonTool.editBindPose = false;
             skeletonTool.DoGUI();
         }
 
@@ -282,6 +283,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             ActivateTool(currentTool);
             m_Model.view.SetBoneOpacitySliderValue(m_Model.boneOpacityValue);
             m_Model.view.SetMeshOpacitySliderValue(m_Model.meshOpacityValue);
+            m_Model.view.onBoneOpacitySliderChange -= OnBoneOpacityChange;
+            m_Model.view.onMeshOpacitySliderChange -= OnMeshOpacityChange;
             m_Model.view.onBoneOpacitySliderChange += OnBoneOpacityChange;
             m_Model.view.onMeshOpacitySliderChange += OnMeshOpacityChange;
         }

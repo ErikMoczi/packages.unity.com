@@ -159,7 +159,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
             for (int i = 0; i < meshCache.vertexCount; ++i)
             {
                 var weight = meshCache.GetWeight(i);
-                Assert.AreEqual(0, weight.Sum(), 0.00001f);
+                Assert.AreEqual(1f, weight.Sum(), 0.00001f);
             }
         }
     }

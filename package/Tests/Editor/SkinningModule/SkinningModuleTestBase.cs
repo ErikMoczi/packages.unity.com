@@ -144,6 +144,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
         public void Setup()
         {
             SetupWindow();
+            m_Window.Focus();
             m_Window.Show();
             m_Window.Activate();
             DoOtherSetup();

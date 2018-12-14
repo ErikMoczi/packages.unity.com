@@ -40,6 +40,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         private int m_ChangeLengthControlID = -1;
         private int m_CreateBoneControlID = -1;
         private int m_HoveredBoneID = 0;
+        private int m_PrevHoveredBoneID = 0;
         private int m_HoveredBodyID = 0;
         private int m_HoveredJointID = 0;
         private int m_HoveredTailID = 0;
@@ -71,6 +72,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             if (m_GUIWrapper.eventType == EventType.Layout)
             {
+                m_PrevHoveredBoneID = m_HoveredBoneID;
                 m_NearestDistance = float.MaxValue;
                 m_NearestBodyDistance = float.MaxValue;
                 m_NearestJointDistance = float.MaxValue;
@@ -103,8 +105,6 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_GUIWrapper.LayoutControl(m_HoveredJointControlID, m_NearestJointDistance);
             m_GUIWrapper.LayoutControl(m_HoveredTailControlID, m_NearestTailDistance);
 
-            var oldHoveredBone = m_HoveredBoneID;
-
             if (m_GUIWrapper.IsControlNearest(m_HoveredBodyControlID))
             {
                 m_HoveredBoneID = m_NearestBodyId;
@@ -123,7 +123,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 m_HoveredTailID = m_NearestTailId;
             }
 
-            if (oldHoveredBone != m_HoveredBoneID)
+            if (m_GUIWrapper.eventType == EventType.Layout && m_PrevHoveredBoneID != m_HoveredBoneID)
                 m_GUIWrapper.Repaint();
         }
 
@@ -580,17 +580,18 @@ namespace UnityEditor.Experimental.U2D.Animation
             BoneDrawingUtility.DrawBoneOutline(position, position + right * length, forward, color, outlineScale);
         }
 
-        public void DrawCursors()
+        public void DrawCursors(bool canBeActive)
         {
             var mouseScreenRect = new Rect(m_GUIWrapper.mousePosition.x - 100f, m_GUIWrapper.mousePosition.y - 100f, 200f, 200f);
 
-            if (IsActionActive(SkeletonAction.RotateBone) || IsActionHot(SkeletonAction.RotateBone))
+            var isRotateHot = IsActionHot(SkeletonAction.RotateBone);
+            if ((canBeActive && IsActionActive(SkeletonAction.RotateBone)) || isRotateHot)
                 EditorGUIUtility.AddCursorRect(mouseScreenRect, MouseCursor.RotateArrow);
 
-            if (IsActionActive(SkeletonAction.MoveBone) || IsActionHot(SkeletonAction.MoveBone) ||
-                IsActionActive(SkeletonAction.FreeMoveBone) || IsActionHot(SkeletonAction.FreeMoveBone) ||
-                IsActionActive(SkeletonAction.MoveJoint) || IsActionHot(SkeletonAction.MoveJoint) ||
-                IsActionActive(SkeletonAction.MoveEndPosition) || IsActionHot(SkeletonAction.MoveEndPosition))
+            if ((canBeActive && IsActionActive(SkeletonAction.MoveBone)) || IsActionHot(SkeletonAction.MoveBone) ||
+                (canBeActive && IsActionActive(SkeletonAction.FreeMoveBone)) || IsActionHot(SkeletonAction.FreeMoveBone) ||
+                (canBeActive && IsActionActive(SkeletonAction.MoveJoint)) || IsActionHot(SkeletonAction.MoveJoint) ||
+                (canBeActive && IsActionActive(SkeletonAction.MoveEndPosition)) || IsActionHot(SkeletonAction.MoveEndPosition))
                 EditorGUIUtility.AddCursorRect(mouseScreenRect, MouseCursor.MoveArrow);
         }
 

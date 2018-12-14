@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace UnityEditor.Experimental.U2D.Animation
@@ -10,34 +11,45 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             if (sprite != null)
                 return sprite.skinningCache.GetMesh(sprite);
-            return null;            
+            return null;
         }
 
         public static MeshPreviewCache GetMeshPreview(this SpriteCache sprite)
         {
             if (sprite != null)
                 return sprite.skinningCache.GetMeshPreview(sprite);
-            return null;   
+            return null;
         }
 
         public static SkeletonCache GetSkeleton(this SpriteCache sprite)
         {
             if (sprite != null)
                 return sprite.skinningCache.GetSkeleton(sprite);
-            return null;   
+            return null;
         }
 
         public static CharacterPartCache GetCharacterPart(this SpriteCache sprite)
         {
             if (sprite != null)
                 return sprite.skinningCache.GetCharacterPart(sprite);
-            return null;   
+            return null;
+        }
+
+        public static bool IsVisible(this SpriteCache sprite)
+        {
+            var isVisible = true;
+            var characterPart = sprite.GetCharacterPart();
+
+            if (sprite.skinningCache.mode == SkinningMode.Character && characterPart != null)
+                isVisible = characterPart.isVisible;
+
+            return isVisible;
         }
 
         public static Matrix4x4 GetLocalToWorldMatrixFromMode(this SpriteCache sprite)
         {
             var skinningCache = sprite.skinningCache;
-            
+
             if (skinningCache.mode == SkinningMode.SpriteSheet)
                 return sprite.localToWorldMatrix;
 
@@ -77,13 +89,14 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             var mesh = sprite.GetMesh();
 
-            Debug.Assert(mesh != null);
+            if (mesh == null)
+                return;
 
             var controller = new SpriteMeshDataController();
             controller.spriteMeshData = mesh;
             controller.SmoothFill();
         }
-        
+
         public static void RestoreBindPose(this SpriteCache sprite)
         {
             var skinningCache = sprite.skinningCache;
@@ -108,7 +121,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             Debug.Assert(characterPart != null);
 
-            var bones = character.skeleton.bones;
+            var bones = character.skeleton.bones.Where(x => x.isVisible).ToArray();
             characterPart.bones = bones;
 
             characterPart.sprite.UpdateMesh(bones);

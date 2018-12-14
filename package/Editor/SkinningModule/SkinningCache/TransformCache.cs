@@ -112,7 +112,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        protected override void OnDestroy()
+        internal override void OnDestroy()
         {
             if (parent != null)
                 parent.RemoveChild(this);

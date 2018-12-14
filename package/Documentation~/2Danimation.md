@@ -1,6 +1,6 @@
 # Introduction
 
-The aim of this manual is to guide you to quickly rig and animate a 2D character in Unity with the 2D Animation V2 package and tools. This package is only supported for Unity 2018.3 or later.
+The aim of this manual is to guide you to quickly rig and animate a 2D character in Unity with the 2D Animation V2 package and tools. This package is only supported for Unity 2018.3.
 
 ## Adobe Photoshop PSB format
 
@@ -39,7 +39,7 @@ Prepare your character by separating the character's limbs and parts into separa
    - Set **Sprite Mode** to 'Multiple'.
    - Check __Mosaic Layer__.
    - Check __Character Rig__.
-   - Check __Use Hierarchy__.
+   - Check __Use Folder Grouping__.
 
 ![Importer Window settings](images/ImporterWindow.png)
 
@@ -61,21 +61,22 @@ Click __Apply__ to apply the settings when ready. Refer to the __PSD Importer__ 
 | ![icon_CreateBone](images/icon_CreateBone.png)Create Bone    |    Shift + E     | Click and drag to create bones.                              |
 | ![icon_SplitBone](images/icon_SplitBone.png)Split Bone       |    Shift + R     | Splits the selected bone.                                    |
 | ![icon_ReparentBone](images/icon_ReparentBone.png)Reparent Bone |    Shift + T     | Reparents a child bone to a different parent bone, changing the bone hierarchy. |
-| ![icon_EditGeo](images/icon_EditGeo.png)Edit Geometry        |    Shift + A     | Edit generated meshes by repositioning vertices.             |
-| ![icon_CreateVertex](images/icon_CreateVertex.png)Create Vertex |    Shift + S     | Create new vertices to create geometry.                      |
-| ![icon_CreateEdge](images/icon_CreateEdge.png)Create Edge    |    Shift + D     | Create new edges to create geometry.                         |
+| ![icon_GenGeo](images/icon_GenGeo.png)Auto Geometry      |    Shift + A     | Autogenerate meshes for Sprites.                             |
+| ![icon_EditGeo](images/icon_EditGeo.png)Edit Geometry        |    Shift + S     | Edit generated meshes by repositioning vertices.             |
+| ![icon_CreateVertex](images/icon_CreateVertex.png)Create Vertex |    Shift + D     | Create new vertices to create geometry.                      |
+| ![icon_CreateEdge](images/icon_CreateEdge.png)Create Edge    |    Shift + G     | Create new edges to create geometry.                         |
 | ![icon_SplitEdge](images/icon_SplitEdge.png)Split Edge       |    Shift + H     | Split an existing edge into two.                             |
-| ![icon_GenGeo](images/icon_GenGeo.png)Generate Geometry      |    Shift + G     | Autogenerate meshes for Sprites.                             |
-| ![icon_WeightSlider](images/icon_WeightSlider.png)Weight Painter Slider |    Shift + Z     | Adjust weights via slider control.                           |
-| ![icon_WeightPaint](images/icon_WeightPaint.png)Weight Painter Brush |    Shift + X     | Adjust weights by painting with a brush.                     |
-| ![icon_BoneInfluence](images/icon_BoneInfluence.png)Bone Influence |    Shift + C     | Select which bones influence a Sprite.                       |
-| ![icon_GenWeights](images/icon_GenWeights.png)               |    Shift + V     | Autogenerate weights for geometry.                           |
-| ![icon_RestoreBind](images/icon_RestoreBind.png)Restore Bind Pose |    Shift + 1     | Restore a character’s bones and joints to their original positions. |
+| ![icon_GenWeights](images/icon_GenWeights.png)Auto Weights   |    Shift + Z     | Autogenerate weights for geometry.                           |
+| ![icon_WeightSlider](images/icon_WeightSlider.png)Weight Slider |    Shift + X     | Adjust weights via slider control.                           |
+| ![icon_WeightPaint](images/icon_WeightPaint.png)Weight Brush |    Shift + C     | Adjust weights by painting with a brush.                     |
+| ![icon_BoneInfluence](images/icon_BoneInfluence.png)Bone Influence |    Shift + V     | Select which bones influence a Sprite.                       |
+| ![icon_RestoreBind](images/icon_RestoreBind.png)Reset Pose |    Shift + 1     | Restore a character’s bones and joints to their original positions. |
 | ![icon_ToggleView](images/icon_ToggleView.png)Toggle View Mode |    Shift + 2     | Switch between the Character and Sprite Sheet view           |
 | ![icon_Copy](images/icon_Copy.png)Copy                       |     Ctrl + C     | Copy the data from the current selection.                    |
 | ![icon_Paste](images/icon_Paste.png)Paste                    |     Ctrl + V     | Pastes the copied data.                                      |
 | ![icon_Paste](images/icon_Paste.png)Paste                    |    Shift + B     | Show additional pasting options.                             |
 | ![icon_Visibility](images/icon_Visibility.png)Visibility     |    Shift + P     | Toggle visibility of selected Sprites or bones.              |
+| Toggle Tool Text     |    Shift + `     | Show or hide text on tool buttons              |
 
 ## Sprite selection
 
@@ -98,8 +99,8 @@ The Unity 2D Animation preferences menu is found in the Preferences menu by goin
 
 | Setting                    | Function                                                     |
 | -------------------------- | ------------------------------------------------------------ |
-| **Collapse Toolbar**       | Enable this option to minimize all toolbar options to  a compact view (see example below). |
-| **Selected Outline Color** | Customize the outline color of a selected Sprite.            |
+| **Hide Tool Text**        | Enable this option to hide tool text to have a compact view (see example below). |
+| **Selected Outline Color** | Customize the outline color of selected Sprite and bone.            |
 | **Sprite Outline Size**    | Use the slider to adjust the outline thickness of a selected Sprite. |
 | **Bone Outline Size**      | Use the slider to adjust the outline thickness of a selected  bone. |
 
@@ -113,7 +114,7 @@ The Unity 2D Animation preferences menu is found in the Preferences menu by goin
 
 3. To create a continuous chain of bones, select the ![icon_small_CreateBone](images/icon_small_CreateBone.png)__Create Bone__ tool and click the end-point of an existing bone. The new bone is started from the end-point, creating a chain.
 
-4. Once all bones are created, generate the mesh geometry for the Sprites. It is recommended to use the ![icon_small_GenGeo](images/icon_small_GenGeo.png)__Generate Geometry__ tool to autogenerate the Sprites’s geometry mesh. Then refine the geometry with the ![icon_small_CreateVertex](images/icon_small_CreateVertex.png)__Create Vertex__ and ![icon_small_CreateEdge](images/icon_small_CreateEdge.png)__Create Edge__ tools.
+4. Once all bones are created, generate the mesh geometry for the Sprites. It is recommended to use the ![icon_small_GenGeo](images/icon_small_GenGeo.png)__Auto Geometry__ tool to autogenerate the Sprites’s geometry mesh. Then refine the geometry with the ![icon_small_CreateVertex](images/icon_small_CreateVertex.png)__Create Vertex__ and ![icon_small_CreateEdge](images/icon_small_CreateEdge.png)__Create Edge__ tools.
 
 5. To edit the bones that influence a Sprite, select the ![icon_small_BoneInfluence](images/icon_small_BoneInfluence.png)__Bone Influence__ tool and double-click a Sprite to select it. A list of bones currently influencing the Sprite appears. 
 
@@ -121,11 +122,11 @@ The Unity 2D Animation preferences menu is found in the Preferences menu by goin
 
     - To add a bone, select it in the **Sprite Window** and click + to add it to the list.
 
-6. The weight attached to vertices affects the influence between bones and the Sprites' geometry. Select the  ![icon_small_GenWeight](images/icon_small_GenWeight.png)__Generate Weights__ tool to autogenerate the weight of a selected Sprites. To generate weights for all Sprites at once, deselect all Sprites before selecting the tool. Refine the weights of the vertices with the ![icon_small_WeightPainter](images/icon_small_WeightPainter.png)__Weight Painter Brush__ and ![icon_small_WeightSlider](images/icon_small_WeightSlider.png)__Weight Painting Slider__ tools.
+6. The weight attached to vertices affects the influence between bones and the Sprites' geometry. Select the  ![icon_small_GenWeight](images/icon_small_GenWeight.png)__Auto Weights__ tool to autogenerate the weight of a selected Sprites. To generate weights for all Sprites at once, deselect all Sprites before selecting the tool. Refine the weights of the vertices with the ![icon_small_WeightPainter](images/icon_small_WeightPainter.png)__Weight Brush__ and ![icon_small_WeightSlider](images/icon_small_WeightSlider.png)__Weight Slider__ tools.
 
-7. Test the skeleton rig previewing poses with the ![icon_small_PreviewPose](images/icon_small_PreviewPose.png)__Preview Pose__ tool. Move and rotate the different bones to check their influence on the geometry mesh. Previewing poses can also be done while using the following tools: the ![icon_small_ReparentBone](images/icon_small_ReparentBone.png)__Reparent Bone__, ![icon_small_WeightPainter](images/icon_small_WeightPainter.png)__Weight Painter Brush__, ![icon_small_WeightSlider](images/icon_small_WeightSlider.png)__Weight Painting Slider__, ![icon_small_BoneInfluence](images/icon_small_BoneInfluence.png)__Bone Influence__, ![icon_small_GenWeight](images/icon_small_GenWeight-1543300126435.png)__Generate Weights__, and ![icon_small_Visibility](images/icon_small_Visibility.png)__Visibility__ tools.
+7. Test the skeleton rig previewing poses with the ![icon_small_PreviewPose](images/icon_small_PreviewPose.png)__Preview Pose__ tool. Move and rotate the different bones to check their influence on the geometry mesh. Previewing poses can also be done while using the following tools: the ![icon_small_ReparentBone](images/icon_small_ReparentBone.png)__Reparent Bone__, ![icon_small_WeightPainter](images/icon_small_WeightPainter.png)__Weight Brush__, ![icon_small_WeightSlider](images/icon_small_WeightSlider.png)__Weight Slider__, ![icon_small_BoneInfluence](images/icon_small_BoneInfluence.png)__Bone Influence__, ![icon_small_GenWeight](images/icon_small_GenWeight-1543300126435.png)__Auto Weights__, and ![icon_small_Visibility](images/icon_small_Visibility.png)__Visibility__ tools.
 
-    * To restore a skeleton rig to its original pose, select ![icon_small_RestoreBind](images/icon_small_RestoreBind.png)__Restore Bind Pose__. The default pose can be edited with the ![icon_small_EditJoints](images/icon_small_EditJoints.png)__Edit Joints__ tool.
+    * To restore a skeleton rig to its original pose, select ![icon_small_RestoreBind](images/icon_small_RestoreBind.png)__Reset Pose__. The default pose can be edited with the ![icon_small_EditJoints](images/icon_small_EditJoints.png)__Edit Joints__ tool.
 
 # Animating
 

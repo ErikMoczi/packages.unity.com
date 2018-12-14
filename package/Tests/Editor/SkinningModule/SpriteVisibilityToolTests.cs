@@ -72,6 +72,8 @@ namespace  UnityEditor.Experimental.U2D.Animation.Test.SpriteVisibilityTests
             m_Controller.OnAvailabilityChangeListeners += () => availabilityChangedCalled = true;
             m_Controller.Activate();
             m_Model.mode.Returns(mode);
+            m_Model.previousVisibility.Returns(false);
+            m_Model.allVisibility.Returns(true);
             m_Events.skinningModeChanged.Invoke(mode);
             var temp = m_Model.Received(hasCharacterRecievedCall).hasCharacter;
             Assert.IsTrue(availabilityChangedCalled);

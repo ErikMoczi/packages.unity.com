@@ -70,12 +70,15 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         void OnGUI()
         {
+            var guiEnabled = GUI.enabled;
+            GUI.enabled = true;
             GUILayout.BeginVertical();
             DoSearchField();
             GUILayout.EndVertical();
             Rect rect = GUILayoutUtility.GetRect(0, 100000, 0, 100000);
             m_TreeView.OnGUI(rect);
             DoOpacitySlider();
+            GUI.enabled = guiEnabled;
         }
     }
 

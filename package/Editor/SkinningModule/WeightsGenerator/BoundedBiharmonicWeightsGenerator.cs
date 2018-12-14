@@ -9,10 +9,10 @@ namespace UnityEditor.Experimental.U2D.Animation
 {
     internal class BoundedBiharmonicWeightsGenerator : IWeightsGenerator
     {
+        internal static readonly BoneWeight defaultWeight = new BoneWeight() { weight0 = 1 };
         private const int kNumIterations = -1;
-        private const float kDistancePerSample = 5f;
-        private const int kMinSamples = 10;
-        private const float kMinAngle = 25f;
+        private const int kNumSamples = 10;
+        private const float kMinAngle = 20f;
         private const float kLargestTriangleAreaFactor = 0.25f;
         private const float kMeshAreaFactor = 0.0015f;
 
@@ -28,7 +28,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public BoneWeight[] Calculate(Vector2[] vertices, Edge[] edges, Vector2[] controlPoints, Edge[] bones, int[] pins)
         {
-            var boneSamples = SampleBones(controlPoints, bones, kDistancePerSample, kMinSamples);
+            var boneSamples = SampleBones(controlPoints, bones, kNumSamples);
             var verticesList = new List<Vector2>(vertices.Length + controlPoints.Length + boneSamples.Length);
             var edgesList = new List<Edge>(edges);
             var indicesList = new List<int>();
@@ -65,12 +65,20 @@ namespace UnityEditor.Experimental.U2D.Animation
             pinsHandle.Free();
             weightsHandle.Free();
 
+            for (var i = 0; i < weights.Length; ++i)
+            {
+                var weight = weights[i];
+
+                if (weight.Sum() == 0f)
+                    weights[i] = defaultWeight;
+            }
+
             return weights;
         }
 
         public void DebugMesh(ISpriteMeshData spriteMeshData, Vector2[] vertices, Edge[] edges, Vector2[] controlPoints, Edge[] bones, int[] pins)
         {
-            var boneSamples = SampleBones(controlPoints, bones, kDistancePerSample, kMinSamples);
+            var boneSamples = SampleBones(controlPoints, bones, kNumSamples);
             var verticesList = new List<Vector2>(vertices.Length + controlPoints.Length + boneSamples.Length);
             var edgesList = new List<Edge>(edges);
             var indicesList = new List<int>();
@@ -88,9 +96,9 @@ namespace UnityEditor.Experimental.U2D.Animation
             spriteMeshData.indices.AddRange(indicesList);
         }
 
-        private Vector2[] SampleBones(Vector2[] points, Edge[] edges, float distancePerSample, int minSamples)
+        private Vector2[] SampleBones(Vector2[] points, Edge[] edges, int numSamples)
         {
-            Debug.Assert(distancePerSample > 0f);
+            Debug.Assert(numSamples > 0);
 
             var sampledEdges = new List<Vector2>();
 
@@ -100,11 +108,10 @@ namespace UnityEditor.Experimental.U2D.Animation
                 var tip = points[edge.index1];
                 var tail = points[edge.index2];
                 var length = (tip - tail).magnitude;
-                var samplesPerEdge = Mathf.Max((int)(length / distancePerSample), minSamples);
 
-                for (var s = 0; s < samplesPerEdge; s++)
+                for (var s = 0; s < numSamples; s++)
                 {
-                    var f = (s + 1f) / (float)(samplesPerEdge + 1f);
+                    var f = (s + 1f) / (float)(numSamples + 1f);
                     sampledEdges.Add(f * tail + (1f - f) * tip);
                 }
             }

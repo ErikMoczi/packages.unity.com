@@ -242,6 +242,22 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
+        new public void SetParent(TransformCache newParent)
+        {
+            SetParent(newParent, true);
+        }
+
+        new public void SetParent(TransformCache newParent, bool worldPositionStays)
+        {
+            if (parentBone != null && parentBone.chainedChild == this)
+                parentBone.chainedChild = null;
+
+            base.SetParent(newParent, worldPositionStays);
+
+            if (parentBone != null && parentBone.chainedChild == null && (parentBone.endPosition - position).sqrMagnitude < 0.001f)
+                parentBone.chainedChild = this;
+        }
+
         public void OrientToChainedChild(bool freezeChildren)
         {
             Debug.Assert(chainedChild != null);

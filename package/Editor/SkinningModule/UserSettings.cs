@@ -9,7 +9,7 @@ namespace UnityEditor.Experimental.U2D.Animation
     internal class SkinningModuleSettings
     {
         public const string kCompactToolbarKey = UserSettings.kSettingsUniqueKey + "AnimationEditorSetting.compactToolbar";
-        public static readonly GUIContent kCompactToolbarLabel = EditorGUIUtility.TrTextContent("Collapse Toolbar");
+        public static readonly GUIContent kCompactToolbarLabel = EditorGUIUtility.TrTextContent("Hide Tool Text");
         public static bool compactToolBar
         {
             get { return EditorPrefs.GetBool(kCompactToolbarKey, false); }
@@ -44,6 +44,9 @@ namespace UnityEditor.Experimental.U2D.Animation
 
     internal class GenerateGeomertySettings
     {
+        public const int kDefaultOutlineDetail = 10;
+        public const int kDefaultAlphaTolerance = 10;
+        public const int kDefaultSubdivide = 20;
         public const string kOutlineDetailKey = UserSettings.kSettingsUniqueKey + "GenerateGeomertySetting.outlineDetail";
         public const string kAlphaToleranceKey = UserSettings.kSettingsUniqueKey + "GenerateGeomertySetting.alphaTolerance";
         public const string kSubdivideKey = UserSettings.kSettingsUniqueKey + "GenerateGeomertySetting.subdivide";
@@ -51,19 +54,19 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public static int outlineDetail
         {
-            get { return EditorPrefs.GetInt(kOutlineDetailKey, 10); }
+            get { return EditorPrefs.GetInt(kOutlineDetailKey, kDefaultOutlineDetail); }
             set { EditorPrefs.SetInt(kOutlineDetailKey, value); }
         }
 
         public static int alphaTolerance
         {
-            get { return EditorPrefs.GetInt(kAlphaToleranceKey, 0); }
+            get { return EditorPrefs.GetInt(kAlphaToleranceKey, kDefaultAlphaTolerance); }
             set { EditorPrefs.SetInt(kAlphaToleranceKey, value); }
         }
 
         public static int subdivide
         {
-            get { return EditorPrefs.GetInt(kSubdivideKey, 20); }
+            get { return EditorPrefs.GetInt(kSubdivideKey, kDefaultSubdivide); }
             set { EditorPrefs.SetInt(kSubdivideKey, value); }
         }
 
@@ -144,7 +147,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         private static SelectionOutlineSettings s_SelectionOutlineSettings = new SelectionOutlineSettings();
         private static SkinningModuleSettings s_SkinningModuleSettings = new SkinningModuleSettings();
 
-        public UserSettings() : base("Preferences/Unity 2D Animation", SettingsScope.User)
+        public UserSettings() : base("Preferences/2D/Animation", SettingsScope.User)
         {
             guiHandler = OnGUI;
         }

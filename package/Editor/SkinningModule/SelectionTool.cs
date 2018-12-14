@@ -21,6 +21,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             {
                 if (selectedSprite != value)
                 {
+                    skinningCache.vertexSelection.Clear();
+
                     if (skinningCache.mode == SkinningMode.SpriteSheet)
                     {
                         skinningCache.skeletonSelection.Clear();

@@ -127,6 +127,11 @@ namespace UnityEditor.Experimental.U2D.Animation
         }
 
         BoneReparentToolView toolView { get {return m_ToolView; } }
+
+        public void Deactivate()
+        {
+            toolView.Deactivate();
+        }
     }
 
     internal class BoneReparentToolView : BoneVisibilityToolView
@@ -139,22 +144,22 @@ namespace UnityEditor.Experimental.U2D.Animation
             var columns = new MultiColumnHeaderState.Column[3];
             columns[0] = new MultiColumnHeaderState.Column
             {
-                headerContent = EditorGUIUtility.TrTextContent("Bone"),
-                headerTextAlignment = TextAlignment.Center,
-                width = 170,
-                minWidth = 130,
-                autoResize = true,
-                allowToggleVisibility = false
-            };
-            columns[1] = new MultiColumnHeaderState.Column
-            {
-                headerContent = new GUIContent(EditorGUIUtility.FindTexture("visibilityOn")),
+                headerContent = VisibilityTreeViewBase.VisibilityIconStyle.visibilityOnIcon,
                 headerTextAlignment = TextAlignment.Center,
                 width = 32,
                 minWidth = 32,
                 maxWidth = 32,
                 autoResize = false,
                 allowToggleVisibility = true
+            };
+            columns[1] = new MultiColumnHeaderState.Column
+            {
+                headerContent = EditorGUIUtility.TrTextContent("Bone"),
+                headerTextAlignment = TextAlignment.Center,
+                width = 170,
+                minWidth = 130,
+                autoResize = true,
+                allowToggleVisibility = false
             };
             columns[2] = new MultiColumnHeaderState.Column
             {
@@ -173,7 +178,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 SetAllVisibility = SetAllVisibility,
                 canSort = false,
                 height = 20,
-                visibilityColumn = 1
+                visibilityColumn = 0
             };
         }
     }

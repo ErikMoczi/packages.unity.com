@@ -1,16 +1,24 @@
 {
-    "name": "com.unity.2d.animation",
-    "version": "2.0.0-preview.9",
-    "unity": "2018.3",
-    "displayName": "2D Animation",
-    "description": "2D Animation provides the all the necessary tooling and runtime components for skeletal animation using Sprites.",
-    "keywords": ["2d", "animation"],
-    "category": "2D",
-    "dependencies": {
-        "com.unity.2d.common": "1.0.11-preview.4",
-        "com.unity.2d.triangle": "1.0.3-preview"
-    },
-    "config": {
-		"publishtest": true
-	}
+  "name": "com.unity.2d.animation",
+  "version": "2.0.0-preview.1",
+  "unity": "2018.3",
+  "displayName": "2D Animation",
+  "description": "2D Animation provides the all the necessary tooling and runtime components for skeletal animation using Sprites.",
+  "keywords": [
+    "2d",
+    "animation"
+  ],
+  "category": "2D",
+  "dependencies": {
+    "com.unity.2d.common": "1.0.11-preview.1",
+    "com.unity.2d.triangle": "1.0.2-preview.1"
+  },
+  "config": {
+    "publishtest": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/2D/com.unity.2d.animation.git",
+    "revision": "4dc3c51dca51b8914dd45952c464120be4b8f86e"
+  }
 }
