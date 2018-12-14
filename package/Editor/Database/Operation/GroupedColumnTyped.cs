@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Unity.MemoryProfiler.Editor.Database.Operation
 {
-    public class GroupedColumnTyped<DataT> : ExpandColumnTyped<DataT>, IGroupedColumn, IColumnDecorator where DataT : System.IComparable
+    internal class GroupedColumnTyped<DataT> : ExpandColumnTyped<DataT>, IGroupedColumn, IColumnDecorator where DataT : System.IComparable
     {
 #if MEMPROFILER_DEBUG_INFO
         public override string GetDebugString(long row)

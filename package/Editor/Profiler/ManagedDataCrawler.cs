@@ -1,11 +1,10 @@
-//#define DEBUG_VALIDATION
 using System;
 using System.Collections.Generic;
 using UnityEditor.Profiling.Memory.Experimental;
 
 namespace Unity.MemoryProfiler.Editor
 {
-    public struct ManagedConnection
+    internal struct ManagedConnection
     {
         public enum ConnectionType
         {
@@ -163,7 +162,7 @@ namespace Unity.MemoryProfiler.Editor
         }
     }
 
-    public class ManagedObjectInfo
+    internal class ManagedObjectInfo
     {
         public ulong ptrObject;
         public ulong ptrTypeInfo;
@@ -180,7 +179,7 @@ namespace Unity.MemoryProfiler.Editor
         public BytesAndOffset data;
     }
 
-    public class ManagedData
+    internal class ManagedData
     {
         public bool valid;
         public CachedSnapshot m_Snapshot;
@@ -211,7 +210,7 @@ namespace Unity.MemoryProfiler.Editor
         }
     }
 
-    public struct BytesAndOffset
+    internal struct BytesAndOffset
     {
         public byte[] bytes;
         public int offset;
@@ -314,7 +313,7 @@ namespace Unity.MemoryProfiler.Editor
         }
     }
 
-    public class Crawler
+    internal class Crawler
     {
         CachedSnapshot m_Snapshot;
 
@@ -335,6 +334,20 @@ namespace Unity.MemoryProfiler.Editor
             for (int i = 0; i != m_Snapshot.gcHandles.Count; i++)
             {
                 var moi = new ManagedObjectInfo();
+                if (m_Snapshot.gcHandles.target[i] == 0)
+                {
+                    Debuging.DebugUtility.LogWarning("null object in gc handles " + i);
+                    moi.managedObjectIndex = i;
+                    m_ObjectList.Add(moi);
+                    continue;
+                }
+                if (m_Snapshot.m_CrawledData.managedObjectByAddress.ContainsKey(m_Snapshot.gcHandles.target[i]))
+                {
+                    Debuging.DebugUtility.LogWarning("Duplicated object in gc handles " + i + " addr:" + m_Snapshot.gcHandles.target[i]);
+                    moi.managedObjectIndex = i;
+                    m_ObjectList.Add(moi);
+                    continue;
+                }
                 moi.managedObjectIndex = i;
                 //moi.ptrObject = m_Snapshot.gcHandles.target[i];
                 //moi.
@@ -445,12 +458,27 @@ namespace Unity.MemoryProfiler.Editor
                 int instanceID = CachedSnapshot.NativeObjectEntriesCache.InstanceID_None;
                 if (iField_UnityEngineObject_m_InstanceID >= 0)
                 {
-                    instanceID = m_Snapshot.managedHeapSections.Find(o.ptrObject + (UInt64)instanceIDOffset, m_Snapshot.virtualMachineInformation).ReadInt32();
+                    var h = m_Snapshot.managedHeapSections.Find(o.ptrObject + (UInt64)instanceIDOffset, m_Snapshot.virtualMachineInformation);
+                    if (h.IsValid)
+                    {
+                        instanceID = h.ReadInt32();
+                    }
+                    else
+                    {
+                        UnityEngine.Debug.LogWarning("Managed object missing head (addr:" + o.ptrObject + ", index:" + o.managedObjectIndex + ")");
+                        continue;
+                    }
                 }
                 else if (cachedPtrOffset >= 0)
                 {
                     // If you get a compilation error on the following 2 lines, update to Unity 5.4b14.
-                    var cachedPtr = m_Snapshot.managedHeapSections.Find(o.ptrObject + (UInt64)cachedPtrOffset, m_Snapshot.virtualMachineInformation).ReadPointer();
+                    var heapSection = m_Snapshot.managedHeapSections.Find(o.ptrObject + (UInt64)cachedPtrOffset, m_Snapshot.virtualMachineInformation);
+                    if (!heapSection.IsValid)
+                    {
+                        UnityEngine.Debug.LogWarning("Managed object (addr:" + o.ptrObject + ", index:" + o.managedObjectIndex + ") does not have data at cachedPtr offset(" + cachedPtrOffset + ")");
+                        continue;
+                    }
+                    var cachedPtr = heapSection.ReadPointer();
                     var indexOfNativeObject = m_Snapshot.nativeObjects.nativeObjectAddress.FindIndex(no => (ulong)no == cachedPtr);
                     if (indexOfNativeObject >= 0)
                     {
@@ -458,7 +486,6 @@ namespace Unity.MemoryProfiler.Editor
                     }
                     else
                     {
-                        UnityEngine.Debug.LogWarning("Managed object (addr:" + o.ptrObject + ", index:" + o.managedObjectIndex + ") pointing to unknown native object. (cachedPtr:" + cachedPtr + ")");
                         continue;
                     }
                 }
@@ -523,14 +550,16 @@ namespace Unity.MemoryProfiler.Editor
                 }
                 catch (ArgumentException)
                 {
+#if VERIFY_LITERALS_SENT //literals are currently not being crawled inside the scripting backend
                     UnityEngine.Debug.LogWarningFormat("Skipping field {0} on type {1}", m_Snapshot.fieldDescriptions.fieldDescriptionName[iField], m_Snapshot.typeDescriptions.typeDescriptionName[iTypeDescription]);
                     UnityEngine.Debug.LogWarningFormat("FieldType.name: {0}", m_Snapshot.typeDescriptions.typeDescriptionName[iField_TypeDescription_ArrayIndex]);
+#endif
                     gotException = true;
                 }
 
                 if (!gotException)
                 {
-                    CrawlPointer(fieldLocation.ReadPointer(), ptrFrom, iTypeDescription, indexOfFrom, iField, -1 , true);
+                    CrawlPointer(fieldLocation.ReadPointer(), ptrFrom, iTypeDescription, indexOfFrom, iField, -1, true);
                 }
             }
         }
@@ -541,10 +570,12 @@ namespace Unity.MemoryProfiler.Editor
             var bo = m_Snapshot.managedHeapSections.Find(pointer, m_Snapshot.virtualMachineInformation);
             if (!bo.IsValid)
             {
+#if DEBUG_VALIDATION
                 if (pointer != 0)
                 {
-                    UnityEngine.Debug.LogWarningFormat("CrawlPointer ptr not found " + pointer);
+                    UnityEngine.Debug.LogError("CrawlPointer ptr not found " + pointer);
                 }
+#endif
                 return false;
             }
 
@@ -569,6 +600,10 @@ namespace Unity.MemoryProfiler.Editor
 
             var arrayLength = ArrayTools.ReadArrayLength(m_Snapshot, m_Snapshot.managedHeapSections, pointer, obj.iTypeDescription, m_Snapshot.virtualMachineInformation);
             int iElementTypeDescription = m_Snapshot.typeDescriptions.baseOrElementTypeIndex[obj.iTypeDescription];
+            if(iElementTypeDescription == -1)
+            {
+                return false; //do not crawl uninitialized object types, as we currently don't have proper handling for these
+            }
             var cursor = bo.Add(m_Snapshot.virtualMachineInformation.arrayHeaderSize);
             for (int i = 0; i != arrayLength; i++)
             {
@@ -751,7 +786,7 @@ namespace Unity.MemoryProfiler.Editor
             return virtualMachineInformation.objectHeaderSize + /*lengthfield*/ 1 + (length * /*utf16=2bytes per char*/ 2) + /*2 zero terminators*/ 2;
         }
     }
-    public class ArrayInfo
+    internal class ArrayInfo
     {
         public ulong baseAddress;
         public int[] rank;
@@ -858,6 +893,10 @@ namespace Unity.MemoryProfiler.Editor
             }
 
             o.elementTypeDescription = data.typeDescriptions.baseOrElementTypeIndex[iTypeDescriptionArrayType];
+            if (o.elementTypeDescription == -1) //We currently do not handle uninitialized types as such override the type, making it return pointer size
+            {
+                o.elementTypeDescription = iTypeDescriptionArrayType;
+            }
             if (data.typeDescriptions.HasFlag(o.elementTypeDescription, TypeFlags.kValueType))
             {
                 o.elementSize = data.typeDescriptions.size[o.elementTypeDescription];
@@ -987,6 +1026,10 @@ namespace Unity.MemoryProfiler.Editor
 
 
             var ti = data.typeDescriptions.baseOrElementTypeIndex[iTypeDescriptionArrayType];
+            if(ti == -1) // check added as element type index can be -1 if we are dealing with a class member (Eg Dictionary.Entry) whose type is uninitialized due to their generic data not getting inflated a.k.a unused types
+            {
+                ti = iTypeDescriptionArrayType;
+            }
             var ai = data.typeDescriptions.TypeIndex2ArrayIndex(ti);
             var isValueType = data.typeDescriptions.HasFlag(ai, TypeFlags.kValueType);
 

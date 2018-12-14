@@ -1,6 +1,6 @@
 namespace Unity.MemoryProfiler.Editor.Database
 {
-    public class ColumnError : Database.ColumnTyped<string>
+    internal class ColumnError : Database.ColumnTyped<string>
     {
 #if MEMPROFILER_DEBUG_INFO
         public override string GetDebugString(long row)

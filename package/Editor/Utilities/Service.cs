@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Unity.MemoryProfiler.Editor
 {
-    public class Service<IServieT>
+    internal class Service<IServieT>
     {
         static private Stack<IServieT> m_Implementation = new Stack<IServieT>();
 

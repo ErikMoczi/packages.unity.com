@@ -5,7 +5,7 @@ using UnityEditor;
 
 namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
 {
-    public class MatchTable : IndexedTable
+    internal class MatchTable : IndexedTable
     {
         public int m_columnIndex;
         public string m_matchString;
@@ -28,7 +28,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
                 UnityEngine.Debug.LogError("No column index " + m_columnIndex + " on table '" + m_SourceTable.GetName() + "'");
                 indices = new long[0];
             }
-            var t = metaCol.type;
+            var t = metaCol.Type;
             Matcher m;
             if (t == typeof(string))
             {
@@ -136,20 +136,33 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
         {
         }
     }
-    public class Match : Filter
+    internal class Match : Filter
     {
+        public string MatchString
+        {
+            get
+            {
+                return m_MatchString;
+            }
+        }
+
         int m_ColumnIndex;
         string m_MatchString;
-        int m_SelectedPopup = 0;
-        public Match(int col)
+        readonly string k_MatchStringField;
+        int m_SelectedPopup;
+        bool m_ForceFocus;
+        public Match(int col, string matchString = "")
         {
             m_ColumnIndex = col;
-            m_MatchString = "";
+            m_MatchString = matchString;
+            k_MatchStringField = "MatchInputFieldColumn" + col;
+            m_ForceFocus = true;
         }
 
         public override Filter Clone(FilterCloning fc)
         {
             Match o = new Match(m_ColumnIndex);
+            m_ForceFocus = false;
             o.m_MatchString = m_MatchString;
             o.m_SelectedPopup = m_SelectedPopup;
             return o;
@@ -174,6 +187,10 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
         {
             yield break;
         }
+        public string GetColumnName(Database.Table sourceTable)
+        {
+            return sourceTable.GetMetaData().GetColumnByIndex(m_ColumnIndex).Name;
+        }
 
         Database.Table m_CacheSourceTable;
         string[] m_CachePopupSelection;
@@ -184,14 +201,14 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
             var metaCol = sourceTable.GetMetaData().GetColumnByIndex(m_ColumnIndex);
             string label;
 
-            var t = metaCol.type;
+            var t = metaCol.Type;
             if (t == typeof(string))
             {
-                label = "'" + metaCol.displayName + "' contains:";
+                label = "'" + metaCol.DisplayName + "' contains:";
             }
             else
             {
-                label = "'" + metaCol.displayName + "' is:";
+                label = "'" + metaCol.DisplayName + "' is:";
             }
             GUILayout.Label(label);
             if (t.IsEnum)
@@ -215,7 +232,14 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
                     }
                 }
 
+                GUI.SetNextControlName(k_MatchStringField);
                 int newSelectedPopup = EditorGUILayout.Popup(m_SelectedPopup, popupSelection);
+                if (m_ForceFocus)
+                {
+                    m_ForceFocus = false;
+                    GUI.FocusControl(k_MatchStringField);
+                }
+
                 if (m_SelectedPopup != newSelectedPopup)
                 {
                     m_SelectedPopup = newSelectedPopup;
@@ -232,9 +256,13 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
             }
             else
             {
-                GUI.SetNextControlName(k_FilterInput);
+                GUI.SetNextControlName(k_MatchStringField);
                 var newMatchString = GUILayout.TextField(m_MatchString, GUILayout.MinWidth(250));
-                GUI.FocusControl(k_FilterInput);
+                if (m_ForceFocus)
+                {
+                    m_ForceFocus = false;
+                    GUI.FocusControl(k_MatchStringField);
+                }
                 if (m_MatchString != newMatchString)
                 {
                     m_MatchString = newMatchString;

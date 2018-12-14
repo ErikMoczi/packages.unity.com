@@ -1,13 +1,13 @@
 namespace Unity.MemoryProfiler.Editor
 {
-    public class ObjectArrayTable : ObjectListTable
+    internal class ObjectArrayTable : ObjectListTable
     {
         public new const string kTableName = "ManagedObjectArray";
         public new const string kTableDisplayName = "Managed Object Array";
         public ObjectData arrayData;
         public ArrayInfo arrayInfo;
-        public ObjectArrayTable(Database.Scheme scheme, SnapshotDataRenderer renderer, CachedSnapshot snapshot, ManagedData crawledData, ObjectData arrayData, ObjectMetaType metaType)
-            : base(scheme, renderer, snapshot, crawledData, metaType)
+        public ObjectArrayTable(Database.Schema schema, SnapshotDataRenderer renderer, CachedSnapshot snapshot, ManagedData crawledData, ObjectData arrayData, ObjectMetaType metaType)
+            : base(schema, renderer, snapshot, crawledData, metaType)
         {
             this.arrayData = arrayData;
 

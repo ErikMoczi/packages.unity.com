@@ -3,7 +3,7 @@ using UnityEditor;
 
 namespace Unity.MemoryProfiler.Editor.UI
 {
-    public class Styles
+    internal class Styles
     {
         public GUIStyle background = "OL Box";
         public GUIStyle tooltip = "AnimationEventTooltip";
@@ -38,7 +38,7 @@ namespace Unity.MemoryProfiler.Editor.UI
             get { return ms_Styles ?? (ms_Styles = new Styles()); }
         }
     }
-    public class EllipsisStyleMetric
+    internal class EllipsisStyleMetric
     {
         public GUIStyle style;
         public string ellipsisString = "...";

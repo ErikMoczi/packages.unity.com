@@ -5,21 +5,21 @@ using Unity.MemoryProfiler.Editor.Database.View;
 
 namespace Unity.MemoryProfiler.Editor.Database.Operation
 {
-    public interface IColumnFactory
+    internal interface IColumnFactory
     {
     }
 
-    public abstract class TypedColumnFactory : IColumnFactory
+    internal abstract class TypedColumnFactory : IColumnFactory
     {
         public abstract Column CreateTypedColumn();
     }
 
-    public abstract class ViewColumnExpressionFactory : IColumnFactory
+    internal abstract class ViewColumnExpressionFactory : IColumnFactory
     {
         public abstract Column CreateViewColumnExpression(Expression expression);
     }
 
-    public class ViewColumnExpressionTypeFactory<T> : ViewColumnExpressionFactory where T : IComparable
+    internal class ViewColumnExpressionTypeFactory<T> : ViewColumnExpressionFactory where T : IComparable
     {
         public override Column CreateViewColumnExpression(Expression expression)
         {
@@ -27,7 +27,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         }
     }
 
-    public abstract class ExpressionFactory : IColumnFactory
+    internal abstract class ExpressionFactory : IColumnFactory
     {
         public abstract Expression CreateTypedExpressionColumn(Column source);
         public abstract Expression CreateTypedExpressionFixedRow(Expression baseExp, long row);
@@ -41,7 +41,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         public abstract Expression CreateTypedExpressionDataBreakPoint(Expression baseExp, Expression value);
     }
 
-    public abstract class MatcherFactory : IColumnFactory
+    internal abstract class MatcherFactory : IColumnFactory
     {
         protected interface IParser {}
         protected class Parser<T> : IParser
@@ -76,14 +76,14 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         public abstract Matcher CreateTypedMatcher(string matchString);
     }
 
-    public class ColumnFactory<ColumnT> : TypedColumnFactory where ColumnT : Column, new()
+    internal class ColumnFactory<ColumnT> : TypedColumnFactory where ColumnT : Column, new()
     {
         public override Column CreateTypedColumn()
         {
             return new ColumnT();
         }
     }
-    public class ViewFirstMatchColumnFactory<T> : TypedColumnFactory where T : IComparable
+    internal class ViewFirstMatchColumnFactory<T> : TypedColumnFactory where T : IComparable
     {
         public override Column CreateTypedColumn()
         {
@@ -91,7 +91,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         }
     }
 
-    public class ExpressionColumnFactory<T> : ExpressionFactory where T : IComparable
+    internal class ExpressionColumnFactory<T> : ExpressionFactory where T : IComparable
     {
         public override Expression CreateTypedExpressionColumn(Column source)
         {
@@ -145,7 +145,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         }
     }
 
-    public class ConstMatcherFactory<T> : MatcherFactory where T : IComparable
+    internal class ConstMatcherFactory<T> : MatcherFactory where T : IComparable
     {
         public override Matcher CreateTypedMatcher(string matchString)
         {
@@ -161,12 +161,12 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         }
     }
 
-    public struct TypePair
+    internal struct TypePair
     {
         public Type Key, Value;
     };
 
-    public static class ColumnCreator
+    internal static class ColumnCreator
     {
         private static Dictionary<Type, IColumnFactory> kExpressionFactory = new Dictionary<Type, IColumnFactory>()
         {

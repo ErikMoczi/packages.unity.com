@@ -4,70 +4,70 @@ using System.Collections.Generic;
 
 namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
 {
-    public class Sort : Filter
+    internal class Sort : Filter
     {
         public abstract class Level
         {
             public Level(SortOrder order)
             {
-                this.order = order;
+                this.Order = order;
             }
 
             public abstract int GetColumnIndex(Database.Table tableIn);
             public abstract string GetColumnName(Database.Table tableIn);
             //public long columnIndex;
-            public SortOrder order;
+            public SortOrder Order;
         }
-        public class LevelByIndex : Level
+        internal class LevelByIndex : Level
         {
             public LevelByIndex(int columnIndex, SortOrder order)
                 : base(order)
             {
-                this.columnIndex = columnIndex;
+                this.ColumnIndex = columnIndex;
             }
 
             public override int GetColumnIndex(Database.Table tableIn)
             {
-                return columnIndex;
+                return ColumnIndex;
             }
 
             public override string GetColumnName(Database.Table tableIn)
             {
-                return tableIn.GetMetaData().GetColumnByIndex(columnIndex).name;
+                return tableIn.GetMetaData().GetColumnByIndex(ColumnIndex).Name;
             }
 
-            public int columnIndex;
+            public int ColumnIndex;
         }
-        public class LevelByName : Level
+        internal class LevelByName : Level
         {
             public LevelByName(string columnName, SortOrder order)
                 : base(order)
             {
-                this.columnName = columnName;
+                this.ColumnName = columnName;
             }
 
             public override int GetColumnIndex(Database.Table tableIn)
             {
-                return tableIn.GetMetaData().GetColumnByName(columnName).index;
+                return tableIn.GetMetaData().GetColumnByName(ColumnName).Index;
             }
 
             public override string GetColumnName(Database.Table tableIn)
             {
-                return columnName;
+                return ColumnName;
             }
 
-            public string columnName;
+            public string ColumnName;
         }
-        public List<Level> sortLevel = new List<Level>();
+        public List<Level> SortLevel = new List<Level>();
 
         public override Filter Clone(FilterCloning fc)
         {
             Sort o = new Sort();
 
-            o.sortLevel.Capacity = sortLevel.Count;
-            foreach (var l in sortLevel)
+            o.SortLevel.Capacity = SortLevel.Count;
+            foreach (var l in SortLevel)
             {
-                o.sortLevel.Add(l);
+                o.SortLevel.Add(l);
             }
 
             return o;
@@ -75,7 +75,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
 
         public override Database.Table CreateFilter(Database.Table tableIn)
         {
-            if (sortLevel.Count == 0)
+            if (SortLevel.Count == 0)
             {
                 return tableIn;
             }
@@ -89,18 +89,18 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
 
         public override Database.Table CreateFilter(Database.Table tableIn, ArrayRange range)
         {
-            if (sortLevel.Count == 0)
+            if (SortLevel.Count == 0)
             {
                 return new Database.Operation.IndexedTable(tableIn, range);
             }
 
 
-            int[] columnIndex = new int[sortLevel.Count];
-            SortOrder[] order = new SortOrder[sortLevel.Count];
-            for (int i = 0; i != sortLevel.Count; ++i)
+            int[] columnIndex = new int[SortLevel.Count];
+            SortOrder[] order = new SortOrder[SortLevel.Count];
+            for (int i = 0; i != SortLevel.Count; ++i)
             {
-                columnIndex[i] = sortLevel[i].GetColumnIndex(tableIn);
-                order[i] = sortLevel[i].order;
+                columnIndex[i] = SortLevel[i].GetColumnIndex(tableIn);
+                order[i] = SortLevel[i].Order;
             }
             return new Database.Operation.SortedTable(tableIn, columnIndex, order, 0, range);
         }
@@ -116,10 +116,10 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
 
             EditorGUILayout.BeginVertical();
             int iLevelToRemove = -1;
-            for (int i = 0; i != sortLevel.Count; ++i)
+            for (int i = 0; i != SortLevel.Count; ++i)
             {
-                string sortName = GetSortName(sortLevel[i].order);
-                string colName = sortLevel[i].GetColumnName(sourceTable);
+                string sortName = GetSortName(SortLevel[i].Order);
+                string colName = SortLevel[i].GetColumnName(sourceTable);
 
                 EditorGUILayout.BeginHorizontal();
                 if (OnGui_RemoveButton())
@@ -132,7 +132,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
             if (iLevelToRemove >= 0)
             {
                 dirty = true;
-                sortLevel.RemoveAt(iLevelToRemove);
+                SortLevel.RemoveAt(iLevelToRemove);
             }
 
             EditorGUILayout.EndVertical();
@@ -140,20 +140,20 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
             EditorGUILayout.EndHorizontal();
 
             //remove this filter if it's empty
-            return sortLevel.Count == 0;
+            return SortLevel.Count == 0;
         }
 
         public override void UpdateColumnState(Database.Table sourceTable, ColumnState[] colState)
         {
-            foreach (var l in sortLevel)
+            foreach (var l in SortLevel)
             {
-                colState[l.GetColumnIndex(sourceTable)].sorted = l.order;
+                colState[l.GetColumnIndex(sourceTable)].Sorted = l.Order;
             }
         }
 
         public override bool Simplify(ref bool dirty)
         {
-            return sortLevel.Count == 0;
+            return SortLevel.Count == 0;
         }
     }
 }

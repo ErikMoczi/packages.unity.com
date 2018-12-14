@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Unity.MemoryProfiler.Editor.UI.Treemap
 {
-    public class Utility
+    internal class Utility
     {
         public static Rect[] GetTreemapRects(float[] values, Rect targetRect)
         {

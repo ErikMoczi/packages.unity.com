@@ -4,7 +4,7 @@ using System.Xml;
 
 namespace Unity.MemoryProfiler.Editor.Debuging
 {
-    public static class DebugUtility
+    internal static class DebugUtility
     {
         public static bool IsInValidRange<T>(T[] array, long index)
         {
@@ -36,7 +36,7 @@ namespace Unity.MemoryProfiler.Editor.Debuging
         public static string GetExceptionHelpMessage(System.Exception e)
         {
 #if MEMPROFILER_DEBUGCHECK
-            throw e;
+            throw new System.Exception(e.Message, e);
 #else
             return "Unhandled exception. To get additional information add in project settings \"scripting define symbols\" : MEMPROFILER_DEBUGCHECK\n"
                 + e.Message + "\n"
@@ -88,6 +88,7 @@ namespace Unity.MemoryProfiler.Editor.Debuging
 
         public static void LogInvalidXmlChild(System.Xml.XmlElement parent, System.Xml.XmlElement child)
         {
+            MemoryProfilerAnalytics.AddMetaDatatoEvent<MemoryProfilerAnalytics.LoadViewXMLEvent>(2);
             var debugContext = GetCurrentDebugContext();
             if (debugContext != null)
             {
@@ -118,6 +119,23 @@ namespace Unity.MemoryProfiler.Editor.Debuging
             {
                 LogWarning("Element '" + element.Name + "' is missing the '" + attributeName + "' attribute.");
                 value = null;
+
+                byte errorID = 3;
+                switch (attributeName)
+                {
+                    case "column":
+                        errorID = 4;
+                        break;
+                    case "view":
+                        errorID = 5;
+                        break;
+                    case "order":
+                        errorID = 6;
+                        break;
+                    default:
+                        break;
+                }
+                MemoryProfilerAnalytics.AddMetaDatatoEvent<MemoryProfilerAnalytics.LoadViewXMLEvent>(errorID);
                 return false;
             }
             value = valueGot;

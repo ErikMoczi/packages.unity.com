@@ -1,6 +1,6 @@
 namespace Unity.MemoryProfiler.Editor.Database.Soa
 {
-    public class DataChunk<DataT>
+    internal class DataChunk<DataT>
     {
         public DataChunk(long size)
         {

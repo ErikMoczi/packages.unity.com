@@ -9,7 +9,7 @@ using Unity.MemoryProfiler.Editor.Database;
 namespace Unity.MemoryProfiler.Editor.Tests
 {
     [TestFixture]
-    public class ColumnFactoryTests
+    internal class ColumnFactoryTests
     {
         private MethodInfo factoryMethod = typeof(ColumnCreator).GetMethod("GetFactory", BindingFlags.Static | BindingFlags.NonPublic);
 

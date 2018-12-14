@@ -1,12 +1,15 @@
 {
     "name": "Unity.MemoryProfiler.Editor",
-    "references": [],
+    "references": [
+        "Unity.EditorCoroutines.Editor",
+        "Unity.MemoryProfiler"
+    ],
     "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
     ],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,

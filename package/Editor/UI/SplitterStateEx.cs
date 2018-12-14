@@ -1,11 +1,13 @@
 using UnityEngine;
 using UnityEditor;
+using System;
 
 namespace Unity.MemoryProfiler.Editor.UI
 {
     [System.Serializable]
-    public class SplitterStateEx
+    internal class SplitterStateEx
     {
+        public const int MinSplitterSize = 16;
         const int defaultSplitSize = 6;
 
         public int[] realSizes;
@@ -13,11 +15,13 @@ namespace Unity.MemoryProfiler.Editor.UI
         public int splitSize;
 
         public Vector2 m_TopLeft = Vector2.zero;
-        private double lastClickTime = 0;
-        private Vector2 lastClickPos = Vector2.zero;
+        double lastClickTime = 0;
+        Vector2 lastClickPos = Vector2.zero;
 
         public int splitterInitialOffset;
         public int currentActiveSplitter = -1;
+
+        public event Action<int, int> RealSizeChanged = delegate { };
 
         public SplitterStateEx(int[] realSizes)
         {
@@ -25,12 +29,15 @@ namespace Unity.MemoryProfiler.Editor.UI
             splitSize = defaultSplitSize;
         }
 
-        public void DoSplitter(int i1, int i2, int diff)
+        void DoSplitter(int i1, int i2, int diff)
         {
             realSizes[i1] += diff;
+            if (realSizes[i1] < MinSplitterSize)
+                realSizes[i1] = MinSplitterSize;
+            RealSizeChanged(i1, realSizes[i1]);
         }
 
-        protected Rect getSpliterRect(int index, bool vertical, float offset)
+        Rect GetSpliterRect(int index, bool vertical, float offset)
         {
             var splitterRect = vertical ?
                 new Rect(m_TopLeft.x, m_TopLeft.y + offset + realSizes[index] - splitSize / 2, 100, splitSize) :
@@ -72,7 +79,7 @@ namespace Unity.MemoryProfiler.Editor.UI
 
                         for (int i = 0; i < realSizes.Length; ++i)
                         {
-                            var splitterRect = getSpliterRect(i, vertical, cursor);
+                            var splitterRect = GetSpliterRect(i, vertical, cursor);
                             if (splitterRect.Contains(Event.current.mousePosition))
                             {
                                 splitterInitialOffset = pos;
@@ -130,7 +137,7 @@ namespace Unity.MemoryProfiler.Editor.UI
 
                     for (var i = 0; i < realSizes.Length; ++i)
                     {
-                        var splitterRect = getSpliterRect(i, vertical, cursor);
+                        var splitterRect = GetSpliterRect(i, vertical, cursor);
                         EditorGUIUtility.AddCursorRect(splitterRect, vertical ? MouseCursor.ResizeVertical : MouseCursor.SplitResizeLeftRight);
                         cursor += realSizes[i];
                     }

@@ -4,7 +4,7 @@ using Unity.MemoryProfiler.Editor.Debuging;
 namespace Unity.MemoryProfiler.Editor.Database.View
 {
     //Used with select statement that are Many-To-Many. Shows only the first match for each row.
-    public class ViewColumnFirstMatch<DataT> : Database.ColumnTyped<DataT>, ViewColumn.IViewColumn where DataT : IComparable
+    internal class ViewColumnFirstMatch<DataT> : Database.ColumnTyped<DataT>, ViewColumn.IViewColumn where DataT : IComparable
     {
 #if MEMPROFILER_DEBUG_INFO
         public override string GetDebugString(long row)
@@ -46,7 +46,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             string extraInfo = "";
             if (metaColumn != null)
             {
-                extraInfo += " column '" + metaColumn.name + "'";
+                extraInfo += " column '" + metaColumn.Name + "'";
             }
             DebugUtility.LogError("Cannot set a const value on a first match view column. Table '" + vc.viewTable.GetName() + "'" + extraInfo);
         }

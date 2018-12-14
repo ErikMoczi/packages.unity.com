@@ -5,14 +5,14 @@ using UnityEngine;
 
 namespace Unity.MemoryProfiler.Editor.UI.Treemap
 {
-    public class Group : IComparable<Group>, ITreemapRenderable
+    internal class Group : IComparable<Group>, ITreemapRenderable
     {
         public string _name;
         public Rect _position;
         public List<Item> _items;
-        private float _totalValue = -1;
+        private long _totalValue = -1;
 
-        public float totalValue
+        public long totalValue
         {
             get
             {

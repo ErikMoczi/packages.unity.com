@@ -1,19 +1,20 @@
 using UnityEngine;
 using UnityEditor;
+using System;
 
 namespace Unity.MemoryProfiler.Editor.UI
 {
-    public interface IViewEventListener
+    internal interface IViewEventListener
     {
         void OnRepaint();
     }
-    public abstract class SpreadsheetLogic
+    internal abstract class SpreadsheetLogic
     {
-        //used to catch infinit loop caused by implementation
-        const long kMaxRow = 100000000;
+        //used to catch infinite loop caused by implementation
+        const long k_MaxRow = 100000000;
 
-        protected const float kSmallMargin = 4;
-        public IViewEventListener m_Listener;
+        protected const float k_SmallMargin = 4;
+        WeakReference m_Listener;
 
         protected SplitterStateEx m_Splitter;
 
@@ -21,51 +22,62 @@ namespace Unity.MemoryProfiler.Editor.UI
         protected class DataState
         {
             //total height of all data without scroll region. used to optimize layout calls
-            public double m_TotalDataHeight = 0;//using double since this value will be maintained by offseting it.
+            public double TotalDataHeight = 0;//using double since this value will be maintained by offseting it.
         };
         protected DataState m_DataState;
 
         protected class GUIState
         {
             //rect of the scroll region for displaying data. relative to current window.
-            public Rect m_RectHeader;
-            public Rect m_RectData;
-            public bool m_HasRectData = false;
-            public Vector2 m_ScrollPosition = Vector2.zero;
+            public Rect RectHeader;
+            public Rect RectData;
+            public bool HasRectData;
+            public Vector2 ScrollPosition;
 
-            public long m_FirstVisibleRow = 0;
-            public float m_FirstVisibleRowY = 0;
-            public long m_FirstVisibleRowIndex = 0;//sequential index assigned to all visible row. Differ from row index if there are invisible rows
-            public double m_HeightBeforeFirstVisibleRow = 0;//using double since this value will be maintained by offseting it.
-            public long m_SelectedRow = -1;
+            public long FirstVisibleRow;
+            public float FirstVisibleRowY;
+            public long FirstVisibleRowIndex;//sequential index assigned to all visible row. Differ from row index if there are invisible rows
+            public double HeightBeforeFirstVisibleRow;//using double since this value will be maintained by offseting it.
+            public long SelectedRow = -1;
+
+            public GUIState() {}
+
+            public GUIState(GUIState copy)
+            {
+                RectHeader = copy.RectHeader;
+                RectData = copy.RectData;
+                HasRectData = copy.HasRectData;
+                ScrollPosition = copy.ScrollPosition;
+                FirstVisibleRow = copy.FirstVisibleRow;
+                FirstVisibleRowY = copy.FirstVisibleRowY;
+                FirstVisibleRowIndex = copy.FirstVisibleRowIndex;
+                HeightBeforeFirstVisibleRow = copy.HeightBeforeFirstVisibleRow;
+                SelectedRow = copy.SelectedRow;
+            }
         };
         protected GUIState m_GUIState = new GUIState();
-
+        protected GUIState m_DelayedUpdateGUIState = null;
+        public SpreadsheetLogic(IViewEventListener listener) : this(null, listener) { }
 
         public SpreadsheetLogic(SplitterStateEx splitter, IViewEventListener listener)
         {
             m_Splitter = splitter;
-            m_Listener = listener;
-        }
-
-        public SpreadsheetLogic(IViewEventListener listener)
-        {
-            m_Listener = listener;
+            m_Listener = new WeakReference(listener);
         }
 
         protected abstract float GetRowHeight(long row);
 
         public struct DirtyRowRange
         {
-            public Range range;
-            public float heightOffset;
+            public Range Range;
+            public float HeightOffset;
             public static DirtyRowRange NonDirty
             {
                 get
                 {
                     DirtyRowRange o;
-                    o.range = Range.Empty();
-                    o.heightOffset = 0;
+                    o.Range = Range.Empty();
+                    o.HeightOffset = 0;
                     return o;
                 }
             }
@@ -112,19 +124,19 @@ namespace Unity.MemoryProfiler.Editor.UI
             float h = 0;
 
             long i = 0;
-            for (; i >= 0 && iRowCount < kMaxRow; i = GetNextVisibleRow(i), ++iRowCount)
+            for (; i >= 0 && iRowCount < k_MaxRow; i = GetNextVisibleRow(i), ++iRowCount)
             {
                 h += GetRowHeight(i);
             }
-            UnityEngine.Debug.Assert(iRowCount < kMaxRow, "GridSheet.UpdateDataState Reached " + kMaxRow + " rows while computing data state, make sure GetNextTopLevelRow() eventually returns -1");
+            UnityEngine.Debug.Assert(iRowCount < k_MaxRow, "GridSheet.UpdateDataState Reached " + k_MaxRow + " rows while computing data state, make sure GetNextTopLevelRow() eventually returns -1");
 
 
-            m_DataState.m_TotalDataHeight = h;
+            m_DataState.TotalDataHeight = h;
         }
 
         public void UpdateDirtyRowRange(DirtyRowRange d)
         {
-            m_DataState.m_TotalDataHeight += d.heightOffset;
+            m_DataState.TotalDataHeight += d.HeightOffset;
         }
 
         public void SetCellExpandedState(long row, long col, bool expanded)
@@ -138,12 +150,12 @@ namespace Unity.MemoryProfiler.Editor.UI
             long rowIndex = 0;
             long nextRow = 0;
             var y = GetCumulativeHeight(0, pos.row, out nextRow, ref rowIndex);
-            m_GUIState.m_ScrollPosition = new Vector2(0, y);
-            m_GUIState.m_SelectedRow = pos.row;
-            m_GUIState.m_FirstVisibleRow = pos.row;
-            m_GUIState.m_FirstVisibleRowIndex = rowIndex;
-            m_GUIState.m_FirstVisibleRowY = y;
-            m_GUIState.m_HeightBeforeFirstVisibleRow = y;
+            m_GUIState.ScrollPosition = new Vector2(0, y);
+            m_GUIState.SelectedRow = pos.row;
+            m_GUIState.FirstVisibleRow = pos.row < 0 ? 0 : pos.row;
+            m_GUIState.FirstVisibleRowIndex = rowIndex;
+            m_GUIState.FirstVisibleRowY = y;
+            m_GUIState.HeightBeforeFirstVisibleRow = y;
         }
 
         protected virtual void OnGUI_CellMouseMove(Database.CellPosition pos)
@@ -173,17 +185,17 @@ namespace Unity.MemoryProfiler.Editor.UI
 
         protected long GetRowAtPosition(Vector2 pos)
         {
-            if (!m_GUIState.m_HasRectData) return -1;
-            if (pos.x < m_GUIState.m_RectData.x || pos.y < m_GUIState.m_RectData.y) return -1;
-            if (pos.x >= m_GUIState.m_RectData.xMax || pos.y >= m_GUIState.m_RectData.yMax) return -1;
-            var vInData = pos - m_GUIState.m_RectData.position;
+            if (!m_GUIState.HasRectData) return -1;
+            if (pos.x < m_GUIState.RectData.x || pos.y < m_GUIState.RectData.y) return -1;
+            if (pos.x >= m_GUIState.RectData.xMax || pos.y >= m_GUIState.RectData.yMax) return -1;
+            var vInData = pos - m_GUIState.RectData.position;
             //var yWorld = m_GUIState.m_ScrollPosition + vInData.y;
-            var y = m_GUIState.m_ScrollPosition.y + vInData.y - m_GUIState.m_FirstVisibleRowY;
+            var y = m_GUIState.ScrollPosition.y + vInData.y - m_GUIState.FirstVisibleRowY;
 
             float h = 0;
-            long i = m_GUIState.m_FirstVisibleRowIndex;
+            long i = m_GUIState.FirstVisibleRowIndex;
             int iMax = 0;
-            while (i >= 0 && iMax < kMaxRow)
+            while (i >= 0 && iMax < k_MaxRow)
             {
                 h += GetRowHeight(i);
                 if (h >= y) break;
@@ -211,7 +223,7 @@ namespace Unity.MemoryProfiler.Editor.UI
 
             GUILayout.BeginVertical(opt);
 
-            m_Splitter.BeginHorizontalSplit(-m_GUIState.m_ScrollPosition.x);
+            m_Splitter.BeginHorizontalSplit(-m_GUIState.ScrollPosition.x);
             Rect rectHeader = new Rect(m_Splitter.m_TopLeft.x, m_Splitter.m_TopLeft.y, 0, Styles.styles.header.fixedHeight);
 
             float totalHeaderWidth = 0;
@@ -234,14 +246,14 @@ namespace Unity.MemoryProfiler.Editor.UI
             var rectHeader2 = GUILayoutUtility.GetLastRect();
             if (Event.current.type == EventType.Repaint)
             {
-                m_GUIState.m_RectHeader = rectHeader2;
+                m_GUIState.RectHeader = rectHeader2;
             }
 
             //Rect rr = GUILayoutUtility.GetRect(10, 10000, 10, 10000, Styles.styles.background);
             //Debug.Log("rr = " + rr.xMin + ", " + rr.yMin + " - " + rr.xMax + ", " + rr.yMax);
 
-            Vector2 scrollBefore = m_GUIState.m_ScrollPosition;
-            m_GUIState.m_ScrollPosition = GUILayout.BeginScrollView(scrollBefore, Styles.styles.background);
+            Vector2 scrollBefore = m_GUIState.ScrollPosition;
+            m_GUIState.ScrollPosition = GUILayout.BeginScrollView(scrollBefore, Styles.styles.background);
 
             EditorGUILayout.BeginHorizontal();
             for (int k = 0; k < m_Splitter.realSizes.Length; ++k)
@@ -250,15 +262,15 @@ namespace Unity.MemoryProfiler.Editor.UI
             }
             EditorGUILayout.EndHorizontal();
 
-            if (scrollBefore.y < m_GUIState.m_ScrollPosition.y)
+            if (scrollBefore.y < m_GUIState.ScrollPosition.y)
             {
                 //moved down
-                double curYMin = m_GUIState.m_FirstVisibleRowY;
+                double curYMin = m_GUIState.FirstVisibleRowY;
                 double rowH = 0;
-                double curYMax = m_GUIState.m_FirstVisibleRowY;
+                double curYMax = m_GUIState.FirstVisibleRowY;
                 double offsetY = 0;
                 long curRow = 0;
-                long nextRow = m_GUIState.m_FirstVisibleRow;
+                long nextRow = m_GUIState.FirstVisibleRow;
                 long i = 0;
                 do
                 {
@@ -272,31 +284,37 @@ namespace Unity.MemoryProfiler.Editor.UI
                     nextRow = GetNextVisibleRow(nextRow);
                     ++i;
                 }
-                while (curYMax < m_GUIState.m_ScrollPosition.y && nextRow >= 0 && i < kMaxRow);
+                while (curYMax < m_GUIState.ScrollPosition.y && nextRow >= 0 && i < k_MaxRow);
 
-                UnityEngine.Debug.Assert(i < kMaxRow, "Reached " + kMaxRow + " iteration while updating data state. make sure GetRowHeight does not always return 0 or GetNextVisibleRow eventually returns -1");
+                UnityEngine.Debug.Assert(i < k_MaxRow, "Reached " + k_MaxRow + " iteration while updating data state. make sure GetRowHeight does not always return 0 or GetNextVisibleRow eventually returns -1");
 
-                m_GUIState.m_FirstVisibleRow = curRow;
-                m_GUIState.m_FirstVisibleRowY = (float)curYMin;
-                m_GUIState.m_FirstVisibleRowIndex += i - 1;
-                m_GUIState.m_HeightBeforeFirstVisibleRow += offsetY;
+                var guiState = m_GUIState;
+                if (Event.current.type == EventType.Repaint)
+                {
+                    // don't change the guiState during repaint
+                    guiState = m_DelayedUpdateGUIState = new GUIState(m_GUIState);
+                }
+                guiState.FirstVisibleRow = curRow;
+                guiState.FirstVisibleRowY = (float)curYMin;
+                guiState.FirstVisibleRowIndex += i - 1;
+                guiState.HeightBeforeFirstVisibleRow += offsetY;
             }
-            else if (scrollBefore.y > m_GUIState.m_ScrollPosition.y)
+            else if (scrollBefore.y > m_GUIState.ScrollPosition.y)
             {
                 //moved up
-                float curYMin = m_GUIState.m_FirstVisibleRowY;
+                float curYMin = m_GUIState.FirstVisibleRowY;
                 float rowH = 0;
-                long curRow = m_GUIState.m_FirstVisibleRow;
+                long curRow = m_GUIState.FirstVisibleRow;
                 long i = 0;
                 double offsetY = 0;
-                while (curYMin > m_GUIState.m_ScrollPosition.y && curRow >= 0 && i < kMaxRow)
+                while (curYMin > m_GUIState.ScrollPosition.y && curRow >= 0 && i < k_MaxRow)
                 {
                     var prevRow = GetPreviousVisibleRow(curRow);
                     if (prevRow < 0)
                     {
                         //can't move up any further. set all data to top of the list.
                         curYMin = 0;
-                        offsetY = m_GUIState.m_HeightBeforeFirstVisibleRow;
+                        offsetY = m_GUIState.HeightBeforeFirstVisibleRow;
                         break;
                     }
                     curRow = prevRow;
@@ -305,39 +323,46 @@ namespace Unity.MemoryProfiler.Editor.UI
                     curYMin = curYMin - rowH;
                     ++i;
                 }
-                UnityEngine.Debug.Assert(i < kMaxRow, "Reached " + kMaxRow + " iteration while updating data state. make sure GetRowHeight does not always return 0 or GetNextVisibleRow eventually returns -1");
+                UnityEngine.Debug.Assert(i < k_MaxRow, "Reached " + k_MaxRow + " iteration while updating data state. make sure GetRowHeight does not always return 0 or GetNextVisibleRow eventually returns -1");
 
-                m_GUIState.m_FirstVisibleRow = curRow;
-                m_GUIState.m_FirstVisibleRowY = curYMin;
-                m_GUIState.m_FirstVisibleRowIndex -= i;
-                m_GUIState.m_HeightBeforeFirstVisibleRow -= offsetY;
+                var guiState = m_GUIState;
+                if (Event.current.type == EventType.Repaint)
+                {
+                    // don't change the guiState during repaint
+                    guiState = m_DelayedUpdateGUIState = new GUIState(m_GUIState);
+                }
+                guiState.FirstVisibleRow = curRow;
+                guiState.FirstVisibleRowY = curYMin;
+                guiState.FirstVisibleRowIndex -= i;
+                guiState.HeightBeforeFirstVisibleRow -= offsetY;
+                
             }
 
 
-            GUILayout.Space((float)m_GUIState.m_HeightBeforeFirstVisibleRow);
+            GUILayout.Space((float)m_GUIState.HeightBeforeFirstVisibleRow);
 
             double visibleRowTotalHeight = 0;
 
-            float yMax = m_GUIState.m_ScrollPosition.y + m_GUIState.m_RectData.height;
+            float yMax = m_GUIState.ScrollPosition.y + m_GUIState.RectData.height;
             Rect r = new Rect(0
-                    , m_GUIState.m_FirstVisibleRowY
+                    , m_GUIState.FirstVisibleRowY
                     , 0
                     , 0);
             long firstRow = GetFirstRow();
             if (firstRow >= 0)
             {
-                firstRow = m_GUIState.m_FirstVisibleRow;
+                firstRow = m_GUIState.FirstVisibleRow;
             }
-            for (long i = firstRow, j = 0; r.y < yMax && i < kMaxRow && i >= 0; i = GetNextVisibleRow(i), ++j)
+            for (long i = firstRow, j = 0; r.y < yMax && i < k_MaxRow && i >= 0; i = GetNextVisibleRow(i), ++j)
             {
                 float h = GetRowHeight(i);
                 r.height = h;
                 visibleRowTotalHeight += h;
                 r.x = 0;
-                r.width = m_GUIState.m_RectData.width;
-                Rect rRow = new Rect(m_GUIState.m_ScrollPosition.x, r.y, r.width, r.height);
+                r.width = m_GUIState.RectData.width;
+                Rect rRow = new Rect(m_GUIState.ScrollPosition.x, r.y, r.width, r.height);
 
-                DrawRow(i, rRow, m_GUIState.m_FirstVisibleRowIndex + j, i == m_GUIState.m_SelectedRow, ref pipe);
+                DrawRow(i, rRow, m_GUIState.FirstVisibleRowIndex + j, i == m_GUIState.SelectedRow, ref pipe);
                 for (long k = 0; k < m_Splitter.realSizes.Length; ++k)
                 {
                     if (k == 0)
@@ -346,11 +371,11 @@ namespace Unity.MemoryProfiler.Editor.UI
                     }
                     else
                     {
-                        r.width = m_Splitter.realSizes[k] - kSmallMargin;
+                        r.width = m_Splitter.realSizes[k] - k_SmallMargin;
                     }
                     if (m_Splitter.realSizes[k] > 0)
                     {
-                        DrawCell(i, k, r, m_GUIState.m_FirstVisibleRowIndex + j, i == m_GUIState.m_SelectedRow, ref pipe);
+                        DrawCell(i, k, r, m_GUIState.FirstVisibleRowIndex + j, i == m_GUIState.SelectedRow, ref pipe);
                     }
 
                     r.x += m_Splitter.realSizes[k];
@@ -359,7 +384,7 @@ namespace Unity.MemoryProfiler.Editor.UI
                 r.y += h;
             }
 
-            double heightAfterVisibleRow = m_DataState.m_TotalDataHeight - (m_GUIState.m_HeightBeforeFirstVisibleRow + visibleRowTotalHeight);
+            double heightAfterVisibleRow = m_DataState.TotalDataHeight - (m_GUIState.HeightBeforeFirstVisibleRow + visibleRowTotalHeight);
 
             GUILayout.Space((float)heightAfterVisibleRow);
 
@@ -368,11 +393,15 @@ namespace Unity.MemoryProfiler.Editor.UI
             var rect = GUILayoutUtility.GetLastRect();
             if (Event.current.type == EventType.Repaint)
             {
-                m_GUIState.m_RectData = rect;
-                if (m_GUIState.m_HasRectData == false)
+                m_GUIState.RectData = rect;
+                if (m_GUIState.HasRectData == false)
                 {
-                    m_GUIState.m_HasRectData = true;
-                    if (m_Listener != null) m_Listener.OnRepaint();
+                    m_GUIState.HasRectData = true;
+
+                    if (m_Listener != null && m_Listener.IsAlive)
+                    {
+                        ((IViewEventListener)m_Listener.Target).OnRepaint();
+                    }
                 }
             }
 
@@ -389,9 +418,13 @@ namespace Unity.MemoryProfiler.Editor.UI
                         var row = GetRowAtPosition(Event.current.mousePosition);
                         if (row >= 0)
                         {
-                            m_GUIState.m_SelectedRow = row;
-                            if (m_Listener != null) m_Listener.OnRepaint();
-                            OnGUI_CellMouseDown(new Database.CellPosition(row, (int)GetColAtPosition(Event.current.mousePosition)));
+                                m_GUIState.SelectedRow = row;
+                                if (m_Listener != null && m_Listener.IsAlive)
+                                {
+                                    ((IViewEventListener)m_Listener.Target).OnRepaint();
+                                }
+
+                                OnGUI_CellMouseDown(new Database.CellPosition(row, (int)GetColAtPosition(Event.current.mousePosition)));
                         }
                         break;
                     }
@@ -421,6 +454,17 @@ namespace Unity.MemoryProfiler.Editor.UI
                         }
                         break;
                     }
+                }
+            }
+
+            if(m_DelayedUpdateGUIState != null && Event.current.type == EventType.Repaint)
+            {
+                m_GUIState = m_DelayedUpdateGUIState;
+                m_DelayedUpdateGUIState = null;
+
+                if (m_Listener != null && m_Listener.IsAlive)
+                {
+                    ((IViewEventListener)m_Listener.Target).OnRepaint();
                 }
             }
         }

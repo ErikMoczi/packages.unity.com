@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Unity.MemoryProfiler.Editor.Database.Operation
 {
-    public class IndexedTable : Table
+    internal class IndexedTable : Table
     {
         public Table m_SourceTable;
         public long[] indices;
@@ -12,7 +12,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         }
 
         public IndexedTable(Database.Table sourceTable)
-            : base(sourceTable.scheme)
+            : base(sourceTable.Schema)
         {
             m_SourceTable = sourceTable;
             m_Meta = m_SourceTable.GetMetaData();
@@ -20,7 +20,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         }
 
         public IndexedTable(Database.Table sourceTable, ArrayRange indices)
-            : base(sourceTable.scheme)
+            : base(sourceTable.Schema)
         {
             this.indices = indices.ToArray();
             m_SourceTable = sourceTable;
@@ -28,8 +28,8 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             CreateColumn();
         }
 
-        protected IndexedTable(Scheme scheme)
-            : base(scheme)
+        protected IndexedTable(Schema schema)
+            : base(schema)
         {
         }
 
@@ -39,7 +39,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             for (int i = 0; i != m_Meta.GetColumnCount(); ++i)
             {
                 var metaCol = m_Meta.GetColumnByIndex(i);
-                IIndexedColumn newCol = (IIndexedColumn)ColumnCreator.CreateColumn(typeof(IndexedColumnTyped<>), metaCol.type);
+                IIndexedColumn newCol = (IIndexedColumn)ColumnCreator.CreateColumn(typeof(IndexedColumnTyped<>), metaCol.Type);
 
                 newCol.Initialize(this, m_SourceTable.GetColumnByIndex(i));
                 m_Columns.Add((Column)newCol);
@@ -132,6 +132,8 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         }
         public override Database.CellLink GetLinkTo(CellPosition pos)
         {
+            if (indices.Length == 0 || pos.row > indices.Length)
+                return null;
             LinkIndex li = new LinkIndex();
             var i = indices[pos.row];
             li.subLink = m_SourceTable.GetLinkTo(new CellPosition(i, pos.col));
@@ -192,13 +194,13 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         }
     }
 
-    public class SortedTable : IndexedTable
+    internal class SortedTable : IndexedTable
     {
         public int[] m_SortColumn;
         public SortOrder[] m_SortOrder;
         public int m_ColumnIndexFirst; //index into m_SortColumn
         public SortedTable(Database.Table table, int[] sortColumn, SortOrder[] sortOrder, int columnIndexFirst, ArrayRange indices)
-            : base(table.scheme)
+            : base(table.Schema)
         {
             m_SourceTable = table;
             m_Meta = m_SourceTable.GetMetaData();
@@ -206,7 +208,10 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             m_SortOrder = sortOrder;
             m_ColumnIndexFirst = columnIndexFirst;
 
-            this.indices = SortRange(indices, sortColumn, sortOrder, m_ColumnIndexFirst);
+            using (Profiling.GetMarker(Profiling.MarkerId.SortedTable).Auto())
+            {
+                this.indices = SortRange(indices, sortColumn, sortOrder, m_ColumnIndexFirst);
+            }
 
 
             //create columns
@@ -225,10 +230,13 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
                 {
                     if (col.CompareRow(sortedIndices[j], sortedIndices[i]) != 0)
                     {
-                        //sort sub range
-                        long[] subIndices = SortRange(new ArrayRange(sortedIndices, iGroupFirst, i), colToSort, order, depth);
-                        //copy sorted sub range
-                        System.Array.Copy(subIndices, 0, sortedIndices, iGroupFirst, i - iGroupFirst);
+                        if (i - iGroupFirst > 1)
+                        {
+                            //sort sub range
+                            long[] subIndices = SortRange(new ArrayRange(sortedIndices, iGroupFirst, i), colToSort, order, depth);
+                            //copy sorted sub range
+                            System.Array.Copy(subIndices, 0, sortedIndices, iGroupFirst, i - iGroupFirst);
+                        }
                         iGroupFirst = i;
                     }
                 }

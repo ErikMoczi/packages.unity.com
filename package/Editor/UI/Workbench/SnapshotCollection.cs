@@ -1,221 +1,183 @@
-#undef WORKSPACES_AS_SERIALIZED_OBJECTS
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using System.IO;
 using System;
-using UnityEditor.Profiling.Memory.Experimental;
-
-namespace Unity.Profiling.Memory.UI
-{
-#if SNAPSHOT_COLLECTIONSS_AS_SERIALIZED_OBJECTS
-    public class SnapshotCollection : ScriptableObject
+using Unity.MemoryProfiler.Editor;
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
 #else
-    [System.Serializable]
-    public class SnapshotCollection : IEnumerable<SnapshotCollection.SnapshotUIData>
+using UnityEngine.Experimental.UIElements;
 #endif
+using UnityEditorInternal;
+
+namespace Unity.MemoryProfiler.Editor
+{
+    internal class SnapshotCollectionEnumerator : IEnumerator<SnapshotFileData>
     {
-        [System.Serializable]
-        public class SnapshotUIData
+        int m_Index;
+        List<SnapshotFileData> m_Files;
+        
+        public SnapshotFileData Current { get { return m_Files[m_Index]; } }
+        object IEnumerator.Current { get { return Current; } }
+        public int Count { get { return m_Files.Count; } }
+
+        internal SnapshotCollectionEnumerator(List<SnapshotFileData> files)
         {
-            public enum State
-            {
-                Listed,
-                Open,
-                OpenInDiffAsFirst,
-                OpenInDiffAsSecond,
-            }
-            [NonSerialized]
-            public State CurrentState;
-            [NonSerialized]
-            PackedMemorySnapshot m_Snapshot;
-            public string Path;
-            public GUIContent Name;
-            public GUIContent MetaInfo;
-            public GUIContent FileSize;
-            public Texture2D PreviewImage;
-
-            public SnapshotUIData(PackedMemorySnapshot snapshot)
-            {
-                m_Snapshot = snapshot;
-            }
-
-            public struct Enumerator : IEnumerator<SnapshotUIData>
-            {
-                private SnapshotCollection m_SnapshotCollection;
-                private int m_CurrentIndex;
-
-                public Enumerator(SnapshotCollection snapshotCollection)
-                {
-                    this.m_SnapshotCollection = snapshotCollection;
-                    m_CurrentIndex = -1;
-                }
-
-                public SnapshotUIData Current
-                {
-                    get
-                    {
-                        return m_SnapshotCollection.m_SnapshotUIData[m_CurrentIndex];
-                    }
-                }
-
-                object IEnumerator.Current
-                {
-                    get
-                    {
-                        return Current;
-                    }
-                }
-
-                public void Dispose()
-                {
-                    m_SnapshotCollection = null;
-                }
-
-                public bool MoveNext()
-                {
-                    return m_SnapshotCollection.m_SnapshotUIData != null && ++m_CurrentIndex < m_SnapshotCollection.m_SnapshotUIData.Count;
-                }
-
-                public void Reset()
-                {
-                    m_CurrentIndex = -1;
-                }
-
-                public void UnloadCurrent()
-                {
-                    m_SnapshotCollection.m_SnapshotUIData.RemoveAt(m_CurrentIndex--);
-                }
-
-                public SnapshotUIData OpenCurrent(out PackedMemorySnapshot snapshot)
-                {
-                    snapshot = m_SnapshotCollection.m_SnapshotUIData[m_CurrentIndex].m_Snapshot;
-                    if (snapshot == null)
-                    {
-                        int index = m_CurrentIndex;
-                        snapshot = m_SnapshotCollection.LoadCapture(m_SnapshotCollection.m_SnapshotUIData[m_CurrentIndex].Path, ref index);
-                        m_SnapshotCollection.m_SnapshotUIData[m_CurrentIndex].m_Snapshot = snapshot;
-                    }
-                    return m_SnapshotCollection.m_SnapshotUIData[m_CurrentIndex];
-                }
-
-                internal bool EqualsCurrentSnapshot(PackedMemorySnapshot snapshot)
-                {
-                    if (Current.m_Snapshot == null)
-                        return false;
-                    return Current.m_Snapshot == snapshot;
-                }
-            }
+            m_Files = files;
+            Reset();
         }
 
-        static class Content
+        public void Dispose()
         {
-            public const string LoadSnapshotFilePanelText = "Load Snapshot";
-            public const string SaveSnapshotFilePanelText = "Save Snapshot";
-            public static readonly GUIContent Unsaved = new GUIContent("<Unsaved>");
-            public static readonly GUIContent InvalidPath = new GUIContent("<Invalid Path>");
+            m_Files = null;
         }
-        const string k_SnapshotFileExtension = "snap";
 
-        static Texture2D s_PreviewTextureFallback;
-
-        static Texture2D PreviewTextureFallback
+        public bool MoveNext()
         {
-            get
+            ++m_Index;
+
+            return m_Index < m_Files.Count;
+        }
+
+        public void Reset()
+        {
+            m_Index = -1;
+        }
+    }
+
+    internal enum ImportMode
+    {
+        Copy,
+        Move
+    }
+
+    internal class SnapshotCollection
+    {
+        DirectoryInfo m_Info;
+        List<SnapshotFileData> m_Snapshots;
+        bool m_PrevApplicationFocusState;
+        public Action collectionRefresh;
+
+        public string Name { get { return m_Info.Name; } }
+
+        public SnapshotCollection(string collectionPath)
+        {
+            m_Info = new DirectoryInfo(collectionPath);
+            if (!m_Info.Exists)
             {
-                if (s_PreviewTextureFallback == null)
-                    s_PreviewTextureFallback = new Texture2D(100, 100);
-                return s_PreviewTextureFallback;
+                m_Info = Directory.CreateDirectory(collectionPath);
+                if (!m_Info.Exists)
+                    throw new UnityException("Failed to create directory, with provided preferences path: " + collectionPath);
+            }
+
+            RefreshFileListInternal(m_Info);
+            m_PrevApplicationFocusState = InternalEditorUtility.isApplicationActive;
+            EditorApplication.update += PoolForApplicationFocus;
+        }
+
+        ~SnapshotCollection()
+        {
+            EditorApplication.update -= PoolForApplicationFocus;
+        }
+
+        void RefreshFileListInternal(DirectoryInfo info)
+        {
+            m_Snapshots = new List<SnapshotFileData>();
+            var fileEnumerator = info.GetFiles('*' + MemoryProfilerWindow.k_SnapshotFileExtension, SearchOption.AllDirectories);
+            for (int i = 0; i < fileEnumerator.Length; ++i)
+            {
+                FileInfo fInfo = fileEnumerator[i];
+                if(fInfo.Length != 0)
+                    m_Snapshots.Add(new SnapshotFileData(fInfo));
             }
         }
-
-        public int SnapshotCount
+        
+        public void RenameSnapshot(SnapshotFileData snapshot, string name)
         {
-            get
-            {
-                return m_SnapshotUIData.Count;
-            }
+            int nameStart = snapshot.FileInfo.FullName.LastIndexOf(snapshot.FileInfo.Name);
+            string targetPath = snapshot.FileInfo.FullName.Substring(0, nameStart) + name + MemoryProfilerWindow.k_SnapshotFileExtension;
+            snapshot.FileInfo.MoveTo(targetPath);
+            snapshot.GuiData.name = new GUIContent(name);
+            snapshot.GuiData.dynamicVisualElements.snapshotNameLabel.text = name;
+            snapshot.GuiData.RenamingFieldVisible = false;
+            m_Info.Refresh();
         }
 
-        [SerializeField]
-        List<SnapshotUIData> m_SnapshotUIData = new List<SnapshotUIData>();
-
-        public SnapshotUIData LoadCapture(out PackedMemorySnapshot snapshot)
+        public void RemoveSnapshotFromCollection(SnapshotFileData snapshot)
         {
-            string filePath = EditorUtility.OpenFilePanel(Content.LoadSnapshotFilePanelText, "", k_SnapshotFileExtension);
-            int index = -1;
-            snapshot = LoadCapture(filePath, ref index);
-            return m_SnapshotUIData[index];
+            snapshot.FileInfo.Delete();
+            m_Snapshots.Remove(snapshot);
+            m_Info.Refresh();
         }
 
-        public SnapshotUIData AddCapture(PackedMemorySnapshot snapshot, string filePath)
+        public void RemoveSnapshotFromCollection(SnapshotCollectionEnumerator iter)
         {
-            Texture2D preview = null;
-            string snapshotFileName = Path.GetFileNameWithoutExtension(filePath);
+            RemoveSnapshotFromCollection(iter.Current);
+        }
 
-            var metaData = snapshot.metadata;
-            if (metaData.screenshot != null)
+        public SnapshotFileData AddSnapshotToCollection(string path, ImportMode mode = ImportMode.Copy)
+        {
+            FileInfo file = new FileInfo(path);
+            if (file.FullName.StartsWith(m_Info.FullName))
             {
-                preview = metaData.screenshot;
-            }
-            else
-                preview = PreviewTextureFallback;
-
-
-            GUIContent fileSize;
-            if (!string.IsNullOrEmpty(filePath))
-            {
-                var fileInfo = new FileInfo(filePath);
-                if (fileInfo == null)
+                if(m_Snapshots.Find(item => item.FileInfo == file) == null)
                 {
-                    fileSize = Content.InvalidPath;
-                }
-                else
-                {
-                    fileSize = new GUIContent(new FileInfo(filePath).Length / (1024 * 1024) + "MB");
+                    m_Snapshots.Add(new SnapshotFileData(file));
+                    m_Info.Refresh();
+                    return m_Snapshots[m_Snapshots.Count - 1];
                 }
             }
             else
             {
-                fileSize = Content.Unsaved;
-            }
-            m_SnapshotUIData.Add(
-                new SnapshotUIData(snapshot)
-            {
-                Path = filePath,
-                Name = new GUIContent(snapshotFileName),
-                MetaInfo = new GUIContent("Standalone Mono 4.6", snapshot.recordDate.ToShortDateString()),
-                FileSize = fileSize,
-                PreviewImage = preview,
-            }
-                );
-            return m_SnapshotUIData[m_SnapshotUIData.Count - 1];
-        }
-
-        private PackedMemorySnapshot LoadCapture(string filePath, ref int indexInList)
-        {
-            if (filePath.Length != 0)
-            {
-                var snapshot = PackedMemorySnapshot.Load(filePath);
-                if (snapshot != null && indexInList < 0)
+                string newPath = m_Info.FullName + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(file.Name) + "-import-" + DateTime.Now.Ticks + MemoryProfilerWindow.k_SnapshotFileExtension;
+                switch (mode)
                 {
-                    AddCapture(snapshot, filePath);
-                    indexInList = m_SnapshotUIData.Count - 1;
+                    case ImportMode.Copy:
+                        file = file.CopyTo(newPath);
+                        break;
+                    case ImportMode.Move:
+                        file.MoveTo(newPath);
+                        break;
                 }
-                return snapshot;
+                m_Snapshots.Add(new SnapshotFileData(file));
+                m_Info.Refresh();
+                return m_Snapshots[m_Snapshots.Count - 1];
             }
             return null;
         }
 
-        public IEnumerator<SnapshotUIData> GetEnumerator()
+        public void RefreshCollection()
         {
-            return new SnapshotUIData.Enumerator(this);
+            DirectoryInfo rootDir = new DirectoryInfo(m_Info.FullName);
+            if (rootDir.LastWriteTime != m_Info.LastWriteTime)
+            {
+                m_Info = new DirectoryInfo(m_Info.FullName);
+                RefreshFileListInternal(m_Info);
+
+                if (collectionRefresh != null)
+                {
+                    collectionRefresh();
+                }
+            }
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
+        public SnapshotCollectionEnumerator GetEnumerator()
         {
-            return GetEnumerator();
+            return new SnapshotCollectionEnumerator(m_Snapshots);
+        }
+        
+        private void PoolForApplicationFocus()
+        {
+            if (m_PrevApplicationFocusState != InternalEditorUtility.isApplicationActive)
+            {
+                if (!m_PrevApplicationFocusState)
+                {
+                    RefreshCollection();
+                }
+                m_PrevApplicationFocusState = InternalEditorUtility.isApplicationActive;
+            }
         }
     }
 }

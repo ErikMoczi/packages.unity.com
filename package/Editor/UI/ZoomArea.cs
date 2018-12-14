@@ -4,7 +4,7 @@ using Unity.MemoryProfiler.Editor.Debuging;
 
 namespace Unity.MemoryProfiler.Editor.UI
 {
-    public class ZoomArea
+    internal class ZoomArea
     {
         // Global state
         private static Vector2 m_WorldMouseDownPosition = new Vector2(-1000000, -1000000); // in transformed space
@@ -220,13 +220,8 @@ namespace Unity.MemoryProfiler.Editor.UI
 
         public Matrix4x4 worldToViewMatrix
         {
-            get
-            {
-                var s = new Vector3(m_WorldToViewScale_Effective.x
-                        , m_WorldToViewScale_Effective.y
-                        , 1);
-                return Matrix4x4.TRS(m_WorldToViewTranslation_Effective, Quaternion.identity, s);
-            }
+            get;
+            private set;
         }
         public Rect WorldInViewSpace
         {
@@ -343,7 +338,8 @@ namespace Unity.MemoryProfiler.Editor.UI
         public void BeginViewGUI()
         {
             AnimStep();
-            GUILayout.BeginArea(m_ViewSpace, styles.background);
+            var boxRect = new Rect(m_ViewSpace.x - 1, m_ViewSpace.y - 1, m_ViewSpace.width + 1, m_ViewSpace.height + 1);
+            GUILayout.BeginArea(boxRect, styles.background);
             HandleZoomAndPanEvents(m_ViewSpace);
             GUILayout.EndArea();
         }
@@ -493,6 +489,11 @@ namespace Unity.MemoryProfiler.Editor.UI
             m_WorldToViewScale_Effective = new Vector2(m_WorldToViewScale.x * m_Scale.x, m_WorldToViewScale.y * m_Scale.y);
             m_WorldToViewTranslation_Effective = new Vector2(m_WorldToViewTranslation.x + m_Translation.x, m_WorldToViewTranslation.y + m_Translation.y);
             //m_ViewToWorldTranslation_Effective = new Vector2(m_ViewToWorldTranslation.x - m_Translation.x, m_ViewToWorldTranslation.y - m_Translation.y);
+
+            var s = new Vector3(m_WorldToViewScale_Effective.x
+                    , m_WorldToViewScale_Effective.y
+                    , 1);
+            worldToViewMatrix = Matrix4x4.TRS(m_WorldToViewTranslation_Effective, Quaternion.identity, s);
         }
     }
 }

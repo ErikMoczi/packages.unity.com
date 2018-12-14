@@ -1,3 +1,3 @@
 # Memory Profiler
 
-UI fontend of the memory profiler.
+UI frontend of the memory profiler.

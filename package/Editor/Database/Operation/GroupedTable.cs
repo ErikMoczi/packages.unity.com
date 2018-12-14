@@ -2,7 +2,7 @@ using System;
 
 namespace Unity.MemoryProfiler.Editor.Database.Operation
 {
-    public class GroupedTable : ExpandTable
+    internal class GroupedTable : ExpandTable
     {
         public Database.Table m_table;
         public ExpandTable m_expandTable;
@@ -27,7 +27,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
 
         // colToGroup is an index from aNewColumnOrder.
         public GroupedTable(Database.Table table, ArrayRange range, int colToGroup, SortOrder sortOrder, FnCreateGroupTable subTable)
-            : base(table.scheme)
+            : base(table.Schema)
         {
             m_table = table;
             if (m_table is ExpandTable) m_expandTable = (ExpandTable)m_table;
@@ -38,21 +38,24 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             m_SortOrder = new SortOrder[1] { sortOrder };
             m_createGroupTable = subTable;
 
-            var col = m_table.GetColumnByIndex(colToGroup);
-            var metaCol = m_Meta.GetColumnByIndex(colToGroup);
-            if (metaCol.defaultGroupAlgorithm != null)
+            using (Profiling.GetMarker(Profiling.MarkerId.GroupedTable).Auto())
             {
-                m_GroupCollection = metaCol.defaultGroupAlgorithm.Group(col, range, sortOrder);
+                var col = m_table.GetColumnByIndex(colToGroup);
+                var metaCol = m_Meta.GetColumnByIndex(colToGroup);
+                if (metaCol.DefaultGroupAlgorithm != null)
+                {
+                    m_GroupCollection = metaCol.DefaultGroupAlgorithm.Group(col, range, sortOrder);
+                }
+                else
+                {
+                    throw new Exception("Trying to group a column without grouping algorithm. Column '" + metaCol.Name + "' from table '" + m_table.GetName() + "'");
+                }
+                InitializeFromGroupCollection(col, colToGroup);
             }
-            else
-            {
-                throw new Exception("Trying to group a column without grouping algorithm. Column '" + metaCol.name + "' from table '" + m_table.GetName() + "'");
-            }
-            InitializeFromGroupCollection(col, colToGroup);
         }
 
         public GroupedTable(Database.Table table, ArrayRange range, int colToGroupFirst, int colToGroupLast, int[] colGroupOrder, SortOrder[] sortOrder)
-            : base(table.scheme)
+            : base(table.Schema)
         {
             m_table = table;
             if (m_table is ExpandTable) m_expandTable = (ExpandTable)m_table;
@@ -64,17 +67,20 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
 
             int sourceGroupedColumnIndex = m_ColumnOrder[colToGroupFirst];
 
-            var col = m_table.GetColumnByIndex(sourceGroupedColumnIndex);
-            var metaCol = m_Meta.GetColumnByIndex(sourceGroupedColumnIndex);
-            if (metaCol.defaultGroupAlgorithm != null)
+            using (Profiling.GetMarker(Profiling.MarkerId.GroupedTable).Auto())
             {
-                m_GroupCollection = metaCol.defaultGroupAlgorithm.Group(col, range, m_SortOrder[colToGroupFirst]);
+                var col = m_table.GetColumnByIndex(sourceGroupedColumnIndex);
+                var metaCol = m_Meta.GetColumnByIndex(sourceGroupedColumnIndex);
+                if (metaCol.DefaultGroupAlgorithm != null)
+                {
+                    m_GroupCollection = metaCol.DefaultGroupAlgorithm.Group(col, range, m_SortOrder[colToGroupFirst]);
+                }
+                else
+                {
+                    throw new Exception("Trying to group a column without grouping algorithm. Column '" + metaCol.Name + "' from table '" + m_table.GetName() + "'");
+                }
+                InitializeFromGroupCollection(col, sourceGroupedColumnIndex);
             }
-            else
-            {
-                throw new Exception("Trying to group a column without grouping algorithm. Column '" + metaCol.name + "' from table '" + m_table.GetName() + "'");
-            }
-            InitializeFromGroupCollection(col, sourceGroupedColumnIndex);
         }
 
         private void InitializeFromGroupCollection(Database.Column col, long sourceColToGroup)
@@ -94,9 +100,9 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             for (int i = 0; i != m_Meta.GetColumnCount(); ++i)
             {
                 var metaCol = m_Meta.GetColumnByIndex(i);
-                IGroupedColumn newCol = (IGroupedColumn)ColumnCreator.CreateColumn(typeof(GroupedColumnTyped<>), metaCol.type);
+                IGroupedColumn newCol = (IGroupedColumn)ColumnCreator.CreateColumn(typeof(GroupedColumnTyped<>), metaCol.Type);
 
-                newCol.Initialize(this, m_table.GetColumnByIndex(i), i, metaCol.defaultMergeAlgorithm, i == sourceColToGroup);
+                newCol.Initialize(this, m_table.GetColumnByIndex(i), i, metaCol.DefaultMergeAlgorithm, i == sourceColToGroup);
                 m_Columns.Add((Column)newCol);
             }
             InitGroup(groupCount);

@@ -1,72 +1,72 @@
 namespace Unity.MemoryProfiler.Editor
 {
-    public interface ITypeRenderer
+    internal interface ITypeRenderer
     {
         string GetTypeName();
         string Render(CachedSnapshot snapshot, ObjectData data);
         bool Expandable();
     }
-    public class Int16TypeDisplay : ITypeRenderer
+    internal class Int16TypeDisplay : ITypeRenderer
     {
         bool ITypeRenderer.Expandable() { return false; }
         string ITypeRenderer.GetTypeName() { return "System.Int16"; }
         string ITypeRenderer.Render(CachedSnapshot snapshot, ObjectData od) { return od.managedObjectData.ReadInt16().ToString(); }
     }
-    public class Int32TypeDisplay : ITypeRenderer
+    internal class Int32TypeDisplay : ITypeRenderer
     {
         bool ITypeRenderer.Expandable() { return false; }
         string ITypeRenderer.GetTypeName() { return "System.Int32"; }
         string ITypeRenderer.Render(CachedSnapshot snapshot, ObjectData od) { return od.managedObjectData.ReadInt32().ToString(); }
     }
-    public class Int64TypeDisplay : ITypeRenderer
+    internal class Int64TypeDisplay : ITypeRenderer
     {
         bool ITypeRenderer.Expandable() { return false; }
         string ITypeRenderer.GetTypeName() { return "System.Int64"; }
         string ITypeRenderer.Render(CachedSnapshot snapshot, ObjectData od) { return od.managedObjectData.ReadInt64().ToString(); }
     }
-    public class UInt16TypeDisplay : ITypeRenderer
+    internal class UInt16TypeDisplay : ITypeRenderer
     {
         bool ITypeRenderer.Expandable() { return false; }
         string ITypeRenderer.GetTypeName() { return "System.UInt16"; }
         string ITypeRenderer.Render(CachedSnapshot snapshot, ObjectData od) { return od.managedObjectData.ReadUInt16().ToString(); }
     }
-    public class UInt32TypeDisplay : ITypeRenderer
+    internal class UInt32TypeDisplay : ITypeRenderer
     {
         bool ITypeRenderer.Expandable() { return false; }
         string ITypeRenderer.GetTypeName() { return "System.UInt32"; }
         string ITypeRenderer.Render(CachedSnapshot snapshot, ObjectData od) { return od.managedObjectData.ReadUInt32().ToString(); }
     }
-    public class UInt64TypeDisplay : ITypeRenderer
+    internal class UInt64TypeDisplay : ITypeRenderer
     {
         bool ITypeRenderer.Expandable() { return false; }
         string ITypeRenderer.GetTypeName() { return "System.UInt64"; }
         string ITypeRenderer.Render(CachedSnapshot snapshot, ObjectData od) { return od.managedObjectData.ReadUInt64().ToString(); }
     }
-    public class BooleanTypeDisplay : ITypeRenderer
+    internal class BooleanTypeDisplay : ITypeRenderer
     {
         bool ITypeRenderer.Expandable() { return false; }
         string ITypeRenderer.GetTypeName() { return "System.Boolean"; }
         string ITypeRenderer.Render(CachedSnapshot snapshot, ObjectData od) { return od.managedObjectData.ReadBoolean().ToString(); }
     }
-    public class CharTypeDisplay : ITypeRenderer
+    internal class CharTypeDisplay : ITypeRenderer
     {
         bool ITypeRenderer.Expandable() { return false; }
         string ITypeRenderer.GetTypeName() { return "System.Char"; }
         string ITypeRenderer.Render(CachedSnapshot snapshot, ObjectData od) { return od.managedObjectData.ReadChar().ToString(); }
     }
-    public class DoubleTypeDisplay : ITypeRenderer
+    internal class DoubleTypeDisplay : ITypeRenderer
     {
         bool ITypeRenderer.Expandable() { return false; }
         string ITypeRenderer.GetTypeName() { return "System.Double"; }
         string ITypeRenderer.Render(CachedSnapshot snapshot, ObjectData od) { return od.managedObjectData.ReadDouble().ToString(); }
     }
-    public class SingleTypeDisplay : ITypeRenderer
+    internal class SingleTypeDisplay : ITypeRenderer
     {
         bool ITypeRenderer.Expandable() { return false; }
         string ITypeRenderer.GetTypeName() { return "System.Single"; }
         string ITypeRenderer.Render(CachedSnapshot snapshot, ObjectData od) { return od.managedObjectData.ReadSingle().ToString(); }
     }
-    public class StringTypeDisplay : ITypeRenderer
+    internal class StringTypeDisplay : ITypeRenderer
     {
         bool ITypeRenderer.Expandable() { return false; }
         string ITypeRenderer.GetTypeName() { return "System.String"; }
@@ -80,13 +80,13 @@ namespace Unity.MemoryProfiler.Editor
             return "\"" + od.managedObjectData.ReadString() + "\"";
         }
     }
-    public class IntPtrTypeDisplay : ITypeRenderer
+    internal class IntPtrTypeDisplay : ITypeRenderer
     {
         bool ITypeRenderer.Expandable() { return false; }
         string ITypeRenderer.GetTypeName() { return "System.IntPtr"; }
         string ITypeRenderer.Render(CachedSnapshot snapshot, ObjectData od) { return od.managedObjectData.ReadPointer().ToString(); }
     }
-    public class ByteTypeDisplay : ITypeRenderer
+    internal class ByteTypeDisplay : ITypeRenderer
     {
         bool ITypeRenderer.Expandable() { return false; }
         string ITypeRenderer.GetTypeName() { return "System.Byte"; }

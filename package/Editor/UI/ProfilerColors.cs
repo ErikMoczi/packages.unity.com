@@ -3,7 +3,7 @@ using UnityEngine.Accessibility;
 
 namespace Unity.MemoryProfiler.Editor.UI
 {
-    public class ProfilerColors
+    internal class ProfilerColors
     {
         static ProfilerColors()
         {

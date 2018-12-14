@@ -4,7 +4,7 @@ using Unity.MemoryProfiler.Editor.Debuging;
 
 namespace Unity.MemoryProfiler.Editor.Database
 {
-    public abstract class ExpandTable : Table
+    internal abstract class ExpandTable : Table
     {
         public class ExpandedGroup
         {
@@ -27,8 +27,8 @@ namespace Unity.MemoryProfiler.Editor.Database
         public Range[] m_GroupRowDataRange { get { return m_Data.m_GroupRowDataRange; } }
         public System.Collections.Generic.SortedDictionary<long, ExpandedGroup> m_ExpandedGroup { get { return m_Data.m_ExpandedGroup; } }
 
-        public ExpandTable(Scheme scheme)
-            : base(scheme)
+        public ExpandTable(Schema schema)
+            : base(schema)
         {
         }
 
@@ -65,7 +65,7 @@ namespace Unity.MemoryProfiler.Editor.Database
             for (int i = 0; i != m_Meta.GetColumnCount(); ++i)
             {
                 var metaCol = m_Meta.GetColumnByIndex(i);
-                IExpandColumn newCol = (IExpandColumn)Database.Operation.ColumnCreator.CreateColumn(typeof(ExpandColumnTyped<>), metaCol.type);
+                IExpandColumn newCol = (IExpandColumn)Database.Operation.ColumnCreator.CreateColumn(typeof(ExpandColumnTyped<>), metaCol.Type);
 
                 newCol.Initialize(this, baseColumn[i], i);
                 m_Columns.Add((Column)newCol);
@@ -75,26 +75,27 @@ namespace Unity.MemoryProfiler.Editor.Database
         public void SetColumn(MetaColumn metaColumn, Column newColumn)
         {
             //add missing columns if the meta column index does not fit in table's column list
-            int missingColumnCount = metaColumn.index - m_Columns.Count + 1;
+            int missingColumnCount = metaColumn.Index - m_Columns.Count + 1;
             if (missingColumnCount > 0)
             {
                 m_Columns.AddRange(Enumerable.Range(0, missingColumnCount).Select(x => (Column)null));
             }
-            if (metaColumn.type != null)
+            if (metaColumn.Type != null)
             {
-                IExpandColumn newExpandColumn = (IExpandColumn)Database.Operation.ColumnCreator.CreateColumn(typeof(ExpandColumnTyped<>), metaColumn.type);
-                newExpandColumn.Initialize(this, newColumn, metaColumn.index);
-                m_Columns[metaColumn.index] = (Column)newExpandColumn;
+                IExpandColumn newExpandColumn = (IExpandColumn)Database.Operation.ColumnCreator.CreateColumn(typeof(ExpandColumnTyped<>), metaColumn.Type);
+                newExpandColumn.Initialize(this, newColumn, metaColumn.Index);
+                m_Columns[metaColumn.Index] = (Column)newExpandColumn;
             }
             else
             {
-                m_Columns[metaColumn.index] = new ColumnError(this);
-                DebugUtility.LogWarning("Cannot create column '" + GetName() + "." + metaColumn.name + "'. Type is unknown (null)");
+                m_Columns[metaColumn.Index] = new ColumnError(this);
+                DebugUtility.LogWarning("Cannot create column '" + GetName() + "." + metaColumn.Name + "'. Type is unknown (null)");
             }
         }
 
         public override long GetRowCount()
         {
+            if (m_Data == null) return -1;
             return m_RowData.Length;
         }
 

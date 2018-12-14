@@ -6,43 +6,43 @@ using Unity.MemoryProfiler.Editor.Debuging;
 
 namespace Unity.MemoryProfiler.Editor.Database.View
 {
-    public class ViewScheme : Database.Scheme
+    internal class ViewSchema : Database.Schema
     {
         public string name = "<unknown>";
-        public Database.Scheme baseScheme;
+        public Database.Schema baseSchema;
         public ViewTable[] tables;
         public System.Collections.Generic.Dictionary<string, ViewTable> tablesByName = new System.Collections.Generic.Dictionary<string, ViewTable>();
 
         public override string GetDisplayName()
         {
-            return baseScheme.GetDisplayName();
+            return baseSchema.GetDisplayName();
         }
 
         public override bool OwnsTable(Table table)
         {
-            if (table.scheme == this) return true;
+            if (table.Schema == this) return true;
             if (System.Array.IndexOf(tables, table) >= 0) return true;
-            return baseScheme.OwnsTable(table);
+            return baseSchema.OwnsTable(table);
         }
 
         public override long GetTableCount()
         {
-            if (baseScheme != null)
+            if (baseSchema != null)
             {
-                return baseScheme.GetTableCount() + tables.Length;
+                return baseSchema.GetTableCount() + tables.Length;
             }
             return tables.Length;
         }
 
         public override Table GetTableByIndex(long index)
         {
-            if (baseScheme != null && index < baseScheme.GetTableCount())
+            if (baseSchema != null && index < baseSchema.GetTableCount())
             {
-                return baseScheme.GetTableByIndex(index);
+                return baseSchema.GetTableByIndex(index);
             }
             else
             {
-                index -= baseScheme.GetTableCount();
+                index -= baseSchema.GetTableCount();
                 return tables[index];
             }
         }
@@ -54,9 +54,9 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             {
                 return vt;
             }
-            if (baseScheme != null)
+            if (baseSchema != null)
             {
-                return baseScheme.GetTableByName(name);
+                return baseSchema.GetTableByName(name);
             }
             return null;
         }
@@ -68,14 +68,14 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             {
                 return vt;
             }
-            if (baseScheme != null)
+            if (baseSchema != null)
             {
-                return baseScheme.GetTableByName(name, param);
+                return baseSchema.GetTableByName(name, param);
             }
             return null;
         }
 
-        public class Builder
+        internal class Builder
         {
             public string name;
             protected System.Collections.Generic.List<ViewTable.Builder> viewTable = new System.Collections.Generic.List<ViewTable.Builder>();
@@ -87,16 +87,16 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                 return t;
             }
 
-            public ViewScheme Build(Database.Scheme baseScheme)
+            public ViewSchema Build(Database.Schema baseSchema)
             {
-                ViewScheme vs = new ViewScheme();
-                vs.baseScheme = baseScheme;
+                ViewSchema vs = new ViewSchema();
+                vs.baseSchema = baseSchema;
                 vs.tables = new ViewTable[viewTable.Count];
                 vs.name = name;
                 int i = 0;
                 foreach (var tBuilder in viewTable)
                 {
-                    var table = tBuilder.Build(vs, baseScheme);
+                    var table = tBuilder.Build(vs, baseSchema);
                     vs.tables[i] = table;
                     vs.tablesByName.Add(table.GetName(), table);
                     ++i;

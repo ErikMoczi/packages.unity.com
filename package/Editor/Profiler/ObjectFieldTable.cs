@@ -5,7 +5,7 @@ using Unity.MemoryProfiler.Editor.Debuging;
 
 namespace Unity.MemoryProfiler.Editor
 {
-    public class ObjectFieldTable : ObjectListTable
+    internal class ObjectFieldTable : ObjectListTable
     {
         public static string kObjectFieldTableName = "ManagedObjectField";
         public class FieldsList
@@ -90,8 +90,8 @@ namespace Unity.MemoryProfiler.Editor
         FieldsList m_Fields;
         public ObjectData obj;
         public ObjectData objBase;
-        public ObjectFieldTable(Scheme scheme, SnapshotDataRenderer renderer, CachedSnapshot snapshot, ManagedData crawledData, ObjectData obj, ObjectMetaType metaType)
-            : base(scheme, renderer, snapshot, crawledData, metaType)
+        public ObjectFieldTable(Schema schema, SnapshotDataRenderer renderer, CachedSnapshot snapshot, ManagedData crawledData, ObjectData obj, ObjectMetaType metaType)
+            : base(schema, renderer, snapshot, crawledData, metaType)
         {
             this.obj = obj;
             objBase = obj.GetBase(snapshot);
@@ -297,7 +297,7 @@ namespace Unity.MemoryProfiler.Editor
             {
                 return ObjectData.invalid;
             }
-            return obj.GetField(snapshot, m_Fields.fieldIndices[row2], true);
+            return obj.GetInstanceFieldBySnapshotFieldIndex(snapshot, m_Fields.fieldIndices[row2], true);
         }
 
         public override bool GetObjectStatic(long row)

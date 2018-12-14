@@ -1,0 +1,833 @@
+<ProfilerView name="default">
+
+  <!-- AllComponentType
+    List of all native types that are component.
+  -->
+  <!-- Used only for debug
+  <View name="AllComponentType">
+    <SelectSet>
+      <Select name="ComponentNativeType" table="RawNativeType">
+        <Where column="name" op="equal" value="Component"  literal="true"/>
+      </Select>
+    </SelectSet>
+    <Column name="Name" width="350"/>
+    <Data type="select">
+      <SelectSet>
+        <Select name="AllComponentNativeTypeIndex" table="RawNativeTypeBase">
+          <Where column="baseIndex" op="equal" value="ComponentNativeType._row_index_" row="0"/>
+        </Select>
+        <Select name="NativeType" table="RawNativeType">
+          <Where column="_row_index_" op="equal" value="AllComponentNativeTypeIndex.typeIndex"/>
+        </Select>
+      </SelectSet>
+      <Column name="Name" value="NativeType.name"/>
+      <Column name="Index" value="AllComponentNativeTypeIndex.typeIndex"/>
+    </Data>
+  </View>
+  -->
+  
+  <!-- <View name="Overview"> -->
+
+    <!-- <SelectSet> -->
+      <!-- <Select name="GOManagedType" table="RawManagedType"> -->
+        <!-- <Where column="name" op="equal" value="UnityEngine.GameObject"  literal="true"/> -->
+      <!-- </Select> -->
+      <!-- <Select name="GONativeType" table="RawNativeType"> -->
+        <!-- <Where column="name" op="equal" value="GameObject"  literal="true"/> -->
+      <!-- </Select> -->
+      <!-- <Select name="ComponentNativeType" table="RawNativeType"> -->
+        <!-- <Where column="name" op="equal" value="Component"  literal="true"/> -->
+      <!-- </Select> -->
+      <!-- <Select name="AllComponentNativeType" table="RawNativeTypeBase"> -->
+        <!-- <Where column="baseIndex" op="equal" value="ComponentNativeType._row_index_" row="0"/> -->
+      <!-- </Select> -->
+    <!-- </SelectSet> -->
+    <!-- <Column name="Name" width="350"/> -->
+    <!-- <Column name="Size" type="ulong" merged="sum" /> -->
+    <!-- <Column name="Type" type="string" /> -->
+    <!-- <Column name="RootArea" type="string"/> -->
+    <!-- <Column name="RootObject" type="string"/> -->
+
+    <!-- -->
+    <!-- <Column name="ObjectIndex" type="int"/> -->
+    <!-- <Column name="ObjectInstanceId" type="int"/> -->
+    <!-- -->
+    <!-- <Data type="node"> -->
+      <!-- <Node name="All"> -->
+        <!-- <Column name="Name" value="All" literal="true"/> -->
+
+
+
+        <!-- <Data type="node"> -->
+
+
+          <!-- ====================================== -->
+          <!-- Scene  -->
+            <!-- All native objec that: -->
+              <!-- * have NotEditable set to false -->
+              <!-- * are of native type "GameObject" -->
+          <!-- -->
+          <!-- <Node name="NodeScene"> -->
+            <!-- <Column name="Name" value="Scene" literal="true"/> -->
+
+            <!-- <Data type="select"> -->
+              <!-- <SelectSet> -->
+                <!-- <Select name="NativeGORaw" table="RawNativeObject"> -->
+                  <!-- <Where column="nativeTypeArrayIndex" op="equal" value="GONativeType._row_index_" row="0"/> -->
+                  <!-- <Where column="NotEditable" op="equal" value="false"/> -->
+                <!-- </Select> -->
+                <!-- <Select name="NativeGO" table="AllNativeObjects"> -->
+                  <!-- <Where column="NativeInstanceId" op="equal" value="NativeGORaw.instanceId"/> -->
+                <!-- </Select> -->
+                <!-- <Select name="ManagedGO" table="AllManagedObjects"> -->
+                  <!-- <Where column="NativeInstanceId" op="equal" value="NativeGORaw.instanceId"/> -->
+                <!-- </Select> -->
+                <!-- <Select name="RootRef" table="RawRootReference"> -->
+                  <!-- <Where column="id" op="equal" value="NativeGORaw.rootReferenceId"/> -->
+                <!-- </Select> -->
+              <!-- </SelectSet> -->
+              <!-- <Column name="Name" value="NativeGORaw.name"> -->
+                <!-- <Link view="AllObjects"> -->
+                  <!-- <Where column="Index" op="equal" value="NativeGO.Index"/> -->
+                <!-- </Link> -->
+              <!-- </Column> -->
+              <!-- <Column name="ObjectIndex" value="NativeGO.Index"/>-->
+              <!-- <Column name="ObjectInstanceId" value="NativeGORaw.instanceId"/>-->
+              <!-- <Column name="Type" value="NativeGO.Type"/> -->
+              <!-- <Column name="RootArea" value="RootRef.areaName"/> -->
+              <!-- <Column name="RootObject" value="RootRef.objectName"/> -->
+
+              <!-- <Node name="NodeNativeGORaw"> -->
+                <!-- <Data type="node"> -->
+                  <!-- -->
+                <!-- <Node name="NodeNativeObject"> -->
+                  <!-- <Column name="Name" value="NativeGORaw.nativeObjectAddress"> -->
+                    <!-- <Link view="RawNativeObject"> -->
+                      <!-- <Where column="instanceId" op="equal" value="NativeGORaw.instanceId"/> -->
+                    <!-- </Link> -->
+                  <!-- </Column> -->
+                  <!-- <Column name="Size" value="NativeGORaw.size"/> -->
+                <!-- </Node> -->
+                <!-- -->
+                  <!-- Native Allocations -->
+                  <!-- <Node name="NodeNativeAllocation"> -->
+                    <!-- <Column name="Name" value="Native Allocation" literal="true"/> -->
+                    <!-- <Data type="select"> -->
+                      <!-- <SelectSet> -->
+                        <!-- <Select name="NativeAlloc" table="RawNativeAllocation"> -->
+                          <!-- <Where column="rootReferenceId" op="equal" value="NativeGORaw.rootReferenceId"/> -->
+                        <!-- </Select> -->
+                      <!-- </SelectSet> -->
+                      <!-- <Column name="Name" value="NativeAlloc.address"> -->
+                        <!-- <Link view="RawNativeAllocation"> -->
+                          <!-- <Where column="address" op="equal" value="NativeAlloc.address"/> -->
+                        <!-- </Link> -->
+                      <!-- </Column> -->
+                      <!-- <Column name="Size" value="NativeAlloc.size"/> -->
+                    <!-- </Data> -->
+                    <!-- <Filter> -->
+                      <!-- <DefaultSort> -->
+                        <!-- <Level column="Size" order="des"/> -->
+                        <!-- <Level column="Name" order="asc"/> -->
+                      <!-- </DefaultSort> -->
+                    <!-- </Filter> -->
+                  <!-- </Node> -->
+
+                  <!-- Managed Object -->
+                  <!-- <Node name="NodeManagedObject"> -->
+                    <!-- <Condition op="equal"> -->
+                      <!-- <Left value="ManagedGO.NativeInstanceId"/> -->
+                      <!-- <Right value="NativeGORaw.instanceId"/> -->
+                    <!-- </Condition> -->
+                    <!-- some gameObject might not have a linked managed object -->
+                    <!-- <Column name="Name" value="Managed Object" literal="true"> -->
+                      <!-- <Link view="AllManagedObjects"> -->
+                        <!-- <Where column="Index" op="equal" value="ManagedGO.Index"/> -->
+                      <!-- </Link> -->
+                    <!-- </Column> -->
+                    <!-- <Column name="Size" value="ManagedGO.OwnedSize" default="0"/> -->
+                    <!-- <Column name="ObjectIndex" value="ManagedGO.Index" default="-1"/>-->
+                    <!-- <Column name="ObjectInstanceId" value="ManagedGO.NativeInstanceId" default="0"/>-->
+                    <!-- <Column name="Type" value="ManagedGO.Type"/> -->
+                  <!-- </Node> -->
+
+                  <!-- Components -->
+                  <!-- <Node name="Components"> -->
+                    <!-- <Column name="Name" value="Components" literal="true"/> -->
+
+                    <!-- <Data type="select"> -->
+                      <!-- <SelectSet> -->
+                        <!-- <Select name="ComponentConnection" table="RawNativeConnection"> -->
+                          <!-- <Where column="from" op="equal" value="NativeGO.Index"/> -->
+                          <!-- <Where column="to" op="notEqual" value="ManagedGO.Index" default="-1"/> -->
+                        <!-- </Select> -->
+                        <!-- <Select name="ComponentObject" table="AllObjects"> -->
+                          <!-- <Where column="Index" op="equal" value="ComponentConnection.to"/> -->
+                        <!-- </Select> -->
+                        <!-- <Select name="NativeComponentRaw" table="RawNativeObject"> -->
+                          <!-- <Where column="instanceId" op="equal" value="ComponentObject.NativeInstanceId"/> -->
+                        <!-- </Select> -->
+                        <!-- <Select name="ManagedComponent" table="AllManagedObjects"> -->
+                          <!-- <Where column="NativeInstanceId" op="equal" value="ComponentObject.NativeInstanceId"/> -->
+                        <!-- </Select> -->
+                        <!-- <Condition op="isIn"> -->
+                          <!-- <Left value="NativeComponentRaw.nativeTypeArrayIndex"/> -->
+                          <!-- <Right value="AllComponentNativeType.typeIndex" /> -->
+                        <!-- </Condition> -->
+                      <!-- </SelectSet> -->
+                      <!-- <Column name="Name" value="ComponentObject.NativeObjectName"> -->
+                        <!-- <Link view="AllObjects"> -->
+                          <!-- <Where column="Index" op="equal" value="ComponentObject.Index"/> -->
+                        <!-- </Link> -->
+                      <!-- </Column> -->
+                      <!-- <Column name="Size" value="ComponentObject.OwnedSize"/> -->
+                      <!-- <Column name="Type" value="ComponentObject.Type"/> -->
+                      <!-- <Column name="ObjectIndex" value="ComponentObject.Index"/>-->
+                      <!-- <Column name="ObjectInstanceId" value="ComponentObject.NativeInstanceId"/>-->
+
+                      <!-- <Node name="NodeNativeGOComponent"> -->
+                        <!-- <Data type="node"> -->
+
+                          <!-- Native Allocations -->
+                          <!-- <Node name="NodeComponentNativeAllocation"> -->
+                            <!-- <Column name="Name" value="Native Allocation" literal="true"/> -->
+                            <!-- <Data type="select"> -->
+                              <!-- <SelectSet> -->
+                                <!-- <Select name="NativeAlloc" table="RawNativeAllocation"> -->
+                                  <!-- <Where column="rootReferenceId" op="equal" value="NativeComponentRaw.rootReferenceId"/> -->
+                                <!-- </Select> -->
+                              <!-- </SelectSet> -->
+                              <!-- <Column name="Name" value="NativeAlloc.address"> -->
+                                <!-- <Link view="RawNativeAllocation"> -->
+                                  <!-- <Where column="address" op="equal" value="NativeAlloc.address"/> -->
+                                <!-- </Link> -->
+                              <!-- </Column> -->
+                              <!-- <Column name="Size" value="NativeAlloc.size"/> -->
+                            <!-- </Data> -->
+                            <!-- <Filter> -->
+                              <!-- <DefaultSort> -->
+                                <!-- <Level column="Size" order="des"/> -->
+                                <!-- <Level column="Name" order="asc"/> -->
+                              <!-- </DefaultSort> -->
+                            <!-- </Filter> -->
+                          <!-- </Node> -->
+
+                          <!-- Managed Object -->
+                          <!-- <Node name="NodeComponentManagedObject"> -->
+                            <!-- <Condition op="equal"> -->
+                              <!-- <Left value="ManagedComponent.NativeInstanceId"/> -->
+                              <!-- <Right value="NativeComponentRaw.instanceId"/> -->
+                            <!-- </Condition> -->
+                            <!-- some gameObject might not have a linked managed object -->
+                            <!-- <Column name="Name" value="Managed Object" literal="true"> -->
+                              <!-- <Link view="AllManagedObjects"> -->
+                                <!-- <Where column="Index" op="equal" value="ComponentObject.Index"/> -->
+                              <!-- </Link> -->
+                            <!-- </Column> -->
+                            <!-- <Column name="Size" value="ManagedComponent.OwnedSize" default="0"/> -->
+                            <!-- <Column name="ObjectIndex" value="ManagedComponent.Index" default="-1"/>-->
+                            <!-- <Column name="ObjectInstanceId" value="ManagedComponent.NativeInstanceId" default="0"/>-->
+                            <!-- <Column name="Type" value="ManagedComponent.Type"/> -->
+                          <!-- </Node> -->
+                        <!-- </Data> -->
+                      <!-- </Node> -->
+                    <!-- </Data> -->
+                  <!-- </Node> -->
+                <!-- </Data> -->
+              <!-- </Node> -->
+            <!-- </Data> -->
+
+            <!-- <Filter> -->
+              <!-- <DefaultSort> -->
+                <!-- <Level column="Size" order="des"/> -->
+                <!-- <Level column="Name" order="asc"/> -->
+              <!-- </DefaultSort> -->
+            <!-- </Filter> -->
+          <!-- </Node> -->
+
+
+          <!-- ====================================== -->
+          <!-- Not Editable  -->
+            <!-- All native objects that: -->
+              <!-- * have flag NotEditable set to true; -->
+              <!-- * are not a component type -->
+          <!-- -->
+          <!-- <Node name="NotEditable"> -->
+            <!-- <Column name="Name" value="Not Editable" literal="true"/> -->
+            <!-- <Data type="select"> -->
+              <!-- <SelectSet> -->
+                <!-- <Select name="NativeGORaw" table="RawNativeObject" > -->
+                  <!-- <Where column="NotEditable" op="equal" value="true"/> -->
+                  <!-- <Where column="nativeTypeArrayIndex" op="notIn" value="AllComponentNativeType.typeIndex"/> -->
+                <!-- </Select> -->
+                <!-- <Select name="NativeGO" table="AllNativeObjects"> -->
+                  <!-- <Where column="NativeInstanceId" op="equal" value="NativeGORaw.instanceId"/> -->
+                <!-- </Select> -->
+                <!-- <Select name="ManagedGO" table="AllManagedObjects"> -->
+                  <!-- <Where column="NativeInstanceId" op="equal" value="NativeGORaw.instanceId"/> -->
+                <!-- </Select> -->
+                <!-- <Select name="RootRef" table="RawRootReference"> -->
+                  <!-- <Where column="id" op="equal" value="NativeGORaw.rootReferenceId"/> -->
+                <!-- </Select> -->
+              <!-- </SelectSet> -->
+              <!-- <Column name="Name" value="NativeGORaw.name"> -->
+                <!-- <Link view="AllObjects"> -->
+                  <!-- <Where column="Index" op="equal" value="NativeGO.Index"/> -->
+                <!-- </Link> -->
+              <!-- </Column> -->
+              <!-- <Column name="ObjectIndex" value="NativeGO.Index"/>-->
+              <!-- <Column name="ObjectInstanceId" value="NativeGORaw.instanceId"/>-->
+              <!-- <Column name="Type" value="NativeGO.Type"/> -->
+              <!-- <Column name="RootArea" value="RootRef.areaName"/> -->
+              <!-- <Column name="RootObject" value="RootRef.objectName"/> -->
+
+              <!-- <Node name="NodeNativeGORaw"> -->
+                <!-- <Data type="node"> -->
+
+                  <!-- Native Allocations -->
+                  <!-- <Node name="NodeNativeAllocation"> -->
+                    <!-- <Column name="Name" value="Native Allocation" literal="true"/> -->
+                    <!-- <Data type="select"> -->
+                      <!-- <SelectSet> -->
+                        <!-- <Select name="NativeAlloc" table="RawNativeAllocation"> -->
+                          <!-- <Where column="rootReferenceId" op="equal" value="NativeGORaw.rootReferenceId"/> -->
+                        <!-- </Select> -->
+                      <!-- </SelectSet> -->
+                      <!-- <Column name="Name" value="NativeAlloc.address"> -->
+                        <!-- <Link view="RawNativeAllocation"> -->
+                          <!-- <Where column="address" op="equal" value="NativeAlloc.address"/> -->
+                        <!-- </Link> -->
+                      <!-- </Column> -->
+                      <!-- <Column name="Size" value="NativeAlloc.size"/> -->
+                    <!-- </Data> -->
+                    <!-- <Filter> -->
+                      <!-- <DefaultSort> -->
+                        <!-- <Level column="Size" order="des"/> -->
+                        <!-- <Level column="Name" order="asc"/> -->
+                      <!-- </DefaultSort> -->
+                    <!-- </Filter> -->
+                  <!-- </Node> -->
+                  <!-- Managed Object -->
+                  <!-- <Node name="NodeManagedObject"> -->
+
+                    <!-- <Condition op="equal"> -->
+                      <!-- <Left value="ManagedGO.NativeInstanceId"/> -->
+                      <!-- <Right value="NativeGORaw.instanceId"/> -->
+                    <!-- </Condition> -->
+
+                    <!-- <Column name="Name" value="Managed Object" literal="true"> -->
+                      <!-- <Link view="AllManagedObjects"> -->
+                        <!-- <Where column="Index" op="equal" value="ManagedGO.Index"/> -->
+                      <!-- </Link> -->
+                    <!-- </Column> -->
+                    <!-- <Column name="Size" value="ManagedGO.OwnedSize" default="0"/> -->
+                    <!-- <Column name="ObjectIndex" value="ManagedGO.Index" default="-1"/>-->
+                    <!-- <Column name="ObjectInstanceId" value="ManagedGO.NativeInstanceId" default="0"/>-->
+                    <!-- <Column name="Type" value="ManagedGO.Type"/> -->
+                  <!-- </Node> -->
+                  <!-- Components -->
+                  <!-- <Node name="Components"> -->
+                    <!-- <Condition op="equal"> -->
+                      <!-- <Left value="NativeGORaw.nativeTypeArrayIndex"/> -->
+                      <!-- <Right value="GONativeType._row_index_" row="0"/> -->
+                    <!-- </Condition> -->
+                    <!-- <Column name="Name" value="Components" literal="true"/> -->
+
+                    <!-- <Data type="select"> -->
+                      <!-- <SelectSet> -->
+                        <!-- <Select name="ComponentConnection" table="RawNativeConnection"> -->
+                          <!-- <Where column="from" op="equal" value="NativeGO.Index"/> -->
+                          <!-- <Where column="to" op="notEqual" value="ManagedGO.Index" default="-1"/> -->
+                        <!-- </Select> -->
+                        <!-- <Select name="ComponentObject" table="AllObjects"> -->
+                          <!-- <Where column="Index" op="equal" value="ComponentConnection.to"/> -->
+                        <!-- </Select> -->
+                        <!-- <Select name="NativeComponentRaw" table="RawNativeObject"> -->
+                          <!-- <Where column="instanceId" op="equal" value="ComponentObject.NativeInstanceId"/> -->
+                        <!-- </Select> -->
+                        <!-- <Select name="ManagedComponent" table="AllManagedObjects"> -->
+                          <!-- <Where column="NativeInstanceId" op="equal" value="ComponentObject.NativeInstanceId"/> -->
+                        <!-- </Select> -->
+                        <!-- <Condition op="isIn"> -->
+                          <!-- <Left value="NativeComponentRaw.nativeTypeArrayIndex"/> -->
+                          <!-- <Right value="AllComponentNativeType.typeIndex" /> -->
+                        <!-- </Condition> -->
+                      <!-- </SelectSet> -->
+                      <!-- <Column name="Name" value="ComponentObject.NativeObjectName"> -->
+                        <!-- <Link view="AllObjects"> -->
+                          <!-- <Where column="Index" op="equal" value="ComponentObject.Index"/> -->
+                        <!-- </Link> -->
+                      <!-- </Column> -->
+                      <!-- <Column name="Type" value="ComponentObject.Type"/> -->
+                      <!-- <Column name="ObjectIndex" value="ComponentObject.Index"/>-->
+                      <!-- <Column name="ObjectInstanceId" value="ComponentObject.NativeInstanceId"/>-->
+
+                      <!-- <Node name="NodeNativeGOComponent"> -->
+                        <!-- <Data type="node"> -->
+
+                          <!-- Native Allocations -->
+                          <!-- <Node name="NodeComponentNativeAllocation"> -->
+                            <!-- <Column name="Name" value="Native Allocation" literal="true"/> -->
+                            <!-- <Data type="select"> -->
+                              <!-- <SelectSet> -->
+                                <!-- <Select name="NativeAlloc" table="RawNativeAllocation"> -->
+                                  <!-- <Where column="rootReferenceId" op="equal" value="NativeComponentRaw.rootReferenceId"/> -->
+                                <!-- </Select> -->
+                              <!-- </SelectSet> -->
+                              <!-- <Column name="Name" value="NativeAlloc.address"> -->
+                                <!-- <Link view="RawNativeAllocation"> -->
+                                  <!-- <Where column="address" op="equal" value="NativeAlloc.address"/> -->
+                                <!-- </Link> -->
+                              <!-- </Column> -->
+                              <!-- <Column name="Size" value="NativeAlloc.size"/> -->
+                            <!-- </Data> -->
+                            <!-- <Filter> -->
+                              <!-- <DefaultSort> -->
+                                <!-- <Level column="Size" order="des"/> -->
+                                <!-- <Level column="Name" order="asc"/> -->
+                              <!-- </DefaultSort> -->
+                            <!-- </Filter> -->
+                          <!-- </Node> -->
+
+                          <!-- Managed Object -->
+                          <!-- <Node name="NodeComponentManagedObject"> -->
+                            <!-- <Condition op="equal"> -->
+                              <!-- <Left value="ManagedComponent.NativeInstanceId"/> -->
+                              <!-- <Right value="NativeComponentRaw.instanceId"/> -->
+                            <!-- </Condition> -->
+                            <!-- some gameObject might not have a linked managed object -->
+                            <!-- <Column name="Name" value="Managed Object" literal="true"> -->
+                              <!-- <Link view="AllManagedObjects"> -->
+                                <!-- <Where column="Index" op="equal" value="ComponentObject.Index"/> -->
+                              <!-- </Link> -->
+                            <!-- </Column> -->
+                            <!-- <Column name="Size" value="ManagedComponent.OwnedSize" default="0"/> -->
+                            <!-- <Column name="ObjectIndex" value="ManagedComponent.Index" default="-1"/>-->
+                            <!-- <Column name="ObjectInstanceId" value="ManagedComponent.NativeInstanceId" default="0"/>-->
+                            <!-- <Column name="Type" value="ManagedComponent.Type"/> -->
+                          <!-- </Node> -->
+                        <!-- </Data> -->
+                      <!-- </Node> -->
+                    <!-- </Data> -->
+                  <!-- </Node> -->
+                <!-- </Data> -->
+              <!-- </Node> -->
+
+            <!-- </Data> -->
+            <!-- <Filter> -->
+              <!-- <DefaultSort> -->
+                <!-- <Level column="Size" order="des"/> -->
+                <!-- <Level column="Name" order="asc"/> -->
+              <!-- </DefaultSort> -->
+            <!-- </Filter> -->
+          <!-- </Node> -->
+
+
+          <!-- ====================================== -->
+          <!-- Assets  -->
+            <!-- All native object that: -->
+              <!-- * have flag NotEditable set to false -->
+              <!-- * are not of native type "GameObject" -->
+              <!-- * are not a component type -->
+          <!-- -->
+          <!-- <Node> -->
+            <!-- <Column name="Name" value="Assets" literal="true"/> -->
+            <!-- <Data type="select"> -->
+              <!-- <SelectSet> -->
+                <!-- <Select name="NativeGORaw" table="RawNativeObject"> -->
+                  <!-- <Where column="nativeTypeArrayIndex" op="notEqual" value="GONativeType._row_index_" row="0"/> -->
+                  <!-- <Where column="nativeTypeArrayIndex" op="notIn" value="AllComponentNativeType.typeIndex"/> -->
+                  <!-- <Where column="NotEditable" op="equal" value="false"/> -->
+                <!-- </Select> -->
+                <!-- <Select name="NativeGO" table="AllNativeObjects"> -->
+                  <!-- <Where column="NativeInstanceId" op="equal" value="NativeGORaw.instanceId"/> -->
+                <!-- </Select> -->
+                <!-- <Select name="ManagedGO" table="AllManagedObjects"> -->
+                  <!-- <Where column="NativeInstanceId" op="equal" value="NativeGORaw.instanceId"/> -->
+                <!-- </Select> -->
+                <!-- <Select name="RootRef" table="RawRootReference"> -->
+                  <!-- <Where column="id" op="equal" value="NativeGORaw.rootReferenceId"/> -->
+                <!-- </Select> -->
+              <!-- </SelectSet> -->
+              <!-- <Column name="Name" value="NativeGORaw.name"> -->
+                <!-- <Link view="AllObjects"> -->
+                  <!-- <Where column="Index" op="equal" value="NativeGO.Index"/> -->
+                <!-- </Link> -->
+              <!-- </Column> -->
+              <!-- <Column name="ObjectIndex" value="NativeGO.Index"/>-->
+              <!-- <Column name="ObjectInstanceId" value="NativeGORaw.instanceId"/>-->
+              <!-- <Column name="Type" value="NativeGO.Type"/> -->
+              <!-- <Column name="RootArea" value="RootRef.areaName"/> -->
+              <!-- <Column name="RootObject" value="RootRef.objectName"/> -->
+
+              <!-- <Node name="NodeNativeGORaw"> -->
+                <!-- <Data type="node"> -->
+                  <!-- Native Allocations -->
+                  <!-- <Node name="NodeNativeAllocation"> -->
+                    <!-- <Column name="Name" value="Native Allocation" literal="true"/> -->
+                    <!-- <Data type="select"> -->
+                      <!-- <SelectSet> -->
+                        <!-- <Select name="NativeAlloc" table="RawNativeAllocation"> -->
+                          <!-- <Where column="rootReferenceId" op="equal" value="NativeGORaw.rootReferenceId"/> -->
+                        <!-- </Select> -->
+                      <!-- </SelectSet> -->
+                      <!-- <Column name="Name" value="NativeAlloc.address"> -->
+                        <!-- <Link view="RawNativeAllocation"> -->
+                          <!-- <Where column="address" op="equal" value="NativeAlloc.address"/> -->
+                        <!-- </Link> -->
+                      <!-- </Column> -->
+                      <!-- <Column name="Size" value="NativeAlloc.size"/> -->
+                    <!-- </Data> -->
+                    <!-- <Filter> -->
+                      <!-- <DefaultSort> -->
+                        <!-- <Level column="Size" order="des"/> -->
+                        <!-- <Level column="Name" order="asc"/> -->
+                      <!-- </DefaultSort> -->
+                    <!-- </Filter> -->
+                  <!-- </Node> -->
+
+                  <!-- Managed Object -->
+                  <!-- <Node name="NodeManagedObject"> -->
+                    <!-- <Condition op="equal"> -->
+                      <!-- <Left value="ManagedGO.NativeInstanceId"/> -->
+                      <!-- <Right value="NativeGORaw.instanceId"/> -->
+                    <!-- </Condition> -->
+                    <!-- some gameObject might not have a linked managed object -->
+                    <!-- <Column name="Name" value="Managed Object" literal="true"> -->
+                      <!-- <Link view="AllManagedObjects"> -->
+                        <!-- <Where column="Index" op="equal" value="ManagedGO.Index"/> -->
+                      <!-- </Link> -->
+                    <!-- </Column> -->
+                    <!-- <Column name="Size" value="ManagedGO.OwnedSize" default="0"/> -->
+                    <!-- <Column name="ObjectIndex" value="ManagedGO.Index" default="-1"/>-->
+                    <!-- <Column name="ObjectInstanceId" value="ManagedGO.NativeInstanceId" default="0"/>-->
+                    <!-- <Column name="Type" value="ManagedGO.Type"/> -->
+                  <!-- </Node> -->
+
+                <!-- </Data> -->
+              <!-- </Node> -->
+            <!-- </Data> -->
+
+            <!-- <Filter> -->
+              <!-- <DefaultSort> -->
+                <!-- <Level column="Size" order="des"/> -->
+                <!-- <Level column="Name" order="asc"/> -->
+              <!-- </DefaultSort> -->
+            <!-- </Filter> -->
+          <!-- </Node> -->
+
+
+          <!-- ====================================== -->
+          <!-- Other Managed Objects  -->
+            <!-- All managed objects that does not have an object instanceId -->
+          <!-- -->
+          <!-- <Node> -->
+            <!-- <Column name="Name" value="Other Managed Objects" literal="true"/> -->
+            <!-- <Data type="select"> -->
+              <!-- <SelectSet> -->
+                <!-- <Select name="ManegedObject" table="AllManagedObjects"> -->
+                  <!-- <Where column="NativeInstanceId" op="equal" value="0"/> -->
+                <!-- </Select> -->
+              <!-- </SelectSet> -->
+              <!-- <Column name="Name" value="ManegedObject.Name"> -->
+                <!-- <Link view="AllManagedObjects"> -->
+                  <!-- <Where column="Index" op="equal" value="ManegedObject.Index"/> -->
+                <!-- </Link> -->
+              <!-- </Column> -->
+              <!-- <Column name="Size" value="ManegedObject.OwnedSize"/> -->
+              <!-- <Column name="Type" value="ManegedObject.Type"/> -->
+            <!-- </Data> -->
+            <!-- <Filter> -->
+              <!-- <DefaultSort> -->
+                <!-- <Level column="Size" order="des"/> -->
+                <!-- <Level column="Name" order="asc"/> -->
+              <!-- </DefaultSort> -->
+            <!-- </Filter> -->
+          <!-- </Node> -->
+          
+          
+          <!-- -->
+          <!-- Root References that are not objects -->
+          <!-- -->
+          <!-- <Node> -->
+            <!-- <Column name="Name" value="Root references" literal="true"/> -->
+            <!-- <Data type="select"> -->
+              <!-- <SelectSet> -->
+                <!-- <Select name="RootRef" table="RawRootReference"> -->
+                  <!-- <Where column="areaName" op="notEqual" value="Objects" literal="true"/> -->
+                <!-- </Select> -->
+              <!-- </SelectSet> -->
+              <!-- <Column name="Name" value="RootRef.id"> -->
+                <!-- <Link view="RawRootReference"> -->
+                  <!-- <Where column="id" op="equal" value="RootRef.id"/> -->
+                <!-- </Link> -->
+              <!-- </Column> -->
+              <!-- <Column name="RootArea" value="RootRef.areaName"/> -->
+              <!-- <Column name="RootObject" value="RootRef.objectName"/> -->
+              <!-- <Node name="NodeNativeAllocation"> -->
+                <!-- <Data type="select"> -->
+                  <!-- <SelectSet> -->
+                    <!-- <Select name="NativeAlloc" table="RawNativeAllocation"> -->
+                      <!-- <Where column="rootReferenceId" op="equal" value="RootRef.id"/> -->
+                    <!-- </Select> -->
+                  <!-- </SelectSet> -->
+                  <!-- <Column name="Name" value="NativeAlloc.address"> -->
+                    <!-- <Link view="RawNativeAllocation"> -->
+                      <!-- <Where column="address" op="equal" value="NativeAlloc.address"/> -->
+                    <!-- </Link> -->
+                  <!-- </Column> -->
+                  <!-- <Column name="Size" value="NativeAlloc.size"/> -->
+                <!-- </Data> -->
+                <!-- <Filter> -->
+                  <!-- <DefaultSort> -->
+                    <!-- <Level column="Size" order="des"/> -->
+                    <!-- <Level column="Name" order="asc"/> -->
+                  <!-- </DefaultSort> -->
+                <!-- </Filter> -->
+              <!-- </Node> -->
+            <!-- </Data> -->
+            <!-- <Filter> -->
+              <!-- <DefaultSort> -->
+                <!-- <Level column="Size" order="des"/> -->
+                <!-- <Level column="Name" order="asc"/> -->
+              <!-- </DefaultSort> -->
+            <!-- </Filter> -->
+          <!-- </Node> -->
+          <!-- TODO -->
+          <!-- <Node> -->
+            <!-- <Column name="Name" value="Executable" literal="true"/> -->
+          <!-- </Node> -->
+          <!-- -->
+        <!-- </Data> -->
+      <!-- </Node> -->
+    <!-- </Data> -->
+  <!-- </View> -->
+
+
+  <Removed>
+    <View name="TestNode">
+      <SelectSet>
+        <Select name="GameObjectType" table="RawManagedType">
+          <Where column="name" op="equal" value="UnityEngine.GameObject" literal="true"/>
+        </Select>
+      </SelectSet>
+      <!-- columns here are declarations -->
+      <Column name="col1"/>
+      <Column name="col2"/>
+      <Column name="col3" type="ulong"/>
+      <Data type="node">
+        <!-- When data.type == node -->
+        <!--    columns here are declarations -->
+        <!-- When data.type == select -->
+        <!--    columns here are definitions -->
+        <Node name="NodeAllocation">
+          <!-- When parent data.type == node -->
+          <!--    columns here are entries -->
+          <!-- When parent data.type == select -->
+          <!--    columns here are declarations-->
+          <Column name="col1" value="Native" literal="true"/>
+          <Column name="col2" value="Allocation" literal="true"/>
+
+          <Data type="select">
+            <SelectSet>
+              <Select name="alloc" table="RawNativeAllocation"/>
+            </SelectSet>
+            <Column name="col1" value="_row_index_" width="42"/>
+            <Column name="col2" value="alloc" literal="true"/>
+            <Column name="col3" value="alloc.address"/>
+          </Data>
+        </Node>
+        <Node name="Node1">
+          <!-- When parent data.type == node -->
+          <!--    columns here are entries -->
+          <!-- When parent data.type == select -->
+          <!--    columns here are declarations-->
+          <Column name="col1" value="Managed" literal="true"/>
+          <Column name="col2" value="Object" literal="true"/>
+          <Data type="node">
+            <Node name="Node0_0">
+              <Column name="col1" value="Allo" literal="true"/>
+              <Column name="col2" value="Monde" literal="true"/>
+            </Node>
+          </Data>
+        </Node>
+      </Data>
+    </View>
+  </Removed>
+  
+  
+    <View name="Alloc/ByNativeObject">
+
+        <Data type="select">
+          <SelectSet>
+            <Select name="alloc" table="RawNativeAllocation"/>
+            <Select name="obj" table="RawNativeObject">
+                <Where column="rootReferenceId" op="equal" value="alloc.rootReferenceId"/>
+            </Select>
+            <Select name="rr" table="RawRootReference">
+                <Where column="id" op="equal" value="alloc.rootReferenceId"/>
+            </Select>
+            <Select name="mr" table="RawNativeMemoryRegion">
+                <Where column="_row_index_" op="equal" value="alloc.memoryRegionIndex"/>
+            </Select>
+          </SelectSet>
+            <!--
+         Column statements add a column to the view and define its behaviour 
+           Attributes:
+             name: identifier for that column 
+             value: data to fill the cell with, can reference identifiers in the Select statments 
+             groupable: defined how this column can be grouped. 
+               Groups hierarchy is always from first defined groupable column as parents to last groupable columns as childrens
+               values: 
+                 duplicate: group values that are equal together 
+                 tree: group in a tree structure, parent/child relationship is define in a ParentGroup sub-statement 
+             merged: defined how this column's value is computed when another column is grouping 
+               values:
+                 sum: add all together 
+                 count: count the number of grouped entries 
+                 avg: compute the average of grouped entries' value
+                 ... many other algorithms here ... TBD 
+        -->
+            <Column name="index" value="_row_index_" width="42"/>
+            <Column name="ObjectName" value="obj.name" groupable="duplicate" defaultGrouped="1"/>
+            <Column name="AreaName" value="rr.areaName" groupable="duplicate" defaultGrouped="2"/>
+            <Column name="MemRegion" value="mr.name" groupable="duplicate" defaultGrouped="3">
+                <Link view="Alloc/ByMemRegion">
+                    <!-- When clicking on a cell of that column, the profiler view change to the linked one -->
+                    <!-- The UI shall implement ways to go back and forward between views -->
+                    <!-- Where statments indicate which entry to highlight in the target view -->
+                    <!-- Will highlight the first entry that match all the Where statements -->
+                    <Where column="Name" op="equal" value="mr.name"/>
+                </Link>
+            </Column>
+
+            <Column name="MemRegionIndex" value="alloc.memoryRegionIndex"/>
+            <Column name="Address" value="alloc.address" isKey="true"/>
+            <Column name="AllocCount" value="1" merged="count"/>
+            <Column name="Size" value="alloc.size" merged="sum"/>
+            <Column name="MinSize" value="alloc.size" merged="min"/>
+            <Column name="MaxSize" value="alloc.size" merged="max"/>
+            <Column name="AverageSize" value="alloc.size" merged="average"/>
+            <Column name="MedianSize" value="alloc.size" merged="median"/>
+            <Column name="Deviation" value="alloc.size" merged="deviation"/>
+        </Data>
+        <Filter>
+            <!-- default sort aplies to all group level-->
+            <DefaultSort>
+                <Level column="Size" order="des"/>
+            </DefaultSort>
+            <Group column="ObjectName">
+                <Group column="AreaName">
+                    <Group column="MemRegion">
+                    </Group>
+                </Group>
+            </Group>
+        </Filter>
+        <!--
+    This view will look like this:
+    
+    | ObjectName  | AreaName    | MemRegion     | AllocCount | Size | Min Size | Max Size | AverageSize | Median Size | Devication |
+    |[-] BoxCrate |             |               | 11         | 1004 | ##       | ##       | 91.27       | ##          | ##         |
+    |             |[-] MemPool  |               | 6          | 896  | ##       | ##       | 149.3       | ##          | ##         |
+    |             |             |[-] SmallPool0 | 4          | 512  | ##       | ##       | 128         | ##          | ##         |
+    |             |             |               |            | 128  | ##       | ##       |             | ##          | ##         |
+    |             |             |               |            | 256  | ##       | ##       |             | ##          | ##         |
+    |             |             |               |            | 64   | ##       | ##       |             | ##          | ##         |
+    |             |             |               |            | 64   | ##       | ##       |             | ##          | ##         |
+    |             |             |[-] SmallPool1 | 2          | 384  | ##       | ##       | 192         | ##          | ##         |
+    |             |             |               |            | 256  | ##       | ##       |             | ##          | ##         |
+    |             |             |               |            | 128  | ##       | ##       |             | ##          | ##         |
+    |             |[-] Manager  |               | 5          | 108  | ##       | ##       | 21.6        | ##          | ##         |
+    |             |             |[-] SmallPool0 | 3          | 36   | ##       | ##       | 12          | ##          | ##         |
+    |             |             |               |            | 12   | ##       | ##       |             | ##          | ##         |
+    |             |             |               |            | 12   | ##       | ##       |             | ##          | ##         |
+    |             |             |               |            | 12   | ##       | ##       |             | ##          | ##         |
+    |             |             |[-] SmallPool1 | 2          | 72   | ##       | ##       | 36          | ##          | ##         |
+    |             |             |               |            | 8    | ##       | ##       |             | ##          | ##         |
+    |             |             |               |            | 64   | ##       | ##       |             | ##          | ##         |
+    |[+] Barrel   |             |               | 12086      | 128k | ##       | ##       | 10.84       | ##          | ##         |
+    | ...         | ...         | ...           | ...        | ...  | ##       | ##       | ...         | ##          | ##         |
+    -->
+    </View>
+
+    <View name="Alloc/ByRoot">
+        <Data type="select">
+          <SelectSet>
+            <Select name="alloc" table="RawNativeAllocation"/>
+
+            <Select name="rr" table="RawRootReference">
+                <Where column="id" op="equal" value="alloc.rootReferenceId"/>
+            </Select>
+          </SelectSet>
+            <Column name="index" value="_row_index_" width="42"/>
+            <Column name="Area" value="rr.areaName" groupable="duplicate" defaultGrouped="1"/>
+            <Column name="Object" value="rr.objectName" groupable="duplicate"/>
+
+            <Column name="Address" value="alloc.address" isKey="true"/>
+            <Column name="AllocCount" value="1" merged="count"/>
+            <Column name="Size" value="alloc.size" groupable="duplicate" merged="sum"/>
+            <Column name="MinSize" value="alloc.size" merged="min"/>
+            <Column name="MaxSize" value="alloc.size" merged="max"/>
+            <Column name="AverageSize" value="alloc.size" merged="average"/>
+            <Column name="MedianSize" value="alloc.size" merged="median"/>
+            <Column name="Deviation" value="alloc.size" merged="deviation"/>
+        </Data>
+        <Filter>
+            <!-- default sort aplies to all group level-->
+            <DefaultSort>
+                <Level column="Size" order="des"/>
+            </DefaultSort>
+            <Group column="Area">
+            </Group>
+        </Filter>
+
+        <!--
+    This view will look like this:
+    
+    
+        | Area       | Object      | AllocCount | Size | Min Size | Max Size | AverageSize | Median Size | Devication |
+        |[-] MemPool |             | 7          | 548  | ##       | ##       | 78.28       | ##          | ##         |
+        |            | [-]RTTI     | 3          | 448  | ##       | ##       | 149.3       | ##          | ##         |
+        |            |             |            | 128  | ##       | ##       |             | ##          | ##         |
+        |            |             |            | 256  | ##       | ##       |             | ##          | ##         |
+        |            |             |            | 64   | ##       | ##       |             | ##          | ##         |
+        |            | [-]Profiler | 4          | 100  | ##       | ##       | 25          | ##          | ##         |
+        |            |             |            | 64   | ##       | ##       |             | ##          | ##         |
+        |            |             |            | 12   | ##       | ##       |             | ##          | ##         |
+        |            |             |            | 12   | ##       | ##       |             | ##          | ##         |
+        |            |             |            | 12   | ##       | ##       |             | ##          | ##         |
+        |[+] Manager |             | 4          | 456  | ##       | ##       | 65.14       | ##          | ##         |
+        | ...        | ...         | ...        | ...  | ...      | ...      | ...         | ...         | ...        |
+    -->
+    </View>
+    <View name="Alloc/ByMemRegion">
+        <Data type="select">
+          <SelectSet>
+            <Select name="alloc" table="RawNativeAllocation"/>
+            <Select name="mr" table="RawNativeMemoryRegion">
+                <Where column="_row_index_" op="equal" value="alloc.memoryRegionIndex"/>
+            </Select>
+          </SelectSet>
+            <Column name="Name" value="mr.name" groupable="duplicate" />
+
+
+            <Column name="index" value="_row_index_" width="42" isKey="true"/>
+            <Column name="AllocCount" value="1" merged="count"/>
+            <Column name="Size" value="alloc.size" merged="sum"/>
+            <Column name="MinSize" value="alloc.size" merged="min"/>
+            <Column name="MaxSize" value="alloc.size" merged="max"/>
+            <Column name="AverageSize" value="alloc.size" merged="average"/>
+            <Column name="MedianSize" value="alloc.size" merged="median"/>
+            <Column name="Deviation" value="alloc.size" merged="deviation"/>
+        </Data>
+        <Filter>
+            <!-- default sort aplies to all group level-->
+            <DefaultSort>
+                <Level column="Size" order="des"/>
+            </DefaultSort>
+            <Group column="Name">
+            </Group>
+        </Filter>
+    </View>
+
+</ProfilerView>

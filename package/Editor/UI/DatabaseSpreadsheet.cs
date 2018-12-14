@@ -7,37 +7,131 @@ using Unity.MemoryProfiler.Editor.Database.Operation;
 
 namespace Unity.MemoryProfiler.Editor.UI
 {
-    public class DatabaseSpreadsheet : TextSpreadsheet
+    internal class DatabaseSpreadsheet : TextSpreadsheet
     {
         protected Database.Table m_TableSource;
         protected Database.Table m_TableDisplay;
         protected DataRenderer m_DataRenderer;
 
-        public Database.Table sourceTable
+        const string k_DisplayWidthPrefKeyBase = "Unity.MemoryProfiler.Editor.Database.DisplayWidth";
+        string[] m_DisplayWidthPrefKeysPerColumn;
+
+        public int GetDisplayWidth(int columnIndex, int defaultDisplayWidth)
+        {
+            return EditorPrefs.GetInt(m_DisplayWidthPrefKeysPerColumn[columnIndex], defaultDisplayWidth);
+        }
+
+        public void SetDisplayWidth(int columnIndex, int value)
+        {
+            value = Mathf.Max(value, UI.SplitterStateEx.MinSplitterSize);
+            EditorPrefs.SetInt(m_DisplayWidthPrefKeysPerColumn[columnIndex], value);
+        }
+
+
+        public Database.Table SourceTable
         {
             get
             {
                 return m_TableSource;
             }
         }
-        public Database.Table displayTable
+
+        public Database.Table DisplayTable
         {
             get
             {
                 return m_TableDisplay;
             }
         }
+
+        public long RowCount
+        {
+            get {
+                return m_TableDisplay.GetRowCount();
+            }
+        }
+
+        public long SelectedRow 
+        {
+            get {
+                return m_GUIState.SelectedRow;
+            }
+
+            set {
+
+                m_GUIState.SelectedRow = value;
+            }
+        }
+
         //keep the state of each column's desired filters
         //does not contain order in which the filters should be applied
         //in order of m_TableSource columns
         protected Filter.ColumnState[] m_ColumnState;
 
-        Filter.Multi filters = new Filter.Multi();
-        Filter.Sort allLevelSortFilter = new Filter.Sort();
+        Filter.Multi m_Filters = new Filter.Multi();
+        Filter.Sort m_AllLevelSortFilter = new Filter.Sort();
         //filter.DefaultSort allLevelDefaultSort = new filter.DefaultSort();
 
+        public struct State
+        {
+            public Database.Operation.Filter.Filter Filter;
+            public Database.CellLink SelectedCell;
+            public Vector2 ScrollPosition;
+            public List<Database.CellPosition> ExpandedCells;
 
-        public DatabaseSpreadsheet(DataRenderer dataRenderer, Database.Table table, IViewEventListener listener, Database.Operation.Filter.Filter filter)
+            public long SelectedRow;
+            public long FirstVisibleRow;
+            public float FirstVisibleRowY;
+            public long FirstVisibleRowIndex;//sequential index assigned to all visible row. Differ from row index if there are invisible rows
+            public double HeightBeforeFirstVisibleRow;//using double since this value will be maintained by offseting it.
+        }
+
+        public State CurrentState 
+        {
+            get { 
+                State state = new State();
+
+                state.SelectedCell = GetLinkToCurrentSelection();
+
+                state.Filter = GetCurrentFilterCopy(); 
+                state.ScrollPosition = m_GUIState.ScrollPosition;
+                state.SelectedRow = m_GUIState.SelectedRow;
+                state.FirstVisibleRow = m_GUIState.FirstVisibleRow;
+                state.FirstVisibleRowIndex = m_GUIState.FirstVisibleRowIndex;
+                state.FirstVisibleRowY = m_GUIState.FirstVisibleRowY;
+                state.HeightBeforeFirstVisibleRow = m_GUIState.HeightBeforeFirstVisibleRow;
+
+                state.ExpandedCells = new List<Database.CellPosition>();
+                var rowCount = DisplayTable.GetRowCount();
+                var columnCount = DisplayTable.GetMetaData().GetColumnCount();
+                for (long row = 0; row < rowCount; row++)
+                {
+                    for (int col = 0; col < columnCount; col++)
+                    {
+                        var expendedState = DisplayTable.GetCellExpandState(row, col);
+                        if (expendedState.isColumnExpandable && expendedState.isExpanded)
+                        {
+                            state.ExpandedCells.Add(new Database.CellPosition(row, col));
+                        }
+                    }
+                }
+
+                return state;
+            }
+            set {
+                InitFilter(value.Filter, value.ExpandedCells);
+
+                m_GUIState.ScrollPosition = value.ScrollPosition;
+                m_GUIState.SelectedRow = value.SelectedRow;
+                m_GUIState.FirstVisibleRow = value.FirstVisibleRow;
+                m_GUIState.FirstVisibleRowIndex = value.FirstVisibleRowIndex;
+                m_GUIState.FirstVisibleRowY = value.FirstVisibleRowY;
+                m_GUIState.HeightBeforeFirstVisibleRow = value.HeightBeforeFirstVisibleRow;
+            }
+        }
+
+
+        public DatabaseSpreadsheet(DataRenderer dataRenderer, Database.Table table, IViewEventListener listener, State state)
             : base(listener)
         {
             m_TableSource = table;
@@ -45,7 +139,7 @@ namespace Unity.MemoryProfiler.Editor.UI
             m_DataRenderer = dataRenderer;
 
             InitSplitter();
-            InitFilter(filter);
+            CurrentState = state;
         }
 
         public DatabaseSpreadsheet(DataRenderer dataRenderer, Database.Table table, IViewEventListener listener)
@@ -65,49 +159,53 @@ namespace Unity.MemoryProfiler.Editor.UI
             int colCount = meta.GetColumnCount();
             m_ColumnState = new Filter.ColumnState[colCount];
             int[] colSizes = new int[colCount];
+
+            string basePrefKey = k_DisplayWidthPrefKeyBase /*+ DisplayTable.GetName()*/;
+            m_DisplayWidthPrefKeysPerColumn = new string[colCount];
             for (int i = 0; i != colCount; ++i)
             {
-                colSizes[i] = meta.GetColumnByIndex(i).displayDefaultWidth;
+                var column = meta.GetColumnByIndex(i);
+                m_DisplayWidthPrefKeysPerColumn[i] = basePrefKey + column.Name;
+                colSizes[i] = GetDisplayWidth(i, column.DefaultDisplayWidth);
                 m_ColumnState[i] = new Filter.ColumnState();
             }
             m_Splitter = new SplitterStateEx(colSizes);
+            m_Splitter.RealSizeChanged += SetDisplayWidth;
         }
 
-        private void InitEmptyFilter()
+        private void InitEmptyFilter(List<Database.CellPosition> expandedCells = null)
         {
-            filters = new Filter.Multi();
-            var ds = new Database.Operation.Filter.DefaultSort();
-            ds.defaultSort = allLevelSortFilter;
-            filters.filters.Add(ds);
-            UpdateDisplayTable();
+            m_Filters = new Filter.Multi();
+            var ds = new Database.Operation.Filter.DefaultSort(m_AllLevelSortFilter, null);
+            m_Filters.filters.Add(ds);
+            UpdateDisplayTable(expandedCells);
         }
 
-        protected void InitFilter(Database.Operation.Filter.Filter filter)
+        protected void InitFilter(Database.Operation.Filter.Filter filter, List<Database.CellPosition> expandedCells = null)
         {
             Database.Operation.Filter.FilterCloning fc = new Database.Operation.Filter.FilterCloning();
 
             var deffilter = filter.Clone(fc);
             if (deffilter != null)
             {
-                filters = new Filter.Multi();
+                m_Filters = new Filter.Multi();
 
-                filters.filters.Add(deffilter);
+                m_Filters.filters.Add(deffilter);
 
-                allLevelSortFilter = fc.GetFirstUniqueOf<Filter.Sort>();
-                if (allLevelSortFilter == null)
+                m_AllLevelSortFilter = fc.GetFirstUniqueOf<Filter.Sort>();
+                if (m_AllLevelSortFilter == null)
                 {
-                    allLevelSortFilter = new Filter.Sort();
-                    var ds = new Database.Operation.Filter.DefaultSort();
-                    ds.defaultSort = allLevelSortFilter;
-                    filters.filters.Add(ds);
+                    m_AllLevelSortFilter = new Filter.Sort();
+                    var ds = new Database.Operation.Filter.DefaultSort(m_AllLevelSortFilter, null);
+                    m_Filters.filters.Add(ds);
                 }
                 bool bDirty = false;
-                filters.Simplify(ref bDirty);
-                UpdateDisplayTable();
+                m_Filters.Simplify(ref bDirty);
+                UpdateDisplayTable(expandedCells);
             }
             else
             {
-                InitEmptyFilter();
+                InitEmptyFilter(expandedCells);
             }
         }
 
@@ -146,18 +244,18 @@ namespace Unity.MemoryProfiler.Editor.UI
 
         public Database.CellLink GetLinkToCurrentSelection()
         {
-            if (m_GUIState.m_SelectedRow >= 0)
+            if (m_GUIState.SelectedRow >= 0)
             {
-                return m_TableDisplay.GetLinkTo(new Database.CellPosition(m_GUIState.m_SelectedRow, 0));
+                return m_TableDisplay.GetLinkTo(new Database.CellPosition(m_GUIState.SelectedRow, 0));
             }
             return null;
         }
 
         public Database.CellLink GetLinkToFirstVisible()
         {
-            if (m_GUIState.m_FirstVisibleRow >= 0)
+            if (m_GUIState.FirstVisibleRow >= 0)
             {
-                return m_TableDisplay.GetLinkTo(new Database.CellPosition(m_GUIState.m_FirstVisibleRow, 0));
+                return m_TableDisplay.GetLinkTo(new Database.CellPosition(m_GUIState.FirstVisibleRow, 0));
             }
             return null;
         }
@@ -165,7 +263,7 @@ namespace Unity.MemoryProfiler.Editor.UI
         public Database.Operation.Filter.Filter GetCurrentFilterCopy()
         {
             Database.Operation.Filter.FilterCloning fc = new Database.Operation.Filter.FilterCloning();
-            return filters.Clone(fc);
+            return m_Filters.Clone(fc);
         }
 
         public void Goto(Database.CellLink cl)
@@ -198,8 +296,8 @@ namespace Unity.MemoryProfiler.Editor.UI
         protected override DirtyRowRange SetCellExpanded(long row, long col, bool expanded)
         {
             DirtyRowRange o;
-            o.range = m_TableDisplay.ExpandCell(row, (int)col, expanded);
-            o.heightOffset = kRowHeight * o.range.length;
+            o.Range = m_TableDisplay.ExpandCell(row, (int)col, expanded);
+            o.HeightOffset = k_RowHeight * o.Range.length;
             return o;
         }
 
@@ -211,107 +309,124 @@ namespace Unity.MemoryProfiler.Editor.UI
         protected override void DrawHeader(long col, Rect r, ref GUIPipelineState pipe)
         {
             var colState = m_ColumnState[col];
-            if (Event.current.type == EventType.Repaint)
-            {
-                string str = m_DataRenderer.showPrettyNames
-                    ? m_TableDisplay.GetMetaData().GetColumnByIndex((int)col).displayName
-                    : m_TableDisplay.GetMetaData().GetColumnByIndex((int)col).name;
-                if (colState.grouped)
-                {
-                    str = "[" + str + "]";
-                }
-                string sortName = Filter.Sort.GetSortName(colState.sorted);
-                str = sortName + str;
 
-                Styles.styles.header.Draw(r, str, false, false, false, false);
-                return;
+            string str = m_DataRenderer.ShowPrettyNames
+                ? m_TableDisplay.GetMetaData().GetColumnByIndex((int)col).DisplayName
+                : m_TableDisplay.GetMetaData().GetColumnByIndex((int)col).Name;
+            if (colState.Grouped)
+            {
+                str = "[" + str + "]";
             }
+            var sorted = colState.Sorted != SortOrder.None ? colState.Sorted : colState.DefaultSorted;
+            var sortName = Filter.Sort.GetSortName(sorted);
+            str = sortName + str;
+            
+            if(!GUI.Button(r, str, Styles.styles.header))
+                return;
 
             var meta = m_TableSource.GetMetaData();
             var metaCol = meta.GetColumnByIndex((int)col);
             bool canGroup = false;
             if (metaCol != null)
             {
-                if (metaCol.defaultGroupAlgorithm != null)
+                if (metaCol.DefaultGroupAlgorithm != null)
                 {
                     canGroup = true;
                 }
             }
 
-
-            const string strOpOn = "[x] ";
-            const string strOpOff = "[ ] ";
+            var menu = new GenericMenu();
             const string strGroup = "Group";
             const string strSortAsc = "Sort Ascending";
             const string strSortDsc = "Sort Descending";
             const string strMatch = "Match...";
-            List<string> opNames = new List<string>();
-            List<Action<int>> opActions = new List<Action<int>>();
             if (canGroup)
             {
-                if (colState.grouped)
+                menu.AddItem(new GUIContent(strGroup), colState.Grouped, () =>
                 {
-                    opNames.Add(strOpOn + strGroup);
-                    opActions.Add((x) =>
-                        {
-                            RemoveSubGroupFilter((int)col);
-                        });
-                }
-                else
-                {
-                    opNames.Add(strOpOff + strGroup);
-                    opActions.Add((x) =>
-                        {
-                            AddSubGroupFilter((int)col);
-                        });
-                }
-            }
-
-            if (colState.sorted == SortOrder.Ascending)
-            {
-                opNames.Add(strOpOn + strSortAsc);
-                opActions.Add((x) =>
-                    {
-                        RemoveDefaultSortFilter();
-                    });
-            }
-            else
-            {
-                opNames.Add(strOpOff + strSortAsc);
-                opActions.Add((x) =>
-                    {
-                        SetDefaultSortFilter((int)col, SortOrder.Ascending);
-                    });
-            }
-
-            if (colState.sorted == SortOrder.Descending)
-            {
-                opNames.Add(strOpOn + strSortDsc);
-                opActions.Add((x) =>
-                    {
-                        RemoveDefaultSortFilter();
-                    });
-            }
-            else
-            {
-                opNames.Add(strOpOff + strSortDsc);
-                opActions.Add((x) =>
-                    {
-                        SetDefaultSortFilter((int)col, SortOrder.Descending);
-                    });
-            }
-
-            opNames.Add(strMatch);
-            opActions.Add((x) =>
-                {
-                    AddMatchFilter((int)col);
+                    if (colState.Grouped)
+                        RemoveSubGroupFilter((int)col);
+                    else
+                        AddSubGroupFilter((int)col);
                 });
-
-            int selectedOp = EditorGUI.Popup(r, -1, opNames.ToArray());
-            if (selectedOp >= 0)
-            {
-                opActions[selectedOp](selectedOp);
             }
+
+            menu.AddItem(new GUIContent(strSortAsc), sorted == SortOrder.Ascending, () =>
+            {
+                if (sorted == SortOrder.Ascending)
+                    RemoveDefaultSortFilter();
+                else
+                    SetDefaultSortFilter((int)col, SortOrder.Ascending);
+            });
+
+            menu.AddItem(new GUIContent(strSortDsc), sorted == SortOrder.Descending, () =>
+            {
+                if (sorted == SortOrder.Descending)
+                    RemoveDefaultSortFilter();
+                else
+                    SetDefaultSortFilter((int)col, SortOrder.Descending);
+            });
+
+            menu.AddItem(new GUIContent(strMatch), false, () =>
+            {
+                AddMatchFilter((int)col);
+            });
+            menu.DropDown(r);
+        }
+
+        List<MemoryProfilerAnalytics.Filter> m_FilterBuffer = new List<MemoryProfilerAnalytics.Filter>();
+
+        void ReportFilterChanges()
+        {
+            m_FilterBuffer.Clear();
+            foreach (var filter in m_Filters.filters)
+            {
+                if (filter is Filter.Sort)
+                {
+                    var sortFilter = (filter as Filter.Sort);
+                    var level = (sortFilter.SortLevel != null && sortFilter.SortLevel.Count > 0) ? sortFilter.SortLevel[0] : null;
+                    if (level == null)
+                        continue;
+                    string columnName = GetColumnName(level);
+                    m_FilterBuffer.Add(new MemoryProfilerAnalytics.Filter() {column = columnName, filterName = "Sort", filterInput = level.Order.ToString() });
+                }
+                else if (filter is Filter.DefaultSort)
+                {
+                    var sortFilter = (filter as Filter.DefaultSort);
+                    Filter.Sort.Level level = null;
+                    if (sortFilter.SortOverride != null && sortFilter.SortOverride.SortLevel != null && sortFilter.SortOverride.SortLevel.Count > 0)
+                        level = sortFilter.SortOverride.SortLevel[0];
+                    if((level == null || level.Order == SortOrder.None) && sortFilter.SortDefault != null && sortFilter.SortDefault.SortLevel != null && sortFilter.SortDefault.SortLevel.Count > 0)
+                        level = sortFilter.SortDefault.SortLevel[0];
+                    if (level == null)
+                        continue;
+                    string columnName = GetColumnName(level);
+                    m_FilterBuffer.Add(new MemoryProfilerAnalytics.Filter() { column = columnName, filterName = "Sort", filterInput = level != null ? level.Order.ToString() : null });
+                }
+                else if (filter is Filter.Group)
+                { 
+                    m_FilterBuffer.Add(new MemoryProfilerAnalytics.Filter() { column = (filter as Filter.Group).GetColumnName(m_TableDisplay), filterName = "Group"});
+                }
+                else if (filter is Filter.Match)
+                {
+                    var matchFilter = (filter as Filter.Match);
+                    m_FilterBuffer.Add(new MemoryProfilerAnalytics.Filter() { column = matchFilter.GetColumnName(m_TableDisplay), filterName = "Match", filterInput = matchFilter.MatchString });
+                } 
+            }
+            MemoryProfilerAnalytics.FiltersChanged(m_TableDisplay.GetName(),  m_FilterBuffer);
+        }
+
+        string GetColumnName(Filter.Sort.Level sortLevel)
+        {
+            if (sortLevel is Filter.Sort.LevelByIndex)
+            {
+                return m_TableDisplay.GetMetaData().GetColumnByIndex((sortLevel as Filter.Sort.LevelByIndex).ColumnIndex).Name;
+            }
+            else if (sortLevel is Filter.Sort.LevelByName)
+            {
+                return (sortLevel as Filter.Sort.LevelByName).ColumnName;
+            }
+            return "";
         }
 
         public void UpdateTable()
@@ -319,11 +434,11 @@ namespace Unity.MemoryProfiler.Editor.UI
             var updater = m_TableDisplay.BeginUpdate();
             if (updater != null)
             {
-                long sel = updater.OldToNewRow(m_GUIState.m_SelectedRow);
+                long sel = updater.OldToNewRow(m_GUIState.SelectedRow);
 
                 //find the row that is still the first visible or the previous one that still exist after the uptate
                 long fvr = -1;
-                long fvr_before = m_GUIState.m_FirstVisibleRow;
+                long fvr_before = m_GUIState.FirstVisibleRow;
                 do
                 {
                     fvr = updater.OldToNewRow(fvr_before);
@@ -348,26 +463,26 @@ namespace Unity.MemoryProfiler.Editor.UI
                     float totalh = fvrY + GetCumulativeHeight(nextRow, long.MaxValue, out nextRow, ref lastIndex);
 
 
-                    m_GUIState.m_ScrollPosition.y = fvrY;
-                    m_GUIState.m_FirstVisibleRowY = fvrY;
-                    m_GUIState.m_FirstVisibleRow = fvr;
-                    m_GUIState.m_FirstVisibleRowIndex = fvrIndex;
-                    m_GUIState.m_HeightBeforeFirstVisibleRow = fvrY;
-                    m_DataState.m_TotalDataHeight = totalh;
+                    m_GUIState.ScrollPosition.y = fvrY;
+                    m_GUIState.FirstVisibleRowY = fvrY;
+                    m_GUIState.FirstVisibleRow = fvr;
+                    m_GUIState.FirstVisibleRowIndex = fvrIndex;
+                    m_GUIState.HeightBeforeFirstVisibleRow = fvrY;
+                    m_DataState.TotalDataHeight = totalh;
                 }
                 else
                 {
-                    m_GUIState.m_ScrollPosition = Vector2.zero;
-                    m_GUIState.m_FirstVisibleRowY = 0;
-                    m_GUIState.m_FirstVisibleRow = GetFirstRow();
-                    m_GUIState.m_FirstVisibleRowIndex = 0;
-                    m_GUIState.m_HeightBeforeFirstVisibleRow = 0;
+                    m_GUIState.ScrollPosition = Vector2.zero;
+                    m_GUIState.FirstVisibleRowY = 0;
+                    m_GUIState.FirstVisibleRow = GetFirstRow();
+                    m_GUIState.FirstVisibleRowIndex = 0;
+                    m_GUIState.HeightBeforeFirstVisibleRow = 0;
                     long nextRow;
                     long lastIndex = 0;
-                    m_DataState.m_TotalDataHeight = GetCumulativeHeight(GetFirstRow(), long.MaxValue, out nextRow, ref lastIndex);
+                    m_DataState.TotalDataHeight = GetCumulativeHeight(GetFirstRow(), long.MaxValue, out nextRow, ref lastIndex);
                 }
 
-                m_GUIState.m_SelectedRow = sel;
+                m_GUIState.SelectedRow = sel;
                 //m_Listener.OnRepaint();
             }
             else
@@ -378,13 +493,24 @@ namespace Unity.MemoryProfiler.Editor.UI
             //ResetGUIState();
         }
 
-        public void UpdateDisplayTable()
+        public void UpdateDisplayTable(List<Database.CellPosition> expandedCells = null)
         {
             UpdateColumnState();
-            m_TableDisplay = filters.CreateFilter(m_TableSource);
-
+            m_TableDisplay = m_Filters.CreateFilter(m_TableSource);
+            
+            UpdateExpandedState(expandedCells);
             UpdateDataState();
             ResetGUIState();
+        }
+
+        void UpdateExpandedState(List<Database.CellPosition> expandedCells)
+        {
+            if (expandedCells == null)
+                return;
+            foreach (var cell in expandedCells)
+            {
+                m_TableDisplay.ExpandCell(cell.row, cell.col, true);
+            }
         }
 
         protected override void DrawCell(long row, long col, Rect r, long index, bool selected, ref GUIPipelineState pipe)
@@ -436,7 +562,7 @@ namespace Unity.MemoryProfiler.Editor.UI
 #endif
                     DrawTextEllipsis(str, r,
                         link == null ? Styles.styles.numberLabel : Styles.styles.clickableLabel
-                        , ellipsisStyleMetric_Data, selected);
+                        , EllipsisStyleMetricData, selected);
                 }
             }
             if (link != null)
@@ -482,21 +608,22 @@ namespace Unity.MemoryProfiler.Editor.UI
                 m_ColumnState[i] = new Filter.ColumnState();
             }
 
-            filters.UpdateColumnState(m_TableSource, m_ColumnState);
+            m_Filters.UpdateColumnState(m_TableSource, m_ColumnState);
         }
 
         public bool RemoveSubSortFilter(int colIndex, bool update = true)
         {
-            if (allLevelSortFilter.sortLevel.RemoveAll(x => x.GetColumnIndex(m_TableSource) == colIndex) > 0)
+            if (m_AllLevelSortFilter.SortLevel.RemoveAll(x => x.GetColumnIndex(m_TableSource) == colIndex) > 0)
             {
                 bool dirty = false;
-                filters.Simplify(ref dirty);
+                m_Filters.Simplify(ref dirty);
                 if (update)
                 {
                     UpdateDisplayTable();
                 }
                 return true;
             }
+            ReportFilterChanges();
             return false;
         }
 
@@ -504,48 +631,52 @@ namespace Unity.MemoryProfiler.Editor.UI
         public bool AddSubSortFilter(int colIndex, SortOrder ss, bool update = true)
         {
             Filter.Sort.Level sl = new Filter.Sort.LevelByIndex(colIndex, ss);
-            int index = allLevelSortFilter.sortLevel.FindIndex(x => x.GetColumnIndex(m_TableSource) == colIndex);
+            int index = m_AllLevelSortFilter.SortLevel.FindIndex(x => x.GetColumnIndex(m_TableSource) == colIndex);
             if (index >= 0)
             {
-                if (allLevelSortFilter.sortLevel[index].Equals(sl)) return false;
-                allLevelSortFilter.sortLevel[index] = sl;
+                if (m_AllLevelSortFilter.SortLevel[index].Equals(sl)) return false;
+                m_AllLevelSortFilter.SortLevel[index] = sl;
             }
             else
             {
-                allLevelSortFilter.sortLevel.Add(sl);
+                m_AllLevelSortFilter.SortLevel.Add(sl);
             }
             if (update)
             {
                 UpdateDisplayTable();
             }
+            ReportFilterChanges();
             return true;
         }
 
         // return if something change
         public bool RemoveDefaultSortFilter(bool update = true)
         {
-            bool changed = allLevelSortFilter.sortLevel.Count > 0;
-            allLevelSortFilter.sortLevel.Clear();
+            bool changed = m_AllLevelSortFilter.SortLevel.Count > 0;
+            m_AllLevelSortFilter.SortLevel.Clear();
             if (changed && update)
             {
                 UpdateDisplayTable();
             }
+            if(changed)
+                ReportFilterChanges();
             return changed;
         }
 
         public bool SetDefaultSortFilter(int colIndex, SortOrder ss, bool update = true)
         {
-            allLevelSortFilter.sortLevel.Clear();
+            m_AllLevelSortFilter.SortLevel.Clear();
 
             if (ss != SortOrder.None)
             {
                 Filter.Sort.Level sl = new Filter.Sort.LevelByIndex(colIndex, ss);
-                allLevelSortFilter.sortLevel.Add(sl);
+                m_AllLevelSortFilter.SortLevel.Add(sl);
             }
             if (update)
             {
                 UpdateDisplayTable();
             }
+            ReportFilterChanges();
             return true;
         }
 
@@ -555,31 +686,31 @@ namespace Unity.MemoryProfiler.Editor.UI
             var newFilter = new Filter.GroupByColumnIndex(colIndex, SortOrder.Ascending);
 
 
-            var ds = new Database.Operation.Filter.DefaultSort();
-            ds.defaultSort = allLevelSortFilter;
+            var ds = new Database.Operation.Filter.DefaultSort(m_AllLevelSortFilter, null);
 
-            var gfp = GetDeepestGroupFilter(filters);
+            var gfp = GetDeepestGroupFilter(m_Filters);
             if (gfp.child != null)
             {
                 //add the new group with the default sort filter
                 var newMulti = new Filter.Multi();
                 newMulti.filters.Add(newFilter);
                 newMulti.filters.Add(ds);
-                var subf = gfp.child.subGroupFilter;
-                gfp.child.subGroupFilter = newMulti;
-                newFilter.subGroupFilter = subf;
+                var subf = gfp.child.SubGroupFilter;
+                gfp.child.SubGroupFilter = newMulti;
+                newFilter.SubGroupFilter = subf;
             }
             else
             {
                 //add it to top, already has te default sort filter there
-                newFilter.subGroupFilter = ds;
-                filters.filters.Insert(0, newFilter);
+                newFilter.SubGroupFilter = ds;
+                m_Filters.filters.Insert(0, newFilter);
             }
 
             if (update)
             {
                 UpdateDisplayTable();
             }
+            ReportFilterChanges();
             return true;
         }
 
@@ -588,7 +719,7 @@ namespace Unity.MemoryProfiler.Editor.UI
         {
             FilterParenthood<Filter.Filter, Filter.Group> fpToRemove = new FilterParenthood<Filter.Filter, Filter.Group>();
 
-            foreach (var fp in VisitAllSubGroupFilters(filters))
+            foreach (var fp in VisitAllSubGroupFilters(m_Filters))
             {
                 if (fp.child.GetColumnIndex(m_TableSource) == colIndex)
                 {
@@ -602,11 +733,12 @@ namespace Unity.MemoryProfiler.Editor.UI
                 if (Filter.Filter.RemoveFilter(fpToRemove.parent, fpToRemove.child))
                 {
                     bool dirty = false;
-                    filters.Simplify(ref dirty);
+                    m_Filters.Simplify(ref dirty);
                     if (update)
                     {
                         UpdateDisplayTable();
                     }
+                    ReportFilterChanges();
                     return true;
                 }
             }
@@ -614,16 +746,17 @@ namespace Unity.MemoryProfiler.Editor.UI
             return false;
         }
 
-        public bool AddMatchFilter(int colIndex, bool update = true)
+        public bool AddMatchFilter(int colIndex, string matchString = "", bool update = true)
         {
-            var newFilter = new Filter.Match(colIndex);
+            var newFilter = new Filter.Match(colIndex, matchString);
 
-            filters.filters.Insert(0, newFilter);
+            m_Filters.filters.Insert(0, newFilter);
 
             if (update)
             {
                 UpdateDisplayTable();
             }
+            ReportFilterChanges();
             return true;
         }
 
@@ -691,13 +824,15 @@ namespace Unity.MemoryProfiler.Editor.UI
             bool dirty = false;
 
             EditorGUILayout.BeginVertical();
-            filters.OnGui(m_TableDisplay, ref dirty);
-            allLevelSortFilter.OnGui(m_TableDisplay, ref dirty);
+            m_Filters.OnGui(m_TableDisplay, ref dirty);
+            m_AllLevelSortFilter.OnGui(m_TableDisplay, ref dirty);
             EditorGUILayout.EndVertical();
             if (dirty)
             {
                 UpdateDisplayTable();
+                ReportFilterChanges();
             }
         }
+        
     }
 }

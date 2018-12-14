@@ -3,7 +3,7 @@ using UnityEditor.Profiling.Memory.Experimental;
 
 namespace Unity.MemoryProfiler.Editor
 {
-    public class DataSourceFromAPI
+    internal class DataSourceFromAPI
     {
         public class Adaptor<DataT> : Database.Soa.DataSource<DataT>
         {

@@ -2,7 +2,7 @@ using System;
 
 namespace Unity.MemoryProfiler.Editor
 {
-    public static class Algorithm
+    internal static class Algorithm
     {
         public static int LowerBound<T>(T[] array, T v) where T : IComparable<T>
         {
@@ -41,7 +41,7 @@ namespace Unity.MemoryProfiler.Editor
                 int it = first;
                 int step = count / 2;
                 it += step;
-                if (array[it].CompareTo(v) >= 0)
+                if (v.CompareTo(array[it]) >= 0)
                 {
                     first = it + 1;
                     count -= step + 1;

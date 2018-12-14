@@ -5,7 +5,7 @@ using Unity.MemoryProfiler.Editor.Debuging;
 namespace Unity.MemoryProfiler.Editor.Database.View
 {
     // Defines what data to select and where it comes from
-    public class Select
+    internal class Select
     {
 #if MEMPROFILER_DEBUG_INFO
         public string GetDebugString(long columnRow, long valueRow)
@@ -66,11 +66,14 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             {
                 if (HasWhereCondition())
                 {
-                    cacheMatchingIndices = where.GetMatchingIndices(row);
-                    cacheMatchingIndicesRow = row;
-                    if (MaxRow >= 0)
+                    using (Profiling.GetMarker(Profiling.MarkerId.Select).Auto())
                     {
-                        System.Array.Resize(ref cacheMatchingIndices, MaxRow);
+                        cacheMatchingIndices = where.GetMatchingIndices(row);
+                        cacheMatchingIndicesRow = row;
+                        if (MaxRow >= 0)
+                        {
+                            System.Array.Resize(ref cacheMatchingIndices, MaxRow);
+                        }
                     }
                 }
             }
@@ -181,11 +184,11 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             }
 
             protected System.Collections.Generic.List<Where.Builder> where = new System.Collections.Generic.List<Where.Builder>();
-            public Select Create(ViewScheme vs, Database.Scheme baseScheme, Table table)
+            public Select Create(ViewSchema vs, Database.Schema baseSchema, Table table)
             {
                 Select sel = new Select();
                 sel.name = name;
-                sel.sourceTable = baseScheme.GetTableByName(sourceTableName);
+                sel.sourceTable = baseSchema.GetTableByName(sourceTableName);
                 sel.MaxRow = MaxRow;
                 if (sel.sourceTable == null)
                 {
@@ -199,7 +202,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                 return sel;
             }
 
-            public void Build(ViewScheme vs, ViewTable vTable, SelectSet selectSet, Select sel, Database.Scheme baseScheme, Operation.ExpressionParsingContext expressionParsingContext)
+            public void Build(ViewSchema vs, ViewTable vTable, SelectSet selectSet, Select sel, Database.Schema baseSchema, Operation.ExpressionParsingContext expressionParsingContext)
             {
                 using (ScopeDebugContext.Func(() => { return "Select:'" + name + "'"; }))
                 {
@@ -208,7 +211,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                         sel.where = new WhereUnion();
                         foreach (var w in where)
                         {
-                            var w2 = w.Build(vs, vTable, selectSet, sel, baseScheme, sel.sourceTable, expressionParsingContext);
+                            var w2 = w.Build(vs, vTable, selectSet, sel, baseSchema, sel.sourceTable, expressionParsingContext);
                             if (w2.Comparison.IsManyToMany())
                             {
                                 sel.isManyToMany = true;
@@ -260,16 +263,34 @@ namespace Unity.MemoryProfiler.Editor.Database.View
     }
 
 
-    // A collection of select statement
-    public class SelectSet
+    // A collection of select statements
+    // the first Select in the list is the "Main" select.
+    // TryGetMainSelect, GetMainRows and GetMainRowCount will return data from the main select regardless of whether there is a condition set or not.
+    // 
+    internal class SelectSet
     {
-        public System.Collections.Generic.List<Select> select = new System.Collections.Generic.List<Select>();
-        public System.Collections.Generic.Dictionary<string, Select> selectByName = new System.Collections.Generic.Dictionary<string, Select>();
+        public List<Select> select = new List<Select>();
+        public Dictionary<string, Select> selectByName = new Dictionary<string, Select>();
 
-        // Applies a condition on the main select result rows. Will remove the rows that does not meet the condition. When null, all rows are valid
+        // when true, m_MainIndices needs to be computed
+        bool m_MainIndicesDirty = true;
+
+        // Array of row index into the main Select's source table that are selected
+        // if null, all rows from the main Select's source table are selected
+        long[] m_MainIndices;
+
+        // Applies a condition on the main select result rows. Will add row indices that pass the condition into m_MainConditionalIndices. 
+        // When null, all rows are valid.
         public Operation.ExpComparison Condition;
 
+        // when true, m_MainConditionalIndices needs to be computed
+        bool m_MainConditionalIndicesDirty = true;
 
+        // array of index into m_MainIndices that passes the condition.
+        // if null, all indices in m_MainIndices passes the condition.
+        long[] m_MainConditionalIndices;
+
+        // Retrieve the main Select (the first Select added to the SelectSet)
         public bool TryGetMainSelect(out Select select)
         {
             if (this.select.Count > 0)
@@ -281,57 +302,88 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             return false;
         }
 
-        private long[] m_Indices;
-        // Returns the index of the resulting rows from the main select.
-        public long[] GetMainRows()
+        void UpdateMainIndices()
         {
-            if (m_Indices != null) return m_Indices;
-            if (select.Count == 0) return null;
-            m_Indices = select[0].GetMatchingIndices();
-            return m_Indices;
+            if (m_MainIndicesDirty)
+            {
+                m_MainIndicesDirty = false;
+                Select mainSelect;
+                if (TryGetMainSelect(out mainSelect))
+                {
+                    m_MainIndices = mainSelect.GetMatchingIndices();
+                }
+            }
         }
 
-        private long[] m_ConditionalIndices;
+        // Returns the index of the resulting rows from the main select.
+        // Will return null if all rows from the main Select's source table are selected.
+        public long[] GetMainRows()
+        {
+            UpdateMainIndices();
+            return m_MainIndices;
+        }
+
+        public long GetMainRowCount()
+        {
+            UpdateMainIndices();
+            if (m_MainIndices != null) return m_MainIndices.LongLength;
+
+            // when m_MainIndices is null and not dirty, all rows from main Select's source table are selected.
+            // therefore, we return the source table rows count.
+            Select mainSelect;
+            if (TryGetMainSelect(out mainSelect))
+            {
+                long sourceTableRowCount = mainSelect.sourceTable.GetRowCount();
+                if(sourceTableRowCount < 0)
+                {
+                    // Force computing row count
+                    mainSelect.sourceTable.ComputeRowCount();
+                    return mainSelect.sourceTable.GetRowCount();
+                }
+                return sourceTableRowCount;
+            }
+
+            // No main select set.
+            throw new System.InvalidOperationException("Cannot call 'SelectSet.GetMainRowCount' when it has no main select. Call 'SelectSet.Add' at least once before calling 'SelectSet.GetMainRowCount'");
+            
+        }
+
+        void UpdateMainConditionalIndices()
+        {
+            if (m_MainConditionalIndicesDirty)
+            {
+                m_MainConditionalIndicesDirty = false;
+                if (Condition != null)
+                {
+                    long[] rows = GetMainRows();
+					if(rows == null)
+					{
+					   m_MainConditionalIndices = null;
+					   return;
+					}
+                    var conditionalIndices = new List<long>();
+                    for (int i = 0; i != rows.Length; ++i)
+                    {
+                        if (Condition.GetValue(i))
+                        {
+                            conditionalIndices.Add(i);
+                        }
+                    }
+                    m_MainConditionalIndices = conditionalIndices.ToArray();
+                }
+                else
+                {
+                    m_MainConditionalIndices = null;
+                }
+            }
+        }
+
         // Returns an array of indices into GetMainRows() of rows that passes the SelectSet condition.
         // If it returns null, all entries in GetMainRowIndices() pass the condition
         public long[] GetConditionalRowIndices()
         {
-            if (m_ConditionalIndices != null) return m_ConditionalIndices;
-            if (select.Count == 0) return null;
-            long[] rows = GetMainRows();
-            if (Condition != null)
-            {
-                //run the select result through the condition
-                var conditionalIndices = new List<long>();
-                for (int i = 0; i != rows.Length; ++i)
-                {
-                    if (Condition.GetValue(i))
-                    {
-                        conditionalIndices.Add(i);
-                    }
-                }
-                m_ConditionalIndices = conditionalIndices.ToArray();
-            }
-            return m_ConditionalIndices;
-        }
-
-        public long GetRowCount()
-        {
-            var indices = GetConditionalRowIndices();
-            if (indices != null) return indices.LongLength;
-            var rows = GetMainRows();
-            if (rows != null) return rows.LongLength;
-            return -1;
-        }
-
-        public bool ComputeRowCount()
-        {
-            if (m_Indices == null)
-            {
-                GetConditionalRowIndices();
-                return m_Indices != null;
-            }
-            return false;
+            UpdateMainConditionalIndices();
+            return m_MainConditionalIndices;
         }
 
         public bool IsManyToMany()
@@ -345,8 +397,12 @@ namespace Unity.MemoryProfiler.Editor.Database.View
 
         public void Add(Select newSelect)
         {
-            m_Indices = null;
-            m_ConditionalIndices = null;
+            if(select.Count == 0)
+            {
+                //setting main select.
+                m_MainIndicesDirty = true;
+            }
+            m_MainConditionalIndicesDirty = true;
             select.Add(newSelect);
             selectByName.Add(newSelect.name, newSelect);
         }
@@ -361,7 +417,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             public System.Collections.Generic.List<Select.Builder> select = new System.Collections.Generic.List<Select.Builder>();
             public Operation.MetaExpComparison Condition;
 
-            public SelectSet Build(ViewTable viewTable, ViewScheme viewScheme, Database.Scheme baseScheme)
+            public SelectSet Build(ViewTable viewTable, ViewSchema viewSchema, Database.Schema baseSchema)
             {
                 if (select.Count == 0) return null;
 
@@ -370,7 +426,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                 // Create select statements (first pass)
                 foreach (var iSelect in select)
                 {
-                    Select s = iSelect.Create(viewTable.viewScheme, baseScheme, viewTable);
+                    Select s = iSelect.Create(viewTable.ViewSchema, baseSchema, viewTable);
                     if (s != null)
                     {
                         selectSet.Add(s);
@@ -386,12 +442,12 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                 while (eSelBuilder.MoveNext())
                 {
                     eSelList.MoveNext();
-                    eSelBuilder.Current.Build(viewScheme, viewTable, selectSet, eSelList.Current, baseScheme, expressionParsingContext);
+                    eSelBuilder.Current.Build(viewSchema, viewTable, selectSet, eSelList.Current, baseSchema, expressionParsingContext);
                 }
 
                 if (Condition != null)
                 {
-                    Operation.Expression.ParseIdentifierOption parseOpt = new Operation.Expression.ParseIdentifierOption(viewScheme, viewTable, true, false, null, expressionParsingContext);
+                    Operation.Expression.ParseIdentifierOption parseOpt = new Operation.Expression.ParseIdentifierOption(viewSchema, viewTable, true, false, null, expressionParsingContext);
                     parseOpt.BypassSelectSetCondition = selectSet;
                     selectSet.Condition = Condition.Build(parseOpt);
                 }

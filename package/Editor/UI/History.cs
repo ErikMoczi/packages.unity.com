@@ -1,80 +1,20 @@
 namespace Unity.MemoryProfiler.Editor.UI
 {
-    public abstract class HistoryEvent
+    internal abstract class HistoryEvent
     {
         protected const string seperator = "::";
         //public abstract bool IsSame(HistoryEvent e);
-    }
-    public class HETable : HistoryEvent
-    {
-        public HETable(UIState.BaseMode mode, Database.TableLink table, Database.Operation.Filter.Filter filter, Database.CellLink cell)
-        {
-            this.mode = mode;
-            this.table = table;
-            this.filter = filter;
-            this.cell = cell;
-        }
-
-        public UIState.BaseMode mode;
-        public Database.TableLink table;
-        public Database.Operation.Filter.Filter filter;
-        public Database.CellLink cell;
-        public override string ToString()
-        {
-            string s = mode.GetSheme().GetDisplayName() + seperator + table.name;
-            if (table.param != null && table.param.param != null)
-            {
-                s += "(";
-                string sp = "";
-                foreach (var p in table.param.param)
-                {
-                    if (sp != "")
-                    {
-                        sp += ", ";
-                    }
-                    sp += p.Key;
-                    sp += "=";
-                    sp += p.Value.GetValueString(0);
-                }
-                s += sp + ")";
-            }
-            return s;
-        }
-    }
-    public class HEMemoryMap : HistoryEvent
-    {
-        public UIState.BaseMode mode;
-        public HEMemoryMap(UIState.BaseMode mode)
-        {
-            this.mode = mode;
-        }
-
-        public override string ToString()
-        {
-            return mode.GetSheme().GetDisplayName() + seperator + "Memory Map";
-        }
-    }
-    public class HETreeMap : HistoryEvent
-    {
-        public UIState.BaseMode mode;
-        public Treemap.IMetricValue selected;
-        public HETreeMap(UIState.BaseMode mode, Treemap.IMetricValue selected)
-        {
-            this.mode = mode;
-            this.selected = selected;
-        }
-
-        public override string ToString()
-        {
-            return mode.GetSheme().GetDisplayName() + seperator + "Tree Map" + seperator + selected.GetName();
-        }
+        public UIState.BaseMode Mode;
     }
 
-    public class History
+    internal class History
     {
         public System.Collections.Generic.List<HistoryEvent> events = new System.Collections.Generic.List<HistoryEvent>();
         public int backCount = 0;
         public bool hasPresentEvent = false;
+
+        public event System.Action historyChanged = delegate { };
+
         public void Clear()
         {
             backCount = 0;
@@ -137,6 +77,7 @@ namespace Unity.MemoryProfiler.Editor.UI
             hasPresentEvent = false;
             //UnityEngine.Debug.Log("History add: " + e.ToString());
             //PrintHistory();
+            historyChanged();
         }
 
         public void SetPresentEvent(HistoryEvent ePresent)
@@ -144,6 +85,7 @@ namespace Unity.MemoryProfiler.Editor.UI
             if (ePresent == null) return;
             events.Add(ePresent);
             hasPresentEvent = true;
+            historyChanged();
         }
 
         public HistoryEvent Backward()
@@ -156,16 +98,19 @@ namespace Unity.MemoryProfiler.Editor.UI
                     int l = events.Count - 1;
                     var e = events[l];
                     events.RemoveAt(l);
+                    historyChanged();
                     return e;
                 }
                 else
                 {
                     ++backCount;
                     var i = GetCurrent();
+                    historyChanged();
                     return events[i];
                 }
             }
 
+            historyChanged();
             return null;
         }
 
@@ -175,8 +120,11 @@ namespace Unity.MemoryProfiler.Editor.UI
             {
                 --backCount;
                 var i = GetCurrent();
+                historyChanged();
                 return events[i];
             }
+
+            historyChanged();
             return null;
         }
 

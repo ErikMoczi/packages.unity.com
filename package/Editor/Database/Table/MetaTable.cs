@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Unity.MemoryProfiler.Editor.Database
 {
-    public class MetaTable
+    internal class MetaTable
     {
         public static string kRowIndexColumnName = "_row_index_";
         public string name;
@@ -21,7 +21,7 @@ namespace Unity.MemoryProfiler.Editor.Database
             System.Collections.Generic.List<int> o = new System.Collections.Generic.List<int>();
             for (int i = 0; i < m_Columns.Count; ++i)
             {
-                if (m_Columns[i].isPrimaryKey)
+                if (m_Columns[i].IsPrimaryKey)
                 {
                     o.Add(i);
                 }
@@ -56,7 +56,7 @@ namespace Unity.MemoryProfiler.Editor.Database
 
         public long GetColumnIndexByName(string name)
         {
-            return m_Columns.FindIndex(x => x.name == name);
+            return m_Columns.FindIndex(x => x.Name == name);
         }
 
         public void SetColumns(Database.MetaColumn[] cols)
@@ -65,8 +65,8 @@ namespace Unity.MemoryProfiler.Editor.Database
             int i = 0;
             foreach (var c in m_Columns)
             {
-                c.index = i;
-                m_ColumnsByName.Add(c.name, c);
+                c.Index = i;
+                m_ColumnsByName.Add(c.Name, c);
                 ++i;
             }
         }
@@ -74,17 +74,8 @@ namespace Unity.MemoryProfiler.Editor.Database
         public void AddColumn(MetaColumn col)
         {
             m_Columns.Add(col);
-            col.index = m_Columns.Count - 1;
-            m_ColumnsByName.Add(col.name, col);
-        }
-
-        public void SwapColumn(int a, int b)
-        {
-            var col = m_Columns[a];
-            m_Columns[a] = m_Columns[b];
-            m_Columns[b] = col;
-            m_Columns[a].index = a;
-            m_Columns[b].index = b;
+            col.Index = m_Columns.Count - 1;
+            m_ColumnsByName.Add(col.Name, col);
         }
     }
 }

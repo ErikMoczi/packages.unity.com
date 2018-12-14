@@ -4,23 +4,23 @@ using Unity.MemoryProfiler.Editor.Debuging;
 
 namespace Unity.MemoryProfiler.Editor.Database.View
 {
-    public class MetaParameter
+    internal class MetaParameter
     {
         public string name;
         public string value;
     }
-    public class MetaParameterSet
+    internal class MetaParameterSet
     {
         public System.Collections.Generic.Dictionary<string, MetaParameter> param = new System.Collections.Generic.Dictionary<string, MetaParameter>();
     }
-    public class MetaLink
+    internal class MetaLink
     {
         public string linkViewName;
         public System.Collections.Generic.List<Where.Builder> linkWhere;
         public MetaParameterSet param;
     }
 
-    public class LinkRequest
+    internal class LinkRequest
     {
         public MetaLink metaLink;
         public ViewTable sourceView;
@@ -45,8 +45,8 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                 {
                     foreach (var p in lr.metaLink.param.param)
                     {
-                        var opt = new Operation.Expression.ParseIdentifierOption(sourceTable.scheme as View.ViewScheme, sourceTable, true, true, typeof(string), expressionParsingContext);
-                        var metaExpression = new Operation.Expression.MetaExpression(p.Value.value);
+                        var opt = new Operation.Expression.ParseIdentifierOption(sourceTable.Schema as View.ViewSchema, sourceTable, true, true, typeof(string), expressionParsingContext);
+                        var metaExpression = new Operation.Expression.MetaExpression(p.Value.value, true);
                         var exp = Operation.Expression.ParseIdentifier(metaExpression, opt);
                         var exp2 = Operation.ColumnCreator.CreateTypedExpressionFixedRow(exp, sourceRow);
                         if (lr.param == null) lr.param = new ParameterSet();
@@ -57,7 +57,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             }
         }
     }
-    public class ViewColumn
+    internal class ViewColumn
     {
         public Select select;
         public Operation.ExpressionParsingContext ParsingContext;
@@ -84,7 +84,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             public bool isPrimaryKey = false;
 
 
-            private string FormatErrorContextInfo(ViewScheme vs, ViewTable vTable)
+            private string FormatErrorContextInfo(ViewSchema vs, ViewTable vTable)
             {
                 string str = "Error while building view column '" + name + "'";
                 if (vs != null) str += " schema '" + vs.name + "'";
@@ -100,14 +100,14 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                     mergeAlgo = Operation.Grouping.GetMergeAlgo(mergeAlgoE, columnValueType);
                     if (metaColumn != null)
                     {
-                        metaColumn.defaultMergeAlgorithm = mergeAlgo;
+                        metaColumn.DefaultMergeAlgorithm = mergeAlgo;
                     }
                 }
                 else
                 {
                     if (metaColumn != null)
                     {
-                        mergeAlgo = metaColumn.defaultMergeAlgorithm;
+                        mergeAlgo = metaColumn.DefaultMergeAlgorithm;
                     }
                 }
 
@@ -122,18 +122,17 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             {
                 if (metaColumn == null)
                 {
-                    metaColumn = new MetaColumn(name, name, columnValueType, isPrimaryKey, groupAlgo, mergeAlgo);
-                    metaColumn.displayDefaultWidth = displayDefaultWidth;
+                    metaColumn = new MetaColumn(name, name, columnValueType, isPrimaryKey, groupAlgo, mergeAlgo, displayDefaultWidth);
                 }
                 else
                 {
-                    if (metaColumn.type == null)
+                    if (metaColumn.Type == null)
                     {
-                        metaColumn.type = columnValueType;
+                        metaColumn.Type = columnValueType;
                     }
-                    else if (columnValueType != null && metaColumn.type != columnValueType)
+                    else if (columnValueType != null && metaColumn.Type != columnValueType)
                     {
-                        DebugUtility.LogError("Cannot redefine column type as '" + columnValueType + "'. Was already defined as '" + metaColumn.type + "'");
+                        DebugUtility.LogError("Cannot redefine column type as '" + columnValueType + "'. Was already defined as '" + metaColumn.Type + "'");
                     }
                 }
                 return metaColumn;
@@ -152,7 +151,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             //Create a column that merge the result of all sub nodes
             static public Column BuildColumnNodeMerge(ViewTable vTable, Database.MetaColumn metaColumn, Operation.ExpressionParsingContext expressionParsingContext)
             {
-                var columnNode = (ViewColumnNode.IViewColumnNode)Operation.ColumnCreator.CreateColumn(typeof(ViewColumnNodeMergeTyped<>), metaColumn.type);
+                var columnNode = (ViewColumnNode.IViewColumnNode)Operation.ColumnCreator.CreateColumn(typeof(ViewColumnNodeMergeTyped<>), metaColumn.Type);
                 ViewColumnNode viewColumnNode = new ViewColumnNode(vTable, metaColumn, expressionParsingContext);
                 columnNode.SetColumn(viewColumnNode);
                 return columnNode.GetColumn();
@@ -163,7 +162,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                 var column = vTable.GetColumnByName(columnName);
                 if (column == null)
                 {
-                    var columnNode = (ViewColumnNode.IViewColumnNode)Operation.ColumnCreator.CreateColumn(typeof(ViewColumnNodeTyped<>), metaColumn.type);
+                    var columnNode = (ViewColumnNode.IViewColumnNode)Operation.ColumnCreator.CreateColumn(typeof(ViewColumnNodeTyped<>), metaColumn.Type);
                     ViewColumnNode viewColumnNode = new ViewColumnNode(vTable, metaColumn, expressionParsingContext);
 
                     columnNode.SetColumn(viewColumnNode);
@@ -184,12 +183,12 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                 }
                 else
                 {
-                    throw new Exception("Expecting column  '" + vTable.GetName() + "." + metaColumn.name + "' to be a from a node data type (ViewColumnNode) but is of type '" + column.GetType().Name + "'");
+                    throw new Exception("Expecting column  '" + vTable.GetName() + "." + metaColumn.Name + "' to be a from a node data type (ViewColumnNode) but is of type '" + column.GetType().Name + "'");
                 }
             }
 
             //A column under a <Node> (or <View>) element is either a declaration (build meta data only) or defines an entry in the parent's ViewColumnNode
-            public void BuildNodeValue(ViewTable.Builder.Node node, long row, ViewScheme vs, Database.Scheme baseScheme, ViewTable parentViewTable, Operation.ExpressionParsingContext expressionParsingContext, ref Database.MetaColumn metaColum)
+            public void BuildNodeValue(ViewTable.Builder.Node node, long row, ViewSchema vs, Database.Schema baseSchema, ViewTable parentViewTable, Operation.ExpressionParsingContext expressionParsingContext, ref Database.MetaColumn metaColum)
             {
                 BuildOrUpdateDeclaration(ref metaColum);
 
@@ -197,7 +196,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                 if (node.parent != null && node.parent.data.type == ViewTable.Builder.Node.Data.DataType.Node)
                 {
                     // this column is an entry in the parent's column
-                    var option = new Operation.Expression.ParseIdentifierOption(vs, parentViewTable, true, true, metaColum != null ? metaColum.type : null, expressionParsingContext);
+                    var option = new Operation.Expression.ParseIdentifierOption(vs, parentViewTable, true, true, metaColum != null ? metaColum.Type : null, expressionParsingContext);
                     option.formatError = (string s, Operation.Expression.ParseIdentifierOption opt) =>
                         {
                             return FormatErrorContextInfo(vs, parentViewTable) + " : " + s;
@@ -205,9 +204,9 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                     Operation.Expression expression = Operation.Expression.ParseIdentifier(value, option);
 
                     //if the meta column does not have a type defined yet, define it as the expression's type.
-                    if (metaColum.type == null)
+                    if (metaColum.Type == null)
                     {
-                        metaColum.type = expression.type;
+                        metaColum.Type = expression.type;
                     }
                     ViewColumnNode.IViewColumnNode column = BuildOrGetColumnNode(parentViewTable, metaColum, name, expressionParsingContext);
                     column.SetEntry(row, expression, m_MetaLink);
@@ -215,21 +214,21 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             }
 
             // Set a Node value to the merged result of it's sub entries
-            public static void BuildNodeValueDefault(ViewTable.Builder.Node node, long row, ViewScheme vs, Database.Scheme baseScheme, ViewTable parentViewTable, Operation.ExpressionParsingContext expressionParsingContext, Database.MetaColumn metaColumn)
+            public static void BuildNodeValueDefault(ViewTable.Builder.Node node, long row, ViewSchema vs, Database.Schema baseSchema, ViewTable parentViewTable, Operation.ExpressionParsingContext expressionParsingContext, Database.MetaColumn metaColumn)
             {
                 //set the entry for merge column
-                if (metaColumn.defaultMergeAlgorithm != null && metaColumn.type != null)
+                if (metaColumn.DefaultMergeAlgorithm != null && metaColumn.Type != null)
                 {
-                    ViewColumnNode.IViewColumnNode column = BuildOrGetColumnNode(parentViewTable, metaColumn, metaColumn.name, expressionParsingContext);
-                    Operation.Expression expression = Operation.ColumnCreator.CreateTypedExpressionColumnMerge(metaColumn.type, parentViewTable, row, column.GetColumn(), metaColumn);
+                    ViewColumnNode.IViewColumnNode column = BuildOrGetColumnNode(parentViewTable, metaColumn, metaColumn.Name, expressionParsingContext);
+                    Operation.Expression expression = Operation.ColumnCreator.CreateTypedExpressionColumnMerge(metaColumn.Type, parentViewTable, row, column.GetColumn(), metaColumn);
                     column.SetEntry(row, expression, null);
                 }
             }
 
-            public IViewColumn Build(ViewTable.Builder.Node node, ViewScheme vs, Database.Scheme baseScheme, ViewTable vTable, Operation.ExpressionParsingContext expressionParsingContext, ref Database.MetaColumn metaColumn)
+            public IViewColumn Build(ViewTable.Builder.Node node, ViewSchema vs, Database.Schema baseSchema, ViewTable vTable, Operation.ExpressionParsingContext expressionParsingContext, ref Database.MetaColumn metaColumn)
             {
                 // Check if we have a type mismatch
-                Type columnValueType = metaColumn != null ? metaColumn.type : null;
+                Type columnValueType = metaColumn != null ? metaColumn.Type : null;
                 if (value.type != null)
                 {
                     if (columnValueType != null && columnValueType != value.type)

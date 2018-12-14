@@ -1,33 +1,34 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+
 namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
 {
-    public class ColumnState
+    internal class ColumnState
     {
-        public SortOrder sorted = SortOrder.None;
-        public SortOrder defaultSorted = SortOrder.None;
-        public bool grouped = false;
+        public SortOrder Sorted = SortOrder.None;
+        public SortOrder DefaultSorted = SortOrder.None;
+        public bool Grouped = false;
     }
-    public class FilterCloning
+    internal class FilterCloning
     {
-        Dictionary<Filter, Filter> uniques = new Dictionary<Filter, Filter>();
+        Dictionary<Filter, Filter> m_Uniques = new Dictionary<Filter, Filter>();
         public Filter CloneUnique(Filter source)
         {
             Filter c;
-            if (uniques.TryGetValue(source, out c))
+            if (m_Uniques.TryGetValue(source, out c))
             {
                 return c;
             }
             c = source.Clone(this);
-            uniques[source] = c;
+            m_Uniques[source] = c;
             return c;
         }
 
         public Filter GetUnique(Filter source)
         {
             Filter c;
-            if (uniques.TryGetValue(source, out c))
+            if (m_Uniques.TryGetValue(source, out c))
             {
                 return c;
             }
@@ -36,7 +37,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
 
         public T GetFirstUniqueOf<T>() where T : Filter
         {
-            foreach (var f in uniques.Values)
+            foreach (var f in m_Uniques.Values)
             {
                 if (f is T)
                 {
@@ -46,9 +47,8 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
             return null;
         }
     }
-    public abstract class Filter
+    internal abstract class Filter
     {
-        public static readonly string k_FilterInput = "InputField";
         public abstract Filter Clone(FilterCloning fc);
         public abstract Database.Table CreateFilter(Database.Table tableIn);
         public abstract Database.Table CreateFilter(Database.Table tableIn, ArrayRange range);

@@ -1,10 +1,10 @@
 namespace Unity.MemoryProfiler.Editor.Database.Operation
 {
-    public interface IIndexedColumn
+    internal interface IIndexedColumn
     {
         void Initialize(IndexedTable table, Column sourceColumn);
     }
-    public class IndexedColumnTyped<DataT> : ColumnTyped<DataT>, IIndexedColumn, IColumnDecorator where DataT : System.IComparable
+    internal class IndexedColumnTyped<DataT> : ColumnTyped<DataT>, IIndexedColumn, IColumnDecorator where DataT : System.IComparable
     {
 #if MEMPROFILER_DEBUG_INFO
         public override string GetDebugString(long row)

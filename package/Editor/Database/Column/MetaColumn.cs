@@ -2,57 +2,61 @@ using System;
 
 namespace Unity.MemoryProfiler.Editor.Database
 {
-    public class MetaColumn
+    internal class MetaColumn
     {
-        public Type type;
+        public Type Type { get; set; }
 
-        public MetaColumn(string aName, string aDisplayName, Type aType, bool aIsPrimaryKey, Operation.Grouping.IGroupAlgorithm groupAlgo, Operation.Grouping.IMergeAlgorithm mergeAlgo)
+        public int Index { get; set; }
+        public readonly string Name;
+        public readonly string DisplayName;
+
+        const int k_DefaultDisplayWidth = 100;
+        public readonly int DefaultDisplayWidth;
+
+        public readonly bool IsPrimaryKey;
+        public readonly bool IsReference;
+        public readonly ColumnRef Reference;
+
+        public readonly Operation.Grouping.IGroupAlgorithm DefaultGroupAlgorithm;
+        public Operation.Grouping.IMergeAlgorithm DefaultMergeAlgorithm { get; set; }
+
+        public MetaColumn(string name, string displayName, Type type, bool isPrimaryKey, Operation.Grouping.IGroupAlgorithm groupAlgo, Operation.Grouping.IMergeAlgorithm mergeAlgo, int displayDefaultWidth = k_DefaultDisplayWidth)
         {
-            index = 0;
-            name = aName;
-            displayName = aDisplayName;
-            type = aType;
-            isPrimaryKey = aIsPrimaryKey;
-            defaultMergeAlgorithm = mergeAlgo;
-            defaultGroupAlgorithm = groupAlgo;
+            Index = 0;
+            Name = name;
+            DisplayName = displayName;
+            Type = type;
+            IsPrimaryKey = isPrimaryKey;
+            DefaultMergeAlgorithm = mergeAlgo;
+            DefaultGroupAlgorithm = groupAlgo;
+            DefaultDisplayWidth = displayDefaultWidth;
         }
 
-        public MetaColumn(string aName, string aDisplayName, Type aType, ColumnRef aReference, Operation.Grouping.IGroupAlgorithm groupAlgo, Operation.Grouping.IMergeAlgorithm mergeAlgo)
+        public MetaColumn(string name, string displayName, Type type, ColumnRef reference, Operation.Grouping.IGroupAlgorithm groupAlgo, Operation.Grouping.IMergeAlgorithm mergeAlgo, int displayDefaultWidth = k_DefaultDisplayWidth)
         {
-            index = 0;
-            name = aName;
-            displayName = aDisplayName;
-            type = aType;
-            isReference = true;
-            reference = aReference;
-            defaultMergeAlgorithm = mergeAlgo;
-            defaultGroupAlgorithm = groupAlgo;
+            Index = 0;
+            Name = name;
+            DisplayName = displayName;
+            Type = type;
+            IsReference = true;
+            Reference = reference;
+            DefaultMergeAlgorithm = mergeAlgo;
+            DefaultGroupAlgorithm = groupAlgo;
+            DefaultDisplayWidth = displayDefaultWidth;
         }
 
         public MetaColumn(MetaColumn mc)
         {
-            index = 0;
-            name = mc.name;
-            isPrimaryKey = mc.isPrimaryKey;
-            displayName = mc.displayName;
-            type = mc.type;
-            isReference = mc.isReference;
-            reference = mc.reference;
-            defaultMergeAlgorithm = mc.defaultMergeAlgorithm;
-            defaultGroupAlgorithm = mc.defaultGroupAlgorithm;
+            Index = 0;
+            Name = mc.Name;
+            IsPrimaryKey = mc.IsPrimaryKey;
+            DisplayName = mc.DisplayName;
+            Type = mc.Type;
+            IsReference = mc.IsReference;
+            Reference = mc.Reference;
+            DefaultMergeAlgorithm = mc.DefaultMergeAlgorithm;
+            DefaultGroupAlgorithm = mc.DefaultGroupAlgorithm;
+            DefaultDisplayWidth = mc.DefaultDisplayWidth;
         }
-
-        public int index;
-        public string name;
-        public string displayName;
-        public int displayDefaultWidth = 100;
-
-        public bool isPrimaryKey = false;
-        public bool isReference = false;
-        public ColumnRef reference;
-
-
-        public Operation.Grouping.IGroupAlgorithm defaultGroupAlgorithm;
-        public Operation.Grouping.IMergeAlgorithm defaultMergeAlgorithm;
     }
 }

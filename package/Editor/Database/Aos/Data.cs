@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Unity.MemoryProfiler.Editor.Database.Aos
 {
-    public class Data
+    internal class Data
     {
         public static Column<StructT, DataT> MakeColumn<StructT, DataT>(StructT[] array, Column<StructT, DataT>.Getter getter, Column<StructT, DataT>.Setter setter) where DataT : IComparable, new()
         {
@@ -15,7 +15,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Aos
             return new Column<StructT, DataT>(array, getter, (ref StructT o, DataT v) => { throw new Exception("Cannot set value on this column"); });
         }
 
-        public class Column<StructT, DataT> : Database.ColumnTyped<DataT> where DataT : System.IComparable, new()
+        internal class Column<StructT, DataT> : Database.ColumnTyped<DataT> where DataT : System.IComparable, new()
         {
 #if MEMPROFILER_DEBUG_INFO
             public override string GetDebugString(long row)
@@ -76,7 +76,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Aos
             return new ColumnList<StructT, DataT>(list, getter, (List<StructT> l, int index, DataT v) => { throw new Exception("Cannot set value on this column"); });
         }
 
-        public class ColumnList<StructT, DataT> : Database.ColumnTyped<DataT> where DataT : System.IComparable, new()
+        internal class ColumnList<StructT, DataT> : Database.ColumnTyped<DataT> where DataT : System.IComparable, new()
         {
 #if MEMPROFILER_DEBUG_INFO
             public override string GetDebugString(long row)

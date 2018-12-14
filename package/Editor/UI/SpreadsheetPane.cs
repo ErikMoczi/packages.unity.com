@@ -1,15 +1,77 @@
 using UnityEngine;
 using UnityEditor;
 using Unity.MemoryProfiler.Editor.Debuging;
+using System.Collections.Generic;
 
 namespace Unity.MemoryProfiler.Editor.UI
 {
-    public class SpreadsheetPane : ViewPane
+    internal class SpreadsheetPane : ViewPane
     {
-        public UI.DatabaseSpreadsheet m_Spreadsheet;
-        public Database.TableLink m_CurrentTableLink;
+        public string TableDisplayName
+        {
+            get
+            {
+                return m_Spreadsheet.SourceTable.GetDisplayName();
+            }
+        }
 
-        public int m_CurrentTableIndex = 0;
+        UI.DatabaseSpreadsheet m_Spreadsheet;
+        Database.TableLink m_CurrentTableLink;
+
+        public int CurrentTableIndex { get; private set; }
+
+        bool m_NeedRefresh = false;
+        
+        internal class History : HistoryEvent
+        {
+            readonly Database.TableLink m_Table;
+            readonly DatabaseSpreadsheet.State m_SpreadsheetState;
+
+            public History(SpreadsheetPane spreadsheetPane, UIState.BaseMode mode, Database.CellLink cell)
+            {
+                Mode = mode;
+                m_Table = spreadsheetPane.m_CurrentTableLink;
+                m_SpreadsheetState = spreadsheetPane.m_Spreadsheet.CurrentState;
+            }
+            
+            public void Restore(SpreadsheetPane pane)
+            {
+                DebugUtility.DebugLog("Open History: " + ToString());
+                var table = pane.m_UIState.CurrentMode.GetSchema().GetTableByLink(m_Table);
+                if (table == null)
+                {
+                    DebugUtility.LogError("No table named '" + m_Table.name + "' found.");
+                    return;
+                }
+                pane.m_CurrentTableLink = m_Table;
+                pane.CurrentTableIndex = pane.m_UIState.CurrentMode.GetTableIndex(table);
+                pane.m_Spreadsheet = new UI.DatabaseSpreadsheet(pane.m_UIState.DataRenderer, table, pane, m_SpreadsheetState);
+                pane.m_Spreadsheet.onClickLink += pane.OnSpreadsheetClick;
+                pane.m_EventListener.OnRepaint();
+            }
+
+            public override string ToString()
+            {
+                string s = Mode.GetSchema().GetDisplayName() + seperator + m_Table.name;
+                if (m_Table.param != null && m_Table.param.param != null)
+                {
+                    s += "(";
+                    string sp = "";
+                    foreach (var p in m_Table.param.param)
+                    {
+                        if (sp != "")
+                        {
+                            sp += ", ";
+                        }
+                        sp += p.Key;
+                        sp += "=";
+                        sp += p.Value.GetValueString(0);
+                    }
+                    s += sp + ")";
+                }
+                return s;
+            }
+        }
 
         public SpreadsheetPane(UIState s, IViewPaneEventListener l)
             : base(s, l)
@@ -20,9 +82,9 @@ namespace Unity.MemoryProfiler.Editor.UI
         {
             if (m_Spreadsheet != null)
             {
-                if (m_Spreadsheet.sourceTable is Database.ExpandTable)
+                if (m_Spreadsheet.SourceTable is Database.ExpandTable)
                 {
-                    (m_Spreadsheet.sourceTable as Database.ExpandTable).ResetAllGroup();
+                    (m_Spreadsheet.SourceTable as Database.ExpandTable).ResetAllGroup();
                 }
             }
         }
@@ -30,7 +92,7 @@ namespace Unity.MemoryProfiler.Editor.UI
         public void OpenLinkRequest(Database.View.LinkRequest link)
         {
             var tableLink = new Database.TableLink(link.metaLink.linkViewName, link.param);
-            var table = m_UIState.currentMode.GetSheme().GetTableByLink(tableLink);
+            var table = m_UIState.CurrentMode.GetSchema().GetTableByLink(tableLink);
             if (table == null)
             {
                 UnityEngine.Debug.LogError("No table named '" + link.metaLink.linkViewName + "' found.");
@@ -50,7 +112,7 @@ namespace Unity.MemoryProfiler.Editor.UI
                     {
                         filteredTable = table.GetMetaData().defaultFilter.CreateFilter(table);
                     }
-                    var whereUnion = new Database.View.WhereUnion(link.metaLink.linkWhere, null, null, null, null, m_UIState.currentMode.GetSheme(), filteredTable, link.sourceView == null ? null : link.sourceView.expressionParsingContext);
+                    var whereUnion = new Database.View.WhereUnion(link.metaLink.linkWhere, null, null, null, null, m_UIState.CurrentMode.GetSchema(), filteredTable, link.sourceView == null ? null : link.sourceView.expressionParsingContext);
                     long rowToSelect = whereUnion.GetIndexFirstMatch(link.row);
                     if (rowToSelect < 0)
                     {
@@ -70,17 +132,18 @@ namespace Unity.MemoryProfiler.Editor.UI
 
         void OnSpreadsheetClick(UI.DatabaseSpreadsheet sheet, Database.View.LinkRequest link, Database.CellPosition pos)
         {
-            var hEvent = new UI.HETable(m_UIState.currentMode, m_CurrentTableLink, sheet.GetCurrentFilterCopy(), sheet.displayTable.GetLinkTo(pos));
+            var hEvent = new History(this, m_UIState.CurrentMode, sheet.DisplayTable.GetLinkTo(pos));
             m_UIState.history.AddEvent(hEvent);
             m_EventListener.OnOpenTable(link);
         }
 
         public void OpenTable(Database.TableLink link, Database.Table table)
         {
+            Profiling.StartProfiling("Profile_OpenTable_" + table.GetName());
             CloseCurrentTable();
             m_CurrentTableLink = link;
-            m_CurrentTableIndex = m_UIState.currentMode.GetTableIndex(table);
-            m_Spreadsheet = new UI.DatabaseSpreadsheet(m_UIState.m_DataRenderer, table, this);
+            CurrentTableIndex = m_UIState.CurrentMode.GetTableIndex(table);
+            m_Spreadsheet = new UI.DatabaseSpreadsheet(m_UIState.DataRenderer, table, this);
             m_Spreadsheet.onClickLink += OnSpreadsheetClick;
             m_EventListener.OnRepaint();
         }
@@ -89,29 +152,17 @@ namespace Unity.MemoryProfiler.Editor.UI
         {
             CloseCurrentTable();
             m_CurrentTableLink = link;
-            m_CurrentTableIndex = m_UIState.currentMode.GetTableIndex(table);
-            m_Spreadsheet = new UI.DatabaseSpreadsheet(m_UIState.m_DataRenderer, table, this);
+            CurrentTableIndex = m_UIState.CurrentMode.GetTableIndex(table);
+            m_Spreadsheet = new UI.DatabaseSpreadsheet(m_UIState.DataRenderer, table, this);
             m_Spreadsheet.onClickLink += OnSpreadsheetClick;
             m_Spreadsheet.Goto(pos);
             m_EventListener.OnRepaint();
         }
 
-        public void OpenHistoryEvent(UI.HETable e)
+        public void OpenHistoryEvent(History e)
         {
             if (e == null) return;
-            DebugUtility.DebugLog("Open History: " + e.ToString());
-            var table = m_UIState.currentMode.GetSheme().GetTableByLink(e.table);
-            if (table == null)
-            {
-                UnityEngine.Debug.LogError("No table named '" + e.table.name + "' found.");
-                return;
-            }
-            m_CurrentTableLink = e.table;
-            m_CurrentTableIndex = m_UIState.currentMode.GetTableIndex(table);
-            m_Spreadsheet = new UI.DatabaseSpreadsheet(m_UIState.m_DataRenderer, table, this, e.filter);
-            m_Spreadsheet.onClickLink += OnSpreadsheetClick;
-            m_Spreadsheet.Goto(e.cell);
-            m_EventListener.OnRepaint();
+            e.Restore(this);
         }
 
         public override UI.HistoryEvent GetCurrentHistoryEvent()
@@ -125,7 +176,7 @@ namespace Unity.MemoryProfiler.Editor.UI
                 }
                 if (c != null)
                 {
-                    var hEvent = new UI.HETable(m_UIState.currentMode, m_CurrentTableLink, m_Spreadsheet.GetCurrentFilterCopy(), c);
+                    var hEvent = new History(this, m_UIState.CurrentMode, c);
                     return hEvent;
                 }
             }
@@ -136,30 +187,28 @@ namespace Unity.MemoryProfiler.Editor.UI
         {
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            var ff = GUILayout.Toggle(m_UIState.m_DataRenderer.flattenFields, "Flatten Fields");
-            if (m_UIState.m_DataRenderer.flattenFields != ff)
+            var ff = GUILayout.Toggle(m_UIState.DataRenderer.flattenFields, "Flatten Fields");
+            if (m_UIState.DataRenderer.flattenFields != ff)
             {
-                m_UIState.m_DataRenderer.flattenFields = ff;
+                m_UIState.DataRenderer.flattenFields = ff;
                 if (m_Spreadsheet != null)
                 {
-                    mbNeedRefresh = true;
+                    m_NeedRefresh = true;
                 }
             }
-            var fsf = GUILayout.Toggle(m_UIState.m_DataRenderer.flattenStaticFields, "Flatten Static Fields");
-            if (m_UIState.m_DataRenderer.flattenStaticFields != fsf)
+            var fsf = GUILayout.Toggle(m_UIState.DataRenderer.flattenStaticFields, "Flatten Static Fields");
+            if (m_UIState.DataRenderer.flattenStaticFields != fsf)
             {
-                m_UIState.m_DataRenderer.flattenStaticFields = fsf;
+                m_UIState.DataRenderer.flattenStaticFields = fsf;
                 if (m_Spreadsheet != null)
                 {
-                    mbNeedRefresh = true;
+                    m_NeedRefresh = true;
                 }
             }
-            var spn = GUILayout.Toggle(m_UIState.m_DataRenderer.showPrettyNames, "Pretty Name");
-            if (m_UIState.m_DataRenderer.showPrettyNames != spn)
+            var spn = GUILayout.Toggle(m_UIState.DataRenderer.ShowPrettyNames, "Pretty Name");
+            if (m_UIState.DataRenderer.ShowPrettyNames != spn)
             {
-                m_UIState.m_DataRenderer.showPrettyNames = spn;
-                if (m_UIState.snapshotMode != null) m_UIState.snapshotMode.UpdateTableSelectionNames();
-                if (m_UIState.diffMode != null) m_UIState.diffMode.UpdateTableSelectionNames();
+                m_UIState.DataRenderer.ShowPrettyNames = spn;
                 m_EventListener.OnRepaint();
             }
 #if MEMPROFILER_DEBUG_INFO
@@ -173,19 +222,18 @@ namespace Unity.MemoryProfiler.Editor.UI
             EditorGUILayout.EndHorizontal();
         }
 
-        bool mbNeedRefresh = false;
-        public override void OnPreGUI()
-        {
-            if (mbNeedRefresh)
-            {
-                m_Spreadsheet.UpdateTable();
-                mbNeedRefresh = false;
-            }
-        }
-
         public override void OnGUI(Rect r)
         {
-            m_UIState.m_DataRenderer.forceLinkAllObject = false;
+            if(Event.current.type == EventType.Layout)
+            {
+
+                if (m_NeedRefresh)
+                {
+                    m_Spreadsheet.UpdateTable();
+                    m_NeedRefresh = false;
+                }
+            }
+            m_UIState.DataRenderer.forceLinkAllObject = false;
             if (m_Spreadsheet != null)
             {
                 GUILayout.BeginArea(r);
@@ -207,7 +255,7 @@ namespace Unity.MemoryProfiler.Editor.UI
                 GUILayout.Space(2);
                 EditorGUILayout.EndVertical();
                 GUILayout.EndArea();
-                if (mbNeedRefresh)
+                if (m_NeedRefresh)
                 {
                     m_EventListener.OnRepaint();
                 }
@@ -216,7 +264,9 @@ namespace Unity.MemoryProfiler.Editor.UI
 
         public override void OnClose()
         {
+            MemoryProfilerAnalytics.SendPendingFilterChanges();
             CloseCurrentTable();
+            m_Spreadsheet = null;
         }
     }
 }

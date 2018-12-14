@@ -1,0 +1,287 @@
+/**********************************************************************************************************************/
+/* Visual Splitters                                                                                                   */
+/**********************************************************************************************************************/
+
+VisualSplitter.horizontalSplitter{
+	flex-direction: row;
+	flex-grow:1;
+}
+
+VisualSplitter.verticalSplitter{
+	flex-direction: column;
+	flex-grow:1;
+}
+
+#splitterLeftPane {
+    min-width: 252;
+}
+
+#splitterDraglineAnchor {
+    width: 1;
+}
+
+#splitterDragline {
+    width: 10;
+    background-color: rgba(0, 0, 0, 0);
+    position-left: -5;
+    position-top: 0;
+    position-bottom: 0;
+    position-type: absolute;
+    cursor: resize-horizontal;
+}
+
+/**********************************************************************************************************************/
+/* Top-level UI                                                                                                       */
+/**********************************************************************************************************************/
+
+#sidebar{
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+#sidebarContent{
+	flex:1;
+}
+
+#mainWindow{
+	flex-direction: column;
+	flex-grow:1;
+}
+
+ToolbarButton.iconButton{
+	background-image: none;
+	width:28;
+	height:18;
+}
+
+Image.iconButton{
+	margin-top: 2;
+	margin-bottom: 2;
+	margin-left: 0;
+	margin-right: 0;
+}
+
+Image.historyButtonIcon{
+	width:16;
+	height:14;
+}
+
+ScrollView#snapshotListSidebar {
+	margin-left:1;
+	margin-right:1;
+	margin-top:1;
+	margin-bottom:1;
+	flex:1;
+}
+
+.toolbarFlexSpacer
+{
+	flex:1;
+}
+
+Label.guidanceText{
+	-unity-word-wrap: true;
+	white-space: normal;
+	flex-grow: 1;
+	-unity-text-align: middle-center;
+}
+
+#attachToPlayerMenuPlaceholder{
+	flex-shrink:1;
+	flex-grow:1;
+}
+
+#attachToPlayerMenu{
+	min-height:18;
+}
+
+/**********************************************************************************************************************/
+/* Toggle                                                                                                             */
+/**********************************************************************************************************************/
+
+Toggle.radioButton {
+	margin-left:0;
+	margin-right:0;
+	margin-top:1;
+	margin-bottom:1;
+	padding-top:1;
+	padding-bottom:0;
+}
+Toggle.radioButton > Label {
+	font-size:9;
+	margin-top:1;
+	margin-left:0;
+}
+
+/**********************************************************************************************************************/
+/* Snapshot Items                                                                                                   */
+/**********************************************************************************************************************/
+
+#snapshotListItem{
+	height:56;
+	flex-direction:row;
+	padding-right:0;
+	padding-top:1;
+	padding-bottom:1;
+}
+
+.snapshotButton{
+	height:16;
+	min-height:0;
+	margin-top:1;
+	padding-top:2;
+	padding-left:2;
+	padding-right:2;
+	margin-bottom:1;
+	font-size:9;
+}
+
+#snapshotButtons{ 
+	position: absolute;
+	right: 0;
+	justify-content:flex-end;
+	flex-direction: column;
+	min-width:50;
+	max-width:50;
+}
+
+#snapshotMetaData{
+	flex-direction: column;
+	position: absolute;
+	left: 1;
+	flex:1 0 0;
+}
+
+.snapshotMetaDataText{
+	overflow: visible;
+}
+
+#previewImage{
+	flex-direction: row;
+	height:54;
+	width:96;
+}
+
+Image#previewImage.previewImage{
+	justify-content: flex-end;
+	align-items: flex-end;
+}
+
+
+.snapshotMetaDataText{
+	flex:3;
+}
+
+#snapshotName.snapshotMetaDataText{
+	-unity-font-style:bold;
+}
+
+#snapshotName.snapshotMetaDataTextField{
+	flex:1;
+	visibility: hidden;
+	max-height: 15;
+	margin-right: 50;
+	overflow: hidden;
+}
+
+#metaDataAndButtons{
+	flex:1;
+	flex-direction: row; 
+}
+
+Image.optionButtonIcon
+{
+	height:14;
+	width:15;
+	align-self: flex-end;
+	margin-right: 4;
+}
+
+.platformIcon{
+	height:16;
+	width:16;
+}
+
+.platformIcon.Editor{
+	--unity-image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/Editor.png");
+	image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/Editor.png");
+}
+
+.platformIcon.Android{
+	--unity-image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/Android.png");
+	image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/Android.png");
+}
+
+.platformIcon.StandaloneOSX{
+	--unity-image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/StandaloneOSX.png");
+	image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/StandaloneOSX.png");
+}
+
+.platformIcon.StandaloneWindows{
+	--unity-image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/StandaloneWindows.png");
+	image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/StandaloneWindows.png");
+}
+
+.platformIcon.iOS{
+	--unity-image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/iOS.png");
+	image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/iOS.png");
+}
+.platformIcon.StandaloneLinux{
+	--unity-image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/StandaloneLinux.png");
+	image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/StandaloneLinux.png");
+}
+
+.platformIcon.WebGL{
+	--unity-image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/WebGL.png");
+	image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/WebGL.png");
+}
+.platformIcon.WSAPlayer{
+	--unity-image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/WSAPlayer.png");
+	image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/WSAPlayer.png");
+}
+.platformIcon.PS4{
+	--unity-image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/PS4.png");
+	image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/PS4.png");
+}
+
+.platformIcon.XboxOne{
+	--unity-image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/XboxOne.png");
+	image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/XboxOne.png");
+}
+.platformIcon.tvOS{
+	--unity-image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/tvOS.png");
+	image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/tvOS.png");
+}
+.platformIcon.Switch{
+	--unity-image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/Switch.png");
+	image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/Switch.png");
+}
+.platformIcon.Lumin{
+	--unity-image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/Lumin.png");
+	image:resource("Packages/com.unity.memoryprofiler/Package Resources/PlatformIcons/Lumin.png");
+}
+/**********************************************************************************************************************/
+/* Main Window                                                                                                        */
+/**********************************************************************************************************************/
+
+#mainWindowContent{
+	margin-left: 2;
+	padding-right: 2;
+	padding-top: 2;
+	padding-bottom: 2;
+}
+
+/**********************************************************************************************************************/
+/* Tree map                                                                                                           */
+/**********************************************************************************************************************/
+
+#TreeMap{
+	margin-left: 2;
+	padding-right: 2;
+	padding-top: 2;
+	padding-bottom: 2;
+}
+
+#TreeMapSpreadsheet{
+	padding-top: 2;
+}

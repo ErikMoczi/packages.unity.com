@@ -3,7 +3,7 @@ using Unity.MemoryProfiler.Editor.Database.Operation;
 
 namespace Unity.MemoryProfiler.Editor.Database
 {
-    public abstract class Column
+    internal abstract class Column
     {
         public Type type;
         public abstract long[] GetSortIndex(SortOrder order, ArrayRange indices, bool relativeIndex);
@@ -46,7 +46,7 @@ namespace Unity.MemoryProfiler.Editor.Database
 #endif
     }
 
-    public interface IColumnDecorator
+    internal interface IColumnDecorator
     {
         Column GetBaseColumn();
     }

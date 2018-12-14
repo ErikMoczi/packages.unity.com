@@ -5,7 +5,7 @@ using UnityEditor;
 
 namespace Unity.MemoryProfiler.Editor.UI
 {
-    public class Mesh2D
+    internal class Mesh2D
     {
         public List<Mesh> meshes = new List<Mesh>();
 
@@ -28,7 +28,7 @@ namespace Unity.MemoryProfiler.Editor.UI
             meshes.Clear();
         }
     }
-    public class MeshBuilder
+    internal class MeshBuilder
     {
         public class Layer
         {

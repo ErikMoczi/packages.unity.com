@@ -5,14 +5,14 @@ using UnityEngine;
 
 namespace Unity.MemoryProfiler.Editor.UI.Treemap
 {
-    public interface IMetricValue
+    internal interface IMetricValue
     {
         string GetName();
         long GetValue();
         string GetGroupName();
         int GetObjectUID();
     }
-    public class ManagedObjectMetric : IMetricValue
+    internal class ManagedObjectMetric : IMetricValue
     {
         public CachedSnapshot m_Snapshot;
         public ManagedObjectInfo m_Object;
@@ -29,7 +29,7 @@ namespace Unity.MemoryProfiler.Editor.UI.Treemap
                 string typeName = m_Snapshot.typeDescriptions.typeDescriptionName[m_Object.iTypeDescription];
                 return typeName;
             }
-            return "<unknown managed type>";
+            return "<uninitialized managed type>";
         }
 
         public string GetName()
@@ -75,7 +75,7 @@ namespace Unity.MemoryProfiler.Editor.UI.Treemap
             return m_Snapshot.ManagedObjectIndexToUnifiedObjectIndex(m_Object.managedObjectIndex);
         }
     }
-    public class NativeObjectMetric : IMetricValue
+    internal class NativeObjectMetric : IMetricValue
     {
         public CachedSnapshot m_Snapshot;
         public int m_ObjectIndex;
@@ -138,11 +138,11 @@ namespace Unity.MemoryProfiler.Editor.UI.Treemap
             return m_Snapshot.NativeObjectIndexToUnifiedObjectIndex(m_ObjectIndex);
         }
     }
-    public class Item : IComparable<Item>, ITreemapRenderable
+    internal class Item : IComparable<Item>, ITreemapRenderable
     {
         public Group _group;
         public Rect _position;
-        public int _index;
+        //public int _index;
 
         public IMetricValue _metric;
 
@@ -177,7 +177,5 @@ namespace Unity.MemoryProfiler.Editor.UI.Treemap
             string row2 = EditorUtility.FormatBytes(value);
             return row1 + "\n" + row2;
         }
-
-        public CachedSnapshot m_Snapshot;
     }
 }

@@ -1,22 +1,167 @@
 using UnityEngine;
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
+#else
+using UnityEngine.Experimental.UIElements;
+#endif
 using UnityEditor;
 using Unity.MemoryProfiler.Editor.Debuging;
+using System;
+using System.Collections.Generic;
+using Unity.MemoryProfiler.Editor.Database.View;
 
 namespace Unity.MemoryProfiler.Editor.UI
 {
-    public class TreeMapPane : ViewPane
+    internal class TreeMapPane : ViewPane
     {
-        const int kPropertyPaneWidth = 0;
-        const int kDetailsPaneHeight = 200;
-        public UI.Treemap.TreeMapView m_TreeMap;
+        UI.Treemap.TreeMapView m_TreeMap;
 
-        public UI.DatabaseSpreadsheet m_Spreadsheet;
-        public Database.TableLink m_CurrentTableLink;
+        UI.DatabaseSpreadsheet m_Spreadsheet;
+
+        string m_CurrentTableTypeFilter;
+
+        CodeType m_CurrentCodeType = CodeType.Unknown;
+
+        internal class History : HistoryEvent
+        {            
+            string m_GroupName;
+            Treemap.IMetricValue m_SelectedItem;
+
+            public History(TreeMapPane pane)
+            {
+                Mode = pane.m_UIState.CurrentMode;
+                
+                if (pane.m_TreeMap.SelectedItem != null)
+                {
+                    m_SelectedItem = pane.m_TreeMap.SelectedItem._metric;
+                    m_GroupName = m_SelectedItem.GetGroupName();
+                }
+                else if (pane.m_TreeMap.SelectedGroup != null)
+                {
+                    m_GroupName = pane.m_TreeMap.SelectedGroup._name;
+                }
+            }
+
+            public void Restore(TreeMapPane pane)
+            {                
+                if (m_SelectedItem != null)
+                {  
+                    if (pane.m_TreeMap.HasMetric(m_SelectedItem))
+                    {
+                        pane.OpenMetricData(m_SelectedItem, true);
+                    }
+                    else
+                    {
+                        pane.ShowAllObjects(m_SelectedItem, true);
+                    }
+                }
+                else if (m_GroupName != null)
+                {
+                    Treemap.Group group = pane.m_TreeMap.FindGroup(m_GroupName);
+
+                    if (group != null)
+                    {
+                        pane.OnClickGroup(group);
+                    }
+                    else
+                    {
+                        pane.ShowAllObjects(null, true);
+                    }
+                }
+                
+                pane.m_EventListener.OnRepaint();
+            }
+
+            public override string ToString()
+            {
+                string name = Mode.GetSchema().GetDisplayName() + seperator + "Tree Map";
+
+                if (m_SelectedItem != null)
+                {
+                    name += seperator + m_SelectedItem.GetName();
+                }
+
+                return name;
+            }
+        }
+
+        public CodeType CurrentCodeType
+        {
+            set
+            {
+                if (value == m_CurrentCodeType)
+                    return;
+                switch (value)
+                {
+                    case CodeType.Native:
+                    case CodeType.Managed:
+                        m_CurrentCodeType = value;
+                        break;
+                    default:
+                        if (m_CurrentCodeType == CodeType.Unknown)
+                            return;
+                        m_CurrentCodeType = CodeType.Unknown;
+                        break;
+                }
+                ShowAllObjects(null, false);
+            }
+        }
+
+        string TableName
+        {
+            get
+            {
+                switch (m_CurrentCodeType)
+                {
+                    case CodeType.Native:
+                        return ObjectAllNativeTable.kTableName;
+                    case CodeType.Managed:
+                        return ObjectAllManagedTable.kTableName;
+                    default:
+                        return ObjectAllTable.kTableName;
+                }
+            }
+        }
+
+        public override VisualElement[] VisualElements
+        {
+            get
+            {
+                if (m_VisualElements == null)
+                {
+                    m_VisualElements = new VisualElement[]
+                    {
+                        new IMGUIContainer(() => OnGUI(0))
+                        {
+                            name = "TreeMap",
+                            style =
+                            {
+                                flexGrow = 3,
+                            }
+                        },
+                        new IMGUIContainer(() => OnGUI(1))
+                        {
+                            name = "TreeMapSpreadsheet",
+                            style =
+                            {
+                                flexGrow = 1,
+                            }
+                        }
+                    };
+                    m_VisualElementsOnGUICalls = new Action<Rect>[]
+                    {
+                        OnGUI,
+                        OnGUISpreadsheet,
+                    };
+                }
+                return m_VisualElements;
+            }
+        }
 
         public TreeMapPane(UIState s, IViewPaneEventListener l)
             : base(s, l)
         {
-            m_TreeMap = new UI.Treemap.TreeMapView(s.snapshotMode.m_RawScheme.m_Snapshot);
+            m_TreeMap = new UI.Treemap.TreeMapView(s.snapshotMode.snapshot);
             m_TreeMap.Setup();
             m_TreeMap.OnClickItem = OnClickItem;
             m_TreeMap.OnClickGroup = OnClickGroup;
@@ -27,48 +172,78 @@ namespace Unity.MemoryProfiler.Editor.UI
 
         public void ShowAllObjects(Treemap.IMetricValue itemCopyToSelect, bool focus)
         {
+            // TODO: Fix history zooming UX
+            focus = false;
+
             Treemap.IMetricValue itemToSelect = null;
             m_TreeMap.ClearMetric();
-            foreach (var managedObject in m_UIState.snapshotMode.snapshot.m_CrawledData.managedObjects)
+            if(m_CurrentCodeType == CodeType.Unknown || m_CurrentCodeType == CodeType.Managed)
             {
-                if (managedObject.size > 0)
+                foreach (var managedObject in m_UIState.snapshotMode.snapshot.m_CrawledData.managedObjects)
                 {
-                    var o = new Treemap.ManagedObjectMetric(m_UIState.snapshotMode.snapshot, managedObject);
-                    if (o.IsSame(itemCopyToSelect))
+                    if (managedObject.size > 0)
                     {
-                        itemToSelect = o;
+                        var o = new Treemap.ManagedObjectMetric(m_UIState.snapshotMode.snapshot, managedObject);
+                        if (o.IsSame(itemCopyToSelect))
+                        {
+                            itemToSelect = o;
+                        }
+                        m_TreeMap.AddMetric(o);
                     }
-                    m_TreeMap.AddMetric(o);
                 }
             }
-            for (int i = 0; i != m_UIState.snapshotMode.snapshot.nativeObjects.Count; ++i)
+            if (m_CurrentCodeType == CodeType.Unknown || m_CurrentCodeType == CodeType.Native)
             {
-                if (m_UIState.snapshotMode.snapshot.nativeObjects.size[i] > 0)
+                for (int i = 0; i != m_UIState.snapshotMode.snapshot.nativeObjects.Count; ++i)
                 {
-                    var o = new Treemap.NativeObjectMetric(m_UIState.snapshotMode.snapshot, i);
-                    if (o.IsSame(itemCopyToSelect))
+                    if (m_UIState.snapshotMode.snapshot.nativeObjects.size[i] > 0)
                     {
-                        itemToSelect = o;
+                        var o = new Treemap.NativeObjectMetric(m_UIState.snapshotMode.snapshot, i);
+                        if (o.IsSame(itemCopyToSelect))
+                        {
+                            itemToSelect = o;
+                        }
+                        m_TreeMap.AddMetric(o);
                     }
-                    m_TreeMap.AddMetric(o);
                 }
             }
             m_TreeMap.UpdateMetric();
 
             if (itemToSelect != null)
                 OpenMetricData(itemToSelect, focus);
+            else
+            {
+                try
+                {
+                    using (new Service<IDebugContextService>.ScopeService(new DebugContextService()))
+                    {
+                        var lr = new Database.View.LinkRequest();
+                        lr.metaLink = new Database.View.MetaLink();
+                        lr.metaLink.linkViewName = ObjectAllTable.kTableName;
+                        lr.sourceTable = null;
+                        lr.sourceColumn = null;
+                        lr.row = -1;
+                        OpenLinkRequest(lr, false, null, false);
+                    }
+                }
+                catch (ExitGUIException)
+                {
+                    throw;
+                }
+                catch (Exception e)
+                {
+                    throw new Exception(DebugUtility.GetExceptionHelpMessage(e));
+                }
+            }
         }
 
         public override UI.HistoryEvent GetCurrentHistoryEvent()
         {
-            if (m_TreeMap.selectedItem == null) return null;
-            var e = new UI.HETreeMap(m_UIState.currentMode, m_TreeMap.selectedItem._metric);
-            return e;
+            return new History(this);
         }
 
         public void OnClickItem(Treemap.Item a)
         {
-            m_UIState.AddHistoryEvent(GetCurrentHistoryEvent());
             m_TreeMap.SelectItem(a);
             OpenMetricData(a._metric, false);
         }
@@ -80,52 +255,97 @@ namespace Unity.MemoryProfiler.Editor.UI
 
         public void OnClickGroup(Treemap.Group a)
         {
-            m_UIState.AddHistoryEvent(GetCurrentHistoryEvent());
             m_TreeMap.SelectGroup(a);
+            OpenGroupData(a);
+        }
+
+        void OpenGroupData(Treemap.Group group)
+        {
+            var lr = new Database.View.LinkRequest();
+            lr.metaLink = new Database.View.MetaLink();
+            lr.metaLink.linkViewName = ObjectAllTable.kTableName;
+            lr.sourceTable = null;
+            lr.sourceColumn = null;
+            lr.row = -1;
+            OpenLinkRequest(lr, false, group._name, false);
         }
 
         void OpenMetricData(Treemap.IMetricValue metric, bool focus)
         {
+
             if (metric is Treemap.ManagedObjectMetric)
             {
                 var m = (Treemap.ManagedObjectMetric)metric;
 
+                if (m_CurrentTableTypeFilter == metric.GetGroupName())
+                {
+                    var builder = new Database.View.Where.Builder("Index", Database.Operation.Operator.Equal, new Database.Operation.Expression.MetaExpression(metric.GetObjectUID().ToString(), true));
+                    
+                    var whereStatement = builder.Build(null, null, null, null, null, m_Spreadsheet.DisplayTable, null); //yeah we could add a no param Build() too..
+                    var row = whereStatement.GetFirstMatchIndex(-1);
+
+                    if (row > 0)
+                    {
+                        m_Spreadsheet.Goto(new Database.CellPosition(row, 0));
+                        return;
+                    }
+                }
+
                 var lr = new Database.View.LinkRequest();
                 lr.metaLink = new Database.View.MetaLink();
-                lr.metaLink.linkViewName = ObjectTable.kTableName;
+                lr.metaLink.linkViewName = TableName;
                 lr.sourceTable = null;
                 lr.sourceColumn = null;
                 lr.row = -1;
                 lr.param = new Database.ParameterSet();
                 lr.param.param.Add(ObjectTable.kObjParamName, new Database.Operation.ExpConst<ulong>(m.m_Object.ptrObject));
                 lr.param.param.Add(ObjectTable.kTypeParamName, new Database.Operation.ExpConst<int>(m.m_Object.iTypeDescription));
-                OpenLinkRequest(lr, focus);
+                OpenLinkRequest(lr, focus, metric.GetGroupName());
             }
             else if (metric is Treemap.NativeObjectMetric)
             {
                 var m = (Treemap.NativeObjectMetric)metric;
+
+                if (m_CurrentTableTypeFilter == metric.GetGroupName())
+                {
+                    var builder = new Database.View.Where.Builder("NativeInstanceId", Database.Operation.Operator.Equal, new Database.Operation.Expression.MetaExpression(m_UIState.snapshotMode.snapshot.nativeObjects.instanceId[m.m_ObjectIndex].ToString(), true));
+                    var whereStatement = builder.Build(null, null, null, null, null, m_Spreadsheet.DisplayTable, null); //yeah we could add a no param Build() too..
+                    var row = whereStatement.GetFirstMatchIndex(-1);
+
+                    if (row > 0)
+                    {
+                        m_Spreadsheet.Goto(new Database.CellPosition(row, 0));
+                        return;
+                    }
+                }
                 var lr = new Database.View.LinkRequest();
                 lr.metaLink = new Database.View.MetaLink();
-                lr.metaLink.linkViewName = ObjectAllNativeTable.kTableName;
-
+                lr.metaLink.linkViewName = TableName;
                 var instanceId = m_UIState.snapshotMode.snapshot.nativeObjects.instanceId[m.m_ObjectIndex];
-                var b = new Database.View.Where.Builder("NativeInstanceId", Database.Operation.Operator.equal, new Database.Operation.Expression.MetaExpression(instanceId.ToString()));
+                var b = new Database.View.Where.Builder("NativeInstanceId", Database.Operation.Operator.Equal, new Database.Operation.Expression.MetaExpression(instanceId.ToString(), true));
                 lr.metaLink.linkWhere = new System.Collections.Generic.List<Database.View.Where.Builder>();
                 lr.metaLink.linkWhere.Add(b);
                 lr.sourceTable = null;
                 lr.sourceColumn = null;
                 lr.row = -1;
-                OpenLinkRequest(lr, focus);
+                OpenLinkRequest(lr, focus, metric.GetGroupName());
             }
         }
 
-        void OpenLinkRequest(Database.View.LinkRequest link, bool focus)
+        void OpenLinkRequest(Database.View.LinkRequest link, bool focus, string tableTypeFilter = null, bool select = true)
         {
+            List<Database.View.Where.Builder> tableFilterWhere = null;
+            m_CurrentTableTypeFilter = tableTypeFilter;
+            if (tableTypeFilter != null)
+            {
+                tableFilterWhere = new List<Database.View.Where.Builder>();
+                tableFilterWhere.Add(new Database.View.Where.Builder("Type", Database.Operation.Operator.Equal, new Database.Operation.Expression.MetaExpression(tableTypeFilter, true)));
+            }
             //TODO this code is the same as the one inSpreadsheetPane, should be put together
             using (ScopeDebugContext.String("OpenLinkRequest"))
             {
                 var tableLink = new Database.TableLink(link.metaLink.linkViewName, link.param);
-                var table = m_UIState.snapshotMode.m_SchemeToDisplay.GetTableByLink(tableLink);
+                var table = m_UIState.snapshotMode.SchemaToDisplay.GetTableByLink(tableLink);
                 if (table == null)
                 {
                     UnityEngine.Debug.LogError("No table named '" + link.metaLink.linkViewName + "' found.");
@@ -133,30 +353,45 @@ namespace Unity.MemoryProfiler.Editor.UI
                 }
                 if (link.metaLink.linkWhere != null && link.metaLink.linkWhere.Count > 0)
                 {
-                    Database.Table filteredTable = table;
                     if (table.GetMetaData().defaultFilter != null)
                     {
-                        filteredTable = table.GetMetaData().defaultFilter.CreateFilter(table);
+                        table = table.GetMetaData().defaultFilter.CreateFilter(table);
                     }
                     Database.Operation.ExpressionParsingContext expressionParsingContext = null;
                     if (link.sourceView != null)
                     {
                         expressionParsingContext = link.sourceView.expressionParsingContext;
                     }
-                    var whereUnion = new Database.View.WhereUnion(link.metaLink.linkWhere, null, null, null, null, m_UIState.snapshotMode.m_SchemeToDisplay, filteredTable, expressionParsingContext);
+                    if (tableFilterWhere != null && tableFilterWhere.Count > 0)
+                    {
+                        table = FilterTable(table, link.row, tableFilterWhere);
+                    }
+                    var whereUnion = new Database.View.WhereUnion(link.metaLink.linkWhere, null, null, null, null, m_UIState.snapshotMode.SchemaToDisplay, table, expressionParsingContext);
                     long rowToSelect = whereUnion.GetIndexFirstMatch(link.row);
                     if (rowToSelect < 0)
                     {
                         UnityEngine.Debug.LogError("Could not find entry in target table '" + link.metaLink.linkViewName + "'");
                         return;
                     }
-                    OpenTable(tableLink, table, new Database.CellPosition(rowToSelect, 0), focus);
+                    OpenTable(tableLink, table, new Database.CellPosition(rowToSelect, 0), focus, select);
+                }
+                else if (tableFilterWhere != null && tableFilterWhere.Count > 0)
+                {
+                    table = FilterTable(table, link.row, tableFilterWhere);
+                    OpenTable(tableLink, table, new Database.CellPosition(0, 0), focus, select);
                 }
                 else
                 {
-                    OpenTable(tableLink, table, new Database.CellPosition(0, 0), focus);
+                    OpenTable(tableLink, table, new Database.CellPosition(0, 0), focus, select);
                 }
             }
+        }
+
+        Database.Table FilterTable(Database.Table table, long row, List<Database.View.Where.Builder> tableFilterWhere)
+        {
+            var tableFilterWhereUnion = new Database.View.WhereUnion(tableFilterWhere, null, null, null, null, m_UIState.snapshotMode.SchemaToDisplay, table, null);
+            var indices = tableFilterWhereUnion.GetMatchingIndices(row);
+            return new Database.Operation.IndexedTable(table, new ArrayRange(indices));
         }
 
         void OnSpreadsheetClick(UI.DatabaseSpreadsheet sheet, Database.View.LinkRequest link, Database.CellPosition pos)
@@ -210,93 +445,97 @@ namespace Unity.MemoryProfiler.Editor.UI
             return -1;
         }
 
-        public void OpenTable(Database.TableLink link, Database.Table table, bool focus)
+        public void OpenTable(Database.TableLink link, Database.Table table, bool focus, bool select)
         {
-            var objectUID = GetTableObjectUID(table, 0);
-            if (objectUID >= 0)
+            if (select)
             {
-                SelectObjectByUID(objectUID, focus);
+                var objectUID = GetTableObjectUID(table, 0);
+                if (objectUID >= 0)
+                {
+                    SelectObjectByUID(objectUID, focus);
+                }
             }
-
-            m_CurrentTableLink = link;
+            
             //m_CurrentTableIndex = m_UIState.GetTableIndex(table);
-            m_Spreadsheet = new UI.DatabaseSpreadsheet(m_UIState.m_DataRenderer, table, this);
+            m_Spreadsheet = new UI.DatabaseSpreadsheet(m_UIState.DataRenderer, table, this);
             m_Spreadsheet.onClickLink += OnSpreadsheetClick;
             m_EventListener.OnRepaint();
         }
 
-        public void OpenTable(Database.TableLink link, Database.Table table, Database.CellPosition pos, bool focus)
+        public void OpenTable(Database.TableLink link, Database.Table table, Database.CellPosition pos, bool focus, bool select)
         {
-            var objectUID = GetTableObjectUID(table, pos.row);
-            if (objectUID >= 0)
+            if (select)
             {
-                SelectObjectByUID(objectUID, focus);
+                var objectUID = GetTableObjectUID(table, pos.row);
+                if (objectUID >= 0)
+                {
+                    SelectObjectByUID(objectUID, focus);
+                }
             }
-
-            m_CurrentTableLink = link;
+            
             //m_CurrentTableIndex = m_UIState.GetTableIndex(table);
-            m_Spreadsheet = new UI.DatabaseSpreadsheet(m_UIState.m_DataRenderer, table, this);
+            m_Spreadsheet = new UI.DatabaseSpreadsheet(m_UIState.DataRenderer, table, this);
             m_Spreadsheet.onClickLink += OnSpreadsheetClick;
             m_Spreadsheet.Goto(pos);
             m_EventListener.OnRepaint();
         }
 
-        public void OpenHistoryEvent(UI.HETreeMap e)
+        public void OpenHistoryEvent(History e)
         {
             //m_TreeMap.SelectItem(a);
             //OpenMetricData(a._metric);
             if (e == null) return;
-            mEventToOpenNextDraw = e;
+            m_EventToOpenNextDraw = e;
             m_EventListener.OnRepaint();
         }
 
-        public void OpenHistoryEventImmediate(UI.HETreeMap e)
+        public void OpenHistoryEventImmediate(History e)
         {
-            if (m_TreeMap.HasMetric(e.selected))
-            {
-                OpenMetricData(e.selected, true);
-            }
-            else
-            {
-                ShowAllObjects(e.selected, true);
-            }
-            m_EventListener.OnRepaint();
+            e.Restore(this);
         }
 
-        UI.HETreeMap mEventToOpenNextDraw = null;
+        History m_EventToOpenNextDraw = null;
+
         public override void OnGUI(Rect r)
         {
-            if (m_UIState.m_HotKey.m_CameraFocus.IsTriggered())
+            if (m_UIState.HotKey.m_CameraFocus.IsTriggered())
             {
-                if (m_TreeMap.selectedItem != null)
+                if (m_TreeMap.SelectedItem != null)
                 {
-                    m_TreeMap.FocusOnItem(m_TreeMap.selectedItem, false);
+                    m_TreeMap.FocusOnItem(m_TreeMap.SelectedItem, false);
                 }
             }
-            if (m_UIState.m_HotKey.m_CameraShowAll.IsTriggered())
+            if (m_UIState.HotKey.m_CameraShowAll.IsTriggered())
             {
-                if (m_TreeMap.selectedItem != null)
+                if (m_TreeMap.SelectedItem != null)
                 {
                     m_TreeMap.FocusOnAll();
                 }
             }
-            m_UIState.m_DataRenderer.forceLinkAllObject = true;
-            float margin = 2;
-            Rect rectMap = r;
-            rectMap.xMax -= kPropertyPaneWidth + margin;
-            rectMap.yMax -= kDetailsPaneHeight + margin;
-            m_TreeMap.OnGUI(rectMap);
+            m_UIState.DataRenderer.forceLinkAllObject = true;
+            r.xMin++;
+            r.yMin++;
+            r.xMax--;
+            r.yMax--;
+            m_TreeMap.OnGUI(r);
+        }
 
+        void OnGUISpreadsheet(Rect r)
+        {
             if (m_Spreadsheet != null)
             {
-                Rect rectSpreadsheet = r;
-                rectSpreadsheet.yMin = rectMap.yMax + margin;
-                GUILayout.BeginArea(rectSpreadsheet);
+                GUILayout.BeginArea(r);
                 EditorGUILayout.BeginVertical();
+                EditorGUILayout.BeginHorizontal();
+                GUILayout.Label("Filters:");
+
+                m_Spreadsheet.OnGui_Filters();
+                GUILayout.FlexibleSpace();
+                EditorGUILayout.EndHorizontal();
 
                 EditorGUILayout.BeginHorizontal();
                 GUILayout.Space(2);
-                m_Spreadsheet.OnGUI(rectSpreadsheet.width);
+                m_Spreadsheet.OnGUI(r.width);
                 GUILayout.Space(2);
                 EditorGUILayout.EndHorizontal();
 
@@ -305,16 +544,16 @@ namespace Unity.MemoryProfiler.Editor.UI
                 GUILayout.EndArea();
             }
 
-            if (mEventToOpenNextDraw != null)
+            if (m_EventToOpenNextDraw != null)
             {
                 //this must be done after at least one call of m_TreeMap.OnGUI(rectMap)
                 //so that m_TreeMap is initialized with the appropriate rect.
                 //otherwise the zoom area will generate NaNs.
-                OpenHistoryEventImmediate(mEventToOpenNextDraw);
-                mEventToOpenNextDraw = null;
+                OpenHistoryEventImmediate(m_EventToOpenNextDraw);
+                m_EventToOpenNextDraw = null;
                 m_EventListener.OnRepaint();
             }
-            else if (m_TreeMap.IsAnimated())
+            else if (m_TreeMap != null && m_TreeMap.IsAnimated())
             {
                 m_EventListener.OnRepaint();
             }
@@ -323,6 +562,8 @@ namespace Unity.MemoryProfiler.Editor.UI
         public override void OnClose()
         {
             m_TreeMap.CleanupMeshes();
+            m_TreeMap = null;
+            m_Spreadsheet = null;
         }
     }
 }

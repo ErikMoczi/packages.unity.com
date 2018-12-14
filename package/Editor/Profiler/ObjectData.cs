@@ -7,7 +7,7 @@ using Unity.MemoryProfiler.Editor.Debuging;
 namespace Unity.MemoryProfiler.Editor
 {
 #if MEMPROFILER_DEBUG_INFO
-    public class ObjectData_DebugInfo
+    internal class ObjectData_DebugInfo
     {
         public ObjectData_DebugInfo mBase;
         public string mTypeName;
@@ -64,7 +64,7 @@ namespace Unity.MemoryProfiler.Editor
         }
     }
 #endif
-    public enum ObjectDataType
+    internal enum ObjectDataType
     {
         Unknown,
         Global,
@@ -78,7 +78,16 @@ namespace Unity.MemoryProfiler.Editor
         NativeObject,
         NativeObjectReference,
     }
-    public class ObjectDataParent
+
+    internal enum CodeType
+    {
+        Native,
+        Managed,
+        Unknown,
+        Count,
+    }
+
+    internal class ObjectDataParent
     {
         public ObjectData obj;
         public int iField;
@@ -92,7 +101,7 @@ namespace Unity.MemoryProfiler.Editor
             this.expandToTarget = expandToTarget;
         }
     }
-    public struct ObjectData
+    internal struct ObjectData
     {
 #if MEMPROFILER_DEBUG_INFO
         public ObjectData_DebugInfo mDebugInfo;
@@ -106,6 +115,13 @@ namespace Unity.MemoryProfiler.Editor
 #endif
         }
 
+        public static int InvalidInstanceID
+        {
+            get
+            {
+                return CachedSnapshot.NativeObjectEntriesCache.InstanceID_None;
+            }
+        }
         private ObjectDataType m_dataType;
         public ObjectDataParent m_Parent;//used for reference object/array and value to hold the owning object.
         public ObjectData displayObject
@@ -377,19 +393,75 @@ namespace Unity.MemoryProfiler.Editor
             else return ObjectDataType.Object;
         }
 
-        public ObjectData GetField(CachedSnapshot snapshot, int iField, bool expandToTarget)
+
+
+
+        // ObjectData is pointing to an object's field
+        public bool IsField()
+        {
+            return m_Parent != null && m_Parent.iField >= 0;
+        }
+
+        // ObjectData is pointing to an item in an array
+        public bool IsArrayItem()
+        {
+            return m_Parent != null && m_Parent.obj.dataType == ObjectDataType.Array;
+        }
+
+        // Returns the name of the field this ObjectData is pointing at.
+        // should be called only when IsField() return true
+        public string GetFieldName(CachedSnapshot snapshot)
+        {
+            return snapshot.fieldDescriptions.fieldDescriptionName[m_Parent.iField];
+        }
+
+        // Returns the number of fields the object (that this ObjectData is currently pointing at) has 
+        public int GetInstanceFieldCount(CachedSnapshot snapshot)
         {
             switch (m_dataType)
             {
-                case ObjectDataType.Unknown:
-                case ObjectDataType.Global:
-                case ObjectDataType.Array:
+                case ObjectDataType.Object:
+                case ObjectDataType.BoxedValue:
                 case ObjectDataType.ReferenceObject:
-                case ObjectDataType.ReferenceArray:
-                    DebugUtility.LogError("Requesting a field on an invalid data type");
-                    return new ObjectData();
+                case ObjectDataType.Value:
+                    if (managedTypeIndex < 0 || managedTypeIndex >= snapshot.typeDescriptions.fieldIndices_instance.Length) return 0;
+                    return snapshot.typeDescriptions.fieldIndices_instance[managedTypeIndex].Length;
                 default:
+                    return 0;
+            }
+        }
+
+        // Returns a new ObjectData pointing to the object's (that this ObjectData is currently pointing at) field
+        // using the field index from [0, GetInstanceFieldCount()[
+        public ObjectData GetInstanceFieldByIndex(CachedSnapshot snapshot, int i)
+        {
+            int iField = snapshot.typeDescriptions.fieldIndices_instance[managedTypeIndex][i];
+            return GetInstanceFieldBySnapshotFieldIndex(snapshot, iField, true);
+        }
+
+        // Returns a new ObjectData pointing to the object's (that this ObjectData is currently pointing at) field
+        // using a field index from snapshot.fieldDescriptions
+        public ObjectData GetInstanceFieldBySnapshotFieldIndex(CachedSnapshot snapshot, int iField, bool expandToTarget)
+        {
+            ObjectData obj;
+            ulong objectPtr;
+            switch (m_dataType)
+            {
+                case ObjectDataType.ReferenceObject:
+                    objectPtr = GetReferencePointer();
+                    obj = FromManagedPointer(snapshot, objectPtr);
                     break;
+                case ObjectDataType.BoxedValue:
+                case ObjectDataType.Object:
+                case ObjectDataType.Value:
+                    objectPtr = m_data.managed.objectPtr;
+                    obj = this;
+                    break;
+                //case ObjectDataType.ReferenceArray:
+                default:
+                    //TODO: add proper handling for missing types
+                    //DebugUtility.LogError("Requesting a field on an invalid data type");
+                    return new ObjectData();
             }
             var fieldOffset = snapshot.fieldDescriptions.offset[iField];
             var fieldType = snapshot.fieldDescriptions.typeIndex[iField];
@@ -414,14 +486,14 @@ namespace Unity.MemoryProfiler.Editor
             }
 
             ObjectData o = new ObjectData();
-            o.m_Parent = new ObjectDataParent(this, iField, -1, expandToTarget);
+            o.m_Parent = new ObjectDataParent(obj, iField, -1, expandToTarget);
             o.SetManagedType(snapshot, fieldType);
             o.m_dataType = TypeToSubDataType(snapshot, fieldType);
 
             if (isStatic)
             {
                 //the field requested might come from a base class. make sure we are using the right staticFieldBytes.
-                var iOwningType = m_data.managed.iType;
+                var iOwningType = obj.m_data.managed.iType;
                 while (iOwningType >= 0)
                 {
                     var fieldIndex = System.Array.FindIndex(snapshot.typeDescriptions.fieldIndicesOwned_static[iOwningType], x => x == iField);
@@ -444,12 +516,29 @@ namespace Unity.MemoryProfiler.Editor
             }
             else
             {
-                o.m_data.managed.objectPtr = m_data.managed.objectPtr;
-                o.managedObjectData = managedObjectData.Add(fieldOffset);
+                o.m_data.managed.objectPtr = objectPtr;// m_data.managed.objectPtr;
+                o.managedObjectData = obj.managedObjectData.Add(fieldOffset);
             }
             return o;
         }
 
+        public int GetInstanceID(CachedSnapshot snapshot)
+        {
+            int nativeIndex = nativeObjectIndex;
+            if (nativeIndex < 0) {
+                int managedIndex = GetManagedObjectIndex(snapshot);
+                if (managedIndex >= 0)
+                {
+                    nativeIndex = snapshot.m_CrawledData.managedObjects[managedIndex].nativeObjectIndex;
+                }
+            }
+
+            if (nativeIndex >= 0)
+            {
+                return snapshot.nativeObjects.instanceId[nativeIndex];
+            }
+            return CachedSnapshot.NativeObjectEntriesCache.InstanceID_None;
+        }
         public ObjectData GetBase(CachedSnapshot snapshot)
         {
             switch (m_dataType)
@@ -683,9 +772,31 @@ namespace Unity.MemoryProfiler.Editor
                 return false;
             }
         }
+        public CodeType codeType
+        {
+            get
+            {
+                switch (dataType)
+                {
+                    case ObjectDataType.Global:
+                    case ObjectDataType.Value:
+                    case ObjectDataType.Object:
+                    case ObjectDataType.Array:
+                    case ObjectDataType.BoxedValue:
+                    case ObjectDataType.ReferenceObject:
+                    case ObjectDataType.ReferenceArray:
+                    case ObjectDataType.Type:
+                        return CodeType.Managed;
+                    case ObjectDataType.NativeObject:
+                        return CodeType.Native;
+                    default:
+                        return CodeType.Unknown;
+                }
+            }
+        }
     }
 
-    public struct ObjectConnection
+    internal struct ObjectConnection
     {
         public static ObjectData[] GetAllObjectConnectingTo(CachedSnapshot snapshot, ObjectData obj)
         {
@@ -720,7 +831,7 @@ namespace Unity.MemoryProfiler.Editor
                                         var objParent = ObjectData.FromManagedObjectIndex(snapshot, c.fromManagedObjectIndex);
                                         if (c.fieldFrom >= 0)
                                         {
-                                            o.Add(objParent.GetField(snapshot, c.fieldFrom, false));
+                                            o.Add(objParent.GetInstanceFieldBySnapshotFieldIndex(snapshot, c.fieldFrom, false));
                                         }
                                         else if (c.arrayIndexFrom >= 0)
                                         {
@@ -738,7 +849,7 @@ namespace Unity.MemoryProfiler.Editor
                                         var objType = ObjectData.FromManagedType(snapshot, c.fromManagedType);
                                         if (c.fieldFrom >= 0)
                                         {
-                                            o.Add(objType.GetField(snapshot, c.fieldFrom, false));
+                                            o.Add(objType.GetInstanceFieldBySnapshotFieldIndex(snapshot, c.fieldFrom, false));
                                         }
                                         else if (c.arrayIndexFrom >= 0)
                                         {
@@ -799,7 +910,7 @@ namespace Unity.MemoryProfiler.Editor
             return o.ToArray();
         }
 
-        public static ObjectData[] GetAllObjectConnectingFrom(CachedSnapshot snapshot, ObjectData obj)
+        internal static ObjectData[] GetAllObjectConnectingFrom(CachedSnapshot snapshot, ObjectData obj)
         {
             //TODO
             var o = new List<ObjectData>();

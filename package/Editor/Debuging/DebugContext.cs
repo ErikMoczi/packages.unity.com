@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace Unity.MemoryProfiler.Editor.Debuging
 {
-    public interface IDebugContext
+    internal interface IDebugContext
     {
         string GetContextString(string separator);
         void SetParentContext(IDebugContext parent);
     }
-    public class DebugContextString : IDebugContext
+    internal class DebugContextString : IDebugContext
     {
         public string Message;
         public IDebugContext Parent;
@@ -31,7 +31,7 @@ namespace Unity.MemoryProfiler.Editor.Debuging
             Parent = parent;
         }
     }
-    public class DebugContextFunc : IDebugContext
+    internal class DebugContextFunc : IDebugContext
     {
         public Func<string> Function;
         public IDebugContext Parent;
@@ -55,14 +55,14 @@ namespace Unity.MemoryProfiler.Editor.Debuging
         }
     }
 
-    public interface IDebugContextService
+    internal interface IDebugContextService
     {
         void Push(IDebugContext context);
         IDebugContext Pop();
         IDebugContext GetCurrent();
     }
 
-    public class DebugContextService : IDebugContextService
+    internal class DebugContextService : IDebugContextService
     {
         public List<IDebugContext> Context = new List<IDebugContext>();
         void IDebugContextService.Push(IDebugContext context)
@@ -89,7 +89,7 @@ namespace Unity.MemoryProfiler.Editor.Debuging
     }
 
     // RAII class for scoping IDebugContext. Must be instantiated into a using statement
-    public class ScopeDebugContext : IDisposable
+    internal class ScopeDebugContext : IDisposable
     {
         private IDebugContext m_Context;
         public ScopeDebugContext(IDebugContext context)

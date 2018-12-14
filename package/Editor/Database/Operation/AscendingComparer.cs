@@ -1,10 +1,10 @@
 namespace Unity.MemoryProfiler.Editor.Database.Operation
 {
-    public class AscendingComparerValueType<DataT> : System.Collections.Generic.IComparer<DataT> where DataT : System.IComparable
+    internal class AscendingComparerValueType<DataT> : System.Collections.Generic.IComparer<DataT> where DataT : System.IComparable
     {
         public int Compare(DataT a, DataT b) { return a.CompareTo(b); }
     }
-    public class AscendingComparerReferenceType<DataT> : System.Collections.Generic.IComparer<DataT> where DataT : System.IComparable
+    internal class AscendingComparerReferenceType<DataT> : System.Collections.Generic.IComparer<DataT> where DataT : System.IComparable
     {
         public int Compare(DataT a, DataT b)
         {

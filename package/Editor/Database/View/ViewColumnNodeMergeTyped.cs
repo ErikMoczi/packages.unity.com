@@ -3,7 +3,7 @@ using System;
 namespace Unity.MemoryProfiler.Editor.Database.View
 {
     // List of merged value on a view when the data type is "node"
-    public class ViewColumnNodeMergeTyped<DataT> : ColumnTyped<DataT>, ViewColumnNode.IViewColumnNode where DataT : IComparable
+    internal class ViewColumnNodeMergeTyped<DataT> : ColumnTyped<DataT>, ViewColumnNode.IViewColumnNode where DataT : IComparable
     {
 #if MEMPROFILER_DEBUG_INFO
         public override string GetDebugString(long row)
@@ -51,15 +51,18 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             entries = new DataT[rowCount];
             for (long row = 0; row != rowCount; ++row)
             {
-                var subTable = m_ViewColumnNode.viewTable.CreateGroupTable(row);
-                if (subTable != null)
+                using (Profiling.GetMarker(Profiling.MarkerId.MergeColumn).Auto())
                 {
-                    var subColumn = subTable.GetColumnByIndex(m_ViewColumnNode.metaColumn.index);
-                    while (subColumn is IColumnDecorator)
+                    var subTable = m_ViewColumnNode.viewTable.CreateGroupTable(row);
+                    if (subTable != null)
                     {
-                        subColumn = (subColumn as IColumnDecorator).GetBaseColumn();
+                        var subColumn = subTable.GetColumnByIndex(m_ViewColumnNode.metaColumn.Index);
+                        while (subColumn is IColumnDecorator)
+                        {
+                            subColumn = (subColumn as IColumnDecorator).GetBaseColumn();
+                        }
+                        m_ViewColumnNode.metaColumn.DefaultMergeAlgorithm.Merge(this, row, subColumn, new ArrayRange(0, subColumn.GetRowCount()));
                     }
-                    m_ViewColumnNode.metaColumn.defaultMergeAlgorithm.Merge(this, row, subColumn, new ArrayRange(0, subColumn.GetRowCount()));
                 }
             }
             mbDirty = false;

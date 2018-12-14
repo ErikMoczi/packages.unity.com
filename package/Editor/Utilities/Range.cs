@@ -4,7 +4,7 @@ using System;
 
 namespace Unity.MemoryProfiler.Editor
 {
-    public struct Range
+    internal struct Range
     {
         public long first;
         public long last;
@@ -54,7 +54,7 @@ namespace Unity.MemoryProfiler.Editor
         }
     }
 
-    public struct ArrayRange
+    internal struct ArrayRange
     {
         public static ArrayRange FirstLast(long first, long last)
         {

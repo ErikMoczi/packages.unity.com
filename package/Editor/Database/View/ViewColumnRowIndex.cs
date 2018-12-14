@@ -3,7 +3,7 @@ using Unity.MemoryProfiler.Editor.Debuging;
 namespace Unity.MemoryProfiler.Editor.Database.View
 {
     // Used when displaying a constant value for all rows
-    public class ViewColumRowIndex : ColumnTyped<long>, ViewColumn.IViewColumn
+    internal class ViewColumRowIndex : ColumnTyped<long>, ViewColumn.IViewColumn
     {
 #if MEMPROFILER_DEBUG_INFO
         public override string GetDebugString(long row)
@@ -30,7 +30,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             string extraInfo = "";
             if (metaColumn != null)
             {
-                extraInfo += " column '" + metaColumn.name + "'";
+                extraInfo += " column '" + metaColumn.Name + "'";
             }
             DebugUtility.LogError("Cannot set a const value on a RowIndex view column. Table '" + vc.viewTable.GetName() + "'" + extraInfo);
         }

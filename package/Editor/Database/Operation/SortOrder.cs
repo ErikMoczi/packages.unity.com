@@ -1,12 +1,12 @@
 namespace Unity.MemoryProfiler.Editor.Database.Operation
 {
-    public enum SortOrder
+    internal enum SortOrder
     {
         None,
         Ascending,
         Descending,
     }
-    public class SortOrderString
+    internal class SortOrderString
     {
         public static SortOrder StringToSortOrder(string s, SortOrder defaultOrder = SortOrder.None)
         {

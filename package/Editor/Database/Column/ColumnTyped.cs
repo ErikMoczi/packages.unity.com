@@ -3,7 +3,7 @@ using Unity.MemoryProfiler.Editor.Database.Operation;
 
 namespace Unity.MemoryProfiler.Editor.Database
 {
-    public abstract class ColumnTyped<DataT> : Column where DataT : System.IComparable
+    internal abstract class ColumnTyped<DataT> : Column where DataT : System.IComparable
     {
         protected long[] m_SortIndexAsc;
         protected bool m_IsDataNullable;
@@ -65,7 +65,6 @@ namespace Unity.MemoryProfiler.Editor.Database
 
         public override long[] GetSortIndex(SortOrder order, ArrayRange indices, bool relativeIndex)
         {
-            Update();
             switch (order)
             {
                 case SortOrder.Ascending:
@@ -78,61 +77,55 @@ namespace Unity.MemoryProfiler.Editor.Database
 
         protected virtual long[] GetSortIndex(System.Collections.Generic.IComparer<DataT> comparer, ArrayRange indices, bool relativeIndex)
         {
-            Update();
-            long count = indices.indexCount;
-            DataT[] keys = new DataT[count];
-
-
-            //create index array
-            long[] index = new long[count];
-            if (relativeIndex)
+            using (Profiling.GetMarker(Profiling.MarkerId.Sort).Auto())
             {
-                for (long i = 0; i != count; ++i)
-                {
-                    index[i] = i;
-                    keys[i] = GetRowValue(indices[i]);
-                }
-            }
-            else
-            {
-                for (long i = 0; i != count; ++i)
-                {
-                    index[i] = indices[i];
-                    keys[i] = GetRowValue(indices[i]);
-                }
-            }
+                Update();
+                long count = indices.indexCount;
+                DataT[] keys = new DataT[count];
 
-            System.Array.Sort(keys, index, comparer);
-            return index;
+
+                //create index array
+                long[] index = new long[count];
+                if (relativeIndex)
+                {
+                    for (long i = 0; i != count; ++i)
+                    {
+                        index[i] = i;
+                        keys[i] = GetRowValue(indices[i]);
+                    }
+                }
+                else
+                {
+                    for (long i = 0; i != count; ++i)
+                    {
+                        index[i] = indices[i];
+                        keys[i] = GetRowValue(indices[i]);
+                    }
+                }
+
+                using (Profiling.GetMarker(Profiling.MarkerId.ArraySort).Auto())
+                {
+                    System.Array.Sort(keys, index, comparer);
+                }
+                return index;
+            }
         }
 
         public override long[] GetMatchIndex(ArrayRange rowRange, Operation.Operator operation, Operation.Expression expression, long expressionRowFirst, bool rowToRow)
         {
-            Update();
-            long count = rowRange.indexCount;
-            long[] matchedIndices = new long[count];
-            long indexOflastMatchedIndex = 0;
-            Operation.Operation.ComparableComparator comparator = Operation.Operation.GetComparator(type, expression.type);
-            if (rowToRow)
+            using (Profiling.GetMarker(Profiling.MarkerId.ColumnMatchQuery).Auto())
             {
-                for (long i = 0; i != count; ++i)
+                Update();
+                long count = rowRange.indexCount;
+                long[] matchedIndices = new long[count];
+                long indexOflastMatchedIndex = 0;
+                Operation.Operation.ComparableComparator comparator = Operation.Operation.GetComparator(type, expression.type);
+                if (rowToRow)
                 {
-                    var leftValue = GetRowValue(rowRange[i]);
-                    if (Operation.Operation.Match(operation, comparator, leftValue, expression, expressionRowFirst + i))
-                    {
-                        matchedIndices[indexOflastMatchedIndex] = rowRange[i];
-                        ++indexOflastMatchedIndex;
-                    }
-                }
-            }
-            else
-            {
-                if (Operation.Operation.IsOperatorOneToMany(operation))
-                {
-                    for (int i = 0; i != count; ++i)
+                    for (long i = 0; i != count; ++i)
                     {
                         var leftValue = GetRowValue(rowRange[i]);
-                        if (Operation.Operation.Match(operation, comparator, leftValue, expression, expressionRowFirst))
+                        if (Operation.Operation.Match(operation, comparator, leftValue, expression, expressionRowFirst + i))
                         {
                             matchedIndices[indexOflastMatchedIndex] = rowRange[i];
                             ++indexOflastMatchedIndex;
@@ -141,35 +134,50 @@ namespace Unity.MemoryProfiler.Editor.Database
                 }
                 else
                 {
-                    var valueRight = expression.GetComparableValue(expressionRowFirst);
-                    for (int i = 0; i != count; ++i)
+                    if (Operation.Operation.IsOperatorOneToMany(operation))
                     {
-                        var leftValue = GetRowValue(rowRange[i]);
-                        if (Operation.Operation.Match(operation, comparator, leftValue, valueRight))
+                        for (int i = 0; i != count; ++i)
                         {
-                            matchedIndices[indexOflastMatchedIndex] = rowRange[i];
-                            ++indexOflastMatchedIndex;
+                            var leftValue = GetRowValue(rowRange[i]);
+                            if (Operation.Operation.Match(operation, comparator, leftValue, expression, expressionRowFirst))
+                            {
+                                matchedIndices[indexOflastMatchedIndex] = rowRange[i];
+                                ++indexOflastMatchedIndex;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var valueRight = expression.GetComparableValue(expressionRowFirst);
+                        for (int i = 0; i != count; ++i)
+                        {
+                            var leftValue = GetRowValue(rowRange[i]);
+                            if (Operation.Operation.Match(operation, comparator, leftValue, valueRight))
+                            {
+                                matchedIndices[indexOflastMatchedIndex] = rowRange[i];
+                                ++indexOflastMatchedIndex;
+                            }
                         }
                     }
                 }
-            }
 
-            if (indexOflastMatchedIndex != count)
-            {
-                System.Array.Resize(ref matchedIndices, (int)indexOflastMatchedIndex);
-            }
+                if (indexOflastMatchedIndex != count)
+                {
+                    System.Array.Resize(ref matchedIndices, (int)indexOflastMatchedIndex);
+                }
 
 #if MEMPROFILER_DEBUG_INFO
-            Algorithm.DebugLog("GetMatchIndex : indexCount " + rowRange.indexCount
-                + " op:" + Operation.Operation.OperatorToString(operation)
-                + " Exp():" + expression.GetValueString(expressionRowFirst)
-                + " expRowFirst:" + expressionRowFirst
-                + " Column:" + this.GetDebugString(rowRange[0])
-                + " Expression:" + expression.GetDebugString(expressionRowFirst)
-                + " Result Count:" + (matchedIndices != null ? matchedIndices.Length : 0));
+	            Algorithm.DebugLog("GetMatchIndex : indexCount " + rowRange.indexCount
+	                + " op:" + Operation.Operation.OperatorToString(operation)
+	                + " Exp():" + expression.GetValueString(expressionRowFirst)
+	                + " expRowFirst:" + expressionRowFirst
+	                + " Column:" + this.GetDebugString(rowRange[0])
+	                + " Expression:" + expression.GetDebugString(expressionRowFirst)
+	                + " Result Count:" + (matchedIndices != null ? matchedIndices.Length : 0));
 #endif
 
-            return matchedIndices;
+                return matchedIndices;
+            }
         }
 
         public override long[] GetMatchIndex(ArrayRange indices, Operation.Matcher matcher)
@@ -239,109 +247,112 @@ namespace Unity.MemoryProfiler.Editor.Database
 
         public override long GetFirstMatchIndex(Operation.Operator operation, Operation.Expression expression, long expRowFirst)
         {
-            Update();
-            long[] sortedIndex = GetSortIndexAsc();
-
-            Operation.Operation.ComparableComparator comparator = Operation.Operation.GetComparator(type, expression.type);
-            var val2 = expression.GetComparableValue(expRowFirst);
-
-            long firstMatchIndex = -1;
-            switch (operation)
+            using (Profiling.GetMarker(Profiling.MarkerId.ColumnFirstMatchQuery).Auto())
             {
-                case Operation.Operator.less:
+                Update();
+                long[] sortedIndex = GetSortIndexAsc();
+
+                Operation.Operation.ComparableComparator comparator = Operation.Operation.GetComparator(type, expression.type);
+                var val2 = expression.GetComparableValue(expRowFirst);
+
+                long firstMatchIndex = -1;
+                switch (operation)
                 {
-                    long iFirst = sortedIndex[0];
-                    var val1 = GetRowValue(iFirst);
-                    int result = comparator(val1, val2);
-                    if (result < 0)
-                    {
-                        firstMatchIndex = iFirst;
-                    }
-                    break;
-                }
-                case Operation.Operator.lessEqual:
-                {
-                    long iFirst = sortedIndex[0];
-                    var val1 = GetRowValue(iFirst);
-                    int result = comparator(val1, val2);
-                    if (result <= 0)
-                    {
-                        firstMatchIndex = iFirst;
-                    }
-                    break;
-                }
-                case Operation.Operator.equal:
-                {
-                    long iFirstGreaterEqual = LowerBound(val2, comparator);
-                    if (iFirstGreaterEqual < sortedIndex.Length)
-                    {
-                        long index = sortedIndex[iFirstGreaterEqual];
-                        var val1 = GetRowValue(index);
-                        int comparisonResult = comparator(val1, val2);
-                        if (comparisonResult == 0)
+                    case Operation.Operator.Less:
                         {
-                            firstMatchIndex = index;
+                            long iFirst = sortedIndex[0];
+                            var val1 = GetRowValue(iFirst);
+                            int result = comparator(val1, val2);
+                            if (result < 0)
+                            {
+                                firstMatchIndex = iFirst;
+                            }
+                            break;
                         }
-                    }
-                    break;
+                    case Operation.Operator.LessEqual:
+                        {
+                            long iFirst = sortedIndex[0];
+                            var val1 = GetRowValue(iFirst);
+                            int result = comparator(val1, val2);
+                            if (result <= 0)
+                            {
+                                firstMatchIndex = iFirst;
+                            }
+                            break;
+                        }
+                    case Operation.Operator.Equal:
+                        {
+                            long iFirstGreaterEqual = LowerBound(val2, comparator);
+                            if (iFirstGreaterEqual < sortedIndex.Length)
+                            {
+                                long index = sortedIndex[iFirstGreaterEqual];
+                                var val1 = GetRowValue(index);
+                                int comparisonResult = comparator(val1, val2);
+                                if (comparisonResult == 0)
+                                {
+                                    firstMatchIndex = index;
+                                }
+                            }
+                            break;
+                        }
+                    case Operation.Operator.GreaterEqual:
+                        {
+                            long iFirstGreaterEqual = LowerBound(val2, comparator);
+                            if (iFirstGreaterEqual < sortedIndex.Length)
+                            {
+                                firstMatchIndex = sortedIndex[iFirstGreaterEqual];
+                            }
+                            break;
+                        }
+                    case Operation.Operator.Greater:
+                        {
+                            long iFirstGreater = UpperBound(val2, comparator);
+                            if (iFirstGreater < sortedIndex.Length)
+                            {
+                                firstMatchIndex = sortedIndex[iFirstGreater];
+                            }
+                            break;
+                        }
                 }
-                case Operation.Operator.greaterEqual:
-                {
-                    long iFirstGreaterEqual = LowerBound(val2, comparator);
-                    if (iFirstGreaterEqual < sortedIndex.Length)
-                    {
-                        firstMatchIndex = sortedIndex[iFirstGreaterEqual];
-                    }
-                    break;
-                }
-                case Operation.Operator.greater:
-                {
-                    long iFirstGreater = UpperBound(val2, comparator);
-                    if (iFirstGreater < sortedIndex.Length)
-                    {
-                        firstMatchIndex = sortedIndex[iFirstGreater];
-                    }
-                    break;
-                }
-            }
 #if (PROFILER_DEBUG_TEST)
 
-            {
-                long count = sortedIndex.Length;
-                long resultTest = -1;
-                for (long i = 0; i != count; ++i)
-                {
-                    long index = sortedIndex[i];
-                    var val = GetRowValue(index);
-                    int comparisonResult = comparator(val, val2);
-                    bool matchResult = Operation.Operation.Match(operation, comparisonResult);
-                    if (matchResult)
-                    {
-                        resultTest = index;
-                        break;
-                    }
-                }
-                UnityEngine.Debug.Assert(resultTest == firstMatchIndex);
-                if (resultTest >= 0)
-                {
-                    var val1 = GetRowValue(resultTest);
-                    int comparisonResult = comparator(val1, val2);
-                    bool resultMatch = Operation.Operation.Match(operation, comparisonResult);
-                    UnityEngine.Debug.Assert(resultMatch);
-                }
-            }
+	            {
+	                long count = sortedIndex.Length;
+	                long resultTest = -1;
+	                for (long i = 0; i != count; ++i)
+	                {
+	                    long index = sortedIndex[i];
+	                    var val = GetRowValue(index);
+	                    int comparisonResult = comparator(val, val2);
+	                    bool matchResult = Operation.Operation.Match(operation, comparisonResult);
+	                    if (matchResult)
+	                    {
+	                        resultTest = index;
+	                        break;
+	                    }
+	                }
+	                UnityEngine.Debug.Assert(resultTest == firstMatchIndex);
+	                if (resultTest >= 0)
+	                {
+	                    var val1 = GetRowValue(resultTest);
+	                    int comparisonResult = comparator(val1, val2);
+	                    bool resultMatch = Operation.Operation.Match(operation, comparisonResult);
+	                    UnityEngine.Debug.Assert(resultMatch);
+	                }
+	            }
 #endif
 
 #if MEMPROFILER_DEBUG_INFO
-            Algorithm.DebugLog("GetFirstMatchIndex :"
-                + " op:" + Operation.Operation.OperatorToString(operation)
-                + " Exp():" + expression.GetValueString(expRowFirst)
-                + " expRowFirst:" + expRowFirst
-                + " Column:" + this.GetDebugString(0)
-                + " Expression:" + expression.GetDebugString(expRowFirst)
-                + " Result:" + firstMatchIndex);
+	            Algorithm.DebugLog("GetFirstMatchIndex :"
+	                + " op:" + Operation.Operation.OperatorToString(operation)
+	                + " Exp():" + expression.GetValueString(expRowFirst)
+	                + " expRowFirst:" + expRowFirst
+	                + " Column:" + this.GetDebugString(0)
+	                + " Expression:" + expression.GetDebugString(expRowFirst)
+	                + " Result:" + firstMatchIndex);
 #endif
-            return firstMatchIndex;
+                return firstMatchIndex;
+            }
         }
 
         public override int Compare(long rowLhs, Operation.Expression expression, long rowRhs)

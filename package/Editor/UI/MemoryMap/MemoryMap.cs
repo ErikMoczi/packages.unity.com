@@ -1,379 +1,586 @@
 using System;
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.MemoryProfiler.Editor.NativeArrayExtensions;
 using UnityEngine;
 using UnityEditor;
 
 namespace Unity.MemoryProfiler.Editor.UI.MemoryMap
 {
-    public class MemoryMap
-    {
-        public CachedSnapshot m_Snapshot;
-        private ZoomArea m_ZoomArea;
-
-        public IViewEventListener m_EventListener;
-        public MemoryMap(IViewEventListener l)
+    internal class MemoryMap : MemoryMapBase
+    {        
+        [Flags]
+        public enum DisplayElements
         {
-            m_EventListener = l;
+            Allocations   = 1 << 0, 
+            MangedObjects = 1 << 1,   
+            NativeObjects = 1 << 2,
+            VirtualMemory = 1 << 3,
         }
 
-        private List<Mesh2D> m_cachedMeshes = new List<Mesh2D>();
-        private List<Mesh2D> m_SelectionMeshes = new List<Mesh2D>();
-
-        private Vector2 mousePosition { get { return m_ZoomArea.ViewToWorldTransformPoint(Event.current.mousePosition); } }
-
-        public delegate void OnSelectRegionsDelegate(MemoryRegion[] rngs);
-        public OnSelectRegionsDelegate OnSelectRegions;
-
-        public Rect mDrawRect;
-        public int m_RowCount = 32;
-        public ulong m_RowMemorySize;
-        public ulong m_MemoryAddressMin;
-        public ulong m_MemoryAddressMax;
-        public MemoryRegion[] m_MemoryRegion;
-        public MemoryRegion[] m_SelectedMemoryRegions;
-        public class RegionMesh
+        public struct ViewState
         {
-            public MemoryRegion m_Region;
-            public class SectionMesh
-            {
-                public Rect m_Rect;
+            public ulong    BytesInRow;
+            public ulong    HighlightedAddrMin;
+            public ulong    HighlightedAddrMax;
+            public int      DisplayElements;
+            public Vector2  ScrollArea;
+        }
+
+        public ViewState CurrentViewState
+        {
+            get { 
+                ViewState state;
+                state.BytesInRow = m_BytesInRow;
+                state.HighlightedAddrMin = m_HighlightedAddrMin;
+                state.HighlightedAddrMax = m_HighlightedAddrMax;
+                state.DisplayElements = m_DisplayElements;
+                state.ScrollArea = m_ScrollArea;
+                return state;
+            }
+
+            set {
+                m_BytesInRow = value.BytesInRow;
+                m_HighlightedAddrMin = value.HighlightedAddrMin;
+                m_HighlightedAddrMax = value.HighlightedAddrMax;
+                m_DisplayElements = value.DisplayElements;
+                m_ScrollArea = value.ScrollArea;
             }
         }
-        public class Row
+
+        Vector2 m_ScrollArea;
+        int m_DisplayElements = int.MaxValue & (~(int)DisplayElements.NativeObjects);
+
+        public bool GetDisplayElement(DisplayElements element)
         {
-            public ulong m_Begin;
-            public ulong m_End;
-            public Row(ulong begin, ulong end)
-            {
-                m_Begin = begin;
-                m_End = end;
-            }
-
-            protected MemoryRegion[] m_Region;
-            protected ulong[] m_RegionBegin;
-            protected ulong[] m_RegionEnd;
-            public void SetRegions(List<MemoryRegion> regionList)
-            {
-                var r = regionList.ToArray();
-                System.Array.Sort(r, new MemoryRegion.EndComparer());
-                m_Region = r;
-                m_RegionBegin = new ulong[r.Length];
-                m_RegionEnd = new ulong[r.Length];
-                for (int i = 0; i != r.Length; ++i)
-                {
-                    m_RegionBegin[i] = r[i].GetAddressBegin();
-                    m_RegionEnd[i] = r[i].GetAddressEnd();
-                }
-            }
-
-            public MemoryRegion[] GetRegionIn(ulong minAddress, ulong maxAddress)
-            {
-                int first = Algorithm.LowerBound(m_RegionEnd, minAddress);
-                int last = first;
-                while (last < m_RegionBegin.Length && m_RegionBegin[last] < maxAddress)
-                {
-                    ++last;
-                }
-                MemoryRegion[] o = new MemoryRegion[last - first];
-                Array.Copy(m_Region, first, o, 0, last - first);
-                return o;
-            }
+            return (m_DisplayElements & (int)element) != 0 ;
         }
-        public Row[] m_Row;
 
-        Rect m_World_Rect;
-        Vector2 m_World_TopLeft;
-        Vector2 m_World_BottomRight;
-        Vector2 m_World_Diff;
-        float m_World_RowHeight;
-
-        public void Setup(CachedSnapshot snapshot)//(MemoryProfilerWindow hostWindow, CrawledMemorySnapshot _unpackedCrawl)
+        public int DisplayElement
         {
-            m_Snapshot = snapshot;
-            m_MemoryRegion = new MemoryRegion[m_Snapshot.nativeMemoryRegions.Count + m_Snapshot.managedHeapSections.Count + m_Snapshot.managedStacks.Count];
+            get { 
+                return m_DisplayElements; 
+            }
+            set { 
+                m_DisplayElements = value; 
+                SetupView(m_BytesInRow);                
+                m_ForceReselect = true;
+                ForceRepaint = true;
+                          
+                UnityEditor.EditorPrefs.SetInt("Unity.MemoryProfiler.Editor.UI.MemoryMap.DisplayElements", m_DisplayElements);
+            }
+        }        
+
+        public void SetDisplayElement(DisplayElements element, bool state)
+        {
+            if (state)
+                DisplayElement = DisplayElement | (int)element;
+            else
+                DisplayElement = DisplayElement & (~(int)element); 
+        }
+        public void ToggleDisplayElement(DisplayElements element)
+        {
+            SetDisplayElement(element, !GetDisplayElement(element));
+        }
+
+        bool m_ForceReselect = false;
+
+        public void Reselect()
+        {
+            m_ForceReselect = true;
+        }
+
+        public ulong BytesInRow 
+        {
+            get { return m_BytesInRow; }
+
+            set 
+            { 
+                SetupView(value);
+
+                ForceRepaint = true;
+
+                UnityEditor.EditorPrefs.SetInt("Unity.MemoryProfiler.Editor.UI.MemoryMap.BytesInRow", (int)m_BytesInRow);  
+             }
+        }
+        
+
+        public event Action<ulong, ulong> RegionSelected;
+        
+        CachedSnapshot m_Snapshot;
+        MemoryRegion[] m_SnapshotMemoryRegion;
+        List<EntryRange>  m_GroupsMangedObj = new List<EntryRange>();    
+        List<EntryRange>  m_GroupsNativeAlloc = new List<EntryRange>();    
+        List<EntryRange>  m_GroupsNativeObj = new List<EntryRange>();     
+        ulong m_MouseDragStartAddr = 0;
+
+        public MemoryMap()
+        {
+            m_BytesInRow = (ulong)UnityEditor.EditorPrefs.GetInt("Unity.MemoryProfiler.Editor.UI.MemoryMap.BytesInRow", (int)m_BytesInRow);            
+            m_DisplayElements = UnityEditor.EditorPrefs.GetInt("Unity.MemoryProfiler.Editor.UI.MemoryMap.DisplayElements", m_DisplayElements);
+        }
+
+        void SetupSortedData()
+        {
+            PrepareSortedData(new CachedSnapshot.ISortedEntriesCache[] { 
+                m_Snapshot.SortedManagedObjects,
+                m_Snapshot.SortedNativeAllocations,
+                m_Snapshot.SortedNativeObjects });
+        }
+
+        void SetupRegions()
+        {
+            ProgressBarDisplay.UpdateProgress(0.0f, "Flushing regions ...");
+            
+            int regionIndex = 0;
+            
+            m_SnapshotMemoryRegion = new MemoryRegion[m_Snapshot.nativeMemoryRegions.Count + m_Snapshot.managedHeapSections.Count + m_Snapshot.managedStacks.Count];
+
             for (int i = 0; i != m_Snapshot.nativeMemoryRegions.Count; ++i)
             {
-                m_MemoryRegion[i] = new NativeMemoryRegion(m_Snapshot, i);
-            }
-            for (int i = 0; i != m_Snapshot.managedHeapSections.Count; ++i)
-            {
-                m_MemoryRegion[m_Snapshot.nativeMemoryRegions.Count + i] = new ManagedMemoryRegion(m_Snapshot, i);
-            }
-            for (int i = 0; i != m_Snapshot.managedStacks.Count; ++i)
-            {
-                m_MemoryRegion[m_Snapshot.nativeMemoryRegions.Count + m_Snapshot.managedHeapSections.Count + i] = new ManagedStackMemoryRegion(m_Snapshot, i);
-            }
-            ComputeFullMemoryRange();
-            m_Row = new Row[m_RowCount];
-            List<MemoryRegion>[] mrList = new List<MemoryRegion>[m_Row.Length];
-            for (int i = 0; i != m_RowCount; ++i)
-            {
-                m_Row[i] = new Row(m_MemoryAddressMin + (ulong)i * m_RowMemorySize, m_MemoryAddressMin + (ulong)(i + 1) * m_RowMemorySize);
-                mrList[i] = new List<MemoryRegion>();
-            }
+                if (regionIndex%10000 == 0) ProgressBarDisplay.UpdateProgress((float)regionIndex/(float)m_SnapshotMemoryRegion.Length);
 
-            foreach (var mr in m_MemoryRegion)
-            {
-                ulong b = mr.GetAddressBegin();
-                ulong e = mr.GetAddressEnd();
-                if (b != e)
+                ulong start = m_Snapshot.nativeMemoryRegions.addressBase[i];
+                ulong size = (ulong)m_Snapshot.nativeMemoryRegions.addressSize[i];
+                string name = m_Snapshot.nativeMemoryRegions.memoryRegionName[i];
+
+                MemoryRegion region;
+                if (name.Contains("Virtual Memory") )
                 {
-                    ulong br = MapAddressRow(b);
-                    ulong er = MapAddressRow(e);
-                    mrList[br].Add(mr);
-                    if (er != br && er < (ulong)m_RowCount)
-                    {
-                        mrList[er].Add(mr);
-                    }
-                }
-            }
-            for (int i = 0; i != m_RowCount; ++i)
-            {
-                m_Row[i].SetRegions(mrList[i]);
-            }
-
-            m_ZoomArea = new ZoomArea();
-            m_ZoomArea.resizeWorld(new Rect(-1, -1, 2, 2));
-
-            ComputeWorldMetrics();
-        }
-
-        private void ComputeWorldMetrics()
-        {
-            m_World_Rect = m_ZoomArea.m_WorldSpace;
-            m_World_TopLeft = new Vector2(m_World_Rect.xMin, m_World_Rect.yMax);
-            m_World_BottomRight = new Vector2(m_World_Rect.xMax, m_World_Rect.yMin);
-            m_World_Diff = m_World_BottomRight - m_World_TopLeft;
-            m_World_RowHeight = m_World_Diff.y / m_RowCount;
-        }
-
-        public void OnGUI(Rect r)
-        {
-            mDrawRect = r;
-
-            if (r != m_ZoomArea.m_ViewSpace)
-            {
-                m_ZoomArea.resizeView(r);
-                RefreshMesh(r);
-            }
-
-            //_ZoomArea.rect = r;
-            m_ZoomArea.BeginViewGUI();
-
-            GUI.BeginGroup(r);
-            Handles.matrix = m_ZoomArea.worldToViewMatrix;
-            HandleMouseClick(r);
-            RenderMap();
-            GUI.EndGroup();
-
-            m_ZoomArea.EndViewGUI();
-        }
-
-        public void SelectRegions(MemoryRegion[] rngs)
-        {
-            m_SelectedMemoryRegions = rngs;
-            RefreshSelectionhMesh();
-            if (OnSelectRegions != null) OnSelectRegions(m_SelectedMemoryRegions);
-            if (m_EventListener != null) m_EventListener.OnRepaint();
-        }
-
-        private void HandleMouseClick(Rect r)
-        {
-            if (Event.current.type == EventType.MouseDown)
-            {
-                var vMouseInWorld = m_ZoomArea.ViewToWorldTransformPoint(Event.current.mousePosition);
-                var vMouseInWorldRect = vMouseInWorld - m_World_TopLeft;
-                var mouseRow = (int)(vMouseInWorldRect.y / m_World_RowHeight);
-
-                if (mouseRow >= 0 && mouseRow < m_RowCount)
-                {
-                    var xT = vMouseInWorldRect.x / m_World_Diff.x;
-                    var xDelta = m_ZoomArea.worldPixelSize.x / m_World_Diff.x;
-                    ulong addressBegin = (ulong)Mathf.Floor(xT * m_RowMemorySize) + m_Row[mouseRow].m_Begin;
-                    ulong addressEnd = addressBegin + (ulong)Mathf.Ceil(xDelta * m_RowMemorySize);
-                    var rngs = m_Row[mouseRow].GetRegionIn(addressBegin, addressEnd);
-                    SelectRegions(rngs);
-                }
-            }
-        }
-
-        public void CleanupMeshes()
-        {
-            if (m_cachedMeshes == null)
-            {
-                m_cachedMeshes = new List<Mesh2D>();
-            }
-            else
-            {
-                for (int i = 0; i != m_MemoryRegion.Length; ++i)
-                {
-                    m_MemoryRegion[i].CleanupMeshes();
-                }
-
-                m_cachedMeshes.Clear();
-            }
-        }
-
-        public void ComputeFullMemoryRange()
-        {
-            ulong memMin = ulong.MaxValue;
-            ulong memMax = ulong.MinValue;
-            for (int i = 0; i != m_MemoryRegion.Length; ++i)
-            {
-                ulong b = m_MemoryRegion[i].GetAddressBegin();
-                ulong e = m_MemoryRegion[i].GetAddressEnd();
-                if (b != e)
-                {
-                    memMin = Math.Min(memMin, b);
-                    memMax = Math.Max(memMax, e);
-                }
-            }
-            m_MemoryAddressMin = memMin;
-            m_MemoryAddressMax = memMax;
-            m_RowMemorySize = (ulong)Mathf.Ceil((m_MemoryAddressMax - m_MemoryAddressMin) / (float)m_RowCount);
-        }
-
-        private Vector2 MapAddressOld(Rect r, ulong addr)
-        {
-            float rowHeight = r.height / m_RowCount;
-            float rowMemory = (m_MemoryAddressMax - m_MemoryAddressMin) / (float)m_RowCount;
-
-            ulong offset = addr - m_MemoryAddressMin;
-            float row = Mathf.Floor(offset / rowMemory);
-            float rowMin = row * rowMemory;
-            float inRow = (offset - rowMin) / rowMemory * r.width;
-
-            return new Vector2(inRow, row * rowHeight);
-        }
-
-        private ulong MapAddressRow(ulong addr)
-        {
-            ulong offset = addr - m_MemoryAddressMin;
-            ulong row = (ulong)(offset / m_RowMemorySize);
-            return row;
-        }
-
-        private int MapYToRow(Rect r, float y)
-        {
-            ulong rowHeight = (ulong)(r.height / m_RowCount);
-            int row = (int)(y / rowHeight);
-            return row;
-        }
-
-        private ulong MapPixelToAddress(Rect r, Vector2 pos, int row)
-        {
-            ulong offset = (ulong)((pos.x / r.width + row) * m_RowMemorySize);
-            return offset + m_MemoryAddressMin;
-        }
-
-        private ulong MapPixelToAddressRange(Rect r)
-        {
-            ulong addr = (ulong)Mathf.Ceil(m_RowMemorySize / r.width);
-            return addr;
-        }
-
-        private MemoryRegionSection[] MapRegionToWorldRect(MemoryRegion rgn)
-        {
-            List<MemoryRegionSection> o = new List<MemoryRegionSection>();
-
-
-            ulong b = rgn.GetAddressBegin();
-            ulong e = rgn.GetAddressEnd();
-            ulong first_row = MapAddressRow(b);
-            ulong Last_row = MapAddressRow(e);
-            ulong minInRowByte;
-            ulong maxInRowByte;
-            while (b < e)
-            {
-                minInRowByte = (b - m_MemoryAddressMin) - (first_row * m_RowMemorySize);
-                ulong e2;
-                if (first_row == Last_row)
-                {
-                    maxInRowByte = (e - m_MemoryAddressMin) - (first_row * m_RowMemorySize);
-                    e2 = e;
+                    region = new MemoryRegion(RegionType.VirtualMemory, start, size, name);
+                    region.ColorRegion = m_ColorNative[(int)EntryColors.VirtualMemory];
                 }
                 else
                 {
-                    maxInRowByte = m_RowMemorySize;
-                    e2 = m_MemoryAddressMin + (first_row * m_RowMemorySize) + m_RowMemorySize;
+                    region = new MemoryRegion(RegionType.Native, start, size, name);
+                    region.ColorRegion = m_ColorNative[(int)EntryColors.Region];
                 }
-                float minRatio = minInRowByte / (float)m_RowMemorySize;
-                float maxRatio = maxInRowByte / (float)m_RowMemorySize;
-                var vMin = m_World_TopLeft + new Vector2(minRatio * m_World_Diff.x, first_row * m_World_RowHeight);
-                var vMax = m_World_TopLeft + new Vector2(maxRatio * m_World_Diff.x, (first_row + 1) * m_World_RowHeight);
-                Rect rr = new Rect(vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y);
-                o.Add(new MemoryRegionSection(rr, b, e2));
 
-                ++first_row;
-                b = (first_row * m_RowMemorySize) + m_MemoryAddressMin;
+                region.ColorRegion = new Color32(region.ColorRegion.r, region.ColorRegion.g, region.ColorRegion.b, (byte)(1 + regionIndex%255));
+                m_SnapshotMemoryRegion[regionIndex++] = region;
             }
-            return o.ToArray();
+
+            for (int i = 0; i != m_Snapshot.managedHeapSections.Count; ++i)
+            {
+                if (regionIndex%10000 == 0) ProgressBarDisplay.UpdateProgress((float)regionIndex/(float)m_SnapshotMemoryRegion.Length);
+
+                ulong start = m_Snapshot.managedHeapSections.startAddress[i];
+                ulong size = (ulong)m_Snapshot.managedHeapSections.bytes[i].Length;
+                string name = string.Format("Heap Sections {0}", i);
+
+                MemoryRegion region = new MemoryRegion(RegionType.Managed, start, size, name);                
+                region.ColorRegion = m_ColorManaged[(int)EntryColors.Region];
+                region.ColorRegion = new Color32(region.ColorRegion.r, region.ColorRegion.g, region.ColorRegion.b, (byte)(1 + regionIndex%255));
+                m_SnapshotMemoryRegion[regionIndex++] = region;
+            }
+
+            ProgressBarDisplay.UpdateProgress((float)regionIndex/(float)m_SnapshotMemoryRegion.Length);
+
+            for (int i = 0; i != m_Snapshot.managedStacks.Count; ++i)
+            {
+                if (regionIndex%10000 == 0) ProgressBarDisplay.UpdateProgress((float)regionIndex/(float)m_SnapshotMemoryRegion.Length);
+
+                ulong start = m_Snapshot.managedStacks.startAddress[i];
+                ulong size = (ulong)m_Snapshot.managedStacks.bytes[i].Length;
+                string name = string.Format("Stack Sections {0}", i);
+
+                MemoryRegion region = new MemoryRegion(RegionType.ManagedStack, start, size, name);
+                region.ColorRegion = m_ColorManagedStack[(int)EntryColors.Region];
+                region.ColorRegion = new Color32(region.ColorRegion.r, region.ColorRegion.g, region.ColorRegion.b, (byte)(1 + regionIndex%255));
+                m_SnapshotMemoryRegion[regionIndex++] = region;
+            }
+
+            ProgressBarDisplay.UpdateProgress((float)regionIndex/(float)m_SnapshotMemoryRegion.Length);
+
+            ProgressBarDisplay.UpdateProgress(0.0f, "Sorting regions ...");
+
+            Array.Sort(m_SnapshotMemoryRegion, delegate(MemoryRegion a, MemoryRegion b) 
+                { 
+                    int result = a.AddressBegin.CompareTo(b.AddressBegin); 
+
+                    if (result == 0) 
+                        result = -a.AddressEnd.CompareTo(b.AddressEnd);  
+                          
+                    return result;
+                }
+            );
+
+            ProgressBarDisplay.UpdateProgress(1.0f);
         }
 
-        private void RefreshMesh(Rect r)
+        void CreateGroups( )
         {
-            m_cachedMeshes.Clear();
+            m_Groups.Clear();
 
+            ProgressBarDisplay.UpdateProgress(0.0f, "Create groups ...");
 
-            MeshBuilder mb = new MeshBuilder();
-            for (int i = 1; i != m_RowCount; ++i)
+            int metaRegions = 0;
+
+            while(m_SnapshotMemoryRegion[metaRegions].AddressBegin == 0 && m_SnapshotMemoryRegion[metaRegions].AddressBegin == m_SnapshotMemoryRegion[metaRegions].AddressEnd)
+                metaRegions ++;
+
+            int   groupIdx = 0;
+            ulong groupAddressBegin = m_SnapshotMemoryRegion[metaRegions].AddressBegin; 
+            ulong groupAddressEnd = groupAddressBegin;
+
+            for (int i=metaRegions; i<m_SnapshotMemoryRegion.Length; ++i)
             {
-                float rowRatio = i / (float)m_RowCount;
-                var vMin = m_World_TopLeft + new Vector2(0, rowRatio * m_World_Diff.y);
-                var vMax = m_World_TopLeft + new Vector2(m_World_Diff.x, rowRatio * m_World_Diff.y);
-                mb.Add(0, new MeshBuilder.Line(vMin, vMax, new Color(0.33f, 0.33f, 0.33f)));
-            }
-            m_cachedMeshes.Add(mb.CreateMesh());
+                if (i%10000 == 0) ProgressBarDisplay.UpdateProgress((float)i/(float)m_SnapshotMemoryRegion.Length);
 
+                if(m_SnapshotMemoryRegion[i].Type == RegionType.VirtualMemory && !GetDisplayElement(DisplayElements.VirtualMemory))
+                    continue;
 
-            mb = new MeshBuilder();
-            for (int i = 0; i != m_MemoryRegion.Length; ++i)
-            {
-                MemoryRegionSection[] sections = MapRegionToWorldRect(m_MemoryRegion[i]);
-                foreach (var sec in sections)
+                ulong addressBegin = m_SnapshotMemoryRegion[i].AddressBegin;
+                ulong addressEnd   = m_SnapshotMemoryRegion[i].AddressEnd;
+
+                if ((addressBegin > groupAddressEnd) && (addressBegin/m_BytesInRow) > (groupAddressEnd/m_BytesInRow) + 1)
                 {
-                    m_MemoryRegion[i].BuildMeshSection(mb, sec.rect, sec.beginAddress, sec.endAddress, m_ZoomArea.worldPixelSize);
+                    AddGroup(groupAddressBegin, groupAddressEnd);
+                    groupAddressBegin = addressBegin;
+                    groupAddressEnd = addressEnd;
+                    groupIdx++;
                 }
-            }
-            m_cachedMeshes.Add(mb.CreateMesh());
-
-
-            mb = new MeshBuilder();
-            Rect rAll = new Rect(m_World_TopLeft.x, m_World_TopLeft.y, m_World_Diff.x - 0.00001f, m_World_Diff.y + 0.00001f);
-            mb.Add(0, new MeshBuilder.Rectangle(rAll, Color.white), false);
-            m_cachedMeshes.Add(mb.CreateMesh());
-        }
-
-        private void RefreshSelectionhMesh()
-        {
-            m_SelectionMeshes.Clear();
-
-
-            MeshBuilder mb = new MeshBuilder();
-            for (int i = 0; i != m_SelectedMemoryRegions.Length; ++i)
-            {
-                MemoryRegionSection[] sections = MapRegionToWorldRect(m_SelectedMemoryRegions[i]);
-                foreach (var sec in sections)
+                else
                 {
-                    m_MemoryRegion[i].BuildSelectionMeshSection(mb, sec.rect, sec.beginAddress, sec.endAddress, m_ZoomArea.worldPixelSize);
+                    groupAddressEnd = Math.Max(groupAddressEnd, addressEnd);
                 }
+
+                m_SnapshotMemoryRegion[i].Group = groupIdx;
             }
-            m_SelectionMeshes.Add(mb.CreateMesh());
+
+            AddGroup(groupAddressBegin, groupAddressEnd);
+
+            ProgressBarDisplay.UpdateProgress(1.0f);
         }
 
-        public void RenderMap()
+        void SetupGroups()
         {
-            if (Event.current.type != EventType.Repaint || m_cachedMeshes == null)
+            ProgressBarDisplay.UpdateProgress(0.0f, "Setup groups ...");
+
+            int managedObjectsOffset = 0;
+            int managedObjectsCount = m_Snapshot.SortedManagedObjects.Count;
+
+            m_GroupsMangedObj.Clear();
+
+            int nativeAllocationsOffset = 0;
+            int nativeAllocationsCount = m_Snapshot.SortedNativeAllocations.Count;
+
+            m_GroupsNativeAlloc.Clear();
+
+            int nativeObjectsOffset = 0;
+            int nativeObjectsCount = m_Snapshot.SortedNativeObjects.Count;
+
+            m_GroupsNativeObj.Clear();
+
+            EntryRange range;
+
+            for (int i =0; i<m_Groups.Count; ++i)
+            {
+                if (i%1000 == 0) ProgressBarDisplay.UpdateProgress((float)i/(float)m_Groups.Count);
+
+                // Assigning Managed Objects Range
+                while (managedObjectsOffset < managedObjectsCount && m_Groups[i].AddressBegin > m_Snapshot.SortedManagedObjects.Address(managedObjectsOffset))
+                    managedObjectsOffset ++;
+
+                range.Begin = managedObjectsOffset;
+
+                while (managedObjectsOffset < managedObjectsCount && m_Snapshot.SortedManagedObjects.Address(managedObjectsOffset) < m_Groups[i].AddressEnd)
+                    managedObjectsOffset ++;
+
+                range.End = managedObjectsOffset;
+            
+                m_GroupsMangedObj.Add(range);
+                
+                // Assigning Native Allocation Range
+                while (nativeAllocationsOffset < nativeAllocationsCount && m_Groups[i].AddressBegin > m_Snapshot.SortedNativeAllocations.Address(nativeAllocationsOffset))
+                    nativeAllocationsOffset ++;
+
+                range.Begin = nativeAllocationsOffset;
+
+                while (nativeAllocationsOffset < nativeAllocationsCount && m_Snapshot.SortedNativeAllocations.Address(nativeAllocationsOffset) < m_Groups[i].AddressEnd)
+                    nativeAllocationsOffset ++;
+
+                range.End = nativeAllocationsOffset;
+            
+                m_GroupsNativeAlloc.Add(range);
+
+                // Assigning Native Objects Range
+                while (nativeObjectsOffset < nativeObjectsCount && m_Groups[i].AddressBegin > m_Snapshot.SortedNativeObjects.Address(nativeObjectsOffset))
+                    nativeObjectsOffset ++;
+
+                range.Begin = nativeObjectsOffset;
+
+                while (nativeObjectsOffset < nativeObjectsCount && m_Snapshot.SortedNativeObjects.Address(nativeObjectsOffset) < m_Groups[i].AddressEnd)
+                    nativeObjectsOffset ++;
+
+                range.End = nativeObjectsOffset;
+            
+                m_GroupsNativeObj.Add(range);
+            }
+
+            ProgressBarDisplay.UpdateProgress(1.0f);
+        }
+
+        public void SetupView( ulong rowMemorySize )
+        {
+            ProgressBarDisplay.ShowBar("Setup memory map view");
+
+            m_BytesInRow = rowMemorySize;
+
+            CreateGroups();
+
+            SetupGroups();
+
+            ProgressBarDisplay.ClearBar();
+        }
+
+        public void Setup(CachedSnapshot snapshot)
+        {
+            m_Snapshot = snapshot;
+
+            ProgressBarDisplay.ShowBar("Setup memory map");
+
+            SetupSortedData();
+
+            SetupRegions();
+
+            CreateGroups();
+
+            SetupGroups();
+
+            ProgressBarDisplay.ClearBar();
+        }
+
+        public override void OnRenderMap(ulong addressMin, ulong addressMax, int slot)
+        {
+            for (int i = 0; i<m_SnapshotMemoryRegion.Length; ++i)
+            {
+                if(m_SnapshotMemoryRegion[i].Type == RegionType.VirtualMemory && !GetDisplayElement(DisplayElements.VirtualMemory))
+                    continue;
+
+                ulong stripGroupAddrBegin = m_SnapshotMemoryRegion[i].AddressBegin.Clamp(addressMin, addressMax);
+                ulong stripGroupAddrEnd   = m_SnapshotMemoryRegion[i].AddressEnd.Clamp(addressMin, addressMax);
+
+                if (stripGroupAddrBegin == stripGroupAddrEnd)
+                    continue;
+
+                MemoryGroup group = m_Groups[m_SnapshotMemoryRegion[i].Group];
+                
+                RenderStrip(group, stripGroupAddrBegin, stripGroupAddrEnd, m_SnapshotMemoryRegion[i].ColorRegion);
+            }
+
+            for (int i = 0; i<m_Groups.Count; ++i)
+            {
+                ulong stripGroupAddrBegin = m_Groups[i].AddressBegin.Clamp(addressMin, addressMax);
+                ulong stripGroupAddrEnd   = m_Groups[i].AddressEnd.Clamp(addressMin, addressMax);
+
+                if (stripGroupAddrBegin == stripGroupAddrEnd)
+                    continue;
+
+                if (GetDisplayElement(DisplayElements.Allocations))
+                {
+                    Color32 color = m_ColorNative[(int)EntryColors.Allocation];
+                    Render(m_Snapshot.SortedNativeAllocations, m_GroupsNativeAlloc, i, addressMin, addressMax, (Color32 c) => new Color32(color.r, color.g, color.b, c.a));
+                }
+        
+                if (GetDisplayElement(DisplayElements.NativeObjects))
+                {        
+                    Color32 color = m_ColorNative[(int)EntryColors.Object];
+                    Render(m_Snapshot.SortedNativeObjects, m_GroupsNativeObj, i, addressMin, addressMax, (Color32 c) => new Color32(color.r, color.g, color.b, c.a));
+                }
+
+                if (GetDisplayElement(DisplayElements.MangedObjects))
+                {
+                    Color32 color = m_ColorManaged[(int)EntryColors.Object];
+                    Render(m_Snapshot.SortedManagedObjects, m_GroupsMangedObj, i, addressMin, addressMax, (Color32 c) => new Color32(color.r, color.g, color.b, c.a));
+                }
+            }
+        }
+
+        void OnGUIView(Rect r, Rect viewRect)
+        {
+            GUI.BeginGroup(r);
+
+            m_ScrollArea = GUI.BeginScrollView(new Rect(0,0, r.width, r.height), m_ScrollArea, new Rect(0,0,viewRect.width - Styles.VScrollBarWidth, viewRect.height), false, true);
+
+            if (m_ScrollArea.y + r.height > viewRect.height)
+                m_ScrollArea.y = Math.Max(0, viewRect.height - r.height);
+
+            FlushTextures(m_ScrollArea.y, m_ScrollArea.y + r.height);
+
+            float viewTop    = m_ScrollArea.y;
+            float viewBottom = m_ScrollArea.y + r.height;
+
+            HandleMouseClick(r);
+    
+            if (Event.current.type == EventType.Repaint)    
+            {
+                BindDefaultMaterial();
+
+                RenderGroups(viewTop, viewBottom);
+            }
+
+            RenderGroupLabels(viewTop, viewBottom);
+
+            GUI.EndScrollView();
+
+            GUI.EndGroup();
+        }
+
+        void OnGUILegend(Rect r)
+        {            
+            Color oldColor = GUI.backgroundColor;
+                
+            int slotWidth = 150;
+            GUI.BeginGroup(r);
+                
+            int yOffset = 5;
+            int xOffset = (int)Styles.HeaderWidth;
+
+
+            GUI.backgroundColor = m_ColorManaged[(int)EntryColors.Region];  
+            GUI.Toggle(new Rect(xOffset, yOffset, slotWidth, r.height), true, "Managed Memory", Styles.SeriesLabel);
+            xOffset += slotWidth-50;
+
+            if (GetDisplayElement(DisplayElements.MangedObjects))
+            {
+                GUI.backgroundColor = m_ColorManaged[(int)EntryColors.Object];  
+                GUI.Toggle(new Rect(xOffset, yOffset, slotWidth, r.height), true, "Managed Object", Styles.SeriesLabel);
+                xOffset += slotWidth-50;
+            }
+
+            GUI.backgroundColor = m_ColorNative[(int)EntryColors.Region];  
+            GUI.Toggle(new Rect(xOffset, yOffset, slotWidth, r.height), true, "Native Memory (Reserved)", Styles.SeriesLabel);
+            xOffset += slotWidth;
+
+            if (GetDisplayElement(DisplayElements.Allocations))
+            {
+                GUI.backgroundColor = m_ColorNative[(int)EntryColors.Allocation];  
+                GUI.Toggle(new Rect(xOffset, yOffset, slotWidth, r.height), true, "Native Memory (Allocated)", Styles.SeriesLabel);
+                xOffset += slotWidth;
+            }
+
+            if (GetDisplayElement(DisplayElements.NativeObjects))
+            {
+                GUI.backgroundColor = m_ColorNative[(int)EntryColors.Object];  
+                GUI.Toggle(new Rect(xOffset, yOffset, slotWidth, r.height), true, "Native Object", Styles.SeriesLabel);
+                xOffset += slotWidth-50;            
+            }
+
+            if (GetDisplayElement(DisplayElements.VirtualMemory))
+            {
+                GUI.backgroundColor = m_ColorNative[(int)EntryColors.VirtualMemory];  
+                GUI.Toggle(new Rect(xOffset, yOffset, slotWidth, r.height), true, "Virtual Memory", Styles.SeriesLabel);
+                xOffset += slotWidth-50;            
+            }
+            GUI.EndGroup();
+
+            GUI.backgroundColor = oldColor;
+        }
+
+        public void OnGUI(Rect rect)
+        {
+            Rect r = new Rect(rect);
+            r.y      += Styles.LegendHeight;
+            r.height -= Styles.LegendHeight;
+
+            Rect viewRect = new Rect(0, 0, r.width, m_Groups[m_Groups.Count-1].MaxY + Styles.RowPixelHeight);
+
+            MemoryMapRect = new Rect(
+                viewRect.x + Styles.HeaderWidth, 
+                viewRect.y, 
+                viewRect.width - Styles.HeaderWidth - Styles.VScrollBarWidth, 
+                viewRect.height);
+
+            if (MemoryMapRect.width <= 0 || MemoryMapRect.height <= 0)
                 return;
 
-            for (int i = 0; i < m_cachedMeshes.Count; i++)
+            OnGUILegend(new Rect(r.x, rect.y, r.width, Styles.LegendHeight));
+
+            OnGUIView(r, viewRect);
+
+            if (m_ForceReselect)
             {
-                m_cachedMeshes[i].Render();
-            }
-            for (int i = 0; i < m_SelectionMeshes.Count; i++)
-            {
-                m_SelectionMeshes[i].Render();
+                RegionSelected(m_HighlightedAddrMin, m_HighlightedAddrMax);
+                m_ForceReselect = false;
             }
         }
+
+        int AddressToRegion(ulong addr)
+        {
+            int select = -1;
+            for (int i = 0; i < m_SnapshotMemoryRegion.Length; ++i)
+            {
+                MemoryRegion region = m_SnapshotMemoryRegion[i];
+                
+                if (addr < region.AddressBegin)
+                {
+                    break;
+                }
+
+                if (region.AddressBegin <= addr && addr < region.AddressEnd)
+                {
+                    select = i;
+                }
+            }
+            return select;
+        }
+
+        void HandleMouseClick(Rect r)
+        {
+            ulong pixelDragLimit = 2*m_BytesInRow/(ulong)MemoryMapRect.width;
+
+            if (Event.current.mousePosition.y-m_ScrollArea.y >= r.height)
+                return;
+
+            if (Event.current.type == EventType.MouseDown)
+            {
+                m_MouseDragStartAddr = MouseToAddress(Event.current.mousePosition);
+                m_HighlightedAddrMin = m_MouseDragStartAddr;
+                m_HighlightedAddrMax = m_MouseDragStartAddr;
+            }
+            else if (Event.current.type == EventType.MouseDrag)
+            {
+                ulong addr = MouseToAddress(Event.current.mousePosition);;                
+                m_HighlightedAddrMin = (addr < m_MouseDragStartAddr) ? addr : m_MouseDragStartAddr;
+                m_HighlightedAddrMax = (addr < m_MouseDragStartAddr) ? m_MouseDragStartAddr : addr;     
+                
+                if (m_HighlightedAddrMax - m_HighlightedAddrMin > pixelDragLimit)
+                {           
+                    Event.current.Use();
+                }
+            }
+            else if (Event.current.type == EventType.MouseUp)
+            {
+                if (m_HighlightedAddrMax - m_HighlightedAddrMin <= pixelDragLimit)
+                {
+                    if (Event.current.mousePosition.x < Styles.HeaderWidth)
+                    {
+                        for (int i = 0; i < m_Groups.Count; ++i)
+                        {
+                            if (m_Groups[i].Labels[0].TextRect.Contains(Event.current.mousePosition))
+                            {
+                                m_HighlightedAddrMin = m_Groups[i].AddressBegin;
+                                m_HighlightedAddrMax = m_Groups[i].AddressEnd;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {                   
+                        m_HighlightedAddrMax = m_HighlightedAddrMin = ulong.MaxValue; 
+                        int reg = AddressToRegion(m_MouseDragStartAddr);
+                        if (reg >= 0)
+                        {
+                            m_HighlightedAddrMin = m_SnapshotMemoryRegion[reg].AddressBegin;
+                            m_HighlightedAddrMax = m_SnapshotMemoryRegion[reg].AddressEnd;
+                        }
+                    }
+                }
+
+                RegionSelected(m_HighlightedAddrMin, m_HighlightedAddrMax);
+                Event.current.Use();
+            }
+        } 
     }
 }

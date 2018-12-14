@@ -3,31 +3,56 @@ using System;
 namespace Unity.MemoryProfiler.Editor.Database.View
 {
     // Column that yield the value of an expression
-    public class ViewColumnExpressionType<DataT> : Database.ColumnTyped<DataT>, ViewColumn.IViewColumn where DataT : IComparable
+    internal class ViewColumnExpressionType<DataT> : Database.ColumnTyped<DataT>, ViewColumn.IViewColumn where DataT : IComparable
     {
 #if MEMPROFILER_DEBUG_INFO
         public override string GetDebugString(long row)
         {
-            return "ViewColumnExpressionType<" + typeof(DataT).Name + ">[" + row + "]{" + SourceExpression.GetDebugString(row) + "}";
+            return "ViewColumnExpressionType<" + typeof(DataT).Name + ">[" + row + "]{" + m_SourceExpression.GetDebugString(row) + "}";
         }
 
 #endif
-        public ViewColumn SourceViewColumn;
-        public Operation.TypedExpression<DataT> SourceExpression;
+        ViewColumn m_SourceViewColumn;
+        Operation.TypedExpression<DataT> m_SourceExpression;
+
+        Operation.ValueStringArrayCache<DataT> m_Cache;
 
         public ViewColumnExpressionType(Operation.TypedExpression<DataT> expression)
         {
             type = typeof(DataT);
-            SourceExpression = expression;
+            m_SourceExpression = expression;
+        }
+
+        bool HasFixedRow { get { return m_SourceViewColumn.ParsingContext != null && m_SourceViewColumn.ParsingContext.fixedRow >= 0; } }
+        int FixedRow { get { return (int)m_SourceViewColumn.ParsingContext.fixedRow; } }
+
+        bool UpdateCache()
+        {
+            if (!m_Cache.Initialized)
+            {
+                m_Cache.InitForExpression(m_SourceExpression);
+                return true;
+            }
+            return false;
+        }
+        int EntryIndexToCacheIndex(long index)
+        {
+            return HasFixedRow ? 0 : (int)index;
+        }
+        int EntryIndexToSourceRow(long index)
+        {
+            return HasFixedRow ? FixedRow : (int)index;
         }
 
         void ViewColumn.IViewColumn.SetColumn(ViewColumn vc, Database.Column col)
         {
-            SourceViewColumn = vc;
+            m_SourceViewColumn = vc;
+            UpdateCache();
         }
 
         void ViewColumn.IViewColumn.SetConstValue(string value)
         {
+            throw new InvalidOperationException("Cannot call 'ViewColumn.IViewColumn.SetConstValue' on 'ViewColumnExpressionType'");
         }
 
         Database.Column ViewColumn.IViewColumn.GetColumn()
@@ -37,53 +62,45 @@ namespace Unity.MemoryProfiler.Editor.Database.View
 
         public override long GetRowCount()
         {
-            return SourceExpression.RowCount();
+            return m_SourceExpression.RowCount();
         }
 
         public override bool ComputeRowCount()
         {
-            return SourceViewColumn.viewTable.ComputeRowCount();
+            return m_SourceViewColumn.viewTable.ComputeRowCount();
         }
 
         public override Database.View.LinkRequest GetRowLink(long row)
         {
-            if (SourceViewColumn.ParsingContext != null && SourceViewColumn.ParsingContext.fixedRow >= 0)
+            if (m_SourceViewColumn.ParsingContext != null && m_SourceViewColumn.ParsingContext.fixedRow >= 0)
             {
-                return Database.View.LinkRequest.MakeLinkRequest(SourceViewColumn.m_MetaLink, SourceViewColumn.viewTable, this, SourceViewColumn.ParsingContext.fixedRow, SourceViewColumn.ParsingContext);
+                return Database.View.LinkRequest.MakeLinkRequest(m_SourceViewColumn.m_MetaLink, m_SourceViewColumn.viewTable, this, m_SourceViewColumn.ParsingContext.fixedRow, m_SourceViewColumn.ParsingContext);
             }
             else
             {
-                return Database.View.LinkRequest.MakeLinkRequest(SourceViewColumn.m_MetaLink, SourceViewColumn.viewTable, this, row, SourceViewColumn.ParsingContext);
+                return Database.View.LinkRequest.MakeLinkRequest(m_SourceViewColumn.m_MetaLink, m_SourceViewColumn.viewTable, this, row, m_SourceViewColumn.ParsingContext);
             }
         }
 
         public override string GetRowValueString(long row)
         {
-            if (SourceViewColumn.m_IsDisplayMergedOnly) return "";
-            if (SourceViewColumn.ParsingContext != null && SourceViewColumn.ParsingContext.fixedRow >= 0)
+            if (m_SourceViewColumn.m_IsDisplayMergedOnly)
             {
-                return SourceExpression.GetValueString(SourceViewColumn.ParsingContext.fixedRow);
+                return "";
             }
-            else
-            {
-                return SourceExpression.GetValueString(row);
-            }
+            UpdateCache();
+            return m_Cache.GetValueStringFromExpression((int)row, m_SourceExpression, row);
         }
 
         public override DataT GetRowValue(long row)
         {
-            if (SourceViewColumn.ParsingContext != null && SourceViewColumn.ParsingContext.fixedRow >= 0)
-            {
-                return SourceExpression.GetValue(SourceViewColumn.ParsingContext.fixedRow);
-            }
-            else
-            {
-                return SourceExpression.GetValue(row);
-            }
+            UpdateCache();
+            return m_Cache.GetValueFromExpression((int)row, m_SourceExpression, row);
         }
 
         public override void SetRowValue(long row, DataT value)
         {
+            throw new InvalidOperationException("Cannot call 'SetRowValue' on 'ViewColumnExpressionType'");
         }
     }
 }

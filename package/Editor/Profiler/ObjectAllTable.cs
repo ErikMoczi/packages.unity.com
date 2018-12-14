@@ -1,12 +1,12 @@
 namespace Unity.MemoryProfiler.Editor
 {
-    public class ObjectAllManagedTable : ObjectListTable
+    internal class ObjectAllManagedTable : ObjectListTable
     {
-        public new const string kTableName = "AllManagedObject";
-        public new const string kTableDisplayName = "All Managed Object";
+        public new const string kTableName = "AllManagedObjects";
+        public new const string kTableDisplayName = "All Managed Objects";
         private ObjectData[] m_cache;
-        public ObjectAllManagedTable(Database.Scheme scheme, SnapshotDataRenderer renderer, CachedSnapshot snapshot, ManagedData crawledData, ObjectMetaType metaType)
-            : base(scheme, renderer, snapshot, crawledData, metaType)
+        public ObjectAllManagedTable(Database.Schema schema, SnapshotDataRenderer renderer, CachedSnapshot snapshot, ManagedData crawledData, ObjectMetaType metaType)
+            : base(schema, renderer, snapshot, crawledData, metaType)
         {
             InitObjectList();
         }
@@ -37,9 +37,9 @@ namespace Unity.MemoryProfiler.Editor
             {
                 UnityEngine.Debug.Log("GetObjectData out of range");
             }
-            var mo = crawledData.managedObjects[(int)row];
             if (!m_cache[row].IsValid)
             {
+                var mo = crawledData.managedObjects[(int)row];
                 m_cache[row] = ObjectData.FromManagedPointer(snapshot, mo.ptrObject);
             }
             return m_cache[row];
@@ -56,13 +56,13 @@ namespace Unity.MemoryProfiler.Editor
             m_cache = null;
         }
     }
-    public class ObjectAllNativeTable : ObjectListTable
+    internal class ObjectAllNativeTable : ObjectListTable
     {
-        public new const string kTableName = "AllNativeObject";
-        public new const string kTableDisplayName = "All Native Object";
+        public new const string kTableName = "AllNativeObjects";
+        public new const string kTableDisplayName = "All Native Objects";
         private ObjectData[] m_cache;
-        public ObjectAllNativeTable(Database.Scheme scheme, SnapshotDataRenderer renderer, CachedSnapshot snapshot, ManagedData crawledData, ObjectMetaType metaType)
-            : base(scheme, renderer, snapshot, crawledData, metaType)
+        public ObjectAllNativeTable(Database.Schema schema, SnapshotDataRenderer renderer, CachedSnapshot snapshot, ManagedData crawledData, ObjectMetaType metaType)
+            : base(schema, renderer, snapshot, crawledData, metaType)
         {
             InitObjectList();
         }
@@ -106,13 +106,13 @@ namespace Unity.MemoryProfiler.Editor
             m_cache = null;
         }
     }
-    public class ObjectAllTable : ObjectListTable
+    internal class ObjectAllTable : ObjectListTable
     {
-        public new const string kTableName = "AllObject";
-        public new const string kTableDisplayName = "All Object";
+        public new const string kTableName = "AllObjects";
+        public new const string kTableDisplayName = "All Objects";
         private ObjectData[] m_cache;
-        public ObjectAllTable(Database.Scheme scheme, SnapshotDataRenderer renderer, CachedSnapshot snapshot, ManagedData crawledData, ObjectMetaType metaType)
-            : base(scheme, renderer, snapshot, crawledData, metaType)
+        public ObjectAllTable(Database.Schema schema, SnapshotDataRenderer renderer, CachedSnapshot snapshot, ManagedData crawledData, ObjectMetaType metaType)
+            : base(schema, renderer, snapshot, crawledData, metaType)
         {
             InitObjectList();
         }

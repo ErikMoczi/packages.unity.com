@@ -2,7 +2,7 @@ using System;
 
 namespace Unity.MemoryProfiler.Editor.Database.Operation
 {
-    public class Comparer
+    internal class Comparer
     {
         public static System.Collections.Generic.IComparer<DataT> Ascending<DataT>() where DataT : System.IComparable
         {
@@ -28,18 +28,18 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             }
         }
     }
-    public enum Operator
+    internal enum Operator
     {
-        equal,
-        notEqual,
-        greater,
-        greaterEqual,
-        less,
-        lessEqual,
-        isIn,
-        notIn
+        Equal,
+        NotEqual,
+        Greater,
+        GreaterEqual,
+        Less,
+        LessEqual,
+        IsIn,
+        NotIn
     }
-    public class Operation
+    internal class Operation
     {
         public static bool IsOperatorOneToOne(Operator op)
         {
@@ -50,8 +50,8 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         {
             switch (op)
             {
-                case Operator.isIn:
-                case Operator.notIn:
+                case Operator.IsIn:
+                case Operator.NotIn:
                     return true;
                 default: return false;
             }
@@ -61,14 +61,14 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         {
             switch (op)
             {
-                case Operator.equal: return "==";
-                case Operator.notEqual: return "!=";
-                case Operator.greater: return ">";
-                case Operator.greaterEqual: return ">=";
-                case Operator.less: return "<";
-                case Operator.lessEqual: return "<=";
-                case Operator.isIn: return "isIn";
-                case Operator.notIn: return "notIn";
+                case Operator.Equal: return "==";
+                case Operator.NotEqual: return "!=";
+                case Operator.Greater: return ">";
+                case Operator.GreaterEqual: return ">=";
+                case Operator.Less: return "<";
+                case Operator.LessEqual: return "<=";
+                case Operator.IsIn: return "isIn";
+                case Operator.NotIn: return "notIn";
                 default: return "<unknown operator>";
             }
         }
@@ -96,8 +96,8 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         {
             switch (op)
             {
-                case Operator.isIn:
-                case Operator.notIn:
+                case Operator.IsIn:
+                case Operator.NotIn:
                 {
                     long rightRowCount = rightExpression.RowCount();
                     for (long expRow = 0; expRow != rightRowCount; ++expRow)
@@ -105,10 +105,10 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
                         var rightValue = rightExpression.GetComparableValue(expRow);
                         if (Compare(comparator, leftValue, rightValue) == 0)
                         {
-                            return op == Operator.isIn;
+                            return op == Operator.IsIn;
                         }
                     }
-                    return op == Operator.notIn;
+                    return op == Operator.NotIn;
                 }
                 default:
                 {
@@ -118,16 +118,93 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             }
         }
 
+        public static bool Match(Operator op, long leftValue, TypedExpression<long> rightExpression, long rightExpressionRow)
+        {
+            switch (op)
+            {
+                case Operator.IsIn:
+                case Operator.NotIn:
+                    {
+                        long rightRowCount = rightExpression.RowCount();
+                        for (long expRow = 0; expRow != rightRowCount; ++expRow)
+                        {
+                            var rightValue = rightExpression.GetValue(expRow);
+                            if (leftValue == rightValue)
+                            {
+                                return op == Operator.IsIn;
+                            }
+                        }
+                        return op == Operator.NotIn;
+                    }
+                default:
+                    {
+                        var rightValue = rightExpression.GetValue(rightExpressionRow);
+                        return Match(op, leftValue, rightValue);
+                    }
+            }
+        }
+        public static bool Match(Operator op, int leftValue, TypedExpression<int> rightExpression, long rightExpressionRow)
+        {
+            switch (op)
+            {
+                case Operator.IsIn:
+                case Operator.NotIn:
+                    {
+                        long rightRowCount = rightExpression.RowCount();
+                        for (long expRow = 0; expRow != rightRowCount; ++expRow)
+                        {
+                            var rightValue = rightExpression.GetValue(expRow);
+                            if (leftValue == rightValue)
+                            {
+                                return op == Operator.IsIn;
+                            }
+                        }
+                        return op == Operator.NotIn;
+                    }
+                default:
+                    {
+                        var rightValue = rightExpression.GetValue(rightExpressionRow);
+                        return Match(op, leftValue, rightValue);
+                    }
+            }
+        }
+
         public static bool Match(Operator op, int CompareResult)
         {
             switch (op)
             {
-                case Operator.equal: return CompareResult == 0;
-                case Operator.notEqual: return CompareResult != 0;
-                case Operator.greater: return CompareResult > 0;
-                case Operator.greaterEqual: return CompareResult >= 0;
-                case Operator.less: return CompareResult < 0;
-                case Operator.lessEqual: return CompareResult <= 0;
+                case Operator.Equal: return CompareResult == 0;
+                case Operator.NotEqual: return CompareResult != 0;
+                case Operator.Greater: return CompareResult > 0;
+                case Operator.GreaterEqual: return CompareResult >= 0;
+                case Operator.Less: return CompareResult < 0;
+                case Operator.LessEqual: return CompareResult <= 0;
+            }
+            throw new System.Exception("bad operator");
+        }
+        public static bool Match(Operator op, long lhs, long rhs)
+        {
+            switch (op)
+            {
+                case Operator.Equal: return lhs == rhs;
+                case Operator.NotEqual: return lhs != rhs;
+                case Operator.Greater: return lhs > rhs;
+                case Operator.GreaterEqual: return lhs >= rhs;
+                case Operator.Less: return lhs < rhs;
+                case Operator.LessEqual: return lhs <= rhs;
+            }
+            throw new System.Exception("bad operator");
+        }
+        public static bool Match(Operator op, int lhs, int rhs)
+        {
+            switch (op)
+            {
+                case Operator.Equal: return lhs == rhs;
+                case Operator.NotEqual: return lhs != rhs;
+                case Operator.Greater: return lhs > rhs;
+                case Operator.GreaterEqual: return lhs >= rhs;
+                case Operator.Less: return lhs < rhs;
+                case Operator.LessEqual: return lhs <= rhs;
             }
             throw new System.Exception("bad operator");
         }
@@ -136,14 +213,14 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         {
             switch (op)
             {
-                case Operator.equal: return Operator.notEqual;
-                case Operator.notEqual: return Operator.equal;
-                case Operator.greater: return Operator.lessEqual;
-                case Operator.greaterEqual: return Operator.less;
-                case Operator.less: return Operator.greaterEqual;
-                case Operator.lessEqual: return Operator.greater;
-                case Operator.isIn: return Operator.notIn;
-                case Operator.notIn: return Operator.isIn;
+                case Operator.Equal: return Operator.NotEqual;
+                case Operator.NotEqual: return Operator.Equal;
+                case Operator.Greater: return Operator.LessEqual;
+                case Operator.GreaterEqual: return Operator.Less;
+                case Operator.Less: return Operator.GreaterEqual;
+                case Operator.LessEqual: return Operator.Greater;
+                case Operator.IsIn: return Operator.NotIn;
+                case Operator.NotIn: return Operator.IsIn;
             }
             throw new System.Exception("bad operator");
         }
@@ -152,18 +229,18 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         {
             switch (op)
             {
-                case Operator.equal: return lhs.CompareTo(rhs) == 0;
-                case Operator.notEqual: return lhs.CompareTo(rhs) != 0;
-                case Operator.greater: return lhs.CompareTo(rhs) > 0;
-                case Operator.greaterEqual: return lhs.CompareTo(rhs) >= 0;
-                case Operator.less: return lhs.CompareTo(rhs) < 0;
-                case Operator.lessEqual: return lhs.CompareTo(rhs) <= 0;
+                case Operator.Equal: return lhs.CompareTo(rhs) == 0;
+                case Operator.NotEqual: return lhs.CompareTo(rhs) != 0;
+                case Operator.Greater: return lhs.CompareTo(rhs) > 0;
+                case Operator.GreaterEqual: return lhs.CompareTo(rhs) >= 0;
+                case Operator.Less: return lhs.CompareTo(rhs) < 0;
+                case Operator.LessEqual: return lhs.CompareTo(rhs) <= 0;
             }
             throw new System.Exception("bad operator");
         }
 
         public delegate int ComparableComparator(IComparable a, IComparable b);
-        public class TypePair : IComparable
+        internal class TypePair : IComparable
         {
             int IComparable.CompareTo(object obj)
             {

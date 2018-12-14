@@ -1,17 +1,16 @@
-#define DEBUG_VALIDATION
 namespace Unity.MemoryProfiler.Editor
 {
-    public class ObjectReferenceTable : ObjectListTable
+    internal class ObjectReferenceTable : ObjectListTable
     {
         public static string kObjectReferenceTableName = "ManagedObjectReference";
-        public static string kObjectReferenceTableDisplayName = "Managed Object Reference";
-        public ManagedConnection[] managedReference;
+        //not used //static string k_ObjectReferenceTableDisplayName = "Managed Object Reference";
+        //not used //public ManagedConnection[] managedReference;
 
-        public ObjectData m_Object;
-        private ObjectData[] m_References;
+        ObjectData m_Object;
+        ObjectData[] m_References;
 
-        public ObjectReferenceTable(Database.Scheme scheme, SnapshotDataRenderer renderer, CachedSnapshot snapshot, ManagedData crawledData, ObjectData obj, ObjectMetaType metaType)
-            : base(scheme, renderer, snapshot, crawledData, metaType)
+        public ObjectReferenceTable(Database.Schema schema, SnapshotDataRenderer renderer, CachedSnapshot snapshot, ManagedData crawledData, ObjectData obj, ObjectMetaType metaType)
+            : base(schema, renderer, snapshot, crawledData, metaType)
         {
             m_Object = obj;
             m_References = ObjectConnection.GetAllObjectConnectingTo(snapshot, obj);

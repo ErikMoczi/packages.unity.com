@@ -3,11 +3,11 @@ using Unity.MemoryProfiler.Editor.Debuging;
 
 namespace Unity.MemoryProfiler.Editor.Database.Operation
 {
-    public interface IDiffColumn
+    internal interface IDiffColumn
     {
         void Initialize(DiffTable table, Column[] sourceColumn);
     }
-    public class DiffColumnTyped<DataT> : ColumnTyped<DataT>, IDiffColumn where DataT : System.IComparable
+    internal class DiffColumnTyped<DataT> : ColumnTyped<DataT>, IDiffColumn where DataT : System.IComparable
     {
 #if MEMPROFILER_DEBUG_INFO
         public override string GetDebugString(long row)
@@ -76,7 +76,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             return link;
         }
     }
-    public class DiffColumnResult : ColumnTyped<DiffTable.DiffResult>
+    internal class DiffColumnResult : ColumnTyped<DiffTable.DiffResult>
     {
 #if MEMPROFILER_DEBUG_INFO
         public override string GetDebugString(long row)
@@ -114,7 +114,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
     }
 
     // Compares 2 table with identical structure and output each rows which primary key are present in either the first one only, the second one only or in both
-    public class DiffTable : Table
+    internal class DiffTable : Table
     {
         public Table[] sourceTables;
         public enum DiffFilter
@@ -163,8 +163,8 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         }
         public Entry[] m_Entries;
 
-        public DiffTable(Scheme scheme, Table[] table, int columnKey)
-            : base(scheme)
+        public DiffTable(Schema schema, Table[] table, int columnKey)
+            : base(schema)
         {
             this.sourceTables = table;
             this.columnKey = columnKey;
@@ -219,7 +219,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             for (int i = 1; i != m_Meta.GetColumnCount(); ++i)
             {
                 var metaCol = m_Meta.GetColumnByIndex(i);
-                IDiffColumn newCol = (IDiffColumn)ColumnCreator.CreateColumn(typeof(DiffColumnTyped<>), metaCol.type);
+                IDiffColumn newCol = (IDiffColumn)ColumnCreator.CreateColumn(typeof(DiffColumnTyped<>), metaCol.Type);
                 Column[] c = new Column[sourceTables.Length];
                 for (int j = 0; j < sourceTables.Length; ++j)
                 {
@@ -242,7 +242,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             int curB = 0;
             int maxA = indexA.Length;
             int maxB = indexB.Length;
-            var exp = ColumnCreator.CreateTypedExpressionColumn(mc.type, colB);
+            var exp = ColumnCreator.CreateTypedExpressionColumn(mc.Type, colB);
             System.Collections.Generic.List<Entry> entries = new System.Collections.Generic.List<Entry>();
             while (curA < maxA && curB < maxB)
             {
@@ -334,30 +334,30 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
     }
 
 
-    public class DiffScheme : SchemeAggregate
+    internal class DiffSchema : SchemaAggregate
     {
-        public Scheme m_SchemeBefore;
-        public Scheme m_SchemeAfter;
-        public DiffScheme(Scheme schemeBefore, Scheme schemeAfter)
+        public Schema m_SchemaBefore;
+        public Schema m_SchemaAfter;
+        public DiffSchema(Schema schemaBefore, Schema schemaAfter)
         {
             name = "Diff";
-            m_SchemeBefore = schemeBefore;
-            m_SchemeAfter = schemeAfter;
+            m_SchemaBefore = schemaBefore;
+            m_SchemaAfter = schemaAfter;
             ComputeTables();
         }
 
         public override bool OwnsTable(Table table)
         {
-            if (table.scheme == this) return true;
+            if (table.Schema == this) return true;
             return base.OwnsTable(table);
         }
 
         protected void ComputeTables()
         {
-            for (int iTable = 0; iTable < m_SchemeBefore.GetTableCount(); ++iTable)
+            for (int iTable = 0; iTable < m_SchemaBefore.GetTableCount(); ++iTable)
             {
-                var tabA = m_SchemeBefore.GetTableByIndex(iTable);
-                var tabB = m_SchemeAfter.GetTableByName(tabA.GetName());
+                var tabA = m_SchemaBefore.GetTableByIndex(iTable);
+                var tabB = m_SchemaAfter.GetTableByName(tabA.GetName());
 
                 if (tabB == null) continue;
 
@@ -382,20 +382,20 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             int snapshotIndex;
             if (param != null && param.TryGet("snapshotindex", out snapshotIndex))
             {
-                Scheme scheme;
+                Schema schema;
                 switch (snapshotIndex)
                 {
                     case 0:
-                        scheme = m_SchemeBefore;
+                        schema = m_SchemaBefore;
                         break;
                     case 1:
-                        scheme = m_SchemeAfter;
+                        schema = m_SchemaAfter;
                         break;
                     default:
                         DebugUtility.LogError("Requesting a table from an invalid snapshot index. Must be 0 or 1. Is " + snapshotIndex);
                         return null;
                 }
-                return scheme.GetTableByName(name, param);
+                return schema.GetTableByName(name, param);
             }
             return GetTableByName(name);
         }

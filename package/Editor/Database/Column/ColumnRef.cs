@@ -1,6 +1,6 @@
 namespace Unity.MemoryProfiler.Editor.Database
 {
-    public struct ColumnRef
+    internal struct ColumnRef
     {
         public string tableName;
         public string columnName;

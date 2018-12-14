@@ -3,7 +3,7 @@ using System.Xml;
 
 namespace Unity.MemoryProfiler.Editor.Database.View
 {
-    public class Where
+    internal class Where
     {
 #if MEMPROFILER_DEBUG_INFO
         public string GetDebugString(long columnRow, long valueRow)
@@ -43,7 +43,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                 comparison = new Operation.MetaColumnComparison(column, op, value);
             }
 
-            private string FormatErrorContextInfo(ViewScheme vs, ViewTable vTable, Select select)
+            private string FormatErrorContextInfo(ViewSchema vs, ViewTable vTable, Select select)
             {
                 string str = "";
                 if (vs != null && vTable != null) str += "Error while building view '" + vs.name + "' table '" + vTable.GetName() + "'";
@@ -52,7 +52,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                 return str;
             }
 
-            public Where Build(ViewScheme vs, ViewTable vTable, SelectSet selectSet, Select select, Scheme baseScheme, Table table, Operation.ExpressionParsingContext expressionParsingContext)
+            public Where Build(ViewSchema vs, ViewTable vTable, SelectSet selectSet, Select select, Schema baseSchema, Table table, Operation.ExpressionParsingContext expressionParsingContext)
             {
                 Where w = new Where();
                 var option = new Operation.Expression.ParseIdentifierOption(vs, table, true, false, null, expressionParsingContext);
@@ -73,7 +73,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             }
         }
     }
-    public class WhereUnion
+    internal class WhereUnion
     {
 #if MEMPROFILER_DEBUG_INFO
         public string GetDebugString(long columnRow, long valueRow)
@@ -101,11 +101,11 @@ namespace Unity.MemoryProfiler.Editor.Database.View
         {
         }
 
-        public WhereUnion(List<Where.Builder> builders, ViewScheme vs, ViewTable vTable, SelectSet selectSet, Select select, Scheme baseScheme, Table table, Operation.ExpressionParsingContext expressionParsingContext)
+        public WhereUnion(List<Where.Builder> builders, ViewSchema vs, ViewTable vTable, SelectSet selectSet, Select select, Schema baseSchema, Table table, Operation.ExpressionParsingContext expressionParsingContext)
         {
             foreach (var b in builders)
             {
-                Add(b.Build(vs, vTable, selectSet, select, baseScheme, table, expressionParsingContext));
+                Add(b.Build(vs, vTable, selectSet, select, baseSchema, table, expressionParsingContext));
             }
         }
 
@@ -176,10 +176,12 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             }
         }
 
-        //get all matching indices for a specific row of expressions used in where statements
+        /// <summary>
+        /// get all matching indices for a specific row of expressions used in where statements
+        /// </summary>
         public long[] GetMatchingIndices(long row)
         {
-            //No where statements, seting index to null will bypass directly to the underlying talbe data
+            //No where statements, setting index to null will bypass directly to the underlying table data
             if (where == null || where.Count == 0)
             {
                 long[] r = new long[1];

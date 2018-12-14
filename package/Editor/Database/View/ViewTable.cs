@@ -6,10 +6,10 @@ using Unity.MemoryProfiler.Editor.Database.Operation;
 
 namespace Unity.MemoryProfiler.Editor.Database.View
 {
-    public class ViewTable : ExpandTable
+    internal class ViewTable : ExpandTable
     {
-        public ViewScheme viewScheme;
-        public Scheme baseScheme;
+        public ViewSchema ViewSchema;
+        public Schema BaseSchema;
 
 
         public Builder.Node node;
@@ -127,11 +127,11 @@ namespace Unity.MemoryProfiler.Editor.Database.View
         //==========================================================================
 
 
-        public ViewTable(ViewScheme viewScheme, Scheme baseScheme)
-            : base(viewScheme)
+        public ViewTable(ViewSchema viewSchema, Schema baseSchema)
+            : base(viewSchema)
         {
-            this.viewScheme = viewScheme;
-            this.baseScheme = baseScheme;
+            this.ViewSchema = viewSchema;
+            this.BaseSchema = baseSchema;
         }
 
         public override string GetName() { return node.GetFullName(); }
@@ -216,7 +216,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                     return null;
             }
 
-            m_GroupTableCache[(int)groupIndex] = node.data.child[childIndexToBuild].Build(this, groupIndex, viewScheme, baseScheme, curParent);
+            m_GroupTableCache[(int)groupIndex] = node.data.child[childIndexToBuild].Build(this, groupIndex, ViewSchema, BaseSchema, curParent);
 
             // create default filter
             if (node.data.child[childIndexToBuild].defaultFilter != null)
@@ -268,7 +268,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                 public Database.Operation.Filter.Filter defaultFilter;
                 public Database.Operation.Filter.Sort defaultAllLevelSortFilter;
 
-                public bool EvaluateCondition(ViewScheme vs, ViewTable parentViewTable, Operation.ExpressionParsingContext expressionParsingContext)
+                public bool EvaluateCondition(ViewSchema vs, ViewTable parentViewTable, Operation.ExpressionParsingContext expressionParsingContext)
                 {
                     if (condition == null) return true;
                     using (ScopeDebugContext.Func(() => { return "EvaluateCondition on Node '" + GetFullName() + "'"; }))
@@ -358,7 +358,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                         return data;
                     }
 
-                    public long GetChildCount(ViewScheme vs, ViewTable vTable, Operation.ExpressionParsingContext expressionParsingContext)
+                    public long GetChildCount(ViewSchema vs, ViewTable vTable, Operation.ExpressionParsingContext expressionParsingContext)
                     {
                         switch (type)
                         {
@@ -378,14 +378,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                                 }
                                 else
                                 {
-                                    if (vTable.dataSelectSet.ComputeRowCount())
-                                    {
-                                        return vTable.dataSelectSet.GetRowCount();
-                                    }
-                                    else
-                                    {
-                                        return 0;
-                                    }
+                                    return vTable.dataSelectSet.GetMainRowCount();
                                 }
                             case DataType.NoData:
                             default:
@@ -393,10 +386,10 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                         }
                     }
 
-                    public void Build(Node node, ViewTable vTable, ViewTable parent, ViewScheme vs, Database.Scheme baseScheme, Operation.ExpressionParsingContext parentExpressionParsingContext, MetaTable metaTable)
+                    public void Build(Node node, ViewTable vTable, ViewTable parent, ViewSchema vs, Database.Schema baseSchema, Operation.ExpressionParsingContext parentExpressionParsingContext, MetaTable metaTable)
                     {
                         // build selects
-                        vTable.dataSelectSet = dataSelectSet.Build(vTable, vs, baseScheme);
+                        vTable.dataSelectSet = dataSelectSet.Build(vTable, vs, baseSchema);
                         if (vTable.dataSelectSet != null)
                         {
                             // add the select set to the expression parsing context hierarchy. see [Figure.1]
@@ -431,7 +424,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                                     if (c.EvaluateCondition(vs, vTable, vTable.expressionParsingContext))
                                     {
                                         validChildNodeIndices.Add(iChild);
-                                        c.BuildAsNode(vTable, (long)iValidChild, vs, baseScheme, vTable.expressionParsingContext);
+                                        c.BuildAsNode(vTable, (long)iValidChild, vs, baseSchema, vTable.expressionParsingContext);
                                         ++iValidChild;
                                     }
                                 }
@@ -451,7 +444,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                                     MetaColumn metaColumn = metaTable.GetColumnByName(colb.name);
                                     bool hadMetaColumn = metaColumn != null;
 
-                                    var newColumn = colb.Build(node, vs, baseScheme, vTable, vTable.expressionParsingContext, ref metaColumn);
+                                    var newColumn = colb.Build(node, vs, baseSchema, vTable, vTable.expressionParsingContext, ref metaColumn);
 
                                     // add the metacolum to the metatable if it just got created
                                     if (!hadMetaColumn)
@@ -482,10 +475,10 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                     return name;
                 }
 
-                private string FormatErrorContextInfo(ViewScheme vs)
+                private string FormatErrorContextInfo(ViewSchema vs)
                 {
                     string fullName = GetFullName();
-                    if (vs != null) return "Error while building scheme '" + vs.name + "' view table '" + fullName + "' ";
+                    if (vs != null) return "Error while building schema '" + vs.name + "' view table '" + fullName + "' ";
                     return "Error while building view table '" + fullName + "' ";
                 }
 
@@ -498,6 +491,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                         {
                             //we must be building a view table when building the root.
                             DebugUtility.LogError("Failed to build the root view table.");
+                            MemoryProfilerAnalytics.AddMetaDatatoEvent<MemoryProfilerAnalytics.LoadViewXMLEvent>(8);
                         }
 
                         Database.MetaTable metaTable = new Database.MetaTable();
@@ -532,7 +526,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                 }
 
                 // When building as node, the columns are interpreted as entries in the parent's view table.
-                public void BuildAsNode(ViewTable parentViewTable, long row, ViewScheme vs, Database.Scheme baseScheme, Operation.ExpressionParsingContext parentExpressionParsingContext)
+                public void BuildAsNode(ViewTable parentViewTable, long row, ViewSchema vs, Database.Schema baseSchema, Operation.ExpressionParsingContext parentExpressionParsingContext)
                 {
                     MetaTable metaTable = BuildOrGetMetaTable(parentViewTable, null);
                     if (localSelectSet.select.Count > 0)
@@ -546,7 +540,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                         MetaColumn metaColumn = metaTable.GetColumnByName(colb.name);
                         bool hadMetaColumn = metaColumn != null;
 
-                        colb.BuildNodeValue(this, row, vs, baseScheme, parentViewTable, parentExpressionParsingContext, ref metaColumn);
+                        colb.BuildNodeValue(this, row, vs, baseSchema, parentViewTable, parentExpressionParsingContext, ref metaColumn);
 
                         // add the metacolum to the metatable if it just got created
                         if (!hadMetaColumn)
@@ -559,14 +553,14 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                     for (int i = 0; i != metaTable.GetColumnCount(); ++i)
                     {
                         var metaColumn = metaTable.GetColumnByIndex(i);
-                        if (!HasColumn(metaColumn.name))
+                        if (!HasColumn(metaColumn.Name))
                         {
-                            ViewColumn.Builder.BuildNodeValueDefault(this, row, vs, baseScheme, parentViewTable, parentExpressionParsingContext, metaColumn);
+                            ViewColumn.Builder.BuildNodeValueDefault(this, row, vs, baseSchema, parentViewTable, parentExpressionParsingContext, metaColumn);
                         }
                     }
                 }
 
-                public ViewTable Build(ViewTable parent, long row, ViewScheme vs, Database.Scheme baseScheme, Operation.ExpressionParsingContext parentExpressionParsingContext)
+                public ViewTable Build(ViewTable parent, long row, ViewSchema vs, Database.Schema baseSchema, Operation.ExpressionParsingContext parentExpressionParsingContext)
                 {
                     // Check for usage error from data.
                     if (parent == null && String.IsNullOrEmpty(name))
@@ -585,13 +579,13 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                             return null;
                         }
 
-                        ViewTable vTable = new ViewTable(vs, baseScheme);
+                        ViewTable vTable = new ViewTable(vs, baseSchema);
                         vTable.node = this;
                         vTable.parentExpressionParsingContext = parentExpressionParsingContext;
                         vTable.expressionParsingContext = parentExpressionParsingContext;
 
                         // If has local select set, create it and add it to the expression parsing context hierarchy. see [Figure.1]
-                        vTable.localSelectSet = localSelectSet.Build(vTable, vs, baseScheme);
+                        vTable.localSelectSet = localSelectSet.Build(vTable, vs, baseSchema);
                         if (vTable.localSelectSet != null)
                         {
                             vTable.expressionParsingContext = new Operation.ExpressionParsingContext(vTable.expressionParsingContext, vTable.localSelectSet);
@@ -614,7 +608,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                             }
                         }
 
-                        data.Build(this, vTable, parent, vs, baseScheme, parentExpressionParsingContext, metaTable);
+                        data.Build(this, vTable, parent, vs, baseSchema, parentExpressionParsingContext, metaTable);
 
 
                         //Build missing column with default behavior
@@ -625,7 +619,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
 
                             if (column == null)
                             {
-                                if (metaColumn.defaultMergeAlgorithm != null)
+                                if (metaColumn.DefaultMergeAlgorithm != null)
                                 {
                                     //when we have a merge algorithm, set the entries as the result of each group's merge value.
                                     column = ViewColumn.Builder.BuildColumnNodeMerge(vTable, metaColumn, parentExpressionParsingContext);
@@ -637,6 +631,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                         if (data.type == Data.DataType.Select && vTable.dataSelectSet.IsManyToMany())
                         {
                             DebugUtility.LogError("Cannot build a view table '" + vTable.GetName() + "' using on a many-to-many select statement. Specify a row value for your select statement where condition(s).");
+                            MemoryProfilerAnalytics.AddMetaDatatoEvent<MemoryProfilerAnalytics.LoadViewXMLEvent>(7);
                         }
                         else
                         {
@@ -701,7 +696,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                             && DebugUtility.TryGetMandatoryXmlAttribute(root, "order", out strOrder))
                         {
                             SortOrder order = SortOrderString.StringToSortOrder(strOrder, SortOrder.Ascending);
-                            f.sortLevel.Add(new Operation.Filter.Sort.LevelByName(colName, order));
+                            f.SortLevel.Add(new Operation.Filter.Sort.LevelByName(colName, order));
                         }
                     }
 
@@ -719,7 +714,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                                     && DebugUtility.TryGetMandatoryXmlAttribute(e, "order", out strOrderL))
                                 {
                                     var orderL = SortOrderString.StringToSortOrder(strOrderL, SortOrder.Ascending);
-                                    f.sortLevel.Add(new Operation.Filter.Sort.LevelByName(colNameL, orderL));
+                                    f.SortLevel.Add(new Operation.Filter.Sort.LevelByName(colNameL, orderL));
                                 }
                             }
                             else
@@ -728,7 +723,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                             }
                         }
                     }
-                    if (f.sortLevel.Count == 0) return null;
+                    if (f.SortLevel.Count == 0) return null;
                     return f;
                 }
 
@@ -739,7 +734,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                     {
                         var order = SortOrderString.StringToSortOrder(root.GetAttribute("order"), SortOrder.Ascending);
                         Operation.Filter.Group g = new Operation.Filter.GroupByColumnName(colName, order);
-                        g.subGroupFilter = LoadSubFilterFromXML(node, root);
+                        g.SubGroupFilter = LoadSubFilterFromXML(node, root);
                         return g;
                     }
                     return null;
@@ -765,9 +760,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                                 sortFilter = LoadSortFilterFromXML(node, e);
                                 if (node.defaultAllLevelSortFilter != null)
                                 {
-                                    Operation.Filter.DefaultSort ds = new Operation.Filter.DefaultSort();
-                                    ds.defaultSort = node.defaultAllLevelSortFilter;
-                                    ds.overrideSort = sortFilter;
+                                    Operation.Filter.DefaultSort ds = new Operation.Filter.DefaultSort(node.defaultAllLevelSortFilter, sortFilter);
                                     filter = ds;
                                 }
                                 else
@@ -796,9 +789,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                     //add all level sort filter if we haven't already
                     if (sortFilter == null && node.defaultAllLevelSortFilter != null)
                     {
-                        Operation.Filter.DefaultSort ds = new Operation.Filter.DefaultSort();
-                        ds.defaultSort = node.defaultAllLevelSortFilter;
-                        ds.overrideSort = null;
+                        Operation.Filter.DefaultSort ds = new Operation.Filter.DefaultSort(node.defaultAllLevelSortFilter, null);
 
                         //must use the multi filter if we have a lastFilter or already have a multi filter.
                         //we could have a multi filter and still have lastFilter == null if the lastfilter creation failed.
@@ -854,9 +845,9 @@ namespace Unity.MemoryProfiler.Editor.Database.View
 
             public Node rootNode;
 
-            public ViewTable Build(ViewScheme vs, Scheme baseScheme)
+            public ViewTable Build(ViewSchema vs, Schema baseSchema)
             {
-                return rootNode.Build(null, 0, vs, baseScheme, null);
+                return rootNode.Build(null, 0, vs, baseSchema, null);
             }
 
             public static Builder LoadFromXML(XmlElement root)

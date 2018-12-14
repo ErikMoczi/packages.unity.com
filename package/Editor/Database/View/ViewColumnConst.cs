@@ -3,7 +3,7 @@ using System;
 namespace Unity.MemoryProfiler.Editor.Database.View
 {
     // Used when displaying a constant value for all rows
-    public class ViewColumnConst<DataT> : Database.ColumnTyped<DataT>, ViewColumn.IViewColumn where DataT : IComparable
+    internal class ViewColumnConst<DataT> : Database.ColumnTyped<DataT>, ViewColumn.IViewColumn where DataT : IComparable
     {
 #if MEMPROFILER_DEBUG_INFO
         public override string GetDebugString(long row)
@@ -26,6 +26,10 @@ namespace Unity.MemoryProfiler.Editor.Database.View
 
         void ViewColumn.IViewColumn.SetColumn(ViewColumn vc, Database.Column col)
         {
+            if (this.vc != null)
+            {
+                throw new InvalidOperationException("Cannot call 'ViewColumn.IViewColumn.SetColumn' once already set");
+            }
             this.vc = vc;
         }
 

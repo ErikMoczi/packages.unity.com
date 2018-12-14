@@ -2,7 +2,7 @@ using System;
 
 namespace Unity.MemoryProfiler.Editor.Database.Operation
 {
-    public interface IArithmetic<DataT>
+    internal interface IArithmetic<DataT>
     {
         DataT Add(DataT a, DataT b);
         DataT Sub(DataT a, DataT b);
@@ -20,7 +20,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         int Compare(DataT a, DataT b);
     }
 
-    public class Arithmetic : IArithmetic<int>, IArithmetic<long>, IArithmetic<ulong>, IArithmetic<float>
+    internal class Arithmetic : IArithmetic<int>, IArithmetic<long>, IArithmetic<ulong>, IArithmetic<float>
     {
         int IArithmetic<int>.Add(int a, int b) { return a + b; }
         int IArithmetic<int>.Sub(int a, int b) { return a - b; }
@@ -80,7 +80,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         int IArithmetic<float>.Compare(float a, float b) { return a.CompareTo(b); }
     }
 
-    public class Grouping
+    internal class Grouping
     {
         public abstract class GroupCollection
         {
@@ -92,11 +92,11 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             public abstract ArrayRange GetIndices(GroupCollection coll);
         }
 
-        public interface IGroupAlgorithm
+        internal interface IGroupAlgorithm
         {
             GroupCollection Group(Column sourceColumn, ArrayRange range, SortOrder order);
         }
-        public interface IMergeAlgorithm
+        internal interface IMergeAlgorithm
         {
             void Merge(Column destColumn, long destRow, Column sourceColumn, ArrayRange sourceIndices);
             IComparable Merge(Column sourceColumn, ArrayRange sourceIndices);
@@ -154,88 +154,91 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
 
             Grouping.GroupCollection Grouping.IGroupAlgorithm.Group(Column sourceColumn, ArrayRange indices, SortOrder order)
             {
-                DupCollection coll = new DupCollection();
-                if (order == SortOrder.None)
+                using (Profiling.GetMarker(Profiling.MarkerId.GroupByDuplicate).Auto())
                 {
-                    order = SortOrder.Ascending;
-                }
-                coll.m_sortedIndex = sourceColumn.GetSortIndex(order, indices, false);
-                System.Collections.Generic.List<DupGroup> groups = new System.Collections.Generic.List<DupGroup>();
-                int iGroupFirst = 0;
-                for (int i = 1, j = 0; i < coll.m_sortedIndex.Length; j = i++)
-                {
-                    if (sourceColumn.CompareRow(coll.m_sortedIndex[j], coll.m_sortedIndex[i]) != 0)
+                    DupCollection coll = new DupCollection();
+                    if (order == SortOrder.None)
                     {
-                        //create group;
-                        Range range = Range.FirstLast(iGroupFirst, i);
-                        groups.Add(new DupGroup(range));
-                        iGroupFirst = i;
+                        order = SortOrder.Ascending;
                     }
-                }
-                Range rangeLast = Range.FirstLast(iGroupFirst, coll.m_sortedIndex.Length);
-                if (rangeLast.length > 0)
-                {
-                    groups.Add(new DupGroup(rangeLast));
-                }
-                coll.m_Groups = groups.ToArray();
+                    coll.m_sortedIndex = sourceColumn.GetSortIndex(order, indices, false);
+                    System.Collections.Generic.List<DupGroup> groups = new System.Collections.Generic.List<DupGroup>();
+                    int iGroupFirst = 0;
+                    for (int i = 1, j = 0; i < coll.m_sortedIndex.Length; j = i++)
+                    {
+                        if (sourceColumn.CompareRow(coll.m_sortedIndex[j], coll.m_sortedIndex[i]) != 0)
+                        {
+                            //create group;
+                            Range range = Range.FirstLast(iGroupFirst, i);
+                            groups.Add(new DupGroup(range));
+                            iGroupFirst = i;
+                        }
+                    }
+                    Range rangeLast = Range.FirstLast(iGroupFirst, coll.m_sortedIndex.Length);
+                    if (rangeLast.length > 0)
+                    {
+                        groups.Add(new DupGroup(rangeLast));
+                    }
+                    coll.m_Groups = groups.ToArray();
 
 
 #if (PROFILER_DEBUG_TEST)
-                {
-                    UnityEngine.Debug.LogWarning("Testing GroupByDuplicate result...");
-                    //test if grouping data is good
-                    foreach (var g in coll.m_Groups)
                     {
-                        Debug.Assert(g.range.first >= 0);
-                        Debug.Assert(g.range.first < coll.m_sortedIndex.Length);
-                        Debug.Assert(g.range.last > 0);
-                        Debug.Assert(g.range.last <= coll.m_sortedIndex.Length);
+                        UnityEngine.Debug.LogWarning("Testing GroupByDuplicate result...");
+                        //test if grouping data is good
+                        foreach (var g in coll.m_Groups)
+                        {
+                            Debug.Assert(g.range.first >= 0);
+                            Debug.Assert(g.range.first < coll.m_sortedIndex.Length);
+                            Debug.Assert(g.range.last > 0);
+                            Debug.Assert(g.range.last <= coll.m_sortedIndex.Length);
 
-                        //indices before should all be -1 compared to group's first index
-                        for (long i = 0; i != g.range.first; ++i)
-                        {
-                            int c = sourceColumn.CompareRow(coll.m_sortedIndex[i], coll.m_sortedIndex[g.range.first]);
-                            if (c != -1)
+                            //indices before should all be -1 compared to group's first index
+                            for (long i = 0; i != g.range.first; ++i)
                             {
-                                Debug.Assert(c == -1, "index " + i + " should be -1 compared to group starting at index " + g.range.first + "."
-                                    + "\n Result=" + c
-                                    + "\n val[" + i + "]=" + sourceColumn.GetRowValueString(coll.m_sortedIndex[i])
-                                    + "\n val[" + g.range.first + "]=" + sourceColumn.GetRowValueString(coll.m_sortedIndex[g.range.first])
-                                    );
+                                int c = sourceColumn.CompareRow(coll.m_sortedIndex[i], coll.m_sortedIndex[g.range.first]);
+                                if (c != -1)
+                                {
+                                    Debug.Assert(c == -1, "index " + i + " should be -1 compared to group starting at index " + g.range.first + "."
+                                        + "\n Result=" + c
+                                        + "\n val[" + i + "]=" + sourceColumn.GetRowValueString(coll.m_sortedIndex[i])
+                                        + "\n val[" + g.range.first + "]=" + sourceColumn.GetRowValueString(coll.m_sortedIndex[g.range.first])
+                                        );
+                                }
+                            }
+                            //indices inside group should all be 0 compared to group's first index
+                            for (long i = g.range.first; i != g.range.last; ++i)
+                            {
+                                int c = sourceColumn.CompareRow(coll.m_sortedIndex[i], coll.m_sortedIndex[g.range.first]);
+                                if (c != 0)
+                                {
+                                    Debug.Assert(c == 0, "index " + i + " should be 0 compared to group starting at index " + g.range.first + "."
+                                        + "\n Result=" + c
+                                        + "\n val[" + i + "]=" + sourceColumn.GetRowValueString(coll.m_sortedIndex[i])
+                                        + "\n val[" + g.range.first + "]=" + sourceColumn.GetRowValueString(coll.m_sortedIndex[g.range.first])
+                                        );
+                                }
+                            }
+                            //indices after group should all be 1 compared to group's first index
+                            for (long i = g.range.last; i != coll.m_sortedIndex.Length; ++i)
+                            {
+                                int c = sourceColumn.CompareRow(coll.m_sortedIndex[i], coll.m_sortedIndex[g.range.first]);
+                                if (c != 1)
+                                {
+                                    Debug.Assert(c == 1, "index " + i + " should be 1 compared to group starting at index " + g.range.first + "."
+                                        + "\n Result=" + c
+                                        + "\n val[" + i + "]=" + sourceColumn.GetRowValueString(coll.m_sortedIndex[i])
+                                        + "\n val[" + g.range.first + "]=" + sourceColumn.GetRowValueString(coll.m_sortedIndex[g.range.first])
+                                        );
+                                }
                             }
                         }
-                        //indices inside group should all be 0 compared to group's first index
-                        for (long i = g.range.first; i != g.range.last; ++i)
-                        {
-                            int c = sourceColumn.CompareRow(coll.m_sortedIndex[i], coll.m_sortedIndex[g.range.first]);
-                            if (c != 0)
-                            {
-                                Debug.Assert(c == 0, "index " + i + " should be 0 compared to group starting at index " + g.range.first + "."
-                                    + "\n Result=" + c
-                                    + "\n val[" + i + "]=" + sourceColumn.GetRowValueString(coll.m_sortedIndex[i])
-                                    + "\n val[" + g.range.first + "]=" + sourceColumn.GetRowValueString(coll.m_sortedIndex[g.range.first])
-                                    );
-                            }
-                        }
-                        //indices after group should all be 1 compared to group's first index
-                        for (long i = g.range.last; i != coll.m_sortedIndex.Length; ++i)
-                        {
-                            int c = sourceColumn.CompareRow(coll.m_sortedIndex[i], coll.m_sortedIndex[g.range.first]);
-                            if (c != 1)
-                            {
-                                Debug.Assert(c == 1, "index " + i + " should be 1 compared to group starting at index " + g.range.first + "."
-                                    + "\n Result=" + c
-                                    + "\n val[" + i + "]=" + sourceColumn.GetRowValueString(coll.m_sortedIndex[i])
-                                    + "\n val[" + g.range.first + "]=" + sourceColumn.GetRowValueString(coll.m_sortedIndex[g.range.first])
-                                    );
-                            }
-                        }
+
+                        UnityEngine.Debug.LogWarning("Testing GroupByDuplicate result done");
                     }
-
-                    UnityEngine.Debug.LogWarning("Testing GroupByDuplicate result done");
-                }
 #endif
-                return coll;
+                    return coll;
+                }
             }
         }
         private static GroupByDuplicate _groupByDuplicate = null;
@@ -389,7 +392,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             }
         }
 
-        public class First<DataT> : TypedAlgorithm<DataT> where DataT : System.IComparable
+        internal class First<DataT> : TypedAlgorithm<DataT> where DataT : System.IComparable
         {
             protected override void GroupTyped(ColumnTyped<DataT> destColumn, long destRow, ColumnTyped<DataT> sourceColumn, ArrayRange sourceIndices)
             {
@@ -439,12 +442,15 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
 
             protected override IComparable GroupTyped(ColumnTyped<DataT> sourceColumn, ArrayRange sourceIndices)
             {
-                DataT result = math.Zero();
-                foreach (var v in sourceColumn.VisitRows(sourceIndices))
+                using (Profiling.GetMarker(Profiling.MarkerId.MergeSum).Auto())
                 {
-                    result = math.Add(result, v);
+                    DataT result = math.Zero();
+                    foreach (var v in sourceColumn.VisitRows(sourceIndices))
+                    {
+                        result = math.Add(result, v);
+                    }
+                    return result;
                 }
-                return result;
             }
         }
         public class SumPositive<DataT> : TypedAlgorithm<DataT> where DataT : System.IComparable
@@ -462,16 +468,19 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
 
             protected override IComparable GroupTyped(ColumnTyped<DataT> sourceColumn, ArrayRange sourceIndices)
             {
-                DataT result = math.Zero();
-                DataT z = math.Zero();
-                foreach (var v in sourceColumn.VisitRows(sourceIndices))
+                using (Profiling.GetMarker(Profiling.MarkerId.MergeSumPositive).Auto())
                 {
-                    if (math.Compare(v, z) >= 0)
+                    DataT result = math.Zero();
+                    DataT z = math.Zero();
+                    foreach (var v in sourceColumn.VisitRows(sourceIndices))
                     {
-                        result = math.Add(result, v);
+                        if (math.Compare(v, z) >= 0)
+                        {
+                            result = math.Add(result, v);
+                        }
                     }
+                    return result;
                 }
-                return result;
             }
         }
         public class Min<DataT> : TypedAlgorithm<DataT> where DataT : System.IComparable
@@ -489,12 +498,15 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
 
             protected override IComparable GroupTyped(ColumnTyped<DataT> sourceColumn, ArrayRange sourceIndices)
             {
-                DataT result = math.MaxValue();
-                foreach (var v in sourceColumn.VisitRows(sourceIndices))
+                using (Profiling.GetMarker(Profiling.MarkerId.MergeMin).Auto())
                 {
-                    result = math.Min(result, v);
+                    DataT result = math.MaxValue();
+                    foreach (var v in sourceColumn.VisitRows(sourceIndices))
+                    {
+                        result = math.Min(result, v);
+                    }
+                    return result;
                 }
-                return result;
             }
         }
         public class Max<DataT> : TypedAlgorithm<DataT> where DataT : System.IComparable
@@ -512,12 +524,15 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
 
             protected override IComparable GroupTyped(ColumnTyped<DataT> sourceColumn, ArrayRange sourceIndices)
             {
-                DataT result = math.MinValue();
-                foreach (var v in sourceColumn.VisitRows(sourceIndices))
+                using (Profiling.GetMarker(Profiling.MarkerId.MergeMax).Auto())
                 {
-                    result = math.Max(result, v);
+                    DataT result = math.MinValue();
+                    foreach (var v in sourceColumn.VisitRows(sourceIndices))
+                    {
+                        result = math.Max(result, v);
+                    }
+                    return result;
                 }
-                return result;
             }
         }
         public class Average<DataT> : TypedAlgorithm<DataT> where DataT : System.IComparable
@@ -535,13 +550,16 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
 
             protected override IComparable GroupTyped(ColumnTyped<DataT> sourceColumn, ArrayRange sourceIndices)
             {
-                DataT result = math.Zero();
-                foreach (var v in sourceColumn.VisitRows(sourceIndices))
+                using (Profiling.GetMarker(Profiling.MarkerId.MergeAverage).Auto())
                 {
-                    result = math.Add(result, v);
+                    DataT result = math.Zero();
+                    foreach (var v in sourceColumn.VisitRows(sourceIndices))
+                    {
+                        result = math.Add(result, v);
+                    }
+                    result = math.Div(result, math.Make(sourceIndices.indexCount));
+                    return result;
                 }
-                result = math.Div(result, math.Make(sourceIndices.indexCount));
-                return result;
             }
         }
 
@@ -560,26 +578,29 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
 
             protected override IComparable GroupTyped(ColumnTyped<DataT> sourceColumn, ArrayRange sourceIndices)
             {
-                long count = sourceIndices.indexCount;
-                DataT[] d = new DataT[count];
-                int i = 0;
-                foreach (var v in sourceColumn.VisitRows(sourceIndices))
+                using (Profiling.GetMarker(Profiling.MarkerId.MergeMedian).Auto())
                 {
-                    d[i] = v;
-                    ++i;
+                    long count = sourceIndices.indexCount;
+                    DataT[] d = new DataT[count];
+                    int i = 0;
+                    foreach (var v in sourceColumn.VisitRows(sourceIndices))
+                    {
+                        d[i] = v;
+                        ++i;
+                    }
+                    Array.Sort(d, Comparer.Ascending<DataT>());
+                    DataT median;
+                    long mid = count / 2;
+                    if (count % 2 == 0)
+                    {
+                        median = math.Div(math.Add(d[mid - 1], d[mid]), math.Make(2));
+                    }
+                    else
+                    {
+                        median = d[mid];
+                    }
+                    return median;
                 }
-                Array.Sort(d, Comparer.Ascending<DataT>());
-                DataT median;
-                long mid = count / 2;
-                if (count % 2 == 0)
-                {
-                    median = math.Div(math.Add(d[mid - 1], d[mid]), math.Make(2));
-                }
-                else
-                {
-                    median = d[mid];
-                }
-                return median;
             }
         }
 
@@ -599,21 +620,24 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
 
             protected override IComparable GroupTyped(ColumnTyped<DataT> sourceColumn, ArrayRange sourceIndices)
             {
-                DataT count = math.Make(sourceIndices.indexCount);
-                DataT avg = math.Zero();
-                foreach (var v in sourceColumn.VisitRows(sourceIndices))
+                using (Profiling.GetMarker(Profiling.MarkerId.MergeDeviation).Auto())
                 {
-                    avg = math.Add(avg, v);
-                }
-                avg = math.Div(avg, count);
+                    DataT count = math.Make(sourceIndices.indexCount);
+                    DataT avg = math.Zero();
+                    foreach (var v in sourceColumn.VisitRows(sourceIndices))
+                    {
+                        avg = math.Add(avg, v);
+                    }
+                    avg = math.Div(avg, count);
 
-                DataT dev = math.Zero();
-                foreach (var v in sourceColumn.VisitRows(sourceIndices))
-                {
-                    dev = math.Add(dev, math.SubAbs(avg, v));
+                    DataT dev = math.Zero();
+                    foreach (var v in sourceColumn.VisitRows(sourceIndices))
+                    {
+                        dev = math.Add(dev, math.SubAbs(avg, v));
+                    }
+                    dev = math.Div(dev, count);
+                    return dev;
                 }
-                dev = math.Div(dev, count);
-                return dev;
             }
 
             public override DataT GetRowValue(DataT mergedValue, ColumnTyped<DataT> sourceColumn, long row)

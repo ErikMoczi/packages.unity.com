@@ -1,14 +1,23 @@
 using UnityEngine;
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
+#else
+using UnityEngine.Experimental.UIElements;
+#endif
+using System;
+using Unity.MemoryProfiler.Editor.Debuging;
+
 namespace Unity.MemoryProfiler.Editor.UI
 {
-    public interface IViewPaneEventListener
+    internal interface IViewPaneEventListener
     {
         void OnOpenTable(Database.View.LinkRequest link);
+        void OnOpenTable(Database.View.LinkRequest link, UIState.SnapshotMode mode);
         void OnOpenMemoryMap();
         void OnOpenTreeMap();
         void OnRepaint();
     }
-    public abstract class ViewPane : UI.IViewEventListener
+    internal abstract class ViewPane : UI.IViewEventListener
     {
         public UIState m_UIState;
         public IViewPaneEventListener m_EventListener;
@@ -18,8 +27,63 @@ namespace Unity.MemoryProfiler.Editor.UI
             m_EventListener = l;
         }
 
+        protected VisualElement[] m_VisualElements;
+        protected Action<Rect>[] m_VisualElementsOnGUICalls;
+
+        public virtual VisualElement [] VisualElements
+        {
+            get
+            {
+                if (m_VisualElements == null)
+                {
+                    m_VisualElements = new VisualElement[]
+                    {
+                        new IMGUIContainer(() => OnGUI(0))
+                        {
+                            style =
+                            {
+                                flexGrow = 1,
+                            }
+                        }
+                    };
+                    m_VisualElementsOnGUICalls = new Action<Rect>[]
+                    {
+                        OnGUI,
+                    };
+                }
+                return m_VisualElements;
+            }
+        }
+
         public abstract UI.HistoryEvent GetCurrentHistoryEvent();
-        public virtual void OnPreGUI() {}
+
+        protected virtual void OnGUI(int elementIndex)
+        {
+            using (Profiling.GetMarker(Profiling.MarkerId.MemoryProfiler).Auto())
+            {
+                try
+                {
+                    using (new Service<IDebugContextService>.ScopeService(new DebugContextService()))
+                    {
+                        var rect = m_VisualElements[elementIndex].contentRect;
+                        if(float.IsNaN(rect.width) || float.IsNaN(rect.height))
+                        {
+                            rect = new Rect(0, 0, 1, 1);
+                        }
+                        m_VisualElementsOnGUICalls[elementIndex](rect);
+                    }
+                }
+                catch (ExitGUIException)
+                {
+                    throw;
+                }
+                catch (Exception e)
+                {
+                    throw new Exception(DebugUtility.GetExceptionHelpMessage(e));
+                }
+            }
+        }
+
         public abstract void OnGUI(Rect r);
         void UI.IViewEventListener.OnRepaint()
         {

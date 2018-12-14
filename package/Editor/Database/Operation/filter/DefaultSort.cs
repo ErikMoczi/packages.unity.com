@@ -6,50 +6,57 @@ namespace Unity.MemoryProfiler.Editor.Database
     {
         namespace Filter
         {
-            public class DefaultSort : Filter
+            internal class DefaultSort : Filter
             {
-                public Sort defaultSort;
-                public Sort overrideSort;
+                public Sort SortDefault;
+                public Sort SortOverride;
+
+                public DefaultSort() {}
+                public DefaultSort(Sort sortDefault, Sort sortOverride)
+                {
+                    SortDefault = sortDefault;
+                    SortOverride = sortOverride;
+                }
 
                 public override Filter Clone(FilterCloning fc)
                 {
                     DefaultSort o = new DefaultSort();
-                    o.defaultSort = (Sort)fc.CloneUnique(defaultSort);
-                    if (overrideSort != null) o.overrideSort = (Sort)overrideSort.Clone(fc);
+                    o.SortDefault = (Sort)fc.CloneUnique(SortDefault);
+                    if (SortOverride != null) o.SortOverride = (Sort)SortOverride.Clone(fc);
                     return o;
                 }
 
                 public override Database.Table CreateFilter(Database.Table tableIn)
                 {
-                    if (overrideSort != null) return overrideSort.CreateFilter(tableIn);
-                    if (defaultSort != null) return defaultSort.CreateFilter(tableIn);
+                    if (SortOverride != null) return SortOverride.CreateFilter(tableIn);
+                    if (SortDefault != null) return SortDefault.CreateFilter(tableIn);
                     return tableIn;
                 }
 
                 public override Database.Table CreateFilter(Database.Table tableIn, ArrayRange range)
                 {
-                    if (overrideSort != null) return overrideSort.CreateFilter(tableIn, range);
-                    if (defaultSort != null) return defaultSort.CreateFilter(tableIn, range);
+                    if (SortOverride != null) return SortOverride.CreateFilter(tableIn, range);
+                    if (SortDefault != null) return SortDefault.CreateFilter(tableIn, range);
                     return new Database.Operation.IndexedTable(tableIn, range);
                 }
 
                 public override IEnumerable<Filter> SubFilters()
                 {
-                    if (overrideSort != null)
+                    if (SortOverride != null)
                     {
-                        yield return overrideSort;
+                        yield return SortOverride;
                     }
                     else
                     {
-                        yield return defaultSort;
+                        yield return SortDefault;
                     }
                 }
 
                 public override bool RemoveSubFilters(Filter f)
                 {
-                    if (f == overrideSort)
+                    if (f == SortOverride)
                     {
-                        overrideSort = null;
+                        SortOverride = null;
                         return true;
                     }
                     return false;
@@ -57,11 +64,11 @@ namespace Unity.MemoryProfiler.Editor.Database
 
                 public override bool ReplaceSubFilters(Filter replaced, Filter with)
                 {
-                    if (replaced == overrideSort)
+                    if (replaced == SortOverride)
                     {
                         if (with is Sort)
                         {
-                            overrideSort = (Sort)with;
+                            SortOverride = (Sort)with;
                             return true;
                         }
                     }
@@ -79,24 +86,24 @@ namespace Unity.MemoryProfiler.Editor.Database
 
                 public override void UpdateColumnState(Database.Table sourceTable, ColumnState[] colState)
                 {
-                    if (overrideSort != null)
+                    if (SortOverride != null)
                     {
-                        overrideSort.UpdateColumnState(sourceTable, colState);
+                        SortOverride.UpdateColumnState(sourceTable, colState);
                     }
-                    else if (defaultSort != null)
+                    else if (SortDefault != null)
                     {
-                        foreach (var l in defaultSort.sortLevel)
+                        foreach (var l in SortDefault.SortLevel)
                         {
-                            colState[l.GetColumnIndex(sourceTable)].defaultSorted = l.order;
+                            colState[l.GetColumnIndex(sourceTable)].DefaultSorted = l.Order;
                         }
                     }
                 }
 
                 public override bool Simplify(ref bool dirty)
                 {
-                    if (overrideSort != null)
+                    if (SortOverride != null)
                     {
-                        overrideSort.Simplify(ref dirty);
+                        SortOverride.Simplify(ref dirty);
                     }
                     return false;
                 }

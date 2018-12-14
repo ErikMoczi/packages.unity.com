@@ -2,21 +2,31 @@ using UnityEngine;
 
 namespace Unity.MemoryProfiler.Editor.UI
 {
-    public abstract class TextSpreadsheet : SpreadsheetLogic
+    internal abstract class TextSpreadsheet : SpreadsheetLogic
     {
-        private EllipsisStyleMetric m_EllipsisStyleMetric_Data;
-        private EllipsisStyleMetric m_EllipsisStyleMetric_Header;
+        private EllipsisStyleMetric m_EllipsisStyleMetricData;
+        private EllipsisStyleMetric m_EllipsisStyleMetricHeader;
 
-        protected EllipsisStyleMetric ellipsisStyleMetric_Data
+        protected EllipsisStyleMetric EllipsisStyleMetricData
         {
-            get { return m_EllipsisStyleMetric_Data ?? (m_EllipsisStyleMetric_Data = new EllipsisStyleMetric(Styles.styles.numberLabel)); }
+            get { 
+                if (m_EllipsisStyleMetricData == null)
+                    m_EllipsisStyleMetricData = new EllipsisStyleMetric(Styles.styles.numberLabel);
+
+                return m_EllipsisStyleMetricData;
+            }
         }
-        protected EllipsisStyleMetric ellipsisStyleMetric_Header
+        protected EllipsisStyleMetric EllipsisStyleMetricHeader
         {
-            get { return m_EllipsisStyleMetric_Header ?? (m_EllipsisStyleMetric_Header = new EllipsisStyleMetric(Styles.styles.entryEven)); }
+            get { 
+                if (m_EllipsisStyleMetricHeader == null)
+                    m_EllipsisStyleMetricHeader = new EllipsisStyleMetric(Styles.styles.entryEven);
+
+                return m_EllipsisStyleMetricHeader; 
+            }
         }
 
-        protected const float kRowHeight = 16;
+        protected const float k_RowHeight = 16;
 
         public TextSpreadsheet(SplitterStateEx splitter, IViewEventListener listener)
             : base(splitter, listener)
@@ -30,7 +40,7 @@ namespace Unity.MemoryProfiler.Editor.UI
 
         protected override float GetRowHeight(long row)
         {
-            return kRowHeight;
+            return k_RowHeight;
         }
 
         protected override void DrawRow(long row, Rect r, long index, bool selected, ref GUIPipelineState pipe)
@@ -102,7 +112,7 @@ namespace Unity.MemoryProfiler.Editor.UI
             {
                 string t = "R" + row + "C" + col + "Y" + r.y;
 
-                DrawTextEllipsis(t, r, Styles.styles.numberLabel, ellipsisStyleMetric_Data, selected);
+                DrawTextEllipsis(t, r, Styles.styles.numberLabel, EllipsisStyleMetricData, selected);
             }
         }
 

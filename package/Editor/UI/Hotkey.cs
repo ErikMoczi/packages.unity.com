@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Unity.MemoryProfiler.Editor.UI
 {
-    public class HotKey
+    internal class HotKey
     {
         public string name;
         public HotKey() {}
@@ -11,14 +11,14 @@ namespace Unity.MemoryProfiler.Editor.UI
             this.name = name;
         }
     }
-    public class HotKeyTrigger
+    internal class HotKeyTrigger
     {
         public virtual bool Test(Event evt)
         {
             return false;
         }
     }
-    public class HotKeyTriggerKey : HotKeyTrigger
+    internal class HotKeyTriggerKey : HotKeyTrigger
     {
         public KeyCode m_KeyCode;
         public bool m_Shift;
@@ -46,7 +46,7 @@ namespace Unity.MemoryProfiler.Editor.UI
             return false;
         }
     }
-    public class HotKeyTriggerCommand : HotKeyTrigger
+    internal class HotKeyTriggerCommand : HotKeyTrigger
     {
         public string m_CommandName;
         public HotKeyTriggerCommand() {}
@@ -76,7 +76,7 @@ namespace Unity.MemoryProfiler.Editor.UI
             return false;
         }
     }
-    public class HotKeyBind
+    internal class HotKeyBind
     {
         public HotKey m_HotKey;
         public HotKeyTrigger m_Trigger;
@@ -93,7 +93,7 @@ namespace Unity.MemoryProfiler.Editor.UI
         }
     }
 
-    public class DefaultHotKey
+    internal class DefaultHotKey
     {
         public HotKeyBind m_CameraFocus;
         public HotKeyBind m_CameraShowAll;

@@ -8,7 +8,7 @@ using Unity.MemoryProfiler.Editor.Database.Aos;
 
 namespace Unity.MemoryProfiler.Editor
 {
-    public class RawScheme : Scheme
+    internal class RawSchema : Schema
     {
         public static string kPrefixTableName = "Raw";
         public static string kPrefixTableDisplayName = "Raw ";
@@ -50,11 +50,17 @@ namespace Unity.MemoryProfiler.Editor
 
         Dictionary<string, Table> m_TablesByName = new Dictionary<string, Table>();
 
-        public RawScheme(PackedMemorySnapshot aSnapshot, DataRenderer dataRenderer)
+        public RawSchema(PackedMemorySnapshot aSnapshot, DataRenderer dataRenderer)
         {
             m_Snapshot = new CachedSnapshot(aSnapshot);
             renderer = new SnapshotDataRenderer(dataRenderer, m_Snapshot);
             CreateTables();
+        }
+
+        public void Clear()
+        {
+            m_Snapshot = null;
+            renderer.Clear();
         }
 
         public override string GetDisplayName()
@@ -64,7 +70,7 @@ namespace Unity.MemoryProfiler.Editor
 
         public override bool OwnsTable(Table table)
         {
-            if (table.scheme == this) return true;
+            if (table.Schema == this) return true;
             if (System.Array.IndexOf(m_Tables, table) >= 0) return true;
             if (System.Array.IndexOf(m_ExtraTable, table) >= 0) return true;
             return false;
@@ -639,7 +645,10 @@ namespace Unity.MemoryProfiler.Editor
             CreateTable_TypeDescriptions(tables);
 
             Crawler c = new Crawler();
-            crawledData = c.Crawl(m_Snapshot);
+            using (Profiling.GetMarker(Profiling.MarkerId.CrawlManagedData).Auto())
+            {
+                crawledData = c.Crawl(m_Snapshot);
+            }
 #if MEMPROFILER_ALLRAWDATA
             CreateTable_GCHandles(tables);
             CreateTable_ManagedHeapSections(tables);

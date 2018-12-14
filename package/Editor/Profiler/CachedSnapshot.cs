@@ -66,7 +66,7 @@ namespace Unity.MemoryProfiler.Editor
         }
     }
 
-    public class CachedSnapshot
+    internal class CachedSnapshot
     {
         public static int kCacheEntrySize = 4 * 1024;
         private VirtualMachineInformation m_VirtualMachineInfo;
@@ -86,6 +86,31 @@ namespace Unity.MemoryProfiler.Editor
                 id = DataArray.MakeCache(dataSet, DataSourceFromAPI.ApiToDatabase(ss.id));
                 memoryLabelIndex = DataArray.MakeCache(dataSet, DataSourceFromAPI.ApiToDatabase(ss.memoryLabelIndex));
                 callstackSymbols = DataArray.MakeCache(dataSet, DataSourceFromAPI.ApiToDatabase(ss.callstackSymbols));
+            }
+
+            public string GetReadableCallstackForId( NativeCallstackSymbolEntriesCache symbols, long id)
+            {
+                int entryIdx = this.id.FindIndex(x=> x==id);
+
+                return entryIdx < 0 ? "" : GetReadableCallstack(symbols, entryIdx);
+            }
+            public string GetReadableCallstack( NativeCallstackSymbolEntriesCache symbols, long idx)
+            {
+                string readableStackTrace = "";
+
+                ulong[] callstackSymbols = this.callstackSymbols[idx];
+
+                for (int i=0; i<callstackSymbols.Length; ++i)
+                {
+                    int symbolIdx = symbols.symbol.FindIndex(x=> x==callstackSymbols[i]);
+
+                    if (symbolIdx < 0)
+                        readableStackTrace += "<unknown>\n";
+                    else
+                        readableStackTrace += symbols.readableStackTrace[symbolIdx];
+                }
+                
+                return readableStackTrace;
             }
         }
 
@@ -475,6 +500,13 @@ namespace Unity.MemoryProfiler.Editor
         public FieldDescriptionEntriesCache fieldDescriptions;
         public ConnectionEntriesCache connections;
 
+        public SortedNativeMemoryRegionEntriesCache SortedNativeRegionsEntries;
+        public SortedManagedMemorySectionEntriesCache SortedManagedStacksEntries;
+        public SortedManagedMemorySectionEntriesCache SortedManagedHeapEntries;
+        public SortedManagedObjectsCache SortedManagedObjects;
+        public SortedNativeAllocationsCache SortedNativeAllocations;
+        public SortedNativeObjectsCache SortedNativeObjects;
+
         public CachedSnapshot(PackedMemorySnapshot s)
         {
             packedMemorySnapshot = s;
@@ -493,6 +525,14 @@ namespace Unity.MemoryProfiler.Editor
             gcHandles               = new GCHandleEntriesCache(s.gcHandles);
             fieldDescriptions       = new FieldDescriptionEntriesCache(s.fieldDescriptions);
             connections             = new ConnectionEntriesCache(s.connections);
+
+            SortedNativeRegionsEntries = new SortedNativeMemoryRegionEntriesCache(this);
+            SortedManagedStacksEntries = new SortedManagedMemorySectionEntriesCache(managedStacks);
+            SortedManagedHeapEntries   = new SortedManagedMemorySectionEntriesCache(managedHeapSections);
+
+            SortedManagedObjects    = new SortedManagedObjectsCache(this);
+            SortedNativeAllocations = new SortedNativeAllocationsCache(this);
+            SortedNativeObjects     = new SortedNativeObjectsCache(this);
 
             typeDescriptions.InitSecondaryItems(this);
             nativeObjects.InitSecondaryItems();
@@ -617,17 +657,220 @@ namespace Unity.MemoryProfiler.Editor
             return false;
         }
 
-        //public bool HasNativeConnection(int fromNativeObject, int toNativeObject)
-        //{
+        public interface ISortedEntriesCache
+        {
+            void Preload();
+            int Count { get; } 
+            ulong Address(int index);
+            ulong Size(int index);
+        }
 
-        //}
-        //public bool HasManagedConnection(int fromManagedIndex, int toManagedObjectIndex)
-        //{
+        public class SortedNativeMemoryRegionEntriesCache : ISortedEntriesCache
+        {
+            CachedSnapshot m_Snapshot;
+            int[] m_Sorting;
 
-        //}
-        //public bool HasUnityEngineObjectConnection(int nativeObjectIndex, int managedObjectIndex)
-        //{
+            public SortedNativeMemoryRegionEntriesCache(CachedSnapshot snapshot)
+            {
+                m_Snapshot = snapshot;
+            }
+            
+            public void Preload()
+            {
+                if (m_Sorting == null)
+                {
+                    m_Sorting = new int[m_Snapshot.nativeMemoryRegions.Count];
 
-        //}
+                    for (int i=0; i<m_Sorting.Length; ++i)
+                        m_Sorting[i] = i;
+
+                    Array.Sort(m_Sorting, (x,y)=>m_Snapshot.nativeMemoryRegions.addressBase[x].CompareTo(m_Snapshot.nativeMemoryRegions.addressBase[y]));
+                }                    
+            }
+
+            int this[ int index ]
+            {
+                get {
+                    Preload();
+                    return m_Sorting[index];
+                }
+            }
+
+            public int  Count { get { return (int) m_Snapshot.nativeMemoryRegions.Count; } } 
+            public ulong  Address(int index) { return m_Snapshot.nativeMemoryRegions.addressBase[this[index]]; }
+            public ulong  Size(int index) { return m_Snapshot.nativeMemoryRegions.addressSize[this[index]]; }
+
+            public string Name(int index) { return m_Snapshot.nativeMemoryRegions.memoryRegionName[this[index]]; }
+            public int    UnsortedParentRegionIndex(int index) { return m_Snapshot.nativeMemoryRegions.parentIndex[this[index]]; }
+            public int    UnsortedFirstAllocationIndex(int index) { return m_Snapshot.nativeMemoryRegions.firstAllocationIndex[this[index]]; }
+            public int    UnsortedNumAllocations(int index) { return m_Snapshot.nativeMemoryRegions.numAllocations[this[index]]; }
+        }
+
+        public class SortedManagedMemorySectionEntriesCache : ISortedEntriesCache
+        {
+            ManagedMemorySectionEntriesCache m_Entries;
+            int[] m_Sorting;
+
+            public SortedManagedMemorySectionEntriesCache(ManagedMemorySectionEntriesCache entries)
+            {
+                m_Entries = entries;
+            }
+
+            public void Preload()
+            {
+                if (m_Sorting == null)
+                {
+                    m_Sorting = new int[m_Entries.Count];
+
+                    for (int i=0; i<m_Sorting.Length; ++i)
+                        m_Sorting[i] = i;
+
+                    Array.Sort(m_Sorting, (x,y)=>m_Entries.startAddress[x].CompareTo(m_Entries.startAddress[y]));
+                }
+            }
+
+            int this[ int index ]
+            {
+                get {
+                    Preload();                    
+                    return m_Sorting[index];
+                }
+            }
+
+            public int  Count { get { return (int) m_Entries.Count; } } 
+            public ulong Address(int index) { return m_Entries.startAddress[this[index]]; }
+            public ulong Size(int index) { return (ulong)m_Entries.bytes[this[index]].Length; }
+            public byte[] Bytes(int index) { return m_Entries.bytes[this[index]]; }
+        }
+
+        public class SortedManagedObjectsCache : ISortedEntriesCache
+        {
+            CachedSnapshot m_Snapshot;
+            int[] m_Sorting;
+
+            public SortedManagedObjectsCache(CachedSnapshot snapshot)
+            {
+                m_Snapshot = snapshot;
+            }
+
+            public void Preload()
+            {
+                if (m_Sorting == null)
+                {
+                    m_Sorting = new int[m_Snapshot.m_CrawledData.managedObjects.Count];
+
+                    for (int i=0; i<m_Sorting.Length; ++i)
+                        m_Sorting[i] = i;
+
+                    Array.Sort(m_Sorting, (x,y)=>m_Snapshot.m_CrawledData.managedObjects[x].ptrObject.CompareTo(m_Snapshot.m_CrawledData.managedObjects[y].ptrObject));
+                }
+            }
+
+            ManagedObjectInfo this[ int index ]
+            {
+                get {
+                    Preload();                    
+                    return m_Snapshot.m_CrawledData.managedObjects[m_Sorting[index]];
+                }
+            }
+
+            public int  Count { get { return m_Snapshot.m_CrawledData.managedObjects.Count; } } 
+            public ulong Address(int index) { return this[index].ptrObject; }
+            public ulong Size(int index) { return (ulong)this[index].size; }
+            public ulong PtrTypeInfo(int index) { return this[index].ptrTypeInfo; }
+            public int NativeObjectIndex(int index) { return this[index].nativeObjectIndex; }
+            public int ManagedObjectIndex(int index) { return this[index].managedObjectIndex; }
+            public int ITypeDescription(int index) { return this[index].iTypeDescription; }
+            public int RefCount(int index) { return this[index].refCount; }
+            public bool IsKnownType(int index) { return this[index].IsKnownType(); }
+        }
+
+
+        public class SortedNativeAllocationsCache : ISortedEntriesCache
+        {
+            CachedSnapshot m_Snapshot;
+            int[] m_Sorting;
+
+            public SortedNativeAllocationsCache(CachedSnapshot snapshot)
+            {
+                m_Snapshot = snapshot;
+            }
+            
+            public void Preload()
+            {
+                if (m_Sorting == null)
+                {
+                    m_Sorting = new int[m_Snapshot.nativeAllocations.address.Length];
+
+                    for (int i=0; i<m_Sorting.Length; ++i)
+                        m_Sorting[i] = i;
+
+                    Array.Sort(m_Sorting, (x,y)=>m_Snapshot.nativeAllocations.address[x].CompareTo(m_Snapshot.nativeAllocations.address[y]));
+                }
+            }
+
+            int this[ int index ]
+            {
+                get 
+                {
+                    Preload();                
+                    return m_Sorting[index];
+                }
+            }
+
+            public int  Count { get { return (int)m_Snapshot.nativeAllocations.Count; } } 
+            public ulong Address(int index) { return m_Snapshot.nativeAllocations.address[this[index]]; }
+            public ulong Size(int index) { return m_Snapshot.nativeAllocations.size[this[index]]; }
+            public int MemoryRegionIndex(int index) { return m_Snapshot.nativeAllocations.memoryRegionIndex[this[index]]; }
+            public long RootReferenceId(int index) { return m_Snapshot.nativeAllocations.rootReferenceId[this[index]]; }
+            public long AllocationSiteId(int index) { return m_Snapshot.nativeAllocations.allocationSiteId[this[index]]; }
+            public int OverheadSize(int index) { return m_Snapshot.nativeAllocations.overheadSize[this[index]]; }
+            public int PaddingSize(int index) { return m_Snapshot.nativeAllocations.paddingSize[this[index]]; }
+        }
+            
+        public class SortedNativeObjectsCache : ISortedEntriesCache
+        {
+            CachedSnapshot m_Snapshot;
+            int[] m_Sorting;
+
+            public SortedNativeObjectsCache(CachedSnapshot snapshot)
+            {
+                m_Snapshot = snapshot;
+            }
+
+            public void Preload()
+            {
+                if (m_Sorting == null)
+                {
+                    m_Sorting = new int[m_Snapshot.nativeObjects.nativeObjectAddress.Length];
+
+                    for (int i=0; i<m_Sorting.Length; ++i)
+                        m_Sorting[i] = i;
+
+                    Array.Sort(m_Sorting, (x,y)=>m_Snapshot.nativeObjects.nativeObjectAddress[x].CompareTo(m_Snapshot.nativeObjects.nativeObjectAddress[y]));
+                }
+            }
+
+            int this[ int index ]
+            {
+                get 
+                {
+                    Preload();
+                    return m_Sorting[index];
+                }
+            }
+
+            public int  Count { get { return (int)m_Snapshot.nativeObjects.Count; } } 
+            public ulong Address(int index) { return m_Snapshot.nativeObjects.nativeObjectAddress[this[index]]; }
+            public ulong Size(int index) { return m_Snapshot.nativeObjects.size[this[index]]; }
+            public string Name(int index) { return m_Snapshot.nativeObjects.objectName[this[index]]; }
+            public int InstanceId(int index) { return m_Snapshot.nativeObjects.instanceId[this[index]]; }
+            public int NativeTypeArrayIndex(int index) { return m_Snapshot.nativeObjects.nativeTypeArrayIndex[this[index]]; }
+            public HideFlags HideFlags(int index) { return m_Snapshot.nativeObjects.hideFlags[this[index]]; }
+            public ObjectFlags Flags(int index) { return m_Snapshot.nativeObjects.flags[this[index]]; }
+            public long RootReferenceId(int index) { return m_Snapshot.nativeObjects.rootReferenceId[this[index]]; }
+            public int Refcount(int index) { return m_Snapshot.nativeObjects.refcount[this[index]]; }
+            public int ManagedObjectIndex(int index) { return m_Snapshot.nativeObjects.managedObjectIndex[this[index]]; }
+        } 
     }
 }

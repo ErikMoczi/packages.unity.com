@@ -1,6 +1,6 @@
 namespace Unity.MemoryProfiler.Editor.Database.Soa
 {
-    public class SoaDataSet
+    internal class SoaDataSet
     {
         public SoaDataSet(long adataCount, long achunkSize)
         {

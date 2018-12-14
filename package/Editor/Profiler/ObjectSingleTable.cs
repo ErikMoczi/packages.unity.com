@@ -2,13 +2,13 @@ using Unity.MemoryProfiler.Editor.Database;
 
 namespace Unity.MemoryProfiler.Editor
 {
-    public class ObjectSingleTable : ObjectListTable
+    internal class ObjectSingleTable : ObjectListTable
     {
         public ObjectData obj;
         public int objOffset;
 
-        public ObjectSingleTable(Scheme scheme, SnapshotDataRenderer renderer, CachedSnapshot snapshot, ManagedData crawledData, ObjectData obj, ObjectMetaType metaType)
-            : base(scheme, renderer, snapshot, crawledData, metaType)
+        public ObjectSingleTable(Schema schema, SnapshotDataRenderer renderer, CachedSnapshot snapshot, ManagedData crawledData, ObjectData obj, ObjectMetaType metaType)
+            : base(schema, renderer, snapshot, crawledData, metaType)
         {
             this.obj = obj;
             if (!obj.dataIncludeObjectHeader)

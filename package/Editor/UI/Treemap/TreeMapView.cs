@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Unity.MemoryProfiler.Editor.UI.Treemap
 {
-    public class TreeMapView
+    internal class TreeMapView
     {
         public CachedSnapshot m_Snapshot;
         public ZoomArea m_ZoomArea;
@@ -37,7 +37,7 @@ namespace Unity.MemoryProfiler.Editor.UI.Treemap
         public void Setup()//(MemoryProfilerWindow hostWindow, CrawledMemorySnapshot _unpackedCrawl)
         {
             m_ZoomArea = new ZoomArea();
-            m_ZoomArea.resizeWorld(new Rect(-110f, -110f, 220, 220));
+            m_ZoomArea.resizeWorld(new Rect(-100, -100, 200, 200));
             //RefreshCaches();
             RefreshMesh();
         }
@@ -45,6 +45,14 @@ namespace Unity.MemoryProfiler.Editor.UI.Treemap
         public Item GetItemByObjectUID(int objectUID)
         {
             return _items.Find(x => x._metric.GetObjectUID() == objectUID);
+        }
+
+        public Group FindGroup(string name)
+        {
+            Group group = null;
+            if (!_groups.TryGetValue(name, out group))
+                return null;
+            return group;
         }
 
         public bool IsAnimated()
@@ -208,13 +216,22 @@ namespace Unity.MemoryProfiler.Editor.UI.Treemap
             m_ZoomArea.FocusTo(1, Vector2.zero, null, true);
         }
 
-        public Item selectedItem
+        public Item SelectedItem
         {
             get
             {
                 return _selectedItem;
             }
         }
+
+        public Group SelectedGroup
+        {
+            get
+            {
+                return _selectedGroup;
+            }
+        }
+
         public void ClearMetric()
         {
             _items.Clear();
@@ -359,19 +376,19 @@ namespace Unity.MemoryProfiler.Editor.UI.Treemap
                 return;
 
             GUI.color = Color.black;
-            Matrix4x4 mat = m_ZoomArea.worldToViewMatrix; //_ZoomArea.drawingToViewMatrix;
+            var mat = m_ZoomArea.worldToViewMatrix; //_ZoomArea.drawingToViewMatrix;
 
-            foreach (Group group in _groups.Values)
+            foreach (var group in _groups.Values)
             {
                 if (Utility.IsInside(group._position, m_ZoomArea.ViewInWorldSpace)) //_ZoomArea.shownArea))
                 {
                     if (_selectedGroup == group)
                     {
-                        RenderGroupItems(group);
+                        RenderGroupItems(group, ref mat);
                     }
                     else
                     {
-                        RenderGroupLabel(group);
+                        RenderGroupLabel(group, ref mat);
                     }
                 }
             }
@@ -379,32 +396,32 @@ namespace Unity.MemoryProfiler.Editor.UI.Treemap
             GUI.color = Color.white;
         }
 
-        private void RenderGroupLabel(Group group)
-        {
-            Matrix4x4 mat = m_ZoomArea.worldToViewMatrix;// _ZoomArea.drawingToViewMatrix;
+        float k_MinWidthForLables = 30;
+        float k_MinHeightForLables = 16;
 
+        private void RenderGroupLabel(Group group, ref Matrix4x4 mat)
+        {
             Vector3 p1 = mat.MultiplyPoint(new Vector3(group._position.xMin, group._position.yMin));
             Vector3 p2 = mat.MultiplyPoint(new Vector3(group._position.xMax, group._position.yMax));
 
-            if (p2.x - p1.x > 30f)
+            if (p2.x - p1.x > k_MinWidthForLables && p1.y - p2.y > k_MinHeightForLables)
             {
                 Rect rect = new Rect(p1.x, p2.y, p2.x - p1.x, p1.y - p2.y);
                 GUI.Label(rect, group.GetLabel());
             }
         }
 
-        private void RenderGroupItems(Group group)
+        private void RenderGroupItems(Group group, ref Matrix4x4 mat)
         {
-            Matrix4x4 mat = m_ZoomArea.worldToViewMatrix;// _ZoomArea.drawingToViewMatrix;
-
-            foreach (Item item in group._items)
+            var viewInWorldSpace = m_ZoomArea.ViewInWorldSpace;
+            foreach (var item in group._items)
             {
-                if (Utility.IsInside(item._position, m_ZoomArea.ViewInWorldSpace))  //_ZoomArea.shownArea))
+                if (Utility.IsInside(item._position, viewInWorldSpace))  //_ZoomArea.shownArea))
                 {
                     Vector3 p1 = mat.MultiplyPoint(new Vector3(item._position.xMin, item._position.yMin));
                     Vector3 p2 = mat.MultiplyPoint(new Vector3(item._position.xMax, item._position.yMax));
 
-                    if (p2.x - p1.x > 30f)
+                    if (p2.x - p1.x > k_MinWidthForLables && p1.y - p2.y > k_MinHeightForLables)
                     {
                         Rect rect = new Rect(p1.x, p2.y, p2.x - p1.x, p1.y - p2.y);
                         //string row1 = item._group._name;

@@ -4,7 +4,7 @@ using Unity.MemoryProfiler.Editor.Debuging;
 namespace Unity.MemoryProfiler.Editor.Database.View
 {
     // Used only with select statement that are not Many-To-Many
-    public class ViewColumnTyped<DataT> : Database.ColumnTyped<DataT>, ViewColumn.IViewColumn where DataT : IComparable
+    internal class ViewColumnTyped<DataT> : Database.ColumnTyped<DataT>, ViewColumn.IViewColumn where DataT : IComparable
     {
 #if MEMPROFILER_DEBUG_INFO
         public override string GetDebugString(long row)
@@ -46,7 +46,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             string extraInfo = "";
             if (metaColumn != null)
             {
-                extraInfo += " column '" + metaColumn.name + "'";
+                extraInfo += " column '" + metaColumn.Name + "'";
             }
             DebugUtility.LogError("Cannot set a const value on an indexed view column. Table '" + vc.viewTable.GetName() + "'" + extraInfo);
         }

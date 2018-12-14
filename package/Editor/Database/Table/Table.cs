@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Unity.MemoryProfiler.Editor.Database
 {
-    public struct CellPosition
+    internal struct CellPosition
     {
         public static CellPosition invalid
         {
@@ -30,7 +30,7 @@ namespace Unity.MemoryProfiler.Editor.Database
         public long row;
         public int col;
     }
-    public class RowIndexColumn : ColumnTyped<long>
+    internal class RowIndexColumn : ColumnTyped<long>
     {
 #if MEMPROFILER_DEBUG_INFO
         public override string GetDebugString(long row)
@@ -61,7 +61,7 @@ namespace Unity.MemoryProfiler.Editor.Database
             //do nothing
         }
     }
-    public abstract class Table
+    internal abstract class Table
     {
         protected Database.MetaTable m_Meta;
         public Database.MetaTable GetMetaData() { return m_Meta; }
@@ -71,10 +71,10 @@ namespace Unity.MemoryProfiler.Editor.Database
 
         protected RowIndexColumn m_RowIndexColumn;
         protected List<Column> m_Columns = new List<Column>();
-        public Scheme scheme;
-        public Table(Scheme scheme)
+        public Schema Schema;
+        public Table(Schema schema)
         {
-            this.scheme = scheme;
+            this.Schema = schema;
         }
 
         public virtual MetaColumn GetMetaColumnByColumn(Column col)
@@ -108,17 +108,7 @@ namespace Unity.MemoryProfiler.Editor.Database
             }
             var mc = m_Meta.GetColumnByName(name);
             if (mc == null) return null;
-            return GetColumnByIndex(mc.index);
-        }
-
-        //return if swap was successful
-        public virtual bool SwapColumn(int a, int b)
-        {
-            m_Meta.SwapColumn(a, b);
-            var col = m_Columns[a];
-            m_Columns[a] = m_Columns[b];
-            m_Columns[b] = col;
-            return true;
+            return GetColumnByIndex(mc.Index);
         }
 
         //will return -1 if the underlying data has not been computed yet.
@@ -147,7 +137,7 @@ namespace Unity.MemoryProfiler.Editor.Database
             return wasDirty;
         }
 
-        public interface IUpdater
+        internal interface IUpdater
         {
             long OldToNewRow(long a);
             long GetRowCount();
@@ -213,11 +203,11 @@ namespace Unity.MemoryProfiler.Editor.Database
         public virtual Range ExpandCell(long row, int col, bool expanded) { return Range.Empty(); }
     }
 
-    public abstract class CellLink
+    internal abstract class CellLink
     {
         public abstract CellPosition Apply(Table t);
     }
-    public class LinkPosition : CellLink
+    internal class LinkPosition : CellLink
     {
         public LinkPosition(CellPosition pos)
         {
@@ -237,7 +227,7 @@ namespace Unity.MemoryProfiler.Editor.Database
     }
 
 
-    public interface IExpandColumn
+    internal interface IExpandColumn
     {
         void Initialize(ExpandTable table, Column column, int columnIndex);
     }

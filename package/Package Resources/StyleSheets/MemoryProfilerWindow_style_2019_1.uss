@@ -1,0 +1,5 @@
+#viewHistory{
+	padding-top:3;
+	padding-left:6;
+	margin-right:-6;
+}

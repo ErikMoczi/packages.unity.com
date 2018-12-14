@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
 {
-    public class Multi : Filter
+    internal class Multi : Filter
     {
         public List<Filter> filters = new List<Filter>();
 

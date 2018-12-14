@@ -9,15 +9,15 @@ namespace Unity.MemoryProfiler.Editor.Database
         public Soa.SoaDataSet m_DataSet;
         System.Collections.Generic.List<MetaColumn> m_ListMetaColumns = new System.Collections.Generic.List<MetaColumn>();
         System.Collections.Generic.List<Column> m_ListColumns = new System.Collections.Generic.List<Column>();
-        public APITable(Scheme scheme, CachedSnapshot s, Soa.SoaDataSet ds)
-            : base(scheme)
+        public APITable(Schema schema, CachedSnapshot s, Soa.SoaDataSet ds)
+            : base(schema)
         {
             m_Snapshot = s;
             m_DataSet = ds;
         }
 
-        public APITable(Scheme scheme, CachedSnapshot s, long dataCount)
-            : base(scheme)
+        public APITable(Schema schema, CachedSnapshot s, long dataCount)
+            : base(schema)
         {
             m_Snapshot = s;
             m_DataSet = new Soa.SoaDataSet(dataCount, 4 * 1024);
@@ -29,8 +29,8 @@ namespace Unity.MemoryProfiler.Editor.Database
             m_ListColumns.Add(c);
 
             var t1 = c.type;
-            var t2 = mc.type;
-            DebugUtility.CheckCondition(t1 == t2 || t1.Equals(t2), "Type of Column must be the same as its MetaColumn.\nColumn: '" + mc.name + "'");
+            var t2 = mc.Type;
+            DebugUtility.CheckCondition(t1 == t2 || t1.Equals(t2), "Type of Column must be the same as its MetaColumn.\nColumn: '" + mc.Name + "'");
         }
 
         public void CreateTable(string nameId, string nameDisplay)

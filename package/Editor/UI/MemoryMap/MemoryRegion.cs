@@ -3,28 +3,33 @@ using UnityEngine;
 
 namespace Unity.MemoryProfiler.Editor.UI.MemoryMap
 {
-    public abstract class MemoryRegion
+    public enum RegionType
     {
-        public class EndComparer : IComparer<MemoryRegion>
+        Native,
+        VirtualMemory,
+        Managed,                
+        ManagedStack,
+    };
+
+    internal class MemoryRegion
+    {
+        public int Group { get; set; }
+        public readonly string Name;
+        public readonly ulong AddressBegin;
+        public readonly ulong Size;
+        public readonly RegionType Type;
+        public Color32 ColorRegion { get; set; }
+        public ulong AddressEnd
         {
-            int IComparer<MemoryRegion>.Compare(MemoryRegion a, MemoryRegion b)
-            {
-                return a.GetAddressEnd().CompareTo(b.GetAddressEnd());
-            }
-        }
-        public virtual Mesh2D BuildMeshSection(Rect r, ulong memBegin, ulong memEnd, Vector2 pixelSize)
-        {
-            MeshBuilder mb = new MeshBuilder();
-            BuildMeshSection(mb, r, memBegin, memEnd, pixelSize);
-            return mb.CreateMesh();
+            get { return AddressBegin + Size; }
         }
 
-        public abstract void BuildMeshSection(MeshBuilder mb, Rect r, ulong memBegin, ulong memEnd, Vector2 pixelSize);
-        public abstract void BuildSelectionMeshSection(MeshBuilder mb, Rect r, ulong memBegin, ulong memEnd, Vector2 pixelSize);
-        public abstract void CleanupMeshes();
-        public abstract ulong GetAddressBegin();
-        public abstract ulong GetAddressEnd();
-        public abstract string GetDisplayName();
-        public abstract string GetDisplayType();
+        public MemoryRegion(RegionType type,  ulong begin, ulong size, string displayName)
+        {
+            AddressBegin = begin;
+            Size = size;
+            Name = displayName;
+            Type = type;
+        }
     }
 }

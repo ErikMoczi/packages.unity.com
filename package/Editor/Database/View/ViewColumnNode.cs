@@ -2,7 +2,7 @@ using System;
 
 namespace Unity.MemoryProfiler.Editor.Database.View
 {
-    public class ViewColumnNode
+    internal class ViewColumnNode
     {
         public ViewTable viewTable;
         public MetaColumn metaColumn;
@@ -23,7 +23,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
     }
 
     // List of expression set by a view when the data type is "node"
-    public class ViewColumnNodeTyped<DataT> : Database.ColumnTyped<DataT>, ViewColumnNode.IViewColumnNode where DataT : IComparable
+    internal class ViewColumnNodeTyped<DataT> : Database.ColumnTyped<DataT>, ViewColumnNode.IViewColumnNode where DataT : IComparable
     {
 #if MEMPROFILER_DEBUG_INFO
         public override string GetDebugString(long row)
@@ -42,7 +42,9 @@ namespace Unity.MemoryProfiler.Editor.Database.View
         public Operation.TypedExpression<DataT>[] entries;
         public MetaLink[] linkEntries;
         private ViewColumnNode m_ViewColumn;
-        //TODO add cache here, clear it on update
+
+        Operation.ValueStringArrayCache<DataT> m_Cache;
+
         public ViewColumnNodeTyped()
         {
             type = typeof(DataT);
@@ -50,15 +52,19 @@ namespace Unity.MemoryProfiler.Editor.Database.View
 
         void ViewColumnNode.IViewColumnNode.SetColumn(ViewColumnNode vc)
         {
+            if (m_ViewColumn != null)
+            {
+                throw new InvalidOperationException("Cannot call 'ViewColumn.IViewColumn.SetColumn' once already set");
+            }
             if (vc.viewTable.node.data.type != ViewTable.Builder.Node.Data.DataType.Node)
             {
                 throw new Exception("Cannot set a ViewColumnNodeTyped column on a non-Node data type view table");
             }
             m_ViewColumn = vc;
             entries = new Operation.TypedExpression<DataT>[vc.viewTable.GetNodeChildCount()];
+            m_Cache.InitDirect(entries.Length);
             linkEntries = new MetaLink[vc.viewTable.GetNodeChildCount()];
         }
-
         Database.Column ViewColumnNode.IViewColumnNode.GetColumn()
         {
             return this;
@@ -66,6 +72,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
 
         void ViewColumnNode.IViewColumnNode.SetEntry(long row, Operation.Expression exp, MetaLink link)
         {
+            m_Cache.SetEntryDirty((int)row);
             entries[(int)row] = exp as Operation.TypedExpression<DataT>;
             linkEntries[(int)row] = link;
         }
@@ -82,24 +89,17 @@ namespace Unity.MemoryProfiler.Editor.Database.View
 
         public override string GetRowValueString(long row)
         {
-            if (entries[(int)row] == null)
-            {
-                return "";
-            }
-            return entries[(int)row].GetValueString(0);
+            return m_Cache.GetValueStringFromExpression((int)row, entries[row], 0);
         }
 
         public override DataT GetRowValue(long row)
         {
-            if (entries[(int)row] == null)
-            {
-                return default(DataT);
-            }
-            return entries[(int)row].GetValue(0);
+            return m_Cache.GetValueFromExpression((int)row, entries[row], 0);
         }
 
         public override void SetRowValue(long row, DataT value)
         {
+            throw new InvalidOperationException("Cannot call 'SetRowValue' on 'ViewColumnNodeTyped'");
         }
     }
 }
