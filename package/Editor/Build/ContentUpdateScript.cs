@@ -122,13 +122,16 @@ namespace UnityEditor.AddressableAssets
         public static string GetContentStateDataPath(bool browse)
         {
             var buildPath = EditorUserBuildSettings.GetBuildLocation(EditorUserBuildSettings.activeBuildTarget);
-            if (File.Exists(buildPath))
-                buildPath = Path.GetDirectoryName(buildPath);
-            #if UNITY_EDITOR_OSX
+            if (!string.IsNullOrEmpty(buildPath))
+            {
+                if (File.Exists(buildPath))
+                    buildPath = Path.GetDirectoryName(buildPath);
+#if UNITY_EDITOR_OSX
                 if(EditorUserBuildSettings.activeBuildTarget == BuildTarget.iOS || 
                    EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneOSX)
                     buildPath = Path.GetDirectoryName(buildPath);
-            #endif
+#endif
+            }
             if (browse)
             {
                 if (string.IsNullOrEmpty(buildPath))

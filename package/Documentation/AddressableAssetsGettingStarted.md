@@ -26,6 +26,14 @@ To change the address, double click the current address of the Asset and enter t
 
 When you first start using Addressable Assets, the system saves some edit-time and run-time data Assets for your Project in *Assets/AddressableAssetsData* which should be added to your version control check in.
 
+### Building your game
+Addressables needs to build your content into files that can be consumed by the running game before you build the player.  This step is not done automatically.  You can build this content via the UI or API.
+1. UI
+a. Open the __Addressables__ window.
+b. Select _Build->Build Player Content_
+2. API
+a. `AddressableAssetSettings.BuildPlayerContent()`
+
 ### Loading or instantiating by address
 
 You can load or instantiate an Asset at run-time. Loading an Asset loads all dependencies into memory (including Asset bundle data if relevant). This allows you to use the Asset when you need to. Instantiating loads the Asset, and then immediately adds it to the scene.
