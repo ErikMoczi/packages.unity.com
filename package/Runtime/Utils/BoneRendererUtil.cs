@@ -109,7 +109,7 @@ namespace UnityEngine.Animations.Rigging
 
         static BoneRendererUtil()
         {
-            SceneView.onSceneGUIDelegate += DrawSkeletons;
+            SceneView.duringSceneGui += DrawSkeletons;
         }
 
         private static Material material

@@ -2,9 +2,14 @@
 All notable changes to this package will be documented in this file.
 
 <!--
-## [0.1.4] - 2019-01-XX
+## [0.1.5] - 2019-01-XX
 ### Patch Update of *Unity Package Animation Rigging*.
 -->
+
+## [0.1.4] - 2018-12-21
+
+### Patch Update of *Unity Package Animation Rigging*.
+- Fixed onSceneGUIDelegate deprecation warning in BoneRenderUtils
 
 ## [0.1.3] - 2018-12-21
 
