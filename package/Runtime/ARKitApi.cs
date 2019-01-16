@@ -145,7 +145,18 @@ namespace UnityEngine.XR.ARKit
         [DllImport("__Internal")]
         static internal extern bool UnityARKit_cameraImage_tryGetCurrentConfiguration(
             out CameraConfiguration configuration);
+
+        [DllImport("__Internal")]
+        static internal extern bool UnityARKit_tryGetCameraIntrinsics(
+            out CameraIntrinsics cameraIntrinsics);
 #else
+        static internal bool UnityARKit_tryGetCameraIntrinsics(
+            out CameraIntrinsics cameraIntrinsics)
+        {
+            cameraIntrinsics = default(CameraIntrinsics);
+            return false;
+        }
+
         static internal bool UnityARKit_cameraImage_tryGetCurrentConfiguration(
             out CameraConfiguration configuration)
         {

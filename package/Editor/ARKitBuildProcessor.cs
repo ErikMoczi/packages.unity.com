@@ -23,23 +23,7 @@ namespace UnityEditor.XR.ARKit
             if (target != BuildTarget.iOS)
                 return;
 
-            string unityTargetName = PBXProject.GetUnityTargetName();
-            string projPath = PBXProject.GetPBXProjectPath(pathToBuiltProject);
-
-            // Create a PBXProject object and populate it with the trampoline project
-            var proj = new PBXProject();
-            proj.ReadFromString(File.ReadAllText(projPath));
-
-            // Add the ARKit framework to the Xcode project
-            string targetGuid = proj.TargetGuidByName(unityTargetName);
-            const bool isFrameworkOptional = false;
-            const string arkitFramework = "ARKit.framework";
-            proj.AddFrameworkToProject(targetGuid, arkitFramework, isFrameworkOptional);
-
             HandleARKitRequiredFlag(pathToBuiltProject);
-
-            // Finally, write out the modified project with the framework added.
-            File.WriteAllText(projPath, proj.WriteToString());
         }
 
         static void HandleARKitRequiredFlag(string pathToBuiltProject)
@@ -92,15 +76,20 @@ namespace UnityEditor.XR.ARKit
                 EnsureOnlyMetalIsUsed();
                 EnsureTargetArchitecturesAreSupported(report.summary.platformGroup);
 
+                var arkitSettings = ARKitSettings.GetOrCreateSettings();
+
                 if (LinkerUtility.AssemblyStrippingEnabled(report.summary.platformGroup))
                 {
                     LinkerUtility.EnsureLinkXmlExistsFor("ARKit");
-                    var arkitSettings = ARKitSettings.GetOrCreateSettings();
                     if (arkitSettings.ARKitFaceTrackingEnabled)
                     {
                         LinkerUtility.EnsureLinkXmlExistsFor("ARKit.FaceTracking");
                     }
                 }
+
+                var pluginImporter = AssetImporter.GetAtPath("Packages/com.unity.xr.arkit/Runtime/iOS/libUnityARKitFaceTracking.a") as PluginImporter;
+                if (pluginImporter)
+                    pluginImporter.SetCompatibleWithPlatform(BuildTarget.iOS, arkitSettings.ARKitFaceTrackingEnabled);
             }
 
             void EnsureTargetArchitecturesAreSupported(BuildTargetGroup buildTargetGroup)

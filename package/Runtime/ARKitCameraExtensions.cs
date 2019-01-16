@@ -18,6 +18,7 @@ namespace UnityEngine.XR.ARKit
             XRCameraExtensions.RegisterCameraImageApi(k_SubsystemId, s_CameraImageApi);
             XRCameraExtensions.RegisterCameraConfigApi(k_SubsystemId, s_CameraConfigApi);
             XRCameraExtensions.RegisterTrySetFocusModeHandler(k_SubsystemId, TrySetFocusMode);
+            XRCameraExtensions.RegisterTryGetIntrinsicsHandler(k_SubsystemId, TryGetIntrinsics);
         }
 
         static ARKitCameraExtension()
@@ -39,6 +40,11 @@ namespace UnityEngine.XR.ARKit
         static IntPtr GetNativePtr(XRCameraSubsystem cameraSubsystem)
         {
             return Api.UnityARKit_getNativeFramePtr();
+        }
+
+        static bool TryGetIntrinsics(XRCameraSubsystem cameraSubsystem, out CameraIntrinsics cameraIntrinsics)
+        {
+            return Api.UnityARKit_tryGetCameraIntrinsics(out cameraIntrinsics);
         }
 
         static readonly string k_SubsystemId = "ARKit-Camera";
