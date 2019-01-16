@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.Experimental.GraphView;
+using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements.StyleEnums;
+using UnityEngine.Experimental.UIElements.StyleSheets;
 using UnityEngine.Profiling;
 
 namespace UnityEditor.VFX.UI
@@ -82,8 +84,8 @@ namespace UnityEditor.VFX.UI
         public VFXParameterUI() : base("uxml/VFXParameter")
         {
             RemoveFromClassList("VFXNodeUI");
-            styleSheets.Add(Resources.Load<StyleSheet>("VFXParameter"));
-            styleSheets.Add(EditorGUIUtility.Load("StyleSheets/GraphView/Node.uss") as StyleSheet);
+            AddStyleSheetPath("VFXParameter");
+            AddStyleSheetPath("StyleSheets/GraphView/Node.uss");
 
             RegisterCallback<MouseEnterEvent>(OnMouseHover);
             RegisterCallback<MouseLeaveEvent>(OnMouseHover);
@@ -147,12 +149,12 @@ namespace UnityEditor.VFX.UI
         {
             if (evt.target == this && controller != null)
             {
-                evt.menu.AppendAction("Convert to Inline", OnConvertToInline, e => DropdownMenuAction.Status.Normal);
+                evt.menu.AppendAction("Convert to Inline", OnConvertToInline, e => DropdownMenu.MenuAction.StatusFlags.Normal);
                 evt.menu.AppendSeparator();
             }
         }
 
-        void OnConvertToInline(DropdownMenuAction evt)
+        void OnConvertToInline(DropdownMenu.MenuAction evt)
         {
             controller.ConvertToInline();
         }
@@ -169,7 +171,7 @@ namespace UnityEditor.VFX.UI
             if (row == null)
                 return;
 
-            if (evt.eventTypeId == MouseEnterEvent.TypeId())
+            if (evt.GetEventTypeId() == MouseEnterEvent.TypeId())
                 row.AddToClassList("hovered");
             else
                 row.RemoveFromClassList("hovered");

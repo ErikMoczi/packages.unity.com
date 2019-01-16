@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements.StyleSheets;
 using System;
 
 using UnityObject = UnityEngine.Object;
@@ -11,7 +12,8 @@ namespace UnityEditor.VFX.UI
     public class VFXContextBorderFactory : UxmlFactory<VFXContextBorder>
     {}
 
-    public class VFXContextBorder : ImmediateModeElement, IDisposable
+    [InitializeOnLoad]
+    public class VFXContextBorder : VisualElement, IDisposable
     {
         Material m_Mat;
 
@@ -20,7 +22,6 @@ namespace UnityEditor.VFX.UI
         public VFXContextBorder()
         {
             RecreateResources();
-            RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
         }
 
         void RecreateResources()
@@ -75,34 +76,46 @@ namespace UnityEditor.VFX.UI
             UnityObject.DestroyImmediate(m_Mat);
         }
 
-        Color m_StartColor;
+        StyleValue<Color> m_StartColor;
         public Color startColor
         {
-            get { return m_StartColor; }
+            get
+            {
+                return m_StartColor.GetSpecifiedValueOrDefault(Color.black);
+            }
+            set
+            {
+                m_StartColor = value;
+            }
         }
-
-        Color m_EndColor;
+        StyleValue<Color> m_EndColor;
         public Color endColor
         {
-            get { return m_EndColor; }
+            get
+            {
+                return m_EndColor.GetSpecifiedValueOrDefault(Color.black);
+            }
+            set
+            {
+                m_EndColor = value;
+            }
         }
 
-        static readonly CustomStyleProperty<Color> s_StartColorProperty = new CustomStyleProperty<Color>("--start-color");
-        static readonly CustomStyleProperty<Color> s_EndColorProperty = new CustomStyleProperty<Color>("--end-color");
-        private void OnCustomStyleResolved(CustomStyleResolvedEvent e)
+        protected override void OnStyleResolved(ICustomStyle styles)
         {
-            var customStyle = e.customStyle;
-            customStyle.TryGetValue(s_StartColorProperty, out m_StartColor);
-            customStyle.TryGetValue(s_EndColorProperty, out m_EndColor);
+            base.OnStyleResolved(styles);
+
+            styles.ApplyCustomProperty("start-color", ref m_StartColor);
+            styles.ApplyCustomProperty("end-color", ref m_EndColor);
         }
 
-        protected override void ImmediateRepaint()
+        protected override void DoRepaint(IStylePainter sp)
         {
             RecreateResources();
             VFXView view = GetFirstAncestorOfType<VFXView>();
             if (view != null && m_Mat != null)
             {
-                float radius = resolvedStyle.borderTopLeftRadius;
+                float radius = style.borderRadius;
 
                 float realBorder = style.borderLeftWidth.value * view.scale;
 

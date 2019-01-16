@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using UnityEditor.Experimental.GraphView;
+using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEditor.Experimental.VFX;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -562,6 +562,12 @@ namespace UnityEditor.VFX.UI
             return changed;
         }
 
+        private enum RecordEvent
+        {
+            Add,
+            Remove
+        }
+
         public ReadOnlyCollection<VFXDataEdgeController> dataEdges
         {
             get { return m_DataEdges.AsReadOnly(); }
@@ -665,7 +671,6 @@ namespace UnityEditor.VFX.UI
                 context.Detach();
 
                 RemoveFromGroupNodes(element as VFXNodeController);
-
 
                 UnityObject.DestroyImmediate(context, true);
             }
@@ -882,7 +887,7 @@ namespace UnityEditor.VFX.UI
 
             for (int i = index; i < m_StickyNoteControllers.Count; ++i)
             {
-                m_StickyNoteControllers[i].index = index;
+                m_StickyNoteControllers[i].index = i;
             }
 
             //Patch group nodes, removing this sticky note and fixing ids that are bigger than index

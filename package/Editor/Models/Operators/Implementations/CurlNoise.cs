@@ -5,15 +5,15 @@ using UnityEngine;
 
 namespace UnityEditor.VFX.Operator
 {
-    class CurlNoiseVariantProvider : IVariantProvider
+    class CurlNoiseVariantProvider : VariantProvider
     {
-        public Dictionary<string, object[]> variants
+        protected override sealed Dictionary<string, object[]> variants
         {
             get
             {
                 return new Dictionary<string, object[]>
                 {
-                    { "type", Enum.GetValues(typeof(NoiseBase.NoiseType)).Cast<object>().ToArray() },
+                    { "type", Enum.GetValues(typeof(NoiseBase.NoiseType)).OfType<NoiseBase.NoiseType>().Where(o => o != NoiseBase.NoiseType.Cellular).Cast<object>().ToArray() },
                     { "dimensions", Enum.GetValues(typeof(CurlNoise.DimensionCount)).Cast<object>().ToArray() }
                 };
             }
@@ -65,12 +65,12 @@ namespace UnityEditor.VFX.Operator
                 IEnumerable<VFXPropertyWithValue> properties = null;
 
                 if (dimensions == DimensionCount.Two)
-                    properties = PropertiesFromType(nameof(InputProperties2D));
+                    properties = PropertiesFromType("InputProperties2D");
                 else
-                    properties = PropertiesFromType(nameof(InputProperties3D));
+                    properties = PropertiesFromType("InputProperties3D");
 
-                properties = properties.Concat(PropertiesFromType(nameof(InputPropertiesCommon)));
-                properties = properties.Concat(PropertiesFromType(nameof(InputPropertiesAmplitude)));
+                properties = properties.Concat(PropertiesFromType("InputPropertiesCommon"));
+                properties = properties.Concat(PropertiesFromType("InputPropertiesAmplitude"));
 
                 return properties;
             }
@@ -81,9 +81,9 @@ namespace UnityEditor.VFX.Operator
             get
             {
                 if (dimensions == DimensionCount.Two)
-                    return PropertiesFromType(nameof(OutputProperties2D));
+                    return PropertiesFromType("OutputProperties2D");
                 else
-                    return PropertiesFromType(nameof(OutputProperties3D));
+                    return PropertiesFromType("OutputProperties3D");
             }
         }
 

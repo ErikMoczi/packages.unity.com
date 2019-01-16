@@ -8,11 +8,11 @@
     padding-top: 1;
     padding-right: 3;
     padding-bottom: 2;
-    -unity-slice-left: 3;
-    -unity-slice-top: 3;
-    -unity-slice-right: 3;
-    -unity-slice-bottom: 3;
-    --unity-selection-color: rgba(61,128,223,166);
+    slice-left: 3;
+    slice-top: 3;
+    slice-right: 3;
+    slice-bottom: 3;
+    selection-color: rgba(61,128,223,166);
     cursor: text;
 }*/
 
@@ -26,10 +26,10 @@ VFXColorField
 
 VFXColorField #indeterminate
 {
-    color:#000;
+    text-color:#000;
 }
 
-.unity-curve-field
+CurveField
 {
     height:16;
     background-color:rgb(86, 86, 86);
@@ -44,7 +44,7 @@ VFXColorField #indeterminate
 {
     flex-direction:row;
 }
-.sliderField .unity-slider
+.sliderField Slider
 {
     flex:1 0 auto;
 }
@@ -61,13 +61,13 @@ VFXColorField #indeterminate
 
 .PopupButton
 {
-    -unity-text-align:middle-left;
+    text-alignment:middle-left;
     height: 16;
-    -unity-slice-left: 6;
-    -unity-slice-top: 4;
-    -unity-slice-right: 14;
-    -unity-slice-bottom: 4;
-    color: #B4B4B4;
+    slice-left: 6;
+    slice-top: 4;
+    slice-right: 14;
+    slice-bottom: 4;
+    text-color: #B4B4B4;
     padding-right:14;
     padding-left:4;
 }
@@ -75,7 +75,7 @@ VFXColorField #indeterminate
 
 VFXEnumField .PopupButton:hover
 {
-    color: #FFF;
+    text-color: #FFF;
 }
 
 VFXStringFieldPushButton
@@ -83,12 +83,12 @@ VFXStringFieldPushButton
     height:16;
 }
 
-VFXStringFieldPushButton .unity-button
+VFXStringFieldPushButton Button
 {
     height:16;
 }
 
-.unity-button.MiniDropDown
+Button.MiniDropDown
 {
-    -unity-slice-right: 12;
+    slice-right: 12;
 }

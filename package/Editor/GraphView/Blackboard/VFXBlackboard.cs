@@ -1,9 +1,11 @@
 using System;
-using UnityEditor.UIElements;
-using UnityEditor.Experimental.GraphView;
+using UnityEditor.Experimental.UIElements;
+using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine;
 using UnityEngine.Experimental.VFX;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
+
+using UnityEngine.Experimental.UIElements.StyleEnums;
 using UnityEditor.VFX;
 using System.Collections.Generic;
 using UnityEditor;
@@ -11,8 +13,6 @@ using System.Linq;
 using System.Text;
 using UnityEditor.Graphs;
 using UnityEditor.SceneManagement;
-
-using PositionType = UnityEngine.UIElements.Position;
 
 namespace  UnityEditor.VFX.UI
 {
@@ -72,7 +72,7 @@ namespace  UnityEditor.VFX.UI
             Add(m_DefaultCategory);
             m_DefaultCategory.headerVisible = false;
 
-            styleSheets.Add(Resources.Load<StyleSheet>("VFXBlackboard"));
+            AddStyleSheetPath("VFXBlackboard");
 
             RegisterCallback<MouseDownEvent>(OnMouseClick, TrickleDown.TrickleDown);
             RegisterCallback<DragUpdatedEvent>(OnDragUpdatedEvent);
@@ -80,23 +80,23 @@ namespace  UnityEditor.VFX.UI
             RegisterCallback<DragLeaveEvent>(OnDragLeaveEvent);
             RegisterCallback<KeyDownEvent>(OnKeyDown);
 
-            focusable = true;
+            focusIndex = 0;
 
 
             m_DragIndicator = new VisualElement();
 
             m_DragIndicator.name = "dragIndicator";
-            m_DragIndicator.style.position = PositionType.Absolute;
-            hierarchy.Add(m_DragIndicator);
+            m_DragIndicator.style.positionType = PositionType.Absolute;
+            shadow.Add(m_DragIndicator);
 
-            cacheAsBitmap = true;
+            clippingOptions = ClippingOptions.ClipContents;
             SetDragIndicatorVisible(false);
 
             Resizer resizer = this.Query<Resizer>();
 
-            hierarchy.Add(new ResizableElement());
+            shadow.Add(new ResizableElement());
 
-            style.position = PositionType.Absolute;
+            style.positionType = PositionType.Absolute;
 
             subTitle = "Parameters";
 
@@ -130,12 +130,12 @@ namespace  UnityEditor.VFX.UI
         {
             if (visible && (m_DragIndicator.parent == null))
             {
-                hierarchy.Add(m_DragIndicator);
+                shadow.Add(m_DragIndicator);
                 m_DragIndicator.visible = true;
             }
             else if ((visible == false) && (m_DragIndicator.parent != null))
             {
-                hierarchy.Remove(m_DragIndicator);
+                shadow.Remove(m_DragIndicator);
             }
         }
 
@@ -203,7 +203,7 @@ namespace  UnityEditor.VFX.UI
                     {
                         VisualElement lastChild = this[childCount - 1];
 
-                        indicatorY = lastChild.ChangeCoordinatesTo(this, new Vector2(0, lastChild.layout.height + lastChild.resolvedStyle.marginBottom)).y;
+                        indicatorY = lastChild.ChangeCoordinatesTo(this, new Vector2(0, lastChild.layout.height + lastChild.style.marginBottom)).y;
                     }
                     else
                     {
@@ -214,12 +214,12 @@ namespace  UnityEditor.VFX.UI
                 {
                     VisualElement childAtInsertIndex = this[m_InsertIndex];
 
-                    indicatorY = childAtInsertIndex.ChangeCoordinatesTo(this, new Vector2(0, -childAtInsertIndex.resolvedStyle.marginTop)).y;
+                    indicatorY = childAtInsertIndex.ChangeCoordinatesTo(this, new Vector2(0, -childAtInsertIndex.style.marginTop)).y;
                 }
 
                 SetDragIndicatorVisible(true);
 
-                m_DragIndicator.style.top =  indicatorY - m_DragIndicator.resolvedStyle.height * 0.5f;
+                m_DragIndicator.style.positionTop =  indicatorY - m_DragIndicator.style.height * 0.5f;
 
                 DragAndDrop.visualMode = DragAndDropVisualMode.Move;
             }

@@ -7,35 +7,34 @@ using System.Reflection;
 
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.VFX;
-
 
 using UnityEditor.Experimental.VFX;
 
-using UnityEditor.VFX;
-using UnityEditor.VFX.UI;
-using EditMode = UnityEditorInternal.EditMode;
 using UnityObject = UnityEngine.Object;
 
 namespace UnityEditor.VFX
 {
-#if ! WORKAROUND_TIMELINE
+#if WORKAROUND_TIMELINE
+    class FakeObject : MonoBehaviour
+#else
     class FakeObject : ScriptableObject
-
-    {
-        public float aFloat;
-        public Vector2 aVector2;
-        public Vector3 aVector3;
-        public Vector4 aVector4;
-        public Color aColor;
-        public UnityObject anObject;
-        public AnimationCurve anAnimationCurve;
-        public Gradient aGradient;
-        public int anInt;
-        public long anUInt;
-        public bool aBool;
-    }
 #endif
+    {
+        public float aFloat = 0.0f;
+        public Vector2 aVector2 = Vector2.zero;
+        public Vector3 aVector3 = Vector3.zero;
+        public Vector4 aVector4 = Vector4.zero;
+        public Color aColor = Color.black;
+        public UnityObject anObject = null;
+        public AnimationCurve anAnimationCurve = null;
+        public Gradient aGradient = null;
+        public int anInt = 0;
+        public long anUInt = 0u;
+        public bool aBool = false;
+    }
+
 
     public static class VisualEffectControl
     {
@@ -134,74 +133,155 @@ namespace UnityEditor.VFX
 
         protected const float overrideWidth = 16;
 
-        static void DisplayProperty(ref VFXParameterInfo parameter, GUIContent nameContent, SerializedProperty overridenProperty, SerializedProperty valueProperty, bool animated)
+        SerializedProperty GetFakeProperty(ref VFXParameterInfo parameter)
+        {
+            if (parameter.defaultValue == null)
+                return null;
+            Type type = parameter.defaultValue.type;
+            if (type == null)
+                return null;
+
+            if (typeof(float) == type)
+            {
+                return s_FakeObjectSerializedCache.FindProperty("aFloat");
+            }
+            else if (typeof(Vector2) == type)
+            {
+                return s_FakeObjectSerializedCache.FindProperty("aVector2");
+            }
+            else if (typeof(Vector3) == type)
+            {
+                return s_FakeObjectSerializedCache.FindProperty("aVector3");
+            }
+            else if (typeof(Vector4) == type)
+            {
+                return s_FakeObjectSerializedCache.FindProperty("aVector4");
+            }
+            else if (typeof(Color) == type)
+            {
+                return s_FakeObjectSerializedCache.FindProperty("aColor");
+            }
+            else if (typeof(Gradient) == type)
+            {
+                return s_FakeObjectSerializedCache.FindProperty("aGradient");
+            }
+            else if (typeof(AnimationCurve) == type)
+            {
+                return s_FakeObjectSerializedCache.FindProperty("anAnimationCurve");
+            }
+            else if (typeof(UnityObject).IsAssignableFrom(type))
+            {
+                return s_FakeObjectSerializedCache.FindProperty("anObject");
+            }
+            else if (typeof(int) == type)
+            {
+                return s_FakeObjectSerializedCache.FindProperty("anInt");
+            }
+            else if (typeof(uint) == type)
+            {
+                return s_FakeObjectSerializedCache.FindProperty("anUInt");
+            }
+            else if (typeof(bool) == type)
+            {
+                return s_FakeObjectSerializedCache.FindProperty("aBool");
+            }
+
+            return null;
+        }
+
+        void DisplayProperty(ref VFXParameterInfo parameter, SerializedProperty overrideProperty, SerializedProperty property)
         {
             EditorGUILayout.BeginHorizontal();
 
-            Color previousColor = GUI.color;
-            if (animated)
+            GUIContent nameContent = GetGUIContent(parameter.name, parameter.tooltip);
+
+            EditorGUI.BeginChangeCheck();
+            bool result = EditorGUILayout.Toggle(overrideProperty.hasMultipleDifferentValues ? false : overrideProperty.boolValue, overrideProperty.hasMultipleDifferentValues ? Styles.toggleMixedStyle : Styles.toggleStyle, GUILayout.Width(overrideWidth));
+            if (EditorGUI.EndChangeCheck())
             {
-                GUI.color = AnimationMode.animatedPropertyColor;
+                overrideProperty.boolValue = result;
             }
 
-            overridenProperty.boolValue = EditorGUILayout.Toggle(overridenProperty.hasMultipleDifferentValues ? false : overridenProperty.boolValue, overridenProperty.hasMultipleDifferentValues ? Styles.toggleMixedStyle : Styles.toggleStyle, GUILayout.Width(overrideWidth));
-            if (parameter.min != Mathf.NegativeInfinity && parameter.max != Mathf.Infinity)
-            {
-                if (valueProperty.propertyType == SerializedPropertyType.Float)
-                    EditorGUILayout.Slider(valueProperty, parameter.min, parameter.max, nameContent);
-                else
-                    EditorGUILayout.IntSlider(valueProperty, (int)parameter.min, (int)parameter.max, nameContent);
-            }
-            else if (parameter.realType == typeof(Color).Name)
-            {
-                Vector4 vVal = valueProperty.vector4Value;
-                Color c = new Color(vVal.x, vVal.y, vVal.z, vVal.w);
-                c = EditorGUILayout.ColorField(nameContent, c, true, true, true);
+            SerializedProperty originalProperty = property;
 
-                if (GUI.changed)
-                    valueProperty.vector4Value = new Vector4(c.r, c.g, c.b, c.a);
-            }
-            else if (parameter.realType == typeof(Gradient).Name)
+            if (!overrideProperty.boolValue)
             {
-                Gradient newGradient = EditorGUILayout.GradientField(nameContent, valueProperty.gradientValue, true);
-
-                if (GUI.changed)
-                    valueProperty.gradientValue = newGradient;
-            }
-            else if (valueProperty.propertyType == SerializedPropertyType.Vector4)
-            {
-                var oldVal = valueProperty.vector4Value;
-                var newVal = EditorGUILayout.Vector4Field(nameContent, oldVal);
-                if (oldVal.x != newVal.x || oldVal.y != newVal.y || oldVal.z != newVal.z || oldVal.w != newVal.w)
-                    valueProperty.vector4Value = newVal;
-            }
-            else if (valueProperty.propertyType == SerializedPropertyType.ObjectReference)
-            {
-                Type objTyp = typeof(UnityObject);
-                if (!string.IsNullOrEmpty(parameter.realType))
+                s_FakeObjectSerializedCache.Update();
+                property = s_FakeObjectSerializedCache.FindProperty(originalProperty.propertyPath);
+                if (property != null)
                 {
-                    if (parameter.realType.StartsWith("Texture") || parameter.realType.StartsWith("Cubemap"))
+                    SetObjectValue(property,parameter.defaultValue.Get());
+                }
+            }
+
+            if (property != null)
+            {
+                EditorGUI.BeginChangeCheck();
+                if (parameter.min != Mathf.NegativeInfinity && parameter.max != Mathf.Infinity)
+                {
+                    if (property.propertyType == SerializedPropertyType.Float)
+                        EditorGUILayout.Slider(property, parameter.min, parameter.max, nameContent);
+                    else
+                        EditorGUILayout.IntSlider(property, (int)parameter.min, (int)parameter.max, nameContent);
+                }
+                else if (parameter.realType == typeof(Color).Name)
+                {
+                    Vector4 vVal = property.vector4Value;
+                    Color c = new Color(vVal.x, vVal.y, vVal.z, vVal.w);
+                    c = EditorGUILayout.ColorField(nameContent, c, true, true, true);
+
+                    if (GUI.changed)
+                        property.vector4Value = new Vector4(c.r, c.g, c.b, c.a);
+                }
+                else if (parameter.realType == typeof(Gradient).Name)
+                {
+                    Gradient newGradient = EditorGUILayout.GradientField(nameContent, property.gradientValue, true);
+
+                    if (GUI.changed)
+                        property.gradientValue = newGradient;
+                }
+                else if (property.propertyType == SerializedPropertyType.Vector4)
+                {
+                    var oldVal = property.vector4Value;
+                    var newVal = EditorGUILayout.Vector4Field(nameContent, oldVal);
+                    if (oldVal.x != newVal.x || oldVal.y != newVal.y || oldVal.z != newVal.z || oldVal.w != newVal.w)
+                        property.vector4Value = newVal;
+                }
+                else if (property.propertyType == SerializedPropertyType.ObjectReference)
+                {
+                    Type objTyp = typeof(UnityObject);
+                    if (!string.IsNullOrEmpty(parameter.realType))
                     {
-                        objTyp = typeof(Texture);
+                        if (parameter.realType.StartsWith("Texture") || parameter.realType.StartsWith("Cubemap"))
+                        {
+                            objTyp = typeof(Texture);
+                        }
+                        else if (parameter.realType == "Mesh")
+                        {
+                            objTyp = typeof(Mesh);
+                        }
                     }
-                    else if (parameter.realType == "Mesh")
+                    Rect r = EditorGUILayout.GetControlRect(true, EditorGUI.kSingleLineHeight, EditorStyles.objectField, null);
+                    EditorGUI.ObjectField(r, property, objTyp, nameContent);
+                }
+                else
+                {
+                    EditorGUILayout.PropertyField(property, nameContent, true);
+                }
+                if (EditorGUI.EndChangeCheck())
+                {
+                    if (overrideProperty.boolValue == false)
                     {
-                        objTyp = typeof(Mesh);
+                        if (originalProperty.propertyType == property.propertyType)
+                        {
+                            SetObjectValue(originalProperty, GetObjectValue(property));
+                        }
+                        overrideProperty.boolValue = true;
                     }
                 }
-                Rect r = EditorGUILayout.GetControlRect(true, EditorGUI.kSingleLineHeight, EditorStyles.objectField, null);
-                EditorGUI.ObjectField(r, valueProperty, objTyp, nameContent);
-            }
-            else
-            {
-                EditorGUILayout.PropertyField(valueProperty, nameContent, true);
             }
 
-            if (animated)
-            {
-                GUI.color = previousColor;
-            }
-
+            serializedObject.ApplyModifiedProperties();
             EditorGUILayout.EndHorizontal();
         }
 
@@ -519,7 +599,7 @@ namespace UnityEditor.VFX
                 if (m_graph.m_ParameterInfo != null)
                 {
                     ShowHeader(Contents.headerParameters, false, false, false, false);
-                    var stack = new List<int>();
+                    List<int> stack = new List<int>();
                     int currentCount = m_graph.m_ParameterInfo.Length;
                     if (currentCount == 0)
                     {
@@ -533,6 +613,7 @@ namespace UnityEditor.VFX
                         --currentCount;
 
                         var parameter = param;
+
                         if (parameter.descendantCount > 0)
                         {
                             stack.Add(currentCount);
@@ -577,93 +658,45 @@ namespace UnityEditor.VFX
                         }
                         else if (!ignoreUntilNextCat)
                         {
-                            //< Try find source property
-                            var sourceVfxField = m_VFXPropertySheet.FindPropertyRelative(parameter.sheetType + ".m_Array");
-                            SerializedProperty sourceProperty = null;
-                            for (int i = 0; i < sourceVfxField.arraySize; ++i)
+                            var vfxField = m_VFXPropertySheet.FindPropertyRelative(parameter.sheetType + ".m_Array");
+                            SerializedProperty property = null;
+                            if (vfxField != null)
                             {
-                                sourceProperty = sourceVfxField.GetArrayElementAtIndex(i);
-                                var nameProperty = sourceProperty.FindPropertyRelative("m_Name").stringValue;
-                                if (nameProperty == parameter.path)
+                                for (int i = 0; i < vfxField.arraySize; ++i)
                                 {
-                                    break;
-                                }
-                                sourceProperty = null;
-                            }
-
-                            //< Prepare potential indirection
-                            bool wasNewProperty = false;
-                            bool wasNotOverriddenProperty = false;
-
-                            SerializedProperty actualDisplayedPropertyValue = null;
-                            SerializedProperty actualDisplayedPropertyOverridden = null;
-                            if (sourceProperty == null)
-                            {
-                                s_FakeObjectSerializedCache.Update();
-                                var fakeField = s_FakeObjectSerializedCache.FindProperty("m_PropertySheet." + parameter.sheetType + ".m_Array");
-                                fakeField.InsertArrayElementAtIndex(fakeField.arraySize);
-                                var newFakeEntry = fakeField.GetArrayElementAtIndex(fakeField.arraySize - 1);
-                                newFakeEntry.FindPropertyRelative("m_Name").stringValue = param.path;
-                                newFakeEntry.FindPropertyRelative("m_Overridden").boolValue = false;
-
-                                actualDisplayedPropertyOverridden = newFakeEntry.FindPropertyRelative("m_Overridden");
-                                actualDisplayedPropertyValue = newFakeEntry.FindPropertyRelative("m_Value");
-                                SetObjectValue(actualDisplayedPropertyValue, parameter.defaultValue.Get());
-
-                                wasNewProperty = true;
-                            }
-                            else
-                            {
-                                actualDisplayedPropertyOverridden = sourceProperty.FindPropertyRelative("m_Overridden");
-                                actualDisplayedPropertyValue = sourceProperty.FindPropertyRelative("m_Value");
-                                if (!actualDisplayedPropertyOverridden.boolValue)
-                                {
-                                    s_FakeObjectSerializedCache.Update();
-
-                                    actualDisplayedPropertyOverridden = s_FakeObjectSerializedCache.FindProperty(actualDisplayedPropertyOverridden.propertyPath);
-                                    actualDisplayedPropertyValue = s_FakeObjectSerializedCache.FindProperty(actualDisplayedPropertyValue.propertyPath);
-                                    SetObjectValue(actualDisplayedPropertyValue, parameter.defaultValue.Get());
-
-                                    wasNotOverriddenProperty = true;
-                                }
-                            }
-
-                            //< Actual display
-                            GUIContent nameContent = GetGUIContent(parameter.name, parameter.tooltip);
-                            EditorGUI.BeginChangeCheck();
-                            DisplayProperty(ref parameter, nameContent, actualDisplayedPropertyOverridden, actualDisplayedPropertyValue, AnimationMode.IsPropertyAnimated(target, actualDisplayedPropertyValue.propertyPath));
-                            if (EditorGUI.EndChangeCheck())
-                            {
-                                if (wasNewProperty)
-                                {
-                                    //We start editing a new exposed value which wasn't stored in this Visual Effect Component
-                                    sourceVfxField.InsertArrayElementAtIndex(sourceVfxField.arraySize);
-                                    var newEntry = sourceVfxField.GetArrayElementAtIndex(sourceVfxField.arraySize - 1);
-
-                                    newEntry.FindPropertyRelative("m_Overridden").boolValue = actualDisplayedPropertyOverridden.boolValue;
-                                    SetObjectValue(newEntry.FindPropertyRelative("m_Value"), GetObjectValue(actualDisplayedPropertyValue));
-                                    newEntry.FindPropertyRelative("m_Name").stringValue = param.path;
-                                }
-                                else if (wasNotOverriddenProperty)
-                                {
-                                    if (actualDisplayedPropertyOverridden.boolValue)
+                                    property = vfxField.GetArrayElementAtIndex(i);
+                                    var nameProperty = property.FindPropertyRelative("m_Name").stringValue;
+                                    if (nameProperty == parameter.path)
                                     {
-                                        //The check box has simply been toggle, we should not restore value from asset but simply change overridden state
-                                        sourceProperty.FindPropertyRelative("m_Overridden").boolValue = true;
+                                        break;
                                     }
-                                    else
-                                    {
-                                        //The value has been directly changed, change overridden state and recopy new value
-                                        SetObjectValue(sourceProperty.FindPropertyRelative("m_Value"), GetObjectValue(actualDisplayedPropertyValue));
-                                        sourceProperty.FindPropertyRelative("m_Overridden").boolValue = true;
-                                    }
+
+                                    property = null;
                                 }
-                                else //wasNewProperty == wasNotOverriddenProperty == false => there isn't any additionnal behavior needed, we are already using real serialized property
+                            }
+
+                            if (property != null)
+                            {
+                                SerializedProperty overrideProperty = property.FindPropertyRelative("m_Overridden");
+                                property = property.FindPropertyRelative("m_Value");
+                                string firstpropName = property.name;
+
+                                Color previousColor = GUI.color;
+                                var animated = AnimationMode.IsPropertyAnimated(target, property.propertyPath);
+                                if (animated)
                                 {
+                                    GUI.color = AnimationMode.animatedPropertyColor;
                                 }
-                                serializedObject.ApplyModifiedProperties();
+
+                                DisplayProperty(ref parameter, overrideProperty, property);
+
+                                if (animated)
+                                {
+                                    GUI.color = previousColor;
+                                }
                             }
                         }
+
                         EditorGUI.indentLevel = stack.Count;
                     }
                 }
@@ -685,7 +718,7 @@ namespace UnityEditor.VFX
                 RenderPipelineAsset srpAsset = GraphicsSettings.renderPipelineAsset;
                 if (srpAsset != null)
                 {
-                    var layerNames = srpAsset.renderingLayerMaskNames;
+                    var layerNames = srpAsset.GetRenderingLayerMaskNames();
                     if (layerNames != null)
                     {
                         var mask = (int)m_Renderers[0].renderingLayerMask;

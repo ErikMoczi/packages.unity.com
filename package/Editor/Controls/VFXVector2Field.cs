@@ -1,9 +1,10 @@
 using UnityEngine;
-using UnityEngine.UIElements;
-using UnityEditor.UIElements;
+using UnityEngine.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements.StyleEnums;
+using UnityEditor.Experimental.UIElements;
 using System.Collections.Generic;
 
-using FloatField = UnityEditor.VFX.UIElements.VFXLabeledField<UnityEditor.UIElements.FloatField, float>;
+using FloatField = UnityEditor.VFX.UIElements.VFXLabeledField<UnityEditor.Experimental.UIElements.FloatField, float>;
 
 namespace UnityEditor.VFX.UIElements
 {

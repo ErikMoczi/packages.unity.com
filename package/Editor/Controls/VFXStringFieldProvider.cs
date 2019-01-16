@@ -1,8 +1,8 @@
 using UnityEngine;
-using UnityEngine.UIElements;
-using UnityEditor.UIElements;
+using UnityEngine.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements.StyleEnums;
+using UnityEditor.Experimental.UIElements;
 using System;
-using UnityEditor.VFX.UI;
 
 namespace UnityEditor.VFX.UIElements
 {

@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using UnityEditor.Experimental.GraphView;
+using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements.StyleEnums;
+using UnityEngine.Experimental.UIElements.StyleSheets;
 using UnityEngine.Profiling;
-
-using PositionType = UnityEngine.UIElements.Position;
 
 namespace UnityEditor.VFX.UI
 {
@@ -45,7 +45,7 @@ namespace UnityEditor.VFX.UI
         protected virtual void OnNewController()
         {
             if (controller != null)
-                viewDataKey = string.Format("NodeID-{0}", controller.model.GetInstanceID());
+                persistenceKey = string.Format("NodeID-{0}", controller.model.GetInstanceID());
         }
 
         public void OnSelectionMouseDown(MouseDownEvent e)
@@ -90,7 +90,7 @@ namespace UnityEditor.VFX.UI
 
         public VFXNodeUI() : base(UXMLResourceToPackage("uxml/VFXNode"))
         {
-            styleSheets.Add(EditorGUIUtility.Load("StyleSheets/GraphView/Node.uss") as StyleSheet);
+            AddStyleSheetPath("StyleSheets/GraphView/Node.uss");
             Initialize();
         }
 
@@ -145,9 +145,9 @@ namespace UnityEditor.VFX.UI
 
         void Initialize()
         {
-            this.AddStyleSheetPath("VFXNode");
+            AddStyleSheetPath("VFXNode");
             AddToClassList("VFXNodeUI");
-            cacheAsBitmap = true;
+            clippingOptions = ClippingOptions.ClipContents;
 
             RegisterCallback<MouseEnterEvent>(OnMouseEnter);
             RegisterCallback<MouseLeaveEvent>(OnMouseLeave);
@@ -331,9 +331,9 @@ namespace UnityEditor.VFX.UI
 
             if (HasPosition())
             {
-                style.position = PositionType.Absolute;
-                style.left = controller.position.x;
-                style.top = controller.position.y;
+                style.positionType = PositionType.Absolute;
+                style.positionLeft = controller.position.x;
+                style.positionTop = controller.position.y;
             }
 
             base.expanded = controller.expanded;
@@ -388,7 +388,7 @@ namespace UnityEditor.VFX.UI
         {
             if (input)
             {
-                foreach (var child in inputContainer.Children())
+                foreach (var child in inputContainer)
                 {
                     if (child is VFXDataAnchor)
                         yield return child as VFXDataAnchor;
@@ -396,7 +396,7 @@ namespace UnityEditor.VFX.UI
             }
             if (output)
             {
-                foreach (var child in outputContainer.Children())
+                foreach (var child in outputContainer)
                 {
                     if (child is VFXDataAnchor)
                         yield return child as VFXDataAnchor;

@@ -1,7 +1,9 @@
 using System.Collections.Generic;
-using UnityEditor.Experimental.GraphView;
+using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements.StyleSheets;
+using UnityEngine.Experimental.UIElements.StyleEnums;
 using System.Reflection;
 using System.Linq;
 
@@ -61,12 +63,12 @@ namespace UnityEditor.VFX.UI
     {
         public void OnMoved()
         {
-            controller.position = new Rect(resolvedStyle.left, resolvedStyle.top, resolvedStyle.width, resolvedStyle.height);
+            controller.position = new Rect(style.positionLeft, style.positionTop, style.width, style.height);
         }
 
         public override void OnResized()
         {
-            controller.position = new Rect(resolvedStyle.left, resolvedStyle.top, resolvedStyle.width, resolvedStyle.height);
+            controller.position = new Rect(style.positionLeft, style.positionTop, style.width, style.height);
         }
 
         Controller IControlledElement.controller

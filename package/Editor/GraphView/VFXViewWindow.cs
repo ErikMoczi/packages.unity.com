@@ -1,12 +1,12 @@
 #define USE_EXIT_WORKAROUND_FOGBUGZ_1062258
 using System;
 using System.Linq;
-using UnityEditor.UIElements;
-using UnityEditor.Experimental.GraphView;
+using UnityEditor.Experimental.UIElements;
+using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine;
 using UnityEngine.Experimental.VFX;
 using UnityEditor.Experimental.VFX;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
 using UnityEditor.VFX;
 using System.Collections.Generic;
 using UnityEditor;
@@ -42,7 +42,13 @@ namespace  UnityEditor.VFX.UI
 
         public static VFXViewWindow currentWindow;
 
-        [MenuItem("Window/Visual Effects/Visual Effect Graph", false, 3010)]
+
+        [MenuItem("Window/Visual Effects", false, 3010)]
+        public static void AAToCreateSubmenuAtRightPlace()
+        {
+        }
+        
+        [MenuItem("Window/Visual Effects/Visual Effect Graph",false,3011)]
         public static void ShowWindow()
         {
             GetWindow<VFXViewWindow>();
@@ -131,7 +137,7 @@ namespace  UnityEditor.VFX.UI
             graphView.StretchToParentSize();
             SetupFramingShortcutHandler(graphView);
 
-            rootVisualElement.Add(graphView);
+            this.GetRootVisualContainer().Add(graphView);
 
 
             var currentAsset = GetCurrentResource();
@@ -146,6 +152,8 @@ namespace  UnityEditor.VFX.UI
             graphView.RegisterCallback<AttachToPanelEvent>(OnEnterPanel);
             graphView.RegisterCallback<DetachFromPanelEvent>(OnLeavePanel);
 
+
+            VisualElement rootVisualElement = this.GetRootVisualContainer();
             if (rootVisualElement.panel != null)
             {
                 rootVisualElement.AddManipulator(m_ShortcutHandler);
@@ -195,11 +203,13 @@ namespace  UnityEditor.VFX.UI
 
         void OnEnterPanel(AttachToPanelEvent e)
         {
+            VisualElement rootVisualElement = UIElementsEntryPoint.GetRootVisualContainer(this);
             rootVisualElement.AddManipulator(m_ShortcutHandler);
         }
 
         void OnLeavePanel(DetachFromPanelEvent e)
         {
+            VisualElement rootVisualElement = UIElementsEntryPoint.GetRootVisualContainer(this);
             rootVisualElement.RemoveManipulator(m_ShortcutHandler);
         }
 

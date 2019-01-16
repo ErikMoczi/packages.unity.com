@@ -2,15 +2,16 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.UIElements;
-using UnityEditor.UIElements;
+using UnityEngine.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements.StyleEnums;
+using UnityEditor.Experimental.UIElements;
 using UnityEditor.VFX;
 using UnityEditor.VFX.UIElements;
 using Object = UnityEngine.Object;
 using Type = System.Type;
 
 #if true
-using ObjectField = UnityEditor.VFX.UIElements.VFXLabeledField<UnityEditor.UIElements.ObjectField, UnityEngine.Object>;
+using ObjectField = UnityEditor.VFX.UIElements.VFXLabeledField<UnityEditor.Experimental.UIElements.ObjectField, UnityEngine.Object>;
 
 namespace UnityEditor.VFX.UI
 {
@@ -26,8 +27,7 @@ namespace UnityEditor.VFX.UI
 
             m_ObjectField.RegisterCallback<ChangeEvent<Object>>(OnValueChanged);
             m_ObjectField.control.allowSceneObjects = false;
-            m_ObjectField.style.flexGrow = 1f;
-            m_ObjectField.style.flexShrink = 0f;
+            m_ObjectField.style.flex = new Flex(1, 0);
 
             Add(m_ObjectField);
         }

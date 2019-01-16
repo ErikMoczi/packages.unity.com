@@ -367,11 +367,11 @@ namespace UnityEditor.VFX
                     {
                         return Activator.CreateInstance(type);
                     }
-                    catch (MissingMethodException)
+                    catch (MissingMethodException e)
                     {
                         Debug.LogError(type.Name + " Doesn't seem to have a default constructor");
 
-                        throw;
+                        throw e;
                     }
 
                 return Convert.ChangeType(text, type, CultureInfo.InvariantCulture);
@@ -507,11 +507,11 @@ namespace UnityEditor.VFX
                     EditorJsonUtility.FromJsonOverwrite(text, obj);
                     return obj;
                 }
-                catch (MissingMethodException)
+                catch (MissingMethodException e)
                 {
                     Debug.LogError(type.Name + " Doesn't seem to have a default constructor");
 
-                    throw;
+                    throw e;
                 }
             }
         }

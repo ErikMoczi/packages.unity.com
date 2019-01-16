@@ -1,8 +1,7 @@
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UIElements;
-
-using PositionType = UnityEngine.UIElements.Position;
+using UnityEngine.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements.StyleEnums;
 
 namespace UnityEditor.VFX.UI
 {
@@ -156,9 +155,9 @@ namespace UnityEditor.VFX.UI
             {
                 VisualElement child = context.items[i];
                 Rect rect = context.originalPositions[i];
-                child.style.position = PositionType.Absolute;
-                child.style.left = rect.x;
-                child.style.top = rect.y;
+                child.style.positionType = PositionType.Absolute;
+                child.style.positionLeft = rect.x;
+                child.style.positionTop = rect.y;
                 child.style.width = rect.width;
                 child.style.height = rect.height;
             }
@@ -194,7 +193,7 @@ namespace UnityEditor.VFX.UI
         {
             DraggingContext context = (DraggingContext)ctx;
 
-            item.style.top = context.originalPositions[context.draggedIndex].y + offset;
+            item.style.positionTop = context.originalPositions[context.draggedIndex].y + offset;
 
             int hoveredIndex = GetHoveredIndex(context, mouseWorldPosition);
 
@@ -206,30 +205,30 @@ namespace UnityEditor.VFX.UI
                 {
                     for (int i = 0; i < hoveredIndex; ++i)
                     {
-                        context.items[i].style.top = context.originalPositions[i].y;
+                        context.items[i].style.positionTop = context.originalPositions[i].y;
                     }
                     for (int i = hoveredIndex; i < context.draggedIndex; ++i)
                     {
-                        context.items[i].style.top = context.originalPositions[i].y + draggedHeight;
+                        context.items[i].style.positionTop = context.originalPositions[i].y + draggedHeight;
                     }
                     for (int i = context.draggedIndex + 1; i < context.items.Length; ++i)
                     {
-                        context.items[i].style.top = context.originalPositions[i].y;
+                        context.items[i].style.positionTop = context.originalPositions[i].y;
                     }
                 }
                 else if (hoveredIndex > context.draggedIndex)
                 {
                     for (int i = 0; i < context.draggedIndex; ++i)
                     {
-                        context.items[i].style.top = context.originalPositions[i].y;
+                        context.items[i].style.positionTop = context.originalPositions[i].y;
                     }
                     for (int i = hoveredIndex; i > context.draggedIndex; --i)
                     {
-                        context.items[i].style.top = context.originalPositions[i].y - draggedHeight;
+                        context.items[i].style.positionTop = context.originalPositions[i].y - draggedHeight;
                     }
                     for (int i = hoveredIndex + 1; i < context.items.Length; ++i)
                     {
-                        context.items[i].style.top = context.originalPositions[i].y;
+                        context.items[i].style.positionTop = context.originalPositions[i].y;
                     }
                 }
             }
@@ -238,7 +237,7 @@ namespace UnityEditor.VFX.UI
                 for (int i = 0; i < context.items.Length; ++i)
                 {
                     if (i != context.draggedIndex)
-                        context.items[i].style.top = context.originalPositions[i].y;
+                        context.items[i].style.positionTop = context.originalPositions[i].y;
                 }
             }
         }

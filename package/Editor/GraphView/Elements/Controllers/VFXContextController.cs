@@ -1,5 +1,5 @@
-using UnityEditor.Experimental.GraphView;
-using UnityEngine.UIElements;
+using UnityEditor.Experimental.UIElements.GraphView;
+using UnityEngine.Experimental.UIElements;
 using UnityEngine;
 using UnityEditor.Experimental.VFX;
 using System.Collections.Generic;
@@ -153,17 +153,7 @@ namespace UnityEditor.VFX.UI
         public void RemoveBlock(VFXBlock block)
         {
             model.RemoveChild(block);
-
-            VFXSlot slotToClean = null;
-            do
-            {
-                slotToClean = block.inputSlots.Concat(block.outputSlots).FirstOrDefault(o => o.HasLink(true));
-                if (slotToClean)
-                {
-                    slotToClean.UnlinkAll(true, true);
-                }
-            }
-            while (slotToClean != null);
+            VFXModel.UnlinkModel(model);
         }
 
         public int FindBlockIndexOf(VFXBlockController controller)

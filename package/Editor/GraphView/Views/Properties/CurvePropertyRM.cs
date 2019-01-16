@@ -1,12 +1,13 @@
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UIElements;
-using UnityEditor.UIElements;
+using UnityEngine.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements.StyleEnums;
+using UnityEditor.Experimental.UIElements;
 using Object = UnityEngine.Object;
 using System.Reflection;
 using System.Linq;
 
-using MyCurveField = UnityEditor.VFX.UIElements.VFXLabeledField<UnityEditor.UIElements.CurveField, UnityEngine.AnimationCurve>;
+using MyCurveField = UnityEditor.VFX.UIElements.VFXLabeledField<UnityEditor.Experimental.UIElements.CurveField, UnityEngine.AnimationCurve>;
 
 namespace UnityEditor.VFX.UI
 {
@@ -20,8 +21,7 @@ namespace UnityEditor.VFX.UI
 
             m_CurveField.style.flexDirection = FlexDirection.Column;
             m_CurveField.style.alignItems = Align.Stretch;
-            m_CurveField.style.flexGrow = 1f;
-            m_CurveField.style.flexShrink = 0f;
+            m_CurveField.style.flex = new Flex(1, 0);
 
             Add(m_CurveField);
         }
