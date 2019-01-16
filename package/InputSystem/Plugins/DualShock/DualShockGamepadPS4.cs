@@ -6,6 +6,7 @@ using System;
 using System.Runtime.InteropServices;
 using UnityEngine.Experimental.Input.Plugins.DualShock.LowLevel;
 using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine.Experimental.Input.Layouts;
 
 ////TODO: player ID
 
@@ -347,6 +348,9 @@ namespace UnityEngine.Experimental.Input.Plugins.DualShock
         protected override void OnRemoved()
         {
             base.OnRemoved();
+
+            if (m_SlotId == -1)
+                return;
 
             var index = slotIndex;
             if (index >= 0 && index < s_Devices.Length && s_Devices[index] == this)

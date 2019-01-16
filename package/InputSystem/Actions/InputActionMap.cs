@@ -3,7 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Experimental.Input.Utilities;
 
-////TODO: notifications when maps and actions are enabled/disabled
+////TODO: add public InputActionManager that supports various device allocation strategies (one stack
+////      per device, multiple devices per stack, etc.); should also resolve the problem of having
+////      two bindings stack on top of each other and making the one on top suppress the one below
+
+////REVIEW: have an optional reference to an InputActionMap?
+
+////TODO: nuke Clone()
 
 namespace UnityEngine.Experimental.Input
 {
@@ -35,6 +41,43 @@ namespace UnityEngine.Experimental.Input
         }
 
         /// <summary>
+        /// A stable, unique identifier for the map.
+        /// </summary>
+        /// <remarks>
+        /// This can be used instead of the name to refer to the action map. Doing so allows referring to the
+        /// map such that renaming it does not break references.
+        /// </remarks>
+        public Guid id
+        {
+            get
+            {
+                if (m_Guid == Guid.Empty)
+                {
+                    if (m_Id == null)
+                    {
+                        m_Guid = Guid.NewGuid();
+                        m_Id = m_Guid.ToString();
+                    }
+                    else
+                    {
+                        m_Guid = new Guid(m_Id);
+                    }
+                }
+                return m_Guid;
+            }
+        }
+
+        internal Guid idDontGenerate
+        {
+            get
+            {
+                if (m_Guid == Guid.Empty && !string.IsNullOrEmpty(m_Id))
+                    m_Guid = new Guid(m_Id);
+                return m_Guid;
+            }
+        }
+
+        /// <summary>
         /// Whether any action in the map is currently enabled.
         /// </summary>
         public bool enabled
@@ -56,6 +99,8 @@ namespace UnityEngine.Experimental.Input
             get { return new ReadOnlyArray<InputAction>(m_Actions); }
         }
 
+        //what about explicitly grouping bindings into named sets?
+
         /// <summary>
         /// List of bindings contained in the map.
         /// </summary>
@@ -69,6 +114,27 @@ namespace UnityEngine.Experimental.Input
         public ReadOnlyArray<InputBinding> bindings
         {
             get { return new ReadOnlyArray<InputBinding>(m_Bindings); }
+        }
+
+        public ReadOnlyArray<InputControl> controls
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        public ReadOnlyArray<InputDevice> devices
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        ////REVIEW: should this operate by binding path or by action name?
+        public InputAction this[string actionNameOrId]
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(actionNameOrId))
+                    throw new ArgumentNullException("actionNameOrId");
+                return GetAction(actionNameOrId);
+            }
         }
 
         /// <summary>
@@ -101,23 +167,52 @@ namespace UnityEngine.Experimental.Input
             }
         }
 
-        public InputActionMap(string name = null)
+        public InputActionMap(string name = null, InputActionMap extend = null)
         {
             m_Name = name;
+
+            if (extend != null)
+                throw new NotImplementedException();
         }
 
-        internal int TryGetActionIndex(string name)
+        internal int TryGetActionIndex(string nameOrId)
         {
             ////REVIEW: have transient lookup table? worth optimizing this?
             ////   Ideally, this should at least be an InternedString comparison but due to serialization,
             ////   that's quite tricky.
 
+            if (string.IsNullOrEmpty(nameOrId))
+                throw new ArgumentNullException("nameOrId");
+
             if (m_Actions == null)
                 return InputActionMapState.kInvalidIndex;
+            var actionCount = m_Actions.Length;
 
+            var isReferenceById = nameOrId[0] == '{';
+            if (isReferenceById)
+            {
+                var id = new Guid(nameOrId);
+                for (var i = 0; i < actionCount; ++i)
+                    if (m_Actions[i].idDontGenerate == id)
+                        return i;
+            }
+            else
+            {
+                for (var i = 0; i < actionCount; ++i)
+                    if (string.Compare(m_Actions[i].m_Name, nameOrId, StringComparison.InvariantCultureIgnoreCase) == 0)
+                        return i;
+            }
+
+            return InputActionMapState.kInvalidIndex;
+        }
+
+        internal int TryGetActionIndex(Guid id)
+        {
+            if (m_Actions == null)
+                return InputActionMapState.kInvalidIndex;
             var actionCount = m_Actions.Length;
             for (var i = 0; i < actionCount; ++i)
-                if (string.Compare(m_Actions[i].m_Name, name, StringComparison.InvariantCultureIgnoreCase) == 0)
+                if (m_Actions[i].idDontGenerate == id)
                     return i;
 
             return InputActionMapState.kInvalidIndex;
@@ -131,12 +226,29 @@ namespace UnityEngine.Experimental.Input
             return m_Actions[index];
         }
 
+        public InputAction TryGetAction(Guid id)
+        {
+            var index = TryGetActionIndex(id);
+            if (index == -1)
+                return null;
+            return m_Actions[index];
+        }
+
         public InputAction GetAction(string name)
         {
             var action = TryGetAction(name);
             if (action == null)
-                throw new KeyNotFoundException(string.Format("Could not find action '{0}' in set '{1}'", name,
+                throw new KeyNotFoundException(string.Format("Could not find action '{0}' in map '{1}'", name,
                     this.name));
+            return action;
+        }
+
+        public InputAction GetAction(Guid id)
+        {
+            var action = TryGetAction(id);
+            if (action == null)
+                throw new KeyNotFoundException(string.Format("Could not find action with ID '{0}' in map '{1}'", id,
+                    name));
             return action;
         }
 
@@ -232,7 +344,8 @@ namespace UnityEngine.Experimental.Input
         // The state we persist is pretty much just a name, a flat list of actions, and a flat
         // list of bindings. The rest is state we keep at runtime when a map is in use.
 
-        [SerializeField] private string m_Name;
+        [SerializeField] internal string m_Name;
+        [SerializeField] internal string m_Id; // Can't serialize System.Guid and Unity's GUID is editor only.
 
         /// <summary>
         /// List of actions in this map.
@@ -254,11 +367,13 @@ namespace UnityEngine.Experimental.Input
         ////REVIEW: this will lead to problems when overrides are thrown into the mix
         [NonSerialized] internal InputBinding[] m_BindingsForEachAction;
         [NonSerialized] internal InputControl[] m_ControlsForEachAction;
+        [NonSerialized] internal InputDevice[] m_DevicesForEachAction;
         ////REVIEW: this seems to make sense to have on the state; probably best to move it over there
         ////REVIEW: also, should this be integer indices instead of another array that needs scanning?
         [NonSerialized] internal InputAction[] m_ActionForEachBinding;
 
         [NonSerialized] internal int m_EnabledActionsCount;
+        [NonSerialized] internal Guid m_Guid;
 
         // Action sets that are created internally by singleton actions to hold their data
         // are never exposed and never serialized so there is no point allocating an m_Actions
@@ -294,6 +409,108 @@ namespace UnityEngine.Experimental.Input
 
             return new ReadOnlyArray<InputBinding>(m_BindingsForEachAction, action.m_BindingsStartIndex,
                 action.m_BindingsCount);
+        }
+
+        /// <summary>
+        /// For the given action, return the current list of devices used by its bound controls.
+        /// </summary>
+        /// <param name="action">Input action belonging to this action map.</param>
+        /// <returns>(Possibly empty) array of devices used by action.</returns>
+        /// <remarks>
+        /// This function may allocate whenever the control setup of the action map changes.
+        /// </remarks>
+        internal ReadOnlyArray<InputDevice> GetDevicesForSingleAction(InputAction action)
+        {
+            Debug.Assert(m_State != null);
+            Debug.Assert(m_MapIndex != InputActionMapState.kInvalidIndex);
+            Debug.Assert(m_Actions != null);
+            Debug.Assert(action != null);
+            Debug.Assert(action.m_ActionMap == this);
+            Debug.Assert(!action.isSingletonAction || m_SingletonAction == action);
+
+            if (m_DevicesForEachAction == null)
+            {
+                if (m_State.totalDeviceCount == 0)
+                    return new ReadOnlyArray<InputDevice>();
+
+                var perActionDeviceListCorrespondsToDeviceListOfEntireState = true;
+                if (m_SingletonAction != null)
+                {
+                    // For singleton action, device list always corresponds to the list of
+                    // devices in our state.
+                    action.m_DeviceStartIndex = 0;
+                    action.m_DeviceCount = m_State.totalDeviceCount;
+                }
+                else
+                {
+                    // Try to find an action that doesn't use all of the devices in our state.
+                    // If there's none, we can still just use the same list of devices that we
+                    // have in our state.
+                    var haveActionNotUsingAllDevices = false;
+                    var deviceCount = m_State.totalDeviceCount;
+                    for (var i = 0; i < m_Actions.Length; ++i)
+                    {
+                        var currentAction = m_Actions[i];
+
+                        for (var n = 0; n < deviceCount; ++n)
+                        {
+                            // Get device.
+                            InputDevice currentDevice;
+                            if (m_DevicesForEachAction != null)
+                                currentDevice = m_DevicesForEachAction[n];
+                            else
+                                currentDevice = m_State.devices[n];
+
+                            // Try to find control that uses the device.
+                            var isUsedByControl = false;
+                            var controlsForAction = currentAction.controls;
+                            for (var k = 0; k < controlsForAction.Count; ++k)
+                            {
+                                if (controlsForAction[k].device == currentDevice)
+                                {
+                                    isUsedByControl = true;
+                                    break;
+                                }
+                            }
+
+                            if (!isUsedByControl)
+                            {
+                                haveActionNotUsingAllDevices = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // If we have at least one action that isn't using all the devices in our state,
+                    // set up a separate array. We may still end up being able to share one list of
+                    // devices between all the actions in our map.
+                    if (haveActionNotUsingAllDevices)
+                    {
+                        throw new NotImplementedException();
+                    }
+                    else
+                    {
+                        for (var i = 0; i < m_Actions.Length; ++i)
+                        {
+                            var currentAction = m_Actions[i];
+                            currentAction.m_DeviceStartIndex = 0;
+                            currentAction.m_DeviceCount = m_State.totalDeviceCount;
+                        }
+                    }
+                }
+
+                // If the list of devices used by this one and every action in it corresponds
+                // to the list of devices used by our shared state, then just copy that list.
+                if (perActionDeviceListCorrespondsToDeviceListOfEntireState)
+                {
+                    m_DevicesForEachAction = new InputDevice[m_State.totalDeviceCount];
+                    for (var i = 0; i < m_State.totalDeviceCount; ++i)
+                        m_DevicesForEachAction[i] = m_State.devices[i];
+                }
+            }
+
+            return new ReadOnlyArray<InputDevice>(m_DevicesForEachAction, action.m_DeviceStartIndex,
+                action.m_DeviceCount);
         }
 
         internal ReadOnlyArray<InputControl> GetControlsForSingleAction(InputAction action)
@@ -636,9 +853,10 @@ namespace UnityEngine.Experimental.Input
         }
 
         [Serializable]
-        private struct ActionJson
+        internal struct ActionJson
         {
             public string name;
+            public string id;
             public string expectedControlLayout;
 
             // Bindings can either be on the action itself (in which case the action name
@@ -651,15 +869,17 @@ namespace UnityEngine.Experimental.Input
                 return new ActionJson
                 {
                     name = action.m_Name,
+                    id = action.id.ToString(),
                     expectedControlLayout = action.m_ExpectedControlLayout,
                 };
             }
         }
 
         [Serializable]
-        private struct MapJson
+        internal struct MapJson
         {
             public string name;
+            public string id;
             public ActionJson[] actions;
             public BindingJson[] bindings;
 
@@ -691,6 +911,7 @@ namespace UnityEngine.Experimental.Input
                 return new MapJson
                 {
                     name = map.name,
+                    id = map.id.ToString(),
                     actions = jsonActions,
                     bindings = jsonBindings,
                 };
@@ -702,7 +923,7 @@ namespace UnityEngine.Experimental.Input
         // the action name and containing their own bindings directly. JSON files we write
         // go map by map and separate bindings and actions.
         [Serializable]
-        private struct WriteFileJson
+        internal struct WriteFileJson
         {
             public MapJson[] maps;
 
@@ -729,11 +950,11 @@ namespace UnityEngine.Experimental.Input
             }
         }
 
-        // A JSON represention of one or more sets of actions.
+        // A JSON representation of one or more sets of actions.
         // Contains a list of actions. Each action may specify the set it belongs to
         // as part of its name ("set/action").
         [Serializable]
-        private struct ReadFileJson
+        internal struct ReadFileJson
         {
             public ActionJson[] actions;
             public MapJson[] maps;
@@ -784,6 +1005,7 @@ namespace UnityEngine.Experimental.Input
                     // Create new map if it's the first action in the map.
                     if (map == null)
                     {
+                        // NOTE: No map IDs supported on this path.
                         map = new InputActionMap(mapName);
                         mapIndex = mapList.Count;
                         mapList.Add(map);
@@ -793,6 +1015,7 @@ namespace UnityEngine.Experimental.Input
 
                     // Create action.
                     var action = new InputAction(actionName);
+                    action.m_Id = string.IsNullOrEmpty(jsonAction.id) ? null : jsonAction.id;
                     action.m_ExpectedControlLayout = !string.IsNullOrEmpty(jsonAction.expectedControlLayout)
                         ? jsonAction.expectedControlLayout
                         : null;
@@ -838,6 +1061,7 @@ namespace UnityEngine.Experimental.Input
                     if (map == null)
                     {
                         map = new InputActionMap(mapName);
+                        map.m_Id = string.IsNullOrEmpty(jsonMap.id) ? null : jsonMap.id;
                         mapIndex = mapList.Count;
                         mapList.Add(map);
                         actionLists.Add(new List<InputAction>());
@@ -855,6 +1079,7 @@ namespace UnityEngine.Experimental.Input
 
                         // Create action.
                         var action = new InputAction(jsonAction.name);
+                        action.m_Id = string.IsNullOrEmpty(jsonAction.id) ? null : jsonAction.id;
                         action.m_ExpectedControlLayout = !string.IsNullOrEmpty(jsonAction.expectedControlLayout)
                             ? jsonAction.expectedControlLayout
                             : null;
@@ -917,13 +1142,13 @@ namespace UnityEngine.Experimental.Input
         public static string ToJson(IEnumerable<InputActionMap> sets)
         {
             var fileJson = WriteFileJson.FromMaps(sets);
-            return JsonUtility.ToJson(fileJson);
+            return JsonUtility.ToJson(fileJson, true);
         }
 
         public string ToJson()
         {
             var fileJson = WriteFileJson.FromMap(this);
-            return JsonUtility.ToJson(fileJson);
+            return JsonUtility.ToJson(fileJson, true);
         }
 
         public void OnBeforeSerialize()

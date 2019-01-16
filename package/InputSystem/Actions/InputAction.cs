@@ -2,11 +2,17 @@ using System;
 using UnityEngine.Experimental.Input.Utilities;
 using UnityEngine.Serialization;
 
+////REVIEW: remove everything on InputAction that isn't about being an endpoint? (i.e. 'controls', 'devices', and 'bindings')
+
+////REVIEW: should the enable/disable API actually sit on InputSystem?
+
 ////REVIEW: might have to revisit when we fire actions in relation to Update/FixedUpdate
 
 ////REVIEW: Do we need to have separate display names for actions? They should definitely be allowed to contain '/' and whatnot
 
 ////REVIEW: the entire 'lastXXX' API section is shit and needs a pass
+
+////REVIEW: resolving as a side-effect of 'controls' and 'devices' seems pretty heavy handed
 
 ////TODO: give every action in the system a stable unique ID; use this also to reference actions in InputActionReferences
 
@@ -19,7 +25,11 @@ using UnityEngine.Serialization;
 ////TODO: do not hardcode the transition from performed->waiting; allow an action to be performed over and over again inside
 ////      a single start cycle
 
+////TODO: add ability to query devices used by action
+
 ////REVIEW: instead of only having the callbacks on each single action, also have them on the map as a whole?
+
+////TODO: nuke Clone()
 
 // So, actions are set up to not have a contract. They just monitor state changes and then fire
 // in response to those.
@@ -101,6 +111,43 @@ namespace UnityEngine.Experimental.Input
         }
 
         /// <summary>
+        /// A stable, unique identifier for the action.
+        /// </summary>
+        /// <remarks>
+        /// This can be used instead of the name to refer to the action. Doing so allows referring to the
+        /// action such that renaming the action does not break references.
+        /// </remarks>
+        public Guid id
+        {
+            get
+            {
+                if (m_Guid == Guid.Empty)
+                {
+                    if (m_Id == null)
+                    {
+                        m_Guid = Guid.NewGuid();
+                        m_Id = m_Guid.ToString();
+                    }
+                    else
+                    {
+                        m_Guid = new Guid(m_Id);
+                    }
+                }
+                return m_Guid;
+            }
+        }
+
+        internal Guid idDontGenerate
+        {
+            get
+            {
+                if (m_Guid == Guid.Empty && !string.IsNullOrEmpty(m_Id))
+                    m_Guid = new Guid(m_Id);
+                return m_Guid;
+            }
+        }
+
+        /// <summary>
         /// Name of control layout expected for controls bound to this action.
         /// </summary>
         /// <remarks>
@@ -128,7 +175,7 @@ namespace UnityEngine.Experimental.Input
         }
 
         ////TODO: add support for turning binding array into displayable info
-        ////      (allow to constrain by sets of devics set on action set)
+        ////      (allow to constrain by sets of devices set on action set)
 
         /// <summary>
         /// The list of bindings associated with the action.
@@ -149,19 +196,38 @@ namespace UnityEngine.Experimental.Input
         /// The set of controls to which the action's bindings resolve.
         /// </summary>
         /// <remarks>
-        /// May allocate memory on first and also whenever the control setup in the system has changed
-        /// (e.g. when devices are added or removed).
+        /// May allocate memory each time the control setup changes on the action.
         /// </remarks>
         public ReadOnlyArray<InputControl> controls
         {
             get
             {
-                var actionMap = GetOrCreateActionMap();
-                ////REVIEW: resolving as a side-effect is pretty heavy handed
-                ////FIXME: these don't get re-resolved if the control setup in the system changes
-                actionMap.ResolveBindingsIfNecessary();
-                return actionMap.GetControlsForSingleAction(this);
+                var map = GetOrCreateActionMap();
+                map.ResolveBindingsIfNecessary();
+                return map.GetControlsForSingleAction(this);
             }
+        }
+
+        /// <summary>
+        /// The set of devices used by the action.
+        /// </summary>
+        /// <remarks>
+        /// May allocate memory each time the control setup changes on the action.
+        /// </remarks>
+        public ReadOnlyArray<InputDevice> devices
+        {
+            get
+            {
+                var map = GetOrCreateActionMap();
+                map.ResolveBindingsIfNecessary();
+                return map.GetDevicesForSingleAction(this);
+            }
+        }
+
+        public bool required
+        {
+            get { throw new NotImplementedException(); }
+            set { throw new NotImplementedException(); }
         }
 
         /// <summary>
@@ -275,7 +341,7 @@ namespace UnityEngine.Experimental.Input
 
         // Listeners that are called when the action has been fully performed.
         // Passes along the control that triggered the state change and the action
-        // object iself as well.
+        // object itself as well.
         public event InputActionListener performed
         {
             add { m_OnPerformed.Append(value); }
@@ -296,7 +362,7 @@ namespace UnityEngine.Experimental.Input
         // Construct a disabled action targeting the given sources.
         // NOTE: This constructor is *not* used for actions added to sets. These are constructed
         //       by sets themselves.
-        public InputAction(string name = null, string binding = null, string interactions = null)
+        public InputAction(string name = null, string binding = null, string interactions = null, string expectedControlLayout = null)
             : this(name)
         {
             if (binding == null && interactions != null)
@@ -308,6 +374,8 @@ namespace UnityEngine.Experimental.Input
                 m_BindingsStartIndex = 0;
                 m_BindingsCount = 1;
             }
+
+            this.expectedControlLayout = expectedControlLayout;
         }
 
         public override string ToString()
@@ -366,6 +434,7 @@ namespace UnityEngine.Experimental.Input
         ////REVIEW: it would be best if these were InternedStrings; however, for serialization, it has to be strings
         [SerializeField] internal string m_Name;
         [SerializeField] internal string m_ExpectedControlLayout;
+        [SerializeField] internal string m_Id; // Can't serialize System.Guid and Unity's GUID is editor only.
 
         // For singleton actions, we serialize the bindings directly as part of the action.
         // For any other type of action, this is null.
@@ -376,6 +445,9 @@ namespace UnityEngine.Experimental.Input
         [NonSerialized] internal int m_BindingsCount;
         [NonSerialized] internal int m_ControlStartIndex;
         [NonSerialized] internal int m_ControlCount;
+        [NonSerialized] internal int m_DeviceStartIndex;
+        [NonSerialized] internal int m_DeviceCount;
+        [NonSerialized] internal Guid m_Guid;
 
         /// <summary>
         /// Index of the action in the <see cref="InputActionMapState"/> associated with the

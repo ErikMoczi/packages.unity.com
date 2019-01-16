@@ -5,12 +5,13 @@ using UnityEngine.Experimental.Input.Plugins.DualShock.LowLevel;
 using UnityEngine.Experimental.Input.Processors;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Experimental.Input.Layouts;
 
 #if UNITY_WSA
 using UnityEngine.Experimental.Input.Plugins.HID;
 #endif
 
-class DualShockTests : InputTestFixture
+public class DualShockTests : InputTestFixture
 {
 #if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX || UNITY_WSA
     [Test]
@@ -38,6 +39,9 @@ class DualShockTests : InputTestFixture
 
         Assert.That(device, Is.AssignableTo<DualShockGamepad>());
         var gamepad = (DualShockGamepad)device;
+
+        // Dpad has default state value so make sure that one is coming through.
+        Assert.That(gamepad.dpad.ReadValue(), Is.EqualTo(Vector2.zero).Using(vector2Comparer));
 
         InputSystem.QueueStateEvent(gamepad,
             new DualShockHIDInputReport

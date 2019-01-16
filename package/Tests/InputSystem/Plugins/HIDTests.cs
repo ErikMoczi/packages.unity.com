@@ -10,11 +10,12 @@ using UnityEngine.Experimental.Input.LowLevel;
 using UnityEngine.Experimental.Input.Plugins.HID;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using UnityEngine.Experimental.Input.Layouts;
 using UnityEngine.Experimental.Input.Utilities;
 
 ////TODO: add test to make sure we're not grabbing HIDs that have more specific layouts
 
-class HIDTests : InputTestFixture
+public class HIDTests : InputTestFixture
 {
     [Test]
     [Category("Devices")]
@@ -566,8 +567,7 @@ class HIDTests : InputTestFixture
             }.ToJson());
         InputSystem.Update();
 
-        InputSystem.Save();
-        InputSystem.Reset();
+        InputSystem.SaveAndReset();
         InputSystem.Restore();
 
         var hid = (HID)InputSystem.devices.First(x => x is HID);
@@ -769,6 +769,7 @@ class HIDTests : InputTestFixture
 
     [Test]
     [Category("Devices")]
+    [Ignore("TODO")]
     public void TODO_Devices_SupportsHIDDpads()
     {
         Assert.Fail();
@@ -776,6 +777,7 @@ class HIDTests : InputTestFixture
 
     [Test]
     [Category("Devices")]
+    [Ignore("TODO")]
     public void TODO_Devices_GenericHIDJoystickIsTurnedIntoJoystick()
     {
         Assert.Fail();
@@ -790,6 +792,7 @@ class HIDTests : InputTestFixture
     // all but rather turn them into joysticks instead.
     [Test]
     [Category("Devices")]
+    [Ignore("TODO")]
     public void TODO_Devices_GenericHIDGamepadIsTurnedIntoJoystick()
     {
         Assert.Fail();

@@ -5,6 +5,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Experimental.Input;
 using UnityEngine.Experimental.Input.Controls;
+using UnityEngine.Experimental.Input.Layouts;
 using UnityEngine.Experimental.Input.LowLevel;
 using UnityEngine.Experimental.Input.Processors;
 using UnityEngine.Experimental.Input.Utilities;
@@ -86,7 +87,7 @@ partial class CoreTests
             }
         ";
 
-        InputSystem.RegisterControlLayout(json);
+        InputSystem.RegisterLayout(json);
 
         var device = new InputDeviceBuilder("MyDevice").Finish();
 
@@ -129,7 +130,7 @@ partial class CoreTests
             }
         ";
 
-        InputSystem.RegisterControlLayout(json);
+        InputSystem.RegisterLayout(json);
         var device = (Gamepad)InputSystem.AddDevice("MyDevice");
 
         ////NOTE: Unfortunately, this relies on an internal method ATM.
@@ -169,7 +170,7 @@ partial class CoreTests
             }
         ";
 
-        InputSystem.RegisterControlLayout(json);
+        InputSystem.RegisterLayout(json);
         var device = (Gamepad)InputSystem.AddDevice("MyDevice");
 
         var processor = device.leftStick.TryGetProcessor<DeadzoneProcessor>();
@@ -211,7 +212,7 @@ partial class CoreTests
     [Category("Controls")]
     public void Controls_CanReadDefaultValue()
     {
-        InputSystem.RegisterControlLayout<TestDeviceWithDefaultState>();
+        InputSystem.RegisterLayout<TestDeviceWithDefaultState>();
 
         var device = InputSystem.AddDevice<TestDeviceWithDefaultState>();
 
@@ -284,7 +285,7 @@ partial class CoreTests
             }
         ";
 
-        InputSystem.RegisterControlLayout(json);
+        InputSystem.RegisterLayout(json);
         var device = InputSystem.AddDevice("TestDevice");
 
         float? value = null;
@@ -447,7 +448,7 @@ partial class CoreTests
             ]
         }";
 
-        InputSystem.RegisterControlLayout(json);
+        InputSystem.RegisterLayout(json);
         var device = InputSystem.AddDevice("MyDevice");
         var dpad = (DpadControl)device["dpad"];
 
@@ -561,7 +562,7 @@ partial class CoreTests
             }
         ";
 
-        InputSystem.RegisterControlLayout(json);
+        InputSystem.RegisterLayout(json);
         var device = InputSystem.AddDevice("MyGamepad");
 
         var matches = InputSystem.GetControls("/<gamepad>");
@@ -641,7 +642,7 @@ partial class CoreTests
             }
         ";
 
-        InputSystem.RegisterControlLayout(json);
+        InputSystem.RegisterLayout(json);
         var gamepad = (Gamepad) new InputDeviceBuilder("CustomGamepad").Finish();
 
         Assert.That(gamepad.rightTrigger.pressPoint, Is.EqualTo(0.2f).Within(0.0001f));
@@ -663,7 +664,7 @@ partial class CoreTests
             }
         ";
 
-        InputSystem.RegisterControlLayout(json);
+        InputSystem.RegisterLayout(json);
 
         var setup = new InputDeviceBuilder("MyDevice");
         var control = setup.GetControl("control");

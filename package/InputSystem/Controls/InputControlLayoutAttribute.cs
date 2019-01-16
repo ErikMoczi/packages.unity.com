@@ -1,7 +1,6 @@
 using System;
-using UnityEngine.Experimental.Input.Utilities;
 
-namespace UnityEngine.Experimental.Input
+namespace UnityEngine.Experimental.Input.Layouts
 {
     /// <summary>
     /// Attribute to control layout settings of a type used to generate an <see cref="InputControlLayout"/>.

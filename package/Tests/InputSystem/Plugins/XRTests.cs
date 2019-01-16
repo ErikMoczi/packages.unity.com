@@ -8,8 +8,9 @@ using UnityEngine.Experimental.Input;
 using UnityEngine.Experimental.Input.Utilities;
 using UnityEngine.Experimental.Input.Plugins.XR;
 using UnityEngine.Experimental.Input.Controls;
+using UnityEngine.Experimental.Input.Layouts;
 
-class XRTests : InputTestFixture
+public class XRTests : InputTestFixture
 {
     [Test]
     [Category("Devices")]
@@ -98,7 +99,7 @@ class XRTests : InputTestFixture
         Assert.That(XRController.rightHand, Is.Null);
         Assert.That(XRController.leftHand, Is.EqualTo(controller));
 
-        InputSystem.SetUsage(controller, CommonUsages.RightHand);
+        InputSystem.SetDeviceUsage(controller, CommonUsages.RightHand);
 
         Assert.That(controller.usages, Has.Exactly(0).EqualTo(CommonUsages.LeftHand));
         Assert.That(controller.usages, Has.Exactly(1).EqualTo(CommonUsages.RightHand));
