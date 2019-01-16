@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-preview.2] - 2018-12-19
+* Fix CI build tooling to correct (new) validation issues.
+
 ## [1.0.0-preview.1] - 2018-12-19
 * Fix loader helper to support integrated and standlone subsystem loading.
 * Tagging build as 1.0.0 preview to note that this should be feature complete for 1.0.
