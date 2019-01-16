@@ -56,7 +56,7 @@ namespace UnityEngine.TestTools
             {
                 var methodInfo = SetUps[state.NextSetUpStepIndex];
                 var enumerator = Run(context, methodInfo);
-                SetEnumeratorPC(enumerator, state.NextSetUpStepPc);
+                ActivePcHelper.SetEnumeratorPC(enumerator, state.NextSetUpStepPc);
 
                 var logScope = new LogScope();
 
@@ -77,7 +77,7 @@ namespace UnityEngine.TestTools
                         break;
                     }
 
-                    state.NextSetUpStepPc = GetEnumeratorPC(enumerator);
+                    state.NextSetUpStepPc = ActivePcHelper.GetEnumeratorPC(enumerator);
                     yield return enumerator.Current;
                 }
 
@@ -125,7 +125,7 @@ namespace UnityEngine.TestTools
                 state.TestTearDownStarted = true;
                 var methodInfo = TearDowns[state.NextTearDownStepIndex];
                 var enumerator = Run(context, methodInfo);
-                SetEnumeratorPC(enumerator, state.NextTearDownStepPc);
+                ActivePcHelper.SetEnumeratorPC(enumerator, state.NextTearDownStepPc);
 
                 var logScope = new LogScope();
 
@@ -145,7 +145,7 @@ namespace UnityEngine.TestTools
                         break;
                     }
 
-                    state.NextTearDownStepPc = GetEnumeratorPC(enumerator);
+                    state.NextTearDownStepPc = ActivePcHelper.GetEnumeratorPC(enumerator);
                     yield return enumerator.Current;
                 }
 
@@ -165,27 +165,36 @@ namespace UnityEngine.TestTools
             state.Reset();
         }
 
-        private static void SetEnumeratorPC(IEnumerator enumerator, int pc)
+        private static PcHelper pcHelper;
+
+        internal static PcHelper ActivePcHelper
         {
-            GetPCFieldInfo(enumerator).SetValue(enumerator, pc);
+            get
+            {
+                if (pcHelper == null)
+                {
+                    pcHelper = new PcHelper();
+                }
+
+                return pcHelper;
+            }
+            set
+            {
+                pcHelper = value;
+            }
         }
 
-        private static int GetEnumeratorPC(IEnumerator enumerator)
+        internal class PcHelper
         {
-            if (enumerator == null)
+            public virtual void SetEnumeratorPC(IEnumerator enumerator, int pc)
+            {
+                // Noop implementation used in playmode.
+            }
+
+            public virtual int GetEnumeratorPC(IEnumerator enumerator)
             {
                 return 0;
             }
-            return (int)GetPCFieldInfo(enumerator).GetValue(enumerator);
-        }
-
-        private static FieldInfo GetPCFieldInfo(IEnumerator enumerator)
-        {
-            var field = enumerator.GetType().GetField("$PC", BindingFlags.NonPublic | BindingFlags.Instance);
-            if (field == null) // Roslyn
-                field = enumerator.GetType().GetField("<>1__state", BindingFlags.NonPublic | BindingFlags.Instance);
-
-            return field;
         }
     }
 }

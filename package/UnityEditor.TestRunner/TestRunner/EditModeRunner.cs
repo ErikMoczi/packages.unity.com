@@ -107,6 +107,7 @@ namespace UnityEditor.TestTools.TestRunner
                 UnityTestAssemblyBuilder.GetNUnitTestBuilderSettings(m_TestPlatform));
             loadedTests.ParseForNameDuplicates();
             hideFlags |= HideFlags.DontSave;
+            EnumerableSetUpTearDownCommand.ActivePcHelper = new EditModePcHelper();
         }
 
         public void OnEnable()

@@ -23,6 +23,8 @@ namespace UnityEngine.TestTools
 
         public IEnumerable ExecuteEnumerable(ITestExecutionContext context)
         {
+            yield return null;
+
             var currentExecutingTestEnumerator = new TestEnumeratorWrapper(testMethod).GetEnumerator(context);
             if (currentExecutingTestEnumerator != null)
             {

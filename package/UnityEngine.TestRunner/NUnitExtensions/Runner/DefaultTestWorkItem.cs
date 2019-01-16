@@ -42,9 +42,24 @@ namespace UnityEngine.TestRunner.NUnitExtensions.Runner
                     yield break;
                 }
 
-                if (GetFirstInnerCommandOfType<UnityLogCheckDelegatingCommand>(_command) == null)
+                if (_command is NUnit.Framework.Internal.Commands.SetUpTearDownCommand)
                 {
-                    _command = new UnityLogCheckDelegatingCommand(_command);
+                    var setupTearDownCommand = _command as NUnit.Framework.Internal.Commands.SetUpTearDownCommand;
+
+                    var innerCommand = setupTearDownCommand.GetInnerCommand();
+                    if (GetFirstInnerCommandOfType<UnityLogCheckDelegatingCommand>(innerCommand) == null)
+                    {
+                        innerCommand = new UnityLogCheckDelegatingCommand(innerCommand);
+                    }
+
+                    _command = new TestTools.SetUpTearDownCommand(innerCommand);
+                }
+                else
+                {
+                    if (GetFirstInnerCommandOfType<UnityLogCheckDelegatingCommand>(_command) == null)
+                    {
+                        _command = new UnityLogCheckDelegatingCommand(_command);
+                    }
                 }
 
                 _command = new EnumerableSetUpTearDownCommand(_command);
