@@ -1,9 +1,16 @@
-<size=20><b>Version 2.2.9-preview.2</b></size>
+<size=20><b>Version 2.3.1</b></size>
 
-- FreeLook: if inherit position from similar FreeLooks, bypass damping
-- Timline: improve handling when vcam values are tweaked inside shot inspector (fogbugz 1109024)
+- Added timeline dependency
 - OnTargetObjectWarped no longer generates garbage
-- Orthographic cameras allow a Near Clip of 0
+
+
+<size=20><b>Version 2.3.0</b></size>
+
+- Added dependency on new unity.timeline
+- Added conditional dependence on PostProcessingV2
+- No copying CM gizmo into assets folder
+- FreeLook: if inherit position from similar FreeLooks, bypass damping
+- Timeline: improve handling when vcam values are tweaked inside shot inspector (fogbugz 1109024)
 
 
 <size=20><b>Version 2.2.8</b></size>

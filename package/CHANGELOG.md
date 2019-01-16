@@ -4,12 +4,18 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.2.9-preview.2] - 2019-01-07
+## [2.3.1] - 2019-01-07
 ### Bugfixes
+- Added timeline dependency
+- OnTargetObjectWarped no longer generates garbage
+
+## [2.3.0] - 2018-12-20
+### Support for Unity 2019.1
+- Added dependency on new unity.timeline
+- Added conditional dependence on PostProcessingV2
+- No copying CM gizmo into assets folder
 - FreeLook: if inherit position from similar FreeLooks, bypass damping 
 - Timeline: improve handling when vcam values are tweaked inside shot inspector (fogbugz 1109024)
-- OnTargetObjectWarped no longer generates garbage
-- Orthographic cameras allow a Near Clip of 0
 
 ## [2.2.8] - 2018-12-10
 ### Bugfixes, optimizations, and some experimental stuff
@@ -20,7 +26,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - State-driven-camera: added [NoSaveDuringPlay] to Animated Target and Layer Index
 - Added AxisState.Recentering.RecenterNow() API call to skip wait time and start recentering now (if enabled)
 - Added NoLens blend hint, to leave camera Lens settings alone
-- Added Composer.CenterOnActivate option, to disable automatic centering in dead zone when vcam is activated
 - Updated documentation (corrections, and relocation to prevent importing)
 - Upgrade: added support for nested prefabs in Unity 2018.3 (fogbugz 1077395)
 - Optimization: position predictor is more efficient
