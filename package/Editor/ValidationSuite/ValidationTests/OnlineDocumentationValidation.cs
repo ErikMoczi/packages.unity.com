@@ -13,11 +13,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         private const string docsurl = "https://docs.unity3d.com/Packages/{0}/manual/index.html";
         private IHttpWebRequestFactory httpWebRequestFactory;
 
-        /*public OnlineDocumentationValidation()
-        {
-            Initialize(new HttpWebRequestFactory());
-        }*/
-
         public OnlineDocumentationValidation(IHttpWebRequestFactory httpFactory)
         {
             Initialize(httpFactory);

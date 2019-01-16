@@ -175,28 +175,49 @@ namespace UnityEditor.PackageManager.ValidationSuite
         /// <summary>
         /// Returns the Assembly instances which contain one or more scripts in a package, given the list of files in the package.
         /// </summary>
-        public static IEnumerable<Assembly> AssembliesForPackage(Assembly[] assemblies, IEnumerable<string> filesInPackage)
+        public static IEnumerable<Assembly> AssembliesForPackage(string packageRootPath)
         {
-            var assemblyNames = new HashSet<string>();
+
+            var projectPath = Path.GetDirectoryName(Application.dataPath);
+            var filesInPackage = Directory.GetFiles(packageRootPath, "*", SearchOption.AllDirectories).Select(p => p.Substring(projectPath.Length + 1).Replace('\\', '/')).ToArray();
+
+            var projectAssemblies = CompilationPipeline.GetAssemblies();
+            var assemblyHash = new HashSet<Assembly>();
+
             foreach (var path in filesInPackage)
             {
                 if (!string.Equals(Path.GetExtension(path), ".cs", StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                var assemblyName = CompilationPipeline.GetAssemblyNameFromScriptPath(path);
-                if (assemblyName != null)
-                    assemblyNames.Add(assemblyName.Replace(".dll", ""));
-
-                if (string.Equals(".asmdef", Path.GetExtension(path), StringComparison.OrdinalIgnoreCase))
+                var assembly = GetAssemblyFromScriptPath(projectAssemblies, path);
+                if (assembly != null && !Utilities.IsTestAssembly(assembly))
                 {
-                    var assemblyDefinition = GetDataFromJson<AssemblyDefinition>(path);
-                    if (string.IsNullOrEmpty(assemblyDefinition.name))
-                        throw new ArgumentException(path + " does not have a name field");
-
-                    assemblyNames.Add(assemblyDefinition.name);
+                    assemblyHash.Add(assembly);
                 }
             }
-            return assemblies.Where(a => assemblyNames.Contains(a.name));
+
+            return assemblyHash;
+        }
+
+        private static Assembly GetAssemblyFromScriptPath(Assembly[] assemblies, string scriptPath)
+        {
+            var fullScriptPath = Path.GetFullPath(scriptPath);
+
+            foreach (var assembly in assemblies)
+            {
+                foreach (var packageSourceFile in assembly.sourceFiles)
+                {
+                    var fullSourceFilePath = Path.GetFullPath(packageSourceFile);
+
+                    if (fullSourceFilePath == fullScriptPath)
+                    {
+                        return assembly;
+                    }
+
+                }
+            }
+
+            return null;
         }
 #endif
     }

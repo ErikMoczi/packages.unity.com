@@ -6,14 +6,12 @@ using System.Linq;
 using Semver;
 using Unity.APIComparison.Framework.Changes;
 using Unity.APIComparison.Framework.Collectors;
-using UnityEditor.Compilation;
 using UnityEngine;
 
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
-    internal class ApiValidation : BaseValidation
+    internal class ApiValidation : BaseAssemblyValidation
     {
-
         private readonly ApiValidationAssemblyInformation assemblyInformation;
 
         public ApiValidation()
@@ -36,44 +34,12 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             get { return assemblyInformation; }
         }
 
-        public class AssemblyInfo
+        private AssemblyInfo[] GetAndCheckAsmdefs()
         {
-            public readonly Assembly assembly;
-            public readonly string asmdefPath;
+            var relevantAssemblyInfo = GetRelevantAssemblyInfo();
 
-            public AssemblyDefinition assemblyDefinition
-            {
-                get
-                {
-                    cachedAssemblyDefinition = cachedAssemblyDefinition ?? JsonUtility.FromJson<AssemblyDefinition>(File.ReadAllText(asmdefPath));
-
-                    return cachedAssemblyDefinition;
-                }
-            }
-            private AssemblyDefinition cachedAssemblyDefinition;
-
-            public AssemblyInfo(Assembly assembly, string asmdefPath)
-            {
-                this.assembly = assembly;
-                this.asmdefPath = asmdefPath;
-            }
-        }
-
-        private AssemblyInfo[] GetAndCheckAsmdefs(HashSet<string> files)
-        {
             var previousAssemblyDefinitions = GetAssemblyDefinitionDataInFolder(Context.PreviousPackageInfo.path);
             var versionChangeType = Context.VersionChangeType;
-
-
-            var allAssemblyInfo = CompilationPipeline.GetAssemblies().Select(AssemblyInfoFromAssembly).Where(a => a != null).ToArray();
-
-            var badAssemblyInfo = allAssemblyInfo.Where(a => !a.asmdefPath.StartsWith(Context.ProjectPackageInfo.path)).ToArray();
-            foreach (var badFilePath in badAssemblyInfo.SelectMany(a => a.assembly.sourceFiles).Where(files.Contains))
-                Error("Script \"{0}\" is not included by any asmdefs in the package.", badFilePath);
-
-            var relevantAssemblyInfo = files.Where(f => string.Equals(Path.GetExtension(f), ".asmdef", StringComparison.OrdinalIgnoreCase))
-                .Select(f => AssemblyInfoFromAsmdefPath(f, allAssemblyInfo))
-                .ToArray();
 
             foreach (var assemblyInfo in relevantAssemblyInfo)
             {
@@ -113,22 +79,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             return relevantAssemblyInfo;
         }
 
-        private AssemblyInfo AssemblyInfoFromAsmdefPath(string asmdefPath, AssemblyInfo[] allAssemblyInfo)
-        {
-            AssemblyInfo existingInfo = allAssemblyInfo.FirstOrDefault(ai => ai.asmdefPath == asmdefPath);
-            return existingInfo ?? new AssemblyInfo(null, asmdefPath);
-        }
-
-        private AssemblyInfo AssemblyInfoFromAssembly(Assembly assembly)
-        {
-            var path = CompilationPipeline.GetAssemblyDefinitionFilePathFromAssemblyName(assembly.name);
-            if (string.IsNullOrEmpty(path))
-                return null;
-
-            var asmdefPath = Path.GetFullPath(path);
-            return new AssemblyInfo(assembly, asmdefPath);
-        }
-
         private bool DoAssembliesMatch(AssemblyDefinition assemblyDefinition1, AssemblyDefinition assemblyDefinition2)
         {
             return assemblyInformation.GetAssemblyName(assemblyDefinition1, true).Equals(assemblyInformation.GetAssemblyName(assemblyDefinition2, false));
@@ -155,24 +105,9 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 .Select(Utilities.GetDataFromJson<AssemblyDefinition>).ToArray();
         }
 
-        protected override void Run()
+        protected override void Run(AssemblyInfo[] info)
         {
             TestState = TestState.Succeeded;
-            var packagePath = Context.ProjectPackageInfo.path;
-            var files = new HashSet<string>(Directory.GetFiles(packagePath, "*", SearchOption.AllDirectories).Select(Path.GetFullPath));
-
-            //does it compile?
-            if (EditorUtility.scriptCompilationFailed)
-            {
-                Error("Compilation failed. Please fix any compilation errors.");
-                return;
-            }
-
-            if (EditorApplication.isCompiling)
-            {
-                Error("Compilation in progress. Please wait for compilation to finish.");
-                return;
-            }
 
             if (Context.PreviousPackageInfo == null)
             {
@@ -182,7 +117,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
 
             //does it have asmdefs for all scripts?
-            var assemblies = GetAndCheckAsmdefs(files);
+            var assemblies = GetAndCheckAsmdefs();
 
             CheckApiDiff(assemblies);
 

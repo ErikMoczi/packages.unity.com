@@ -25,7 +25,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
                     return _nodePath;
                 _nodePath = Path.Combine(EditorApplication.applicationContentsPath, "Tools");
                 _nodePath = Path.Combine(_nodePath, "nodejs");
-#if UNITY_EDITOR_OSX
+#if (UNITY_EDITOR_OSX || UNITY_EDITOR_LINUX)
                 _nodePath = Path.Combine(_nodePath, "bin");
                 _nodePath = Path.Combine(_nodePath, "node");
 #elif UNITY_EDITOR_WIN
@@ -43,7 +43,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
                     return _npmScriptPath;
                 _npmScriptPath = Path.Combine(EditorApplication.applicationContentsPath, "Tools");
                 _npmScriptPath = Path.Combine(_npmScriptPath, "nodejs");
-#if UNITY_EDITOR_OSX
+#if (UNITY_EDITOR_OSX || UNITY_EDITOR_LINUX)
                 _npmScriptPath = Path.Combine(_npmScriptPath, "lib");
 #endif
                 _npmScriptPath = Path.Combine(_npmScriptPath, "node_modules");

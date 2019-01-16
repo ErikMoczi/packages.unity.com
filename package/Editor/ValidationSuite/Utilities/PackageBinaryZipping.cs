@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using UnityEditor.Compilation;
 using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
+using UnityEngine;
 
 namespace UnityEditor.PackageManager.ValidationSuite
 {
@@ -32,19 +33,18 @@ namespace UnityEditor.PackageManager.ValidationSuite
             }
 
             zipFilePath = Path.Combine(zipDirectory, PackageDataZipFilename(packageName, packageVersion));
-            var files = Directory.GetFiles(packageRootPath, "*", SearchOption.AllDirectories);
-            var assemblies = Utilities.AssembliesForPackage(CompilationPipeline.GetAssemblies(), files).Where(a => !Utilities.IsTestAssembly(a)).ToArray();
-            var assemblyFilenames = assemblies.Select(a => Path.GetFileName(a.outputPath)).ToArray();
-            if (assemblyFilenames.Length == 0)
+
+            var assemblies = Utilities.AssembliesForPackage(packageRootPath);
+
+            if (!assemblies.Any())
                 return Zip(null, new string[0], zipFilePath);
 
-            var directoryPath = Path.GetDirectoryName(assemblies.First().outputPath);
-
-            var badAssembly = assemblies.FirstOrDefault(a => Path.GetDirectoryName(a.outputPath) != directoryPath);
+            var assembliesPath = Path.GetDirectoryName(assemblies.First().outputPath);
+            var badAssembly = assemblies.FirstOrDefault(a => Path.GetDirectoryName(a.outputPath) != assembliesPath);
             if (badAssembly != null)
                 throw new ArgumentException(badAssembly.outputPath + " is in an unexpected directory and cannot be zipped.");
 
-            return Zip(directoryPath, assemblyFilenames, zipFilePath);
+            return Zip(assembliesPath, assemblies.Select(a => Path.GetFileName(a.outputPath)).ToArray(), zipFilePath);
         }
 
         private static bool Zip(string directoryPath, string[] filenames, string zipFilePath)

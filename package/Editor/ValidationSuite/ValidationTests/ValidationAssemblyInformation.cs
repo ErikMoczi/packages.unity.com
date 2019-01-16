@@ -26,7 +26,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             this.projectAssemblyNameOverride = projectAssemblyNameOverride;
         }
 
-        public bool IsTestAssembly(ApiValidation.AssemblyInfo assembly)
+        public bool IsTestAssembly(AssemblyInfo assembly)
         {
             if (isProjectPackageTestOverride.HasValue)
                 return isProjectPackageTestOverride.Value;
