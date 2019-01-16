@@ -48,7 +48,7 @@ namespace Samples
                 // TODO: Pass settings off to plugin prior to subsystem init.
             }
 
-            CreateSubsystem<XRInputSubsystemDescriptor, XRInputSubsystem>(s_InputSubsystemDescriptors, "InputSubsystemDescriptor");
+            CreateIntegratedSubsystem<XRInputSubsystemDescriptor, XRInputSubsystem>(s_InputSubsystemDescriptors, "InputSubsystemDescriptor");
 
             return false;
         }

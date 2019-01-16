@@ -1,8 +1,8 @@
 {
-    "name": "Unity.XR.Management.Tests",
+    "name": "Unity.XR.Management.Tests.Standalone",
     "references": [
-        "Unity.XR.Management",
-        "Unity.XR.Management.Tests.Standalone"
+        "Unity.Subsystem.Registration",
+        "Unity.XR.Management"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

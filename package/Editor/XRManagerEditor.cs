@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
-
+using System.Text.RegularExpressions;
+using JetBrains.Annotations;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.XR.Management;
@@ -105,8 +106,20 @@ namespace UnityEditor.XR.Management
             UpdateSerializedProperty();
         }
 
+        string TypeNameToString(Type type)
+        {
+            string[] words = Regex.Matches(type.Name, "(^[a-z]+|[A-Z]+(?![a-z])|[A-Z][a-z]+)")
+                .OfType<Match>()
+                .Select(m => m.Value)
+                .ToArray();
+            return string.Join(" ", words);
+        }
+
         void DrawAddDropdown(Rect rect, ReorderableList list)
         {
+            List<string> names = new List<string>();
+            List<bool> enabled = new List<bool>();
+
             GenericMenu menu = new GenericMenu();
 
             int index = 0;
@@ -115,7 +128,7 @@ namespace UnityEditor.XR.Management
                 string name = info.assetName;
                 if (String.IsNullOrEmpty(name) && info.loaderType != null)
                 {
-                    name = EditorUtilities.TypeNameToString(info.loaderType);
+                    name = TypeNameToString(info.loaderType);
                 }
 
                 if (info.instance == null)
@@ -135,15 +148,18 @@ namespace UnityEditor.XR.Management
 
             if (info.instance == null)
             {
-                string newAssetName = String.Format("{0}.asset", EditorUtilities.TypeNameToString(info.loaderType));
+                string newAssetName = String.Format("New {0}.asset", TypeNameToString(info.loaderType));
                 XRLoader loader = ScriptableObject.CreateInstance(info.loaderType) as XRLoader;
-                string assetPath = EditorUtilities.GetAssetPathForComponents(EditorUtilities.s_DefaultLoaderPath);
+                string assetPath = EditorUtility.SaveFilePanelInProject("Create new XR Loader asset",
+                    newAssetName,
+                    "asset",
+                    "Please enter a name and location where the loader asset can be created at.");
+
                 if (string.IsNullOrEmpty(assetPath))
                 {
                     return;
                 }
 
-                assetPath = Path.Combine(assetPath, newAssetName);
                 info.instance = loader;
                 info.assetName = Path.GetFileNameWithoutExtension(assetPath);
                 AssetDatabase.CreateAsset(loader, assetPath);

@@ -1,27 +1,70 @@
-using UnityEngine;
-using UnityEditor;
-using UnityEngine.TestTools;
-using NUnit.Framework;
+using System;
 using System.Collections;
 
-namespace ManagmentTests.Editor
+using NUnit.Framework;
+
+using UnityEditor;
+
+using UnityEngine;
+using UnityEngine.TestTools;
+
+using Unity.XR.Management.Tests.Standalone;
+using Unity.XR.Management.Tests.Standalone.Providing;
+
+namespace Unity.XR.Management.EditorTests
 {
     class EditorTests
     {
-        [Test]
-        public void EditorSampleTestSimplePasses()
+        [OneTimeSetUp]
+        public void OneTimeSetUp()
         {
-            // Use the Assert class to test conditions.
+            StandaloneSubsystemParams parms = new StandaloneSubsystemParams("Standalone Subsystem", typeof(StandaloneSubsystem));
+            StandaloneSubsystemDescriptor.Create(parms);
+        }
+
+        StandaloneLoader loader;
+
+        [SetUp]
+        public void SetUp()
+        {
+            loader = ScriptableObject.CreateInstance<StandaloneLoader>() as StandaloneLoader;
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            UnityEngine.Object.DestroyImmediate(loader);
+            loader = null;
+        }
+
+        [Test]
+        public void StandaloneLoaderCreateTest()
+        {
+            Assert.IsTrue(loader.Initialize());
         }
 
         // A UnityTest behaves like a coroutine in PlayMode
         // and allows you to yield null to skip a frame in EditMode
         [UnityTest]
-        public IEnumerator EditorSampleTestWithEnumeratorPasses()
+        public IEnumerator StandaloneLoaderLifecycleTest()
         {
-            // Use the Assert class to test conditions.
-            // yield to skip a frame
+            Assert.IsTrue(loader.Initialize());
             yield return null;
+
+            Assert.IsTrue(loader.Start());
+            Assert.IsTrue(loader.started);
+            yield return null;
+
+
+            Assert.IsTrue(loader.Stop());
+            Assert.IsTrue(loader.stopped);
+            yield return null;
+
+
+            Assert.IsTrue(loader.Deinitialize());
+            Assert.IsTrue(loader.deInitialized);
+            yield return null;
+
         }
     }
 }
