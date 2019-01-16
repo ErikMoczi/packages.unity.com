@@ -1,7 +1,7 @@
 {
   "name": "com.unity.mobile.android-logcat",
   "displayName": "Android Logcat",
-  "version": "0.1.5-preview",
+  "version": "0.2.0-preview",
   "unity": "2019.1",
   "description": "Android Logcat package adds support for displaying log messages coming from Android devices in Unity Editor. Click the 'View documentation' link above for more information.\n\nThe window can be accessed in Unity Editor via 'Window > Analysis > Android Logcat', or simply by pressing 'Alt+6' on Windows or 'Option+6' on macOS. \n\nMake sure to have Android module loaded and switch to Android build target in 'Build Settings' window if the menu doesn't exist.",
   "keywords": [
@@ -13,6 +13,6 @@
   "repository": {
     "type": "git",
     "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/mobile/mobile-android-logcat.git",
-    "revision": "03a1d06e37b44bf4f1a8afb3d48a394891de4653"
+    "revision": "8c5d299a006b1c160a07ae1d4f212548caf60c9a"
   }
 }

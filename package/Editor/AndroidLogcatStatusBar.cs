@@ -1,11 +1,6 @@
-using System.Collections.Generic;
-using System.Diagnostics;
+#if PLATFORM_ANDROID && NET_4_6
 using System;
-using System.Text.RegularExpressions;
-using System.Linq;
 using UnityEngine;
-using UnityEditor.Utils;
-using System.Text;
 
 namespace Unity.Android.Logcat
 {
@@ -40,3 +35,4 @@ namespace Unity.Android.Logcat
         }
     }
 }
+#endif

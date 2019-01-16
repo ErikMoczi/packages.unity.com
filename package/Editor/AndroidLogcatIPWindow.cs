@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+#if PLATFORM_ANDROID && NET_4_6
 using UnityEngine;
 using UnityEditor;
 
@@ -59,3 +56,4 @@ namespace Unity.Android.Logcat
         }
     }
 }
+#endif

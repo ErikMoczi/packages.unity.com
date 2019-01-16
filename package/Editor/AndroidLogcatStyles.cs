@@ -1,9 +1,6 @@
-using System;
-using System.IO;
-using System.Collections.Generic;
+#if PLATFORM_ANDROID && NET_4_6
 using UnityEngine;
 using UnityEditor;
-using System.Text;
 
 namespace Unity.Android.Logcat
 {
@@ -41,3 +38,4 @@ namespace Unity.Android.Logcat
         public static GUIStyle statusLabel = new GUIStyle("AppToolbar") { fontSize = kStatusBarFontSize, fixedHeight = kLStatusBarFixedHeight, richText = true };
     }
 }
+#endif
