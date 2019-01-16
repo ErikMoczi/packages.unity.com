@@ -277,12 +277,18 @@ namespace Unity.MemoryProfiler.Editor
             // during on enabled, none of the layout is filled with useful numbers (most is just 0 or NaN).
             EditorCoroutineUtility.StartCoroutine(UpdateOpenSnapshotsPaneAfterLayout(), this);
             CompilationPipeline.assemblyCompilationStarted += StartedCompilationCallback;
+            CompilationPipeline.assemblyCompilationFinished += FinishedCompilationCallback;
         }
 
         void StartedCompilationCallback(string msg)
         {
-            //Disable the capture button during compilation(delayed a few frames), no need to re-enable it as the window will get destroyed on domain reload
+            //Disable the capture button during compilation.
             m_CaptureButton.SetEnabled(false);
+        }
+
+        void FinishedCompilationCallback(string msg, UnityEditor.Compilation.CompilerMessage[] compilerMsg)
+        {
+            m_CaptureButton.SetEnabled(true);
         }
 
         IEnumerator UpdateOpenSnapshotsPaneAfterLayout()
@@ -580,6 +586,9 @@ namespace Unity.MemoryProfiler.Editor
                 m_PlayerConnectionState.Dispose();
                 m_PlayerConnectionState = null;
             }
+
+            CompilationPipeline.assemblyCompilationStarted -= StartedCompilationCallback;
+            CompilationPipeline.assemblyCompilationFinished -= FinishedCompilationCallback;
         }
 
         void UI.IViewPaneEventListener.OnRepaint()
