@@ -5,6 +5,8 @@ using NUnit.Framework.Internal;
 using NUnit.Framework.Internal.Commands;
 using NUnit.Framework.Internal.Execution;
 using UnityEngine.TestTools;
+using SetUpTearDownCommand = NUnit.Framework.Internal.Commands.SetUpTearDownCommand;
+using TestActionCommand = NUnit.Framework.Internal.Commands.TestActionCommand;
 
 namespace UnityEngine.TestRunner.NUnitExtensions.Runner
 {
@@ -62,7 +64,9 @@ namespace UnityEngine.TestRunner.NUnitExtensions.Runner
                     }
                 }
 
+                _command = new TestTools.TestActionCommand(_command);
                 _command = new EnumerableSetUpTearDownCommand(_command);
+                _command = new OuterUnityTestActionCommand(_command);
 
                 foreach (var testAction in ((IEnumerableTestMethodCommand)_command).ExecuteEnumerable(Context))
                 {

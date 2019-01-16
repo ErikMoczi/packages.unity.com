@@ -246,7 +246,7 @@ namespace UnityEditor.TestTools.TestRunner
 
         public void RebuildUIFilter()
         {
-            if (m_SelectedTestTypes != null)
+            if (m_SelectedTestTypes != null && m_SelectedTestTypes.HasTreeData())
             {
                 m_SelectedTestTypes.RebuildUIFilter();
             }
