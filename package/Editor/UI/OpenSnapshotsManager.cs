@@ -97,12 +97,12 @@ namespace Unity.MemoryProfiler.Editor
                     {
                         if (snapshot == Second)
                         {
-                            m_UIState.ClearFirstMode();
+                            m_UIState.ClearSecondMode();
                             Second.GuiData.CurrentState = SnapshotFileGUIData.State.Closed;
                         }
                         else if (snapshot == First)
                         {
-                            m_UIState.ClearSecondMode();
+                            m_UIState.ClearFirstMode();
                             if (First != null)
                                 First.GuiData.CurrentState = SnapshotFileGUIData.State.Closed;
                             First = Second;

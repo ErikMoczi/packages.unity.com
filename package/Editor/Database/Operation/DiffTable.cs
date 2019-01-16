@@ -315,7 +315,8 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         public override bool Update()
         {
             if (m_Entries != null) return false;
-
+            sourceTables[0].Update();
+            sourceTables[1].Update();
             var mc = sourceTables[0].GetMetaData().GetColumnByIndex(columnKey);
             var col0 = sourceTables[0].GetColumnByIndex(columnKey);
             var index0 = col0.GetSortIndex(SortOrder.Ascending, new ArrayRange(0, col0.GetRowCount()), false);

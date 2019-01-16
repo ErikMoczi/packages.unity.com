@@ -70,7 +70,6 @@ namespace Unity.MemoryProfiler.Editor.UI
                 for (long i = 0; i != schema.GetTableCount(); ++i)
                 {
                     var tab = schema.GetTableByIndex(i);
-                    tab.Update(); //update table internal data
                     long rowCount = tab.GetRowCount();
                     m_TableNames[i + 1] = (dataRenderer.ShowPrettyNames ? tab.GetDisplayName() : tab.GetName()) + " (" + (rowCount >= 0 ? rowCount.ToString() : "?") + ")";
                     m_Tables[i + 1] = tab;
@@ -251,6 +250,11 @@ namespace Unity.MemoryProfiler.Editor.UI
                 }
                 if (table == null)
                     table = uiState.CurrentMode.GetTableByIndex(Mathf.Min(0, m_TableNames.Length - 1));
+
+                if (table.Update())
+                {
+                    UpdateTableSelectionNames();
+                }
 
                 var pane = new UI.SpreadsheetPane(uiState, viewPaneEventListener);
                 pane.OpenTable(new Database.TableLink(table.GetName()), table);

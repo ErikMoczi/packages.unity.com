@@ -89,8 +89,17 @@ namespace Unity.MemoryProfiler.Editor
             for (int i = 0; i < fileEnumerator.Length; ++i)
             {
                 FileInfo fInfo = fileEnumerator[i];
-                if(fInfo.Length != 0)
-                    m_Snapshots.Add(new SnapshotFileData(fInfo));
+                if (fInfo.Length != 0)
+                {
+                    try
+                    {
+                        m_Snapshots.Add(new SnapshotFileData(fInfo));
+                    }
+                    catch(IOException e)
+                    {
+                        Debug.LogError("Failed to load snapshot, error: " + e.Message);
+                    }
+                }
             }
         }
         

@@ -320,6 +320,16 @@ namespace Unity.MemoryProfiler.Editor
         List<ManagedObjectInfo> m_ObjectList;
         List<ManagedConnection> m_ConnectionList;
 
+        struct StackCrawlData
+        {
+            public ulong ptr;
+            public ulong ptrFrom;
+            public int typeFrom;
+            public int indexOfFrom;
+            public int fieldFrom;
+            public int fromArrayIndex;
+        }
+
         public ManagedData Crawl(CachedSnapshot snapshot)
         {
             m_Snapshot = snapshot;
@@ -339,31 +349,31 @@ namespace Unity.MemoryProfiler.Editor
                     Debuging.DebugUtility.LogWarning("null object in gc handles " + i);
                     moi.managedObjectIndex = i;
                     m_ObjectList.Add(moi);
-                    continue;
                 }
-                if (m_Snapshot.m_CrawledData.managedObjectByAddress.ContainsKey(m_Snapshot.gcHandles.target[i]))
+                else if (m_Snapshot.m_CrawledData.managedObjectByAddress.ContainsKey(m_Snapshot.gcHandles.target[i]))
                 {
                     Debuging.DebugUtility.LogWarning("Duplicated object in gc handles " + i + " addr:" + m_Snapshot.gcHandles.target[i]);
                     moi.managedObjectIndex = i;
                     m_ObjectList.Add(moi);
-                    continue;
                 }
-                moi.managedObjectIndex = i;
-                //moi.ptrObject = m_Snapshot.gcHandles.target[i];
-                //moi.
-                m_ObjectList.Add(moi);
-                m_Snapshot.m_CrawledData.managedObjectByAddress.Add(m_Snapshot.gcHandles.target[i], moi);
+                else
+                {
+                    moi.managedObjectIndex = i;
+                    m_ObjectList.Add(moi);
+                    m_Snapshot.m_CrawledData.managedObjectByAddress.Add(m_Snapshot.gcHandles.target[i], moi);
+                }
             }
 
-            // Set to true to ignore all the first objects that are bad.
-            // For some reason, the first few gcHandles Mono returns are not valid objects
-            bool ignoreBadObject = false;
-            for (int i = 0; i != m_Snapshot.gcHandles.Count; i++)
+            Stack<StackCrawlData> crawlerStack = new Stack<StackCrawlData>();
+
+            for (int i = (int)m_Snapshot.gcHandles.Count - 1; i >= 0; --i)
             {
-                if (CrawlPointer(m_Snapshot.gcHandles.target[i], 0, -1, -1, -1, -1, ignoreBadObject))
-                {
-                    ignoreBadObject = false;
-                }
+                crawlerStack.Push(new StackCrawlData { ptr = m_Snapshot.gcHandles.target[i], ptrFrom = 0, typeFrom = -1, indexOfFrom = -1, fieldFrom = -1, fromArrayIndex = - 1});
+            }
+
+            while(crawlerStack.Count > 0)
+            {
+                CrawlPointer(crawlerStack.Pop(), crawlerStack);
             }
 
             for (int i = 0; i < m_Snapshot.m_CrawledData.typesWithStaticFields.Length; i++)
@@ -371,7 +381,12 @@ namespace Unity.MemoryProfiler.Editor
                 var iTypeDescription = m_Snapshot.m_CrawledData.typesWithStaticFields[i];
                 CrawlRawObjectData(
                     new BytesAndOffset { bytes = m_Snapshot.typeDescriptions.staticFieldBytes[iTypeDescription], offset = 0, pointerSize = m_Snapshot.virtualMachineInformation.pointerSize }
-                    , iTypeDescription, true, 0, -1);
+                    , iTypeDescription, true, 0, -1, crawlerStack);
+            }
+
+            while (crawlerStack.Count > 0)
+            {
+                CrawlPointer(crawlerStack.Pop(), crawlerStack);
             }
 
             ConnectNativeToManageObject();
@@ -479,7 +494,7 @@ namespace Unity.MemoryProfiler.Editor
                         continue;
                     }
                     var cachedPtr = heapSection.ReadPointer();
-                    var indexOfNativeObject = m_Snapshot.nativeObjects.nativeObjectAddress.FindIndex(no => (ulong)no == cachedPtr);
+                    var indexOfNativeObject = m_Snapshot.nativeObjects.nativeObjectAddress.FindIndex(no => no == cachedPtr);
                     if (indexOfNativeObject >= 0)
                     {
                         instanceID = m_Snapshot.nativeObjects.instanceId[indexOfNativeObject];
@@ -522,12 +537,9 @@ namespace Unity.MemoryProfiler.Editor
             return DerivesFrom(baseArrayIndex, potentialBase);
         }
 
-        private void CrawlRawObjectData(BytesAndOffset bytesAndOffset, int iTypeDescription, bool useStaticFields, ulong ptrFrom, int indexOfFrom)
+        private void CrawlRawObjectData(BytesAndOffset bytesAndOffset, int iTypeDescription, bool useStaticFields, ulong ptrFrom, int indexOfFrom, Stack<StackCrawlData> dataStack)
         {
-            //_instanceFields
-            //var fields = useStaticFields ? m_Snapshot.typeDescriptions.fieldIndices_static[iTypeDescription] : m_Snapshot.typeDescriptions.fieldIndices_instance[iTypeDescription];
             var fields = useStaticFields ? m_Snapshot.typeDescriptions.fieldIndicesOwned_static[iTypeDescription] : m_Snapshot.typeDescriptions.fieldIndices_instance[iTypeDescription];
-
             foreach (var iField in fields)
             {
                 int iField_TypeDescription_TypeIndex = m_Snapshot.fieldDescriptions.typeIndex[iField];
@@ -537,12 +549,11 @@ namespace Unity.MemoryProfiler.Editor
 
                 if (m_Snapshot.typeDescriptions.HasFlag(iField_TypeDescription_ArrayIndex, TypeFlags.kValueType))
                 {
-                    CrawlRawObjectData(fieldLocation, iField_TypeDescription_ArrayIndex, useStaticFields, ptrFrom, indexOfFrom);
+                    CrawlRawObjectData(fieldLocation, iField_TypeDescription_ArrayIndex, useStaticFields, ptrFrom, indexOfFrom, dataStack);
                     continue;
                 }
 
-
-                //temporary workaround for a bug in 5.3b4 and earlier where we would get literals returned as fields with offset 0. soon we'll be able to remove this code.
+                //Workaround that was done to not error out when trying to read an array where the remaining length is less than that pointer size.
                 bool gotException = false;
                 try
                 {
@@ -550,42 +561,31 @@ namespace Unity.MemoryProfiler.Editor
                 }
                 catch (ArgumentException)
                 {
-#if VERIFY_LITERALS_SENT //literals are currently not being crawled inside the scripting backend
-                    UnityEngine.Debug.LogWarningFormat("Skipping field {0} on type {1}", m_Snapshot.fieldDescriptions.fieldDescriptionName[iField], m_Snapshot.typeDescriptions.typeDescriptionName[iTypeDescription]);
-                    UnityEngine.Debug.LogWarningFormat("FieldType.name: {0}", m_Snapshot.typeDescriptions.typeDescriptionName[iField_TypeDescription_ArrayIndex]);
-#endif
                     gotException = true;
                 }
 
                 if (!gotException)
                 {
-                    CrawlPointer(fieldLocation.ReadPointer(), ptrFrom, iTypeDescription, indexOfFrom, iField, -1, true);
+                    dataStack.Push(new StackCrawlData() { ptr = fieldLocation.ReadPointer(), ptrFrom = ptrFrom, typeFrom = iTypeDescription, indexOfFrom = indexOfFrom, fieldFrom = iField, fromArrayIndex = -1});
                 }
             }
+
         }
 
-        // return false if bad object
-        private bool CrawlPointer(ulong pointer, ulong pointerFrom, int typeFrom, int indexOfFrom, int fieldFrom, int fromArrayIndex, bool ignoreBadHeaderError)
+        private bool CrawlPointer(StackCrawlData data, Stack<StackCrawlData> dataStack)
         {
-            var bo = m_Snapshot.managedHeapSections.Find(pointer, m_Snapshot.virtualMachineInformation);
-            if (!bo.IsValid)
+            var byteOffset = m_Snapshot.managedHeapSections.Find(data.ptr, m_Snapshot.virtualMachineInformation);
+            if (!byteOffset.IsValid)
             {
-#if DEBUG_VALIDATION
-                if (pointer != 0)
-                {
-                    UnityEngine.Debug.LogError("CrawlPointer ptr not found " + pointer);
-                }
-#endif
                 return false;
             }
 
-
-            bool wasAlreadyCrawled;
             ManagedObjectInfo obj;
+            bool wasAlreadyCrawled;
 
-            obj = ParseObjectHeader(m_Snapshot.managedHeapSections, pointer, out wasAlreadyCrawled, ignoreBadHeaderError);
+            obj = ParseObjectHeader(m_Snapshot.managedHeapSections, data.ptr, out wasAlreadyCrawled, false);
             ++obj.refCount;
-            m_ConnectionList.Add(ManagedConnection.MakeConnection(m_Snapshot, indexOfFrom, pointerFrom, obj.managedObjectIndex, pointer, typeFrom, fieldFrom, fromArrayIndex));
+            m_ConnectionList.Add(ManagedConnection.MakeConnection(m_Snapshot, data.indexOfFrom, data.ptrFrom, obj.managedObjectIndex, data.ptr, data.typeFrom, data.fieldFrom, data.fromArrayIndex));
 
             if (!obj.IsKnownType())
                 return false;
@@ -594,27 +594,27 @@ namespace Unity.MemoryProfiler.Editor
 
             if (!m_Snapshot.typeDescriptions.HasFlag(obj.iTypeDescription, TypeFlags.kArray))
             {
-                CrawlRawObjectData(bo.Add(m_Snapshot.virtualMachineInformation.objectHeaderSize), obj.iTypeDescription, false, pointer, obj.managedObjectIndex);
+                CrawlRawObjectData(byteOffset.Add(m_Snapshot.virtualMachineInformation.objectHeaderSize), obj.iTypeDescription, false, data.ptr, obj.managedObjectIndex, dataStack);
                 return true;
             }
 
-            var arrayLength = ArrayTools.ReadArrayLength(m_Snapshot, m_Snapshot.managedHeapSections, pointer, obj.iTypeDescription, m_Snapshot.virtualMachineInformation);
+            var arrayLength = ArrayTools.ReadArrayLength(m_Snapshot, m_Snapshot.managedHeapSections, data.ptr, obj.iTypeDescription, m_Snapshot.virtualMachineInformation);
             int iElementTypeDescription = m_Snapshot.typeDescriptions.baseOrElementTypeIndex[obj.iTypeDescription];
-            if(iElementTypeDescription == -1)
+            if (iElementTypeDescription == -1)
             {
                 return false; //do not crawl uninitialized object types, as we currently don't have proper handling for these
             }
-            var cursor = bo.Add(m_Snapshot.virtualMachineInformation.arrayHeaderSize);
+            var cursor = byteOffset.Add(m_Snapshot.virtualMachineInformation.arrayHeaderSize);
             for (int i = 0; i != arrayLength; i++)
             {
                 if (m_Snapshot.typeDescriptions.HasFlag(iElementTypeDescription, TypeFlags.kValueType))
                 {
-                    CrawlRawObjectData(cursor, iElementTypeDescription, false, pointer, obj.managedObjectIndex);
+                    CrawlRawObjectData(cursor, iElementTypeDescription, false, data.ptr, obj.managedObjectIndex, dataStack);
                     cursor = cursor.Add(m_Snapshot.typeDescriptions.size[iElementTypeDescription]);
                 }
                 else
                 {
-                    CrawlPointer(cursor.ReadPointer(), pointer, obj.iTypeDescription, obj.managedObjectIndex, -1, i, false);
+                    dataStack.Push(new StackCrawlData() { ptr = cursor.ReadPointer(), ptrFrom = data.ptr, typeFrom = obj.iTypeDescription, indexOfFrom = obj.managedObjectIndex, fieldFrom = -1, fromArrayIndex = i });
                     cursor = cursor.NextPointer();
                 }
             }

@@ -39,14 +39,20 @@ namespace Unity.MemoryProfiler.Editor.Database
 
             ResetAllGroup();
         }
+        protected bool IsGroupInitialized()
+        {
+            return m_Data != null;
+        }
 
         public long GetGroupCount()
         {
+            if (m_Data == null) return -1;
             return m_Data.m_GroupRowDataRange.LongLength;
         }
 
         public void ResetAllGroup()
         {
+            if (m_Data == null) return;
             m_ExpandedGroup.Clear();
             //create data entries with group heads only
             m_Data.m_RowData = new DataEntry[m_GroupRowDataRange.Length];

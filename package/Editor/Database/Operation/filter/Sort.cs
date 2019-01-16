@@ -79,11 +79,18 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation.Filter
             {
                 return tableIn;
             }
+
+            // make sure we can get an accurate row count
+            tableIn.ComputeRowCount();
+
+            // This is a temporary fix to avoid sorting sub tables entries with top level entries.
+            // the real fix involve sorting sub tables entries as part of the group head
             if (tableIn is ExpandTable)
             {
                 var et = (ExpandTable)tableIn;
                 et.ResetAllGroup();
             }
+
             return CreateFilter(tableIn, new ArrayRange(0, tableIn.GetRowCount()));
         }
 

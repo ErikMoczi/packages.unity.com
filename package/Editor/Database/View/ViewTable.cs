@@ -139,14 +139,31 @@ namespace Unity.MemoryProfiler.Editor.Database.View
 
 
         private Table[] m_GroupTableCache;
-        public override bool Update()
+        public override IUpdater BeginUpdate()
         {
-            bool result = base.Update();
-            if (result)
+            bool builtChildren = BuildChildren(); // must be done before base.BeginUpdate to initialize groups
+            var updater = base.BeginUpdate();
+            if(updater == null && builtChildren)
             {
-                m_GroupTableCache = new Table[GetGroupCount()];
+                return new DefaultDirtyUpdater(this);
             }
-            return result;
+            return updater;
+        }
+
+        public override bool ComputeRowCount()
+        {
+            return BuildChildren();
+        }
+        private bool BuildChildren()
+        {
+            if (!IsGroupInitialized())
+            {
+                var childCount = node.data.GetChildCount(this.ViewSchema, this, parentExpressionParsingContext);
+                InitGroup(childCount);
+                m_GroupTableCache = new Table[GetGroupCount()];
+                return true;
+            }
+            return false;
         }
 
         public long GetNodeChildCount()
@@ -178,10 +195,8 @@ namespace Unity.MemoryProfiler.Editor.Database.View
 
         public override Table CreateGroupTable(long groupIndex)
         {
-            if (m_GroupTableCache == null)
-            {
-                Update();
-            }
+            BuildChildren();
+
             if (m_GroupTableCache[(int)groupIndex] != null) return m_GroupTableCache[(int)groupIndex];
 
             // Create expression parsing context with a fix row so the child can refer to this group index data and local select sets.
@@ -628,16 +643,13 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                                 vTable.SetColumn(metaColumn, column);
                             }
                         }
+
                         if (data.type == Data.DataType.Select && vTable.dataSelectSet.IsManyToMany())
                         {
-                            DebugUtility.LogError("Cannot build a view table '" + vTable.GetName() + "' using on a many-to-many select statement. Specify a row value for your select statement where condition(s).");
+                            DebugUtility.LogError("Cannot build the view table '" + vTable.GetName() + "' using a many-to-many select statement. Specify a row value for your select statement where condition(s).");
                             MemoryProfilerAnalytics.AddMetaDatatoEvent<MemoryProfilerAnalytics.LoadViewXMLEvent>(7);
                         }
-                        else
-                        {
-                            var childCount = data.GetChildCount(vs, vTable, parentExpressionParsingContext);
-                            vTable.InitGroup(childCount);
-                        }
+
                         return vTable;
                     }
                 }

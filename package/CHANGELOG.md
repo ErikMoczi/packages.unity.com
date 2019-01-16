@@ -3,6 +3,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+## [0.1.0-preview.4] - 2019-01-02
+### Added
+ - Added on demand computing for tables with the purpose of speeding up the snapshot opening process.
+ - Added better handling for corrupted snapshots, in order to avoid having the UI become non-responsive.
+
+### Changed
+ - Changed the managed data crawler to use a stack based approach in order to avoid stack overflows when processing large amounts of managed object references.
+ - Fixed an issue where attempting to rename a snapshot with two snapshots open would cause an I/O sharing violation, due to the other snapshot being closed instead.
+ - Changed capture sequence to first output to a temporary (.tmpsnap) file, to avoid having the Workbench's refresh functionality(triggered during application focus) try to access a snapshot that currently being streamed from a remote target.
+
 ## [0.1.0-preview.3] - 2018-12-17
 ### Added
  - Added enable callback for the capture button, to support cases where the compilation guards get triggered by building the Player.

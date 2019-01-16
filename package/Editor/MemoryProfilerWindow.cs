@@ -71,7 +71,8 @@ namespace Unity.MemoryProfiler.Editor
 
         static Dictionary<BuildTarget, string> s_PlatformIconClasses = new Dictionary<BuildTarget, string>();
 
-        const string k_SnapshotFileNamePart = "/Snapshot-";
+        const string k_SnapshotFileNamePart = "Snapshot-";
+        const string k_SnapshotTempFileName = "temp.tmpsnap";
         internal const string k_SnapshotFileExtension = ".snap";
         internal const string k_ConvertedSnapshotFileName = "ConvertedSnaphot.snap";
         const string k_ViewFileExtension = "xml";
@@ -806,8 +807,7 @@ namespace Unity.MemoryProfiler.Editor
             GC.Collect();
             GC.WaitForPendingFinalizers();
 
-            string basePath = MemoryProfilerSettings.AbsoluteMemorySnapshotStoragePath + k_SnapshotFileNamePart + DateTime.Now.Ticks;
-            basePath += k_SnapshotFileExtension;
+            string basePath = Path.Combine(MemoryProfilerSettings.AbsoluteMemorySnapshotStoragePath, k_SnapshotTempFileName);
 
             bool captureResult = false;
             string capturePath = "";
@@ -845,7 +845,9 @@ namespace Unity.MemoryProfiler.Editor
 
             if (captureResult)
             {
-                var snapshot = m_MemorySnapshotsCollection.AddSnapshotToCollection(capturePath);
+                string targetPath = Path.Combine(MemoryProfilerSettings.AbsoluteMemorySnapshotStoragePath, k_SnapshotFileNamePart + DateTime.Now.Ticks + k_SnapshotFileExtension);
+                File.Move(capturePath, targetPath);
+                var snapshot = m_MemorySnapshotsCollection.AddSnapshotToCollection(targetPath);
                 AddSnapshotToUI(snapshot);
             }
 
@@ -1076,17 +1078,30 @@ namespace Unity.MemoryProfiler.Editor
                             int newTableIndex = i;
                             menu.AddItem(ConvertTableNameForUI(UIState.CurrentMode.TableNames[i]), newTableIndex == curTableIndex, () =>
                             {
-                                MemoryProfilerAnalytics.StartEvent<MemoryProfilerAnalytics.OpenedViewEvent>();
-                                var tab = UIState.CurrentMode.GetTableByIndex(newTableIndex - numberOfTabelsToSkip);
-                                if (tab.ComputeRowCount())
+                                ProgressBarDisplay.ShowBar("Opening Table...");
+                                try
                                 {
-                                    UIState.CurrentMode.UpdateTableSelectionNames();
-                                }
-                                AddCurrentHistoryEvent();
+                                    MemoryProfilerAnalytics.StartEvent<MemoryProfilerAnalytics.OpenedViewEvent>();
+                                    var tab = UIState.CurrentMode.GetTableByIndex(newTableIndex - numberOfTabelsToSkip);
 
-                                OpenTable(new Database.TableLink(tab.GetName()), tab);
-                                
-                                MemoryProfilerAnalytics.EndEvent(new MemoryProfilerAnalytics.OpenedViewEvent() { viewName = tab.GetDisplayName() });
+                                    ProgressBarDisplay.UpdateProgress(0.0f, "Updating Table...");
+                                    if (tab.Update())
+                                    {
+                                        UIState.CurrentMode.UpdateTableSelectionNames();
+                                    }
+                                    AddCurrentHistoryEvent();
+
+                                    ProgressBarDisplay.UpdateProgress(0.75f, "Opening Table...");
+                                    OpenTable(new Database.TableLink(tab.GetName()), tab);
+
+                                    MemoryProfilerAnalytics.EndEvent(new MemoryProfilerAnalytics.OpenedViewEvent() { viewName = tab.GetDisplayName() });
+                                    ProgressBarDisplay.UpdateProgress(1.0f, "");
+                                }
+                                finally
+                                {
+                                    ProgressBarDisplay.ClearBar();
+                                }
+
                             });
                         }
                     }
