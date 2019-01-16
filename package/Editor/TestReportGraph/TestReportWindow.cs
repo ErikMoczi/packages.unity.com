@@ -117,7 +117,7 @@ namespace Unity.PerformanceTesting
 
         private void LoadData()
         {
-            string filePath = Path.Combine(Application.streamingAssetsPath, "PerformanceTestResults.json");
+            string filePath = Path.Combine(Application.persistentDataPath, "PerformanceTestResults.json");
             if (!File.Exists(filePath)) return;
 
             string json = File.ReadAllText(filePath);

@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.50] - 2019-1-15
+
+### Change results paths to persistend data
+
 ## [0.1.49] - 2018-12-4
 
 ### Revert changes to profiler and GC
