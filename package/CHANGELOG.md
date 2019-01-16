@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-preview.8] - 2019-01-03
+### New
+- Add a `TryGetIntrinsics` extension to the `XRCameraSubsystem` for querying the physical characteristics of the device camera.
+
 ## [1.0.0-preview.7] - 2018-12-13
 ### Improvements
 - Add support for x86 and ARM64 Android architectures.

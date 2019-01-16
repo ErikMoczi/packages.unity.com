@@ -37,6 +37,16 @@ namespace UnityEngine.XR.ARExtensions
             IntPtr context);
 
         /// <summary>
+        /// Delegate to retrieve camera instrinics for a physical camera.
+        /// </summary>
+        /// <param name="cameraSubsystem">The <c>XRCameraSubsystem</c> being extended.</param>
+        /// <param name="cameraIntrinsics">Should be populated with the camera's <see cref="CameraIntrinsics"/> if this method returns true.</param>
+        /// <returns><c>true</c> if the <see cref="CameraIntrinsics"/> was populated, <c>false</c> otherwise.</returns>
+        public delegate bool TryGetIntrinsicsDelegate(
+            XRCameraSubsystem cameraSubsystems,
+            out CameraIntrinsics cameraIntrinsics);
+
+        /// <summary>
         /// For internal use. Allows a camera provider to register for the IsPermissionGranted extension.
         /// </summary>
         /// <param name="subsystemId">The string name associated with the camera provider to extend.</param>
@@ -100,6 +110,20 @@ namespace UnityEngine.XR.ARExtensions
             Func<XRCameraSubsystem, CameraFocusMode, bool> handler)
         {
             s_TrySetFocusModeDelegates[subsystemId] = handler;
+        }
+
+        /// <summary>
+        /// Allows a camera provider to register support for <see cref="TryGetIntrinsics(XRCameraSubsystem, out CameraIntrinsics)"/>.
+        /// This is typically only used by platform-specific packages.
+        /// </summary>
+        /// <param name="subsystemId">The string name associated with the camera provider to extend.</param>
+        /// <param name="handler">A method to get the camera intriniscs that should return <c>true</c> when successful,
+        /// or <c>false</c> otherwise.</param>
+        public static void RegisterTryGetIntrinsicsHandler(
+            string subsystemId,
+            TryGetIntrinsicsDelegate handler)
+        {
+            s_TryGetIntrinsicsDelegates[subsystemId] = handler;
         }
 
         /// <summary>
@@ -263,13 +287,29 @@ namespace UnityEngine.XR.ARExtensions
         }
 
         /// <summary>
+        /// Attempt to get the hardware camera's intrinsics. Intrinsics describe physical
+        /// characteristics of a camera, which may be necessary to perform
+        /// computer vision algorithms or other processing.
+        /// </summary>
+        /// <param name="cameraSubsystem">The <c>XRCameraSubsystem</c> being extended.</param>
+        /// <param name="cameraIntrinsics">If this method returns <c>true</c>, this parameter will be
+        /// populated with intrinsics describing the physical camera.</param>
+        /// <returns><c>true</c> if successful, otherwise <c>false</c>.</returns>
+        public static bool TryGetIntrinsics(this XRCameraSubsystem cameraSubsystem, out CameraIntrinsics cameraIntrinsics)
+        {
+            if (cameraSubsystem == null)
+                throw new ArgumentNullException("cameraSubsystem");
+
+            return s_TryGetIntrinsicsDelegate(cameraSubsystem, out cameraIntrinsics);
+        }
+
+        /// <summary>
         /// For internal use. Sets the active subsystem whose extension methods should be used.
         /// </summary>
         /// <param name="cameraSubsystem">The <c>XRCameraSubsystem</c> being extended.</param>
         public static void ActivateExtensions(this XRCameraSubsystem cameraSubsystem)
         {
             if (cameraSubsystem == null)
-
             {
                 SetDefaultDelegates();
             }
@@ -281,7 +321,8 @@ namespace UnityEngine.XR.ARExtensions
                 s_GetNativePtrDelegate = RegistrationHelper.GetValueOrDefault(s_GetNativePtrDelegates, id, DefaultGetNativePtr);
                 s_CameraImageApi = RegistrationHelper.GetValueOrDefault(s_CameraImageApis, id, s_DefaultCameraImageApi);
                 s_CameraConfigApi = RegistrationHelper.GetValueOrDefault(s_CameraConfigApis, id, s_DefaultCameraConfigApi);
-                s_TrySetFocusModeDelegate = RegistrationHelper.GetValueOrDefault(s_TrySetFocusModeDelegates, id, s_DefaultTrySetFocusMode);
+                s_TrySetFocusModeDelegate = RegistrationHelper.GetValueOrDefault(s_TrySetFocusModeDelegates, id, DefaultTrySetFocusMode);
+                s_TryGetIntrinsicsDelegate = RegistrationHelper.GetValueOrDefault(s_TryGetIntrinsicsDelegates, id,DefaultTryGetIntrinsics);
             }
         }
 
@@ -301,8 +342,14 @@ namespace UnityEngine.XR.ARExtensions
             return IntPtr.Zero;
         }
 
-        static bool s_DefaultTrySetFocusMode(XRCameraSubsystem cameraSubsystem, CameraFocusMode mode)
+        static bool DefaultTrySetFocusMode(XRCameraSubsystem cameraSubsystem, CameraFocusMode mode)
         {
+            return false;
+        }
+
+        static bool DefaultTryGetIntrinsics(XRCameraSubsystem cameraSubsystem, out CameraIntrinsics cameraIntrinsics)
+        {
+            cameraIntrinsics = default(CameraIntrinsics);
             return false;
         }
 
@@ -313,7 +360,8 @@ namespace UnityEngine.XR.ARExtensions
             s_GetNativePtrDelegate = DefaultGetNativePtr;
             s_CameraImageApi = s_DefaultCameraImageApi;
             s_CameraConfigApi = s_DefaultCameraConfigApi;
-            s_TrySetFocusModeDelegate = s_DefaultTrySetFocusMode;
+            s_TrySetFocusModeDelegate = DefaultTrySetFocusMode;
+            s_TryGetIntrinsicsDelegate = DefaultTryGetIntrinsics;
         }
 
         static XRCameraExtensions()
@@ -331,6 +379,7 @@ namespace UnityEngine.XR.ARExtensions
         static ICameraConfigApi s_CameraConfigApi;
         static DefaultCameraConfigApi s_DefaultCameraConfigApi;
         static Func<XRCameraSubsystem, CameraFocusMode, bool> s_TrySetFocusModeDelegate;
+        static TryGetIntrinsicsDelegate s_TryGetIntrinsicsDelegate;
 
         static Dictionary<string, Func<XRCameraSubsystem, bool>> s_IsPermissionGrantedDelegates =
             new Dictionary<string, Func<XRCameraSubsystem, bool>>();
@@ -349,5 +398,8 @@ namespace UnityEngine.XR.ARExtensions
 
         static Dictionary<string, Func<XRCameraSubsystem, CameraFocusMode, bool>> s_TrySetFocusModeDelegates =
             new Dictionary<string, Func<XRCameraSubsystem, CameraFocusMode, bool>>();
+
+        static Dictionary<string, TryGetIntrinsicsDelegate> s_TryGetIntrinsicsDelegates =
+            new Dictionary<string, TryGetIntrinsicsDelegate>();
     }
 }
