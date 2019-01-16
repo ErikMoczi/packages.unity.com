@@ -48,6 +48,10 @@ namespace UnityEngine.Experimental.Input
                 sets[i].Disable();
         }
 
+        public virtual void MakePrivateCopyOfActions()
+        {
+        }
+
         public InputActionAssetReference Clone()
         {
             var clone = (InputActionAssetReference)MemberwiseClone();
@@ -57,6 +61,11 @@ namespace UnityEngine.Experimental.Input
         object ICloneable.Clone()
         {
             throw new NotImplementedException();
+        }
+
+        public static implicit operator InputActionAsset(InputActionAssetReference reference)
+        {
+            return reference.m_Asset;
         }
 
         [SerializeField] private InputActionAsset m_Asset;

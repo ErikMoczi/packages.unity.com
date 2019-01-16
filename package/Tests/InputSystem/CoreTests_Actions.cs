@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
@@ -17,6 +18,7 @@ using UnityEngine.TestTools.Constraints;
 using Is = UnityEngine.TestTools.Constraints.Is;
 #endif
 
+[SuppressMessage("ReSharper", "AccessToStaticMemberViaDerivedType")]
 partial class CoreTests
 {
     [Test]
@@ -168,7 +170,7 @@ partial class CoreTests
 
         derivedMap.Enable();
 
-        InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadState.Button.North));
+        InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.North));
         InputSystem.Update();
 
         Assert.That(actionWasPerformed);
@@ -274,7 +276,7 @@ partial class CoreTests
             receivedValue = ctx.ReadValue<float>();
         };
 
-        InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadState.Button.South));
+        InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.South));
         InputSystem.Update();
 
         Assert.That(receivedValue, Is.EqualTo(1).Within(0.00001));
@@ -357,7 +359,7 @@ partial class CoreTests
                     .And.With.Message.Contains("Vector2"));
         };
 
-        InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadState.Button.South));
+        InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.South));
         InputSystem.Update();
 
         Assert.That(receivedCall, Is.True);
@@ -501,6 +503,40 @@ partial class CoreTests
 
     [Test]
     [Category("Actions")]
+    public void Actions_WhenTriggered_TriggerNotification()
+    {
+        var gamepad = InputSystem.AddDevice<Gamepad>();
+
+        var action = new InputAction(binding: "<Gamepad>/leftTrigger");
+        action.Enable();
+
+        var receivedPerformed = false;
+        action.performed += ctx => receivedPerformed = true;
+
+        InputAction receivedAction = null;
+        InputActionChange? receivedChange = null;
+        InputSystem.onActionChange +=
+            (a, c) =>
+        {
+            Assert.That(receivedAction, Is.Null);
+            Assert.That(receivedPerformed, Is.False);     // Notification must come *before* callback.
+
+            receivedAction = (InputAction)a;
+            receivedChange = c;
+
+            // lastXXX state on action must have been updated.
+            Assert.That(receivedAction.lastTriggerControl, Is.SameAs(gamepad.leftTrigger));
+        };
+
+        InputSystem.QueueStateEvent(gamepad, new GamepadState { leftTrigger =  0.5f });
+        InputSystem.Update();
+
+        Assert.That(receivedChange, Is.EqualTo(InputActionChange.ActionTriggered));
+        Assert.That(receivedAction, Is.SameAs(action));
+    }
+
+    [Test]
+    [Category("Actions")]
     public void Actions_CanRecordActionsAsEvents()
     {
         var action = new InputAction();
@@ -574,7 +610,7 @@ partial class CoreTests
             ctx => { ++receivedCalls; };
         action.Enable();
 
-        var firstState = new GamepadState {buttons = 1 << (int)GamepadState.Button.B};
+        var firstState = new GamepadState {buttons = 1 << (int)GamepadButton.B};
         var secondState = new GamepadState {buttons = 0};
 
         InputSystem.QueueStateEvent(gamepad, firstState);
@@ -620,7 +656,7 @@ partial class CoreTests
         };
         action.Enable();
 
-        InputSystem.QueueStateEvent(gamepad, new GamepadState {buttons = 1 << (int)GamepadState.Button.South}, 0.0);
+        InputSystem.QueueStateEvent(gamepad, new GamepadState {buttons = 1 << (int)GamepadButton.South}, 0.0);
         InputSystem.Update();
 
         Assert.That(startedReceivedCalls, Is.EqualTo(1));
@@ -677,7 +713,7 @@ partial class CoreTests
         };
         action.Enable();
 
-        InputSystem.QueueStateEvent(gamepad, new GamepadState {buttons = 1 << (int)GamepadState.Button.South}, 0.0);
+        InputSystem.QueueStateEvent(gamepad, new GamepadState {buttons = 1 << (int)GamepadButton.South}, 0.0);
         InputSystem.Update();
 
         Assert.That(startedReceivedCalls, Is.EqualTo(1));
@@ -715,7 +751,7 @@ partial class CoreTests
             ctx => ++ startedReceivedCalls;
         action.Enable();
 
-        InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadState.Button.South), 1);
+        InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.South), 1);
         InputSystem.Update();
 
         Assert.That(startedReceivedCalls, Is.EqualTo(1));
@@ -1449,7 +1485,7 @@ partial class CoreTests
         action.cancelled += ctx => cancelled.Add(ctx);
 
         // Perform tap.
-        InputSystem.QueueStateEvent(gamepad, new GamepadState {buttons = 1 << (int)GamepadState.Button.A}, 0.0);
+        InputSystem.QueueStateEvent(gamepad, new GamepadState {buttons = 1 << (int)GamepadButton.A}, 0.0);
         InputSystem.QueueStateEvent(gamepad, new GamepadState {buttons = 0}, 0.05);
         InputSystem.Update();
 
@@ -1469,7 +1505,7 @@ partial class CoreTests
         cancelled.Clear();
 
         // Perform slow tap.
-        InputSystem.QueueStateEvent(gamepad, new GamepadState {buttons = 1 << (int)GamepadState.Button.A}, 2.0);
+        InputSystem.QueueStateEvent(gamepad, new GamepadState {buttons = 1 << (int)GamepadButton.A}, 2.0);
         InputSystem.QueueStateEvent(gamepad, new GamepadState {buttons = 0},
             2.0 + InputConfiguration.SlowTapTime + 0.0001);
         InputSystem.Update();
@@ -1586,7 +1622,7 @@ partial class CoreTests
         Assert.That(performed, Is.Empty);
 
         InputSystem.QueueStateEvent(gamepad,
-            new GamepadState {leftTrigger = 1.0f, buttons = 1 << (int)GamepadState.Button.A});
+            new GamepadState {leftTrigger = 1.0f, buttons = 1 << (int)GamepadButton.A});
         InputSystem.Update();
 
         Assert.That(performed, Has.Count.EqualTo(1));
@@ -1609,7 +1645,7 @@ partial class CoreTests
         action.performed += ctx => performed.Add(ctx);
 
         InputSystem.QueueStateEvent(gamepad,
-            new GamepadState {leftTrigger = 1.0f, buttons = 1 << (int)GamepadState.Button.A});
+            new GamepadState {leftTrigger = 1.0f, buttons = 1 << (int)GamepadButton.A});
         InputSystem.Update();
 
         Assert.That(performed, Has.Count.EqualTo(1));
@@ -1630,9 +1666,9 @@ partial class CoreTests
         action.performed += ctx => performed.Add(ctx);
 
         InputSystem.QueueStateEvent(gamepad,
-            new GamepadState {buttons = 1 << (int)GamepadState.Button.A});
+            new GamepadState {buttons = 1 << (int)GamepadButton.A});
         InputSystem.QueueStateEvent(gamepad,
-            new GamepadState {leftTrigger = 1.0f, buttons = 1 << (int)GamepadState.Button.A});
+            new GamepadState {leftTrigger = 1.0f, buttons = 1 << (int)GamepadButton.A});
         InputSystem.Update();
 
         Assert.That(performed, Is.Empty);
@@ -1658,7 +1694,7 @@ partial class CoreTests
         action.performed += ctx => performed.Add(ctx);
 
         InputSystem.QueueStateEvent(gamepad,
-            new GamepadState {leftTrigger = 1.0f, buttons = 1 << (int)GamepadState.Button.A}, 0.0);
+            new GamepadState {leftTrigger = 1.0f, buttons = 1 << (int)GamepadButton.A}, 0.0);
         InputSystem.QueueStateEvent(gamepad,
             new GamepadState {leftTrigger = 1.0f, buttons = 0}, InputConfiguration.SlowTapTime + 0.1);
         InputSystem.Update();
@@ -1730,7 +1766,7 @@ partial class CoreTests
         Assert.That(action.lastTriggerControl, Is.SameAs(gamepad1.leftTrigger));
 
         // Also make sure that this device creation path gets it right.
-        testRuntime.ReportNewInputDevice(
+        runtime.ReportNewInputDevice(
             new InputDeviceDescription {product = "Test", deviceClass = "Gamepad"}.ToJson());
         InputSystem.Update();
         var gamepad2 = (Gamepad)InputSystem.devices.First(x => x.description.product == "Test");
@@ -2344,6 +2380,31 @@ partial class CoreTests
 
     #endif
 
+    [Test]
+    [Category("Actions")]
+    public void Actions_CanFindControlSchemeUsingGivenDevice()
+    {
+        var scheme1 = new InputControlScheme()
+            .WithRequiredDevice("<Gamepad>");
+        var scheme2 = new InputControlScheme()
+            .WithRequiredDevice("<Keyboard>")
+            .WithRequiredDevice("<Mouse>");
+
+        var gamepad = InputSystem.AddDevice<Gamepad>();
+        var keyboard = InputSystem.AddDevice<Keyboard>();
+        var mouse = InputSystem.AddDevice<Mouse>();
+        var touch = InputSystem.AddDevice<Touchscreen>();
+
+        Assert.That(InputControlScheme.FindControlSchemeForControl(gamepad, new[] {scheme1, scheme2}),
+            Is.EqualTo(scheme1));
+        Assert.That(InputControlScheme.FindControlSchemeForControl(keyboard, new[] {scheme1, scheme2}),
+            Is.EqualTo(scheme2));
+        Assert.That(InputControlScheme.FindControlSchemeForControl(mouse, new[] {scheme1, scheme2}),
+            Is.EqualTo(scheme2));
+        Assert.That(InputControlScheme.FindControlSchemeForControl(touch, new[] {scheme1, scheme2}),
+            Is.Null);
+    }
+
     // The bindings targeting an action can be masked out such that only specific
     // bindings take effect and others are ignored.
     [Test]
@@ -2558,14 +2619,14 @@ partial class CoreTests
         float? value = null;
         action.performed += ctx => { value = ctx.ReadValue<float>(); };
 
-        InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadState.Button.LeftShoulder));
+        InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.LeftShoulder));
         InputSystem.Update();
 
         Assert.That(value, Is.Not.Null);
         Assert.That(value.Value, Is.EqualTo(-1).Within(0.00001));
 
         value = null;
-        InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadState.Button.RightShoulder));
+        InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.RightShoulder));
         InputSystem.Update();
 
         Assert.That(value, Is.Not.Null);
@@ -3158,19 +3219,434 @@ partial class CoreTests
         Assert.That(clone.actionMaps[1].name, Is.EqualTo("set2"));
     }
 
+    ////REVIEW: can we can this work with chained bindings and e.g. bind "Shift+W" successfully?
+
+    ////TODO: allow restricting by control paths so that we can restrict it by device requirements found in control schemes
+    ////      (this will implicitly allow restricting rebinds to specific types of devices)
+
+    [Test]
+    [Category("Actions")]
+    public void Actions_CanPerformInteractiveRebinding()
+    {
+        // Most straightforward test:
+        // - Take action with existing binding to A button
+        // - Initiate rebind
+        // - Press Y button
+
+        var action = new InputAction(binding: "<Gamepad>/buttonSouth");
+        var gamepad = InputSystem.AddDevice<Gamepad>();
+
+        var receivedCompleteCallback = false;
+
+        using (var rebind =
+                   action.PerformInteractiveRebinding()
+                       .OnComplete(
+                           operation =>
+                           {
+                               Assert.That(receivedCompleteCallback, Is.False);
+                               Assert.That(operation.started);
+                               Assert.That(operation.completed);
+                               Assert.That(operation.action, Is.SameAs(action));
+                               Assert.That(operation.selectedControl, Is.SameAs(gamepad.buttonNorth));
+                               receivedCompleteCallback = true;
+                           })
+                       .Start())
+        {
+            Assert.That(action.controls, Is.EquivalentTo(new[] { gamepad.buttonSouth }));
+
+            InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.North));
+            InputSystem.Update();
+
+            Assert.That(action.controls, Is.EquivalentTo(new[] { gamepad.buttonNorth }));
+            Assert.That(action.bindings[0].path, Is.EqualTo("<Gamepad>/buttonSouth"));
+            Assert.That(action.bindings[0].overridePath, Is.EqualTo("<Gamepad>/buttonNorth"));
+            Assert.That(rebind.completed, Is.True);
+            Assert.That(rebind.cancelled, Is.False);
+            Assert.That(receivedCompleteCallback, Is.True);
+        }
+    }
+
     [Test]
     [Category("Actions")]
     [Ignore("TODO")]
-    public void TODO_Actions_CanRebindFromUserInput()
+    public void TODO_Actions_CanCancelInteractiveRebinding_ThroughAction()
     {
-        var action = new InputAction(binding: "/gamepad/leftStick");
-        //var gamepad = InputSystem.AddDevice("Gamepad");
-
-        using (var rebind = InputActionRebindingExtensions.PerformUserRebind(action))
-        {
-        }
-
         Assert.Fail();
+    }
+
+    [Test]
+    [Category("Actions")]
+    public void Actions_CanCancelInteractiveRebinding_ThroughBinding()
+    {
+        var action = new InputAction(binding: "<Keyboard>/space");
+        var keyboard = InputSystem.AddDevice<Keyboard>();
+
+        var receivedCancelCallback = false;
+
+        using (var rebind =
+                   action.PerformInteractiveRebinding()
+                       .OnComplete(
+                           operation =>
+                           {
+                               Assert.Fail("Should not complete");
+                           })
+                       .OnCancel(
+                           operation =>
+                           {
+                               Assert.That(receivedCancelCallback, Is.False);
+                               receivedCancelCallback = true;
+                           })
+                       .WithCancellingThrough(keyboard.escapeKey)
+                       .Start())
+        {
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Escape));
+            InputSystem.Update();
+
+            Assert.That(action.controls, Is.EquivalentTo(new[] { keyboard.spaceKey }));
+            Assert.That(action.bindings[0].path, Is.EqualTo("<Keyboard>/space"));
+            Assert.That(action.bindings[0].overridePath, Is.Null);
+            Assert.That(rebind.completed, Is.False);
+            Assert.That(rebind.cancelled, Is.True);
+            Assert.That(receivedCancelCallback, Is.True);
+        }
+    }
+
+    [Test]
+    [Category("Actions")]
+    public void Actions_CanCancelInteractiveRebinding_Manually()
+    {
+        var action = new InputAction(binding: "<Keyboard>/space");
+
+        var receivedCancelCallback = false;
+
+        using (var rebind =
+                   action.PerformInteractiveRebinding()
+                       .OnComplete(
+                           operation =>
+                           {
+                               Assert.Fail("Should not complete");
+                           })
+                       .OnCancel(
+                           operation =>
+                           {
+                               Assert.That(receivedCancelCallback, Is.False);
+                               receivedCancelCallback = true;
+                           })
+                       .Start())
+        {
+            rebind.Cancel();
+
+            Assert.That(action.bindings[0].path, Is.EqualTo("<Keyboard>/space"));
+            Assert.That(action.bindings[0].overridePath, Is.Null);
+            Assert.That(rebind.completed, Is.False);
+            Assert.That(rebind.cancelled, Is.True);
+            Assert.That(receivedCancelCallback, Is.True);
+        }
+    }
+
+    [Test]
+    [Category("Actions")]
+    [Ignore("TODO")]
+    public void TODO_Actions_InteractiveRebinding_IgnoresUnrelatedInput()
+    {
+        Assert.Fail();
+    }
+
+    ////FIXME: doesn't yet work because of small floating-point differences throwing off the MemCmp;
+    ////       for this here we we actually do want the "significant value change" logic
+    // Make sure we take things like deadzone processors into account and don't react to controls that
+    // are below their threshold.
+    [Test]
+    [Category("Actions")]
+    [Ignore("TODO")]
+    public void TODO_Actions_InteractiveRebinding_IgnoresControlsWithNoEffectiveValueChange()
+    {
+        var action = new InputAction(binding: "<Gamepad>/leftStick");
+        var gamepad = InputSystem.AddDevice<Gamepad>();
+
+        using (var rebind =
+                   action.PerformInteractiveRebinding()
+                       .Start())
+        {
+            InputSystem.QueueStateEvent(gamepad,
+                new GamepadState
+                {
+                    rightStick = new Vector2(InputConfiguration.DeadzoneMin - 0.0001f, InputConfiguration.DeadzoneMin - 0.0001f)
+                });
+            InputSystem.Update();
+
+            Assert.That(rebind.completed, Is.False);
+
+            InputSystem.QueueStateEvent(gamepad,
+                new GamepadState
+                {
+                    rightStick = Vector2.one
+                });
+            InputSystem.Update();
+
+            Assert.That(rebind.completed, Is.True);
+            Assert.That(action.bindings[0].path, Is.EqualTo("<Gamepad>/leftStick"));
+            Assert.That(action.bindings[0].overridePath, Is.EqualTo("<Gamepad>/rightStick"));
+        }
+    }
+
+    [Test]
+    [Category("Actions")]
+    [Ignore("TODO")]
+    public void TODO_Actions_InteractiveRebinding_RequiresAtLeastOneBindingToBePresent()
+    {
+        Assert.Fail();
+    }
+
+    [Test]
+    [Category("Actions")]
+    [Ignore("TODO")]
+    public void TODO_Actions_InteractiveRebinding_RequiresActionToBeDisabled()
+    {
+        Assert.Fail();
+    }
+
+    //we may want to allow users to turn this one off; if the other matching checks are good enough, we may be able
+    //to bind reliably even to noisy controls
+    [Test]
+    [Category("Actions")]
+    [Ignore("TODO")]
+    public void TODO_Actions_InteractiveRebinding_IgnoresNoisyControls()
+    {
+        Assert.Fail();
+    }
+
+    [Test]
+    [Category("Actions")]
+    [Ignore("TODO")]
+    public void TODO_Actions_InteractiveRebinding_CanManuallyAcceptAndRejectControls()
+    {
+        Assert.Fail();
+    }
+
+    ////FIXME: this doesn't yet work because the system will find that leftStick/left or leftStick/right
+    ////       have been actuated and since they are buttons, will go for them; we need overall better picking
+    ////       logic to reliably deal with sticks
+    // InputAction.expectedControlLayout, if set, will guide the rebinding process as to which
+    // controls we are looking for.
+    [Test]
+    [Category("Actions")]
+    [Ignore("TODO")]
+    public void TODO_Actions_InteractiveRebinding_RespectsExpectedControlLayoutIfSet()
+    {
+        var action = new InputAction(binding: "<Gamepad>/buttonSouth")
+        {
+            expectedControlLayout = "Button",
+        };
+
+        var gamepad = InputSystem.AddDevice<Gamepad>();
+
+        using (var rebind = action.PerformInteractiveRebinding().Start())
+        {
+            // Gamepad leftStick should get ignored.
+            InputSystem.QueueStateEvent(gamepad, new GamepadState {leftStick = Vector2.one});
+            InputSystem.Update();
+
+            Assert.That(rebind.completed, Is.False);
+            Assert.That(rebind.cancelled, Is.False);
+            Assert.That(action.bindings[0].path, Is.EqualTo("<Gamepad>/buttonSouth"));
+            Assert.That(action.bindings[0].overridePath, Is.Null);
+
+            // Gamepad leftTrigger should bind.
+            InputSystem.QueueStateEvent(gamepad, new GamepadState {leftTrigger = 0.5f});
+            InputSystem.Update();
+
+            Assert.That(rebind.completed, Is.True);
+            Assert.That(rebind.cancelled, Is.False);
+            Assert.That(action.bindings[0].path, Is.EqualTo("<Gamepad>/buttonSouth"));
+            Assert.That(action.bindings[0].overridePath, Is.EqualTo("<Gamepad>/leftTrigger"));
+        }
+    }
+
+    // If a control is already actuated when we initiate a rebind, we first require it to go
+    // back to its default value.
+    [Test]
+    [Category("Actions")]
+    [Ignore("TODO")]
+    public void TODO_Actions_InteractiveRebinding_RequiresControlToBeActuatedStartingWithDefaultValue()
+    {
+        Assert.Fail();
+    }
+
+    ////TODO: figure out how we can rebind to, say, "leftStick/up"
+    ////      (has to be smart enough to know it's looking for a button and that the stick has buttons and that up has been actuated)
+
+    // Say the user has a DualShock gamepad and performs an interactive rebind. We generally don't want to bind
+    // specifically to controls on the DualShock. Instead, if, after rebinding from buttonNorth to buttonSouth,
+    // the user then picks up an Xbox gamepad, no rebinding should be required.
+    //
+    // To achieve this, the system looks for the topmost layout in the base layout chain that still has the control
+    // we are looking for. E.g. if we start with buttonSouth on DualShockGamepadHID, we should trace it all the way
+    // back to Gamepad which introduces the control.
+    [Test]
+    [Category("Actions")]
+    public void Actions_InteractiveRebinding_ChoosesBaseLayoutThatIntroducesSelectedControl()
+    {
+        // Define a device with a stick. Then define another device that's based on it.
+        // Finally, rebind to X on the stick.
+        // The system has to be smart enough to realize that controlFromBase is coming
+        // from the base device even though the X control is not defined in the device
+        // (but rather comes from the Stick layout).
+        const string baseLayout = @"
+            {
+                ""name"" : ""BaseLayout"",
+                ""controls"" : [
+                    { ""name"" : ""controlFromBase"", ""layout"" : ""Stick"" }
+                ]
+            }
+        ";
+        const string derivedLayout = @"
+            {
+                ""name"" : ""DerivedLayout"",
+                ""extend"" : ""BaseLayout"",
+                ""controls"" : [
+                    { ""name"" : ""controlFromBase/x"", ""format"" : ""FLT"" },
+                    { ""name"" : ""controlFromBase/y"", ""format"" : ""FLT"" }
+                ]
+            }
+        ";
+
+        InputSystem.RegisterLayout(baseLayout);
+        InputSystem.RegisterLayout(derivedLayout);
+
+        var action = new InputAction(binding: "<Gamepad>/leftStick/x");
+        var derived = InputSystem.AddDevice("DerivedLayout");
+
+        using (action.PerformInteractiveRebinding().Start())
+        {
+            InputEventPtr eventPtr;
+            using (StateEvent.From(derived, out eventPtr))
+            {
+                derived["controlFromBase/x"].WriteValueFromObjectInto(eventPtr, 0.5f);
+
+                InputSystem.QueueEvent(eventPtr);
+                InputSystem.Update();
+            }
+
+            Assert.That(action.bindings[0].overridePath, Is.EqualTo("<BaseLayout>/controlFromBase"));
+        }
+    }
+
+    // Say we actuate a button on the XRController marked as LeftHand, then we want the override we generate
+    // to take handedness into account and actually mention LeftHand in the override.
+    [Test]
+    [Category("Actions")]
+    [Ignore("TODO")]
+    public void TODO_Actions_InteractiveRebinding_IfDeviceHasUsages_UsagesAreAppliedToOverridePath()
+    {
+        Assert.Fail();
+    }
+
+    [Test]
+    [Category("Actions")]
+    [Ignore("TODO")]
+    public void TODO_Actions_InteractiveRebinding_FavorsControlOfSameType()
+    {
+        Assert.Fail();
+    }
+
+    // We may want to perform a rebind on just one specific control scheme. For this, the rebinding
+    // machinery allows specifying a binding mask to respect.
+    [Test]
+    [Category("Actions")]
+    public void Actions_InteractiveRebinding_CanBeRestrictedToSpecificBindingGroups()
+    {
+        var action = new InputAction();
+        action.AddBinding("<Keyboard>/space", groups: "Keyboard");
+        action.AddBinding("<Gamepad>/buttonSouth", groups: "Gamepad");
+
+        var gamepad = InputSystem.AddDevice<Gamepad>();
+
+        using (var rebind =
+                   action.PerformInteractiveRebinding()
+                       .WithBindingGroup("Gamepad")
+                       .Start())
+        {
+            Assert.That(rebind.bindingMask, Is.EqualTo(new InputBinding { groups = "Gamepad"}));
+
+            InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.North));
+            InputSystem.Update();
+
+            Assert.That(rebind.completed, Is.True);
+            Assert.That(action.bindings[0].path, Is.EqualTo("<Keyboard>/space"));
+            Assert.That(action.bindings[0].overridePath, Is.Null);
+            Assert.That(action.bindings[1].path, Is.EqualTo("<Gamepad>/buttonSouth"));
+            Assert.That(action.bindings[1].overridePath, Is.EqualTo("<Gamepad>/buttonNorth"));
+        }
+    }
+
+    // By default, override paths will refer to devices by their type. Meaning that instead of getting
+    // a concrete path like "/Gamepad1/buttonNorth", you get "<Gamepad>/buttonNorth". Alternatively,
+    // rebinding can be configured to not do this but rather take the path of the chosen control as is.
+    [Test]
+    [Category("Actions")]
+    [Ignore("TODO")]
+    public void TODO_Actions_InteractiveRebinding_CanSetOverridesToReferToSpecificDevices()
+    {
+        Assert.Fail();
+    }
+
+    // A timeout can be specified to wait after we have a match to see if there's more matches and if so,
+    // have them get picked instead. This is useful when trying to bind to just one axis of the stick,
+    // for example. We'll invariably get motion on both axes but we want to pick the motion axis with the
+    // greatest amount of movement.
+    [Test]
+    [Category("Actions")]
+    [Ignore("TODO")]
+    public void TODO_Actions_InteractiveRebinding_CanWaitForAndPickBetterMatch()
+    {
+        Assert.Fail();
+    }
+
+    // Optionally, a fixed timeout on the entire operation can be specified. If no relevant input registers
+    // within the given time, the operation is automatically cancelled.
+    [Test]
+    [Category("Actions")]
+    [Ignore("TODO")]
+    public void TODO_Actions_InteractiveRebinding_CanBeMadeToTimeOut()
+    {
+        Assert.Fail();
+    }
+
+    // By default, rebinds non-destructively apply as overrides. Optionally, they can be made to destructively
+    // edit the path on bindings.
+    [Test]
+    [Category("Actions")]
+    [Ignore("TODO")]
+    public void TODO_Actions_InteractiveRebinding_CanBeMadeToOverwritePath()
+    {
+        Assert.Fail();
+    }
+
+    ////REVIEW: do we really want this behavior? why not just leave it to the user to sort out what actions are or are not enabled?
+    [Test]
+    [Category("Actions")]
+    [Ignore("TODO")]
+    public void TODO_Actions_InteractiveRebinding_DisablesInputOnCurrentlyEnabledActions()
+    {
+        var keyboard = InputSystem.AddDevice<Keyboard>();
+
+        var otherAction = new InputAction(binding: "<Keyboard>/a");
+        var otherActionTriggered = false;
+        otherAction.performed += ctx => otherActionTriggered = true;
+        otherAction.Enable();
+
+        var rebindAction = new InputAction(binding: "<Keyboard>/space");
+        using (var rebind = rebindAction.PerformInteractiveRebinding().Start())
+        {
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.U));
+            InputSystem.Update();
+
+            Assert.That(otherActionTriggered, Is.False);
+            Assert.That(rebindAction.controls, Is.EquivalentTo(new[] { keyboard.uKey }));
+            Assert.That(rebind.completed, Is.True);
+            Assert.That(rebind.cancelled, Is.False);
+        }
     }
 
     [Test]
@@ -3448,7 +3924,7 @@ partial class CoreTests
                 ".*InvalidOperationException thrown during execution of callback for 'Performed' phase of 'testAction' action in map 'testMap'.*"));
         LogAssert.Expect(LogType.Exception, new Regex(".*TEST EXCEPTION FROM MAP.*"));
 
-        InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadState.Button.South));
+        InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.South));
         InputSystem.Update();
     }
 
@@ -3563,92 +4039,33 @@ partial class CoreTests
 
     [Test]
     [Category("Actions")]
-    [Ignore("TODO")]
-    public void TODO_Actions_CanBeArrangedInStack()
+    public void Actions_CanIterateOverActionsInAsset()
     {
-        var stack = new InputActionStack();
-        var action1 = new InputAction("action1");
-        var action2 = new InputAction("action2");
-        var action3 = new InputAction("action3");
+        var asset = ScriptableObject.CreateInstance<InputActionAsset>();
 
-        stack.Push(action1);
-        stack.Push(action2);
-        stack.Push(action3);
+        var map1 = new InputActionMap("map1");
+        var map2 = new InputActionMap("map2");
 
-        Assert.That(stack.actions, Has.Count.EqualTo(3));
-        Assert.That(stack.actions[0], Is.SameAs(action1));
-        Assert.That(stack.actions[1], Is.SameAs(action2));
-        Assert.That(stack.actions[2], Is.SameAs(action3));
-        Assert.That(stack.ToList(), Is.EquivalentTo(new[] { action1, action2, action3 }));
+        asset.AddActionMap(map1);
+        asset.AddActionMap(map2);
 
-        stack.Clear();
+        var action1 = map1.AddAction("action1");
+        var action2 = map1.AddAction("action2");
+        var action3 = map2.AddAction("action3");
 
-        Assert.That(stack.actions, Is.Empty);
-        Assert.That(stack.ToList(), Is.Empty);
+        Assert.That(asset.ToList(), Is.EquivalentTo(new[] { action1, action2, action3 }));
     }
 
     [Test]
     [Category("Actions")]
-    [Ignore("TODO")]
-    public void TODO_Actions_ArrangedInStack_CanBeEnabledAndDisabledInBulk()
+    public void Actions_CanIterateOverActionsInMap()
     {
-        var stack = new InputActionStack();
-        var action1 = new InputAction("action1");
-        var action2 = new InputAction("action2");
+        var map = new InputActionMap();
 
-        stack.Push(action1);
-        stack.Push(action2);
+        var action1 = map.AddAction("action1");
+        var action2 = map.AddAction("action2");
+        var action3 = map.AddAction("action3");
 
-        stack.Enable();
-
-        Assert.That(stack.enabled);
-        Assert.That(action1.enabled);
-        Assert.That(action2.enabled);
-
-        stack.Disable();
-
-        Assert.That(stack.enabled, Is.False);
-        Assert.That(action1.enabled, Is.False);
-        Assert.That(action2.enabled, Is.False);
-    }
-
-    [Test]
-    [Category("Actions")]
-    [Ignore("TODO")]
-    public void TODO_Actions_ArrangedInStack_OverrideEachOthersBindings()
-    {
-        var gamepad = InputSystem.AddDevice<Gamepad>();
-
-        var stack = new InputActionStack();
-        var action1 = new InputAction("action1", binding: "<Gamepad>/buttonSouth");
-        var action2 = new InputAction("action2", binding: "<Gamepad>/buttonSouth");
-
-        var action1Performed = false;
-        var action2Performed = false;
-
-        action1.performed += ctx => action1Performed = true;
-        action2.performed += ctx => action2Performed = true;
-
-        stack.Push(action1);
-        stack.Push(action2);
-
-        stack.Enable();
-
-        InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadState.Button.South));
-        InputSystem.Update();
-
-        Assert.That(action1Performed, Is.False);
-        Assert.That(action2Performed, Is.True);
-
-        stack.Pop(action2);
-
-        action1Performed = false;
-        action2Performed = false;
-
-        InputSystem.QueueStateEvent(gamepad, new GamepadState());
-        InputSystem.Update();
-
-        Assert.That(action1Performed, Is.True);
-        Assert.That(action2Performed, Is.False);
+        Assert.That(map.ToList(), Is.EquivalentTo(new[] { action1, action2, action3 }));
     }
 }
