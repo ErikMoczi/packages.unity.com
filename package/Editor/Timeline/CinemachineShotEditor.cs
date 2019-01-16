@@ -1,9 +1,8 @@
-#if true || CINEMACHINE_TIMELINE
-
 using UnityEditor;
 using UnityEngine;
 using Cinemachine.Editor;
 using System.Collections.Generic;
+using UnityEditor.Timeline;
 
 namespace Cinemachine.Timeline
 {
@@ -59,10 +58,20 @@ namespace Cinemachine.Timeline
                 serializedObject.ApplyModifiedProperties();
             }
 
+            EditorGUI.BeginChangeCheck();
             DrawRemainingPropertiesInInspector();
 
             if (vcam != null)
                 DrawSubeditors(vcam);
+
+            // by default timeline rebuilds the entire graph when something changes,
+            // but if a property of the virtual camera changes, we only need to re-evaluate the timeline.
+            // this prevents flicker on post processing updates
+            if (EditorGUI.EndChangeCheck())
+            {
+                TimelineEditor.Refresh(RefreshReason.SceneNeedsUpdate);
+                GUI.changed = false;
+            }
         }
 
         void DrawSubeditors(CinemachineVirtualCameraBase vcam)
@@ -133,4 +142,3 @@ namespace Cinemachine.Timeline
         }
     }
 }
-#endif

@@ -1,5 +1,3 @@
-#if true || CINEMACHINE_TIMELINE
-
 using UnityEngine;
 using UnityEngine.Playables;
 
@@ -111,4 +109,3 @@ namespace Cinemachine.Timeline
         }
     }
 }
-#endif
