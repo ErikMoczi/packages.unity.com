@@ -5,16 +5,103 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [3.10.0] - 2019-01-14
+## [4.0.0-preview.35] - 2018-12-17
+
+### Features
+
+- New public API.
+- Project now distributed as source code, with assembly definition files.
+- Add experimental pre-selection highlight for vertices and faces (enable in Preferences / ProBuilder / Experimental).
+- Improve the behaviour of vertex and edge selection with hidden faces.
+- Add ability to resize the UV settings window.
+- Dimensions overlay now works with mesh element selections.
+- Update FBX Exporter integration to use version 2.0.0.
+- Improve performance of UV calculation methods.
+- Improve the default UV mapping of sphere primitives.
+- Support new 2018.3 prefab system.
+- Redesigned Lightmap UV workflow now exposes settings on the ProBuilderMesh component, provides a modifiable default value, and is generally smarter about keeping Lightmap UV channels in sync with changes.
+- Improve performance of toolbar rendering by caching some frequently accessed selection information.
+- Redesigned settings interface, now supports search and resetting individual fields.
+- Add support for `Pivot` and `Center` handle position toggle.
+- Handles now support operating in selection space (Position: Pivot + Orientation: Normal).
+- Texture scene tool now supports vertices and edges.
+- Improve performance of mesh rebuild functions.
+- Improve performance of vertex, edge, and face gizmos.
+- Respect Unity pivot mode and pivot orientation (note that setting `Orientation: Normal` overrides the Unity pivot orientation).
+- Add a preference to disable depth testing for mesh selection highlights.
 
 ### Bug Fixes
 
-- Update for compatibility with prefab changes in Unity 2018.3.
+- Fix regression that broke dragging and dropping GameObjects onto ProBuilder meshes.
+- Fix Poly Shape and Bezier Shape incorrectly resetting materials to default.
+- Fix `Export` not generating UV2 in some cases.
+- Fix `Export` functions not refreshing the Project view.
+- Fix edge colors not matching preferences.
+- Fix oversized vertex handle pre-selection billboard.
+- Fix `Collapse Vertices` breaking mesh topology.
+- Fix "UV Overlap" warnings on default shapes when baking GI.
+- Fix mismatched plane width, height segment fields.
+- Fix ProGrids "Push to Grid" affecting un-selected vertices.
+- Fix `Extrude` incorrectly applying smoothing groups to extruded face sides.
+- Fix `Detach to GameObject` sometimes including children in duplicated `GameObject`.
+- Fix vertex handle pre-selection gizmo drawing 2x larger on scaled screens.
+- Fix "Detach to GameObject" deleting the current face selection.
+- Fix deprecated GUID check running on every domain reload.
+- Fix `ProBuilderize` importing quad topologies with incorrect winding.
+- Fix `Extrude Edges` sometimes splitting vertices when extruding as a group.
+- Fix toolbar vertex actions showing as available in some cases where not applicable.
+- Fix case where drag selecting mesh elements could clear the current selection.
+- Fix element preselection highlight incorrectly showing when a GUI control has focus.
+- Fix `Create Poly Shape` throwing errors in some cases.
+- Fix `Connect Edges` action showing incorrect results in notifications.
+- Fix incorrect use of object finalizers in some classes.
+- Fix vertex drag selection with "Select Hidden: Off" omitting distinct but coincident vertices.
+- Fix changes to `MeshRenderer` materials being incorrectly reset by ProBuilder.
+- Fix `Delete Faces` tooltip not showing "Backspace" as the shortcut key on Windows.
+- Fix Auto UV settings inspector not allowing certain properties to be edited with multiple selections.
+- Fix face, edge, and vertex modes requiring user to first select an object before registering element selection when clicking.
+- Fix bug where adjusting shape creation parameters would move the preview mesh.
+- Fix bug where the mesh element gizmos would not respect the screen DPI on startup.
+- Fix `Pipe` and `Sphere` shapes not setting a consistent pivot point.
+- Fix possible null reference exception when deleting the `Shape Editor` preview mesh.
+- Automatically destroy invalid `Poly Shape` objects when the selection is lost.
+- `Detach to GameObject` now sets the detached object as a child of the donor mesh.
+- Fix vertex billboards not rendering when the backing graphics API does not support geometry shaders.
+- Fix new shapes not instantiating on the grid when `Snap New Shape To Grid` is enabled.
+- Fix potential error when `Poly Shape` enters an invalid path.
+- Fix `Poly Shape` not instantiating on grid when ProGrids is enabled.
+- Fix toggling static flags not consistently rebuilding lightmap UVs when `Auto Lightmap UVs` is enabled.
+- Fix `Poly Shape` not aligning with the ProGrids plane.
 
-## [3.0.9] - 2018-05-30
+### Changes
 
-- Fix exporting to OBJ and PLY not refreshing assets when the destination directory is in the project.
-- Fix bug that broke drag and dropping prefabs onto ProBuilder meshes.
+- Tests and documentation are no longer imported with package, significantly improving initial import times.
+- Face selection highlight is now rendered with both front and back faces.
+- Adding custom actions to the ProBuilder toolbar is now done by registering an attribute.
+- ProBuilder Debug Editor removed.
+- Rename `MenuAction::DoAlternativeAction` to `DoAlternateAction`.
+- Simplify assembly definition files, merging ProBuilder.Core & ProBuilder.MeshOperations to single assembly.
+- Minor performance improvements to some common mesh editing actions.
+- Remove "Precise Element Selection" preference.
+- Project preferences are no longer saved in the Assets directory (now located at "ProjectSettings/ProBuilderSettings.json").
+- Improve performance of normal and tangent calculations.
+- `MeshSelection.Top()` becomes `MeshSelection.top` property.
+- Include third party dependencies as source code with assembly definitions instead of pre-compiled DLLs.
+- Performance optimization for selection changes in editor.
+- Make auto-resizing colliders opt-in instead of on by default.
+- Use the last selected mesh element as the active selection pivot, matching object selection.
+
+### Changes since 4.0.0-preview.34
+
+- Fix FBX Exporter incompatibilities breaking compiliation.
+- Remove "About" window.
+- (Internal) Fix selection preview highlight not respecting color choices on all graphics devices.
+- (Internal) Fix inconsistencies with depth test param between vertex, edge, and face modes.
+- (Internal) Fix handle pivot and rotation not updating with toolbar.
+
+### Known Issues
+
+- Handle transformations on two faces connected by a single vertex with `PivotPoint.IndividualOrigins` and `HandleOrientation.ActiveSelection` chooses a single direction to move the shared vertex instead of averaging the direction. The same applies to extrusion with these parameters.
 
 ## [3.0.8] - 2018-05-07
 
