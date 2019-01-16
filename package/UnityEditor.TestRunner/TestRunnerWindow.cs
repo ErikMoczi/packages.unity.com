@@ -89,7 +89,7 @@ namespace UnityEditor.TestTools.TestRunner
 
         private static void OnPlayModeStateChanged(PlayModeStateChange state)
         {
-            if (s_Instance && state == PlayModeStateChange.EnteredEditMode)
+            if (s_Instance && state == PlayModeStateChange.EnteredEditMode && s_Instance.m_SelectedTestTypes.HasTreeData())
             {
                 //repaint message details after exit playmode
                 s_Instance.m_SelectedTestTypes.TestSelectionCallback(s_Instance.m_SelectedTestTypes.m_TestListState.selectedIDs.ToArray());

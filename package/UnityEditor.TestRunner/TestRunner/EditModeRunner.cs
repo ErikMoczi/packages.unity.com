@@ -368,12 +368,6 @@ namespace UnityEditor.TestTools.TestRunner
             m_RunFinishedEvent.AddListener(eventHandler.RunFinished);
         }
 
-        [DidReloadScripts]
-        private static void DidReloadScripts()
-        {
-            EditorApplication.UnlockReloadAssemblies();
-        }
-
         public void Dispose()
         {
             Reflect.MethodCallWrapper = null;

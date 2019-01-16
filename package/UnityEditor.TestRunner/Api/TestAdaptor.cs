@@ -20,7 +20,12 @@ namespace UnityEditor.TestTools.TestRunner.Api
         {
             Id = test.Id;
             Name = test.Name;
-            FullName = test.FullName;
+            var childIndex = -1;
+            if (test.Properties["childIndex"].Count > 0)
+            {
+                childIndex = (int)test.Properties["childIndex"][0];
+            }
+            FullName = childIndex != -1 ? GetIndexedTestCaseName(test.FullName, childIndex) : test.FullName;
             TestCaseCount = test.TestCaseCount;
             HasChildren = test.HasChildren;
             IsSuite = test.IsSuite;
@@ -51,7 +56,7 @@ namespace UnityEditor.TestTools.TestRunner.Api
         {
             Id = test.id;
             Name = test.name;
-            FullName = test.fullName;
+            FullName = test.ChildIndex != -1 ? GetIndexedTestCaseName(test.fullName, test.ChildIndex) : test.fullName;
             TestCaseCount = test.testCaseCount;
             HasChildren = test.hasChildren;
             IsSuite = test.isSuite;
@@ -84,7 +89,6 @@ namespace UnityEditor.TestTools.TestRunner.Api
         public IMethodInfo Method { get; private set; }
         public string FullPath { get; private set; }
         private string[] m_ChildrenIds;
-
         public string[] Categories { get; private set; }
         public bool IsTestAssembly { get; private set; }
         public RunState RunState { get; }
@@ -99,6 +103,21 @@ namespace UnityEditor.TestTools.TestRunner.Api
             if (test.Parent != null && test.Parent.Parent != null)
                 return GetFullPath(test.Parent) + "/" + test.Name;
             return test.Name;
+        }
+
+        private static string GetIndexedTestCaseName(string fullName, int index)
+        {
+            var generatedTestSuffix = " GeneratedTestCase" + index;
+            if (fullName.EndsWith(")"))
+            {
+                // Test names from generated TestCaseSource look like Test(TestCaseSourceType)
+                // This inserts a unique test case index in the name, so that it becomes Test(TestCaseSourceType GeneratedTestCase0)
+                return fullName.Substring(0, fullName.Length - 1) + generatedTestSuffix + fullName[fullName.Length - 1];
+            }
+
+            // In some cases there can be tests with duplicate names generated in other ways and they won't have () in their name
+            // We just append a suffix at the end of the name in that case
+            return fullName + generatedTestSuffix;
         }
     }
 }

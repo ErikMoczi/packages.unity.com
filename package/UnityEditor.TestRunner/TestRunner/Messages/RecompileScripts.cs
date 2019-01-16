@@ -31,6 +31,11 @@ namespace UnityEngine.TestTools
         {
             Current = this;
 
+            // We need to yield, to give the test runner a chance to prepare for the domain reload
+            //  If the script compilation happens very fast, then EditModeRunner.MoveNextAndUpdateYieldObject will not have a chance to set m_CurrentYieldObject
+            // This really should be fixed in EditModeRunner.MoveNextAndUpdateYieldObject
+            yield return null;
+
             AssetDatabase.Refresh();
 
             if (ExpectScriptCompilation && !EditorApplication.isCompiling)

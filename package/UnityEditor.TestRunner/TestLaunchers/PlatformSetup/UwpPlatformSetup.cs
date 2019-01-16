@@ -26,6 +26,8 @@ namespace UnityEditor.TestTools.TestRunner
                 EditorUserBuildSettings.wsaSubtarget = WSASubtarget.PC;
                 EditorUserBuildSettings.wsaArchitecture = "x64";
                 EditorUserBuildSettings.SetPlatformSettings(BuildPipeline.GetBuildTargetName(BuildTarget.WSAPlayer), k_SettingsBuildConfiguration, WSABuildType.Debug.ToString());
+                EditorUserBuildSettings.wsaUWPBuildType = WSAUWPBuildType.ExecutableOnly;
+                PlayerSettings.SetIl2CppCompilerConfiguration(BuildTargetGroup.WSA, Il2CppCompilerConfiguration.Debug);
             }
         }
 

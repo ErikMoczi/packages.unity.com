@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using UnityEngine.TestRunner.NUnitExtensions;
@@ -15,6 +13,7 @@ namespace UnityEngine.TestRunner.TestLaunchers
         public string name;
         public string fullName;
         public int testCaseCount;
+        public int ChildIndex;
         public bool hasChildren;
         public bool isSuite;
         public string[] childrenIds;
@@ -34,6 +33,11 @@ namespace UnityEngine.TestRunner.TestLaunchers
             name = test.Name;
             fullName = test.FullName;
             testCaseCount = test.TestCaseCount;
+            ChildIndex = -1;
+            if (test.Properties["childIndex"].Count > 0)
+            {
+                ChildIndex = (int)test.Properties["childIndex"][0];
+            }
             hasChildren = test.HasChildren;
             isSuite = test.IsSuite;
             childrenIds = test.Tests.Select(t => t.Id).ToArray();
