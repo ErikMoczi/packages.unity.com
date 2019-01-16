@@ -53,10 +53,10 @@ namespace UnityEditor.XR.ARKit
         /// <summary>
         /// Gets the currently selected settings, or create a default one if no <see cref="ARKitSettings"/> has been set in Player Settings.
         /// </summary>
-        /// <returns>The ARCore settings to use for the current Player build.</returns>
-        internal static ARKitSettings GetOrCreateSettings()
+        /// <returns>The ARKit settings to use for the current Player build.</returns>
+        public static ARKitSettings GetOrCreateSettings()
         {
-            var settings = CurrentSettings;
+            var settings = currentSettings;
             if (settings != null)
                 return settings;
 
@@ -66,7 +66,7 @@ namespace UnityEditor.XR.ARKit
         /// <summary>
         /// Get or set the <see cref="ARKitSettings"/> that will be used for the player build.
         /// </summary>
-        internal static ARKitSettings CurrentSettings
+        public static ARKitSettings currentSettings
         {
             get
             {
@@ -93,7 +93,7 @@ namespace UnityEditor.XR.ARKit
 
         internal static bool TrySelect()
         {
-            var settings = CurrentSettings;
+            var settings = currentSettings;
             if (settings == null)
                 return false;
 
@@ -124,8 +124,8 @@ namespace UnityEditor.XR.ARKit
             EditorGUILayout.LabelField("Select an existing ARKitSettings object or create a new one.", titleStyle);
 
             EditorGUI.BeginChangeCheck();
-            ARKitSettings.CurrentSettings =
-                EditorGUILayout.ObjectField("ARKitSettings", ARKitSettings.CurrentSettings, typeof(ARKitSettings), false) as ARKitSettings;
+            ARKitSettings.currentSettings =
+                EditorGUILayout.ObjectField("ARKitSettings", ARKitSettings.currentSettings, typeof(ARKitSettings), false) as ARKitSettings;
             if (EditorGUI.EndChangeCheck())
                 ARKitSettings.TrySelect();
 
@@ -150,7 +150,7 @@ namespace UnityEditor.XR.ARKit
 
             var settings = CreateInstance<ARKitSettings>();
             AssetDatabase.CreateAsset(settings, path);
-            ARKitSettings.CurrentSettings = settings;
+            ARKitSettings.currentSettings = settings;
         }
     }
 }

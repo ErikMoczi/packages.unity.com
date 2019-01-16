@@ -3,10 +3,15 @@
     "references": [
         "Unity.XR.FaceSubsystem"
     ],
+    "optionalUnityReferences": [],
     "includePlatforms": [
-        "Editor"
+        "Editor",
+        "iOS"
     ],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
-    "autoReferenced": true
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
 }

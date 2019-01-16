@@ -100,52 +100,44 @@ namespace UnityEditor.XR.ARKit
                         LinkerUtility.EnsureLinkXmlExistsFor("ARKit.FaceTracking");
                 }
 
-                SetFaceTrackingAssemblyIncludePlatformIos(arkitSettings.ARKitFaceTrackingEnabled);
+                if (!arkitSettings.ARKitFaceTrackingEnabled)
+                    EnsureLinkXmlDoesNotContainFaceTracking();
 
                 var pluginImporter = AssetImporter.GetAtPath("Packages/com.unity.xr.arkit/Runtime/iOS/libUnityARKitFaceTracking.a") as PluginImporter;
                 if (pluginImporter)
                     pluginImporter.SetCompatibleWithPlatform(BuildTarget.iOS, arkitSettings.ARKitFaceTrackingEnabled);
             }
 
-            void SetFaceTrackingAssemblyIncludePlatformIos(bool includeIos)
+            void EnsureLinkXmlDoesNotContainFaceTracking()
             {
-                bool needToUpdate = false;
-
-                var faceTrackingAssemblyPath =
-                    CompilationPipeline.GetAssemblyDefinitionFilePathFromAssemblyName("Unity.XR.ARKit.FaceTracking");
-
-                if (string.IsNullOrEmpty(faceTrackingAssemblyPath))
-                {
-                    if (includeIos)
-                        throw new BuildFailedException("Assembly definition file for Unity.XR.ARKit.FaceTracking not found. This is required for face tracking.");
+                var path = Path.Combine("Assets", "link.xml");
+                if (!File.Exists(path))
                     return;
-                }
 
-                var faceTrackingAssembly = JsonUtility.FromJson<AssemblyDefinitionType>(File.ReadAllText(faceTrackingAssemblyPath));
+                var document = new XmlDocument();
+                document.Load(path);
+                var nav = document.CreateNavigator();
 
-                if (includeIos)
+                var assemblyName = "Unity.XR.ARKit.FaceTracking";
+                var iter = nav.SelectSingleNode(string.Format("/linker/assembly[@fullname='{0}']", assemblyName));
+                if (iter != null)
                 {
-                    // Enable face tracking
-                    if (!faceTrackingAssembly.includePlatforms.Contains("iOS"))
+                    // Entry exists. Need to remove it.
+                    var fixLinkXml = EditorUtility.DisplayDialog(
+                        string.Format("{0} is included in your build.", assemblyName),
+                        "Face tracking is not enabled, but your link.xml includes the Unity.XR.ARKit.FaceTracking assembly. You will not be able to build until this is resolved. Would you like to remove this entry from your link.xml now?",
+                        "Yes, fix and build",
+                        "No, cancel build");
+
+                    if (fixLinkXml)
                     {
-                        faceTrackingAssembly.includePlatforms.Add("iOS");
-                        needToUpdate = true;
+                        iter.DeleteSelf();
+                        document.Save(path);
                     }
-                }
-                else
-                {
-                    // Disable face tracking
-                    if (faceTrackingAssembly.includePlatforms.Contains("iOS"))
+                    else
                     {
-                        faceTrackingAssembly.includePlatforms.Remove("iOS");
-                        needToUpdate = true;
+                        throw new BuildFailedException("Build canceled by request. Either enable face tracking in your ARKit Settings (Edit > Project Settings > ARKit XR Plugin) or remove the Unity.XR.ARKit.FaceTracking entry from your link.xml.");
                     }
-                }
-
-                if (needToUpdate)
-                {
-                    File.WriteAllText(faceTrackingAssemblyPath, JsonUtility.ToJson(faceTrackingAssembly, true));
-                    AssetDatabase.ImportAsset(faceTrackingAssemblyPath);
                 }
             }
 
