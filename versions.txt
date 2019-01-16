@@ -50,3 +50,4 @@
 0.5.1-preview
 0.5.2-preview
 0.5.2-preview20190108-nightly
+0.5.3-preview
