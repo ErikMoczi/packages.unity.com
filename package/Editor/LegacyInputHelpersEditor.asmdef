@@ -1,6 +1,9 @@
 {
     "name": "UnityEditor.XR.LegacyInputHelpers",
-    "references": [],
+    "references": [
+        "UnityEngine.XR.LegacyInputHelpers",
+        "UnityEngine.SpatialTracking"
+    ],
     "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"

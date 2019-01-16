@@ -3,19 +3,21 @@ using UnityEngine.XR;
 using System.Collections.Generic;
 using UnityEngine.XR.Tango;
 using UnityEngine.Experimental.XR.Interaction;
+using System.Runtime.CompilerServices;
 
-//trackedposedriver
+[assembly: InternalsVisibleTo("UnityEditor.SpatialTracking")]
+
 namespace UnityEngine.SpatialTracking
 {
-    public class TrackedPoseDriverDataDescription
+    internal class TrackedPoseDriverDataDescription
     {        
-        public struct PoseData
+        internal struct PoseData
         {
             public List<string> PoseNames;
             public List<TrackedPoseDriver.TrackedPose> Poses;
         }
      
-        public static List<PoseData> DeviceData = new List<PoseData>
+        internal static List<PoseData> DeviceData = new List<PoseData>
         {
             // Generic XR Device
             new PoseData
@@ -66,7 +68,7 @@ namespace UnityEngine.SpatialTracking
     /// </summary>
     static public class PoseDataSource
     {
-        static List<XR.XRNodeState> nodeStates = new List<XR.XRNodeState>();        
+        static internal List<XR.XRNodeState> nodeStates = new List<XR.XRNodeState>();        
         static internal bool TryGetNodePoseData(XR.XRNode node, out Pose resultPose)
         {
             XR.InputTracking.GetNodeStates(nodeStates);
@@ -136,13 +138,13 @@ namespace UnityEngine.SpatialTracking
                 {
                     Debug.LogWarningFormat("Unable to retrieve pose data for poseSource: {0}", poseSource.ToString());
                     break;
-                }           
+                }              
             }
             resultPose = Pose.identity;
             return false;
         }
 
-        static bool TryGetTangoPose(out Pose pose)
+        static internal bool TryGetTangoPose(out Pose pose)
         {
             PoseData poseOut;
             if (TangoInputTracking.TryGetPoseAtTime(out poseOut) && poseOut.statusCode == PoseStatus.Valid)

@@ -1,6 +1,8 @@
 {
     "name": "UnityEngine.XR.LegacyInputHelpers",
-    "references": [],
+    "references": [
+        "UnityEngine.SpatialTracking"
+    ],
     "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],

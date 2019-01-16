@@ -48,7 +48,7 @@ namespace UnityEditor.XR.LegacyInputHelpers
                 name = "XRI_Left_Primary2DAxis_Vertical",
                 descriptiveName = "Device joystick/touchpad horizontal motion",
                 dead = 0.19f,
-                axis = 1,
+                axis = 2,
                 type = 2,
             },
             new InputAxis()
@@ -56,7 +56,7 @@ namespace UnityEditor.XR.LegacyInputHelpers
                 name = "XRI_Left_Primary2DAxis_Horizontal",
                 descriptiveName = "Device joystick/touchpad horizontal motion",
                 dead = 0.19f,
-                axis = 2,
+                axis = 1,
                 type = 2,
             },
             new InputAxis()
@@ -64,7 +64,7 @@ namespace UnityEditor.XR.LegacyInputHelpers
                 name = "XRI_Left_Secondary2DAxis_Vertical",
                 descriptiveName = "Device joystick/touchpad horizontal motion.",
                 dead = 0.19f,
-                axis = 17,
+                axis = 18,
                 type = 2,
             },
             new InputAxis()
@@ -72,21 +72,7 @@ namespace UnityEditor.XR.LegacyInputHelpers
                 name = "XRI_Left_Secondary2DAxis_Horizontal",
                 descriptiveName = "Device joystick/touchpad horizontal motion",
                 dead = 0.19f,
-                axis = 18,
-                type = 2,
-            },
-            new InputAxis()
-            {
-                name = "XRI_Left_DPad_Vertical",
-                descriptiveName = "Device directional pad. These values are replicated l/r",
-                axis = 6,
-                type = 2,
-            },
-            new InputAxis()
-            {
-                name = "XRI_Left_DPad_Horizontal",
-                descriptiveName = "Device directional pad. These values are replicated l/r",
-                axis = 7,
+                axis = 17,
                 type = 2,
             },
             new InputAxis()
@@ -260,7 +246,7 @@ namespace UnityEditor.XR.LegacyInputHelpers
                 name = "XRI_Right_Primary2DAxis_Vertical",
                 descriptiveName = "Device joystick/touchpad horizontal motion",
                 dead = 0.19f,
-                axis = 4,
+                axis = 5,
                 type = 2,
             },
             new InputAxis()
@@ -268,7 +254,7 @@ namespace UnityEditor.XR.LegacyInputHelpers
                 name = "XRI_Right_Primary2DAxis_Horizontal",
                 descriptiveName = "Device joystick/touchpad horizontal motion",
                 dead = 0.19f,
-                axis = 5,
+                axis = 4,
                 type = 2,
             },
             new InputAxis()
@@ -276,7 +262,7 @@ namespace UnityEditor.XR.LegacyInputHelpers
                 name = "XRI_Right_Secondary2DAxis_Vertical",
                 descriptiveName = "Device joystick/touchpad horizontal motion.",
                 dead = 0.19f,
-                axis = 19,
+                axis = 20,
                 type = 2,
             },
             new InputAxis()
@@ -284,21 +270,7 @@ namespace UnityEditor.XR.LegacyInputHelpers
                 name = "XRI_Right_Secondary2DAxis_Horizontal",
                 descriptiveName = "Device joystick/touchpad horizontal motion",
                 dead = 0.19f,
-                axis = 20,
-                type = 2,
-            },
-            new InputAxis()
-            {
-                name = "XRI_Right_DPad_Vertical",
-                descriptiveName = "Device directional pad. These values are replicated l/r",
-                axis = 6,
-                type = 2,
-            },
-            new InputAxis()
-            {
-                name = "XRI_Right_DPad_Horizontal",
-                descriptiveName = "Device directional pad. These values are replicated l/r",
-                axis = 7,
+                axis = 19,
                 type = 2,
             },
             new InputAxis()
@@ -486,18 +458,8 @@ namespace UnityEditor.XR.LegacyInputHelpers
                 dead = 0.0f,
                 sensitivity = 0.1f,
                 type = 0,
-            },
+            },            
             new InputAxis()
-            {
-                name = "Back",
-                descriptiveName = "Back",
-                positiveButton = "joystick button 1",
-                gravity = 0.0f,
-                dead = 0.0f,
-                sensitivity = 0.1f,
-                type = 0,
-            },
-             new InputAxis()
             {
                 name = "Horizontal",
                 descriptiveName = "Horizontal",
@@ -511,6 +473,33 @@ namespace UnityEditor.XR.LegacyInputHelpers
                 descriptiveName = "Vertical",
                 dead = 0.19f,
                 axis = 5,
+                type = 2,
+            },
+            #endregion
+            //######################################################################################################################################
+            // Combined Trigger
+            //######################################################################################################################################
+            #region Combined
+             new InputAxis()
+            {
+                name = "XRI_Combined_Trigger",
+                descriptiveName = "Combined Trigger",
+                dead = 0.19f,
+                axis = 3,
+                type = 2,
+            },
+            new InputAxis()
+            {
+                name = "XRI_DPad_Vertical",
+                descriptiveName = "Device directional pad. These values are replicated l/r",
+                axis = 7,
+                type = 2,
+            },
+            new InputAxis()
+            {
+                name = "XRI_DPad_Horizontal",
+                descriptiveName = "Device directional pad. These values are replicated l/r",
+                axis = 6,
                 type = 2,
             },
             #endregion
