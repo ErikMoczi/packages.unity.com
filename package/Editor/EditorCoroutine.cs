@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,71 +11,71 @@ namespace Unity.EditorCoroutines.Editor
     /// </summary>
     public class EditorCoroutine
     {
-        private struct WaitforSecondsProcessor
+        private struct YieldProcessor
         {
-            double targetTime;
-            EditorWaitForSeconds current;
-
-            public void Set(EditorWaitForSeconds yieldStatement)
+            enum DataType : byte
             {
-                if (yieldStatement == current)
+                None = 0,
+                WaitForSeconds = 1,
+                EditorCoroutine = 2,
+                AsyncOP = 3,
+            }
+            struct ProcessorData
+            {
+                public DataType type;
+                public double targetTime;
+                public object current;
+            }
+
+            ProcessorData data;
+
+            public void Set(object yield)
+            {
+                if (yield == data.current)
                     return;
 
-                current = yieldStatement;
-                targetTime = EditorApplication.timeSinceStartup + yieldStatement.WaitTime;
-            }
-
-            public bool MoveNext(IEnumerator enumerator)
-            {
-                if (targetTime <= EditorApplication.timeSinceStartup)
+                var type = yield.GetType();
+                var dataType = DataType.None;
+                double targetTime = -1;
+                if(type == typeof(EditorWaitForSeconds))
                 {
-                    current = null;
-                    targetTime = 0;
-                    return enumerator.MoveNext();
+                    targetTime = EditorApplication.timeSinceStartup + (yield as EditorWaitForSeconds).WaitTime;
+                    dataType = DataType.WaitForSeconds;
                 }
-                return true;
-            }
-        }
-
-        private struct WaitForCoroutineProcessor
-        {
-            EditorCoroutine m_Current;
-
-            public void Set(EditorCoroutine routine)
-            {
-                if (m_Current == routine)
-                    return;
-
-                m_Current = routine;
-            }
-
-            public bool MoveNext(IEnumerator enumerator)
-            {
-                if (m_Current.m_IsDone)
+                else if(type == typeof(EditorCoroutine))
                 {
-                    m_Current = null;
-                    return enumerator.MoveNext();
+                    dataType = DataType.EditorCoroutine;
+                }
+                else if(type == typeof(AsyncOperation))
+                {
+                    dataType = DataType.AsyncOP;
                 }
 
-                return true;
-            }
-        }
-
-        private struct WaitForAsyncOPProcessor
-        {
-            AsyncOperation m_Current;
-
-            public void Set(AsyncOperation operation)
-            {
-                if (m_Current != operation)
-                    m_Current = operation;
+                data = new ProcessorData { current = yield, targetTime = targetTime, type = dataType };
             }
 
             public bool MoveNext(IEnumerator enumerator)
             {
-                if (m_Current.isDone)
+                bool advance = false;
+                switch (data.type)
                 {
-                    m_Current = null;
+                    case DataType.WaitForSeconds:
+                        advance = data.targetTime <= EditorApplication.timeSinceStartup;
+                        break;
+                    case DataType.EditorCoroutine:
+                        advance = (data.current as EditorCoroutine).m_IsDone;
+                        break;
+                    case DataType.AsyncOP:
+                        advance = (data.current as AsyncOperation).isDone;
+                        break;
+                    default:
+                        advance = data.current == enumerator.Current; //a IEnumerator or a plain object was passed to the implementation
+                        break;
+                }
+
+                if(advance)
+                {
+                    data = default; 
                     return enumerator.MoveNext();
                 }
                 return true;
@@ -83,10 +84,7 @@ namespace Unity.EditorCoroutines.Editor
 
         WeakReference m_Owner;
         IEnumerator m_Routine;
-
-        WaitforSecondsProcessor m_WaitProcessor;
-        WaitForCoroutineProcessor m_WaitForCoroutine;
-        WaitForAsyncOPProcessor m_WaitForAsyncOPProcessor;
+        YieldProcessor m_Processor;
 
         bool m_IsDone;
 
@@ -99,6 +97,7 @@ namespace Unity.EditorCoroutines.Editor
 
         internal EditorCoroutine(IEnumerator routine, object owner)
         {
+            m_Processor = new YieldProcessor();
             m_Owner = new WeakReference(owner);
             m_Routine = routine;
             EditorApplication.update += MoveNext;
@@ -112,63 +111,43 @@ namespace Unity.EditorCoroutines.Editor
                 return;
             }
 
-            bool done = ProcessIEnumeratorRecursive(m_Routine, null);
+            bool done = ProcessIEnumeratorRecursive(m_Routine);
             m_IsDone = !done;
 
             if (m_IsDone)
                 EditorApplication.update -= MoveNext;
         }
 
-        private bool ProcessIEnumeratorRecursive(IEnumerator child, IEnumerator root)
+        static Stack<IEnumerator> kIEnumeratorProcessingStack = new Stack<IEnumerator>(32);
+        private bool ProcessIEnumeratorRecursive(IEnumerator enumerator)
         {
-            bool isRoot = root == null;
-
-            var nestedEnumerator = child.Current as IEnumerator;
-            var result = false;
-            if (nestedEnumerator == null)
+            var root = enumerator;
+            while(enumerator.Current as IEnumerator != null)
             {
-                result = ProcessIEnumerator(child);
-            }
-            else
-            {
-                result = ProcessIEnumeratorRecursive(nestedEnumerator, child);
+                kIEnumeratorProcessingStack.Push(enumerator);
+                enumerator = enumerator.Current as IEnumerator;
             }
 
-            if (!result && !isRoot)
-                return root.MoveNext();
+            //process leaf
+            m_Processor.Set(enumerator.Current);
+            var result = m_Processor.MoveNext(enumerator);
+
+            while (kIEnumeratorProcessingStack.Count > 1)
+            {
+                if (!result)
+                {
+                    result = kIEnumeratorProcessingStack.Pop().MoveNext();
+                }
+                else
+                    kIEnumeratorProcessingStack.Clear();
+            }
+
+            if (kIEnumeratorProcessingStack.Count > 0 && !result && root == kIEnumeratorProcessingStack.Pop())
+            {
+                result = root.MoveNext();
+            }
 
             return result;
-        }
-
-        private bool ProcessIEnumerator(IEnumerator enumerator)
-        {
-            var nestedCoroutine = enumerator.Current as EditorCoroutine;
-            if (nestedCoroutine != null)
-            {
-                m_WaitForCoroutine.Set(nestedCoroutine);
-                return m_WaitForCoroutine.MoveNext(enumerator);
-            }
-
-            var waitForSeconds = enumerator.Current as EditorWaitForSeconds;
-            if (waitForSeconds != null)
-            {
-                m_WaitProcessor.Set(waitForSeconds);
-                return m_WaitProcessor.MoveNext(enumerator);
-            }
-
-            var waitForAsyncOP = enumerator.Current as AsyncOperation;
-            if (waitForAsyncOP != null)
-            {
-                m_WaitForAsyncOPProcessor.Set(waitForAsyncOP);
-                return m_WaitForAsyncOPProcessor.MoveNext(enumerator);
-            }
-            else
-            {
-                if (!enumerator.MoveNext())
-                    return false;
-
-                return true;
-            }
         }
 
         internal void Stop()

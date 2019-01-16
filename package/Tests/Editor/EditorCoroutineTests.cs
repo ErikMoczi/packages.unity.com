@@ -9,6 +9,7 @@ namespace Unity.EditorCoroutines.Editor.Tests
 {
     internal class DummyEditorWindow : EditorWindow
     {
+
     }
 
     [TestFixture]
@@ -37,7 +38,7 @@ namespace Unity.EditorCoroutines.Editor.Tests
         }
 
         [UnityTest]
-        public IEnumerator CoroutineLogsStepsAtExpectedTimes()
+        public IEnumerator Coroutine_LogsStepsAtExpectedTimes()
         {
             var currentWindow = EditorWindow.GetWindow<DummyEditorWindow>();
 
@@ -54,7 +55,7 @@ namespace Unity.EditorCoroutines.Editor.Tests
         }
 
         [UnityTest]
-        public IEnumerator CoroutineWaitsForSpecifiedNumberOfSeconds()
+        public IEnumerator Coroutine_WaitsForSpecifiedNumberOfSeconds()
         {
             yield return new EnterPlayMode(); //both enter/exit play mode cause domain reload
 
@@ -78,7 +79,7 @@ namespace Unity.EditorCoroutines.Editor.Tests
         }
 
         [UnityTest]
-        public IEnumerator CoroutineWithAbitraryObjectStopsExecutionIfObjectIsCollected()
+        public IEnumerator CoroutineWithAbitraryObject_StopsExecutionIfObjectIsCollected()
         {
             object obj = new object();
             EditorCoroutineUtility.StartCoroutine(ExecuteRoutineWithWaitForSeconds(), obj);
@@ -103,7 +104,7 @@ namespace Unity.EditorCoroutines.Editor.Tests
 
 
         [UnityTest]
-        public IEnumerator CoroutineWithAbitraryUnityEngineObjectStopsExecutionIfObjectIsCollected()
+        public IEnumerator CoroutineWithAbitraryUnityEngineObject_StopsExecutionIfObjectIsCollected()
         {
             GameObject gameObject = new GameObject("TEST");
             EditorCoroutineUtility.StartCoroutine(ExecuteRoutineWithWaitForSeconds(), gameObject);
@@ -127,7 +128,7 @@ namespace Unity.EditorCoroutines.Editor.Tests
         }
 
         [UnityTest]
-        public IEnumerator NestedOwnerlessCoroutinesWaitForSpecificNumberOfSeconds()
+        public IEnumerator NestedCoroutinesWithoutOwner_WaitForSpecificNumberOfSeconds()
         {
             EditorCoroutineUtility.StartCoroutineOwnerless(ExecuteNestedOwnerlessRoutineswithWaitForSeconds());
 
@@ -158,7 +159,7 @@ namespace Unity.EditorCoroutines.Editor.Tests
         }
 
         [UnityTest]
-        public IEnumerator OwnerlessCoroutineYieldingIEnumerator()
+        public IEnumerator CoroutineWithoutOwner_YieldingIEnumerator()
         {
             EditorCoroutineUtility.StartCoroutineOwnerless(NestedIEnumeratorRoutine());
             yield return null;
@@ -179,6 +180,20 @@ namespace Unity.EditorCoroutines.Editor.Tests
 
             //return to routine execution
             LogAssert.Expect(LogType.Log, "End of nesting");
+        }
+
+        IEnumerator RoutineThrowingGUIException()
+        {
+            yield return null;
+            GUIUtility.ExitGUI();
+            LogAssert.Expect(LogType.Exception, "");
+        }
+
+        [UnityTest]
+        public IEnumerator ThrowingCoroutine_DoesNotHandleExitGUIException() //prefixed test with Z in order to ensure it is last
+        {
+            EditorCoroutineUtility.StartCoroutineOwnerless(RoutineThrowingGUIException());
+            yield return null;
         }
     }
 }

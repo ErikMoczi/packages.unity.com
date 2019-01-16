@@ -1,4 +1,1 @@
-Editor Coroutines
-
-
-Home of the mythical editor coroutines.
+Editor Coroutines Package Repository

@@ -3,27 +3,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+
+## [0.0.1-preview.5] - 2019-01-14
+### Changed
+ - Updated Readme.md.
+ - Added unified yield statement processor.
+ - Added stack based processing of nested yield statements.
+ - Updated tests.
+ - Lowered memory footprint of editor coroutine instances.
+
+### Removed
+ - Removed recursive handling of nested yield statements.
+ - Removed specialized yield statement processors.
+
 ## [0.0.1-preview.4] - 2018-12-7
 ### Added
- - API documentation
+ - API documentation.
 
 ### Changed
- - Fixed line endings for the EditorCourtineTests.cs source file
+ - Fixed line endings for the EditorCourtineTests.cs source file.
 
 ## [0.0.1-preview.3] - 2018-10-11
 ### Changed
- - Updated LICENSE.md
- - Updated manifest to reflect correct minimum supported version
+ - Updated LICENSE.md.
+ - Updated manifest to reflect correct minimum supported version.
 
 ## [0.0.1-preview.2] - 2018-10-11
 ### Added 
- - Added stub documentation via com.unity.editorcoroutines.md
+ - Added stub documentation via com.unity.editorcoroutines.md.
 
 ## [0.0.1-preview.1] - 2018-10-10
 ### Added
- - Added nesting support for editor coroutines
- - Added abitrary enumerator support for editor coroutines
- - Created specialized EditorWaitForSeconds class with access to it's wait time ( same behavior as WaitForSeconds)
+ - Added nesting support for editor coroutines.
+ - Added abitrary enumerator support for editor coroutines.
+ - Created specialized EditorWaitForSeconds class with access to it's wait time ( same behavior as WaitForSeconds).
 
 
 ### This is the first release of *Unity Package Editor Coroutines*.
