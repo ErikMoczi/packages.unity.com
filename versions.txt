@@ -45,3 +45,4 @@
 2.2.8
 2.3.0-preview.2
 2.2.9-preview.1
+2.2.9-preview.2
