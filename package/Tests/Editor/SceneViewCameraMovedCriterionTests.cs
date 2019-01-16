@@ -32,7 +32,17 @@ namespace Unity.InteractiveTutorials.Tests
 
             Assert.IsTrue(m_Criterion.completed);
         }
-        
+
+        [UnityTest]
+        public IEnumerator WhenCameraViewChangesOrientation_IsComplete()
+        {
+            var localRotation = SceneView.lastActiveSceneView.camera.transform.localRotation;
+            SceneView.lastActiveSceneView.camera.transform.localRotation = localRotation * Quaternion.Euler(0, 15, 0);
+            yield return null;
+
+            Assert.IsTrue(m_Criterion.completed);
+        }
+
         [UnityTest]
         public IEnumerator AutoComplete_ReturnsTrue_IsComplete()
         {

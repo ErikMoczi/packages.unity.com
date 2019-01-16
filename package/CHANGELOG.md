@@ -4,11 +4,16 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.9]
+## Changed
+- SceneViewCameraMovedCriterion will also complete if the user changes the camera orientation.
+
+## Fixed
+- Added work around for issue where tutorial is not loaded initial project load
 
 ## [0.1.8] - 2018-12-11
 ## Fixed
- - Fixed build script
+- Fixed build script
 
 ## [0.1.7] - 2018-12-10
 ### Fixed

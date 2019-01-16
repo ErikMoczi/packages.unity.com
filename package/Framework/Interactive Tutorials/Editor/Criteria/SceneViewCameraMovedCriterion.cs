@@ -10,6 +10,8 @@ namespace Unity.InteractiveTutorials
         bool m_InitialPositionInitialized = false;
         [NonSerialized]
         Vector3 m_InitialCameraPosition;
+        [NonSerialized]
+        Quaternion m_InitialCameraOrientation;
 
         public override void StartTesting()
         {
@@ -30,6 +32,7 @@ namespace Unity.InteractiveTutorials
 
             m_InitialPositionInitialized = true;
             m_InitialCameraPosition = SceneView.lastActiveSceneView.camera.transform.position;
+            m_InitialCameraOrientation = SceneView.lastActiveSceneView.camera.transform.localRotation;
         }
 
         public override void StopTesting()
@@ -45,7 +48,9 @@ namespace Unity.InteractiveTutorials
 
             UpdateInitialCameraPositionIfNeeded();
             var currentPosition = SceneView.lastActiveSceneView.camera.transform.position;
-            return m_InitialCameraPosition != currentPosition;
+            var currentOrientation = SceneView.lastActiveSceneView.camera.transform.localRotation;
+            return m_InitialCameraPosition != currentPosition || m_InitialCameraOrientation != currentOrientation;
+
         }
 
         public override bool AutoComplete()

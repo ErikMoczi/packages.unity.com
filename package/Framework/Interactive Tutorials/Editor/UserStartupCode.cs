@@ -38,6 +38,17 @@ namespace Unity.InteractiveTutorials
 
         private static void InitRunStartupCode()
         {
+            // Work around issue where loaded tutorial has invalid references to its pages
+            // Something goes wrong when importing the tutorial assets
+            // This causes the tutorial pages to be deserialized twice invaliding the previous instance
+            // Entering play mode here triggers a domain reload which fixes the issue
+            // When the first tutorial is started we exit play mode again
+            if (!EditorApplication.isPlaying)
+            {
+                EditorApplication.isPlaying = true;
+                return;
+            }
+
             SetInitilized();
             EditorApplication.update -= InitRunStartupCode;
             RunStartupCode();
