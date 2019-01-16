@@ -1,1 +1,1 @@
-# tracking unity packages
+This package contains the necessary components required to use the Google VR Virtual Reality SDK on Android. By using this package, you will be able to deploy and run your applications on Daydream/Cardboard supported devices. Currently GVR 1.180
