@@ -231,7 +231,7 @@ namespace UnityEditor.TestTools.TestRunner.GUI
 
         internal void TestSelectionCallback(int[] selected)
         {
-            if (selected.Length == 1)
+            if (m_TestListTree != null && selected.Length == 1)
             {
                 var node = m_TestListTree.FindItem(selected[0]);
                 if (node is TestTreeViewItem)
