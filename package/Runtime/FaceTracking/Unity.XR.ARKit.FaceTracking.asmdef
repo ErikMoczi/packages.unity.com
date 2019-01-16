@@ -4,8 +4,7 @@
         "Unity.XR.FaceSubsystem"
     ],
     "includePlatforms": [
-        "Editor",
-        "iOS"
+        "Editor"
     ],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
