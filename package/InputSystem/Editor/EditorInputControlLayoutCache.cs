@@ -92,6 +92,7 @@ namespace UnityEngine.Experimental.Input.Editor
 
         public static InputControlLayout TryGetLayout(string name)
         {
+            Refresh();
             return s_Cache.FindOrLoadLayout(name);
         }
 
@@ -140,10 +141,12 @@ namespace UnityEngine.Experimental.Input.Editor
             {
                 var layout = s_Cache.FindOrLoadLayout(name);
 
-                for (var baseLayoutName = layout.extendsLayout; baseLayoutName != null;)
+                if (layout.m_BaseLayouts.length > 1)
+                    throw new NotImplementedException();
+
+                for (var baseLayoutName = layout.baseLayouts.FirstOrDefault(); !baseLayoutName.IsEmpty();)
                 {
-                    var internedBaseLayoutName = new InternedString(baseLayoutName);
-                    if (s_ProductLayouts.Contains(internedBaseLayoutName))
+                    if (s_ProductLayouts.Contains(baseLayoutName))
                     {
                         // Defer removing from s_DeviceLayouts to keep iteration stable.
                         s_ProductLayouts.Add(name);
@@ -151,7 +154,9 @@ namespace UnityEngine.Experimental.Input.Editor
                     }
 
                     var baseLayout = s_Cache.FindOrLoadLayout(baseLayoutName);
-                    baseLayoutName = baseLayout.extendsLayout;
+                    if (baseLayout.m_BaseLayouts.length > 1)
+                        throw new NotImplementedException();
+                    baseLayoutName = baseLayout.baseLayouts.FirstOrDefault();
                 }
             }
 

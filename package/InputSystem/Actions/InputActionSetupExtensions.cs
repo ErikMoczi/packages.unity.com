@@ -213,7 +213,8 @@ namespace UnityEngine.Experimental.Input
             }
         }
 
-        public static InputAction AddAction(this InputActionMap map, string name, string binding = null, string interactions = null, string groups = null)
+        public static InputAction AddAction(this InputActionMap map, string name, string binding = null,
+            string interactions = null, string groups = null, string expectedControlLayout = null)
         {
             if (map == null)
                 throw new ArgumentNullException("map");
@@ -228,6 +229,7 @@ namespace UnityEngine.Experimental.Input
 
             // Append action to array.
             var action = new InputAction(name);
+            action.expectedControlLayout = expectedControlLayout;
             ArrayHelpers.Append(ref map.m_Actions, action);
             action.m_ActionMap = map;
 
@@ -309,7 +311,7 @@ namespace UnityEngine.Experimental.Input
             return new BindingSyntax(actionMap, null, bindingIndex);
         }
 
-        public static CompositeSyntax AppendCompositeBinding(this InputAction action, string composite)
+        public static CompositeSyntax AppendCompositeBinding(this InputAction action, string composite, string interactions = null)
         {
             if (action == null)
                 throw new ArgumentNullException("action");
@@ -318,7 +320,7 @@ namespace UnityEngine.Experimental.Input
 
             var actionMap = action.GetOrCreateActionMap();
             ////REVIEW: use 'name' instead of 'path' field here?
-            var binding = new InputBinding {path = composite, flags = InputBinding.Flags.Composite, action = action.name};
+            var binding = new InputBinding {path = composite, interactions = interactions, flags = InputBinding.Flags.Composite, action = action.name};
             var bindingIndex = AppendBindingInternal(actionMap, binding);
             return new CompositeSyntax(actionMap, action, bindingIndex);
         }

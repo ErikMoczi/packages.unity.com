@@ -3,6 +3,8 @@ using Unity.Collections;
 using UnityEngine.Experimental.Input.LowLevel;
 using UnityEngine.Experimental.Input.Utilities;
 
+////REVIEW: should we make this ExecuteInEditMode?
+
 ////TODO: make this survive domain reloads
 
 namespace UnityEngine.Experimental.Input.Plugins.OnScreen
@@ -97,7 +99,7 @@ namespace UnityEngine.Experimental.Input.Plugins.OnScreen
                 catch (Exception exception)
                 {
                     Debug.LogError(string.Format("Could not create device with layout '{0}' used in '{1}' component", layoutName,
-                            GetType().Name));
+                        GetType().Name));
                     Debug.LogException(exception);
                     return;
                 }
@@ -146,16 +148,19 @@ namespace UnityEngine.Experimental.Input.Plugins.OnScreen
 
         protected void SendValueToControl<TValue>(TValue value)
         {
+            if (m_Control == null)
+                return;
+
             ////TODO: only cast once
             var control = m_Control as InputControl<TValue>;
             if (control == null)
             {
                 throw new Exception(string.Format(
-                        "The control path {0} yields a control of type {1} which is not an InputControl",
-                        controlPath, m_Control.GetType().Name));
+                    "The control path {0} yields a control of type {1} which is not an InputControl with value type {2}",
+                    controlPath, m_Control.GetType().Name, typeof(TValue).Name));
             }
 
-            m_InputEventPtr.time = InputRuntime.s_Instance.currentTime;
+            m_InputEventPtr.internalTime = InputRuntime.s_Instance.currentTime;
             control.WriteValueInto(m_InputEventPtr, value);
             InputSystem.QueueEvent(m_InputEventPtr);
         }

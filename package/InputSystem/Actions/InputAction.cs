@@ -2,6 +2,8 @@ using System;
 using UnityEngine.Experimental.Input.Utilities;
 using UnityEngine.Serialization;
 
+////REVIEW: might have to revisit when we fire actions in relation to Update/FixedUpdate
+
 ////REVIEW: Do we need to have separate display names for actions? They should definitely be allowed to contain '/' and whatnot
 
 ////REVIEW: the entire 'lastXXX' API section is shit and needs a pass
@@ -96,6 +98,22 @@ namespace UnityEngine.Experimental.Input
         public string name
         {
             get { return m_Name; }
+        }
+
+        /// <summary>
+        /// Name of control layout expected for controls bound to this action.
+        /// </summary>
+        /// <remarks>
+        /// This is optional and is null by default.
+        ///
+        /// Constraining an action to a particular control layout allows determine the value
+        /// type and expected input behavior of an action without being reliant on any particular
+        /// binding.
+        /// </remarks>
+        public string expectedControlLayout
+        {
+            get { return m_ExpectedControlLayout; }
+            set { m_ExpectedControlLayout = value; }
         }
 
         /// <summary>
@@ -345,8 +363,9 @@ namespace UnityEngine.Experimental.Input
             return Clone();
         }
 
-        ////REVIEW: for binding resolution, it would be best if this was an InternedString; however, for serialization, it has to be a string
+        ////REVIEW: it would be best if these were InternedStrings; however, for serialization, it has to be strings
         [SerializeField] internal string m_Name;
+        [SerializeField] internal string m_ExpectedControlLayout;
 
         // For singleton actions, we serialize the bindings directly as part of the action.
         // For any other type of action, this is null.
@@ -497,59 +516,11 @@ namespace UnityEngine.Experimental.Input
                 }
             }
 
-            public object composite
-            {
-                get
-                {
-                    if (m_State == null)
-                        return null;
-                    var bindingStates = m_State.bindingStates;
-                    if (!bindingStates[m_BindingIndex].isPartOfComposite)
-                        return null;
-                    var compositeIndex = bindingStates[m_BindingIndex].compositeIndex;
-                    Debug.Assert(compositeIndex != InputActionMapState.kInvalidIndex);
-                    return m_State.composites[compositeIndex];
-                }
-            }
-
             public TValue ReadValue<TValue>()
             {
-                ////TODO: instead of straight casting, perform 'as' casts and throw better exceptions than just InvalidCastException
-                ////TODO: this needs to be shared with InputActionManager
-
                 var value = default(TValue);
-                if (m_State == null)
-                    return value;
-
-                // In the case of a composite, this will be null.
-                InputControl<TValue> controlOfType = null;
-
-                // If the binding that triggered the action is part of a composite, let
-                // the composite determine the value we return.
-                var compositeObject = composite;
-                if (compositeObject != null)
-                {
-                    var compositeOfType = (IInputBindingComposite<TValue>)compositeObject;
-                    var context = new InputBindingCompositeContext();
-                    value = compositeOfType.ReadValue(ref context);
-                }
-                else
-                {
-                    controlOfType = (InputControl<TValue>)control;
-                    value = controlOfType.ReadValue();
-                }
-
-                // Run value through processors, if any.
-                var bindingStates = m_State.bindingStates;
-                var processorCount = bindingStates[m_BindingIndex].processorCount;
-                if (processorCount > 0)
-                {
-                    var processorStartIndex = bindingStates[m_BindingIndex].processorStartIndex;
-                    var processors = m_State.processors;
-                    for (var i = 0; i < processorCount; ++i)
-                        value = ((IInputControlProcessor<TValue>)processors[processorStartIndex + i]).Process(value, controlOfType);
-                }
-
+                if (m_State != null)
+                    value = m_State.ReadValue<TValue>(m_BindingIndex, m_ControlIndex);
                 return value;
             }
 

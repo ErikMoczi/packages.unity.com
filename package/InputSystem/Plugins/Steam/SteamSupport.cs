@@ -1,4 +1,4 @@
-////TODO: write a ScriptedImporter for VDF files which automatically generates a layout
+#if (UNITY_STANDALONE || UNITY_EDITOR) && UNITY_ENABLE_STEAM_CONTROLLER_SUPPORT
 
 namespace UnityEngine.Experimental.Input.Plugins.Steam
 {
@@ -11,3 +11,5 @@ namespace UnityEngine.Experimental.Input.Plugins.Steam
         }
     }
 }
+
+#endif // (UNITY_STANDALONE || UNITY_EDITOR) && UNITY_ENABLE_STEAM_CONTROLLER_SUPPORT
