@@ -24,3 +24,4 @@
 0.0.24-preview
 0.0.25-preview
 0.0.26-preview
+0.0.27-preview
