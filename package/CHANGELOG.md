@@ -4,16 +4,27 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.0.0-preview.2] - 2018-12-19
-* Fix CI build tooling to correct (new) validation issues.
+## [2.0.0-preview.1] - 2018-12-19
+* Upated to support loading integrated and standalone subsystems.
+* Add support for pre-init framework to allow for setting handling things like LUID setup pre-gfx setup.
+* Add ability for general settings to be set per platform and not just globally.
+* Tagged with release preview build. This should be the base on which we move to release for 2019.1
 
-## [1.0.0-preview.1] - 2018-12-19
-* Fix loader helper to support integrated and standlone subsystem loading.
-* Tagging build as 1.0.0 preview to note that this should be feature complete for 1.0.
+## [0.2.0-preview.9] 2018-11-27
+* Fixed some issues with boot time and general setting.
 
-## [0.1.0-preview.12] - 2018-07-30
-* Update to handle breaking API change in 2019.1 for UIElements
-* Update to handle breaking API change in 2018.3 for Unified Settings.
+## [0.2.0-preview.8] 2018-10-29
+* Fix an API breaking change to UnifiedSettings api
+* Fix a NRE in XRGeneralSettings if the user has set an XRManager Component on a scene game object and didn't setup general settings.
+
+## [0.2.0-preview.7] 2018-10-29
+* Hopefully all CI issues are resolved now.
+  
+## [0.2.0-preview.4] 2018-10-24
+* Merged in gneral settings support. Initial implentation allows for ability to assign an XR Manager instance for loading XR SDK at boot launch time.
+
+## [0.2.0-preview.3] 2018-10-24
+* Merged in Unified Settings dependent changes.
 
 ## [0.1.0-preview.9] - 2018-07-30
 * Add missing .npmignore file

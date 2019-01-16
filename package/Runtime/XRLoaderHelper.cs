@@ -77,96 +77,76 @@ namespace UnityEngine.XR.Management
                 subsystem.Destroy();
         }
 
-        protected ISubsystem CreateIntegratedSubsystemHelper<TSubsystem>(IntegratedSubsystemDescriptor<TSubsystem> descriptor, string id)
-            where TSubsystem : IntegratedSubsystem
-        {
-            ISubsystem ret = null;
-            if (descriptor != null && String.Compare(descriptor.id, id, true) == 0)
-            {
-                ret = descriptor.Create();
-            }
-            return ret;
-        }
-    
-        protected ISubsystem CreateSubsystemHelper<TSubsystem>(SubsystemDescriptor<TSubsystem> descriptor, string id)
-            where TSubsystem : Subsystem
-        {
-            ISubsystem ret = null;
-            if (descriptor != null && String.Compare(descriptor.id, id, true) == 0)
-            {
-                ret = descriptor.Create();
-            }
-            return ret;
-        }
-
         /// <summary>
-        /// Creates a native, integrated subsystem given a list of descriptors and a specific subsystem id.
+        /// Creates a subsystem given a list of descriptors and a specific subsystem id.
         /// </summary>
         ///
         /// <paramref name="TDescriptor">The descriptor type being passed in.</paramref>
         /// <paramref name="TSubsystem">The subsystem type being requested</paramref>
         /// <param name="descriptors">List of TDescriptor instances to use for subsystem matching.</param>
         /// <param name="id">The identifier key of the particualr subsystem implementation being requested.</param>
+        protected void CreateSubsystem<TDescriptor, TSubsystem>(List<TDescriptor> descriptors, string id)
+            where TDescriptor : ISubsystemDescriptor
+            where TSubsystem : ISubsystem
+        {
+            if (descriptors == null)
+                throw new ArgumentNullException("descriptors");
+
+            SubsystemManager.GetSubsystemDescriptors<TDescriptor>(descriptors);
+
+            if (descriptors.Count > 0)
+            {
+                foreach (var descriptor in descriptors)
+                {
+                    ISubsystem subsys = null;
+                    if (String.Compare(descriptor.id, id, true) == 0)
+                    {
+                        subsys = descriptor.Create();
+                    }
+                    if (subsys != null)
+                    {
+                        m_SubsystemInstanceMap[typeof(TSubsystem)] = subsys;
+                        break;
+                    }
+                }
+            }
+        }
+
+        
+        /// <summary>
+        /// Creates a native, integrated subsystem given a list of descriptors and a specific subsystem id.
+        /// DEPRECATED: Please use the geenric CreateSubsystem method. This method is soley retained for 
+        /// backwards compatibility and will be removed in a future release.
+        /// </summary>
+        ///
+        /// <paramref name="TDescriptor">The descriptor type being passed in.</paramref>
+        /// <paramref name="TSubsystem">The subsystem type being requested</paramref>
+        /// <param name="descriptors">List of TDescriptor instances to use for subsystem matching.</param>
+        /// <param name="id">The identifier key of the particualr subsystem implementation being requested.</param>
+        [Obsolete("This method is obsolete. Please use the geenric CreateSubsystem method.", false)]
         protected void CreateIntegratedSubsystem<TDescriptor, TSubsystem>(List<TDescriptor> descriptors, string id)
             where TDescriptor : IntegratedSubsystemDescriptor
             where TSubsystem : IntegratedSubsystem
         {
-            if (descriptors == null)
-                throw new ArgumentNullException("descriptors");
-
-            SubsystemManager.GetSubsystemDescriptors<TDescriptor>(descriptors);
-
-            if (descriptors.Count > 0)
-            {
-                foreach (var descriptor in descriptors)
-                {
-                    IntegratedSubsystemDescriptor<TSubsystem> desc = descriptor as IntegratedSubsystemDescriptor<TSubsystem>;
-                    if (desc != null && String.Compare(desc.id, id) == 0)
-                    {
-                        ISubsystem subsys = desc.Create();
-                        if (subsys != null)
-                        {
-                            m_SubsystemInstanceMap[typeof(TSubsystem)] = subsys;
-                            break;
-                        }
-                    }
-                }
-            }
+            CreateSubsystem<TDescriptor, TSubsystem>(descriptors, id);
         }
 
         /// <summary>
         /// Creates a managed, standalone subsystem given a list of descriptors and a specific subsystem id.
+        /// DEPRECATED: Please use the geenric CreateSubsystem method. This method is soley retained for 
+        /// backwards compatibility and will be removed in a future release.
         /// </summary>
         ///
         /// <paramref name="TDescriptor">The descriptor type being passed in.</paramref>
         /// <paramref name="TSubsystem">The subsystem type being requested</paramref>
         /// <param name="descriptors">List of TDescriptor instances to use for subsystem matching.</param>
         /// <param name="id">The identifier key of the particualr subsystem implementation being requested.</param>
+        [Obsolete("This method is obsolete. Please use the geenric CreateSubsystem method.", false)]
         protected void CreateStandaloneSubsystem<TDescriptor, TSubsystem>(List<TDescriptor> descriptors, string id)
             where TDescriptor : SubsystemDescriptor
             where TSubsystem : Subsystem
         {
-            if (descriptors == null)
-                throw new ArgumentNullException("descriptors");
-
-            SubsystemManager.GetSubsystemDescriptors<TDescriptor>(descriptors);
-
-            if (descriptors.Count > 0)
-            {
-                foreach (var descriptor in descriptors)
-                {
-                    SubsystemDescriptor<TSubsystem> desc = descriptor as SubsystemDescriptor<TSubsystem>;
-                    if (desc != null && String.Compare(desc.id, id) == 0)
-                    {
-                        ISubsystem subsys = desc.Create();
-                        if (subsys != null)
-                        {
-                            m_SubsystemInstanceMap[typeof(TSubsystem)] = subsys;
-                            break;
-                        }
-                    }
-                }
-            }
+            CreateSubsystem<TDescriptor, TSubsystem>(descriptors, id);
         }
     }
 }

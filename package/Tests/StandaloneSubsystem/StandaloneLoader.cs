@@ -45,7 +45,7 @@ namespace Unity.XR.Management.Tests.Standalone
             stopped = false;
             deInitialized = false;
 
-            CreateStandaloneSubsystem<StandaloneSubsystemDescriptor, StandaloneSubsystem>(s_StandaloneSubsystemDescriptors, "Standalone Subsystem");
+            CreateSubsystem<StandaloneSubsystemDescriptor, StandaloneSubsystem>(s_StandaloneSubsystemDescriptors, "Standalone Subsystem");
             if (standaloneSubsystem == null)
                 return false;
 

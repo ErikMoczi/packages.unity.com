@@ -10,30 +10,29 @@ using UnityEditor;
 namespace UnityEngine.XR.Management
 {
 
-#if UNITY_EDITOR
-    [InitializeOnLoad]
-#endif
     public class XRGeneralSettings : ScriptableObject
     {
         public static string k_SettingsKey = "com.unity.xr.managment.loader_settings";
         internal static XRGeneralSettings s_RuntimeSettingsInstance = null;
 
-        // TODO: Need to store a map of buildtarget to instance.
         [SerializeField]
         internal GameObject m_LoaderManagerInstance = null;
 
-        XRManager m_XRManager = null;
+        [SerializeField]
+        internal bool m_InitManagerOnStart = true;
+
+        public GameObject Manager
+        {
+            get { return m_LoaderManagerInstance; }
+            set { m_LoaderManagerInstance = value; }
+        }
+
+        private XRManager m_XRManager = null;
 
         public static XRGeneralSettings Instance
         {
             get
             {
-#if UNITY_EDITOR
-                if (s_RuntimeSettingsInstance == null)
-                {
-                    EditorBuildSettings.TryGetConfigObject<XRGeneralSettings>(XRGeneralSettings.k_SettingsKey, out s_RuntimeSettingsInstance);
-                }
-#endif
                 return s_RuntimeSettingsInstance;
             }
         }
@@ -62,13 +61,21 @@ namespace UnityEngine.XR.Management
             }
 #endif            
         }
-
-#if UNITY_EDITOR
-        static XRGeneralSettings()
+        
+        public bool InitManagerOnStart
         {
-            EditorApplication.playModeStateChanged += PlayModeStateChanged;
+            get
+            {
+                return m_InitManagerOnStart;
+            }
+            #if UNITY_EDITOR
+            set
+            {
+                m_InitManagerOnStart = value;
+            }
+            #endif
         }
-#endif
+
 
 #if !UNITY_EDITOR
         void Awake()
@@ -81,21 +88,10 @@ namespace UnityEngine.XR.Management
 #endif
 
 #if UNITY_EDITOR
-
         bool m_IsPlaying = false;
 
-        static void PlayModeStateChanged(PlayModeStateChange state)
+        public void InternalPlayModeStateChanged(PlayModeStateChange state)
         {
-            XRGeneralSettings instance = XRGeneralSettings.Instance;
-            if (instance == null)
-                return;
-
-            instance.InternalPlayModeStateChanged(state);
-        }
-
-        private void InternalPlayModeStateChanged(PlayModeStateChange state)
-        {
-
             switch (state)
             {
                 case PlayModeStateChange.ExitingEditMode:
@@ -103,6 +99,9 @@ namespace UnityEngine.XR.Management
                 case PlayModeStateChange.EnteredPlayMode:
                     if (!m_IsPlaying)
                     {
+                        if (s_RuntimeSettingsInstance == null)
+                            s_RuntimeSettingsInstance = this;
+
                         InitXRSDK();
                         StartXRSDK();
                         m_IsPlaying = true;
@@ -114,6 +113,10 @@ namespace UnityEngine.XR.Management
                         m_IsPlaying = false;
                         StopXRSDK();
                         DeInitXRSDK();
+
+                        if (s_RuntimeSettingsInstance != null)
+                            s_RuntimeSettingsInstance = null;
+
                     }
                     break;
                 case PlayModeStateChange.EnteredEditMode:
@@ -121,6 +124,7 @@ namespace UnityEngine.XR.Management
             }
         }
 #else
+
         static void Quit()
         {
             XRGeneralSettings instance = XRGeneralSettings.Instance;
@@ -145,7 +149,6 @@ namespace UnityEngine.XR.Management
         {
             DeInitXRSDK();
         }
-
 #endif
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
@@ -174,7 +177,7 @@ namespace UnityEngine.XR.Management
 
         private void InitXRSDK()
         {
-            if (XRGeneralSettings.Instance == null || XRGeneralSettings.Instance.m_LoaderManagerInstance == null)
+            if (XRGeneralSettings.Instance == null || XRGeneralSettings.Instance.m_LoaderManagerInstance == null || XRGeneralSettings.Instance.m_InitManagerOnStart == false)
                 return;
 
             m_XRManager = XRGeneralSettings.Instance.m_LoaderManagerInstance.GetComponent<XRManager>();

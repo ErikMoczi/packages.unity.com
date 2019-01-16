@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.XR.Management;
 
-namespace ManagementTests.Runtime
+namespace Unity.XR.Management.Tests
 {
     internal class DummyLoader : XRLoader
     {

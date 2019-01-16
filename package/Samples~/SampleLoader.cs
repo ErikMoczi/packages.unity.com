@@ -28,7 +28,7 @@ namespace Samples
         SampleSettings GetSettings()
         {
             SampleSettings settings = null;
-            // When running in the Unit Editor, we can a users customization of configuration data directly form
+            // When running in the Unity Editor, we have to load user's customization of configuration data directly from
             // EditorBuildSettings. At runtime, we need to grab it from the static instance field instead.
             #if UNITY_EDITOR
             UnityEditor.EditorBuildSettings.TryGetConfigObject(SampleConstants.k_SettingsKey, out settings);
@@ -48,7 +48,7 @@ namespace Samples
                 // TODO: Pass settings off to plugin prior to subsystem init.
             }
 
-            CreateIntegratedSubsystem<XRInputSubsystemDescriptor, XRInputSubsystem>(s_InputSubsystemDescriptors, "InputSubsystemDescriptor");
+            CreateSubsystem<XRInputSubsystemDescriptor, XRInputSubsystem>(s_InputSubsystemDescriptors, "InputSubsystemDescriptor");
 
             return false;
         }

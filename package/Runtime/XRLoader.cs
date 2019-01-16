@@ -18,28 +18,28 @@ namespace UnityEngine.XR.Management
         /// loader represents.
         /// </summary>
         ///
-        /// <returns>< Whether or not initialization succeeded ></returns>
+        /// <returns>Whether or not initialization succeeded.</returns>
         public virtual bool Initialize() { return false; }
 
         /// <summary>
         /// Ask loader to start all initialized subsystems.
         /// </summary>
         ///
-        /// <returns>< Whether or not all subsystems were successfully started. ></returns>
+        /// <returns>Whether or not all subsystems were successfully started.</returns>
         public virtual bool Start() { return false; }
 
         /// <summary>
         /// Ask loader to stop all initialized subsystems.
         /// </summary>
         ///
-        /// <returns>< Whether or not all subsystems were successfully stopped ></returns>
+        /// <returns>Whether or not all subsystems were successfully stopped.</returns>
         public virtual bool Stop() { return false; }
 
         /// <summary>
         /// Ask loader to deinitialize all initialized subsystems.
         /// </summary>
         ///
-        /// <returns>< Whether or not deinitialization succeeded ></returns>
+        /// <returns>Whether or not deinitialization succeeded.</returns>
         public virtual bool Deinitialize() { return false; }
 
         /// <summary>

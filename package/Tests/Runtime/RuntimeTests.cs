@@ -8,7 +8,7 @@ using UnityEngine.XR.Management;
 using UnityEditor;
 using UnityEngine.SceneManagement;
 
-namespace ManagementTests.Runtime
+namespace Unity.XR.Management.Tests
 {
     [TestFixture(0, -1)] // No loaders, should never have any results
     [TestFixture(1, -1)] // 1 loader, fails so no active loaders

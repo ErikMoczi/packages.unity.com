@@ -1,70 +1,119 @@
-using System;
-using System.Collections;
-
 using NUnit.Framework;
 
+using System;
+using System.Collections;
+using System.IO;
+
 using UnityEditor;
+using UnityEditor.XR.Management;
 
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.XR.Management;
 
-using Unity.XR.Management.Tests.Standalone;
-using Unity.XR.Management.Tests.Standalone.Providing;
 
 namespace Unity.XR.Management.EditorTests
 {
-    class EditorTests
-    {
-        [OneTimeSetUp]
-        public void OneTimeSetUp()
-        {
-            StandaloneSubsystemParams parms = new StandaloneSubsystemParams("Standalone Subsystem", typeof(StandaloneSubsystem));
-            StandaloneSubsystemDescriptor.Create(parms);
-        }
 
-        StandaloneLoader loader;
+    class XRGeneralSettingsTests
+    {
+        internal static readonly string[] s_TempSettingsPath = {"Temp", "Test", "Settings"};
+
+        string testPathToSettings;
+
+        UnityEngine.Object currentSettings = null;
+
+        GameObject testManager = null;
+        XRGeneralSettings testSettings = null;
 
         [SetUp]
-        public void SetUp()
+        public void SetupTest()
         {
-            loader = ScriptableObject.CreateInstance<StandaloneLoader>() as StandaloneLoader;
+            testManager = new GameObject("Test Manager");
+            testManager.AddComponent<XRManager>();
+
+            testSettings = ScriptableObject.CreateInstance<XRGeneralSettings>() as XRGeneralSettings;
+            testSettings.Manager = testManager;
+
+            testPathToSettings = XRGeneralSettingsTests.GetAssetPathForComponents(XRGeneralSettingsTests.s_TempSettingsPath);            
+            if (!string.IsNullOrEmpty(testPathToSettings))
+            {
+                testPathToSettings = Path.Combine(testPathToSettings, "Test_XRGeneralSettings.asset");
+                AssetDatabase.CreateAsset(testSettings, testPathToSettings);
+                AssetDatabase.SaveAssets();
+            }
+
+            EditorBuildSettings.TryGetConfigObject(XRGeneralSettings.k_SettingsKey, out currentSettings);
+            EditorBuildSettings.AddConfigObject(XRGeneralSettings.k_SettingsKey, testSettings, true);
         }
 
         [TearDown]
-        public void TearDown()
+        public void TearDownTest()
         {
-            UnityEngine.Object.DestroyImmediate(loader);
-            loader = null;
+            EditorBuildSettings.RemoveConfigObject(XRGeneralSettings.k_SettingsKey);
+
+            if (!string.IsNullOrEmpty(testPathToSettings))
+            {
+                AssetDatabase.DeleteAsset(testPathToSettings);
+            }
+
+            testSettings.Manager = null;
+            UnityEngine.Object.DestroyImmediate(testSettings);
+            testSettings = null;
+
+            UnityEngine.Object.DestroyImmediate(testManager);
+            testManager = null;
+
+            if (currentSettings != null)
+                EditorBuildSettings.AddConfigObject(XRGeneralSettings.k_SettingsKey, currentSettings, true);
+
+            AssetDatabase.DeleteAsset(Path.Combine("Assets","Temp"));
         }
+
 
         [Test]
-        public void StandaloneLoaderCreateTest()
+        public void UpdateGeneralSettings_ToPerBuildTargetSettings()
         {
-            Assert.IsTrue(loader.Initialize());
+            bool success = XRGeneralSettingsUpgrade.UpgradeSettingsToPerBuildTarget(testPathToSettings);
+            Assert.IsTrue(success);
+
+            XRGeneralSettingsPerBuildTarget pbtgs = null;
+
+            pbtgs = AssetDatabase.LoadAssetAtPath(testPathToSettings, typeof(XRGeneralSettingsPerBuildTarget)) as XRGeneralSettingsPerBuildTarget;
+            Assert.IsNotNull(pbtgs);
+
+            var settings = pbtgs.SettingsForBuildTarget(EditorUserBuildSettings.selectedBuildTargetGroup);
+            Assert.IsNotNull(settings);
+            Assert.IsNotNull(settings.Manager);
+            Assert.AreEqual(testManager, settings.Manager);
         }
 
-        // A UnityTest behaves like a coroutine in PlayMode
-        // and allows you to yield null to skip a frame in EditMode
-        [UnityTest]
-        public IEnumerator StandaloneLoaderLifecycleTest()
+        internal static string GetAssetPathForComponents(string[] pathComponents, string root = "Assets")
         {
-            Assert.IsTrue(loader.Initialize());
-            yield return null;
+            if (pathComponents.Length <= 0)
+                return null;
 
-            Assert.IsTrue(loader.Start());
-            Assert.IsTrue(loader.started);
-            yield return null;
+            string path = root;
+            foreach( var pc in pathComponents)
+            {
+                string subFolder = Path.Combine(path, pc);
+                bool shouldCreate = true;
+                foreach (var f in AssetDatabase.GetSubFolders(path))
+                {
+                    if (String.Compare(Path.GetFullPath(f), Path.GetFullPath(subFolder), true) == 0)
+                    {
+                        shouldCreate = false;
+                        break;
+                    }
+                }
 
+                if (shouldCreate)
+                    AssetDatabase.CreateFolder(path, pc);
+                path = subFolder;
+            }
 
-            Assert.IsTrue(loader.Stop());
-            Assert.IsTrue(loader.stopped);
-            yield return null;
-
-
-            Assert.IsTrue(loader.Deinitialize());
-            Assert.IsTrue(loader.deInitialized);
-            yield return null;
-
+            return path;
         }
+
     }
 }
