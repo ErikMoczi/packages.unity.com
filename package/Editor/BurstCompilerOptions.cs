@@ -24,8 +24,8 @@ namespace Burst.Compiler.IL
         public const string OptionTarget = "target=";
         public const string OptionIROpt = "ir-opt";
         public const string OptionCpuOpt = "cpu-opt=";
-        public const string OptionPrecision = "precision=";
-        public const string OptionMath = "math=";
+        public const string OptionFloatPrecision = "float-precision=";
+        public const string OptionFloatMode = "float-mode=";
         public const string OptionDump = "dump=";
         public const string OptionFormat = "format=";
         public const string OptionDebugTrap = "debugtrap";
@@ -56,6 +56,7 @@ namespace Burst.Compiler.IL
         public const string OptionAotOutputPath = "output=";
         public const string OptionAotIL2CPPPluginFolder = "il2cpp-plugin-folder=";
         public const string OptionAotKeepIntermediateFiles = "keep-intermediate-files";
+        public const string OptionAotNoLink = "nolink";
 
         public static string GetOption(string optionName, object value = null)
         {

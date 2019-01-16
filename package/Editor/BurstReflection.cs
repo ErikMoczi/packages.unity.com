@@ -163,11 +163,8 @@ namespace Unity.Burst.Editor
             return result;
         }
 
-        // TODO: This is not working with method. We have to change this
-        public static bool ExtractBurstCompilerOptions(Type type, out string optimizationFlags)
+        public static bool ExtractBurstCompilerOptionsBasic(Type type, StringBuilder flagsOut)
         {
-            optimizationFlags = null;
-
             if (!BurstEditorOptions.EnableBurstCompilation)
             {
                 return false;
@@ -180,24 +177,14 @@ namespace Unity.Burst.Editor
             if (attr == null)
                 return false;
 
-            var builder = new StringBuilder();
-
-            if (BurstEditorOptions.EnableBurstSafetyChecks)
-            {
-                AddOption(builder, GetOption(OptionSafetyChecks));
-            }
-            else
-            {
-                AddOption(builder, GetOption(OptionDisableSafetyChecks));
-                // Enable NoAlias ahen safety checks are disable
-                AddOption(builder, GetOption(OptionNoAlias));
-            }
-
             if (attr.CompileSynchronously)
-                AddOption(builder, GetOption(OptionJitEnableSynchronousCompilation));
+                AddOption(flagsOut, GetOption(OptionJitEnableSynchronousCompilation));
 
-            if (attr.Accuracy != Accuracy.Std)
-                AddOption(builder, GetOption(OptionFastMath));
+            if (attr.FloatMode != FloatMode.Default)
+                AddOption(flagsOut, GetOption(OptionFloatMode, attr.FloatMode));
+
+            if (attr.FloatPrecision != FloatPrecision.Standard)
+                AddOption(flagsOut, GetOption(OptionFloatPrecision, attr.FloatPrecision));
 
             // Add custom options
             if (attr.Options != null)
@@ -206,31 +193,55 @@ namespace Unity.Burst.Editor
                 {
                     if (!string.IsNullOrEmpty(option))
                     {
-                        AddOption(builder, option);
+                        AddOption(flagsOut, option);
                     }
                 }
             }
 
-            // Allow to configure the backend from BurstCompile.Backend attribute
-            var backendName = attr.Backend ?? BurstCompiler.BackendName;
-            var backendPath = BurstCompiler.ResolveBackendPath(backendName);
-            if (backendPath != null)
+            return true;
+        }
+
+        public static bool GetBurstGeneralOptions(StringBuilder flagsOut)
+        {
+            if (!BurstEditorOptions.EnableBurstCompilation)
             {
-                AddOption(builder, GetOption(OptionBackend, backendPath));
+                return false;
+            }
+
+            if (BurstEditorOptions.EnableBurstSafetyChecks)
+            {
+                AddOption(flagsOut, GetOption(OptionSafetyChecks));
+            }
+            else
+            {
+                AddOption(flagsOut, GetOption(OptionDisableSafetyChecks));
+                // Enable NoAlias ahen safety checks are disable
+                AddOption(flagsOut, GetOption(OptionNoAlias));
             }
 
             if (BurstEditorOptions.EnableShowBurstTimings)
             {
-                AddOption(builder, GetOption(OptionJitLogTimings));
+                AddOption(flagsOut, GetOption(OptionJitLogTimings));
             }
-            //Debug.Log($"ExtractBurstCompilerOptions: {type} {optimizationFlags}");
+            return true;
+        }
 
-            // AddOption(builder, GetOption(OptionJitEnableModuleCachingDebugger));
-            // AddOption(builder, GetOption(OptionJitCacheDirectory, "Library/BurstCache"));
 
-            optimizationFlags = builder.ToString();
-            //Debug.Log(optimizationFlags);
+        // TODO: This is not working with method. We have to change this
+        public static bool ExtractBurstCompilerOptions(Type type, out string flagsOut)
+        {
+            flagsOut = null;
+            if (!BurstEditorOptions.EnableBurstCompilation)
+            {
+                return false;
+            }
 
+            var flagsBuilderOut = new StringBuilder();
+            if (!ExtractBurstCompilerOptionsBasic(type, flagsBuilderOut))
+                return false;
+
+            GetBurstGeneralOptions(flagsBuilderOut);
+            flagsOut = flagsBuilderOut.ToString();
             return true;
         }
 

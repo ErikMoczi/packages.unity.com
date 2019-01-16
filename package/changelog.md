@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.4-preview.40
+
+- Fix bug when a write to a pointer type of an argument of a generic function
+- Breaking change of API: `Accuracy` -> `FloatPrecision`, and `Support` => `FloatMode`
+- Add `FloatMode.Deterministic` mode with early preview of deterministic mathematical functions
+- Fix bug with fonts in inspector being incorrectly reloaded
+
 ## 0.2.4-preview.39
 
 - Add preview support for readonly static arrays typically used for LUT

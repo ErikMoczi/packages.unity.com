@@ -3,43 +3,43 @@ using Unity.Burst;
 
 namespace Unity.Burst
 {
-    public enum Support
+    // FloatMode and FloatPrecision must be kept in sync with burst.h / Burst.Backend
+
+    public enum FloatMode
     {
-        Strict,
-        Relaxed
+        Default = 0,
+        Strict = 1,
+        Deterministic = 2,
+        Fast = 3,
     }
 
-    public enum Accuracy
+    public enum FloatPrecision
     {
-        Std,
-        Low,
-        Med,
-        High,
+        Standard = 0,
+        High = 1,
+        Medium = 2,
+        Low = 3,
     }
 
     [AttributeUsage(AttributeTargets.Class|AttributeTargets.Struct|AttributeTargets.Method)]
     public class BurstCompileAttribute : System.Attribute
     {
-        public Support Support { get; set; }
+        public FloatMode FloatMode { get; set; }
 
-        public Accuracy Accuracy { get; set; }
+        public FloatPrecision FloatPrecision { get; set; }
 
         public bool CompileSynchronously { get; set; }
-
-        public string Backend { get; set; }
 
         public string[] Options { get; set; }
 
         public BurstCompileAttribute()
         {
-            Support = Support.Strict;
-            Accuracy = Accuracy.Std;
         }
 
-        public BurstCompileAttribute(Accuracy accuracy, Support support)
+        public BurstCompileAttribute(FloatPrecision floatPrecision, FloatMode floatMode)
         {
-            Support = support;
-            Accuracy = accuracy;
+            FloatMode = floatMode;
+            FloatPrecision = floatPrecision;
         }
     }
 
@@ -58,7 +58,7 @@ namespace Unity.Jobs
         {
         }
 
-        public ComputeJobOptimizationAttribute(Accuracy accuracy, Support support) : base(accuracy, support)
+        public ComputeJobOptimizationAttribute(FloatPrecision floatPrecision, FloatMode floatMode) : base(floatPrecision, floatMode)
         {
         }
     }

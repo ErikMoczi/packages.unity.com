@@ -72,8 +72,10 @@ namespace Unity.Burst.Editor
 
         [SerializeField] private bool _fastMath = true;
 
+        [NonSerialized]
         private GUIStyle _fixedFontStyle;
 
+        [NonSerialized]
         private int _fontSizeIndex = -1;
 
         [SerializeField] private bool _optimizations = true;
@@ -85,7 +87,14 @@ namespace Unity.Burst.Editor
 
         [SerializeField] private string _selectedItem;
         private List<BurstCompileTarget> _targets;
+
+        [NonSerialized]
         private LongTextArea _textArea;
+
+        [NonSerialized]
+        private Font _font;
+
+        [NonSerialized]
         private BurstMethodTreeView _treeView;
 
         private int FontSize => FontSizes[_fontSizeIndex];
@@ -93,6 +102,20 @@ namespace Unity.Burst.Editor
         public void OnEnable()
         {
             if (_treeView == null) _treeView = new BurstMethodTreeView(new TreeViewState());
+        }
+
+        private void CleanupFont()
+        {
+            if (_font != null)
+            {
+                DestroyImmediate(_font, true);
+                _font = null;
+            }
+        }
+
+        public void OnDisable()
+        {
+            CleanupFont();
         }
 
         public void OnGUI()
@@ -127,7 +150,11 @@ namespace Unity.Burst.Editor
                   fontName = "Consolas";
                 else
                   fontName = "Courier";
-                _fixedFontStyle.font = Font.CreateDynamicFontFromOSFont(fontName, FontSize);
+
+                CleanupFont();
+
+                _font = Font.CreateDynamicFontFromOSFont(fontName, FontSize);
+                _fixedFontStyle.font = _font;
             }
 
             if (_searchField == null) _searchField = new SearchField();
@@ -189,6 +216,8 @@ namespace Unity.Burst.Editor
                 {
                     // TODO: refactor this code with a proper AppendOption to avoid these "\n"
                     var options = new StringBuilder();
+                    BurstReflection.ExtractBurstCompilerOptionsBasic(target.JobType, options);
+
                     if (!_safetyChecks)
                         options.Append("\n" + GetOption(OptionDisableSafetyChecks) + "\n" + GetOption(OptionNoAlias));
 
