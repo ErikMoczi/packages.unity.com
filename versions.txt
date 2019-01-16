@@ -67,3 +67,4 @@
 2.4.2-preview
 2.4.3-preview
 2.4.4-preview
+2.4.4-preview20190108-nightly
