@@ -6,7 +6,9 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace UnityEngine.Experimental.Input.Utilities
 {
-    // A collection of utility functions to work with arrays.
+    /// <summary>
+    /// A collection of utility functions for working with arrays.
+    /// </summary>
     internal static class ArrayHelpers
     {
         public static bool Contains<TValue>(TValue[] array, TValue value)
@@ -246,7 +248,7 @@ namespace UnityEngine.Experimental.Input.Utilities
                 array[index++] = value;
 
             if (values != null)
-                Array.Copy(values, 0, array, index, length);
+                Array.Copy(values, 0, array, index, values.Length);
 
             return array;
         }

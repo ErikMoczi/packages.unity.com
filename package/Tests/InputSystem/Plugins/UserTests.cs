@@ -92,6 +92,14 @@ public class UserTests : InputTestFixture
 
     [Test]
     [Category("Users")]
+    public void Users_UserNameIsNullByDefault()
+    {
+        var user = InputUser.Add();
+        Assert.That(user.userName, Is.Null);
+    }
+
+    [Test]
+    [Category("Users")]
     public void Users_CanMonitorForChanges()
     {
         InputUser receivedUser = null;
@@ -239,15 +247,7 @@ public class UserTests : InputTestFixture
     [Test]
     [Category("Users")]
     [Ignore("TODO")]
-    public void TODO_Users_WhenDeviceIsAssigned_TriggersNotification()
-    {
-        Assert.Fail();
-    }
-
-    [Test]
-    [Category("Users")]
-    [Ignore("TODO")]
-    public void TODO_Users_WhenActionMapIsAssigned_TriggersNotification()
+    public void TODO_Users_CanSwitchControlSchemes()
     {
         Assert.Fail();
     }
