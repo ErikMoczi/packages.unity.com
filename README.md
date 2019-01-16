@@ -1,1 +1,1 @@
-New input system.
+A new input system.
