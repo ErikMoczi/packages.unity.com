@@ -1,6 +1,7 @@
 ﻿using UnityEditor.Build.Pipeline.Injector;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEditor.Sprites;
+using UnityEditor.U2D;
 
 namespace UnityEditor.Build.Pipeline.Tasks
 {
@@ -17,6 +18,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
         {
             // TODO: Need a return value if this ever can fail
             Packer.RebuildAtlasCacheIfNeeded(m_Parameters.Target, true, Packer.Execution.Normal);
+			SpriteAtlasUtility.PackAllAtlases(m_Parameters.Target);
             return ReturnCode.Success;
         }
     }
