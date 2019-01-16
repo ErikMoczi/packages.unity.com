@@ -7,17 +7,19 @@ namespace UnityEngine.Animations.Rigging
     [System.Serializable]
     public struct MultiParentConstraintData : IAnimationJobData, IMultiParentConstraintData, IRigReferenceSync
     {
-        [SerializeField] JobTransform m_ConstrainedObject;
+        [SerializeField] Transform m_ConstrainedObject;
         [SerializeField] Vector3Bool m_ConstrainedPositionAxes;
         [SerializeField] Vector3Bool m_ConstrainedRotationAxes;
         [SerializeField] List<WeightedJobTransform> m_SourceObjects;
-        [SerializeField] bool m_MaintainOffset;
+
+        [SerializeField] bool m_MaintainPositionOffset;
+        [SerializeField] bool m_MaintainRotationOffset;
 
         // Since source weights can be updated at runtime keep a local cache instead of
         // extracting these constantly
         private WeightCache m_SrcWeightCache;
 
-        public JobTransform constrainedObject { get => m_ConstrainedObject; set => m_ConstrainedObject = value; }
+        public Transform constrainedObject { get => m_ConstrainedObject; set => m_ConstrainedObject = value; }
 
         public List<WeightedJobTransform> sourceObjects
         {
@@ -36,7 +38,8 @@ namespace UnityEngine.Animations.Rigging
             }
         }
 
-        public bool maintainOffset { get => m_MaintainOffset; set => m_MaintainOffset = value; }
+        public bool maintainPositionOffset { get => m_MaintainPositionOffset; set => m_MaintainPositionOffset = value; }
+        public bool maintainRotationOffset { get => m_MaintainRotationOffset; set => m_MaintainRotationOffset = value; }
 
         public bool constrainedPositionXAxis { get => m_ConstrainedPositionAxes.x; set => m_ConstrainedPositionAxes.x = value; }
         public bool constrainedPositionYAxis { get => m_ConstrainedPositionAxes.y; set => m_ConstrainedPositionAxes.y = value; }
@@ -45,13 +48,12 @@ namespace UnityEngine.Animations.Rigging
         public bool constrainedRotationYAxis { get => m_ConstrainedRotationAxes.y; set => m_ConstrainedRotationAxes.y = value; }
         public bool constrainedRotationZAxis { get => m_ConstrainedRotationAxes.z; set => m_ConstrainedRotationAxes.z = value; }
 
-        Transform IMultiParentConstraintData.constrainedObject => m_ConstrainedObject.transform;
         Transform[] IMultiParentConstraintData.sourceObjects => ConstraintDataUtils.GetTransforms(m_SourceObjects);
         float[] IMultiParentConstraintData.sourceWeights => m_SrcWeightCache.GetWeights(m_SourceObjects);
 
         bool IAnimationJobData.IsValid()
         {
-            if (m_ConstrainedObject.transform == null || m_SourceObjects == null || m_SourceObjects.Count == 0)
+            if (m_ConstrainedObject == null || m_SourceObjects == null || m_SourceObjects.Count == 0)
                 return false;
 
             foreach (var src in m_SourceObjects)
@@ -63,25 +65,15 @@ namespace UnityEngine.Animations.Rigging
 
         void IAnimationJobData.SetDefaultValues()
         {
-            m_ConstrainedObject = JobTransform.defaultNoSync;
+            m_ConstrainedObject = null;
             m_ConstrainedPositionAxes = new Vector3Bool(true);
             m_ConstrainedRotationAxes = new Vector3Bool(true);
             m_SourceObjects = new List<WeightedJobTransform>();
-            m_MaintainOffset = true;
+            m_MaintainPositionOffset = true;
+            m_MaintainRotationOffset = true;
         }
 
-        JobTransform[] IRigReferenceSync.allReferences
-        {
-            get
-            {
-                JobTransform[] jobTx = new JobTransform[m_SourceObjects.Count + 1];
-                jobTx[0] = m_ConstrainedObject;
-                for (int i = 0; i < m_SourceObjects.Count; ++i)
-                    jobTx[i + 1] = m_SourceObjects[i];
-
-                return jobTx;
-            }
-        }
+        JobTransform[] IRigReferenceSync.allReferences => m_SourceObjects.ToArray();
 
         public void MarkSourceWeightsDirty() => m_SrcWeightCache.MarkDirty();
     }

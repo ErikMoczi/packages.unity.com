@@ -31,7 +31,7 @@ class MultiAimConstraintTests
         multiAimGO.transform.parent = data.rigData.rigGO.transform;
 
         var head = data.rigData.hipsGO.transform.Find("Chest/Head");
-        multiAim.data.constrainedObject = new JobTransform(head, false);
+        multiAim.data.constrainedObject = head;
 
         List<WeightedJobTransform> sources = new List<WeightedJobTransform>(2);
         var src0GO = new GameObject("source0");

@@ -29,14 +29,14 @@ class TwoBoneIKConstraintTests {
 
         twoBoneIKGO.transform.parent = data.rigData.rigGO.transform;
 
-        twoBoneIK.data.root = new JobTransform(data.rigData.hipsGO.transform.Find("Chest/LeftArm"), false);
-        Assert.IsNotNull(twoBoneIK.data.root.transform, "Could not find root transform");
+        twoBoneIK.data.root = data.rigData.hipsGO.transform.Find("Chest/LeftArm");
+        Assert.IsNotNull(twoBoneIK.data.root, "Could not find root transform");
 
-        twoBoneIK.data.mid = new JobTransform(twoBoneIK.data.root.transform.Find("LeftForeArm"), false);
-        Assert.IsNotNull(twoBoneIK.data.mid.transform, "Could not find mid transform");
+        twoBoneIK.data.mid = twoBoneIK.data.root.transform.Find("LeftForeArm");
+        Assert.IsNotNull(twoBoneIK.data.mid, "Could not find mid transform");
 
-        twoBoneIK.data.tip = new JobTransform(twoBoneIK.data.mid.transform.Find("LeftHand"), false);
-        Assert.IsNotNull(twoBoneIK.data.tip.transform, "Could not find tip transform");
+        twoBoneIK.data.tip = twoBoneIK.data.mid.transform.Find("LeftHand");
+        Assert.IsNotNull(twoBoneIK.data.tip, "Could not find tip transform");
 
         var targetGO = new GameObject ("target");
         targetGO.transform.parent = twoBoneIKGO.transform;

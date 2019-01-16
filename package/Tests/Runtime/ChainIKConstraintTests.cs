@@ -31,10 +31,10 @@ class ChainIKConstraintTests {
 
         chainIKGO.transform.parent = data.rigData.rigGO.transform;
 
-        chainIK.data.root = new JobTransform(data.rigData.hipsGO.transform.Find("Chest"), false);
+        chainIK.data.root = data.rigData.hipsGO.transform.Find("Chest");
         Assert.IsNotNull(chainIK.data.root.transform, "Could not find root transform");
 
-        chainIK.data.tip = new JobTransform(chainIK.data.root.transform.Find("LeftArm/LeftForeArm/LeftHand"), false);
+        chainIK.data.tip = chainIK.data.root.transform.Find("LeftArm/LeftForeArm/LeftHand");
         Assert.IsNotNull(chainIK.data.tip.transform, "Could not find tip transform");
 
         var targetGO = new GameObject ("target");

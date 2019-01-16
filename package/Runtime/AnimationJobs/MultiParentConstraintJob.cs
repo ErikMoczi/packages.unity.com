@@ -76,7 +76,8 @@ namespace UnityEngine.Animations.Rigging
         Transform constrainedObject { get; }
         Transform[] sourceObjects { get; }
         float[] sourceWeights { get; }
-        bool maintainOffset { get; }
+        bool maintainPositionOffset { get; }
+        bool maintainRotationOffset { get; }
 
         bool constrainedPositionXAxis { get; }
         bool constrainedPositionYAxis { get; }
@@ -109,13 +110,16 @@ namespace UnityEngine.Animations.Rigging
                 job.sources[i] = TransformHandle.Bind(animator, src[i]);
                 cacheBuilder.SetValue(job.sourceWeightStartIdx, i, srcWeights[i]);
 
-                if (data.maintainOffset)
-                {
-                    var srcTx = new AffineTransform(src[i].position, src[i].rotation);
-                    job.sourceOffsets[i] = srcTx.InverseMul(drivenTx);
-                }
-                else
-                    job.sourceOffsets[i] = AffineTransform.identity;
+                var srcTx = new AffineTransform(src[i].position, src[i].rotation);
+                var srcOffset = AffineTransform.identity;
+                var tmp = srcTx.InverseMul(drivenTx);
+
+                if (data.maintainPositionOffset)
+                    srcOffset.translation = tmp.translation;
+                if (data.maintainRotationOffset)
+                    srcOffset.rotation = tmp.rotation;
+
+                job.sourceOffsets[i] = srcOffset;
             }
 
             job.positionAxesMask = new Vector3(

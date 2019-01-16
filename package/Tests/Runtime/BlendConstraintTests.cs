@@ -37,7 +37,7 @@ class BlendConstraintTests
 
         var constrainedObject = new GameObject("constrainedBlendObj");
         constrainedObject.transform.parent = blendConstraintGO.transform;
-        blendConstraint.data.constrainedObject = new JobTransform(constrainedObject.transform, false);
+        blendConstraint.data.constrainedObject = constrainedObject.transform;
         data.restPose = new AffineTransform(constrainedObject.transform.position, constrainedObject.transform.rotation);
 
         blendConstraint.data.positionWeight = blendConstraint.data.rotationWeight = 0.5f;

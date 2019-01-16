@@ -9,7 +9,8 @@ namespace UnityEditor.Animations.Rigging
     {
         static readonly GUIContent k_SourceObjectsLabel = new GUIContent("Source Objects");
         static readonly GUIContent k_SettingsLabel = new GUIContent("Settings");
-        static readonly string[] k_AimAxisLables = { "X", "-X", "Y", "-Y", "Z", "-Z" };
+        static readonly GUIContent k_MaintainOffsetLabel = new GUIContent("Maintain Rotation Offset");
+        static readonly string[] k_AimAxisLabels = { "X", "-X", "Y", "-Y", "Z", "-Z" };
 
         SerializedProperty m_Weight;
         SerializedProperty m_ConstrainedObject;
@@ -57,7 +58,7 @@ namespace UnityEditor.Animations.Rigging
 
             EditorGUILayout.PropertyField(m_Weight);
             EditorGUILayout.PropertyField(m_ConstrainedObject);
-            m_AimAxis.enumValueIndex = EditorGUILayout.Popup(m_AimAxis.displayName, m_AimAxis.enumValueIndex, k_AimAxisLables);
+            m_AimAxis.enumValueIndex = EditorGUILayout.Popup(m_AimAxis.displayName, m_AimAxis.enumValueIndex, k_AimAxisLabels);
 
             m_SourceObjectsToggle.boolValue = EditorGUILayout.Foldout(m_SourceObjectsToggle.boolValue, k_SourceObjectsLabel);
             if (m_SourceObjectsToggle.boolValue)
@@ -71,7 +72,7 @@ namespace UnityEditor.Animations.Rigging
             if (m_SettingsToggle.boolValue)
             {
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(m_MaintainOffset);
+                EditorGUILayout.PropertyField(m_MaintainOffset, k_MaintainOffsetLabel);
                 EditorGUILayout.PropertyField(m_Offset);
                 EditorGUILayout.PropertyField(m_ConstrainedAxes);
                 EditorGUILayout.PropertyField(m_MinLimit);

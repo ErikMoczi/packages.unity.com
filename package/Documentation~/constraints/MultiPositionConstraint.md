@@ -12,5 +12,5 @@ A Position Constraint component moves a GameObject to follow its source GameObje
 |Constrained Object|The GameObject affected by the constraint Source GameObjects|
 |Constrained Axes|Check X, Y, or Z to allow the Constraint to control the corresponding Position axis. Uncheck an axis to stop the Constraint from controlling it.|
 |Source Objects|The list of GameObjects that influence the constrained GameObject position. To get the result you want, drag and drop items in this list. Each source has a weight from 0 to 1.|
-|Maintain Offset|Maintain the current offset from the constrained GameObject to the source GameObjects|
+|Maintain Position Offset|Maintain the current position offset from the constrained GameObject to the source GameObjects|
 |Offset|Apply and extra post position offset to the constrained object. Specified in local space.|

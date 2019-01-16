@@ -5,13 +5,31 @@ namespace UnityEngine.Animations.Rigging
     using RuntimeConstraints;
 
     [System.Serializable]
+    public class TwistNode : ITransformProvider, IWeightProvider
+    {
+        public Transform transform;
+
+        [Range(-1f, 1f)]
+        public float weight;
+
+        public TwistNode(Transform transform, float weight = 0f)
+        {
+            this.transform = transform;
+            this.weight = Mathf.Clamp(weight, -1f, 1f);
+        }
+
+        Transform ITransformProvider.transform { get => transform; set => transform = value; }
+        float IWeightProvider.weight { get => weight; set => weight = value; }
+    }
+
+    [System.Serializable]
     public struct TwistCorrectionData : IAnimationJobData, ITwistCorrectionData, IRigReferenceSync
     {
         public enum Axis { X, Y ,Z }
 
         [SerializeField] JobTransform m_Source;
         [SerializeField] Axis m_TwistAxis;
-        [SerializeField] List<WeightedJobTransform> m_TwistNodes;
+        [SerializeField] List<TwistNode> m_TwistNodes;
 
         // Since twist node weights can be updated at runtime keep a local cache instead of
         // extracting these constantly
@@ -19,12 +37,12 @@ namespace UnityEngine.Animations.Rigging
 
         public JobTransform sourceObject { get => m_Source; set => m_Source = value; }
 
-        public List<WeightedJobTransform> twistNodes
+        public List<TwistNode> twistNodes
         {
             get
             {
                 if (m_TwistNodes == null)
-                    m_TwistNodes = new List<WeightedJobTransform>();
+                    m_TwistNodes = new List<TwistNode>();
 
                 return m_TwistNodes;
             }
@@ -70,21 +88,10 @@ namespace UnityEngine.Animations.Rigging
         {
             m_Source = JobTransform.defaultNoSync;
             m_TwistAxis = Axis.X;
-            m_TwistNodes = new List<WeightedJobTransform>();
+            m_TwistNodes = new List<TwistNode>();
         }
 
-        JobTransform[] IRigReferenceSync.allReferences
-        {
-            get
-            {
-                JobTransform[] jobTx = new JobTransform[m_TwistNodes.Count + 1];
-                jobTx[0] = m_Source;
-                for (int i = 0; i < m_TwistNodes.Count; ++i)
-                    jobTx[i + 1] = m_TwistNodes[i];
-
-                return jobTx;
-            }
-        }
+        JobTransform[] IRigReferenceSync.allReferences => new JobTransform[] { m_Source };
 
         public void MarkTwistNodeWeightsDirty() => m_TwistNodeWeightCache.MarkDirty();
     }

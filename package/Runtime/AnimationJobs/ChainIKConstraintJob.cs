@@ -9,6 +9,7 @@ namespace UnityEngine.Animations.Rigging
     {
         public NativeArray<TransformHandle> chain;
         public TransformHandle target;
+        public AffineTransform targetOffset;
 
         public NativeArray<float> linkLengths;
         public NativeArray<Vector3> linkPositions;
@@ -32,7 +33,7 @@ namespace UnityEngine.Animations.Rigging
                     linkPositions[i] = chain[i].GetPosition(stream);
 
                 int tipIndex = chain.Length - 1;
-                if (AnimationRuntimeUtils.SolveFABRIK(linkPositions, linkLengths, target.GetPosition(stream),
+                if (AnimationRuntimeUtils.SolveFABRIK(linkPositions, linkLengths, target.GetPosition(stream) + targetOffset.translation,
                     cache.GetRaw(toleranceIdx), maxReach, (int)cache.GetRaw(maxIterationsIdx)))
                 {
                     var chainRWeight = cache.GetRaw(chainRotationWeightIdx) * jobWeight;
@@ -45,7 +46,12 @@ namespace UnityEngine.Animations.Rigging
                 }
 
                 chain[tipIndex].SetRotation(
-                    stream, Quaternion.Lerp(chain[tipIndex].GetRotation(stream), target.GetRotation(stream), cache.GetRaw(tipRotationWeightIdx) * jobWeight)
+                    stream,
+                    Quaternion.Lerp(
+                        chain[tipIndex].GetRotation(stream),
+                        target.GetRotation(stream) * targetOffset.rotation,
+                        cache.GetRaw(tipRotationWeightIdx) * jobWeight
+                        )
                     );
             }
             else
@@ -65,6 +71,8 @@ namespace UnityEngine.Animations.Rigging
         float tipRotationWeight { get; }
         int maxIterations { get; }
         float tolerance { get; }
+        bool maintainTargetPositionOffset { get; }
+        bool maintainTargetRotationOffset { get; }
     }
 
     public class ChainIKConstraintJobBinder<T> : AnimationJobBinder<ChainIKConstraintJob, T>
@@ -97,6 +105,11 @@ namespace UnityEngine.Animations.Rigging
             }
 
             job.target = TransformHandle.Bind(animator, data.target);
+            job.targetOffset = AffineTransform.identity;
+            if (data.maintainTargetPositionOffset)
+                job.targetOffset.translation = data.tip.position - data.target.position;
+            if (data.maintainTargetRotationOffset)
+                job.targetOffset.rotation = Quaternion.Inverse(data.target.rotation) * data.tip.rotation;
 
             var cacheBuilder = new AnimationJobCacheBuilder();
             job.chainRotationWeightIdx = cacheBuilder.Add(data.chainRotationWeight);

@@ -32,7 +32,7 @@ class MultiParentConstraintTests
 
         multiParentGO.transform.parent = data.rigData.rigGO.transform;
 
-        multiParent.data.constrainedObject = new JobTransform(data.rigData.hipsGO.transform, false);
+        multiParent.data.constrainedObject = data.rigData.hipsGO.transform;
         data.constrainedObjectRestTx = new AffineTransform(
             multiParent.data.constrainedObject.transform.position,
             multiParent.data.constrainedObject.transform.rotation

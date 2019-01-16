@@ -28,7 +28,7 @@ class OverrideTransformTests
         overrideTransform.Reset();
 
         overrideTransformGO.transform.parent = data.rigData.rigGO.transform;
-        overrideTransform.data.constrainedObject = new JobTransform(data.rigData.hipsGO.transform.Find("Chest"), false);
+        overrideTransform.data.constrainedObject = data.rigData.hipsGO.transform.Find("Chest");
 
         var overrideSourceGO = new GameObject ("source");
         overrideSourceGO.transform.parent = overrideTransformGO.transform;

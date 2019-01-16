@@ -22,6 +22,19 @@ namespace UnityEngine.Animations.Rigging
             return tmp.Count == 0 ? null : tmp.ToArray();
         }
 
+        public static JobTransform[] GetAllRigTransformReferences(Rig rig)
+        {
+            RigTransform[] rigTransforms = rig.GetComponentsInChildren<RigTransform>();
+            if (rigTransforms.Length == 0)
+                return null;
+
+            JobTransform[] jobTransforms = new JobTransform[rigTransforms.Length];
+            for (int i = 0; i < jobTransforms.Length; ++i)
+                jobTransforms[i] = new JobTransform(rigTransforms[i].transform, rigTransforms[i].syncFromScene);
+
+            return jobTransforms;
+        }
+
         public static JobTransform[] GetAllConstraintReferences(Animator animator, IRigConstraint[] constraints)
         {
             if (constraints == null || constraints.Length == 0)
@@ -35,6 +48,9 @@ namespace UnityEngine.Animations.Rigging
                     continue;
 
                 var references = ((IRigReferenceSync)data).allReferences;
+                if (references == null)
+                    continue;
+
                 foreach (var reference in references)
                 {
                     if (reference.transform.IsChildOf(animator.transform))

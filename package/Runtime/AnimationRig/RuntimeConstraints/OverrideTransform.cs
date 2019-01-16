@@ -11,7 +11,7 @@
             Pivot = OverrideTransformJob.Space.Pivot
         }
 
-        [SerializeField] JobTransform m_ConstrainedObject;
+        [SerializeField] Transform m_ConstrainedObject;
         [SerializeField] JobTransform m_OverrideSource;
         [SerializeField] Vector3 m_OverridePosition;
         [SerializeField] Vector3 m_OverrideRotation;
@@ -19,7 +19,7 @@
         [SerializeField, Range(0f, 1f)] float m_PositionWeight;
         [SerializeField, Range(0f, 1f)] float m_RotationWeight;
 
-        public JobTransform constrainedObject { get => m_ConstrainedObject; set => m_ConstrainedObject = value; }
+        public Transform constrainedObject { get => m_ConstrainedObject; set => m_ConstrainedObject = value; }
         public JobTransform sourceObject { get => m_OverrideSource; set => m_OverrideSource = value; }
         public Space space { get => m_Space; set => m_Space = value; }
         public Vector3 position { get => m_OverridePosition; set => m_OverridePosition = value; }
@@ -27,15 +27,14 @@
         public float positionWeight { get => m_PositionWeight; set => m_PositionWeight = Mathf.Clamp01(value); }
         public float rotationWeight { get => m_RotationWeight; set => m_RotationWeight = Mathf.Clamp01(value); }
 
-        Transform IOverrideTransformData.constrainedObject => m_ConstrainedObject.transform;
         Transform IOverrideTransformData.source => m_OverrideSource.transform;
         int IOverrideTransformData.space => (int)m_Space;
 
-        bool IAnimationJobData.IsValid() => m_ConstrainedObject.transform != null;
+        bool IAnimationJobData.IsValid() => m_ConstrainedObject != null;
 
         void IAnimationJobData.SetDefaultValues()
         {
-            m_ConstrainedObject = JobTransform.defaultNoSync;
+            m_ConstrainedObject = null;
             m_OverrideSource = JobTransform.defaultNoSync;
             m_OverridePosition = Vector3.zero;
             m_OverrideRotation = Vector3.zero;
@@ -44,16 +43,7 @@
             m_RotationWeight = 1f;
         }
 
-        JobTransform[] IRigReferenceSync.allReferences
-        {
-            get
-            {
-                if (m_OverrideSource.transform != null)
-                    return new JobTransform[] { m_ConstrainedObject, m_OverrideSource };
-
-                return new JobTransform[] { m_ConstrainedObject };
-            }
-        }
+        JobTransform[] IRigReferenceSync.allReferences => m_OverrideSource.transform == null ? null : new JobTransform[] { m_OverrideSource };
     }
 
     [AddComponentMenu("Animation Rigging/Override Transform")]

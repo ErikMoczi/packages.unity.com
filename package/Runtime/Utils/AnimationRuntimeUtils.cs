@@ -18,14 +18,15 @@ namespace UnityEngine.Animations.Rigging
             float posWeight,
             float rotWeight,
             float hintWeight,
-            Vector2 limbLengths
+            Vector2 limbLengths,
+            AffineTransform targetOffset
             )
         {
             Vector3 aPosition = root.GetPosition(stream);
             Vector3 bPosition = mid.GetPosition(stream);
             Vector3 cPosition = tip.GetPosition(stream);
-            Vector3 tPosition = Vector3.Lerp(cPosition, target.GetPosition(stream), posWeight);
-            Quaternion tRotation = Quaternion.Lerp(tip.GetRotation(stream), target.GetRotation(stream), rotWeight);
+            Vector3 tPosition = Vector3.Lerp(cPosition, target.GetPosition(stream) + targetOffset.translation, posWeight);
+            Quaternion tRotation = Quaternion.Lerp(tip.GetRotation(stream), target.GetRotation(stream) * targetOffset.rotation, rotWeight);
             bool hasHint = hint.IsValid(stream) && hintWeight > 0f;
 
             Vector3 ab = bPosition - aPosition;

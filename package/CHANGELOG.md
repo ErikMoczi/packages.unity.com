@@ -2,9 +2,19 @@
 All notable changes to this package will be documented in this file.
 
 <!--
-## [0.1.3] - 2018-12-XX
+## [0.1.4] - 2019-01-XX
 ### Patch Update of *Unity Package Animation Rigging*.
 -->
+
+## [0.1.3] - 2018-12-21
+
+### Patch Update of *Unity Package Animation Rigging*.
+- Fixed stale bone rendering in prefab isolation view.
+- Updated constraints to have a transform sync scene to stream toggle only on inputs.
+- Fixed Twist Correction component to have twist nodes with weight varying between [-1, 1]
+- Added Maintain Offset dropdown to TwoBoneIK, ChainIK, Blend and Multi-Parent constraints
+- Added Rig Transform component in order to tag extra objects not specified by constraints to have an influence in the animation stream
+- Updated documentation and samples to reflect component changes
 
 ## [0.1.2] - 2018-11-29
 

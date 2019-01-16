@@ -32,7 +32,7 @@ class DampedTransformTests
 
         dampedTransformGO.transform.parent = data.rigData.rigGO.transform;
 
-        dampedTransform.data.constrainedObject = new JobTransform(data.rigData.hipsGO.transform.Find("Chest/LeftArm/LeftForeArm/LeftHand"), false);
+        dampedTransform.data.constrainedObject = data.rigData.hipsGO.transform.Find("Chest/LeftArm/LeftForeArm/LeftHand");
 
         var dampedSourceGO = new GameObject ("source");
         dampedSourceGO.transform.parent = dampedTransformGO.transform;

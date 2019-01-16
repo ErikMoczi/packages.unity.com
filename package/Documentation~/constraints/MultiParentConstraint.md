@@ -17,6 +17,6 @@ However, it offers certain advantages that are not possible when you make one Ga
 |Weight|The weight of the constraint. If set to 0, the constraint has no influence on the Constrained GameObject while when set to 1, it applies full influence given the specified settings.|
 |Constrained Object|The GameObject affected by the constraint Source GameObjects|
 |Source Objects|The list of GameObjects that influence the constrained GameObject position and orientation. Unity evaluates source GameObjects in the order that they appear in this list. This order affects how this constraint computes the final transform of the constrained GameObject. To get the result you want, drag and drop items in this list. Each source has a weight from 0 to 1.|
-|Maintain Offset|Maintain the current offset from the constrained GameObject to the source GameObjects|
+|Maintain Offset|Maintain the offset (in Position, Rotation or both) from the constrained GameObject to the source GameObjects when not set to None|
 |Constrained Position Axes|Check X, Y, or Z to allow the Constraint to control the corresponding Position axis. Uncheck an axis to stop the Constraint from controlling it.|
 |Constrained Rotation Axes|Check X, Y, or Z to allow the Constraint to control the corresponding Rotation axis. Uncheck an axis to stop the Constraint from controlling it.|

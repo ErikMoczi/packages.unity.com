@@ -29,7 +29,7 @@ namespace UnityEngine.Animations.Rigging
                 Quaternion invTwistRot = Quaternion.Inverse(twistRot);
                 for (int i = 0; i < twistNodes.Length; ++i)
                 {
-                    var w = cache.GetRaw(twistWeightStartIdx, i) * 2f - 1f;
+                    float w = Mathf.Clamp(cache.GetRaw(twistWeightStartIdx, i), -1f, 1f);
                     Quaternion rot = Quaternion.Lerp(Quaternion.identity, Mathf.Sign(w) < 0f ? invTwistRot : twistRot, Mathf.Abs(w));
                     twistNodes[i].SetLocalRotation(stream, Quaternion.Lerp(twistNodes[i].GetLocalRotation(stream), rot, jobWeight));
                 }

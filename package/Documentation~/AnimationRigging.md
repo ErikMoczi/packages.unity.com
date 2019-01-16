@@ -11,10 +11,10 @@ World interaction rigs (IK, Aim, etc.) for interactive adjustments, targeting, a
 
 # Workflow
 
-The following sections present required components and steps to take in order to define an Animation Rig. This [**video**](https://youtu.be/gTPdInHbJkM) also demonstrates package component usage to create a custom Animation Rig.
+The following sections present required components and steps to take in order to define an Animation Rig. This [**video**](https://youtu.be/DzW_jQGO1dc) also demonstrates package component usage to create a custom Animation Rig.
 
 <figure class="video_container">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/gTPdInHbJkM" frameborder="0" allowfullscreen></iframe>
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/DzW_jQGO1dc" frameborder="0" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
 </figure>
 
 ### Rig Builder Component
@@ -24,7 +24,7 @@ The Rig Builder component needs to be added to the GameObject that has the Anima
 
 ![Rig Builder Setup](images/rig_builder/rig_builder_setup.gif)
 
-Using **Rig Layers**, the Rig Builder component allows for stacking of multiple Rigs, that can enabled/disabled at any time.
+Using **Rig Layers**, the Rig Builder component allows for stacking of multiple Rigs, that can be enabled/disabled at any time.
 
 ![Rig Builder Layers](images/rig_builder/rig_builder_layers.gif)
 
@@ -109,7 +109,7 @@ The Animation Rigging package contains a few predefined constraints that you can
 
 ## Scene Synchronisation to the Animation Stream
 
-All constraints expose property transform fields with a synchronisation to stream checkbox. Any valid references living under the **Animator** component root
+All constraint sources expose property transform fields with a synchronisation to stream checkbox. Any valid references living under the **Animator** component root
 specified in those fields will be declared as *TransformStreamHandles*. This means that we expect these transforms to be animated. However, if they are not
 you can enable the toggle in order to populate the values of that stream with what is currently defined in the scene at the beginning of the constraint pipeline.
 For example, if you declare a Two Bone IK Constraint with *Target* and *Hint* transform fields which are not animated, then enabling a sync operation will make these transforms editable.

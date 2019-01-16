@@ -7,7 +7,7 @@ namespace UnityEngine.Animations.Rigging
     [System.Serializable]
     public struct MultiRotationConstraintData : IAnimationJobData, IMultiRotationConstraintData, IRigReferenceSync
     {
-        [SerializeField] JobTransform m_ConstrainedObject;
+        [SerializeField] Transform m_ConstrainedObject;
         [SerializeField] Vector3Bool m_ConstrainedAxes;
         [SerializeField] List<WeightedJobTransform> m_SourceObjects;
         [SerializeField] bool m_MaintainOffset;
@@ -17,7 +17,7 @@ namespace UnityEngine.Animations.Rigging
         // extracting these constantly
         private WeightCache m_SrcWeightCache;
 
-        public JobTransform constrainedObject { get => m_ConstrainedObject; set => m_ConstrainedObject = value; }
+        public Transform constrainedObject { get => m_ConstrainedObject; set => m_ConstrainedObject = value; }
 
         public List<WeightedJobTransform> sourceObjects
         {
@@ -43,13 +43,12 @@ namespace UnityEngine.Animations.Rigging
         public bool constrainedYAxis { get => m_ConstrainedAxes.y; set => m_ConstrainedAxes.y = value; }
         public bool constrainedZAxis { get => m_ConstrainedAxes.z; set => m_ConstrainedAxes.z = value; }
 
-        Transform IMultiRotationConstraintData.constrainedObject => m_ConstrainedObject.transform;
         Transform[] IMultiRotationConstraintData.sourceObjects => ConstraintDataUtils.GetTransforms(m_SourceObjects);
         float[] IMultiRotationConstraintData.sourceWeights => m_SrcWeightCache.GetWeights(m_SourceObjects);
 
         bool IAnimationJobData.IsValid()
         {
-            if (m_ConstrainedObject.transform == null || m_SourceObjects == null || m_SourceObjects.Count == 0)
+            if (m_ConstrainedObject == null || m_SourceObjects == null || m_SourceObjects.Count == 0)
                 return false;
 
             foreach (var src in m_SourceObjects)
@@ -61,25 +60,14 @@ namespace UnityEngine.Animations.Rigging
 
         void IAnimationJobData.SetDefaultValues()
         {
-            m_ConstrainedObject = JobTransform.defaultNoSync;
+            m_ConstrainedObject = null;
             m_ConstrainedAxes = new Vector3Bool(true);
             m_SourceObjects = new List<WeightedJobTransform>();
             m_MaintainOffset = true;
             m_Offset = Vector3.zero;
         }
 
-        JobTransform[] IRigReferenceSync.allReferences
-        {
-            get
-            {
-                JobTransform[] jobTx = new JobTransform[m_SourceObjects.Count + 1];
-                jobTx[0] = m_ConstrainedObject;
-                for (int i = 0; i < m_SourceObjects.Count; ++i)
-                    jobTx[i + 1] = m_SourceObjects[i];
-
-                return jobTx;
-            }
-        }
+        JobTransform[] IRigReferenceSync.allReferences => m_SourceObjects.ToArray();
 
         public void MarkSourceWeightsDirty() => m_SrcWeightCache.MarkDirty();
     }

@@ -7,11 +7,11 @@ namespace UnityEngine.Animations.Rigging.RuntimeConstraints
         private bool dirty;
         private float[] cache;
 
-        public float[] GetWeights(List<WeightedJobTransform> jobTransforms)
+        public float[] GetWeights<T>(List<T> weights) where T : IWeightProvider
         {
             if (dirty || cache == null)
             {
-                ConstraintDataUtils.GetWeights(jobTransforms, ref cache);
+                ConstraintDataUtils.GetWeights(weights, ref cache);
                 dirty = false;
             }
             return cache;
@@ -22,41 +22,29 @@ namespace UnityEngine.Animations.Rigging.RuntimeConstraints
 
     public static class ConstraintDataUtils
     {
-        public static Transform[] GetTransforms(List<JobTransform> jobTransforms)
+        public static Transform[] GetTransforms<T>(List<T> transforms) where T : ITransformProvider
         {
-            if (jobTransforms.Count == 0)
+            if (transforms.Count == 0)
                 return null;
 
-            Transform[] ret = new Transform[jobTransforms.Count];
-            for (int i = 0; i < jobTransforms.Count; ++i)
-                ret[i] = jobTransforms[i].transform;
+            Transform[] ret = new Transform[transforms.Count];
+            for (int i = 0; i < transforms.Count; ++i)
+                ret[i] = transforms[i].transform;
 
             return ret;
         }
 
-        public static Transform[] GetTransforms(List<WeightedJobTransform> jobTransforms)
+        public static void GetWeights<T>(List<T> weights, ref float[] outWeights) where T : IWeightProvider
         {
-            if (jobTransforms.Count == 0)
-                return null;
-
-            Transform[] ret = new Transform[jobTransforms.Count];
-            for (int i = 0; i < jobTransforms.Count; ++i)
-                ret[i] = jobTransforms[i].transform;
-
-            return ret;
-        }
-
-        public static void GetWeights(List<WeightedJobTransform> jobTransforms, ref float[] outWeights)
-        {
-            if (jobTransforms.Count == 0)
+            if (weights.Count == 0)
                 outWeights = null;
             else
             {
-                if (outWeights == null || jobTransforms.Count != outWeights.Length)
-                    outWeights = new float[jobTransforms.Count];
+                if (outWeights == null || weights.Count != outWeights.Length)
+                    outWeights = new float[weights.Count];
 
-                for (int i = 0; i < jobTransforms.Count; ++i)
-                    outWeights[i] = jobTransforms[i].weight;
+                for (int i = 0; i < weights.Count; ++i)
+                    outWeights[i] = weights[i].weight;
             }
         }
     }

@@ -44,15 +44,15 @@ class TwistCorrectionTests
         twistCorrection.data.twistAxis = TwistCorrectionData.Axis.X;
         data.restLocalRotation = leftHand.localRotation;
 
-        List<WeightedJobTransform> twistNodes = new List<WeightedJobTransform>(2);
+        List<TwistNode> twistNodes = new List<TwistNode>(2);
         var twistNode0GO = new GameObject("twistNode0");
         var twistNode1GO = new GameObject("twistNode1");
         twistNode0GO.transform.parent = leftForeArm;
         twistNode1GO.transform.parent = leftForeArm;
         twistNode0GO.transform.SetPositionAndRotation(Vector3.Lerp(leftForeArm.position, leftHand.position, 0.25f), leftHand.rotation);
         twistNode1GO.transform.SetPositionAndRotation(Vector3.Lerp(leftForeArm.position, leftHand.position, 0.75f), leftHand.rotation);
-        twistNodes.Add(new WeightedJobTransform(twistNode0GO.transform, false, 0.5f));
-        twistNodes.Add(new WeightedJobTransform(twistNode1GO.transform, false, 0.5f));
+        twistNodes.Add(new TwistNode(twistNode0GO.transform));
+        twistNodes.Add(new TwistNode(twistNode1GO.transform));
         twistCorrection.data.twistNodes = twistNodes;
 
         data.rigData.rootGO.GetComponent<RigBuilder>().Build();
@@ -74,9 +74,9 @@ class TwistCorrectionTests
         // Apply rotation to source object
         sourceObject.transform.localRotation = sourceObject.transform.localRotation * Quaternion.AngleAxis(90, Vector3.left);
 
-        // twistNode0.w = 0.5f, twistNode1.w = 0.5f [does not influence twist nodes]
-        Assert.AreEqual(twistNodes[0].weight, 0.5f);
-        Assert.AreEqual(twistNodes[1].weight, 0.5f);
+        // twistNode0.w = 0.0f, twistNode1.w = 0.0f [does not influence twist nodes]
+        Assert.AreEqual(twistNodes[0].weight, 0.0f);
+        Assert.AreEqual(twistNodes[1].weight, 0.0f);
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         Assert.AreNotEqual(sourceObject.transform.localRotation, data.restLocalRotation);
@@ -95,9 +95,9 @@ class TwistCorrectionTests
         Assert.AreEqual(twistNodes[1].transform.localRotation.w, sourceObject.transform.localRotation.w, k_Epsilon);
         Assert.AreEqual(twistNodes[1].transform.localRotation.x, sourceObject.transform.localRotation.x, k_Epsilon);
 
-        // twistNode0.w = 0f, twistNode1.w = 0f [twist nodes should be inverse to source]
-        twistNodes[0].weight = 0f;
-        twistNodes[1].weight = 0f;
+        // twistNode0.w = -1f, twistNode1.w = -1f [twist nodes should be inverse to source]
+        twistNodes[0].weight = -1f;
+        twistNodes[1].weight = -1f;
         constraint.data.MarkTwistNodeWeightsDirty();
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 

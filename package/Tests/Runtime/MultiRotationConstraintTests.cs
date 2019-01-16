@@ -32,7 +32,7 @@ class MultiRotationConstraintTests
 
         multiRotationGO.transform.parent = data.rigData.rigGO.transform;
 
-        multiRotation.data.constrainedObject = new JobTransform(data.rigData.hipsGO.transform, false);
+        multiRotation.data.constrainedObject = data.rigData.hipsGO.transform;
         data.constrainedObjectRestRotation = multiRotation.data.constrainedObject.transform.rotation;
 
         List<WeightedJobTransform> sources = new List<WeightedJobTransform>(2);

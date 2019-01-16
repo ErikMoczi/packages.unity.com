@@ -32,7 +32,7 @@ class MultiPositionConstraintTests
 
         multiPositionGO.transform.parent = data.rigData.rigGO.transform;
 
-        multiPosition.data.constrainedObject = new JobTransform(data.rigData.hipsGO.transform, false);
+        multiPosition.data.constrainedObject = data.rigData.hipsGO.transform;
         data.constrainedObjectRestPosition = multiPosition.data.constrainedObject.transform.position;
 
         List<WeightedJobTransform> sources = new List<WeightedJobTransform>(2);

@@ -29,11 +29,11 @@ namespace UnityEditor.Animations.Rigging
 
             m_ReorderableList = ReorderableListHelper.Create(serializedObject, m_TwistNodes, false);
             if (m_ReorderableList.count == 0)
-                ((TwistCorrection)serializedObject.targetObject).data.twistNodes.Add(new WeightedJobTransform(null, false, 0.5f));
+                ((TwistCorrection)serializedObject.targetObject).data.twistNodes.Add(new TwistNode(null));
 
             m_ReorderableList.onAddCallback = (ReorderableList list) =>
             {
-                ((TwistCorrection)serializedObject.targetObject).data.twistNodes.Add(WeightedJobTransform.defaultNoSync(0.5f));
+                ((TwistCorrection)serializedObject.targetObject).data.twistNodes.Add(new TwistNode(null));
             };
         }
 

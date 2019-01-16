@@ -14,6 +14,8 @@ namespace UnityEngine.Animations.Rigging
         [Serializable]
         public class RigLayer
         {
+            const int k_InvalidDataIndex = -1;
+
             public Rig rig;
             public bool active = true;
 
@@ -24,17 +26,26 @@ namespace UnityEngine.Animations.Rigging
             {
                 this.rig = rig;
                 this.active = active;
-                data = -1;
+                data = k_InvalidDataIndex;
             }
 
             public void Reset()
             {
-                data = -1;
+                data = k_InvalidDataIndex;
                 if (rig != null)
                     rig.Destroy();
             }
 
-            public bool IsValid() => rig != null && data != -1;
+            public bool Initialize(Animator animator)
+            {
+                data = k_InvalidDataIndex;
+                if (rig != null)
+                    return rig.Initialize(animator);
+
+                return false;
+            }
+
+            public bool IsValid() => rig != null && data != k_InvalidDataIndex;
         }
 
         struct LayerData
@@ -94,7 +105,7 @@ namespace UnityEngine.Animations.Rigging
             List<JobTransform> allRigReferences = new List<JobTransform>();
             foreach (var layer in layers)
             {
-                if (layer.rig == null || !layer.rig.Initialize(animator))
+                if (!layer.Initialize(animator))
                     continue;
 
                 LayerData data = new LayerData();
@@ -106,7 +117,13 @@ namespace UnityEngine.Animations.Rigging
                 m_RigLayerData.Add(data);
 
                 // Gather all references used by rig
-                allRigReferences.AddRange(RigUtils.GetAllConstraintReferences(animator, layer.rig.constraints));
+                var references = RigUtils.GetAllConstraintReferences(animator, layer.rig.constraints);
+                if (references != null)
+                    allRigReferences.AddRange(references);
+
+                references = RigUtils.GetAllRigTransformReferences(layer.rig);
+                if (references != null)
+                    allRigReferences.AddRange(references);
             }
 
             // Create sync to stream job with all rig references

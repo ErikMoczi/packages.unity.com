@@ -9,13 +9,15 @@ namespace UnityEditor.Animations.Rigging
     {
         static readonly GUIContent k_SourceObjectsLabel = new GUIContent("Source Objects");
         static readonly GUIContent k_SettingsLabel = new GUIContent("Settings");
+        static readonly GUIContent k_MaintainOffsetLabel = new GUIContent("Maintain Offset");
 
         SerializedProperty m_Weight;
         SerializedProperty m_ConstrainedObject;
         SerializedProperty m_ConstrainedPositionAxes;
         SerializedProperty m_ConstrainedRotationAxes;
         SerializedProperty m_SourceObjects;
-        SerializedProperty m_MaintainOffset;
+        SerializedProperty m_MaintainPositionOffset;
+        SerializedProperty m_MaintainRotationOffset;
 
         SerializedProperty m_SourceObjectsToggle;
         SerializedProperty m_SettingsToggle;
@@ -32,7 +34,8 @@ namespace UnityEditor.Animations.Rigging
             m_ConstrainedPositionAxes = data.FindPropertyRelative("m_ConstrainedPositionAxes");
             m_ConstrainedRotationAxes = data.FindPropertyRelative("m_ConstrainedRotationAxes");
             m_SourceObjects = data.FindPropertyRelative("m_SourceObjects");
-            m_MaintainOffset = data.FindPropertyRelative("m_MaintainOffset");
+            m_MaintainPositionOffset = data.FindPropertyRelative("m_MaintainPositionOffset");
+            m_MaintainRotationOffset = data.FindPropertyRelative("m_MaintainRotationOffset");
 
             m_ReorderableList = ReorderableListHelper.Create(serializedObject, m_SourceObjects);
             if (m_ReorderableList.count == 0)
@@ -63,7 +66,7 @@ namespace UnityEditor.Animations.Rigging
             if (m_SettingsToggle.boolValue)
             {
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(m_MaintainOffset);
+                MaintainOffsetHelper.DoDropdown(k_MaintainOffsetLabel, m_MaintainPositionOffset, m_MaintainRotationOffset);
                 EditorGUILayout.PropertyField(m_ConstrainedPositionAxes);
                 EditorGUILayout.PropertyField(m_ConstrainedRotationAxes);
                 EditorGUI.indentLevel--;

@@ -15,6 +15,8 @@
         public CacheIndex targetPositionWeightIdx;
         public CacheIndex targetRotationWeightIdx;
 
+        public AffineTransform targetOffset;
+
         public Vector2 linkLengths;
 
         public AnimationJobCache cache;
@@ -31,7 +33,8 @@
                     cache.GetRaw(targetPositionWeightIdx) * jobWeight,
                     cache.GetRaw(targetRotationWeightIdx) * jobWeight,
                     cache.GetRaw(hintWeightIdx) * jobWeight,
-                    linkLengths
+                    linkLengths,
+                    targetOffset
                     );
             }
             else
@@ -54,6 +57,9 @@
         float targetPositionWeight { get; }
         float targetRotationWeight { get; }
         float hintWeight { get; }
+
+        bool maintainTargetPositionOffset { get; }
+        bool maintainTargetRotationOffset { get; }
     }
 
     public class TwoBoneIKConstraintJobBinder<T> : AnimationJobBinder<TwoBoneIKConstraintJob, T>
@@ -71,6 +77,12 @@
 
             if (data.hint != null)
                 job.hint = TransformHandle.Bind(animator, data.hint);
+
+            job.targetOffset = AffineTransform.identity;
+            if (data.maintainTargetPositionOffset)
+                job.targetOffset.translation = data.tip.position - data.target.position;
+            if (data.maintainTargetRotationOffset)
+                job.targetOffset.rotation = Quaternion.Inverse(data.target.rotation) * data.tip.rotation;
 
             job.linkLengths[0] = Vector3.Distance(data.root.position, data.mid.position);
             job.linkLengths[1] = Vector3.Distance(data.mid.position, data.tip.position);

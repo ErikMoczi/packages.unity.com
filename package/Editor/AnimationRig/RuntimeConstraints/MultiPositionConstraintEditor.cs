@@ -9,6 +9,7 @@ namespace UnityEditor.Animations.Rigging
     {
         static readonly GUIContent k_SourceObjectsLabel = new GUIContent("Source Objects");
         static readonly GUIContent k_SettingsLabel = new GUIContent("Settings");
+        static readonly GUIContent k_MaintainOffsetLabel = new GUIContent("Maintain Position Offset");
 
         SerializedProperty m_Weight;
         SerializedProperty m_ConstrainedObject;
@@ -64,7 +65,7 @@ namespace UnityEditor.Animations.Rigging
             if (m_SettingsToggle.boolValue)
             {
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(m_MaintainOffset);
+                EditorGUILayout.PropertyField(m_MaintainOffset, k_MaintainOffsetLabel);
                 EditorGUILayout.PropertyField(m_Offset);
                 EditorGUI.indentLevel--;
             }

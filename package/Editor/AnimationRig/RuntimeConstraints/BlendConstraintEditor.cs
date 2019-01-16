@@ -10,6 +10,7 @@ namespace UnityEditor.Animations.Rigging
         static readonly GUIContent k_SettingsLabel = new GUIContent("Settings");
         static readonly GUIContent k_BlendPosLabel = new GUIContent("Blend A | B Position");
         static readonly GUIContent k_BlendRotLabel = new GUIContent("Blend A | B Rotation");
+        static readonly GUIContent k_MaintainOffset = new GUIContent("Maintain Offset");
 
         SerializedProperty m_Weight;
         SerializedProperty m_ConstrainedObject;
@@ -19,6 +20,8 @@ namespace UnityEditor.Animations.Rigging
         SerializedProperty m_BlendRotation;
         SerializedProperty m_PositionWeight;
         SerializedProperty m_RotationWeight;
+        SerializedProperty m_MaintainPositionOffsets;
+        SerializedProperty m_MaintainRotationOffsets;
 
         SerializedProperty m_SourceObjectsToggle;
         SerializedProperty m_SettingsToggle;
@@ -37,6 +40,8 @@ namespace UnityEditor.Animations.Rigging
             m_BlendRotation = data.FindPropertyRelative("m_BlendRotation");
             m_PositionWeight = data.FindPropertyRelative("m_PositionWeight");
             m_RotationWeight = data.FindPropertyRelative("m_RotationWeight");
+            m_MaintainPositionOffsets = data.FindPropertyRelative("m_MaintainPositionOffsets");
+            m_MaintainRotationOffsets = data.FindPropertyRelative("m_MaintainRotationOffsets");
         }
 
         public override void OnInspectorGUI()
@@ -60,6 +65,8 @@ namespace UnityEditor.Animations.Rigging
             {
                 EditorGUI.indentLevel++;
 
+                MaintainOffsetHelper.DoDropdown(k_MaintainOffset, m_MaintainPositionOffsets, m_MaintainRotationOffsets);
+                
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.PropertyField(m_BlendPosition, k_BlendPosLabel);
                 using (new EditorGUI.DisabledScope(!m_BlendPosition.boolValue))

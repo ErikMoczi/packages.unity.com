@@ -8,6 +8,7 @@ namespace UnityEditor.Animations.Rigging
     {
         static readonly GUIContent k_SourceObjectsLabel = new GUIContent("Source Objects");
         static readonly GUIContent k_SettingsLabel = new GUIContent("Settings");
+        static readonly GUIContent k_MaintainTargetOffsetLabel = new GUIContent("Maintain Target Offset");
 
         SerializedProperty m_Weight;
         SerializedProperty m_Root;
@@ -18,6 +19,8 @@ namespace UnityEditor.Animations.Rigging
         SerializedProperty m_TargetPositionWeight;
         SerializedProperty m_TargetRotationWeight;
         SerializedProperty m_HintWeight;
+        SerializedProperty m_MaintainTargetPositionOffset;
+        SerializedProperty m_MaintainTargetRotationOffset;
 
         SerializedProperty m_SourceObjectsToggle;
         SerializedProperty m_SettingsToggle;
@@ -37,6 +40,8 @@ namespace UnityEditor.Animations.Rigging
             m_TargetPositionWeight = data.FindPropertyRelative("m_TargetPositionWeight");
             m_TargetRotationWeight = data.FindPropertyRelative("m_TargetRotationWeight");
             m_HintWeight = data.FindPropertyRelative("m_HintWeight");
+            m_MaintainTargetPositionOffset = data.FindPropertyRelative("m_MaintainTargetPositionOffset");
+            m_MaintainTargetRotationOffset = data.FindPropertyRelative("m_MaintainTargetRotationOffset");
         }
 
         public override void OnInspectorGUI()
@@ -61,6 +66,7 @@ namespace UnityEditor.Animations.Rigging
             if (m_SettingsToggle.boolValue)
             {
                 EditorGUI.indentLevel++;
+                MaintainOffsetHelper.DoDropdown(k_MaintainTargetOffsetLabel, m_MaintainTargetPositionOffset, m_MaintainTargetRotationOffset);
                 EditorGUILayout.PropertyField(m_TargetPositionWeight);
                 EditorGUILayout.PropertyField(m_TargetRotationWeight);
                 EditorGUILayout.PropertyField(m_HintWeight);
