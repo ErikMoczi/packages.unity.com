@@ -143,8 +143,8 @@ namespace UnityEngine.SpatialTracking
             resultPose = Pose.identity;
             return false;
         }
-
-        static internal bool TryGetTangoPose(out Pose pose)
+       
+        static bool TryGetTangoPose(out Pose pose)
         {
             PoseData poseOut;
             if (TangoInputTracking.TryGetPoseAtTime(out poseOut) && poseOut.statusCode == PoseStatus.Valid)
