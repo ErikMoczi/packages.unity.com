@@ -10,3 +10,4 @@
 3.0.1-preview
 3.0.2-preview
 3.0.3-preview.0
+3.0.3-preview.1

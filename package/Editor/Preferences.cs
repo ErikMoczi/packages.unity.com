@@ -64,9 +64,9 @@ namespace UnityEditor.ProGrids
 
 		public static bool LoadPreferences()
 		{
-			s_GridColorX = (EditorPrefs.HasKey(PreferenceKeys.GridColorX)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorX)) : Defaults.GridColorX;
-			s_GridColorY = (EditorPrefs.HasKey(PreferenceKeys.GridColorY)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorY)) : Defaults.GridColorY;
-			s_GridColorZ = (EditorPrefs.HasKey(PreferenceKeys.GridColorZ)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorZ)) : Defaults.GridColorZ;
+			s_GridColorX = EditorUtility.GetColorFromJson(EditorPrefs.GetString(PreferenceKeys.GridColorX), Defaults.GridColorX);
+			s_GridColorY = EditorUtility.GetColorFromJson(EditorPrefs.GetString(PreferenceKeys.GridColorY), Defaults.GridColorY);
+			s_GridColorZ = EditorUtility.GetColorFromJson(EditorPrefs.GetString(PreferenceKeys.GridColorZ), Defaults.GridColorZ);
 			s_AlphaBump = EditorPrefs.GetFloat(PreferenceKeys.AlphaBump, Defaults.AlphaBump);
 			s_BracketIncreaseValue = EditorPrefs.HasKey(PreferenceKeys.BracketIncreaseValue) ? EditorPrefs.GetFloat(PreferenceKeys.BracketIncreaseValue) : .25f;
 			s_GridUnits = (SnapUnit) EditorPrefs.GetInt(PreferenceKeys.GridUnit, 0);
@@ -97,9 +97,9 @@ namespace UnityEditor.ProGrids
 
 		public static void SetPreferences()
 		{
-			EditorPrefs.SetString(PreferenceKeys.GridColorX, s_GridColorX.ToString("f3"));
-			EditorPrefs.SetString(PreferenceKeys.GridColorY, s_GridColorY.ToString("f3"));
-			EditorPrefs.SetString(PreferenceKeys.GridColorZ, s_GridColorZ.ToString("f3"));
+			EditorPrefs.SetString(PreferenceKeys.GridColorX, JsonUtility.ToJson(s_GridColorX));
+			EditorPrefs.SetString(PreferenceKeys.GridColorY, JsonUtility.ToJson(s_GridColorY));
+			EditorPrefs.SetString(PreferenceKeys.GridColorZ, JsonUtility.ToJson(s_GridColorZ));
 			EditorPrefs.SetFloat(PreferenceKeys.AlphaBump, s_AlphaBump);
 			EditorPrefs.SetFloat(PreferenceKeys.BracketIncreaseValue, s_BracketIncreaseValue);
 			EditorPrefs.SetInt(PreferenceKeys.GridUnit, (int)s_GridUnits);

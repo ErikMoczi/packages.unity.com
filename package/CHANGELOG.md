@@ -5,11 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [3.0.3-preview.0] - 2018-05-29
+## [3.0.3-preview.1] - 2019-01-14
 
 ## Bug Fixes
 
 - Fix grid not rendering in SRP projects.
+
+## Changes since [3.0.3-preview.0]
+
+- Fix ProBuilder still applying snap values when ProGrids is closed.
+- Fix case where orbiting out of iso view would not reset the render plane.
+- Fix bug where ProBuilder would sometimes not snap new objects to the ProGrids grid.
+- Fix bug where single-key shortcuts would override Unity shortcuts.
+- Remove `About Window`.
+- Fix bug where rotating to isographic view would not reset the projection grid.
+- Fix X and Z grid colors being swapped.
+- Consistently use locale setting aware strings when storing preferences.
 
 ## [3.0.2-preview] - 2018-05-08
 
@@ -43,9 +54,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Remove `pg_` suffix from class and file names.
 - Remove automatic About Window popup on update.
 - `Alpha 0` shortcut now resets grid size modifier and offset.
-
-### Changes from ProGrids 3.0.0-preview.7
-
 - Fix reset shortcut not affecting the size modifier in some cases.
 
 ## [2.5.0-f.0] - 2017-08-03

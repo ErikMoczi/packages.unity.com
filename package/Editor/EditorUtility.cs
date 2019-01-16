@@ -30,6 +30,7 @@ namespace UnityEditor.ProGrids
 				|| (e.isMouse && e.button > 0);
 		}
 
+#if !UNITY_2019_1_OR_NEWER
 		static SceneView.OnSceneFunc onPreSceneGuiDelegate
 		{
 			get
@@ -64,6 +65,7 @@ namespace UnityEditor.ProGrids
 			if (del != null)
 				del -= func;
 		}
+#endif
 
 		public static T LoadInternalAsset<T>(string path) where T : Object
 		{
@@ -72,21 +74,16 @@ namespace UnityEditor.ProGrids
 			return AssetDatabase.LoadAssetAtPath<T>(k_ProGridsDirectory + path);
 		}
 
-		internal static Color ColorWithString(string value)
+		internal static Color GetColorFromJson(string json, Color fallback)
 		{
-			string valid = "01234567890.,";
-	        value = new string(value.Where(c => valid.Contains(c)).ToArray());
-	        string[] rgba = value.Split(',');
-
-	        // BRIGHT pink
-	        if(rgba.Length < 4)
-	        	return new Color(1f, 0f, 1f, 1f);
-
-			return new Color(
-				float.Parse(rgba[0]),
-				float.Parse(rgba[1]),
-				float.Parse(rgba[2]),
-				float.Parse(rgba[3]));
+			try
+			{
+				return JsonUtility.FromJson<Color>(json);
+			}
+			catch
+			{
+				return fallback;
+			}
 		}
 
 		static Vector3 VectorToMask(Vector3 vec)

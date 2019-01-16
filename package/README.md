@@ -1,9 +1,8 @@
 # ProGrids
 
-The development repository is mirrored to the Package Manager staging repository, which will pick up any tagged commits
-and create a new package uploaded to staging.
+The development repository is mirrored to the Package Manager staging repository. **Do not commit to the Package Manager mirror**.
 
-**Do not commit to the Package Manager mirror**.
+[![pipeline status](https://gitlab.internal.unity3d.com/world-building/progrids/badges/master/pipeline.svg)](https://gitlab.internal.unity3d.com/world-building/progrids/commits/master)
 
 ## Development
 

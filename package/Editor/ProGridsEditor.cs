@@ -63,7 +63,7 @@ namespace UnityEditor.ProGrids
 		// Distance from camera to m_Pivot at the last time the grid mesh was updated.
 		float m_LastDistanceCameraToPivot = 0f;
 		public float GridRenderOffset { get; set; }
-		public bool GridIsOrthographic { get; private set; }
+		public bool gridIsOrthographic { get; private set; }
 		bool m_IsFirstMove = true;
 		float m_PlaneGridDrawDistance = 0f;
 		bool m_IsEnabled;
@@ -122,7 +122,7 @@ namespace UnityEditor.ProGrids
 
 		internal bool GetSnapEnabled()
 		{
-			return m_ToggleTempSnap ? !m_SnapSettings.SnapEnabled : m_SnapSettings.SnapEnabled;
+			return m_IsEnabled && (m_ToggleTempSnap ? !m_SnapSettings.SnapEnabled : m_SnapSettings.SnapEnabled);
 		}
 
 		internal void SetSnapEnabled(bool isEnabled)
@@ -367,7 +367,7 @@ namespace UnityEditor.ProGrids
 
 		~ProGridsEditor()
 		{
-			Destroy();
+			EditorApplication.delayCall += Destroy;
 		}
 
 		void Initialize()
@@ -422,9 +422,14 @@ namespace UnityEditor.ProGrids
 		void RegisterDelegates()
 		{
 			UnregisterDelegates();
-
+			
+#if UNITY_2019_1_OR_NEWER
+			SceneView.duringSceneGui += OnSceneGUI;
+			SceneView.duringSceneGui += DrawSceneGrid;
+#else
 			SceneView.onSceneGUIDelegate += OnSceneGUI;
 			SceneView.onSceneGUIDelegate += DrawSceneGrid;
+#endif
 			EditorApplication.update += UpdateToolbar;
 			Selection.selectionChanged += OnSelectionChange;
 			Undo.undoRedoPerformed += ResetActiveTransformValues;
@@ -436,8 +441,13 @@ namespace UnityEditor.ProGrids
 		{
 			m_IsEnabled = false;
 
+#if UNITY_2019_1_OR_NEWER
+			SceneView.duringSceneGui -= OnSceneGUI;
+			SceneView.duringSceneGui -= DrawSceneGrid;
+#else
 			SceneView.onSceneGUIDelegate -= OnSceneGUI;
 			SceneView.onSceneGUIDelegate -= DrawSceneGrid;
+#endif
 			EditorApplication.update -= UpdateToolbar;
 			Selection.selectionChanged -= OnSelectionChange;
 			Undo.undoRedoPerformed -= ResetActiveTransformValues;
@@ -521,9 +531,11 @@ namespace UnityEditor.ProGrids
 
 		void OnSceneGUI(SceneView view)
 		{
+			Handles.EndGUI();
+
 			var currentEvent = Event.current;
 
-			HandleKeys(currentEvent);
+			HandleSingleKeyShortcuts(currentEvent);
 
 			if (view == SceneView.lastActiveSceneView)
 			{
@@ -545,17 +557,21 @@ namespace UnityEditor.ProGrids
 				Vector3 previousPivot = m_Pivot;
 				CalculateGridPlacement(view);
 
-				if (GridIsOrthographic)
+				if (gridIsOrthographic)
 				{
-					GridRenderer.DrawOrthographic(view.camera, SnapValueInUnityUnits, m_DrawAngles ? AngleValue : -1f);
+                    Axis camAxis = EnumExtension.AxisWithVector(Camera.current.transform.TransformDirection(Vector3.forward).normalized);
+                    if(m_RenderPlane != camAxis)
+	                    SetRenderPlane(camAxis);
+                    GridRenderer.DrawOrthographic(view.camera, camAxis, SnapValueInUnityUnits, m_DrawAngles ? AngleValue : -1f);
 				}
 				else
 				{
 					float camDistance = Vector3.Distance(view.camera.transform.position, previousPivot);
 
-					if (m_DoGridRepaint || m_Pivot != previousPivot ||
-					    Mathf.Abs(camDistance - m_LastDistanceCameraToPivot) > m_LastDistanceCameraToPivot / 2 ||
-					    m_CameraDirection != m_PreviousCameraDirection)
+					if (m_DoGridRepaint
+						|| m_Pivot != previousPivot
+						|| Mathf.Abs(camDistance - m_LastDistanceCameraToPivot) > m_LastDistanceCameraToPivot / 2
+						|| m_CameraDirection != m_PreviousCameraDirection)
 					{
 						m_PreviousCameraDirection = m_CameraDirection;
 						m_DoGridRepaint = false;
@@ -576,19 +592,24 @@ namespace UnityEditor.ProGrids
 		{
 			var cam = view.camera;
 
-			bool wasOrtho = GridIsOrthographic;
+			bool wasOrtho = gridIsOrthographic;
 
-			GridIsOrthographic = cam.orthographic && Snapping.IsRounded(view.rotation.eulerAngles.normalized);
+			gridIsOrthographic = cam.orthographic && Snapping.IsRounded(view.rotation.eulerAngles.normalized);
 
 			m_CameraDirection = Snapping.Sign(m_Pivot - cam.transform.position);
 
-			if (GridIsOrthographic && !wasOrtho || GridIsOrthographic != menuIsOrtho)
-				OnSceneBecameOrtho(view == SceneView.lastActiveSceneView);
+			if (wasOrtho != gridIsOrthographic)
+			{
+				m_DoGridRepaint = true;
 
-			if (!GridIsOrthographic && wasOrtho)
-				OnSceneBecamePersp(view == SceneView.lastActiveSceneView);
+				if (gridIsOrthographic && !wasOrtho || gridIsOrthographic != menuIsOrtho)
+					OnSceneBecameOrtho(view == SceneView.lastActiveSceneView);
 
-			if (GridIsOrthographic)
+				if (!gridIsOrthographic && wasOrtho)
+					OnSceneBecamePersp(view == SceneView.lastActiveSceneView);
+			}
+
+			if (gridIsOrthographic)
 				return;
 
 			if (FullGridEnabled)
@@ -720,13 +741,15 @@ namespace UnityEditor.ProGrids
 			m_LastScale = m_LastActiveTransform.localScale;
 		}
 
-		void HandleKeys(Event currentEvent)
+		void HandleSingleKeyShortcuts(Event currentEvent)
 		{
-			if (!currentEvent.isKey || EditorUtility.SceneViewInUse())
+			if (!currentEvent.isKey
+				|| EditorUtility.SceneViewInUse()
+				|| currentEvent.modifiers != EventModifiers.None)
 				return;
 
-			KeyCode keyCode = currentEvent.keyCode;
-			bool used = true;
+			var keyCode = currentEvent.keyCode;
+			var used = true;
 
 			if (currentEvent.type == EventType.KeyDown)
 			{
@@ -752,17 +775,17 @@ namespace UnityEditor.ProGrids
 				}
 				else if (currentEvent.keyCode == m_NudgePerspectiveBackwardShortcut)
 				{
-					if (!FullGridEnabled && !GridIsOrthographic && m_GridIsLocked)
+					if (!FullGridEnabled && !gridIsOrthographic && m_GridIsLocked)
 						MenuNudgePerspectiveBackward();
 				}
 				else if (currentEvent.keyCode == m_NudgePerspectiveForwardShortcut)
 				{
-					if (!FullGridEnabled && !GridIsOrthographic && m_GridIsLocked)
+					if (!FullGridEnabled && !gridIsOrthographic && m_GridIsLocked)
 						MenuNudgePerspectiveForward();
 				}
 				else if (currentEvent.keyCode == m_ResetGridShortcutModifiers)
 				{
-					if (!FullGridEnabled && !GridIsOrthographic && m_GridIsLocked)
+					if (!FullGridEnabled && !gridIsOrthographic && m_GridIsLocked)
 						MenuNudgePerspectiveReset();
 
 					ResetGridSize();
@@ -775,6 +798,10 @@ namespace UnityEditor.ProGrids
 				{
 					used = false;
 				}
+			}
+			else
+			{
+				used = false;
 			}
 
 			if (used)
@@ -800,13 +827,13 @@ namespace UnityEditor.ProGrids
 
 		void OnSceneBecameOrtho(bool isCurrentView)
 		{
-			if (isCurrentView && GridIsOrthographic != menuIsOrtho)
+			if (isCurrentView && gridIsOrthographic != menuIsOrtho)
 				SetMenuIsExtended(menuOpen);
 		}
 
 		void OnSceneBecamePersp(bool isCurrentView)
 		{
-			if (isCurrentView && GridIsOrthographic != menuIsOrtho)
+			if (isCurrentView && gridIsOrthographic != menuIsOrtho)
 				SetMenuIsExtended(menuOpen);
 		}
 
@@ -884,7 +911,7 @@ namespace UnityEditor.ProGrids
 		/// <returns></returns>
 		public static Vector3 GetPivot()
 		{
-			return s_Instance == null ? Vector3.zero : s_Instance.m_Pivot;
+			return s_Instance == null ? Vector3.zero : Snapping.Round(s_Instance.m_Pivot, s_Instance.GetSnapValue());
 		}
 
 		/// <summary>

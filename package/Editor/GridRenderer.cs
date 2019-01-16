@@ -76,7 +76,7 @@ namespace UnityEditor.ProGrids
 			}
 
 			LoadPreferences();
-			
+
 			return s_GridMesh != null || s_GridMaterial != null;
 		}
 
@@ -93,9 +93,9 @@ namespace UnityEditor.ProGrids
 		{
 			s_AlphaBump = EditorPrefs.GetFloat(PreferenceKeys.AlphaBump, Defaults.AlphaBump);
 
-			gridColorX = (EditorPrefs.HasKey(PreferenceKeys.GridColorX)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorX)) : Defaults.GridColorX;
-			gridColorY = (EditorPrefs.HasKey(PreferenceKeys.GridColorY)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorY)) : Defaults.GridColorY;
-			gridColorZ = (EditorPrefs.HasKey(PreferenceKeys.GridColorZ)) ? EditorUtility.ColorWithString(EditorPrefs.GetString(PreferenceKeys.GridColorZ)) : Defaults.GridColorZ;
+			gridColorX = EditorUtility.GetColorFromJson(EditorPrefs.GetString(PreferenceKeys.GridColorX), Defaults.GridColorX);
+			gridColorY = EditorUtility.GetColorFromJson(EditorPrefs.GetString(PreferenceKeys.GridColorY), Defaults.GridColorY);
+			gridColorZ = EditorUtility.GetColorFromJson(EditorPrefs.GetString(PreferenceKeys.GridColorZ), Defaults.GridColorZ);
 		}
 
 		internal static void Repaint()
@@ -269,7 +269,7 @@ namespace UnityEditor.ProGrids
 			List<int> indices_m = new List<int>();
 
 			// X plane
-			RebuildPerspectivePlane(cam, pivot, up, right, snapValue*div, x_iter/div, gridColorX, out vertices_t, out normals_t, out colors_t, out indices_t, 0);
+			RebuildPerspectivePlane(cam, pivot, up, forward, snapValue*div, x_iter/div, gridColorX, out vertices_t, out normals_t, out colors_t, out indices_t, 0);
 			vertices_m.AddRange(vertices_t);
 			normals_m.AddRange(normals_t);
 			colors_m.AddRange(colors_t);
@@ -283,7 +283,7 @@ namespace UnityEditor.ProGrids
 			indices_m.AddRange(indices_t);
 
 			// Z plane
-			RebuildPerspectivePlane(cam, pivot, forward, up, snapValue*div, z_iter/div, gridColorZ, out vertices_t, out normals_t, out colors_t, out indices_t, vertices_m.Count);
+			RebuildPerspectivePlane(cam, pivot, right, up, snapValue*div, z_iter/div, gridColorZ, out vertices_t, out normals_t, out colors_t, out indices_t, vertices_m.Count);
 			vertices_m.AddRange(vertices_t);
 			normals_m.AddRange(normals_t);
 			colors_m.AddRange(colors_t);
@@ -299,28 +299,24 @@ namespace UnityEditor.ProGrids
 
 		}
 
-		internal static void DrawOrthographic(Camera cam, float snapValue, float angle)
+		internal static void DrawOrthographic(Camera cam, Axis camAxis, float snapValue, float angle)
 		{
-			Axis camAxis = EnumExtension.AxisWithVector(Camera.current.transform.TransformDirection(Vector3.forward).normalized);
-
 			switch (camAxis)
 			{
 				case Axis.X:
-				case Axis.NegX:
 					DrawOrthographic(cam, camAxis, gridColorX, snapValue, angle);
 					break;
 
 				case Axis.Y:
-				case Axis.NegY:
 					DrawOrthographic(cam, camAxis, gridColorY, snapValue, angle);
 					break;
 
 				case Axis.Z:
-				case Axis.NegZ:
 					DrawOrthographic(cam, camAxis, gridColorZ, snapValue, angle);
 					break;
 			}
 		}
+
 		static void RebuildPerspectivePlane(Camera cam, Vector3 pivot, Vector3 tan, Vector3 bitan, float increment, int iterations, Color secondary,
 			out Vector3[] vertices,
 			out Vector3[] normals,
@@ -545,15 +541,18 @@ namespace UnityEditor.ProGrids
 			return intersects;
 		}
 
-		static void DrawOrthographic(Camera cam, Axis camAxis, Color color, float snapValue, float angle)
+		static void DrawOrthographic(Camera camera, Axis camAxis, Color color, float snapValue, float angle)
 		{
 			Color previousColor = Handles.color;
 			Color primaryColor = new Color(color.r, color.g, color.b, color.a + s_AlphaBump);
 
-			Vector3 bottomLeft = Snapping.Floor(cam.ScreenToWorldPoint(Vector2.zero), snapValue);
-			Vector3 bottomRight = Snapping.Floor(cam.ScreenToWorldPoint(new Vector2(cam.pixelWidth, 0f)), snapValue);
-			Vector3 topLeft = Snapping.Floor(cam.ScreenToWorldPoint(new Vector2(0f, cam.pixelHeight)), snapValue);
-			Vector3 topRight = Snapping.Floor(cam.ScreenToWorldPoint(new Vector2(cam.pixelWidth, cam.pixelHeight)), snapValue);
+			Vector3 bottomLeft = Snapping.Floor(camera.ScreenToWorldPoint(Vector2.zero), snapValue);
+			Vector3 bottomRight =
+				Snapping.Floor(camera.ScreenToWorldPoint(new Vector2(camera.pixelWidth, 0f)), snapValue);
+			Vector3 topLeft = Snapping.Floor(camera.ScreenToWorldPoint(new Vector2(0f, camera.pixelHeight)), snapValue);
+			Vector3 topRight =
+				Snapping.Floor(camera.ScreenToWorldPoint(new Vector2(camera.pixelWidth, camera.pixelHeight)),
+					snapValue);
 
 			Vector3 axis = EnumExtension.VectorWithAxis(camAxis);
 
@@ -561,25 +560,28 @@ namespace UnityEditor.ProGrids
 			float height = Vector3.Distance(bottomRight, topRight);
 
 			// Shift lines to 10m forward of the camera
-			bottomLeft += axis * 10f;
-			topRight += axis * 10f;
-			bottomRight += axis * 10f;
-			topLeft += axis * 10f;
+			var camTrs = camera.transform;
+			var camForward = camTrs.forward;
+			var camRight = camTrs.right;
+			var camUp = camTrs.up;
+
+			bottomLeft += axis * Mathf.Sign(Vector3.Dot(camForward, axis)) * 10f;
+			topRight += axis * Mathf.Sign(Vector3.Dot(camForward, axis)) * 10f;
+			bottomRight += axis * Mathf.Sign(Vector3.Dot(camForward, axis)) * 10f;
+			topLeft += axis * Mathf.Sign(Vector3.Dot(camForward, axis)) * 10f;
 
 			// Draw Vertical Lines
-			Vector3 camRight = cam.transform.right;
-			Vector3 camUp = cam.transform.up;
 
 			float snapValueAtResolution = snapValue;
 
-			int segs = (int)Mathf.Ceil(width / snapValueAtResolution) + 2;
+			int segs = (int) Mathf.Ceil(width / snapValueAtResolution) + 2;
 
 			float n = 2f;
 
 			while (segs > k_MaxLines)
 			{
 				snapValueAtResolution = snapValueAtResolution * n;
-				segs = (int)Mathf.Ceil(width / snapValueAtResolution) + 2;
+				segs = (int) Mathf.Ceil(width / snapValueAtResolution) + 2;
 				n++;
 			}
 
@@ -605,13 +607,13 @@ namespace UnityEditor.ProGrids
 			}
 
 			// Draw Horizontal Lines
-			segs = (int)Mathf.Ceil(height / snapValueAtResolution) + 2;
+			segs = (int) Mathf.Ceil(height / snapValueAtResolution) + 2;
 
 			n = 2;
 			while (segs > k_MaxLines)
 			{
 				snapValueAtResolution = snapValueAtResolution * n;
-				segs = (int)Mathf.Ceil(height / snapValueAtResolution) + 2;
+				segs = (int) Mathf.Ceil(height / snapValueAtResolution) + 2;
 				n++;
 			}
 
@@ -621,7 +623,7 @@ namespace UnityEditor.ProGrids
 			start = tl - camRight * (width + snapValueAtResolution * 2);
 			end = tl + camRight * (width + snapValueAtResolution * 2);
 
-			segs += (int)k_PrimaryColorIncrement;
+			segs += (int) k_PrimaryColorIncrement;
 
 			for (int i = -1; i < segs; i++)
 			{
@@ -639,8 +641,8 @@ namespace UnityEditor.ProGrids
 
 				float opposite = Mathf.Tan(Mathf.Deg2Rad * angle) * half;
 
-				Vector3 up = cam.transform.up * opposite;
-				Vector3 right = cam.transform.right * half;
+				Vector3 up = camera.transform.up * opposite;
+				Vector3 right = camera.transform.right * half;
 
 				Vector3 bottomLeftAngle = cen - (up + right);
 				Vector3 topRightAngle = cen + (up + right);

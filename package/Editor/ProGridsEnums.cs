@@ -3,14 +3,12 @@
 namespace UnityEditor.ProGrids
 {
 	[System.Flags]
-	enum Axis {
+	enum Axis
+	{
 		None = 0x0,
-		X = 0x1,
-		Y = 0x2,
-		Z = 0x4,
-		NegX = 0x8,
-		NegY = 0x16,
-		NegZ = 0x32
+		X = 1 << 0,
+		Y = 1 << 1,
+		Z = 1 << 2
 	}
 
 	enum SnapUnit {
@@ -42,15 +40,12 @@ namespace UnityEditor.ProGrids
 			switch(axis)
 			{
 				case Axis.X:
-				case Axis.NegX:
 					return Vector3.Scale(v, new Vector3(0f, 1f, 1f));
 
 				case Axis.Y:
-				case Axis.NegY:
 					return Vector3.Scale(v, new Vector3(1f, 0f, 1f));
 
 				case Axis.Z:
-				case Axis.NegZ:
 					return Vector3.Scale(v, new Vector3(1f, 1f, 0f));
 
 				default:
@@ -63,15 +58,12 @@ namespace UnityEditor.ProGrids
 			switch(axis)
 			{
 				case Axis.X:
-				case Axis.NegX:
 					return Vector3.Scale(v, new Vector3(1f, 0f, 0f));
 
 				case Axis.Y:
-				case Axis.NegY:
 					return Vector3.Scale(v, new Vector3(0f, 1f, 0f));
 
 				case Axis.Z:
-				case Axis.NegZ:
 					return Vector3.Scale(v, new Vector3(0f, 0f, 1f));
 
 				default:
@@ -117,27 +109,12 @@ namespace UnityEditor.ProGrids
 			Vector3 v = new Vector3(Mathf.Abs(val.x), Mathf.Abs(val.y), Mathf.Abs(val.z));
 
 			if (v.x > v.y && v.x > v.z)
-			{
-				if (val.x > 0)
-					return Axis.X;
-				else
-					return Axis.NegX;
-			}
-			else
+				return Axis.X;
+
 			if (v.y > v.x && v.y > v.z)
-			{
-				if (val.y > 0)
-					return Axis.Y;
-				else
-					return Axis.NegY;
-			}
-			else
-			{
-				if (val.z > 0)
-					return Axis.Z;
-				else
-					return Axis.NegZ;
-			}
+				return Axis.Y;
+
+			return Axis.Z;
 		}
 
 		internal static Vector3 VectorWithAxis(Axis axis)
@@ -148,15 +125,6 @@ namespace UnityEditor.ProGrids
 					return Vector3.right;
 				case Axis.Y:
 					return Vector3.up;
-				case Axis.Z:
-					return Vector3.forward;
-				case Axis.NegX:
-					return -Vector3.right;
-				case Axis.NegY:
-					return -Vector3.up;
-				case Axis.NegZ:
-					return -Vector3.forward;
-
 				default:
 					return Vector3.forward;
 			}

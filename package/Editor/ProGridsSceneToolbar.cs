@@ -228,47 +228,50 @@ namespace UnityEditor.ProGrids
 				ProGridsEditor.DoGridRepaint();
 			}
 
-			if (menuIsOrtho)
-			{
-				menuRect.y += menuRect.height + k_MenuItemPadding;
+            if (menuIsOrtho)
+            {
+                menuRect.y += menuRect.height + k_MenuItemPadding;
 
-				if (ToggleContent.ToggleButton(menuRect, Styles.angleEnabledContent, m_DrawAngles, Styles.gridButtonStyle, EditorStyles.miniButton))
-					SetDrawAngles(!m_DrawAngles);
-			}
+                if (ToggleContent.ToggleButton(menuRect, Styles.angleEnabledContent, m_DrawAngles, Styles.gridButtonStyle, EditorStyles.miniButton))
+                    SetDrawAngles(!m_DrawAngles);
+            }
 
-			// perspective toggles
+            else
+            {
+                // perspective toggles
 
-			menuRect.y += menuRect.height + k_MenuItemPadding + 4;
+                menuRect.y += menuRect.height + k_MenuItemPadding + 4;
 
-			if (ToggleContent.ToggleButton(menuRect, Styles.renderPlaneXContent, (m_RenderPlane & Axis.X) == Axis.X && !FullGridEnabled,
-				Styles.gridButtonStyle, EditorStyles.miniButton))
-				SetRenderPlane(Axis.X);
+                if (ToggleContent.ToggleButton(menuRect, Styles.renderPlaneXContent, (m_RenderPlane & Axis.X) == Axis.X && !FullGridEnabled,
+                    Styles.gridButtonStyle, EditorStyles.miniButton))
+                    SetRenderPlane(Axis.X);
 
-			menuRect.y += menuRect.height + k_MenuItemPadding;
+                menuRect.y += menuRect.height + k_MenuItemPadding;
 
-			if (ToggleContent.ToggleButton(menuRect, Styles.renderPlaneYContent, (m_RenderPlane & Axis.Y) == Axis.Y && !FullGridEnabled,
-				Styles.gridButtonStyle, EditorStyles.miniButton))
-				SetRenderPlane(Axis.Y);
+                if (ToggleContent.ToggleButton(menuRect, Styles.renderPlaneYContent, (m_RenderPlane & Axis.Y) == Axis.Y && !FullGridEnabled,
+                    Styles.gridButtonStyle, EditorStyles.miniButton))
+                    SetRenderPlane(Axis.Y);
 
-			menuRect.y += menuRect.height + k_MenuItemPadding;
+                menuRect.y += menuRect.height + k_MenuItemPadding;
 
-			if (ToggleContent.ToggleButton(menuRect, Styles.renderPlaneZContent, (m_RenderPlane & Axis.Z) == Axis.Z && !FullGridEnabled,
-				Styles.gridButtonStyle, EditorStyles.miniButton))
-				SetRenderPlane(Axis.Z);
+                if (ToggleContent.ToggleButton(menuRect, Styles.renderPlaneZContent, (m_RenderPlane & Axis.Z) == Axis.Z && !FullGridEnabled,
+                    Styles.gridButtonStyle, EditorStyles.miniButton))
+                    SetRenderPlane(Axis.Z);
 
-			menuRect.y += menuRect.height + k_MenuItemPadding;
+                menuRect.y += menuRect.height + k_MenuItemPadding;
 
-			if (ToggleContent.ToggleButton(menuRect, Styles.renderPerspectiveGridContent, FullGridEnabled, Styles.gridButtonStyle,
-				EditorStyles.miniButton))
-			{
-				FullGridEnabled = !FullGridEnabled;
-				EditorPrefs.SetBool(PreferenceKeys.PerspGrid, FullGridEnabled);
-				ProGridsEditor.DoGridRepaint();
-			}
+                if (ToggleContent.ToggleButton(menuRect, Styles.renderPerspectiveGridContent, FullGridEnabled, Styles.gridButtonStyle,
+                    EditorStyles.miniButton))
+                {
+                    FullGridEnabled = !FullGridEnabled;
+                    EditorPrefs.SetBool(PreferenceKeys.PerspGrid, FullGridEnabled);
+                    ProGridsEditor.DoGridRepaint();
+                }
+            }
 
-			menuRect.y += menuRect.height + k_MenuItemPadding;
+            menuRect.y += menuRect.height + k_MenuItemPadding;
 
-			extendoButtonRect.x = menuRect.x;
+            extendoButtonRect.x = menuRect.x;
 			extendoButtonRect.y = menuRect.y;
 			extendoButtonRect.width = menuRect.width;
 			extendoButtonRect.height = menuRect.height;
@@ -305,7 +308,7 @@ namespace UnityEditor.ProGrids
 		void SetMenuIsExtended(bool isExtended)
 		{
 			menuOpen = isExtended;
-			menuIsOrtho = GridIsOrthographic;
+			menuIsOrtho = gridIsOrthographic;
 			menuStart = menuOpen ? k_MenuPosition.y : SceneToolbarPositionClosedY;
 
 			menuBackgroundColor.a = 0f;

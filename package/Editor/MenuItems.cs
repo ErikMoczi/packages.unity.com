@@ -4,12 +4,6 @@ namespace UnityEditor.ProGrids
 {
 	static class MenuItems
 	{
-		[MenuItem("Tools/ProGrids/About", false, 0)]
-		public static void MenuAboutProGrids()
-		{
-			AboutWindow.Init();
-		}
-
 		[MenuItem("Tools/ProGrids/ProGrids Window", false, 15)]
 		public static void InitProGrids()
 		{
@@ -60,7 +54,7 @@ namespace UnityEditor.ProGrids
 		[MenuItem("Tools/ProGrids/Reset Perspective Nudge", true, 306)]
 		public static bool VerifyMenuNudgePerspective()
 		{
-			return ProGridsEditor.IsEnabled() && !ProGridsEditor.Instance.FullGridEnabled && !ProGridsEditor.Instance.GridIsOrthographic && ProGridsEditor.Instance.GridIsLocked;
+			return ProGridsEditor.IsEnabled() && !ProGridsEditor.Instance.FullGridEnabled && !ProGridsEditor.Instance.gridIsOrthographic && ProGridsEditor.Instance.GridIsLocked;
 		}
 
 		[MenuItem("Tools/ProGrids/Nudge Perspective Backward", false, 304)]
