@@ -1,11 +1,11 @@
 {
 	"name": "com.unity.xr.googlevr.android",
 	"displayName":"Google VR Android",
-	"version": "1.18.0",
+	"version": "1.18.1",
 	"unity": "2019.1",
 	"description": "This package contains the necessary components required to use the Google VR Virtual Reality SDK on Android. By using this package, you will be able to deploy and run your applications on Daydream/Cardboard supported devices. Currently GVR 1.180",
 	"keywords": ["google", "xr", "vr", "ar", "virtual", "cardboard", "daydream", "sdk", "android", "gvr"],
     "dependencies": {
-        "com.unity.google.resonance.audio" : "1.18.0"
+        "com.unity.google.resonance.audio" : "1.18.1"
     }
 }
