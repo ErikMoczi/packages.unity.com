@@ -66,3 +66,4 @@
 4.0.0-preview.39
 4.0.0-preview.40
 4.0.0-preview.41
+4.0.0
