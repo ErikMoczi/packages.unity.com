@@ -7,7 +7,6 @@
         "Unity.Entities.TestComponents",
         "Unity.Collections",
         "Unity.Jobs",
-        "Unity.Rendering.Hybrid",
         "Unity.Transforms",
         "Unity.Mathematics"
     ],
