@@ -17,8 +17,7 @@ namespace Unity.Mathematics
         public uint w;
 
         /// <summary>uint4 zero value.</summary>
-        public static readonly uint4 zero = new uint4(0u,   0u,   0u,   0u);
-
+        public static readonly uint4 zero;
 
         /// <summary>Constructs a uint4 vector from four uint values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3393,7 +3392,7 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint hash(uint4 v)
         {
-            return csum(v * uint4(0x7AA07CD3u, 0xAF642BA9u, 0xA8F2213Bu, 0x9F3FDC37u)) + 0xAC60D0C3u;
+            return csum(v * uint4(0xB492BF15u, 0xD37220E3u, 0x7AA2C2BDu, 0xE16BC89Du)) + 0x7AA07CD3u;
         }
 
         /// <summary>
@@ -3404,7 +3403,7 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint4 hashwide(uint4 v)
         {
-            return (v * uint4(0x9263662Fu, 0xE69626FFu, 0xBD010EEBu, 0x9CEDE1D1u)) + 0x43BE0B51u;
+            return (v * uint4(0xAF642BA9u, 0xA8F2213Bu, 0x9F3FDC37u, 0xAC60D0C3u)) + 0x9263662Fu;
         }
 
         /// <summary>Returns the result of specified shuffling of the components from two uint4 vectors into a uint value.</summary>

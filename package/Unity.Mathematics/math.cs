@@ -72,7 +72,7 @@ namespace Unity.Mathematics
         public static readonly float FLT_MIN_NORMAL = 1.175494351e-38F;
 
         /// <summary>The smallest positive normal number representable in a double.</summary>
-        public static readonly float DBL_MIN_NORMAL = 1.175494351e-38F;
+        public static readonly double DBL_MIN_NORMAL = 2.2250738585072014e-308;
 
 
         /// <summary>Returns the bit pattern of a uint as an int.</summary>
@@ -344,7 +344,7 @@ namespace Unity.Mathematics
         }
 
 
-        /// <summary>Returns the minimum of two integers.</summary>
+        /// <summary>Returns the minimum of two int values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int min(int x, int y) { return x < y ? x : y; }
 
@@ -361,7 +361,7 @@ namespace Unity.Mathematics
         public static int4 min(int4 x, int4 y) { return new int4(min(x.x, y.x), min(x.y, y.y), min(x.z, y.z), min(x.w, y.w)); }
 
 
-        /// <summary>Returns the minimum of two int values.</summary>
+        /// <summary>Returns the minimum of two uint values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint min(uint x, uint y) { return x < y ? x : y; }
 
@@ -376,6 +376,16 @@ namespace Unity.Mathematics
         /// <summary>Returns the componentwise minimum of two uint4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint4 min(uint4 x, uint4 y) { return new uint4(min(x.x, y.x), min(x.y, y.y), min(x.z, y.z), min(x.w, y.w)); }
+
+
+        /// <summary>Returns the minimum of two long values.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long min(long x, long y) { return x < y ? x : y; }
+
+
+        /// <summary>Returns the minimum of two ulong values.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong min(ulong x, ulong y) { return x < y ? x : y; }
 
 
         /// <summary>Returns the minimum of two float values.</summary>
@@ -444,6 +454,16 @@ namespace Unity.Mathematics
         /// <summary>Returns the componentwise maximum of two uint4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint4 max(uint4 x, uint4 y) { return new uint4(max(x.x, y.x), max(x.y, y.y), max(x.z, y.z), max(x.w, y.w)); }
+
+
+        /// <summary>Returns the maximum of two long values.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long max(long x, long y) { return x > y ? x : y; }
+
+
+        /// <summary>Returns the maximum of two ulong values.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong max(ulong x, ulong y) { return x > y ? x : y; }
 
 
         /// <summary>Returns the maximum of two float values.</summary>
@@ -642,6 +662,16 @@ namespace Unity.Mathematics
         public static uint4 mad(uint4 a, uint4 b, uint4 c) { return a * b + c; }
 
 
+        /// <summary>Returns the result of a multiply-add operation (a * b + c) on 3 long values.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long mad(long a, long b, long c) { return a * b + c; }
+
+
+        /// <summary>Returns the result of a multiply-add operation (a * b + c) on 3 ulong values.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong mad(ulong a, ulong b, ulong c) { return a * b + c; }
+
+
         /// <summary>Returns the result of a multiply-add operation (a * b + c) on 3 float values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float mad(float a, float b, float c) { return a * b + c; }
@@ -708,6 +738,15 @@ namespace Unity.Mathematics
         /// <summary>Returns the result of a componentwise clamping of the value x into the interval [a, b], where x, a and b are uint4 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint4 clamp(uint4 x, uint4 a, uint4 b) { return max(a, min(b, x)); }
+
+
+        /// <summary>Returns the result of clamping the value x into the interval [a, b], where x, a and b are long values.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long clamp(long x, long a, long b) { return max(a, min(b, x)); }
+
+        /// <summary>Returns the result of clamping the value x into the interval [a, b], where x, a and b are ulong values.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong clamp(ulong x, ulong a, ulong b) { return max(a, min(b, x)); }
 
 
         /// <summary>Returns the result of clamping the value x into the interval [a, b], where x, a and b are float values.</summary>
@@ -793,6 +832,10 @@ namespace Unity.Mathematics
         /// <summary>Returns the componentwise absolute value of a int4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int4 abs(int4 x) { return max(-x, x); }
+
+        /// <summary>Returns the absolute value of a long value.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long abs(long x) { return max(-x, x); }
 
 
         /// <summary>Returns the absolute value of a float value.</summary>
@@ -1314,7 +1357,7 @@ namespace Unity.Mathematics
 
 
         /// <summary>Returns the sign of a float value. -1.0f if it is less than zero, 0.0f if it is zero and 1.0f if it greater than zero.</summary>
-        public static float sign(float x) { return x == 0.0f ? 0.0f : (x > 0.0f ? 1.0f : 0.0f) - (x < 0.0f ? 1.0f : 0.0f); }
+        public static float sign(float x) { return (x > 0.0f ? 1.0f : 0.0f) - (x < 0.0f ? 1.0f : 0.0f); }
 
         /// <summary>Returns the componentwise sign of a float2 value. 1.0f for positive components, 0.0f for zero components and -1.0f for negative components.</summary>
         public static float2 sign(float2 x) { return new float2(sign(x.x), sign(x.y)); }
@@ -1339,7 +1382,7 @@ namespace Unity.Mathematics
         public static double4 sign(double4 x) { return new double4(sign(x.x), sign(x.y), sign(x.z), sign(x.w)); }
 
 
-        /// <summary>Returns x raised to the y power y.</summary>
+        /// <summary>Returns x raised to the power y.</summary>
         public static float pow(float x, float y) { return (float)System.Math.Pow((float)x, (float)y); }
 
         /// <summary>Returns the componentwise result of raising x to the power y.</summary>
@@ -1352,7 +1395,7 @@ namespace Unity.Mathematics
         public static float4 pow(float4 x, float4 y) { return new float4(pow(x.x, y.x), pow(x.y, y.y), pow(x.z, y.z), pow(x.w, y.w)); }
 
 
-        /// <summary>Returns x raised to the y power y.</summary>
+        /// <summary>Returns x raised to the power y.</summary>
         public static double pow(double x, double y) { return System.Math.Pow(x, y); }
 
         /// <summary>Returns the componentwise result of raising x to the power y.</summary>
@@ -1363,32 +1406,6 @@ namespace Unity.Mathematics
 
         /// <summary>Returns the componentwise result of raising x to the power y.</summary>
         public static double4 pow(double4 x, double4 y) { return new double4(pow(x.x, y.x), pow(x.y, y.y), pow(x.z, y.z), pow(x.w, y.w)); }
-
-
-        /// <summary>Returns x raised to the y power y. Assumes x is non-negative.</summary>
-        public static float powr(float x, float y) { return pow(x, y); }
-
-        /// <summary>Returns the componentwise result of raising x to the power y. Assumes the components of x are non-negative.</summary>
-        public static float2 powr(float2 x, float2 y) { return pow(x, y); }
-
-        /// <summary>Returns the componentwise result of raising x to the power y. Assumes the components of x are non-negative.</summary>
-        public static float3 powr(float3 x, float3 y) { return pow(x, y); }
-
-        /// <summary>Returns the componentwise result of raising x to the power y. Assumes the components of x are non-negative.</summary>
-        public static float4 powr(float4 x, float4 y) { return pow(x, y); }
-
-
-        /// <summary>Returns x raised to the y power y. Assumes x is non-negative.</summary>
-        public static double powr(double x, double y) { return pow(x, y); }
-
-        /// <summary>Returns the componentwise result of raising x to the power y. Assumes the components of x are non-negative.</summary>
-        public static double2 powr(double2 x, double2 y) { return pow(x, y); }
-
-        /// <summary>Returns the componentwise result of raising x to the power y. Assumes the components of x are non-negative.</summary>
-        public static double3 powr(double3 x, double3 y) { return pow(x, y); }
-
-        /// <summary>Returns the componentwise result of raising x to the power y. Assumes the components of x are non-negative.</summary>
-        public static double4 powr(double4 x, double4 y) { return pow(x, y); }
 
 
         /// <summary>Returns the base-e exponential of x.</summary>
@@ -1418,7 +1435,7 @@ namespace Unity.Mathematics
 
 
         /// <summary>Returns the base-2 exponential of x.</summary>
-        public static float exp2(float x) { return (float)System.Math.Pow(2.0f, (float)x); }
+        public static float exp2(float x) { return (float)System.Math.Exp((float)x * 0.69314718f); }
 
         /// <summary>Returns the componentwise base-2 exponential of x.</summary>
         public static float2 exp2(float2 x) { return new float2(exp2(x.x), exp2(x.y)); }
@@ -1431,7 +1448,7 @@ namespace Unity.Mathematics
 
 
         /// <summary>Returns the base-2 exponential of x.</summary>
-        public static double exp2(double x) { return System.Math.Pow(2.0, x); }
+        public static double exp2(double x) { return System.Math.Exp(x * 0.693147180559945309); }
 
         /// <summary>Returns the componentwise base-2 exponential of x.</summary>
         public static double2 exp2(double2 x) { return new double2(exp2(x.x), exp2(x.y)); }
@@ -1444,7 +1461,7 @@ namespace Unity.Mathematics
 
 
         /// <summary>Returns the base-10 exponential of x.</summary>
-        public static float exp10(float x) { return (float)System.Math.Exp((float)x); }
+        public static float exp10(float x) { return (float)System.Math.Exp((float)x * 2.30258509f); }
 
         /// <summary>Returns the componentwise base-10 exponential of x.</summary>
         public static float2 exp10(float2 x) { return new float2(exp10(x.x), exp10(x.y)); }
@@ -1457,7 +1474,7 @@ namespace Unity.Mathematics
 
 
         /// <summary>Returns the base-10 exponential of x.</summary>
-        public static double exp10(double x) { return System.Math.Pow(10.0, x); }
+        public static double exp10(double x) { return System.Math.Exp(x * 2.302585092994045684); }
 
         /// <summary>Returns the componentwise base-10 exponential of x.</summary>
         public static double2 exp10(double2 x) { return new double2(exp10(x.x), exp10(x.y)); }
@@ -1825,7 +1842,7 @@ namespace Unity.Mathematics
 
 
         /// <summary>Returns the distance between two double values.</summary>
-        public static double distance(double x, double y) { return length(y - x); }
+        public static double distance(double x, double y) { return abs(y - x); }
 
         /// <summary>Returns the distance between two double2 vectors.</summary>
         public static double distance(double2 x, double2 y) { return length(y - x); }
@@ -1835,6 +1852,32 @@ namespace Unity.Mathematics
 
         /// <summary>Returns the distance between two double4 vectors.</summary>
         public static double distance(double4 x, double4 y) { return length(y - x); }
+
+
+        /// <summary>Returns the distance between two float values.</summary>
+        public static float distancesq(float x, float y) { return (y - x) * (y - x); }
+
+        /// <summary>Returns the distance between two float2 vectors.</summary>
+        public static float distancesq(float2 x, float2 y) { return lengthsq(y - x); }
+
+        /// <summary>Returns the distance between two float3 vectors.</summary>
+        public static float distancesq(float3 x, float3 y) { return lengthsq(y - x); }
+
+        /// <summary>Returns the distance between two float4 vectors.</summary>
+        public static float distancesq(float4 x, float4 y) { return lengthsq(y - x); }
+
+
+        /// <summary>Returns the distance between two double values.</summary>
+        public static double distancesq(double x, double y) { return (y - x) * (y - x); }
+
+        /// <summary>Returns the distance between two double2 vectors.</summary>
+        public static double distancesq(double2 x, double2 y) { return lengthsq(y - x); }
+
+        /// <summary>Returns the distance between two double3 vectors.</summary>
+        public static double distancesq(double3 x, double3 y) { return lengthsq(y - x); }
+
+        /// <summary>Returns the distance between two double4 vectors.</summary>
+        public static double distancesq(double4 x, double4 y) { return lengthsq(y - x); }
 
 
         /// <summary>Returns the cross product of two float3 vectors.</summary>
@@ -1901,10 +1944,7 @@ namespace Unity.Mathematics
             return t * t * (3.0 - (2.0 * t));
         }
 
-        /// <summary>Returns true if the input bool is true, false otherwise. Equivalent to the identity function.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool any(bool x) { return x; }
-
+ 
         /// <summary>Returns true if any component of the input bool2 vector is true, false otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool any(bool2 x) { return x.x || x.y; }
@@ -1917,10 +1957,6 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool any(bool4 x) { return x.x || x.y || x.z || x.w; }
 
-
-        /// <summary>Returns true if the input int is non-zero, false otherwise.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool any(int x) { return x != 0; }
 
         /// <summary>Returns true if any component of the input int2 vector is non-zero, false otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1935,10 +1971,6 @@ namespace Unity.Mathematics
         public static bool any(int4 x) { return x.x != 0 || x.y != 0 || x.z != 0 || x.w != 0; }
 
 
-        /// <summary>Returns true if the input uint is non-zero, false otherwise.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool any(uint x) { return x != 0; }
-
         /// <summary>Returns true if any component of the input uint2 vector is non-zero, false otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool any(uint2 x) { return x.x != 0 || x.y != 0; }
@@ -1951,10 +1983,6 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool any(uint4 x) { return x.x != 0 || x.y != 0 || x.z != 0 || x.w != 0; }
 
-
-        /// <summary>Returns true if the input float is non-zero, false otherwise.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool any(float x) { return x != 0.0f; }
 
         /// <summary>Returns true if any component of the input float2 vector is non-zero, false otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1969,10 +1997,6 @@ namespace Unity.Mathematics
         public static bool any(float4 x) { return x.x != 0.0f || x.y != 0.0f || x.z != 0.0f || x.w != 0.0f; }
 
 
-        /// <summary>Returns true if the input double is non-zero, false otherwise.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool any(double x) { return x != 0.0; }
-
         /// <summary>Returns true if any component of the input double2 vector is non-zero, false otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool any(double2 x) { return x.x != 0.0 || x.y != 0.0; }
@@ -1985,10 +2009,6 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool any(double4 x) { return x.x != 0.0 || x.y != 0.0 || x.z != 0.0 || x.w != 0.0; }
 
-
-        /// <summary>Returns true if the input bool is true, false otherwise. Equivalent to the identity function.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool all(bool x) { return x; }
 
         /// <summary>Returns true if all components of the input bool2 vector are true, false otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2003,10 +2023,6 @@ namespace Unity.Mathematics
         public static bool all(bool4 x) { return x.x && x.y && x.z && x.w; }
 
 
-        /// <summary>Returns true if the input int is non-zero, false otherwise.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool all(int x) { return x != 0; }
-
         /// <summary>Returns true if all components of the input int2 vector are non-zero, false otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool all(int2 x) { return x.x != 0 && x.y != 0; }
@@ -2019,10 +2035,6 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool all(int4 x) { return x.x != 0 && x.y != 0 && x.z != 0 && x.w != 0; }
 
-
-        /// <summary>Returns true if the input uint is non-zero, false otherwise.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool all(uint x) { return x != 0; }
 
         /// <summary>Returns true if all components of the input uint2 vector are non-zero, false otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2037,10 +2049,6 @@ namespace Unity.Mathematics
         public static bool all(uint4 x) { return x.x != 0 && x.y != 0 && x.z != 0 && x.w != 0; }
 
 
-        /// <summary>Returns true if the input float is non-zero, false otherwise.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool all(float x) { return x != 0.0f; }
-
         /// <summary>Returns true if all components of the input float2 vector are non-zero, false otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool all(float2 x) { return x.x != 0.0f && x.y != 0.0f; }
@@ -2053,10 +2061,6 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool all(float4 x) { return x.x != 0.0f && x.y != 0.0f && x.z != 0.0f && x.w != 0.0f; }
 
-
-        /// <summary>Returns true if the input double is non-zero, false otherwise.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool all(double x) { return x != 0.0; }
 
         /// <summary>Returns true if all components of the input double2 vector are non-zero, false otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2147,6 +2151,15 @@ namespace Unity.Mathematics
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint4 select(uint4 a, uint4 b, bool4 c) { return new uint4(c.x ? b.x : a.x, c.y ? b.y : a.y, c.z ? b.z : a.z, c.w ? b.w : a.w); }
+
+
+        /// <summary>Returns b if c is true, a otherwise.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long select(long a, long b, bool c) { return c ? b : a; }
+
+        /// <summary>Returns b if c is true, a otherwise.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ulong select(ulong a, ulong b, bool c) { return c ? b : a; }
 
 
         /// <summary>Returns b if c is true, a otherwise.</summary>
@@ -2910,36 +2923,36 @@ namespace Unity.Mathematics
             return x + 1;
         }
 
-        /// <summary>Returns the result of converting a float value from radians to degrees.</summary>
+        /// <summary>Returns the result of converting a float value from degrees to radians.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float radians(float x) { return x * 0.0174532925f; }
 
-        /// <summary>Returns the result of a componentwise conversion of a float2 vector from radians to degrees.</summary>
+        /// <summary>Returns the result of a componentwise conversion of a float2 vector from degrees to radians.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float2 radians(float2 x) { return x * 0.0174532925f; }
 
-        /// <summary>Returns the result of a componentwise conversion of a float3 vector from radians to degrees.</summary>
+        /// <summary>Returns the result of a componentwise conversion of a float3 vector from degrees to radians.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3 radians(float3 x) { return x * 0.0174532925f; }
 
-        /// <summary>Returns the result of a componentwise conversion of a float4 vector from radians to degrees.</summary>
+        /// <summary>Returns the result of a componentwise conversion of a float4 vector from degrees to radians.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float4 radians(float4 x) { return x * 0.0174532925f; }
 
 
-        /// <summary>Returns the result of converting a float value from radians to degrees.</summary>
+        /// <summary>Returns the result of converting a float value from degrees to radians.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double radians(double x) { return x * 0.017453292519943296; }
 
-        /// <summary>Returns the result of a componentwise conversion of a float2 vector from radians to degrees.</summary>
+        /// <summary>Returns the result of a componentwise conversion of a float2 vector from degrees to radians.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double2 radians(double2 x) { return x * 0.017453292519943296; }
 
-        /// <summary>Returns the result of a componentwise conversion of a float3 vector from radians to degrees.</summary>
+        /// <summary>Returns the result of a componentwise conversion of a float3 vector from degrees to radians.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double3 radians(double3 x) { return x * 0.017453292519943296; }
 
-        /// <summary>Returns the result of a componentwise conversion of a float4 vector from radians to degrees.</summary>
+        /// <summary>Returns the result of a componentwise conversion of a float4 vector from degrees to radians.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double4 radians(double4 x) { return x * 0.017453292519943296; }
 
@@ -2978,10 +2991,6 @@ namespace Unity.Mathematics
         public static double4 degrees(double4 x) { return x * 57.29577951308232; }
 
 
-        /// <summary>Returns the input int value. Identity function.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int cmin(int x) { return x; }
-
         /// <summary>Returns the minimum component of an int2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int cmin(int2 x) { return min(x.x, x.y); }
@@ -2994,10 +3003,6 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int cmin(int4 x) { return min(min(x.x, x.y), min(x.z, x.w)); }
 
-
-        /// <summary>Returns the input uint value. Identity function.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint cmin(uint x) { return x; }
 
         /// <summary>Returns the minimum component of a uint2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3012,10 +3017,6 @@ namespace Unity.Mathematics
         public static uint cmin(uint4 x) { return min(min(x.x, x.y), min(x.z, x.w)); }
 
 
-        /// <summary>Returns the input float value. Identity function.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float cmin(float x) { return x; }
-
         /// <summary>Returns the minimum component of a float2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float cmin(float2 x) { return min(x.x, x.y); }
@@ -3028,10 +3029,6 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float cmin(float4 x) { return min(min(x.x, x.y), min(x.z, x.w)); }
 
-
-        /// <summary>Returns the input float value. Identity function.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double cmin(double x) { return x; }
 
         /// <summary>Returns the minimum component of a float2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3046,10 +3043,6 @@ namespace Unity.Mathematics
         public static double cmin(double4 x) { return min(min(x.x, x.y), min(x.z, x.w)); }
 
 
-        /// <summary>Returns the input int value. Identity function.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int cmax(int x) { return x; }
-
         /// <summary>Returns the maximum component of an int2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int cmax(int2 x) { return max(x.x, x.y); }
@@ -3062,10 +3055,6 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int cmax(int4 x) { return max(max(x.x, x.y), max(x.z, x.w)); }
 
-
-        /// <summary>Returns the input uint value. Identity function.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint cmax(uint x) { return x; }
 
         /// <summary>Returns the maximum component of a uint2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3080,10 +3069,6 @@ namespace Unity.Mathematics
         public static uint cmax(uint4 x) { return max(max(x.x, x.y), max(x.z, x.w)); }
 
 
-        /// <summary>Returns the input float value. Identity function.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float cmax(float x) { return x; }
-
         /// <summary>Returns the maximum component of a float2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float cmax(float2 x) { return max(x.x, x.y); }
@@ -3096,10 +3081,6 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float cmax(float4 x) { return max(max(x.x, x.y), max(x.z, x.w)); }
 
-
-        /// <summary>Returns the input double value. Identity function.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double cmax(double x) { return x; }
 
         /// <summary>Returns the maximum component of a double2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3114,10 +3095,6 @@ namespace Unity.Mathematics
         public static double cmax(double4 x) { return max(max(x.x, x.y), max(x.z, x.w)); }
 
 
-        /// <summary>Returns the input int value. Identity function.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int csum(int x) { return x; }
-
         /// <summary>Returns the horizontal sum of components of an int2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int csum(int2 x) { return x.x + x.y; }
@@ -3130,10 +3107,6 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int csum(int4 x) { return x.x + x.y + x.z + x.w; }
 
-
-        /// <summary>Returns the input uint value. Identity function.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint csum(uint x) { return x; }
 
         /// <summary>Returns the horizontal sum of components of a uint2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3148,10 +3121,6 @@ namespace Unity.Mathematics
         public static uint csum(uint4 x) { return x.x + x.y + x.z + x.w; }
 
 
-        /// <summary>Returns the input float value. Identity function.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float csum(float x) { return x; }
-
         /// <summary>Returns the horizontal sum of components of a float2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float csum(float2 x) { return x.x + x.y; }
@@ -3164,10 +3133,6 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float csum(float4 x) { return (x.x + x.y) + (x.z + x.w); }
 
-
-        /// <summary>Returns the input double value. Identity function.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double csum(double x) { return x; }
 
         /// <summary>Returns the horizontal sum of components of a double2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3266,7 +3231,7 @@ namespace Unity.Mathematics
 
             uint ux = asuint(x);
             uint uux = ux & msk;
-            uint h = (uint)(asint(min(asfloat(uux) * 1.92592994e-34f, 260042752.0f)) + 0x1000) >> 13;   // Clamp to signed infinity if overflowed
+            uint h = (uint)(asuint(min(asfloat(uux) * 1.92592994e-34f, 260042752.0f)) + 0x1000) >> 13;   // Clamp to signed infinity if overflowed
             h = select(h, select(0x7c00u, 0x7e00u, (int)uux > infinity_32), (int)uux >= infinity_32);   // NaN->qNaN and Inf->Inf
             return h | (ux & ~msk) >> 16;
         }

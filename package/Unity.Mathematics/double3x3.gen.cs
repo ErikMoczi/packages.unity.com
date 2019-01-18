@@ -17,8 +17,7 @@ namespace Unity.Mathematics
         public static readonly double3x3 identity = new double3x3(1.0, 0.0, 0.0,   0.0, 1.0, 0.0,   0.0, 0.0, 1.0);
 
         /// <summary>double3x3 zero value.</summary>
-        public static readonly double3x3 zero = new double3x3(0.0, 0.0, 0.0,   0.0, 0.0, 0.0,   0.0, 0.0, 0.0);
-
+        public static readonly double3x3 zero;
 
         /// <summary>Constructs a double3x3 matrix from three double3 vectors.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -439,30 +438,20 @@ namespace Unity.Mathematics
         /// <summary>Returns the double3x3 full inverse of a double3x3 matrix.</summary>
         public static double3x3 inverse(double3x3 m)
         {
-            // naive scalar implementation using direct calculation by cofactors
             double3 c0 = m.c0;
             double3 c1 = m.c1;
             double3 c2 = m.c2;
 
-            // calculate minors
-            double m00 = c1.y * c2.z - c1.z * c2.y;
-            double m01 = c0.y * c2.z - c0.z * c2.y;
-            double m02 = c0.y * c1.z - c0.z * c1.y;
+            double3 t0 = double3(c1.x, c2.x, c0.x);
+            double3 t1 = double3(c1.y, c2.y, c0.y);
+            double3 t2 = double3(c1.z, c2.z, c0.z);
 
-            double m10 = c1.x * c2.z - c1.z * c2.x;
-            double m11 = c0.x * c2.z - c0.z * c2.x;
-            double m12 = c0.x * c1.z - c0.z * c1.x;
+            double3 m0 = t1 * t2.yzx - t1.yzx * t2;
+            double3 m1 = t0.yzx * t2 - t0 * t2.yzx;
+            double3 m2 = t0 * t1.yzx - t0.yzx * t1;
 
-            double m20 = c1.x * c2.y - c1.y * c2.x;
-            double m21 = c0.x * c2.y - c0.y * c2.x;
-            double m22 = c0.x * c1.y - c0.y * c1.x;
-
-            double det = c0.x * m00 - c1.x * m01 + c2.x * m02;
-
-            return double3x3(
-                 m00,-m10, m20,
-                -m01, m11,-m21,
-                 m02, -m12, m22) * (1.0 / det);
+            double rcpDet = 1.0 / csum(t0.zxy * m0);
+            return double3x3(m0, m1, m2) * rcpDet;
         }
 
         /// <summary>Returns the determinant of a double3x3 matrix.</summary>
@@ -484,9 +473,9 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint hash(double3x3 v)
         {
-            return csum(fold_to_uint(v.c0) * uint3(0xFAAF07DDu, 0x625C45BDu, 0xC9F27FCBu) + 
-                        fold_to_uint(v.c1) * uint3(0x6D2523B1u, 0x6E2BF6A9u, 0xCC74B3B7u) + 
-                        fold_to_uint(v.c2) * uint3(0x83B58237u, 0x833E3E29u, 0xA9D919BFu)) + 0xC3EC1D97u;
+            return csum(fold_to_uint(v.c0) * uint3(0xAC5DB57Bu, 0xA91A02EDu, 0xB3C49313u) + 
+                        fold_to_uint(v.c1) * uint3(0xF43A9ABBu, 0x84E7E01Bu, 0x8E055BE5u) + 
+                        fold_to_uint(v.c2) * uint3(0x6E624EB7u, 0x7383ED49u, 0xDD49C23Bu)) + 0xEBD0D005u;
         }
 
         /// <summary>
@@ -497,9 +486,9 @@ namespace Unity.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint3 hashwide(double3x3 v)
         {
-            return (fold_to_uint(v.c0) * uint3(0xB8B208C7u, 0x5D3ED947u, 0x4473BBB1u) + 
-                    fold_to_uint(v.c1) * uint3(0xCBA11D5Fu, 0x685835CFu, 0xC3D32AE1u) + 
-                    fold_to_uint(v.c2) * uint3(0xB966942Fu, 0xFE9856B3u, 0xFA3A3285u)) + 0xAD55999Du;
+            return (fold_to_uint(v.c0) * uint3(0x91475DF7u, 0x55E84827u, 0x90A285BBu) + 
+                    fold_to_uint(v.c1) * uint3(0x5D19E1D5u, 0xFAAF07DDu, 0x625C45BDu) + 
+                    fold_to_uint(v.c2) * uint3(0xC9F27FCBu, 0x6D2523B1u, 0x6E2BF6A9u)) + 0xCC74B3B7u;
         }
 
     }
