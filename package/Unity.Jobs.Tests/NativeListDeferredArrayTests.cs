@@ -62,7 +62,7 @@ public class NativeListDeferredArrayTests
         var setLengthJob = new SetListLengthJob { list = list, ResizeLength = length };
         var jobHandle = setLengthJob.Schedule();
 
-        var setValuesJob = new SetArrayValuesJobParallel { array = list.ToDeferredJobArray() };
+        var setValuesJob = new SetArrayValuesJobParallel { array = list.AsDeferredJobArray() };
         setValuesJob.Schedule(list, 3, jobHandle).Complete();
         
         Assert.AreEqual(length, list.Length);
@@ -78,7 +78,7 @@ public class NativeListDeferredArrayTests
         var list = new NativeList<int> (Allocator.TempJob);
 
         var setLengthJob = new SetListLengthJob { list = list, ResizeLength = length }.Schedule();
-        var setValuesJob = new SetArrayValuesJobParallel { array = list.ToDeferredJobArray() };
+        var setValuesJob = new SetArrayValuesJobParallel { array = list.AsDeferredJobArray() };
 		setLengthJob.Complete();
 
         setValuesJob.Schedule(list, 3).Complete();
@@ -96,7 +96,7 @@ public class NativeListDeferredArrayTests
         var list = new NativeList<int> (Allocator.TempJob);
         list.Add(1);
         
-        var array = list.ToDeferredJobArray();
+        var array = list.AsDeferredJobArray();
 #pragma warning disable 0219 // assigned but its value is never used
         Assert.Throws<IndexOutOfRangeException>(() => { var value = array[0]; });
 #pragma warning restore 0219
@@ -111,7 +111,7 @@ public class NativeListDeferredArrayTests
         var list = new NativeList<int> (Allocator.TempJob);
         list.ResizeUninitialized(42);
 
-        var setValuesJob = new GetArrayValuesJobParallel { array = list.ToDeferredJobArray() };
+        var setValuesJob = new GetArrayValuesJobParallel { array = list.AsDeferredJobArray() };
         var jobHandle = setValuesJob.Schedule(list, 3);
         
         Assert.Throws<InvalidOperationException>(() => list.ResizeUninitialized(1) );
@@ -126,7 +126,7 @@ public class NativeListDeferredArrayTests
     {
         var list = new NativeList<int> (Allocator.TempJob);
         
-        var aliasJob = new AliasJob{ list = list, array = list.ToDeferredJobArray() };
+        var aliasJob = new AliasJob{ list = list, array = list.AsDeferredJobArray() };
         Assert.Throws<InvalidOperationException>(() => aliasJob.Schedule() );
 
         list.Dispose ();
