@@ -1,0 +1,16 @@
+{
+    "displayName": "Hybrid Renderer", 
+    "name": "com.unity.rendering.hybrid", 
+    "unity": "2018.3", 
+    "version": "0.0.1-preview.1", 
+    "dependencies": {
+        "com.unity.entities": "0.0.12-preview.22"
+    }, 
+    "keywords": [
+        "entities", 
+        "unity", 
+        "hybrid", 
+        "rendering"
+    ], 
+    "description": "Unity Hybrid Renderer"
+}
