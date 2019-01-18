@@ -32,9 +32,16 @@ namespace Unity.Burst.Editor
             foreach (var assembly in assemblyList)
             {
                 var types = new List<Type>();
-                types.AddRange(assembly.GetTypes());
-                // Collect all generic type instances (excluding indirect instances)
-                CollectGenericTypeInstances(assembly, types);
+                try
+                {
+                    types.AddRange(assembly.GetTypes());
+                    // Collect all generic type instances (excluding indirect instances)
+                    CollectGenericTypeInstances(assembly, types);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("Unexpected exception while collecting types in assembly `" + assembly.FullName + "` Exception: " + ex);
+                }
 
                 for (var i = 0; i < types.Count; i++)
                 {
@@ -104,7 +111,7 @@ namespace Unity.Burst.Editor
                     }
                     catch (Exception ex)
                     {
-                        Debug.Log("Unexpected exception while inspecting type `" + t +
+                        Debug.LogWarning("Unexpected exception while inspecting type `" + t +
                                   "` IsConstructedGenericType: " + t.IsConstructedGenericType +
                                   " IsGenericTypeDef: " + t.IsGenericTypeDefinition +
                                   " IsGenericParam: " + t.IsGenericParameter +

@@ -1,5 +1,7 @@
+// For some reasons Unity.Burst.LowLevel is not part of UnityEngine in 2018.2 but only in UnityEditor
+// In 2018.3 It should be fine
+#if (UNITY_2018_2_OR_NEWER && UNITY_EDITOR) || UNITY_2018_3_OR_NEWER
 using System;
-using System.Collections.Generic;
 
 namespace Unity.Burst
 {
@@ -8,57 +10,17 @@ namespace Unity.Burst
     /// </summary>
     public static class BurstCompiler
     {
-        private static readonly List<ResolveBackendPathFromNameDelegate> BackendPathResolvers = new List<ResolveBackendPathFromNameDelegate>();
-
-        public const string DefaultBackendName = "burst-llvm";
-
         static BurstCompiler()
         {
-            BackendName = DefaultBackendName;
         }
 
-        /// <summary>
-        /// Gets or sets a default compiler backend path to dll (default will resolve to `burst-llvm`)
-        /// </summary>
-        /// <remarks>
-        /// Note that this does not have any effect at runtime, only at editor time.
-        /// </remarks>
-        public static string BackendName { get; set; }
 
-        /// <summary>
-        /// A delegate to translate a backend name to a backend path to the shared DLL of the backend to load.
-        /// </summary>
-        /// <param name="name">Name of the backend (e.g `burst-llvm`)</param>
-        /// <returns>Path to the shared dll of the backend</returns>
-        public delegate string ResolveBackendPathFromNameDelegate(string name);
-
-        /// <summary>
-        /// Setup a callback to allow to resolve a backend name to a backend path.
-        /// </summary>
-        /// <remarks>
-        /// Note that this does not have any effect at runtime, only at editor time.
-        /// </remarks>
-        public static event ResolveBackendPathFromNameDelegate BackendNameResolver
+        private static unsafe void* CompileInternal<T>(T delegateMethod) where T : class
         {
-            add
-            {
-                lock (BackendPathResolvers)
-                {
-                    if (!BackendPathResolvers.Contains(value))
-                    {
-                        BackendPathResolvers.Add(value);
-
-                    }
-                }
-            }
-
-            remove
-            {
-                lock (BackendPathResolvers)
-                {
-                    BackendPathResolvers.Remove(value);
-                }
-            }
+            string defaultOptions = "--enable-synchronous-compilation";
+            int delegateMethodID = Unity.Burst.LowLevel.BurstCompilerService.CompileAsyncDelegateMethod(delegateMethod, defaultOptions);
+            void* function = Unity.Burst.LowLevel.BurstCompilerService.GetAsyncCompiledAsyncDelegateMethod(delegateMethodID);
+            return function;
         }
 
         /// <summary>
@@ -70,51 +32,31 @@ namespace Unity.Burst
         public static unsafe T CompileDelegate<T>(T delegateMethod) where T : class
         {
             // We have added support for runtime CompileDelegate in 2018.2+
-#if UNITY_EDITOR //|| UNITY_2018_2_OR_NEWER
-            string defaultOptions = "--enable-synchronous-compilation";
-            var backendPath = ResolveBackendPath(BackendName);
-            if (backendPath != null)
-            {
-                defaultOptions = defaultOptions + "\n--backend=" + backendPath;
-            }
-            int delegateMethodID = Unity.Burst.LowLevel.BurstCompilerService.CompileAsyncDelegateMethod(delegateMethod, defaultOptions);
-            void* function = Unity.Burst.LowLevel.BurstCompilerService.GetAsyncCompiledAsyncDelegateMethod(delegateMethodID);
+            void* function = CompileInternal(delegateMethod);
             if (function == null)
                 return delegateMethod;
 
             object res = System.Runtime.InteropServices.Marshal.GetDelegateForFunctionPointer((IntPtr)function, delegateMethod.GetType());
             return (T)res;
-#else
-            //@TODO: Runtime implementation
-            return delegateMethod;
-#endif
         }
 
+#if BURST_FEATURE_FUNCTION_POINTER
         /// <summary>
-        /// Resolves the <see cref="BackendName"/> to a full backend path (if null, returns null)
+        /// Compile the following delegate into a function pointer with burst.
         /// </summary>
-        /// <returns>The path of the backend or null if default</returns>
-        public static string ResolveBackendPath(string backendName)
+        /// <typeparam name="T"></typeparam>
+        /// <param name="delegateMethod"></param>
+        /// <returns></returns>
+        public static unsafe FunctionPointer<T> CompileFunctionPointer<T>(T delegateMethod) where T : class
         {
-            // By default if it is null, let the default compiler resolve the backend
-            if (backendName == null)
-            {
-                return null;
-            }
+            // We have added support for runtime CompileDelegate in 2018.2+
+            void* function = CompileInternal(delegateMethod);
+            if (function == null)
+                throw new InvalidOperationException($"Burst failed to compile the given delegate.");
 
-            lock (BackendPathResolvers)
-            {
-                foreach (var resolveBackendPathFromNameDelegate in BackendPathResolvers)
-                {
-                    var newBackendPath = resolveBackendPathFromNameDelegate(backendName);
-                    if (newBackendPath != null)
-                    {
-                        return newBackendPath;
-                    }
-                }
-            }
-
-            return BackendName;
+            return new FunctionPointer<T>(new IntPtr(function));
         }
+#endif
     }
 }
+#endif

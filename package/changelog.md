@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.4-preview.41
+
+- Fix codegen issue with Interlocked.Decrement that was instead performing an increment
+- Fix codegen issue for an invalid layout of struct with nested recursive pointer references 
+- Fix for Fogbugz case : https://fogbugz.unity3d.com/f/cases/1109514/
+- Fix codegen issue with ref bool on a method argument creating a compiler exception
+
 ## 0.2.4-preview.40
 
 - Fix bug when a write to a pointer type of an argument of a generic function

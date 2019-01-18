@@ -235,7 +235,7 @@ namespace Unity.Burst.Editor
 
                 try
                 {
-	                Runner.RunManagedProgram(Path.Combine(BurstLoader.RuntimePath, BurstAotCompilerExecutable),  "@" + responseFile, Application.dataPath + "/..", new BclParser(), null);
+	                Runner.RunManagedProgram(Path.Combine(BurstLoader.RuntimePath, BurstAotCompilerExecutable), "--debug=true " + "@" + responseFile, Application.dataPath + "/..", new BclParser(), null);
                 }
                 catch (Exception e)
                 {
