@@ -28,7 +28,7 @@ The following Photoshop features are **not** supported by the PSD Importer **:**
 
 ### Texture Type - Default
 
-This is the default **Texture Type** when an image is imported without a specific Texture Type selected. Refer to the documentation on [Texture Types](https://docs.unity3d.com/Manual/TextureTypes.html) for further information and details.
+This is the default **Texture Type** usage when an image is imported without a specific Texture Type selected. Refer to the documentation on [Texture Types](https://docs.unity3d.com/Manual/TextureTypes.html) for further information and details.
 
 ### Texture Type - Sprite (2D and UI)
 
@@ -41,10 +41,9 @@ Property settings that are specific to the **PSD Importer** are marked by an *.
 | Property                        | Function                                                     |
 | ------------------------------- | ------------------------------------------------------------ |
 | __Texture Type__                | Select __Sprite (2D and UI)__ to import the Texture as a [Sprite](https://docs.unity3d.com/Manual/Sprites.html). This is required to begin using the imported images with the 2D Animation V2 package. |
-| __Sprite Mode__                 | Use this setting to specify how the the Sprite graphic is extracted from the image. The default for this option is **Single**. |
+| __Sprite Mode__                 | Use this setting to specify how the the Sprite graphic is extracted from the image. The default for this option is **Multiple**. |
 | Single                          | Select this option if there is only a single element in the imported image. |
 | Multiple                        | Select this option if there are multiple elements in the imported image. Select this option when importing a character meant for animation with the 2D Animation V2 package. |
-| __Packing Tag__                 | Specify a __Sprite Atlas__ by name, where the  Texture into using the legacy Sprite Packer packing tag. |
 | __Pixels Per Unit__             | The number of pixels that equal 1 Unity unit.                |
 | __Mesh Type__                   | This defines the __Mesh__ type that is generated for the __Sprite__. The default for this option is 'Tight'. |
 | Full Rect                       | The Sprite is mapped onto a mesh generated as a quad.        |
@@ -53,7 +52,7 @@ Property settings that are specific to the **PSD Importer** are marked by an *.
 | * [Import Hidden](#ImportHidde) | Select this property to specify that hidden layers in the PSB file should be imported. Clear this option to not import the hidden layers. |
 | * [Mosaic](#Mosaic)             | This option is only available if Texture Type is set to ‘Multiple’. Enable this to allow Unity to create a Sprite from each imported layer and arrange them into a Sprite Sheet layout. |
 | * [Character Rig](#CharRig)     | Select the imported image(s) is to be used for a multi-Sprite character.  When selected, a Prefab containing the imported images is generated. |
-| * [Use Folder Grouping](#Hierarchy)   | Select to have the generated Prefab mimic the layer hierarchy of the imported PSB file. |
+| * [Use Layer Grouping](#Hierarchy)   | Select to have the generated Prefab mimic the layer hierarchy of the imported PSB file. |
 | __Pivot__                       | Select the pivot point of the Sprite from the dropdown menu options. |
 | Custom                          | Define the X and Y coordinates of a custom __Pivot__ location. |
 | * [Reslice](#Reslice)           | Available only when __Mosaic__ is enabled.<br />Select this to clear away all previous Sprite metadata and recreate the Sprite from the imported PSB layers. |
@@ -70,7 +69,7 @@ The 4 sets are created by enabling the following property combinations:
 
 3. Sprite Mode: Multiple + Mosaic
 
-4. Sprite Mode: Multiple + Mosaic + Character Rig**
+4. Sprite Mode: Multiple + Mosaic + Character Rig
 
 #### User defined SpriteRect
 
@@ -113,7 +112,7 @@ When **Mosaic** is selected, all layers in the PSB file will be imported as sepa
 
 When this is selected, a Prefab is generated containing a Sprite GameObject with the SpriteRenderer component. If the Sprite contains bone and skin data, the **Sprite Skin** component is added as well. The name of the GameObject is the same as the name specified in it's SpriteRect.
 
-### Use Folder Grouping<a name="Hierarchy"></a>
+### Use Layer Grouping<a name="Hierarchy"></a>
 
 When this is selected, the generated GameObjects  mimic the layer grouping in the imported file. When the Asset hierarchy is modified, it is reflected on the next import.
 
@@ -125,7 +124,7 @@ When this is selected, all user modification is discarded and SpriteRects are re
 
 A name collision can occur in the following ways:
 
-1. 2 or more layers in the Asset has the same name. This does not affect Photoshop folder name. 
+1. 2 or more layers in the Asset has the same name. This does not affect Photoshop group name. 
 
 2. A new layer created in the Asset has the same name as a user created SpriteRect.
 

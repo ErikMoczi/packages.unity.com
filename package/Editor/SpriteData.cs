@@ -26,7 +26,7 @@ namespace UnityEditor.Experimental.U2D.PSD
             alignment = sr.alignment;
             border = sr.border;
             name = sr.name;
-            pivot = sr.pivot;
+            pivot = GetPivotValue(sr.alignment, sr.pivot);
             rect = sr.rect;
             spriteID = sr.spriteID;
         }

@@ -15,7 +15,6 @@ namespace UnityEditor.Experimental.U2D.PSD
         SerializedProperty m_TextureType;
         SerializedProperty m_TextureShape;
         SerializedProperty m_SpriteMode;
-        SerializedProperty m_SpritePackingTag;
         SerializedProperty m_SpritePixelsToUnits;
         SerializedProperty m_SpriteMeshType;
         SerializedProperty m_SpriteExtrude;
@@ -61,7 +60,6 @@ namespace UnityEditor.Experimental.U2D.PSD
         TexturePlatformSettingsController m_TexturePlatformSettingsController = new TexturePlatformSettingsController();
         public override void OnEnable()
         {
-            m_SpritePackingTag = serializedObject.FindProperty("m_SpritePackingTag");
             m_MosaicLayers = serializedObject.FindProperty("m_MosaicLayers");
             m_ImportHiddenLayers = serializedObject.FindProperty("m_ImportHiddenLayers");
             m_ResliceFromLayer = serializedObject.FindProperty("m_ResliceFromLayer");
@@ -567,7 +565,6 @@ namespace UnityEditor.Experimental.U2D.PSD
             // Show generic attributes
             if (m_SpriteMode.intValue != 0)
             {
-                EditorGUILayout.PropertyField(m_SpritePackingTag, s_Styles.spritePackingTag);
                 EditorGUILayout.PropertyField(m_SpritePixelsToUnits, s_Styles.spritePixelsPerUnit);
 
                 if (m_SpriteMode.intValue != (int)SpriteImportMode.Polygon && !m_SpriteMode.hasMultipleDifferentValues)
@@ -865,7 +862,7 @@ namespace UnityEditor.Experimental.U2D.PSD
             public readonly GUIContent applyButtonLabel = new GUIContent("Apply");
             public readonly GUIContent revertButtonLabel = new GUIContent("Revert");
             public readonly GUIContent spriteEditorButtonLabel = new GUIContent("Sprite Editor");
-            public readonly GUIContent resliceFromLayerWarning = new GUIContent("This will reinitialized and recreate all Sprites based on the file's layer. Existing Sprite metadata for previous generated Sprite will be copied over.");
+            public readonly GUIContent resliceFromLayerWarning = new GUIContent("This will reinitialize and recreate all Sprites based on the file’s layer data. Existing Sprite metadata from previously generated Sprites are copied over.");
             public readonly GUIContent alphaIsTransparency = new GUIContent("Alpha Is Transparency", "If the provided alpha channel is transparency, enable this to pre-filter the color to avoid texture filtering artifacts. This is not supported for HDR textures.");
             public readonly GUIContent etc1Compression = new GUIContent("Compress using ETC1 (split alpha channel)|Alpha for this texture will be preserved by splitting the alpha channel to another texture, and both resulting textures will be compressed using ETC1.");
             public readonly GUIContent crunchedCompression = new GUIContent("Use Crunch Compression", "Texture is crunch-compressed to save space on disk when applicable.");

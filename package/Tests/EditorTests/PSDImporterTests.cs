@@ -36,7 +36,7 @@ namespace UnityEditor.Experimental.U2D.PSD.Tests
         }
 
         [TestCase(EditorBehaviorMode.Mode2D, true)]
-        [TestCase(EditorBehaviorMode.Mode3D, false)]
+        [TestCase(EditorBehaviorMode.Mode3D, true)]
         public void EditorBehaviourModeImportTest(EditorBehaviorMode mode, bool expectSprite)
         {
             EditorSettings.defaultBehaviorMode = mode;
@@ -122,7 +122,7 @@ namespace UnityEditor.Experimental.U2D.PSD.Tests
                     new GameObjectHierarchyNode()
                     {
                         name = "Black",
-                        componentType = new[] { typeof(Transform), typeof(SpriteRenderer), typeof(SpriteSkin) },
+                        componentType = new[] { typeof(Transform), typeof(SpriteRenderer), typeof(SpriteSkin)},
                         children = new GameObjectHierarchyNode[0]
                     },
 
@@ -159,7 +159,7 @@ namespace UnityEditor.Experimental.U2D.PSD.Tests
             Assert.AreEqual(hierarchy.name, go.name);
             Assert.AreEqual(hierarchy.children.Length, go.transform.childCount);
             var components = go.GetComponents(typeof(Component));
-            Assert.AreEqual(hierarchy.componentType.Length, components.Length);
+            Assert.LessOrEqual(hierarchy.componentType.Length, components.Length);
             foreach (var component in hierarchy.componentType)
             {
                 Assert.NotNull(components.SingleOrDefault(x => x.GetType() == component));

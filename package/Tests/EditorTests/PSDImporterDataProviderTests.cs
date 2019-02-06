@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using NSubstitute;
 using UnityEditor.Experimental.U2D;
+using UnityEditor.Experimental.U2D.Animation;
 using UnityEditor.Experimental.U2D.PSD;
 using UnityEngine.Experimental.U2D;
 
@@ -269,6 +270,43 @@ namespace UnityEditor.Experimental.U2D.PSD.Tests
             {
                 Assert.AreEqual(edges[i], testEdges[i]);
             }
+        }
+
+        [Test]
+        public void UserCreatedSpriteRect_AppearsBottomLeftInCharacterMode()
+        {
+            var so = new SerializedObject(m_Importer);
+            var textureImporterSettingsSP = so.FindProperty("m_TextureImporterSettings");
+            textureImporterSettingsSP.FindPropertyRelative("m_SpriteMode").intValue = (int)SpriteImportMode.Multiple;
+            so.FindProperty("m_MosaicLayers").boolValue = true;
+            so.FindProperty("m_CharacterMode").boolValue = true;
+            so.ApplyModifiedProperties();
+
+            var spriteProvider = m_Importer.GetDataProvider<ISpriteEditorDataProvider>();
+            var textureDataProvider = spriteProvider.GetDataProvider<ITextureDataProvider>();
+            int width, height;
+            textureDataProvider.GetTextureActualWidthAndHeight(out width, out height);
+            var spriteRect = spriteProvider.GetSpriteRects().ToList();
+
+            spriteRect.Add(new SpriteRect()
+            {
+                border = Vector4.zero,
+                alignment = SpriteAlignment.Center,
+                name = "InsertedRect",
+                pivot = Vector2.zero,
+                rect = new Rect(width - width * 0.5f, height - height * 0.5f, width * 0.5f, height * 0.5f),
+            });
+            var newSpriteID = spriteRect[spriteRect.Count - 1].spriteID;
+            spriteProvider.SetSpriteRects(spriteRect.ToArray());
+            spriteProvider.Apply();
+
+            m_Importer.SaveAndReimport();
+            var importer = AssetImporter.GetAtPath(m_Importer.assetPath) as PSDImporter;
+            var characterProvider = importer.GetDataProvider<ICharacterDataProvider>();
+            var characterData = characterProvider.GetCharacterData();
+            Assert.AreEqual(spriteRect.Count, characterData.parts.Length);
+            var insertedSpriteCharacterPart = characterData.parts.FirstOrDefault(x => x.spriteId == newSpriteID.ToString());
+            Assert.AreEqual(new RectInt(0, 0, (int)(width * 0.5f), (int)(height * 0.5f)), insertedSpriteCharacterPart.spritePosition);
         }
     }
 }

@@ -422,8 +422,8 @@ namespace PhotoshopFile
             while (reader.BaseStream.Position < endPosition)
             {
                 var info = LayerInfoFactory.Load(reader,
-                    psdFile: this,
-                    globalLayerInfo: true);
+                        psdFile: this,
+                        globalLayerInfo: true, endPosition);
                 AdditionalInfo.Add(info);
 
                 if (info is RawLayerInfo)
@@ -637,7 +637,7 @@ namespace PhotoshopFile
             foreach (var layer in Enumerable.Reverse(Layers))
             {
                 var layerSectionInfo = layer.AdditionalInfo.SingleOrDefault(
-                    x => x is LayerSectionInfo);
+                        x => x is LayerSectionInfo);
                 if (layerSectionInfo == null)
                     continue;
 

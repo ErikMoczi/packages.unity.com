@@ -187,7 +187,7 @@ namespace PhotoshopFile
             {
                 var layerInfo = LayerInfoFactory.Load(reader,
                         psdFile: this.PsdFile,
-                        globalLayerInfo: false);
+                        globalLayerInfo: false, adjustmentLayerEndPos);
                 AdditionalInfo.Add(layerInfo);
             }
 
