@@ -349,7 +349,7 @@ namespace Unity.MemoryProfiler.Editor
                 UnityEngine.Debug.LogError("Requesting an ArrayInfo on an invalid data type");
                 return null;
             }
-            return ArrayTools.GetArrayInfo(snapshot, snapshot.managedHeapSections, managedObjectData, m_data.managed.iType, snapshot.virtualMachineInformation);
+            return ArrayTools.GetArrayInfo(snapshot, managedObjectData, m_data.managed.iType);
         }
 
         public ObjectData GetArrayElement(CachedSnapshot snapshot, int index, bool expandToTarget)
@@ -529,7 +529,7 @@ namespace Unity.MemoryProfiler.Editor
                 int managedIndex = GetManagedObjectIndex(snapshot);
                 if (managedIndex >= 0)
                 {
-                    nativeIndex = snapshot.m_CrawledData.managedObjects[managedIndex].nativeObjectIndex;
+                    nativeIndex = snapshot.CrawledData.ManagedObjects[managedIndex].NativeObjectIndex;
                 }
             }
 
@@ -572,9 +572,9 @@ namespace Unity.MemoryProfiler.Editor
                 case ObjectDataType.BoxedValue:
                 {
                     ManagedObjectInfo moi;
-                    if (snapshot.m_CrawledData.managedObjectByAddress.TryGetValue(m_data.managed.objectPtr, out moi))
+                    if (snapshot.CrawledData.ManagedObjectByAddress.TryGetValue(m_data.managed.objectPtr, out moi))
                     {
-                        return snapshot.ManagedObjectIndexToUnifiedObjectIndex(moi.managedObjectIndex);
+                        return snapshot.ManagedObjectIndexToUnifiedObjectIndex(moi.ManagedObjectIndex);
                     }
 
 
@@ -596,9 +596,9 @@ namespace Unity.MemoryProfiler.Editor
                 case ObjectDataType.BoxedValue:
                 {
                     ManagedObjectInfo moi;
-                    if (snapshot.m_CrawledData.managedObjectByAddress.TryGetValue(m_data.managed.objectPtr, out moi))
+                    if (snapshot.CrawledData.ManagedObjectByAddress.TryGetValue(m_data.managed.objectPtr, out moi))
                     {
-                        return moi.managedObjectIndex;
+                        return moi.ManagedObjectIndex;
                     }
 
 
@@ -685,23 +685,23 @@ namespace Unity.MemoryProfiler.Editor
 
         public static ObjectData FromManagedObjectInfo(CachedSnapshot snapshot, ManagedObjectInfo moi)
         {
-            if (moi.iTypeDescription < 0) return ObjectData.invalid;
+            if (moi.ITypeDescription < 0) return ObjectData.invalid;
             ObjectData o = new ObjectData();
-            o.m_dataType = TypeToDataType(snapshot, moi.iTypeDescription);// ObjectDataType.Object;
-            o.m_data.managed.objectPtr = moi.ptrObject;
-            o.SetManagedType(snapshot, moi.iTypeDescription);
+            o.m_dataType = TypeToDataType(snapshot, moi.ITypeDescription);// ObjectDataType.Object;
+            o.m_data.managed.objectPtr = moi.PtrObject;
+            o.SetManagedType(snapshot, moi.ITypeDescription);
             o.managedObjectData = moi.data;
             return o;
         }
 
         public static ObjectData FromManagedObjectIndex(CachedSnapshot snapshot, int index)
         {
-            if (index < 0 || index >= snapshot.m_CrawledData.managedObjects.Count) return ObjectData.invalid;
-            var moi = snapshot.m_CrawledData.managedObjects[index];
+            if (index < 0 || index >= snapshot.CrawledData.ManagedObjects.Count) return ObjectData.invalid;
+            var moi = snapshot.CrawledData.ManagedObjects[index];
 
             if (index < snapshot.gcHandles.Count)
             {
-                if (moi.ptrObject != snapshot.gcHandles.target[index])
+                if (moi.PtrObject != snapshot.gcHandles.target[index])
                 {
                     throw new Exception("bad object");
                 }
@@ -714,7 +714,7 @@ namespace Unity.MemoryProfiler.Editor
         {
             if (ptr == 0) return ObjectData.invalid;
             ManagedObjectInfo moi;
-            if (snapshot.m_CrawledData.managedObjectByAddress.TryGetValue(ptr, out moi))
+            if (snapshot.CrawledData.ManagedObjectByAddress.TryGetValue(ptr, out moi))
             {
                 return FromManagedObjectInfo(snapshot, moi);
             }
@@ -725,17 +725,17 @@ namespace Unity.MemoryProfiler.Editor
                 o.managedObjectData = snapshot.managedHeapSections.Find(ptr, snapshot.virtualMachineInformation);
                 if (o.managedObjectData.IsValid)
                 {
-                    var info = Crawler.ParseObjectHeader(snapshot, snapshot.managedHeapSections, o.managedObjectData, false);
+                    var info = Crawler.ParseObjectHeader(snapshot, o.managedObjectData, false);
                     if (asTypeIndex >= 0)
                     {
                         o.SetManagedType(snapshot, asTypeIndex);
                     }
                     else
                     {
-                        o.SetManagedType(snapshot, info.iTypeDescription);
+                        o.SetManagedType(snapshot, info.ITypeDescription);
                     }
 
-                    o.m_dataType = TypeToDataType(snapshot, info.iTypeDescription);
+                    o.m_dataType = TypeToDataType(snapshot, info.ITypeDescription);
                     return o;
                 }
             }
@@ -809,24 +809,24 @@ namespace Unity.MemoryProfiler.Editor
                 case ObjectDataType.Object:
                 {
                     ManagedObjectInfo moi;
-                    if (snapshot.m_CrawledData.managedObjectByAddress.TryGetValue(obj.hostManagedObjectPtr, out moi))
+                    if (snapshot.CrawledData.ManagedObjectByAddress.TryGetValue(obj.hostManagedObjectPtr, out moi))
                     {
-                        objIndex = snapshot.ManagedObjectIndexToUnifiedObjectIndex(moi.managedObjectIndex);
+                        objIndex = snapshot.ManagedObjectIndexToUnifiedObjectIndex(moi.ManagedObjectIndex);
 
                         //add crawled connections
-                        for (int i = 0; i != snapshot.m_CrawledData.connections.Count; ++i)
+                        for (int i = 0; i != snapshot.CrawledData.Connections.Count; ++i)
                         {
-                            var c = snapshot.m_CrawledData.connections[i];
+                            var c = snapshot.CrawledData.Connections[i];
                             switch (c.connectionType)
                             {
                                 case ManagedConnection.ConnectionType.Global_To_ManagedObject:
-                                    if (c.toManagedObjectIndex == moi.managedObjectIndex)
+                                    if (c.toManagedObjectIndex == moi.ManagedObjectIndex)
                                     {
                                         o.Add(ObjectData.global);
                                     }
                                     break;
                                 case ManagedConnection.ConnectionType.ManagedObject_To_ManagedObject:
-                                    if (c.toManagedObjectIndex == moi.managedObjectIndex)
+                                    if (c.toManagedObjectIndex == moi.ManagedObjectIndex)
                                     {
                                         var objParent = ObjectData.FromManagedObjectIndex(snapshot, c.fromManagedObjectIndex);
                                         if (c.fieldFrom >= 0)
@@ -844,7 +844,7 @@ namespace Unity.MemoryProfiler.Editor
                                     }
                                     break;
                                 case ManagedConnection.ConnectionType.ManagedType_To_ManagedObject:
-                                    if (c.toManagedObjectIndex == moi.managedObjectIndex)
+                                    if (c.toManagedObjectIndex == moi.ManagedObjectIndex)
                                     {
                                         var objType = ObjectData.FromManagedType(snapshot, c.fromManagedType);
                                         if (c.fieldFrom >= 0)
@@ -862,7 +862,7 @@ namespace Unity.MemoryProfiler.Editor
                                     }
                                     break;
                                 case ManagedConnection.ConnectionType.UnityEngineObject:
-                                    if (c.UnityEngineManagedObjectIndex == moi.managedObjectIndex)
+                                    if (c.UnityEngineManagedObjectIndex == moi.ManagedObjectIndex)
                                     {
                                         o.Add(ObjectData.FromNativeObjectIndex(snapshot, c.UnityEngineNativeObjectIndex));
                                     }
@@ -876,18 +876,18 @@ namespace Unity.MemoryProfiler.Editor
                     objIndex = snapshot.NativeObjectIndexToUnifiedObjectIndex(obj.nativeObjectIndex);
 
                     //add crawled connection
-                    for (int i = 0; i != snapshot.m_CrawledData.connections.Count; ++i)
+                    for (int i = 0; i != snapshot.CrawledData.Connections.Count; ++i)
                     {
-                        switch (snapshot.m_CrawledData.connections[i].connectionType)
+                        switch (snapshot.CrawledData.Connections[i].connectionType)
                         {
                             case ManagedConnection.ConnectionType.Global_To_ManagedObject:
                             case ManagedConnection.ConnectionType.ManagedObject_To_ManagedObject:
                             case ManagedConnection.ConnectionType.ManagedType_To_ManagedObject:
                                 break;
                             case ManagedConnection.ConnectionType.UnityEngineObject:
-                                if (snapshot.m_CrawledData.connections[i].UnityEngineNativeObjectIndex == obj.nativeObjectIndex)
+                                if (snapshot.CrawledData.Connections[i].UnityEngineNativeObjectIndex == obj.nativeObjectIndex)
                                 {
-                                    o.Add(ObjectData.FromManagedObjectIndex(snapshot, snapshot.m_CrawledData.connections[i].UnityEngineManagedObjectIndex));
+                                    o.Add(ObjectData.FromManagedObjectIndex(snapshot, snapshot.CrawledData.Connections[i].UnityEngineManagedObjectIndex));
                                 }
                                 break;
                         }

@@ -52,7 +52,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             m_SourceColumn.SetRowValue(m_IndexedTable.indices[row], value);
         }
 
-        public override Database.View.LinkRequest GetRowLink(long row)
+        public override LinkRequest GetRowLink(long row)
         {
             return m_SourceColumn.GetRowLink(m_IndexedTable.indices[row]);
         }

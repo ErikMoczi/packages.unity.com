@@ -52,7 +52,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Soa
             {
                 m_DataSet = dataSet;
                 m_DataSource = source;
-                chunkCount = (m_DataSet.m_dataCount + dataSet.m_chunkSize - 1) / m_DataSet.m_chunkSize;
+                chunkCount = (m_DataSet.DataCount + dataSet.ChunkSize - 1) / m_DataSet.ChunkSize;
                 m_DataChunk = new DataChunk<DataT>[chunkCount];
             }
 
@@ -60,14 +60,14 @@ namespace Unity.MemoryProfiler.Editor.Database.Soa
             public DataSource<DataT> m_DataSource;
             public void IndexToChunckIndex(long index, out long chunkIndex, out long chunkSubIndex)
             {
-                chunkIndex = index / m_DataSet.m_chunkSize;
-                chunkSubIndex = index % m_DataSet.m_chunkSize;
+                chunkIndex = index / m_DataSet.ChunkSize;
+                chunkSubIndex = index % m_DataSet.ChunkSize;
             }
 
             public DataChunk<DataT> IndexToChunck(long index, out long chunkSubIndex)
             {
-                long chunkIndex = index / m_DataSet.m_chunkSize;
-                chunkSubIndex = index % m_DataSet.m_chunkSize;
+                long chunkIndex = index / m_DataSet.ChunkSize;
+                chunkSubIndex = index % m_DataSet.ChunkSize;
                 var chunk = GetChunk(chunkIndex);
                 return chunk;
             }
@@ -95,7 +95,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Soa
             {
                 get
                 {
-                    return m_DataSet.m_dataCount;
+                    return m_DataSet.DataCount;
                 }
             }
             public DataChunk<DataT> GetChunk(long chunkIndex)
@@ -104,11 +104,11 @@ namespace Unity.MemoryProfiler.Editor.Database.Soa
                 {
                     using (Profiling.GetMarker(Profiling.MarkerId.NewDataChunk).Auto())
                     {
-                        long indexFirst = chunkIndex * m_DataSet.m_chunkSize;
-                        long indexLast = indexFirst + m_DataSet.m_chunkSize;
-                        if (indexLast > m_DataSet.m_dataCount)
+                        long indexFirst = chunkIndex * m_DataSet.ChunkSize;
+                        long indexLast = indexFirst + m_DataSet.ChunkSize;
+                        if (indexLast > m_DataSet.DataCount)
                         {
-                            indexLast = m_DataSet.m_dataCount;
+                            indexLast = m_DataSet.DataCount;
                         }
                         m_DataChunk[chunkIndex] = new DataChunk<DataT>(indexLast - indexFirst);
                         m_DataSource.Get(Range.FirstLast(indexFirst, indexLast), ref m_DataChunk[chunkIndex].m_Data);
@@ -128,7 +128,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Soa
                     int r = Array.FindIndex(GetChunk(i).m_Data, match);
                     if (r >= 0)
                     {
-                        return (int)(i * m_DataSet.m_chunkSize + r);
+                        return (int)(i * m_DataSet.ChunkSize + r);
                     }
                 }
                 return -1;
@@ -144,7 +144,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Soa
                     {
                         if (match(c[j]))
                         {
-                            result.Add((int)(i * m_DataSet.m_chunkSize + j));
+                            result.Add((int)(i * m_DataSet.ChunkSize + j));
                         }
                     }
                 }
@@ -326,22 +326,22 @@ namespace Unity.MemoryProfiler.Editor.Database.Soa
                 long count = indices.indexCount;
                 DataT[] k = new DataT[count];
 
-                long firstChunkSubIndex = indices.directIndexFirst % m_Cache.m_DataSet.m_chunkSize;
-                long lastChunkSubIndex = indices.directIndexLast % m_Cache.m_DataSet.m_chunkSize;
+                long firstChunkSubIndex = indices.directIndexFirst % m_Cache.m_DataSet.ChunkSize;
+                long lastChunkSubIndex = indices.directIndexLast % m_Cache.m_DataSet.ChunkSize;
 
-                long firstChunkIndex = indices.directIndexFirst / m_Cache.m_DataSet.m_chunkSize;
-                long lastChunkIndex = indices.directIndexLast / m_Cache.m_DataSet.m_chunkSize;
+                long firstChunkIndex = indices.directIndexFirst / m_Cache.m_DataSet.ChunkSize;
+                long lastChunkIndex = indices.directIndexLast / m_Cache.m_DataSet.ChunkSize;
 
-                long firstChunkLength = m_Cache.m_DataSet.m_chunkSize - firstChunkSubIndex;
+                long firstChunkLength = m_Cache.m_DataSet.ChunkSize - firstChunkSubIndex;
                 long lastChunkLength = lastChunkSubIndex;
 
                 long firstFullChunk = firstChunkIndex + 1;
                 long lastFullChunk = lastChunkIndex;
                 long fullChunkCount = lastFullChunk - firstFullChunk;
 
-                if (firstChunkLength > m_Cache.m_DataSet.m_dataCount)
+                if (firstChunkLength > m_Cache.m_DataSet.DataCount)
                 {
-                    firstChunkLength = m_Cache.m_DataSet.m_dataCount;
+                    firstChunkLength = m_Cache.m_DataSet.DataCount;
                     lastChunkLength = 0;
                 }
                 //copy first chunk
@@ -355,15 +355,15 @@ namespace Unity.MemoryProfiler.Editor.Database.Soa
                 for (long i = 0; i < fullChunkCount; ++i)
                 {
                     long chunkIndex = i + firstFullChunk;
-                    long chunkRowFirst = chunkIndex * m_Cache.m_DataSet.m_chunkSize;
+                    long chunkRowFirst = chunkIndex * m_Cache.m_DataSet.ChunkSize;
                     var c = m_Cache.GetChunk(chunkIndex);
-                    System.Array.Copy(c.m_Data, 0, k, chunkRowFirst - indices.directIndexFirst, m_Cache.m_DataSet.m_chunkSize);
+                    System.Array.Copy(c.m_Data, 0, k, chunkRowFirst - indices.directIndexFirst, m_Cache.m_DataSet.ChunkSize);
                 }
 
                 //copy last chunk
                 if (lastChunkLength > 0)
                 {
-                    long chunkRowFirst = lastChunkIndex * m_Cache.m_DataSet.m_chunkSize;
+                    long chunkRowFirst = lastChunkIndex * m_Cache.m_DataSet.ChunkSize;
                     var c = m_Cache.GetChunk(lastChunkIndex);
                     System.Array.Copy(c.m_Data, 0, k, chunkRowFirst - indices.directIndexFirst, lastChunkLength);
                 }

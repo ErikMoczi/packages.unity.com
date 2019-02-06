@@ -12,21 +12,21 @@ namespace Unity.MemoryProfiler.Editor
         }
 
 #endif
-        public ObjectListTable table;
+        ObjectListTable m_Table;
         public ObjectListUnifiedIndexColumn(ObjectListTable table)
         {
-            this.table = table;
+            m_Table = table;
         }
 
         public override long GetRowCount()
         {
-            return table.GetObjectCount();
+            return m_Table.GetObjectCount();
         }
 
         public override int GetRowValue(long row)
         {
-            var obj = table.GetObjectData(row).displayObject;
-            var i = obj.GetUnifiedObjectIndex(table.snapshot);
+            var obj = m_Table.GetObjectData(row).displayObject;
+            var i = obj.GetUnifiedObjectIndex(m_Table.Snapshot);
             return i;
         }
 
@@ -41,6 +41,7 @@ namespace Unity.MemoryProfiler.Editor
         {
         }
     }
+
     internal class ObjectListNameColumn : Database.ColumnTyped<string>
     {
 #if MEMPROFILER_DEBUG_INFO
@@ -50,26 +51,27 @@ namespace Unity.MemoryProfiler.Editor
         }
 
 #endif
-        public ObjectListTable table;
+        ObjectListTable m_Table;
         public ObjectListNameColumn(ObjectListTable table)
         {
-            this.table = table;
+            m_Table = table;
         }
 
         public override long GetRowCount()
         {
-            return table.GetObjectCount();
+            return m_Table.GetObjectCount();
         }
 
         public override string GetRowValue(long row)
         {
-            return table.GetObjectName(row);
+            return m_Table.GetObjectName(row);
         }
 
         public override void SetRowValue(long row, string value)
         {
         }
     }
+
     internal class ObjectListValueColumn : Database.ColumnTyped<string>
     {
 #if MEMPROFILER_DEBUG_INFO
@@ -79,21 +81,21 @@ namespace Unity.MemoryProfiler.Editor
         }
 
 #endif
-        public ObjectListTable table;
+        ObjectListTable m_Table;
         public ObjectListValueColumn(ObjectListTable table)
         {
-            this.table = table;
+            m_Table = table;
         }
 
         public override long GetRowCount()
         {
-            return table.GetObjectCount();
+            return m_Table.GetObjectCount();
         }
 
         public override string GetRowValue(long row)
         {
-            var obj = table.GetObjectData(row).displayObject;
-            var result = table.renderer.Render(obj);
+            var obj = m_Table.GetObjectData(row).displayObject;
+            var result = m_Table.Renderer.Render(obj);
             return result;
         }
 
@@ -101,24 +103,23 @@ namespace Unity.MemoryProfiler.Editor
         {
         }
 
-        public override Database.View.LinkRequest GetRowLink(long row)
+        public override Database.LinkRequest GetRowLink(long row)
         {
-            var obj = table.GetObjectData(row).displayObject;
-            if (!table.IsGroupLinked(obj)) return null;
+            var obj = m_Table.GetObjectData(row).displayObject;
+            if (!m_Table.IsGroupLinked(obj)) return null;
             switch (obj.dataType)
             {
                 case ObjectDataType.Array:
                 case ObjectDataType.Object:
                 {
-                    var lr = new Database.View.LinkRequest();
-                    lr.metaLink = new Database.View.MetaLink();
-                    lr.metaLink.linkViewName = ObjectTable.kTableName;
-                    lr.sourceTable = table;
-                    lr.sourceColumn = this;
-                    lr.row = row;
-                    lr.param = new Database.ParameterSet();
-                    lr.param.param.Add(ObjectTable.kObjParamName, new Database.Operation.ExpConst<ulong>(obj.hostManagedObjectPtr));
-                    lr.param.param.Add(ObjectTable.kTypeParamName, new Database.Operation.ExpConst<int>(obj.managedTypeIndex));
+                    var lr = new Database.LinkRequestTable();
+                    lr.LinkToOpen = new Database.TableLink();
+                    lr.LinkToOpen.TableName = ObjectTable.TableName;
+                    lr.SourceTable = m_Table;
+                    lr.SourceColumn = this;
+                    lr.SourceRow = row;
+                    lr.Parameters.Add(ObjectTable.ObjParamName, new Database.Operation.ExpConst<ulong>(obj.hostManagedObjectPtr));
+                    lr.Parameters.Add(ObjectTable.TypeParamName, new Database.Operation.ExpConst<int>(obj.managedTypeIndex));
                     return lr;
                 }
 
@@ -127,14 +128,13 @@ namespace Unity.MemoryProfiler.Editor
                 {
                     ulong result = obj.GetReferencePointer();
                     if (result == 0) return null;
-                    var lr = new Database.View.LinkRequest();
-                    lr.metaLink = new Database.View.MetaLink();
-                    lr.metaLink.linkViewName = ObjectTable.kTableName;
-                    lr.sourceTable = table;
-                    lr.sourceColumn = this;
-                    lr.row = row;
-                    lr.param = new Database.ParameterSet();
-                    lr.param.param.Add(ObjectTable.kObjParamName, new Database.Operation.ExpConst<ulong>(result));
+                    var lr = new Database.LinkRequestTable();
+                    lr.LinkToOpen = new Database.TableLink();
+                    lr.LinkToOpen.TableName = ObjectTable.TableName;
+                    lr.SourceTable = m_Table;
+                    lr.SourceColumn = this;
+                    lr.SourceRow = row;
+                    lr.Parameters.Add(ObjectTable.ObjParamName, new Database.Operation.ExpConst<ulong>(result));
                     return lr;
                 }
                 default:
@@ -152,21 +152,21 @@ namespace Unity.MemoryProfiler.Editor
         }
 
 #endif
-        public ObjectListTable table;
+        ObjectListTable m_Table;
         public ObjectListUniqueStringColumn(ObjectListTable table)
         {
-            this.table = table;
+            m_Table = table;
         }
 
         public override long GetRowCount()
         {
-            return table.GetObjectCount();
+            return m_Table.GetObjectCount();
         }
 
         public override string GetRowValue(long row)
         {
-            var obj = table.GetObjectData(row).displayObject;
-            var result = table.renderer.RenderUniqueString(obj);
+            var obj = m_Table.GetObjectData(row).displayObject;
+            var result = m_Table.Renderer.RenderUniqueString(obj);
             return result;
         }
 
@@ -174,7 +174,7 @@ namespace Unity.MemoryProfiler.Editor
         {
         }
 
-        public override Database.View.LinkRequest GetRowLink(long row)
+        public override Database.LinkRequest GetRowLink(long row)
         {
             return null;
         }
@@ -189,28 +189,28 @@ namespace Unity.MemoryProfiler.Editor
         }
 
 #endif
-        public ObjectListTable table;
+        ObjectListTable m_Table;
         public ObjectListAddressColumn(ObjectListTable table)
         {
-            this.table = table;
+            m_Table = table;
         }
 
         public override long GetRowCount()
         {
-            return table.GetObjectCount();
+            return m_Table.GetObjectCount();
         }
 
         public override ulong GetRowValue(long row)
         {
-            var obj = table.GetObjectData(row).displayObject;
-            return obj.GetObjectPointer(table.snapshot, false);
+            var obj = m_Table.GetObjectData(row).displayObject;
+            return obj.GetObjectPointer(m_Table.Snapshot, false);
         }
 
         public override void SetRowValue(long row, ulong value)
         {
         }
 
-        public override Database.View.LinkRequest GetRowLink(long row)
+        public override Database.LinkRequest GetRowLink(long row)
         {
             return null;
         }
@@ -225,20 +225,20 @@ namespace Unity.MemoryProfiler.Editor
         }
 
 #endif
-        public ObjectListTable table;
+        ObjectListTable m_Table;
         public ObjectListTypeColumn(ObjectListTable table)
         {
-            this.table = table;
+            m_Table = table;
         }
 
         public override long GetRowCount()
         {
-            return table.GetObjectCount();
+            return m_Table.GetObjectCount();
         }
 
         public override string GetRowValue(long row)
         {
-            var d = table.GetObjectData(row).displayObject;
+            var d = m_Table.GetObjectData(row).displayObject;
             switch (d.dataType)
             {
                 case ObjectDataType.Array:
@@ -247,21 +247,21 @@ namespace Unity.MemoryProfiler.Editor
                 case ObjectDataType.ReferenceArray:
                 case ObjectDataType.Value:
                     if (d.managedTypeIndex < 0) return "<unknown type>";
-                    return table.snapshot.typeDescriptions.typeDescriptionName[d.managedTypeIndex];
+                    return m_Table.Snapshot.typeDescriptions.typeDescriptionName[d.managedTypeIndex];
 
                 case ObjectDataType.ReferenceObject:
                 {
                     var ptr = d.GetReferencePointer();
                     if (ptr != 0)
                     {
-                        var obj = ObjectData.FromManagedPointer(table.snapshot, ptr);
+                        var obj = ObjectData.FromManagedPointer(m_Table.Snapshot, ptr);
                         if (obj.IsValid && obj.managedTypeIndex != d.managedTypeIndex)
                         {
-                            return "(" + table.snapshot.typeDescriptions.typeDescriptionName[obj.managedTypeIndex] + ") "
-                                + table.snapshot.typeDescriptions.typeDescriptionName[d.managedTypeIndex];
+                            return "(" + m_Table.Snapshot.typeDescriptions.typeDescriptionName[obj.managedTypeIndex] + ") "
+                                + m_Table.Snapshot.typeDescriptions.typeDescriptionName[d.managedTypeIndex];
                         }
                     }
-                    return table.snapshot.typeDescriptions.typeDescriptionName[d.managedTypeIndex];
+                    return m_Table.Snapshot.typeDescriptions.typeDescriptionName[d.managedTypeIndex];
                 }
 
                 case ObjectDataType.Global:
@@ -270,8 +270,8 @@ namespace Unity.MemoryProfiler.Editor
                     return "Type";
                 case ObjectDataType.NativeObject:
                 {
-                    int iType = table.snapshot.nativeObjects.nativeTypeArrayIndex[d.nativeObjectIndex];
-                    return table.snapshot.nativeTypes.typeName[iType];
+                    int iType = m_Table.Snapshot.nativeObjects.nativeTypeArrayIndex[d.nativeObjectIndex];
+                    return m_Table.Snapshot.nativeTypes.typeName[iType];
                 }
                 case ObjectDataType.Unknown:
                 default:
@@ -293,15 +293,15 @@ namespace Unity.MemoryProfiler.Editor
         }
 
 #endif
-        public ObjectListTable table;
+        ObjectListTable m_Table;
         public ObjectListLengthColumn(ObjectListTable table)
         {
-            this.table = table;
+            m_Table = table;
         }
 
         public override long GetRowCount()
         {
-            return table.GetObjectCount();
+            return m_Table.GetObjectCount();
         }
 
         public override string GetRowValueString(long row)
@@ -313,12 +313,12 @@ namespace Unity.MemoryProfiler.Editor
 
         public override int GetRowValue(long row)
         {
-            var obj = table.GetObjectData(row).displayObject;
+            var obj = m_Table.GetObjectData(row).displayObject;
             switch (obj.dataType)
             {
                 case ObjectDataType.ReferenceArray:
                 {
-                    obj = ObjectData.FromManagedPointer(table.snapshot, obj.GetReferencePointer());
+                    obj = ObjectData.FromManagedPointer(m_Table.Snapshot, obj.GetReferencePointer());
                     if (obj.hostManagedObjectPtr != 0)
                     {
                         goto case ObjectDataType.Array;
@@ -327,7 +327,7 @@ namespace Unity.MemoryProfiler.Editor
                 }
                 case ObjectDataType.Array:
                 {
-                    var arrayInfo = ArrayTools.GetArrayInfo(table.snapshot, table.snapshot.managedHeapSections, obj.managedObjectData, obj.managedTypeIndex, table.snapshot.virtualMachineInformation);
+                    var arrayInfo = ArrayTools.GetArrayInfo(m_Table.Snapshot, obj.managedObjectData, obj.managedTypeIndex);
                     return arrayInfo.length;
                 }
                 default:
@@ -348,20 +348,20 @@ namespace Unity.MemoryProfiler.Editor
         }
 
 #endif
-        public ObjectListTable table;
+        ObjectListTable m_Table;
         public ObjectListStaticColumn(ObjectListTable table)
         {
-            this.table = table;
+            m_Table = table;
         }
 
         public override long GetRowCount()
         {
-            return table.GetObjectCount();
+            return m_Table.GetObjectCount();
         }
 
         public override bool GetRowValue(long row)
         {
-            var b = table.GetObjectStatic(row);
+            var b = m_Table.GetObjectStatic(row);
             return b;
         }
 
@@ -378,15 +378,15 @@ namespace Unity.MemoryProfiler.Editor
         }
 
 #endif
-        public ObjectListTable table;
+        ObjectListTable m_Table;
         public ObjectListRefCountColumn(ObjectListTable table)
         {
-            this.table = table;
+            m_Table = table;
         }
 
         public override long GetRowCount()
         {
-            return table.GetObjectCount();
+            return m_Table.GetObjectCount();
         }
 
         public override string GetRowValueString(long row)
@@ -401,7 +401,7 @@ namespace Unity.MemoryProfiler.Editor
 
         public override int GetRowValue(long row)
         {
-            var obj = table.GetObjectData(row).displayObject;
+            var obj = m_Table.GetObjectData(row).displayObject;
             switch (obj.dataType)
             {
                 case ObjectDataType.Array:
@@ -412,16 +412,16 @@ namespace Unity.MemoryProfiler.Editor
                     if (ptr > 0)
                     {
                         ManagedObjectInfo moi;
-                        if (table.crawledData.managedObjectByAddress.TryGetValue(ptr, out moi))
+                        if (m_Table.CrawledData.ManagedObjectByAddress.TryGetValue(ptr, out moi))
                         {
-                            return moi.refCount;
+                            return moi.RefCount;
                         }
                     }
                     break;
                 }
 
                 case ObjectDataType.NativeObject:
-                    return table.snapshot.nativeObjects.refcount[obj.nativeObjectIndex];
+                    return m_Table.Snapshot.nativeObjects.refcount[obj.nativeObjectIndex];
             }
             return -1;
         }
@@ -430,20 +430,19 @@ namespace Unity.MemoryProfiler.Editor
         {
         }
 
-        public override Database.View.LinkRequest GetRowLink(long row)
+        public override Database.LinkRequest GetRowLink(long row)
         {
-            var obj = table.GetObjectData(row).displayObject;
-            int i = obj.GetUnifiedObjectIndex(table.snapshot);
+            var obj = m_Table.GetObjectData(row).displayObject;
+            int i = obj.GetUnifiedObjectIndex(m_Table.Snapshot);
             if (i >= 0)
             {
-                var lr = new Database.View.LinkRequest();
-                lr.metaLink = new Database.View.MetaLink();
-                lr.metaLink.linkViewName = ObjectReferenceTable.kObjectReferenceTableName;
-                lr.sourceTable = table;
-                lr.sourceColumn = this;
-                lr.row = row;
-                lr.param = new Database.ParameterSet();
-                lr.param.param.Add(ObjectTable.kObjParamName, new Database.Operation.ExpConst<int>(i));
+                var lr = new Database.LinkRequestTable();
+                lr.LinkToOpen = new Database.TableLink();
+                lr.LinkToOpen.TableName = ObjectReferenceTable.kObjectReferenceTableName;
+                lr.SourceTable = m_Table;
+                lr.SourceColumn = this;
+                lr.SourceRow = row;
+                lr.Parameters.AddValue(ObjectTable.ObjParamName, i);
                 return lr;
             }
             return null;
@@ -459,35 +458,35 @@ namespace Unity.MemoryProfiler.Editor
         }
 
 #endif
-        public ObjectListTable table;
+        ObjectListTable m_Table;
         public ObjectListOwnedSizeColumn(ObjectListTable table)
         {
-            this.table = table;
+            m_Table = table;
         }
 
         public override long GetRowCount()
         {
-            return table.GetObjectCount();
+            return m_Table.GetObjectCount();
         }
 
         public override long GetRowValue(long row)
         {
-            if (table.GetObjectStatic(row)) return 0;
-            var obj = table.GetObjectData(row).displayObject;
+            if (m_Table.GetObjectStatic(row)) return 0;
+            var obj = m_Table.GetObjectData(row).displayObject;
             switch (obj.dataType)
             {
                 case ObjectDataType.Object:
                 case ObjectDataType.BoxedValue:
                 case ObjectDataType.Array:
                 case ObjectDataType.Value:
-                    return table.snapshot.typeDescriptions.size[obj.managedTypeIndex];
+                    return m_Table.Snapshot.typeDescriptions.size[obj.managedTypeIndex];
                 case ObjectDataType.ReferenceArray:
                 case ObjectDataType.ReferenceObject:
-                    return table.snapshot.virtualMachineInformation.pointerSize;
+                    return m_Table.Snapshot.virtualMachineInformation.pointerSize;
                 case ObjectDataType.Type:
-                    return table.snapshot.typeDescriptions.size[obj.managedTypeIndex];
+                    return m_Table.Snapshot.typeDescriptions.size[obj.managedTypeIndex];
                 case ObjectDataType.NativeObject:
-                    return (long)table.snapshot.nativeObjects.size[obj.nativeObjectIndex];
+                    return (long)m_Table.Snapshot.nativeObjects.size[obj.nativeObjectIndex];
                 case ObjectDataType.NativeObjectReference:
                     return 0;
                 default:
@@ -509,26 +508,26 @@ namespace Unity.MemoryProfiler.Editor
         }
 
 #endif
-        public ObjectListTable table;
+        ObjectListTable m_Table;
         public ObjectListTargetSizeColumn(ObjectListTable table)
         {
-            this.table = table;
+            m_Table = table;
         }
 
         public override long GetRowCount()
         {
-            return table.GetObjectCount();
+            return m_Table.GetObjectCount();
         }
 
         public override long GetRowValue(long row)
         {
-            var obj = table.GetObjectData(row).displayObject;
+            var obj = m_Table.GetObjectData(row).displayObject;
             switch (obj.dataType)
             {
                 case ObjectDataType.Value:
-                    if (table.GetObjectStatic(row))
+                    if (m_Table.GetObjectStatic(row))
                     {
-                        return table.snapshot.typeDescriptions.size[obj.managedTypeIndex];
+                        return m_Table.Snapshot.typeDescriptions.size[obj.managedTypeIndex];
                     }
                     return 0;
 
@@ -538,9 +537,9 @@ namespace Unity.MemoryProfiler.Editor
                     var ptr = obj.GetReferencePointer();
                     if (ptr == 0) return 0;
                     ManagedObjectInfo moi;
-                    if (table.crawledData.managedObjectByAddress.TryGetValue(ptr, out moi))
+                    if (m_Table.CrawledData.ManagedObjectByAddress.TryGetValue(ptr, out moi))
                     {
-                        return moi.size;
+                        return moi.Size;
                     }
                     else
                     {
@@ -551,7 +550,7 @@ namespace Unity.MemoryProfiler.Editor
                 case ObjectDataType.NativeObject:
                     return 0;
                 case ObjectDataType.NativeObjectReference:
-                    return (long)table.snapshot.nativeObjects.size[obj.nativeObjectIndex];
+                    return (long)m_Table.Snapshot.nativeObjects.size[obj.nativeObjectIndex];
                 default:
                     return 0;
             }
@@ -571,15 +570,15 @@ namespace Unity.MemoryProfiler.Editor
         }
 
 #endif
-        public ObjectListTable table;
+        ObjectListTable m_Table;
         public ObjectListObjectTypeColumn(ObjectListTable table)
         {
-            this.table = table;
+            m_Table = table;
         }
 
         public override long GetRowCount()
         {
-            return table.GetObjectCount();
+            return m_Table.GetObjectCount();
         }
 
         public static string GetObjecType(ObjectData obj)
@@ -626,7 +625,7 @@ namespace Unity.MemoryProfiler.Editor
 
         public override string GetRowValue(long row)
         {
-            var obj = table.GetObjectData(row).displayObject;
+            var obj = m_Table.GetObjectData(row).displayObject;
             return GetObjecType(obj);
         }
 
@@ -636,38 +635,38 @@ namespace Unity.MemoryProfiler.Editor
     }
     internal abstract class ObjectListNativeLinkColumn<DataT> : Database.ColumnTyped<DataT> where DataT : System.IComparable
     {
-        public ObjectListTable table;
+        protected ObjectListTable m_Table;
         public ObjectListNativeLinkColumn(ObjectListTable table)
         {
-            this.table = table;
+            m_Table = table;
         }
 
-        private Database.View.LinkRequest MakeLink(string tableName, int instanceId, long rowFrom)
+        private Database.LinkRequest MakeLink(string tableName, int instanceId, long rowFrom)
         {
-            var lr = new Database.View.LinkRequest();
-            lr.metaLink = new Database.View.MetaLink();
-            lr.metaLink.linkViewName = tableName;
+            var lr = new Database.LinkRequestTable();
+            lr.LinkToOpen = new Database.TableLink();
+            lr.LinkToOpen.TableName = tableName;
             var b = new Database.View.Where.Builder("NativeInstanceId", Operator.Equal, new Expression.MetaExpression(instanceId.ToString(), true));
-            lr.metaLink.linkWhere = new System.Collections.Generic.List<Database.View.Where.Builder>();
-            lr.metaLink.linkWhere.Add(b);
-            lr.sourceTable = table;
-            lr.sourceColumn = this;
-            lr.row = rowFrom;
+            lr.LinkToOpen.RowWhere = new System.Collections.Generic.List<Database.View.Where.Builder>();
+            lr.LinkToOpen.RowWhere.Add(b);
+            lr.SourceTable = m_Table;
+            lr.SourceColumn = this;
+            lr.SourceRow = rowFrom;
 
             return lr;
         }
 
-        public override Database.View.LinkRequest GetRowLink(long row)
+        public override Database.LinkRequest GetRowLink(long row)
         {
-            var obj = table.GetObjectData(row).displayObject;
+            var obj = m_Table.GetObjectData(row).displayObject;
             if (obj.isManaged)
             {
                 ManagedObjectInfo moi = GetInfo(obj);
-                if (moi != null && moi.nativeObjectIndex >= 0)
+                if (moi.IsValid() && moi.NativeObjectIndex >= 0)
                 {
-                    var instanceId = table.snapshot.nativeObjects.instanceId[moi.nativeObjectIndex];
+                    var instanceId = m_Table.Snapshot.nativeObjects.instanceId[moi.NativeObjectIndex];
                     if (instanceId == CachedSnapshot.NativeObjectEntriesCache.InstanceID_None) return null;
-                    return MakeLink(ObjectAllNativeTable.kTableName, instanceId, row);
+                    return MakeLink(ObjectAllNativeTable.TableName, instanceId, row);
                 }
             }
             // we are linking native objects to themselves currently as that allows us 
@@ -675,11 +674,11 @@ namespace Unity.MemoryProfiler.Editor
             // TODO: Improve column link API so it supports all 3 cases ( native - native , managed - native,  native - managed)
             else if (obj.isNative)
             {
-                int index = obj.GetNativeObjectIndex(table.snapshot);
+                int index = obj.GetNativeObjectIndex(m_Table.Snapshot);
                 if (index < 0) return null;
-                var instanceId = table.snapshot.nativeObjects.instanceId[index];
+                var instanceId = m_Table.Snapshot.nativeObjects.instanceId[index];
                 if (instanceId == CachedSnapshot.NativeObjectEntriesCache.InstanceID_None) return null;
-                return MakeLink(ObjectAllNativeTable.kTableName, instanceId, row);
+                return MakeLink(ObjectAllNativeTable.TableName, instanceId, row);
             }
             return null;
         }
@@ -690,22 +689,64 @@ namespace Unity.MemoryProfiler.Editor
             switch (obj.dataType)
             {
                 case ObjectDataType.Object:
-                    table.crawledData.managedObjectByAddress.TryGetValue(obj.hostManagedObjectPtr, out moi);
+                    m_Table.CrawledData.ManagedObjectByAddress.TryGetValue(obj.hostManagedObjectPtr, out moi);
                     return moi;
                 case ObjectDataType.ReferenceObject:
                 {
                     var ptr = obj.GetReferencePointer();
-                    if (ptr == 0) return null;
-                    table.crawledData.managedObjectByAddress.TryGetValue(ptr, out moi);
+                    if (ptr == 0) return default(ManagedObjectInfo);
+                    m_Table.CrawledData.ManagedObjectByAddress.TryGetValue(ptr, out moi);
                     return moi;
                 }
                 default:
-                    return null;
+                    return default(ManagedObjectInfo);
             }
         }
     }
 
-    internal class ObjectListNativeObjectNameColumn : ObjectListNativeLinkColumn<string>
+    internal class ObjectListNativeObjectNameLinkColumn : ObjectListNativeLinkColumn<string>
+    {
+#if MEMPROFILER_DEBUG_INFO
+        public override string GetDebugString(long row)
+        {
+            return "ObjectListNativeObjectNameLinkColumn<string>[" + row + "]{" + GetRowValueString(row) + "}";
+        }
+
+#endif
+        public ObjectListNativeObjectNameLinkColumn(ObjectListTable table)
+            : base(table)
+        {
+        }
+
+        public override long GetRowCount()
+        {
+            return m_Table.GetObjectCount();
+        }
+
+        public override string GetRowValue(long row)
+        {
+            var obj = m_Table.GetObjectData(row).displayObject;
+            switch (obj.dataType)
+            {
+                case ObjectDataType.NativeObject:
+                case ObjectDataType.NativeObjectReference:
+                    return m_Table.Snapshot.nativeObjects.objectName[obj.nativeObjectIndex];
+            }
+
+            ManagedObjectInfo moi = GetInfo(obj);
+            if (moi.IsValid() && moi.NativeObjectIndex >= 0)
+            {
+                return m_Table.Snapshot.nativeObjects.objectName[moi.NativeObjectIndex];
+            }
+            return "";
+        }
+
+        public override void SetRowValue(long row, string value)
+        {
+        }
+    }
+
+    internal class ObjectListNativeObjectNameColumn : Database.ColumnTyped<string>
     {
 #if MEMPROFILER_DEBUG_INFO
         public override string GetDebugString(long row)
@@ -714,32 +755,29 @@ namespace Unity.MemoryProfiler.Editor
         }
 
 #endif
+        ObjectListTable m_table;
         public ObjectListNativeObjectNameColumn(ObjectListTable table)
-            : base(table)
+            : base()
         {
+            m_table = table;
         }
 
         public override long GetRowCount()
         {
-            return table.GetObjectCount();
+            return m_table.GetObjectCount();
         }
 
         public override string GetRowValue(long row)
         {
-            var obj = table.GetObjectData(row).displayObject;
+            var obj = m_table.GetObjectData(row).displayObject;
             switch (obj.dataType)
             {
                 case ObjectDataType.NativeObject:
                 case ObjectDataType.NativeObjectReference:
-                    return table.snapshot.nativeObjects.objectName[obj.nativeObjectIndex];
+                    return m_table.Snapshot.nativeObjects.objectName[obj.nativeObjectIndex];
             }
 
-            ManagedObjectInfo moi = GetInfo(obj);
-            if (moi != null && moi.nativeObjectIndex >= 0)
-            {
-                return table.snapshot.nativeObjects.objectName[moi.nativeObjectIndex];
-            }
-            return "";
+            throw new System.NotSupportedException("ObjectListNativeObjectNameColumn is only allowed to be used for purely native lists");
         }
 
         public override void SetRowValue(long row, string value)
@@ -752,7 +790,7 @@ namespace Unity.MemoryProfiler.Editor
 #if MEMPROFILER_DEBUG_INFO
         public override string GetDebugString(long row)
         {
-            return "ObjectListNativeObjectNameColumn<long>[" + row + "]{" + GetRowValueString(row) + "}";
+            return "ObjectListNativeObjectSizeColumn<long>[" + row + "]{" + GetRowValueString(row) + "}";
         }
 
 #endif
@@ -763,7 +801,7 @@ namespace Unity.MemoryProfiler.Editor
 
         public override long GetRowCount()
         {
-            return table.GetObjectCount();
+            return m_Table.GetObjectCount();
         }
 
         public override string GetRowValueString(long row)
@@ -775,11 +813,11 @@ namespace Unity.MemoryProfiler.Editor
 
         public override long GetRowValue(long row)
         {
-            var obj = table.GetObjectData(row).displayObject;
+            var obj = m_Table.GetObjectData(row).displayObject;
             ManagedObjectInfo moi = GetInfo(obj);
-            if (moi != null && moi.nativeObjectIndex >= 0)
+            if (moi.IsValid() && moi.NativeObjectIndex >= 0)
             {
-                return (long)table.snapshot.nativeObjects.size[moi.nativeObjectIndex];
+                return (long)m_Table.Snapshot.nativeObjects.size[moi.NativeObjectIndex];
             }
             return -1;
         }
@@ -789,23 +827,23 @@ namespace Unity.MemoryProfiler.Editor
         }
     }
 
-    internal class ObjectListNativeInstanceIdColumn : ObjectListNativeLinkColumn<int>
+    internal class ObjectListNativeInstanceIdLinkColumn : ObjectListNativeLinkColumn<int>
     {
 #if MEMPROFILER_DEBUG_INFO
         public override string GetDebugString(long row)
         {
-            return "ObjectListNativeInstanceIdColumn<int>[" + row + "]{" + GetRowValueString(row) + "}";
+            return "ObjectListNativeInstanceIdLinkColumn<int>[" + row + "]{" + GetRowValueString(row) + "}";
         }
 
 #endif
-        public ObjectListNativeInstanceIdColumn(ObjectListTable table)
+        public ObjectListNativeInstanceIdLinkColumn(ObjectListTable table)
             : base(table)
         {
         }
 
         public override long GetRowCount()
         {
-            return table.GetObjectCount();
+            return m_Table.GetObjectCount();
         }
 
         public override string GetRowValueString(long row)
@@ -817,22 +855,68 @@ namespace Unity.MemoryProfiler.Editor
 
         public override int GetRowValue(long row)
         {
-            var obj = table.GetObjectData(row).displayObject;
+            var obj = m_Table.GetObjectData(row).displayObject;
             switch (obj.dataType)
             {
                 case ObjectDataType.NativeObject:
                 case ObjectDataType.NativeObjectReference:
-                    return table.snapshot.nativeObjects.instanceId[obj.nativeObjectIndex];
+                    return m_Table.Snapshot.nativeObjects.instanceId[obj.nativeObjectIndex];
                 case ObjectDataType.Object:
                 case ObjectDataType.ReferenceObject:
-                {
                     ManagedObjectInfo moi = GetInfo(obj);
-                    if (moi != null && moi.nativeObjectIndex >= 0)
+                    if (moi.IsValid() && moi.NativeObjectIndex >= 0)
                     {
-                        return table.snapshot.nativeObjects.instanceId[moi.nativeObjectIndex];
+                        return m_Table.Snapshot.nativeObjects.instanceId[moi.NativeObjectIndex];
                     }
                     break;
-                }
+
+            }
+            return CachedSnapshot.NativeObjectEntriesCache.InstanceID_None;
+        }
+
+        public override void SetRowValue(long row, int value)
+        {
+        }
+    }
+
+    internal class ObjectListNativeInstanceIdColumn : Database.ColumnTyped<int>
+    {
+#if MEMPROFILER_DEBUG_INFO
+        public override string GetDebugString(long row)
+        {
+            return "ObjectListNativeInstanceIdColumn<int>[" + row + "]{" + GetRowValueString(row) + "}";
+        }
+
+#endif
+        ObjectListTable m_Table;
+        public ObjectListNativeInstanceIdColumn(ObjectListTable table)
+        {
+            m_Table = table;
+        }
+
+        public override long GetRowCount()
+        {
+            return m_Table.GetObjectCount();
+        }
+
+        public override string GetRowValueString(long row)
+        {
+            var l = GetRowValue(row);
+            if (l == CachedSnapshot.NativeObjectEntriesCache.InstanceID_None) return "";
+            return l.ToString();
+        }
+
+        public override int GetRowValue(long row)
+        {
+            var obj = m_Table.GetObjectData(row).displayObject;
+            switch (obj.dataType)
+            {
+                case ObjectDataType.NativeObject:
+                case ObjectDataType.NativeObjectReference:
+                    return m_Table.Snapshot.nativeObjects.instanceId[obj.nativeObjectIndex];
+                case ObjectDataType.Object:
+                case ObjectDataType.ReferenceObject:
+                    throw new System.NotSupportedException("ObjectListNativeInstanceIdColumn is only to be used in native-objects-only-lists. Use ObjectListNativeInstanceIdLinkColumn instead");
             }
             return CachedSnapshot.NativeObjectEntriesCache.InstanceID_None;
         }
@@ -844,25 +928,25 @@ namespace Unity.MemoryProfiler.Editor
 
     internal abstract class ObjectTable : Database.ExpandTable
     {
-        public const string kTableName = "Object";
-        public const string kTableDisplayName = "Object";
-        public const string kObjParamName = "obj";
-        public const string kTypeParamName = "type";
-        private static Database.MetaTable[] ms_meta;
+        public const string TableName = "Object";
+        public const string TableDisplayName = "Object";
+        public const string ObjParamName = "obj";
+        public const string TypeParamName = "type";
+        static Database.MetaTable[] s_Meta;
         static ObjectTable()
         {
-            ms_meta = new Database.MetaTable[(int)ObjectMetaType.Count];
+            s_Meta = new Database.MetaTable[(int)ObjectMetaType.Count];
 
             var metaManaged = new Database.MetaTable();
             var metaNative = new Database.MetaTable();
-            ms_meta[(int)ObjectMetaType.Managed] = metaManaged;
-            ms_meta[(int)ObjectMetaType.Native] = metaNative;
-            ms_meta[(int)ObjectMetaType.All] = metaManaged;
+            s_Meta[(int)ObjectMetaType.Managed] = metaManaged;
+            s_Meta[(int)ObjectMetaType.Native] = metaNative;
+            s_Meta[(int)ObjectMetaType.All] = metaManaged;
 
-            metaManaged.name = kTableName;
-            metaManaged.displayName = kTableDisplayName;
-            metaNative.name = kTableName;
-            metaNative.displayName = kTableDisplayName;
+            metaManaged.name = TableName;
+            metaManaged.displayName = TableDisplayName;
+            metaNative.name = TableName;
+            metaNative.displayName = TableDisplayName;
 
             var metaColIndex           = new Database.MetaColumn("Index", "Index", typeof(int), false, Grouping.groupByDuplicate, Grouping.GetMergeAlgo(Grouping.MergeAlgo.first, typeof(int)), 40);
             var metaColName            = new Database.MetaColumn("Name", "Name", typeof(string), false, Grouping.groupByDuplicate, Grouping.GetMergeAlgo(Grouping.MergeAlgo.first, typeof(string)), 200);
@@ -921,26 +1005,26 @@ namespace Unity.MemoryProfiler.Editor
             All,
             Count,
         }
-        public ObjectMetaType m_MetaType;
+        protected ObjectMetaType m_MetaType;
         public ObjectTable(Database.Schema schema, ObjectMetaType metaType)
             : base(schema)
         {
             m_MetaType = metaType;
-            m_Meta = ms_meta[(int)metaType];
+            m_Meta = s_Meta[(int)metaType];
         }
     }
     internal abstract class ObjectListTable : ObjectTable
     {
-        public SnapshotDataRenderer renderer;
-        public CachedSnapshot snapshot;
-        public ManagedData crawledData;
+        public readonly SnapshotDataRenderer Renderer;
+        public readonly CachedSnapshot Snapshot;
+        public readonly ManagedData CrawledData;
 
         public ObjectListTable(Database.Schema schema, SnapshotDataRenderer renderer, CachedSnapshot snapshot, ManagedData crawledData, ObjectMetaType metaType)
             : base(schema, metaType)
         {
-            this.renderer = renderer;
-            this.snapshot = snapshot;
-            this.crawledData = crawledData;
+            Renderer = renderer;
+            Snapshot = snapshot;
+            CrawledData = crawledData;
 
             var col = new List<Database.Column>();
             switch (metaType)
@@ -952,14 +1036,14 @@ namespace Unity.MemoryProfiler.Editor
                     col.Add(new ObjectListValueColumn(this));
                     col.Add(new ObjectListTypeColumn(this));
                     col.Add(new ObjectListObjectTypeColumn(this));
-                    col.Add(new ObjectListNativeObjectNameColumn(this));
+                    col.Add(new ObjectListNativeObjectNameLinkColumn(this));
                     col.Add(new ObjectListLengthColumn(this));
                     col.Add(new ObjectListStaticColumn(this));
                     col.Add(new ObjectListRefCountColumn(this));
                     col.Add(new ObjectListOwnedSizeColumn(this));
                     col.Add(new ObjectListTargetSizeColumn(this));
                     col.Add(new ObjectListNativeObjectSizeColumn(this));
-                    col.Add(new ObjectListNativeInstanceIdColumn(this));
+                    col.Add(new ObjectListNativeInstanceIdLinkColumn(this));
                     col.Add(new ObjectListAddressColumn(this));
                     col.Add(new ObjectListUniqueStringColumn(this));
                     break;
@@ -993,26 +1077,26 @@ namespace Unity.MemoryProfiler.Editor
             switch (subObj.dataType)
             {
                 case ObjectDataType.Array:
-                    return new ObjectArrayTable(Schema, renderer, snapshot, crawledData, subObj, m_MetaType);
+                    return new ObjectArrayTable(Schema, Renderer, Snapshot, CrawledData, subObj, m_MetaType);
                 case ObjectDataType.ReferenceArray:
                 {
                     var ptr = subObj.GetReferencePointer();
-                    subObj = ObjectData.FromManagedPointer(snapshot, ptr);
-                    return new ObjectArrayTable(Schema, renderer, snapshot, crawledData, subObj, m_MetaType);
+                    subObj = ObjectData.FromManagedPointer(Snapshot, ptr);
+                    return new ObjectArrayTable(Schema, Renderer, Snapshot, CrawledData, subObj, m_MetaType);
                 }
                 case ObjectDataType.Value:
                 case ObjectDataType.BoxedValue:
                 case ObjectDataType.Object:
                 case ObjectDataType.Type:
-                    return new ObjectFieldTable(Schema, renderer, snapshot, crawledData, subObj, m_MetaType);
+                    return new ObjectFieldTable(Schema, Renderer, Snapshot, CrawledData, subObj, m_MetaType);
                 case ObjectDataType.ReferenceObject:
                 {
                     var ptr = subObj.GetReferencePointer();
-                    subObj = ObjectData.FromManagedPointer(snapshot, ptr);
-                    return new ObjectFieldTable(Schema, renderer, snapshot, crawledData, subObj, m_MetaType);
+                    subObj = ObjectData.FromManagedPointer(Snapshot, ptr);
+                    return new ObjectFieldTable(Schema, Renderer, Snapshot, CrawledData, subObj, m_MetaType);
                 }
                 case ObjectDataType.NativeObject:
-                    return new ObjectReferenceTable(Schema, renderer, snapshot, crawledData, subObj, m_MetaType);
+                    return new ObjectReferenceTable(Schema, Renderer, Snapshot, CrawledData, subObj, m_MetaType);
                 default:
                     return null;
             }
@@ -1033,7 +1117,7 @@ namespace Unity.MemoryProfiler.Editor
 
         public bool IsGroupLinked(ObjectData od)
         {
-            return IsGroupExpandable(od, renderer.forceLinkAllObject);
+            return IsGroupExpandable(od, Renderer.forceLinkAllObject);
         }
 
         public bool IsGroupExpandable(ObjectData od, bool forceExpandAllObject = false)
@@ -1042,7 +1126,7 @@ namespace Unity.MemoryProfiler.Editor
             {
                 case ObjectDataType.Array:
                 {
-                    var l = ArrayTools.ReadArrayLength(snapshot, snapshot.managedHeapSections, od.hostManagedObjectPtr, od.managedTypeIndex, snapshot.virtualMachineInformation);
+                    var l = ArrayTools.ReadArrayLength(Snapshot, od.hostManagedObjectPtr, od.managedTypeIndex);
                     return l > 0 || forceExpandAllObject;
                 }
                 case ObjectDataType.ReferenceArray:
@@ -1050,8 +1134,8 @@ namespace Unity.MemoryProfiler.Editor
                     var ptr = od.GetReferencePointer();
                     if (ptr != 0)
                     {
-                        var arr = ObjectData.FromManagedPointer(snapshot, ptr);
-                        var l = ArrayTools.ReadArrayLength(snapshot, snapshot.managedHeapSections, arr.hostManagedObjectPtr, arr.managedTypeIndex, snapshot.virtualMachineInformation);
+                        var arr = ObjectData.FromManagedPointer(Snapshot, ptr);
+                        var l = ArrayTools.ReadArrayLength(Snapshot, arr.hostManagedObjectPtr, arr.managedTypeIndex);
                         return l > 0 || forceExpandAllObject;
                     }
                     return false;
@@ -1060,27 +1144,27 @@ namespace Unity.MemoryProfiler.Editor
                 {
                     ulong ptr = od.GetReferencePointer();
                     if (ptr == 0) return false;
-                    var obj = ObjectData.FromManagedPointer(snapshot, ptr);
+                    var obj = ObjectData.FromManagedPointer(Snapshot, ptr);
                     if (!obj.IsValid) return false;
                     if (forceExpandAllObject) return true;
-                    if (!renderer.IsExpandable(obj.managedTypeIndex)) return false;
-                    return snapshot.typeDescriptions.HasAnyField(obj.managedTypeIndex);
+                    if (!Renderer.IsExpandable(obj.managedTypeIndex)) return false;
+                    return Snapshot.typeDescriptions.HasAnyField(obj.managedTypeIndex);
                 }
                 case ObjectDataType.BoxedValue:
                 case ObjectDataType.Object:
                 case ObjectDataType.Value:
                     if (forceExpandAllObject) return true;
-                    if (!renderer.IsExpandable(od.managedTypeIndex)) return false;
-                    return snapshot.typeDescriptions.HasAnyField(od.managedTypeIndex);
+                    if (!Renderer.IsExpandable(od.managedTypeIndex)) return false;
+                    return Snapshot.typeDescriptions.HasAnyField(od.managedTypeIndex);
                 case ObjectDataType.Type:
-                    if (!renderer.IsExpandable(od.managedTypeIndex)) return false;
-                    if (renderer.flattenFields)
+                    if (!Renderer.IsExpandable(od.managedTypeIndex)) return false;
+                    if (Renderer.flattenFields)
                     {
-                        return snapshot.typeDescriptions.HasAnyStaticField(od.managedTypeIndex);
+                        return Snapshot.typeDescriptions.HasAnyStaticField(od.managedTypeIndex);
                     }
                     else
                     {
-                        return snapshot.typeDescriptions.HasStaticField(od.managedTypeIndex);
+                        return Snapshot.typeDescriptions.HasStaticField(od.managedTypeIndex);
                     }
                 default:
                     return false;
@@ -1101,12 +1185,12 @@ namespace Unity.MemoryProfiler.Editor
                 case ObjectDataType.ReferenceArray:
                 case ObjectDataType.ReferenceObject:
                 case ObjectDataType.Value:
-                    return renderer.RenderPointer(obj.GetObjectPointer(snapshot));
+                    return Renderer.RenderPointer(obj.GetObjectPointer(Snapshot));
                 case ObjectDataType.Global:
                 case ObjectDataType.Type:
                 case ObjectDataType.Unknown:
                 default:
-                    return renderer.Render(obj);
+                    return Renderer.Render(obj);
             }
         }
 

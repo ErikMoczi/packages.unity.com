@@ -536,7 +536,7 @@ namespace Unity.MemoryProfiler.Editor.UI
                 r.width -= 16;
             }
 
-            Database.View.LinkRequest link = null;
+            Database.LinkRequest link = null;
             if (onClickLink != null)
             {
                 link = m_TableDisplay.GetCellLink(new Database.CellPosition(row, (int)col));
@@ -588,14 +588,14 @@ namespace Unity.MemoryProfiler.Editor.UI
             if (onClickLink != null)
             {
                 var link = m_TableDisplay.GetCellLink(pos);
-                if (link != null && link.metaLink != null)
+                if (link != null)
                 {
                     onClickLink(this, link, pos);
                 }
             }
         }
 
-        public delegate void OnClickLink(DatabaseSpreadsheet sheet, Database.View.LinkRequest link, Database.CellPosition pos);
+        public delegate void OnClickLink(DatabaseSpreadsheet sheet, Database.LinkRequest link, Database.CellPosition pos);
         public OnClickLink onClickLink;
 
 

@@ -34,7 +34,7 @@ namespace Unity.MemoryProfiler.Editor.Database
         {
         }
 
-        public override Database.View.LinkRequest GetRowLink(long row)
+        public override LinkRequest GetRowLink(long row)
         {
             return null;
         }

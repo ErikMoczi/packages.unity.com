@@ -191,7 +191,7 @@ namespace Unity.MemoryProfiler.Editor.Database
             }
         }
         public virtual ExpandableCellState GetCellExpandState(long row, int col) { return ExpandableCellState.NonExpandable; }
-        public virtual Database.View.LinkRequest GetCellLink(Database.CellPosition pos)
+        public virtual LinkRequest GetCellLink(Database.CellPosition pos)
         {
             var column = GetColumnByIndex(pos.col);
             if (column != null) return column.GetRowLink(pos.row);

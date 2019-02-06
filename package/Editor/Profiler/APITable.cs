@@ -48,7 +48,7 @@ namespace Unity.MemoryProfiler.Editor.Database
 
         public override long GetRowCount()
         {
-            return m_DataSet.m_dataCount;
+            return m_DataSet.DataCount;
         }
 
         public override CellLink GetLinkTo(CellPosition pos)

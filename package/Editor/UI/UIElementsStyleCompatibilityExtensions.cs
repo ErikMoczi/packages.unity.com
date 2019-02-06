@@ -17,93 +17,93 @@ namespace Unity.MemoryProfiler.Editor
     internal static class UIElementsStyleCompatibilityExtensions
     {
 
-        internal static float GetMarginBottom(this IStyle style)
+        internal static float GetMarginBottomFromStyle(this VisualElement visualElement)
         {
 #if UNITY_2019_1_OR_NEWER
-            return style.marginBottom.value.value;
+            return visualElement.resolvedStyle.marginBottom;
 #else 
-            return style.marginBottom;
+            return visualElement.style.marginBottom;
 #endif
         }
 
-        internal static float GetMarginTop(this IStyle style)
+        internal static float GetMarginTopFromStyle(this VisualElement visualElement)
         {
 #if UNITY_2019_1_OR_NEWER
-            return style.marginTop.value.value;
+            return visualElement.resolvedStyle.marginTop;
 #else 
-            return style.marginTop;
+            return visualElement.style.marginTop;
 #endif
         }
 
-        internal static float GetMarginRight(this IStyle style)
+        internal static float GetMarginRightFromStyle(this VisualElement visualElement)
         {
 #if UNITY_2019_1_OR_NEWER
-            return style.marginRight.value.value;
+            return visualElement.resolvedStyle.marginRight;
 #else 
-            return style.marginRight;
+            return visualElement.style.marginRight;
 #endif
         }
 
-        internal static float GetMarginLeft(this IStyle style)
+        internal static float GetMarginLeftFromStyle(this VisualElement visualElement)
         {
 #if UNITY_2019_1_OR_NEWER
-            return style.marginLeft.value.value;
+            return visualElement.resolvedStyle.marginLeft;
 #else 
-            return style.marginLeft;
+            return visualElement.style.marginLeft;
 #endif
         }
 
-        internal static float GetPaddingBottom(this IStyle style)
+        internal static float GetPaddingBottomFromStyle(this VisualElement visualElement)
         {
 #if UNITY_2019_1_OR_NEWER
-            return style.paddingBottom.value.value;
+            return visualElement.resolvedStyle.paddingBottom;
 #else 
-            return style.paddingBottom;
+            return visualElement.style.paddingBottom;
 #endif
         }
 
-        internal static float GetPaddingTop(this IStyle style)
+        internal static float GetPaddingTopFromStyle(this VisualElement visualElement)
         {
 #if UNITY_2019_1_OR_NEWER
-            return style.paddingTop.value.value;
+            return visualElement.resolvedStyle.paddingTop;
 #else 
-            return style.paddingTop;
+            return visualElement.style.paddingTop;
 #endif
         }
 
-        internal static float GetPaddingRight(this IStyle style)
+        internal static float GetPaddingRightFromStyle(this VisualElement visualElement)
         {
 #if UNITY_2019_1_OR_NEWER
-            return style.paddingRight.value.value;
+            return visualElement.resolvedStyle.paddingRight;
 #else 
-            return style.paddingRight;
+            return visualElement.style.paddingRight;
 #endif
         }
 
-        internal static float GetPaddingLeft(this IStyle style)
+        internal static float GetPaddingLeftFromStyle(this VisualElement visualElement)
         {
 #if UNITY_2019_1_OR_NEWER
-            return style.paddingLeft.value.value;
+            return visualElement.resolvedStyle.paddingLeft;
 #else 
-            return style.paddingLeft;
+            return visualElement.style.paddingLeft;
 #endif
         }
 
-        internal static float GetWidth(this IStyle style)
+        internal static float GetWidthFromStyle(this VisualElement visualElement)
         {
 #if UNITY_2019_1_OR_NEWER
-            return style.width.value.value;
+            return visualElement.resolvedStyle.width;
 #else 
-            return style.width;
+            return visualElement.style.width;
 #endif
         }
 
-        internal static float GetMinWidth(this IStyle style)
+        internal static float GetMinWidthFromStyle(this VisualElement visualElement)
         {
 #if UNITY_2019_1_OR_NEWER
-            return style.minWidth.value.value;
+            return visualElement.resolvedStyle.minWidth.value;
 #else 
-            return style.minWidth;
+            return visualElement.style.minWidth;
 #endif
         }
     }

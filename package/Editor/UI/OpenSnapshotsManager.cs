@@ -106,6 +106,7 @@ namespace Unity.MemoryProfiler.Editor
                             if (First != null)
                                 First.GuiData.CurrentState = SnapshotFileGUIData.State.Closed;
                             First = Second;
+                            m_UIState.SwapLastAndCurrentSnapshot();
                         }
                         else
                         {

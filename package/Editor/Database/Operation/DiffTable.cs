@@ -62,17 +62,13 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             m_SourceColumn[tabI].SetRowValue(rowI, value);
         }
 
-        public override Database.View.LinkRequest GetRowLink(long row)
+        public override LinkRequest GetRowLink(long row)
         {
             int tabI = m_Table.m_Entries[row].tableIndex;
             long rowI = m_Table.m_Entries[row].rowIndex;
             var link = m_SourceColumn[tabI].GetRowLink(rowI);
             if (link == null) return null;
-            if (link.param == null)
-            {
-                link.param = new ParameterSet();
-            }
-            link.param.Add("snapshotindex", tabI);
+            link.Parameters.AddValue("snapshotindex", tabI);
             return link;
         }
     }
@@ -381,7 +377,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         public override Table GetTableByName(string name, ParameterSet param)
         {
             int snapshotIndex;
-            if (param != null && param.TryGet("snapshotindex", out snapshotIndex))
+            if (param != null && param.TryGetValue("snapshotindex", out snapshotIndex))
             {
                 Schema schema;
                 switch (snapshotIndex)
@@ -401,9 +397,9 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             return GetTableByName(name);
         }
 
-        public override Table GetTableByLink(TableLink link)
+        public override Table GetTableByReference(TableReference tableRef)
         {
-            return GetTableByName(link.name, link.param);
+            return GetTableByName(tableRef.Name, tableRef.Param);
         }
     }
 }

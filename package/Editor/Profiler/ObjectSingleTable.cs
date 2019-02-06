@@ -27,7 +27,7 @@ namespace Unity.MemoryProfiler.Editor
         public override string GetName()
         {
             var str = string.Format("0x{0:X16}", obj.hostManagedObjectPtr);
-            return ObjectTable.kTableName + "(" + str + ")";
+            return ObjectTable.TableName + "(" + str + ")";
         }
 
         public override string GetDisplayName() { return GetName(); }

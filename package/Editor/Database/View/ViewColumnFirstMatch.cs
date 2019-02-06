@@ -56,9 +56,9 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             return this;
         }
 
-        public override Database.View.LinkRequest GetRowLink(long row)
+        public override LinkRequest GetRowLink(long row)
         {
-            return Database.View.LinkRequest.MakeLinkRequest(vc.m_MetaLink, vc.viewTable, this, row, vc.ParsingContext);
+            return LinkRequestTable.MakeLinkRequest(vc.m_MetaLink, vc.viewTable, this, row, vc.ParsingContext);
         }
 
         public override long GetRowCount()

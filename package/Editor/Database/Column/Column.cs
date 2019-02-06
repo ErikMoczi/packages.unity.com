@@ -27,7 +27,7 @@ namespace Unity.MemoryProfiler.Editor.Database
         public abstract long[] GetMatchIndex(ArrayRange indices, Operation.Matcher matcher);
         public abstract long GetFirstMatchIndex(Operation.Operator op, Operation.Expression exp, long expRowFirst);
 
-        public virtual Database.View.LinkRequest GetRowLink(long row) { return null; }
+        public virtual LinkRequest GetRowLink(long row) { return null; }
 
         // will return -1 if the underlying data has not been computed yet.
         // ComputeRowCount or Update should be called at least once before getting accurate row count

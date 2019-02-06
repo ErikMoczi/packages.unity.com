@@ -20,6 +20,7 @@ namespace Unity.MemoryProfiler.Editor.UI
             backCount = 0;
             hasPresentEvent = false;
             events.Clear();
+            historyChanged();
         }
 
         protected int eventCount

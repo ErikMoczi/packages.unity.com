@@ -1,14 +1,14 @@
 namespace Unity.MemoryProfiler.Editor.Database.Soa
 {
-    internal class SoaDataSet
+    internal struct SoaDataSet
     {
-        public SoaDataSet(long adataCount, long achunkSize)
+        public SoaDataSet(long dataCount, long chunkSize)
         {
-            m_dataCount = adataCount;
-            m_chunkSize = achunkSize;
+            DataCount = dataCount;
+            ChunkSize = chunkSize;
         }
 
-        public long m_dataCount;
-        public long m_chunkSize = 16;
+        public readonly long DataCount;
+        public readonly long ChunkSize;
     }
 }

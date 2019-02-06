@@ -164,15 +164,15 @@ namespace Unity.MemoryProfiler.Editor
                 case ObjectDataType.Type:
                     fl.mbHasStaticGroup = false;
                     fl.mbHasBaseGroup = false;
-                    if (renderer.flattenFields)
+                    if (Renderer.flattenFields)
                     {
                         //take all static field
-                        fl.fieldIndices = snapshot.typeDescriptions.fieldIndices_static[obj.managedTypeIndex];
+                        fl.fieldIndices = Snapshot.typeDescriptions.fieldIndices_static[obj.managedTypeIndex];
                         return fl;
                     }
                     else
                     {
-                        var staticFields = snapshot.typeDescriptions.fieldIndices[obj.managedTypeIndex].Where(x => snapshot.fieldDescriptions.isStatic[x]);
+                        var staticFields = Snapshot.typeDescriptions.fieldIndices[obj.managedTypeIndex].Where(x => Snapshot.fieldDescriptions.isStatic[x]);
                         fields.AddRange(staticFields);
                     }
                     break;
@@ -180,14 +180,14 @@ namespace Unity.MemoryProfiler.Editor
                 case ObjectDataType.Object:
                 case ObjectDataType.Value:
                 case ObjectDataType.ReferenceObject:
-                    if (renderer.flattenFields)
+                    if (Renderer.flattenFields)
                     {
                         fl.mbHasBaseGroup = false;
-                        fields.AddRange(snapshot.typeDescriptions.fieldIndices_instance[obj.managedTypeIndex]);
-                        if (renderer.flattenStaticFields)
+                        fields.AddRange(Snapshot.typeDescriptions.fieldIndices_instance[obj.managedTypeIndex]);
+                        if (Renderer.flattenStaticFields)
                         {
                             fl.mbHasStaticGroup = false;
-                            fields.AddRange(snapshot.typeDescriptions.fieldIndices_static[obj.managedTypeIndex]);
+                            fields.AddRange(Snapshot.typeDescriptions.fieldIndices_static[obj.managedTypeIndex]);
                         }
                         else
                         {
@@ -197,18 +197,18 @@ namespace Unity.MemoryProfiler.Editor
                     else
                     {
                         fl.mbHasBaseGroup = objBase.IsValid;
-                        if (renderer.flattenStaticFields)
+                        if (Renderer.flattenStaticFields)
                         {
                             fl.mbHasStaticGroup = false;
                             //already has instance and static fields in the same array
-                            fl.fieldIndices = snapshot.typeDescriptions.fieldIndices[obj.managedTypeIndex];
+                            fl.fieldIndices = Snapshot.typeDescriptions.fieldIndices[obj.managedTypeIndex];
                             return fl;
                         }
                         else
                         {
-                            var staticFields = snapshot.typeDescriptions.fieldIndices[obj.managedTypeIndex].Where(x => snapshot.fieldDescriptions.isStatic[x]);
+                            var staticFields = Snapshot.typeDescriptions.fieldIndices[obj.managedTypeIndex].Where(x => Snapshot.fieldDescriptions.isStatic[x]);
                             fl.mbHasStaticGroup = (staticFields.Count() > 0);
-                            var instanceFields = snapshot.typeDescriptions.fieldIndices[obj.managedTypeIndex].Where(x => !snapshot.fieldDescriptions.isStatic[x]);
+                            var instanceFields = Snapshot.typeDescriptions.fieldIndices[obj.managedTypeIndex].Where(x => !Snapshot.fieldDescriptions.isStatic[x]);
                             fields.AddRange(instanceFields);
                         }
                     }
@@ -279,7 +279,7 @@ namespace Unity.MemoryProfiler.Editor
             }
             row = m_Fields.RowToFieldIndex(row);
             int fieldIndex = m_Fields.fieldIndices[row];
-            return snapshot.fieldDescriptions.fieldDescriptionName[fieldIndex];
+            return Snapshot.fieldDescriptions.fieldDescriptionName[fieldIndex];
         }
 
         public override ObjectData GetObjectData(long row)
@@ -290,14 +290,14 @@ namespace Unity.MemoryProfiler.Editor
             }
             if (m_Fields.IsRowStaticGroup(row))
             {
-                return ObjectData.FromManagedType(snapshot, obj.managedTypeIndex);
+                return ObjectData.FromManagedType(Snapshot, obj.managedTypeIndex);
             }
             var row2 = m_Fields.RowToFieldIndex(row);
             if (DebugUtility.CheckIndexOutOfRange(m_Fields.fieldIndices, row2))
             {
                 return ObjectData.invalid;
             }
-            return obj.GetInstanceFieldBySnapshotFieldIndex(snapshot, m_Fields.fieldIndices[row2], true);
+            return obj.GetInstanceFieldBySnapshotFieldIndex(Snapshot, m_Fields.fieldIndices[row2], true);
         }
 
         public override bool GetObjectStatic(long row)
@@ -312,7 +312,7 @@ namespace Unity.MemoryProfiler.Editor
             }
             row = m_Fields.RowToFieldIndex(row);
             var iField = m_Fields.fieldIndices[row];
-            return snapshot.fieldDescriptions.isStatic[iField];
+            return Snapshot.fieldDescriptions.isStatic[iField];
         }
 
         //public int GetFieldType(long fieldIndex)

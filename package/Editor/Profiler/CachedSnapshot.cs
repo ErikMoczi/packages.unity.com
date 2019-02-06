@@ -69,9 +69,10 @@ namespace Unity.MemoryProfiler.Editor
     internal class CachedSnapshot
     {
         public static int kCacheEntrySize = 4 * 1024;
-        private VirtualMachineInformation m_VirtualMachineInfo;
-        public ManagedData m_CrawledData;
-        public PackedMemorySnapshot packedMemorySnapshot;
+
+        public ManagedData CrawledData { internal set; get; }
+        public PackedMemorySnapshot packedMemorySnapshot { private set; get; }
+
         public class NativeAllocationSiteEntriesCache
         {
             public uint Count;
@@ -343,6 +344,7 @@ namespace Unity.MemoryProfiler.Editor
                 numAllocations = DataArray.MakeCache(dataSet, DataSourceFromAPI.ApiToDatabase(ss.numAllocations));
             }
         }
+
         public class NativeMemoryLabelEntriesCache
         {
             public uint Count;
@@ -355,7 +357,6 @@ namespace Unity.MemoryProfiler.Editor
                 memoryLabelName = DataArray.MakeCache(dataSet, DataSourceFromAPI.ApiToDatabase(ss.memoryLabelName));
             }
         }
-
 
         public class NativeCallstackSymbolEntriesCache
         {
@@ -397,7 +398,6 @@ namespace Unity.MemoryProfiler.Editor
             }
         }
 
-
         public class ManagedMemorySectionEntriesCache
         {
             public uint Count;
@@ -416,18 +416,25 @@ namespace Unity.MemoryProfiler.Editor
 
             public ManagedMemorySectionEntriesCache(ManagedMemorySectionEntries ss)
             {
+
                 Count = ss.GetNumEntries();
                 dataSet = new SoaDataSet(Count, kCacheEntrySize);
+                
                 if (Count > 0)
                 {
                     bytes = new byte[Count][];
-                    ss.bytes.GetEntries(0, Count, ref bytes);
+                    var cacheBytes = new byte[1][];
+                    for (uint i = 0; i < Count; ++i)
+                    {
+                        ss.bytes.GetEntries(i, 1, ref cacheBytes);
+                        bytes[i] = cacheBytes[0];
+
+                    }
                     startAddress = new ulong[Count];
                     ss.startAddress.GetEntries(0, Count, ref startAddress);
                 }
             }
         }
-
 
         public class GCHandleEntriesCache
         {
@@ -476,13 +483,7 @@ namespace Unity.MemoryProfiler.Editor
             }
         }
 
-        public VirtualMachineInformation virtualMachineInformation
-        {
-            get
-            {
-                return m_VirtualMachineInfo;
-            }
-        }
+        public VirtualMachineInformation virtualMachineInformation { get; private set; }
 
 
         public NativeAllocationSiteEntriesCache nativeAllocationSites;
@@ -510,7 +511,7 @@ namespace Unity.MemoryProfiler.Editor
         public CachedSnapshot(PackedMemorySnapshot s)
         {
             packedMemorySnapshot = s;
-            m_VirtualMachineInfo = s.virtualMachineInformation;
+            virtualMachineInformation = s.virtualMachineInformation;
             nativeAllocationSites   = new NativeAllocationSiteEntriesCache(s.nativeAllocationSites);
             typeDescriptions        = new TypeDescriptionEntriesCache(s.typeDescriptions);
             nativeTypes             = new NativeTypeEntriesCache(s.nativeTypes);
@@ -534,6 +535,8 @@ namespace Unity.MemoryProfiler.Editor
             SortedNativeAllocations = new SortedNativeAllocationsCache(this);
             SortedNativeObjects     = new SortedNativeObjectsCache(this);
 
+            CrawledData = new ManagedData();
+
             typeDescriptions.InitSecondaryItems(this);
             nativeObjects.InitSecondaryItems();
             nativeObjects.InitSecondaryItems(this);
@@ -544,7 +547,7 @@ namespace Unity.MemoryProfiler.Editor
         {
             if (i < 0) return -1;
             if (i < gcHandles.Count) return i;
-            if (i < m_CrawledData.managedObjects.Count) return i + (int)nativeObjects.Count;
+            if (i < CrawledData.ManagedObjects.Count) return i + (int)nativeObjects.Count;
             return -1;
         }
 
@@ -560,7 +563,7 @@ namespace Unity.MemoryProfiler.Editor
             if (i < 0) return -1;
             if (i < gcHandles.Count) return i;
             int firstCrawled = (int)(gcHandles.Count + nativeObjects.Count);
-            int lastCrawled = (int)nativeObjects.Count + m_CrawledData.managedObjects.Count;
+            int lastCrawled = (int)nativeObjects.Count + CrawledData.ManagedObjects.Count;
             if (i >= firstCrawled && i < lastCrawled) return i - (int)nativeObjects.Count;
             return -1;
         }
@@ -577,7 +580,7 @@ namespace Unity.MemoryProfiler.Editor
         {
             get
             {
-                return (int)nativeObjects.Count + m_CrawledData.managedObjects.Count;
+                return (int)nativeObjects.Count + CrawledData.ManagedObjects.Count;
             }
         }
 
@@ -594,20 +597,20 @@ namespace Unity.MemoryProfiler.Editor
             int toManaged = UnifiedObjectIndexToManagedObjectIndex(toUnifiedObject);
             int fromNative = UnifiedObjectIndexToNativeObjectIndex(fromUnifiedObject);
             int toNative = UnifiedObjectIndexToNativeObjectIndex(toUnifiedObject);
-            for (int i = 0; i != m_CrawledData.connections.Count; ++i)
+            for (int i = 0; i != CrawledData.Connections.Count; ++i)
             {
-                switch (m_CrawledData.connections[i].connectionType)
+                switch (CrawledData.Connections[i].connectionType)
                 {
                     case ManagedConnection.ConnectionType.ManagedObject_To_ManagedObject:
-                        if (m_CrawledData.connections[i].fromManagedObjectIndex == fromManaged && m_CrawledData.connections[i].toManagedObjectIndex == toManaged)
+                        if (CrawledData.Connections[i].fromManagedObjectIndex == fromManaged && CrawledData.Connections[i].toManagedObjectIndex == toManaged)
                         {
                             return true;
                         }
                         break;
                     case ManagedConnection.ConnectionType.UnityEngineObject:
                     {
-                        var cManaged = m_CrawledData.connections[i].UnityEngineManagedObjectIndex;
-                        var cNative = m_CrawledData.connections[i].UnityEngineNativeObjectIndex;
+                        var cManaged = CrawledData.Connections[i].UnityEngineManagedObjectIndex;
+                        var cNative = CrawledData.Connections[i].UnityEngineNativeObjectIndex;
                         if (cManaged == fromManaged && cNative == toNative)
                         {
                             return true;
@@ -625,12 +628,12 @@ namespace Unity.MemoryProfiler.Editor
 
         public bool HasGlobalConnection(int toManagedObjectIndex)
         {
-            for (int i = 0; i != m_CrawledData.connections.Count; ++i)
+            for (int i = 0; i != CrawledData.Connections.Count; ++i)
             {
-                switch (m_CrawledData.connections[i].connectionType)
+                switch (CrawledData.Connections[i].connectionType)
                 {
                     case ManagedConnection.ConnectionType.Global_To_ManagedObject:
-                        if (m_CrawledData.connections[i].toManagedObjectIndex == toManagedObjectIndex)
+                        if (CrawledData.Connections[i].toManagedObjectIndex == toManagedObjectIndex)
                         {
                             return true;
                         }
@@ -642,12 +645,12 @@ namespace Unity.MemoryProfiler.Editor
 
         public bool HasManagedTypeConnection(int fromType, int toManagedObjectIndex)
         {
-            for (int i = 0; i != m_CrawledData.connections.Count; ++i)
+            for (int i = 0; i != CrawledData.Connections.Count; ++i)
             {
-                switch (m_CrawledData.connections[i].connectionType)
+                switch (CrawledData.Connections[i].connectionType)
                 {
                     case ManagedConnection.ConnectionType.ManagedType_To_ManagedObject:
-                        if (m_CrawledData.connections[i].fromManagedType == fromType && m_CrawledData.connections[i].toManagedObjectIndex == toManagedObjectIndex)
+                        if (CrawledData.Connections[i].fromManagedType == fromType && CrawledData.Connections[i].toManagedObjectIndex == toManagedObjectIndex)
                         {
                             return true;
                         }
@@ -757,12 +760,12 @@ namespace Unity.MemoryProfiler.Editor
             {
                 if (m_Sorting == null)
                 {
-                    m_Sorting = new int[m_Snapshot.m_CrawledData.managedObjects.Count];
+                    m_Sorting = new int[m_Snapshot.CrawledData.ManagedObjects.Count];
 
                     for (int i=0; i<m_Sorting.Length; ++i)
                         m_Sorting[i] = i;
 
-                    Array.Sort(m_Sorting, (x,y)=>m_Snapshot.m_CrawledData.managedObjects[x].ptrObject.CompareTo(m_Snapshot.m_CrawledData.managedObjects[y].ptrObject));
+                    Array.Sort(m_Sorting, (x,y)=>m_Snapshot.CrawledData.ManagedObjects[x].PtrObject.CompareTo(m_Snapshot.CrawledData.ManagedObjects[y].PtrObject));
                 }
             }
 
@@ -770,21 +773,14 @@ namespace Unity.MemoryProfiler.Editor
             {
                 get {
                     Preload();                    
-                    return m_Snapshot.m_CrawledData.managedObjects[m_Sorting[index]];
+                    return m_Snapshot.CrawledData.ManagedObjects[m_Sorting[index]];
                 }
             }
 
-            public int  Count { get { return m_Snapshot.m_CrawledData.managedObjects.Count; } } 
-            public ulong Address(int index) { return this[index].ptrObject; }
-            public ulong Size(int index) { return (ulong)this[index].size; }
-            public ulong PtrTypeInfo(int index) { return this[index].ptrTypeInfo; }
-            public int NativeObjectIndex(int index) { return this[index].nativeObjectIndex; }
-            public int ManagedObjectIndex(int index) { return this[index].managedObjectIndex; }
-            public int ITypeDescription(int index) { return this[index].iTypeDescription; }
-            public int RefCount(int index) { return this[index].refCount; }
-            public bool IsKnownType(int index) { return this[index].IsKnownType(); }
+            public int  Count { get { return m_Snapshot.CrawledData.ManagedObjects.Count; } } 
+            public ulong Address(int index) { return this[index].PtrObject; }
+            public ulong Size(int index) { return (ulong)this[index].Size; }
         }
-
 
         public class SortedNativeAllocationsCache : ISortedEntriesCache
         {

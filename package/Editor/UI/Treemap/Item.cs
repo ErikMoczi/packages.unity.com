@@ -24,9 +24,9 @@ namespace Unity.MemoryProfiler.Editor.UI.Treemap
 
         public string GetTypeName()
         {
-            if (m_Object.iTypeDescription >= 0)
+            if (m_Object.ITypeDescription >= 0)
             {
-                string typeName = m_Snapshot.typeDescriptions.typeDescriptionName[m_Object.iTypeDescription];
+                string typeName = m_Snapshot.typeDescriptions.typeDescriptionName[m_Object.ITypeDescription];
                 return typeName;
             }
             return "<uninitialized managed type>";
@@ -34,15 +34,15 @@ namespace Unity.MemoryProfiler.Editor.UI.Treemap
 
         public string GetName()
         {
-            if (m_Object.nativeObjectIndex >= 0)
+            if (m_Object.NativeObjectIndex >= 0)
             {
-                string objName = m_Snapshot.nativeObjects.objectName[m_Object.nativeObjectIndex];
+                string objName = m_Snapshot.nativeObjects.objectName[m_Object.NativeObjectIndex];
                 if (objName.Length > 0)
                 {
                     return " \"" + objName + "\" <" + GetTypeName() + ">";
                 }
             }
-            return string.Format("[0x{0:x16}]", m_Object.ptrObject) + " < " + GetTypeName() + " > ";
+            return string.Format("[0x{0:x16}]", m_Object.PtrObject) + " < " + GetTypeName() + " > ";
         }
 
         public bool IsSame(IMetricValue obj)
@@ -62,7 +62,7 @@ namespace Unity.MemoryProfiler.Editor.UI.Treemap
 
         long IMetricValue.GetValue()
         {
-            return m_Object.size;
+            return m_Object.Size;
         }
 
         string IMetricValue.GetGroupName()
@@ -72,7 +72,7 @@ namespace Unity.MemoryProfiler.Editor.UI.Treemap
 
         int IMetricValue.GetObjectUID()
         {
-            return m_Snapshot.ManagedObjectIndexToUnifiedObjectIndex(m_Object.managedObjectIndex);
+            return m_Snapshot.ManagedObjectIndexToUnifiedObjectIndex(m_Object.ManagedObjectIndex);
         }
     }
     internal class NativeObjectMetric : IMetricValue

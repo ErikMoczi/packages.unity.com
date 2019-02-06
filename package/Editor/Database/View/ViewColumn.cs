@@ -4,66 +4,13 @@ using Unity.MemoryProfiler.Editor.Debuging;
 
 namespace Unity.MemoryProfiler.Editor.Database.View
 {
-    internal class MetaParameter
-    {
-        public string name;
-        public string value;
-    }
-    internal class MetaParameterSet
-    {
-        public System.Collections.Generic.Dictionary<string, MetaParameter> param = new System.Collections.Generic.Dictionary<string, MetaParameter>();
-    }
-    internal class MetaLink
-    {
-        public string linkViewName;
-        public System.Collections.Generic.List<Where.Builder> linkWhere;
-        public MetaParameterSet param;
-    }
-
-    internal class LinkRequest
-    {
-        public MetaLink metaLink;
-        public ViewTable sourceView;
-        public Table sourceTable;
-        public Column sourceColumn;
-        public long row;
-        public ParameterSet param;
-
-        public static Database.View.LinkRequest MakeLinkRequest(Database.View.MetaLink metaLink, Table sourceTable, Column sourceColumn, long sourceRow, Database.Operation.ExpressionParsingContext expressionParsingContext)
-        {
-            if (metaLink == null) return null;
-            using (ScopeDebugContext.Func(() => { return "MakeLinkRequest from table '" + sourceTable.GetName() + "' row " + sourceRow; }))
-            {
-                var lr = new Database.View.LinkRequest();
-                lr.metaLink = metaLink;
-                lr.sourceTable = sourceTable;
-                lr.sourceView = sourceTable as ViewTable;
-                lr.sourceColumn = sourceColumn;
-                lr.row = sourceRow;
-
-                if (lr.metaLink.param != null)
-                {
-                    foreach (var p in lr.metaLink.param.param)
-                    {
-                        var opt = new Operation.Expression.ParseIdentifierOption(sourceTable.Schema as View.ViewSchema, sourceTable, true, true, typeof(string), expressionParsingContext);
-                        var metaExpression = new Operation.Expression.MetaExpression(p.Value.value, true);
-                        var exp = Operation.Expression.ParseIdentifier(metaExpression, opt);
-                        var exp2 = Operation.ColumnCreator.CreateTypedExpressionFixedRow(exp, sourceRow);
-                        if (lr.param == null) lr.param = new ParameterSet();
-                        lr.param.param.Add(p.Key, exp2);
-                    }
-                }
-                return lr;
-            }
-        }
-    }
     internal class ViewColumn
     {
         public Select select;
         public Operation.ExpressionParsingContext ParsingContext;
         public ViewTable viewTable;
         public bool m_IsDisplayMergedOnly = false;
-        public MetaLink m_MetaLink;
+        public TableLink m_MetaLink;
 
         public interface IViewColumn
         {
@@ -80,7 +27,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
 
             public int displayDefaultWidth = 100;
             public Operation.Grouping.MergeAlgo mergeAlgoE;
-            public MetaLink m_MetaLink;
+            public TableLink m_MetaLink;
             public bool isPrimaryKey = false;
 
 
@@ -285,8 +232,8 @@ namespace Unity.MemoryProfiler.Editor.Database.View
 
             private static void LoadLinkFromXML(Builder b, XmlElement root)
             {
-                b.m_MetaLink = new MetaLink();
-                DebugUtility.TryGetMandatoryXmlAttribute(root, "view", out b.m_MetaLink.linkViewName);
+                b.m_MetaLink = new TableLink();
+                DebugUtility.TryGetMandatoryXmlAttribute(root, "view", out b.m_MetaLink.TableName);
                 foreach (XmlNode node in root.ChildNodes)
                 {
                     if (node.NodeType == XmlNodeType.Element)
@@ -295,22 +242,20 @@ namespace Unity.MemoryProfiler.Editor.Database.View
                         if (e.Name == "Where")
                         {
                             var w = Where.Builder.LoadFromXML(e);
-                            if (b.m_MetaLink.linkWhere == null)
+                            if (b.m_MetaLink.RowWhere == null)
                             {
-                                b.m_MetaLink.linkWhere = new System.Collections.Generic.List<Where.Builder>();
+                                b.m_MetaLink.RowWhere = new System.Collections.Generic.List<Where.Builder>();
                             }
-                            b.m_MetaLink.linkWhere.Add(w);
+                            b.m_MetaLink.RowWhere.Add(w);
                         }
                         else if (e.Name == "Param")
                         {
-                            if (b.m_MetaLink.param == null)
+                            string paramName, paramValue;
+                            if (DebugUtility.TryGetMandatoryXmlAttribute(e, "name", out paramName)
+                                && DebugUtility.TryGetMandatoryXmlAttribute(e, "value", out paramValue))
                             {
-                                b.m_MetaLink.param = new MetaParameterSet();
+                                b.m_MetaLink.SetParameter(paramName, paramValue);
                             }
-                            MetaParameter mp = new MetaParameter();
-                            mp.name = e.GetAttribute("name");
-                            mp.value = e.GetAttribute("value");
-                            b.m_MetaLink.param.param.Add(mp.name, mp);
                         }
                     }
                 }

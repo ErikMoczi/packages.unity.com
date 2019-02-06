@@ -70,15 +70,15 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             return m_SourceViewColumn.viewTable.ComputeRowCount();
         }
 
-        public override Database.View.LinkRequest GetRowLink(long row)
+        public override LinkRequest GetRowLink(long row)
         {
             if (m_SourceViewColumn.ParsingContext != null && m_SourceViewColumn.ParsingContext.fixedRow >= 0)
             {
-                return Database.View.LinkRequest.MakeLinkRequest(m_SourceViewColumn.m_MetaLink, m_SourceViewColumn.viewTable, this, m_SourceViewColumn.ParsingContext.fixedRow, m_SourceViewColumn.ParsingContext);
+                return LinkRequestTable.MakeLinkRequest(m_SourceViewColumn.m_MetaLink, m_SourceViewColumn.viewTable, this, m_SourceViewColumn.ParsingContext.fixedRow, m_SourceViewColumn.ParsingContext);
             }
             else
             {
-                return Database.View.LinkRequest.MakeLinkRequest(m_SourceViewColumn.m_MetaLink, m_SourceViewColumn.viewTable, this, row, m_SourceViewColumn.ParsingContext);
+                return LinkRequestTable.MakeLinkRequest(m_SourceViewColumn.m_MetaLink, m_SourceViewColumn.viewTable, this, row, m_SourceViewColumn.ParsingContext);
             }
         }
 

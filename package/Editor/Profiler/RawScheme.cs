@@ -14,7 +14,6 @@ namespace Unity.MemoryProfiler.Editor
         public static string kPrefixTableDisplayName = "Raw ";
 
         public CachedSnapshot m_Snapshot;
-        ManagedData crawledData;
         public SnapshotDataRenderer renderer;
         APITable[] m_Tables;
         Table[] m_ExtraTable;
@@ -50,11 +49,52 @@ namespace Unity.MemoryProfiler.Editor
 
         Dictionary<string, Table> m_TablesByName = new Dictionary<string, Table>();
 
-        public RawSchema(PackedMemorySnapshot aSnapshot, DataRenderer dataRenderer)
+        public void SetupSchema(CachedSnapshot snapshot, DataRenderer dataRenderer)
         {
-            m_Snapshot = new CachedSnapshot(aSnapshot);
-            renderer = new SnapshotDataRenderer(dataRenderer, m_Snapshot);
-            CreateTables();
+            using (Profiling.GetMarker(Profiling.MarkerId.CreateSnapshotSchema).Auto())
+            {
+                m_Snapshot = snapshot;
+                renderer = new SnapshotDataRenderer(dataRenderer, m_Snapshot);
+                CreateTables(m_Snapshot.CrawledData);
+            }
+
+        }
+
+        private void CreateTables(ManagedData crawledData)
+        {
+            List<APITable> tables = new List<APITable>();
+            CreateTable_RootReferences(tables);
+            CreateTable_NativeAllocations(tables);
+            CreateTable_NativeAllocationSites(tables);
+            CreateTable_NativeCallstackSymbols(tables);
+            CreateTable_NativeMemoryLabels(tables);
+            CreateTable_NativeMemoryRegions(tables);
+            CreateTable_NativeObjects(tables);
+            CreateTable_NativeTypes(tables);
+            CreateNativeTable_NativeTypeBase(tables);
+            CreateTable_NativeConnections(tables);
+            CreateTable_TypeDescriptions(tables);
+#if MEMPROFILER_ALLRAWDATA
+            CreateTable_GCHandles(tables);
+            CreateTable_ManagedHeapSections(tables);
+            CreateTable_ManagedStacks(tables);
+            CreateTable_Field(tables);
+            CreateManageTable_Connections(tables);
+#endif
+            m_Tables = tables.ToArray();
+
+
+            List<Table> extraTable = new List<Table>();
+
+            extraTable.Add(new ObjectAllManagedTable(this, renderer, m_Snapshot, crawledData, ObjectTable.ObjectMetaType.Managed));
+            extraTable.Add(new ObjectAllNativeTable(this, renderer, m_Snapshot, crawledData, ObjectTable.ObjectMetaType.Native));
+            extraTable.Add(new ObjectAllTable(this, renderer, m_Snapshot, crawledData, ObjectTable.ObjectMetaType.All));
+
+            m_ExtraTable = extraTable.ToArray();
+            foreach (var t in m_ExtraTable)
+            {
+                m_TablesByName.Add(t.GetName(), t);
+            }
         }
 
         public void Clear()
@@ -121,13 +161,13 @@ namespace Unity.MemoryProfiler.Editor
 
         private bool TryGetParam(ParameterSet param, string name, out ulong value)
         {
-            if (param == null || param.param == null)
+            if (param == null)
             {
                 value = default(ulong);
                 return false;
             }
             Expression expObj;
-            param.param.TryGetValue(ObjectTable.kObjParamName, out expObj);
+            param.TryGet(ObjectTable.ObjParamName, out expObj);
             if (expObj == null)
             {
                 value = 0;
@@ -150,13 +190,13 @@ namespace Unity.MemoryProfiler.Editor
 
         private bool TryGetParam(ParameterSet param, string name, out int value)
         {
-            if (param == null || param.param == null)
+            if (param == null)
             {
                 value = default(int);
                 return false;
             }
             Expression expObj;
-            param.param.TryGetValue(ObjectTable.kObjParamName, out expObj);
+            param.TryGet(ObjectTable.ObjParamName, out expObj);
             if (expObj == null)
             {
                 value = 0;
@@ -179,32 +219,32 @@ namespace Unity.MemoryProfiler.Editor
 
         public override Table GetTableByName(string name, ParameterSet param)
         {
-            if (name == ObjectTable.kTableName)
+            if (name == ObjectTable.TableName)
             {
                 ulong obj;
-                if (!TryGetParam(param, ObjectTable.kObjParamName, out obj))
+                if (!TryGetParam(param, ObjectTable.ObjParamName, out obj))
                 {
                     return null;
                 }
                 int iType;
-                if (!TryGetParam(param, ObjectTable.kTypeParamName, out iType))
+                if (!TryGetParam(param, ObjectTable.TypeParamName, out iType))
                 {
                     iType = -1;
                 }
 
                 ObjectData od = ObjectData.FromManagedPointer(m_Snapshot, obj, iType);
-                var table = new ObjectSingleTable(this, renderer, m_Snapshot, crawledData, od, od.isNative ? ObjectTable.ObjectMetaType.Native : ObjectTable.ObjectMetaType.Managed);
+                var table = new ObjectSingleTable(this, renderer, m_Snapshot, m_Snapshot.CrawledData, od, od.isNative ? ObjectTable.ObjectMetaType.Native : ObjectTable.ObjectMetaType.Managed);
                 return table;
             }
             else if (name == ObjectReferenceTable.kObjectReferenceTableName)
             {
                 int objUnifiedIndex;
-                if (!TryGetParam(param, ObjectTable.kObjParamName, out objUnifiedIndex))
+                if (!TryGetParam(param, ObjectTable.ObjParamName, out objUnifiedIndex))
                 {
                     return null;
                 }
                 var od = ObjectData.FromUnifiedObjectIndex(m_Snapshot, objUnifiedIndex);
-                var table = new ObjectReferenceTable(this, renderer, m_Snapshot, crawledData, od, ObjectTable.ObjectMetaType.All); //, od.isNative ? ObjectTable.ObjectMetaType.Native : ObjectTable.ObjectMetaType.Managed);
+                var table = new ObjectReferenceTable(this, renderer, m_Snapshot, m_Snapshot.CrawledData, od, ObjectTable.ObjectMetaType.All); //, od.isNative ? ObjectTable.ObjectMetaType.Native : ObjectTable.ObjectMetaType.Managed);
                 return table;
                 //ObjectReferenceTable
             }
@@ -542,7 +582,7 @@ namespace Unity.MemoryProfiler.Editor
             AddTable(table, tables);
         }
 
-        private void CreateTalbe_Field(List<APITable> tables)
+        private void CreateTable_Field(List<APITable> tables)
         {
             APITable table = new APITable(this, m_Snapshot, m_Snapshot.fieldDescriptions.dataSet);
 
@@ -603,21 +643,22 @@ namespace Unity.MemoryProfiler.Editor
             AddTable(table, tables);
         }
 
-        private void CreateManageTable_Connections(ManagedData pcd, List<APITable> tables)
+        private void CreateManageTable_Connections(List<APITable> tables)
         {
-            APITable table = new APITable(this, m_Snapshot, pcd.connections.Count);
+            var pcd = m_Snapshot.CrawledData;
+            APITable table = new APITable(this, m_Snapshot, pcd.Connections.Count);
 
             table.AddColumn(
                 new MetaColumn("from", "from", typeof(int), true, Grouping.groupByDuplicate, null)
-                , Data.MakeColumn(pcd.connections, n => n.GetUnifiedIndexFrom(pcd.m_Snapshot))
+                , Data.MakeColumn(pcd.Connections, n => n.GetUnifiedIndexFrom(m_Snapshot))
                 );
             table.AddColumn(
                 new MetaColumn("to", "to", typeof(int), true, Grouping.groupByDuplicate, null)
-                , Data.MakeColumn(pcd.connections, n => n.GetUnifiedIndexTo(pcd.m_Snapshot))
+                , Data.MakeColumn(pcd.Connections, n => n.GetUnifiedIndexTo(m_Snapshot))
                 );
             table.AddColumn(
                 new MetaColumn("type", "type", typeof(ManagedConnection.ConnectionType), true, Grouping.groupByDuplicate, null)
-                , Data.MakeColumn(pcd.connections, n => n.connectionType)
+                , Data.MakeColumn(pcd.Connections, n => n.connectionType)
                 );
             table.CreateTable(kPrefixTableName + "ObjectConnection", kPrefixTableDisplayName + "Object Connection");
             AddTable(table, tables);
@@ -638,54 +679,6 @@ namespace Unity.MemoryProfiler.Editor
                 );
             table.CreateTable(kPrefixTableName + "NativeTypeBase", kPrefixTableDisplayName + "Native Type Base");
             AddTable(table, tables);
-        }
-
-        private void CreateManageTables(List<APITable> tables)
-        {
-            CreateTable_TypeDescriptions(tables);
-
-            Crawler c = new Crawler();
-            using (Profiling.GetMarker(Profiling.MarkerId.CrawlManagedData).Auto())
-            {
-                crawledData = c.Crawl(m_Snapshot);
-            }
-#if MEMPROFILER_ALLRAWDATA
-            CreateTable_GCHandles(tables);
-            CreateTable_ManagedHeapSections(tables);
-            CreateTable_ManagedStacks(tables);
-            CreateTalbe_Field(tables);
-            CreateManageTable_Connections(crawledData, tables);
-#endif
-        }
-
-        private void CreateTables()
-        {
-            List<APITable> tables = new List<APITable>();
-            CreateTable_RootReferences(tables);
-            CreateTable_NativeAllocations(tables);
-            CreateTable_NativeAllocationSites(tables);
-            CreateTable_NativeCallstackSymbols(tables);
-            CreateTable_NativeMemoryLabels(tables);
-            CreateTable_NativeMemoryRegions(tables);
-            CreateTable_NativeObjects(tables);
-            CreateTable_NativeTypes(tables);
-            CreateNativeTable_NativeTypeBase(tables);
-            CreateTable_NativeConnections(tables);
-            CreateManageTables(tables);
-            m_Tables = tables.ToArray();
-
-
-            List<Table> extraTable = new List<Table>();
-
-            extraTable.Add(new ObjectAllManagedTable(this, renderer, m_Snapshot, crawledData, ObjectTable.ObjectMetaType.Managed));
-            extraTable.Add(new ObjectAllNativeTable(this, renderer, m_Snapshot, crawledData, ObjectTable.ObjectMetaType.Native));
-            extraTable.Add(new ObjectAllTable(this, renderer, m_Snapshot, crawledData, ObjectTable.ObjectMetaType.All));
-
-            m_ExtraTable = extraTable.ToArray();
-            foreach (var t in m_ExtraTable)
-            {
-                m_TablesByName.Add(t.GetName(), t);
-            }
         }
 
         private void AddTable(APITable t, List<APITable> tables)

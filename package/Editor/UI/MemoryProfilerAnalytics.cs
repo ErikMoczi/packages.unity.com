@@ -192,6 +192,14 @@ namespace Unity.MemoryProfiler.Editor
             if (s_EnableAnalytics)
                 s_PendingEvents[typeof(T)] = EditorApplication.timeSinceStartup;
         }
+
+        public static void CancelEvent<T>() where T : IMemoryProfilerAnalyticsEvent
+        {
+            if (s_EnableAnalytics && s_PendingEvents.ContainsKey(typeof(T)))
+            {
+                s_PendingEvents[typeof(T)] = -1;
+            }
+        }
         
         public static void EndEvent<T>(T eventData) where T : IMemoryProfilerAnalyticsEvent
         {

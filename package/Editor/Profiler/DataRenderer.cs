@@ -221,7 +221,7 @@ namespace Unity.MemoryProfiler.Editor
             var str = RenderPointer(od.hostManagedObjectPtr);
             if (od.hostManagedObjectPtr != 0)
             {
-                var arrayInfo = ArrayTools.GetArrayInfo(m_Snapshot, m_Snapshot.managedHeapSections, od.managedObjectData, od.managedTypeIndex, m_Snapshot.virtualMachineInformation);
+                var arrayInfo = ArrayTools.GetArrayInfo(m_Snapshot, od.managedObjectData, od.managedTypeIndex);
                 str += "[" + arrayInfo.ArrayRankToString() + "]";
             }
             return str;
@@ -302,7 +302,7 @@ namespace Unity.MemoryProfiler.Editor
                         int index = od.GetManagedObjectIndex(m_Snapshot);
                         if (index >= 0)
                         {
-                            int nativeIndex = m_Snapshot.m_CrawledData.managedObjects[index].nativeObjectIndex;
+                            int nativeIndex = m_Snapshot.CrawledData.ManagedObjects[index].NativeObjectIndex;
                             if (nativeIndex >= 0)
                             {
                                 return RenderInstanceId(CodeType.Managed, m_Snapshot.nativeObjects.instanceId[nativeIndex]);

@@ -73,7 +73,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             return this;
         }
 
-        void ViewColumnNode.IViewColumnNode.SetEntry(long row, Operation.Expression exp, MetaLink link)
+        void ViewColumnNode.IViewColumnNode.SetEntry(long row, Operation.Expression exp, TableLink link)
         {
         }
 

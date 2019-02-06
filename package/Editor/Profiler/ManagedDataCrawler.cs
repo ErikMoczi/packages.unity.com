@@ -1,6 +1,9 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEditor.Profiling.Memory.Experimental;
+using UnityEngine;
 
 namespace Unity.MemoryProfiler.Editor
 {
@@ -162,51 +165,60 @@ namespace Unity.MemoryProfiler.Editor
         }
     }
 
-    internal class ManagedObjectInfo
+#pragma warning disable CS0660 // Type defines operator == or operator != but does not override Object.Equals(object o)
+#pragma warning disable CS0661 // Type defines operator == or operator != but does not override Object.GetHashCode()
+    internal struct ManagedObjectInfo
+#pragma warning restore CS0661 // Type defines operator == or operator != but does not override Object.GetHashCode()
+#pragma warning restore CS0660 // Type defines operator == or operator != but does not override Object.Equals(object o)
     {
-        public ulong ptrObject;
-        public ulong ptrTypeInfo;
-        public int nativeObjectIndex = -1;
-        public int managedObjectIndex;
-        public int iTypeDescription;
-        public int size;
-        public int refCount = 0;
+        public ulong PtrObject;
+        public ulong PtrTypeInfo;
+        public int NativeObjectIndex;
+        public int ManagedObjectIndex;
+        public int ITypeDescription;
+        public int Size;
+        public int RefCount;
+
         public bool IsKnownType()
         {
-            return iTypeDescription >= 0;
+            return ITypeDescription >= 0;
         }
 
         public BytesAndOffset data;
+
+        public bool IsValid()
+        {
+            return PtrObject != 0 && PtrTypeInfo != 0 && data.bytes != null;
+        }
+
+        public static bool operator ==(ManagedObjectInfo lhs, ManagedObjectInfo rhs)
+        {
+            return lhs.PtrObject == rhs.PtrObject
+                && lhs.PtrTypeInfo == rhs.PtrTypeInfo
+                && lhs.NativeObjectIndex == rhs.NativeObjectIndex
+                && lhs.ManagedObjectIndex == rhs.ManagedObjectIndex
+                && lhs.ITypeDescription == rhs.ITypeDescription
+                && lhs.Size == rhs.Size
+                && lhs.RefCount == rhs.RefCount;
+        }
+
+        public static bool operator !=(ManagedObjectInfo lhs, ManagedObjectInfo rhs)
+        {
+            return !(lhs == rhs);
+        }
     }
 
     internal class ManagedData
     {
-        public bool valid;
-        public CachedSnapshot m_Snapshot;
+        public List<ManagedObjectInfo> ManagedObjects { private set; get; }  //includes gcHandle and all crawled objects
+        public SortedDictionary<ulong, ManagedObjectInfo> ManagedObjectByAddress { private set; get; }
+        public List<ManagedConnection> Connections { private set; get; }
 
-
-        public List<ManagedObjectInfo> managedObjects;  //includes gcHandle and all crawled objects
-        public SortedDictionary<ulong, ManagedObjectInfo> managedObjectByAddress = new SortedDictionary<ulong, ManagedObjectInfo>();
-
-        public int[] typesWithStaticFields;
-
-        public List<ManagedConnection> connections;
-        public ManagedData(CachedSnapshot snapshot)
+        public ManagedData()
         {
-            this.m_Snapshot = snapshot;
-            snapshot.m_CrawledData = this;
-
-            List<int> l = new List<int>();
-            for (int i = 0; i != m_Snapshot.typeDescriptions.Count; ++i)
-            {
-                if (m_Snapshot.typeDescriptions.staticFieldBytes[i] != null
-                    && m_Snapshot.typeDescriptions.staticFieldBytes[i].Length > 0)
-                {
-                    l.Add(m_Snapshot.typeDescriptions.typeIndex[i]);
-                }
-            }
-            typesWithStaticFields = l.ToArray();
-            valid = true;
+            ManagedObjects = new List<ManagedObjectInfo>();
+            ManagedObjectByAddress = new SortedDictionary<ulong, ManagedObjectInfo>();
+            Connections = new List<ManagedConnection>();
         }
     }
 
@@ -229,7 +241,7 @@ namespace Unity.MemoryProfiler.Editor
                 return BitConverter.ToUInt32(bytes, offset);
             if (pointerSize == 8)
                 return BitConverter.ToUInt64(bytes, offset);
-            throw new ArgumentException("Unexpected pointersize: " + pointerSize);
+            throw new ArgumentException("Unexpected pointer size: " + pointerSize);
         }
 
         public byte ReadByte()
@@ -313,13 +325,8 @@ namespace Unity.MemoryProfiler.Editor
         }
     }
 
-    internal class Crawler
+    internal static class Crawler
     {
-        CachedSnapshot m_Snapshot;
-
-        List<ManagedObjectInfo> m_ObjectList;
-        List<ManagedConnection> m_ConnectionList;
-
         struct StackCrawlData
         {
             public ulong ptr;
@@ -329,102 +336,174 @@ namespace Unity.MemoryProfiler.Editor
             public int fieldFrom;
             public int fromArrayIndex;
         }
-
-        public ManagedData Crawl(CachedSnapshot snapshot)
+        
+        class IntermediateCrawlData
         {
-            m_Snapshot = snapshot;
-
-            m_Snapshot.m_CrawledData = new ManagedData(m_Snapshot);
-
-            m_ObjectList = new List<ManagedObjectInfo>((int)m_Snapshot.gcHandles.Count * 3);
-
-            m_ConnectionList = new List<ManagedConnection>((int)m_Snapshot.gcHandles.Count * 6);
-
-            // Add all gchandle in the beginning of the output list to keep the same object order as the input
-            for (int i = 0; i != m_Snapshot.gcHandles.Count; i++)
+            public List<int> TypesWithStaticFields { private set; get; }
+            public Stack<StackCrawlData> CrawlDataStack { private set; get; }
+            public List<ManagedObjectInfo> ManagedObjectInfos { get { return CachedMemorySnapshot.CrawledData.ManagedObjects; } }
+            public List<ManagedConnection> ManagedConnections { get { return CachedMemorySnapshot.CrawledData.Connections; } }
+            public CachedSnapshot CachedMemorySnapshot { private set; get; }
+            public Stack<int> DuplicatedGCHandlesStack { private set; get; }
+            const int kInitialStackSize = 256;
+            public IntermediateCrawlData(CachedSnapshot snapshot)
             {
-                var moi = new ManagedObjectInfo();
-                if (m_Snapshot.gcHandles.target[i] == 0)
+                DuplicatedGCHandlesStack = new Stack<int>(kInitialStackSize);
+                CachedMemorySnapshot = snapshot;
+                CrawlDataStack = new Stack<StackCrawlData>();
+
+                TypesWithStaticFields = new List<int>();
+                for (int i = 0; i != snapshot.typeDescriptions.Count; ++i)
                 {
-                    Debuging.DebugUtility.LogWarning("null object in gc handles " + i);
-                    moi.managedObjectIndex = i;
-                    m_ObjectList.Add(moi);
-                }
-                else if (m_Snapshot.m_CrawledData.managedObjectByAddress.ContainsKey(m_Snapshot.gcHandles.target[i]))
-                {
-                    Debuging.DebugUtility.LogWarning("Duplicated object in gc handles " + i + " addr:" + m_Snapshot.gcHandles.target[i]);
-                    moi.managedObjectIndex = i;
-                    m_ObjectList.Add(moi);
-                }
-                else
-                {
-                    moi.managedObjectIndex = i;
-                    m_ObjectList.Add(moi);
-                    m_Snapshot.m_CrawledData.managedObjectByAddress.Add(m_Snapshot.gcHandles.target[i], moi);
+                    if (snapshot.typeDescriptions.staticFieldBytes[i] != null
+                        && snapshot.typeDescriptions.staticFieldBytes[i].Length > 0)
+                    {
+                        TypesWithStaticFields.Add(snapshot.typeDescriptions.typeIndex[i]);
+                    }
                 }
             }
-
-            Stack<StackCrawlData> crawlerStack = new Stack<StackCrawlData>();
-
-            for (int i = (int)m_Snapshot.gcHandles.Count - 1; i >= 0; --i)
-            {
-                crawlerStack.Push(new StackCrawlData { ptr = m_Snapshot.gcHandles.target[i], ptrFrom = 0, typeFrom = -1, indexOfFrom = -1, fieldFrom = -1, fromArrayIndex = - 1});
-            }
-
-            while(crawlerStack.Count > 0)
-            {
-                CrawlPointer(crawlerStack.Pop(), crawlerStack);
-            }
-
-            for (int i = 0; i < m_Snapshot.m_CrawledData.typesWithStaticFields.Length; i++)
-            {
-                var iTypeDescription = m_Snapshot.m_CrawledData.typesWithStaticFields[i];
-                CrawlRawObjectData(
-                    new BytesAndOffset { bytes = m_Snapshot.typeDescriptions.staticFieldBytes[iTypeDescription], offset = 0, pointerSize = m_Snapshot.virtualMachineInformation.pointerSize }
-                    , iTypeDescription, true, 0, -1, crawlerStack);
-            }
-
-            while (crawlerStack.Count > 0)
-            {
-                CrawlPointer(crawlerStack.Pop(), crawlerStack);
-            }
-
-            ConnectNativeToManageObject();
-
-            m_Snapshot.m_CrawledData.managedObjects = m_ObjectList;
-            m_Snapshot.m_CrawledData.connections = m_ConnectionList;
-
-            AddupRawRefCount();
-            return m_Snapshot.m_CrawledData;
         }
 
-        private void AddupRawRefCount()
+        static void GatherIntermediateCrawlData(CachedSnapshot snapshot, IntermediateCrawlData crawlData)
         {
-            for (int i = 0; i != m_Snapshot.connections.Count; ++i)
+            unsafe
             {
-                int iManagedTo = m_Snapshot.UnifiedObjectIndexToManagedObjectIndex(m_Snapshot.connections.to[i]);
+                var uniqueHandlesPtr = (ulong*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<ulong>() * snapshot.gcHandles.Count, UnsafeUtility.AlignOf<ulong>(), Collections.Allocator.Temp);
+
+                ulong* uniqueHandlesBegin = uniqueHandlesPtr;
+                ulong* uniqueHandlesEnd = uniqueHandlesPtr + snapshot.gcHandles.Count;
+
+                // Parse all handles
+                for (int i = 0; i != snapshot.gcHandles.Count; i++)
+                {
+                    var moi = new ManagedObjectInfo();
+                    var target = snapshot.gcHandles.target[i];
+                    if (target == 0)
+                    {
+#if SNAPSHOT_CRAWLER_DIAG
+                        Debuging.DebugUtility.LogWarning("null object in gc handles " + i);
+#endif
+                        moi.ManagedObjectIndex = i;
+                        crawlData.ManagedObjectInfos.Add(moi);
+                    }
+                    else if (snapshot.CrawledData.ManagedObjectByAddress.ContainsKey(target))
+                    {
+#if SNAPSHOT_CRAWLER_DIAG
+                    Debuging.DebugUtility.LogWarning("Duplicate gc handles " + i + " addr:" + snapshot.gcHandles.target[i]);
+#endif
+                        moi.ManagedObjectIndex = i;
+                        moi.PtrObject = target;
+                        crawlData.ManagedObjectInfos.Add(moi);
+                        crawlData.DuplicatedGCHandlesStack.Push(i);
+                    }
+                    else
+                    {
+                        moi.ManagedObjectIndex = i;
+                        crawlData.ManagedObjectInfos.Add(moi);
+                        snapshot.CrawledData.ManagedObjectByAddress.Add(target, moi);
+                        UnsafeUtility.CopyStructureToPtr(ref target, uniqueHandlesBegin++);
+                    }
+                }
+                uniqueHandlesBegin = uniqueHandlesPtr; //reset iterator
+
+                //add handles for processing
+                while (uniqueHandlesBegin != uniqueHandlesEnd)
+                {
+                    crawlData.CrawlDataStack.Push(new StackCrawlData { ptr = UnsafeUtility.ReadArrayElement<ulong>(uniqueHandlesBegin++, 0), ptrFrom = 0, typeFrom = -1, indexOfFrom = -1, fieldFrom = -1, fromArrayIndex = -1 });
+                }
+                UnsafeUtility.Free(uniqueHandlesPtr, Collections.Allocator.Temp);
+            }
+        }
+        public static IEnumerator Crawl(CachedSnapshot snapshot)
+        {
+            const int stepCount = 5;
+            var status = new EnumerationUtilities.EnumerationStatus(stepCount);
+
+            IntermediateCrawlData crawlData = new IntermediateCrawlData(snapshot);
+            crawlData.ManagedObjectInfos.Capacity = (int)snapshot.gcHandles.Count * 3;
+            crawlData.ManagedConnections.Capacity = (int)snapshot.gcHandles.Count * 6;
+
+            //Gather handles and duplicates
+            status.StepStatus = "Gathering snapshot managed data.";
+            yield return status;
+            GatherIntermediateCrawlData(snapshot, crawlData);
+
+            //crawl handle data
+            status.IncrementStep();
+            status.StepStatus = "Crawling GC handles.";
+            yield return status;
+            while (crawlData.CrawlDataStack.Count > 0)
+            {
+                CrawlPointer(crawlData);
+            }
+
+            //crawl data pertaining to types with static fields and enqueue any heap objects
+            status.IncrementStep();
+            status.StepStatus = "Crawling data types with static fields";
+            yield return status;
+            for (int i = 0; i < crawlData.TypesWithStaticFields.Count; i++)
+            {
+                var iTypeDescription = crawlData.TypesWithStaticFields[i];
+                var bytesOffset = new BytesAndOffset { bytes = snapshot.typeDescriptions.staticFieldBytes[iTypeDescription], offset = 0, pointerSize = snapshot.virtualMachineInformation.pointerSize };
+                CrawlRawObjectData(crawlData, bytesOffset, iTypeDescription, true, 0, -1);
+            }
+
+            //crawl handles belonging to static instances
+            status.IncrementStep();
+            status.StepStatus = "Crawling static instances heap data.";
+            yield return status;
+            while (crawlData.CrawlDataStack.Count > 0)
+            {
+                CrawlPointer(crawlData);
+            }
+
+            //copy crawled object source data for duplicate objects
+            foreach (var i in crawlData.DuplicatedGCHandlesStack)
+            {
+                var ptr = snapshot.CrawledData.ManagedObjects[i].PtrObject;
+                snapshot.CrawledData.ManagedObjects[i] = snapshot.CrawledData.ManagedObjectByAddress[ptr];
+            }
+
+            //crawl connection data
+            status.IncrementStep();
+            status.StepStatus = "Crawling connection data";
+            yield return status;
+            ConnectNativeToManageObject(crawlData);
+            AddupRawRefCount(crawlData.CachedMemorySnapshot);
+        }
+
+        static void AddupRawRefCount(CachedSnapshot snapshot)
+        {
+            for (int i = 0; i != snapshot.connections.Count; ++i)
+            {
+                int iManagedTo = snapshot.UnifiedObjectIndexToManagedObjectIndex(snapshot.connections.to[i]);
                 if (iManagedTo >= 0)
                 {
-                    ++m_Snapshot.m_CrawledData.managedObjects[iManagedTo].refCount;
+                    var obj = snapshot.CrawledData.ManagedObjects[iManagedTo];
+                    ++obj.RefCount;
+                    snapshot.CrawledData.ManagedObjects[iManagedTo] = obj;
                     continue;
                 }
 
-                int iNativeTo = m_Snapshot.UnifiedObjectIndexToNativeObjectIndex(m_Snapshot.connections.to[i]);
+                int iNativeTo = snapshot.UnifiedObjectIndexToNativeObjectIndex(snapshot.connections.to[i]);
                 if (iNativeTo >= 0)
                 {
-                    ++m_Snapshot.nativeObjects.refcount[iNativeTo];
+                    ++snapshot.nativeObjects.refcount[iNativeTo];
                     continue;
                 }
             }
         }
 
-        private void ConnectNativeToManageObject()
+        static void ConnectNativeToManageObject(IntermediateCrawlData crawlData)
         {
-            if (m_Snapshot.typeDescriptions.Count == 0)
+            var snapshot = crawlData.CachedMemorySnapshot;
+            var objectInfos = crawlData.ManagedObjectInfos;
+
+            if (snapshot.typeDescriptions.Count == 0)
                 return;
 
             // Get UnityEngine.Object
-            int iTypeDescription_UnityEngineObject = m_Snapshot.typeDescriptions.typeDescriptionName.FindIndex(x => x == "UnityEngine.Object");
+            int iTypeDescription_UnityEngineObject = snapshot.typeDescriptions.typeDescriptionName.FindIndex(x => x == "UnityEngine.Object");
             if (iTypeDescription_UnityEngineObject < 0)
             {
                 //No Unity Object ?
@@ -433,71 +512,71 @@ namespace Unity.MemoryProfiler.Editor
 
             //Get UnityEngine.Object.m_InstanceID field
             int iField_UnityEngineObject_m_InstanceID = Array.FindIndex(
-                    m_Snapshot.typeDescriptions.fieldIndices[iTypeDescription_UnityEngineObject]
-                    , iField => m_Snapshot.fieldDescriptions.fieldDescriptionName[iField] == "m_InstanceID");
+                    snapshot.typeDescriptions.fieldIndices[iTypeDescription_UnityEngineObject]
+                    , iField => snapshot.fieldDescriptions.fieldDescriptionName[iField] == "m_InstanceID");
 
             int instanceIDOffset = -1;
             int cachedPtrOffset = -1;
             if (iField_UnityEngineObject_m_InstanceID >= 0)
             {
-                var fieldIndex = m_Snapshot.typeDescriptions.fieldIndices[iTypeDescription_UnityEngineObject][iField_UnityEngineObject_m_InstanceID];
-                instanceIDOffset = m_Snapshot.fieldDescriptions.offset[fieldIndex];
+                var fieldIndex = snapshot.typeDescriptions.fieldIndices[iTypeDescription_UnityEngineObject][iField_UnityEngineObject_m_InstanceID];
+                instanceIDOffset = snapshot.fieldDescriptions.offset[fieldIndex];
             }
             if (instanceIDOffset < 0)
             {
                 // on UNITY_5_4_OR_NEWER, there is the member m_CachedPtr we can use to identify the connection
                 //Since Unity 5.4, UnityEngine.Object no longer stores instance id inside when running in the player. Use cached ptr instead to find the instanceID of native object
                 int iField_UnityEngineObject_m_CachedPtr = Array.FindIndex(
-                        m_Snapshot.typeDescriptions.fieldIndices[iTypeDescription_UnityEngineObject]
-                        , iField => m_Snapshot.fieldDescriptions.fieldDescriptionName[iField] == "m_CachedPtr");
+                        snapshot.typeDescriptions.fieldIndices[iTypeDescription_UnityEngineObject]
+                        , iField => snapshot.fieldDescriptions.fieldDescriptionName[iField] == "m_CachedPtr");
+
                 if (iField_UnityEngineObject_m_CachedPtr >= 0)
                 {
-                    cachedPtrOffset = m_Snapshot.fieldDescriptions.offset[iField_UnityEngineObject_m_CachedPtr];
+                    cachedPtrOffset = snapshot.fieldDescriptions.offset[iField_UnityEngineObject_m_CachedPtr];
                 }
             }
             if (instanceIDOffset < 0 && cachedPtrOffset < 0)
             {
-                UnityEngine.Debug.LogWarning("Could not find unity object instance id field or m_CachedPtr");
+                Debug.LogWarning("Could not find unity object instance id field or m_CachedPtr");
                 return;
             }
 
-
-            for (int i = 0; i != m_ObjectList.Count; i++)
+            for (int i = 0; i != objectInfos.Count; i++)
             {
                 //Must derive of unity Object
-                var o = m_ObjectList[i];
-                if (!DerivesFrom(o.iTypeDescription, iTypeDescription_UnityEngineObject))
+                var objectInfo = objectInfos[i];
+                if (!DerivesFrom(snapshot.typeDescriptions, objectInfo.ITypeDescription, iTypeDescription_UnityEngineObject))
                     continue;
 
                 //Find object instance id
                 int instanceID = CachedSnapshot.NativeObjectEntriesCache.InstanceID_None;
                 if (iField_UnityEngineObject_m_InstanceID >= 0)
                 {
-                    var h = m_Snapshot.managedHeapSections.Find(o.ptrObject + (UInt64)instanceIDOffset, m_Snapshot.virtualMachineInformation);
+                    var h = snapshot.managedHeapSections.Find(objectInfo.PtrObject + (UInt64)instanceIDOffset, snapshot.virtualMachineInformation);
                     if (h.IsValid)
                     {
                         instanceID = h.ReadInt32();
                     }
                     else
                     {
-                        UnityEngine.Debug.LogWarning("Managed object missing head (addr:" + o.ptrObject + ", index:" + o.managedObjectIndex + ")");
+                        Debug.LogWarning("Managed object missing head (addr:" + objectInfo.PtrObject + ", index:" + objectInfo.ManagedObjectIndex + ")");
                         continue;
                     }
                 }
                 else if (cachedPtrOffset >= 0)
                 {
                     // If you get a compilation error on the following 2 lines, update to Unity 5.4b14.
-                    var heapSection = m_Snapshot.managedHeapSections.Find(o.ptrObject + (UInt64)cachedPtrOffset, m_Snapshot.virtualMachineInformation);
+                    var heapSection = snapshot.managedHeapSections.Find(objectInfo.PtrObject + (UInt64)cachedPtrOffset, snapshot.virtualMachineInformation);
                     if (!heapSection.IsValid)
                     {
-                        UnityEngine.Debug.LogWarning("Managed object (addr:" + o.ptrObject + ", index:" + o.managedObjectIndex + ") does not have data at cachedPtr offset(" + cachedPtrOffset + ")");
+                        Debug.LogWarning("Managed object (addr:" + objectInfo.PtrObject + ", index:" + objectInfo.ManagedObjectIndex + ") does not have data at cachedPtr offset(" + cachedPtrOffset + ")");
                         continue;
                     }
                     var cachedPtr = heapSection.ReadPointer();
-                    var indexOfNativeObject = m_Snapshot.nativeObjects.nativeObjectAddress.FindIndex(no => no == cachedPtr);
+                    var indexOfNativeObject = snapshot.nativeObjects.nativeObjectAddress.FindIndex(no => no == cachedPtr);
                     if (indexOfNativeObject >= 0)
                     {
-                        instanceID = m_Snapshot.nativeObjects.instanceId[indexOfNativeObject];
+                        instanceID = snapshot.nativeObjects.instanceId[indexOfNativeObject];
                     }
                     else
                     {
@@ -505,51 +584,46 @@ namespace Unity.MemoryProfiler.Editor
                     }
                 }
 
-                if (!m_Snapshot.nativeObjects.instanceId2Index.TryGetValue(instanceID, out o.nativeObjectIndex))
+                if (!snapshot.nativeObjects.instanceId2Index.TryGetValue(instanceID, out objectInfo.NativeObjectIndex))
                 {
-                    o.nativeObjectIndex = -1;
+                    objectInfo.NativeObjectIndex = -1;
                 }
                 else
                 {
-                    //The native to manage connections are already in the raw snapshot
-                    //m_ConnectionList.Add(ManagedConnection.MakeUnityEngineObjectConnection(o.nativeObjectIndex, i));
-                    ////addup refcount
-                    //++o.refCount;
-                    //++m_Snapshot.nativeObjects.refcount[o.nativeObjectIndex];
-
-                    m_Snapshot.nativeObjects.managedObjectIndex[o.nativeObjectIndex] = i;
+                    snapshot.nativeObjects.managedObjectIndex[objectInfo.NativeObjectIndex] = i;
                 }
-                //yield return new NativeToManagedConnection { nativeInstanceId = instanceID, manageIndex = i };
             }
         }
 
-        private bool DerivesFrom(int iTypeDescription, int potentialBase)
+        static bool DerivesFrom(CachedSnapshot.TypeDescriptionEntriesCache typeDescriptions, int iTypeDescription, int potentialBase)
         {
             if (iTypeDescription < 0) return false;
             if (iTypeDescription == potentialBase)
                 return true;
 
-            var baseIndex = m_Snapshot.typeDescriptions.baseOrElementTypeIndex[iTypeDescription];
+            var baseIndex = typeDescriptions.baseOrElementTypeIndex[iTypeDescription];
 
             if (baseIndex < 0)
                 return false;
-            var baseArrayIndex = m_Snapshot.typeDescriptions.TypeIndex2ArrayIndex(baseIndex);
-            return DerivesFrom(baseArrayIndex, potentialBase);
+            var baseArrayIndex = typeDescriptions.TypeIndex2ArrayIndex(baseIndex);
+            return DerivesFrom(typeDescriptions, baseArrayIndex, potentialBase);
         }
 
-        private void CrawlRawObjectData(BytesAndOffset bytesAndOffset, int iTypeDescription, bool useStaticFields, ulong ptrFrom, int indexOfFrom, Stack<StackCrawlData> dataStack)
+        static void CrawlRawObjectData(IntermediateCrawlData crawlData, BytesAndOffset bytesAndOffset, int iTypeDescription, bool useStaticFields, ulong ptrFrom, int indexOfFrom)
         {
-            var fields = useStaticFields ? m_Snapshot.typeDescriptions.fieldIndicesOwned_static[iTypeDescription] : m_Snapshot.typeDescriptions.fieldIndices_instance[iTypeDescription];
+            var snapshot = crawlData.CachedMemorySnapshot;
+
+            var fields = useStaticFields ? snapshot.typeDescriptions.fieldIndicesOwned_static[iTypeDescription] : snapshot.typeDescriptions.fieldIndices_instance[iTypeDescription];
             foreach (var iField in fields)
             {
-                int iField_TypeDescription_TypeIndex = m_Snapshot.fieldDescriptions.typeIndex[iField];
-                int iField_TypeDescription_ArrayIndex = m_Snapshot.typeDescriptions.TypeIndex2ArrayIndex(iField_TypeDescription_TypeIndex);
+                int iField_TypeDescription_TypeIndex = snapshot.fieldDescriptions.typeIndex[iField];
+                int iField_TypeDescription_ArrayIndex = snapshot.typeDescriptions.TypeIndex2ArrayIndex(iField_TypeDescription_TypeIndex);
 
-                var fieldLocation = bytesAndOffset.Add(m_Snapshot.fieldDescriptions.offset[iField] - (useStaticFields ? 0 : m_Snapshot.virtualMachineInformation.objectHeaderSize));
+                var fieldLocation = bytesAndOffset.Add(snapshot.fieldDescriptions.offset[iField] - (useStaticFields ? 0 : snapshot.virtualMachineInformation.objectHeaderSize));
 
-                if (m_Snapshot.typeDescriptions.HasFlag(iField_TypeDescription_ArrayIndex, TypeFlags.kValueType))
+                if (snapshot.typeDescriptions.HasFlag(iField_TypeDescription_ArrayIndex, TypeFlags.kValueType))
                 {
-                    CrawlRawObjectData(fieldLocation, iField_TypeDescription_ArrayIndex, useStaticFields, ptrFrom, indexOfFrom, dataStack);
+                    CrawlRawObjectData(crawlData, fieldLocation, iField_TypeDescription_ArrayIndex, useStaticFields, ptrFrom, indexOfFrom);
                     continue;
                 }
 
@@ -566,15 +640,23 @@ namespace Unity.MemoryProfiler.Editor
 
                 if (!gotException)
                 {
-                    dataStack.Push(new StackCrawlData() { ptr = fieldLocation.ReadPointer(), ptrFrom = ptrFrom, typeFrom = iTypeDescription, indexOfFrom = indexOfFrom, fieldFrom = iField, fromArrayIndex = -1});
+                    crawlData.CrawlDataStack.Push(new StackCrawlData() { ptr = fieldLocation.ReadPointer(), ptrFrom = ptrFrom, typeFrom = iTypeDescription, indexOfFrom = indexOfFrom, fieldFrom = iField, fromArrayIndex = -1 });
                 }
             }
 
         }
 
-        private bool CrawlPointer(StackCrawlData data, Stack<StackCrawlData> dataStack)
+        static bool CrawlPointer(IntermediateCrawlData dataStack)
         {
-            var byteOffset = m_Snapshot.managedHeapSections.Find(data.ptr, m_Snapshot.virtualMachineInformation);
+            UnityEngine.Debug.Assert(dataStack.CrawlDataStack.Count > 0);
+
+            var snapshot = dataStack.CachedMemorySnapshot;
+            var typeDescriptions = snapshot.typeDescriptions;
+            var data = dataStack.CrawlDataStack.Pop();
+            var virtualMachineInformation = snapshot.virtualMachineInformation;
+            var managedHeapSections = snapshot.managedHeapSections;
+            var byteOffset = managedHeapSections.Find(data.ptr, virtualMachineInformation);
+
             if (!byteOffset.IsValid)
             {
                 return false;
@@ -583,142 +665,137 @@ namespace Unity.MemoryProfiler.Editor
             ManagedObjectInfo obj;
             bool wasAlreadyCrawled;
 
-            obj = ParseObjectHeader(m_Snapshot.managedHeapSections, data.ptr, out wasAlreadyCrawled, false);
-            ++obj.refCount;
-            m_ConnectionList.Add(ManagedConnection.MakeConnection(m_Snapshot, data.indexOfFrom, data.ptrFrom, obj.managedObjectIndex, data.ptr, data.typeFrom, data.fieldFrom, data.fromArrayIndex));
+            obj = ParseObjectHeader(snapshot, data.ptr, out wasAlreadyCrawled, false);
+            ++obj.RefCount;
+            dataStack.ManagedConnections.Add(ManagedConnection.MakeConnection(snapshot, data.indexOfFrom, data.ptrFrom, obj.ManagedObjectIndex, data.ptr, data.typeFrom, data.fieldFrom, data.fromArrayIndex));
 
             if (!obj.IsKnownType())
                 return false;
             if (wasAlreadyCrawled)
                 return true;
 
-            if (!m_Snapshot.typeDescriptions.HasFlag(obj.iTypeDescription, TypeFlags.kArray))
+            if (!typeDescriptions.HasFlag(obj.ITypeDescription, TypeFlags.kArray))
             {
-                CrawlRawObjectData(byteOffset.Add(m_Snapshot.virtualMachineInformation.objectHeaderSize), obj.iTypeDescription, false, data.ptr, obj.managedObjectIndex, dataStack);
+                CrawlRawObjectData(dataStack, byteOffset.Add(snapshot.virtualMachineInformation.objectHeaderSize), obj.ITypeDescription, false, data.ptr, obj.ManagedObjectIndex);
                 return true;
             }
 
-            var arrayLength = ArrayTools.ReadArrayLength(m_Snapshot, m_Snapshot.managedHeapSections, data.ptr, obj.iTypeDescription, m_Snapshot.virtualMachineInformation);
-            int iElementTypeDescription = m_Snapshot.typeDescriptions.baseOrElementTypeIndex[obj.iTypeDescription];
+            var arrayLength = ArrayTools.ReadArrayLength(snapshot, data.ptr, obj.ITypeDescription);
+            int iElementTypeDescription = typeDescriptions.baseOrElementTypeIndex[obj.ITypeDescription];
             if (iElementTypeDescription == -1)
             {
                 return false; //do not crawl uninitialized object types, as we currently don't have proper handling for these
             }
-            var cursor = byteOffset.Add(m_Snapshot.virtualMachineInformation.arrayHeaderSize);
+            var arrayData = byteOffset.Add(virtualMachineInformation.arrayHeaderSize);
             for (int i = 0; i != arrayLength; i++)
             {
-                if (m_Snapshot.typeDescriptions.HasFlag(iElementTypeDescription, TypeFlags.kValueType))
+                if (typeDescriptions.HasFlag(iElementTypeDescription, TypeFlags.kValueType))
                 {
-                    CrawlRawObjectData(cursor, iElementTypeDescription, false, data.ptr, obj.managedObjectIndex, dataStack);
-                    cursor = cursor.Add(m_Snapshot.typeDescriptions.size[iElementTypeDescription]);
+                    CrawlRawObjectData(dataStack, arrayData, iElementTypeDescription, false, data.ptr, obj.ManagedObjectIndex);
+                    arrayData = arrayData.Add(typeDescriptions.size[iElementTypeDescription]);
                 }
                 else
                 {
-                    dataStack.Push(new StackCrawlData() { ptr = cursor.ReadPointer(), ptrFrom = data.ptr, typeFrom = obj.iTypeDescription, indexOfFrom = obj.managedObjectIndex, fieldFrom = -1, fromArrayIndex = i });
-                    cursor = cursor.NextPointer();
+                    dataStack.CrawlDataStack.Push(new StackCrawlData() { ptr = arrayData.ReadPointer(), ptrFrom = data.ptr, typeFrom = obj.ITypeDescription, indexOfFrom = obj.ManagedObjectIndex, fieldFrom = -1, fromArrayIndex = i });
+                    arrayData = arrayData.NextPointer();
                 }
             }
             return true;
         }
 
-        int SizeOfObjectInBytes(int iTypeDescription, BytesAndOffset bo, CachedSnapshot.ManagedMemorySectionEntriesCache heap, ulong address)
-        {
-            return SizeOfObjectInBytes(m_Snapshot, iTypeDescription, bo, heap, address);
-        }
-
-        static int SizeOfObjectInBytes(CachedSnapshot snapshot, int iTypeDescription, BytesAndOffset bo, CachedSnapshot.ManagedMemorySectionEntriesCache heap, ulong address)
+        static int SizeOfObjectInBytes(CachedSnapshot snapshot, int iTypeDescription, BytesAndOffset bo, ulong address)
         {
             if (iTypeDescription < 0) return 0;
 
             if (snapshot.typeDescriptions.HasFlag(iTypeDescription, TypeFlags.kArray))
-                return ArrayTools.ReadArrayObjectSizeInBytes(snapshot, heap, address, iTypeDescription, snapshot.virtualMachineInformation);
+                return ArrayTools.ReadArrayObjectSizeInBytes(snapshot, address, iTypeDescription);
 
             if (snapshot.typeDescriptions.typeDescriptionName[iTypeDescription] == "System.String")
                 return StringTools.ReadStringObjectSizeInBytes(bo, snapshot.virtualMachineInformation);
 
-            //array and string are the only types that are special, all other types just have one size, which is stored in the typedescription
+            //array and string are the only types that are special, all other types just have one size, which is stored in the type description
             return snapshot.typeDescriptions.size[iTypeDescription];
         }
 
-        int SizeOfObjectInBytes(int iTypeDescription, BytesAndOffset bo, CachedSnapshot.ManagedMemorySectionEntriesCache heap)
-        {
-            return SizeOfObjectInBytes(m_Snapshot, iTypeDescription, bo, heap);
-        }
-
-        static int SizeOfObjectInBytes(CachedSnapshot snapshot, int iTypeDescription, BytesAndOffset bo, CachedSnapshot.ManagedMemorySectionEntriesCache heap)
+        static int SizeOfObjectInBytes(CachedSnapshot snapshot, int iTypeDescription, BytesAndOffset byteOffset, CachedSnapshot.ManagedMemorySectionEntriesCache heap)
         {
             if (iTypeDescription < 0) return 0;
 
             if (snapshot.typeDescriptions.HasFlag(iTypeDescription, TypeFlags.kArray))
-                return ArrayTools.ReadArrayObjectSizeInBytes(snapshot, heap, bo, iTypeDescription, snapshot.virtualMachineInformation);
+                return ArrayTools.ReadArrayObjectSizeInBytes(snapshot, byteOffset, iTypeDescription);
 
             if (snapshot.typeDescriptions.typeDescriptionName[iTypeDescription] == "System.String")
-                return StringTools.ReadStringObjectSizeInBytes(bo, snapshot.virtualMachineInformation);
+                return StringTools.ReadStringObjectSizeInBytes(byteOffset, snapshot.virtualMachineInformation);
 
-            //array and string are the only types that are special, all other types just have one size, which is stored in the typedescription
+            //array and string are the only types that are special, all other types just have one size, which is stored in the type description
             return snapshot.typeDescriptions.size[iTypeDescription];
         }
 
-        private ManagedObjectInfo ParseObjectHeader(CachedSnapshot.ManagedMemorySectionEntriesCache heap, ulong ptrObjectHeader, out bool wasAlreadyCrawled, bool ignoreBadHeaderError)
+        static ManagedObjectInfo ParseObjectHeader(CachedSnapshot snapshot, ulong ptrObjectHeader, out bool wasAlreadyCrawled, bool ignoreBadHeaderError)
         {
-            ManagedObjectInfo o;
-            if (!m_Snapshot.m_CrawledData.managedObjectByAddress.TryGetValue(ptrObjectHeader, out o))
+            var objectList = snapshot.CrawledData.ManagedObjects;
+            var objectsByAddress = snapshot.CrawledData.ManagedObjectByAddress;
+
+            ManagedObjectInfo objectInfo;
+            if (!snapshot.CrawledData.ManagedObjectByAddress.TryGetValue(ptrObjectHeader, out objectInfo))
             {
-                o = ParseObjectHeader(m_Snapshot, heap, ptrObjectHeader, ignoreBadHeaderError);
-                o.managedObjectIndex = m_ObjectList.Count;
-                m_ObjectList.Add(o);
-                m_Snapshot.m_CrawledData.managedObjectByAddress.Add(ptrObjectHeader, o);
+                objectInfo = ParseObjectHeader(snapshot, ptrObjectHeader, ignoreBadHeaderError);
+                objectInfo.ManagedObjectIndex = objectList.Count;
+                objectList.Add(objectInfo);
+                objectsByAddress.Add(ptrObjectHeader, objectInfo);
                 wasAlreadyCrawled = false;
-                return o;
+                return objectInfo;
             }
 
             // this happens on objects from gcHandles, they are added before any other crawled object but have their ptr set to 0.
-            if (o.ptrObject == 0)
+            if (objectInfo.PtrObject == 0)
             {
-                var index = o.managedObjectIndex;
-                o = ParseObjectHeader(m_Snapshot, heap, ptrObjectHeader, ignoreBadHeaderError);
-                o.managedObjectIndex = index;
-                m_ObjectList[index] = o;
-                m_Snapshot.m_CrawledData.managedObjectByAddress[ptrObjectHeader] = o;
+                var index = objectInfo.ManagedObjectIndex;
+                objectInfo = ParseObjectHeader(snapshot, ptrObjectHeader, ignoreBadHeaderError);
+                objectInfo.ManagedObjectIndex = index;
+                objectList[index] = objectInfo;
+                objectsByAddress[ptrObjectHeader] = objectInfo;
 
                 wasAlreadyCrawled = false;
-                return o;
+                return objectInfo;
             }
 
             wasAlreadyCrawled = true;
-            return o;
+            return objectInfo;
         }
 
-        public static ManagedObjectInfo ParseObjectHeader(CachedSnapshot snapshot, CachedSnapshot.ManagedMemorySectionEntriesCache heap, ulong ptrObjectHeader, bool ignoreBadHeaderError)
+        public static ManagedObjectInfo ParseObjectHeader(CachedSnapshot snapshot, ulong ptrObjectHeader, bool ignoreBadHeaderError)
         {
+            var heap = snapshot.managedHeapSections;
             var boHeader = heap.Find(ptrObjectHeader, snapshot.virtualMachineInformation);
-            var o = ParseObjectHeader(snapshot, heap, boHeader, ignoreBadHeaderError);
-            o.ptrObject = ptrObjectHeader;
-            return o;
+            var objectInfo = ParseObjectHeader(snapshot, boHeader, ignoreBadHeaderError);
+            objectInfo.PtrObject = ptrObjectHeader;
+            return objectInfo;
         }
 
-        public static ManagedObjectInfo ParseObjectHeader(CachedSnapshot snapshot, CachedSnapshot.ManagedMemorySectionEntriesCache heap, BytesAndOffset obj, bool ignoreBadHeaderError)
+        public static ManagedObjectInfo ParseObjectHeader(CachedSnapshot snapshot, BytesAndOffset byteOffset, bool ignoreBadHeaderError)
         {
-            ManagedObjectInfo o;
+            var heap = snapshot.managedHeapSections;
+            ManagedObjectInfo objectInfo;
 
-            o = new ManagedObjectInfo();
-            o.ptrObject = 0;
-            o.managedObjectIndex = -1;
+            objectInfo = new ManagedObjectInfo();
+            objectInfo.PtrObject = 0;
+            objectInfo.ManagedObjectIndex = -1;
 
-            var boHeader = obj;
+            var boHeader = byteOffset;
             var ptrIdentity = boHeader.ReadPointer();
-            o.ptrTypeInfo = ptrIdentity;
-            o.iTypeDescription = snapshot.typeDescriptions.TypeInfo2ArrayIndex(o.ptrTypeInfo);
+            objectInfo.PtrTypeInfo = ptrIdentity;
+            objectInfo.ITypeDescription = snapshot.typeDescriptions.TypeInfo2ArrayIndex(objectInfo.PtrTypeInfo);
             bool error = false;
-            if (o.iTypeDescription < 0)
+            if (objectInfo.ITypeDescription < 0)
             {
                 var boIdentity = heap.Find(ptrIdentity, snapshot.virtualMachineInformation);
                 if (boIdentity.IsValid)
                 {
                     var ptrTypeInfo = boIdentity.ReadPointer();
-                    o.ptrTypeInfo = ptrTypeInfo;
-                    o.iTypeDescription = snapshot.typeDescriptions.TypeInfo2ArrayIndex(o.ptrTypeInfo);
-                    error = o.iTypeDescription < 0;
+                    objectInfo.PtrTypeInfo = ptrTypeInfo;
+                    objectInfo.ITypeDescription = snapshot.typeDescriptions.TypeInfo2ArrayIndex(objectInfo.PtrTypeInfo);
+                    error = objectInfo.ITypeDescription < 0;
                 }
                 else
                 {
@@ -727,14 +804,13 @@ namespace Unity.MemoryProfiler.Editor
             }
             if (!error)
             {
-                o.size = SizeOfObjectInBytes(snapshot, o.iTypeDescription, boHeader, heap);
-                o.data = boHeader;
+                objectInfo.Size = SizeOfObjectInBytes(snapshot, objectInfo.ITypeDescription, boHeader, heap);
+                objectInfo.data = boHeader;
             }
             else
             {
                 if (!ignoreBadHeaderError)
                 {
-                    var ptrIdentityTypeIndex = snapshot.typeDescriptions.TypeInfo2ArrayIndex(ptrIdentity);
 
 
                     var cursor = boHeader;
@@ -752,18 +828,21 @@ namespace Unity.MemoryProfiler.Editor
                         str += "\n";
                         cursor = cursor.Add(8);
                     }
+#if DEBUG_VALIDATION
+                    var ptrIdentityTypeIndex = snapshot.typeDescriptions.TypeInfo2ArrayIndex(ptrIdentity);
+
                     UnityEngine.Debug.LogWarning("Unknown object header or type. "
                         + " header: \n" + str
                         + " First pointer as type index = " + ptrIdentityTypeIndex
                         );
+#endif
                 }
 
-                o.ptrTypeInfo = 0;
-                o.iTypeDescription = -1;
-                o.size = 0;
+                objectInfo.PtrTypeInfo = 0;
+                objectInfo.ITypeDescription = -1;
+                objectInfo.Size = 0;
             }
-
-            return o;
+            return objectInfo;
         }
     }
 
@@ -818,104 +897,62 @@ namespace Unity.MemoryProfiler.Editor
     }
     internal static class ArrayTools
     {
-        public static ArrayInfo GetArrayInfo(CachedSnapshot data, CachedSnapshot.ManagedMemorySectionEntriesCache heap, UInt64 address, int iTypeDescriptionArrayType, VirtualMachineInformation virtualMachineInformation)
+        public static ArrayInfo GetArrayInfo(CachedSnapshot data, BytesAndOffset arrayData, int iTypeDescriptionArrayType)
         {
-            var o = new ArrayInfo();
-            o.baseAddress = address;
-            o.arrayTypeDescription = iTypeDescriptionArrayType;
+            var virtualMachineInformation = data.virtualMachineInformation;
+            var arrayInfo = new ArrayInfo();
+            arrayInfo.baseAddress = 0;
+            arrayInfo.arrayTypeDescription = iTypeDescriptionArrayType;
 
 
-            o.header = heap.Find(address, virtualMachineInformation);
-            o.data = o.header.Add(data.virtualMachineInformation.arrayHeaderSize);
-            var bounds = o.header.Add(virtualMachineInformation.arrayBoundsOffsetInHeader).ReadPointer();
+            arrayInfo.header = arrayData;
+            arrayInfo.data = arrayInfo.header.Add(virtualMachineInformation.arrayHeaderSize);
+            var bounds = arrayInfo.header.Add(virtualMachineInformation.arrayBoundsOffsetInHeader).ReadPointer();
 
             if (bounds == 0)
             {
-                o.length = o.header.Add(virtualMachineInformation.arraySizeOffsetInHeader).ReadInt32();
-                o.rank = new int[1] { o.length };
+                arrayInfo.length = arrayInfo.header.Add(virtualMachineInformation.arraySizeOffsetInHeader).ReadInt32();
+                arrayInfo.rank = new int[1] { arrayInfo.length };
             }
             else
             {
-                var cursor = heap.Find(bounds, virtualMachineInformation);
+                var cursor = data.managedHeapSections.Find(bounds, virtualMachineInformation);
                 int rank = data.typeDescriptions.GetRank(iTypeDescriptionArrayType);
-                o.rank = new int[rank];
-                o.length = 1;
+                arrayInfo.rank = new int[rank];
+                arrayInfo.length = 1;
                 for (int i = 0; i != rank; i++)
                 {
                     var l = cursor.ReadInt32();
-                    o.length *= l;
-                    o.rank[i] = l;
+                    arrayInfo.length *= l;
+                    arrayInfo.rank[i] = l;
                     cursor = cursor.Add(8);
                 }
             }
 
-            o.elementTypeDescription = data.typeDescriptions.baseOrElementTypeIndex[iTypeDescriptionArrayType];
-            if (data.typeDescriptions.HasFlag(o.elementTypeDescription, TypeFlags.kValueType))
+            arrayInfo.elementTypeDescription = data.typeDescriptions.baseOrElementTypeIndex[iTypeDescriptionArrayType];
+            if (arrayInfo.elementTypeDescription == -1) //We currently do not handle uninitialized types as such override the type, making it return pointer size
             {
-                o.elementSize = data.typeDescriptions.size[o.elementTypeDescription];
+                arrayInfo.elementTypeDescription = iTypeDescriptionArrayType;
+            }
+            if (data.typeDescriptions.HasFlag(arrayInfo.elementTypeDescription, TypeFlags.kValueType))
+            {
+                arrayInfo.elementSize = data.typeDescriptions.size[arrayInfo.elementTypeDescription];
             }
             else
             {
-                o.elementSize = virtualMachineInformation.pointerSize;
+                arrayInfo.elementSize = virtualMachineInformation.pointerSize;
             }
-            return o;
+            return arrayInfo;
         }
 
-        public static ArrayInfo GetArrayInfo(CachedSnapshot data, CachedSnapshot.ManagedMemorySectionEntriesCache heap, BytesAndOffset arrayData, int iTypeDescriptionArrayType, VirtualMachineInformation virtualMachineInformation)
-        {
-            var o = new ArrayInfo();
-            o.baseAddress = 0;
-            o.arrayTypeDescription = iTypeDescriptionArrayType;
-
-
-            o.header = arrayData;
-            o.data = o.header.Add(data.virtualMachineInformation.arrayHeaderSize);
-            var bounds = o.header.Add(virtualMachineInformation.arrayBoundsOffsetInHeader).ReadPointer();
-
-            if (bounds == 0)
-            {
-                o.length = o.header.Add(virtualMachineInformation.arraySizeOffsetInHeader).ReadInt32();
-                o.rank = new int[1] { o.length };
-            }
-            else
-            {
-                var cursor = heap.Find(bounds, virtualMachineInformation);
-                int rank = data.typeDescriptions.GetRank(iTypeDescriptionArrayType);
-                o.rank = new int[rank];
-                o.length = 1;
-                for (int i = 0; i != rank; i++)
-                {
-                    var l = cursor.ReadInt32();
-                    o.length *= l;
-                    o.rank[i] = l;
-                    cursor = cursor.Add(8);
-                }
-            }
-
-            o.elementTypeDescription = data.typeDescriptions.baseOrElementTypeIndex[iTypeDescriptionArrayType];
-            if (o.elementTypeDescription == -1) //We currently do not handle uninitialized types as such override the type, making it return pointer size
-            {
-                o.elementTypeDescription = iTypeDescriptionArrayType;
-            }
-            if (data.typeDescriptions.HasFlag(o.elementTypeDescription, TypeFlags.kValueType))
-            {
-                o.elementSize = data.typeDescriptions.size[o.elementTypeDescription];
-            }
-            else
-            {
-                o.elementSize = virtualMachineInformation.pointerSize;
-            }
-            return o;
-        }
-
-        public static int GetArrayElementSize(CachedSnapshot data, int iTypeDescriptionArrayType, VirtualMachineInformation virtualMachineInformation)
+        public static int GetArrayElementSize(CachedSnapshot data, int iTypeDescriptionArrayType)
         {
             int iElementTypeDescription = data.typeDescriptions.baseOrElementTypeIndex[iTypeDescriptionArrayType];
             if (data.typeDescriptions.HasFlag(iElementTypeDescription, TypeFlags.kValueType))
             {
                 return data.typeDescriptions.size[iElementTypeDescription];
             }
-            return virtualMachineInformation.pointerSize;
+            return data.virtualMachineInformation.pointerSize;
         }
 
         public static string ArrayRankToString(int[] rankLength)
@@ -978,18 +1015,24 @@ namespace Unity.MemoryProfiler.Editor
             return l;
         }
 
-        public static int ReadArrayLength(CachedSnapshot data, CachedSnapshot.ManagedMemorySectionEntriesCache heap, UInt64 address, int iTypeDescriptionArrayType, VirtualMachineInformation virtualMachineInformation)
+        public static int ReadArrayLength(CachedSnapshot data, UInt64 address, int iTypeDescriptionArrayType)
         {
-            if (iTypeDescriptionArrayType < 0) return 0;
+            if (iTypeDescriptionArrayType < 0)
+            {
+                return 0;
+            }
 
-            var bo = heap.Find(address, virtualMachineInformation);
-            return ReadArrayLength(data, heap, bo, iTypeDescriptionArrayType, virtualMachineInformation);
+            var heap = data.managedHeapSections;
+            var bo = heap.Find(address, data.virtualMachineInformation);
+            return ReadArrayLength(data, bo, iTypeDescriptionArrayType);
         }
 
-        public static int ReadArrayLength(CachedSnapshot data, CachedSnapshot.ManagedMemorySectionEntriesCache heap, BytesAndOffset arrayData, int iTypeDescriptionArrayType, VirtualMachineInformation virtualMachineInformation)
+        public static int ReadArrayLength(CachedSnapshot data, BytesAndOffset arrayData, int iTypeDescriptionArrayType)
         {
             if (iTypeDescriptionArrayType < 0) return 0;
 
+            var virtualMachineInformation = data.virtualMachineInformation;
+            var heap = data.managedHeapSections;
             var bo = arrayData;
             var bounds = bo.Add(virtualMachineInformation.arrayBoundsOffsetInHeader).ReadPointer();
 
@@ -1007,11 +1050,11 @@ namespace Unity.MemoryProfiler.Editor
             return length;
         }
 
-        public static int ReadArrayObjectSizeInBytes(CachedSnapshot data, CachedSnapshot.ManagedMemorySectionEntriesCache heap, UInt64 address, int iTypeDescriptionArrayType, VirtualMachineInformation virtualMachineInformation)
+        public static int ReadArrayObjectSizeInBytes(CachedSnapshot data, UInt64 address, int iTypeDescriptionArrayType)
         {
-            var arrayLength = ArrayTools.ReadArrayLength(data, heap, address, iTypeDescriptionArrayType, virtualMachineInformation);
+            var arrayLength = ReadArrayLength(data, address, iTypeDescriptionArrayType);
 
-
+            var virtualMachineInformation = data.virtualMachineInformation;
             var ti = data.typeDescriptions.baseOrElementTypeIndex[iTypeDescriptionArrayType];
             var ai = data.typeDescriptions.TypeIndex2ArrayIndex(ti);
             var isValueType = data.typeDescriptions.HasFlag(ai, TypeFlags.kValueType);
@@ -1020,20 +1063,21 @@ namespace Unity.MemoryProfiler.Editor
             return virtualMachineInformation.arrayHeaderSize + elementSize * arrayLength;
         }
 
-        public static int ReadArrayObjectSizeInBytes(CachedSnapshot data, CachedSnapshot.ManagedMemorySectionEntriesCache heap, BytesAndOffset arrayData, int iTypeDescriptionArrayType, VirtualMachineInformation virtualMachineInformation)
+        public static int ReadArrayObjectSizeInBytes(CachedSnapshot data, BytesAndOffset arrayData, int iTypeDescriptionArrayType)
         {
-            var arrayLength = ArrayTools.ReadArrayLength(data, heap, arrayData, iTypeDescriptionArrayType, virtualMachineInformation);
-
+            var arrayLength = ReadArrayLength(data, arrayData, iTypeDescriptionArrayType);
+            var virtualMachineInformation = data.virtualMachineInformation;
 
             var ti = data.typeDescriptions.baseOrElementTypeIndex[iTypeDescriptionArrayType];
-            if(ti == -1) // check added as element type index can be -1 if we are dealing with a class member (Eg Dictionary.Entry) whose type is uninitialized due to their generic data not getting inflated a.k.a unused types
+            if (ti == -1) // check added as element type index can be -1 if we are dealing with a class member (eg: Dictionary.Entry) whose type is uninitialized due to their generic data not getting inflated a.k.a unused types
             {
                 ti = iTypeDescriptionArrayType;
             }
+
             var ai = data.typeDescriptions.TypeIndex2ArrayIndex(ti);
             var isValueType = data.typeDescriptions.HasFlag(ai, TypeFlags.kValueType);
-
             var elementSize = isValueType ? data.typeDescriptions.size[ai] : virtualMachineInformation.pointerSize;
+
             return virtualMachineInformation.arrayHeaderSize + elementSize * arrayLength;
         }
     }

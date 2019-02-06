@@ -3,6 +3,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+## [0.1.0-preview.5] - 2019-01-29
+### Added
+ - Added progress bar displays for actions like opening/importing snapshots.
+ - Restored binary compatibility with the 2017.4 memory snapshot format.
+ - Added handling for duplicate GC handles present in the snapshot.
+
+### Changed
+ - Lowered the number of GC allocations when crawling a snapshot.
+ - Upgraded dependency on EditorCoroutines package to 0.0.2-preview.1.
+ - Changed the initialization of the managed memory sections to not overallocate. 
+ - Fixed an issue where selecting a region on the memory map would expand the table underneath onto the whole window.
+ - Fixed an issue where closing either snapshot (with two snapshots loaded) would close the other one instead.
+ - Resolved UI issues with upstream UI elements versions.
+
+### Removed
+ - Removed links in columns: Native Object Name, Native Size. For the Native Objects table. 
+
 ## [0.1.0-preview.4] - 2019-01-02
 ### Added
  - Added on demand computing for tables with the purpose of speeding up the snapshot opening process.

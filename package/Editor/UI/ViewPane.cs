@@ -11,8 +11,8 @@ namespace Unity.MemoryProfiler.Editor.UI
 {
     internal interface IViewPaneEventListener
     {
-        void OnOpenTable(Database.View.LinkRequest link);
-        void OnOpenTable(Database.View.LinkRequest link, UIState.SnapshotMode mode);
+        void OnOpenLink(Database.LinkRequest link);
+        void OnOpenLink(Database.LinkRequest link, UIState.SnapshotMode mode);
         void OnOpenMemoryMap();
         void OnOpenTreeMap();
         void OnRepaint();

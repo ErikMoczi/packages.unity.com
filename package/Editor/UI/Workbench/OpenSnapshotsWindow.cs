@@ -193,9 +193,9 @@ namespace Unity.MemoryProfiler.Editor
 
             public LabelWidthData(Label label, float snapshotMinWidth)
             {
-                Padding = label.style.GetPaddingLeft() + label.style.GetPaddingRight();
-                Margin = label.style.GetMarginLeft() + label.style.GetMarginRight();
-                TextWidth = label.MeasureTextSize(label.text, label.style.GetWidth(), MeasureMode.Undefined, 20, MeasureMode.Exactly).x;
+                Padding = label.GetPaddingLeftFromStyle() + label.GetPaddingRightFromStyle();
+                Margin = label.GetMarginLeftFromStyle() + label.GetMarginRightFromStyle();
+                TextWidth = label.MeasureTextSize(label.text, label.GetWidthFromStyle(), MeasureMode.Undefined, 20, MeasureMode.Exactly).x;
                 m_SnapshotMinWidth = snapshotMinWidth;
                 m_Label = label;
             }
@@ -237,9 +237,9 @@ namespace Unity.MemoryProfiler.Editor
 
         public void UpdateWidth(float width)
         {
-            float snapshotMinWidth = m_FirstSnapshotHolder.style.GetMinWidth();
+            float snapshotMinWidth = m_FirstSnapshotHolder.GetMinWidthFromStyle();
 
-            var distributableWidth = width - (2 * snapshotMinWidth + m_DiffButtonHolder.style.GetMinWidth());
+            var distributableWidth = width - (2 * snapshotMinWidth + m_DiffButtonHolder.GetMinWidthFromStyle());
 
             var firstSnapshotWidthData = new SnapshotUIWidthData(m_OpenSnapshotItemUIFirst, snapshotMinWidth);
             var secondSnapshotWidthData = new SnapshotUIWidthData(m_OpenSnapshotItemUISecond, snapshotMinWidth);

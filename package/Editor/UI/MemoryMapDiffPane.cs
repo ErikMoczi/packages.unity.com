@@ -243,35 +243,35 @@ namespace Unity.MemoryProfiler.Editor.UI
             if (minAddr == maxAddr)
                 return;
 
-            var lr = new Database.View.LinkRequest();
-            lr.metaLink = new Database.View.MetaLink();
+            var lr = new Database.LinkRequestTable();
+            lr.LinkToOpen = new Database.TableLink();
             
             if (CurrentTableView == TableDisplayMode.Objects)
             {
-                lr.metaLink.linkViewName = ObjectAllTable.kTableName;
+                lr.LinkToOpen.TableName = ObjectAllTable.TableName;
 
-                lr.metaLink.linkWhere = new List<Database.View.Where.Builder>();
-                lr.metaLink.linkWhere.Add(new Database.View.Where.Builder("Address", Database.Operation.Operator.GreaterEqual, new Expression.MetaExpression(minAddr.ToString(), false)));
-                lr.metaLink.linkWhere.Add(new Database.View.Where.Builder("Address", Database.Operation.Operator.Less, new Expression.MetaExpression(maxAddr.ToString(), false)));
+                lr.LinkToOpen.RowWhere = new List<Database.View.Where.Builder>();
+                lr.LinkToOpen.RowWhere.Add(new Database.View.Where.Builder("Address", Database.Operation.Operator.GreaterEqual, new Expression.MetaExpression(minAddr.ToString(), false)));
+                lr.LinkToOpen.RowWhere.Add(new Database.View.Where.Builder("Address", Database.Operation.Operator.Less, new Expression.MetaExpression(maxAddr.ToString(), false)));
             }
             else if (CurrentTableView == TableDisplayMode.Allocations)
             {                    
-                lr.metaLink.linkViewName = "RawNativeAllocation";
-                lr.metaLink.linkWhere = new List<Database.View.Where.Builder>();
-                lr.metaLink.linkWhere.Add(new Database.View.Where.Builder("address", Database.Operation.Operator.GreaterEqual, new Expression.MetaExpression(minAddr.ToString(), false)));
-                lr.metaLink.linkWhere.Add(new Database.View.Where.Builder("address", Database.Operation.Operator.Less, new Expression.MetaExpression(maxAddr.ToString(), false)));
+                lr.LinkToOpen.TableName = "RawNativeAllocation";
+                lr.LinkToOpen.RowWhere = new List<Database.View.Where.Builder>();
+                lr.LinkToOpen.RowWhere.Add(new Database.View.Where.Builder("address", Database.Operation.Operator.GreaterEqual, new Expression.MetaExpression(minAddr.ToString(), false)));
+                lr.LinkToOpen.RowWhere.Add(new Database.View.Where.Builder("address", Database.Operation.Operator.Less, new Expression.MetaExpression(maxAddr.ToString(), false)));
             }
             else if (CurrentTableView == TableDisplayMode.Regions)
             {
-                lr.metaLink.linkViewName = "RawNativeMemoryRegion";
-                lr.metaLink.linkWhere = new List<Database.View.Where.Builder>();
-                lr.metaLink.linkWhere.Add(new Database.View.Where.Builder("addressBase", Database.Operation.Operator.GreaterEqual, new Expression.MetaExpression(minAddr.ToString(), false)));
-                lr.metaLink.linkWhere.Add(new Database.View.Where.Builder("addressBase", Database.Operation.Operator.Less, new Expression.MetaExpression(maxAddr.ToString(), false)));
+                lr.LinkToOpen.TableName = "RawNativeMemoryRegion";
+                lr.LinkToOpen.RowWhere = new List<Database.View.Where.Builder>();
+                lr.LinkToOpen.RowWhere.Add(new Database.View.Where.Builder("addressBase", Database.Operation.Operator.GreaterEqual, new Expression.MetaExpression(minAddr.ToString(), false)));
+                lr.LinkToOpen.RowWhere.Add(new Database.View.Where.Builder("addressBase", Database.Operation.Operator.Less, new Expression.MetaExpression(maxAddr.ToString(), false)));
             }
 
-            lr.sourceTable = null;
-            lr.sourceColumn = null;
-            lr.row = -1;
+            lr.SourceTable = null;
+            lr.SourceColumn = null;
+            lr.SourceRow = -1;
             
             OpenLinkRequest(lr, true);
 
@@ -291,21 +291,21 @@ namespace Unity.MemoryProfiler.Editor.UI
             (history as History).Restore(this);
         }
 
-        void OpenLinkRequest(Database.View.LinkRequest link, bool focus)
+        void OpenLinkRequest(Database.LinkRequestTable link, bool focus)
         {
             //TODO this code is the same as the one inSpreadsheetPane, should be put together
             using (ScopeDebugContext.String("OpenLinkRequest"))
             {     
                 UIElementsHelper.SetVisibility(VisualElements[2], m_ActiveMode.snapshot.nativeAllocationSites.Count > 0 && m_CurrentTableView == TableDisplayMode.Allocations);
 
-                var tableLink = new Database.TableLink(link.metaLink.linkViewName, link.param);
-                var table = m_ActiveMode.SchemaToDisplay.GetTableByLink(tableLink);
+                var tableRef = new Database.TableReference(link.LinkToOpen.TableName, link.Parameters);
+                var table = m_ActiveMode.SchemaToDisplay.GetTableByReference(tableRef);
                 if (table == null)
                 {
-                    UnityEngine.Debug.LogError("No table named '" + link.metaLink.linkViewName + "' found.");
+                    UnityEngine.Debug.LogError("No table named '" + link.LinkToOpen.TableName + "' found.");
                     return;
                 }
-                if (link.metaLink.linkWhere != null && link.metaLink.linkWhere.Count > 0)
+                if (link.LinkToOpen.RowWhere != null && link.LinkToOpen.RowWhere.Count > 0)
                 {
                     Database.Table filteredTable = table;
                     if (table.GetMetaData().defaultFilter != null)
@@ -313,47 +313,52 @@ namespace Unity.MemoryProfiler.Editor.UI
                         filteredTable = table.GetMetaData().defaultFilter.CreateFilter(table);
                     }
                     Database.Operation.ExpressionParsingContext expressionParsingContext = null;
-                    if (link.sourceView != null)
+                    if (link.SourceView != null)
                     {
-                        expressionParsingContext = link.sourceView.expressionParsingContext;
+                        expressionParsingContext = link.SourceView.expressionParsingContext;
                     }
-                    var whereUnion = new Database.View.WhereUnion(link.metaLink.linkWhere, null, null, null, null, m_ActiveMode.SchemaToDisplay, filteredTable, expressionParsingContext);
-                    var indices = whereUnion.GetMatchingIndices(link.row);
+                    var whereUnion = new Database.View.WhereUnion(link.LinkToOpen.RowWhere, null, null, null, null, m_ActiveMode.SchemaToDisplay, filteredTable, expressionParsingContext);
+                    var indices = whereUnion.GetMatchingIndices(link.SourceRow);
                     var newTab = new Database.Operation.IndexedTable(table, new ArrayRange(indices));
-                    OpenTable(tableLink, newTab, focus);
+                    OpenTable(tableRef, newTab, focus);
                 }
                 else
                 {
-                    OpenTable(tableLink, table, new Database.CellPosition(0, 0), focus);
+                    OpenTable(tableRef, table, new Database.CellPosition(0, 0), focus);
                 }
             }
         }
 
-        void OnSpreadsheetClick(UI.DatabaseSpreadsheet sheet, Database.View.LinkRequest link, Database.CellPosition pos)
+        void OnSpreadsheetClick(UI.DatabaseSpreadsheet sheet, Database.LinkRequest link, Database.CellPosition pos)
         {
             //add current event in history
 
             m_UIState.AddHistoryEvent(GetCurrentHistoryEvent());
-
-            if (link.metaLink.linkViewName == ObjectTable.kTableName)
+            var tableLinkRequest = link as Database.LinkRequestTable;
+            if(tableLinkRequest != null)
             {
-                //open object link in the same pane
-                OpenLinkRequest(link, true);
+                if (tableLinkRequest.LinkToOpen.TableName == ObjectTable.TableName)
+                {
+                    //open object link in the same pane
+                    OpenLinkRequest(tableLinkRequest, true);
+                    return;
+                }
             }
             else
-            {
-                //open the link in the spreadsheet pane
-                m_EventListener.OnOpenTable(link, m_ActiveMode);
-            }
+                DebugUtility.LogWarning("Cannot open unknown link '" + link.ToString() + "'");
+
+            //open the link in the spreadsheet pane
+            m_EventListener.OnOpenLink(link, m_ActiveMode);
+            
         }        
-        void OpenTable(Database.TableLink link, Database.Table table, bool focus)
+        void OpenTable(Database.TableReference tableRef, Database.Table table, bool focus)
         {
             m_Spreadsheet = new UI.DatabaseSpreadsheet(m_UIState.DataRenderer, table, this);
             m_Spreadsheet.onClickLink += OnSpreadsheetClick;
             m_EventListener.OnRepaint();
         }
 
-        void OpenTable(Database.TableLink link, Database.Table table, Database.CellPosition pos, bool focus)
+        void OpenTable(Database.TableReference tableRef, Database.Table table, Database.CellPosition pos, bool focus)
         {
             m_Spreadsheet = new UI.DatabaseSpreadsheet(m_UIState.DataRenderer, table, this);
             m_Spreadsheet.onClickLink += OnSpreadsheetClick;
@@ -371,6 +376,8 @@ namespace Unity.MemoryProfiler.Editor.UI
 
         void OnGUISpreadsheet(Rect r)
         {
+            GUILayout.BeginArea(r);
+
             int currentTableView = (int)CurrentTableView;
             
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
@@ -425,26 +432,29 @@ namespace Unity.MemoryProfiler.Editor.UI
                 EditorGUILayout.EndVertical();
                 EditorGUILayout.EndHorizontal();
             }
+
+            GUILayout.EndArea();
         }
 
         void OnGUICallstack(Rect r)
         {
+            GUILayout.BeginArea(r);
             if (m_CurrentTableView == TableDisplayMode.Allocations)
             {
                 long row = m_Spreadsheet.SelectedRow;
 
-                if (row < 0)
-                    return;
+                if (row >= 0)
+                {
+                    var col = m_Spreadsheet.DisplayTable.GetColumnByName("allocationSiteId");
 
-                var col = m_Spreadsheet.DisplayTable.GetColumnByName("allocationSiteId");
-
-                if (col == null)
-                    return;
-
-                long id = Convert.ToInt64(col.GetRowValueString(row));
-
-                GUI.Label (r, m_ActiveMode.snapshot.nativeAllocationSites.GetReadableCallstackForId(m_ActiveMode.snapshot.nativeCallstackSymbols,id));
+                    if (col != null && row < col.GetRowCount())
+                    {             
+                        long id = Convert.ToInt64(col.GetRowValueString(row));
+                        GUI.Label (r, m_ActiveMode.snapshot.nativeAllocationSites.GetReadableCallstackForId(m_ActiveMode.snapshot.nativeCallstackSymbols,id));
+                    }
+                }
             }
+            GUILayout.EndArea();
         }
         void OnGUIToolbarExtension()
         {

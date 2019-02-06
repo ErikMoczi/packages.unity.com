@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.IO;
-using UnityEditor.MemoryProfiler;
+using System.Runtime.Serialization;
+using Unity.MemoryProfiler.Editor.Legacy.LegacyFormats;
 
 namespace Unity.MemoryProfiler.Editor.Legacy
 {
@@ -23,9 +25,9 @@ namespace Unity.MemoryProfiler.Editor.Legacy
             }
         }
 
-        public PackedMemorySnapshot ReadFromFile(string path)
+        public LegacyPackedMemorySnapshot ReadFromFile(string path)
         {
-            PackedMemorySnapshot snapshot = null;
+            LegacyPackedMemorySnapshot snapshot = null;
             string json = null;
 
             string extension = Path.GetExtension(path);
@@ -35,18 +37,54 @@ namespace Unity.MemoryProfiler.Editor.Legacy
                     var binaryFormatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
                     using (Stream stream = File.Open(path, FileMode.Open))
                     {
-                        snapshot = binaryFormatter.Deserialize(stream) as PackedMemorySnapshot;
+                        using (MemoryStream memStr = new MemoryStream())
+                        {
+                            byte[] bytes = new byte[stream.Length];
+                            stream.Read(bytes, 0, (int)stream.Length);
+                            memStr.Write(bytes, 0, (int)stream.Length);
+                            memStr.Seek(0, SeekOrigin.Begin);
+                            SurrogateSelector ss = new SurrogateSelector();
+
+                            ss.AddSurrogate(typeof(UnityEditor.MemoryProfiler.PackedMemorySnapshot),
+                            new StreamingContext(StreamingContextStates.All),
+                            new LegacyFormats.Serialization.LegacyPackedMemorySnapshotSerializationSurrogate(true));
+                            binaryFormatter.SurrogateSelector = ss;
+                            object obj = null;
+                            try
+                            {
+                                obj = binaryFormatter.Deserialize(memStr);
+                            }
+                            catch (SerializationException)
+                            {
+                                memStr.Seek(0, SeekOrigin.Begin);
+                                ss = new SurrogateSelector();
+
+                                ss.AddSurrogate(typeof(UnityEditor.MemoryProfiler.PackedMemorySnapshot),
+                                new StreamingContext(StreamingContextStates.All),
+                                new LegacyFormats.Serialization.LegacyPackedMemorySnapshotSerializationSurrogate(false));
+
+                                binaryFormatter.SurrogateSelector = ss;
+                                obj = binaryFormatter.Deserialize(memStr);
+                            }
+                            snapshot = obj as LegacyPackedMemorySnapshot;
+                        }
                     }
                     break;
                 case k_Memsnap2:
                     json = File.ReadAllText(path);
-                    snapshot = UnityEngine.JsonUtility.FromJson<PackedMemorySnapshot>(json);
+                    //fix binary compatibility for GCHandles
+                    json = JsonUtil.JsonFindAndReplace(json, JsonFormatTokenChanges.kGcHandles.OldField, JsonFormatTokenChanges.kGcHandles.NewField);
+
+                    snapshot = UnityEngine.JsonUtility.FromJson<LegacyPackedMemorySnapshot>(json);
                     break;
                 case k_Memsnap3:
                     json = File.ReadAllText(path);
+                    //fix binary compatibility for GCHandles
+                    json = JsonUtil.JsonFindAndReplace(json, JsonFormatTokenChanges.kGcHandles.OldField, JsonFormatTokenChanges.kGcHandles.NewField);
+
                     JsonNetConverter converter = new JsonNetConverter();
                     json = converter.Convert(json);
-                    snapshot = UnityEngine.JsonUtility.FromJson<PackedMemorySnapshot>(json);
+                    snapshot = UnityEngine.JsonUtility.FromJson<LegacyPackedMemorySnapshot>(json);
                     break;
                 default:
                     throw new System.Exception("Not a supported file format, provided extension was: "+ extension);

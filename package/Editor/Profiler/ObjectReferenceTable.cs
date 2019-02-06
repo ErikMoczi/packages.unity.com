@@ -85,7 +85,7 @@ namespace Unity.MemoryProfiler.Editor
 
         public override string GetName()
         {
-            var str = renderer.Render(m_Object); //string.Format("0x{0:X16}", ptr);
+            var str = Renderer.Render(m_Object); //string.Format("0x{0:X16}", ptr);
             return kObjectReferenceTableName + "(" + str + ")";
         }
 
@@ -104,12 +104,12 @@ namespace Unity.MemoryProfiler.Editor
                 if (m_References[row].m_Parent != null)
                 {
                     var typeIndex = m_References[row].m_Parent.obj.managedTypeIndex;
-                    var typeName = snapshot.typeDescriptions.typeDescriptionName[typeIndex];
+                    var typeName = Snapshot.typeDescriptions.typeDescriptionName[typeIndex];
                     var iField = m_References[row].m_Parent.iField;
                     var arrayIndex = m_References[row].m_Parent.arrayIndex;
                     if (iField >= 0)
                     {
-                        var fieldName = snapshot.fieldDescriptions.fieldDescriptionName[iField];
+                        var fieldName = Snapshot.fieldDescriptions.fieldDescriptionName[iField];
                         return typeName + "." + fieldName;
                     }
                     else if (arrayIndex >= 0)

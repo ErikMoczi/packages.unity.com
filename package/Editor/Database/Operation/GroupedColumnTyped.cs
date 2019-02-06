@@ -55,7 +55,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
             return m_GroupTable.m_Groups.Length;
         }
 
-        public override Database.View.LinkRequest GetRowLink(long row)
+        public override LinkRequest GetRowLink(long row)
         {
             var e = m_GroupTable.m_RowData[row];
             if (e.isGroupHead())

@@ -114,11 +114,11 @@ namespace Unity.MemoryProfiler.Editor.UI
                 switch (m_CurrentCodeType)
                 {
                     case CodeType.Native:
-                        return ObjectAllNativeTable.kTableName;
+                        return ObjectAllNativeTable.TableName;
                     case CodeType.Managed:
-                        return ObjectAllManagedTable.kTableName;
+                        return ObjectAllManagedTable.TableName;
                     default:
-                        return ObjectAllTable.kTableName;
+                        return ObjectAllTable.TableName;
                 }
             }
         }
@@ -179,9 +179,9 @@ namespace Unity.MemoryProfiler.Editor.UI
             m_TreeMap.ClearMetric();
             if(m_CurrentCodeType == CodeType.Unknown || m_CurrentCodeType == CodeType.Managed)
             {
-                foreach (var managedObject in m_UIState.snapshotMode.snapshot.m_CrawledData.managedObjects)
+                foreach (var managedObject in m_UIState.snapshotMode.snapshot.CrawledData.ManagedObjects)
                 {
-                    if (managedObject.size > 0)
+                    if (managedObject.Size > 0)
                     {
                         var o = new Treemap.ManagedObjectMetric(m_UIState.snapshotMode.snapshot, managedObject);
                         if (o.IsSame(itemCopyToSelect))
@@ -217,12 +217,12 @@ namespace Unity.MemoryProfiler.Editor.UI
                 {
                     using (new Service<IDebugContextService>.ScopeService(new DebugContextService()))
                     {
-                        var lr = new Database.View.LinkRequest();
-                        lr.metaLink = new Database.View.MetaLink();
-                        lr.metaLink.linkViewName = ObjectAllTable.kTableName;
-                        lr.sourceTable = null;
-                        lr.sourceColumn = null;
-                        lr.row = -1;
+                        var lr = new Database.LinkRequestTable();
+                        lr.LinkToOpen = new Database.TableLink();
+                        lr.LinkToOpen.TableName = ObjectAllTable.TableName;
+                        lr.SourceTable = null;
+                        lr.SourceColumn = null;
+                        lr.SourceRow = -1;
                         OpenLinkRequest(lr, false, null, false);
                     }
                 }
@@ -261,12 +261,12 @@ namespace Unity.MemoryProfiler.Editor.UI
 
         void OpenGroupData(Treemap.Group group)
         {
-            var lr = new Database.View.LinkRequest();
-            lr.metaLink = new Database.View.MetaLink();
-            lr.metaLink.linkViewName = ObjectAllTable.kTableName;
-            lr.sourceTable = null;
-            lr.sourceColumn = null;
-            lr.row = -1;
+            var lr = new Database.LinkRequestTable();
+            lr.LinkToOpen = new Database.TableLink();
+            lr.LinkToOpen.TableName = ObjectAllTable.TableName;
+            lr.SourceTable = null;
+            lr.SourceColumn = null;
+            lr.SourceRow = -1;
             OpenLinkRequest(lr, false, group._name, false);
         }
 
@@ -291,15 +291,14 @@ namespace Unity.MemoryProfiler.Editor.UI
                     }
                 }
 
-                var lr = new Database.View.LinkRequest();
-                lr.metaLink = new Database.View.MetaLink();
-                lr.metaLink.linkViewName = TableName;
-                lr.sourceTable = null;
-                lr.sourceColumn = null;
-                lr.row = -1;
-                lr.param = new Database.ParameterSet();
-                lr.param.param.Add(ObjectTable.kObjParamName, new Database.Operation.ExpConst<ulong>(m.m_Object.ptrObject));
-                lr.param.param.Add(ObjectTable.kTypeParamName, new Database.Operation.ExpConst<int>(m.m_Object.iTypeDescription));
+                var lr = new Database.LinkRequestTable();
+                lr.LinkToOpen = new Database.TableLink();
+                lr.LinkToOpen.TableName = TableName;
+                lr.SourceTable = null;
+                lr.SourceColumn = null;
+                lr.SourceRow = -1;
+                lr.Parameters.AddValue(ObjectTable.ObjParamName, m.m_Object.PtrObject);
+                lr.Parameters.AddValue(ObjectTable.TypeParamName, m.m_Object.ITypeDescription);
                 OpenLinkRequest(lr, focus, metric.GetGroupName());
             }
             else if (metric is Treemap.NativeObjectMetric)
@@ -318,71 +317,71 @@ namespace Unity.MemoryProfiler.Editor.UI
                         return;
                     }
                 }
-                var lr = new Database.View.LinkRequest();
-                lr.metaLink = new Database.View.MetaLink();
-                lr.metaLink.linkViewName = TableName;
+                var lr = new Database.LinkRequestTable();
+                lr.LinkToOpen = new Database.TableLink();
+                lr.LinkToOpen.TableName = TableName;
                 var instanceId = m_UIState.snapshotMode.snapshot.nativeObjects.instanceId[m.m_ObjectIndex];
                 var b = new Database.View.Where.Builder("NativeInstanceId", Database.Operation.Operator.Equal, new Database.Operation.Expression.MetaExpression(instanceId.ToString(), true));
-                lr.metaLink.linkWhere = new System.Collections.Generic.List<Database.View.Where.Builder>();
-                lr.metaLink.linkWhere.Add(b);
-                lr.sourceTable = null;
-                lr.sourceColumn = null;
-                lr.row = -1;
+                lr.LinkToOpen.RowWhere = new System.Collections.Generic.List<Database.View.Where.Builder>();
+                lr.LinkToOpen.RowWhere.Add(b);
+                lr.SourceTable = null;
+                lr.SourceColumn = null;
+                lr.SourceRow = -1;
                 OpenLinkRequest(lr, focus, metric.GetGroupName());
             }
         }
 
-        void OpenLinkRequest(Database.View.LinkRequest link, bool focus, string tableTypeFilter = null, bool select = true)
+        void OpenLinkRequest(Database.LinkRequestTable link, bool focus, string tableTypeFilter = null, bool select = true)
         {
-            List<Database.View.Where.Builder> tableFilterWhere = null;
+            List<Where.Builder> tableFilterWhere = null;
             m_CurrentTableTypeFilter = tableTypeFilter;
             if (tableTypeFilter != null)
             {
-                tableFilterWhere = new List<Database.View.Where.Builder>();
-                tableFilterWhere.Add(new Database.View.Where.Builder("Type", Database.Operation.Operator.Equal, new Database.Operation.Expression.MetaExpression(tableTypeFilter, true)));
+                tableFilterWhere = new List<Where.Builder>();
+                tableFilterWhere.Add(new Where.Builder("Type", Database.Operation.Operator.Equal, new Database.Operation.Expression.MetaExpression(tableTypeFilter, true)));
             }
             //TODO this code is the same as the one inSpreadsheetPane, should be put together
             using (ScopeDebugContext.String("OpenLinkRequest"))
             {
-                var tableLink = new Database.TableLink(link.metaLink.linkViewName, link.param);
-                var table = m_UIState.snapshotMode.SchemaToDisplay.GetTableByLink(tableLink);
+                var tableRef = new Database.TableReference(link.LinkToOpen.TableName, link.Parameters);
+                var table = m_UIState.snapshotMode.SchemaToDisplay.GetTableByReference(tableRef);
                 if (table == null)
                 {
-                    UnityEngine.Debug.LogError("No table named '" + link.metaLink.linkViewName + "' found.");
+                    UnityEngine.Debug.LogError("No table named '" + link.LinkToOpen.TableName + "' found.");
                     return;
                 }
-                if (link.metaLink.linkWhere != null && link.metaLink.linkWhere.Count > 0)
+                if (link.LinkToOpen.RowWhere != null && link.LinkToOpen.RowWhere.Count > 0)
                 {
                     if (table.GetMetaData().defaultFilter != null)
                     {
                         table = table.GetMetaData().defaultFilter.CreateFilter(table);
                     }
                     Database.Operation.ExpressionParsingContext expressionParsingContext = null;
-                    if (link.sourceView != null)
+                    if (link.SourceView != null)
                     {
-                        expressionParsingContext = link.sourceView.expressionParsingContext;
+                        expressionParsingContext = link.SourceView.expressionParsingContext;
                     }
                     if (tableFilterWhere != null && tableFilterWhere.Count > 0)
                     {
-                        table = FilterTable(table, link.row, tableFilterWhere);
+                        table = FilterTable(table, link.SourceRow, tableFilterWhere);
                     }
-                    var whereUnion = new Database.View.WhereUnion(link.metaLink.linkWhere, null, null, null, null, m_UIState.snapshotMode.SchemaToDisplay, table, expressionParsingContext);
-                    long rowToSelect = whereUnion.GetIndexFirstMatch(link.row);
+                    var whereUnion = new WhereUnion(link.LinkToOpen.RowWhere, null, null, null, null, m_UIState.snapshotMode.SchemaToDisplay, table, expressionParsingContext);
+                    long rowToSelect = whereUnion.GetIndexFirstMatch(link.SourceRow);
                     if (rowToSelect < 0)
                     {
-                        UnityEngine.Debug.LogError("Could not find entry in target table '" + link.metaLink.linkViewName + "'");
+                        UnityEngine.Debug.LogError("Could not find entry in target table '" + link.LinkToOpen.TableName + "'");
                         return;
                     }
-                    OpenTable(tableLink, table, new Database.CellPosition(rowToSelect, 0), focus, select);
+                    OpenTable(tableRef, table, new Database.CellPosition(rowToSelect, 0), focus, select);
                 }
                 else if (tableFilterWhere != null && tableFilterWhere.Count > 0)
                 {
-                    table = FilterTable(table, link.row, tableFilterWhere);
-                    OpenTable(tableLink, table, new Database.CellPosition(0, 0), focus, select);
+                    table = FilterTable(table, link.SourceRow, tableFilterWhere);
+                    OpenTable(tableRef, table, new Database.CellPosition(0, 0), focus, select);
                 }
                 else
                 {
-                    OpenTable(tableLink, table, new Database.CellPosition(0, 0), focus, select);
+                    OpenTable(tableRef, table, new Database.CellPosition(0, 0), focus, select);
                 }
             }
         }
@@ -394,22 +393,27 @@ namespace Unity.MemoryProfiler.Editor.UI
             return new Database.Operation.IndexedTable(table, new ArrayRange(indices));
         }
 
-        void OnSpreadsheetClick(UI.DatabaseSpreadsheet sheet, Database.View.LinkRequest link, Database.CellPosition pos)
+        void OnSpreadsheetClick(UI.DatabaseSpreadsheet sheet, Database.LinkRequest link, Database.CellPosition pos)
         {
             //add current event in history
 
             m_UIState.AddHistoryEvent(GetCurrentHistoryEvent());
-
-            if (link.metaLink.linkViewName == ObjectTable.kTableName)
+            var tableLinkRequest = link as Database.LinkRequestTable;
+            if(tableLinkRequest != null)
             {
-                //open object link in the same pane
-                OpenLinkRequest(link, true);
+                if (tableLinkRequest.LinkToOpen.TableName == ObjectTable.TableName)
+                {
+                    //open object link in the same pane
+                    OpenLinkRequest(tableLinkRequest, true);
+                    return;
+                }
             }
             else
-            {
-                //open the link in the spreadsheet pane
-                m_EventListener.OnOpenTable(link);
-            }
+                DebugUtility.LogWarning("Cannot open unknown link '" + link.ToString() + "'");
+
+            //open the link in the spreadsheet pane
+            m_EventListener.OnOpenLink(link);
+            
         }
 
         private void SelectObjectByUID(int objectUID, bool focus)
@@ -445,7 +449,7 @@ namespace Unity.MemoryProfiler.Editor.UI
             return -1;
         }
 
-        public void OpenTable(Database.TableLink link, Database.Table table, bool focus, bool select)
+        public void OpenTable(Database.TableReference tableRef, Database.Table table, bool focus, bool select)
         {
             if (select)
             {
@@ -462,7 +466,7 @@ namespace Unity.MemoryProfiler.Editor.UI
             m_EventListener.OnRepaint();
         }
 
-        public void OpenTable(Database.TableLink link, Database.Table table, Database.CellPosition pos, bool focus, bool select)
+        public void OpenTable(Database.TableReference tableRef, Database.Table table, Database.CellPosition pos, bool focus, bool select)
         {
             if (select)
             {

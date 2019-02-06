@@ -69,7 +69,7 @@ namespace Unity.MemoryProfiler.Editor.Database
             return m_Table.GetRowCount();
         }
 
-        public override Database.View.LinkRequest GetRowLink(long row)
+        public override LinkRequest GetRowLink(long row)
         {
             var tableEntry = m_Table.m_RowData[row];
             if (tableEntry.isGroupHead())

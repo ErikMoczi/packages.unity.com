@@ -100,7 +100,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
         {
             void Merge(Column destColumn, long destRow, Column sourceColumn, ArrayRange sourceIndices);
             IComparable Merge(Column sourceColumn, ArrayRange sourceIndices);
-            Database.View.LinkRequest GetLink(Column sourceColumn, ArrayRange sourceIndices);
+            LinkRequest GetLink(Column sourceColumn, ArrayRange sourceIndices);
 
             // Only display a value on merged rows. normal entries will display an empty string
             bool IsDisplayMergedRowsOnly();
@@ -362,12 +362,12 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
                 return GroupTyped(sourceColumn as ColumnTyped<DataT>, sourceIndices);
             }
 
-            Database.View.LinkRequest IMergeAlgorithm.GetLink(Column sourceColumn, ArrayRange sourceIndices)
+            LinkRequest IMergeAlgorithm.GetLink(Column sourceColumn, ArrayRange sourceIndices)
             {
                 return this.GetLink(sourceColumn, sourceIndices);
             }
 
-            protected virtual Database.View.LinkRequest GetLink(Column sourceColumn, ArrayRange sourceIndices)
+            protected virtual LinkRequest GetLink(Column sourceColumn, ArrayRange sourceIndices)
             {
                 return null;
             }
@@ -404,7 +404,7 @@ namespace Unity.MemoryProfiler.Editor.Database.Operation
                 return sourceColumn.GetRowValue(sourceIndices[0]);
             }
 
-            protected override Database.View.LinkRequest GetLink(Column sourceColumn, ArrayRange sourceIndices)
+            protected override LinkRequest GetLink(Column sourceColumn, ArrayRange sourceIndices)
             {
                 return sourceColumn.GetRowLink(sourceIndices[0]);
             }

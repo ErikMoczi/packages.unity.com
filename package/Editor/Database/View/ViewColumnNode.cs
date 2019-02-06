@@ -18,7 +18,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
         {
             void SetColumn(ViewColumnNode vc);
             Database.Column GetColumn();
-            void SetEntry(long row, Operation.Expression exp, MetaLink Link);
+            void SetEntry(long row, Operation.Expression exp, TableLink Link);
         }
     }
 
@@ -40,7 +40,7 @@ namespace Unity.MemoryProfiler.Editor.Database.View
 
 #endif
         public Operation.TypedExpression<DataT>[] entries;
-        public MetaLink[] linkEntries;
+        public TableLink[] linkEntries;
         private ViewColumnNode m_ViewColumn;
 
         Operation.ValueStringArrayCache<DataT> m_Cache;
@@ -63,14 +63,14 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             m_ViewColumn = vc;
             entries = new Operation.TypedExpression<DataT>[vc.viewTable.GetNodeChildCount()];
             m_Cache.InitDirect(entries.Length);
-            linkEntries = new MetaLink[vc.viewTable.GetNodeChildCount()];
+            linkEntries = new TableLink[vc.viewTable.GetNodeChildCount()];
         }
         Database.Column ViewColumnNode.IViewColumnNode.GetColumn()
         {
             return this;
         }
 
-        void ViewColumnNode.IViewColumnNode.SetEntry(long row, Operation.Expression exp, MetaLink link)
+        void ViewColumnNode.IViewColumnNode.SetEntry(long row, Operation.Expression exp, TableLink link)
         {
             m_Cache.SetEntryDirty((int)row);
             entries[(int)row] = exp as Operation.TypedExpression<DataT>;
@@ -82,9 +82,9 @@ namespace Unity.MemoryProfiler.Editor.Database.View
             return entries.Length;
         }
 
-        public override Database.View.LinkRequest GetRowLink(long row)
+        public override LinkRequest GetRowLink(long row)
         {
-            return Database.View.LinkRequest.MakeLinkRequest(linkEntries[(int)row], m_ViewColumn.viewTable, this, row, m_ViewColumn.ParsingContext);
+            return LinkRequestTable.MakeLinkRequest(linkEntries[(int)row], m_ViewColumn.viewTable, this, row, m_ViewColumn.ParsingContext);
         }
 
         public override string GetRowValueString(long row)

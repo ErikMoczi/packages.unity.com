@@ -23,6 +23,8 @@ using UnityEditor.Compilation;
 using ConnectionUtility = UnityEditor.Experimental.Networking.PlayerConnection.EditorGUIUtility;
 using ConnectionGUI = UnityEditor.Experimental.Networking.PlayerConnection.EditorGUI;
 using UnityEngine.Experimental.Networking.PlayerConnection;
+using Unity.MemoryProfiler.Editor.Legacy.LegacyFormats;
+using Unity.MemoryProfiler.Editor.EnumerationUtilities;
 
 [assembly: InternalsVisibleTo("Unity.MemoryProfiler.Editor.Tests")]
 namespace Unity.MemoryProfiler.Editor
@@ -74,7 +76,7 @@ namespace Unity.MemoryProfiler.Editor
         const string k_SnapshotFileNamePart = "Snapshot-";
         const string k_SnapshotTempFileName = "temp.tmpsnap";
         internal const string k_SnapshotFileExtension = ".snap";
-        internal const string k_ConvertedSnapshotFileName = "ConvertedSnaphot.snap";
+        internal const string k_ConvertedSnapshotTempFileName = "ConvertedSnaphot.tmpsnap";
         const string k_ViewFileExtension = "xml";
         const string k_RawCategoryName = "Raw";
         const string k_DiffRawCategoryName = "Diff Raw";
@@ -121,6 +123,7 @@ namespace Unity.MemoryProfiler.Editor
 
         Button m_BackwardsInHistoryButton;
         Button m_ForwardsInHistoryButton;
+        ToolbarButton m_InportButton;
         VisualElement m_ViewSelectorMenu;
 
         VisualElement m_AttachToPlayerDropdownHolder;
@@ -227,7 +230,9 @@ namespace Unity.MemoryProfiler.Editor
                 return; // in case the construction of the Window went wrong, exit here
             m_CaptureButton = root.Q<ToolbarButton>("captureButton");
             m_CaptureButton.clickable.clicked += TakeCapture;
-            root.Q<ToolbarButton>("importButton").clickable.clicked += ImportCapture;
+
+            m_InportButton = root.Q<ToolbarButton>("importButton");
+            m_InportButton.clickable.clicked += ImportCapture;
 
             EditorApplication.playModeStateChanged += PlaymodeStateChanged;
             PlaymodeStateChanged(Application.isPlaying ? PlayModeStateChange.EnteredPlayMode : PlayModeStateChange.EnteredEditMode);
@@ -597,21 +602,25 @@ namespace Unity.MemoryProfiler.Editor
             Repaint();
         }
 
-        void UI.IViewPaneEventListener.OnOpenTable(Database.View.LinkRequest link)
+        void UI.IViewPaneEventListener.OnOpenLink(Database.LinkRequest link)
         {
-            OpenTable(link);
+            OpenLink(link);
         }
 
-        void UI.IViewPaneEventListener.OnOpenTable(Database.View.LinkRequest link, UIState.SnapshotMode mode)
+        void UI.IViewPaneEventListener.OnOpenLink(Database.LinkRequest link, UIState.SnapshotMode mode)
         {
-            var tableLink = new Database.TableLink(link.metaLink.linkViewName, link.param);
-            var table = mode.GetSchema().GetTableByLink(tableLink);
-
-            var pane = new UI.SpreadsheetPane(UIState, this);
-            if (pane.OpenLinkRequest(link, tableLink, table))
+            var tableLinkRequest = link as Database.LinkRequestTable;
+            if (tableLinkRequest != null)
             {
-                UIState.TransitModeToOwningTable(table);
-                TransitPane(pane);
+                var tableRef = new Database.TableReference(tableLinkRequest.LinkToOpen.TableName, link.Parameters);
+                var table = mode.GetSchema().GetTableByReference(tableRef);
+
+                var pane = new UI.SpreadsheetPane(UIState, this);
+                if (pane.OpenLinkRequest(tableLinkRequest, tableRef, table))
+                {
+                    UIState.TransitModeToOwningTable(table);
+                    TransitPane(pane);
+                }
             }
         }
 
@@ -682,32 +691,53 @@ namespace Unity.MemoryProfiler.Editor
             }
         }
 
-        void OpenTable(Database.View.LinkRequest link)
+        void OpenLink(Database.LinkRequest link)
         {
-            var tableLink = new Database.TableLink(link.metaLink.linkViewName, link.param);
-            var table = UIState.CurrentMode.GetSchema().GetTableByLink(tableLink);
-
-            var pane = new UI.SpreadsheetPane(UIState, this);
-            if (pane.OpenLinkRequest(link, tableLink, table))
+            var tableLinkRequest = link as Database.LinkRequestTable;
+            if (tableLinkRequest != null)
             {
-                UIState.TransitModeToOwningTable(table);
-                TransitPane(pane);
+                try
+                {
+                    ProgressBarDisplay.ShowBar("Resolving Link...");
+                    var tableRef = new Database.TableReference(tableLinkRequest.LinkToOpen.TableName, link.Parameters);
+                    var table = UIState.CurrentMode.GetSchema().GetTableByReference(tableRef);
+
+                    ProgressBarDisplay.UpdateProgress(0.0f, "Updating Table...");
+                    if (table.Update())
+                    {
+                        UIState.CurrentMode.UpdateTableSelectionNames();
+                    }
+
+                    ProgressBarDisplay.UpdateProgress(0.75f, "Opening Table...");
+                    var pane = new UI.SpreadsheetPane(UIState, this);
+                    if (pane.OpenLinkRequest(tableLinkRequest, tableRef, table))
+                    {
+                        UIState.TransitModeToOwningTable(table);
+                        TransitPane(pane);
+                    }
+                }
+                finally
+                {
+                    ProgressBarDisplay.ClearBar();
+                }
             }
+            else
+                DebugUtility.LogWarning("Cannot open unknown link '" + link.ToString() + "'");
         }
 
-        void OpenTable(Database.TableLink link, Database.Table table)
+        void OpenTable(Database.TableReference tableRef, Database.Table table)
         {
             UIState.TransitModeToOwningTable(table);
             var pane = new UI.SpreadsheetPane(UIState, this);
-            pane.OpenTable(link, table);
+            pane.OpenTable(tableRef, table);
             TransitPane(pane);
         }
 
-        void OpenTable(Database.TableLink link, Database.Table table, Database.CellPosition pos)
+        void OpenTable(Database.TableReference tableRef, Database.Table table, Database.CellPosition pos)
         {
             UIState.TransitModeToOwningTable(table);
             var pane = new UI.SpreadsheetPane(UIState, this);
-            pane.OpenTable(link, table, pos);
+            pane.OpenTable(tableRef, table, pos);
             TransitPane(pane);
         }
 
@@ -864,6 +894,57 @@ namespace Unity.MemoryProfiler.Editor
             this.StartCoroutine(DelayedSnapshotRoutine());
         }
 
+        IEnumerator ImportCaptureRoutine(string path)
+        {
+            m_InportButton.SetEnabled(false);
+
+            MemoryProfilerAnalytics.StartEvent<MemoryProfilerAnalytics.ImportedSnapshotEvent>();
+            string targetPath = null;
+            ProgressBarDisplay.ShowBar("Importing snapshot.");
+            yield return null;
+            bool legacy = m_LegacyReader.IsLegacyFileFormat(path);
+            if (legacy)
+            {
+                float initalProgress = 0.15f;
+                ProgressBarDisplay.UpdateProgress(initalProgress, "Reading legacy format file.");
+                var oldSnapshot = m_LegacyReader.ReadFromFile(path);
+                targetPath = Path.Combine(Application.temporaryCachePath, k_ConvertedSnapshotTempFileName);
+
+                ProgressBarDisplay.UpdateProgress(0.25f, "Converting to current snapshot format.");
+
+                var conversion = LegacyPackedMemorySnapshotConverter.Convert(oldSnapshot, targetPath);
+                conversion.MoveNext(); //start execution
+
+                if (conversion.Current == null)
+                {
+                    ProgressBarDisplay.ClearBar();
+                    MemoryProfilerAnalytics.CancelEvent<MemoryProfilerAnalytics.ImportedSnapshotEvent>();
+                    m_InportButton.SetEnabled(true);
+                    yield break;
+                }
+
+                var status = conversion.Current as EnumerationStatus;
+                float progressPerStep = (1.0f - initalProgress) / status.StepCount;
+                while (conversion.MoveNext())
+                {
+                    ProgressBarDisplay.UpdateProgress(initalProgress + status.CurrentStep * progressPerStep, status.StepStatus);
+                }
+            }
+            else
+            {
+                targetPath = path;
+            }
+
+            var snapshot = m_MemorySnapshotsCollection.AddSnapshotToCollection(targetPath, legacy ? ImportMode.Move : ImportMode.Copy);
+            AddSnapshotToUI(snapshot);
+
+            ProgressBarDisplay.ClearBar();
+            MemoryProfilerAnalytics.EndEvent(new MemoryProfilerAnalytics.ImportedSnapshotEvent());
+
+            m_InportButton.SetEnabled(true);
+            m_InportButton.MarkDirtyRepaint();
+        }
+
         void ImportCapture()
         {
             string path = EditorUtility.OpenFilePanelWithFilters(Content.ImportSnapshotWindowTitle, SessionState.GetString(k_LastImportPathPrefKey, Application.dataPath), Content.MemorySnapshotImportWindowFileExtensions);
@@ -873,29 +954,8 @@ namespace Unity.MemoryProfiler.Editor
             }
 
             SessionState.SetString(k_LastImportPathPrefKey, path);
-            MemoryProfilerAnalytics.StartEvent<MemoryProfilerAnalytics.ImportedSnapshotEvent>();
 
-            string targetPath = null;
-            bool isLegacy = m_LegacyReader.IsLegacyFileFormat(path);
-
-            if (isLegacy)
-            {
-                var oldSnapshot = m_LegacyReader.ReadFromFile(path);
-                targetPath = Path.Combine(Application.temporaryCachePath, k_ConvertedSnapshotFileName);
-                bool res = PackedMemorySnapshot.Convert(oldSnapshot, targetPath);
-                Debug.Assert(res);
-            }
-            else
-            {
-                targetPath = path;
-            }
-
-            var snapshot = m_MemorySnapshotsCollection.AddSnapshotToCollection(targetPath, isLegacy ? ImportMode.Move : ImportMode.Copy);
-
-            AddSnapshotToUI(snapshot);
-            MemoryProfilerAnalytics.EndEvent(new MemoryProfilerAnalytics.ImportedSnapshotEvent());
-
-            GUIUtility.ExitGUI();
+            this.StartCoroutine(ImportCaptureRoutine(path));
         }
 
 
@@ -1092,7 +1152,7 @@ namespace Unity.MemoryProfiler.Editor
                                     AddCurrentHistoryEvent();
 
                                     ProgressBarDisplay.UpdateProgress(0.75f, "Opening Table...");
-                                    OpenTable(new Database.TableLink(tab.GetName()), tab);
+                                    OpenTable(new Database.TableReference(tab.GetName()), tab);
 
                                     MemoryProfilerAnalytics.EndEvent(new MemoryProfilerAnalytics.OpenedViewEvent() { viewName = tab.GetDisplayName() });
                                     ProgressBarDisplay.UpdateProgress(1.0f, "");
@@ -1125,7 +1185,6 @@ namespace Unity.MemoryProfiler.Editor
                         EditorPrefs.SetString(k_LastXMLLoadPathPrefKey, viewFile);
                         if (UIState.LoadView(viewFile))
                         {
-                            ShowNothing();
                             success = true;
                         }
                         MemoryProfilerAnalytics.EndEventWithMetadata(new MemoryProfilerAnalytics.LoadViewXMLEvent() { fileName = Path.GetFileName(viewFile), success = success });
@@ -1163,6 +1222,7 @@ namespace Unity.MemoryProfiler.Editor
                 m_UIFriendlyViewOptionNames[tableName] = new GUIContent(name);
 
                 Vector2 potentialViewDropdownSize = Styles.ToolbarPopup.CalcSize(m_UIFriendlyViewOptionNames[tableName]);
+                potentialViewDropdownSize.x = Mathf.Clamp(potentialViewDropdownSize.x, 100, 300);
                 if (m_ViewDropdownSize.x < potentialViewDropdownSize.x)
                 {
                     m_ViewDropdownSize = potentialViewDropdownSize;

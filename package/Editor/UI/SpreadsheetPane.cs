@@ -16,7 +16,7 @@ namespace Unity.MemoryProfiler.Editor.UI
         }
 
         UI.DatabaseSpreadsheet m_Spreadsheet;
-        Database.TableLink m_CurrentTableLink;
+        Database.TableReference m_CurrentTableLink;
 
         public int CurrentTableIndex { get; private set; }
 
@@ -24,7 +24,7 @@ namespace Unity.MemoryProfiler.Editor.UI
         
         internal class History : HistoryEvent
         {
-            readonly Database.TableLink m_Table;
+            readonly Database.TableReference m_Table;
             readonly DatabaseSpreadsheet.State m_SpreadsheetState;
 
             public History(SpreadsheetPane spreadsheetPane, UIState.BaseMode mode, Database.CellLink cell)
@@ -37,10 +37,10 @@ namespace Unity.MemoryProfiler.Editor.UI
             public void Restore(SpreadsheetPane pane)
             {
                 DebugUtility.DebugLog("Open History: " + ToString());
-                var table = pane.m_UIState.CurrentMode.GetSchema().GetTableByLink(m_Table);
+                var table = pane.m_UIState.CurrentMode.GetSchema().GetTableByReference(m_Table);
                 if (table == null)
                 {
-                    DebugUtility.LogError("No table named '" + m_Table.name + "' found.");
+                    DebugUtility.LogError("No table named '" + m_Table.Name + "' found.");
                     return;
                 }
                 pane.m_CurrentTableLink = m_Table;
@@ -52,12 +52,12 @@ namespace Unity.MemoryProfiler.Editor.UI
 
             public override string ToString()
             {
-                string s = Mode.GetSchema().GetDisplayName() + seperator + m_Table.name;
-                if (m_Table.param != null && m_Table.param.param != null)
+                string s = Mode.GetSchema().GetDisplayName() + seperator + m_Table.Name;
+                if (m_Table.Param != null)
                 {
                     s += "(";
                     string sp = "";
-                    foreach (var p in m_Table.param.param)
+                    foreach (var p in m_Table.Param.AllParameters)
                     {
                         if (sp != "")
                         {
@@ -89,37 +89,37 @@ namespace Unity.MemoryProfiler.Editor.UI
             }
         }
 
-        public void OpenLinkRequest(Database.View.LinkRequest link)
+        public void OpenLinkRequest(Database.LinkRequestTable link)
         {
-            var tableLink = new Database.TableLink(link.metaLink.linkViewName, link.param);
-            var table = m_UIState.CurrentMode.GetSchema().GetTableByLink(tableLink);
+            var tableRef = new Database.TableReference(link.LinkToOpen.TableName, link.Parameters);
+            var table = m_UIState.CurrentMode.GetSchema().GetTableByReference(tableRef);
             if (table == null)
             {
-                UnityEngine.Debug.LogError("No table named '" + link.metaLink.linkViewName + "' found.");
+                UnityEngine.Debug.LogError("No table named '" + link.LinkToOpen.TableName + "' found.");
                 return;
             }
-            OpenLinkRequest(link, tableLink, table);
+            OpenLinkRequest(link, tableRef, table);
         }
 
-        public bool OpenLinkRequest(Database.View.LinkRequest link, Database.TableLink tableLink, Database.Table table)
+        public bool OpenLinkRequest(Database.LinkRequestTable link, Database.TableReference tableLink, Database.Table table)
         {
             using (ScopeDebugContext.String("OpenLinkRequest"))
             {
-                if (link.metaLink.linkWhere != null && link.metaLink.linkWhere.Count > 0)
+                if (link.LinkToOpen.RowWhere != null && link.LinkToOpen.RowWhere.Count > 0)
                 {
                     Database.Table filteredTable = table;
                     if (table.GetMetaData().defaultFilter != null)
                     {
                         filteredTable = table.GetMetaData().defaultFilter.CreateFilter(table);
                     }
-                    var whereUnion = new Database.View.WhereUnion(link.metaLink.linkWhere, null, null, null, null, m_UIState.CurrentMode.GetSchema(), filteredTable, link.sourceView == null ? null : link.sourceView.expressionParsingContext);
-                    long rowToSelect = whereUnion.GetIndexFirstMatch(link.row);
+                    var whereUnion = new Database.View.WhereUnion(link.LinkToOpen.RowWhere, null, null, null, null, m_UIState.CurrentMode.GetSchema(), filteredTable, link.SourceView == null ? null : link.SourceView.expressionParsingContext);
+                    long rowToSelect = whereUnion.GetIndexFirstMatch(link.SourceRow);
                     if (rowToSelect < 0)
                     {
-                        DebugUtility.LogWarning("Could not find entry in target table '" + link.metaLink.linkViewName + "'");
+                        DebugUtility.LogWarning("Could not find entry in target table '" + link.LinkToOpen.TableName + "'");
                         return false;
                     }
-                    DebugUtility.DebugLog("Opening table '" + link.metaLink.linkViewName + "' at row " + rowToSelect);
+                    DebugUtility.DebugLog("Opening table '" + link.LinkToOpen.TableName + "' at row " + rowToSelect);
                     OpenTable(tableLink, table, new Database.CellPosition(rowToSelect, 0));
                 }
                 else
@@ -130,28 +130,28 @@ namespace Unity.MemoryProfiler.Editor.UI
             }
         }
 
-        void OnSpreadsheetClick(UI.DatabaseSpreadsheet sheet, Database.View.LinkRequest link, Database.CellPosition pos)
+        void OnSpreadsheetClick(UI.DatabaseSpreadsheet sheet, Database.LinkRequest link, Database.CellPosition pos)
         {
             var hEvent = new History(this, m_UIState.CurrentMode, sheet.DisplayTable.GetLinkTo(pos));
             m_UIState.history.AddEvent(hEvent);
-            m_EventListener.OnOpenTable(link);
+            m_EventListener.OnOpenLink(link);
         }
 
-        public void OpenTable(Database.TableLink link, Database.Table table)
+        public void OpenTable(Database.TableReference tableRef, Database.Table table)
         {
             Profiling.StartProfiling("Profile_OpenTable_" + table.GetName());
             CloseCurrentTable();
-            m_CurrentTableLink = link;
+            m_CurrentTableLink = tableRef;
             CurrentTableIndex = m_UIState.CurrentMode.GetTableIndex(table);
             m_Spreadsheet = new UI.DatabaseSpreadsheet(m_UIState.DataRenderer, table, this);
             m_Spreadsheet.onClickLink += OnSpreadsheetClick;
             m_EventListener.OnRepaint();
         }
 
-        public void OpenTable(Database.TableLink link, Database.Table table, Database.CellPosition pos)
+        public void OpenTable(Database.TableReference tableRef, Database.Table table, Database.CellPosition pos)
         {
             CloseCurrentTable();
-            m_CurrentTableLink = link;
+            m_CurrentTableLink = tableRef;
             CurrentTableIndex = m_UIState.CurrentMode.GetTableIndex(table);
             m_Spreadsheet = new UI.DatabaseSpreadsheet(m_UIState.DataRenderer, table, this);
             m_Spreadsheet.onClickLink += OnSpreadsheetClick;

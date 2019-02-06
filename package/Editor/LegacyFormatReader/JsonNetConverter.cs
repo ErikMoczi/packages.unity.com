@@ -8,7 +8,7 @@ namespace Unity.MemoryProfiler.Editor.Legacy
     /// Used for .memsnap3 file data conversion to Unity's JsonUtil json format
     /// </summary>
     internal class JsonNetConverter
-    {
+    { 
         readonly string k_BytesToken = @"""m_Bytes"":";
         readonly string k_StaticFieldBytesToken = @"""m_StaticFieldBytes"":";
         const char k_ArrayStartToken = '[';
@@ -67,5 +67,27 @@ namespace Unity.MemoryProfiler.Editor.Legacy
 
             return result;
         }
+    }
+
+    internal static class JsonUtil
+    {
+        public static string JsonFindAndReplace(string json, string oldToken, string newToken)
+        {
+            int foundIndex = json.IndexOf(0, oldToken);
+            if (foundIndex == -1)
+            {
+                return json;
+            }
+
+            StringBuilder builder = new StringBuilder(json.Length + newToken.Length - oldToken.Length);
+
+            builder.Append(json, 0, foundIndex);
+            builder.Append(newToken);
+            int endIndex = foundIndex + oldToken.Length;
+            builder.Append(json, endIndex, json.Length - endIndex);
+
+            return builder.ToString();
+        }
+
     }
 }
