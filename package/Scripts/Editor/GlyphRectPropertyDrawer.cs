@@ -21,17 +21,17 @@ namespace TMPro.EditorUtilities
 
             // We get Rect since a valid position may not be provided by the caller.
             Rect rect = new Rect(position.x, position.y, position.width, 49);
-            EditorGUI.LabelField(rect, new GUIContent("Glyph Rect"));
+            EditorGUI.LabelField(new Rect(rect.x + 5f, rect.y, rect.width, rect.height), new GUIContent("Glyph Rect"));
 
             EditorGUIUtility.labelWidth = 30f;
             EditorGUIUtility.fieldWidth = 10f;
 
             //GUI.enabled = false;
             float width = (rect.width - 75f) / 4;
-            EditorGUI.PropertyField(new Rect(rect.x + width * 0, rect.y + 20, width - 5f, 18), prop_X, new GUIContent("X:"));
-            EditorGUI.PropertyField(new Rect(rect.x + width * 1, rect.y + 20, width - 5f, 18), prop_Y, new GUIContent("Y:"));
-            EditorGUI.PropertyField(new Rect(rect.x + width * 2, rect.y + 20, width - 5f, 18), prop_Width, new GUIContent("W:"));
-            EditorGUI.PropertyField(new Rect(rect.x + width * 3, rect.y + 20, width - 5f, 18), prop_Height, new GUIContent("H:"));
+            EditorGUI.PropertyField(new Rect(rect.x + 5f + width * 0, rect.y + 20, width - 5f, 18), prop_X, new GUIContent("X:"));
+            EditorGUI.PropertyField(new Rect(rect.x + 5f + width * 1, rect.y + 20, width - 5f, 18), prop_Y, new GUIContent("Y:"));
+            EditorGUI.PropertyField(new Rect(rect.x + 5f + width * 2, rect.y + 20, width - 5f, 18), prop_Width, new GUIContent("W:"));
+            EditorGUI.PropertyField(new Rect(rect.x + 5f + width * 3, rect.y + 20, width - 5f, 18), prop_Height, new GUIContent("H:"));
 
             //EditorGUI.EndProperty();
         }

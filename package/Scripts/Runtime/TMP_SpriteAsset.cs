@@ -1,7 +1,10 @@
 ﻿using UnityEngine;
 using UnityEngine.TextCore;
 using System.Collections.Generic;
+
+#if UNITY_EDITOR
 using System.Linq;
+#endif
 
 
 namespace TMPro
@@ -11,7 +14,7 @@ namespace TMPro
     {
         internal Dictionary<uint, int> m_UnicodeLookup;
         internal Dictionary<int, int> m_NameLookup;
-        internal Dictionary<uint, int> m_GlyphIndexLookup;
+
 
         /// <summary>
         /// The version of the sprite asset class.
@@ -25,18 +28,31 @@ namespace TMPro
         [SerializeField]
         private string m_Version;
 
+
+        /// <summary>
+        /// Static reference to the default font asset included with TextMesh Pro.
+        /// </summary>
+        //public static TMP_SpriteAsset defaultSpriteAsset
+        //{
+        //    get
+        //    {
+        //        if (m_DefaultSpriteAsset == null)
+        //        {
+        //            m_DefaultSpriteAsset = Resources.Load<TMP_SpriteAsset>("Sprite Assets/Default Sprite Asset");
+        //        }
+
+        //        return m_DefaultSpriteAsset;
+        //    }
+        //}
+        //public static TMP_SpriteAsset m_DefaultSpriteAsset;
+
+
         // The texture which contains the sprites.
         public Texture spriteSheet;
 
         public List<TMP_SpriteCharacter> spriteCharacterTable
         {
-            get
-            {
-                if (m_GlyphIndexLookup == null)
-                    UpdateLookupTables();
-
-                return m_SpriteCharacterTable;
-            }
+            get { return m_SpriteCharacterTable; }
             internal set { m_SpriteCharacterTable = value; }
         }
         [SerializeField]
@@ -66,29 +82,28 @@ namespace TMPro
         [SerializeField]
         public List<TMP_SpriteAsset> fallbackSpriteAssets;
 
-        internal bool m_IsSpriteAssetLookupTablesDirty = false;
 
-        void Awake()
+        //private bool isEditingAsset;
+
+        void OnEnable()
         {
             // Check version number of sprite asset to see if it needs to be upgraded.
-            if (this.material != null && string.IsNullOrEmpty(m_Version))
+            if (this.material != null && (m_Version == null || m_Version == string.Empty))
                 UpgradeSpriteAsset();
         }
 
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         /// <summary>
         /// 
         /// </summary>
         void OnValidate()
         {
-            //Debug.Log("Sprite Asset [" + name + "] has changed.");
+            UpdateLookupTables();
 
-            //UpdateLookupTables();
-
-            //TMPro_EventManager.ON_SPRITE_ASSET_PROPERTY_CHANGED(true, this);
+            TMPro_EventManager.ON_SPRITE_ASSET_PROPERTY_CHANGED(true, this);
         }
-        #endif
+#endif
 
 
         /// <summary>
@@ -106,10 +121,10 @@ namespace TMPro
             tempMaterial.SetTexture(ShaderUtilities.ID_MainTex, spriteSheet);
             tempMaterial.hideFlags = HideFlags.HideInHierarchy;
 
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             UnityEditor.AssetDatabase.AddObjectToAsset(tempMaterial, this);
             UnityEditor.AssetDatabase.ImportAsset(UnityEditor.AssetDatabase.GetAssetPath(this));
-            #endif
+#endif
             //isEditingAsset = false;
 
             return tempMaterial;
@@ -122,39 +137,15 @@ namespace TMPro
         /// </summary>
         public void UpdateLookupTables()
         {
-            //Debug.Log("Updating [" + this.name + "] Lookup tables.");
+            if (m_NameLookup == null) m_NameLookup = new Dictionary<int, int>();
+            m_NameLookup.Clear();
 
-            // Check version number of sprite asset to see if it needs to be upgraded.
-            if (this.material != null && string.IsNullOrEmpty(m_Version))
-                UpgradeSpriteAsset();
-
-            // Initialize / Clear glyph index lookup dictionary.
-            if (m_GlyphIndexLookup == null)
-                m_GlyphIndexLookup = new Dictionary<uint, int>();
-            else
-                m_GlyphIndexLookup.Clear();
-
-            for (int i = 0; i < m_SpriteGlyphTable.Count; i++)
-            {
-                uint glyphIndex = m_SpriteGlyphTable[i].index;
-
-                if (m_GlyphIndexLookup.ContainsKey(glyphIndex) == false)
-                    m_GlyphIndexLookup.Add(glyphIndex, i);
-            }
-
-            if (m_NameLookup == null)
-                m_NameLookup = new Dictionary<int, int>();
-            else
-                m_NameLookup.Clear();
-
-            if (m_UnicodeLookup == null)
-                m_UnicodeLookup = new Dictionary<uint, int>();
-            else
-                m_UnicodeLookup.Clear();
+            if (m_UnicodeLookup == null) m_UnicodeLookup = new Dictionary<uint, int>();
+            m_UnicodeLookup.Clear();
 
             for (int i = 0; i < m_SpriteCharacterTable.Count; i++)
             {
-                int nameHashCode = m_SpriteCharacterTable[i].hashCode;
+                int nameHashCode = (int)m_SpriteCharacterTable[i].hashCode;
 
                 if (m_NameLookup.ContainsKey(nameHashCode) == false)
                     m_NameLookup.Add(nameHashCode, i);
@@ -163,15 +154,7 @@ namespace TMPro
 
                 if (m_UnicodeLookup.ContainsKey(unicode) == false)
                     m_UnicodeLookup.Add(unicode, i);
-
-                // Update glyph reference which is not serialized
-                uint glyphIndex = m_SpriteCharacterTable[i].glyphIndex;
-
-                if (m_GlyphIndexLookup.TryGetValue(glyphIndex, out int index))
-                    m_SpriteCharacterTable[i].glyph = m_SpriteGlyphTable[index];
             }
-
-            m_IsSpriteAssetLookupTablesDirty = false;
         }
 
 
@@ -185,7 +168,8 @@ namespace TMPro
             if (m_NameLookup == null)
                 UpdateLookupTables();
 
-            if (m_NameLookup.TryGetValue(hashCode, out int index))
+            int index = 0;
+            if (m_NameLookup.TryGetValue(hashCode, out index))
                 return index;
 
             return -1;
@@ -202,7 +186,8 @@ namespace TMPro
             if (m_UnicodeLookup == null)
                 UpdateLookupTables();
 
-            if (m_UnicodeLookup.TryGetValue(unicode, out int index))
+            int index = 0;
+            if (m_UnicodeLookup.TryGetValue(unicode, out index))
                 return index;
 
             return -1;
@@ -424,33 +409,39 @@ namespace TMPro
         }
 
 
+#if UNITY_EDITOR
         /// <summary>
-        /// Sort the sprite glyph table by glyph index.
+        /// Update sprite asset as a result the texture contained the sprites being edited in the Unity Sprite editor.
         /// </summary>
-        public void SortGlyphTable()
+        internal void UpdateSpriteAsset()
         {
-            if (m_SpriteGlyphTable == null || m_SpriteGlyphTable.Count == 0) return;
+            string texturePath = UnityEditor.AssetDatabase.GetAssetPath(spriteSheet);
 
-            m_SpriteGlyphTable = m_SpriteGlyphTable.OrderBy(item => item.index).ToList();
-        }
+            // Get all the Sprites sorted by Index
+            Sprite[] sprites = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(texturePath).Select(x => x as Sprite).ToArray();
 
-        /// <summary>
-        /// Sort the sprite character table by Unicode values.
-        /// </summary>
-        internal void SortCharacterTable()
-        {
-            if (m_SpriteCharacterTable != null && m_SpriteCharacterTable.Count > 0)
-                m_SpriteCharacterTable = m_SpriteCharacterTable.OrderBy(c => c.unicode).ToList();
-        }
+            Sprite[] spritesInSpriteAsset = m_SpriteGlyphTable.Select(x => x.sprite).ToArray();
 
-        /// <summary>
-        /// Sort both sprite glyph and character tables.
-        /// </summary>
-        internal void SortGlyphAndCharacterTables()
-        {
-            SortGlyphTable();
-            SortCharacterTable();
+            // Iterate through all the sprites contained in the updated texture.
+            for (int i = 0; i < sprites.Length; i++)
+            {
+                Sprite sprite = sprites[i];
+
+                // Check if sprite is currently in the sprite asset.
+                if (spritesInSpriteAsset.Contains(sprite))
+                {
+                    // Update current sprite
+                    //Debug.Log("Sprite [" + sprite.name + "] has been modified.");
+                }
+                else
+                {
+                    // Add new sprite
+                    //Debug.Log("Sprite [" + sprite.name + "] is new and has been added.");
+                }
+            }
+
         }
+#endif
 
 
         /// <summary>
@@ -460,7 +451,7 @@ namespace TMPro
         {
             m_Version = "1.1.0";
 
-            Debug.Log("Upgrading sprite asset [" + this.name + "] to version " + m_Version + ".", this);
+            Debug.LogWarning("Upgrading sprite asset [" + this.name + "] to version " + m_Version + ".", this);
 
             // Convert legacy glyph and character tables to new format
             m_SpriteCharacterTable.Clear();
@@ -481,8 +472,10 @@ namespace TMPro
 
                 m_SpriteGlyphTable.Add(spriteGlyph);
 
-                TMP_SpriteCharacter spriteCharacter = new TMP_SpriteCharacter((uint)oldSprite.unicode, spriteGlyph);
+                TMP_SpriteCharacter spriteCharacter = new TMP_SpriteCharacter();
+                spriteCharacter.unicode = (uint)oldSprite.unicode;
                 spriteCharacter.name = oldSprite.name;
+                spriteCharacter.glyph = spriteGlyph;
                 spriteCharacter.scale = oldSprite.scale;
 
                 m_SpriteCharacterTable.Add(spriteCharacter);
@@ -493,10 +486,10 @@ namespace TMPro
 
             UpdateLookupTables();
 
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             UnityEditor.EditorUtility.SetDirty(this);
             UnityEditor.AssetDatabase.SaveAssets();
-            #endif
+#endif
         }
 
     }

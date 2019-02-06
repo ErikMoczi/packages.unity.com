@@ -7,15 +7,27 @@ using UnityEditor;
  
 
 namespace TMPro
-{
-    [System.Serializable]
+{ 
     public class TMP_PackageResourceImporter
     {
         bool m_EssentialResourcesImported;
         bool m_ExamplesAndExtrasResourcesImported;
-        internal bool m_IsImportingExamples;
 
-        public TMP_PackageResourceImporter() { }
+        [SerializeField]
+        bool m_IsImportingExamples;
+
+        public TMP_PackageResourceImporter()
+        {
+            m_EssentialResourcesImported = Directory.Exists("Assets/TextMesh Pro");
+            m_ExamplesAndExtrasResourcesImported = Directory.Exists("Assets/TextMesh Pro/Examples & Extras");
+            
+            // Special handling due to scripts imported in a .unitypackage result in resulting in an assembly reload which clears the callbacks.
+            if (m_IsImportingExamples)
+            {
+                AssetDatabase.importPackageCompleted += ImportCallback;
+                m_IsImportingExamples = false;
+            }
+        }
 
         public void OnDestroy()
         {
@@ -23,10 +35,6 @@ namespace TMPro
 
         public void OnGUI()
         {
-            // Check if the resources state has changed.
-            m_EssentialResourcesImported = Directory.Exists("Assets/TextMesh Pro");
-            m_ExamplesAndExtrasResourcesImported = Directory.Exists("Assets/TextMesh Pro/Examples & Extras");
-
             GUILayout.BeginVertical();
             {
                 // Display options to import Essential resources
@@ -72,11 +80,6 @@ namespace TMPro
             }
             GUILayout.EndVertical();
             GUILayout.Space(5f);
-        }
-
-        internal void RegisterResourceImportCallback()
-        {
-            AssetDatabase.importPackageCompleted += ImportCallback;
         }
 
         /// <summary>
@@ -172,11 +175,7 @@ namespace TMPro
             // Set Editor Window Size
             SetEditorWindowSize();
 
-            if (m_ResourceImporter == null)
-                m_ResourceImporter = new TMP_PackageResourceImporter();
-
-            if (m_ResourceImporter.m_IsImportingExamples)
-                m_ResourceImporter.RegisterResourceImportCallback();
+            m_ResourceImporter = new TMP_PackageResourceImporter();
         }
 
         void OnDestroy()

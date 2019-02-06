@@ -919,18 +919,6 @@ namespace TMPro
         protected VertexSortingOrder m_geometrySortingOrder;
 
         /// <summary>
-        /// Determines if the data structures allocated to contain the geometry of the text object will be reduced in size if the number of characters required to display the text is reduced by more than 256 characters.
-        /// This reduction has the benefit of reducing the amount of vertex data being submitted to the graphic device but results in GC when it occurs. 
-        /// </summary>
-        public bool vertexBufferAutoSizeReduction
-        {
-            get { return m_VertexBufferAutoSizeReduction; }
-            set { m_VertexBufferAutoSizeReduction = value; m_havePropertiesChanged = true; SetVerticesDirty(); }
-        }
-        [SerializeField]
-        protected bool m_VertexBufferAutoSizeReduction = true;
-
-        /// <summary>
         /// The first character which should be made visible in conjunction with the Text Overflow Linked mode.
         /// </summary>
         public int firstVisibleCharacter
@@ -1033,7 +1021,7 @@ namespace TMPro
             get { return m_havePropertiesChanged; }
             set { if (m_havePropertiesChanged == value) return; m_havePropertiesChanged = value; m_isInputParsingRequired = true; SetAllDirty(); }
         }
-        //[SerializeField]
+        [SerializeField]
         protected bool m_havePropertiesChanged;  // Used to track when properties of the text object have changed.
 
 
@@ -1313,14 +1301,15 @@ namespace TMPro
         protected bool m_layoutAlreadyDirty;
 
         protected bool m_isAwake;
-        internal bool m_isWaitingOnResourceLoad;
+        protected bool m_isWaitingOnResourceLoad;
 
-        internal bool m_isInputParsingRequired = false; // Used to determine if the input text needs to be re-parsed.
+        [SerializeField]
+        protected bool m_isInputParsingRequired = false; // Used to determine if the input text needs to be re-parsed.
 
         // Protected Fields
-        internal enum TextInputSources { Text = 0, SetText = 1, SetCharArray = 2, String = 3 };
-        //[SerializeField]
-        internal TextInputSources m_inputSource;
+        protected enum TextInputSources { Text = 0, SetText = 1, SetCharArray = 2, String = 3 };
+        [SerializeField]
+        protected TextInputSources m_inputSource;
         protected string old_text; // Used by SetText to determine if the text has changed.
         //protected float old_arg0, old_arg1, old_arg2; // Used by SetText to determine if the args have changed.
 
@@ -1344,16 +1333,7 @@ namespace TMPro
         protected bool m_isFXMatrixSet;
 
 
-        protected UnicodeChar[] m_TextParsingBuffer; // This array holds the characters to be processed by GenerateMesh();
-
-        protected struct UnicodeChar
-        {
-            public int unicode;
-            public int stringIndex;
-            public int length;
-        }
-        //protected UnicodeChar[] m_InternalParsingBuffer;
-
+        protected int[] m_char_buffer; // This array holds the characters to be processed by GenerateMesh();
         private TMP_CharacterInfo[] m_internalCharacterInfo; // Used by functions to calculate preferred values.
         protected char[] m_input_CharArray = new char[256]; // This array hold the characters from the SetText();
         private int m_charArray_Length = 0;
@@ -1704,16 +1684,16 @@ namespace TMPro
             {
                 case TextInputSources.String:
                 case TextInputSources.Text:
-                    StringToCharArray(m_text, ref m_TextParsingBuffer);
+                    StringToCharArray(m_text, ref m_char_buffer);
                     break;
                 case TextInputSources.SetText:
-                    SetTextArrayToCharArray(m_input_CharArray, ref m_TextParsingBuffer);
+                    SetTextArrayToCharArray(m_input_CharArray, ref m_char_buffer);
                     break;
                 case TextInputSources.SetCharArray:
                     break;
             }
 
-            SetArraySizes(m_TextParsingBuffer);
+            SetArraySizes(m_char_buffer);
             ////Profiler.EndSample();
         }
 
@@ -1740,7 +1720,7 @@ namespace TMPro
 
             m_inputSource = TextInputSources.SetCharArray;
 
-            StringToCharArray(text, ref m_TextParsingBuffer);
+            StringToCharArray(text, ref m_char_buffer);
 
             #if UNITY_EDITOR
             // Set the text in the Text Input Box in the Unity Editor only.
@@ -1867,7 +1847,7 @@ namespace TMPro
             m_text = text.ToString();
             #endif
 
-            StringBuilderToIntArray(text, ref m_TextParsingBuffer);
+            StringBuilderToIntArray(text, ref m_char_buffer);
 
             m_isInputParsingRequired = true;
             m_havePropertiesChanged = true;
@@ -1885,7 +1865,7 @@ namespace TMPro
         public void SetCharArray(char[] sourceText)
         {
             // Initialize internal character buffer if necessary
-            if (m_TextParsingBuffer == null) m_TextParsingBuffer = new UnicodeChar[8];
+            if (m_char_buffer == null) m_char_buffer = new int[8];
 
             #if UNITY_EDITOR
             // Create new string to be displayed in the Input Text Box of the Editor Panel.
@@ -1907,23 +1887,23 @@ namespace TMPro
                     switch ((int)sourceText[i + 1])
                     {
                         case 110: // \n LineFeed
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 10;
+                            m_char_buffer[writeIndex] = (char)10;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 114: // \r LineFeed
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 13;
+                            m_char_buffer[writeIndex] = (char)13;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 116: // \t Tab
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 9;
+                            m_char_buffer[writeIndex] = (char)9;
                             i += 1;
                             writeIndex += 1;
                             continue;
@@ -1935,9 +1915,9 @@ namespace TMPro
                 {
                     if (IsTagName(ref sourceText, "<BR>", i))
                     {
-                        if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                        if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-                        m_TextParsingBuffer[writeIndex].unicode = 10; ;
+                        m_char_buffer[writeIndex] = 10; ;
                         writeIndex += 1;
                         i += 3;
 
@@ -1945,7 +1925,8 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out int srcOffset, ref m_TextParsingBuffer, ref writeIndex))
+                        int srcOffset = 0;
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref m_char_buffer, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -1953,7 +1934,7 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "</STYLE>", i))
                     {
-                        ReplaceClosingStyleTag(ref sourceText, i, ref m_TextParsingBuffer, ref writeIndex);
+                        ReplaceClosingStyleTag(ref sourceText, i, ref m_char_buffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
                         i += 7;
@@ -1961,15 +1942,15 @@ namespace TMPro
                     }
                 }
 
-                if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-                m_TextParsingBuffer[writeIndex].unicode = sourceText[i];
+                m_char_buffer[writeIndex] = sourceText[i];
                 writeIndex += 1;
             }
 
-            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+            if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-            m_TextParsingBuffer[writeIndex].unicode = 0;
+            m_char_buffer[writeIndex] = (char)0;
 
             m_inputSource = TextInputSources.SetCharArray;
             m_isInputParsingRequired = true;
@@ -1988,7 +1969,7 @@ namespace TMPro
         public void SetCharArray(char[] sourceText, int start, int length)
         {
             // Initialize internal character buffer if necessary
-            if (m_TextParsingBuffer == null) m_TextParsingBuffer = new UnicodeChar[8];
+            if (m_char_buffer == null) m_char_buffer = new int[8];
 
             #if UNITY_EDITOR
             // Create new string to be displayed in the Input Text Box of the Editor Panel.
@@ -2019,23 +2000,23 @@ namespace TMPro
                     switch ((int)sourceText[i + 1])
                     {
                         case 110: // \n LineFeed
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 10;
+                            m_char_buffer[writeIndex] = (char)10;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 114: // \r LineFeed
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 13;
+                            m_char_buffer[writeIndex] = (char)13;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 116: // \t Tab
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 9;
+                            m_char_buffer[writeIndex] = (char)9;
                             i += 1;
                             writeIndex += 1;
                             continue;
@@ -2047,9 +2028,9 @@ namespace TMPro
                 {
                     if (IsTagName(ref sourceText, "<BR>", i))
                     {
-                        if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                        if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-                        m_TextParsingBuffer[writeIndex].unicode = 10;
+                        m_char_buffer[writeIndex] = 10; ;
                         writeIndex += 1;
                         i += 3;
 
@@ -2057,7 +2038,8 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out int srcOffset, ref m_TextParsingBuffer, ref writeIndex))
+                        int srcOffset = 0;
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref m_char_buffer, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2065,7 +2047,7 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "</STYLE>", i))
                     {
-                        ReplaceClosingStyleTag(ref sourceText, i, ref m_TextParsingBuffer, ref writeIndex);
+                        ReplaceClosingStyleTag(ref sourceText, i, ref m_char_buffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
                         i += 7;
@@ -2073,15 +2055,15 @@ namespace TMPro
                     }
                 }
 
-                if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-                m_TextParsingBuffer[writeIndex].unicode = sourceText[i];
+                m_char_buffer[writeIndex] = sourceText[i];
                 writeIndex += 1;
             }
 
-            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+            if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-            m_TextParsingBuffer[writeIndex].unicode = 0;
+            m_char_buffer[writeIndex] = (char)0;
 
             m_inputSource = TextInputSources.SetCharArray;
             m_havePropertiesChanged = true;
@@ -2100,7 +2082,7 @@ namespace TMPro
         public void SetCharArray(int[] sourceText, int start, int length)
         {
             // Initialize internal character buffer if necessary
-            if (m_TextParsingBuffer == null) m_TextParsingBuffer = new UnicodeChar[8];
+            if (m_char_buffer == null) m_char_buffer = new int[8];
 
             #if UNITY_EDITOR
             // Create new string to be displayed in the Input Text Box of the Editor Panel.
@@ -2122,30 +2104,30 @@ namespace TMPro
             int writeIndex = 0;
 
             int end = start + length;
-            for (int i = start; i < end && i < sourceText.Length; i++)
+            for (int i = start; i < end; i++)
             {
                 if (sourceText[i] == 92 && i < length - 1)
                 {
                     switch ((int)sourceText[i + 1])
                     {
                         case 110: // \n LineFeed
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 10;
+                            m_char_buffer[writeIndex] = (char)10;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 114: // \r LineFeed
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 13;
+                            m_char_buffer[writeIndex] = (char)13;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 116: // \t Tab
-                            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                            if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-                            m_TextParsingBuffer[writeIndex].unicode = 9;
+                            m_char_buffer[writeIndex] = (char)9;
                             i += 1;
                             writeIndex += 1;
                             continue;
@@ -2157,9 +2139,9 @@ namespace TMPro
                 {
                     if (IsTagName(ref sourceText, "<BR>", i))
                     {
-                        if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                        if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-                        m_TextParsingBuffer[writeIndex].unicode = 10;
+                        m_char_buffer[writeIndex] = 10; ;
                         writeIndex += 1;
                         i += 3;
 
@@ -2167,7 +2149,8 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out int srcOffset, ref m_TextParsingBuffer, ref writeIndex))
+                        int srcOffset = 0;
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref m_char_buffer, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2175,7 +2158,7 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "</STYLE>", i))
                     {
-                        ReplaceClosingStyleTag(ref sourceText, i, ref m_TextParsingBuffer, ref writeIndex);
+                        ReplaceClosingStyleTag(ref sourceText, i, ref m_char_buffer, ref writeIndex);
 
                         // Strip </style> even if style is invalid.
                         i += 7;
@@ -2183,15 +2166,15 @@ namespace TMPro
                     }
                 }
 
-                if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+                if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-                m_TextParsingBuffer[writeIndex].unicode = sourceText[i];
+                m_char_buffer[writeIndex] = sourceText[i];
                 writeIndex += 1;
             }
 
-            if (writeIndex == m_TextParsingBuffer.Length) ResizeInternalArray(ref m_TextParsingBuffer);
+            if (writeIndex == m_char_buffer.Length) ResizeInternalArray(ref m_char_buffer);
 
-            m_TextParsingBuffer[writeIndex].unicode = 0;
+            m_char_buffer[writeIndex] = (char)0;
 
             m_inputSource = TextInputSources.SetCharArray;
             m_havePropertiesChanged = true;
@@ -2208,13 +2191,13 @@ namespace TMPro
         /// </summary>
         /// <param name="sourceText"></param>
         /// <param name="charBuffer"></param>
-        protected void SetTextArrayToCharArray(char[] sourceText, ref UnicodeChar[] charBuffer)
+        protected void SetTextArrayToCharArray(char[] sourceText, ref int[] charBuffer)
         {
             //Debug.Log("SetText Array to Char called.");
             if (sourceText == null || m_charArray_Length == 0)
                 return;
 
-            if (charBuffer == null) charBuffer = new UnicodeChar[8];
+            if (charBuffer == null) charBuffer = new int[8];
 
             // Clear the Style stack.
             m_styleStack.Clear();
@@ -2228,7 +2211,7 @@ namespace TMPro
                 {
                     if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                    charBuffer[writeIndex].unicode = char.ConvertToUtf32(sourceText[i], sourceText[i + 1]);
+                    charBuffer[writeIndex] = char.ConvertToUtf32(sourceText[i], sourceText[i + 1]);
                     i += 1;
                     writeIndex += 1;
                     continue;
@@ -2241,7 +2224,7 @@ namespace TMPro
                     {
                         if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                        charBuffer[writeIndex].unicode = 10;
+                        charBuffer[writeIndex] = 10;
                         writeIndex += 1;
                         i += 3;
 
@@ -2249,7 +2232,8 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out int srcOffset, ref charBuffer, ref writeIndex))
+                        int srcOffset = 0;
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref charBuffer, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2267,13 +2251,13 @@ namespace TMPro
 
                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                charBuffer[writeIndex].unicode = sourceText[i];
+                charBuffer[writeIndex] = sourceText[i];
                 writeIndex += 1;
             }
 
             if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-            charBuffer[writeIndex].unicode = 0;
+            charBuffer[writeIndex] = 0;
         }
 
 
@@ -2282,15 +2266,15 @@ namespace TMPro
         /// </summary>
         /// <param name="sourceText"></param>
         /// <param name="charBuffer"></param>
-        protected void StringToCharArray(string sourceText, ref UnicodeChar[] charBuffer)
+        protected void StringToCharArray(string sourceText, ref int[] charBuffer)
         {
             if (sourceText == null)
             {
-                charBuffer[0].unicode = 0;
+                charBuffer[0] = 0;
                 return;
             }
 
-            if (charBuffer == null) charBuffer = new UnicodeChar[8];
+            if (charBuffer == null) charBuffer = new int[8];
 
             // Clear the Style stack.
             m_styleStack.SetDefault(0);
@@ -2308,10 +2292,7 @@ namespace TMPro
                             {
                                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                                charBuffer[writeIndex].unicode = GetUTF32(sourceText, i + 2);
-                                charBuffer[writeIndex].stringIndex = i;
-                                charBuffer[writeIndex].length = 10;
-
+                                charBuffer[writeIndex] = GetUTF32(sourceText, i + 2);
                                 i += 9;
                                 writeIndex += 1;
                                 continue;
@@ -2324,8 +2305,8 @@ namespace TMPro
 
                             if (writeIndex + 2 > charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                            charBuffer[writeIndex].unicode = sourceText[i + 1];
-                            charBuffer[writeIndex + 1].unicode = sourceText[i + 2];
+                            charBuffer[writeIndex] = sourceText[i + 1];
+                            charBuffer[writeIndex + 1] = sourceText[i + 2];
                             i += 2;
                             writeIndex += 2;
                             continue;
@@ -2334,10 +2315,7 @@ namespace TMPro
 
                             if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                            charBuffer[writeIndex].unicode = 10;
-                            charBuffer[writeIndex].stringIndex = i;
-                            charBuffer[writeIndex].length = 1;
-
+                            charBuffer[writeIndex] = (char)10;
                             i += 1;
                             writeIndex += 1;
                             continue;
@@ -2346,10 +2324,7 @@ namespace TMPro
 
                             if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                            charBuffer[writeIndex].unicode = 13;
-                            charBuffer[writeIndex].stringIndex = i;
-                            charBuffer[writeIndex].length = 1;
-
+                            charBuffer[writeIndex] = (char)13;
                             i += 1;
                             writeIndex += 1;
                             continue;
@@ -2358,10 +2333,7 @@ namespace TMPro
 
                             if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                            charBuffer[writeIndex].unicode = 9;
-                            charBuffer[writeIndex].stringIndex = i;
-                            charBuffer[writeIndex].length = 1;
-
+                            charBuffer[writeIndex] = (char)9;
                             i += 1;
                             writeIndex += 1;
                             continue;
@@ -2370,10 +2342,7 @@ namespace TMPro
                             {
                                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                                charBuffer[writeIndex].unicode = GetUTF16(sourceText, i + 2);
-                                charBuffer[writeIndex].stringIndex = i;
-                                charBuffer[writeIndex].length = 6;
-
+                                charBuffer[writeIndex] = (char)GetUTF16(sourceText, i + 2);
                                 i += 5;
                                 writeIndex += 1;
                                 continue;
@@ -2387,10 +2356,7 @@ namespace TMPro
                 {
                     if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                    charBuffer[writeIndex].unicode = char.ConvertToUtf32(sourceText[i], sourceText[i + 1]);
-                    charBuffer[writeIndex].stringIndex = i;
-                    charBuffer[writeIndex].length = 2;
-
+                    charBuffer[writeIndex] = char.ConvertToUtf32(sourceText[i], sourceText[i + 1]);
                     i += 1;
                     writeIndex += 1;
                     continue;
@@ -2403,10 +2369,7 @@ namespace TMPro
                     {
                         if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                        charBuffer[writeIndex].unicode = 10;
-                        charBuffer[writeIndex].stringIndex = i;
-                        charBuffer[writeIndex].length = 1;
-
+                        charBuffer[writeIndex] = 10; ;
                         writeIndex += 1;
                         i += 3;
 
@@ -2414,7 +2377,8 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out int srcOffset, ref charBuffer, ref writeIndex))
+                        int srcOffset = 0;
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref charBuffer, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2432,16 +2396,13 @@ namespace TMPro
 
                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                charBuffer[writeIndex].unicode = sourceText[i];
-                charBuffer[writeIndex].stringIndex = i;
-                charBuffer[writeIndex].length = 1;
-
+                charBuffer[writeIndex] = sourceText[i];
                 writeIndex += 1;
             }
 
             if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-            charBuffer[writeIndex].unicode = 0;
+            charBuffer[writeIndex] = (char)0;
         }
 
 
@@ -2450,15 +2411,15 @@ namespace TMPro
         /// </summary>
         /// <param name="sourceText">Text to copy.</param>
         /// <param name="charBuffer">Array to store contents.</param>
-        protected void StringBuilderToIntArray(StringBuilder sourceText, ref UnicodeChar[] charBuffer)
+        protected void StringBuilderToIntArray(StringBuilder sourceText, ref int[] charBuffer)
         {
             if (sourceText == null)
             {
-                charBuffer[0].unicode = 0;
+                charBuffer[0] = 0;
                 return;
             }
 
-            if (charBuffer == null) charBuffer = new UnicodeChar[8];
+            if (charBuffer == null) charBuffer = new int[8];
 
             // Clear the Style stack.
             m_styleStack.Clear();
@@ -2481,7 +2442,7 @@ namespace TMPro
                             {
                                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                                charBuffer[writeIndex].unicode = GetUTF32(sourceText, i + 2);
+                                charBuffer[writeIndex] = GetUTF32(sourceText, i + 2);
                                 i += 9;
                                 writeIndex += 1;
                                 continue;
@@ -2492,29 +2453,29 @@ namespace TMPro
 
                             if (writeIndex + 2 > charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                            charBuffer[writeIndex].unicode = sourceText[i + 1];
-                            charBuffer[writeIndex + 1].unicode = sourceText[i + 2];
+                            charBuffer[writeIndex] = sourceText[i + 1];
+                            charBuffer[writeIndex + 1] = sourceText[i + 2];
                             i += 2;
                             writeIndex += 2;
                             continue;
                         case 110: // \n LineFeed
                             if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                            charBuffer[writeIndex].unicode = 10;
+                            charBuffer[writeIndex] = (char)10;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 114: // \r
                             if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                            charBuffer[writeIndex].unicode = 13;
+                            charBuffer[writeIndex] = (char)13;
                             i += 1;
                             writeIndex += 1;
                             continue;
                         case 116: // \t Tab
                             if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                            charBuffer[writeIndex].unicode = 9;
+                            charBuffer[writeIndex] = (char)9;
                             i += 1;
                             writeIndex += 1;
                             continue;
@@ -2523,7 +2484,7 @@ namespace TMPro
                             {
                                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                                charBuffer[writeIndex].unicode = GetUTF16(sourceText, i + 2);
+                                charBuffer[writeIndex] = (char)GetUTF16(sourceText, i + 2);
                                 i += 5;
                                 writeIndex += 1;
                                 continue;
@@ -2537,7 +2498,7 @@ namespace TMPro
                 {
                     if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                    charBuffer[writeIndex].unicode = char.ConvertToUtf32(sourceText[i], sourceText[i + 1]);
+                    charBuffer[writeIndex] = char.ConvertToUtf32(sourceText[i], sourceText[i + 1]);
                     i += 1;
                     writeIndex += 1;
                     continue;
@@ -2550,7 +2511,7 @@ namespace TMPro
                     {
                         if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                        charBuffer[writeIndex].unicode = 10;
+                        charBuffer[writeIndex] = 10;
                         writeIndex += 1;
                         i += 3;
 
@@ -2558,7 +2519,8 @@ namespace TMPro
                     }
                     else if (IsTagName(ref sourceText, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref sourceText, i, out int srcOffset, ref charBuffer, ref writeIndex))
+                        int srcOffset = 0;
+                        if (ReplaceOpeningStyleTag(ref sourceText, i, out srcOffset, ref charBuffer, ref writeIndex))
                         {
                             i = srcOffset;
                             continue;
@@ -2576,13 +2538,13 @@ namespace TMPro
 
                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                charBuffer[writeIndex].unicode = sourceText[i];
+                charBuffer[writeIndex] = sourceText[i];
                 writeIndex += 1;
             }
 
             if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-            charBuffer[writeIndex].unicode = 0;
+            charBuffer[writeIndex] = (char)0;
         }
 
 
@@ -2595,7 +2557,7 @@ namespace TMPro
         /// <param name="charBuffer"></param>
         /// <param name="writeIndex"></param>
         /// <returns></returns>
-        bool ReplaceOpeningStyleTag(ref string sourceText, int srcIndex, out int srcOffset, ref UnicodeChar[] charBuffer, ref int writeIndex)
+        bool ReplaceOpeningStyleTag(ref string sourceText, int srcIndex, out int srcOffset, ref int[] charBuffer, ref int writeIndex)
         {
             // Validate <style> tag.
             int hashCode = GetTagHashCode(ref sourceText, srcIndex + 7, out srcOffset);
@@ -2622,7 +2584,7 @@ namespace TMPro
                     {
                         if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                        charBuffer[writeIndex].unicode = 10;
+                        charBuffer[writeIndex] = 10;
                         writeIndex += 1;
                         i += 3;
 
@@ -2630,7 +2592,8 @@ namespace TMPro
                     }
                     else if (IsTagName(ref openingTagArray, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref openingTagArray, i, out int offset, ref charBuffer, ref writeIndex))
+                        int offset = 0;
+                        if (ReplaceOpeningStyleTag(ref openingTagArray, i, out offset, ref charBuffer, ref writeIndex))
                         {
                             i = offset;
                             continue;
@@ -2648,7 +2611,7 @@ namespace TMPro
 
                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                charBuffer[writeIndex].unicode = c;
+                charBuffer[writeIndex] = c;
                 writeIndex += 1;
             }
 
@@ -2665,7 +2628,7 @@ namespace TMPro
         /// <param name="charBuffer"></param>
         /// <param name="writeIndex"></param>
         /// <returns></returns>
-        bool ReplaceOpeningStyleTag(ref int[] sourceText, int srcIndex, out int srcOffset, ref UnicodeChar[] charBuffer, ref int writeIndex)
+        bool ReplaceOpeningStyleTag(ref int[] sourceText, int srcIndex, out int srcOffset, ref int[] charBuffer, ref int writeIndex)
         {
             // Validate <style> tag.
             int hashCode = GetTagHashCode(ref sourceText, srcIndex + 7, out srcOffset);
@@ -2692,7 +2655,7 @@ namespace TMPro
                     {
                         if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                        charBuffer[writeIndex].unicode = 10;
+                        charBuffer[writeIndex] = 10;
                         writeIndex += 1;
                         i += 3;
 
@@ -2700,7 +2663,8 @@ namespace TMPro
                     }
                     else if (IsTagName(ref openingTagArray, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref openingTagArray, i, out int offset, ref charBuffer, ref writeIndex))
+                        int offset = 0;
+                        if (ReplaceOpeningStyleTag(ref openingTagArray, i, out offset, ref charBuffer, ref writeIndex))
                         {
                             i = offset;
                             continue;
@@ -2718,7 +2682,7 @@ namespace TMPro
 
                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                charBuffer[writeIndex].unicode = c;
+                charBuffer[writeIndex] = c;
                 writeIndex += 1;
             }
 
@@ -2735,7 +2699,7 @@ namespace TMPro
         /// <param name="charBuffer"></param>
         /// <param name="writeIndex"></param>
         /// <returns></returns>
-        bool ReplaceOpeningStyleTag(ref char[] sourceText, int srcIndex, out int srcOffset, ref UnicodeChar[] charBuffer, ref int writeIndex)
+        bool ReplaceOpeningStyleTag(ref char[] sourceText, int srcIndex, out int srcOffset, ref int[] charBuffer, ref int writeIndex)
         {
             // Validate <style> tag.
             int hashCode = GetTagHashCode(ref sourceText, srcIndex + 7, out srcOffset);
@@ -2762,7 +2726,7 @@ namespace TMPro
                     {
                         if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                        charBuffer[writeIndex].unicode = 10;
+                        charBuffer[writeIndex] = 10;
                         writeIndex += 1;
                         i += 3;
 
@@ -2770,7 +2734,8 @@ namespace TMPro
                     }
                     else if (IsTagName(ref openingTagArray, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref openingTagArray, i, out int offset, ref charBuffer, ref writeIndex))
+                        int offset = 0;
+                        if (ReplaceOpeningStyleTag(ref openingTagArray, i, out offset, ref charBuffer, ref writeIndex))
                         {
                             i = offset;
                             continue;
@@ -2788,7 +2753,7 @@ namespace TMPro
 
                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                charBuffer[writeIndex].unicode = c;
+                charBuffer[writeIndex] = c;
                 writeIndex += 1;
             }
 
@@ -2805,7 +2770,7 @@ namespace TMPro
         /// <param name="charBuffer"></param>
         /// <param name="writeIndex"></param>
         /// <returns></returns>
-        bool ReplaceOpeningStyleTag(ref StringBuilder sourceText, int srcIndex, out int srcOffset, ref UnicodeChar[] charBuffer, ref int writeIndex)
+        bool ReplaceOpeningStyleTag(ref StringBuilder sourceText, int srcIndex, out int srcOffset, ref int[] charBuffer, ref int writeIndex)
         {
             // Validate <style> tag.
             int hashCode = GetTagHashCode(ref sourceText, srcIndex + 7, out srcOffset);
@@ -2832,7 +2797,7 @@ namespace TMPro
                     {
                         if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                        charBuffer[writeIndex].unicode = 10;
+                        charBuffer[writeIndex] = 10;
                         writeIndex += 1;
                         i += 3;
 
@@ -2840,7 +2805,8 @@ namespace TMPro
                     }
                     else if (IsTagName(ref openingTagArray, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref openingTagArray, i, out int offset, ref charBuffer, ref writeIndex))
+                        int offset = 0;
+                        if (ReplaceOpeningStyleTag(ref openingTagArray, i, out offset, ref charBuffer, ref writeIndex))
                         {
                             i = offset;
                             continue;
@@ -2858,7 +2824,7 @@ namespace TMPro
 
                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                charBuffer[writeIndex].unicode = c;
+                charBuffer[writeIndex] = c;
                 writeIndex += 1;
             }
 
@@ -2874,7 +2840,7 @@ namespace TMPro
         /// <param name="charBuffer"></param>
         /// <param name="writeIndex"></param>
         /// <returns></returns>
-        bool ReplaceClosingStyleTag(ref string sourceText, int srcIndex, ref UnicodeChar[] charBuffer, ref int writeIndex)
+        bool ReplaceClosingStyleTag(ref string sourceText, int srcIndex, ref int[] charBuffer, ref int writeIndex)
         {
             // Get style from the Style Stack
             int hashCode = m_styleStack.CurrentItem();
@@ -2900,7 +2866,7 @@ namespace TMPro
                     {
                         if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                        charBuffer[writeIndex].unicode = 10;
+                        charBuffer[writeIndex] = 10;
                         writeIndex += 1;
                         i += 3;
 
@@ -2908,7 +2874,8 @@ namespace TMPro
                     }
                     else if (IsTagName(ref closingTagArray, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref closingTagArray, i, out int offset, ref charBuffer, ref writeIndex))
+                        int offset = 0;
+                        if (ReplaceOpeningStyleTag(ref closingTagArray, i, out offset, ref charBuffer, ref writeIndex))
                         {
                             i = offset;
                             continue;
@@ -2926,7 +2893,7 @@ namespace TMPro
 
                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                charBuffer[writeIndex].unicode = c;
+                charBuffer[writeIndex] = c;
                 writeIndex += 1;
             }
 
@@ -2942,7 +2909,7 @@ namespace TMPro
         /// <param name="charBuffer"></param>
         /// <param name="writeIndex"></param>
         /// <returns></returns>
-        bool ReplaceClosingStyleTag(ref int[] sourceText, int srcIndex, ref UnicodeChar[] charBuffer, ref int writeIndex)
+        bool ReplaceClosingStyleTag(ref int[] sourceText, int srcIndex, ref int[] charBuffer, ref int writeIndex)
         {
             // Get style from the Style Stack
             int hashCode = m_styleStack.CurrentItem();
@@ -2968,7 +2935,7 @@ namespace TMPro
                     {
                         if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                        charBuffer[writeIndex].unicode = 10;
+                        charBuffer[writeIndex] = 10;
                         writeIndex += 1;
                         i += 3;
 
@@ -2976,7 +2943,8 @@ namespace TMPro
                     }
                     else if (IsTagName(ref closingTagArray, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref closingTagArray, i, out int offset, ref charBuffer, ref writeIndex))
+                        int offset = 0;
+                        if (ReplaceOpeningStyleTag(ref closingTagArray, i, out offset, ref charBuffer, ref writeIndex))
                         {
                             i = offset;
                             continue;
@@ -2994,7 +2962,7 @@ namespace TMPro
 
                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                charBuffer[writeIndex].unicode = c;
+                charBuffer[writeIndex] = c;
                 writeIndex += 1;
             }
 
@@ -3010,7 +2978,7 @@ namespace TMPro
         /// <param name="charBuffer"></param>
         /// <param name="writeIndex"></param>
         /// <returns></returns>
-        bool ReplaceClosingStyleTag(ref char[] sourceText, int srcIndex, ref UnicodeChar[] charBuffer, ref int writeIndex)
+        bool ReplaceClosingStyleTag(ref char[] sourceText, int srcIndex, ref int[] charBuffer, ref int writeIndex)
         {
             // Get style from the Style Stack
             int hashCode = m_styleStack.CurrentItem();
@@ -3036,7 +3004,7 @@ namespace TMPro
                     {
                         if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                        charBuffer[writeIndex].unicode = 10;
+                        charBuffer[writeIndex] = 10;
                         writeIndex += 1;
                         i += 3;
 
@@ -3044,7 +3012,8 @@ namespace TMPro
                     }
                     else if (IsTagName(ref closingTagArray, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref closingTagArray, i, out int offset, ref charBuffer, ref writeIndex))
+                        int offset = 0;
+                        if (ReplaceOpeningStyleTag(ref closingTagArray, i, out offset, ref charBuffer, ref writeIndex))
                         {
                             i = offset;
                             continue;
@@ -3062,7 +3031,7 @@ namespace TMPro
 
                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                charBuffer[writeIndex].unicode = c;
+                charBuffer[writeIndex] = c;
                 writeIndex += 1;
             }
 
@@ -3077,7 +3046,7 @@ namespace TMPro
         /// <param name="charBuffer"></param>
         /// <param name="writeIndex"></param>
         /// <returns></returns>
-        bool ReplaceClosingStyleTag(ref StringBuilder sourceText, int srcIndex, ref UnicodeChar[] charBuffer, ref int writeIndex)
+        bool ReplaceClosingStyleTag(ref StringBuilder sourceText, int srcIndex, ref int[] charBuffer, ref int writeIndex)
         {
             // Get style from the Style Stack
             int hashCode = m_styleStack.CurrentItem();
@@ -3103,7 +3072,7 @@ namespace TMPro
                     {
                         if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                        charBuffer[writeIndex].unicode = 10;
+                        charBuffer[writeIndex] = 10;
                         writeIndex += 1;
                         i += 3;
 
@@ -3111,7 +3080,8 @@ namespace TMPro
                     }
                     else if (IsTagName(ref closingTagArray, "<STYLE=", i))
                     {
-                        if (ReplaceOpeningStyleTag(ref closingTagArray, i, out int offset, ref charBuffer, ref writeIndex))
+                        int offset = 0;
+                        if (ReplaceOpeningStyleTag(ref closingTagArray, i, out offset, ref charBuffer, ref writeIndex))
                         {
                             i = offset;
                             continue;
@@ -3129,7 +3099,7 @@ namespace TMPro
 
                 if (writeIndex == charBuffer.Length) ResizeInternalArray(ref charBuffer);
 
-                charBuffer[writeIndex].unicode = c;
+                charBuffer[writeIndex] = c;
                 writeIndex += 1;
             }
 
@@ -3409,7 +3379,7 @@ namespace TMPro
         /// </summary>
         /// <param name="chars"></param>
         /// <returns></returns>
-        protected virtual int SetArraySizes(UnicodeChar[] chars) { return 0; }
+        protected virtual int SetArraySizes(int[] chars) { return 0; }
 
 
         /// <summary>
@@ -3473,8 +3443,8 @@ namespace TMPro
         {
             m_isCalculatingPreferredValues = true;
 
-            StringToCharArray(text, ref m_TextParsingBuffer);
-            SetArraySizes(m_TextParsingBuffer);
+            StringToCharArray(text, ref m_char_buffer);
+            SetArraySizes(m_char_buffer);
 
             Vector2 margin = k_LargePositiveVector2;
 
@@ -3497,8 +3467,8 @@ namespace TMPro
         {
             m_isCalculatingPreferredValues = true;
 
-            StringToCharArray(text, ref m_TextParsingBuffer);
-            SetArraySizes(m_TextParsingBuffer);
+            StringToCharArray(text, ref m_char_buffer);
+            SetArraySizes(m_char_buffer);
 
             Vector2 margin = new Vector2(width, height);
 
@@ -3703,7 +3673,7 @@ namespace TMPro
             }
 
             // Early exit if we don't have any Text to generate.
-            if (m_TextParsingBuffer == null || m_TextParsingBuffer.Length == 0 || m_TextParsingBuffer[0].unicode == (char)0)
+            if (m_char_buffer == null || m_char_buffer.Length == 0 || m_char_buffer[0] == (char)0)
             {
                 return Vector2.zero;
             }
@@ -3796,10 +3766,11 @@ namespace TMPro
             // Counter to prevent recursive lockup when computing preferred values.
             m_recursiveCount += 1;
 
+            int endTagIndex = 0;
             // Parse through Character buffer to read HTML tags and begin creating mesh.
-            for (int i = 0; m_TextParsingBuffer[i].unicode != 0; i++)
+            for (int i = 0; m_char_buffer[i] != 0; i++)
             {
-                charCode = (int)m_TextParsingBuffer[i].unicode;
+                charCode = m_char_buffer[i];
 
                 // Parse Rich Text Tag
                 #region Parse Rich Text Tag
@@ -3809,7 +3780,7 @@ namespace TMPro
                     m_textElementType = TMP_TextElementType.Character;
 
                     // Check if Tag is valid. If valid, skip to the end of the validated tag.
-                    if (ValidateHtmlTag(m_TextParsingBuffer, i + 1, out int endTagIndex))
+                    if (ValidateHtmlTag(m_char_buffer, i + 1, out endTagIndex))
                     {
                         i = endTagIndex;
 
@@ -3933,20 +3904,18 @@ namespace TMPro
                 // Handle Kerning if Enabled.
                 #region Handle Kerning
                 GlyphValueRecord glyphAdjustments = new GlyphValueRecord();
-                float CharacterSpacingAdjustment = m_characterSpacing;
                 if (m_enableKerning)
                 {
+                    KerningPair adjustmentPair = null;
+
                     if (m_characterCount < totalCharacterCount - 1)
                     {
                         uint nextGlyph = m_textInfo.characterInfo[m_characterCount + 1].character;
                         KerningPairKey keyValue = new KerningPairKey((uint)charCode, nextGlyph);
 
-                        m_currentFontAsset.kerningLookupDictionary.TryGetValue((int)keyValue.key, out KerningPair adjustmentPair);
+                        m_currentFontAsset.kerningLookupDictionary.TryGetValue((int)keyValue.key, out adjustmentPair);
                         if (adjustmentPair != null)
-                        {
                             glyphAdjustments = adjustmentPair.firstGlyphAdjustments;
-                            CharacterSpacingAdjustment = adjustmentPair.ignoreSpacingAdjustments ? 0 : CharacterSpacingAdjustment;
-                        }
                     }
 
                     if (m_characterCount >= 1)
@@ -3954,12 +3923,9 @@ namespace TMPro
                         uint previousGlyph = m_textInfo.characterInfo[m_characterCount - 1].character;
                         KerningPairKey keyValue = new KerningPairKey(previousGlyph, (uint)charCode);
 
-                        m_currentFontAsset.kerningLookupDictionary.TryGetValue((int)keyValue.key, out KerningPair adjustmentPair);
+                        m_currentFontAsset.kerningLookupDictionary.TryGetValue((int)keyValue.key, out adjustmentPair);
                         if (adjustmentPair != null)
-                        {
                             glyphAdjustments += adjustmentPair.secondGlyphAdjustments;
-                            CharacterSpacingAdjustment = adjustmentPair.ignoreSpacingAdjustments ? 0 : CharacterSpacingAdjustment;
-                        }
                     }
                 }
                 #endregion
@@ -4093,10 +4059,10 @@ namespace TMPro
                             wrappingIndex = i;  // Used to detect when line length can no longer be reduced.
 
                             // Handling for Soft Hyphen
-                            if (m_TextParsingBuffer[i].unicode == 0xAD) // && !m_isCharacterWrappingEnabled) // && ellipsisIndex != i && !m_isCharacterWrappingEnabled)
+                            if (m_char_buffer[i] == 0xAD) // && !m_isCharacterWrappingEnabled) // && ellipsisIndex != i && !m_isCharacterWrappingEnabled)
                             {
                                 m_isTextTruncated = true;
-                                m_TextParsingBuffer[i].unicode = 0x2D;
+                                m_char_buffer[i] = 0x2D;
                                 return CalculatePreferredValues(defaultFontSize, marginSize, true);
                             }
 
@@ -4263,14 +4229,14 @@ namespace TMPro
                 }
                 else if (m_monoSpacing != 0)
                 {
-                    m_xAdvance += (m_monoSpacing - monoAdvance + ((CharacterSpacingAdjustment + m_currentFontAsset.normalSpacingOffset) * currentElementScale) + m_cSpacing) * (1 - m_charWidthAdjDelta);
+                    m_xAdvance += (m_monoSpacing - monoAdvance + ((m_characterSpacing + m_currentFontAsset.normalSpacingOffset) * currentElementScale) + m_cSpacing) * (1 - m_charWidthAdjDelta);
 
                     if (char.IsWhiteSpace((char)charCode) || charCode == 0x200B)
                         m_xAdvance += m_wordSpacing * currentElementScale;
                 }
                 else
                 {
-                    m_xAdvance += ((m_cached_TextElement.glyph.metrics.horizontalAdvance * bold_xAdvance_multiplier + CharacterSpacingAdjustment + m_currentFontAsset.normalSpacingOffset + glyphAdjustments.xAdvance) * currentElementScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
+                    m_xAdvance += ((m_cached_TextElement.glyph.metrics.horizontalAdvance * bold_xAdvance_multiplier + m_characterSpacing + m_currentFontAsset.normalSpacingOffset + glyphAdjustments.xAdvance) * currentElementScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
 
                     if (char.IsWhiteSpace((char)charCode) || charCode == 0x200B)
                         m_xAdvance += m_wordSpacing * currentElementScale;
@@ -5440,10 +5406,13 @@ namespace TMPro
         /// <param name=""></param>
         protected void GetSpecialCharacters(TMP_FontAsset fontAsset)
         {
+            TMP_FontAsset tempFontAsset;
+            bool isUsingAlternativeTypeface;
+
             // Check & Assign Underline Character for use with the Underline tag.
             if (!fontAsset.characterLookupTable.TryGetValue(95, out m_cached_Underline_Character))
             {
-                m_cached_Underline_Character = TMP_FontAssetUtilities.GetCharacterFromFontAsset(95,fontAsset, false, m_FontStyleInternal, (FontWeight)m_FontWeightInternal, out bool isUsingAlternativeTypeface, out TMP_FontAsset tempFontAsset);
+                m_cached_Underline_Character = TMP_FontAssetUtilities.GetCharacterFromFontAsset(95,fontAsset, false, m_FontStyleInternal, (FontWeight)m_FontWeightInternal, out isUsingAlternativeTypeface, out tempFontAsset);
 
                 if (m_cached_Underline_Character == null)
             {
@@ -5455,7 +5424,7 @@ namespace TMPro
             // Check & Assign Underline Character for use with the Underline tag.
             if (!fontAsset.characterLookupTable.TryGetValue(8230, out m_cached_Ellipsis_Character)) //95
             {
-                m_cached_Ellipsis_Character = TMP_FontAssetUtilities.GetCharacterFromFontAsset(8230, fontAsset, false, m_FontStyleInternal, (FontWeight)m_FontWeightInternal, out bool isUsingAlternativeTypeface, out TMP_FontAsset tempFontAsset);
+                m_cached_Ellipsis_Character = TMP_FontAssetUtilities.GetCharacterFromFontAsset(8230, fontAsset, false, m_FontStyleInternal, (FontWeight)m_FontWeightInternal, out isUsingAlternativeTypeface, out tempFontAsset);
 
                 if (m_cached_Ellipsis_Character == null)
             {
@@ -5916,7 +5885,8 @@ namespace TMPro
         /// <returns></returns>
         protected float ConvertToFloat(char[] chars, int startIndex, int length)
         {
-            return ConvertToFloat(chars, startIndex, length, out int lastIndex);
+            int lastIndex = 0;
+            return ConvertToFloat(chars, startIndex, length, out lastIndex);
         }
 
 
@@ -5998,7 +5968,7 @@ namespace TMPro
         /// <param name="startIndex"></param>
         /// <param name="endIndex"></param>
         /// <returns></returns>
-        protected bool ValidateHtmlTag(UnicodeChar[] chars, int startIndex, out int endIndex)
+        protected bool ValidateHtmlTag(int[] chars, int startIndex, out int endIndex)
         {
             int tagCharCount = 0;
             byte attributeFlag = 0;
@@ -6021,9 +5991,9 @@ namespace TMPro
             bool isTagSet = false;
             bool isValidHtmlTag = false;
 
-            for (int i = startIndex; i < chars.Length && chars[i].unicode != 0 && tagCharCount < m_htmlTag.Length && chars[i].unicode != '<'; i++)
+            for (int i = startIndex; i < chars.Length && chars[i] != 0 && tagCharCount < m_htmlTag.Length && chars[i] != '<'; i++)
             {
-                int unicode = chars[i].unicode;
+                int unicode = chars[i];
 
                 if (unicode == '>') // ASCII Code of End HTML tag '>'
                 {
@@ -6499,10 +6469,10 @@ namespace TMPro
                         switch (tagUnitType)
                         {
                             case TagUnitType.Pixels:
-                                m_baselineOffset = value * (m_isOrthographic ? 1 : 0.1f);
+                                m_baselineOffset = value;
                                 return true;
                             case TagUnitType.FontUnits:
-                                m_baselineOffset = value * (m_isOrthographic ? 1 : 0.1f) * m_currentFontSize;
+                                m_baselineOffset = value * m_currentFontSize;
                                 return true;
                             case TagUnitType.Percentage:
                                 //m_baselineOffset = m_marginHeight * val / 100;
@@ -6761,10 +6731,10 @@ namespace TMPro
                         switch (tagUnitType)
                         {
                             case TagUnitType.Pixels:
-                                m_xAdvance += value * (m_isOrthographic ? 1 : 0.1f);
+                                m_xAdvance += value;
                                 return true;
                             case TagUnitType.FontUnits:
-                                m_xAdvance += value * (m_isOrthographic ? 1 : 0.1f) * m_currentFontSize;
+                                m_xAdvance += value * m_currentFontSize;
                                 return true;
                             case TagUnitType.Percentage:
                                 // Not applicable
@@ -6850,7 +6820,7 @@ namespace TMPro
                         switch (tagUnitType)
                         {
                             case TagUnitType.Pixels:
-                                m_width = value * (m_isOrthographic ? 1 : 0.1f);
+                                m_width = value;
                                 break;
                             case TagUnitType.FontUnits:
                                 return false;
@@ -7016,10 +6986,10 @@ namespace TMPro
                         switch (tagUnitType)
                         {
                             case TagUnitType.Pixels:
-                                m_cSpacing = value * (m_isOrthographic ? 1 : 0.1f);
+                                m_cSpacing = value;
                                 break;
                             case TagUnitType.FontUnits:
-                                m_cSpacing = value * (m_isOrthographic ? 1 : 0.1f) * m_currentFontSize;
+                                m_cSpacing = value * m_currentFontSize;
                                 break;
                             case TagUnitType.Percentage:
                                 return false;
@@ -7045,10 +7015,10 @@ namespace TMPro
                         switch (tagUnitType)
                         {
                             case TagUnitType.Pixels:
-                                m_monoSpacing = value * (m_isOrthographic ? 1 : 0.1f);
+                                m_monoSpacing = value;
                                 break;
                             case TagUnitType.FontUnits:
-                                m_monoSpacing = value * (m_isOrthographic ? 1 : 0.1f) * m_currentFontSize;
+                                m_monoSpacing = value * m_currentFontSize;
                                 break;
                             case TagUnitType.Percentage:
                                 return false;
@@ -7072,10 +7042,10 @@ namespace TMPro
                         switch (tagUnitType)
                         {
                             case TagUnitType.Pixels:
-                                tag_Indent = value * (m_isOrthographic ? 1 : 0.1f);
+                                tag_Indent = value;
                                 break;
                             case TagUnitType.FontUnits:
-                                tag_Indent = value * (m_isOrthographic ? 1 : 0.1f) * m_currentFontSize;
+                                tag_Indent = value * m_currentFontSize;
                                 break;
                             case TagUnitType.Percentage:
                                 tag_Indent = m_marginWidth * value / 100;
@@ -7098,10 +7068,10 @@ namespace TMPro
                         switch (tagUnitType)
                         {
                             case TagUnitType.Pixels:
-                                tag_LineIndent = value * (m_isOrthographic ? 1 : 0.1f);
+                                tag_LineIndent = value;
                                 break;
                             case TagUnitType.FontUnits:
-                                tag_LineIndent = value * (m_isOrthographic ? 1 : 0.1f) * m_currentFontSize;
+                                tag_LineIndent = value * m_currentFontSize;
                                 break;
                             case TagUnitType.Percentage:
                                 tag_LineIndent = m_marginWidth * value / 100;
@@ -7311,10 +7281,10 @@ namespace TMPro
                                 switch (tagUnitType)
                                 {
                                     case TagUnitType.Pixels:
-                                        m_marginLeft = value * (m_isOrthographic ? 1 : 0.1f);
+                                        m_marginLeft = value;
                                         break;
                                     case TagUnitType.FontUnits:
-                                        m_marginLeft = value * (m_isOrthographic ? 1 : 0.1f) * m_currentFontSize;
+                                        m_marginLeft = value * m_currentFontSize;
                                         break;
                                     case TagUnitType.Percentage:
                                         m_marginLeft = (m_marginWidth - (m_width != -1 ? m_width : 0)) * value / 100;
@@ -7339,10 +7309,10 @@ namespace TMPro
                                             switch (m_xmlAttribute[i].unitType)
                                             {
                                                 case TagUnitType.Pixels:
-                                                    m_marginLeft = value * (m_isOrthographic ? 1 : 0.1f);
+                                                    m_marginLeft = value;
                                                     break;
                                                 case TagUnitType.FontUnits:
-                                                    m_marginLeft = value * (m_isOrthographic ? 1 : 0.1f) * m_currentFontSize;
+                                                    m_marginLeft = value * m_currentFontSize;
                                                     break;
                                                 case TagUnitType.Percentage:
                                                     m_marginLeft = (m_marginWidth - (m_width != -1 ? m_width : 0)) * value / 100;
@@ -7358,10 +7328,10 @@ namespace TMPro
                                             switch (m_xmlAttribute[i].unitType)
                                             {
                                                 case TagUnitType.Pixels:
-                                                    m_marginRight = value * (m_isOrthographic ? 1 : 0.1f);
+                                                    m_marginRight = value;
                                                     break;
                                                 case TagUnitType.FontUnits:
-                                                    m_marginRight = value * (m_isOrthographic ? 1 : 0.1f) * m_currentFontSize;
+                                                    m_marginRight = value * m_currentFontSize;
                                                     break;
                                                 case TagUnitType.Percentage:
                                                     m_marginRight = (m_marginWidth - (m_width != -1 ? m_width : 0)) * value / 100;
@@ -7385,16 +7355,17 @@ namespace TMPro
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength); // px
                         if (value == -9999) return false;
 
+                        m_marginLeft = value;
                         switch (tagUnitType)
                         {
                             case TagUnitType.Pixels:
-                                m_marginLeft = value * (m_isOrthographic ? 1 : 0.1f);
+                                // Default behavior
                                 break;
                             case TagUnitType.FontUnits:
-                                m_marginLeft = value * (m_isOrthographic ? 1 : 0.1f) * m_currentFontSize;
+                                m_marginLeft *= m_currentFontSize;
                                 break;
                             case TagUnitType.Percentage:
-                                m_marginLeft = (m_marginWidth - (m_width != -1 ? m_width : 0)) * value / 100;
+                                m_marginLeft = (m_marginWidth - (m_width != -1 ? m_width : 0)) * m_marginLeft / 100;
                                 break;
                         }
                         m_marginLeft = m_marginLeft >= 0 ? m_marginLeft : 0;
@@ -7404,16 +7375,17 @@ namespace TMPro
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength); // px
                         if (value == -9999) return false;
 
+                        m_marginRight = value;
                         switch (tagUnitType)
                         {
                             case TagUnitType.Pixels:
-                                m_marginRight = value * (m_isOrthographic ? 1 : 0.1f);
+                                // Default behavior
                                 break;
                             case TagUnitType.FontUnits:
-                                m_marginRight = value * (m_isOrthographic ? 1 : 0.1f) * m_currentFontSize;
+                                m_marginRight *= m_currentFontSize;
                                 break;
                             case TagUnitType.Percentage:
-                                m_marginRight = (m_marginWidth - (m_width != -1 ? m_width : 0)) * value / 100;
+                                m_marginRight = (m_marginWidth - (m_width != -1 ? m_width : 0)) * m_marginRight / 100;
                                 break;
                         }
                         m_marginRight = m_marginRight >= 0 ? m_marginRight : 0;
@@ -7423,16 +7395,17 @@ namespace TMPro
                         value = ConvertToFloat(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
                         if (value == -9999 || value == 0) return false;
 
+                        m_lineHeight = value;
                         switch (tagUnitType)
                         {
                             case TagUnitType.Pixels:
-                                m_lineHeight = value * (m_isOrthographic ? 1 : 0.1f); 
+                                //m_lineHeight = value; 
                                 break;
                             case TagUnitType.FontUnits:
-                                m_lineHeight = value * (m_isOrthographic ? 1 : 0.1f) * m_currentFontSize;
+                                m_lineHeight *= m_currentFontSize;
                                 break;
                             case TagUnitType.Percentage:
-                                m_lineHeight = m_fontAsset.faceInfo.lineHeight * value / 100 * m_fontScale;
+                                m_lineHeight = m_fontAsset.faceInfo.lineHeight * m_lineHeight / 100 * m_fontScale;
                                 break;
                         }
                         return true;

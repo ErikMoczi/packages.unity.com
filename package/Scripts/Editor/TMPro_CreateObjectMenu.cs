@@ -53,8 +53,7 @@ namespace TMPro.EditorUtilities
             // Override text color and font size
             TMP_Text textComponent = go.GetComponent<TMP_Text>();
             textComponent.color = Color.white;
-            if (textComponent.m_isWaitingOnResourceLoad == false)
-                textComponent.fontSize = TMP_Settings.defaultFontSize;
+            textComponent.fontSize = TMP_Settings.defaultFontSize;
 
             PlaceUIElementRoot(go, menuCommand);
         }
@@ -130,9 +129,10 @@ namespace TMPro.EditorUtilities
                 return;
 
             // Create world space Plane from canvas position.
+            Vector2 localPlanePosition;
             Camera camera = sceneView.camera;
             Vector3 position = Vector3.zero;
-            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRTransform, new Vector2(camera.pixelWidth / 2, camera.pixelHeight / 2), camera, out Vector2 localPlanePosition))
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRTransform, new Vector2(camera.pixelWidth / 2, camera.pixelHeight / 2), camera, out localPlanePosition))
             {
                 // Adjust for canvas pivot
                 localPlanePosition.x = localPlanePosition.x + canvasRTransform.sizeDelta.x * canvasRTransform.pivot.x;

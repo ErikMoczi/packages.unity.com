@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
+using UnityEngine.Experimental.UIElements;
 
 #pragma warning disable 0414 // Disabled a few warnings for not yet implemented features.
 
@@ -289,7 +290,6 @@ namespace TMPro.EditorUtilities
     class TMP_ResourceImporterProvider : SettingsProvider
     {
         TMP_PackageResourceImporter m_ResourceImporter;
-
         public TMP_ResourceImporterProvider()
             : base("Project/TextMesh Pro", SettingsScope.Project)
         {
@@ -299,15 +299,18 @@ namespace TMPro.EditorUtilities
         {
             // Lazy creation that supports domain reload
             if (m_ResourceImporter == null)
+            {
                 m_ResourceImporter = new TMP_PackageResourceImporter();
-
+            }
             m_ResourceImporter.OnGUI();
         }
 
         public override void OnDeactivate()
         {
             if (m_ResourceImporter != null)
+            {
                 m_ResourceImporter.OnDestroy();
+            }
         }
 
         static UnityEngine.Object GetTMPSettings()
@@ -319,7 +322,6 @@ namespace TMPro.EditorUtilities
         static SettingsProvider[] CreateTMPSettingsProvider()
         {
             var providers = new List<SettingsProvider> { new TMP_ResourceImporterProvider() };
-
             if (GetTMPSettings() != null)
             {
                 var provider = new AssetSettingsProvider("Project/TextMesh Pro/Settings", GetTMPSettings);

@@ -616,6 +616,7 @@ namespace TMPro.EditorUtilities
                 m_GlyphRenderMode = (GlyphRenderMode)EditorGUILayout.EnumPopup("Render Mode", m_GlyphRenderMode);
                 if (EditorGUI.EndChangeCheck())
                 {
+                    //m_availableShaderNames = UpdateShaderList(font_renderMode, out m_availableShaders);
                     m_IsFontAtlasInvalid = true;
                 }
 
@@ -724,7 +725,8 @@ namespace TMPro.EditorUtilities
                             {
                                 uint unicode = characterSet[i];
 
-                                if (FontEngine.TryGetGlyphIndex(unicode, out uint glyphIndex))
+                                uint glyphIndex;
+                                if (FontEngine.TryGetGlyphIndex(unicode, out glyphIndex))
                                 {
                                     // Skip over potential duplicate characters.
                                     if (m_CharacterLookupMap.ContainsKey(unicode))
@@ -785,7 +787,8 @@ namespace TMPro.EditorUtilities
                                         {
                                             uint glyphIndex = m_AvailableGlyphsToAdd[i];
 
-                                            if (FontEngine.TryGetGlyphWithIndexValue(glyphIndex, glyphLoadFlags, out Glyph glyph))
+                                            Glyph glyph;
+                                            if (FontEngine.TryGetGlyphWithIndexValue(glyphIndex, glyphLoadFlags, out glyph))
                                             {
                                                 if (glyph.glyphRect.width > 0 && glyph.glyphRect.height > 0)
                                                 {
@@ -854,7 +857,8 @@ namespace TMPro.EditorUtilities
                                     {
                                         uint glyphIndex = m_AvailableGlyphsToAdd[i];
 
-                                        if (FontEngine.TryGetGlyphWithIndexValue(glyphIndex, glyphLoadFlags, out Glyph glyph))
+                                        Glyph glyph;
+                                        if (FontEngine.TryGetGlyphWithIndexValue(glyphIndex, glyphLoadFlags, out glyph))
                                         {
                                             if (glyph.glyphRect.width > 0 && glyph.glyphRect.height > 0)
                                             {
@@ -903,7 +907,7 @@ namespace TMPro.EditorUtilities
                             m_FontGlyphTable.Clear();
                             m_GlyphsToRender.Clear();
 
-                            // Add glyphs and characters successfully added to texture to their respective font tables.
+                            // Add glyphs and characters successfully added to texture to their respective font tables. 
                             foreach (Glyph glyph in m_GlyphsPacked)
                             {
                                 uint glyphIndex = glyph.index;
@@ -941,7 +945,7 @@ namespace TMPro.EditorUtilities
                         {
                             autoEvent.WaitOne();
 
-                            // Start Stop Watch
+                        // Start Stop Watch
                             m_StopWatch = System.Diagnostics.Stopwatch.StartNew();
 
                             m_IsRenderingDone = false;
@@ -953,7 +957,7 @@ namespace TMPro.EditorUtilities
 
                             // Render and add glyphs to the given atlas texture.
                             if (m_GlyphsToRender.Count > 0)
-                            {
+                        {
                                 FontEngine.RenderGlyphsToTexture(m_GlyphsToRender, m_Padding, m_GlyphRenderMode, m_AtlasTextureBuffer, m_AtlasWidth, m_AtlasHeight);
                             }
 
@@ -1308,10 +1312,6 @@ namespace TMPro.EditorUtilities
                 // Set version number of font asset
                 fontAsset.version = "1.1.0";
 
-                // Special handling to remove legacy font asset data
-                if (fontAsset.m_glyphInfoList != null && fontAsset.m_glyphInfoList.Count > 0)
-                    fontAsset.m_glyphInfoList = null;
-
                 // Destroy Assets that will be replaced.
                 if (fontAsset.atlasTextures != null && fontAsset.atlasTextures.Length > 0)
                     DestroyImmediate(fontAsset.atlasTextures[0], true);
@@ -1474,10 +1474,6 @@ namespace TMPro.EditorUtilities
 
                 // Set version number of font asset
                 fontAsset.version = "1.1.0";
-
-                // Special handling to remove legacy font asset data
-                if (fontAsset.m_glyphInfoList != null && fontAsset.m_glyphInfoList.Count > 0)
-                    fontAsset.m_glyphInfoList = null;
 
                 //Set Font Asset Type
                 fontAsset.atlasRenderMode = m_GlyphRenderMode;

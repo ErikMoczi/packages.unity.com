@@ -36,9 +36,9 @@ namespace TMPro
             return hashCode;
         }
 
-        public static int GetHashCodeCaseSensitive(string s)
+        public static uint GetHashCodeCaseSensitive(string s)
         {
-            int hashCode = 0;
+            uint hashCode = 0;
 
             for (int i = 0; i < s.Length; i++)
                 hashCode = ((hashCode << 5) + hashCode) ^ s[i];

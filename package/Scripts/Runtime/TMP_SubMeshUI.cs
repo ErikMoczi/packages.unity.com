@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace TMPro
 {
-    [ExecuteAlways]
+
     public class TMP_SubMeshUI : MaskableGraphic, IClippable, IMaskable, IMaterialModifier
     {
         /// <summary>

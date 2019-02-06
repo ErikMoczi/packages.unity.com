@@ -365,7 +365,8 @@ namespace TMPro
             int texID = tex.GetInstanceID();
             long key = (long)sourceID << 32 | (long)(uint)texID;
 
-            if (m_fallbackMaterials.TryGetValue(key, out FallbackMaterial fallback))
+            FallbackMaterial fallback;
+            if (m_fallbackMaterials.TryGetValue(key, out fallback))
             {
                 //Debug.Log("Material [" + fallback.fallbackMaterial.name + "] already exists.");
                 return fallback.fallbackMaterial;
@@ -424,10 +425,12 @@ namespace TMPro
 
             int sourceID = targetMaterial.GetInstanceID();
 
+            long key;
             // Lookup key to retrieve 
-            if (m_fallbackMaterialLookup.TryGetValue(sourceID, out long key))
+            if (m_fallbackMaterialLookup.TryGetValue(sourceID, out key))
             {
-                if (m_fallbackMaterials.TryGetValue(key, out FallbackMaterial fallback))
+                FallbackMaterial fallback;
+                if (m_fallbackMaterials.TryGetValue(key, out fallback))
                 {
                     //Debug.Log("Adding Fallback material " + fallback.fallbackMaterial.name + " with reference count of " + (fallback.count + 1));
                     fallback.count += 1;
@@ -446,10 +449,12 @@ namespace TMPro
 
             int sourceID = targetMaterial.GetInstanceID();
 
+            long key;
             // Lookup key to retrieve 
-            if (m_fallbackMaterialLookup.TryGetValue(sourceID, out long key))
+            if (m_fallbackMaterialLookup.TryGetValue(sourceID, out key))
             {
-                if (m_fallbackMaterials.TryGetValue(key, out FallbackMaterial fallback))
+                FallbackMaterial fallback;
+                if (m_fallbackMaterials.TryGetValue(key, out fallback))
                 {
                     fallback.count -= 1;
 
@@ -498,9 +503,11 @@ namespace TMPro
 
             int materialID = fallackMaterial.GetInstanceID();
 
-            if (m_fallbackMaterialLookup.TryGetValue(materialID, out long key))
+            long key;
+            if (m_fallbackMaterialLookup.TryGetValue(materialID, out key))
             {
-                if (m_fallbackMaterials.TryGetValue(key, out FallbackMaterial fallback))
+                FallbackMaterial fallback;
+                if (m_fallbackMaterials.TryGetValue(key, out fallback))
                 {
                     //Debug.Log("Releasing Fallback material " + fallback.fallbackMaterial.name + " with remaining reference count of " + (fallback.count - 1));
 

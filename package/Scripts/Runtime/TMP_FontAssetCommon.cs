@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.TextCore;
-using UnityEngine.TextCore.LowLevel;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -225,16 +224,6 @@ namespace TMPro
         [FormerlySerializedAs("XadvanceOffset")]
         public float xOffset;
 
-        /// <summary>
-        /// Determines if the Character Spacing property of the text object will affect the kerning pair.
-        /// This is mostly relevant when using Diacritical marks to prevent Character Spacing from altering the 
-        /// </summary>
-        public bool ignoreSpacingAdjustments
-        {
-            get { return m_IgnoreSpacingAdjustments; }
-        }
-        [SerializeField]
-        private bool m_IgnoreSpacingAdjustments = false;
 
         public KerningPair()
         {
@@ -273,6 +262,7 @@ namespace TMPro
     public class KerningTable
     {
         public List<KerningPair> kerningPairs;
+
 
         public KerningTable()
         {

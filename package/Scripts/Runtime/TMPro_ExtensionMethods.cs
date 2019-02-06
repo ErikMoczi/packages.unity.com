@@ -34,21 +34,15 @@ namespace TMPro
 
         public static string IntToString(this int[] unicodes, int start, int length)
         {
-            if (start > unicodes.Length)
-                return string.Empty;
+            char[] chars = new char[length];
+            int end = start + length;
 
-            int end = Mathf.Min(start + length, unicodes.Length);
-
-            char[] chars = new char[end - start];
-
-            int writeIndex = 0;
-
-            for (int i = start; i < end; i++)
+            for (int i = start; i < end && i < unicodes.Length; i++)
             {
-                chars[writeIndex++] = (char)unicodes[i];
+                chars[i] = (char)unicodes[i];
             }
 
-            return new string(chars);
+            return new string(chars, start, length);
         }
 
 

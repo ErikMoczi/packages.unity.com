@@ -11,7 +11,6 @@ namespace TMPro
     [RequireComponent(typeof(MeshRenderer))]
     [RequireComponent(typeof(MeshFilter))] 
     [AddComponentMenu("Mesh/TextMeshPro - Text")]
-    [ExecuteAlways]
     public partial class TextMeshPro : TMP_Text, ILayoutElement
     {
         // Public Properties and Serializable Properties
@@ -320,8 +319,8 @@ namespace TMPro
         /// <returns></returns>
         public override TMP_TextInfo GetTextInfo(string text)
         {
-            StringToCharArray(text, ref m_TextParsingBuffer);
-            SetArraySizes(m_TextParsingBuffer);
+            StringToCharArray(text, ref m_char_buffer);
+            SetArraySizes(m_char_buffer);
 
             m_renderMode = TextRenderFlags.DontRender;
 

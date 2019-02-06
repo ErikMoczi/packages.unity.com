@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.TextCore;
 
 namespace TMPro
@@ -19,17 +22,16 @@ namespace TMPro
         }
 
         /// <summary>
-        /// Constructor for new character
+        /// Constructor font new character
         /// </summary>
-        /// <param name="unicode">Unicode value.</param>
-        /// <param name="glyph">Glyph</param>
+        /// <param name="unicode"></param>
+        /// <param name="glyph"></param>
         public TMP_Character(uint unicode, Glyph glyph)
         {
             m_ElementType = TextElementType.Character;
 
             this.unicode = unicode;
             this.glyph = glyph;
-            this.glyphIndex = glyph.index;
             this.scale = 1.0f;
         }
     }

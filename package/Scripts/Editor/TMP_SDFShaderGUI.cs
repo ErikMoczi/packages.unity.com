@@ -329,10 +329,6 @@ namespace TMPro.EditorUtilities
             EditorGUILayout.Space();
             DoFloat("_ScaleX", "Scale X");
             DoFloat("_ScaleY", "Scale Y");
-
-            if (m_Material.HasProperty(ShaderUtilities.ID_Sharpness))
-                DoSlider("_Sharpness", "Sharpness");
-
             DoSlider("_PerspectiveFilter", "Perspective Filter");
             EditorGUILayout.Space();
             DoFloat("_VertexOffsetX", "Offset X");

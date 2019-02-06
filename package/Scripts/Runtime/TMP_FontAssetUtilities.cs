@@ -80,39 +80,36 @@ namespace TMPro
                 // Get reference to the font weight pairs of the given font asset.
                 TMP_FontWeightPair[] fontWeights = sourceFontAsset.fontWeightTable;
 
-                int fontWeightIndex = 4;
                 switch (fontWeight)
                 {
                     case FontWeight.Thin:
-                        fontWeightIndex = 1;
+                        fontAsset = isItalic ? fontWeights[1].italicTypeface : fontWeights[1].regularTypeface;
                         break;
                     case FontWeight.ExtraLight:
-                        fontWeightIndex = 2;
+                        fontAsset = isItalic ? fontWeights[2].italicTypeface : fontWeights[2].regularTypeface;
                         break;
                     case FontWeight.Light:
-                        fontWeightIndex = 3;
+                        fontAsset = isItalic ? fontWeights[3].italicTypeface : fontWeights[3].regularTypeface;
                         break;
                     case FontWeight.Regular:
-                        fontWeightIndex = 4;
+                        fontAsset = isItalic ? fontWeights[4].italicTypeface : fontWeights[4].regularTypeface;
                         break;
                     case FontWeight.Medium:
-                        fontWeightIndex = 5;
+                        fontAsset = isItalic ? fontWeights[5].italicTypeface : fontWeights[5].regularTypeface;
                         break;
                     case FontWeight.SemiBold:
-                        fontWeightIndex = 6;
+                        fontAsset = isItalic ? fontWeights[6].italicTypeface : fontWeights[6].regularTypeface;
                         break;
                     case FontWeight.Bold:
-                        fontWeightIndex = 7;
+                        fontAsset = isItalic ? fontWeights[7].italicTypeface : fontWeights[7].regularTypeface;
                         break;
                     case FontWeight.Heavy:
-                        fontWeightIndex = 8;
+                        fontAsset = isItalic ? fontWeights[8].italicTypeface : fontWeights[8].regularTypeface;
                         break;
                     case FontWeight.Black:
-                        fontWeightIndex = 9;
+                        fontAsset = isItalic ? fontWeights[9].italicTypeface : fontWeights[9].regularTypeface;
                         break;
                 }
-
-                fontAsset = isItalic ? fontWeights[fontWeightIndex].italicTypeface : fontWeights[fontWeightIndex].regularTypeface;
 
                 if (fontAsset != null)
                 {
@@ -122,9 +119,9 @@ namespace TMPro
 
                         return characterData;
                     }
-                    else if (fontAsset.atlasPopulationMode == AtlasPopulationMode.Dynamic)
+                    else if (fontAsset.atlasPopulationMode == TMP_FontAsset.AtlasPopulationMode.Dynamic)
                     {
-                        if (fontAsset.TryAddCharacterInternal(unicode, out characterData))
+                        if (fontAsset.TryAddCharacter(unicode, out characterData))
                         {
                             isAlternativeTypeface = true;
 
@@ -161,9 +158,9 @@ namespace TMPro
 
                 return characterData;
             }
-            else if (sourceFontAsset.atlasPopulationMode == AtlasPopulationMode.Dynamic)
+            else if (sourceFontAsset.atlasPopulationMode == TMP_FontAsset.AtlasPopulationMode.Dynamic)
             {
-                if (sourceFontAsset.TryAddCharacterInternal(unicode, out characterData))
+                if (sourceFontAsset.TryAddCharacter(unicode, out characterData))
                 {
                     fontAsset = sourceFontAsset;
 
@@ -301,9 +298,9 @@ namespace TMPro
             // TODO: Add manager to keep track of which font faces are currently loaded.
             FontEngine.LoadFontFace(fontAsset.sourceFontFile, fontAsset.faceInfo.pointSize);
 
-            Glyph glyph = null;
             uint glyphIndex = FontEngine.GetGlyphIndex(unicode);
 
+            Glyph glyph;
             // Check if glyph is already contained in the font asset as the same glyph might be referenced by multiple character.
             if (fontAsset.glyphLookupTable.TryGetValue(glyphIndex, out glyph))
             {

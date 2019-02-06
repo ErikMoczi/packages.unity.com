@@ -2035,12 +2035,10 @@ namespace TMPro
         {
             worldPoint = (Vector3)Vector2.zero;
             Ray ray = RectTransformUtility.ScreenPointToRay(cam, screenPoint);
-
-            if (!new Plane(transform.rotation * Vector3.back, transform.position).Raycast(ray, out float enter))
+            float enter;
+            if (!new Plane(transform.rotation * Vector3.back, transform.position).Raycast(ray, out enter))
                 return false;
-
             worldPoint = ray.GetPoint(enter);
-
             return true;
         }
 
@@ -2263,7 +2261,7 @@ namespace TMPro
         /// </summary>
         /// <param name="s"></param>
         /// <returns></returns>
-        public static int StringHexToInt(string s)
+        public static int StringToInt(string s)
         {
             int value = 0;
 

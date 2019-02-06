@@ -5,7 +5,7 @@ using UnityEditor;
 namespace TMPro.EditorUtilities
 {
 
-    [CustomEditor(typeof(TextMeshProUGUI), true), CanEditMultipleObjects]
+    [CustomEditor(typeof(TextMeshProUGUI)), CanEditMultipleObjects]
     public class TMP_UiEditorPanel : TMP_BaseEditorPanel
     {
         static readonly GUIContent k_RaycastTargetLabel = new GUIContent("Raycast Target", "Whether the text blocks raycasts from the Graphic Raycaster.");

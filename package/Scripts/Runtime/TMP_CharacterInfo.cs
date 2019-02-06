@@ -25,7 +25,6 @@ namespace TMPro
         /// Index of the character in the raw string.
         /// </summary>
         public int index; // Index of the character in the input string.
-        public int stringLength;
         public TMP_TextElementType elementType;
 
         public TMP_Character textElement;

@@ -4,7 +4,7 @@ using UnityEditor;
 namespace TMPro.EditorUtilities
 {
 
-    [CustomEditor(typeof(TextMeshPro), true), CanEditMultipleObjects]
+    [CustomEditor(typeof(TextMeshPro)), CanEditMultipleObjects]
     public class TMP_EditorPanel : TMP_BaseEditorPanel
     {
         static readonly GUIContent k_SortingLayerLabel = new GUIContent("Sorting Layer", "Name of the Renderer's sorting layer.");
