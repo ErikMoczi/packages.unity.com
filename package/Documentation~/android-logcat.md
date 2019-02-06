@@ -8,7 +8,6 @@ Android Logcat Package is a utility for displaying log messages coming from Andr
 - Compatible with Unity 2019.1 or above.
 - Requires Unity's Android support module.
 - Active platform in Unity has to be set to Android.
-- Scripting Runtime Version (in Player Settings) has to be set to .NET 4.x.
 
 **Supported features**
 - Device connnection
@@ -119,6 +118,7 @@ To use this feature, you need to
 ## **Document Revision History**
 |Date|Reason|
 |---|---|
+|Jan 22, 2019|Document Updated. Matches package version 0.2.1.|
 |Nov 16, 2018|Document Updated. Matches package version 0.1.3.|
 |Oct 30, 2018|Document Updated. Matches package version 0.1.2.|
 |Oct 23, 2018|Document created. Matches package version 0.1.1.|
