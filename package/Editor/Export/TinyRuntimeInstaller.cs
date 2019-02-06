@@ -545,7 +545,7 @@ namespace Unity.Tiny
     {
         private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
-            if (!InternalEditorUtility.inBatchMode)
+            if (!UnityEditorInternal.InternalEditorUtility.inBatchMode)
             {
                 TinyRuntimeInstaller.InstallOnLoad();
             }
