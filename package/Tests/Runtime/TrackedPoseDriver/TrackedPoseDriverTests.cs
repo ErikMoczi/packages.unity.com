@@ -31,13 +31,15 @@ namespace UnityEngine.SpatialTracking
 
         internal class TestPoseProvider : BasePoseProvider
         {
-            public override bool TryGetPoseFromProvider(out Pose output)
+            public PoseDataFlags flags = PoseDataFlags.Position | PoseDataFlags.Rotation;
+
+            public override PoseDataFlags GetPoseFromProvider(out Pose output)
             {
                 Pose tmp = new Pose();                
                 tmp.position = testpos;
                 tmp.rotation = testrot;
                 output = tmp;
-                return true;
+                return flags;
             }
         }
 
@@ -140,6 +142,34 @@ namespace UnityEngine.SpatialTracking
             Assert.That(tpd.gameObject.transform.position, Is.Not.EqualTo(testpos));
             Assert.That(tpd.gameObject.transform.rotation.Equals(testrot));
         }
+
+        [Test]
+        public void TPDPartialUpdateDataTest()
+        {
+            TestTrackedPoseDriverWrapper tpd = CreateGameObjectWithTPD();
+            BasePoseProvider pp = CreatePoseProviderOnTPD(tpd);
+            TestPoseProvider tpp = pp as TestPoseProvider;
+
+            Assert.That(tpd.poseProviderComponent, Is.EqualTo(pp));
+
+            tpp.flags = PoseDataFlags.Position;
+            tpd.FakeUpdate();
+            Assert.That(tpd.gameObject.transform.position, Is.EqualTo(testpos));
+            Assert.That(!tpd.gameObject.transform.rotation.Equals(testrot));
+
+            Reset(tpd.gameObject);
+            tpp.flags = PoseDataFlags.Rotation;
+            tpd.FakeUpdate();
+            Assert.That(tpd.gameObject.transform.position, Is.Not.EqualTo(testpos));
+            Assert.That(tpd.gameObject.transform.rotation.Equals(testrot));
+
+            Reset(tpd.gameObject);
+            tpp.flags = PoseDataFlags.Position | PoseDataFlags.Rotation;
+            tpd.FakeUpdate();
+            Assert.That(tpd.gameObject.transform.position, Is.EqualTo(testpos));
+            Assert.That(tpd.gameObject.transform.rotation.Equals(testrot));
+        }
+
     }
 }
     

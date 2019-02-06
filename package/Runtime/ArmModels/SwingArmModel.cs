@@ -153,10 +153,10 @@ namespace UnityEngine.XR.LegacyInputHelpers
             Quaternion swingWristRot = Quaternion.Lerp(Quaternion.identity, xyRotation, finalWristRatio);
 
             // Calculate final rotations.
-            Quaternion shoulderRotation = m_TorsoRotation * swingShoulderRot;
+            Quaternion shoulderRotation = torsoRotation * swingShoulderRot;
             m_ElbowRotation = shoulderRotation * swingElbowRot;
             m_WristRotation = elbowRotation * swingWristRot;
-            m_ControllerRotation = m_TorsoRotation * controllerOrientation;
+            m_ControllerRotation = torsoRotation * controllerOrientation;
             m_TorsoRotation = shoulderRotation;
         }
     }

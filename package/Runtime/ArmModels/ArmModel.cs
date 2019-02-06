@@ -26,16 +26,16 @@ namespace UnityEngine.XR.LegacyInputHelpers
     public class ArmModel : BasePoseProvider
     {
 
-        /// <summary> Gets the Pose value from the calculated arm model, false on error.</summary>
-        public override bool TryGetPoseFromProvider(out Pose output)
+        /// <summary> Gets the Pose value from the calculated arm model. as the model returns both position and rotation in all cases, we set both flags on return if successful.</summary>
+        public override PoseDataFlags GetPoseFromProvider(out Pose output)
         {
             if (OnControllerInputUpdated())
             {
                 output = finalPose;
-                return true;
+                return PoseDataFlags.Position | PoseDataFlags.Rotation;
             }
             output = Pose.identity;
-            return false;
+            return PoseDataFlags.NoData;
         }
 
         Pose m_FinalPose;
@@ -513,12 +513,12 @@ namespace UnityEngine.XR.LegacyInputHelpers
         List<XR.XRNodeState> xrNodeStateListPosition = new List<XRNodeState>();
         protected bool TryGetPosition(XRNode node, out Vector3 position)
         {
-            XR.InputTracking.GetNodeStates(xrNodeStateListOrientation);
-            var length = xrNodeStateListOrientation.Count;      
+            XR.InputTracking.GetNodeStates(xrNodeStateListPosition);
+            var length = xrNodeStateListPosition.Count;      
             XRNodeState nodeState;
             for (int i = 0; i < length; ++i)
             {
-                nodeState = xrNodeStateListOrientation[i];
+                nodeState = xrNodeStateListPosition[i];
                 if (nodeState.nodeType == node)
                 {
                     if (nodeState.TryGetPosition(out position))

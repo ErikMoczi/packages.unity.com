@@ -3,6 +3,7 @@ using UnityEngine.XR;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SpatialTracking;
 
 namespace UnityEngine.Experimental.XR.Interaction
 {
@@ -13,7 +14,11 @@ namespace UnityEngine.Experimental.XR.Interaction
     [Serializable]
     public abstract class BasePoseProvider : MonoBehaviour
     {
-        /// <summary> Gets the Pose value from the implementor of this abstract class. returns true on success, false on error.</summary>
-        public abstract bool TryGetPoseFromProvider(out Pose output);
+        /// <summary> Gets the Pose value from the Pose Provider. returns NoData as this is a default implementation. Specalizations shoudl return the correct bitflags relating to the Pose data they are returning</summary>
+        public virtual PoseDataFlags GetPoseFromProvider(out Pose output)
+        {          
+            output = Pose.identity;
+            return PoseDataFlags.NoData;
+        }
     }
 }

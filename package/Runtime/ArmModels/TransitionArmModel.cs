@@ -22,6 +22,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Experimental.XR.Interaction;
+using UnityEngine.SpatialTracking;
 
 [assembly: InternalsVisibleTo("UnityEditor.XR.LegacyInputHelpers")]
 
@@ -153,15 +154,15 @@ namespace UnityEngine.XR.LegacyInputHelpers
             armModelBlendData.RemoveAt(0);
         }
 
-        public override bool TryGetPoseFromProvider(out Pose output)
+        public override PoseDataFlags GetPoseFromProvider(out Pose output)
         {
             if (UpdateBlends())
             {
-                output = finalPose;
-                return true;
+                output = finalPose;               
+                return PoseDataFlags.Position | PoseDataFlags.Rotation;
             }
             output = Pose.identity;
-            return false;
+            return PoseDataFlags.NoData;
         }
 
         bool UpdateBlends()

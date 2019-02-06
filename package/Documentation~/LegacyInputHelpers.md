@@ -5,7 +5,7 @@ These include the Tracked Pose Driver and the Input Asset XR Bindings Seed Utili
 
 ## Requirements
 
-The com.unity.xr.legacyinputhelpers package version 1.2.0 is compatible with the following versions of the Unity Editor:
+The com.unity.xr.legacyinputhelpers package version 2.0.0 is compatible with the following versions of the Unity Editor:
 
 * 2019.1 (recommended)
 

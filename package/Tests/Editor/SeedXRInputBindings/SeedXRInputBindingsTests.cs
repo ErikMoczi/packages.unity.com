@@ -43,7 +43,6 @@ namespace UnityEditor.XR.LegacyInputHelpers.Tests
             // did we create the right number of things?
             Assert.That(inputManagerCurrentData.arraySize == prevInputManagerSize + tsxib.axisList.Count);
                     
-            Dictionary<string, SeedXRInputBindings.BindingData> dataMap = new Dictionary<string, SeedXRInputBindings.BindingData>();
             List<SeedXRInputBindings.InputAxis> currentInputData = new List<SeedXRInputBindings.InputAxis>();
 
             tsxib.LoadExistingDataAndCheckAgainstNewData(inputManagerCurrentData, ref axisMap, ref currentInputData);
@@ -86,7 +85,6 @@ namespace UnityEditor.XR.LegacyInputHelpers.Tests
             inputManagerCurrentData = serializedObject.FindProperty("m_Axes");
             inputManagerCurrentData.arraySize = prevInputManagerSize + 2;
 
-            Dictionary<string, SeedXRInputBindings.BindingData> dataMap = new Dictionary<string, SeedXRInputBindings.BindingData>();
             List<SeedXRInputBindings.InputAxis> currentInputData = new List<SeedXRInputBindings.InputAxis>();
 
             tsxib.LoadExistingDataAndCheckAgainstNewData(inputManagerCurrentData, ref axisMap, ref currentInputData);
