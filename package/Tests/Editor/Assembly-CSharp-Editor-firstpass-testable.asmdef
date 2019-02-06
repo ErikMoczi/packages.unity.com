@@ -3,7 +3,8 @@
     "references": [
         "Unity.InteractiveTutorials.Core",
         "UnityEditor.InteractiveTutorialsFramework",
-        "Unity.InteractiveTutorials.Core.Scripts"
+        "Unity.InteractiveTutorials.Core.Scripts",
+        "Unity.InteractiveTutorials.Core.Tests"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

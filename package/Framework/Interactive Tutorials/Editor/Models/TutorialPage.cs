@@ -115,17 +115,42 @@ namespace Unity.InteractiveTutorials
                 tutorialPageNonMaskingSettingsChanged(this);
         }
 
+        static Queue<WeakReference<TutorialPage>> s_DeferedValidationQueue = new Queue<WeakReference<TutorialPage>>();
+
+        static TutorialPage()
+        {
+            EditorApplication.update += OnEditorUpdate;
+        }
+
+        static void OnEditorUpdate()
+        {
+            while (s_DeferedValidationQueue.Count != 0)
+            {
+                var weakPageReference = s_DeferedValidationQueue.Dequeue();
+                TutorialPage page;
+                if (weakPageReference.TryGetTarget(out page))
+                {
+                    if (page != null) //Taking into account "unity null"
+                    {
+                        page.SyncCriteriaAndFutureReferences();
+                    }
+                }
+            }
+        }
+
         void OnValidate()
         {
-            // Synchronize future references in next editor update due to AssetDatase interactions
-            EditorApplication.update += SyncCriteriaAndFutureReferences;
+            // Defer synchronization of sub-assets to next editor update due to AssetDatabase interactions
+
+            // Retaining a reference to this instance in OnValidate/OnEnable can cause issues on project load
+            // The same object might be imported more than once and if it's referenced it won't be unloaded correctly
+            // Use WeakReference instead of subscribing directly to EditorApplication.update to avoid strong reference
+
+            s_DeferedValidationQueue.Enqueue(new WeakReference<TutorialPage>(this));
         }
 
         void SyncCriteriaAndFutureReferences()
         {
-            // Unsubscribe immediately since it should only be called once
-            EditorApplication.update -= SyncCriteriaAndFutureReferences;
-
             // Find instanceIDs of referenced criteria
             var referencedCriteriaInstanceIDs = new HashSet<int>();
             foreach (var paragraph in paragraphs)

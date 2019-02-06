@@ -143,6 +143,12 @@ namespace Unity.InteractiveTutorials
         void OnHostViewActualViewChanged()
         {
             // do not mask immediately in case unmasked GUIView doesn't exist yet
+            QueueMaskUpdate();
+        }
+
+        void QueueMaskUpdate()
+        {
+            EditorApplication.update -= ApplyQueuedMask;
             EditorApplication.update += ApplyQueuedMask;
         }
 
@@ -404,9 +410,8 @@ namespace Unity.InteractiveTutorials
         {
             if (!IsParentNull())
             {
-                ApplyMaskingSettings(true);
-
                 EditorApplication.update -= ApplyQueuedMask;
+                ApplyMaskingSettings(true);
             }
         }
 
@@ -688,10 +693,9 @@ namespace Unity.InteractiveTutorials
 
         private void ApplyMaskingSettings(bool applyMask)
         {
-            MaskingManager.Unmask();
-
             if (!applyMask || !maskingEnabled || m_CurrentTutorial == null || m_CurrentTutorial.currentPage == null || IsParentNull())
             {
+                MaskingManager.Unmask();
                 InternalEditorUtility.RepaintAllViews();
                 return;
             }
@@ -702,7 +706,13 @@ namespace Unity.InteractiveTutorials
             {
                 if (maskingSettings != null && maskingSettings.enabled)
                 {
-                    var unmaskedViews = UnmaskedView.GetViewsAndRects(maskingSettings.unmaskedViews);
+                    bool foundAncestorProperty;
+                    var unmaskedViews = UnmaskedView.GetViewsAndRects(maskingSettings.unmaskedViews, out foundAncestorProperty);
+                    if (foundAncestorProperty)
+                    {
+                        // Keep updating mask when target property is not unfolded
+                        QueueMaskUpdate();
+                    }
 
                     if (m_CurrentTutorial.currentPageIndex <= m_FarthestPageCompleted)
                     {
@@ -758,6 +768,8 @@ namespace Unity.InteractiveTutorials
                     Debug.LogException(e, m_CurrentTutorial.currentPage);
                 else
                     Console.WriteLine(StackTraceUtility.ExtractStringFromException(e));
+
+                MaskingManager.Unmask();
             }
             finally
             {

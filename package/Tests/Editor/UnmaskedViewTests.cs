@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
 using NUnit.Framework;
+using UnityEditor.UIAutomation;
 
 namespace Unity.InteractiveTutorials.Tests
 {
@@ -112,6 +113,91 @@ namespace Unity.InteractiveTutorials.Tests
             finally
             {
                 GameObject.DestroyImmediate(testObject);
+            }
+        }
+
+        [UnityTest]
+        [TestCase(true, false, ExpectedResult = null)]
+        [TestCase(false, true, ExpectedResult = null)]
+        public IEnumerator TestGetViewsAndRects_ForSerializedPropertyInInspector_WhenParentPropertyIsCollapsed(
+            bool parentPropertyExpanded, bool expectedFoundAncestorProperty)
+        {
+            var testObject = new GameObject("TestGetViewsAndRects_ForContractedPropertyInInspector",
+                typeof(TestComponents.ComponentWithNestedValues));
+
+            Selection.activeObject = testObject;
+            try
+            {
+                var serializedObject = new SerializedObject(testObject.GetComponent<TestComponents.ComponentWithNestedValues>());
+                var parentProperty = serializedObject.FindProperty("componentWithNestedValuesFieldA");
+                var childProperty = serializedObject.FindProperty(
+                    "componentWithNestedValuesFieldA.componentWithNestedValuesFieldB");
+
+                Assert.That(parentProperty, Is.Not.Null);
+                Assert.That(childProperty, Is.Not.Null);
+
+                parentProperty.isExpanded = parentPropertyExpanded;
+                serializedObject.ApplyModifiedProperties();
+
+                var inspectorWindow = EditorWindow.GetWindow<InspectorWindow>();
+
+                Rect labelRectOfExpectedFoundProperty;
+                using (var automatedWindow = new AutomatedWindow<InspectorWindow>(inspectorWindow))
+                {
+                    inspectorWindow.Repaint();
+                    yield return null;
+
+                    if (expectedFoundAncestorProperty)
+                    {
+                        var parentElements = automatedWindow.FindElementsByGUIContent(
+                            new GUIContent("Component With Nested Values Field A"));
+                        Assert.That(parentElements.Count(), Is.EqualTo(1));
+                        labelRectOfExpectedFoundProperty = parentElements.Single().rect;
+                    }
+                    else
+                    {
+                        var childElements = automatedWindow.FindElementsByGUIContent(
+                            new GUIContent("Component With Nested Values Field B"));
+                        Assert.That(childElements.Count(), Is.EqualTo(1));
+                        labelRectOfExpectedFoundProperty = childElements.Single().rect;
+                    }
+                }
+
+                var unmaskedViews = new[] {
+                    UnmaskedView.CreateInstanceForEditorWindow<InspectorWindow>(
+                        new[] {
+                            new GUIControlSelector()
+                            {
+                                selectorMode = GUIControlSelector.Mode.Property,
+                                targetType = typeof(TestComponents.ComponentWithNestedValues),
+                                propertyPath = "componentWithNestedValuesFieldA.componentWithNestedValuesFieldB"
+                            }
+                        }
+                    )
+                };
+
+                bool foundAncestorProperty;
+                var viewsAndRects = UnmaskedView.GetViewsAndRects(unmaskedViews, out foundAncestorProperty)
+                    .m_MaskData;
+
+                Assert.That(foundAncestorProperty, Is.EqualTo(expectedFoundAncestorProperty));
+                Assert.That(viewsAndRects.Count, Is.EqualTo(1), "Did not find one view for the Inspector");
+
+                var rects = viewsAndRects.Values.First().rects;
+                Assert.That(rects.Count, Is.EqualTo(1),
+                    "Did not find exactly one control for the SerializedPropert " +
+                    "componentWithNestedValuesFieldA.componentWithNestedValuesFieldB for ComponentWithNestedValues");
+
+                var rect = rects.Single();
+                Assert.That(rect.yMin, Is.GreaterThanOrEqualTo(labelRectOfExpectedFoundProperty.yMin),
+                    "Found property rect does not contain of label rect of expected found property");
+                Assert.That(rect.yMax, Is.LessThanOrEqualTo(labelRectOfExpectedFoundProperty.yMax),
+                    "Found property rect does not contain of label rect of expected found property");
+
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(testObject);
             }
         }
     }

@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.12] - 2019-01-24
+### Fixed
+- Fix editor entering and exiting play mode on project load
+- Fix unmasked property unmasking entire window when ancestor property is collapsed
+
 ## [0.1.11] - 2019-01-17
 ### Fixed
 - Fix 2019.1 compilation errors

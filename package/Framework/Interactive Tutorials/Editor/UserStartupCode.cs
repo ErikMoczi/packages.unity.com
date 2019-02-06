@@ -32,28 +32,7 @@ namespace Unity.InteractiveTutorials
             if (IsInitilized())
                 return;
 
-            // Temporarily enter play mode to work around issue with asset importing
-            // ScriptableObject asset might be imported twice depending on the asset import order
-            // When the same asset is imported again the previous instance is unloaded
-            // This can cause existing references to become invalid (i.e. m_CachedPtr == 0x0)
-            // Entering and and immediately existing play mode forces a domain reload which fixes this issue
-            EditorApplication.isPlaying = true;
-            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-        }
-
-        static void OnPlayModeStateChanged(PlayModeStateChange playModeStateChange)
-        {
-            switch (playModeStateChange)
-            {
-                case PlayModeStateChange.EnteredPlayMode:
-                    EditorApplication.isPlaying = false;
-                    break;
-
-                case PlayModeStateChange.EnteredEditMode:
-                    EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
-                    InitRunStartupCode();
-                    break;
-            }
+            EditorApplication.update += InitRunStartupCode;
         }
 
         private static void InitRunStartupCode()

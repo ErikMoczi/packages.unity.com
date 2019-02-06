@@ -37,7 +37,7 @@ namespace Unity.InteractiveTutorials
     [Serializable]
     public class UnmaskedView
     {
-        
+
         public class MaskData : ICloneable
         {
             internal Dictionary<GUIViewProxy, MaskViewData> m_MaskData;
@@ -87,6 +87,14 @@ namespace Unity.InteractiveTutorials
 
         public static MaskData GetViewsAndRects(IEnumerable<UnmaskedView> unmaskedViews)
         {
+            bool foundAncestorProperty;
+            return GetViewsAndRects(unmaskedViews, out foundAncestorProperty);
+        }
+
+        public static MaskData GetViewsAndRects(IEnumerable<UnmaskedView> unmaskedViews, out bool foundAncestorProperty)
+        {
+            foundAncestorProperty = false;
+
             var allViews = new List<GUIViewProxy>();
             GUIViewDebuggerHelperProxy.GetViews(allViews);
 
@@ -197,6 +205,37 @@ namespace Unity.InteractiveTutorials
                                     regionRect = instruction.rect;
                                 }
                             }
+
+                            if (!regionFound)
+                            {
+                                // Property instruction not found
+                                // Let's see if we can find any of the ancestor instructions to allow the user to unfold
+                                var propertyPath = controlSelector.propertyPath;
+                                do
+                                {
+                                    // Remove last component of property path
+                                    var lastIndexOfDelimiter = propertyPath.LastIndexOf(".");
+                                    if (lastIndexOfDelimiter < 1)
+                                    {
+                                        // No components left, give up
+                                        break;
+                                    }
+                                    propertyPath = propertyPath.Substring(0, lastIndexOfDelimiter);
+
+                                    foreach (var instruction in propertyInstructions)
+                                    {
+                                        if (instruction.targetTypeName == targetTypeName &&
+                                            instruction.path == propertyPath)
+                                        {
+                                            regionFound = true;
+                                            regionRect = instruction.rect;
+                                            foundAncestorProperty = true;
+
+                                            break;
+                                        }
+                                    }
+                                } while (!regionFound);
+                            }
                             break;
                         default:
                             Debug.LogErrorFormat(
@@ -216,7 +255,7 @@ namespace Unity.InteractiveTutorials
                         }
                         viewRects.Value.rects.Add(regionRect);
                     }
-                    
+
                 }
 
                 GUIViewDebuggerHelperProxy.StopDebugging();
@@ -333,7 +372,7 @@ namespace Unity.InteractiveTutorials
         private SerializedType m_EditorWindowType = new SerializedType(null);
 
         [SerializeField]
-        private MaskType m_MaskType = MaskType.FullyUnmasked; 
+        private MaskType m_MaskType = MaskType.FullyUnmasked;
 
         [SerializeField]
         private MaskSizeModifier m_MaskSizeModifier = MaskSizeModifier.NoModifications;
