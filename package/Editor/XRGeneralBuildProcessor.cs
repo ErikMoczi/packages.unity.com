@@ -49,7 +49,7 @@ namespace UnityEditor.XR.Management
                 where s.GetType() == typeof(XRGeneralSettings)
                 select s;
 
-            if (oldSettings.Any())
+            if (oldSettings != null && oldSettings.Any())
             {
                 var assets = preloadedAssets.ToList();
                 foreach (var s in oldSettings)
