@@ -1,6 +1,7 @@
 {
     "name": "Unity.XR.ARFoundation",
     "references": [
+        "UnityEngine.SpatialTracking",
         "Unity.XR.ARExtensions", 
         "Unity.XR.FaceSubsystem"
     ],
