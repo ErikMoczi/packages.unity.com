@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.1.3] - 2019-01-30
+
+### Fixed
+- Color grading would output negative values in some cases and break rendering on some platforms.
+- Custom effects with `allowInSceneView` set to `false` could make the scene view flicker to black.
+- R8_SRGB error in 2019.1 when Depth of Field and Temporal Anti-aliasing are enabled at the same time.
+- Auto-exposure compute shader on Metal/iOS.
+
 ## [2.1.2] - 2018-12-05
 
 ### Fixed

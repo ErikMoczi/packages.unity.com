@@ -4,10 +4,10 @@
     "displayName": "Post Processing", 
     "name": "com.unity.postprocessing", 
     "repository": {
-        "revision": "bf46ec0c63f1581ca9e0917a95bac20ce7bc733b", 
+        "revision": "0c92d23eb8b5dff6c1ecb96ab807d0a7ace5bb97", 
         "type": "git", 
         "url": "ssh://git@github.com/Unity-Technologies/PostProcessing.git"
     }, 
     "unity": "2018.1", 
-    "version": "2.1.2"
+    "version": "2.1.3"
 }
