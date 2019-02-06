@@ -27,7 +27,7 @@ namespace TMPro.EditorUtilities
             public static readonly GUIContent textMeshProUiLabel = new GUIContent("TextMeshPro UI");
             public static readonly GUIContent enableRaycastTarget = new GUIContent("Enable Raycast Target");
             public static readonly GUIContent autoSizeContainerLabel = new GUIContent("Auto Size Text Container", "Set the size of the text container to match the text.");
-            
+
             public static readonly GUIContent textComponentDefaultSettingsLabel = new GUIContent("Text Component Default Settings");
             public static readonly GUIContent defaultFontSize = new GUIContent("Default Font Size");
             public static readonly GUIContent autoSizeRatioLabel = new GUIContent("Text Auto Size Ratios");
@@ -143,7 +143,7 @@ namespace TMPro.EditorUtilities
 
             float labelWidth = EditorGUIUtility.labelWidth;
             float fieldWidth = EditorGUIUtility.fieldWidth;
-            
+
             // TextMeshPro Font Info Panel
             EditorGUI.indentLevel = 0;
 
@@ -170,7 +170,7 @@ namespace TMPro.EditorUtilities
 
             EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
-            
+
             // MISSING GLYPHS
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             GUILayout.Label(Styles.missingGlyphsTitleLabel, EditorStyles.boldLabel);
@@ -178,15 +178,15 @@ namespace TMPro.EditorUtilities
             EditorGUILayout.PropertyField(m_PropMissingGlyphCharacter, Styles.missingGlyphLabel);
             EditorGUILayout.PropertyField(m_PropWarningsDisabled, Styles.disableWarningsLabel);
             EditorGUI.indentLevel = 0;
-            
+
             EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
-            
+
             // TEXT OBJECT DEFAULT PROPERTIES
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             GUILayout.Label(Styles.containerDefaultSettingsLabel, EditorStyles.boldLabel);
             EditorGUI.indentLevel = 1;
-            
+
             EditorGUILayout.PropertyField(m_PropDefaultTextMeshProTextContainerSize, Styles.textMeshProLabel);
             EditorGUILayout.PropertyField(m_PropDefaultTextMeshProUITextContainerSize, Styles.textMeshProUiLabel);
             EditorGUILayout.PropertyField(m_PropEnableRaycastTarget, Styles.enableRaycastTarget);
@@ -198,29 +198,29 @@ namespace TMPro.EditorUtilities
             GUILayout.Label(Styles.textComponentDefaultSettingsLabel, EditorStyles.boldLabel);
             EditorGUI.indentLevel = 1;
             EditorGUILayout.PropertyField(m_PropDefaultFontSize, Styles.defaultFontSize);
-            
+
             EditorGUILayout.BeginHorizontal();
             {
                 EditorGUILayout.PrefixLabel(Styles.autoSizeRatioLabel);
                 EditorGUIUtility.labelWidth = 32;
                 EditorGUIUtility.fieldWidth = 10;
-                
+
                 EditorGUI.indentLevel = 0;
                 EditorGUILayout.PropertyField(m_PropDefaultAutoSizeMinRatio, Styles.minLabel);
                 EditorGUILayout.PropertyField(m_PropDefaultAutoSizeMaxRatio, Styles.maxLabel);
                 EditorGUI.indentLevel = 1;
             }
             EditorGUILayout.EndHorizontal();
-            
+
             EditorGUIUtility.labelWidth = labelWidth;
             EditorGUIUtility.fieldWidth = fieldWidth;
-            
+
             EditorGUILayout.PropertyField(m_PropWordWrapping, Styles.wordWrappingLabel);
             EditorGUILayout.PropertyField(m_PropKerning, Styles.kerningLabel);
-            
+
             EditorGUILayout.PropertyField(m_PropExtraPadding, Styles.extraPaddingLabel);
             EditorGUILayout.PropertyField(m_PropTintAllSprites, Styles.tintAllSpritesLabel);
-            
+
             EditorGUILayout.PropertyField(m_PropParseEscapeCharacters, Styles.parseEscapeCharactersLabel);
 
             EditorGUI.indentLevel = 0;
@@ -276,19 +276,20 @@ namespace TMPro.EditorUtilities
 
             EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
-            
+
             if (serializedObject.ApplyModifiedProperties())
             {
                 EditorUtility.SetDirty(target);
                 TMPro_EventManager.ON_TMP_SETTINGS_CHANGED();
             }
         }
-        }
+    }
 
-    #if UNITY_2018_3_OR_NEWER
+#if UNITY_2018_3_OR_NEWER
     class TMP_ResourceImporterProvider : SettingsProvider
     {
         TMP_PackageResourceImporter m_ResourceImporter;
+
         public TMP_ResourceImporterProvider()
             : base("Project/TextMesh Pro", SettingsScope.Project)
         {
@@ -298,18 +299,15 @@ namespace TMPro.EditorUtilities
         {
             // Lazy creation that supports domain reload
             if (m_ResourceImporter == null)
-            {
                 m_ResourceImporter = new TMP_PackageResourceImporter();
-            }
+
             m_ResourceImporter.OnGUI();
         }
 
         public override void OnDeactivate()
         {
             if (m_ResourceImporter != null)
-            {
                 m_ResourceImporter.OnDestroy();
-            }
         }
 
         static UnityEngine.Object GetTMPSettings()
@@ -321,8 +319,9 @@ namespace TMPro.EditorUtilities
         static SettingsProvider[] CreateTMPSettingsProvider()
         {
             var providers = new List<SettingsProvider> { new TMP_ResourceImporterProvider() };
+
             if (GetTMPSettings() != null)
-        {
+            {
                 var provider = new AssetSettingsProvider("Project/TextMesh Pro/Settings", GetTMPSettings);
                 provider.PopulateSearchKeywordsFromGUIContentProperties<TMP_SettingsEditor.Styles>();
                 providers.Add(provider);
@@ -330,6 +329,6 @@ namespace TMPro.EditorUtilities
 
             return providers.ToArray();
         }
-        }
-    #endif
     }
+#endif
+}

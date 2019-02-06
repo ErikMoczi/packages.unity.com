@@ -47,13 +47,14 @@ namespace TMPro.EditorUtilities
         /// <param name="command"></param>
         [MenuItem("GameObject/UI/Text - TextMeshPro", false, 2001)]
         static void CreateTextMeshProGuiObjectPerform(MenuCommand menuCommand)
-                {
+        {
             GameObject go = TMP_DefaultControls.CreateText(GetStandardResources());
-         
+
             // Override text color and font size
             TMP_Text textComponent = go.GetComponent<TMP_Text>();
             textComponent.color = Color.white;
-            textComponent.fontSize = TMP_Settings.defaultFontSize;
+            if (textComponent.m_isWaitingOnResourceLoad == false)
+                textComponent.fontSize = TMP_Settings.defaultFontSize;
 
             PlaceUIElementRoot(go, menuCommand);
         }
@@ -129,10 +130,9 @@ namespace TMPro.EditorUtilities
                 return;
 
             // Create world space Plane from canvas position.
-            Vector2 localPlanePosition;
             Camera camera = sceneView.camera;
             Vector3 position = Vector3.zero;
-            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRTransform, new Vector2(camera.pixelWidth / 2, camera.pixelHeight / 2), camera, out localPlanePosition))
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRTransform, new Vector2(camera.pixelWidth / 2, camera.pixelHeight / 2), camera, out Vector2 localPlanePosition))
             {
                 // Adjust for canvas pivot
                 localPlanePosition.x = localPlanePosition.x + canvasRTransform.sizeDelta.x * canvasRTransform.pivot.x;
@@ -195,7 +195,7 @@ namespace TMPro.EditorUtilities
 
             if (element.transform.parent == null)
             {
-            Undo.SetTransformParent(element.transform, parent.transform, "Parent " + element.name);
+                Undo.SetTransformParent(element.transform, parent.transform, "Parent " + element.name);
             }
 
             GameObjectUtility.EnsureUniqueNameForSibling(element);
@@ -240,7 +240,7 @@ namespace TMPro.EditorUtilities
             // It can be argued for or against placing it in the user scenes,
             // but let's not modify scene user is not currently looking at.
             if (!customScene)
-            CreateEventSystem(false);
+                CreateEventSystem(false);
             return root;
         }
 

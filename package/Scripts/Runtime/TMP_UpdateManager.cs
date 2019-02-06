@@ -52,11 +52,11 @@ namespace TMPro
             #if UNITY_2019_1_OR_NEWER
                 RenderPipelineManager.beginFrameRendering += OnBeginFrameRendering;
             #elif UNITY_2018_1_OR_NEWER
-            RenderPipeline.beginFrameRendering += OnBeginFrameRendering;
+                RenderPipeline.beginFrameRendering += OnBeginFrameRendering;
             #endif
         }
 
-
+        
         /// <summary>
         /// Function used as a replacement for LateUpdate() to handle SDF Scale updates and Legacy Animation updates.
         /// </summary>
@@ -125,16 +125,21 @@ namespace TMPro
             return true;
         }
 
+
         /// <summary>
         /// Callback which occurs just before the Scriptable Render Pipeline (SRP) begins rendering.
         /// </summary>
         /// <param name="cameras"></param>
+        #if UNITY_2018_1_OR_NEWER
         void OnBeginFrameRendering(Camera[] cameras)
+        #elif UNITY_2019_1_OR_NEWER
+        void OnBeginFrameRendering(ScriptableRenderContext renderContext, Camera[] cameras)
+        #endif
         {
             // Exclude the PreRenderCamera
             #if UNITY_EDITOR
-                if (cameras.Length == 1 && cameras[0].cameraType == CameraType.Preview) 
-                    return;
+            if (cameras.Length == 1 && cameras[0].cameraType == CameraType.Preview) 
+                return;
             #endif
             DoRebuilds();
         }
@@ -147,8 +152,8 @@ namespace TMPro
         {
             // Exclude the PreRenderCamera
             #if UNITY_EDITOR
-                if (cam.cameraType == CameraType.Preview) 
-                    return;
+            if (cam.cameraType == CameraType.Preview) 
+                return;
             #endif
             DoRebuilds();
         }
@@ -208,18 +213,18 @@ namespace TMPro
 
         private void InternalUnRegisterTextElementForGraphicRebuild(TMP_Text element)
         {
-                int id = element.GetInstanceID();
+            int id = element.GetInstanceID();
 
-                TMP_UpdateManager.instance.m_GraphicRebuildQueue.Remove(element);
-                m_GraphicQueueLookup.Remove(id);
+            TMP_UpdateManager.instance.m_GraphicRebuildQueue.Remove(element);
+            m_GraphicQueueLookup.Remove(id);
         }
 
         private void InternalUnRegisterTextElementForLayoutRebuild(TMP_Text element)
         {
-                int id = element.GetInstanceID();
+            int id = element.GetInstanceID();
 
-                TMP_UpdateManager.instance.m_LayoutRebuildQueue.Remove(element);
-                m_LayoutQueueLookup.Remove(id);
+            TMP_UpdateManager.instance.m_LayoutRebuildQueue.Remove(element);
+            m_LayoutQueueLookup.Remove(id);
         }
 
         private void InternalUnRegisterTextObjectForUpdate(TMP_Text textObject)
