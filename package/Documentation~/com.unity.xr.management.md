@@ -106,8 +106,6 @@ An **XRLoader** is simply a **ScriptableObject** and as such, the user is able t
 
 A user will add all the **XRLoaders** instances they created to the Loaders property on the **XRManager**, arranging them in the load order that they desire.
 
-**_NOTE_**: _At this time there is no way for a provider to ship an instance of their loader in their package that the user can find. To get around this, you will need to provide a means of allowing the user to create the necessary instance of your loader. The recommendation for this is to add a CreateAssetMenu attribute to your loader class and set the menu location to "XR/Loaders/[your loader name]"._
-
 When asked to initialize, **XRManager** will call each **XRLoader** instance it has a reference to in the order it has and attempt to initialize each one. The first loader that succeeds initialization becomes the active loader and all further attempts to initialize are stopped. From this point the user can ask for the static **XRManager.ActiveLoader** instance to get access to the active loader. If initialization fails for all loaders, **ActiveLoader** is set to null.
 
 Scene based Automatic lifecycle management hooks into the following **MonoBehaviour** callback points:
@@ -222,6 +220,7 @@ This version of **XR SDK Management** includes:
 
 |Date|Reason|
 |---|---|
+|January 8, 2019|Remove not about loader instance creation as it is now fixed. Providers can ship instances of the loaders they make for ready use by developers.|
 |October 8, 2018|Add documentation around package installation.|
 |October 5, 2018|Fix typos.|
 |October 4, 2018|Add info on package initialization.|

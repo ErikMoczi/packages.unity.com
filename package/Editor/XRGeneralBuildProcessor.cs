@@ -120,9 +120,15 @@ namespace UnityEditor.XR.Management
                     {
                         try
                         {
-                            string preInitLibraryName = preInitInfo.loader.GetPreInitLibraryName(preInitInfo.buildTarget, preInitInfo.buildTargetGroup);
-                            preInitInfo = null;
-                            UnityEditor.Experimental.XR.BootOptions.SetXRSDKPreInitLibrary(file.path, preInitLibraryName);
+                            var loader = preInitInfo.loader;
+                            if (loader != null)
+                            {
+                                string preInitLibraryName = loader.GetPreInitLibraryName(preInitInfo.buildTarget,
+                                    preInitInfo.buildTargetGroup);
+                                preInitInfo = null;
+                                UnityEditor.Experimental.XR.BootOptions.SetXRSDKPreInitLibrary(file.path,
+                                    preInitLibraryName);
+                            }
                         }
                         catch (Exception e)
                         {
@@ -145,9 +151,14 @@ namespace UnityEditor.XR.Management
 
             try
             {
-                string preInitLibraryName = preInitInfo.loader.GetPreInitLibraryName(preInitInfo.buildTarget, preInitInfo.buildTargetGroup);
-                preInitInfo = null;
-                UnityEditor.Experimental.XR.BootOptions.SetXRSDKPreInitLibrary(fullPath, preInitLibraryName);
+                var loader = preInitInfo.loader;
+                if (loader != null)
+                {
+                    string preInitLibraryName = loader.GetPreInitLibraryName(preInitInfo.buildTarget,
+                        preInitInfo.buildTargetGroup);
+                    preInitInfo = null;
+                    UnityEditor.Experimental.XR.BootOptions.SetXRSDKPreInitLibrary(fullPath, preInitLibraryName);
+                }
             }
             catch (Exception e)
             {
