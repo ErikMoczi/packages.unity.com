@@ -41,24 +41,7 @@ namespace UnityEditor.XR.Management
 
         void CleanOldSettings()
         {
-            UnityEngine.Object[] preloadedAssets = PlayerSettings.GetPreloadedAssets();
-            if (preloadedAssets == null)
-                return;
-
-            var oldSettings = from s in preloadedAssets
-                where s.GetType() == typeof(XRGeneralSettings)
-                select s;
-
-            if (oldSettings != null && oldSettings.Any())
-            {
-                var assets = preloadedAssets.ToList();
-                foreach (var s in oldSettings)
-                {
-                    assets.Remove(s);
-                }
-
-                PlayerSettings.SetPreloadedAssets(assets.ToArray());
-            }
+            BuildHelpers.CleanOldSettings<XRGeneralSettings>();
         }
 
         public void OnPreprocessBuild(BuildReport report)

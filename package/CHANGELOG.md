@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [2.0.0-preview.3] - 2019-1-22
+* Add missin repo url to package json file
+* Fix NRE issue in build processor
+
+## [2.0.0-preview.3] - 2019-1-22
 * Fix error in general build processor due to a potential null deref.
 * Fix missing check for unity version when referencing UIElements.
 

@@ -43,10 +43,10 @@ namespace Samples
                 return;
 
             var oldSettings = from s in preloadedAssets
-                where s.GetType() == typeof(SampleSettings)
+                where s != null && s.GetType() == typeof(SampleSettings)
                 select s;
 
-            if (oldSettings.Any())
+            if (oldSettings != null && oldSettings.Any())
             {
                 var assets = preloadedAssets.ToList();
                 foreach (var s in oldSettings)
