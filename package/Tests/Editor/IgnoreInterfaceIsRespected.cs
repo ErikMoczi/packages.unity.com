@@ -10,7 +10,7 @@ using UObject = UnityEngine.Object;
 
 namespace UnityEditor.ProGrids.Tests
 {
-	public class IgnoreInterfaceIsRespected
+	class IgnoreInterfaceIsRespected
 	{
 		[Test]
 		public void GameObjectWithIgnoreInterfaceIsNotSnapped()

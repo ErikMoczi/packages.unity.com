@@ -2,12 +2,7 @@
 
 The development repository is mirrored to the Package Manager staging repository. **Do not commit to the Package Manager mirror**.
 
-[![pipeline status](https://gitlab.internal.unity3d.com/world-building/progrids/badges/master/pipeline.svg)](https://gitlab.internal.unity3d.com/world-building/progrids/commits/master)
-
 ## Development
-
-ProGrids is distributed as a Package Manager package. See [UPM Template](https://gitlab.internal.unity3d.com/upm-packages/upm-package-template)
-for more information on Package Manager.
 
 The easiest way to work on packages is by setting up an empty Unity project, then adding ProGrids as a local dependency:
 
@@ -35,7 +30,6 @@ echo "{
 - [ ] Update `CHANGELOG.md`
 - [ ] Update `Editor/Version.cs`
 - [ ] `git tag` commit with `-preview.{build}` ([semantic versioning](https://semver.org/))\*
-- [ ] Complete a new [QA Report](https://drive.google.com/drive/u/0/folders/1jwQWHOMR2GPSaDPwLUp1aeTrbOmobkLy)
 
 \* ProGrids specific tagging:
 
@@ -47,7 +41,7 @@ echo "{
 - [ ] Create a new Unity project with the targeted Unity version (check in `package.json` for this value)
 - [ ] Add `"registry":"http://staging-packages.unity.com"` to the `Packages/manifest.json`
 - [ ] Install the staged ProGrids version (specified in `package.json`)
-- [ ] Complete a new [QA Report]((https://drive.google.com/drive/u/0/folders/1jwQWHOMR2GPSaDPwLUp1aeTrbOmobkLy))
+- [ ] Complete a new [Test Rail](https://qatestrail.hq.unity3d.com/index.php?/projects/overview/31)
 
 ### Publish to Production
 
@@ -56,5 +50,4 @@ After a staging package is approved by QA:
 - [ ] Update `package.json`, `changelog.md`, and `Version.cs` to omit `-preview` suffix.
 - [ ] `git tag` with major, minor, and patch, omitting `-preview.x` suffix.
 - [ ] Push to staging, and contact the release management team to move to production.
-    - [Release Management Production Submission Form](https://docs.google.com/forms/d/e/1FAIpQLSdSIRO6s6_gM-BxXbDtdzIej-Hhk-3n68xSyC2sM8tp7413mw/viewform)
 

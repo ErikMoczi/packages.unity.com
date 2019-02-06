@@ -5,14 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [3.0.3-preview.1] - 2019-01-14
+## [3.0.3-preview.2] - 2019-01-23
 
 ## Bug Fixes
 
 - Fix grid not rendering in SRP projects.
-
-## Changes since [3.0.3-preview.0]
-
 - Fix ProBuilder still applying snap values when ProGrids is closed.
 - Fix case where orbiting out of iso view would not reset the render plane.
 - Fix bug where ProBuilder would sometimes not snap new objects to the ProGrids grid.

@@ -8,7 +8,7 @@ using System.Collections;
 
 namespace UnityEditor.ProGrids.Tests
 {
-	public class SnapOnAllAxes
+	class SnapOnAllAxes
 	{
 		[Test]
 		public void TranslateSnapsAllAxes()

@@ -1,16 +1,11 @@
-﻿using System;
-using System.Reflection;
-using UnityEngine;
-using UnityEditor;
-using UnityEngine.TestTools;
+﻿using UnityEngine;
 using NUnit.Framework;
-using System.Collections;
 using UnityEngine.ProGrids;
 using UObject = UnityEngine.Object;
 
 namespace UnityEditor.ProGrids.Tests
 {
-	public class IgnoreAttributeIsRespected
+	class IgnoreAttributeIsRespected
 	{
 		[Test]
 		public void GameObjectWithIgnoreAttribIsNotSnapped()

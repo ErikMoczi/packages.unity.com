@@ -1,14 +1,9 @@
-﻿using System;
-using System.Reflection;
-using UnityEngine;
-using UnityEditor;
-using UnityEngine.TestTools;
+﻿using UnityEngine;
 using NUnit.Framework;
-using System.Collections;
 
 namespace UnityEditor.ProGrids.Tests
 {
-	public class SnapOnSelectedAxisOnly
+	class SnapOnSelectedAxisOnly
 	{
 		[Test]
 		public void TranslateOnlySnapsChangedAxis()

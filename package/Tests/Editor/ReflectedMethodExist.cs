@@ -8,7 +8,7 @@ using System.Collections;
 
 namespace UnityEditor.ProGrids.Tests
 {
-	public class ReflectedMethodsExist
+	class ReflectedMethodsExist
 	{
 		[Test]
 		public void AnnotationUtility_ShowGrid()
