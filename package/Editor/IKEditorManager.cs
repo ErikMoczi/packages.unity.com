@@ -49,7 +49,11 @@ namespace UnityEditor.Experimental.U2D.IK
         {
             EditorApplication.hierarchyChanged += Initialize;
             Undo.postprocessModifications += OnPostProcessModifications;
+#if UNITY_2019_1_OR_NEWER
+            SceneView.duringSceneGui += OnSceneGUI;
+#else
             SceneView.onSceneGUIDelegate += OnSceneGUI;
+#endif
             Selection.selectionChanged += OnSelectionChanged;
         }
 
@@ -57,7 +61,11 @@ namespace UnityEditor.Experimental.U2D.IK
         {
             EditorApplication.hierarchyChanged -= Initialize;
             Undo.postprocessModifications -= OnPostProcessModifications;
+#if UNITY_2019_1_OR_NEWER
+            SceneView.duringSceneGui -= OnSceneGUI;
+#else
             SceneView.onSceneGUIDelegate -= OnSceneGUI;
+#endif
             Selection.selectionChanged -= OnSelectionChanged;
         }
 

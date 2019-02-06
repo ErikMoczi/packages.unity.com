@@ -1,7 +1,7 @@
 {
   "name": "com.unity.2d.ik",
   "displayName": "2D IK",
-  "version": "1.0.7-preview.1",
+  "version": "1.0.8-preview.1",
   "unity": "2018.3",
   "description": "2D IK package provides the necessary editor tooling to setup inverse kinematics for 2D characters and a runtime component to execute it.",
   "keywords": [
@@ -18,6 +18,6 @@
   "repository": {
     "type": "git",
     "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/2D/com.unity.2d.ik.git",
-    "revision": "75a1656b5dcf270c1ab03af7f6c12881bd91aed8"
+    "revision": "a1aff21afb6d7bfeef119c2cfa0835a2a79f9856"
   }
 }
