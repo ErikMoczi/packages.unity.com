@@ -170,21 +170,18 @@ namespace Unity.Burst.Editor
             return result;
         }
 
-        public static bool ExtractBurstCompilerOptionsBasic(Type type, StringBuilder flagsOut)
+        public static bool ExtractBurstCompilerOptionsBasic(MemberInfo member, StringBuilder flagsOut)
         {
             if (!BurstEditorOptions.EnableBurstCompilation)
             {
                 return false;
             }
 
-#pragma warning disable 618
-            var attr = type.GetCustomAttribute<BurstCompileAttribute>() ?? type.GetCustomAttribute<ComputeJobOptimizationAttribute>();
-#pragma warning restore 618
-
+            var attr = member.GetCustomAttribute<BurstCompileAttribute>();
             if (attr == null)
                 return false;
 
-            if (attr.CompileSynchronously)
+            if (attr.CompileSynchronously || BurstGlobalCompilerOptions.ForceSynchronousCompilation)
                 AddOption(flagsOut, GetOption(OptionJitEnableSynchronousCompilation));
 
             if (attr.FloatMode != FloatMode.Default)
@@ -233,18 +230,17 @@ namespace Unity.Burst.Editor
             return true;
         }
 
-
-        // TODO: This is not working with method. We have to change this
-        public static bool ExtractBurstCompilerOptions(Type type, out string flagsOut)
+        public static bool ExtractBurstCompilerOptions(MemberInfo member, out string flagsOut)
         {
             flagsOut = null;
-            if (!BurstEditorOptions.EnableBurstCompilation)
+            // We don't fail if member == null as this method is being called by native code and doesn't expect to crash
+            if (!BurstEditorOptions.EnableBurstCompilation || member == null || BurstGlobalCompilerOptions.DisableCompilation)
             {
                 return false;
             }
 
             var flagsBuilderOut = new StringBuilder();
-            if (!ExtractBurstCompilerOptionsBasic(type, flagsBuilderOut))
+            if (!ExtractBurstCompilerOptionsBasic(member, flagsBuilderOut))
                 return false;
 
             GetBurstGeneralOptions(flagsBuilderOut);

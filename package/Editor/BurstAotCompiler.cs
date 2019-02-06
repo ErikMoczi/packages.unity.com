@@ -44,8 +44,10 @@ namespace Unity.Burst.Editor
         int IOrderedCallback.callbackOrder => 0;
         public void OnPostBuildPlayerScriptDLLs(BuildReport report)
         {
+            BurstPlatformAotSettings aotSettingsForTarget = BurstPlatformAotSettings.GetOrCreateSettings(report.summary.platform);
+
             // Early exit if burst is not activated or the platform is not supported
-            if (!BurstEditorOptions.EnableBurstCompilation || !IsSupportedPlatform(report.summary.platform))
+            if (aotSettingsForTarget.DisableBurstCompilation || !IsSupportedPlatform(report.summary.platform))
             {
                 return;
             }
@@ -227,6 +229,13 @@ namespace Unity.Burst.Editor
                 var options = new List<string>(commonOptions);
                 options.Add(GetOption(OptionAotOutputPath, outputFilePrefix));
                 options.Add(GetOption(OptionTarget, combination.TargetCpu));
+
+                if (aotSettingsForTarget.DisableOptimisations)
+                    options.Add(GetOption(OptionDisableOpt));
+                if (aotSettingsForTarget.DisableSafetyChecks)
+                    options.Add(GetOption(OptionDisableSafetyChecks));
+                else
+                    options.Add(GetOption(OptionSafetyChecks));
 
                 var responseFile = Path.GetTempFileName();
                 File.WriteAllLines(responseFile, options);

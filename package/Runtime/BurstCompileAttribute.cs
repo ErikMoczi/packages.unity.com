@@ -1,5 +1,9 @@
 using System;
-using Unity.Burst;
+using System.Runtime.CompilerServices;
+using Unity.Jobs.LowLevel.Unsafe;
+
+// Make internals visible to Unity.Burst.Editor for BurstGlobalCompilerOptions
+[assembly: InternalsVisibleTo("Unity.Burst.Editor")]
 
 namespace Unity.Burst
 {
@@ -47,19 +51,48 @@ namespace Unity.Burst
     public class NoAliasAttribute : System.Attribute
     {
     }
-}
 
-namespace Unity.Jobs
-{
-    [Obsolete("Use Unity.Burst.BurstCompileAttribute instead")]
-    public class ComputeJobOptimizationAttribute : BurstCompileAttribute
+    /// <summary>
+    /// Global options that can be setup per executable
+    /// </summary>
+    internal static class BurstGlobalCompilerOptions
     {
-        public ComputeJobOptimizationAttribute()
-        {
-        }
+        private const string DisableCompilationArg = "--burst-disable-compilation";
 
-        public ComputeJobOptimizationAttribute(FloatPrecision floatPrecision, FloatMode floatMode) : base(floatPrecision, floatMode)
+        private const string ForceSynchronousCompilationArg = "--burst-force-sync-compilation";
+
+        /// <summary>
+        /// <c>true</c> to disable compiling functions with burst (editor time only)
+        /// </summary>
+        public static readonly bool DisableCompilation;
+
+        /// <summary>
+        /// <c>true</c> to force synchronous compilation when compiling all functions (editor time only)
+        /// </summary>
+        /// <remarks>
+        /// Typical use case when running with tests
+        /// </remarks>
+        public static readonly bool ForceSynchronousCompilation;
+
+        /// <summary>
+        /// Static initializer based on command line arguments
+        /// </summary>
+        static BurstGlobalCompilerOptions()
         {
+            foreach (var arg in Environment.GetCommandLineArgs())
+            {
+                switch (arg)
+                {
+                    case DisableCompilationArg:
+                        DisableCompilation = true;
+                        // We also force the Jobs to not compile at all
+                        JobsUtility.JobCompilerEnabled = false;
+                        break;
+                    case ForceSynchronousCompilationArg:
+                        ForceSynchronousCompilation = true;
+                        break;
+                }
+            }
         }
     }
 }

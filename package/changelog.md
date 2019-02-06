@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.4-preview.43
+
+- Add preliminary support for burst AOT settings in the player settings
+- Move BurstCompile (delegate/function pointers support) from com.unity.burst package to com.unity.burst.experimental package
+- Fix issue with stackalloc allocating a pointer size for the element type resulting in possible StackOverflowException
+- Add support for disabling burst compilation from Unity editor with the command line argument `--burst-disable-compilation` 
+- Add support for forcing synchronous compilation from Unity editor with the command line argument `--burst-force-sync-compilation`
+- Fix a compiler crash when generating debugging information
+- Fix invalid codegen involving ternary operator
+
 ## 0.2.4-preview.42
 
 - Fix a compilation error when implicit/explicit operators are used returning different type for the same input type
