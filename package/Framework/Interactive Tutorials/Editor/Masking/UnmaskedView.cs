@@ -210,31 +210,10 @@ namespace Unity.InteractiveTutorials
                             {
                                 // Property instruction not found
                                 // Let's see if we can find any of the ancestor instructions to allow the user to unfold
-                                var propertyPath = controlSelector.propertyPath;
-                                do
-                                {
-                                    // Remove last component of property path
-                                    var lastIndexOfDelimiter = propertyPath.LastIndexOf(".");
-                                    if (lastIndexOfDelimiter < 1)
-                                    {
-                                        // No components left, give up
-                                        break;
-                                    }
-                                    propertyPath = propertyPath.Substring(0, lastIndexOfDelimiter);
-
-                                    foreach (var instruction in propertyInstructions)
-                                    {
-                                        if (instruction.targetTypeName == targetTypeName &&
-                                            instruction.path == propertyPath)
-                                        {
-                                            regionFound = true;
-                                            regionRect = instruction.rect;
-                                            foundAncestorProperty = true;
-
-                                            break;
-                                        }
-                                    }
-                                } while (!regionFound);
+                                regionFound = FindAncestorPropertyRegion(controlSelector.propertyPath, targetTypeName,
+                                    drawInstructions, propertyInstructions,
+                                    ref regionRect);
+                                foundAncestorProperty = regionFound;
                             }
                             break;
                         default:
@@ -264,6 +243,75 @@ namespace Unity.InteractiveTutorials
             return new MaskData(result);
         }
 
+        static bool FindAncestorPropertyRegion(string propertyPath, string targetTypeName,
+            List<IMGUIDrawInstructionProxy> drawInstructions, List<IMGUIPropertyInstructionProxy> propertyInstructions,
+            ref Rect regionRect)
+        {
+            while (true)
+            {
+                // Remove last component of property path
+                var lastIndexOfDelimiter = propertyPath.LastIndexOf(".");
+                if (lastIndexOfDelimiter < 1)
+                {
+                    // No components left, give up
+                    return false;
+                }
+                propertyPath = propertyPath.Substring(0, lastIndexOfDelimiter);
+
+                foreach (var instruction in propertyInstructions)
+                {
+                    if (instruction.targetTypeName == targetTypeName &&
+                        instruction.path == propertyPath)
+                    {
+                        regionRect = instruction.rect;
+
+                        // The property rect itself does not contain the foldout arrow
+                        // Expand region to include all draw instructions for this property
+                        var unifiedInstructions = new List<IMGUIInstructionProxy>(128);
+                        GUIViewDebuggerHelperProxy.GetUnifiedInstructions(unifiedInstructions);
+                        var collectDrawInstructions = false;
+                        var propertyBeginLevel = 0;
+                        foreach (var unifiedInstruction in unifiedInstructions)
+                        {
+                            if (collectDrawInstructions)
+                            {
+                                if (unifiedInstruction.level <= propertyBeginLevel)
+                                    break;
+
+                                if (unifiedInstruction.type == InstructionTypeProxy.StyleDraw)
+                                {
+                                    var drawRect = drawInstructions[unifiedInstruction.typeInstructionIndex].rect;
+                                    if (drawRect.xMin < regionRect.xMin)
+                                        regionRect.xMin = drawRect.xMin;
+                                    if (drawRect.yMin < regionRect.yMin)
+                                        regionRect.yMin = drawRect.yMin;
+                                    if (drawRect.xMax > regionRect.xMax)
+                                        regionRect.xMax = drawRect.xMax;
+                                    if (drawRect.yMax > regionRect.yMax)
+                                        regionRect.yMax = drawRect.yMax;
+                                }
+                            }
+                            else
+                            {
+                                if (unifiedInstruction.type == InstructionTypeProxy.PropertyBegin)
+                                {
+                                    var propertyInstruction = propertyInstructions[unifiedInstruction.typeInstructionIndex];
+                                    if (propertyInstruction.targetTypeName == targetTypeName
+                                        && propertyInstruction.path == propertyPath)
+                                    {
+                                        collectDrawInstructions = true;
+                                        propertyBeginLevel = unifiedInstruction.level;
+                                    }
+                                }
+                            }
+                        }
+
+                        return true;
+                    }
+                }
+            }
+        }
+
         private static bool AreEquivalent(GUIContent gc1, GUIContent gc2)
         {
             return
@@ -284,7 +332,7 @@ namespace Unity.InteractiveTutorials
             switch (unmaskedView.m_SelectorType)
             {
                 case SelectorType.EditorWindow:
-                    var targetEditorWindowType = unmaskedView.m_EditorWindowType.type;
+                    var targetEditorWindowType = unmaskedView.editorWindowType;
                     if (targetEditorWindowType == null)
                     {
                         throw new ArgumentException(
@@ -372,6 +420,30 @@ namespace Unity.InteractiveTutorials
         private SerializedType m_EditorWindowType = new SerializedType(null);
 
         [SerializeField]
+        EditorWindowTypeCollection m_AlternateEditorWindowTypes = new EditorWindowTypeCollection();
+
+        Type editorWindowType
+        {
+            get
+            {
+                // Use main EditorWindow type if it can be resolved
+                var type = m_EditorWindowType.type;
+                if (type != null)
+                    return type;
+
+                // Otherwise use first alternate type that resolves
+                foreach (var editorWindowTypeWrapper in m_AlternateEditorWindowTypes)
+                {
+                    type = editorWindowTypeWrapper.editorWindowType.type;
+                    if (type != null)
+                        return type;
+                }
+
+                return null;
+            }
+        }
+
+        [SerializeField]
         private MaskType m_MaskType = MaskType.FullyUnmasked;
 
         [SerializeField]
@@ -410,6 +482,31 @@ namespace Unity.InteractiveTutorials
             if (unmaskedControls != null)
                 result.m_UnmaskedControls.AddRange(unmaskedControls);
             return result;
+        }
+    }
+
+    [Serializable]
+    class EditorWindowType
+    {
+        [SerializeField]
+        [SerializedTypeFilter(typeof(EditorWindow))]
+        public SerializedType editorWindowType;
+
+        public EditorWindowType(SerializedType editorWindowType)
+        {
+            this.editorWindowType = editorWindowType;
+        }
+    }
+
+    [Serializable]
+    class EditorWindowTypeCollection : CollectionWrapper<EditorWindowType>
+    {
+        public EditorWindowTypeCollection() : base()
+        {
+        }
+
+        public EditorWindowTypeCollection(IList<EditorWindowType> items) : base(items)
+        {
         }
     }
 }

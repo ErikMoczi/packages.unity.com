@@ -11,6 +11,7 @@ namespace Unity.InteractiveTutorials
         private const string k_SelectorTypePath = "m_SelectorType";
         private const string k_ViewTypePath = "m_ViewType";
         private const string k_EditorWindowTypePath = "m_EditorWindowType";
+        const string k_AlternateEditorWindowTypesPath = "m_AlternateEditorWindowTypes";
         private const string k_UnmaskedControlsPath = "m_UnmaskedControls";
         private const string k_UnmaskTypePath = "m_MaskType";
         private const string k_MaskSizeModifierPath = "m_MaskSizeModifier";
@@ -26,6 +27,7 @@ namespace Unity.InteractiveTutorials
             {
                 case UnmaskedView.SelectorType.EditorWindow:
                     height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative(k_EditorWindowTypePath), true);
+                    height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative(k_AlternateEditorWindowTypesPath), true);
                     break;
                 case UnmaskedView.SelectorType.GUIView:
                     height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative(k_ViewTypePath), true);
@@ -57,6 +59,14 @@ namespace Unity.InteractiveTutorials
             }
             position.height = EditorGUI.GetPropertyHeight(typeProperty, true);
             EditorGUI.PropertyField(position, typeProperty);
+
+            if ((UnmaskedView.SelectorType)selectorType.intValue == UnmaskedView.SelectorType.EditorWindow)
+            {
+                position.y += position.height + EditorGUIUtility.standardVerticalSpacing;
+                var alternativeEditorWindowTypes = property.FindPropertyRelative(k_AlternateEditorWindowTypesPath);
+                position.height = EditorGUI.GetPropertyHeight(alternativeEditorWindowTypes, true);
+                EditorGUI.PropertyField(position, alternativeEditorWindowTypes);
+            }
             
             position.y += position.height + EditorGUIUtility.standardVerticalSpacing;
             var unmaskType = property.FindPropertyRelative(k_UnmaskTypePath);

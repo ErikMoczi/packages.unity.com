@@ -40,6 +40,13 @@ namespace Unity.InteractiveTutorials
             propertyInstructions.AddRange(instructions.Select(i => new IMGUIPropertyInstructionProxy(i)));
         }
 
+        public static void GetUnifiedInstructions(List<IMGUIInstructionProxy> unifiedInstructions)
+        {
+            var instructions = new List<IMGUIInstruction>();
+            GUIViewDebuggerHelper.GetUnifiedInstructions(instructions);
+            unifiedInstructions.AddRange(instructions.Select(i => new IMGUIInstructionProxy(i)));
+        }
+
         public static void StopDebugging()
         {
             GUIViewDebuggerHelper.StopDebugging();
@@ -84,5 +91,32 @@ namespace Unity.InteractiveTutorials
         public string targetTypeName { get { return m_IMGUIPropertyInstruction.targetTypeName; } }
         public string path { get { return m_IMGUIPropertyInstruction.path; } }
         public Rect rect { get { return m_IMGUIPropertyInstruction.rect; } }
+    }
+
+    public enum InstructionTypeProxy
+    {
+        StyleDraw = 1,
+        ClipPush = 2,
+        ClipPop = 3,
+        LayoutBeginGroup = 4,
+        LayoutEndGroup = 5,
+        LayoutEntry = 6,
+        PropertyBegin = 7,
+        PropertyEnd = 8,
+        LayoutNamedControl = 9,
+    }
+
+    public class IMGUIInstructionProxy
+    {
+        IMGUIInstruction m_IMGUIInstruction;
+
+        internal IMGUIInstructionProxy(IMGUIInstruction imguiInstruction)
+        {
+            m_IMGUIInstruction = imguiInstruction;
+        }
+
+        public InstructionTypeProxy type { get { return (InstructionTypeProxy)m_IMGUIInstruction.type; } }
+        public int level { get { return m_IMGUIInstruction.level; } }
+        public int typeInstructionIndex { get { return m_IMGUIInstruction.typeInstructionIndex; } }
     }
 }

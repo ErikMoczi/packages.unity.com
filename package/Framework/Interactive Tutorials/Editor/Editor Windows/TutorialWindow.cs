@@ -9,18 +9,18 @@ using UnityObject = UnityEngine.Object;
 
 namespace Unity.InteractiveTutorials
 {
-    class TutorialWindow : EditorWindowProxy
+    public sealed class TutorialWindow : EditorWindowProxy
     {
         private static TutorialWindow window;
 
-        public static TutorialWindow CreateWindow()
+        internal static TutorialWindow CreateWindow()
         {
             window = GetWindow<TutorialWindow>();
             window.minSize = new Vector2(300f, 380f);
             return window;
         }
 
-        public static TutorialWindow GetWindow()
+        internal static TutorialWindow GetWindow()
         {
             if (window == null)
                 window = GetWindow<TutorialWindow>();
@@ -58,7 +58,7 @@ namespace Unity.InteractiveTutorials
         private static readonly GUIContent s_RestartPromptYes = new GUIContent("Yes");
         private static readonly GUIContent s_RestartPromptNo = new GUIContent("No");
 
-        public Tutorial currentTutorial { get { return m_CurrentTutorial; } }
+        internal Tutorial currentTutorial { get { return m_CurrentTutorial; } }
         private Tutorial m_CurrentTutorial;
 
         private bool maskingEnabled
@@ -88,7 +88,7 @@ namespace Unity.InteractiveTutorials
         private bool m_PlayModeChanging;
 
         VideoPlaybackManager m_VideoPlaybackManager = new VideoPlaybackManager();
-        public VideoPlaybackManager videoPlaybackManager { get { return m_VideoPlaybackManager; } }
+        internal VideoPlaybackManager videoPlaybackManager { get { return m_VideoPlaybackManager; } }
 
         void TrackPlayModeChanging(PlayModeStateChange change)
         {
@@ -256,7 +256,7 @@ namespace Unity.InteractiveTutorials
             ExitTutorial(true);
         }
 
-        public void CreateTutorialViews()
+        internal void CreateTutorialViews()
         {
             m_AllParagraphs.Clear();
             var ite = 0;
@@ -292,7 +292,7 @@ namespace Unity.InteractiveTutorials
             return tmp;
         }
 
-        public void PrepareNewPage(TutorialPage page = null, int index = 0)
+        internal void PrepareNewPage(TutorialPage page = null, int index = 0)
         {
             if (!m_AllParagraphs.Any())
                 CreateTutorialViews();
@@ -310,7 +310,7 @@ namespace Unity.InteractiveTutorials
             WindowForParagraph();
         }
 
-        public void ForceInititalizeTutorialAndPage()
+        internal void ForceInititalizeTutorialAndPage()
         {
             m_FarthestPageCompleted = -1;
 
@@ -613,7 +613,7 @@ namespace Unity.InteractiveTutorials
             EditorGUILayout.EndHorizontal();
         }
 
-        public void GutterGUI(int currentPageIndex, int pageCount, Rect windowRect)
+        internal void GutterGUI(int currentPageIndex, int pageCount, Rect windowRect)
         {
             using (new GUILayout.HorizontalScope(AllTutorialStyles.gutter))
             {
@@ -788,7 +788,7 @@ namespace Unity.InteractiveTutorials
             }
         }
 
-        public void ResetTutorial()
+        internal void ResetTutorial()
         {
             if (EditorApplication.isPlaying)
             {

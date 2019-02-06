@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.13] - 2019-02-04
+### Added
+- Add support for specifying alternate EditorWindow types when configuring unmasked views
+- Expand unmask region to include foldout arrow when unmasking property that is collapsed
+
+### Removed
+- Remove "Couldn't find a readme" message when there is no Readme asset in project
+
 ## [0.1.12] - 2019-01-24
 ### Fixed
 - Fix editor entering and exiting play mode on project load
