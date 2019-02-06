@@ -71,7 +71,7 @@ namespace TMPro
         void Awake()
         {
             // Check version number of sprite asset to see if it needs to be upgraded.
-            if (this.material != null && (m_Version == null || m_Version == string.Empty))
+            if (this.material != null && string.IsNullOrEmpty(m_Version))
                 UpgradeSpriteAsset();
         }
 
@@ -123,6 +123,10 @@ namespace TMPro
         public void UpdateLookupTables()
         {
             //Debug.Log("Updating [" + this.name + "] Lookup tables.");
+
+            // Check version number of sprite asset to see if it needs to be upgraded.
+            if (this.material != null && string.IsNullOrEmpty(m_Version))
+                UpgradeSpriteAsset();
 
             // Initialize / Clear glyph index lookup dictionary.
             if (m_GlyphIndexLookup == null)

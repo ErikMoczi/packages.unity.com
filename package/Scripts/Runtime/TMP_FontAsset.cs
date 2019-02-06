@@ -484,7 +484,7 @@ namespace TMPro
             //Debug.Log("TMP Font Asset [" + this.name + "] with Version #" + m_Version + " has been enabled!");
 
             // Check version number of font asset to see if it needs to be upgraded.
-            if (this.material != null && (m_Version == null || m_Version == string.Empty))
+            if (this.material != null && string.IsNullOrEmpty(m_Version))
                 UpgradeFontAsset();
         }
 
@@ -626,6 +626,10 @@ namespace TMPro
         public void ReadFontAssetDefinition()
         {
             //Debug.Log("Reading Font Definition for " + this.name + ".");
+
+            // Check version number of font asset to see if it needs to be upgraded.
+            if (this.material != null && string.IsNullOrEmpty(m_Version))
+                UpgradeFontAsset();
 
             // Initialize lookup tables for characters and glyphs.
             InitializeDictionaryLookupTables();

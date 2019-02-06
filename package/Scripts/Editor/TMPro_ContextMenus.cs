@@ -175,8 +175,16 @@ namespace TMPro.EditorUtilities
                 var gradientScale = mat.GetFloat(ShaderUtilities.ID_GradientScale);
                 var texWidth = mat.GetFloat(ShaderUtilities.ID_TextureWidth);
                 var texHeight = mat.GetFloat(ShaderUtilities.ID_TextureHeight);
-                var stencilId = mat.GetFloat(ShaderUtilities.ID_StencilID);
-                var stencilComp = mat.GetFloat(ShaderUtilities.ID_StencilComp);
+
+                var stencilId = 0.0f;
+                var stencilComp = 0.0f;
+
+                if (mat.HasProperty(ShaderUtilities.ID_StencilID))
+                {
+                    stencilId = mat.GetFloat(ShaderUtilities.ID_StencilID);
+                    stencilComp = mat.GetFloat(ShaderUtilities.ID_StencilComp);
+                }
+
                 var normalWeight = mat.GetFloat(ShaderUtilities.ID_WeightNormal);
                 var boldWeight = mat.GetFloat(ShaderUtilities.ID_WeightBold);
 
@@ -191,8 +199,13 @@ namespace TMPro.EditorUtilities
                 mat.SetFloat(ShaderUtilities.ID_GradientScale, gradientScale);
                 mat.SetFloat(ShaderUtilities.ID_TextureWidth, texWidth);
                 mat.SetFloat(ShaderUtilities.ID_TextureHeight, texHeight);
-                mat.SetFloat(ShaderUtilities.ID_StencilID, stencilId);
-                mat.SetFloat(ShaderUtilities.ID_StencilComp, stencilComp);
+
+                if (mat.HasProperty(ShaderUtilities.ID_StencilID))
+                {
+                    mat.SetFloat(ShaderUtilities.ID_StencilID, stencilId);
+                    mat.SetFloat(ShaderUtilities.ID_StencilComp, stencilComp);
+                }
+
                 mat.SetFloat(ShaderUtilities.ID_WeightNormal, normalWeight);
                 mat.SetFloat(ShaderUtilities.ID_WeightBold, boldWeight);
             }

@@ -32,6 +32,8 @@ These are the release notes for the TextMesh Pro UPM package which was first int
 - Added new SetValueWithoutNotify() function to TMP_DropDown and SetTextWithoutNotify() function to TMP_InputField allowing these to be set without triggering OnValueChanged event.
 - Geometry buffer deallocation which normally takes place when current allocations exceed those of the new text by more than 256 characters will no longer occur if the new text is set to null or string.empty.
 - Fixed a minor issue where the underline SDF scale would be incorrect when the underline text sequence contained normal size characters and ended with a subscript or superscript character.
+- Fixed an error that would occur when using the Reset Context menu on a Material using the SDF Surface or Mobile SDF Surface Shaders. Case #1122279
+- Resolved a Null Reference Error that would appear when cycling through the text overflow modes. Case #1121624
 
 ## [1.3.0] - 2018-08-09
 ### Changes
