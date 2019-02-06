@@ -56,12 +56,14 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         public const string ProductionRepositoryUrl = "https://packages.unity.com/";
         internal const string StagingRepositoryUrl = "https://api.bintray.com/npm/unity/unity-staging";
+        internal const string BintrayNpmRegistryUrl = "https://api.bintray.com/npm/unity/unity-npm";
 
         public string NpmRegistry { get; set; }
         public string NpmLogLevel { get; set; }
+        public string NpmPrefix { get; set; }
         private bool NpmOnlineOperation { get; set; }
 
-        public string Script{ get; set; }
+        public string Script { get; set; }
         public string Args { get; set; }
 
         public int WaitTime { get; set; }
@@ -76,7 +78,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         public Process Process { get; protected set; }
 
-        public NodeLauncher()
+        public void NodeSetup()
         {
             WaitTime = 1000 * 60 * 10;        // 10 Minutes
             NpmOnlineOperation = false;
@@ -88,6 +90,28 @@ namespace UnityEditor.PackageManager.ValidationSuite
             Process.StartInfo.CreateNoWindow = true;
             Process.StartInfo.RedirectStandardOutput = true;
             Process.StartInfo.RedirectStandardError = true;
+        }
+
+        public NodeLauncher()
+        {
+            NodeSetup();
+        }
+
+        public NodeLauncher(string workingPath = "", string npmLogLevel = "error", string npmRegistry = ProductionRepositoryUrl, string npmPrefix = "")
+        {
+            NodeSetup();
+            
+            if (npmLogLevel != "")
+                NpmLogLevel = npmLogLevel;
+
+            if (npmRegistry != "")
+                NpmRegistry = npmRegistry;
+
+            if (workingPath != "")
+                WorkingDirectory = workingPath;
+
+            if (npmPrefix != "")
+                NpmPrefix = npmPrefix;
         }
 
         public void Launch()
@@ -125,7 +149,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 var currentWaitTime = 0;
                 var exited = false;
                 var offline = false;
-                while(true)
+                while (true)
                 {
                     System.Threading.Thread.Sleep(waitTimePerIteration);
                     currentWaitTime += waitTimePerIteration;
@@ -169,6 +193,9 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 Args += " --registry \"" + NpmRegistry + "\"";
             if (!string.IsNullOrEmpty(NpmLogLevel))
                 Args += " --loglevel=" + NpmLogLevel;
+            if (!string.IsNullOrEmpty(NpmPrefix))
+                Args += " --prefix " + NpmPrefix;
+
             Launch();
         }
 

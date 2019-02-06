@@ -21,7 +21,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
         internal const string RuntimeAssemblyDefintionSuffix = ".Runtime.asmdef";
         internal const string RuntimeTestsAssemblyDefintionSuffix = ".RuntimeTests.asmdef";
 
-        public static bool NetworkNotReachable{ get { return Application.internetReachability == NetworkReachability.NotReachable; } }
+        public static bool NetworkNotReachable { get { return Application.internetReachability == NetworkReachability.NotReachable; } }
 
         public static string CreatePackageId(string name, string version)
         {
@@ -126,10 +126,10 @@ namespace UnityEditor.PackageManager.ValidationSuite
             return !string.IsNullOrEmpty(packageData);
         }
 
-        internal static string ExtractPackage(string packageFileName, string workingPath, string outputDirectory, string packageName)
+        internal static string ExtractPackage(string packageFileName, string workingPath, string outputDirectory, string packageName, NodeLauncher launcher = null)
         {
             //verify if package exists
-            if(!packageFileName.EndsWith(".tgz"))
+            if (!packageFileName.EndsWith(".tgz"))
                 throw new ArgumentException("Package should be a .tgz file");
 
             var fullPackagePath = Path.Combine(workingPath, packageFileName);
@@ -140,29 +140,41 @@ namespace UnityEditor.PackageManager.ValidationSuite
             //Clean node_modules if it exists
             if (File.Exists(modulePath))
             {
-                try{
+                try
+                {
                     Directory.Delete(modulePath, true);
-                } catch(Exception e) {
+                }
+                catch (Exception e)
+                {
                     throw e;
                 }
             }
-            
-            var launcher = new NodeLauncher();
-            launcher.NpmLogLevel = "error";
-            launcher.NpmRegistry = NodeLauncher.ProductionRepositoryUrl;
-            launcher.WorkingDirectory = workingPath;
-            launcher.NpmInstall(packageFileName);
-            
+
+            //Create the NodeLauncher object unless it has been provided already.
+            if (launcher == null)
+                launcher = new NodeLauncher(workingPath);
+
+            launcher.NpmInstall(fullPackagePath);
+
             var extractedPackagePath = Path.Combine(modulePath, packageName);
-            if(!Directory.Exists(extractedPackagePath))
+            if (!Directory.Exists(extractedPackagePath))
                 throw new DirectoryNotFoundException(extractedPackagePath + " was not found.");
 
-            if (Directory.Exists(outputDirectory))
-                Directory.Delete(outputDirectory, true);
+            try
+            {
+                if (Directory.Exists(outputDirectory))
+                    Directory.Delete(outputDirectory, true);
+            }
+            catch (IOException e)
+            {
+                if (e.Message.ToLowerInvariant().Contains("1921"))
+                    throw new ApplicationException("Failed to remove previous module in " + outputDirectory + ". Directory might be in use.");
 
+                throw;
+            }
+            
             Directory.Move(extractedPackagePath, outputDirectory);
             return outputDirectory;
-
         }
 
 #if UNITY_2018_1_OR_NEWER
@@ -179,7 +191,8 @@ namespace UnityEditor.PackageManager.ValidationSuite
         {
 
             var projectPath = Path.GetDirectoryName(Application.dataPath);
-            var filesInPackage = Directory.GetFiles(packageRootPath, "*", SearchOption.AllDirectories).Select(p => p.Substring(projectPath.Length + 1).Replace('\\', '/')).ToArray();
+            var filesInPackage = Directory.GetFiles(packageRootPath, "*", SearchOption.AllDirectories);
+            filesInPackage = filesInPackage.Select(p => p.Substring(projectPath.Length + 1).Replace('\\', '/')).ToArray();
 
             var projectAssemblies = CompilationPipeline.GetAssemblies();
             var assemblyHash = new HashSet<Assembly>();
@@ -219,6 +232,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
             return null;
         }
+
 #endif
     }
 }

@@ -191,12 +191,14 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             catch (Exception)
             {
             }
-            
+
             var vettingContext = new VettingContext
             {
                 ProjectPackageInfo = manifestData,
                 PublishPackageInfo = manifestData,
-                PreviousPackageInfo = manifestData
+                PreviousPackageInfo = manifestData,
+                ValidationType = ValidationType.Publishing
+
             };
 
             if (manifestData != null)
@@ -205,7 +207,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 vettingContext.PublishPackageInfo.path = packagePath;
                 vettingContext.PreviousPackageInfo.path = packagePath;
             }
-            
+
             return vettingContext;
         }
     }

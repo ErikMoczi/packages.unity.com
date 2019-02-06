@@ -33,7 +33,6 @@ namespace UnityEditor.PackageManager.ValidationSuite
             }
 
             zipFilePath = Path.Combine(zipDirectory, PackageDataZipFilename(packageName, packageVersion));
-
             var assemblies = Utilities.AssembliesForPackage(packageRootPath);
 
             if (!assemblies.Any())
@@ -68,7 +67,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         private static string Get7zPath()
         {
-#if UNITY_EDITOR_OSX
+#if (UNITY_EDITOR_OSX || UNITY_EDITOR_LINUX)
             string execFilename = "7za";
 #else
             string execFilename = "7z.exe";

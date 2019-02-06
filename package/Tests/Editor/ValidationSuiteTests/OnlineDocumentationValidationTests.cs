@@ -165,7 +165,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 PreviousPackageInfo = new VettingContext.ManifestData()
                 {
                     version = version
-                }
+                },
+                ValidationType = ValidationType.Publishing
             };
         }
     }

@@ -29,7 +29,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                     ProjectPackageInfo = new VettingContext.ManifestData()
                     {
                         path = testPackageRoot + "TestPackage_WithGoodRenameConfig",
-                    }
+                    },
+                    ValidationType = ValidationType.Publishing
                 }
             };
             updateConfigurationValidation.RunTest();
@@ -45,7 +46,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                     ProjectPackageInfo = new VettingContext.ManifestData()
                     {
                         path = testPackageRoot + "TestPackage_WithSpacesAndGoodRename",
-                    }
+                    },
+                    ValidationType = ValidationType.Publishing
                 }
             };
             updateConfigurationValidation.RunTest();
@@ -61,7 +63,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                     ProjectPackageInfo = new VettingContext.ManifestData()
                     {
                         path = testPackageRoot + "TestPackage_WithInvalidRenameConfig"
-                    }
+                    },
+                    ValidationType = ValidationType.Publishing
                 }
             };
             updateConfigurationValidation.RunTest();
@@ -79,7 +82,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                     ProjectPackageInfo = new VettingContext.ManifestData()
                     {
                         path = testPackageRoot + "TestPackage_WithGoodRenameConfigInDll"
-                    }
+                    },
+                    ValidationType = ValidationType.Publishing
                 }
             };
             updateConfigurationValidation.RunTest();
@@ -95,7 +99,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                     ProjectPackageInfo = new VettingContext.ManifestData()
                     {
                         path = testPackageRoot + "TestPackage_WithInvalidRenameConfigInDll"
-                    }
+                    },
+                    ValidationType = ValidationType.Publishing
                 }
             };
             updateConfigurationValidation.RunTest();

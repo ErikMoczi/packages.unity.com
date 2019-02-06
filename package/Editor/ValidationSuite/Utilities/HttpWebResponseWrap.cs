@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Net;
 
@@ -7,8 +7,8 @@ namespace UnityEditor.PackageManager.ValidationSuite
     public class HttpWebResponseWrap : IHttpWebResponse
     {
         private HttpWebResponse _response;
-        
-        public HttpStatusCode StatusCode { get;set; }
+
+        public HttpStatusCode StatusCode { get; set; }
 
         public HttpWebResponseWrap(HttpWebResponse response)
         {

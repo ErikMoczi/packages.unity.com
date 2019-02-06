@@ -1,4 +1,4 @@
-﻿using UnityEditor.PackageManager.ValidationSuite;
+using UnityEditor.PackageManager.ValidationSuite;
 
 namespace UnityEditor.PackageManager.ValidationSuite
 {

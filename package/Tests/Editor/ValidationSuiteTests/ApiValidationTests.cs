@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using System.IO;
 using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
 using System.Collections.Generic;
@@ -111,7 +111,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             List<string> messagesExpected = new List<string> { "Error: Assembly \"Unity.PackageValidationSuite.EditorTests.TestPackage_Base\" no longer exists or is no longer included in build. This requires a new major version." };
 
-            var apiValidation = Validate("TestPackage_Base", VersionComparisonTestUtilities.VersionForReleaseType(releaseType), isPreviousPackageTest:false, isProjectPackageTest:true);
+            var apiValidation = Validate("TestPackage_Base", VersionComparisonTestUtilities.VersionForReleaseType(releaseType), isPreviousPackageTest: false, isProjectPackageTest: true);
             ExpectResult(apiValidation, expectError, messagesExpected);
         }
 
@@ -170,7 +170,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         {
             List<string> messagesExpected = new List<string> { "Error: Package Validation Suite does not support .asmdefs that are not built on the \"Editor\" platform. See \"Unity.PackageValidationSuite.EditorTests.TestPackage_ExcludesEditor\"" };
 
-            var apiValidation = Validate("TestPackage_ExcludesEditor", "0.1.0", "TestPackage_ExcludesEditor", copyAssemblies:false);
+            var apiValidation = Validate("TestPackage_ExcludesEditor", "0.1.0", "TestPackage_ExcludesEditor", copyAssemblies: false);
             ExpectResult(apiValidation, true, messagesExpected);
         }
 
@@ -182,14 +182,16 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             var apiValidation = Validate("TestPackage_IncludesAndroid", "0.1.0", "TestPackage_IncludesAndroid", copyAssemblies: false);
             ExpectResult(apiValidation, true, messagesExpected);
         }
+
         //need to make decisions on dependencies and write more tests
 
         private static ApiValidation Validate(string projectPackageName, ReleaseType releaseType, string previousPackageName = "TestPackage_Base")
         {
             return Validate(projectPackageName, VersionComparisonTestUtilities.VersionForReleaseType(releaseType), previousPackageName);
         }
+
         private static ApiValidation Validate(string projectPackageName, string projectPackageVersion,
-            string previousPackageName = "TestPackage_Base", string previousPackageVersion = "0.0.1", 
+            string previousPackageName = "TestPackage_Base", string previousPackageVersion = "0.0.1",
             bool isPreviousPackageTest = false, bool isProjectPackageTest = false, bool copyAssemblies = true)
         {
             var previousPackagePath = Path.GetFullPath(testPackageRoot + previousPackageName);
@@ -233,7 +235,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                         path = projectPackagePath,
                         version = projectPackageVersion
                     },
-                    PreviousPackageBinaryDirectory = VettingContext.PreviousVersionBinaryPath
+                    PreviousPackageBinaryDirectory = VettingContext.PreviousVersionBinaryPath,
+                    ValidationType = ValidationType.Publishing
                 }
             };
             apiValidation.Setup();

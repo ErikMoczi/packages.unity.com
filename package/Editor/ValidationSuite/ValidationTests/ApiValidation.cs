@@ -1,4 +1,4 @@
-﻿#if UNITY_2018_1_OR_NEWER
+#if UNITY_2018_1_OR_NEWER
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,7 +24,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         }
 
         public ApiValidation(ApiValidationAssemblyInformation apiValidationAssemblyInformation)
-            :this()
+            : this()
         {
             assemblyInformation = apiValidationAssemblyInformation;
         }
@@ -108,6 +108,21 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         protected override void Run(AssemblyInfo[] info)
         {
             TestState = TestState.Succeeded;
+            var packagePath = Context.ProjectPackageInfo.path;
+            var files = new HashSet<string>(Directory.GetFiles(packagePath, "*", SearchOption.AllDirectories).Select(Path.GetFullPath));
+
+            //does it compile?
+            if (EditorUtility.scriptCompilationFailed)
+            {
+                Error("Compilation failed. Please fix any compilation errors.");
+                return;
+            }
+
+            if (EditorApplication.isCompiling)
+            {
+                Error("Compilation in progress. Please wait for compilation to finish.");
+                return;
+            }
 
             if (Context.PreviousPackageInfo == null)
             {
@@ -197,7 +212,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             diff.removedAssemblyCount = diff.missingAssemblies.Count;
             diff.breakingChanges = diff.assemblyChanges.Sum(v => v.breakingChanges.Count);
 
-            TestOutput.Add(String.Format("API Diff - Breaking changes: {0} Additions: {1} Missing Assemblies: {2}", 
+            TestOutput.Add(String.Format("API Diff - Breaking changes: {0} Additions: {1} Missing Assemblies: {2}",
                 diff.breakingChanges,
                 diff.additions,
                 diff.removedAssemblyCount));
@@ -218,7 +233,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
             if (changeType == VersionChangeType.Unknown)
                 return;
-           
+
             if (diff.breakingChanges > 0 && changeType != VersionChangeType.Major)
                 Error("Breaking changes require a new major version.");
             if (diff.additions > 0 && changeType == VersionChangeType.Patch)

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
@@ -22,6 +23,10 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
             // Honor the Unity tilde skipping of import
             if (Path.GetDirectoryName(name).EndsWith("~") || name.EndsWith("~"))
+                return true;
+            
+            // Ignore node_modules folder as it is created inside the tested directory when production dependencies exist
+            if (Path.GetDirectoryName(name).EndsWith("node_modules") || name.Contains("node_modules"))
                 return true;
 
             return false;

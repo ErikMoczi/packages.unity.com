@@ -1,10 +1,11 @@
-﻿#if UNITY_2018_1_OR_NEWER
+#if UNITY_2018_1_OR_NEWER
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace UnityEditor.PackageManager.ValidationSuite.Tests
 {
@@ -19,7 +20,10 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             Directory.CreateDirectory(testFolder);
             string zipFilePath;
-            Assert.IsTrue(PackageBinaryZipping.TryZipPackageBinaries(ApiValidationTests.testPackageRoot + "TestPackage_AsmdefWithTypeAdd", "TestPackage_AsmdefWithTypeAdd", "0.1.0", testFolder, out zipFilePath), "ZipPackageBinaries failed");
+
+            var projectPath = Path.GetDirectoryName(Application.dataPath);
+            var packageRootPath = Path.Combine(projectPath, ApiValidationTests.testPackageRoot + "TestPackage_AsmdefWithTypeAdd");
+            Assert.IsTrue(PackageBinaryZipping.TryZipPackageBinaries(packageRootPath, "TestPackage_AsmdefWithTypeAdd", "0.1.0", testFolder, out zipFilePath), "ZipPackageBinaries failed");
 
             var destPath = Path.Combine(testFolder, "zipContents");
             var expectedPaths = new[]

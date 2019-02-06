@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Remoting.Contexts;
@@ -34,7 +34,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 Error("`Samples` and `Samples~` cannot both be present in the package.");
             }
 
-            if (Context.IsPublished && samplesDirExists)
+            if (Context.ValidationType != ValidationType.LocalDevelopment && samplesDirExists)
             {
                 Error("In a published package, the `Samples` needs to be renamed to `Samples~`. It should have been done automatically in the CI publishing process.");
             }
@@ -46,11 +46,11 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             if (matchingFiles.Count == 0)
             {
                 Error(samplesDir + " folder exists but no `.sample.json` files found in it." +
-                      "A `.sample.json` file is required for a sample to be recognized." + 
-                      "Please refer to https://gitlab.internal.unity3d.com/upm-packages/upm-package-template/blob/master/Samples/Example/.sample.json for more info.");
+                    "A `.sample.json` file is required for a sample to be recognized." +
+                    "Please refer to https://gitlab.internal.unity3d.com/upm-packages/upm-package-template/blob/master/Samples/Example/.sample.json for more info.");
             }
 
-            if (Context.IsPublished)
+            if (Context.ValidationType != ValidationType.LocalDevelopment)
             {
                 if (Context.PublishPackageInfo.samples.Count != matchingFiles.Count)
                 {

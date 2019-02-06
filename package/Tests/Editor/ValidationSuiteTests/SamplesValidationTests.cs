@@ -43,7 +43,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 {
                     samplesString += "{\"path\":\"" + samples[i].path + "\",";
                     samplesString += "\"displayName\":\"" + samples[i].displayName + "\"}";
-                    if(i != samples.Length - 1)
+                    if (i != samples.Length - 1)
                         samplesString += ",";
                 }
             }
@@ -77,9 +77,9 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         public void When_Both_Samples_And_Samples_Tilde_Exist_Validation_Fails()
         {
             var samples = new VettingContext.SampleData[]
-            { 
-                new VettingContext.SampleData{path = "Samples", displayName = "Samples" },
-                new VettingContext.SampleData{path = "Samples~", displayName = "Samples~" }
+            {
+                new VettingContext.SampleData {path = "Samples", displayName = "Samples" },
+                new VettingContext.SampleData {path = "Samples~", displayName = "Samples~" }
             };
             CreateSamplesFolder(samples[0]);
             CreateSamplesFolder(samples[1]);
@@ -95,7 +95,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         [Test]
         public void When_Samples_Folder_Exists_In_Published_Package_Validation_Fails()
         {
-            var samples = new VettingContext.SampleData[] { new VettingContext.SampleData{path = "Samples", displayName = "Samples" } };
+            var samples = new VettingContext.SampleData[] { new VettingContext.SampleData {path = "Samples", displayName = "Samples" } };
             CreateSamplesFolder(samples[0]);
             CreatePackageJsonFile(name, samples);
 
@@ -109,7 +109,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         [Test]
         public void When_Samples_Tilde_Folder_Exists_In_Published_Package_Validation_Succeeds()
         {
-            var samples = new VettingContext.SampleData[] { new VettingContext.SampleData{path = "Samples~", displayName = "Samples~" } };
+            var samples = new VettingContext.SampleData[] { new VettingContext.SampleData {path = "Samples~", displayName = "Samples~" } };
             CreateSamplesFolder(samples[0]);
             CreatePackageJsonFile(name, samples);
 
@@ -122,12 +122,12 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         [Test]
         public void When_Samples_Folder_Exists_In_Embedded_Package_Validation_Succeeds()
         {
-            var samples = new VettingContext.SampleData[] { new VettingContext.SampleData{path = "Samples", displayName = "Samples" } };
+            var samples = new VettingContext.SampleData[] { new VettingContext.SampleData {path = "Samples", displayName = "Samples" } };
             CreateSamplesFolder(samples[0]);
             CreatePackageJsonFile(name, samples);
 
             var samplesValidation = new SamplesValidation();
-            samplesValidation.Context = PrepareVettingContext(testDirectory, false);
+            samplesValidation.Context = PrepareVettingContext(testDirectory, ValidationType.LocalDevelopment);
             samplesValidation.RunTest();
             Assert.AreEqual(TestState.Succeeded, samplesValidation.TestState);
         }
@@ -135,7 +135,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         [Test]
         public void When_Sample_Path_Not_Set_Validation_Fails()
         {
-            var samples = new VettingContext.SampleData[] { new VettingContext.SampleData{path = "Samples~", displayName = "Samples~" } };
+            var samples = new VettingContext.SampleData[] { new VettingContext.SampleData {path = "Samples~", displayName = "Samples~" } };
             CreateSamplesFolder(samples[0]);
             samples[0].path = string.Empty;
             CreatePackageJsonFile(name, samples);
@@ -150,7 +150,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         [Test]
         public void When_Sample_Display_Name_Not_Set_Validation_Fails()
         {
-            var samples = new VettingContext.SampleData[] { new VettingContext.SampleData{path = "Samples~", displayName = "" } };
+            var samples = new VettingContext.SampleData[] { new VettingContext.SampleData {path = "Samples~", displayName = "" } };
             CreateSamplesFolder(samples[0]);
             CreatePackageJsonFile(name, samples);
 
@@ -164,7 +164,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         [Test]
         public void When_Sample_Exist_But_Not_Set_In_Package_Json_Validation_Fails()
         {
-            var samples = new VettingContext.SampleData[] { new VettingContext.SampleData{path = "Samples~", displayName = "Samples~" } };
+            var samples = new VettingContext.SampleData[] { new VettingContext.SampleData {path = "Samples~", displayName = "Samples~" } };
             CreateSamplesFolder(samples[0]);
             CreatePackageJsonFile(name);
 
@@ -178,7 +178,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         [Test]
         public void When_Samples_Folder_Missing_But_Sample_Info_Found_In_Package_Json_Validation_Fails()
         {
-            var samples = new VettingContext.SampleData[] { new VettingContext.SampleData{path = "Samples~", displayName = "Samples~" } };
+            var samples = new VettingContext.SampleData[] { new VettingContext.SampleData {path = "Samples~", displayName = "Samples~" } };
             CreatePackageJsonFile(name, samples);
 
             var samplesValidation = new SamplesValidation();
@@ -190,7 +190,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
         public void When_Sample_Json_Missing_But_Sample_Info_Found_In_Package_Json_Validation_Fails()
         {
-            var samples = new VettingContext.SampleData[] { new VettingContext.SampleData{path = "Samples~", displayName = "Samples~" } };
+            var samples = new VettingContext.SampleData[] { new VettingContext.SampleData {path = "Samples~", displayName = "Samples~" } };
             CreateSamplesFolder(samples[0], false);
             CreatePackageJsonFile(name, samples);
 
@@ -201,7 +201,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.Greater(samplesValidation.TestOutput.Count, 0);
         }
 
-        private VettingContext PrepareVettingContext(string packagePath, bool isPublished = true)
+        private VettingContext PrepareVettingContext(string packagePath, ValidationType validationType = ValidationType.Publishing)
         {
             var packageJson = File.ReadAllText(Path.Combine(packagePath, "package.json"));
             VettingContext.ManifestData manifestData = null;
@@ -212,13 +212,13 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             catch (Exception)
             {
             }
-            
+
             var vettingContext = new VettingContext
             {
                 ProjectPackageInfo = manifestData,
                 PublishPackageInfo = manifestData,
                 PreviousPackageInfo = manifestData,
-                IsPublished = isPublished
+                ValidationType = validationType
             };
 
             if (manifestData != null)
@@ -227,7 +227,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 vettingContext.PublishPackageInfo.path = packagePath;
                 vettingContext.PreviousPackageInfo.path = packagePath;
             }
-            
+
             return vettingContext;
         }
     }

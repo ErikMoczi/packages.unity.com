@@ -1,4 +1,4 @@
-﻿#if UNITY_2018_2_OR_NEWER
+#if UNITY_2018_2_OR_NEWER
 
 using System;
 using System.Diagnostics;
@@ -6,9 +6,9 @@ using System.IO;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 #if UNITY_2019_1_OR_NEWER
-	using UnityEngine.UIElements;
+using UnityEngine.UIElements;
 #else
-	using UnityEngine.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements;
 #endif
 
 namespace UnityEditor.PackageManager.ValidationSuite.UI
@@ -50,18 +50,23 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
             ViewDiffButton.clickable.clicked += ViewDiffs;
         }
 
-        public static bool SourceSupported(PackageSource source)
+        public static bool SourceSupported(PackageInfo info)
         {
+            PackageSource source = info.source;
+#if UNITY_2019_1_OR_NEWER
+            return source == PackageSource.Embedded || source == PackageSource.Local || source == PackageSource.Registry || (info.source == PackageSource.BuiltIn && info.type != "module");
+#else
             return source == PackageSource.Embedded || source == PackageSource.Local || source == PackageSource.Registry;
+#endif
         }
 
         public void OnPackageSelectionChange(PackageInfo packageInfo)
         {
             if (root == null)
                 return;
-
+            
             var isAvailable = packageInfo != null && (packageInfo.status == PackageStatus.Available || packageInfo.status == PackageStatus.Error);
-            var showValidationUI = packageInfo != null && isAvailable && SourceSupported(packageInfo.source);
+            var showValidationUI = packageInfo != null && isAvailable && SourceSupported(packageInfo);
             UIUtils.SetElementDisplay(this, showValidationUI);
             if (!showValidationUI)
                 return;
@@ -86,8 +91,9 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
                 EditorUtility.DisplayDialog("", "Validation suite requires network access and cannot be used offline.", "Ok");
                 return;
             }
-
-            var results = ValidationSuite.ValidatePackage(PackageId, ValidationType.LocalDevelopment);
+            
+            var validationType = CurrentPackageinfo.source == PackageSource.Registry ? ValidationType.Publishing : ValidationType.LocalDevelopment;
+            var results = ValidationSuite.ValidatePackage(PackageId, validationType);
             ValidationResults.text = results ? "Success" : "Failed";
             UIUtils.SetElementDisplay(ViewResultsButton, ValidationSuiteReport.ReportExists(PackageId));
             UIUtils.SetElementDisplay(ViewDiffButton, ValidationSuiteReport.DiffsReportExists(PackageId));
@@ -104,7 +110,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
                     var targetFile = Directory.GetCurrentDirectory() + "/" + filePath;
                     if (!File.Exists(targetFile))
                         throw new Exception("Validation Result not found!");
-                    
+
                     Process.Start(targetFile);
                 }
                 catch (Exception)
@@ -150,6 +156,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.UI
         {
             ValidationSuite.RunValidationSuite(string.Format("{0}@{1}", "com.unity.package-manager-ui", "1.8.1"));
         }
+
 #endif
 
         [MenuItem("internal:Packages/Test AssetStore Validation")]

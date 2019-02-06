@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text;
 using NUnit.Framework;
@@ -16,12 +16,11 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         [SetUp]
         public void Setup()
         {
-
             if (Directory.Exists(testDirectory))
             {
                 Directory.Delete(testDirectory, true);
             }
-            
+
             Directory.CreateDirectory(testDirectory);
         }
 
@@ -46,7 +45,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                     // Add some information to the file.
                     fs.Write(info, 0, info.Length);
                 }
-            } else
+            }
+            else
             {
                 File.Create(toCreatePath).Dispose();
             }
@@ -231,9 +231,9 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 {
                     path = packagePath,
                     version = version
-                }
+                },
+                ValidationType = ValidationType.Publishing
             };
         }
-
     }
 }

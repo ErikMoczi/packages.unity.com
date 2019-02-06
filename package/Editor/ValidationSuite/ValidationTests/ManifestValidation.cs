@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -68,7 +68,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
 
             // TODO: Validate the Package dependencies meet the minimum editor requirement (eg: 2018.3 minimum for package A is 2, make sure I don't use 1)
-
         }
 
         private void ValidateDependencyChanges()
@@ -96,7 +95,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                         if (previousRefSemver.Major != projectRefSemver.Major &&
                             (versionChangeType == VersionChangeType.Patch || versionChangeType == VersionChangeType.Minor))
                         {
-                            Error(@"Dependency major versions may only change in major releases. ""{0}"": ""{1}"" -> ""{2}""", 
+                            Error(@"Dependency major versions may only change in major releases. ""{0}"": ""{1}"" -> ""{2}""",
                                 projectRef.Key, previousRefVersion, projectRef.Value);
                         }
                     }
@@ -129,7 +128,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             var manifestData = Context.ProjectPackageInfo;
             // Check the package Name, which needs to start with "com.unity."
             if (manifestData.name == (PackageNamePrefix + "[your package name]") ||
-                !manifestData.name.StartsWith(PackageNamePrefix) || 
+                !manifestData.name.StartsWith(PackageNamePrefix) ||
                 manifestData.name.Length == PackageNamePrefix.Length)
             {
                 Error("In package.json, \"name\" needs to start with \"{0}\", and end with your package name.", PackageNamePrefix);
@@ -158,7 +157,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
             else if (!Regex.Match(manifestData.displayName, UpmDisplayRegex).Success)
             {
-                Error("In package.json, \"displayName\" cannot have any special characters."); 
+                Error("In package.json, \"displayName\" cannot have any special characters.");
             }
 
             // Check Description, make sure it's there, and not too short.
@@ -167,7 +166,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 Error("In package.json, \"description\" must be fleshed out and informative, as it is used in the user interface.");
             }
 
-            if (Context.IsPublished)
+            if (Context.ValidationType != ValidationType.LocalDevelopment)
             {
                 // Check if `repository.url` and `repository.revision` exist and the content is valid
                 string value;
@@ -194,15 +193,13 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 return;
             }
 
-            // Core packages must be versioned at 0.0.0-builtin right now.
             if (Context.IsCore)
             {
-                if (packageVersionNumber != "0.0.0-builtin")
+                if (!string.IsNullOrEmpty(packageVersionNumber.Prerelease) || packageVersionNumber.Major < 1)
                 {
-                    Error("In package.json, core packages must force \"version\" to \"0.0.0-builtin\".");
+                    Error("Core packages cannot be preview packages.");
+                    return;
                 }
-
-                return;
             }
 
             if (packageVersionNumber.Major < 1)

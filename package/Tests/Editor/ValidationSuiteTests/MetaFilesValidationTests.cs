@@ -13,12 +13,11 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         [SetUp]
         public void Setup()
         {
-
             if (Directory.Exists(testDirectory))
             {
                 Directory.Delete(testDirectory, true);
             }
-            
+
             Directory.CreateDirectory(testDirectory);
         }
 
@@ -34,12 +33,12 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         private void CreateFileOrFolder(bool folder, string name, bool withMeta, string cwd = "")
         {
             var toCreatePath = Path.Combine(testDirectory, Path.Combine(cwd, name));
-            if(folder)
+            if (folder)
                 Directory.CreateDirectory(toCreatePath);
             else
                 File.Create(toCreatePath).Dispose();
 
-            if(withMeta)
+            if (withMeta)
                 File.Create(toCreatePath + ".meta").Dispose();
         }
 
@@ -146,7 +145,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.AreEqual(1, metaFilesValidation.TestOutput.Count);
         }
 
-
         [Test]
         public void When_File_Meta_IsPresent_Validation_Succeeds()
         {
@@ -175,7 +173,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         public void When_Folder_and_Files_Meta_IsPresent_Validation_Succeeds()
         {
             CreateFileOrFolder(true, "folder1", true);
-            CreateFileOrFolder(false, "file1", true);            
+            CreateFileOrFolder(false, "file1", true);
             var metaFilesValidation = new MetaFilesValidation();
             metaFilesValidation.Context = PrepareVettingContext(testDirectory);
             metaFilesValidation.RunTest();
@@ -277,9 +275,9 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 PreviousPackageInfo = new VettingContext.ManifestData()
                 {
                     path = packagePath
-                }
+                },
+                ValidationType = ValidationType.Publishing
             };
         }
-
     }
 }

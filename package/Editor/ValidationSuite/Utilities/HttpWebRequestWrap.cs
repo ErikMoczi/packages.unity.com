@@ -1,11 +1,13 @@
-﻿using System.Net;
+using System.Net;
 
-namespace UnityEditor.PackageManager.ValidationSuite { 
-    public class HttpWebRequestWrap : IHttpWebRequest {
-
+namespace UnityEditor.PackageManager.ValidationSuite
+{
+    public class HttpWebRequestWrap : IHttpWebRequest
+    {
         private HttpWebRequest _request;
 
-        public string Method {
+        public string Method
+        {
             get { return _request.Method; }
             set { _request.Method = value;  }
         }
@@ -22,7 +24,8 @@ namespace UnityEditor.PackageManager.ValidationSuite {
             set { _request.UserAgent = value; }
         }
 
-        public HttpWebRequestWrap(HttpWebRequest req) {
+        public HttpWebRequestWrap(HttpWebRequest req)
+        {
             _request = req;
         }
 

@@ -44,7 +44,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             {
                 ProjectPackageInfo = projectPackageInfo,
                 PublishPackageInfo = projectPackageInfo,
-                PreviousPackageInfo = null
+                PreviousPackageInfo = null,
+                ValidationType = ValidationType.Publishing
             };
             manifestValidation.Context = vettingContext;
             manifestValidation.Setup();
@@ -58,7 +59,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         public void When_Manifest_OK_Validation_Succeeds()
         {
             var manifestData = GenerateValidManifestData();
-            var manifestValidation = SetupTestManifestAndRunValidation(manifestData);
+            var manifestValidation = SetupTestManifestAndRunValidation(manifestData, null, ValidationType.Publishing);
 
             Assert.AreEqual(TestState.Succeeded, manifestValidation.TestState);
             Assert.AreEqual(0, manifestValidation.TestOutput.Count);
@@ -68,7 +69,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         public void When_Manifest_No_References_Validation_Succeeds()
         {
             var manifestData = GenerateValidManifestData();
-            var manifestValidation = SetupTestManifestAndRunValidation(manifestData);
+            var manifestValidation = SetupTestManifestAndRunValidation(manifestData, null, ValidationType.Publishing);
 
             Assert.AreEqual(TestState.Succeeded, manifestValidation.TestState);
             Assert.AreEqual(0, manifestValidation.TestOutput.Count);
@@ -81,14 +82,14 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             // Put in a bad name
             manifestData.name = "com.bad.name";
-            var manifestValidation = SetupTestManifestAndRunValidation(manifestData);
+            var manifestValidation = SetupTestManifestAndRunValidation(manifestData, null, ValidationType.Publishing);
 
             Assert.AreEqual(TestState.Failed, manifestValidation.TestState);
             Assert.AreEqual(1, manifestValidation.TestOutput.Count);
 
             // Put in capital letters
             manifestData.name = "com.unity.ProjectName";
-            manifestValidation = SetupTestManifestAndRunValidation(manifestData);
+            manifestValidation = SetupTestManifestAndRunValidation(manifestData, null, ValidationType.Publishing);
 
             Assert.AreEqual(TestState.Failed, manifestValidation.TestState);
             Assert.Greater(manifestValidation.TestOutput.Count, 0);
@@ -131,7 +132,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             Assert.AreEqual(TestState.Failed, manifestValidation.TestState);
         }
-        
+
         [Test]
         [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInMinor")]
         public void DependencyAdded_FailsInMinor(ReleaseType releaseType, bool errorExpected)
@@ -146,8 +147,15 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             projectManifestData.version = VersionComparisonTestUtilities.VersionForReleaseType(releaseType);
 
             var messagesExpected = new List<string>
-            { "Warning: Package dependency package1@1.0.0 must be published to production before this package is published to production.  (Except for core packages)", 
-              @"New dependency: ""package1"": ""1.0.0""", "Error: Adding package dependencies requires a new major version."};
+            {
+                "Warning: Package dependency package1@1.0.0 must be published to production before this package is published to production.  (Except for core packages)",
+                @"New dependency: ""package1"": ""1.0.0""", "Error: Adding package dependencies requires a new major version."
+            };
+
+            if (errorExpected)
+            {
+                messagesExpected.Insert(0, "Skipping Git tags check as this is a package in development.");
+            }
 
             var manifestValidation = SetupTestManifestAndRunValidation(projectManifestData, previousManifestData);
 
@@ -183,8 +191,15 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             projectManifestData.version = VersionComparisonTestUtilities.VersionForReleaseType(packageReleaseType);
 
             var messagesExpected = new List<string>
-            { string.Format(@"Error: This production quality package has a dependency on preview package ""{0}"".  Production quality packages can only depend on other production quality packages.", projectManifestData.dependencies["package1"]),
-              string.Format(@"Warning: Package dependency package1@{0} must be published to production before this package is published to production.  (Except for core packages)", projectManifestData.dependencies["package1"]) };
+            {
+                string.Format(@"Error: This production quality package has a dependency on preview package ""{0}"".  Production quality packages can only depend on other production quality packages.", projectManifestData.dependencies["package1"]),
+                string.Format(@"Warning: Package dependency package1@{0} must be published to production before this package is published to production.  (Except for core packages)", projectManifestData.dependencies["package1"])
+            };
+
+            if (errorExpected)
+            {
+                messagesExpected.Insert(0, "Skipping Git tags check as this is a package in development.");
+            }
 
             var manifestValidation = SetupTestManifestAndRunValidation(projectManifestData, previousManifestData);
 
@@ -196,6 +211,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             yield return new TestCaseData(ReleaseType.Patch, true, ReleaseType.Major);
             yield return new TestCaseData(ReleaseType.Minor, true, ReleaseType.Major);
         }
+
         [Test]
         [TestCaseSource("When_DependencyChangedToDifferentVersion_CasesWarning")]
         public void When_DependencyChangedToDifferentVersionWarning(ReleaseType packageReleaseType, bool errorExpected, ReleaseType dependencyReleaseType)
@@ -215,7 +231,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             var messagesExpected = new List<string>
             {
-                string.Format(@"Warning: Package dependency package1@{0} must be published to production before this package is published to production.  (Except for core packages)", projectManifestData.dependencies["package1"]),
+                "Skipping Git tags check as this is a package in development.",
+                string.Format("Warning: Package dependency package1@{0} must be published to production before this package is published to production.  (Except for core packages)", projectManifestData.dependencies["package1"]),
                 string.Format(@"Error: Dependency major versions may only change in major releases. ""package1"": ""{0}"" -> ""1.0.0""", previousManifestData.dependencies["package1"])
             };
 
@@ -233,12 +250,15 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
             previousManifestData.dependencies = new Dictionary<string, string>
             {
-                { "package1","0.0.1-preview" }
+                { "package1", "0.0.1-preview" }
             };
             projectManifestData.version = VersionComparisonTestUtilities.VersionForReleaseType(releaseType);
 
             var messagesExpected = new List<string>
-            { "Error: Removing dependencies is not forwards-compatible and requires a new major or minor version. Removed dependency: package1" };
+            {
+                "Skipping Git tags check as this is a package in development.",
+                "Error: Removing dependencies is not forwards-compatible and requires a new major or minor version. Removed dependency: package1"
+            };
 
             var manifestValidation = SetupTestManifestAndRunValidation(projectManifestData, previousManifestData);
 
@@ -251,12 +271,15 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             var projectManifestData = GenerateValidManifestData();
             projectManifestData.dependencies = new Dictionary<string, string>
             {
-                { "package1","0.0.a" }
+                { "package1", "0.0.a" }
             };
 
             var messagesExpected = new List<string>
-            { "Warning: Package dependency package1@0.0.a must be published to production before this package is published to production.  (Except for core packages)",
-              @"Error: Invalid version number in dependency ""package1"" : ""0.0.a"""};
+            {
+                "Skipping Git tags check as this is a package in development.",
+                "Warning: Package dependency package1@0.0.a must be published to production before this package is published to production.  (Except for core packages)",
+                @"Error: Invalid version number in dependency ""package1"" : ""0.0.a"""
+            };
 
             var manifestValidation = SetupTestManifestAndRunValidation(projectManifestData);
 
@@ -274,7 +297,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 Assert.AreEqual(TestState.Succeeded, manifestValidation.TestState);
         }
 
-        private ManifestValidation SetupTestManifestAndRunValidation(VettingContext.ManifestData projectManifestData, VettingContext.ManifestData previousManifestData = null)
+        private ManifestValidation SetupTestManifestAndRunValidation(VettingContext.ManifestData projectManifestData, VettingContext.ManifestData previousManifestData = null, ValidationType validationType = ValidationType.LocalDevelopment)
         {
             CreateAndWriteManifest(projectManifestData, "Project");
             if (previousManifestData != null)
@@ -287,7 +310,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 PublishPackageInfo = projectManifestData,
                 PreviousPackageInfo = previousManifestData,
                 IsCore = false,
-                IsPublished = true
+                ValidationType = validationType
             };
             manifestValidation.Context = vettingContext;
             manifestValidation.Setup();
@@ -303,7 +326,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             var contents = JsonUtility.ToJson(projectManifestData);
             var deps = string.Join(",\n",
                 projectManifestData.dependencies.Select(d => string.Format("\"{0}\":\"{1}\"", d.Key, d.Value)).ToArray());
-            contents.Insert(contents.LastIndexOf("}"), @"""dependencies"": { " + deps +" }");
+            contents.Insert(contents.LastIndexOf("}"), @"""dependencies"": { " + deps + " }");
             File.WriteAllText(packageJsonPath, contents);
             projectManifestData.path = packageJsonPath;
         }

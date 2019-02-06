@@ -1,4 +1,3 @@
-﻿
 using System;
 using System.IO;
 using System.Net;
@@ -13,6 +12,11 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         private const string docsurl = "https://docs.unity3d.com/Packages/{0}/manual/index.html";
         private IHttpWebRequestFactory httpWebRequestFactory;
 
+        public OnlineDocumentationValidation()
+        {
+            Initialize(new HttpWebRequestFactory());
+        }
+
         public OnlineDocumentationValidation(IHttpWebRequestFactory httpFactory)
         {
             Initialize(httpFactory);
@@ -23,7 +27,11 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestName = "Online Documentation Validation";
             TestDescription = "Make sure the package has online documentation. It is required for a verified package and optional for a preview package";
             TestCategory = TestCategory.DataValidation;
+#if UNITY_2019_1_OR_NEWER
             SupportedValidations = new[] { ValidationType.LocalDevelopment, ValidationType.Publishing };
+#else
+            SupportedValidations = new[] { ValidationType.Publishing };
+#endif
             httpWebRequestFactory = httpFactory;
         }
 

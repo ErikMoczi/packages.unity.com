@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -38,9 +38,9 @@ namespace UnityEditor.PackageManager.ValidationSuite
         internal DateTime EndTime;
 
         internal ValidationSuite(SingleTestCompletedDelegate singleTestCompletionDelegate,
-                               AllTestsCompletedDelegate allTestsCompletedDelegate,
-                               VettingContext context,
-                               ValidationSuiteReport report)
+                                 AllTestsCompletedDelegate allTestsCompletedDelegate,
+                                 VettingContext context,
+                                 ValidationSuiteReport report)
         {
             this.singleTestCompletionDelegate += singleTestCompletionDelegate;
             this.allTestsCompletedDelegate += allTestsCompletedDelegate;
@@ -93,10 +93,18 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 return false;
             }
 
+            // publish locally for embedded and local packages
+            var context = VettingContext.CreatePackmanContext(packageId, validationType);
+            return ValidatePackage(context, validationType);
+        }
+
+        internal static bool ValidatePackage(VettingContext context, ValidationType validationType)
+        {
+            var report = new ValidationSuiteReport(context.ProjectPackageInfo.Id, context.ProjectPackageInfo.name, context.ProjectPackageInfo.version, context.ProjectPackageInfo.path);
+
             try
             {
                 // publish locally for embedded and local packages
-                var context = VettingContext.CreatePackmanContext(packageId, validationType);
                 var testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletedDelegate, context, report);
 
                 report.Initialize(testSuite.context);
@@ -131,7 +139,6 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 EditorApplication.Exit(1);
             }
         }
-
 
         public static bool RunAssetStoreValidationSuite(string packageName, string packageVersion, string packagePath, string previousPackagePath = null)
         {
@@ -188,7 +195,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 test.Suite = this;
                 test.Setup();
             }
-            
+
             Run();
         }
 
@@ -212,13 +219,12 @@ namespace UnityEditor.PackageManager.ValidationSuite
             return success;
         }
 
-
         private void BuildTestSuite()
         {
             // Use reflection to discover all Validation Tests in the project with base type == BaseValidationTest.
             validationTests = (from t in Assembly.GetExecutingAssembly().GetTypes()
-                                where typeof(BaseValidation).IsAssignableFrom(t) && t.GetConstructor(Type.EmptyTypes) != null
-                                select (BaseValidation)Activator.CreateInstance(t)).ToList();
+                where t.BaseType == (typeof(BaseValidation)) && t.GetConstructor(Type.EmptyTypes) != null
+                select(BaseValidation) Activator.CreateInstance(t)).ToList();
         }
 
         private void Run()
@@ -264,14 +270,14 @@ namespace UnityEditor.PackageManager.ValidationSuite
             // when we're done, signal the main thread and all other interested
             allTestsCompletedDelegate(this, testSuiteState);
         }
-        
+
         private static string FindPackagePath(string packageId)
         {
             var path = string.Format("Packages/{0}/package.json", packageId);
             var absolutePath = Path.GetFullPath(path);
             return !File.Exists(absolutePath) ? string.Empty : Directory.GetParent(absolutePath).FullName;
         }
-        
+
         private static void SingleTestCompletedDelegate(IValidationTestResult testResult)
         {
         }

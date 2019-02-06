@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -11,9 +11,9 @@ using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.Networking;
-
 using UnityEditor.PackageManager.ValidationSuite;
 using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
+
 
 public class PackageDependencyInfo
 {
@@ -91,8 +91,6 @@ internal class VettingContext
         }
     }
 
-    public bool IsEmbedded { get; set; }
-    public bool IsPublished { get; set; }
     public bool IsCore { get; set; }
 
     public ManifestData ProjectPackageInfo { get; set; }
@@ -122,20 +120,18 @@ internal class VettingContext
         context.IsCore = false; // there are no core packages before 2019.1
 #endif
         context.ValidationType = validationType;
-        context.IsPublished = packageInfo.source == PackageSource.Registry;
-        context.IsEmbedded = packageInfo.source == PackageSource.Embedded;
         context.ProjectPackageInfo = GetManifest(packageInfo.resolvedPath);
 
-        // For now, only try to publish the package for templates in development.
-        if (context.ProjectPackageInfo.IsProjectTemplate)
+        if (context.ValidationType == ValidationType.LocalDevelopment)
         {
             var publishPackagePath = PublishPackage(context);
-            context.PublishPackageInfo = GetManifest(publishPackagePath);
+            context.PublishPackageInfo = GetManifest(publishPackagePath);    
         }
         else
         {
-            context.PublishPackageInfo = context.ProjectPackageInfo;
+            context.PublishPackageInfo = GetManifest(packageInfo.resolvedPath);
         }
+        
 
 #if UNITY_2019_1_OR_NEWER
         foreach (var relatedPackage in context.PublishPackageInfo.relatedPackages)
@@ -155,10 +151,9 @@ internal class VettingContext
         }
 #endif
 
-
 #if UNITY_2018_1_OR_NEWER
         // No need to compare against the previous version of the package if we're testing out the verified set.
-        if (context.ValidationType != ValidationType.VerifiedSet)
+        if (context.ValidationType == ValidationType.VerifiedSet)
         {
             var previousPackagePath = GetPreviousPackage(context.ProjectPackageInfo);
             if (!string.IsNullOrEmpty(previousPackagePath))
@@ -185,14 +180,14 @@ internal class VettingContext
     public static VettingContext CreateAssetStoreContext(string packageName, string packageVersion, string packagePath, string previousPackagePath)
     {
         VettingContext context = new VettingContext();
-        context.ProjectPackageInfo = new ManifestData () { path = packagePath, name = packageName, version = packageVersion};
-        context.PublishPackageInfo = new ManifestData () { path = packagePath, name = packageName, version = packageVersion };
-        context.PreviousPackageInfo = string.IsNullOrEmpty(previousPackagePath) ? null : new ManifestData () { path = previousPackagePath, name = packageName, version = "Previous" };
+        context.ProjectPackageInfo = new ManifestData() { path = packagePath, name = packageName, version = packageVersion};
+        context.PublishPackageInfo = new ManifestData() { path = packagePath, name = packageName, version = packageVersion };
+        context.PreviousPackageInfo = string.IsNullOrEmpty(previousPackagePath) ? null : new ManifestData() { path = previousPackagePath, name = packageName, version = "Previous" };
         context.ValidationType = ValidationType.AssetStore;
         return context;
     }
 
-    public VersionChangeType VersionChangeType
+    internal VersionChangeType VersionChangeType
     {
         get
         {
@@ -257,20 +252,92 @@ internal class VettingContext
 
     private static string PublishPackage(VettingContext context)
     {
-        // ***** HACK ****** until upm has an api to pack a folder, we will do it ourselves.
-        var tempPath = System.IO.Path.GetTempPath();
-
-        var projectPackagePath = context.ProjectPackageInfo.path;
-        if (context.ProjectPackageInfo.IsProjectTemplate && context.IsEmbedded)
+        var packagePath = context.ProjectPackageInfo.path;
+        if (context.ProjectPackageInfo.IsProjectTemplate)
         {
-            var projectPath = Path.Combine(projectPackagePath, "../../");
-            // re-direct the package path to the folder where the converted project template will be
-            projectPackagePath = Path.Combine(tempPath, "converted-" + context.ProjectPackageInfo.Id);
-            ProjectTemplateUtils.ConvertProjectToTemplate(projectPath, projectPackagePath);
+            return packagePath;
         }
-        var packageName = Utilities.CreatePackage(projectPackagePath, tempPath);
-        var publishPackagePath = Path.Combine(tempPath, "publish-" + context.ProjectPackageInfo.Id);
-        return Utilities.ExtractPackage(packageName, tempPath, publishPackagePath, context.ProjectPackageInfo.name);
+        else
+        {
+            var tempPath = System.IO.Path.GetTempPath();
+            string packageName = context.ProjectPackageInfo.Id.Replace("@", "-") + ".tgz";
+            
+            //Use upm-template-tools package-ci
+            PackageCIUtils.Pack(packagePath, tempPath);
+            
+            // Create a NodeLauncher object that will handle the installation of the
+            // package to validate
+            NodeLauncher launcher;
+
+            if (GetDependencyPackages(context.ProjectPackageInfo.dependencies, packagePath, tempPath, false))
+            {
+                //Create a new launcher without an npmPrefix to use installed dependencies
+                launcher = new NodeLauncher(tempPath, npmPrefix: "", npmRegistry: "");
+            }
+            else
+            {
+                //Create the launcher with an npmPrefix so that modules are installed correctly
+                launcher = new NodeLauncher(tempPath, npmPrefix: ".");
+            }
+
+            var publishPackagePath = Path.Combine(tempPath, "publish-" + context.ProjectPackageInfo.Id);
+            return Utilities.ExtractPackage(packageName, tempPath, publishPackagePath, context.ProjectPackageInfo.name, launcher);
+        }
+    }
+
+    private static bool GetDependencyPackages(Dictionary<string, string> packages, string packagePath, string workingDirectory = "", bool runValidation = false)
+    {
+        NodeLauncher launcher = new NodeLauncher(workingDirectory);
+        bool createdLocalDependencies = false;
+
+        foreach (var package in packages)
+        {
+            var relatedPackagePath = "";
+            var offlineFoundPackages = Utilities.UpmListOffline(package.Key);
+            if (offlineFoundPackages.Any())
+            {
+                if (offlineFoundPackages[0].source == PackageSource.Embedded)
+                {
+                    string packageId = offlineFoundPackages[0].name + "@" + offlineFoundPackages[0].version;
+                    //Create the context of the package, this also publishes (packages) the package
+                    VettingContext packageContext = CreatePackmanContext(packageId, ValidationType.LocalDevelopment);
+
+                    if (runValidation)
+                    {
+                        if (!ValidationSuite.ValidatePackage(packageContext, ValidationType.LocalDevelopment))
+                        {
+                            //Package is invalid.
+                            throw new ApplicationException("Validation check failed for dependent package " + packageId);
+                        }
+                    }
+
+                    // Since the packge is local, we need to install it.
+                    string packageFilePath = Path.Combine(workingDirectory, packageId.Replace("@", "-") + ".tgz");
+                    launcher.NpmInstall(packageFilePath);
+                    createdLocalDependencies = true;
+                    continue;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+            
+            if (Utilities.PackageExistsOnProduction(package.Key))
+            {
+                var tempPath = Path.GetTempPath();
+                var packageFileName = Utilities.DownloadPackage(package.Key, tempPath);
+                var packagesPath = Path.Combine(Directory.GetParent(packagePath).ToString(), package.Key);
+                relatedPackagePath = Utilities.ExtractPackage(packageFileName, tempPath, packagesPath, package.Key);
+            }
+
+            if (relatedPackagePath.Equals(""))
+            {
+                Debug.Log("Cannot find the package " + package.Key + " locally or remotely");
+            }
+        }
+
+        return createdLocalDependencies;
     }
 
     private static string GetPreviousPackage(ManifestData projectPackageInfo)
@@ -363,6 +430,7 @@ internal class VettingContext
         var packageCoDependencies = new Dictionary<string, List<PackageDependencyInfo>>();
 
         var foundPackages =  Utilities.UpmSearch(string.Empty, true);
+        
 
         // Fill in the dictionary
         if (foundPackages != null && foundPackages.Length > 0)
